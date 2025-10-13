@@ -4,7 +4,6 @@
       <Dropdown prefix="View By" v-model="selected_view_id" :options="viewData" variant="secondary">
       </Dropdown>
       <div class="flex gap-3 items-center ">
-
         <Searchbar placeholder="Search in Orchit AI space">
         </Searchbar>
       </div>
@@ -27,7 +26,7 @@
             <p class="text-sm text-text-primary">{{ column.title }} {{ column.cards.length + 1 }}</p>
             <BaseEmailChip placeholder="team member email" v-model="column.email" />
             <p class="text-sm text-text-secondary">You can assign user later</p>
-            <Button size="md" @click="addSeatToColumn(column)">{{ isPending ? 'Adding...': 'Add Seat'}}</Button>
+            <Button size="md" @click="addSeatToColumn(column)">{{ isPending ? 'Adding...' : 'Add Seat' }}</Button>
             <i class="fa-solid fa-close cursor-pointer ml-2" @click="toggleAddNewColumn(column)"></i>
           </div>
         </template>
@@ -81,6 +80,7 @@ import Dropdown from '../../components/ui/Dropdown.vue';
 import DetailPanel from './components/DetailPanel.vue';
 
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
+
 const viewData = [
   {
     title: 'Role',
@@ -88,9 +88,13 @@ const viewData = [
   }, {
     title: 'Team',
     _id: 'team',
-  }
-
+  },
+  {
+    title: 'Status',
+    _id: 'status',
+  },
 ]
+
 const selected_view_id = ref('role');
 const showDelete = ref(false);
 const localColumn = ref();

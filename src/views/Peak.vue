@@ -97,9 +97,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useJobId } from '../composables/useQueryParams'
+import { useJobId,useWorkspaceId } from '../composables/useQueryParams'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import StatusTable from '../components/ui/StatusTable.vue'
+const { workspaceId } = useWorkspaceId();
 
 interface TaskProgress {
   status: string
@@ -145,7 +146,7 @@ const connect = () => {
   console.log('🔐 Token:', token ? token.substring(0, 20) : '' + '...')
 
   // Construct the SSE URL with token as query parameter
-  const sseUrl = `${SERVER_BASE_URL}/step2/tasks/${localStorage.getItem('jobId')}/stream?token=${localStorage.getItem('token')}`
+  const sseUrl = `${SERVER_BASE_URL}/step2/tasks/${localStorage.getItem('jobId') ?? workspaceId.value}/stream?token=${localStorage.getItem('token')}&is_manual=${localStorage.getItem('jobId') ? 'false' : 'true'}`
   console.log('🌐 SSE URL:', sseUrl)
 
   try {
