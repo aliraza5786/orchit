@@ -41,8 +41,17 @@
                     </h1>
                 </template>
             </div>
+
+            <div class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4">
+              <div v-for="(item, index) in peopleVar" :key="index">
+                {{ item.title }}
+                <TypeChanger :key="index" @click.stop :default="item?.value" :data="item?.data" :cardId="details?._id"
+            @onselect="(val: any) => 0" />
+
+              </div>
+            </div>
             <span class="text-base text-text-primary">Worked On</span>
-            <ul v-if="details?.assigned_cards?.length> 0" class="border border-border space-y-1 p-2.5 mt-1 rounded-lg">
+            <ul v-if="details?.assigned_cards?.length > 0" class="border border-border space-y-1 p-2.5 mt-1 rounded-lg">
                 <li class="p-2 " v-for="(item, index) in details?.assigned_cards" :key="index">
                     <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
                     <p class="text-xs text-text-secondary">Design Project . Olivia Updated on April 9, 2025</p>
@@ -54,10 +63,14 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import {  useMoveCard } from '../../../queries/useSheets'
+import { useMoveCard } from '../../../queries/useSheets'
 import { nextTick } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import ProgressBar from '../../../components/ui/ProgressBar.vue'
+import { usePeopleVar } from '../../../queries/usePeople'
+import TypeChanger from '../../Product/components/TypeChanger.vue'
+const { data: peopleVar } = usePeopleVar()
+
 const props = defineProps({
     showPanel: { type: Boolean, default: true },
     details: { type: Object as () => any, default: () => ({}) }

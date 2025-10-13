@@ -139,3 +139,16 @@ export const useCreateTeamMember = (options = {}) =>
       ...(options as any),
     } as any
   );
+  export const usePeopleVar = (options = {}) => {
+    return useQuery({
+      queryKey: ["people-var"],
+      queryFn: ({ signal }) =>
+        request<any>({
+          url: `/common/module-variables/filter?module=people`,
+          method: "GET",
+          signal,
+        }),
+      ...options,
+    });
+  };
+  
