@@ -262,8 +262,8 @@ export const sampleWorkflowStatuses = [
     status_name: 'Create',
     category: 'todo',
     status_color: '#6b7280',
-    position_x: 100,
-    position_y: 200,
+    position_x: 300,
+    position_y: 150,
     order: 0,
     is_initial: true,
     is_final: false
@@ -274,8 +274,8 @@ export const sampleWorkflowStatuses = [
     status_name: 'To Do',
     category: 'todo',
     status_color: '#6b7280',
-    position_x: 300,
-    position_y: 200,
+    position_x: 600,
+    position_y: 350,
     order: 1,
     is_initial: false,
     is_final: false
@@ -286,8 +286,8 @@ export const sampleWorkflowStatuses = [
     status_name: 'In Progress',
     category: 'inprogress',
     status_color: '#3b82f6',
-    position_x: 500,
-    position_y: 200,
+    position_x: 900,
+    position_y: 220,
     order: 2,
     is_initial: false,
     is_final: false
@@ -298,8 +298,8 @@ export const sampleWorkflowStatuses = [
     status_name: 'Done',
     category: 'done',
     status_color: '#10b981',
-    position_x: 700,
-    position_y: 200,
+    position_x: 1200,
+    position_y: 400,
     order: 3,
     is_initial: false,
     is_final: true

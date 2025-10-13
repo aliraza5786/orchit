@@ -66,6 +66,49 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * WorkflowCanvas - Jira-Style Interactive Workflow Editor
+ *
+ * This component implements a drag-and-drop workflow editor with zoom/pan capabilities.
+ * It uses D3.js v7 for SVG manipulation and coordinate transformations.
+ *
+ * CRITICAL: Coordinate System Architecture
+ * ========================================
+ *
+ * This component maintains TWO coordinate systems:
+ *
+ * 1. SCREEN COORDINATES (pointer events, clientX/clientY)
+ *    - Raw mouse/pointer positions from browser events
+ *    - Affected by zoom level and pan offset
+ *    - Used only for initial event capture
+ *
+ * 2. GRAPH COORDINATES (node positions, status.position_x/position_y)
+ *    - The "logical" coordinate space where nodes exist
+ *    - Independent of zoom level or pan offset
+ *    - Stored in database and used for all position calculations
+ *
+ * COORDINATE CONVERSION:
+ * ----------------------
+ * To convert screen → graph coordinates:
+ *   const pt = svg.createSVGPoint()
+ *   pt.x = event.clientX
+ *   pt.y = event.clientY
+ *   const transform = mainGroup.getCTM()  // Current Transform Matrix
+ *   const graphPoint = pt.matrixTransform(transform.inverse())
+ *
+ * Why this matters:
+ * - At zoom=1.0, screen coords ≈ graph coords (no conversion needed)
+ * - At zoom=0.5, a 100px screen movement = 200px graph movement
+ * - At zoom=2.0, a 100px screen movement = 50px graph movement
+ *
+ * THE BUG WE FIXED:
+ * -----------------
+ * The original code used event.x/event.y directly (screen coords) for node positions,
+ * causing nodes to "jump" toward (0,0) at zoom levels != 1.0.
+ *
+ * The fix: Always convert screen → graph coordinates, maintain a drag offset,
+ * and apply zoom transform ONLY to the viewport, never to node data.
+ */
 import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
 import * as d3 from 'd3'
 import { useWorkflowData, useUpdateStatus, useDeleteStatus, useCreateTransition, useUpdateTransition, useDeleteTransition } from '../../../queries/useProcess'
@@ -163,6 +206,15 @@ watch(() => props.showTransitionLabels, () => {
   renderWorkflow()
 })
 
+/**
+ * Initializes the SVG canvas with zoom and pan capabilities.
+ *
+ * Key architectural decisions:
+ * - Zoom transform is applied ONLY to the mainGroup (viewport), not the SVG root
+ * - Node position data (x, y) remains in graph coordinates and is NEVER modified by zoom
+ * - Drag operations convert between screen and graph coordinates using transform.inverse()
+ * - Zoom is disabled during node dragging to prevent coordinate conflicts
+ */
 function initializeCanvas() {
   if (!svgRef.value || !mainGroupRef.value) return
 
@@ -172,11 +224,16 @@ function initializeCanvas() {
   zoom = d3.zoom()
     .scaleExtent([0.1, 4])
     .filter((event: any) => {
+      // Disable zoom during node dragging to prevent interference
       if (isDraggingNode) return false
+      // Disable zoom during connection drawing
       if (connectionState.value?.active) return false
+      // Allow zoom on left mouse button only
       return !event.button
     })
     .on('zoom', (event) => {
+      // Apply zoom transform to viewport group only
+      // This keeps node x,y coordinates in their original graph space
       mainGroup.attr('transform', event.transform)
     })
 
@@ -211,6 +268,7 @@ function handleSvgMouseMove(event: MouseEvent) {
     const transform = mainGroup.getCTM()
     if (!transform) return
 
+    // Convert screen coordinates to graph coordinates for accurate line drawing at any zoom
     const transformed = pt.matrixTransform(transform.inverse())
 
     connectionState.value.mouseX = transformed.x
@@ -587,13 +645,18 @@ function renderTempLine() {
   }
 }
 
+/**
+ * Updates transition paths during node dragging for smooth real-time feedback.
+ * This function recalculates curved Bezier paths connecting status nodes.
+ * Called via requestAnimationFrame to optimize performance during drag operations.
+ */
 function updateTransitionsForDrag() {
   if (!transitionsGroupRef.value || !workflowData.value) return
 
   const statuses = workflowData.value.statuses || []
-
   const transitionGroup = d3.select(transitionsGroupRef.value)
 
+  // Batch update all transition paths for optimal performance
   transitionGroup.selectAll<SVGGElement, any>('.transition-group')
     .select('.transition-path')
     .attr('d', (d: any) => {
@@ -602,6 +665,7 @@ function updateTransitionsForDrag() {
 
       if (!fromStatus || !toStatus) return ''
 
+      // Calculate endpoints: right edge of source, left edge of target
       const x1 = (fromStatus.position_x || 0) + 140
       const y1 = (fromStatus.position_y || 0) + 25
       const x2 = (toStatus.position_x || 0)
@@ -615,15 +679,18 @@ function updateTransitionsForDrag() {
       const midX = (x1 + x2) / 2
       const midY = (y1 + y2) / 2
 
+      // Calculate perpendicular offset for curved path
       const perpX = -dy / distance
       const perpY = dx / distance
 
       const controlX = midX + perpX * curveOffset
       const controlY = midY + perpY * curveOffset
 
+      // Return quadratic Bezier curve path
       return `M ${x1},${y1} Q ${controlX},${controlY} ${x2},${y2}`
     })
 
+  // Update label positions if visible
   if (props.showTransitionLabels) {
     transitionGroup.selectAll<SVGGElement, any>('.transition-group')
       .each(function(d: any) {
@@ -674,6 +741,7 @@ function startConnection(sourceStatus: any, handleId: string, event: any) {
   const transform = mainGroup.getCTM()
   if (!transform) return
 
+  // Convert initial pointer position to graph coordinates for accurate connection start
   const transformed = pt.matrixTransform(transform.inverse())
 
   connectionState.value = {
@@ -725,8 +793,34 @@ function completeConnection(targetStatus: any) {
   renderTempLine()
 }
 
-function dragStarted(event: any) {
+// Store drag offset for each node to maintain cursor alignment at any zoom level
+let dragOffset: { x: number; y: number } | null = null
+
+function dragStarted(event: any, d: any) {
   isDraggingNode = true
+
+  // Convert pointer position from screen coordinates to graph coordinates
+  // This ensures accurate positioning regardless of the current zoom level
+  const svg = svgRef.value
+  const mainGroup = mainGroupRef.value
+  if (!svg || !mainGroup) return
+
+  const pt = svg.createSVGPoint()
+  pt.x = event.sourceEvent.clientX
+  pt.y = event.sourceEvent.clientY
+
+  const transform = mainGroup.getCTM()
+  if (!transform) return
+
+  // Transform screen coordinates to graph coordinates using the inverse transform
+  const graphPoint = pt.matrixTransform(transform.inverse())
+
+  // Calculate and store the offset between the pointer and the node's current position
+  // This offset remains constant throughout the drag, keeping the node under the cursor
+  dragOffset = {
+    x: d.position_x - graphPoint.x,
+    y: d.position_y - graphPoint.y
+  }
 
   const node = d3.select(event.sourceEvent.target.parentNode as SVGGElement)
   node.raise()
@@ -738,11 +832,28 @@ function dragStarted(event: any) {
 }
 
 function dragged(event: any, d: any) {
-  d.position_x = event.x
-  d.position_y = event.y
+  // Convert pointer position to graph coordinates at the current zoom level
+  const svg = svgRef.value
+  const mainGroup = mainGroupRef.value
+  if (!svg || !mainGroup || !dragOffset) return
+
+  const pt = svg.createSVGPoint()
+  pt.x = event.sourceEvent.clientX
+  pt.y = event.sourceEvent.clientY
+
+  const transform = mainGroup.getCTM()
+  if (!transform) return
+
+  // Get current pointer position in graph coordinates
+  const graphPoint = pt.matrixTransform(transform.inverse())
+
+  // Apply the stored offset to maintain cursor alignment
+  // This prevents jumping and keeps the node exactly where the user expects it
+  d.position_x = graphPoint.x + dragOffset.x
+  d.position_y = graphPoint.y + dragOffset.y
 
   const node = d3.select(event.sourceEvent.target.parentNode)
-  node.attr('transform', `translate(${event.x}, ${event.y})`)
+  node.attr('transform', `translate(${d.position_x}, ${d.position_y})`)
 
   if (animationFrameId) {
     cancelAnimationFrame(animationFrameId)
@@ -756,6 +867,7 @@ function dragged(event: any, d: any) {
 
 function dragEnded(event: any, d: any) {
   isDraggingNode = false
+  dragOffset = null
 
   const node = d3.select(event.sourceEvent.target.parentNode as SVGGElement)
   node.classed('dragging', false)
