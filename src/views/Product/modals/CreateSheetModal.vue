@@ -106,17 +106,8 @@ import IconPicker from '../components/IconPicker.vue';
 const route = useRoute();
 const queryClient = useQueryClient()
 const { workspaceId, moduleId } = useRouteIds()
-// v-model
-type FAPrefix =
-  | 'fa-solid'
-  | 'fa-regular'
-  | 'fa-brands'
-  | 'fa-light'
-  | 'fa-thin'
-  | 'fa-duotone'
-  | 'fa-sharp-solid'
-  | 'fa-sharp-duotone';
-type IconRef = { prefix: FAPrefix; iconName: string }
+type IconPrefix = 'pi';
+type IconRef = { prefix: IconPrefix; iconName: string }
 
 const form = ref<{ title: string, description: string, icon: IconRef | null }>({ title: '', description: '', icon: null })
 const { mutate: createSheet, isPending: creatingSheet } = useCreateWorkspaceSheet({

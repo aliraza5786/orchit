@@ -9,7 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@awesome.me/kit-9632b12cc3": "^1.0.10",
     "@floating-ui/dom": "^1.7.1",
     "@tailwindcss/vite": "^4.1.8",
     "@tanstack/query-async-storage-persister": "^5.89.0",
