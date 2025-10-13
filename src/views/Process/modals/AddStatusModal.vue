@@ -10,9 +10,20 @@
         </div>
 
         <div>
+          <label class="text-sm font-medium text-text-primary mb-1.5 block">Category</label>
+          <select v-model="category" @change="handleCategoryChange"
+            class="w-full px-3 py-2 text-sm bg-bg-surface border border-border rounded-md text-text-primary focus:outline-none focus:ring-1 focus:ring-accent">
+            <option value="todo">To Do</option>
+            <option value="inprogress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+          <p class="text-xs text-text-secondary mt-1">Category cannot be changed after creation</p>
+        </div>
+
+        <div>
           <label class="text-sm font-medium text-text-primary mb-1.5 block">Status Color</label>
           <div class="flex items-center gap-3">
-            <input type="color" v-model="statusColor" class="h-10 w-20 rounded border border-border cursor-pointer">
+            <input type="color" v-model="statusColor" @input="updateColorInput" class="h-10 w-20 rounded border border-border cursor-pointer">
             <BaseTextField v-model="statusColor" placeholder="#3b82f6" class="flex-1" />
           </div>
         </div>
@@ -65,18 +76,34 @@ const open = computed({
 })
 
 const statusName = ref('')
-const statusColor = ref('#3b82f6')
+const category = ref('todo')
+const statusColor = ref('#6b7280')
 const isInitial = ref(false)
 const isFinal = ref(false)
+
+const categoryColors: Record<string, string> = {
+  todo: '#6b7280',
+  inprogress: '#3b82f6',
+  done: '#10b981'
+}
 
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     statusName.value = ''
-    statusColor.value = '#3b82f6'
+    category.value = 'todo'
+    statusColor.value = '#6b7280'
     isInitial.value = false
     isFinal.value = false
   }
 })
+
+function handleCategoryChange() {
+  statusColor.value = categoryColors[category.value]
+}
+
+function updateColorInput() {
+  // Allow manual color changes
+}
 
 const { mutate: createStatus, isPending: isSubmitting } = useCreateStatus({
   onSuccess: () => {
@@ -95,6 +122,7 @@ function handleSubmit() {
   const payload = {
     process_id: props.processId,
     status_name: statusName.value.trim(),
+    category: category.value,
     status_color: statusColor.value,
     is_initial: isInitial.value,
     is_final: isFinal.value,
