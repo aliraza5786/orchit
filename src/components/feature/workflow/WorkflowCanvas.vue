@@ -136,6 +136,7 @@ const { mutate: deleteTransition } = useDeleteTransition({
 
 let zoom: any = null
 let isDraggingNode = false
+let animationFrameId: number | null = null
 
 onMounted(() => {
   initializeCanvas()
@@ -222,6 +223,9 @@ function handleSvgMouseMove(event: MouseEvent) {
 function handleSvgMouseUp() {
   if (connectionState.value?.active) {
     connectionState.value = null
+    d3.selectAll('.connection-handle').style('opacity', 0)
+    d3.selectAll('.status-node').classed('connection-mode', false)
+    d3.selectAll('.status-node').classed('drop-target', false)
     renderTempLine()
   }
 }
@@ -347,19 +351,39 @@ function renderStatuses(statuses: any[]) {
       }
     })
 
-    handleGroup.on('mouseenter', function() {
-      d3.select(this).select('circle')
-        .attr('r', 8)
-        .attr('fill', '#2563eb')
-        .attr('filter', 'url(#glow)')
+    handleGroup.on('mouseenter', function(_event: any, d: any) {
+      if (connectionState.value?.active && connectionState.value.sourceStatus.id !== d.id) {
+        const parent = (this as SVGGElement).parentNode
+        if (parent) {
+          const node = d3.select(parent as SVGGElement)
+          node.classed('drop-target', true)
+        }
+        d3.select(this as SVGGElement).select('circle')
+          .attr('r', 10)
+          .attr('fill', '#10b981')
+          .attr('filter', 'url(#glow)')
+      } else if (!connectionState.value?.active) {
+        d3.select(this as SVGGElement).select('circle')
+          .attr('r', 8)
+          .attr('fill', '#2563eb')
+          .attr('filter', 'url(#glow)')
+      }
     })
 
     handleGroup.on('mouseleave', function() {
-      d3.select(this).select('circle')
+      if (connectionState.value?.active) {
+        const parent = (this as SVGGElement).parentNode
+        if (parent) {
+          const node = d3.select(parent as SVGGElement)
+          node.classed('drop-target', false)
+        }
+      }
+      d3.select(this as SVGGElement).select('circle')
         .attr('r', 6)
         .attr('fill', '#3b82f6')
         .attr('filter', null)
     })
+
   })
 
   const drag = d3.drag<SVGGElement, any>()
@@ -528,28 +552,141 @@ function renderTempLine() {
     const x1 = (sourceStatus.position_x || 0) + 140
     const y1 = (sourceStatus.position_y || 0) + 25
 
-    tempGroup.append('line')
-      .attr('x1', x1)
-      .attr('y1', y1)
-      .attr('x2', mouseX)
-      .attr('y2', mouseY)
+    const dx = mouseX - x1
+    const dy = mouseY - y1
+    const distance = Math.sqrt(dx * dx + dy * dy)
+    const curveOffset = Math.min(distance / 3, 50)
+
+    const midX = (x1 + mouseX) / 2
+    const midY = (y1 + mouseY) / 2
+
+    const perpX = -dy / distance
+    const perpY = dx / distance
+
+    const controlX = midX + perpX * curveOffset
+    const controlY = midY + perpY * curveOffset
+
+    const pathData = `M ${x1},${y1} Q ${controlX},${controlY} ${mouseX},${mouseY}`
+
+    tempGroup.append('path')
+      .attr('d', pathData)
+      .attr('fill', 'none')
       .attr('stroke', '#3b82f6')
-      .attr('stroke-width', 2)
-      .attr('stroke-dasharray', '5,5')
-      .attr('opacity', 0.6)
+      .attr('stroke-width', 3)
+      .attr('stroke-dasharray', '8,4')
+      .attr('opacity', 0.7)
+      .style('pointer-events', 'none')
+
+    tempGroup.append('circle')
+      .attr('cx', mouseX)
+      .attr('cy', mouseY)
+      .attr('r', 4)
+      .attr('fill', '#3b82f6')
+      .attr('opacity', 0.8)
+      .style('pointer-events', 'none')
+  }
+}
+
+function updateTransitionsForDrag() {
+  if (!transitionsGroupRef.value || !workflowData.value) return
+
+  const statuses = workflowData.value.statuses || []
+
+  const transitionGroup = d3.select(transitionsGroupRef.value)
+
+  transitionGroup.selectAll<SVGGElement, any>('.transition-group')
+    .select('.transition-path')
+    .attr('d', (d: any) => {
+      const fromStatus = statuses.find((s: any) => s.id === d.from_status_id)
+      const toStatus = statuses.find((s: any) => s.id === d.to_status_id)
+
+      if (!fromStatus || !toStatus) return ''
+
+      const x1 = (fromStatus.position_x || 0) + 140
+      const y1 = (fromStatus.position_y || 0) + 25
+      const x2 = (toStatus.position_x || 0)
+      const y2 = (toStatus.position_y || 0) + 25
+
+      const dx = x2 - x1
+      const dy = y2 - y1
+      const distance = Math.sqrt(dx * dx + dy * dy)
+      const curveOffset = Math.min(distance / 3, 80)
+
+      const midX = (x1 + x2) / 2
+      const midY = (y1 + y2) / 2
+
+      const perpX = -dy / distance
+      const perpY = dx / distance
+
+      const controlX = midX + perpX * curveOffset
+      const controlY = midY + perpY * curveOffset
+
+      return `M ${x1},${y1} Q ${controlX},${controlY} ${x2},${y2}`
+    })
+
+  if (props.showTransitionLabels) {
+    transitionGroup.selectAll<SVGGElement, any>('.transition-group')
+      .each(function(d: any) {
+        const group = d3.select(this)
+        const fromStatus = statuses.find((s: any) => s.id === d.from_status_id)
+        const toStatus = statuses.find((s: any) => s.id === d.to_status_id)
+
+        if (!fromStatus || !toStatus) return
+
+        const x1 = (fromStatus.position_x || 0) + 140
+        const y1 = (fromStatus.position_y || 0) + 25
+        const x2 = (toStatus.position_x || 0)
+        const y2 = (toStatus.position_y || 0) + 25
+
+        const midX = (x1 + x2) / 2
+        const midY = (y1 + y2) / 2
+
+        const label = d.transition_label || 'Click to edit'
+        const labelWidth = label.length * 6.5 + 16
+        const labelHeight = 20
+
+        group.select('.transition-label-bg')
+          .attr('x', midX - labelWidth / 2)
+          .attr('y', midY - labelHeight / 2 - 30)
+          .attr('width', labelWidth)
+          .attr('height', labelHeight)
+
+        group.select('.transition-label')
+          .attr('x', midX)
+          .attr('y', midY - 21)
+      })
   }
 }
 
 function startConnection(sourceStatus: any, handleId: string, event: any) {
   event.stopPropagation()
 
+  const svg = svgRef.value
+  if (!svg) return
+
+  const pt = svg.createSVGPoint()
+  pt.x = event.sourceEvent.clientX
+  pt.y = event.sourceEvent.clientY
+
+  const mainGroup = mainGroupRef.value
+  if (!mainGroup) return
+
+  const transform = mainGroup.getCTM()
+  if (!transform) return
+
+  const transformed = pt.matrixTransform(transform.inverse())
+
   connectionState.value = {
     active: true,
     sourceStatus,
     sourceHandle: handleId,
-    mouseX: event.x,
-    mouseY: event.y
+    mouseX: transformed.x,
+    mouseY: transformed.y
   }
+
+  d3.selectAll('.connection-handle').style('opacity', 1)
+  d3.selectAll('.status-node').classed('connection-mode', true)
+  renderTempLine()
 }
 
 function completeConnection(targetStatus: any) {
@@ -564,6 +701,9 @@ function completeConnection(targetStatus: any) {
   if (existingTransition) {
     alert('A transition already exists between these statuses')
     connectionState.value = null
+    d3.selectAll('.connection-handle').style('opacity', 0)
+    d3.selectAll('.status-node').classed('connection-mode', false)
+    d3.selectAll('.status-node').classed('drop-target', false)
     renderTempLine()
     return
   }
@@ -579,14 +719,22 @@ function completeConnection(targetStatus: any) {
   })
 
   connectionState.value = null
+  d3.selectAll('.connection-handle').style('opacity', 0)
+  d3.selectAll('.status-node').classed('connection-mode', false)
+  d3.selectAll('.status-node').classed('drop-target', false)
   renderTempLine()
 }
 
 function dragStarted(event: any) {
   isDraggingNode = true
-  if (event.sourceEvent?.target?.parentNode) {
-    d3.select(event.sourceEvent.target.parentNode as SVGGElement).raise()
-  }
+
+  const node = d3.select(event.sourceEvent.target.parentNode as SVGGElement)
+  node.raise()
+  node.classed('dragging', true)
+
+  node.select('.status-rect')
+    .style('filter', 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))')
+    .style('cursor', 'grabbing')
 }
 
 function dragged(event: any, d: any) {
@@ -596,11 +744,32 @@ function dragged(event: any, d: any) {
   const node = d3.select(event.sourceEvent.target.parentNode)
   node.attr('transform', `translate(${event.x}, ${event.y})`)
 
-  renderTransitions(workflowData.value?.transitions || [], workflowData.value?.statuses || [])
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId)
+  }
+
+  animationFrameId = requestAnimationFrame(() => {
+    updateTransitionsForDrag()
+    animationFrameId = null
+  })
 }
 
-function dragEnded(_event: any, d: any) {
+function dragEnded(event: any, d: any) {
   isDraggingNode = false
+
+  const node = d3.select(event.sourceEvent.target.parentNode as SVGGElement)
+  node.classed('dragging', false)
+
+  node.select('.status-rect')
+    .style('filter', null)
+    .style('cursor', 'move')
+
+  if (animationFrameId) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
+
+  renderTransitions(workflowData.value?.transitions || [], workflowData.value?.statuses || [])
 
   updateStatus({
     id: d.id,
@@ -699,14 +868,50 @@ function getCategoryLabel(category: string): string {
 }
 
 .connection-handle {
-  transition: opacity 0.2s ease;
+  transition: opacity 0.15s ease-in-out;
+  will-change: opacity;
 }
 
 .transition-path {
   transition: stroke 0.2s ease, stroke-width 0.2s ease;
+  will-change: d;
 }
 
 .transition-label {
   user-select: none;
+}
+
+:deep(.status-node) {
+  transition: none;
+  will-change: transform;
+}
+
+:deep(.status-node.dragging) {
+  transition: none;
+  cursor: grabbing !important;
+}
+
+:deep(.status-node.dragging .status-rect) {
+  transition: filter 0.2s ease;
+}
+
+:deep(.status-node.connection-mode) {
+  pointer-events: all;
+}
+
+:deep(.status-node.drop-target .status-rect) {
+  stroke: #10b981 !important;
+  stroke-width: 3px !important;
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.5));
+}
+
+:deep(.connection-handle circle) {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: r, fill;
+}
+
+:deep(.status-rect) {
+  transition: filter 0.2s ease, stroke 0.2s ease, stroke-width 0.2s ease;
+  will-change: filter;
 }
 </style>
