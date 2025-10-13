@@ -1,0 +1,270 @@
+@import "tailwindcss";
+
+/* -------- Base resets & defaults -------- */
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* colors */
+  --text-primary: #2b2c30;
+  --text-secondary: #6b6b6e;
+  --border: #d9d9d9;
+  --bg-body: #f3f4f6;
+  --bg-surface: #dedfe3; /* table headers, panels */
+  --bg-card: #ffffff;
+  --accent: #5a2d7f;
+  --accent-hover: #6e3b96;
+  --accent-text: #ffffff;
+  --sidebar-primary: 224.3 76.3% 48%;
+
+  /* Dropdowns & Inputs */
+  --bg-input: #ffffff; /* input & dropdown background */
+  --border-input: #d9d9d9; /* input borders */
+  --bg-dropdown: #ffffff; /* dropdown menus */
+    /* Use brand hue plus complimentary neon accents */
+    --glow-brand: var(--sidebar-primary);
+    --glow-2: 190 95% 62%; /* cyan */
+    --glow-3: 330 90% 66%; /* pink */
+    --neon-speed: 4s; /* default loop duration */
+}
+
+/* dark overrides */
+[data-theme="dark"] {
+  --text-primary: #f5f5f5;
+  --text-secondary: #b0b0b0;
+  --border: #3e3e42;
+  --bg-body: #0d0d0d;
+  --bg-surface: #1a1a1a; /* table headers, panels */
+  --bg-card: #2b2c30;
+  --sidebar-primary: 224.3 76.3% 48%;
+
+  --accent: #9356c5;
+  --accent-hover: #6e3b96;
+  --accent-text: #ffffff;
+  /* Dropdowns & Inputs */
+  --bg-input: #1a1a1a; /* dark input backgrounds */
+  --border-input: #3e3e42; /* input borders */
+  --bg-dropdown: #2b2c30; /* dropdown menus */
+    /* Use brand hue plus complimentary neon accents */
+    --glow-brand: var(--sidebar-primary);
+    --glow-2: 190 95% 62%; /* cyan */
+    --glow-3: 330 90% 66%; /* pink */
+    --neon-speed: 4s; /* default loop duration */
+}
+
+/* -------- Tailwind design tokens (v4) -------- */
+@theme {
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border);
+  --color-bg-body: var(--bg-body);
+  --color-bg-surface: var(--bg-surface); /* table headers, panels */
+  --color-bg-card: var(--bg-card);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-text: var(--accent-text);
+  /* Dropdowns & Inputs */
+  --color-bg-input: var(--bg-input); /* input & dropdown background */
+  --color-border-input: var(--border-input); /* input borders */
+  --color-bg-dropdown: var(--bg-input); /* dropdown menus */
+  --color-bg-dropdown-menu-hover: var(--bg-body); /* dropdown menus */
+  
+}
+
+/* Let the layout behave normally (no forced centering) */
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-width: 320px;
+  background: var(--background);
+  color: var(--text);
+}
+
+#app {
+  width: 100%;
+  margin: 0 auto;
+}
+
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-card) inset; /* Replace 'white' with your desired background color */
+  -webkit-text-fill-color: var(--text-primary); /* Replace 'black' with your desired text color */
+}
+::selection {
+  background: rgba(99, 102, 241, 0.25); /* indigo-ish */
+  color: var(--text);
+}
+@keyframes spin-gradient {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes move-gradient {
+  0% { background-position: 0% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Typed custom property to drive sweep progress */
+@property --sweep {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+  @keyframes sweep {
+    from { --sweep: 0deg; }
+    to { --sweep: 360deg; }
+  }
+
+/* -------- Utilities using CSS vars -------- */
+@layer utilities {
+  .bg-surface {
+    background-color: var(--surface);
+  }
+  .bg-surface-2 {
+    background-color: var(--surface-2);
+  }
+  .bg-card {
+    background-color: var(--card);
+  }
+  .text-body {
+    color: var(--text);
+  }
+  .text-muted {
+    color: var(--muted);
+  }
+  .border-ui {
+    border-color: var(--border);
+  }
+
+  /* Opt-in scrollbar hiding */
+  .no-scrollbar {
+    scrollbar-width: none; /* Firefox */
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    /* Chrome/Safari/Edge */
+    display: none;
+  }
+   /* Apply to containers that need animated neon borders */
+   .neon-flow-border {
+    position: relative;
+    isolation: isolate;
+    /* subtle outer glow */
+    box-shadow:
+      0 0 24px hsl(var(--glow-brand) / 0.12),
+      0 0 8px hsl(var(--glow-2) / 0.18);
+  }
+
+
+  .neon-flow-border::after {
+    /* Crisp neon arc passing over the cut-out */
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 2px;
+    background:
+      conic-gradient(from 45deg,
+        transparent 0deg,
+        transparent calc(var(--sweep) - 24deg),
+        hsl(var(--glow-brand)) calc(var(--sweep) - 24deg),
+        hsl(var(--glow-2)) calc(var(--sweep) - 12deg),
+        hsl(var(--glow-3)) var(--sweep),
+        hsl(var(--glow-2)) calc(var(--sweep) + 12deg),
+        hsl(var(--glow-brand)) calc(var(--sweep) + 24deg),
+        transparent calc(var(--sweep) + 24deg) 360deg
+      );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+            mask-composite: exclude;
+    /* mix-blend-mode: screen; */
+    animation: sweep var(--neon-speed, 4s) linear infinite;
+    pointer-events: none;
+    z-index: 2;
+  }
+}
+
+/* -------- Components layer -------- */
+@layer components {
+  .badge {
+    @apply px-2 py-0.5 rounded-full text-sm whitespace-nowrap;
+  }
+}
+
+/* -------- Rich text editor styles -------- */
+.rich-text-editor ul {
+  list-style: disc !important;
+}
+.rich-text-editor ol {
+  @apply !list-decimal !list-inside px-3;
+}
+.rich-text-editor ul p,
+.rich-text-editor ol p {
+  display: inline;
+}
+.rich-text-editor h1 {
+  font-size: 2rem;
+  font-weight: 600;
+}
+.rich-text-editor h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+.rich-text-editor a {
+  color: rgb(48, 41, 246);
+  text-decoration: underline;
+}
+
+/* For Chrome, Safari, Edge (Chromium-based), and Opera */
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* For Internet Explorer and older Edge */
+* {
+  -ms-overflow-style: none;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: none;
+}
+
+
+/* puls */
+
+@keyframes pulse-ring {
+  0% {
+      box-shadow: 0 0 0 0 rgba(138, 49, 246, 0.4);
+  }
+
+  70% {
+      box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+  }
+
+  100% {
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
