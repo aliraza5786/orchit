@@ -1,0 +1,215 @@
+<template>
+  <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex">
+    <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
+      <h2 class="text-lg font-semibold text-text-primary">Process</h2>
+      <div class="flex gap-3 items-center">
+        <Searchbar placeholder="Search processes">
+        </Searchbar>
+      </div>
+    </div>
+    <KanbanSkeleton v-if="isListPending" />
+    <div v-else class="flex p-4 overflow-x-auto gap-3">
+      <KanbanBoard v-if="localList?.length > 0" @delete:column="(e: any) => handleDelete(e)"
+        @update:column="(e) => handleUpdateColumn(e)" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
+        :board="localList" @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="">
+        <template #ticket="{ ticket, index }">
+          <ProcessKanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" :index="index" />
+        </template>
+        <template #column-footer="{ column }: any">
+          <div v-if="!column.showADDNEW" @click="toggleAddNewProcess(column)"
+            class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary cursor-pointer border-dashed mb-4 mx-4 rounded-md">
+            <i class="fa-solid fa-plus"></i> Add Process
+          </div>
+          <div v-else-if="column.showADDNEW" class="p-4 space-y-2 bg-bg-surface m-4 rounded-md">
+            <p class="text-sm text-text-primary">New Process</p>
+            <BaseTextField v-model="newProcessTitle" placeholder="Process title" />
+            <BaseTextAreaField v-model="newProcessDescription" placeholder="Process description (optional)" />
+            <Button size="md" @click="addProcessToColumn(column)">{{ isPending ? 'Adding...' : 'Add Process' }}
+            </Button>
+            <i class="fa-solid fa-close cursor-pointer ml-2" @click="toggleAddNewProcess(column)"></i>
+          </div>
+        </template>
+      </KanbanBoard>
+      <div class="min-w-[328px]" @click.stop>
+        <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
+          <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New Column" @keyup.enter="emitAddColumn" />
+          <p class="text-xs mt-1.5">You can add details while editing</p>
+          <div class="flex items-center mt-3 gap-3">
+            <Button @click="emitAddColumn" variant="primary"
+              class="px-3 py-1 bg-accent cursor-pointer text-white rounded">
+              {{ addingList ? 'Adding...' : 'Add Column' }}
+            </Button>
+            <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
+          </div>
+        </div>
+        <button v-else
+          class="text-sm text-white py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-accent rounded-lg"
+          @click.stop="setActiveAddList">
+          + Add Column
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Column" itemLabel="column"
+    :itemName="localColumn?.title" :requireMatchText="localColumn?.title" confirmText="Delete column"
+    cancelText="Cancel" size="md" :loading="isDeletingList" @confirm="handleDeleteColumn"
+    @cancel="() => { showDelete = false }" />
+
+  <WorkflowBuilderModal v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
+</template>
+
+<script setup lang="ts">
+import { defineAsyncComponent, ref, watch, onMounted } from 'vue';
+import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
+import BaseTextField from '../../components/ui/BaseTextField.vue';
+import BaseTextAreaField from '../../components/ui/BaseTextAreaField.vue';
+import { useRouteIds } from '../../composables/useQueryParams';
+import {
+  useProcessColumns,
+  useCreateProcessColumn,
+  useUpdateProcessColumn,
+  useDeleteProcessColumn,
+  useCreateProcess
+} from '../../queries/useProcess';
+import ProcessKanbanCard from './components/ProcessKanbanCard.vue';
+import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue';
+import { useQueryClient } from '@tanstack/vue-query';
+import Button from '../../components/ui/Button.vue';
+import WorkflowBuilderModal from './modals/WorkflowBuilderModal.vue';
+import Searchbar from '../../components/ui/SearchBar.vue';
+
+const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
+
+const showDelete = ref(false);
+const localColumn = ref();
+const { workspaceId } = useRouteIds();
+
+const { mutate: addList, isPending: addingList } = useCreateProcessColumn({
+  onSuccess: (data: any) => {
+    localList.value = [...(localList.value || []), { ...data, cards: [] }];
+    newColumn.value = '';
+    activeAddList.value = false;
+  },
+});
+
+const localList = ref<any>([]);
+const { data: Lists, isPending: isListPending } = useProcessColumns(workspaceId.value);
+watch(Lists, (newVal) => {
+  if (newVal) {
+    localList.value = newVal.map((col: any) => ({
+      ...col,
+      _id: col.id,
+      cards: col.processes || []
+    }));
+  }
+});
+onMounted(() => {
+  if (Lists.value) {
+    localList.value = Lists.value.map((col: any) => ({
+      ...col,
+      _id: col.id,
+      cards: col.processes || []
+    }));
+  }
+});
+
+const selectedProcess = ref<any>(null);
+const showWorkflowBuilder = ref(false);
+
+const selectCardHandler = (card: any) => {
+  selectedProcess.value = card;
+};
+
+const handleBoardUpdate = (_: any) => { };
+const activeAddList = ref(false);
+const newColumn = ref('');
+
+function setActiveAddList() {
+  activeAddList.value = !activeAddList.value;
+}
+
+function emitAddColumn() {
+  const t = newColumn.value.trim();
+  if (!t) return;
+  handleAddColumn(t);
+}
+
+const handleAddColumn = (name: any) => {
+  const payload = {
+    workspace_id: workspaceId.value,
+    title: name,
+    order: localList.value.length
+  }
+  addList({ payload })
+}
+
+const queryClient = useQueryClient();
+const updateList = useUpdateProcessColumn({
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['process-columns'] });
+  },
+});
+
+const handleUpdateColumn = (newTitle: any) => {
+  const payload = {
+    title: newTitle?.title,
+  };
+  updateList.mutate({ id: newTitle._id, payload });
+};
+
+const { mutate: deleteList, isPending: isDeletingList } = useDeleteProcessColumn({
+  onSuccess: () => {
+    showDelete.value = false;
+    queryClient.invalidateQueries({ queryKey: ['process-columns'] });
+  },
+});
+
+const handleDeleteColumn = () => {
+  deleteList({ id: localColumn.value?.columnId });
+};
+
+const handleDelete = (e: any) => {
+  showDelete.value = true;
+  localColumn.value = e;
+};
+
+const newProcessTitle = ref('');
+const newProcessDescription = ref('');
+
+const { mutate: createProcess, isPending } = useCreateProcess({
+  onSuccess: () => {
+    newProcessTitle.value = '';
+    newProcessDescription.value = '';
+    queryClient.invalidateQueries({ queryKey: ['process-columns'] });
+  }
+});
+
+const toggleAddNewProcess = (column: any) => {
+  column.showADDNEW = !column.showADDNEW;
+};
+
+const addProcessToColumn = (column: any) => {
+  if (!newProcessTitle.value.trim()) return;
+
+  const payload = {
+    workspace_id: workspaceId.value,
+    title: newProcessTitle.value,
+    description: newProcessDescription.value,
+    column_id: column._id,
+    order: column.cards.length
+  };
+  createProcess({ payload });
+  toggleAddNewProcess(column);
+};
+
+const handleClickTicket = (ticket: any) => {
+  selectedProcess.value = ticket;
+  showWorkflowBuilder.value = true;
+};
+
+const closeWorkflowBuilder = () => {
+  showWorkflowBuilder.value = false;
+  selectedProcess.value = null;
+};
+</script>

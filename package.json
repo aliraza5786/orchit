@@ -37,6 +37,7 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@types/d3": "^7.4.3",
     "@types/node": "^22.15.29",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/tsconfig": "^0.7.0",

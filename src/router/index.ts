@@ -26,6 +26,7 @@ const WorkspaceLayout = () =>
   import("../layout/WorkspaceLayout/WorkspaceLayout.vue");
 const Peak = () => import("../views/Peak.vue");
 const People = () => import("../views/People/People.vue");
+const Process = () => import("../views/Process/Process.vue");
 const More = () => import("../views/More/More.vue");
 const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
@@ -128,6 +129,7 @@ const routes: RouteRecordRaw[] = [
       { path: "peak/:id/:job_id", name: "peakWithJob", component: Peak },
       { path: "peak/:id", name: "peak", component: Peak },
       { path: "people/:id", name: "people", component: People },
+      { path: "process/:id", name: "process", component: Process },
       { path: "more/:id", name: "more", component: More },
       { path: ":id/:module_id", name: "product", component: Product },
     ],
