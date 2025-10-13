@@ -48,12 +48,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, inject } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import Button from '../../../components/ui/Button.vue'
-import { useCreateTransition } from '../../../queries/useProcess'
+import type { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
+import { toast } from 'vue-sonner'
 
 const props = defineProps<{
   modelValue: boolean
@@ -71,10 +72,13 @@ const open = computed({
   set: (v: boolean) => emit('update:modelValue', v)
 })
 
+const workflowState = inject<ReturnType<typeof useLocalWorkflowState>>('workflowState')!
+
 const fromStatusId = ref('')
 const toStatusId = ref('')
 const transitionLabel = ref('')
 const rules = ref('')
+const isSubmitting = ref(false)
 
 const canSubmit = computed(() => {
   return fromStatusId.value && toStatusId.value && fromStatusId.value !== toStatusId.value
@@ -89,13 +93,6 @@ watch(() => props.modelValue, (newVal) => {
   }
 })
 
-const { mutate: createTransition, isPending: isSubmitting } = useCreateTransition({
-  onSuccess: () => {
-    emit('transition:added')
-    close()
-  }
-})
-
 function close() {
   open.value = false
 }
@@ -103,14 +100,30 @@ function close() {
 function handleSubmit() {
   if (!canSubmit.value) return
 
-  const payload = {
-    process_id: props.processId,
-    from_status_id: fromStatusId.value,
-    to_status_id: toStatusId.value,
-    transition_label: transitionLabel.value.trim(),
-    rules: rules.value ? [{ description: rules.value }] : []
+  if (workflowState.hasTransition(fromStatusId.value, toStatusId.value)) {
+    toast.error('A transition already exists between these statuses')
+    return
   }
 
-  createTransition({ payload })
+  isSubmitting.value = true
+
+  try {
+    const transitionData = {
+      process_id: props.processId,
+      from_status_id: fromStatusId.value,
+      to_status_id: toStatusId.value,
+      transition_label: transitionLabel.value.trim(),
+      rules: rules.value ? [{ description: rules.value }] : []
+    }
+
+    workflowState.addTransition(transitionData)
+    toast.success('Transition added successfully')
+    emit('transition:added')
+    close()
+  } catch (error) {
+    toast.error('Failed to add transition')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>

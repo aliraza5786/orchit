@@ -16,6 +16,7 @@
       @node-click="handleNodeClick"
       @edge-click="handleEdgeClick"
       @pane-click="handlePaneClick"
+      @update:label="handleUpdateLabel"
       class="workflow-canvas"
     >
       <Background pattern-color="#374151" :gap="20" />
@@ -68,7 +69,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, inject } from 'vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -76,12 +77,17 @@ import type { Node, Edge, Connection, NodeChange, EdgeChange } from '@vue-flow/c
 import StatusNode from './StatusNode.vue'
 import TransitionEdge from './TransitionEdge.vue'
 import { transformWorkflowDataToVueFlow } from '../../../utilities/workflowTransform'
-import { useWorkflowData, useUpdateStatus, useDeleteStatus, useCreateTransition, useDeleteTransition } from '../../../queries/useProcess'
+import type { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
 
 const props = defineProps<{
   processId: string
   showTransitionLabels: boolean
 }>()
+
+const workflowState = inject<ReturnType<typeof useLocalWorkflowState>>('workflowState')!
+if (!workflowState) {
+  throw new Error('WorkflowCanvas must be used within a workflow state provider')
+}
 
 const nodeTypes = {
   workflowStatus: StatusNode
@@ -95,49 +101,30 @@ const nodes = ref<Node[]>([])
 const edges = ref<Edge[]>([])
 const selectedStatus = ref<any>(null)
 const selectedEdge = ref<any>(null)
+const isLoading = ref(false)
 
-const { data: workflowData, isLoading, refetch } = useWorkflowData(props.processId)
 const { zoomIn, zoomOut, setViewport } = useVueFlow()
 
-const { mutate: updateStatus } = useUpdateStatus({
-  onSuccess: () => {
-    refetch()
-  }
-})
-
-const { mutate: deleteStatus } = useDeleteStatus({
-  onSuccess: () => {
-    selectedStatus.value = null
-    refetch()
-  }
-})
-
-const { mutate: createTransition } = useCreateTransition({
-  onSuccess: () => {
-    refetch()
-  }
-})
-
-const { mutate: deleteTransition } = useDeleteTransition({
-  onSuccess: () => {
-    selectedEdge.value = null
-    refetch()
-  }
-})
-
-watch(() => workflowData.value, (newData) => {
-  if (newData) {
-    const { nodes: newNodes, edges: newEdges } = transformWorkflowDataToVueFlow(newData)
-    nodes.value = newNodes
-    edges.value = newEdges.map(edge => ({
-      ...edge,
-      data: {
-        ...edge.data,
-        showLabel: props.showTransitionLabels
-      }
-    }))
-  }
+watch(() => [workflowState.localStatuses.value, workflowState.localTransitions.value], () => {
+  updateNodesAndEdges()
 }, { immediate: true, deep: true })
+
+function updateNodesAndEdges() {
+  const workflowData = {
+    statuses: workflowState.localStatuses.value,
+    transitions: workflowState.localTransitions.value
+  }
+
+  const { nodes: newNodes, edges: newEdges } = transformWorkflowDataToVueFlow(workflowData)
+  nodes.value = newNodes
+  edges.value = newEdges.map(edge => ({
+    ...edge,
+    data: {
+      ...edge.data,
+      showLabel: props.showTransitionLabels
+    }
+  }))
+}
 
 watch(() => props.showTransitionLabels, (show) => {
   edges.value = edges.value.map(edge => ({
@@ -162,16 +149,10 @@ onUnmounted(() => {
 function handleNodesChange(changes: NodeChange[]) {
   changes.forEach(change => {
     if (change.type === 'position' && change.dragging === false && change.position) {
-      const node = nodes.value.find(n => n.id === change.id)
-      if (node) {
-        updateStatus({
-          id: node.id,
-          payload: {
-            position_x: change.position.x,
-            position_y: change.position.y
-          }
-        })
-      }
+      workflowState.updateStatus(change.id, {
+        position_x: change.position.x,
+        position_y: change.position.y
+      })
     }
   })
 }
@@ -179,9 +160,8 @@ function handleNodesChange(changes: NodeChange[]) {
 function handleEdgesChange(changes: EdgeChange[]) {
   changes.forEach(change => {
     if (change.type === 'remove') {
-      const edge = edges.value.find(e => e.id === change.id)
-      if (edge && confirm('Are you sure you want to delete this transition?')) {
-        deleteTransition({ id: change.id })
+      if (confirm('Are you sure you want to delete this transition?')) {
+        workflowState.deleteTransition(change.id)
       }
     }
   })
@@ -190,23 +170,17 @@ function handleEdgesChange(changes: EdgeChange[]) {
 function handleConnect(connection: Connection) {
   if (!connection.source || !connection.target) return
 
-  const existingEdge = edges.value.find(
-    e => e.source === connection.source && e.target === connection.target
-  )
-
-  if (existingEdge) {
+  if (workflowState.hasTransition(connection.source, connection.target)) {
     alert('A transition already exists between these statuses')
     return
   }
 
-  createTransition({
-    payload: {
-      process_id: props.processId,
-      from_status_id: connection.source,
-      to_status_id: connection.target,
-      transition_label: '',
-      rules: []
-    }
+  workflowState.addTransition({
+    process_id: props.processId,
+    from_status_id: connection.source,
+    to_status_id: connection.target,
+    transition_label: '',
+    rules: []
   })
 }
 
@@ -231,37 +205,26 @@ function handlePaneClick() {
 function handleStatusUpdate() {
   if (!selectedStatus.value) return
 
-  const node = nodes.value.find(n => n.id === selectedStatus.value.id)
-  if (node) {
-    node.data = {
-      ...node.data,
-      label: selectedStatus.value.status_name,
-      color: selectedStatus.value.status_color
-    }
-
-    updateStatus({
-      id: selectedStatus.value.id,
-      payload: {
-        status_name: selectedStatus.value.status_name,
-        status_color: selectedStatus.value.status_color
-      }
-    })
-  }
+  workflowState.updateStatus(selectedStatus.value.id, {
+    status_name: selectedStatus.value.status_name,
+    status_color: selectedStatus.value.status_color
+  })
 }
 
 function handleDeleteStatus() {
   if (!selectedStatus.value) return
 
   if (confirm(`Are you sure you want to delete the status "${selectedStatus.value.status_name}"? This will also delete all transitions connected to it.`)) {
-    deleteStatus({ id: selectedStatus.value.id })
+    workflowState.deleteStatus(selectedStatus.value.id)
+    selectedStatus.value = null
   }
 }
 
 function handleKeyDown(event: KeyboardEvent) {
   if (event.key === 'Delete' && selectedEdge.value) {
-    const edge = edges.value.find(e => e.id === selectedEdge.value.id)
-    if (edge && confirm('Are you sure you want to delete this transition?')) {
-      deleteTransition({ id: selectedEdge.value.id })
+    if (confirm('Are you sure you want to delete this transition?')) {
+      workflowState.deleteTransition(selectedEdge.value.id)
+      selectedEdge.value = null
     }
   }
   if (event.key === 'Escape') {
@@ -281,6 +244,12 @@ function handleZoomEvent(event: Event) {
   } else if (action === 'reset') {
     setViewport({ x: 0, y: 0, zoom: 1 }, { duration: 300 })
   }
+}
+
+function handleUpdateLabel(id: string, label: string) {
+  workflowState.updateTransition(id, {
+    transition_label: label
+  })
 }
 
 function getCategoryLabel(category: string): string {

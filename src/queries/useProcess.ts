@@ -271,3 +271,91 @@ export const useDeleteTransition = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+type BatchUpdateWorkflow = {
+  processId: string;
+  statuses: {
+    added: any[];
+    updated: any[];
+    deleted: string[];
+  };
+  transitions: {
+    added: any[];
+    updated: any[];
+    deleted: string[];
+  };
+};
+
+export const useBatchUpdateWorkflow = (options = {}) =>
+  useApiMutation<any, BatchUpdateWorkflow>(
+    {
+      key: ["batch-update-workflow"],
+    } as any,
+    {
+      mutationFn: async (vars: BatchUpdateWorkflow) => {
+        const results = {
+          statusesCreated: [] as any[],
+          statusesUpdated: [] as any[],
+          statusesDeleted: [] as any[],
+          transitionsCreated: [] as any[],
+          transitionsUpdated: [] as any[],
+          transitionsDeleted: [] as any[],
+        };
+
+        for (const status of vars.statuses.deleted) {
+          const result = await request({
+            url: `/workspace/workflow-statuses/${status}`,
+            method: "DELETE",
+          });
+          results.statusesDeleted.push(result);
+        }
+
+        for (const status of vars.statuses.updated) {
+          const result = await request({
+            url: `/workspace/workflow-statuses/${status.id}`,
+            method: "PUT",
+            data: status,
+          });
+          results.statusesUpdated.push(result);
+        }
+
+        for (const status of vars.statuses.added) {
+          const result = await request({
+            url: `/workspace/workflow-statuses`,
+            method: "POST",
+            data: status,
+          });
+          results.statusesCreated.push(result);
+        }
+
+        for (const transition of vars.transitions.deleted) {
+          const result = await request({
+            url: `/workspace/workflow-transitions/${transition}`,
+            method: "DELETE",
+          });
+          results.transitionsDeleted.push(result);
+        }
+
+        for (const transition of vars.transitions.updated) {
+          const result = await request({
+            url: `/workspace/workflow-transitions/${transition.id}`,
+            method: "PUT",
+            data: transition,
+          });
+          results.transitionsUpdated.push(result);
+        }
+
+        for (const transition of vars.transitions.added) {
+          const result = await request({
+            url: `/workspace/workflow-transitions`,
+            method: "POST",
+            data: transition,
+          });
+          results.transitionsCreated.push(result);
+        }
+
+        return results;
+      },
+      ...(options as any),
+    } as any
+  );

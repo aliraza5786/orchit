@@ -54,11 +54,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, inject } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
-import { useCreateStatus } from '../../../queries/useProcess'
+import type { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
+import { toast } from 'vue-sonner'
 
 const props = defineProps<{
   modelValue: boolean
@@ -75,11 +76,14 @@ const open = computed({
   set: (v: boolean) => emit('update:modelValue', v)
 })
 
+const workflowState = inject<ReturnType<typeof useLocalWorkflowState>>('workflowState')!
+
 const statusName = ref('')
 const category = ref('todo')
 const statusColor = ref('#6b7280')
 const isInitial = ref(false)
 const isFinal = ref(false)
+const isSubmitting = ref(false)
 
 const categoryColors: Record<string, string> = {
   todo: '#6b7280',
@@ -105,13 +109,6 @@ function updateColorInput() {
   // Allow manual color changes
 }
 
-const { mutate: createStatus, isPending: isSubmitting } = useCreateStatus({
-  onSuccess: () => {
-    emit('status:added')
-    close()
-  }
-})
-
 function close() {
   open.value = false
 }
@@ -119,18 +116,29 @@ function close() {
 function handleSubmit() {
   if (!statusName.value.trim()) return
 
-  const payload = {
-    process_id: props.processId,
-    status_name: statusName.value.trim(),
-    category: category.value,
-    status_color: statusColor.value,
-    is_initial: isInitial.value,
-    is_final: isFinal.value,
-    position_x: Math.random() * 400 + 100,
-    position_y: Math.random() * 300 + 100,
-    order: 0
-  }
+  isSubmitting.value = true
 
-  createStatus({ payload })
+  try {
+    const statusData = {
+      process_id: props.processId,
+      status_name: statusName.value.trim(),
+      category: category.value,
+      status_color: statusColor.value,
+      is_initial: isInitial.value,
+      is_final: isFinal.value,
+      position_x: Math.random() * 400 + 100,
+      position_y: Math.random() * 300 + 100,
+      order: workflowState.localStatuses.value.length
+    }
+
+    workflowState.addStatus(statusData)
+    toast.success(`Status "${statusName.value}" added`)
+    emit('status:added')
+    close()
+  } catch (error) {
+    toast.error('Failed to add status')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 </script>

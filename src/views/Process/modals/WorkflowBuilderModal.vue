@@ -18,8 +18,8 @@
             <Button @click="handleAddStatus" variant="secondary" size="sm">
               <i class="fa-solid fa-plus mr-2"></i>Add Status
             </Button>
-            <Button @click="handleUpdateWorkflow" variant="primary" size="sm" :disabled="isSaving">
-              {{ isSaving ? 'Saving...' : 'Update workflow' }}
+            <Button @click="handleUpdateWorkflow" variant="primary" size="sm" :disabled="isBatchUpdating || !workflowState.hasChanges.value">
+              {{ isBatchUpdating ? 'Saving...' : `Update workflow${workflowState.changeCount.value > 0 ? ` (${workflowState.changeCount.value})` : ''}` }}
             </Button>
             <button class="text-text-secondary hover:text-text-primary text-xl" @click="close">
               <i class="fa-solid fa-times"></i>
@@ -68,12 +68,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, provide } from 'vue'
 import Button from '../../../components/ui/Button.vue'
 import WorkflowCanvas from '../../../components/feature/workflow/WorkflowCanvas.vue'
 import AddStatusModal from './AddStatusModal.vue'
 import AddTransitionModal from './AddTransitionModal.vue'
-import { useWorkflowData } from '../../../queries/useProcess'
+import { useWorkflowData, useBatchUpdateWorkflow } from '../../../queries/useProcess'
+import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
+import { toast } from 'vue-sonner'
 
 const props = defineProps<{
   modelValue: boolean
@@ -88,12 +90,25 @@ const emit = defineEmits<{
 const showTransitionLabels = ref(true)
 const showAddStatusModal = ref(false)
 const showAddTransitionModal = ref(false)
-const isSaving = ref(false)
 
 const processId = computed(() => props.process?._id || props.process?.id)
 const { data: workflowData, refetch: refetchWorkflow } = useWorkflowData(processId)
 
-const workflowStatuses = computed(() => workflowData.value?.statuses || [])
+const workflowStatuses = computed(() => workflowState.localStatuses.value)
+
+const workflowState = useLocalWorkflowState()
+provide('workflowState', workflowState)
+
+const { mutate: batchUpdate, isPending: isBatchUpdating } = useBatchUpdateWorkflow({
+  onSuccess: () => {
+    toast.success('Workflow updated successfully')
+    workflowState.resetChanges()
+    refetchWorkflow()
+  },
+  onError: (error: any) => {
+    toast.error(`Failed to update workflow: ${error.message || 'Unknown error'}`)
+  }
+})
 
 watch(() => props.modelValue, (newVal) => {
   if (newVal && processId.value) {
@@ -101,7 +116,17 @@ watch(() => props.modelValue, (newVal) => {
   }
 })
 
+watch(() => workflowData.value, (newData) => {
+  if (newData && props.modelValue) {
+    workflowState.initialize(newData.statuses, newData.transitions)
+  }
+}, { immediate: true })
+
 function close() {
+  if (workflowState.hasChanges.value) {
+    const confirmed = confirm('You have unsaved changes. Are you sure you want to close?')
+    if (!confirmed) return
+  }
   emit('update:modelValue', false)
   emit('close')
 }
@@ -119,10 +144,24 @@ function handleWorkflowUpdate() {
 }
 
 function handleUpdateWorkflow() {
-  isSaving.value = true
-  setTimeout(() => {
-    isSaving.value = false
-  }, 1000)
+  if (!workflowState.hasChanges.value) {
+    toast.info('No changes to save')
+    return
+  }
+
+  const validation = workflowState.validateWorkflow()
+  if (!validation.isValid) {
+    toast.error(`Cannot save workflow: ${validation.errors[0]}`)
+    return
+  }
+
+  const changes = workflowState.getChanges()
+
+  batchUpdate({
+    processId: processId.value,
+    statuses: changes.statuses,
+    transitions: changes.transitions
+  })
 }
 
 function handleZoomIn() {
@@ -139,12 +178,10 @@ function handleZoomReset() {
 
 function handleStatusAdded() {
   showAddStatusModal.value = false
-  refetchWorkflow()
 }
 
 function handleTransitionAdded() {
   showAddTransitionModal.value = false
-  refetchWorkflow()
 }
 </script>
 
