@@ -19,7 +19,7 @@ const columns = [
         key: 'variables', label: 'Project type',
         render: ({ value }: any) => h('div', { class: ' capitalize flex items-center gap-2' }, [
 
-            h('span', value['workspace-type'])
+            h('span', value?.['workspace-type'] || '-')
         ])
     },
     {
