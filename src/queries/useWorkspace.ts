@@ -98,6 +98,9 @@ export const useWorkspaces = () =>
     key: keys.workspaces,
     url: "/workspace/all",
     method: "GET",
+  }, {
+    retry: false,
+    placeholderData: [],
   });
 
 export const useWorkspacesTitles = () =>
