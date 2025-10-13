@@ -159,6 +159,8 @@ let zoom: any = null
 let isDraggingNode = false
 let dragOffset: { x: number; y: number } | null = null
 let autoSaveTimer: any = null
+let animationFrameId: number | null = null
+let nearbyTargetNode: string | null = null
 
 onMounted(() => {
   initializeCanvas()
@@ -354,15 +356,44 @@ function renderNodes() {
         .attr('transform', `translate(${handle.x}, ${handle.y})`)
         .style('opacity', 0)
         .style('cursor', 'crosshair')
+        .style('pointer-events', 'all')
+        .style('z-index', '1000')
 
       handleGroup.append('circle')
-        .attr('r', 6)
+        .attr('class', 'handle-hitarea')
+        .attr('r', 12)
+        .attr('fill', 'transparent')
+        .attr('stroke', 'none')
+
+      handleGroup.append('circle')
+        .attr('class', 'handle-visual')
+        .attr('r', 7)
         .attr('fill', '#3b82f6')
         .attr('stroke', '#ffffff')
         .attr('stroke-width', 2)
+        .style('pointer-events', 'none')
+
+      handleGroup.on('mouseenter', function() {
+        d3.select(this).select('.handle-visual')
+          .transition()
+          .duration(150)
+          .attr('r', 9)
+          .attr('fill', '#2563eb')
+      })
+
+      handleGroup.on('mouseleave', function() {
+        if (!connectionState.value?.active) {
+          d3.select(this).select('.handle-visual')
+            .transition()
+            .duration(150)
+            .attr('r', 7)
+            .attr('fill', '#3b82f6')
+        }
+      })
 
       handleGroup.on('mousedown', function(event: any) {
         event.stopPropagation()
+        event.preventDefault()
         startConnection(d.id, handle.id, event)
       })
 
@@ -370,6 +401,15 @@ function renderNodes() {
         event.stopPropagation()
         if (connectionState.value?.active && connectionState.value.sourceId !== d.id) {
           completeConnection(d.id)
+          d3.select(this).select('.handle-visual')
+            .transition()
+            .duration(200)
+            .attr('r', 9)
+            .attr('fill', '#10b981')
+            .transition()
+            .duration(200)
+            .attr('r', 7)
+            .attr('fill', '#3b82f6')
         }
       })
     })
@@ -404,12 +444,18 @@ function renderNodes() {
   })
 
   nodeEnter.on('mouseenter', function() {
-    d3.select(this).selectAll('.connection-handle').style('opacity', 1)
+    d3.select(this).selectAll('.connection-handle')
+      .transition()
+      .duration(200)
+      .style('opacity', 1)
   })
 
   nodeEnter.on('mouseleave', function() {
     if (!connectionState.value?.active) {
-      d3.select(this).selectAll('.connection-handle').style('opacity', 0)
+      d3.select(this).selectAll('.connection-handle')
+        .transition()
+        .duration(200)
+        .style('opacity', 0)
     }
   })
 
@@ -506,9 +552,15 @@ function dragStarted(event: any, d: MindMapNode) {
     y: d.y - pos.y
   }
 
-  d3.select(event.sourceEvent.target.parentNode as SVGGElement)
+  const node = d3.select(event.sourceEvent.target.parentNode as SVGGElement)
     .raise()
     .classed('dragging', true)
+
+  node.select('.node-shape')
+    .transition()
+    .duration(100)
+    .style('filter', 'url(#shadow) brightness(1.1)')
+    .attr('stroke-width', 3)
 }
 
 function dragged(event: any, d: MindMapNode) {
@@ -516,26 +568,37 @@ function dragged(event: any, d: MindMapNode) {
 
   const pos = getCanvasPosition(event.sourceEvent)
 
-  d.x = pos.x + dragOffset.x
-  d.y = pos.y + dragOffset.y
+  let newX = pos.x + dragOffset.x
+  let newY = pos.y + dragOffset.y
 
   if (snapToGrid.value) {
-    d.x = Math.round(d.x / 20) * 20
-    d.y = Math.round(d.y / 20) * 20
+    newX = Math.round(newX / 20) * 20
+    newY = Math.round(newY / 20) * 20
   }
 
-  d3.select(event.sourceEvent.target.parentNode)
-    .attr('transform', `translate(${d.x}, ${d.y})`)
+  d.x = newX
+  d.y = newY
 
-  renderConnections()
+  requestAnimationFrame(() => {
+    d3.select(event.sourceEvent.target.parentNode)
+      .attr('transform', `translate(${d.x}, ${d.y})`)
+
+    renderConnections()
+  })
 }
 
 function dragEnded(event: any) {
   isDraggingNode = false
   dragOffset = null
 
-  d3.select(event.sourceEvent.target.parentNode as SVGGElement)
+  const node = d3.select(event.sourceEvent.target.parentNode as SVGGElement)
     .classed('dragging', false)
+
+  node.select('.node-shape')
+    .transition()
+    .duration(150)
+    .style('filter', 'url(#shadow)')
+    .attr('stroke-width', 2)
 
   saveToHistory()
   saveToLocalStorage()
@@ -563,17 +626,102 @@ function startConnection(sourceId: string, handle: string, event: any) {
 function handleConnectionDrag(event: MouseEvent) {
   if (!connectionState.value?.active) return
 
-  const pos = getCanvasPosition(event)
-  connectionState.value.mouseX = pos.x
-  connectionState.value.mouseY = pos.y
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId)
+  }
 
-  renderTempConnection()
+  animationFrameId = requestAnimationFrame(() => {
+    if (!connectionState.value?.active) return
+
+    const pos = getCanvasPosition(event)
+    connectionState.value.mouseX = pos.x
+    connectionState.value.mouseY = pos.y
+
+    checkNearbyTargets(pos)
+    renderTempConnection()
+    animationFrameId = null
+  })
+}
+
+function checkNearbyTargets(pos: { x: number; y: number }) {
+  const snapDistance = 40
+  let closestNode: string | null = null
+  let minDistance = snapDistance
+
+  nodes.value.forEach(node => {
+    if (node.id === connectionState.value?.sourceId) return
+
+    const handles = [
+      { x: node.x, y: node.y + node.height / 2 },
+      { x: node.x + node.width, y: node.y + node.height / 2 },
+      { x: node.x + node.width / 2, y: node.y },
+      { x: node.x + node.width / 2, y: node.y + node.height }
+    ]
+
+    handles.forEach(handle => {
+      const dx = handle.x - pos.x
+      const dy = handle.y - pos.y
+      const distance = Math.sqrt(dx * dx + dy * dy)
+
+      if (distance < minDistance) {
+        minDistance = distance
+        closestNode = node.id
+      }
+    })
+  })
+
+  if (closestNode !== nearbyTargetNode) {
+    if (nearbyTargetNode) {
+      d3.selectAll('.mind-node').filter((d: any) => d.id === nearbyTargetNode)
+        .selectAll('.connection-handle')
+        .style('opacity', 0)
+    }
+
+    nearbyTargetNode = closestNode
+
+    if (closestNode) {
+      d3.selectAll('.mind-node').filter((d: any) => d.id === closestNode)
+        .selectAll('.connection-handle')
+        .style('opacity', 1)
+        .selectAll('.handle-visual')
+        .transition()
+        .duration(200)
+        .attr('r', 9)
+        .attr('fill', '#10b981')
+
+      if (connectionState.value) {
+        const targetNode = nodes.value.find(n => n.id === closestNode)
+        if (targetNode) {
+          connectionState.value.mouseX = targetNode.x + targetNode.width / 2
+          connectionState.value.mouseY = targetNode.y + targetNode.height / 2
+        }
+      }
+    }
+  }
 }
 
 function handleConnectionEnd() {
+  if (animationFrameId !== null) {
+    cancelAnimationFrame(animationFrameId)
+    animationFrameId = null
+  }
+
   if (connectionState.value?.active) {
+    if (nearbyTargetNode && nearbyTargetNode !== connectionState.value.sourceId) {
+      completeConnection(nearbyTargetNode)
+    }
+
     connectionState.value = null
-    d3.selectAll('.connection-handle').style('opacity', 0)
+    nearbyTargetNode = null
+    d3.selectAll('.connection-handle')
+      .transition()
+      .duration(200)
+      .style('opacity', 0)
+    d3.selectAll('.handle-visual')
+      .transition()
+      .duration(200)
+      .attr('r', 7)
+      .attr('fill', '#3b82f6')
     clearTempConnection()
   }
 
@@ -626,14 +774,49 @@ function renderTempConnection() {
   const x2 = connectionState.value.mouseX
   const y2 = connectionState.value.mouseY
 
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const distance = Math.sqrt(dx * dx + dy * dy)
+  const curveOffset = Math.min(distance / 4, 60)
+
+  const midX = (x1 + x2) / 2
+  const midY = (y1 + y2) / 2
+
+  const perpX = -dy / distance
+  const perpY = dx / distance
+
+  const controlX = midX + perpX * curveOffset
+  const controlY = midY + perpY * curveOffset
+
+  const path = nearbyTargetNode
+    ? `M ${x1},${y1} Q ${controlX},${controlY} ${x2},${y2}`
+    : `M ${x1},${y1} L ${x2},${y2}`
+
   tempGroup.append('path')
-    .attr('d', `M ${x1},${y1} L ${x2},${y2}`)
+    .attr('d', path)
     .attr('fill', 'none')
-    .attr('stroke', '#3b82f6')
-    .attr('stroke-width', 2)
-    .attr('stroke-dasharray', '8,4')
-    .attr('opacity', 0.7)
+    .attr('stroke', nearbyTargetNode ? '#10b981' : '#3b82f6')
+    .attr('stroke-width', nearbyTargetNode ? 3 : 2)
+    .attr('stroke-dasharray', nearbyTargetNode ? '0' : '8,4')
+    .attr('opacity', nearbyTargetNode ? 0.9 : 0.7)
     .style('pointer-events', 'none')
+
+  if (nearbyTargetNode) {
+    tempGroup.append('circle')
+      .attr('cx', x2)
+      .attr('cy', y2)
+      .attr('r', 8)
+      .attr('fill', '#10b981')
+      .attr('opacity', 0.3)
+      .style('pointer-events', 'none')
+
+    tempGroup.append('circle')
+      .attr('cx', x2)
+      .attr('cy', y2)
+      .attr('r', 4)
+      .attr('fill', '#10b981')
+      .style('pointer-events', 'none')
+  }
 }
 
 function clearTempConnection() {
@@ -1023,6 +1206,9 @@ function handleKeyDown(event: KeyboardEvent) {
   width: 100%;
   height: 100%;
   cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .mindmap-svg:active {
@@ -1031,32 +1217,43 @@ function handleKeyDown(event: KeyboardEvent) {
 
 :deep(.mind-node) {
   transition: none;
+  will-change: transform;
 }
 
 :deep(.mind-node.dragging) {
-  opacity: 0.8;
+  opacity: 0.9;
+  filter: brightness(1.05);
+}
+
+:deep(.node-shape) {
+  will-change: filter, stroke-width;
+  transition: filter 0.15s ease, stroke-width 0.15s ease;
 }
 
 :deep(.connection-handle) {
-  transition: opacity 0.2s;
+  transition: opacity 0.2s ease;
+  will-change: opacity;
 }
 
-:deep(.connection-handle circle) {
-  transition: all 0.2s;
+:deep(.connection-handle .handle-visual) {
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, fill;
 }
 
-:deep(.connection-handle:hover circle) {
-  r: 8;
-  fill: #2563eb;
+:deep(.connection-handle:hover .handle-visual) {
+  transform: scale(1.2);
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.6));
 }
 
 :deep(.mind-connection) {
-  transition: stroke 0.2s, stroke-width 0.2s;
+  transition: stroke 0.2s ease, stroke-width 0.2s ease;
+  will-change: stroke, stroke-width;
 }
 
 :deep(.mind-connection:hover) {
   stroke: #3b82f6 !important;
   stroke-width: 3 !important;
+  filter: drop-shadow(0 0 3px rgba(59, 130, 246, 0.4));
 }
 
 .context-menu {

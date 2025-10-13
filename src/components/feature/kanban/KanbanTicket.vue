@@ -1,6 +1,6 @@
 <template>
     <div @click="$emit('click')" class=" bg-bg-card rounded-lg p-4 pt-0 shadow-sm cursor-grab border-t-4
-             hover:shadow-md transition-all duration-200 active:cursor-grabbing" :class="priorityBorderClass"
+             hover:shadow-md transition-all duration-200 active:cursor-grabbing kanban-ticket" :class="priorityBorderClass"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
         <div class="flex justify-between gap-2 items-center">
             <div class="flex gap-2 py-2 flex-wrap ">
@@ -173,3 +173,18 @@ const assignHandle = (user: any) => {
 }
 defineEmits(['click'])
 </script>
+
+<style scoped>
+.kanban-ticket {
+  will-change: transform, box-shadow;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s ease;
+}
+
+.kanban-ticket:hover {
+  transform: translateY(-2px);
+}
+
+.kanban-ticket:active {
+  transform: scale(0.98);
+}
+</style>

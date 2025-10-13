@@ -18,7 +18,7 @@
           </div>
         </div>
 
-        <div class="flex-1 overflow-hidden relative">
+        <div class="flex-1 overflow-hidden relative workflow-canvas-container">
           <MindMapCanvas v-if="process" :process-id="process._id || process.id" />
         </div>
 
@@ -67,6 +67,10 @@ function close() {
 </script>
 
 <style scoped>
+.workflow-canvas-container {
+  contain: layout style paint;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
