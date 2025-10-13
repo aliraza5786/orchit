@@ -148,16 +148,7 @@ export const sampleProcessColumns = [
     created_at: '2024-01-15T10:00:00Z',
     processes: []
   },
-  {
-    id: 'col-2',
-    _id: 'col-2',
-    sheet_id: 'sheet-1',
-    workspace_id: 'workspace-1',
-    title: 'Under Review',
-    order: 1,
-    created_at: '2024-01-15T10:00:00Z',
-    processes: []
-  },
+  
   {
     id: 'col-3',
     _id: 'col-3',
@@ -193,30 +184,7 @@ export const sampleProcesses = [
     transition_count: 5,
     created_at: '2024-01-15T10:00:00Z'
   },
-  {
-    id: 'process-2',
-    _id: 'process-2',
-    workspace_id: 'workspace-1',
-    title: 'Onboarding Process',
-    description: 'New employee onboarding workflow with multiple checkpoints',
-    column_id: 'col-1',
-    order: 1,
-    status_count: 5,
-    transition_count: 6,
-    created_at: '2024-01-16T11:20:00Z'
-  },
-  {
-    id: 'process-3',
-    _id: 'process-3',
-    workspace_id: 'workspace-1',
-    title: 'Approval Workflow',
-    description: 'Multi-level approval process for important decisions',
-    column_id: 'col-2',
-    order: 0,
-    status_count: 3,
-    transition_count: 4,
-    created_at: '2024-01-17T09:45:00Z'
-  },
+  
   {
     id: 'process-4',
     _id: 'process-4',

@@ -49,11 +49,11 @@
             <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
           </div>
         </div>
-        <button v-else
+        <!-- <button v-else
           class="text-sm text-white py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-accent rounded-lg"
           @click.stop="setActiveAddList">
           + Add Column
-        </button>
+        </button> -->
       </div>
     </div>
   </div>
