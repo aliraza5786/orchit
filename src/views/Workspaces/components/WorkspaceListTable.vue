@@ -3,9 +3,10 @@ import Table from '../../../components/ui/Table.vue';
 import { h } from "vue"
 import { formatDate } from '../../../utilities/FormatDate';
 import Collaborators from '../../../components/ui/Collaborators.vue';
+
 const handleClick = (row: any) => {
     localStorage.setItem('jobId', row.row.LatestTask?.job_id)
-    window.open(`/workspace/peak/${row.row._id}/${row.row.LatestTask?.job_id ? row.row.LatestTask?.job_id :''}`);
+    router
 }
 
 const columns = [
