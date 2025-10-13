@@ -110,8 +110,8 @@ const transformedSheets = computed(() => {
 });
 
 watch(processSheets, (newSheets) => {
-  if (newSheets && newSheets.length > 0 && !selectedSheetId.value) {
-    selectedSheetId.value = newSheets[0]?._id;
+  if (newSheets?.length > 0 && !selectedSheetId.value) {
+    selectedSheetId.value = newSheets[0]._id;
   }
 });
 
@@ -250,7 +250,7 @@ const closeWorkflowBuilder = () => {
   selectedProcess.value = null;
 };
 
-const handleSheetCreated = () => {
+const handleSheetCreated = (newSheet: any) => {
   isCreateSheetModal.value = false;
   queryClient.invalidateQueries({ queryKey: ['process-sheets'] });
 };

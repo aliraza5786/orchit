@@ -100,3 +100,247 @@ export const sampleBoard = {
       }
     ]
   };
+
+export const sampleProcessSheets = [
+  {
+    _id: 'sheet-1',
+    title: 'General Process',
+    description: 'Standard workflow processes for the team',
+    icon: {
+      prefix: 'fa-solid',
+      iconName: 'fa-diagram-project'
+    },
+    workspace_id: 'workspace-1',
+    created_at: '2024-01-15T10:00:00Z'
+  },
+  {
+    _id: 'sheet-2',
+    title: 'Development Workflow',
+    description: 'Software development lifecycle processes',
+    icon: {
+      prefix: 'fa-solid',
+      iconName: 'fa-code'
+    },
+    workspace_id: 'workspace-1',
+    created_at: '2024-01-20T14:30:00Z'
+  },
+  {
+    _id: 'sheet-3',
+    title: 'Design Process',
+    description: 'Design review and approval workflow',
+    icon: {
+      prefix: 'fa-solid',
+      iconName: 'fa-palette'
+    },
+    workspace_id: 'workspace-1',
+    created_at: '2024-02-01T09:15:00Z'
+  }
+];
+
+export const sampleProcessColumns = [
+  {
+    id: 'col-1',
+    _id: 'col-1',
+    sheet_id: 'sheet-1',
+    workspace_id: 'workspace-1',
+    title: 'Active Processes',
+    order: 0,
+    created_at: '2024-01-15T10:00:00Z',
+    processes: []
+  },
+  {
+    id: 'col-2',
+    _id: 'col-2',
+    sheet_id: 'sheet-1',
+    workspace_id: 'workspace-1',
+    title: 'Under Review',
+    order: 1,
+    created_at: '2024-01-15T10:00:00Z',
+    processes: []
+  },
+  {
+    id: 'col-3',
+    _id: 'col-3',
+    sheet_id: 'sheet-2',
+    workspace_id: 'workspace-1',
+    title: 'Development',
+    order: 0,
+    created_at: '2024-01-20T14:30:00Z',
+    processes: []
+  },
+  {
+    id: 'col-4',
+    _id: 'col-4',
+    sheet_id: 'sheet-3',
+    workspace_id: 'workspace-1',
+    title: 'Design Queue',
+    order: 0,
+    created_at: '2024-02-01T09:15:00Z',
+    processes: []
+  }
+];
+
+export const sampleProcesses = [
+  {
+    id: 'process-1',
+    _id: 'process-1',
+    workspace_id: 'workspace-1',
+    title: 'General Process',
+    description: 'Standard workflow for handling general tasks and approvals',
+    column_id: 'col-1',
+    order: 0,
+    status_count: 4,
+    transition_count: 5,
+    created_at: '2024-01-15T10:00:00Z'
+  },
+  {
+    id: 'process-2',
+    _id: 'process-2',
+    workspace_id: 'workspace-1',
+    title: 'Onboarding Process',
+    description: 'New employee onboarding workflow with multiple checkpoints',
+    column_id: 'col-1',
+    order: 1,
+    status_count: 5,
+    transition_count: 6,
+    created_at: '2024-01-16T11:20:00Z'
+  },
+  {
+    id: 'process-3',
+    _id: 'process-3',
+    workspace_id: 'workspace-1',
+    title: 'Approval Workflow',
+    description: 'Multi-level approval process for important decisions',
+    column_id: 'col-2',
+    order: 0,
+    status_count: 3,
+    transition_count: 4,
+    created_at: '2024-01-17T09:45:00Z'
+  },
+  {
+    id: 'process-4',
+    _id: 'process-4',
+    workspace_id: 'workspace-1',
+    title: 'Feature Development',
+    description: 'End-to-end feature development workflow',
+    column_id: 'col-3',
+    order: 0,
+    status_count: 6,
+    transition_count: 8,
+    created_at: '2024-01-20T14:30:00Z'
+  },
+  {
+    id: 'process-5',
+    _id: 'process-5',
+    workspace_id: 'workspace-1',
+    title: 'Bug Triage',
+    description: 'Process for triaging and prioritizing bugs',
+    column_id: 'col-3',
+    order: 1,
+    status_count: 4,
+    transition_count: 5,
+    created_at: '2024-01-21T16:00:00Z'
+  },
+  {
+    id: 'process-6',
+    _id: 'process-6',
+    workspace_id: 'workspace-1',
+    title: 'Design Review',
+    description: 'Comprehensive design review and feedback process',
+    column_id: 'col-4',
+    order: 0,
+    status_count: 4,
+    transition_count: 6,
+    created_at: '2024-02-01T09:15:00Z'
+  }
+];
+
+export const sampleWorkflowStatuses = [
+  {
+    id: 'status-1',
+    process_id: 'process-1',
+    status_name: 'Create',
+    status_color: '#10b981',
+    position_x: 100,
+    position_y: 200,
+    order: 0,
+    is_initial: true,
+    is_final: false
+  },
+  {
+    id: 'status-2',
+    process_id: 'process-1',
+    status_name: 'To Do',
+    status_color: '#3b82f6',
+    position_x: 300,
+    position_y: 200,
+    order: 1,
+    is_initial: false,
+    is_final: false
+  },
+  {
+    id: 'status-3',
+    process_id: 'process-1',
+    status_name: 'In Progress',
+    status_color: '#f59e0b',
+    position_x: 500,
+    position_y: 200,
+    order: 2,
+    is_initial: false,
+    is_final: false
+  },
+  {
+    id: 'status-4',
+    process_id: 'process-1',
+    status_name: 'Done',
+    status_color: '#8b5cf6',
+    position_x: 700,
+    position_y: 200,
+    order: 3,
+    is_initial: false,
+    is_final: true
+  }
+];
+
+export const sampleWorkflowTransitions = [
+  {
+    id: 'transition-1',
+    process_id: 'process-1',
+    from_status_id: 'status-1',
+    to_status_id: 'status-2',
+    transition_label: 'Start Task',
+    rules: []
+  },
+  {
+    id: 'transition-2',
+    process_id: 'process-1',
+    from_status_id: 'status-2',
+    to_status_id: 'status-3',
+    transition_label: 'Begin Work',
+    rules: []
+  },
+  {
+    id: 'transition-3',
+    process_id: 'process-1',
+    from_status_id: 'status-3',
+    to_status_id: 'status-4',
+    transition_label: 'Complete',
+    rules: []
+  },
+  {
+    id: 'transition-4',
+    process_id: 'process-1',
+    from_status_id: 'status-3',
+    to_status_id: 'status-2',
+    transition_label: 'Need Revision',
+    rules: []
+  },
+  {
+    id: 'transition-5',
+    process_id: 'process-1',
+    from_status_id: 'status-2',
+    to_status_id: 'status-4',
+    transition_label: 'Skip to Done',
+    rules: []
+  }
+];

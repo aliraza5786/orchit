@@ -1,17 +1,42 @@
 import { useQuery } from "@tanstack/vue-query";
 import { request } from "../libs/api";
 import { useApiMutation } from "../libs/vq";
-import { unref } from "vue";
+import { unref, computed } from "vue";
+import {
+  sampleProcessSheets,
+  sampleProcessColumns,
+  sampleProcesses,
+  sampleWorkflowStatuses,
+  sampleWorkflowTransitions
+} from "../data/sampleData";
 
-export const useProcessColumns = (workspace_id: any, options = {}) => {
+export const useProcessSheets = (workspace_id: any, options = {}) => {
   return useQuery({
-    queryKey: ["process-columns", workspace_id],
-    queryFn: ({ signal }) =>
-      request<any>({
-        url: `workspace/process-columns?workspace_id=${unref(workspace_id)}`,
-        method: "GET",
-        signal,
-      }),
+    queryKey: ["process-sheets", workspace_id],
+    queryFn: () => {
+      return Promise.resolve(sampleProcessSheets.filter(
+        sheet => sheet.workspace_id === unref(workspace_id) || true
+      ));
+    },
+    ...options,
+  });
+};
+
+export const useProcessColumns = (workspace_id: any, sheet_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["process-columns", workspace_id, sheet_id],
+    queryFn: () => {
+      const sheetIdValue = unref(sheet_id);
+      const columns = sampleProcessColumns.filter(
+        col => col.sheet_id === sheetIdValue
+      );
+
+      return Promise.resolve(columns.map(col => ({
+        ...col,
+        processes: sampleProcesses.filter(p => p.column_id === col.id)
+      })));
+    },
+    enabled: computed(() => !!unref(sheet_id)),
     ...options,
   });
 };
@@ -132,12 +157,16 @@ export const useDeleteProcess = (options = {}) =>
 export const useWorkflowData = (process_id: any, options = {}) => {
   return useQuery({
     queryKey: ["workflow-data", process_id],
-    queryFn: ({ signal }) =>
-      request<any>({
-        url: `workspace/workflows/${unref(process_id)}`,
-        method: "GET",
-        signal,
-      }),
+    queryFn: () => {
+      const procId = unref(process_id);
+      const statuses = sampleWorkflowStatuses.filter(s => s.process_id === procId);
+      const transitions = sampleWorkflowTransitions.filter(t => t.process_id === procId);
+
+      return Promise.resolve({
+        statuses,
+        transitions
+      });
+    },
     enabled: !!unref(process_id),
     ...options,
   });
