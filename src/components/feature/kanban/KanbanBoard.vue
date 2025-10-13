@@ -1,11 +1,9 @@
 <template>
     <div class="h-full flex  gap-3 ">
         <!-- Columns (horizontal) -->
-        <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="150"
+        <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
             :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
-            :force-fallback="false" :fallback-on-body="true" :scroll-sensitivity="100" :scroll-speed="20"
-            class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd" @start="onDragStart"
-            :delay="0" :delay-on-touch-only="true" :touch-start-threshold="5">
+            :force-fallback="true" class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd">
             <!-- Each column -->
             <template #item="{ element: column }">
                 <div class="min-w-[320px] max-w-[320px]   rounded-lg bg-bg-surface  "
@@ -64,28 +62,16 @@ const emit = defineEmits<{
     }): void
 }>()
 
-const isDragging = ref(false)
-
 /** Local mirror so we never mutate props directly (optimistic UI) */
 const localBoard = ref<Board>(cloneBoard(props.board))
 
-function onDragStart() {
-    isDragging.value = true
-    document.body.style.cursor = 'grabbing'
-}
-
 watch(() => props.board, (v) => {
     // Only replace when the reference changes (e.g. from server)
-    if (!isDragging.value) {
-        localBoard.value = cloneBoard(v)
-    }
-}, { deep: false })
+    localBoard.value = cloneBoard(v)
+})
 
 /** Column drag end -> columns array already reordered by vuedraggable */
 function onColumnsEnd(e: any) {
-    isDragging.value = false
-    document.body.style.cursor = ''
-
     const oldIndex = e.oldIndex
     const newIndex = e.newIndex
 
@@ -132,23 +118,15 @@ function cloneBoard(b: Column[]): Board {
 <style scoped>
 /* Drag classes from vuedraggable / SortableJS */
 .kanban-ghost {
-    opacity: 0.5;
-    transform: rotate(1deg) scale(0.95);
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    will-change: transform, opacity;
+    opacity: 0.6;
+    transform: rotate(2deg) scale(0.98);
 }
 
 .kanban-chosen {
-    outline: 2px solid rgba(59, 130, 246, 0.5);
-    outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-    transition: all 0.15s ease;
+    outline: 2px dashed rgba(0, 0, 0, .15);
 }
 
 .kanban-dragging {
     cursor: grabbing !important;
-    opacity: 0.9;
-    transform: scale(1.02);
 }
 </style>

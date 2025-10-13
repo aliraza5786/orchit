@@ -1,5 +1,5 @@
 <template>
-  <div class="flex bg-bg-body flex-col min-h-[600px] h-full w-80 rounded-lg transition-all duration-200 kanban-column"
+  <div class="flex bg-bg-body flex-col min-h-[600px] h-full w-80 rounded-lg transition-all duration-200"
     :class="columnBgClass">
     <!-- Column header -->
     <div class="flex items-center justify-between w-full p-4 border-b border-border cursor-grab">
@@ -31,10 +31,8 @@
 
     <!-- Tickets list -->
     <Draggable v-model="localTickets" item-key="_id" class="flex-1 p-4 space-y-3 overflow-y-auto"
-      :group="{ name: 'tickets', pull: true, put: true }" :animation="150" :ghost-class="'kanban-ghost'"
-      :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'" @change="onTicketsChange"
-      :force-fallback="false" :scroll-sensitivity="80" :scroll-speed="15" :delay="0"
-      :delay-on-touch-only="true" :touch-start-threshold="3" @start="onDragStart" @end="onDragEnd">
+      :group="{ name: 'tickets', pull: true, put: true }" :animation="180" :ghost-class="'kanban-ghost'"
+      :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'" @change="onTicketsChange">
       <template #item="{ element: ticket, index }">
         <div>
           <slot name="ticket" @click="() => {
@@ -85,16 +83,6 @@ const emit = defineEmits<{
   }): void
   (e: 'select:ticket', payload: Ticket): void
 }>()
-
-const isDraggingTicket = ref(false)
-
-function onDragStart() {
-  isDraggingTicket.value = true
-}
-
-function onDragEnd() {
-  isDraggingTicket.value = false
-}
 
 /** Inline title editing state */
 const isEditingTitle = ref(false)
@@ -172,28 +160,16 @@ const handleDeleteColumn = () => {
 </script>
 
 <style scoped>
-.kanban-column {
-  will-change: transform;
-}
-
 .kanban-ghost {
-  opacity: 0.5;
-  transform: rotate(1deg) scale(0.95);
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
-  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform, opacity;
+  opacity: 0.6;
+  transform: rotate(2deg) scale(0.98);
 }
 
 .kanban-chosen {
-  outline: 2px solid rgba(59, 130, 246, 0.5);
-  outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-  transition: all 0.15s ease;
+  outline: 2px dashed rgba(0, 0, 0, .15);
 }
 
 .kanban-dragging {
   cursor: grabbing !important;
-  opacity: 0.9;
-  transform: scale(1.02);
 }
 </style>
