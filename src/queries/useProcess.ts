@@ -29,7 +29,7 @@ export const useProcessWorkflow = (workspace_id: any, options = {}) => {
     queryKey: ["process-workflow", workspace_id],
     queryFn: ({signal}) => {
       return  request<any>({
-        url: `workspace/${workspace_id}/process-flow`,
+        url: `workspace/${workspace_id}/process-flow/transitions`,
         method: "GET",
         signal,
       })

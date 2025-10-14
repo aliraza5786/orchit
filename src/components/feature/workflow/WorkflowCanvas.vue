@@ -19,6 +19,7 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import { useProcessWorkflow } from '../../../queries/useProcess'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
+import { watch } from 'vue'
 
 // --- Default (system) nodes like Jira: Start, To Do, Done ---
 
@@ -29,36 +30,6 @@ const nextId = (() => {
   return () => `n-${i++}`
 })()
 
-const nodes = ref<Node[]>([
-  {
-    id: 'start',
-    position: { x: 50, y: 100 },
-    data: { label: 'Start', status: 'To Do' satisfies Status },
-    style: { borderRadius: '9999px', background: '#fff' },
-    // prevent deletion/drag toggle by user config
-    deletable: false,
-  },
-  {
-    id: 'todo',
-    position: { x: 300, y: 60 },
-    data: { label: 'To Do', status: 'To Do' satisfies Status },
-    style: { borderRadius: '10px', background: '#fff' },
-    deletable: false,
-  },
-  {
-    id: 'done',
-    position: { x: 300, y: 220 },
-    data: { label: 'Done', status: 'Done' satisfies Status },
-    style: { borderRadius: '10px', background: '#fff' },
-    deletable: false,
-  },
-])
-
-const edges = ref<Edge[]>([
-  // sample system wiring (editable but nodes aren’t deletable)
-  { id: 'e-start-todo', source: 'start', target: 'todo', type: 'step' },
-  { id: 'e-todo-done', source: 'todo', target: 'done', type: 'step' },
-])
 
 const defaultEdgeOptions: Partial<Edge> = {
   // sharp/right-angle like Jira
@@ -72,6 +43,8 @@ const defaultEdgeOptions: Partial<Edge> = {
     width: 18,
     height: 18,
   },
+  labelBgPadding: [6, 2],
+  labelBgBorderRadius: 6,
 }
 
 
@@ -133,30 +106,129 @@ function handleAddNode(e: any) {
   })
 }
 
-// Connect any node to any other node (disallow self-connect)
 function onConnect(conn: Connection) {
-  if (!conn.source || !conn.target || conn.source === conn.target) return
-  addEdges({ ...conn, id: `${conn.source}-${conn.target}-${crypto.randomUUID?.() ?? Math.random()}` })
+  // if (!isValidConnection(conn)) return;
+  console.log(conn, '>>>conn');
+
+  const uniqueId = `${conn.source}-${conn.target}-${crypto.randomUUID?.() ?? Math.random()}`;
+  addEdges({
+    ...conn,
+    id: uniqueId,
+    type: 'step',
+    data: { name: 'Transition' }, // Optional: Prompt for a name
+    label: 'Transition', // Shows on canvas
+    style: { stroke: '#1152de', strokeWidth: 2 },
+    markerEnd: { type: MarkerType.Arrow, color: '#1152de', width: 18, height: 18 },
+  });
 }
 
 // Optional: validate connections (e.g., prevent multiple parallel edges between same pair)
-function isValidConnection(conn: Connection) {
-  if (!conn.source || !conn.target || conn.source === conn.target) return false
-  return !edges.value.some(e => e.source === conn.source && e.target === conn.target)
+// Allowed status transitions (Jira-like). Tweak as needed.
+const ALLOWED: Record<string, string[]> = {
+  start: ['todo'],         // Start -> To Do
+  todo: ['done'],         // To Do -> Done (add 'blocked' etc if you have it)
+  done: [],               // Done is terminal in this example
 }
 
+// Build a quick lookup for duplicates
+const transitionKey = (s: string, t: string) => `${s}->${t}`
+
+function isValidConnection(conn: Connection) {
+  // 1) basic checks
+  if (!conn.source || !conn.target || !conn.sourceHandle || !conn.targetHandle) return false
+  if (conn.source === conn.target) return false
+  console.log(conn, 'cc from valid');
+
+  // 2) (optional) enforce out-* → in-* or other handle rules
+  // const isSourceOut = conn.sourceHandle.startsWith('out-')
+  // const isTargetIn  = conn.targetHandle.startsWith('in-')
+  // if (!isSourceOut || !isTargetIn) return false
+
+  // 3) (optional) enforce allowed status transitions via your ALLOWED map
+  // const srcNode = nodes.value.find(n => n.id === conn.source)
+  // const tgtNode = nodes.value.find(n => n.id === conn.target)
+  // if (!srcNode || !tgtNode) return false
+  // if (!(ALLOWED[srcNode.id] || []).includes(tgtNode.id)) return false
+
+  // 4) duplicates
+  if (isDuplicateEdge(conn)) return false
+
+  return true
+}
+
+type DedupMode = 'direction' | 'handle-pair' | 'node-pair'
+const DEDUPE_MODE: DedupMode = 'direction' // ← pick one
+
+function edgeMatches(conn: Connection, e: Edge, mode: DedupMode) {
+  const sameDirection =
+    e.source === conn.source && e.target === conn.target
+
+  const sameHandles =
+    e.sourceHandle === conn.sourceHandle && e.targetHandle === conn.targetHandle
+
+  const undirectedPair =
+    (e.source === conn.source && e.target === conn.target) ||
+    (e.source === conn.target && e.target === conn.source)
+
+  if (mode === 'direction') return sameDirection
+  if (mode === 'handle-pair') return sameDirection && sameHandles
+  if (mode === 'node-pair') return undirectedPair
+  return false
+}
+
+function isDuplicateEdge(conn: Connection) {
+  return edges.value.some(e => edgeMatches(conn, e, DEDUPE_MODE))
+}
 
 defineExpose({ openCreateNodeModal, handleAddNode })
 const { workspaceId } = useWorkspaceId();
-const { data: processWorkflow } = useProcessWorkflow(workspaceId); 
+const { data: processWorkflow } = useProcessWorkflow(workspaceId.value);
+watch(() => processWorkflow.value, (newVal: any) => {
+  console.log('>>>> watching...', newVal);
 
+  nodes.value = [
+    ...nodes.value, ...newVal?.flow_diagram?.nodes
+  ]
+  edges.value = [...edges.value, ...newVal?.flow_diagram?.edges];
+
+})
+const nodes = ref<Node[]>([
+  // {
+  //   id: 'start',
+  //   position: { x: 50, y: 100 },
+  //   data: { label: 'Start', status: 'To Do' satisfies Status },
+  //   style: { borderRadius: '9999px', background: '#fff' },
+  //   // prevent deletion/drag toggle by user config
+  //   deletable: false,
+  // },
+  // {
+  //   id: 'todo',
+  //   position: { x: 300, y: 60 },
+  //   data: { label: 'To Do', status: 'To Do' satisfies Status },
+  //   style: { borderRadius: '10px', background: '#fff' },
+  //   deletable: false,
+  // },
+  // {
+  //   id: 'done',
+  //   position: { x: 300, y: 220 },
+  //   data: { label: 'Done', status: 'Done' satisfies Status },
+  //   style: { borderRadius: '10px', background: '#fff' },
+  //   deletable: false,
+  // },
+])
+
+const edges = ref<Edge[]>([
+  // sample system wiring (editable but nodes aren’t deletable)
+  { id: 'e-start-todo', source: 'start', target: 'todo', type: 'step' },
+  { id: 'e-todo-done', source: 'todo', target: 'done', type: 'step' },
+])
 </script>
 
 <template>
   <div class="workflow-wrap">
-    <VueFlow :connection-mode="ConnectionMode.Strict" v-model:nodes="nodes" v-model:edges="edges"
-      :default-edge-options="defaultEdgeOptions" :nodes-draggable="true" :nodes-connectable="true"
-      :elements-selectable="true" fit-view-on-init @connect="onConnect" :is-valid-connection="isValidConnection">
+    <VueFlow v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
+      :nodes-draggable="true" :nodes-connectable="true" :elements-selectable="true" fit-view-on-init
+      @connect="onConnect" :is-valid-connection="isValidConnection">
       <Background />
       <!-- <MiniMap /> -->
       <Controls />
@@ -171,10 +243,12 @@ const { data: processWorkflow } = useProcessWorkflow(workspaceId);
             <i class="fa-solid fa-edit cursor-pointer" @click.stop="startRename(id, data.label)"></i>
           </div>
           <!-- connection points -->
-          <Handle type="target" :position="Position.Top" />
-          <Handle type="source" :position="Position.Right" />
-          <Handle type="source" :position="Position.Bottom" />
-          <Handle type="target" :position="Position.Left" />
+          <!-- inside #node-default -->
+          <Handle id="in-top" type="target" :position="Position.Top" />
+          <Handle id="out-right" type="source" :position="Position.Right" />
+          <Handle id="out-bottom" type="source" :position="Position.Bottom" />
+          <Handle id="in-left" type="target" :position="Position.Left" />
+
         </div>
       </template>
     </VueFlow>
