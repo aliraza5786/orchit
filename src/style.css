@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 
 /* -------- Base resets & defaults -------- */
@@ -9,6 +12,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --small-color:#000;
+
 
   /* colors */
   --text-primary: #2b2c30;
@@ -21,6 +26,7 @@
   --accent-hover: #6e3b96;
   --accent-text: #ffffff;
   --sidebar-primary: 224.3 76.3% 48%;
+  --bg-charcoal: #fff;
 
   /* Dropdowns & Inputs */
   --bg-input: #ffffff; /* input & dropdown background */
@@ -42,7 +48,9 @@
   --bg-surface: #1a1a1a; /* table headers, panels */
   --bg-card: #2b2c30;
   --sidebar-primary: 224.3 76.3% 48%;
-
+  --small-color:#82CFFF;
+   --bg-charcoal: #2A2A2C;
+  
   --accent: #9356c5;
   --accent-hover: #6e3b96;
   --accent-text: #ffffff;
@@ -55,6 +63,7 @@
     --glow-2: 190 95% 62%; /* cyan */
     --glow-3: 330 90% 66%; /* pink */
     --neon-speed: 4s; /* default loop duration */
+
 }
 
 /* -------- Tailwind design tokens (v4) -------- */
@@ -73,6 +82,12 @@
   --color-border-input: var(--border-input); /* input borders */
   --color-bg-dropdown: var(--bg-input); /* dropdown menus */
   --color-bg-dropdown-menu-hover: var(--bg-body); /* dropdown menus */
+  --color-sky: var(--small-color);
+  --font-manrope: "Manrope", sans-serif;
+  --font-lato: "Lato", sans-serif; 
+  --font-inter:"Inter", sans-serif; 
+  --color-bg-charcoal:var(--bg-charcoal);
+
   
 }
 
@@ -91,6 +106,10 @@ body {
 
 #app {
   width: 100%;
+  margin: 0 auto;
+}
+.custom_container{
+  max-width:1280px;
   margin: 0 auto;
 }
 
