@@ -13,10 +13,26 @@ import {
 export const useProcessSheets = (workspace_id: any, options = {}) => {
   return useQuery({
     queryKey: ["process-sheets", workspace_id],
-    queryFn: () => {
-      return Promise.resolve(sampleProcessSheets.filter(
-        sheet => sheet.workspace_id === unref(workspace_id) || true
-      ));
+    queryFn: ({signal}) => {
+      return  request<any>({
+        url: `workspace/${workspace_id}/process-flow`,
+        method: "GET",
+        signal,
+      })
+    },
+    ...options,
+  });
+};
+
+export const useProcessWorkflow = (workspace_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["process-workflow", workspace_id],
+    queryFn: ({signal}) => {
+      return  request<any>({
+        url: `workspace/${workspace_id}/process-flow`,
+        method: "GET",
+        signal,
+      })
     },
     ...options,
   });

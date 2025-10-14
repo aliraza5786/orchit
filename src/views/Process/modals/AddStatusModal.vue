@@ -121,7 +121,7 @@ function handleSubmit() {
   try {
     const statusData = {
       process_id: props.processId,
-      status_name: statusName.value.trim(),
+      name: statusName.value.trim(),
       category: category.value,
       status_color: statusColor.value,
       is_initial: isInitial.value,
@@ -133,7 +133,7 @@ function handleSubmit() {
 
     workflowState.addStatus(statusData)
     toast.success(`Status "${statusName.value}" added`)
-    emit('status:added')
+    emit('status:added', statusName.value.trim())
     close()
   } catch (error) {
     toast.error('Failed to add status')
