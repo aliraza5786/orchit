@@ -100,7 +100,6 @@ const handleFileChange = (event: Event) => {
     if (input?.files?.length) {
         const selectedFile = input.files[0];
         file.value = selectedFile;
-
         emit('update:modelValue', selectedFile);
     }
 };

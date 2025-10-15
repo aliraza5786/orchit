@@ -1,14 +1,14 @@
 <template>
   <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex">
     <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
-      <Dropdown v-model="selectedSheetId" :options="transformedSheets" variant="secondary">
+      <!-- <Dropdown v-model="selectedSheetId" :options="transformedSheets" variant="secondary">
         <template #more>
           <div @click="openCreateSheetModal()"
             class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap">
             <i class="fa-solid fa-plus"></i> Add new sheet
           </div>
         </template>
-      </Dropdown>
+      </Dropdown> -->
       <div class="flex gap-3 items-center">
         <Searchbar placeholder="Search processes">
         </Searchbar>
@@ -22,7 +22,7 @@
         <template #ticket="{ ticket, index }">
           <ProcessKanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" :index="index" />
         </template>
-        <template #column-footer="{ column }: any">
+        <!-- <template #column-footer="{ column }: any">
           <div v-if="!column.showADDNEW" @click="toggleAddNewProcess(column)"
             class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary cursor-pointer border-dashed mb-4 mx-4 rounded-md">
             <i class="fa-solid fa-plus"></i> Add Process
@@ -35,7 +35,7 @@
             </Button>
             <i class="fa-solid fa-close cursor-pointer ml-2" @click="toggleAddNewProcess(column)"></i>
           </div>
-        </template>
+        </template> -->
       </KanbanBoard>
       <div class="min-w-[328px]" @click.stop>
         <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">

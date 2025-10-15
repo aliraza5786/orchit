@@ -151,4 +151,21 @@ export const useCreateTeamMember = (options = {}) =>
       ...options,
     });
   };
+
+
+  export const useUpdateVar = (options = {}) =>
+    useApiMutation<any>(
+      {
+        key: ["update-var"],
+      } as any,
+      {
+        mutationFn: (vars: any) =>
+          request({
+            url: `common/seats/${vars.id}/variables`,
+            method: "PUT",
+            data: vars.payload,
+          }),
+        ...(options as any),
+      } as any
+    );
   

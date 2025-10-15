@@ -18,8 +18,10 @@
             <Button @click="handleAddStatus" variant="secondary" size="sm">
               <i class="fa-solid fa-plus mr-2"></i>Add Status
             </Button>
-            <Button @click="handleUpdateWorkflow" variant="primary" size="sm" :disabled="isBatchUpdating || !workflowState.hasChanges.value">
-              {{ isBatchUpdating ? 'Saving...' : `Update workflow${workflowState.changeCount.value > 0 ? ` (${workflowState.changeCount.value})` : ''}` }}
+            <Button @click="handleUpdateWorkflow" variant="primary" size="sm"
+              >
+              {{ Canvas?.isSuccess ? 'Saving...' : `Update workflow${workflowState.changeCount.value > 0 ? `
+              (${workflowState.changeCount.value})` : ''}` }}
             </Button>
             <button class="text-text-secondary hover:text-text-primary text-xl" @click="close">
               <i class="fa-solid fa-times"></i>
@@ -28,7 +30,7 @@
         </div>
 
         <div class="flex-1 overflow-hidden relative">
-          <WorkflowCanvas v-if="process" :process-id="process._id || process.id"
+          <WorkflowCanvas ref="Canvas" v-if="process" :process-id="process._id || process.id"
             :show-transition-labels="showTransitionLabels" @update:workflow="handleWorkflowUpdate"
             @add:status="handleAddStatus" @add:transition="handleAddTransition" />
         </div>
@@ -86,7 +88,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
   (e: 'close'): void
 }>()
-
+const Canvas = ref(null);
 const showTransitionLabels = ref(true)
 const showAddStatusModal = ref(false)
 const showAddTransitionModal = ref(false)
@@ -132,6 +134,7 @@ function close() {
 }
 
 function handleAddStatus() {
+  
   showAddStatusModal.value = true
 }
 
@@ -144,24 +147,27 @@ function handleWorkflowUpdate() {
 }
 
 function handleUpdateWorkflow() {
-  if (!workflowState.hasChanges.value) {
-    toast.info('No changes to save')
-    return
-  }
+  console.log('>>> i am upading ');
+  
+  // if (!workflowState.hasChanges.value) {
+    // toast.info('No changes to save')
+    Canvas.value.saveWorkflow();
+    // return
+  
 
-  const validation = workflowState.validateWorkflow()
-  if (!validation.isValid) {
-    toast.error(`Cannot save workflow: ${validation.errors[0]}`)
-    return
-  }
+  // const validation = workflowState.validateWorkflow()
+  // if (!validation.isValid) {
+  //   toast.error(`Cannot save workflow: ${validation.errors[0]}`)
+  //   return
+  // }
 
-  const changes = workflowState.getChanges()
+  // const changes = workflowState.getChanges()
 
-  batchUpdate({
-    processId: processId.value,
-    statuses: changes.statuses,
-    transitions: changes.transitions
-  })
+  // batchUpdate({
+  //   processId: processId.value,
+  //   statuses: changes.statuses,
+  //   transitions: changes.transitions
+  // })
 }
 
 function handleZoomIn() {
@@ -176,8 +182,9 @@ function handleZoomReset() {
   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'reset' } }))
 }
 
-function handleStatusAdded() {
+function handleStatusAdded(e:any) {
   showAddStatusModal.value = false
+  Canvas.value.handleAddNode(e)
 }
 
 function handleTransitionAdded() {

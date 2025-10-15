@@ -19,11 +19,11 @@
       ]" @click="toggleDropdown">
       <div class="flex items-center gap-2">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
-        <span :class="selected ? '' : 'text-text-secondary -400'">
+        <span :class="selected ? ' line-clamp-1 overflow-ellipsis ' : 'text-text-secondary'">
           {{ selected?.title || placeholder }}
         </span>
       </div>
-      <svg class="w-4 h-4 text-text-secondary -400" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+      <svg class="w-4 h-4 text-text-secondary " fill="none" viewBox="0 0 20 20" stroke="currentColor">
         <path d="M6 8L10 12L14 8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </div>
