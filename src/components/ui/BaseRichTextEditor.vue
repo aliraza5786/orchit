@@ -22,8 +22,8 @@
                 @mouseleave="toolbarHover = false" :class="[
                     'border-t px-2 py-2 flex items-center flex-wrap gap-2 text-sm relative transition-opacity duration-150',
                     theme === 'dark'
-                        ? 'border-border  text-text-secondary  bg-[#0D0D10]'
-                        : 'border-white   bg-accent text-white'
+                        ? 'border-border text-text-secondary bg-[#0D0D10]'
+                        : 'border-white bg-accent text-white'
                 ]">
                 <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" :class="btnClass"
                     title="Undo">↩</button>
@@ -76,6 +76,31 @@
                     Remove
                 </button>
 
+                <!-- File upload button -->
+                <label @click.prevent="fileInput.click()" class="cursor-pointer" :class="btnClass">
+                    Upload Attachment
+                </label>
+                <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
+
+                <!-- Attachment Preview -->
+                <div v-if="filePreview" class="mt-2 p-3 border rounded-lg">
+                    <div class="flex items-center">
+                        <div v-if="fileType === 'pdf'" class="mr-3">
+                            <i class="fas fa-file-pdf text-red-600"></i>
+                        </div>
+                        <div v-if="fileType === 'docx'" class="mr-3">
+                            <i class="fas fa-file-word text-blue-600"></i>
+                        </div>
+                        <div v-if="fileType === 'image'" class="mr-3">
+                            <img :src="filePreview" alt="Image Preview" class="w-12 h-12 object-cover" />
+                        </div>
+                        <div class="flex-1">
+                            <span>{{ fileName }}</span>
+                        </div>
+                        <a :href="filePreview" target="_blank" class="text-blue-500 hover:underline ml-2">View</a>
+                    </div>
+                </div>
+
                 <!-- Link Panel -->
                 <div v-if="showLinkPanel" class="w-full mt-2 p-3 rounded-xl border shadow-sm"
                     :class="theme === 'dark' ? 'bg-[#111114] border-border text-white' : 'bg-white border-border text-white'"
@@ -122,7 +147,6 @@ import StarterKit from '@tiptap/starter-kit'
 import { onBeforeUnmount, ref, watch, computed, nextTick } from 'vue'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
-// import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 const props = withDefaults(defineProps<{
     modelValue: string
@@ -130,13 +154,16 @@ const props = withDefaults(defineProps<{
     placeholder?: string
     theme?: 'light' | 'dark'
 }>(), { theme: 'light' })
-
-
+const showLinkPanel = ref(false)
 
 const isFocused = ref(false)
 const toolbarHover = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
 
-// in your Editor init, add focus/blur handlers
+const filePreview = ref<string | null>(null)
+const fileName = ref<string>('')
+const fileType = ref<string>('')
+
 const editor = new Editor({
     content: props.modelValue,
     extensions: [
@@ -152,14 +179,10 @@ const editor = new Editor({
     ],
     onUpdate: ({ editor }) => emit('update:modelValue', editor.getHTML()),
     onFocus: () => {
-
         isFocused.value = true
     },
     onBlur: () => {
         emit('focusOut');
-        console.log(">>> i am visiting");
-
-        // delay so moving the mouse to the toolbar doesn't instantly hide it
         setTimeout(() => {
             if (!toolbarHover.value && !showLinkPanel.value) {
                 isFocused.value = false
@@ -167,7 +190,7 @@ const editor = new Editor({
         }, 0)
     },
 })
-/* ----- Typography ----- */
+
 const textType = ref<'paragraph' | 'heading1' | 'heading2'>('paragraph')
 const setTextType = () => {
     if (textType.value === 'heading1') editor.chain().focus().setHeading({ level: 1 }).run()
@@ -175,77 +198,35 @@ const setTextType = () => {
     else editor.chain().focus().setParagraph().run()
 }
 
-/* ----- Link Panel State ----- */
-const showLinkPanel = ref(false)
-const linkHref = ref('')
-const linkText = ref('')
-const linkError = ref('')
-const hrefInputRef = ref<HTMLInputElement | null>(null)
+/* ----- File Upload ----- */
+const handleFileUpload = (event: Event) => {
+    const input = event.target as HTMLInputElement
+    if (input.files && input.files.length > 0) {
+        const file = input.files[0]
+        const fileURL = URL.createObjectURL(file)
 
-const selectionText = computed(() => {
-    try {
-        const { from, to } = editor.state.selection
-        if (from === to) return ''
-        return editor.state.doc.textBetween(from, to, ' ')
-    } catch { return '' }
-})
+        filePreview.value = fileURL
+        fileName.value = file.name
 
-function openLinkPanel() {
-    // Prefill with existing link (if any) and current selection text
-    const prevHref = editor.getAttributes('link')?.href as string | undefined
-    linkHref.value = prevHref || ''
-    linkText.value = selectionText.value || ''
-    linkError.value = ''
-    showLinkPanel.value = true
-    nextTick(() => hrefInputRef.value?.focus())
-}
+        if (file.type.startsWith('image/')) {
+            fileType.value = 'image'
+            // Insert image into the editor
+            editor.chain().focus().insertContent(`<img src="${fileURL}" alt="${file.name}" />`).run()
+        } else if (file.type === 'application/pdf') {
+            editor.chain().focus().insertContent(`                  
+            <div  class="mt-2 p-3 border rounded-lg">
+            <div class="flex items-center">
+            <i class="fas fa-file-pdf text-red-600"></i> 
+         <a href="${fileURL}" target="_blank" class="text-blue-500 hover:underline ml-2">View</a>
+        </div>    </div>`).run()
 
-function closeLinkPanel() {
-    showLinkPanel.value = false
-    linkError.value = ''
-}
-
-function normalizeUrl(input: string) {
-    const v = (input || '').trim()
-    if (!v) return ''
-    if (/^(https?:|mailto:|tel:|#|\/)/i.test(v)) return v
-    return `https://${v}`
-}
-function validateUrl(href: string) {
-    try {
-        if (!href) return false
-        if (/^(mailto:|tel:|#|\/)/i.test(href)) return true
-        const u = new URL(/^[a-z]+:\/\//i.test(href) ? href : `https://${href}`)
-        return !!u.host
-    } catch { return false }
-}
-
-function applyLink() {
-    const normalized = normalizeUrl(linkHref.value)
-    if (!validateUrl(normalized)) {
-        linkError.value = 'Please enter a valid URL (https://…, mailto:, tel:, /path, or #anchor).'
-        return
+            fileType.value = 'pdf'
+        } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            fileType.value = 'docx'
+        } else {
+            fileType.value = 'other'
+        }
     }
-
-    const hasSelection = !!selectionText.value
-    const chain = editor.chain().focus().extendMarkRange('link')
-
-    if (hasSelection) {
-        chain.setLink({ href: normalized, target: '_blank', rel: 'noopener noreferrer nofollow' }).run()
-    } else {
-        const text = (linkText.value && linkText.value.trim()) || normalized
-        chain.insertContent({
-            type: 'text',
-            text,
-            marks: [{ type: 'link', attrs: { href: normalized, target: '_blank', rel: 'noopener noreferrer nofollow' } }]
-        }).run()
-    }
-
-    closeLinkPanel()
-}
-
-function unsetLink() {
-    editor.chain().focus().unsetLink().run()
 }
 
 /* ----- Sync & Cleanup ----- */
@@ -264,54 +245,17 @@ const btnClass = computed(() =>
             : 'border-border text-white hover:bg-accent-hover'
     ].join(' ')
 )
+
 const activeBtnClass = computed(() =>
     props.theme === 'dark' ? 'bg-[#2B2C30] text-white' : 'bg-accent text-white'
 )
-
+function validateUrl(href: string) {
+    try {
+        if (!href) return false
+        if (/^(mailto:|tel:|#|\/)/i.test(href)) return true
+        const u = new URL(/^[a-z]+:\/\//i.test(href) ? href : `https://${href}`)
+        return !!u.host
+    } catch { return false }
+}
 const emit = defineEmits(['update:modelValue', 'focusOut'])
 </script>
-
-<style scoped>
-@reference "../../style.css";
-
-.editor-shell :deep(.ProseMirror) {
-    outline: none !important;
-    height: 100%;
-}
-
-/* Headings */
-h1 {
-    @apply text-2xl font-bold;
-    @apply text-white;
-}
-
-h2 {
-    @apply text-xl font-semibold;
-    @apply text-white;
-}
-
-ol {
-    @apply !list-decimal !list-inside px-3;
-}
-
-ul {
-    list-style: disc !important;
-}
-
-p {
-    @apply text-base;
-}
-
-/* Links */
-a {
-    @apply text-blue-600 underline;
-}
-
-code {
-    @apply rounded px-1 py-0.5 bg-gray-100 dark:bg-[#1a1a1f];
-}
-
-pre {
-    @apply rounded p-3 bg-gray-100 dark:bg-[#1a1a1f];
-}
-</style>

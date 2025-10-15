@@ -4,7 +4,7 @@
         <button type="button"
             class="inline-flex !text-text-primary max-w-50 line-clamp-1 text-[10px] items-center gap-2 rounded-full px-3 py-1  focus:outline-none  hover:opacity-90 bg-bg-body cursor-pointer"
             :aria-expanded="open ? 'true' : 'false'" @click="toggle" :disabled="disabled">
-            <span class="truncate ">{{ labelFor(type) }}</span>
+            <span class="truncate ">{{ labelFor(type) ?? placeholder }}</span>
 
         </button>
 
@@ -38,6 +38,7 @@ const props = withDefaults(defineProps<{
     disabled?: boolean
     cardId: string | number
     data: any
+    placeholder?:any
 }>(), {
 
     disabled: false
