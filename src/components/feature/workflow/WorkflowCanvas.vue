@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import {
   VueFlow,
   Handle,
   Position,
   useVueFlow,
-  type Node,
-  type Edge,
+  type Node as VFNode,
+  type Edge as VFEdge,
   type Connection,
   MarkerType,
 } from '@vue-flow/core'
@@ -17,10 +17,133 @@ import { Controls } from '@vue-flow/controls'
 // import { MiniMap } from '@vue-flow/minimap'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
-import { useProcessWorkflow } from '../../../queries/useProcess'
+import { useCreateTransition, useProcessStatus, useProcessWorkflow } from '../../../queries/useProcess'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 import { watch } from 'vue'
 
+const nodes = ref<VFNode[]>([])
+const edges = ref<VFEdge[]>([])
+
+const { setNodes, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project } = useVueFlow()
+
+// ---- API hooks ----
+const { workspaceId } = useWorkspaceId()
+
+const { data: statuses, isSuccess: isStatues } = useProcessStatus(workspaceId.value);
+const { data: processWorkflow, isSuccess: isProcess } = useProcessWorkflow(workspaceId.value)
+const { mutate: createTransition } = useCreateTransition(workspaceId.value)
+
+// ---- Helpers to normalize API -> VueFlow ----
+function mapApiNode(n: any): VFNode {
+  return {
+    id: n.id,
+    type: n.type ?? 'default',
+    position: n.position,
+    data: n.data,
+    style: n.style,
+    // (optional) dimensions aren’t required by VueFlow; it will measure.
+  }
+}
+
+function normalizeMarkerType(t?: string) {
+  if (!t) return undefined
+  const key = t.toLowerCase()
+  if (key === 'arrow') return MarkerType.Arrow
+  if (key === 'arrowclosed') return MarkerType.ArrowClosed
+  if (key === 'circle') return MarkerType.Circle
+  if (key === 'square') return MarkerType.Square
+  if (key === 'diamond') return MarkerType.Diamond
+  if (key === 'dot') return MarkerType.Dot
+  // fallback
+  return MarkerType.Arrow
+}
+function mapApiEdge(e: any): VFEdge {
+  // Accept either snake_case or camelCase from API
+  const marker = e.markerEnd || e.marker_end
+  const style = e.style
+
+  return {
+    id: e.id || e.flow_metadata?.transition_id,
+    type: e.type ?? 'step',
+    source: e.source ?? e.flow_metadata?.source_node?.id,
+    target: e.target ?? e.flow_metadata?.target_node?.id,
+    sourceHandle: e.sourceHandle ?? e.source_handle,
+    targetHandle: e.targetHandle ?? e.target_handle,
+    label: e.label,
+    data: e.data,
+    animated: e.animated ?? false,
+    style: style ? { ...style, strokeWidth: Number(style.strokeWidth ?? 2) } : undefined,
+    markerEnd: marker
+      ? {
+        type: normalizeMarkerType(marker.type),
+        color: marker.color,
+        width: Number(marker.width ?? 18),
+        height: Number(marker.height ?? 18),
+      }
+      : undefined,
+  }
+}
+watch(
+  [() => isStatues.value, () => isProcess.value],
+  async ([s1, s2]) => {
+    console.log(s1, s2, '>>>> stau');
+
+    if (s1 && s2 && statuses.value && !processWorkflow.value?.raw_transitions.nodes) {
+      const newNodes: VFNode[] = statuses.value.map((n: any, i:any) => ({
+        id: String(n._id),
+        type: n.type ?? 'default',
+        position: { x: 300 * i, y: 34 },   // numbers, not strings
+        data: { label: n.title ,                    "status": "To Do"
+      },
+      }))
+      await nextTick()
+      setNodes(newNodes)
+      await nextTick()
+      nodes.value = newNodes;
+      // stop() // remove the watcher so it fires only once
+    }
+  },
+  { immediate: true }
+)
+// ---- WATCH: put API data into VueFlow ----
+watch(
+  () => processWorkflow.value,
+  async (resp: any) => {
+    const fd = resp?.raw_transitions
+    if (!fd)
+      return
+    const incomingNodes = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
+    const incomingEdges = Array.isArray(fd.edges) ? fd.edges.map(mapApiEdge) : []
+    // 1) put nodes in first
+    await nextTick()
+    setNodes(incomingNodes)
+    // 2) after nodes & handles are mounted/measured, then add edges
+    onNodesInitialized(() => {
+      // (optional) make sure handle bounds are fresh
+      incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
+      setEdges(incomingEdges)
+      fitView({ padding: 0.2 }) // nice-to-have
+    })
+  },
+  { immediate: true }
+)
+
+// ---- onConnect: still send to API and add locally ----
+function onConnect(conn: Connection) {
+  const id = `${conn.source}-${conn.target}-${crypto.randomUUID?.() ?? Math.random()}`
+  const payload: VFEdge = {
+    ...conn,
+    id,
+    type: 'step',
+    label: 'Transition',
+    data: { name: 'Transition' },
+    style: { stroke: '#1152de', strokeWidth: 2 },
+    markerEnd: { type: MarkerType.Arrow, color: '#1152de', width: 18, height: 18 },
+  }
+
+  // createTransition({ payload }) // your POST
+  addEdges(payload)             // update UI
+}
 // --- Default (system) nodes like Jira: Start, To Do, Done ---
 
 type Status = 'To Do' | 'In Progress' | 'Blocked' | 'Done'
@@ -30,13 +153,13 @@ const nextId = (() => {
   return () => `n-${i++}`
 })()
 
+const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(workspaceId.value)
 
-const defaultEdgeOptions: Partial<Edge> = {
+const defaultEdgeOptions: Partial<VFEdge> = {
   // sharp/right-angle like Jira
   type: 'step',
   animated: false,
   style: { strokeWidth: 2 },
-
   markerEnd: {
     type: MarkerType.Arrow,
     color: '#3b82f6',
@@ -48,12 +171,9 @@ const defaultEdgeOptions: Partial<Edge> = {
 }
 
 
-const { addEdges, addNodes, updateNode, project } = useVueFlow()
-
 // --- Modal state for create & rename ---
 const showCreateModal = ref(false)
 const createName = ref('')
-
 const renameId = ref<string | null>(null)
 const renameName = ref('')
 
@@ -105,23 +225,6 @@ function handleAddNode(e: any) {
     style: { border: '2px solid #64748b', borderRadius: '10px', background: '#fff' },
   })
 }
-
-function onConnect(conn: Connection) {
-  // if (!isValidConnection(conn)) return;
-  console.log(conn, '>>>conn');
-
-  const uniqueId = `${conn.source}-${conn.target}-${crypto.randomUUID?.() ?? Math.random()}`;
-  addEdges({
-    ...conn,
-    id: uniqueId,
-    type: 'step',
-    data: { name: 'Transition' }, // Optional: Prompt for a name
-    label: 'Transition', // Shows on canvas
-    style: { stroke: '#1152de', strokeWidth: 2 },
-    markerEnd: { type: MarkerType.Arrow, color: '#1152de', width: 18, height: 18 },
-  });
-}
-
 // Optional: validate connections (e.g., prevent multiple parallel edges between same pair)
 // Allowed status transitions (Jira-like). Tweak as needed.
 const ALLOWED: Record<string, string[]> = {
@@ -159,7 +262,7 @@ function isValidConnection(conn: Connection) {
 type DedupMode = 'direction' | 'handle-pair' | 'node-pair'
 const DEDUPE_MODE: DedupMode = 'direction' // ← pick one
 
-function edgeMatches(conn: Connection, e: Edge, mode: DedupMode) {
+function edgeMatches(conn: Connection, e: VFEdge, mode: DedupMode) {
   const sameDirection =
     e.source === conn.source && e.target === conn.target
 
@@ -180,55 +283,103 @@ function isDuplicateEdge(conn: Connection) {
   return edges.value.some(e => edgeMatches(conn, e, DEDUPE_MODE))
 }
 
-defineExpose({ openCreateNodeModal, handleAddNode })
-const { workspaceId } = useWorkspaceId();
-const { data: processWorkflow } = useProcessWorkflow(workspaceId.value);
-watch(() => processWorkflow.value, (newVal: any) => {
-  console.log('>>>> watching...', newVal);
+defineExpose({ openCreateNodeModal, handleAddNode, saveWorkflow, isSaving })
 
-  nodes.value = [
-    ...nodes.value, ...newVal?.flow_diagram?.nodes
-  ]
-  edges.value = [...edges.value, ...newVal?.flow_diagram?.edges];
+function markerTypeToApi(t?: MarkerType | string) {
+  if (!t) return undefined
+  // VueFlow enum values stringify to names; also accept strings
+  const key = String(t).toLowerCase()
+  // normalize common cases
+  if (key.includes('arrowclosed')) return 'arrowclosed'
+  if (key.includes('arrow')) return 'arrow'
+  if (key.includes('circle')) return 'circle'
+  if (key.includes('square')) return 'square'
+  if (key.includes('diamond')) return 'diamond'
+  if (key.includes('dot')) return 'dot'
+  return 'arrow'
+}
 
+function mapVFNodeToApi(n: VFNode) {
+  // Send what your GET returned under flow_diagram.nodes
+  return {
+    id: n.id,
+    type: n.type ?? 'default',
+    position: n.position,
+    // dimensions are optional; backend can store last known box if you want
+    data: n.data,
+    style: n.style,
+  }
+}
+
+function mapVFEdgeToApi(e: VFEdge) {
+  return {
+    id: e.id,
+    type: e.type ?? 'step',
+    source: e.source,
+    target: e.target,
+    source_handle: e.sourceHandle,      // snake_case for API
+    target_handle: e.targetHandle,
+    label: e.label,
+    data: e.data,
+    style: e.style
+      ? { ...e.style, strokeWidth: Number((e.style as any).strokeWidth ?? 2) }
+      : undefined,
+    marker_end: e.markerEnd
+      ? {
+        type: markerTypeToApi(e.markerEnd.type as any),
+        color: (e.markerEnd as any).color,
+        width: Number((e.markerEnd as any).width ?? 18),
+        height: Number((e.markerEnd as any).height ?? 18),
+      }
+      : undefined,
+    animated: !!e.animated,
+  }
+}
+
+function serializeWorkflowPayload() {
+  return {
+    workspace_id: workspaceId.value,
+    // optional: send totals/summary if you compute them client-side;
+    // otherwise the server can recompute and return them.
+    flow_diagram: {
+      nodes: nodes.value.map(mapVFNodeToApi),
+      edges: edges.value.map(mapVFEdgeToApi),
+      // optional: include meta if you want
+      // meta: { ... }
+    }
+  }
+}
+
+function saveWorkflow() {
+  console.log(' >>> saving workspace');
+
+  const payload = serializeWorkflowPayload()
+  createWorkflow({ payload })
+}
+
+let saveTimer: any = null
+function scheduleSave() {
+  clearTimeout(saveTimer)
+  saveTimer = setTimeout(saveWorkflow, 800) // debounce 800ms
+}
+
+// watch(nodes, scheduleSave, { deep: true })
+// watch(edges, scheduleSave, { deep: true })
+
+// Optional safety net when navigating away
+window.addEventListener('beforeunload', () => {
+  if (isSaving.value) return
+  try { saveWorkflow() } catch { }
 })
-const nodes = ref<Node[]>([
-  // {
-  //   id: 'start',
-  //   position: { x: 50, y: 100 },
-  //   data: { label: 'Start', status: 'To Do' satisfies Status },
-  //   style: { borderRadius: '9999px', background: '#fff' },
-  //   // prevent deletion/drag toggle by user config
-  //   deletable: false,
-  // },
-  // {
-  //   id: 'todo',
-  //   position: { x: 300, y: 60 },
-  //   data: { label: 'To Do', status: 'To Do' satisfies Status },
-  //   style: { borderRadius: '10px', background: '#fff' },
-  //   deletable: false,
-  // },
-  // {
-  //   id: 'done',
-  //   position: { x: 300, y: 220 },
-  //   data: { label: 'Done', status: 'Done' satisfies Status },
-  //   style: { borderRadius: '10px', background: '#fff' },
-  //   deletable: false,
-  // },
-])
-
-const edges = ref<Edge[]>([
-  // sample system wiring (editable but nodes aren’t deletable)
-  { id: 'e-start-todo', source: 'start', target: 'todo', type: 'step' },
-  { id: 'e-todo-done', source: 'todo', target: 'done', type: 'step' },
-])
 </script>
 
 <template>
   <div class="workflow-wrap">
-    <VueFlow v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
-      :nodes-draggable="true" :nodes-connectable="true" :elements-selectable="true" fit-view-on-init
-      @connect="onConnect" :is-valid-connection="isValidConnection">
+
+    <VueFlow v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions" :nodes-draggable="true"
+      :nodes-connectable="true" :elements-selectable="true" fit-view-on-init @connect="onConnect"
+      :is-valid-connection="isValidConnection">
+
       <Background />
       <!-- <MiniMap /> -->
       <Controls />

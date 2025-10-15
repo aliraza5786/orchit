@@ -7,18 +7,18 @@ import {
   sampleProcessColumns,
   sampleProcesses,
   sampleWorkflowStatuses,
-  sampleWorkflowTransitions
+  sampleWorkflowTransitions,
 } from "../data/sampleData";
 
 export const useProcessSheets = (workspace_id: any, options = {}) => {
   return useQuery({
     queryKey: ["process-sheets", workspace_id],
-    queryFn: ({signal}) => {
-      return  request<any>({
+    queryFn: ({ signal }) => {
+      return request<any>({
         url: `workspace/${workspace_id}/process-flow`,
         method: "GET",
         signal,
-      })
+      });
     },
     ...options,
   });
@@ -27,30 +27,36 @@ export const useProcessSheets = (workspace_id: any, options = {}) => {
 export const useProcessWorkflow = (workspace_id: any, options = {}) => {
   return useQuery({
     queryKey: ["process-workflow", workspace_id],
-    queryFn: ({signal}) => {
-      return  request<any>({
+    queryFn: ({ signal }) => {
+      return request<any>({
         url: `workspace/${workspace_id}/process-flow/transitions`,
         method: "GET",
         signal,
-      })
+      });
     },
     ...options,
   });
 };
 
-export const useProcessColumns = (workspace_id: any, sheet_id: any, options = {}) => {
+export const useProcessColumns = (
+  workspace_id: any,
+  sheet_id: any,
+  options = {}
+) => {
   return useQuery({
     queryKey: ["process-columns", workspace_id, sheet_id],
     queryFn: () => {
       const sheetIdValue = unref(sheet_id);
       const columns = sampleProcessColumns.filter(
-        col => col.sheet_id === sheetIdValue
+        (col) => col.sheet_id === sheetIdValue
       );
 
-      return Promise.resolve(columns.map(col => ({
-        ...col,
-        processes: sampleProcesses.filter(p => p.column_id === col.id)
-      })));
+      return Promise.resolve(
+        columns.map((col) => ({
+          ...col,
+          processes: sampleProcesses.filter((p) => p.column_id === col.id),
+        }))
+      );
     },
     enabled: computed(() => !!unref(sheet_id)),
     ...options,
@@ -175,12 +181,16 @@ export const useWorkflowData = (process_id: any, options = {}) => {
     queryKey: ["workflow-data", process_id],
     queryFn: () => {
       const procId = unref(process_id);
-      const statuses = sampleWorkflowStatuses.filter(s => s.process_id === procId);
-      const transitions = sampleWorkflowTransitions.filter(t => t.process_id === procId);
+      const statuses = sampleWorkflowStatuses.filter(
+        (s) => s.process_id === procId
+      );
+      const transitions = sampleWorkflowTransitions.filter(
+        (t) => t.process_id === procId
+      );
 
       return Promise.resolve({
         statuses,
-        transitions
+        transitions,
       });
     },
     enabled: !!unref(process_id),
@@ -239,7 +249,7 @@ export const useDeleteStatus = (options = {}) =>
   );
 
 type CreateTransition = { payload: any };
-export const useCreateTransition = (options = {}) =>
+export const useCreateTransition = (id: any, options = {}) =>
   useApiMutation<any, CreateTransition>(
     {
       key: ["create-transition"],
@@ -247,7 +257,7 @@ export const useCreateTransition = (options = {}) =>
     {
       mutationFn: (vars: CreateTransition) =>
         request({
-          url: `/workspace/workflow-transitions`,
+          url: `workspace/${id}/process-flow/transitions`,
           method: "POST",
           data: vars.payload,
         }),
@@ -375,3 +385,16 @@ export const useBatchUpdateWorkflow = (options = {}) =>
       ...(options as any),
     } as any
   );
+export const useProcessStatus = (workspace_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["process-status", workspace_id],
+    queryFn: ({ signal }) => {
+      return request<any>({
+        url: `common/cardstatus-sheet?workspace_id=${workspace_id}`,
+        method: "GET",
+        signal,
+      });
+    },
+    ...options,
+  });
+};

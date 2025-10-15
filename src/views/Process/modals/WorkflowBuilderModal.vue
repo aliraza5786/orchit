@@ -19,8 +19,8 @@
               <i class="fa-solid fa-plus mr-2"></i>Add Status
             </Button>
             <Button @click="handleUpdateWorkflow" variant="primary" size="sm"
-              :disabled="isBatchUpdating || !workflowState.hasChanges.value">
-              {{ isBatchUpdating ? 'Saving...' : `Update workflow${workflowState.changeCount.value > 0 ? `
+              >
+              {{ Canvas?.isSuccess ? 'Saving...' : `Update workflow${workflowState.changeCount.value > 0 ? `
               (${workflowState.changeCount.value})` : ''}` }}
             </Button>
             <button class="text-text-secondary hover:text-text-primary text-xl" @click="close">
@@ -147,24 +147,27 @@ function handleWorkflowUpdate() {
 }
 
 function handleUpdateWorkflow() {
-  if (!workflowState.hasChanges.value) {
-    toast.info('No changes to save')
-    return
-  }
+  console.log('>>> i am upading ');
+  
+  // if (!workflowState.hasChanges.value) {
+    // toast.info('No changes to save')
+    Canvas.value.saveWorkflow();
+    // return
+  
 
-  const validation = workflowState.validateWorkflow()
-  if (!validation.isValid) {
-    toast.error(`Cannot save workflow: ${validation.errors[0]}`)
-    return
-  }
+  // const validation = workflowState.validateWorkflow()
+  // if (!validation.isValid) {
+  //   toast.error(`Cannot save workflow: ${validation.errors[0]}`)
+  //   return
+  // }
 
-  const changes = workflowState.getChanges()
+  // const changes = workflowState.getChanges()
 
-  batchUpdate({
-    processId: processId.value,
-    statuses: changes.statuses,
-    transitions: changes.transitions
-  })
+  // batchUpdate({
+  //   processId: processId.value,
+  //   statuses: changes.statuses,
+  //   transitions: changes.transitions
+  // })
 }
 
 function handleZoomIn() {
