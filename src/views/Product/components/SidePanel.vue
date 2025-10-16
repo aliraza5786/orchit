@@ -87,8 +87,9 @@
             <h3 class="text-sm font-medium text-text-primary">History</h3>
           </div>
           <ul class=" flex flex-col gap-3  border border-border rounded-md p-4  bg-bg-surface/30">
-            <li v-for="(h, i) in details.history" :key="i"  class="text-xs text-text-secondary">
-       <span class=" capitalize font-bold">{{ h.user.u_full_name }}</span> changed   <span class=" capitalize font-bold">{{ h.field_name }}</span>  
+            <li v-for="(h, i) in details.history" :key="i" class="text-xs text-text-secondary">
+              <span class=" capitalize font-bold">{{ h.user.u_full_name }}</span> changed <span
+                class=" capitalize font-bold">{{ h.field_name }}</span>
             </li>
           </ul>
         </div>
@@ -144,7 +145,8 @@
           <textarea v-model="newComment" rows="3" class="w-full bg-bg-input p-3  outline-none text-sm"
             placeholder="Write a comment" />
           <div class="flex items-center justify-end p-2 bg-bg-body">
-            <Button variant="primary" label="" size="sm"  @click="postComment" :disabled="!newComment.trim()">{{isPostingComment? 'Posting....':'Post'}}</Button>
+            <Button variant="primary" label="" size="sm" @click="postComment" :disabled="!newComment.trim()">{{
+              isPostingComment ? 'Posting....' : 'Post' }}</Button>
           </div>
         </div>
       </section>
@@ -240,8 +242,10 @@ function saveTitle() {
 /* -------------------- Description -------------------- */
 const description = ref(props.details['card-description'])
 watch(() => props.details, () => { description.value = props.details['card-description'] })
-const updateDetailHandler = () => {
-  moveCard.mutate({ card_id: props.details._id, variables: { 'card-description': description.value } })
+const updateDetailHandler = (attachments: []) => {
+  console.log(attachments, '>>>>');
+
+  moveCard.mutate({ card_id: props.details._id, attachments, variables: { 'card-description': description.value } })
 }
 
 /* -------------------- Meta -------------------- */
@@ -287,9 +291,9 @@ const { data: commentsData } = useComments(commentId)
 watch(() => commentsData.value, () => {
   comments.value = commentsData.value?.comments
 })
-const { mutate: createComment , isPending:isPostingComment} = useCreateComment({
+const { mutate: createComment, isPending: isPostingComment } = useCreateComment({
   onSuccess: (data: any) => {
-      newComment.value = ''
+    newComment.value = ''
     comments.value = [...comments.value, data]
   }
 })

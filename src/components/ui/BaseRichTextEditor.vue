@@ -145,7 +145,7 @@ const editor = new Editor({
     onUpdate: ({ editor }) => emit('update:modelValue', editor.getHTML()),
     onFocus: () => { isFocused.value = true },
     onBlur: () => {
-        emit('focusOut');
+        emit('focusOut', filePreviews.value);
         setTimeout(() => {
             if (!toolbarHover.value && !showLinkPanel.value) {
                 isFocused.value = false
@@ -164,12 +164,12 @@ const setTextType = () => {
 const { mutate: uploadFile } = useUploadFile({
     onSuccess: (uploadUrl: any) => {
         const uploadedFileUrl = uploadUrl.data.url
-        const file = uploadUrl.data.file
+        const file = uploadUrl.data.name
 
-        if (uploadedFileUrl.endsWith('.png') || uploadedFileUrl.endsWith('.jpg')||uploadedFileUrl.endsWith('.jepg')) {
+        if (uploadedFileUrl.endsWith('.png') || uploadedFileUrl.endsWith('.jpg') || uploadedFileUrl.endsWith('.jepg')) {
             // Image file, insert it into the editor
-            editor.chain().focus().insertContent(`<img src="${uploadedFileUrl}" alt="${file?.name}" />`).run();
-        } 
+            editor.chain().focus().insertContent(`<img src="${uploadedFileUrl}" alt="${file}" />`).run();
+        }
         else {
 
             console.log('>>> ', uploadedFileUrl);
@@ -177,7 +177,7 @@ const { mutate: uploadFile } = useUploadFile({
             filePreviews.value = [
                 ...filePreviews.value,
                 {
-                    // name: file.name,
+                    name: file,
                     url: uploadedFileUrl,
                 }]
 
