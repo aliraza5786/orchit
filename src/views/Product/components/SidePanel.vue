@@ -100,6 +100,16 @@
       <section v-else-if="activeTab === 'comments'" class="space-y-4 flex-grow overflow-y-auto ">
         <div class="space-y-3">
           <div v-for="c in (comments ?? [])" :key="c._id" class="rounded-md border border-border p-3 bg-bg-input/40">
+            <div v-if="c?.attachments?.length > 0" class="my-3">
+              <p class="text-sm text-text-secondary">Attachments:</p>
+              <div class="flex gap-3">
+                <a :href="file.url" v-for="(file, index) in c.attachments" :key="index" target="_blank"
+                  class="border border-border flex rounded-md p-2 bg-bg-input/40">
+                  <i class="fa-regular fa-file text-sm text-text-secondary"></i>
+                  <span class="text-xs line-clamp-1">{{ file?.name }}</span>
+                </a>
+              </div>
+            </div>
 
             <div class="flex items-center gap-2 mb-2">
               <div class="h-6 w-6 rounded-full bg-accent/10 flex items-center justify-center text-[11px] font-medium">
@@ -140,15 +150,23 @@
           </div>
         </div>
 
+
         <!-- New comment -->
         <div class="border border-border rounded-md overflow-hidden sticky bottom-0 bg-bg-body">
           <textarea v-model="newComment" rows="3" class="w-full bg-bg-input p-3  outline-none text-sm"
             placeholder="Write a comment" />
+
+          <!-- File Attachment -->
+          <input type="file" @change="handleFileChange" class="mt-2" multiple />
+
           <div class="flex items-center justify-end p-2 bg-bg-body">
-            <Button variant="primary" label="" size="sm" @click="postComment" :disabled="!newComment.trim()">{{
-              isPostingComment ? 'Posting....' : 'Post' }}</Button>
+            <Button variant="primary" label="" size="sm" @click="postComment"
+              :disabled="!newComment.trim() && !commentAttachments.length">
+              {{ isPostingComment ? 'Posting....' : 'Post' }}
+            </Button>
           </div>
         </div>
+
       </section>
 
       <!-- TAB: Attachment -->
@@ -243,8 +261,6 @@ function saveTitle() {
 const description = ref(props.details['card-description'])
 watch(() => props.details, () => { description.value = props.details['card-description'] })
 const updateDetailHandler = (attachments: []) => {
-  console.log(attachments, '>>>>');
-
   moveCard.mutate({ card_id: props.details._id, attachments, variables: { 'card-description': description.value } })
 }
 
@@ -294,6 +310,7 @@ watch(() => commentsData.value, () => {
 const { mutate: createComment, isPending: isPostingComment } = useCreateComment({
   onSuccess: (data: any) => {
     newComment.value = ''
+    commentAttachments.value = []; // Clear attachments after posting
     comments.value = [...comments.value, data]
   }
 })
@@ -305,15 +322,6 @@ const formatDateTime = (iso?: string) => {
   if (!iso) return ''
   const d = new Date(iso)
   return d.toLocaleString()
-}
-function postComment() {
-  const comment_text = newComment.value.trim()
-  if (!comment_text) return
-  createComment({
-    id: props.details._id,
-    payload: { comment_text }
-  })
-
 }
 
 /* -------------------- Attachments -------------------- */
@@ -414,4 +422,38 @@ const handleSelect = (val: any, slug: any) => {
 
   })
 }
+
+// State to hold file attachments
+const commentAttachments = ref<File[]>([]);
+
+// Handle file selection
+function handleFileChange(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (input.files) {
+    // Store the selected files
+    commentAttachments.value = Array.from(input.files);
+  }
+}
+
+// Modify the postComment function to include the attachments
+function postComment() {
+  const comment_text = newComment.value.trim();
+  if (!comment_text && !commentAttachments.value.length) return; // Don't post if there's no comment or attachment
+
+  // Prepare the data to be sent (comment and attachments)
+  const commentData = {
+    comment_text,
+    attachments: commentAttachments.value.map(file => ({
+      name: file.name,
+      url: URL.createObjectURL(file), // This can be changed depending on how your backend handles file storage
+      kind: file.type.split('/')[0],  // Could be 'image', 'video', or 'file'
+    }))
+  };
+
+  createComment({
+    id: props.details._id,
+    payload: commentData
+  })
+}
+
 </script>
