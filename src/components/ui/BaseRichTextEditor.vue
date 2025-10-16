@@ -8,7 +8,7 @@
         <div :class="[
             'rounded-lg border',
             theme === 'dark'
-                ? 'bg-[#131318] border-border  text-white'
+                ? 'bg-[#131318] border-border text-white'
                 : 'bg-bg-input border-border text-text-primary'
         ]">
             <!-- Content -->
@@ -25,11 +25,13 @@
                         ? 'border-border text-text-secondary bg-[#0D0D10]'
                         : 'border-white bg-accent text-white'
                 ]">
+                <!-- Undo/Redo buttons -->
                 <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" :class="btnClass"
                     title="Undo">↩</button>
                 <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" :class="btnClass"
                     title="Redo">↪</button>
 
+                <!-- Text type selector -->
                 <select v-model="textType" @change="setTextType"
                     :class="['text-sm bg-transparent focus:outline-none rounded-md px-1 py-1', theme === 'dark' ? 'text-white' : 'text-white ']">
                     <option value="paragraph">Normal text</option>
@@ -37,6 +39,7 @@
                     <option value="heading2">Heading 2</option>
                 </select>
 
+                <!-- Formatting buttons -->
                 <button @click.prevent="editor.chain().focus().toggleBold().run()"
                     :class="[btnClass, editor.isActive('bold') ? activeBtnClass : '']"
                     title="Bold"><strong>B</strong></button>
@@ -50,6 +53,7 @@
                     :class="[btnClass, editor.isActive('codeBlock') ? activeBtnClass : '']"
                     title="Code">&lt;/&gt;</button>
 
+                <!-- List buttons -->
                 <button @click.prevent="editor.chain().focus().toggleBulletList().run()"
                     :class="[btnClass, editor.isActive('bulletList') ? activeBtnClass : '']" title="Bulleted list">
                     <i class="fa-sold fa-list"></i>
@@ -76,66 +80,29 @@
                     Remove
                 </button>
 
-                <!-- File upload button -->
+                <!-- Option 1 - Upload Images button -->
+                <label @click.prevent="imageInput.click()" class="cursor-pointer" :class="btnClass">
+                    Upload Image
+                </label>
+                <input ref="imageInput" type="file" class="hidden" accept="image/*" multiple
+                    @change="handleImageUpload" />
+
+                <!-- Option 2 - Upload Attachments button -->
                 <label @click.prevent="fileInput.click()" class="cursor-pointer" :class="btnClass">
                     Upload Attachment
                 </label>
-                <input ref="fileInput" type="file" class="hidden" @change="handleFileUpload" />
+                <input ref="fileInput" type="file" class="hidden" multiple @change="handleFileUpload" />
 
-                <!-- Attachment Preview -->
-                <div v-if="filePreview" class="mt-2 p-3 border rounded-lg">
-                    <div class="flex items-center">
-                        <div v-if="fileType === 'pdf'" class="mr-3">
-                            <i class="fas fa-file-pdf text-red-600"></i>
-                        </div>
-                        <div v-if="fileType === 'docx'" class="mr-3">
-                            <i class="fas fa-file-word text-blue-600"></i>
-                        </div>
-                        <div v-if="fileType === 'image'" class="mr-3">
-                            <img :src="filePreview" alt="Image Preview" class="w-12 h-12 object-cover" />
-                        </div>
+                <!-- Option 2 - Attachment Previews -->
+                <div v-if="filePreviews.length > 0" class="mt-2">
+                    <div v-for="(file, index) in filePreviews" :key="index"
+                        class="flex items-center mb-2 p-2 border rounded-lg">
                         <div class="flex-1">
-                            <span>{{ fileName }}</span>
+                            <span>{{ file.name }}</span>
                         </div>
-                        <a :href="filePreview" target="_blank" class="text-blue-500 hover:underline ml-2">View</a>
+                        <button @click="removeFile(index)" class="text-red-500 ml-2">✖</button>
                     </div>
                 </div>
-
-                <!-- Link Panel -->
-                <div v-if="showLinkPanel" class="w-full mt-2 p-3 rounded-xl border shadow-sm"
-                    :class="theme === 'dark' ? 'bg-[#111114] border-border text-white' : 'bg-white border-border text-white'"
-                    @click.stop>
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-start">
-                        <div class="md:col-span-3">
-                            <label class="text-xs opacity-70">URL</label>
-                            <input ref="hrefInputRef" v-model="linkHref" type="text" placeholder="https://example.com"
-                                class="mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none" :class="theme === 'dark'
-                                    ? 'bg-[#0D0D10] border-border !text-white placeholder-white/40'
-                                    : 'bg-white border-gray-300 text-white placeholder-gray-400'"
-                                @keydown.enter.prevent="applyLink" />
-                            <p v-if="linkError" class="text-xs text-red-500 mt-1">{{ linkError }}</p>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="text-xs opacity-70">Text (optional)</label>
-                            <input v-model="linkText" type="text" :placeholder="selectionText || 'Link text…'"
-                                class="mt-1 w-full rounded-lg border px-3 py-2 text-sm outline-none" :class="theme === 'dark'
-                                    ? 'bg-[#0D0D10] border-border 353D50] !text-white placeholder-white/40'
-                                    : 'bg-white border-gray-300 text-white placeholder-gray-400'"
-                                @keydown.enter.prevent="applyLink" />
-                        </div>
-
-                        <div class="md:col-span-5 flex items-center gap-2 justify-end pt-1">
-                            <button type="button" :class="btnClass" @click="closeLinkPanel">Cancel</button>
-                            <button type="button" class="px-3 py-1.5 rounded-md text-sm"
-                                :class="theme === 'dark' ? 'bg-white text-white' : 'bg-black text-white'"
-                                @click="applyLink">
-                                Apply
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <!-- /Link Panel -->
             </div>
         </div>
     </div>
@@ -144,9 +111,10 @@
 <script setup lang="ts">
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
-import { onBeforeUnmount, ref, watch, computed, nextTick } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
+import { useUploadFile } from '../../queries/useCommon'
 
 const props = withDefaults(defineProps<{
     modelValue: string
@@ -155,14 +123,11 @@ const props = withDefaults(defineProps<{
     theme?: 'light' | 'dark'
 }>(), { theme: 'light' })
 const showLinkPanel = ref(false)
-
 const isFocused = ref(false)
 const toolbarHover = ref(false)
+const filePreviews = ref<any[]>([]) // Store file previews for Option 2
+const imageInput = ref<HTMLInputElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
-
-const filePreview = ref<string | null>(null)
-const fileName = ref<string>('')
-const fileType = ref<string>('')
 
 const editor = new Editor({
     content: props.modelValue,
@@ -178,9 +143,7 @@ const editor = new Editor({
         Image,
     ],
     onUpdate: ({ editor }) => emit('update:modelValue', editor.getHTML()),
-    onFocus: () => {
-        isFocused.value = true
-    },
+    onFocus: () => { isFocused.value = true },
     onBlur: () => {
         emit('focusOut');
         setTimeout(() => {
@@ -198,44 +161,59 @@ const setTextType = () => {
     else editor.chain().focus().setParagraph().run()
 }
 
-/* ----- File Upload ----- */
-const handleFileUpload = (event: Event) => {
-    const input = event.target as HTMLInputElement
-    if (input.files && input.files.length > 0) {
-        const file = input.files[0]
-        const fileURL = URL.createObjectURL(file)
+const { mutate: uploadFile } = useUploadFile({
+    onSuccess: (uploadUrl: any) => {
+        const uploadedFileUrl = uploadUrl.data.url
+        const file = uploadUrl.data.file
 
-        filePreview.value = fileURL
-        fileName.value = file.name
+        if (uploadedFileUrl.endsWith('.png') || uploadedFileUrl.endsWith('.jpg')||uploadedFileUrl.endsWith('.jepg')) {
+            // Image file, insert it into the editor
+            editor.chain().focus().insertContent(`<img src="${uploadedFileUrl}" alt="${file?.name}" />`).run();
+        } 
+        else {
 
-        if (file.type.startsWith('image/')) {
-            fileType.value = 'image'
-            // Insert image into the editor
-            editor.chain().focus().insertContent(`<img src="${fileURL}" alt="${file.name}" />`).run()
-        } else if (file.type === 'application/pdf') {
-            editor.chain().focus().insertContent(`                  
-            <div  class="mt-2 p-3 border rounded-lg">
-            <div class="flex items-center">
-            <i class="fas fa-file-pdf text-red-600"></i> 
-         <a href="${fileURL}" target="_blank" class="text-blue-500 hover:underline ml-2">View</a>
-        </div>    </div>`).run()
+            console.log('>>> ', uploadedFileUrl);
 
-            fileType.value = 'pdf'
-        } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-            fileType.value = 'docx'
-        } else {
-            fileType.value = 'other'
+            filePreviews.value = [
+                ...filePreviews.value,
+                {
+                    // name: file.name,
+                    url: uploadedFileUrl,
+                }]
+
         }
-    }
+    },
+})
+
+const handleImageUpload = (event: any) => {
+    const files = event.target.files
+    Array.from(files).forEach((file: File) => {
+        const fd = new FormData()
+        fd.append('file', file)
+        uploadFile(fd)  // Trigger the upload API
+    })
+
 }
 
-/* ----- Sync & Cleanup ----- */
+const handleFileUpload = (event: any) => {
+    const files = event.target.files
+    Array.from(files).forEach((file: File) => {
+        const fd = new FormData()
+        fd.append('file', file)
+        uploadFile(fd)  // Trigger the upload API
+    })
+}
+
+const removeFile = (index: number) => {
+    filePreviews.value.splice(index, 1)
+}
+
 watch(() => props.modelValue, (val) => {
     if (val !== editor.getHTML()) editor.commands.setContent(val || '', false)
 })
+
 onBeforeUnmount(() => editor.destroy())
 
-/* ----- Button classes ----- */
 const btnClass = computed(() =>
     [
         'px-2 py-1 rounded-md border text-sm transition',
@@ -243,12 +221,12 @@ const btnClass = computed(() =>
         props.theme === 'dark'
             ? 'border-border text-text-secondary -200 hover:bg-[#1a1a1f]'
             : 'border-border text-white hover:bg-accent-hover'
-    ].join(' ')
-)
+    ].join(' '))
 
 const activeBtnClass = computed(() =>
     props.theme === 'dark' ? 'bg-[#2B2C30] text-white' : 'bg-accent text-white'
 )
+
 function validateUrl(href: string) {
     try {
         if (!href) return false
@@ -257,5 +235,6 @@ function validateUrl(href: string) {
         return !!u.host
     } catch { return false }
 }
+
 const emit = defineEmits(['update:modelValue', 'focusOut'])
 </script>
