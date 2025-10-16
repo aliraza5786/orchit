@@ -16,6 +16,7 @@
                         props.details.title }}</h1>
                 </div>
             </div>
+            <SwitchTab v-model="activeTab" :options="tabOptions" />
 
             <div class="flex flex-col mt-2">
                 <h1 class="text-base font-medium text-text-primary cursor-pointer">
@@ -27,42 +28,54 @@
                     props?.details?.assigned_cards_count }}</span>
             </div>
             <!-- Title -->
-            <div class="mb-2 capitalize">
-                <template v-if="editingTitle">
-                    <input ref="titleInput" v-model="localTitle" @blur="saveTitle" @keydown.enter.prevent="saveTitle"
-                        @keydown.esc.prevent="cancelEdit"
-                        class="border border-border rounded px-2 py-1 w-full text-xl font-medium" type="text" />
-                </template>
-                <template v-else>
-                    <h1 class="text-xl font-medium text-text-primary cursor-pointer" @click="editTitle">
-                        {{ localTitle }}
-                    </h1>
-                </template>
-            </div>
+            <section v-if="activeTab == 'details'">
 
-            <div class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4">
-                <div v-for="(item, index) in peopleVar" :key="index">
-                    {{ item.title }}
-                    <TypeChanger :key="index"  :placeholder="`select ${item.title}`" @click.stop :default="item?.value ?? `select ${item.title}`" :data="item?.data"
-                        :cardId="details?._id" @onselect="(val: any) => handleSelect(val, item._id)" />
-
+                <div class="mb-2 capitalize">
+                    <template v-if="editingTitle">
+                        <input ref="titleInput" v-model="localTitle" @blur="saveTitle"
+                            @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEdit"
+                            class="border border-border rounded px-2 py-1 w-full text-xl font-medium" type="text" />
+                    </template>
+                    <template v-else>
+                        <h1 class="text-xl font-medium text-text-primary cursor-pointer" @click="editTitle">
+                            {{ localTitle }}
+                        </h1>
+                    </template>
                 </div>
-            </div>
-            <span class="text-base text-text-primary">Worked On</span>
-            <ul v-if="details?.assigned_cards?.length > 0" class="border border-border space-y-1 p-2.5 mt-1 rounded-lg">
-                <li class="p-2 " v-for="(item, index) in details?.assigned_cards" :key="index">
-                    <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
-                    <p class="text-xs text-text-secondary">Design Project . Olivia Updated on April 9, 2025</p>
-                </li>
-            </ul>
 
-            <span class="text-base text-text-primary">history</span>
-            <ul v-if="details?.assignment_history?.length > 0" class="border border-border space-y-1 p-2.5 mt-1 rounded-lg">
-                <li class="p-2 " v-for="(item, index) in details?.assignment_history" :key="index">
-                    <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
-                    <p class="text-xs text-text-secondary">Design Project . Olivia Updated on April 9, 2025</p>
-                </li>
-            </ul>
+                <div>
+                    <div v-for="(item, index) in peopleVar" :key="index"
+                        class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4">
+                        {{ item.title }}
+                        <TypeChanger :key="index" :placeholder="`select ${item.title}`" @click.stop
+                            :default="item?.value ?? `select ${item.title}`" :data="item?.data" :cardId="details?._id"
+                            @onselect="(val: any) => handleSelect(val, item._id)" />
+
+                    </div>
+                </div>
+            </section>
+
+
+            <section v-if="activeTab == 'tasks'" class="mt-3">
+                <span class="text-base text-text-primary">Worked On</span>
+                <ul v-if="details?.assigned_cards?.length > 0"
+                    class="border border-border space-y-1 p-2.5 mt-1 rounded-lg">
+                    <li class="p-2 " v-for="(item, index) in details?.assigned_cards" :key="index">
+                        <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
+                        <p class="text-xs text-text-secondary">Design Project . Olivia Updated on April 9, 2025</p>
+                    </li>
+                </ul>
+            </section>
+            <section v-if="activeTab == 'history'" class="mt-3">
+                <span class="text-base text-text-primary">history</span>
+                <ul v-if="details?.assignment_history?.length > 0"
+                    class="border border-border space-y-1 p-2.5 mt-1 rounded-lg">
+                    <li class="p-2 " v-for="(item, index) in details?.assignment_history" :key="index">
+                        <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
+                        <p class="text-xs text-text-secondary">Design Project . Olivia Updated on April 9, 2025</p>
+                    </li>
+                </ul>
+            </section>
         </div>
     </div>
 </template>
@@ -75,6 +88,14 @@ import { useQueryClient } from '@tanstack/vue-query'
 import ProgressBar from '../../../components/ui/ProgressBar.vue'
 import { usePeopleVar, useUpdateVar } from '../../../queries/usePeople'
 import TypeChanger from '../../Product/components/TypeChanger.vue'
+import SwitchTab from '../../../components/ui/SwitchTab.vue'
+
+const activeTab = ref<'details' | 'tasks' | 'history'>('details')
+const tabOptions = [
+    { label: 'Details', value: 'details' },
+    { label: 'Tasks', value: 'tasks' },
+    { label: 'History', value: 'history' },
+]
 const { data: peopleVar } = usePeopleVar()
 const { mutate: UpdateVar } = useUpdateVar();
 const props = defineProps({
@@ -158,7 +179,7 @@ const moveCard = useMoveCard({
 })
 const handleSelect = (val: any, slug: any) => {
     // console.log(ticketID.value, '>>>');
-console.log(slug, 'slug',val);
+    console.log(slug, 'slug', val);
 
     UpdateVar({
         id: props.details._id,
