@@ -32,7 +32,8 @@
 
             <!-- Assignment trigger (stops bubbling) -->
             <div @click.stop>
-                <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to" :seat="ticket?.seat" />
+                <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
+                    :seat="ticket?.seat" />
             </div>
         </div>
 
@@ -67,7 +68,7 @@ import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal
 import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
-const {workspaceId} = useRouteIds();
+const { workspaceId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 
 type Priority = any
@@ -128,6 +129,9 @@ const queryClient = useQueryClient()
 const moveCard = useMoveCard({
     onSuccess: () => {
         queryClient.invalidateQueries({
+            queryKey: ['people-lists']
+        })
+        queryClient.invalidateQueries({
             queryKey: ['get-sheets']
         })
         queryClient.invalidateQueries({
@@ -169,7 +173,8 @@ const assignHandle = (user: any) => {
         card_id: props.ticket._id,
         seat_id: user?._id
     }
-    moveCard.mutate(payload)
+    moveCard.mutate(payload);
+
 }
 defineEmits(['click'])
 </script>

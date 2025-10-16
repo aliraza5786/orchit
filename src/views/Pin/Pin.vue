@@ -27,7 +27,18 @@
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
-                :variable_id="selected_view_by" :sheet_id="selected_sheet_id" />
+                :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
+
+                <template #emptyState>
+                    <div class="flex flex-col items-center justify-center gap-2 py-10">
+                        <img src="../../assets/emptyStates/pin.png" alt="" />
+                        <h1 class="text-sm text-text-primary mt-2">Start creating your pins</h1>
+                        <p class="text-sm text-text-secondary mb-2 text-center">Create pins and add your ideas into the
+                            related pins.</p>
+                        <Button size="sm">Create Pin</Button>
+                    </div>
+                </template>
+            </KanbanBoard>
             <div class="min-w-[328px] " @click.stop>
                 <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
                     <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
@@ -55,8 +66,9 @@
         cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
             showDelete = false
         }" />
-    <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
-        v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
+    <CreateTaskModal :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
+        :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal"
+        @submit="" />
     <SidePanel :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
         :showPanel="selectedCard?.variables.length > 0 ? true : false" />
     <CreateSheetModal v-model="isCreateSheetModal" />
@@ -73,12 +85,14 @@ import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../composables/useQueryParams';
+import Button from '../../components/ui/Button.vue';
+import CreateTaskModal from '../Product/modals/CreateTaskModal.vue';
 
-const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
-const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
-const CreateVariableModal = defineAsyncComponent(() => import('./modals/CreateVariableModal.vue'))
-const ConfirmDeleteModal = defineAsyncComponent(() => import('./modals/ConfirmDeleteModal.vue'))
-const SidePanel = defineAsyncComponent(() => import('./components/SidePanel.vue'))
+// const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
+// const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
+// const CreateVariableModal = defineAsyncComponent(() => import('./modals/CreateVariableModal.vue'))
+// const ConfirmDeleteModal = defineAsyncComponent(() => import('./modals/ConfirmDeleteModal.vue'))
+// const SidePanel = defineAsyncComponent(() => import('./components/SidePanel.vue'))
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 const isCreateVar = ref(false)
 const route = useRoute();

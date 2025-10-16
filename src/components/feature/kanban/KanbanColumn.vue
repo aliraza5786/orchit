@@ -44,12 +44,12 @@
           </slot>
         </div>
       </template>
-
       <template #footer>
-        <div v-if="!localTickets.length"
+        <slot v-if="!localTickets.length" name="emptyState"  ></slot>
+        <!-- <div v-if="!localTickets.length"
           class="flex items-center justify-center h-32 text-muted-foreground text-sm border border-border text-secondary border-dashed rounded-lg">
           Drop tickets here
-        </div>
+        </div> -->
       </template>
     </Draggable>
 

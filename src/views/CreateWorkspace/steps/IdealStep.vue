@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import AudioRecorder from '../components/AudioRecorder.vue';
 import { toast } from 'vue-sonner';
 import { useCreateWorkspaceWithAI, useDescription, useSuggestions } from '../../../queries/useWorkspace';
@@ -135,9 +135,13 @@ function handleGenerate() {
   localStorage.setItem('mannualWorkspace', 'false');
   generate({ idea: description.value });
 }
-
+onMounted(()=>{
+  localStorage.setItem('mannualWorkspace', 'false')
+})
 function mannualHandler() {
+  localStorage.setItem('mannualWorkspace', 'true')
   localStorage.removeItem('workspace');
+  localStorage.removeItem('jobId');
   emit('manual', 'mannual');
 }
 

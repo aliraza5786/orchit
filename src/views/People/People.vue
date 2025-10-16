@@ -46,7 +46,7 @@
           </div>
         </div>
         <button v-else
-          class="text-sm text-white py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-accent rounded-lg"
+          class="text-sm text-text-primary py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
           @click.stop="setActiveAddList">
           + Add Team
         </button>

@@ -20,7 +20,7 @@
         @update:column="(e) => handleUpdateColumn(e)" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
         :board="localList" @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="">
         <template #ticket="{ ticket, index }"> -->
-    <div class="max-w-82 p-4 bg-bg-body rounded-md m-2">
+    <div class="max-w-82 p-4 bg-bg-body rounded-md m-4">
       <ProcessKanbanCard @click="handleClickTicket(item)" v-for="(item, index) in localList[0]?.cards" :key="index"
         :ticket="item" :index="index" />
     </div>

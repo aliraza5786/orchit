@@ -6,12 +6,16 @@
             :force-fallback="true" class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd">
             <!-- Each column -->
             <template #item="{ element: column }">
-                <div class="min-w-[320px] max-w-[320px]   rounded-lg bg-bg-surface  "
+                <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface  "
                     style="height: calc(100dvh - 190px);">
                     <KanbanColumn @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id" :variable_id="variable_id"
                         @update:column="(e) => emit('update:column', e)"
                         @select:ticket="(v: Ticket) => emit('select:ticket', v)"
                         @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd">
+                    <template #emptyState>
+                        <slot name="emptyState"></slot>
+                    </template>
+
                         <template #ticket="{ ticket, index }">
                             <slot name="ticket" :ticket="ticket" :index="index">
                             </slot>

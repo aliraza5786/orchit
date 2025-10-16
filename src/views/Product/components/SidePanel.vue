@@ -223,6 +223,7 @@ import { useComments, useCreateComment } from '../../../queries/useProductCard'
 import { useUpdateComment, useDeleteComment } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
+import { useUploadFile } from '../../../queries/useCommon'
 
 const { workspaceId } = useRouteIds()
 
@@ -427,12 +428,15 @@ const handleSelect = (val: any, slug: any) => {
 const commentAttachments = ref<File[]>([]);
 
 // Handle file selection
-function handleFileChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  if (input.files) {
-    // Store the selected files
-    commentAttachments.value = Array.from(input.files);
-  }
+function handleFileChange(event: any) {
+  // Trigger the upload API
+  const files = event.target.files
+    Array.from(files).forEach((file: any) => {
+        const fd = new FormData()
+        fd.append('file', file)
+        uploadFile(fd)  // Trigger the upload API
+    })
+  
 }
 
 // Modify the postComment function to include the attachments
@@ -444,9 +448,8 @@ function postComment() {
   const commentData = {
     comment_text,
     attachments: commentAttachments.value.map(file => ({
-      name: file.name,
-      url: URL.createObjectURL(file), // This can be changed depending on how your backend handles file storage
-      kind: file.type.split('/')[0],  // Could be 'image', 'video', or 'file'
+      name: file.data.name,
+      url: file.data.url, // This can be changed depending on how your backend handles file storage
     }))
   };
 
@@ -455,5 +458,13 @@ function postComment() {
     payload: commentData
   })
 }
+const { mutate: uploadFile } = useUploadFile({
+  onSuccess: (data: any) => {
+    commentAttachments.value = [
+      data
+    ]
+
+  }
+});
 
 </script>

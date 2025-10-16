@@ -26,7 +26,7 @@
         placeholder="Select value" :allowCustom="true" />
 
       <!-- Start date -->
-      <div class="flex gap-1 flex-col">
+      <div class="flex gap-1 flex-col" v-if="!pin">
         <label class="text-sm">Start date</label>
         <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
           :class="startDateError ? 'border-red-500' : ''">
@@ -37,7 +37,7 @@
       </div>
 
       <!-- End date -->
-      <div class="flex gap-1 flex-col">
+      <div class="flex gap-1 flex-col" v-if="!pin">
         <label class="text-sm">End date</label>
         <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
           :class="endDateError ? 'border-red-500' : ''">
@@ -83,7 +83,7 @@ const emit = defineEmits<{
 
 /** Props */
 const props = withDefaults(
-  defineProps<{ modelValue: boolean; sheet_id?: string; listId?: string | number, selectedVariable: any }>(),
+  defineProps<{ modelValue: boolean; sheet_id?: string; listId?: string | number, selectedVariable: any, pin?: Boolean }>(),
   { modelValue: false }
 )
 const queryClient = useQueryClient()
@@ -107,7 +107,7 @@ type Variable = {
   title: string
   type?: { title?: string }
   data: string[]
-  slug:string
+  slug: string
 }
 const { data: variables } = useVariables(workspaceId.value, moduleId.value)
 
@@ -204,9 +204,9 @@ const isValid = computed(
     !endDateError.value &&
     !laneError.value &&
     !!form.title.trim() &&
-    !!form.startDate &&
-    !!form.endDate 
-   
+    (!props.pin ? !!form.startDate &&
+      !!form.endDate : true)
+
 )
 
 /** Date + Lane handlers */
@@ -245,15 +245,17 @@ const selectedVar = computed(() => selectVariables.value.find((e) => e?._id == p
 
 function create() {
   touched.title = true
-  touched.startDate = true
-  touched.endDate = true
+  if (!props.pin) {
+    touched.startDate = true
+    touched.endDate = true
+  }
   if (!isValid.value || isSubmitting.value) return
   const payload = {
     sheet_list_id: props.listId,
     workspace_id: workspaceId.value,
     sheet_id: props.sheet_id,
     workspace_lane_id: form.lane_id, // ✅ included and required
-    variables: { ...form.variables, [`${selectedVar.value?.slug}`]: props.listId, ['card-title']: form.title.trim(), ['card-description']: form.description.trim(), ['start-date']: form.startDate,['end-date']: form.endDate, },
+    variables: { ...form.variables, [`${selectedVar.value?.slug}`]: props.listId, ['card-title']: form.title.trim(), ['card-description']: form.description.trim(), ['start-date']: form.startDate, ['end-date']: form.endDate, },
     createdAt: new Date().toISOString()
   }
   addTicket(payload)
