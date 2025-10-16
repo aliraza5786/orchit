@@ -20,7 +20,7 @@
             </Button>
             <Button @click="handleUpdateWorkflow" variant="primary" size="sm"
               >
-              {{ Canvas?.isSuccess ? 'Saving...' : `Update workflow${workflowState.changeCount.value > 0 ? `
+              {{ Canvas?.isSaving ? 'Updating...' : `Update workflow${workflowState.changeCount.value > 0 ? `
               (${workflowState.changeCount.value})` : ''}` }}
             </Button>
             <button class="text-text-secondary hover:text-text-primary text-xl" @click="close">
@@ -101,16 +101,16 @@ const workflowStatuses = computed(() => workflowState.localStatuses.value)
 const workflowState = useLocalWorkflowState()
 provide('workflowState', workflowState)
 
-const { mutate: batchUpdate, isPending: isBatchUpdating } = useBatchUpdateWorkflow({
-  onSuccess: () => {
-    toast.success('Workflow updated successfully')
-    workflowState.resetChanges()
-    refetchWorkflow()
-  },
-  onError: (error: any) => {
-    toast.error(`Failed to update workflow: ${error.message || 'Unknown error'}`)
-  }
-})
+// const { mutate: batchUpdate, isPending: isBatchUpdating } = useBatchUpdateWorkflow({
+//   onSuccess: () => {
+//     toast.success('Workflow updated successfully')
+//     workflowState.resetChanges()
+//     refetchWorkflow()
+//   },
+//   onError: (error: any) => {
+//     toast.error(`Failed to update workflow: ${error.message || 'Unknown error'}`)
+//   }
+// })
 
 watch(() => props.modelValue, (newVal) => {
   if (newVal && processId.value) {
