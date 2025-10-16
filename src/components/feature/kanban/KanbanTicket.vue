@@ -44,6 +44,18 @@
             <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setDueDate" />
         </div>
+
+        <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
+   <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
+       <i class="fa-regular fa-message"></i>
+    {{ ticket?.comments_count }}
+   </div>
+   <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
+       <i class="fa-regular fa-file"></i>
+    {{ ticket?.attachments.length }}
+   </div>
+
+        </div>
     </div>
 
     <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.stop @pointerdown.stop>

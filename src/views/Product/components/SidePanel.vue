@@ -50,15 +50,15 @@
           <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
             :model-value="lane" @update:modelValue="setLane" />
 
-          <span>Start date</span>
-          <div class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md">
+          <span v-if="!pin">Start date</span>
+          <div  v-if="!pin" class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md">
             <i class="fa-regular fa-calendar"></i>
             <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
               @update:modelValue="setStartDate" />
           </div>
 
-          <span>Target end</span>
-          <div class="flex gap-1 flex-col">
+          <span  v-if="!pin">Target end</span>
+          <div  v-if="!pin" class="flex gap-1 flex-col">
             <div class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md"
               :class="endDateError ? 'border-red-500' : ''">
               <i class="fa-regular fa-calendar"></i>
@@ -68,8 +68,8 @@
             <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
           </div>
 
-          <span>Assign</span>
-          <AssigmentDropdown @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
+          <span  v-if="!pin">Assign</span>
+          <AssigmentDropdown  v-if="!pin"  @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
 
           <!-- Dynamic Select variables -->
           <template v-for="(item, index) in details.variables" :key="`var-${index}`">
@@ -228,6 +228,7 @@ import { useUploadFile } from '../../../queries/useCommon'
 const { workspaceId } = useRouteIds()
 
 const props = defineProps({
+  pin:{ type: Boolean, default: false },
   showPanel: { type: Boolean, default: true },
   details: { type: Object as () => any, default: () => ({}) }
 })
