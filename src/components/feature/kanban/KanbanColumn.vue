@@ -45,7 +45,7 @@
         </div>
       </template>
       <template #footer>
-        <slot v-if="!localTickets.length" name="emptyState"  ></slot>
+        <slot v-if="!localTickets.length" name="emptyState" :column="column" ></slot>
         <!-- <div v-if="!localTickets.length"
           class="flex items-center justify-center h-32 text-muted-foreground text-sm border border-border text-secondary border-dashed rounded-lg">
           Drop tickets here

@@ -12,8 +12,8 @@
                         @update:column="(e) => emit('update:column', e)"
                         @select:ticket="(v: Ticket) => emit('select:ticket', v)"
                         @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd">
-                    <template #emptyState>
-                        <slot name="emptyState"></slot>
+                    <template #emptyState="{column}">
+                        <slot name="emptyState" :column="column"></slot>
                     </template>
 
                         <template #ticket="{ ticket, index }">

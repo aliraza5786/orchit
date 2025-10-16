@@ -31,13 +31,13 @@
                 <template #ticket="{ ticket, index }">
                     <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" :index="index" />
                 </template>
-                <template #emptyState>
+                <template #emptyState="{ column }">
                     <div class="flex flex-col items-center justify-center gap-2 py-10">
                         <img src="../../assets/emptyStates/pin.png" alt="" />
                         <h1 class="text-sm text-text-primary mt-2">Start creating your pins</h1>
                         <p class="text-sm text-text-secondary mb-2 text-center">Create pins and add your ideas into the
                             related pins.</p>
-                        <Button size="sm">Create Pin</Button>
+                        <Button size="sm" @click="plusHandler(column)">Create Pin</Button>
                     </div>
                 </template>
             </KanbanBoard>
@@ -258,10 +258,12 @@ const deleteHandler = (e: any) => {
     localColumnData.value = e;
 }
 const plusHandler = (e: any) => {
+    console.log('>>>', e);
+
     createTeamModal.value = true;
     localColumnData.value = e
 }
 const handleClickTicket = (ticket: any) => {
-  selectedCard.value = ticket
+    selectedCard.value = ticket
 }
 </script>
