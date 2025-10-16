@@ -33,6 +33,9 @@ const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
 const LandingPageLayout =()=> import ('../layout/LandingPageLayout/LandingPageLayout.vue')
 import LandingHome from '../landingPageViews/LandingHome.vue';
+import Pricing from "../views/pages/Pricing.vue";
+import TermsOfServices from "../views/pages/TermsOfServices.vue";
+ 
 
 
 
@@ -40,8 +43,10 @@ const routes: RouteRecordRaw[] = [
     {
     path: '/home',
     component: LandingPageLayout,    children: [
-      { path: '/home', name: 'landing-home', component: LandingHome, meta: { requiresAuth: false },   
-    }
+      { path: '/home', name: 'landing-home', component: LandingHome, meta: { requiresAuth: false }}, 
+      { path: '/pricing', name: 'pricing', component: Pricing, meta: { requiresAuth: false }},
+      { path: '/terms-of-services', name: 'terms-of-services', component: TermsOfServices, meta: { requiresAuth: false }},
+
     ],
 
   },
