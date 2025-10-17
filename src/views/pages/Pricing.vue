@@ -132,14 +132,14 @@ const pricingPlans: Plan[] = [
                 </div>
             </div>
             <!-- Cards -->
-            <div class="grid md:grid-cols-3  gap-[25px] md:gap-[15px] xl:gap-[44px] ">
+            <div class="grid md:grid-cols-3  gap-[25px] md:gap-[15px] xl:gap-[44px]">
                 <div v-for="plan in pricingPlans" :key="plan.name"
-                    class="relative group rounded-2xl border  border-border-input p-[28px] flex flex-col justify-between transition-all duration-300 hover:scale-[1.01]">
+                    class="relative group rounded-2xl border p-[28px] flex flex-col justify-between transition-all duration-300 hover:scale-[1.01]" :class="theme==='light'?'border-[#a495e9b5]':'border-border-input'">
                     <!-- Gradient border -->
-                    <div class="absolute inset-0 rounded-2xl p-[1px] bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 transition-opacity duration-300"
+                    <div class="absolute  inset-0 rounded-2xl p-[1px] bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 transition-opacity duration-300"
                         :class="{
                             'opacity-100': plan.highlighted,
-                            'opacity-0 group-hover:opacity-100': !plan.highlighted
+                            'opacity-0 group-hover:opacity-100 ': !plan.highlighted
                         }">
                         <div class="w-full h-full rounded-2xl bg-bg-body"></div>
                     </div>
@@ -177,13 +177,13 @@ const pricingPlans: Plan[] = [
                             // Dark Theme
                             theme === 'dark'
                                 ? (plan.highlighted
-                                    ? 'bg-white text-black hover:bg-gray-200' // highlighted dark
-                                    : 'bg-bg-charcoal text-white hover:bg-white hover:text-black' // normal dark
+                                    ? 'bg-white text-black hover:bg-gray-200' 
+                                    : 'bg-bg-charcoal text-white hover:bg-white hover:text-black'  
                                 )
                                 // Light Theme
                                 : (plan.highlighted
-                                    ? 'bg-accent text-white hover:bg-accent-hover' // highlighted light
-                                    : 'bg-bg-surface text-black hover:bg-bg-surface hover:text-black' // normal light
+                                    ? 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white' 
+                                    : 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white' 
                                 )
                            ]">
                             {{ plan.button }}
@@ -199,7 +199,7 @@ const pricingPlans: Plan[] = [
                                 <span v-if="feature.available"
                                     class="text-green-400 font-bold text-lg leading-none">✓</span>
                                 <span v-else class="text-text-secondary font-bold text-lg leading-none">✕</span>
-                                <span class="text-[14px] font-manrope  text-left leading-[21px] font-normal" :class="feature.available ? 'text-text-primary' : 'text-text-secondary'">
+                                <span class="text-[14px] font-manrope  text-left leading-[21px] font-normal" :class="[feature.available ? 'text-text-primary' : 'text-text-secondary', theme==='dark'? 'text-black':'']">
                                     {{ feature.text }}
                                 </span>
                             </li>
@@ -231,5 +231,8 @@ const pricingPlans: Plan[] = [
 
 .price-container {
     font-variant-numeric: tabular-nums;
+}
+.bg-gradinet {
+    background: linear-gradient(142.27deg, #4E3C9E 11.4%, #B5A1F7 84.44%);
 }
 </style>

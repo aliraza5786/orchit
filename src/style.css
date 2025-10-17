@@ -37,6 +37,9 @@
     --glow-2: 190 95% 62%; /* cyan */
     --glow-3: 330 90% 66%; /* pink */
     --neon-speed: 4s; /* default loop duration */
+      --bg-lavender : rgba(241, 238, 255, 1);
+  
+
 }
 
 /* dark overrides */
@@ -50,6 +53,7 @@
   --sidebar-primary: 224.3 76.3% 48%;
   --small-color:#82CFFF;
    --bg-charcoal: #2A2A2C;
+   --bg-lavender :  #27272A;
   
   --accent: #9356c5;
   --accent-hover: #6e3b96;
@@ -63,6 +67,8 @@
     --glow-2: 190 95% 62%; /* cyan */
     --glow-3: 330 90% 66%; /* pink */
     --neon-speed: 4s; /* default loop duration */
+  
+
 
 }
 
@@ -87,8 +93,8 @@
   --font-lato: "Lato", sans-serif; 
   --font-inter:"Inter", sans-serif; 
   --color-bg-charcoal:var(--bg-charcoal);
-
-  
+  --color-bg-lavender:var(--bg-lavender);
+ 
 }
 
 /* Let the layout behave normally (no forced centering) */
