@@ -1,5 +1,6 @@
 <template>
-    <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
+    <div class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
+             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
             <Dropdown v-model="selected_sheet_id" :options="transformedData" variant="secondary">
                 <template #more>
