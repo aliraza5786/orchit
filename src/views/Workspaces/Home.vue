@@ -8,7 +8,7 @@
                     </p>
                 </div>
                 <dv class="flex gap-3 items-center">
-                 
+
                     <RouterLink to="/create-workspace">
                         <Button variant="primary">
                             Create a workspace
@@ -52,11 +52,11 @@
                         :class="{ 'text-accent bg-accent-text p-1 rounded-md': currentView === 'gallery' }">
                         <i class="fa-solid fa-grid-2"></i>
                     </button>
-                    <button class=" cursor-pointer  aspect-square w-8" @click="() => currentView = 'grid'"
+                    <!-- <button class=" cursor-pointer  aspect-square w-8" @click="() => currentView = 'grid'"
                         :class="{ 'text-accent bg-accent-text p-1 rounded-md': currentView === 'grid' }">
                         <i class="fa-solid fa-list-timeline"></i>
 
-                    </button>
+                    </button> -->
                 </div>
             </div>
 
@@ -65,9 +65,9 @@
                 class="flex py-10 justify-center items-center text-sm text-text-secondary">No Workspace</div>
             <WorkspaceListTable v-else-if="currentView === 'list'" :data="data" :isPending="isPending" />
             <ProjectGallery :projects="data || []" :loading="isPending" v-else-if="currentView === 'gallery'" />
-            <StatusTable :columns="columns2" :rows="data || []" :total="data ? data.length : 0" v-model:page="page"
+            <!-- <StatusTable :columns="columns2" :rows="data || []" :total="data ? data.length : 0" v-model:page="page"
                 v-model:pageSize="pageSize" :loading="isPending"
-                @page-change="({ page, pageSize }) => fetchPage(page, pageSize)" v-else-if="currentView === 'grid'" />
+                @page-change="({ page, pageSize }) => fetchPage(page, pageSize)" v-else-if="currentView === 'grid'" /> -->
         </div>
     </div>
 </template>

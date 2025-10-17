@@ -3,7 +3,7 @@
     :aria-busy="loading ? 'true' : 'false'">
     <!-- Data cards -->
     <div v-if="!loading && projects?.length" v-for="(project, index) in projects" :key="project._id ?? index"
-      class="rounded-lg overflow-hidden  hover:shadow-md transition cursor-pointer" @click="onClick(project._id)">
+      class="rounded-lg overflow-hidden  hover:shadow-md transition cursor-pointer" @click="onClick(project)">
       <!-- Top block uses derived color -->
       <div class="h-39 flex items-center justify-center"
         :style="{ backgroundColor: colorMap[project.logo] || hashedColor(project.title || project.logo) }">
@@ -45,6 +45,7 @@
 
 <script setup lang="ts">
 import { onMounted, watch, nextTick, ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 interface Project {
   _id: string
@@ -139,13 +140,18 @@ async function computeColors() {
 }
 
 onMounted(computeColors)
+
 watch(() => [props.loading, props.projects.map(p => p.logo).join('|')], computeColors, { deep: false })
 
 /** Skeleton count */
 const resolvedSkeletonCount = computed(() => props.skeletonCount ?? 8)
-
+const router = useRouter();
 /* Row click */
-const onClick = (row_id: any) => {
-  window.open(`workspace/${row_id}/6889c39a408ed5b78d1f5244`, '_blank')
+const onClick = (row: any) => {
+  if (row.LatestTask?.job_id) { localStorage.setItem('jobId', row.LatestTask?.job_id) }
+  else {
+    localStorage.removeItem('jobId')
+  }
+  router.push(`/workspace/peak/${row._id}/${row.LatestTask?.job_id ? row.LatestTask?.job_id : ''}`)
 }
 </script>

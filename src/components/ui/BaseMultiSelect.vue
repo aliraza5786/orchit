@@ -54,7 +54,7 @@
     <ul
       v-show="open && filteredOptions.length > 0"
       ref="menuRef"
-      class="absolute left-0 z-10 text-sm p-2 border rounded shadow max-h-40 overflow-auto w-full"
+      class="absolute left-0 z-10 text-sm p-2 border rounded-md shadow max-h-40 overflow-auto w-full"
       :class="[
         theme === 'dark' ? 'bg-[#131318] text-white border-border' : 'bg-bg-dropdown text-text-primary border-border',
         dropUp ? 'bottom-[76%] ' : 'top-full '

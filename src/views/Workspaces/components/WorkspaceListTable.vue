@@ -6,8 +6,11 @@ import Collaborators from '../../../components/ui/Collaborators.vue';
 import { useRouter } from 'vue-router';
 const router = useRouter();
 const handleClick = (row: any) => {
-    localStorage.setItem('jobId', row.row.LatestTask?.job_id)
-    router.push(`/workspace/peak/${row.row._id}/${row.row.LatestTask?.job_id ? row.row.LatestTask?.job_id :''}`)
+    if (row.row.LatestTask?.job_id) { localStorage.setItem('jobId', row.row.LatestTask?.job_id) }
+    else {
+        localStorage.removeItem('jobId')
+    }
+    router.push(`/workspace/peak/${row.row._id}/${row.row.LatestTask?.job_id ? row.row.LatestTask?.job_id : ''}`)
 }
 
 const columns = [
@@ -40,6 +43,7 @@ const columns = [
 ]
 
 defineProps<{ data: [], isPending: boolean }>()
+
 </script>
 
 <template>
