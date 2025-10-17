@@ -1,0 +1,193 @@
+<script lang="ts" setup>
+import { ref } from "vue";
+import { RouterLink } from "vue-router";
+import { useTheme } from "../../../composables/useTheme";
+import lightLogo from '@assets/LandingPageImages/footer/lightLogo.webp';
+import darkLogo from '@assets/LandingPageImages/footer/darkLogo.webp';
+import borderGif from '@assets/LandingPageImages/footer/footer-top.gif';
+import linkedIn from '@assets/icons/linkedIn.webp';
+import twitter from '@assets/icons/twitter.webp';
+import lightLinkedIn from '@assets/icons/lightLinkedIn.webp';
+import lighTwitter from '@assets/icons/lightTwitter.webp';
+
+
+
+const { theme, setTheme } = useTheme(); // light / dark / system
+
+// web menu 
+interface FooterSection {
+    title: string;
+    links: { name: string; url: string }[];
+}
+
+const sections: FooterSection[] = [
+    {
+        title: "AI Task Manager",
+        links: [
+            { name: "Predictive Planner", url: "#" },
+            { name: "Context-Aware Assistant", url: "#" },
+            { name: "Privacy-First AI Tools", url: "#" },
+        ],
+    },
+    {
+        title: "Microsoft 365",
+        links: [
+            { name: "Slack", url: "#" },
+            { name: "Notion", url: "#" },
+            { name: "Trello", url: "#" },
+            { name: "AI Insights Blog", url: "#" },
+
+        ],
+    },
+    {
+        title: "Case Studies",
+        links: [
+            { name: "Help Center", url: "#" },
+            { name: "Developer Docs", url: "#" },
+            { name: "API Access", url: "#" },
+            { name: "Our Mission", url: "#" },
+        ],
+    },
+];
+
+// mobile menu
+interface MobFooterMenu {
+    name: string;
+    url: string;
+}
+const moblinks: MobFooterMenu[] = [
+    {
+        name: 'Home',
+        url: '/home'
+    },
+    {
+        name: 'About',
+        url: '#'
+    },
+    {
+        name: 'Marketplace',
+        url: '#'
+    },
+    {
+        name: 'Pricing',
+        url: '#'
+    },
+    {
+        name: 'Sales',
+        url: '#'
+    },
+    {
+        name: 'Team',
+        url: '#'
+    },
+    {
+        name: 'Portfolio',
+        url: '#    '
+    },
+    {
+        name: 'News',
+        url: '#'
+    },
+    {
+        name: 'History',
+        url: '#'
+    },
+
+
+
+]
+
+</script>
+
+<template>
+    <img :src="borderGif" alt="border top gif" class="w-full block h-[13px] bg-cover object-cover" loading="lazy">
+    <footer class="relative float-left w-full block pt-[40px] px-[15px] bg-primary ">
+        <div class="custom_container">
+            <div class="footer_main pb-[42px] lg:border-b-1 "
+                :class="theme === 'dark' ? 'border-gray-800' : 'border-gray-300'">
+                <div class="grid grid-cols-1 gap-[15px] sm:gap-[40px] xl:gap-[55px]
+                 sm:grid-cols-[1fr_1fr] md:grid-cols-[1.2fr_1fr_1fr]
+                 lg:grid-cols-[1.2fr_1fr_1fr_1fr]">
+                    <div class="footer_logo_box">
+                        <figure>
+                            <img class="object-contain mx-auto sm:mx-0 block mb-[16px] sm:mb-[8px] max-w-[111.41px] sm:max-w-[117px] w-full"
+                                :src="theme === 'dark' ? darkLogo : lightLogo" loading="lazy" alt="footer logo" />
+                        </figure>
+                        <p
+                            class="text-center sm:text-left max-w-[375px] sm:max-w-[246px] mb-[15px] lg:mb-[36px] font-normal mx-auto sm:mx-0  font-inter text-primary text-[14px] sm:text-[15px] leading-[22px] sm:leading-[24px] tracking-normal">
+                            Streamed Space is an AI-powered workspace that unifies project.
+                        </p>
+
+                        <div class="fotter_social_links flex gap-3 items-center justify-center  sm:justify-start">
+                            <a href="https://linkedin.com" target="_blank" class="text-primary text-[24px]">
+                                 <img :src="theme ==='dark'? linkedIn : lightLinkedIn" alt="linked In icon" width="20px" loading="lazy">
+                            </a>
+                            <a href="https://twitter.com" target="_blank" class="text-primary text-[24px]">
+                               <img :src="theme==='dark'? twitter: lighTwitter" alt="linked In icon" width="20px" loading="lazy">
+                            </a>
+                        </div>
+                    </div>
+                    <!-- footer web menu -->
+                    <div class="hidden sm:block" v-for="(section, index) in sections" :key="section.title">
+                        <div class="heading_box mb-[16px]">
+                            <h3
+                                class="font-inter text-primary font-semibold text-[18px] md:text-[22.88px] leading-[32px] tracking-normal">
+                                {{ section.title }}
+                            </h3>
+                        </div>
+
+                        <ul class=" transition-all duration-300 sm:block">
+                            <li class="mb-[18px] last:mb-0" v-for="link in section.links" :key="link.name">
+                                <RouterLink :to="link.url"
+                                    class="font-inter font-normal text-primary text-[15px] leading-[24px] tracking-normal hover:underline transition-colors">
+                                    {{ link.name }}
+                                </RouterLink>
+                            </li>
+                        </ul>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+    </footer>
+    <!-- footer mobile menu -->
+    <div class="mobile_menu float-left w-full flex justify-center px-[15px] py-[42px] sm:hidden border-y-1"
+        :class="theme === 'dark' ? 'border-gray-800' : 'border-gray-300'">
+        <div class=" flex justify-center items-center gap-[16px] flex-wrap max-w-[350px] ">
+            <RouterLink
+                class="font-inter font-medium text-primary text-[14px] leading-[21px] tracking-normal hover:underline"
+                v-for="(menu, index) in moblinks" :key="index" :to="menu.url">
+                {{ menu.name }}
+            </RouterLink>
+        </div>
+    </div>
+
+    <!-- copy write -->
+    <section
+        class="copy_write px-[15px] bg-primary float-left w-full  border-t-1 lg:border-t-0  pt-[18px] md:pt-[24px] pb-[18px] md:pb-[24px]  lg:pb-[40px] xl:pb-[72px]"
+        :class="theme === 'dark' ? 'border-gray-800' : 'border-gray-300'">
+        <div class="custom_container">
+            <div class="copy_write_main flex flex-col gap-2 sm:flex-row justify-between items-center">
+                <p class="font-inter text-primary font-normal text-[12px] sm:text-[14px] leading-[24px] tracking-normal">
+                    {{
+                        theme === 'dark'
+                            ? `Copyright © ${new Date().getFullYear()} Space Technologies`
+                            : `${new Date().getFullYear()} © STREAMED INC. All Rights Reserved`
+                    }}
+                </p>
+
+                <div class="copy_write_links hidden sm:flex gap-[24px]">
+                    <RouterLink
+                        class="font-inter text-primary font-normal text-[14px] hover:underline leading-[24px] tracking-normal"
+                        to="#">Terms & Conditions</RouterLink>
+                    <RouterLink
+                        class="font-inter text-primary font-normal text-[14px] hover:underline leading-[24px] tracking-normal"
+                        to="#">Privacy Policy</RouterLink>
+                </div>
+            </div>
+        </div>
+    </section>
+</template>
+
+<style scoped></style>

@@ -33,8 +33,20 @@ const More = () => import("../views/More/More.vue");
 const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
+const LandingPageLayout =()=> import ('../layout/LandingPageLayout/LandingPageLayout.vue')
+import LandingHome from '../landingPageViews/LandingHome.vue';
+
+
 
 const routes: RouteRecordRaw[] = [
+    {
+    path: '/home',
+    component: LandingPageLayout,    children: [
+      { path: '/home', name: 'landing-home', component: LandingHome, meta: { requiresAuth: false },   
+    }
+    ],
+
+  },
   {
     path: "/login",
     name: "Login",
