@@ -1,8 +1,8 @@
 <template>
-    <div class="w-full h-2 bg-bg-surface rounded-full overflow-hidden">
+    <div class="w-full h-2 bg-bg-surface rounded-full overflow-hidden relative">
       <div
         class="h-full rounded-full transition-all duration-300 ease-in-out"
-        :class="isTailwindColor ? fillColor : ''"
+        :class="[isTailwindColor ? fillColor : '', indeterminate ? 'shimmer-effect' : '']"
         :style="{ width: progress + '%', backgroundColor: isTailwindColor ? '' : fillColor }"
       ></div>
     </div>
@@ -14,6 +14,7 @@
   const props = defineProps<{
     progress: number
     fillColor?: string // tailwind class OR hex color
+    indeterminate?: boolean // show shimmer animation during AI generation
   }>()
   
   // If it starts with "bg-", treat it as a Tailwind class

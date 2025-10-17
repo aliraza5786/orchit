@@ -4,20 +4,64 @@
     <div class="p-5 rounded-lg bg-bg-card space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex flex-col w-full">
-          <h3 class="text-2xl text-text-primary font-semibold">
-            Project Overview
-          </h3>
+          <div class="flex items-center gap-3">
+            <h3 class="text-2xl text-text-primary font-semibold">
+              Project Overview
+            </h3>
+            <span
+              v-if="!isManualMode && isConnected"
+              class="px-3 py-1 rounded-full text-xs font-medium bg-accent/20 text-accent flex items-center gap-2"
+            >
+              <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+              AI Generation Active
+            </span>
+            <span
+              v-else-if="isManualMode"
+              class="px-3 py-1 rounded-full text-xs font-medium bg-green-400/20 text-green-400"
+            >
+              Manual Workspace
+            </span>
+          </div>
           <p class="text-sm text-text-secondary mt-2">
-            Last update on Sep 12, 2024 - 09.45 AM
+            {{ getLastUpdateText }}
           </p>
           <div class="flex gap-2.5 overflow-x-auto w-full py-8">
-            <ProjectCard v-for="lane in taskProgress?.progress_details?.lanes_progress" :title="lane.lane_title"
-              subtitle="Mobile Application" :progress="lane?.progress" :status="lane?.status" :avatars="[
+            <ProjectCard
+              v-for="lane in taskProgress?.progress_details?.lanes_progress"
+              :key="lane.lane_id || lane.lane_title"
+              :title="lane.lane_title"
+              subtitle="Mobile Application"
+              :progress="lane?.progress || 0"
+              :status="lane?.status || 'pending'"
+              :loading="isLaneGenerating(lane)"
+              :isManualMode="isManualMode"
+              :avatars="[
                 'https://randomuser.me/api/portraits/women/1.jpg',
                 'https://randomuser.me/api/portraits/men/2.jpg',
                 'https://randomuser.me/api/portraits/men/3.jpg',
-              ]" date="May 28" />
+              ]"
+              date="May 28"
+            />
           </div>
+
+          <!-- Empty state when no lanes are available yet -->
+          <div
+            v-if="!taskProgress?.progress_details?.lanes_progress?.length"
+            class="py-16 text-center"
+          >
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-bg-surface mb-4">
+              <svg class="w-8 h-8 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-text-primary mb-2">
+              {{ isManualMode ? 'No lanes created yet' : 'Waiting for AI to generate lanes...' }}
+            </h3>
+            <p class="text-sm text-text-secondary">
+              {{ isManualMode ? 'Start by creating your first lane' : 'This may take a few moments' }}
+            </p>
+          </div>
+
           <!-- <div class="workspace-progress">
             <div v-if="isConnected" class="connection-status connected">
               🟢 Connected to progress stream
@@ -88,15 +132,25 @@
       </div>
     </div>
     <div class="bg-bg-card p-5 rounded-lg flex-grow">
-      <StatusTable :columns="columns2" :rows="taskProgress?.progress_details?.lanes_progress ?? []" />
-
+      <div class="flex items-center justify-between mb-4">
+        <h4 class="text-lg font-semibold text-text-primary">Lane Progress Details</h4>
+        <div v-if="taskProgress" class="text-sm text-text-secondary">
+          <span class="font-medium">Overall Progress:</span>
+          <span class="ml-2 text-text-primary">{{ Math.round(taskProgress.percent) }}%</span>
+        </div>
+      </div>
+      <StatusTable
+        :columns="columns2"
+        :rows="taskProgress?.progress_details?.lanes_progress ?? []"
+        :loading="!taskProgress && isConnected"
+      />
     </div>
   </div>
 
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useJobId,useWorkspaceId } from '../composables/useQueryParams'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import StatusTable from '../components/ui/StatusTable.vue'
@@ -123,6 +177,33 @@ const eventSource = ref<EventSource | null>(null)
 const reconnectAttempts = ref(0)
 const maxReconnectAttempts = 5
 const debugInfo = ref<any>({})
+
+// Detect if workspace is created manually or with AI
+const isManualMode = computed(() => {
+  const hasJobId = !!localStorage.getItem('jobId')
+  return !hasJobId // If no jobId, it's manual mode
+})
+
+// Helper to check if a lane is currently being generated
+const isLaneGenerating = (lane: any) => {
+  if (isManualMode.value) return false
+  return lane?.status === 'in_progress' && (lane?.progress || 0) < 100
+}
+
+// Get formatted last update text
+const getLastUpdateText = computed(() => {
+  if (!taskProgress.value?.updated_at) {
+    return 'Waiting for updates...'
+  }
+  const date = new Date(taskProgress.value.updated_at)
+  return `Last updated: ${date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })}`
+})
 
 // Server configuration
 const SERVER_BASE_URL = 'https://backend.streamed.space/api/v1/workspace'

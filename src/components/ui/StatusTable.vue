@@ -26,7 +26,8 @@
         <tr
           v-for="(row, rowIndex) in visibleRows"
           :key="row.id ?? row._id ?? rowIndex"
-          class="hover:bg-bg-body "
+          class="hover:bg-bg-body transition-colors duration-300"
+          :class="getRowAnimationClass(row)"
         >
           <!-- Sticky first column -->
           <td
@@ -40,9 +41,12 @@
           <td
             v-for="(col, cIdx) in columns"
             :key="cIdx"
-            class="px-4.5 py-3.5 text-center border border-border text-text-secondary"
+            class="px-4.5 py-3.5 text-center border border-border text-text-secondary transition-all duration-300"
+            :class="getCellAnimationClass(row, col)"
           >
-            <span :class="statusClass(row[col])">{{ row[col] ?? '—' }}</span>
+            <span :class="statusClass(row[col])">
+              {{ getCellValue(row, col) }}
+            </span>
           </td>
         </tr>
       </tbody>
@@ -157,7 +161,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 interface ProjectRow {
   id?: string | number
@@ -251,6 +255,66 @@ const resolvedSkeletonRows = computed(() => props.skeletonRows ?? 6)
 const widthCycle = ['w-16', 'w-24', 'w-12', 'w-28', 'w-20', 'w-24']
 const skeletonWidth = (idx: number) => widthCycle[idx % widthCycle.length]
 
+/* Track recently updated cells and rows for animations */
+const updatedCells = ref<Set<string>>(new Set())
+const updatedRows = ref<Set<string>>(new Set())
+
+// Watch for changes in rows data to trigger animations
+watch(() => props.rows, (newRows, oldRows) => {
+  if (!oldRows || oldRows.length === 0) return
+
+  newRows.forEach((newRow, idx) => {
+    const oldRow = oldRows[idx]
+    if (!oldRow) return
+
+    const rowId = String(newRow.id ?? newRow._id ?? idx)
+    let rowUpdated = false
+
+    props.columns.forEach(col => {
+      if (newRow[col] !== oldRow[col]) {
+        const cellKey = `${rowId}-${col}`
+        updatedCells.value.add(cellKey)
+        rowUpdated = true
+
+        // Remove animation class after 2 seconds
+        setTimeout(() => {
+          updatedCells.value.delete(cellKey)
+        }, 2000)
+      }
+    })
+
+    if (rowUpdated) {
+      updatedRows.value.add(rowId)
+      setTimeout(() => {
+        updatedRows.value.delete(rowId)
+      }, 2000)
+    }
+  })
+}, { deep: true })
+
+/* Get animation class for rows that were recently updated */
+const getRowAnimationClass = (row: ProjectRow) => {
+  const rowId = String(row.id ?? row._id ?? row.lane_title)
+  return updatedRows.value.has(rowId) ? 'row-updated' : ''
+}
+
+/* Get animation class for cells that were recently updated */
+const getCellAnimationClass = (row: ProjectRow, col: string) => {
+  const rowId = String(row.id ?? row._id ?? row.lane_title)
+  const cellKey = `${rowId}-${col}`
+  return updatedCells.value.has(cellKey) ? 'cell-updated' : ''
+}
+
+/* Get cell value with "Generating..." state for AI mode */
+const getCellValue = (row: ProjectRow, col: string) => {
+  const value = row[col]
+  // Show "Generating..." if status is in_progress and cell is empty
+  if (row.status === 'in_progress' && (!value || value === 0)) {
+    return 'Generating...'
+  }
+  return value ?? '—'
+}
+
 /* Status badge classes (light + dark) */
 const statusClass = (status: string) => {
   switch (status) {
@@ -270,6 +334,12 @@ const statusClass = (status: string) => {
         'dark:bg-sky-500/20',
         'sky-300'
       ].join(' ')
+    case 'Generating...':
+      return [
+        'text-accent',
+        'animate-pulse',
+        'font-medium'
+      ].join(' ')
     default:
       return [
         'badge',
@@ -279,3 +349,34 @@ const statusClass = (status: string) => {
   }
 }
 </script>
+
+<style scoped>
+@keyframes flash-update {
+  0% {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes row-highlight {
+  0% {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.cell-updated {
+  animation: flash-update 0.6s ease-in-out;
+}
+
+.row-updated {
+  animation: row-highlight 1s ease-in-out;
+}
+</style>
