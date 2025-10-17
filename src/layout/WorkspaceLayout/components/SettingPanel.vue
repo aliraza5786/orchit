@@ -222,30 +222,33 @@
       <ActivityTimeline v-else />
     </div>
 
-    <!-- Delete Workspace Confirmation Modal -->
-    <ConfirmDeleteModal
-      v-model="showDeleteModal"
-      title="Delete Workspace"
-      :item-label="'workspace'"
-      :item-name="displayTitle"
-      :loading="isDeletingWorkspace"
-      confirm-text="Delete Workspace"
-      @confirm="handleDeleteWorkspace"
-      @cancel="showDeleteModal = false"
-    >
-      <template #message>
-        <p class="text-sm text-text-secondary">
-          This action cannot be undone. This will permanently delete the workspace <span class="font-semibold text-text-primary">{{ displayTitle }}</span> and all of its data, including:
-        </p>
-        <ul class="mt-2 text-sm text-text-secondary list-disc list-inside space-y-1">
-          <li>All tasks and cards</li>
-          <li>All team members and permissions</li>
-          <li>All files and attachments</li>
-          <li>All workspace settings</li>
-        </ul>
-      </template>
-    </ConfirmDeleteModal>
   </div>
+
+  <!-- Delete Workspace Confirmation Modal (Outside side panel for full screen) -->
+  <ConfirmDeleteModal
+    v-model="showDeleteModal"
+    title="Delete Workspace"
+    :item-label="'workspace'"
+    :item-name="displayTitle"
+    :require-match-text="displayTitle"
+    :loading="isDeletingWorkspace"
+    confirm-text="Delete Workspace"
+    size="lg"
+    @confirm="handleDeleteWorkspace"
+    @cancel="showDeleteModal = false"
+  >
+    <template #message>
+      <p class="text-sm text-text-secondary">
+        This action cannot be undone. This will permanently delete the workspace <span class="font-semibold text-text-primary">{{ displayTitle }}</span> and all of its data, including:
+      </p>
+      <ul class="mt-2 text-sm text-text-secondary list-disc list-inside space-y-1">
+        <li>All tasks and cards</li>
+        <li>All team members and permissions</li>
+        <li>All files and attachments</li>
+        <li>All workspace settings</li>
+      </ul>
+    </template>
+  </ConfirmDeleteModal>
 </template>
 
 <script setup lang="ts">
