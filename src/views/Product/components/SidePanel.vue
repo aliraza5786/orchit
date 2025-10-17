@@ -50,15 +50,15 @@
           <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
             :model-value="lane" @update:modelValue="setLane" />
 
-          <span>Start date</span>
-          <div class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md">
+          <span v-if="!pin">Start date</span>
+          <div  v-if="!pin" class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md">
             <i class="fa-regular fa-calendar"></i>
             <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
               @update:modelValue="setStartDate" />
           </div>
 
-          <span>Target end</span>
-          <div class="flex gap-1 flex-col">
+          <span  v-if="!pin">Target end</span>
+          <div  v-if="!pin" class="flex gap-1 flex-col">
             <div class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md"
               :class="endDateError ? 'border-red-500' : ''">
               <i class="fa-regular fa-calendar"></i>
@@ -68,8 +68,8 @@
             <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
           </div>
 
-          <span>Assign</span>
-          <AssigmentDropdown @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
+          <span  v-if="!pin">Assign</span>
+          <AssigmentDropdown  v-if="!pin"  @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
 
           <!-- Dynamic Select variables -->
           <template v-for="(item, index) in details.variables" :key="`var-${index}`">
@@ -87,8 +87,9 @@
             <h3 class="text-sm font-medium text-text-primary">History</h3>
           </div>
           <ul class=" flex flex-col gap-3  border border-border rounded-md p-4  bg-bg-surface/30">
-            <li v-for="(h, i) in details.history" :key="i"  class="text-xs text-text-secondary">
-       <span class=" capitalize font-bold">{{ h.user.u_full_name }}</span> changed   <span class=" capitalize font-bold">{{ h.field_name }}</span>  
+            <li v-for="(h, i) in details.history" :key="i" class="text-xs text-text-secondary">
+              <span class=" capitalize font-bold">{{ h.user.u_full_name }}</span> changed <span
+                class=" capitalize font-bold">{{ h.field_name }}</span>
             </li>
           </ul>
         </div>
@@ -99,6 +100,16 @@
       <section v-else-if="activeTab === 'comments'" class="space-y-4 flex-grow overflow-y-auto ">
         <div class="space-y-3">
           <div v-for="c in (comments ?? [])" :key="c._id" class="rounded-md border border-border p-3 bg-bg-input/40">
+            <div v-if="c?.attachments?.length > 0" class="my-3">
+              <p class="text-sm text-text-secondary">Attachments:</p>
+              <div class="flex gap-3">
+                <a :href="file.url" v-for="(file, index) in c.attachments" :key="index" target="_blank"
+                  class="border border-border flex rounded-md p-2 bg-bg-input/40">
+                  <i class="fa-regular fa-file text-sm text-text-secondary"></i>
+                  <span class="text-xs line-clamp-1">{{ file?.name }}</span>
+                </a>
+              </div>
+            </div>
 
             <div class="flex items-center gap-2 mb-2">
               <div class="h-6 w-6 rounded-full bg-accent/10 flex items-center justify-center text-[11px] font-medium">
@@ -139,14 +150,23 @@
           </div>
         </div>
 
+
         <!-- New comment -->
         <div class="border border-border rounded-md overflow-hidden sticky bottom-0 bg-bg-body">
           <textarea v-model="newComment" rows="3" class="w-full bg-bg-input p-3  outline-none text-sm"
             placeholder="Write a comment" />
+
+          <!-- File Attachment -->
+          <input type="file" @change="handleFileChange" class="mt-2" multiple />
+
           <div class="flex items-center justify-end p-2 bg-bg-body">
-            <Button variant="primary" label="" size="sm"  @click="postComment" :disabled="!newComment.trim()">{{isPostingComment? 'Posting....':'Post'}}</Button>
+            <Button variant="primary" label="" size="sm" @click="postComment"
+              :disabled="!newComment.trim() && !commentAttachments.length">
+              {{ isPostingComment ? 'Posting....' : 'Post' }}
+            </Button>
           </div>
         </div>
+
       </section>
 
       <!-- TAB: Attachment -->
@@ -203,10 +223,12 @@ import { useComments, useCreateComment } from '../../../queries/useProductCard'
 import { useUpdateComment, useDeleteComment } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
+import { useUploadFile } from '../../../queries/useCommon'
 
 const { workspaceId } = useRouteIds()
 
 const props = defineProps({
+  pin:{ type: Boolean, default: false },
   showPanel: { type: Boolean, default: true },
   details: { type: Object as () => any, default: () => ({}) }
 })
@@ -240,8 +262,8 @@ function saveTitle() {
 /* -------------------- Description -------------------- */
 const description = ref(props.details['card-description'])
 watch(() => props.details, () => { description.value = props.details['card-description'] })
-const updateDetailHandler = () => {
-  moveCard.mutate({ card_id: props.details._id, variables: { 'card-description': description.value } })
+const updateDetailHandler = (attachments: []) => {
+  moveCard.mutate({ card_id: props.details._id, attachments, variables: { 'card-description': description.value } })
 }
 
 /* -------------------- Meta -------------------- */
@@ -287,9 +309,10 @@ const { data: commentsData } = useComments(commentId)
 watch(() => commentsData.value, () => {
   comments.value = commentsData.value?.comments
 })
-const { mutate: createComment , isPending:isPostingComment} = useCreateComment({
+const { mutate: createComment, isPending: isPostingComment } = useCreateComment({
   onSuccess: (data: any) => {
-      newComment.value = ''
+    newComment.value = ''
+    commentAttachments.value = []; // Clear attachments after posting
     comments.value = [...comments.value, data]
   }
 })
@@ -301,15 +324,6 @@ const formatDateTime = (iso?: string) => {
   if (!iso) return ''
   const d = new Date(iso)
   return d.toLocaleString()
-}
-function postComment() {
-  const comment_text = newComment.value.trim()
-  if (!comment_text) return
-  createComment({
-    id: props.details._id,
-    payload: { comment_text }
-  })
-
 }
 
 /* -------------------- Attachments -------------------- */
@@ -410,4 +424,48 @@ const handleSelect = (val: any, slug: any) => {
 
   })
 }
+
+// State to hold file attachments
+const commentAttachments = ref<File[]>([]);
+
+// Handle file selection
+function handleFileChange(event: any) {
+  // Trigger the upload API
+  const files = event.target.files
+    Array.from(files).forEach((file: any) => {
+        const fd = new FormData()
+        fd.append('file', file)
+        uploadFile(fd)  // Trigger the upload API
+    })
+  
+}
+
+// Modify the postComment function to include the attachments
+function postComment() {
+  const comment_text = newComment.value.trim();
+  if (!comment_text && !commentAttachments.value.length) return; // Don't post if there's no comment or attachment
+
+  // Prepare the data to be sent (comment and attachments)
+  const commentData = {
+    comment_text,
+    attachments: commentAttachments.value.map(file => ({
+      name: file.data.name,
+      url: file.data.url, // This can be changed depending on how your backend handles file storage
+    }))
+  };
+
+  createComment({
+    id: props.details._id,
+    payload: commentData
+  })
+}
+const { mutate: uploadFile } = useUploadFile({
+  onSuccess: (data: any) => {
+    commentAttachments.value = [
+      data
+    ]
+
+  }
+});
+
 </script>

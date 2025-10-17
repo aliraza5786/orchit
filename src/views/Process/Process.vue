@@ -1,28 +1,31 @@
 <template>
   <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex">
-    <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
-      <!-- <Dropdown v-model="selectedSheetId" :options="transformedSheets" variant="secondary">
+    <!-- <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
+      <Dropdown v-model="selectedSheetId" :options="transformedSheets" variant="secondary">
         <template #more>
           <div @click="openCreateSheetModal()"
             class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap">
             <i class="fa-solid fa-plus"></i> Add new sheet
           </div>
         </template>
-      </Dropdown> -->
-      <div class="flex gap-3 items-center">
-        <Searchbar placeholder="Search processes">
-        </Searchbar>
-      </div>
-    </div>
-    <KanbanSkeleton v-if="isListPending" />
-    <div v-else class="flex p-4 overflow-x-auto gap-3">
-      <KanbanBoard v-if="localList?.length > 0" @delete:column="(e: any) => handleDelete(e)"
+</Dropdown>
+<div class="flex gap-3 items-center">
+  <Searchbar placeholder="Search processes">
+  </Searchbar>
+</div>
+</div> -->
+    <!-- <KanbanSkeleton v-if="isListPending" />
+    <div v-else class="flex p-4 overflow-x-auto gap-3"> -->
+    <!-- <KanbanBoard v-if="localList?.length > 0" @delete:column="(e: any) => handleDelete(e)"
         @update:column="(e) => handleUpdateColumn(e)" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
         :board="localList" @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="">
-        <template #ticket="{ ticket, index }">
-          <ProcessKanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" :index="index" />
-        </template>
-        <!-- <template #column-footer="{ column }: any">
+        <template #ticket="{ ticket, index }"> -->
+    <div class="max-w-82 p-4 bg-bg-body rounded-md m-4">
+      <ProcessKanbanCard @click="handleClickTicket(item)" v-for="(item, index) in localList[0]?.cards" :key="index"
+        :ticket="item" :index="index" />
+    </div>
+    <!-- </template> -->
+    <!-- <template #column-footer="{ column }: any">
           <div v-if="!column.showADDNEW" @click="toggleAddNewProcess(column)"
             class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary cursor-pointer border-dashed mb-4 mx-4 rounded-md">
             <i class="fa-solid fa-plus"></i> Add Process
@@ -36,26 +39,27 @@
             <i class="fa-solid fa-close cursor-pointer ml-2" @click="toggleAddNewProcess(column)"></i>
           </div>
         </template> -->
-      </KanbanBoard>
-      <div class="min-w-[328px]" @click.stop>
-        <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
-          <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New Column" @keyup.enter="emitAddColumn" />
-          <p class="text-xs mt-1.5">You can add details while editing</p>
-          <div class="flex items-center mt-3 gap-3">
-            <Button @click="emitAddColumn" variant="primary"
-              class="px-3 py-1 bg-accent cursor-pointer text-white rounded">
-              {{ addingList ? 'Adding...' : 'Add Column' }}
-            </Button>
-            <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
-          </div>
+    <!-- </KanbanBoard> -->
+    <div class="min-w-[328px]" @click.stop>
+      <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
+        <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New Column"
+          @keyup.enter="emitAddColumn" />
+        <p class="text-xs mt-1.5">You can add details while editing</p>
+        <div class="flex items-center mt-3 gap-3">
+          <Button @click="emitAddColumn" variant="primary"
+            class="px-3 py-1 bg-accent cursor-pointer text-white rounded">
+            {{ addingList ? 'Adding...' : 'Add Column' }}
+          </Button>
+          <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
         </div>
-        <!-- <button v-else
+      </div>
+      <!-- <button v-else
           class="text-sm text-white py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-accent rounded-lg"
           @click.stop="setActiveAddList">
           + Add Column
         </button> -->
-      </div>
     </div>
+    <!-- </div> -->
   </div>
 
   <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Column" itemLabel="column"

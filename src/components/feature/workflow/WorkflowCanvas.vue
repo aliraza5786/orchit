@@ -24,7 +24,7 @@ import { watch } from 'vue'
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
 
-const { setNodes, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project } = useVueFlow()
+const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project } = useVueFlow()
 
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
@@ -86,15 +86,16 @@ function mapApiEdge(e: any): VFEdge {
 watch(
   [() => isStatues.value, () => isProcess.value],
   async ([s1, s2]) => {
-    console.log(s1, s2, '>>>> stau');
+    console.log(s1, s2, '>>>> stau watching ...', !processWorkflow.value?.raw_transitions.nodes);
 
     if (s1 && s2 && statuses.value && !processWorkflow.value?.raw_transitions.nodes) {
-      const newNodes: VFNode[] = statuses.value.map((n: any, i:any) => ({
+      const newNodes: VFNode[] = statuses.value.map((n: any, i: any) => ({
         id: String(n._id),
         type: n.type ?? 'default',
         position: { x: 300 * i, y: 34 },   // numbers, not strings
-        data: { label: n.title ,                    "status": "To Do"
-      },
+        data: {
+          label: n.title, "status": "To Do"
+        },
       }))
       await nextTick()
       setNodes(newNodes)
@@ -113,7 +114,10 @@ watch(
     if (!fd)
       return
     const incomingNodes = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
-    const incomingEdges = Array.isArray(fd.edges) ? fd.edges.map(mapApiEdge) : []
+    let incomingEdges: any;
+    if (Array.isArray(fd.edges)) {
+      incomingEdges = fd.edges.map(mapApiEdge)
+    }
     // 1) put nodes in first
     await nextTick()
     setNodes(incomingNodes)
@@ -214,7 +218,7 @@ function confirmRename() {
 function cancelRename() { renameId.value = null }
 
 // Add a brand-new independent node
-function handleAddNode(e: any) {
+async function handleAddNode(e: any) {
   const id = nextId()
   const pos = project({ x: 60, y: 360 }) // place near bottom-left; project to account for zoom/pan
   const status: Status = 'In Progress'
@@ -224,6 +228,7 @@ function handleAddNode(e: any) {
     data: { label: e, status },
     style: { border: '2px solid #64748b', borderRadius: '10px', background: '#fff' },
   })
+
 }
 // Optional: validate connections (e.g., prevent multiple parallel edges between same pair)
 // Allowed status transitions (Jira-like). Tweak as needed.
@@ -376,9 +381,9 @@ window.addEventListener('beforeunload', () => {
 <template>
   <div class="workflow-wrap">
 
-    <VueFlow v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions" :nodes-draggable="true"
-      :nodes-connectable="true" :elements-selectable="true" fit-view-on-init @connect="onConnect"
-      :is-valid-connection="isValidConnection">
+    <VueFlow v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
+      :nodes-draggable="true" :nodes-connectable="true" :elements-selectable="true" fit-view-on-init
+      @connect="onConnect" :is-valid-connection="isValidConnection">
 
       <Background />
       <!-- <MiniMap /> -->

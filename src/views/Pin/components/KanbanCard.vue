@@ -23,39 +23,28 @@
         <p v-html="ticket['card-description']" v-once
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
         </p>
-        <!-- Footer Meta -->
-        <div class="flex justify-between items-center mt-2">
-            <div class="flex items-center gap-2 text-xs  text-text-secondary uppercase">
-                <img src="../../../assets/icons/ticket.svg" class="w-4" alt="ticket" />
-                <span>{{ ticket['card-code'] }}</span>
+        <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
+            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
+                <i class="fa-regular fa-message"></i>
+                {{ ticket?.comments_count }}
+            </div>
+            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
+                <i class="fa-regular fa-file"></i>
+                {{ ticket?.attachments.length }}
             </div>
 
-            <!-- Assignment trigger (stops bubbling) -->
-            <div @click.stop>
-                <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
-                    :seat="ticket?.seat" />
-            </div>
         </div>
+      
 
         <!-- Bottom Info -->
-        <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
+        <!-- <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
             <DatePicker placeholder="set start date" :model-value="startDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setStartDate" /> -
             <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setDueDate" />
-        </div>
+        </div> -->
 
-        <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
-   <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
-       <i class="fa-regular fa-message"></i>
-    {{ ticket?.comments_count }}
-   </div>
-   <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
-       <i class="fa-regular fa-file"></i>
-    {{ ticket?.attachments.length }}
-   </div>
-
-        </div>
+      
     </div>
 
     <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.stop @pointerdown.stop>
@@ -75,11 +64,13 @@ import TypeChanger from '../../../views/Product/components/TypeChanger.vue'
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
-import DropMenu from '../../ui/DropMenu.vue'
-import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
-import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
+// import DropMenu from '../../ui/DropMenu.vue'
+// import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
+// import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
+import DropMenu from '../../../components/ui/DropMenu.vue'
+import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 const { workspaceId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 
@@ -171,8 +162,19 @@ const handleSelect = (val: any) => {
 
 function getMenuItems() {
     return [{
+        label: 'View Card', danger: true, action: () => {
+            emit('click', props.ticket)
+        },
+        icon: {
+            prefix: 'fa-regular',
+            iconName: 'fa-eye'
+        }
+    }, {
         label: 'Delete', danger: true, action: () => {
             showDelete.value = true
+        }, icon: {
+            prefix: 'fa-regular',
+            iconName: 'fa-trash'
         }
     },
     ]
@@ -188,5 +190,5 @@ const assignHandle = (user: any) => {
     moveCard.mutate(payload);
 
 }
-defineEmits(['click'])
+const emit = defineEmits(['click'])
 </script>

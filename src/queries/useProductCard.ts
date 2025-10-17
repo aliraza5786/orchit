@@ -89,9 +89,7 @@ export const useAddCardPriority = (options = {}) => {
   });
 };
 
-export const useComments = (card_id: any, options = {}) => {
-  console.log(card_id , '>>>>card_id ');
-  
+export const useComments = (card_id: any, options = {}) => {  
   return useQuery({
     queryKey: ["comments", card_id],
     queryFn: ({ signal }) =>
@@ -101,7 +99,7 @@ export const useComments = (card_id: any, options = {}) => {
         signal,
       }),
     ...options,
-    enabled: card_id ? true : false,
+    enabled: !card_id ? false : true ,
   });
 };
 export const useCreateComment = (options = {}) =>
