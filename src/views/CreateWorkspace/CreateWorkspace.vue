@@ -96,8 +96,6 @@ function handleClose() {
   router.push('/')
 }
 function onManualStart(e: any) {
-  console.log(e, '>>>');
-
   isStartOver.value++;
   if (e == 'mannual')
     isAI.value = false
@@ -131,8 +129,6 @@ function handleSkip() {
 function startOver() {
   currentStep.value = 0
   isStartOver.value++;
-  console.log('>>>  wsss ');
-
 }
 
 

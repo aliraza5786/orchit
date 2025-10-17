@@ -9,7 +9,7 @@
                     </div>
                 </template>
             </Dropdown>
-            <div class="flex gap-3 items-center ">
+            <!-- <div class="flex gap-3 items-center ">
                 <Dropdown prefix="View by" v-model="selected_view_by" :options="variables" variant="secondary">
                     <template #more>
                         <div @click="isCreateVar = true"
@@ -20,7 +20,7 @@
                 </Dropdown>
                 <Searchbar placeholder="Search in Orchit AI space">
                 </Searchbar>
-            </div>
+            </div> -->
         </div>
         <KanbanSkeleton v-if="isPending" />
         <div v-else class="flex  overflow-x-auto gap-3 p-4">

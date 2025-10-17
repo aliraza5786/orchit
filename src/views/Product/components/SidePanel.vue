@@ -23,6 +23,11 @@
           </h1>
         </template>
       </div>
+      <div>
+        <h3 class=" mb-2 text-text-primary text-base">Description</h3>
+        <p class="text-text-secondary text-sm" v-html="description"></p>
+        <BaseRichTextEditor v-model="description" @focusOut="updateDetailHandler" />
+      </div>
 
       <!-- Tabs (Switcher) -->
       <SwitchTab v-model="activeTab" :options="tabOptions" />
@@ -30,7 +35,6 @@
       <!-- TAB: Details -->
       <section v-if="activeTab === 'details'" class="space-y-4">
         <!-- Description -->
-        <BaseRichTextEditor v-model="description" @focusOut="updateDetailHandler" />
 
         <!-- Meta row -->
         <div class="flex items-center justify-between py-2">
@@ -51,14 +55,14 @@
             :model-value="lane" @update:modelValue="setLane" />
 
           <span v-if="!pin">Start date</span>
-          <div  v-if="!pin" class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md">
+          <div v-if="!pin" class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md">
             <i class="fa-regular fa-calendar"></i>
             <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
               @update:modelValue="setStartDate" />
           </div>
 
-          <span  v-if="!pin">Target end</span>
-          <div  v-if="!pin" class="flex gap-1 flex-col">
+          <span v-if="!pin">Target end</span>
+          <div v-if="!pin" class="flex gap-1 flex-col">
             <div class="border flex items-center gap-3 border-border h-8 px-4 bg-bg-input rounded-md"
               :class="endDateError ? 'border-red-500' : ''">
               <i class="fa-regular fa-calendar"></i>
@@ -68,8 +72,8 @@
             <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
           </div>
 
-          <span  v-if="!pin">Assign</span>
-          <AssigmentDropdown  v-if="!pin"  @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
+          <span v-if="!pin">Assign</span>
+          <AssigmentDropdown v-if="!pin" @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
 
           <!-- Dynamic Select variables -->
           <template v-for="(item, index) in details.variables" :key="`var-${index}`">
@@ -228,7 +232,7 @@ import { useUploadFile } from '../../../queries/useCommon'
 const { workspaceId } = useRouteIds()
 
 const props = defineProps({
-  pin:{ type: Boolean, default: false },
+  pin: { type: Boolean, default: false },
   showPanel: { type: Boolean, default: true },
   details: { type: Object as () => any, default: () => ({}) }
 })
@@ -432,12 +436,12 @@ const commentAttachments = ref<File[]>([]);
 function handleFileChange(event: any) {
   // Trigger the upload API
   const files = event.target.files
-    Array.from(files).forEach((file: any) => {
-        const fd = new FormData()
-        fd.append('file', file)
-        uploadFile(fd)  // Trigger the upload API
-    })
-  
+  Array.from(files).forEach((file: any) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    uploadFile(fd)  // Trigger the upload API
+  })
+
 }
 
 // Modify the postComment function to include the attachments
