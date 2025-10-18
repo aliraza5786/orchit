@@ -48,8 +48,9 @@ import BlogDetail from "../views/pages/blog/BlogDetail.vue";
 
 const routes: RouteRecordRaw[] = [
     {
-    path: '/home',
+    path: '/',
     component: LandingPageLayout,    children: [
+      { path: '/', name: 'landing-home-2', component: LandingHome, meta: { requiresAuth: false }}, 
       { path: '/home', name: 'landing-home', component: LandingHome, meta: { requiresAuth: false }}, 
       { path: '/pricing', name: 'pricing', component: Pricing, meta: { requiresAuth: false }},
       { path: '/terms-of-services', name: 'terms-of-services', component: TermsOfServices, meta: { requiresAuth: false }},
@@ -108,7 +109,7 @@ const routes: RouteRecordRaw[] = [
 
   // App shell
   {
-    path: "/",
+    path: "/dashboard",
     component: LandingLayout,
     // children use RELATIVE paths
     children: [
