@@ -60,8 +60,8 @@ const route = useRoute();
 
 const navItems = [
     { label: "Home", link: "/home" },
-    { label: "Solutions", link: "/abc" },
-    { label: "Marketplace", link: "/market-place" },
+    // { label: "Solutions", link: "/abc" },
+    // { label: "Marketplace", link: "/market-place" },
     { label: "Pricing", link: "/pricing" },
     { label: "Contact Sales", link: "/contact-sales" },
 ];
