@@ -92,21 +92,106 @@
       </div> -->
     </div>
 
-    <!-- Table Card -->
-    <div class="bg-bg-card p-5 rounded-lg flex-grow">
-      <template v-if="isLoading">
-        <SkeletonTable />
-      </template>
-      <template v-else>
-        <div >
-          <StatusTable
-            :columns="columns2"
-            :rows="lanes"
-            clickable
-            @rowClick="onLaneRowClick"
-          />
+    <!-- Three Column Stats Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow">
+      <!-- Projects Table -->
+      <div class="bg-bg-card p-5 rounded-lg lg:col-span-2">
+        <template v-if="isLoading">
+          <SkeletonTable />
+        </template>
+        <template v-else>
+          <div class="overflow-x-auto">
+            <StatusTable
+              :columns="columns2"
+              :rows="lanes"
+              clickable
+              @rowClick="onLaneRowClick"
+            />
+          </div>
+        </template>
+      </div>
+
+      <!-- Right Column: Team Workload & Recent Activity -->
+      <div class="flex flex-col gap-4">
+        <!-- Team Workload -->
+        <div class="bg-bg-card p-5 rounded-lg">
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
+            <p class="text-sm text-text-secondary mt-1">
+              Monitor the capacity of your team.
+              <a href="#" class="text-blue-500 hover:underline">Reassign work items to get the right balance</a>
+            </p>
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex items-center justify-between text-sm font-medium text-text-secondary mb-2">
+              <span>Assignee</span>
+              <span>Work distribution</span>
+            </div>
+
+            <!-- Workload items -->
+            <div v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
+              <div class="flex items-center gap-2 w-32 flex-shrink-0">
+                <div v-if="member.avatar"
+                     class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                     :style="{ backgroundColor: member.color }">
+                  {{ member.initials }}
+                </div>
+                <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center">
+                  <i class="pi pi-user text-text-secondary"></i>
+                </div>
+                <span class="text-sm text-text-primary truncate">{{ member.name }}</span>
+              </div>
+
+              <div class="flex-1">
+                <div class="h-6 bg-bg-body rounded overflow-hidden relative">
+                  <div
+                    class="h-full bg-border-subtle transition-all duration-300"
+                    :style="{ width: member.workload + '%' }"
+                  ></div>
+                  <span v-if="member.workload > 10"
+                        class="absolute inset-0 flex items-center justify-start px-2 text-xs text-text-primary font-medium">
+                    {{ member.workload }}%
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </template>
+
+        <!-- Recent Activity -->
+        <div class="bg-bg-card p-5 rounded-lg flex-1 overflow-hidden flex flex-col">
+          <div class="mb-4">
+            <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
+            <p class="text-sm text-text-secondary mt-1">Stay up to date with what's happening across the project.</p>
+          </div>
+
+          <div class="space-y-4 overflow-y-auto flex-1">
+            <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
+
+            <div v-for="activity in recentActivities" :key="activity.id" class="flex gap-3 pb-4 border-b border-border-subtle last:border-0">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+                   :style="{ backgroundColor: activity.userColor }">
+                {{ activity.userInitials }}
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-text-primary">
+                  <span class="font-medium text-blue-500">{{ activity.user }}</span>
+                  <span class="text-text-secondary"> {{ activity.action }} </span>
+                  <a href="#" class="text-blue-500 hover:underline">{{ activity.item }}</a>
+                  <span v-if="activity.status"
+                        class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
+                        :class="getStatusClass(activity.status)">
+                    {{ activity.status }}
+                  </span>
+                </div>
+                <div class="text-xs text-text-secondary mt-1">{{ activity.time }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -261,6 +346,59 @@ const onLaneRowClick = (row: LaneProgressRow) => { onLaneClick(row) }
 
 /** Table columns */
 const columns2 = ['lane_title', 'RND', 'Designing', 'Design Review', 'Spec Doc', 'Development', 'QA', 'Content']
+
+/** Team Workload Data */
+const teamWorkload = ref([
+  { id: 1, name: 'Unassigned', initials: '', avatar: false, color: '#6B7280', workload: 13 },
+  { id: 2, name: 'Amal Lashari', initials: 'AL', avatar: true, color: '#3B82F6', workload: 35 },
+  { id: 3, name: 'Anam Rehman', initials: 'AR', avatar: true, color: '#3B82F6', workload: 8 },
+  { id: 4, name: 'Sufian', initials: 'S', avatar: true, color: '#6B7280', workload: 8 },
+  { id: 5, name: 'Arooj Sajjad', initials: 'AS', avatar: true, color: '#EF4444', workload: 5 }
+])
+
+/** Recent Activities Data */
+const recentActivities = ref([
+  {
+    id: 1,
+    user: 'vFairs Bot',
+    userInitials: 'VB',
+    userColor: '#06B6D4',
+    action: 'updated field "RemoteWorkItemLink" on',
+    item: 'VFC-33073: IPU: Agenda Multilingual Issue (global issue)',
+    status: 'DEPLOYED-PROD',
+    time: 'about 4 hours ago'
+  },
+  {
+    id: 2,
+    user: 'vFairs Bot',
+    userInitials: 'VB',
+    userColor: '#06B6D4',
+    action: 'updated field "RemoteWorkItemLink" on',
+    item: 'VFC-31468: Show/Hide Team Members on Booth',
+    status: 'REOPENED',
+    time: 'about 4 hours ago'
+  },
+  {
+    id: 3,
+    user: 'vFairs Bot',
+    userInitials: 'VB',
+    userColor: '#06B6D4',
+    action: 'updated field "RemoteWorkItemLink" on',
+    item: 'VFC-32359: Favicon not displaying after uploading from Event Settings',
+    status: '',
+    time: 'about 4 hours ago'
+  }
+])
+
+/** Helper function for status classes */
+const getStatusClass = (status: string) => {
+  const classes: Record<string, string> = {
+    'DEPLOYED-PROD': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+    'REOPENED': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
+    'IN-PROGRESS': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+  }
+  return classes[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+}
 
 /** Lightweight local skeletons — defined without a second <script> block */
  const SkeletonCard = defineComponent({
