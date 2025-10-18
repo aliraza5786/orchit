@@ -106,7 +106,7 @@ async function handleLogin() {
     const data = await mutateAsync({ u_email: email.value, u_password: password.value })
     // adapt if token key differs
     localStorage.setItem('token', data?.data?.token)
-    router.push('/')
+    router.push('/dashboard')
   } catch (err: any) {
     errorMessage.value = err?.response?.data?.message || 'Login failed. Please try again.'
   }

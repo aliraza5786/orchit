@@ -177,7 +177,8 @@ router.beforeEach((to, _from, next) => {
   const isLoggedIn = isAuthenticated();
 
   if (authRequired && !isLoggedIn) return next("/login");
-  if (!authRequired && isLoggedIn && to.name === "Login") return next("/");
+  if (!authRequired && isLoggedIn && to.name === "Login") return next("/dashboard");
+  if (!authRequired && isLoggedIn && (to.path === "/" || to.name === "landing-home-2")) return next("/dashboard");
   return next();
 });
 
