@@ -104,7 +104,7 @@
             <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
             <p class="text-sm text-text-secondary mt-1">
               Monitor the capacity of your team.
-              <a href="#" class="text-blue-500 hover:underline">Reassign work items to get the right balance</a>
+        
             </p>
           </div>
 
@@ -154,7 +154,7 @@
           <div class="space-y-4 overflow-y-auto flex-1">
             <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
 
-            <div v-for="activity in recentActivities" :key="activity.id" class="flex gap-3 pb-4 border-b border-border-subtle last:border-0">
+            <div v-for="activity in recentActivities" :key="activity.id" class="flex gap-3 pb-4 border-b border-border last:border-0">
               <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
                    :style="{ backgroundColor: activity.userColor }">
                 {{ activity.userInitials }}
@@ -162,9 +162,9 @@
 
               <div class="flex-1 min-w-0">
                 <div class="text-sm text-text-primary">
-                  <span class="font-medium text-blue-500">{{ activity.user  }}</span>
+                  <span class="font-medium text-accent/90">{{ activity.user  }}</span>
                   <span class="text-text-secondary"> {{ activity.action }} </span>
-                  <a href="#" class="text-blue-500 hover:underline">{{ activity.item }}</a>
+                  <a href="#" class="text-accent/90 hover:underline">{{ activity.item }}</a>
                   <span v-if="activity.status"
                         class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
                         :class="getStatusClass(activity.status)">
