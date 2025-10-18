@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useTheme } from "../../../composables/useTheme";
 import lightLogo from '@assets/LandingPageImages/footer/lightLogo.webp';
-import darkLogo from '@assets/LandingPageImages/footer/darkLogo.webp';
+import darkLogo from '@assets/global/dark-logo.png';
 import borderGif from '@assets/LandingPageImages/footer/footer-top.gif';
 import linkedIn from '@assets/icons/linkedIn.webp';
 import twitter from '@assets/icons/twitter.webp';
