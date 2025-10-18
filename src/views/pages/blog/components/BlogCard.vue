@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useTheme } from "../../../../composables/useTheme";
-const { theme, setTheme } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 interface Blog {
   id: number
@@ -41,10 +41,10 @@ function goToDetail() {
       <p class="uppercase font-semibold text-[12px] text-text-secondary mb-[12px]">
         {{ blog.category }} <span class="px-1">. </span> <span class="lowercase">{{ blog.date }}</span>
       </p>
-      <h3 class="font-manrope text-[18px] sm:text-[20px] font-semibold leading-[28px] font-normal mb-[8px] text-text-primary group-hover:text-accent transition">
+      <h3 class="font-manrope text-[18px] sm:text-[20px] font-semibold leading-[28px]  mb-[8px] text-text-primary group-hover:text-accent transition">
         {{ blog.title }}
       </h3>
-      <p class="text-sm text-text-secondary line-clamp-3 font-normal font-manrope text-[14px] leading-[20px] text-text-secondary mb-[16px]">{{ blog.description }}</p>
+      <p class="text-sm line-clamp-3 font-normal font-manrope text-[14px] leading-[20px] text-text-secondary mb-[16px]">{{ blog.description }}</p>
       <div class="flex items-center justify-between text-[12px] text-text-secondary">
         <span>{{ blog.author }} <span class="px-1">. </span> {{ blog.time }}</span>
         <span class="group-hover:text-accent transition"><i class="fa-solid fa-arrow-right -rotate-45"></i></span>

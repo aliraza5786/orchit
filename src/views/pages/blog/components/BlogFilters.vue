@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useTheme } from "../../../../composables/useTheme";
-const { theme, setTheme } = useTheme(); // light / dark / system
-const props = defineProps<{
+const { theme } = useTheme(); // light / dark / system
+ defineProps<{
   categories: string[]
   modelValue: string
 }>()

@@ -51,11 +51,11 @@
                             Trusted by teams at</h3>
                         <div class="flex gap-2">
                             <span
-                                class="bg-bg-charcoal px-3 py-1 rounded-md text-text-secondary  font-manrope font-normal text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Microsoft</span>
+                                class="bg-bg-charcoal px-3 py-1 rounded-md text-text-secondary  font-manrope text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Microsoft</span>
                             <span
-                                class="bg-bg-charcoal px-3 py-1 rounded-md text-text-secondary font-manrope font-normal text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Stripe</span>
+                                class="bg-bg-charcoal px-3 py-1 rounded-md text-text-secondary font-manrope  text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Stripe</span>
                             <span
-                                class="bg-bg-charcoal px-3 py-1 rounded-md  text-text-secondary font-manrope font-normal text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Adobe</span>
+                                class="bg-bg-charcoal px-3 py-1 rounded-md  text-text-secondary font-manrope  text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Adobe</span>
                         </div>
                     </div>
                 </aside>
@@ -64,7 +64,7 @@
                 <div class="bg-bg-lavender rounded-[12px] shadow-xl px-[15px] py-[25px] sm:p-[25px] lg:p-[33px] relative"
                     :class="theme === 'dark' ? 'border border-border-input' : 'border border-[#a495e9b5]'">
                     <h3
-                        class="font-manrope text-[18px] sm:text-[20px] font-semibold leading-[28px] font-normal mb-3 sm:mb-[24px] text-text-primary">
+                        class="font-manrope text-[18px] sm:text-[20px]  leading-[28px] font-normal mb-3 sm:mb-[24px] text-text-primary">
                         Tell us how we can help</h3>
 
                     <form @submit.prevent="handleSubmit" class="space-y-[15px] sm:space-y-[24px]">
@@ -155,7 +155,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useTheme } from "../../composables/useTheme";
-const { theme, setTheme } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 interface ContactForm {
     fullName: string

@@ -1,0 +1,1 @@
+import{P as a,G as o,u as s,E as u}from"./index-4VVrnSvV.js";const r=e=>o.post("/upload/file",e,{headers:{"Content-Type":"multipart/form-data"}}).then(t=>t.data),l=(e={})=>s({mutationKey:["upload-file"],mutationFn:r,...e}),i=(e={})=>a({queryKey:["roles"],queryFn:({signal:t})=>u({url:"common/roles",method:"GET",signal:t}),...e});export{r as a,l as b,i as u};

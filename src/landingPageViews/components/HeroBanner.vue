@@ -56,7 +56,7 @@ async function handleSubmit(value: string) {
 
 <template>
     <section
-        class="float-left w-full pt-[40px] lg:pt-[80px] xl:pt-[125px]  mb-10 md:mb-16 lg:mb-20 w-full transition-colors duration-500">
+        class="float-left pt-[40px] lg:pt-[80px] xl:pt-[125px]  mb-10 md:mb-16 lg:mb-20 w-full transition-colors duration-500">
         <div class="banner_main  px-[15px]">
             <div class="custom_container">
                 <!-- Heading -->

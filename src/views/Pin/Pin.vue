@@ -80,7 +80,6 @@
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
-import Searchbar from '../../components/ui/SearchBar.vue';
 import { ReOrderCard, ReOrderList, useAddList, useSheetList, useSheets, useVariables } from '../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';

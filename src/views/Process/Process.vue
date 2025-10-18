@@ -73,17 +73,15 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch, onMounted, computed } from 'vue';
-import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
+import {  ref, watch, onMounted } from 'vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
-import BaseTextAreaField from '../../components/ui/BaseTextAreaField.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
 import {
   useProcessColumns,
   useCreateProcessColumn,
-  useUpdateProcessColumn,
+  
   useDeleteProcessColumn,
-  useCreateProcess,
+
   useProcessSheets
 } from '../../queries/useProcess';
 import ProcessKanbanCard from './components/ProcessKanbanCard.vue';
@@ -91,12 +89,8 @@ import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import Button from '../../components/ui/Button.vue';
 import WorkflowBuilderModal from './modals/WorkflowBuilderModal.vue';
-import Searchbar from '../../components/ui/SearchBar.vue';
-import Dropdown from '../../components/ui/Dropdown.vue';
+
 import CreateProcessSheetModal from './modals/CreateProcessSheetModal.vue';
-
-const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
-
 const showDelete = ref(false);
 const localColumn = ref();
 const { workspaceId } = useRouteIds();
@@ -104,14 +98,7 @@ const { workspaceId } = useRouteIds();
 const { data: processSheets } = useProcessSheets(workspaceId.value);
 const selectedSheetId = ref<string>('sheet-1');
 
-const transformedSheets = computed(() => {
-  return (processSheets.value || []).map((sheet: any) => ({
-    _id: sheet._id,
-    title: sheet.title,
-    description: sheet.description,
-    icon: sheet.icon
-  }));
-});
+
 
 watch(processSheets, (newSheets) => {
   if (newSheets && newSheets.length > 0 && !selectedSheetId.value) {
@@ -120,10 +107,6 @@ watch(processSheets, (newSheets) => {
 });
 
 const isCreateSheetModal = ref(false);
-const openCreateSheetModal = () => {
-  isCreateSheetModal.value = true;
-};
-
 const { mutate: addList, isPending: addingList } = useCreateProcessColumn({
   onSuccess: (data: any) => {
     localList.value = [...(localList.value || []), { ...data, cards: [] }];
@@ -133,7 +116,7 @@ const { mutate: addList, isPending: addingList } = useCreateProcessColumn({
 });
 
 const localList = ref<any>([]);
-const { data: Lists, isPending: isListPending } = useProcessColumns(workspaceId.value, selectedSheetId);
+const { data: Lists, } = useProcessColumns(workspaceId.value, selectedSheetId);
 watch(Lists, (newVal) => {
   if (newVal) {
     localList.value = newVal.map((col: any) => ({
@@ -156,11 +139,7 @@ onMounted(() => {
 const selectedProcess = ref<any>(null);
 const showWorkflowBuilder = ref(false);
 
-const selectCardHandler = (card: any) => {
-  selectedProcess.value = card;
-};
 
-const handleBoardUpdate = (_: any) => { };
 const activeAddList = ref(false);
 const newColumn = ref('');
 
@@ -185,18 +164,6 @@ const handleAddColumn = (name: any) => {
 }
 
 const queryClient = useQueryClient();
-const updateList = useUpdateProcessColumn({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['process-columns'] });
-  },
-});
-
-const handleUpdateColumn = (newTitle: any) => {
-  const payload = {
-    title: newTitle?.title,
-  };
-  updateList.mutate({ id: newTitle._id, payload });
-};
 
 const { mutate: deleteList, isPending: isDeletingList } = useDeleteProcessColumn({
   onSuccess: () => {
@@ -209,40 +176,8 @@ const handleDeleteColumn = () => {
   deleteList({ id: localColumn.value?.columnId });
 };
 
-const handleDelete = (e: any) => {
-  showDelete.value = true;
-  localColumn.value = e;
-};
 
-const newProcessTitle = ref('');
-const newProcessDescription = ref('');
 
-const { mutate: createProcess, isPending } = useCreateProcess({
-  onSuccess: () => {
-    newProcessTitle.value = '';
-    newProcessDescription.value = '';
-    queryClient.invalidateQueries({ queryKey: ['process-columns'] });
-  }
-});
-
-const toggleAddNewProcess = (column: any) => {
-  column.showADDNEW = !column.showADDNEW;
-};
-
-const addProcessToColumn = (column: any) => {
-  if (!newProcessTitle.value.trim()) return;
-
-  const payload = {
-    workspace_id: workspaceId.value,
-    sheet_id: selectedSheetId.value,
-    title: newProcessTitle.value,
-    description: newProcessDescription.value,
-    column_id: column._id,
-    order: column.cards.length
-  };
-  createProcess({ payload });
-  toggleAddNewProcess(column);
-};
 
 const handleClickTicket = (ticket: any) => {
   selectedProcess.value = ticket;

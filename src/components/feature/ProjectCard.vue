@@ -61,38 +61,39 @@ import { computed } from 'vue'
 import ProgressBar from '../ui/ProgressBar.vue';
 import { useIndeterminateProgress } from '../../utilities/IndeterminateProgress';
 
-const props = defineProps<{
-    title: string
-    color:string
-    subtitle: string
-    status: any
-    progress: number
-    avatars: string[]
-    maxVisible?: number
-    date: string
-    loading?: any   // 👈 add this
-}>()
+const props = withDefaults(defineProps<{
+  title: string
+  subtitle: string
+  status: 'completed' | 'failed' | 'in_progress' | 'pending' | string
+  progress?: number
+  avatars: string[]
+  maxVisible?: number
+  date: string
+  loading?: boolean
+  color?: string
+}>(), {
+  progress: 0,
+  maxVisible: 2,
+  loading: false,
+  color: '#9CA3AF' // neutral fallback
+})
 
-// liveProgress: auto-advances when loading = true, else shows the real progress prop
+// live progress: indeterminate when loading=true
 const indeterminate = useIndeterminateProgress(() => !!props.loading)
 const liveProgress = computed(() => props.loading ? indeterminate.value : props.progress)
 
-const maxVisible = props.maxVisible ?? 2
-
-
-
-const visibleAvatars = computed(() => props.avatars.slice(0, maxVisible))
+const visibleAvatars = computed(() => props.avatars.slice(0, props.maxVisible))
 const extraCount = computed(() =>
-    props.avatars.length > maxVisible ? props.avatars.length - maxVisible : 0
+  props.avatars.length > props.maxVisible ? props.avatars.length - props.maxVisible : 0
 )
 
 const getColor = (status: string) => {
-    switch (status) {
-        case 'completed': return 'bg-green-400/40 border-green-400 text-green-400'
-        case 'failed': return 'bg-red-400/40 border-red-400 text-red-400'
-        case 'in_progress': return 'bg-blue-400/20 border-blue-400 text-blue-400'
-        case 'pending': return 'bg-amber-400/20 border-amber-400 text-amber-400'
-        default: return 'progress-default'
-    }
+  switch (status) {
+    case 'completed': return 'bg-green-400/40 border-green-400 text-green-400'
+    case 'failed': return 'bg-red-400/40 border-red-400 text-red-400'
+    case 'in_progress': return 'bg-blue-400/20 border-blue-400 text-blue-400'
+    case 'pending': return 'bg-amber-400/20 border-amber-400 text-amber-400'
+    default: return 'progress-default'
+  }
 }
 </script>

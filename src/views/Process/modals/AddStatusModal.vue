@@ -68,7 +68,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
-  (e: 'status:added'): void
+  (e: 'status:added', v:any): void
 }>()
 
 const open = computed({
@@ -126,6 +126,7 @@ function handleSubmit() {
       status_color: statusColor.value,
       is_initial: isInitial.value,
       is_final: isFinal.value,
+       status_name: statusName.value.trim(),     // ✅ required by Omit<WorkflowStatus, 'id'>F
       position_x: Math.random() * 400 + 100,
       position_y: Math.random() * 300 + 100,
       order: workflowState.localStatuses.value.length

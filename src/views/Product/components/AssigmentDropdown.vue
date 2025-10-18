@@ -58,7 +58,7 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch } from 'vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace';
 import { useRouteIds } from '../../../composables/useQueryParams';
-import { useProfile } from '../../../services/user';
+
 const { workspaceId } = useRouteIds()
 const { data: roles } = useWorkspacesRoles(workspaceId.value);
 const assignedUser = ref<any>(null)
@@ -120,12 +120,6 @@ function assign(userId: string) {
     emit('update:modelValue', userId)
   }
 
-  close()
-}
-
-function unassign() {
-  emit('update:modelValue', null)
-  emit('assign', { _id: null })
   close()
 }
 

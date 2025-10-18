@@ -5,7 +5,7 @@ import darkGptIcon from '@assets/LandingPageImages/bnanerInputIcons/darkGpt.png'
 import { ref, defineExpose, defineEmits, defineProps } from "vue";
 const props = defineProps<{ 
     loading?: boolean,
-     theme: "light" | "dark"
+     theme: any
  }>();
 
 const emit = defineEmits<{
@@ -39,7 +39,7 @@ defineExpose({ setValue });
       type="text"
       placeholder="Describe your project..."
       class="w-full pl-[54px] lg:pl-[64px] pr-[100px] lg:pr-[130px] py-3 h-[54px] lg:h-[64px] rounded-[16px] bg-bg-body text-text-primary font-manrope text-[13px] md:text-[14px]
-             text-text-primary border-2 lg:border-3 border-[#C74CF0] focus:outline-none focus:ring-0
+           border-2 lg:border-3 border-[#C74CF0] focus:outline-none focus:ring-0
              focus:ring-purple-500 transition-all duration-300 shadow-[0px_8px_32px_0px_#070A0D99]"
     />
 

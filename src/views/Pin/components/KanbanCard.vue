@@ -61,18 +61,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import TypeChanger from '../../../views/Product/components/TypeChanger.vue'
-import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
 // import DropMenu from '../../ui/DropMenu.vue'
 // import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
 // import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
-import { useWorkspacesRoles } from '../../../queries/useWorkspace'
-import { useRouteIds } from '../../../composables/useQueryParams'
 import DropMenu from '../../../components/ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
-const { workspaceId } = useRouteIds();
-const { data: members } = useWorkspacesRoles(workspaceId.value);
 
 type Priority = any
 export interface Ticket {
@@ -112,22 +107,6 @@ const startDate = ref<string | null>(props.ticket['start-date'] ?? null)
 watch(sd, () => startDate.value = sd.value)
 watch(ed, () => dueDate.value = ed.value)
 
-function setDueDate(v: string | null) {
-    if (!props.ticket?._id) return
-    dueDate.value = v
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        end_date: v
-    })
-}
-function setStartDate(v: string | null) {
-    if (!props.ticket?._id) return
-    startDate.value = v
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        start_date: v
-    })
-}
 const queryClient = useQueryClient()
 const moveCard = useMoveCard({
     onSuccess: () => {
@@ -182,13 +161,6 @@ function getMenuItems() {
 const handleDeleteTicket = () => {
     deleteCard({})
 }
-const assignHandle = (user: any) => {
-    const payload = {
-        card_id: props.ticket._id,
-        seat_id: user?._id
-    }
-    moveCard.mutate(payload);
 
-}
 const emit = defineEmits(['click'])
 </script>

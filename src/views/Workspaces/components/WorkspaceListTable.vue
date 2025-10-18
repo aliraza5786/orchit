@@ -42,7 +42,7 @@ const columns = [
     // { key: 'Roles', label: 'Team' }
 ]
 
-defineProps<{ data: [], isPending: boolean }>()
+defineProps<{ data: any[], isPending: boolean }>()
 
 </script>
 

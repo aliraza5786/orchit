@@ -58,9 +58,6 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: string): void
 }>()
 
-/* ---------- sizing (padding only affects button height, not indicator) ---------- */
-const padY = computed(() => props.size === 'sm' ? 6 : props.size === 'lg' ? 10 : 8)
-
 /* ---------- refs & measurements ---------- */
 const trackRef = ref<HTMLElement | null>(null)
 const btnRefs = ref<HTMLElement[]>([])

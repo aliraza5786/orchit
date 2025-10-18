@@ -10,8 +10,6 @@ import {
   type Connection,
   MarkerType,
 } from '@vue-flow/core'
-import { ConnectionMode } from '@vue-flow/core'
-
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 // import { MiniMap } from '@vue-flow/minimap'
@@ -31,7 +29,6 @@ const { workspaceId } = useWorkspaceId()
 
 const { data: statuses, isSuccess: isStatues } = useProcessStatus(workspaceId.value);
 const { data: processWorkflow, isSuccess: isProcess } = useProcessWorkflow(workspaceId.value)
-const { mutate: createTransition } = useCreateTransition(workspaceId.value)
 
 // ---- Helpers to normalize API -> VueFlow ----
 function mapApiNode(n: any): VFNode {
@@ -45,18 +42,15 @@ function mapApiNode(n: any): VFNode {
   }
 }
 
-function normalizeMarkerType(t?: string) {
-  if (!t) return undefined
-  const key = t.toLowerCase()
+// Replace your normalizeMarkerType with this:
+function normalizeMarkerType(t?: string): MarkerType {
+  const key = (t ?? 'arrow').toLowerCase()
   if (key === 'arrow') return MarkerType.Arrow
   if (key === 'arrowclosed') return MarkerType.ArrowClosed
-  if (key === 'circle') return MarkerType.Circle
-  if (key === 'square') return MarkerType.Square
-  if (key === 'diamond') return MarkerType.Diamond
-  if (key === 'dot') return MarkerType.Dot
-  // fallback
+  // add other mappings here if you use them; default to Arrow
   return MarkerType.Arrow
 }
+
 function mapApiEdge(e: any): VFEdge {
   // Accept either snake_case or camelCase from API
   const marker = e.markerEnd || e.marker_end
@@ -230,63 +224,6 @@ async function handleAddNode(e: any) {
   })
 
 }
-// Optional: validate connections (e.g., prevent multiple parallel edges between same pair)
-// Allowed status transitions (Jira-like). Tweak as needed.
-const ALLOWED: Record<string, string[]> = {
-  start: ['todo'],         // Start -> To Do
-  todo: ['done'],         // To Do -> Done (add 'blocked' etc if you have it)
-  done: [],               // Done is terminal in this example
-}
-
-// Build a quick lookup for duplicates
-const transitionKey = (s: string, t: string) => `${s}->${t}`
-
-function isValidConnection(conn: Connection) {
-  // 1) basic checks
-  if (!conn.source || !conn.target || !conn.sourceHandle || !conn.targetHandle) return false
-  if (conn.source === conn.target) return false
-  console.log(conn, 'cc from valid');
-
-  // 2) (optional) enforce out-* → in-* or other handle rules
-  // const isSourceOut = conn.sourceHandle.startsWith('out-')
-  // const isTargetIn  = conn.targetHandle.startsWith('in-')
-  // if (!isSourceOut || !isTargetIn) return false
-
-  // 3) (optional) enforce allowed status transitions via your ALLOWED map
-  // const srcNode = nodes.value.find(n => n.id === conn.source)
-  // const tgtNode = nodes.value.find(n => n.id === conn.target)
-  // if (!srcNode || !tgtNode) return false
-  // if (!(ALLOWED[srcNode.id] || []).includes(tgtNode.id)) return false
-
-  // 4) duplicates
-  if (isDuplicateEdge(conn)) return false
-
-  return true
-}
-
-type DedupMode = 'direction' | 'handle-pair' | 'node-pair'
-const DEDUPE_MODE: DedupMode = 'direction' // ← pick one
-
-function edgeMatches(conn: Connection, e: VFEdge, mode: DedupMode) {
-  const sameDirection =
-    e.source === conn.source && e.target === conn.target
-
-  const sameHandles =
-    e.sourceHandle === conn.sourceHandle && e.targetHandle === conn.targetHandle
-
-  const undirectedPair =
-    (e.source === conn.source && e.target === conn.target) ||
-    (e.source === conn.target && e.target === conn.source)
-
-  if (mode === 'direction') return sameDirection
-  if (mode === 'handle-pair') return sameDirection && sameHandles
-  if (mode === 'node-pair') return undirectedPair
-  return false
-}
-
-function isDuplicateEdge(conn: Connection) {
-  return edges.value.some(e => edgeMatches(conn, e, DEDUPE_MODE))
-}
 
 defineExpose({ openCreateNodeModal, handleAddNode, saveWorkflow, isSaving })
 
@@ -317,29 +254,37 @@ function mapVFNodeToApi(n: VFNode) {
 }
 
 function mapVFEdgeToApi(e: VFEdge) {
+  // narrow markerEnd which is EdgeMarkerType (object | string | undefined)
+  const m = e.markerEnd
+  const marker_end = m
+    ? (() => {
+        const mt = typeof m === 'string' ? m : (m as any).type
+        return {
+          type: markerTypeToApi(mt as MarkerType | string), // ← now safe
+          color: typeof m === 'string' ? undefined : (m as any).color,
+          width: typeof m === 'string' ? undefined : Number((m as any).width ?? 18),
+          height: typeof m === 'string' ? undefined : Number((m as any).height ?? 18),
+        }
+      })()
+    : undefined
+
   return {
     id: e.id,
     type: e.type ?? 'step',
     source: e.source,
     target: e.target,
-    source_handle: e.sourceHandle,      // snake_case for API
+    source_handle: e.sourceHandle,
     target_handle: e.targetHandle,
     label: e.label,
     data: e.data,
     style: e.style
-      ? { ...e.style, strokeWidth: Number((e.style as any).strokeWidth ?? 2) }
+      ? { ...(e.style as Record<string, any>), strokeWidth: Number((e.style as any).strokeWidth ?? 2) }
       : undefined,
-    marker_end: e.markerEnd
-      ? {
-        type: markerTypeToApi(e.markerEnd.type as any),
-        color: (e.markerEnd as any).color,
-        width: Number((e.markerEnd as any).width ?? 18),
-        height: Number((e.markerEnd as any).height ?? 18),
-      }
-      : undefined,
+    marker_end,                 // ← use the narrowed value
     animated: !!e.animated,
   }
 }
+
 
 function serializeWorkflowPayload() {
   return {
@@ -362,11 +307,6 @@ function saveWorkflow() {
   createWorkflow({ payload })
 }
 
-let saveTimer: any = null
-function scheduleSave() {
-  clearTimeout(saveTimer)
-  saveTimer = setTimeout(saveWorkflow, 800) // debounce 800ms
-}
 
 // watch(nodes, scheduleSave, { deep: true })
 // watch(edges, scheduleSave, { deep: true })
@@ -383,7 +323,7 @@ window.addEventListener('beforeunload', () => {
 
     <VueFlow v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
       :nodes-draggable="true" :nodes-connectable="true" :elements-selectable="true" fit-view-on-init
-      @connect="onConnect" :is-valid-connection="isValidConnection">
+      @connect="onConnect" >
 
       <Background />
       <!-- <MiniMap /> -->

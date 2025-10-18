@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router'
 import { ref } from 'vue'
 import { useTheme } from "../../../composables/useTheme";
-const { theme, setTheme } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 import growth from '@assets/blogPageImages/growth.webp'
 import BlogCard from '../blog/components/BlogCard.vue'
 import spaceImage from '@assets/blogPageImages/introSpace.webp';

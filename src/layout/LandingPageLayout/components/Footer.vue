@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useTheme } from "../../../composables/useTheme";
 import lightLogo from '@assets/LandingPageImages/footer/lightLogo.webp';
@@ -12,7 +11,7 @@ import lighTwitter from '@assets/icons/lightTwitter.webp';
 
 
 
-const { theme, setTheme } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 // web menu 
 interface FooterSection {
@@ -124,7 +123,7 @@ const moblinks: MobFooterMenu[] = [
                         </div>
                     </div>
                     <!-- footer web menu -->
-                    <div class="hidden sm:block" v-for="(section, index) in sections" :key="section.title">
+                    <div class="hidden sm:block" v-for="(section) in sections" :key="section.title">
                         <div class="heading_box mb-[16px]">
                             <h3
                                 class="font-inter text-primary font-semibold text-[18px] md:text-[22.88px] leading-[32px] tracking-normal">
