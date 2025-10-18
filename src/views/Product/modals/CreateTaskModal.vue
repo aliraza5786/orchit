@@ -241,7 +241,7 @@ function reset() {
   touched.endDate = false
   touched.lane = false
 }
-const selectedVar = computed(() => selectVariables.value.find((e) => e?._id == props.selectedVariable))
+const selectedVar = computed(() => variables.value.find((e:any) => e?._id == props.selectedVariable))
 
 function create() {
   touched.title = true
