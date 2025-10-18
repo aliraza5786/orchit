@@ -13,7 +13,7 @@
       <button
         v-for="(option, i) in options"
         :key="option.value"
-        :ref="el => setBtnRef(el, i)"
+        :ref="(el:any) => setBtnRef(el, i)"
         role="tab"
         :aria-selected="modelValue === option.value"
         :tabindex="modelValue === option.value ? 0 : -1"

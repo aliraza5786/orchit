@@ -47,7 +47,7 @@ defineProps<{ data: [], isPending: boolean }>()
 </script>
 
 <template>
-    <Table @row-click="handleClick" :columns="columns" :rows="data || []" :loading="isPending" :skeletonRows="6">
+    <Table @row-click="handleClick"  :columns="columns" :rows="data || []" :loading="isPending" :skeletonRows="6">
         <!-- Custom slot for status -->
         <template #status="{ row }">
             <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
