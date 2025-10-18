@@ -33,8 +33,16 @@ const More = () => import("../views/More/More.vue");
 const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
-const LandingPageLayout =()=> import ('../layout/LandingPageLayout/LandingPageLayout.vue')
+const LandingPageLayout =()=> import ('../layout/LandingPageLayout/LandingPageLayout.vue');
+
 import LandingHome from '../landingPageViews/LandingHome.vue';
+import Pricing from "../views/pages/Pricing.vue";
+import TermsOfServices from "../views/pages/TermsOfServices.vue";
+import PrivactPolicy from "../views/pages/PrivactPolicy.vue";
+import ContactUs from "../views/pages/ContactUs.vue";
+import BlogList from "../views/pages/blog/BlogList.vue";
+import BlogDetail from "../views/pages/blog/BlogDetail.vue";
+ 
 
 
 
@@ -42,8 +50,15 @@ const routes: RouteRecordRaw[] = [
     {
     path: '/home',
     component: LandingPageLayout,    children: [
-      { path: '/home', name: 'landing-home', component: LandingHome, meta: { requiresAuth: false },   
-    }
+      { path: '/home', name: 'landing-home', component: LandingHome, meta: { requiresAuth: false }}, 
+      { path: '/pricing', name: 'pricing', component: Pricing, meta: { requiresAuth: false }},
+      { path: '/terms-of-services', name: 'terms-of-services', component: TermsOfServices, meta: { requiresAuth: false }},
+      { path: '/privacy-policy', name: 'privacy-policy', component: PrivactPolicy , meta: { requiresAuth: false }},
+      { path: '/contact-us', name: 'contact-us', component: ContactUs , meta: { requiresAuth: false }},
+      { path: '/blogs', name: 'blogList', component: BlogList , meta: { requiresAuth: false }},
+      { path: '/blogs/:id', name: 'BlogDetail', component: BlogDetail, props: true ,  meta: { requiresAuth: false }},
+
+
     ],
 
   },
