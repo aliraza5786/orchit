@@ -5,7 +5,12 @@
         <div class="px-3 pt-3">
             <div class="flex justify-between items-start ">
                 <div>
-                    <h3 class="text-lg font-semibold text-text-primary">{{ title }}</h3>
+                    <h3 class="text-lg font-semibold text-text-primary  text-left">
+                        <!-- <div class="w-6 h-6 rounded-full " :style="`background:${color} ;`">
+    
+                        </div> -->
+                        
+                        {{ title }}</h3>
                     <p class="text-xs text-text-secondary ">{{ subtitle }}</p>
                 </div>
                 <span class="text-xs border rounded-full px-2 py-0.5" :class="getColor(status)">
@@ -58,6 +63,7 @@ import { useIndeterminateProgress } from '../../utilities/IndeterminateProgress'
 
 const props = defineProps<{
     title: string
+    color:string
     subtitle: string
     status: any
     progress: number

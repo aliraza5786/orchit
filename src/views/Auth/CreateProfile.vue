@@ -50,7 +50,7 @@
         <div class="space-y-6" v-show="activeStep === 3">
           <BaseEmailChip v-model="emailList" />
 
-          <div class="flex flex-col gap-2.5 w-full">
+          <!-- <div class="flex flex-col gap-2.5 w-full">
             <p class="text-sm text-medium text-text-primary" v-once>Invite link for any email</p>
             <div class="flex items-center gap-3 w-full relative">
               <BaseTextField v-model="inviteLink" class="w-full"
@@ -59,7 +59,7 @@
                 <FontAwesomeIcon class="text-accent cursor-pointer text-base" :icon="['far', 'copy']" />
               </span>
             </div>
-          </div>
+          </div> -->
         </div>
 
         <!-- Nav -->

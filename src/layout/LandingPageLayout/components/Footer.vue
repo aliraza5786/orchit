@@ -22,30 +22,26 @@ interface FooterSection {
 
 const sections: FooterSection[] = [
     {
-        title: "AI Task Manager",
+        title: "Resource",
         links: [
-            { name: "Predictive Planner", url: "#" },
-            { name: "Context-Aware Assistant", url: "#" },
-            { name: "Privacy-First AI Tools", url: "#" },
-        ],
+            { name: "Support", url: "#" },
+            { name: "Blog", url: "#" },        ],
     },
     {
-        title: "Microsoft 365",
+        title: "Company",
         links: [
-            { name: "Slack", url: "#" },
-            { name: "Notion", url: "#" },
-            { name: "Trello", url: "#" },
-            { name: "AI Insights Blog", url: "#" },
+            { name: "Privacy", url: "#" },
+            { name: "Terms", url: "#" },
+
 
         ],
     },
     {
-        title: "Case Studies",
+        title: "Socail",
         links: [
-            { name: "Help Center", url: "#" },
-            { name: "Developer Docs", url: "#" },
-            { name: "API Access", url: "#" },
-            { name: "Our Mission", url: "#" },
+            { name: "Instagram", url: "#" },
+            { name: "Linkedin", url: "#" },
+          
         ],
     },
 ];

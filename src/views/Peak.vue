@@ -32,7 +32,7 @@
                   :status="lane?.status"
                   :avatars="avatars"
                   date="May 28"
-                  class="transition-transform duration-200 ease-out group-hover:-translate-y-0.5 group-hover:shadow-lg group-active:translate-y-0 border border-transparent hover:border-border-subtle rounded-xl cursor-pointer"
+                  class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer"
                 />
               </button>
             </TransitionGroup>

@@ -2,7 +2,7 @@
   <div class="w-full pt-4">
     <h2 class="text-xl md:text-4xl font-semibold text-text-primary mb-1">Team Resources</h2>
     <p class="text-sm md:text-lg text-text-secondary">
-      {{ ai ? ' AI-recommended team composition for your project' : 'team composition for your project' }}
+      {{ ai ? ' AI-recommended team composition for your project' : 'Team composition for your project' }}
     </p>
   </div>
 
@@ -13,7 +13,7 @@
         <div class="flex gap-4 items-center text-2xl justify-between w-full">
           <div class="flex flex-col text-text-primary text-lg font-semibold">
             <span>
-              <span class="text-xl mr-2">{{ role.role_emoji }}</span> {{ role.title }}
+              <span v-if="role?.role_emoji" class="text-xl mr-2">{{ role.role_emoji }}</span> {{ role.title }}
             </span>
             <p class="text-sm text-text-secondary">{{ role.description }}</p>
           </div>
