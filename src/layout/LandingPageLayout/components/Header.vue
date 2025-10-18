@@ -1,9 +1,9 @@
 <template>
     <header
         class="w-full bg-body text-primary border-b lg:border-b-0" :class="theme === 'dark'? 'border-gray-800':'border-gray-300'">
-        <div class="custom_container px-[15px]">
+        <div class="mx-auto px-10 border-gray-800 " :class="theme === 'dark'? 'lg:border-b':'border-b-0'">
             <nav
-                class="flex items-center justify-between py-[20px] md:py-[24px]  border-gray-800 " :class="theme === 'dark'? 'lg:border-b':'border-b-0'">
+                class="flex items-center justify-between py-3">
                 <!-- Logo Section -->
                 <RouterLink to="/" class="transition-opacity duration-300 hover:opacity-80">
                     <img :src="theme === 'dark'
@@ -38,7 +38,7 @@
                     <!-- Get Started Button -->
                     <button
                         @click="handleGetStarted"
-                        class="flex text-primary items-center gap-[4px] border-2 border rounded-full px-[15px] md:px-[20px] lg:px-[32px] py-[10px] md:py-[13px] lg:py-[18px] font-lato text-[14px] lg:text-[16px] transition-all duration-300 leading-[100%] hover:bg-accent hover:text-accent-text hover:border-accent hover:scale-105">
+                        class="flex text-primary items-center gap-[4px] border-2 border rounded-full px-[15px] py-[8px] font-lato text-[14px] transition-all duration-300 leading-[100%] hover:bg-accent hover:text-accent-text hover:border-accent hover:scale-105 hover:cursor-pointer">
                         Get Started
                         <div class="flex items-center gap-[4px]">
                             <img :src="googleLogo" alt="Google"
@@ -59,8 +59,8 @@
 <script lang="ts" setup>
 import { useRoute, useRouter, RouterLink } from "vue-router";
 import { useTheme } from "../../../composables/useTheme";
-import lightLogo from '@assets/LandingPageImages/logo/header-logo.png';
-import darkLogo from '@assets/LandingPageImages/logo/dark_logo.png';
+import lightLogo from '@assets/global/light-logo.png';
+import darkLogo from '@assets/global/dark-logo.png';
 import googleLogo from '@assets/LandingPageImages/header-icons/google.png';
 import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
 import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
