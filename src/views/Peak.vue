@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-2 flex flex-col h-full overflow-x-auto w-full flex-auto">
+  <div class=" flex flex-col gap-4 h-full overflow-x-auto w-full flex-auto">
     <!-- Header / Overview -->
     <div class="p-5 rounded-lg bg-bg-card space-y-6">
       <div class="flex items-center justify-between">
@@ -93,28 +93,13 @@
     </div>
 
     <!-- Three Column Stats Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-grow">
-      <!-- Projects Table -->
-      <div class="bg-bg-card p-5 rounded-lg lg:col-span-2">
-        <template v-if="isLoading">
-          <SkeletonTable />
-        </template>
-        <template v-else>
-          <div class="overflow-x-auto">
-            <StatusTable
-              :columns="columns2"
-              :rows="lanes"
-              clickable
-              @rowClick="onLaneRowClick"
-            />
-          </div>
-        </template>
-      </div>
+   
+    
 
       <!-- Right Column: Team Workload & Recent Activity -->
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-grow  gap-4">
         <!-- Team Workload -->
-        <div class="bg-bg-card p-5 rounded-lg">
+        <div class="bg-bg-card w-full flex-auto p-5 rounded-lg">
           <div class="mb-4">
             <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
             <p class="text-sm text-text-secondary mt-1">
@@ -160,7 +145,7 @@
         </div>
 
         <!-- Recent Activity -->
-        <div class="bg-bg-card p-5 rounded-lg flex-1 overflow-hidden flex flex-col">
+        <div class="bg-bg-card w-full flex-auto p-5 rounded-lg  overflow-hidden flex flex-col">
           <div class="mb-4">
             <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
             <p class="text-sm text-text-secondary mt-1">Stay up to date with what's happening across the project.</p>
@@ -177,7 +162,7 @@
 
               <div class="flex-1 min-w-0">
                 <div class="text-sm text-text-primary">
-                  <span class="font-medium text-blue-500">{{ activity.user }}</span>
+                  <span class="font-medium text-blue-500">{{ activity.user  }}</span>
                   <span class="text-text-secondary"> {{ activity.action }} </span>
                   <a href="#" class="text-blue-500 hover:underline">{{ activity.item }}</a>
                   <span v-if="activity.status"
@@ -192,7 +177,7 @@
           </div>
         </div>
       </div>
-    </div>
+   
   </div>
 </template>
 
@@ -360,7 +345,7 @@ const teamWorkload = ref([
 const recentActivities = ref([
   {
     id: 1,
-    user: 'vFairs Bot',
+    user: 'Streamed Bot',
     userInitials: 'VB',
     userColor: '#06B6D4',
     action: 'updated field "RemoteWorkItemLink" on',
@@ -370,7 +355,7 @@ const recentActivities = ref([
   },
   {
     id: 2,
-    user: 'vFairs Bot',
+    user: 'Streamed Bot',
     userInitials: 'VB',
     userColor: '#06B6D4',
     action: 'updated field "RemoteWorkItemLink" on',
@@ -380,7 +365,7 @@ const recentActivities = ref([
   },
   {
     id: 3,
-    user: 'vFairs Bot',
+    user: 'Streamed Bot',
     userInitials: 'VB',
     userColor: '#06B6D4',
     action: 'updated field "RemoteWorkItemLink" on',

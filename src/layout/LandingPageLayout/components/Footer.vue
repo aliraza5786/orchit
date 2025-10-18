@@ -24,14 +24,14 @@ const sections: FooterSection[] = [
     {
         title: "Resource",
         links: [
-            { name: "Support", url: "#" },
-            { name: "Blog", url: "#" },        ],
+            { name: "Support", url: "/contact-us" },
+            { name: "Blog", url: "/blogs" },        ],
     },
     {
         title: "Company",
         links: [
-            { name: "Privacy", url: "#" },
-            { name: "Terms", url: "#" },
+            { name: "Privacy", url: "/terms-of-services" },
+            { name: "Terms", url: "/privacy-policy" },
 
 
         ],
