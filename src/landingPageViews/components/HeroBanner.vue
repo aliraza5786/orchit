@@ -89,24 +89,33 @@ async function handleSubmit(value: string) {
                 Or try
                 these
                 examples:</p>
-            <div class="flex gap-[15px] lg:gap-[24px] px-4 mb-[15px] lg:mb-[24px] animate-marquee">
-                <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                    <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)" class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
+             <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                <div class="examples-container flex gap-[15px] lg:gap-[24px] px-4 mb-[15px] lg:mb-[24px]
+                    snap-x snap-mandatory animate-marquee
+                   hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
+                    <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
+                        <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)"
+                            class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
                     text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
                     transition-all duration-300 whitespace-nowrap "
-                        :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
-                        {{ example }}
-                    </button>
+                            :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
+                            {{ example }}
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2">
-                <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                    <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)" class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
+            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                <div
+                    class="examples-container pb-1 flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2 snap-x snap-mandatory hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
+                    <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
+                        <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)"
+                            class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
                     text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
                     transition-all duration-300 whitespace-nowrap "
-                        :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
-                        {{ example }}
-                    </button>
+                            :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
+                            {{ example }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -154,6 +163,7 @@ async function handleSubmit(value: string) {
     display: flex;
     width: max-content;
     animation: marquee 200s linear infinite;
+    will-change: transform;
 }
 
 @keyframes marquee2 {
@@ -170,5 +180,22 @@ async function handleSubmit(value: string) {
     display: flex;
     width: max-content;
     animation: marquee2 200s linear infinite;
+    will-change: transform;
+
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Pause on hover or touch */
+.examples-container:hover,
+.examples-container:active {
+    animation-play-state: paused;
 }
 </style>

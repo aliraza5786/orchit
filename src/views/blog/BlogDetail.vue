@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { ref } from 'vue'
-import { useTheme } from "../../../composables/useTheme";
+import { useTheme } from "../../composables/useTheme";
 const { theme, setTheme } = useTheme(); // light / dark / system
 import growth from '@assets/blogPageImages/growth.webp'
 import BlogCard from '../blog/components/BlogCard.vue'

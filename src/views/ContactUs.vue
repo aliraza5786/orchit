@@ -154,7 +154,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { useTheme } from "../../composables/useTheme";
+import { useTheme } from "../composables/useTheme";
 const { theme, setTheme } = useTheme(); // light / dark / system
 
 interface ContactForm {
