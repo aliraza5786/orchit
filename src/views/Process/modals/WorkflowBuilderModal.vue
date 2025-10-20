@@ -1,16 +1,8 @@
 <template>
   <transition name="fade">
-    <div
-      v-if="isOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
-      @keydown.esc="close"
-    >
-      <div
-        class="relative flex h-full w-full flex-col bg-bg-body"
-        role="dialog"
-        aria-modal="true"
-        tabindex="0"
-      >
+    <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      @keydown.esc="close">
+      <div class="relative flex h-full w-full flex-col bg-bg-body" role="dialog" aria-modal="true" tabindex="0">
         <!-- Header -->
         <div class="flex items-center justify-between border-b border-border px-6 py-4">
           <div class="flex items-center gap-4">
@@ -42,15 +34,9 @@
 
         <!-- Canvas -->
         <div class="relative flex-1 overflow-hidden">
-          <WorkflowCanvas
-            v-if="processId"
-            ref="Canvas"
-            :process-id="processId"
-            :show-transition-labels="showTransitionLabels"
-            @update:workflow="handleWorkflowUpdate"
-            @add:status="handleAddStatus"
-            @add:transition="handleAddTransition"
-          />
+          <WorkflowCanvas v-if="processId" ref="Canvas" :process-id="processId"
+            :show-transition-labels="showTransitionLabels" @update:workflow="handleWorkflowUpdate"
+            @add:status="handleAddStatus" @add:transition="handleAddTransition" />
         </div>
 
         <!-- Footer -->
@@ -84,18 +70,10 @@
   </transition>
 
   <!-- Modals -->
-  <AddStatusModal
-    v-model="showAddStatusModal"
-    :process-id="processId"
-    @status:added="handleStatusAdded"
-  />
+  <AddStatusModal v-model="showAddStatusModal" :process-id="processId" @status:added="handleStatusAdded" />
 
-  <AddTransitionModal
-    v-model="showAddTransitionModal"
-    :process-id="processId"
-    :statuses="workflowStatuses"
-    @transition:added="handleTransitionAdded"
-  />
+  <AddTransitionModal v-model="showAddTransitionModal" :process-id="processId" :statuses="workflowStatuses"
+    @transition:added="handleTransitionAdded" />
 </template>
 
 <script setup lang="ts">
@@ -197,6 +175,7 @@ function handleZoomReset() {
 }
 
 function handleStatusAdded(e: any) {
+
   showAddStatusModal.value = false
   Canvas.value?.handleAddNode?.(e)
 }
@@ -210,6 +189,7 @@ function handleTransitionAdded() {
 .fade-leave-active {
   transition: opacity 0.2s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;

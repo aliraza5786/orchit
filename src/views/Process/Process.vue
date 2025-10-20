@@ -73,15 +73,13 @@
 </template>
 
 <script setup lang="ts">
-import {  ref, watch, onMounted } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
 import {
   useProcessColumns,
   useCreateProcessColumn,
-  
   useDeleteProcessColumn,
-
   useProcessSheets
 } from '../../queries/useProcess';
 import ProcessKanbanCard from './components/ProcessKanbanCard.vue';

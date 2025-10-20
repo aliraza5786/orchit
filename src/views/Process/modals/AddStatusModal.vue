@@ -28,19 +28,19 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <!-- <div class="flex items-center gap-2">
           <input type="checkbox" v-model="isInitial" id="isInitial" class="rounded">
           <label for="isInitial" class="text-sm text-text-secondary cursor-pointer">
             This is the initial status
           </label>
-        </div>
-
+        </div> -->
+<!-- 
         <div class="flex items-center gap-2">
           <input type="checkbox" v-model="isFinal" id="isFinal" class="rounded">
           <label for="isFinal" class="text-sm text-text-secondary cursor-pointer">
             This is a final status
           </label>
-        </div>
+        </div> -->
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
@@ -134,7 +134,7 @@ function handleSubmit() {
 
     workflowState.addStatus(statusData)
     toast.success(`Status "${statusName.value}" added`)
-    emit('status:added', statusName.value.trim())
+    emit('status:added', statusData)
     close()
   } catch (error) {
     toast.error('Failed to add status')

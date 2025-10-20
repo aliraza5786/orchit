@@ -115,12 +115,16 @@ watch(
     // 1) put nodes in first
     await nextTick()
     setNodes(incomingNodes)
+    await nextTick()
+
     // 2) after nodes & handles are mounted/measured, then add edges
-    onNodesInitialized(() => {
+    onNodesInitialized(async () => {
       // (optional) make sure handle bounds are fresh
       incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
       setEdges(incomingEdges)
       fitView({ padding: 0.2 }) // nice-to-have
+      await nextTick()
+
     })
   },
   { immediate: true }
@@ -213,13 +217,14 @@ function cancelRename() { renameId.value = null }
 
 // Add a brand-new independent node
 async function handleAddNode(e: any) {
-  const id = nextId()
-  const pos = project({ x: 60, y: 360 }) // place near bottom-left; project to account for zoom/pan
-  const status: Status = 'In Progress'
+  const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
+  const id = makeId();
+
+  const pos = project({ x: e.position_x, y: e.position_y }) // place near bottom-left; project to account for zoom/pan
   addNodes({
     id,
     position: pos,
-    data: { label: e, status },
+    data: { label: e.name, status: e.status_name },
     style: { border: '2px solid #64748b', borderRadius: '10px', background: '#fff' },
   })
 
@@ -258,14 +263,14 @@ function mapVFEdgeToApi(e: VFEdge) {
   const m = e.markerEnd
   const marker_end = m
     ? (() => {
-        const mt = typeof m === 'string' ? m : (m as any).type
-        return {
-          type: markerTypeToApi(mt as MarkerType | string), // ← now safe
-          color: typeof m === 'string' ? undefined : (m as any).color,
-          width: typeof m === 'string' ? undefined : Number((m as any).width ?? 18),
-          height: typeof m === 'string' ? undefined : Number((m as any).height ?? 18),
-        }
-      })()
+      const mt = typeof m === 'string' ? m : (m as any).type
+      return {
+        type: markerTypeToApi(mt as MarkerType | string), // ← now safe
+        color: typeof m === 'string' ? undefined : (m as any).color,
+        width: typeof m === 'string' ? undefined : Number((m as any).width ?? 18),
+        height: typeof m === 'string' ? undefined : Number((m as any).height ?? 18),
+      }
+    })()
     : undefined
 
   return {
@@ -323,7 +328,7 @@ window.addEventListener('beforeunload', () => {
 
     <VueFlow v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
       :nodes-draggable="true" :nodes-connectable="true" :elements-selectable="true" fit-view-on-init
-      @connect="onConnect" >
+      @connect="onConnect">
 
       <Background />
       <!-- <MiniMap /> -->
