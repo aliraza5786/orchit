@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 
 // Define types for state
 interface WorkspaceState {
+  workspace: any;
   showSettingPanel: boolean;
   showCreateLaneModal: boolean;
   showUpdateLaneModal: boolean;
@@ -15,6 +16,7 @@ interface WorkspaceState {
 
 export const useWorkspaceStore = defineStore("workspace", {
   state: (): WorkspaceState => ({
+    workspace: null,
     showSettingPanel: false,
     showCreateLaneModal: false,
     showCreateLaneModalWithAI: false,
@@ -26,17 +28,17 @@ export const useWorkspaceStore = defineStore("workspace", {
     selectedLaneIds: [],
   }),
   actions: {
+    setWorkspace(i: any) {
+      this.workspace = i;
+    },
     toggleSettingPanel() {
       this.showProfilePanel = false;
       setTimeout(() => {
         this.showSettingPanel = !this.showSettingPanel;
       }, 200);
     },
-    toggleAllLane(id:any) {
-
-      // Changed to string
-      this.selectedLaneIds= [];
-      console.log('>>>', this.selectedLaneIds, id);
+    toggleAllLane() {
+      this.selectedLaneIds = [];
     },
     setSettingPanel(val: boolean) {
       this.showProfilePanel = false;
@@ -77,9 +79,7 @@ export const useWorkspaceStore = defineStore("workspace", {
         this.selectedLaneIds.splice(index, 1);
       }
     },
-   
     isLaneSelected(id: string): boolean {
-      // Changed to string
       return this.selectedLaneIds.includes(id);
     },
   },

@@ -46,7 +46,8 @@ import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
 import Button from '../../components/ui/Button.vue'
 import { login } from '../../services/auth'
-
+import { useWorkspaceStore } from '../../stores/workspace'
+const workspaceStore = useWorkspaceStore()
 defineOptions({ name: 'LoginPage' })
 
 // --- Constants (non-reactive) ---
@@ -106,7 +107,10 @@ async function handleLogin() {
     const data = await mutateAsync({ u_email: email.value, u_password: password.value })
     // adapt if token key differs
     localStorage.setItem('token', data?.data?.token)
-    router.push('/dashboard')
+    if (workspaceStore.workspace) {
+      router.push('/create-workspace')
+    } else
+      router.push('/dashboard')
   } catch (err: any) {
     errorMessage.value = err?.response?.data?.message || 'Login failed. Please try again.'
   }

@@ -1,41 +1,21 @@
 <template>
-  <div
-    class="relative w-full select-none"
-    role="tablist"
-    @keydown="onKeydown"
-  >
+  <div class="relative w-full select-none overflow-x-auto" role="tablist" @keydown="onKeydown">
     <!-- Track with bottom border only -->
-    <div
-      ref="trackRef"
-      class="flex w-full gap-2 border-b border-border"
-      :class="disabled ? 'opacity-60 pointer-events-none' : ''"
-    >
-      <button
-        v-for="(option, i) in options"
-        :key="option.value"
-        :ref="(el:any) => setBtnRef(el, i)"
-        role="tab"
-        :aria-selected="modelValue === option.value"
-        :tabindex="modelValue === option.value ? 0 : -1"
-        @click="choose(option.value)"
-        @mouseenter="hovered = i"
-        @mouseleave="hovered = null"
-        class="relative px-3 py-2 rounded-md text-sm font-medium transition-colors
+    <div ref="trackRef" class="flex w-full gap-2 border-b border-border "
+      :class="disabled ? 'opacity-60 pointer-events-none' : ''">
+      <button v-for="(option, i) in options" :key="option.value" :ref="(el: any) => setBtnRef(el, i)" role="tab"
+        :aria-selected="modelValue === option.value" :tabindex="modelValue === option.value ? 0 : -1"
+        @click="choose(option.value)" @mouseenter="hovered = i" @mouseleave="hovered = null" class="relative px-3 py-2 rounded-md text-sm font-medium transition-colors
                text-text-secondary hover:text-text-primary
                focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-        :class="modelValue === option.value ? 'text-text-primary' : ''"
-      >
+        :class="modelValue === option.value ? 'text-text-primary' : ''">
         {{ option.label }}
       </button>
     </div>
 
     <!-- Bottom indicator -->
-    <div
-      class="absolute bottom-0 h-[2px] bg-accent rounded-full
-             transition-[transform,width] duration-300"
-      :style="indicatorStyle"
-      aria-hidden="true"
-    />
+    <div class="absolute bottom-0 h-[2px] bg-accent rounded-full
+             transition-[transform,width] duration-300" :style="indicatorStyle" aria-hidden="true" />
   </div>
 </template>
 
@@ -132,7 +112,7 @@ watch(() => [props.modelValue, props.options], async () => {
 
 <style scoped>
 /* Smooth, slightly springy indicator motion */
-:where(.transition-\[transform,width\]) {
-  transition-timing-function: cubic-bezier(.2,.7,.2,1.1);
+:where(.transition-\[transform, width\]) {
+  transition-timing-function: cubic-bezier(.2, .7, .2, 1.1);
 }
 </style>

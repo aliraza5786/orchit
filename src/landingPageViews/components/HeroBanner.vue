@@ -16,7 +16,6 @@ const examples = [
     "👗 I want to launch a fashion boutique.",
     "🚗 I want to open a car rental service.",
     "📸 I want to become a professional photographer."
-
 ];
 
 const projectInputRef = ref<{ setValue: (val: string) => void } | null>(null);
@@ -29,10 +28,8 @@ function handleExampleClick(example: string) {
 
 async function handleSubmit(value: string) {
     if (!value.trim()) return;
-
     isLoading.value = true;
     responseMessage.value = null;
-
     try {
         // Example: Replace this URL with your real endpoint
         const res = await fetch("https://api.example.com/generate-plan", {
@@ -42,7 +39,6 @@ async function handleSubmit(value: string) {
         });
 
         if (!res.ok) throw new Error("Failed to fetch plan");
-
         const data = await res.json();
         responseMessage.value = data.message || "Plan generated successfully!";
     } catch (err) {
@@ -117,9 +113,6 @@ async function handleSubmit(value: string) {
             <p class="font-manrope text-[14px] text-center"
                 :class="theme === 'dark' ? 'text-[#94A3B8]' : 'text-text-primary'">Work Without Limits</p>
         </div>
-
-
-
 
     </section>
 </template>
