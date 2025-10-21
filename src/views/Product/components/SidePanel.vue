@@ -10,7 +10,7 @@
       <div
         class="sticky top-0 z-10 bg-transparent border-b border-orchit-white/5 px-6 py-4 flex items-center justify-between">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
-        <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] transition" @click="$emit('close')"
+        <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition" @click="()=>emit('close')"
           aria-label="Close details">
           <i class="fa-solid fa-xmark text-xl"></i>
         </button>
@@ -107,8 +107,7 @@
 
               </template>
 
-              <!-- Dynamic Select variables -->
-              <template v-for="(item, index) in details.variables" :key="item.slug || `var-${index}`">
+              <template v-if="cardDetails?.variables" v-for="(item, index) in cardDetails?.variables" :key="item.slug || `var-${index}`">
                 <div v-if="item?.type === 'Select'" class="space-y-2 sm:col-span-1">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">{{ item.title }}</div>
                   <BaseSelectField size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
@@ -246,13 +245,13 @@
 import { computed, reactive, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import { useLanes, useMoveCard } from '../../../queries/useSheets'
-import TypeChanger from './TypeChanger.vue'
+// import TypeChanger from './TypeChanger.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import DatePicker from './DatePicker.vue'
 import AssigmentDropdown from './AssigmentDropdown.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteIds } from '../../../composables/useQueryParams'
-import { useComments, useCreateComment, useUpdateComment, useDeleteComment } from '../../../queries/useProductCard'
+import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
 import { useUploadFile } from '../../../queries/useCommon'
@@ -266,7 +265,7 @@ const props = defineProps({
   details: { type: Object as () => any, default: () => ({}) }
 })
 const emit = defineEmits(['close', 'update:details', 'comment:post', 'priority:change'])
-
+const { data: cardDetails } = useProductCard(props.details._id);
 /* -------------------- Tabs -------------------- */
 const activeTab = ref<'details' | 'comments' | 'attachment' | 'history'>('details')
 const tabOptions = [
@@ -477,24 +476,27 @@ const localVarValues = reactive<Record<string, any>>({})
 
 // initialize + keep in sync when props.details changes (e.g., after invalidateQueries)
 const initLocalVars = () => {
-  const vars = props.details?.variables ?? []
-  vars.forEach((v: any) => {
-    if (!v || v.type !== 'Select') return
-    // prefer server value; otherwise default to the first option's value (if exists)
-    const first = Array.isArray(v.data) && v.data.length ? v.data[0]?.value ?? v.data[0]?._id ?? v.data[0] : undefined
-    localVarValues[v.slug] = v.value ?? localVarValues[v.slug] ?? first ?? null
-  })
+  if (cardDetails?.value?.variables){
+    const vars = cardDetails.value.variables ?? []
+    vars.forEach((v: any) => {
+      if (!v || v.type !== 'Select') return
+      // prefer server value; otherwise default to the first option's value (if exists)
+      const first = Array.isArray(v.data) && v.data.length ? v.data[0]?.value ?? v.data[0]?._id ?? v.data[0] : undefined
+      localVarValues[v.slug] = v.value ?? localVarValues[v.slug] ?? first ?? null
+    })
+
+  }
 }
 
 onMounted(initLocalVars)
-watch(() => props.details?.variables, initLocalVars, { deep: true })
+watch(() => cardDetails.value, initLocalVars, { deep: true })
 
 function handleSelect(val: any, slug: string) {
   // update local immediately for snappy UI
   localVarValues[slug] = val
 
   // compare with current prop value to avoid redundant mutation
-  const prev = (props.details?.variables ?? []).find((v: any) => v.slug === slug)?.value
+  const prev = (cardDetails.value?.variables ?? []).find((v: any) => v.slug === slug)?.value
   if (prev === val) return
 
   // persist to server

@@ -1,8 +1,7 @@
-import { computed, unref } from "vue";
-import {  useQuery } from "@tanstack/vue-query";
+import { computed, unref, type Ref } from "vue";
+import { useQuery, type UseQueryOptions } from "@tanstack/vue-query";
 import { useApiMutation } from "../libs/vq";
 import { request } from "../libs/api";
-
 
 /** -----------------------------
  * Stable query keys
@@ -46,7 +45,7 @@ export const useMoveList = (options = {}) =>
 
 // PATCH /workspace/cards/update
 export const useMoveCard = (options = {}) =>
-  useApiMutation<{ data: unknown },   any >(
+  useApiMutation<{ data: unknown }, any>(
     {
       key: ["move-card"],
       url: "/workspace/cards/update",
@@ -131,50 +130,73 @@ export const useSheets = (
   });
 };
 
-export const useSheetList = (
-  module_id: any,
-  sheet_id: any,
-  laneIds: any,
-  view_by: any,
-  options = {}
-) => {
- 
+// tiny helper for typing; you can omit if you like
+type MaybeRef<T> = T | Ref<T>;
 
-  // normalize laneIds -> string like "1,2,3" (deduped)
+export function useSheetList(
+  module_id: MaybeRef<string | null | undefined>,
+  sheet_id: MaybeRef<string | null | undefined>,
+  laneIds: MaybeRef<string[] | string | null | undefined>,
+  view_by: MaybeRef<string | null | undefined>,
+  options: Omit<
+    UseQueryOptions<any, any, any, any>,
+    "queryKey" | "queryFn"
+  > = {}
+) {
+  // normalize laneIds -> "a,b,c"
   const laneIdsParam = computed<string | undefined>(() => {
     const v = unref(laneIds);
     if (v == null) return undefined;
     if (Array.isArray(v)) {
-      const joined = Array.from(
+      const s = Array.from(
         new Set(v.map((x) => String(x).trim()).filter(Boolean))
       ).join(",");
-      return joined || undefined;
+      return s || undefined;
     }
-    const single = String(v).trim();
-    return single || undefined;
+    const one = String(v).trim();
+    return one || undefined;
   });
 
-  
+  // reactive query key
+  const queryKey = computed(() => [
+    "sheet-list",
+    {
+      moduleId: unref(module_id),
+      sheetId: unref(sheet_id),
+      laneIds: unref(laneIdsParam),
+      viewBy: unref(view_by),
+    },
+  ]);
+
+  // reactive enabled
+  const enabled = computed(() =>
+    Boolean(unref(module_id) && unref(sheet_id) && unref(view_by))
+  );
 
   return useQuery({
-    queryKey:  keys.sheetList(module_id, sheet_id, laneIdsParam.value, view_by,),
-    enabled: computed(() => !!module_id && !!sheet_id && !!view_by),
+    retry: 0,
+    queryKey, // pass the computed directly
+    enabled, // pass the computed directly
+    // keep previous data while switching keys (optional)
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      const params = {
+        module_id: unref(module_id)!,
+        sheet_id: unref(sheet_id)!,
+        variable_id: unref(view_by)!,
+        ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam)! } : {}),
+      };
 
-    queryFn: ({ signal }) =>
-      request<any>({
+      // request() should return plain JSON (not AxiosResponse)
+      return request({
         url: "/workspace/cards/grouped",
         method: "GET",
-        params: {
-          module_id: unref(module_id),
-          sheet_id: unref(sheet_id),
-          variable_id: unref(view_by),
-          ...(laneIdsParam.value ? { lane_ids: laneIdsParam.value } : {}),
-        },
-        signal,
-      }),
+        params,
+      });
+    },
     ...options,
   });
-};
+}
 
 export const useVariables = (
   workspace_id: any,
@@ -213,7 +235,7 @@ type createVAr = { payload: any };
 export const useCreateVar = (options = {}) =>
   useApiMutation<any, createVAr>(
     {
-      key: ['addVariables'],
+      key: ["addVariables"],
     } as any,
     {
       mutationFn: (vars: createVAr) =>
@@ -226,35 +248,34 @@ export const useCreateVar = (options = {}) =>
     } as any
   );
 
-  export const ReOrderList = (options = {}) =>
-    useApiMutation<any, createVAr>(
-      {
-        key: ['reorder-list'],
-      } as any,
-      {
-        mutationFn: (vars: createVAr) =>
-          request({
-            url: `workspace/cards/group-order`,
-            method: "PATCH",
-            data: vars.payload,
-          }),
-        ...(options as any),
-      } as any
-    );
+export const ReOrderList = (options = {}) =>
+  useApiMutation<any, createVAr>(
+    {
+      key: ["reorder-list"],
+    } as any,
+    {
+      mutationFn: (vars: createVAr) =>
+        request({
+          url: `workspace/cards/group-order`,
+          method: "PATCH",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
 
-    export const ReOrderCard = (options = {}) =>
-      useApiMutation<any, createVAr>(
-        {
-          key: ['reorder-card'],
-        } as any,
-        {
-          mutationFn: (vars: createVAr) =>
-            request({
-              url: `workspace/cards/group-card-order`,
-              method: "PATCH",
-              data: vars.payload,
-            }),
-          ...(options as any),
-        } as any
-      );
-  
+export const ReOrderCard = (options = {}) =>
+  useApiMutation<any, createVAr>(
+    {
+      key: ["reorder-card"],
+    } as any,
+    {
+      mutationFn: (vars: createVAr) =>
+        request({
+          url: `workspace/cards/group-card-order`,
+          method: "PATCH",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );

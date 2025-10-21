@@ -32,20 +32,20 @@
     <!-- Tickets list -->
     <Draggable v-model="localTickets" item-key="_id" class="flex-1 p-4 space-y-3 overflow-y-auto"
       :group="{ name: 'tickets', pull: true, put: true }" :animation="180" :ghost-class="'kanban-ghost'"
-      :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'" @change="onTicketsChange">
-      <template #item="{ element: ticket, index }">
+      :chosen-class="'kanban-chosen'" @start="onStart" @end="onEnd" :drag-class="'kanban-dragging'" @change="onTicketsChange">
+      <template #item="{ element: ticket }">
         <div>
           <slot name="ticket" @click="() => {
             emit('select:ticket', ticket)
-          }" :ticket="ticket" :index="index">
+          }" :ticket="ticket">
             <KanbanTicket @click="() => {
               emit('select:ticket', ticket)
-            }" :ticket="ticket" :index="index" />
+            }" :ticket="ticket"  />
           </slot>
         </div>
       </template>
       <template #footer>
-        <slot v-if="!localTickets.length" name="emptyState" :column="column" ></slot>
+        <slot v-if="!localTickets.length" name="emptyState" :column="column"></slot>
         <!-- <div v-if="!localTickets.length"
           class="flex items-center justify-center h-32 text-muted-foreground text-sm border border-border text-secondary border-dashed rounded-lg">
           Drop tickets here
@@ -65,9 +65,10 @@ import { computed, nextTick, ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import KanbanTicket from './KanbanTicket.vue'
 import DropMenu from '../../ui/DropMenu.vue'
+import { useWorkspaceStore } from '../../../stores/workspace'
 type Id = string | number
 export interface Ticket { _id: Id;[k: string]: any }
-export interface Column { _id: Id; title: string; cards: Ticket[] }
+export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any }
 
 const props = defineProps<{ column: Column, variable_id: string, sheet_id: string }>()
 const emit = defineEmits<{
@@ -83,7 +84,15 @@ const emit = defineEmits<{
   }): void
   (e: 'select:ticket', payload: Ticket): void
 }>()
-
+const workspaceStore = useWorkspaceStore()
+const onStart = () => {
+  console.log(props?.column?.transitions , '>>>>');
+  
+  workspaceStore.setTransition({...props?.column?.transitions, currentColumn:props.column?.title})
+}
+const onEnd = () => {
+  workspaceStore.setTransition({})
+}
 /** Inline title editing state */
 const isEditingTitle = ref(false)
 const localTitle = ref(props.column.title)
@@ -136,6 +145,7 @@ const columnBgClass = computed(() => {
 
 /** Sortable change */
 function onTicketsChange(evt: any) {
+
   const moved = evt.moved ?? evt.added
   if (!moved) return
   emit('reorder', {

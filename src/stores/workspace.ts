@@ -12,6 +12,7 @@ interface WorkspaceState {
   menuStyle: "classic" | "modern";
   showFilter: boolean;
   selectedLaneIds: string[]; // Updated to use string[] since ids are strings
+  transitions: any;
 }
 
 export const useWorkspaceStore = defineStore("workspace", {
@@ -26,8 +27,12 @@ export const useWorkspaceStore = defineStore("workspace", {
     menuStyle: "classic",
     showFilter: false,
     selectedLaneIds: [],
+    transitions: {},
   }),
   actions: {
+    setTransition(i: any) {
+      this.transitions = i;
+    },
     setWorkspace(i: any) {
       this.workspace = i;
     },

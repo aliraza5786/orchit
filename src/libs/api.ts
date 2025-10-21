@@ -8,40 +8,32 @@ import axios, {
 
 /** Your configured Axios instance */
 export const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, // ← from your env
-  // withCredentials: true,
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
 
-/** Auth token injector (kept from your version) */
+/** Auth token injector */
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
 
-/** (Optional) Response/logging/interceptor */
+/** Response / error interceptor */
 api.interceptors.response.use(
   (r) => r,
   (err: AxiosError) => {
     if (err.response?.status === 401) {
-      // Optional: show toast or alert
       console.warn("User not authorized. Redirecting to login.");
-
-      // Remove token
       localStorage.removeItem("token");
-
-      // Redirect to login page
-      // window.open('/login', '_self'); // not recommended; better use location/router
-      return; // stop    
+      // Important: still reject so callers don't get an undefined "success"
+      return Promise.reject(err);
     }
-
-    return Promise.reject(err); // Reject to allow individual API calls to handle errors if needed
+    return Promise.reject(err);
   }
 );
 
 /** Types & helpers */
-
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 export type DataExtractor = <T>(res: AxiosResponse<any>) => T;
 
@@ -49,16 +41,50 @@ export type DataExtractor = <T>(res: AxiosResponse<any>) => T;
 export const defaultExtractor: DataExtractor = (res) =>
   (res.data?.data ?? res.data) as any;
 
-/** A small, typed request helper you can use everywhere */
-export async function request<T = any>({
-  url,
-  method = "GET",
-  params,
-  data,
-  signal,
-  config,
-  extract = defaultExtractor,
-}: {
+/** Ensure an object is postMessage/structured-clone safe */
+function serializeClone<T>(value: T): T {
+  // Prefer structuredClone when available; fallback to JSON for older targets
+  try {
+    // @ts-ignore
+    if (typeof structuredClone === "function") return structuredClone(value);
+  } catch {/* ignore */}
+  return JSON.parse(JSON.stringify(value));
+}
+
+/** Normalize AxiosError into a plain, cloneable object */
+export type ApiError = {
+  name: string;
+  message: string;
+  status: number | null;
+  data: unknown;
+  // optionally add code, requestId, etc.
+};
+
+export function normalizeAxiosError(err: unknown): ApiError {
+  if (axios.isAxiosError(err)) {
+    const resp = err.response;
+    const plain = {
+      name: err.name || "AxiosError",
+      message:
+        (resp?.data as any)?.message ||
+        (resp?.data as any)?.error ||
+        err.message ||
+        "Network error",
+      status: resp?.status ?? null,
+      data: serializeClone(resp?.data ?? null), // make it cloneable
+    };
+    return plain;
+  }
+  const e = err as Error;
+  return {
+    name: e?.name ?? "Error",
+    message: e?.message ?? "Unknown error",
+    status: null,
+    data: null,
+  };
+}
+// ✅ Fast path: return JSON as-is
+export async function request<T = any>(args: {
   url: string;
   method?: HttpMethod;
   params?: any;
@@ -67,18 +93,31 @@ export async function request<T = any>({
   config?: AxiosRequestConfig;
   extract?: DataExtractor;
 }): Promise<T> {
-  const res = await api.request({
-    url,
-    method,
-    params,
-    data,
-    signal,
-    ...config,
-  });
-  return extract<T>(res);
+  try {
+    console.time('cards'); // if fast, the lag is elsewhere (e.g., render)
+
+    const res = await api.request({
+      url: args.url,
+      method: args.method ?? "GET",
+      params: args.params,
+      data: args.data,
+      signal: args.signal,
+      ...args.config,
+    });
+
+    const picked = (args.extract ?? defaultExtractor)<T>(res);
+    console.timeEnd('cards'); // if fast, the lag is elsewhere (e.g., render)
+
+    // IMPORTANT: no deep clone here
+    return picked;
+    
+  } catch (err) {
+    // Keep errors plain/cloneable for devtools/extension messaging
+    throw normalizeAxiosError(err);
+  }
 }
 
-/** Optional: light error normalization for UI toasts */
+/** Optional: light error message for toasts */
 export function toApiMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {
     const msg =
@@ -90,5 +129,4 @@ export function toApiMessage(err: unknown): string {
   return (err as Error)?.message ?? "Unknown error";
 }
 
-// Keep default export to avoid breaking existing imports
 export default api;

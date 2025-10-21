@@ -1,5 +1,6 @@
 <template>
-    <div class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
+    <div
+        class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
              rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
             <Dropdown v-model="selected_sheet_id" :options="transformedData" variant="secondary">
@@ -28,7 +29,14 @@
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
-                :variable_id="selected_view_by" :sheet_id="selected_sheet_id" />
+                :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
+                <template #column-footer="column">
+                    
+                    <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
+                        v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
+                        Disbale ( you can't drop here )</div>
+                </template>
+            </KanbanBoard>
             <div class="min-w-[328px] " @click.stop>
                 <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
                     <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
@@ -58,13 +66,13 @@
         }" />
     <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
         v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
-    <SidePanel :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
+    <SidePanel v-if="selectedCard?.variables" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
         :showPanel="selectedCard?.variables.length > 0 ? true : false" />
     <CreateSheetModal v-model="isCreateSheetModal" />
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
 </template>
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import Searchbar from '../../components/ui/SearchBar.vue';
@@ -74,6 +82,7 @@ import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../composables/useQueryParams';
+import Button from '../../components/ui/Button.vue';
 
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
 const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
@@ -83,9 +92,7 @@ const SidePanel = defineAsyncComponent(() => import('./components/SidePanel.vue'
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 const isCreateVar = ref(false)
 const route = useRoute();
-const { workspaceId, moduleId } = useRouteIds();
-const workspace_id = route.params.id;
-const workspace_module_id = ref(route.params.module_id);
+const { workspaceId, moduleId } = useRouteIds()
 const { data: variables } = useVariables(workspaceId.value, moduleId.value);
 const queryClient = useQueryClient()
 const { mutate: addList, isPending: addingList } = useAddList({
@@ -107,42 +114,28 @@ const handleAddColumn = (v: any) => {
 }
 
 // Fetch sheets using `useSheets`
-const { data, refetch } = useSheets({
-    workspace_id,
-    workspace_module_id
-}, {
-    onSuccess: () => {
-        refetchList();  // Refetch data on success
-    }
+const { data } = useSheets({
+    workspace_id: workspaceId,
+    workspace_module_id: moduleId
 });
-const selected_sheet_id = ref<any>(data.value ? data.value[0]._id : null);
-const showComponent = ref(true); // Flag to control component rendering
+const selected_sheet_id = ref<any>('');
 const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
 const selected_view_by = ref(viewBy.value);
 watch((viewBy), (newVal) => {
     selected_view_by.value = newVal
 })
-watch(() => route.params.module_id, (newId) => {
-    workspace_module_id.value = newId;
-    showComponent.value = false;
-    nextTick(() => {
-        refetch();
-        showComponent.value = true;
-    });
-});
 
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending, refetch: refetchList } = useSheetList(
-    workspace_module_id,
+const { data: Lists, isPending, } = useSheetList(
+    moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
     selected_view_by,                    // ref
 )
 
 const createTeamModal = ref(false);
-// const currentView = ref<'kanban' | 'list'>('kanban')
 const selectedCard = ref<{ variables: any }>()
 const selectCardHandler = (card: any) => {
     selectedCard.value = card
