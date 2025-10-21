@@ -29,6 +29,7 @@
                 <!-- Get Started Button -->
                 <div class="flex gap-3">
                     <button
+                        @click="handleGetStarted"
                         class="hidden lg:flex text-primary items-center gap-[4px] border-2 border rounded-full px-[15px] md:px-[20px] lg:px-[32px] py-[10px] md:py-[13px] lg:py-[18px] font-lato text-[14px] lg:text-[16px] transition leading-[100%]">
                         Get Started
                         <div class="flex items-center gap-[4px]">
@@ -82,18 +83,18 @@
 </template>
 
 <script lang="ts" setup>
-import { useRoute, RouterLink } from "vue-router";
+import { useRoute, RouterLink, useRouter } from "vue-router";
+import { ref } from "vue";
 import { useTheme } from "../../../composables/useTheme";
 import lightLogo from '@assets/global/light-logo.png';
 import darkLogo from '@assets/global/dark-logo.png';
 import googleLogo from '@assets/LandingPageImages/header-icons/google.png';
 import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
 import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
-import { ref } from "vue";
 
 const { theme } = useTheme();
 const route = useRoute();
-
+const router = useRouter();
 const navItems = [
     { label: "Home", link: "/home" },
     { label: "Pricing", link: "/pricing" },
@@ -110,6 +111,9 @@ const toggleMobileMenu = () => {
 };
 //  Close menu when link is clicked
 const closeMenu = () => {
-    mobileMenuOpen.value = false;
+    mobileMenuOpen.value = false;}
+
+const handleGetStarted = () => {
+    router.push('/register');
 };
 </script>
