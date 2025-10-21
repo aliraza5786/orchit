@@ -175,10 +175,12 @@ export function useSheetList(
 
   return useQuery({
     retry: 0,
-    queryKey, // pass the computed directly
-    enabled, // pass the computed directly
-    // keep previous data while switching keys (optional)
+    queryKey,
+    enabled,
     placeholderData: (prev) => prev,
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    refetchOnMount: 'always',
     queryFn: async () => {
       const params = {
         module_id: unref(module_id)!,
@@ -187,7 +189,6 @@ export function useSheetList(
         ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam)! } : {}),
       };
 
-      // request() should return plain JSON (not AxiosResponse)
       return request({
         url: "/workspace/cards/grouped",
         method: "GET",
