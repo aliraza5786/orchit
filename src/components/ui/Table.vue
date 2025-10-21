@@ -24,11 +24,10 @@
       </thead>
 
       <!-- Data rows -->
-      <TransitionGroup v-if="!loading && visibleRows.length > 0" name="row" tag="tbody"
-        class="divide-y divide-border text-text-secondary" appear>
+      <tbody v-if="!loading && visibleRows.length > 0" class="divide-y divide-border text-text-secondary">
         <tr v-for="(row, rIdx) in visibleRows" :key="rowKey(row, rIdx)" role="row" :aria-rowindex="rowIndex(rIdx)"
           tabindex="0" @click="emitRowClick(row, rIdx)" @keydown.enter.prevent="emitRowClick(row, rIdx)"
-          class="will-change-transform transition-colors duration-200" :class="[
+          class="transition-colors duration-150" :class="[
             hover ? 'hover:bg-surface cursor-pointer' : '',
             striped && rIdx % 2 === 1 ? 'bg-bg-surface/40' : '',
             rowClass?.(row, rIdx)
@@ -40,28 +39,15 @@
             </slot>
           </td>
         </tr>
-      </TransitionGroup>
+      </tbody>
 
 
       <!-- Skeleton rows -->
       <tbody v-else-if="loading" class="divide-y divide-border text-text-secondary">
-        <tr v-for="n in resolvedSkeletonRows" :key="n" class="animate-pulse">
+        <tr v-for="n in resolvedSkeletonRows" :key="n">
           <td v-for="(col, colIdx) in resolvedColumns" :key="col.key" class="px-4.5 py-4">
-        <!-- in your slot -->
-<div
-  class="h-4 rounded
-         bg-gradient-to-r from-slate-200/80 via-slate-300/90 to-slate-200/80
-         dark:from-slate-700/50 dark:via-slate-600/60 dark:to-slate-700/50
-         bg-[length:200%_100%] animate-shimmer"
-  :class="skeletonWidth(colIdx)" />
-<br />
-<div
-  class="h-2 rounded
-         bg-gradient-to-r from-slate-200/70 via-slate-300/80 to-slate-200/70
-         dark:from-slate-700/40 dark:via-slate-600/50 dark:to-slate-700/40
-         bg-[length:200%_100%] animate-shimmer"
-  :class="skeletonWidth(colIdx)" />
-
+            <div class="h-4 rounded bg-[length:200%_100%] animate-shimmer"
+              :class="[skeletonWidth(colIdx), 'bg-gradient-to-r from-slate-200/80 via-slate-300/90 to-slate-200/80 dark:from-slate-700/50 dark:via-slate-600/60 dark:to-slate-700/50']" />
           </td>
         </tr>
         <tr class="sr-only">
@@ -277,33 +263,30 @@ const isServer = computed(() => props.total != null)
 const totalItems = computed(() => (isServer.value ? (props.total as number) : props.rows.length))
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / pageSizeRef.value)))
 
-/* Processing (client-side sort + slice when not server mode) */
-const clientRows = computed(() => {
+/* Processing (client-side sort + slice when not server mode) - memoized */
+const sortedRows = computed(() => {
   if (props.loading) return [] as Row[]
-  let r = props.rows.slice()
+  const r = props.rows
 
-  if (sort.key) {
-    const dir = sort.dir ?? 'asc'
-    const key = sort.key
-    const sorter =
-      props.sorters?.[key] ?? ((a: Row, b: Row, d: 'asc' | 'desc') => {
-        const col = resolvedColumns.value.find((c) => c.key === key)
-        const av = col?.accessor ? col.accessor(a) : getByPath(a, key)
-        const bv = col?.accessor ? col.accessor(b) : getByPath(b, key)
-        return defaultCompare(av, bv, d)
-      })
+  if (!sort.key || !sort.dir) return r
 
-    r = r
-      .map((item, idx) => ({ item, idx }))
-      .sort((x, y) => {
-        const cmp = sorter(x.item, y.item, dir)
-        return cmp === 0 ? x.idx - y.idx : cmp
-      })
-      .map(({ item }) => item)
-  }
+  const dir = sort.dir
+  const key = sort.key
+  const col = resolvedColumns.value.find((c) => c.key === key)
+  const sorter = props.sorters?.[key]
 
+  return r.slice().sort((a, b) => {
+    if (sorter) return sorter(a, b, dir)
+    const av = col?.accessor ? col.accessor(a) : getByPath(a, key)
+    const bv = col?.accessor ? col.accessor(b) : getByPath(b, key)
+    return defaultCompare(av, bv, dir)
+  })
+})
+
+const clientRows = computed(() => {
+  const rows = sortedRows.value
   const start = (pageRef.value - 1) * pageSizeRef.value
-  return r.slice(start, start + pageSizeRef.value)
+  return rows.slice(start, start + pageSizeRef.value)
 })
 
 const visibleRows = computed(() => (isServer.value ? props.rows : clientRows.value))
@@ -344,22 +327,6 @@ function onPageSizeChange(val: string) {
 </script>
 
 <style scoped>
-/* Row enter/leave/move transitions (FLIP) */
-.row-enter-from,
-.row-leave-to {
-  opacity: 0;
-  transform: translateY(4px);
-}
-
-.row-enter-active,
-.row-leave-active {
-  transition: all 180ms ease;
-}
-
-.row-move {
-  transition: transform 180ms ease;
-}
-
 /* Skeleton shimmer keyframes (uses Tailwind arbitrary values above) */
 @keyframes shimmer {
   0% {
