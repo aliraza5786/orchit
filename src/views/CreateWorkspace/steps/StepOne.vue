@@ -44,6 +44,8 @@ import FileUploader from '../../../components/ui/FileUploader.vue';
 import { useIndustries, useWorkspacesTitles } from '../../../queries/useWorkspace';
 import { useUploadFile } from '../../../queries/useCommon';
 import { toast } from 'vue-sonner';
+import { useWorkspaceStore } from '../../../stores/workspace';
+const workspaceStore = useWorkspaceStore();
 
 defineProps<{
   ai: boolean;
@@ -64,20 +66,20 @@ type Workspace = {
 function safeJSONParse<T>(value: string | null, fallback: T): T {
   if (!value) return fallback;
   try {
-    return JSON.parse(value) as T;
+    return value as T;
   } catch {
     return fallback;
   }
 }
 
 function getWorkspace(): Workspace {
-  return safeJSONParse<Workspace>(localStorage.getItem('workspace'), { variables: {} });
+  return safeJSONParse<Workspace>(workspaceStore.workspace, { variables: {} });
 }
 
 function setWorkspace(updater: (prev: Workspace) => Workspace) {
   const prev = getWorkspace();
   const next = updater(prev);
-  localStorage.setItem('workspace', JSON.stringify(next));
+  workspaceStore.setWorkspace(next)
 }
 
 /** Static Options */
@@ -117,7 +119,6 @@ onMounted(() => {
 });
 
 const logoError = computed(() => !logo.value);
-
 const isValid = computed(() => {
   const hasLogo = !!logo.value;
   const hasTitle = !!form.value.title?.trim();
@@ -141,8 +142,6 @@ const { mutate, isPending } = useUploadFile({
   onSuccess: (data: any) => {
     const url: string | undefined = data?.data?.url;
     if (!url) {
-      console.log(data, '>>');
-
       toast.error('Upload succeeded but no URL was returned.');
       return;
     }
@@ -151,8 +150,6 @@ const { mutate, isPending } = useUploadFile({
       logo: url,
       variables: { ...(prev.variables || {}), ...form.value },
     }));
-    console.log(data, '>>hi');
-
     emit('next');
     return;
   },

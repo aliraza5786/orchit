@@ -28,8 +28,8 @@
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
                 :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
-                <template #ticket="{ ticket, index }">
-                    <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" :index="index" />
+                <template #ticket="{ ticket }">
+                    <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket"  />
                 </template>
                 <template #emptyState="{ column }">
                     <div class="flex flex-col items-center justify-center gap-2 py-10">
@@ -77,10 +77,9 @@
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
 </template>
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
-import Searchbar from '../../components/ui/SearchBar.vue';
 import { ReOrderCard, ReOrderList, useAddList, useSheetList, useSheets, useVariables } from '../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
@@ -101,8 +100,7 @@ const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/
 const isCreateVar = ref(false)
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
-const workspace_id = route.params.id;
-const workspace_module_id = ref(route.params.module_id);
+
 const { data: variables } = useVariables(workspaceId.value, moduleId.value);
 const queryClient = useQueryClient()
 const { mutate: addList, isPending: addingList } = useAddList({
@@ -124,35 +122,27 @@ const handleAddColumn = (v: any) => {
 }
 
 // Fetch sheets using `useSheets`
-const { data, refetch } = useSheets({
-    workspace_id,
-    workspace_module_id
+const { data } = useSheets({
+    workspace_id:workspaceId,
+    workspace_module_id:moduleId
 }, {
     onSuccess: () => {
         refetchList();  // Refetch data on success
     }
 });
 const selected_sheet_id = ref<any>(data.value ? data.value[0]._id : null);
-const showComponent = ref(true); // Flag to control component rendering
+// const showComponent = ref(tr/ue); // Flag to control component rendering
 const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
 const selected_view_by = ref(viewBy.value);
 watch((viewBy), (newVal) => {
     selected_view_by.value = newVal
 })
-watch(() => route.params.module_id, (newId) => {
-    workspace_module_id.value = newId;
-    showComponent.value = false;
-    nextTick(() => {
-        refetch();
-        showComponent.value = true;
-    });
-});
 
 const workspaceStore = useWorkspaceStore();
 
 // usage
 const { data: Lists, isPending, refetch: refetchList } = useSheetList(
-    workspace_module_id,
+    moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
     selected_view_by,                    // ref

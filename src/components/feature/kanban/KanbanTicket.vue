@@ -4,10 +4,10 @@
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
         <div class="flex justify-between gap-2 items-center">
             <div class="flex gap-2 py-2 flex-wrap ">
-                <TypeChanger v-for="(item, index) in ticket.variables"
+                <!-- <TypeChanger v-for="(item, index) in ticket.variables"
                     v-show="item?.type === 'Select' && item?.visible_on_card" :key="index" @click.stop
-                    :default="item?.value" :data="item?.data" :cardId="ticket?._id"
-                    @onselect="(val) => handleSelect(val)" />
+                    :default="`${item?.value}`" :slug="item.slug" :cardId="ticket?._id"
+                    @onselect="(val) => handleSelect(val)" /> -->
             </div>
             <DropMenu @click.stop="" :items="getMenuItems()">
                 <template #trigger>
@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import TypeChanger from '../../../views/Product/components/TypeChanger.vue'
+// import TypeChanger from '../../../views/Product/components/TypeChanger.vue'
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -81,6 +81,8 @@ import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
 const { workspaceId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
+
+
 
 type Priority = any
 export interface Ticket {
@@ -161,12 +163,12 @@ const { mutate: deleteCard, isPending: deletingTicket } = useDeleteTicket(props.
         showDelete.value = false
     }
 })
-const handleSelect = (val: any) => {
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        variables: val,
-    })
-}
+// const handleSelect = (val: any) => {
+//     moveCard.mutate({
+//         card_id: props.ticket._id,
+//         variables: val,
+//     })
+// }
 
 function getMenuItems() {
     return [{

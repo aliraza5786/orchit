@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from 'vue';
+import { ref, watch, nextTick } from 'vue';
 import BaseSelectField from './BaseSelectField.vue';
 import BaseTextField from './BaseTextField.vue';
 import Button from './Button.vue';

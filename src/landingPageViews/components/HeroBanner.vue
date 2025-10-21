@@ -16,7 +16,6 @@ const examples = [
     "👗 I want to launch a fashion boutique.",
     "🚗 I want to open a car rental service.",
     "📸 I want to become a professional photographer."
-
 ];
 
 const projectInputRef = ref<{ setValue: (val: string) => void } | null>(null);
@@ -29,10 +28,8 @@ function handleExampleClick(example: string) {
 
 async function handleSubmit(value: string) {
     if (!value.trim()) return;
-
     isLoading.value = true;
     responseMessage.value = null;
-
     try {
         // Example: Replace this URL with your real endpoint
         const res = await fetch("https://api.example.com/generate-plan", {
@@ -42,7 +39,6 @@ async function handleSubmit(value: string) {
         });
 
         if (!res.ok) throw new Error("Failed to fetch plan");
-
         const data = await res.json();
         responseMessage.value = data.message || "Plan generated successfully!";
     } catch (err) {
@@ -56,7 +52,7 @@ async function handleSubmit(value: string) {
 
 <template>
     <section
-        class="float-left w-full pt-[40px] lg:pt-[80px] xl:pt-[125px]  mb-10 md:mb-16 lg:mb-20 w-full transition-colors duration-500">
+        class="float-left pt-[40px] lg:pt-[80px] xl:pt-[125px]  mb-10 md:mb-16 lg:mb-20 w-full transition-colors duration-500">
         <div class="banner_main  px-[15px]">
             <div class="custom_container">
                 <!-- Heading -->
@@ -89,24 +85,33 @@ async function handleSubmit(value: string) {
                 Or try
                 these
                 examples:</p>
-            <div class="flex gap-[15px] lg:gap-[24px] px-4 mb-[15px] lg:mb-[24px] animate-marquee">
-                <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                    <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)" class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
+             <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                <div class="examples-container flex gap-[15px] lg:gap-[24px] px-4 mb-[15px] lg:mb-[24px]
+                    snap-x snap-mandatory animate-marquee
+                   hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
+                    <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
+                        <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)"
+                            class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
                     text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
                     transition-all duration-300 whitespace-nowrap "
-                        :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
-                        {{ example }}
-                    </button>
+                            :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
+                            {{ example }}
+                        </button>
+                    </div>
                 </div>
             </div>
-            <div class="flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2">
-                <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                    <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)" class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
+            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                <div
+                    class="examples-container pb-1 flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2 snap-x snap-mandatory hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
+                    <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
+                        <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)"
+                            class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
                     text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
                     transition-all duration-300 whitespace-nowrap "
-                        :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
-                        {{ example }}
-                    </button>
+                            :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
+                            {{ example }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -117,9 +122,6 @@ async function handleSubmit(value: string) {
             <p class="font-manrope text-[14px] text-center"
                 :class="theme === 'dark' ? 'text-[#94A3B8]' : 'text-text-primary'">Work Without Limits</p>
         </div>
-
-
-
 
     </section>
 </template>
@@ -154,6 +156,7 @@ async function handleSubmit(value: string) {
     display: flex;
     width: max-content;
     animation: marquee 200s linear infinite;
+    will-change: transform;
 }
 
 @keyframes marquee2 {
@@ -170,5 +173,22 @@ async function handleSubmit(value: string) {
     display: flex;
     width: max-content;
     animation: marquee2 200s linear infinite;
+    will-change: transform;
+
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Pause on hover or touch */
+.examples-container:hover,
+.examples-container:active {
+    animation-play-state: paused;
 }
 </style>

@@ -89,7 +89,7 @@ export const useAddCardPriority = (options = {}) => {
   });
 };
 
-export const useComments = (card_id: any, options = {}) => {  
+export const useComments = (card_id: any, options = {}) => {
   return useQuery({
     queryKey: ["comments", card_id],
     queryFn: ({ signal }) =>
@@ -99,7 +99,7 @@ export const useComments = (card_id: any, options = {}) => {
         signal,
       }),
     ...options,
-    enabled: !card_id ? false : true ,
+    enabled: !unref(card_id) ? false : true,
   });
 };
 export const useCreateComment = (options = {}) =>
@@ -147,3 +147,19 @@ export const useUpdateComment = (options = {}) =>
       ...(options as any),
     } as any
   );
+export const useProductCard = (
+  card_id: any,
+  options = {}
+) => {
+  return useQuery({
+    queryKey: ["product-card", card_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `/workspace/card/${unref(card_id)}`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+    enabled: !unref(card_id) ? false : true,
+  });
+};

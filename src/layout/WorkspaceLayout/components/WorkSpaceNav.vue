@@ -64,13 +64,13 @@
         :class="`flex text-xs font-bold items-center gap-2 ${workspaceStore.background.startsWith('url') ? 'text-white' : 'text-text-primary'}`">
         <li class="px-3 py-2 hover:bg-bg-card cursor-pointer group rounded-lg"
           :class="workspaceStore.selectedLaneIds.length == 0 ? 'bg-bg-card text-text-primary' : ''"
-          @click="workspaceStore.toggleAllLane('')">
+          @click="workspaceStore.toggleAllLane()">
           Main
         </li>
 
         <li v-for="item in getWorkspace?.lanes" :key="item._id" @click="workspaceStore.toggleLane(item._id)">
           <LaneDropdown @update="openUpdateModal" :id="item._id" :label="item?.variables['lane-title']"
-            :link="item?.link" :color="item?.variables['lane-color']"
+            :link="item?.link ?? ''" :color="item?.variables['lane-color']"
             :selected="workspaceStore.isLaneSelected(item._id)" />
         </li>
 

@@ -5,11 +5,12 @@
      overflow-y-auto
              bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
              rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)]
-             border border-white/5 overflow-hidden" role="complementary" aria-label="Details panel">
+             border border-orchit-white/5 overflow-hidden" role="complementary" aria-label="Details panel">
       <!-- Header -->
-      <div class="sticky top-0 z-10 bg-transparent border-b border-white/5 px-6 py-4 flex items-center justify-between">
+      <div
+        class="sticky top-0 z-10 bg-transparent border-b border-orchit-white/5 px-6 py-4 flex items-center justify-between">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
-        <button class="p-2 rounded-xl hover:bg-white/5 active:scale-[.98] transition" @click="$emit('close')"
+        <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition" @click="()=>emit('close')"
           aria-label="Close details">
           <i class="fa-solid fa-xmark text-xl"></i>
         </button>
@@ -21,11 +22,11 @@
         <div class="capitalize">
           <Transition name="fade-scale" mode="out-in">
             <input v-if="editingTitle" key="title-edit" ref="titleInput" v-model="localTitle" @blur="saveTitle"
-              @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEdit" class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-white/5 border border-white/10
+              @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEdit" class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10
                      focus:outline-none focus:ring-2 focus:ring-accent/40 transition" type="text"
               aria-label="Edit title" />
             <h1 v-else key="title-view" class="text-2xl font-semibold tracking-tight cursor-text rounded-lg px-2 py-1
-                     hover:bg-white/5 transition" @click="editTitle" aria-label="Card title">
+                     hover:bg-orchit-white/5 transition" @click="editTitle" aria-label="Card title">
               {{ localTitle || 'Untitled' }}
             </h1>
           </Transition>
@@ -38,15 +39,15 @@
           <Transition name="fade-scale" mode="out-in">
             <!-- view mode -->
             <div v-if="!editingDesc" key="desc-view" class="text-[15px] leading-6 text-text-secondary whitespace-pre-wrap cursor-text
-                     rounded-xl px-4 py-3 border border-white/10 bg-white/5
-                     hover:border-white/20 transition" @click="startEditDesc">
+                     rounded-xl px-4 py-3 border border-orchit-white/10 bg-orchit-white/5
+                     hover:border-orchit-white/20 transition" @click="startEditDesc">
               <div v-if="description" v-html="description"></div>
               <span v-else class="opacity-60">Click to add a description…</span>
             </div>
 
             <!-- edit mode -->
             <div v-else key="desc-edit" ref="descEditorWrap"
-              class="rounded-xl overflow-hidden border border-white/10 shadow-sm">
+              class="rounded-xl overflow-hidden border border-orchit-white/10 shadow-sm">
               <BaseRichTextEditor v-model="description" @focusOut="finishDescEdit" />
             </div>
           </Transition>
@@ -60,28 +61,32 @@
           <section v-if="activeTab === 'details'" key="tab-details" class="space-y-6">
             <!-- Meta tiles -->
             <div class="grid grid-cols-2 gap-4 text-sm">
-              <div class="rounded-xl bg-white/5 border border-white/10 p-4">
+              <div class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-4">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Posted On</div>
                 <div class="mt-1 font-medium">{{ dateISO }}</div>
               </div>
-              <div class="rounded-xl bg-white/5 border border-white/10 p-4">
+              <div class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-4">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">ID</div>
                 <div class="mt-1 font-medium">{{ details['card-code'] }}</div>
               </div>
             </div>
 
             <!-- Fields grid -->
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div
+              class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="space-y-2">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
                 <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
                   :model-value="lane" @update:modelValue="setLane" />
               </div>
-
+              <div class="space-y-2 ">
+                <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
+                <AssigmentDropdown @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
+              </div>
               <template v-if="!pin">
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Start Date</div>
-                  <div class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-white/10">
+                  <div class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10">
                     <i class="fa-regular fa-calendar"></i>
                     <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
                       @update:modelValue="setStartDate" />
@@ -90,8 +95,8 @@
 
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Target End</div>
-                  <div class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
-                    :class="endDateError ? 'border-red-500' : 'border-white/10'">
+                  <div class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
+                    :class="endDateError ? 'border-red-500' : 'border-orchit-white/10'">
                     <i class="fa-regular fa-calendar"></i>
                     <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
                       @update:modelValue="setEndDate" />
@@ -99,32 +104,31 @@
                   <p v-if="endDateError" class="text-xs text-red-400 mt-1">{{ endDateError }}</p>
                 </div>
 
-                <div class="space-y-2 sm:col-span-2">
-                  <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
-                  <AssigmentDropdown @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
+
+              </template>
+
+              <template v-if="cardDetails?.variables" v-for="(item, index) in cardDetails?.variables" :key="item.slug || `var-${index}`">
+                <div v-if="item?.type === 'Select'" class="space-y-2 sm:col-span-1">
+                  <div class="text-xs uppercase tracking-wider text-text-secondary">{{ item.title }}</div>
+                  <BaseSelectField size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
+                    placeholder="Select option" :allowCustom="false" :model-value="localVarValues[item.slug]"
+                    @update:modelValue="(val: any) => handleSelect(val, item.slug)" />
                 </div>
               </template>
 
-              <!-- Dynamic Select variables -->
-              <template v-for="(item, index) in details.variables" :key="`var-${index}`">
-                <div v-if="item?.type === 'Select'" class="space-y-2 sm:col-span-1">
-                  <div class="text-xs uppercase tracking-wider text-text-secondary">{{ item.title }}</div>
-                  <TypeChanger :default="item?.value" :data="item?.data" :cardId="details?._id"
-                    @onselect="(val: any) => handleSelect(val, item.slug)" />
-                </div>
-              </template>
             </div>
 
           </section>
           <section v-else-if="activeTab === 'history'">
             <!-- History timeline -->
             <div>
-              <h3 class="text-sm font-semibold tracking-wide mb-2">History</h3>
-              <ol class="relative border-l border-white/10 pl-5 space-y-4">
+              <h3 class="text-sm font-semibold tracking-wide mb-3">History</h3>
+              <ol class="relative border-l border-orchit-white/10 pl-5 space-y-4 ml-1">
                 <li v-for="(h, i) in details.history" :key="i" class="group">
                   <span
                     class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-accent/70 ring-4 ring-accent/10"></span>
-                  <div class="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/7 transition">
+                  <div
+                    class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-3 hover:bg-orchit-white/7 transition">
                     <span class="font-semibold">{{ h.user.u_full_name }}</span>
                     <span class="text-text-secondary"> changed </span>
                     <span class="font-semibold">{{ h.field_name }}</span>
@@ -138,7 +142,7 @@
           <!-- TAB: Comments -->
           <section v-else-if="activeTab === 'comments'" key="tab-comments" class="space-y-4">
             <div v-for="c in (comments ?? [])" :key="c._id"
-              class="rounded-xl border border-white/10 bg-white/5 p-4 hover:bg-white/7 transition">
+              class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 p-4 hover:bg-orchit-white/7 transition">
               <div class="flex items-center gap-3 mb-2">
                 <div
                   class="h-8 w-8 rounded-full bg-accent/15 text-accent flex items-center justify-center text-xs font-semibold">
@@ -160,7 +164,7 @@
                   {{ c.comment_text }}
                 </p>
                 <div v-else :key="`c-edit-${c._id}`" class="space-y-2">
-                  <textarea v-model="editText" rows="3" class="w-full p-3 rounded-lg bg-bg-input/80 border border-white/10
+                  <textarea v-model="editText" rows="3" class="w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10
                            focus:ring-2 focus:ring-accent/40 outline-none" />
                   <div class="flex items-center gap-2 justify-end">
                     <Button variant="secondary" size="sm" @click="cancelEdit">Cancel</Button>
@@ -173,8 +177,8 @@
               </Transition>
 
               <div v-if="c?.attachments?.length" class="mt-3 grid grid-cols-2 gap-2">
-                <a v-for="(file, index) in c.attachments" :key="index" :href="file.url" target="_blank" class="group flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2 py-1
-                         hover:bg-white/10 transition">
+                <a v-for="(file, index) in c.attachments" :key="index" :href="file.url" target="_blank" class="group flex items-center gap-2 rounded-lg border border-orchit-white/10 bg-orchit-white/5 px-2 py-1
+                         hover:bg-orchit-white/10 transition">
                   <i class="fa-regular fa-file text-text-secondary group-hover:text-text-primary transition"></i>
                   <span class="text-xs truncate">{{ file?.name }}</span>
                 </a>
@@ -182,14 +186,14 @@
             </div>
 
             <!-- New comment -->
-            <div class="rounded-xl border border-white/10 bg-white/5 overflow-hidden">
+            <div class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden">
               <textarea v-model="newComment" rows="3" class="w-full p-3 bg-transparent outline-none text-sm"
                 placeholder="Write a comment" />
-              <div class="flex items-center justify-between p-2 border-t border-white/10">
+              <div class="flex items-center justify-between p-2 border-t border-orchit-white/10">
                 <input type="file" multiple @change="handleFileChange" class="text-xs text-text-secondary
                          file:mr-3 file:px-3 file:py-1.5 file:rounded-md
-                         file:border file:border-white/10 file:bg-white/10
-                         hover:file:bg-white/15 file:text-text-primary transition" />
+                         file:border file:border-orchit-white/10 file:bg-orchit-white/10
+                         hover:file:bg-orchit-white/15 file:text-text-primary transition" />
                 <Button variant="primary" size="sm" @click="postComment"
                   :disabled="!newComment.trim() && !commentAttachments.length">
                   {{ isPostingComment ? 'Posting…' : 'Post' }}
@@ -206,7 +210,7 @@
 
             <div class="grid sm:grid-cols-2 gap-4">
               <div v-for="file in attachments" :key="file._id"
-                class="rounded-2xl overflow-hidden border border-white/10 bg-white/5 hover:bg-white/8 transition group">
+                class="rounded-2xl overflow-hidden border border-orchit-white/10 bg-orchit-white/5 hover:bg-orchit-white/8 transition group">
                 <div class="p-3">
                   <div v-if="file.kind === 'image'" class="rounded-lg overflow-hidden">
                     <img :src="file.url" class="w-full h-40 object-cover group-hover:scale-[1.02] transition" />
@@ -224,7 +228,7 @@
                 </div>
                 <div class="p-3 pt-0">
                   <a :href="file.url" target="_blank" rel="noopener" class="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg
-                           bg-accent text-white text-sm hover:opacity-90 transition">
+                           bg-accent text-orchit-white text-sm hover:opacity-90 transition">
                     <i class="fa-regular fa-arrow-up-right-from-square"></i> View
                   </a>
                 </div>
@@ -241,13 +245,13 @@
 import { computed, reactive, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import { useLanes, useMoveCard } from '../../../queries/useSheets'
-import TypeChanger from './TypeChanger.vue'
+// import TypeChanger from './TypeChanger.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import DatePicker from './DatePicker.vue'
 import AssigmentDropdown from './AssigmentDropdown.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteIds } from '../../../composables/useQueryParams'
-import { useComments, useCreateComment, useUpdateComment, useDeleteComment } from '../../../queries/useProductCard'
+import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
 import { useUploadFile } from '../../../queries/useCommon'
@@ -261,7 +265,7 @@ const props = defineProps({
   details: { type: Object as () => any, default: () => ({}) }
 })
 const emit = defineEmits(['close', 'update:details', 'comment:post', 'priority:change'])
-
+const { data: cardDetails } = useProductCard(props.details._id);
 /* -------------------- Tabs -------------------- */
 const activeTab = ref<'details' | 'comments' | 'attachment' | 'history'>('details')
 const tabOptions = [
@@ -351,7 +355,9 @@ function setLane(v: any) {
 
 const form = ref<any>({ startDate: props.details['start-date'], endDate: props.details['end-date'] })
 const startDate = computed(() => props.details['start-date'])
+const endDate = computed(() => props.details['end-date'])
 watch(startDate, (v) => { form.value = { ...form.value, startDate: v } })
+watch(endDate, (v) => { form.value = { ...form.value, endDate: v } })
 
 const endDateError = computed(() =>
   (form?.value.startDate && form.value.endDate && form.value.endDate < form.value.startDate)
@@ -465,14 +471,41 @@ function postComment() {
 }
 
 /* -------------------- Dynamic select handler -------------------- */
+
+const localVarValues = reactive<Record<string, any>>({})
+
+// initialize + keep in sync when props.details changes (e.g., after invalidateQueries)
+const initLocalVars = () => {
+  if (cardDetails?.value?.variables){
+    const vars = cardDetails.value.variables ?? []
+    vars.forEach((v: any) => {
+      if (!v || v.type !== 'Select') return
+      // prefer server value; otherwise default to the first option's value (if exists)
+      const first = Array.isArray(v.data) && v.data.length ? v.data[0]?.value ?? v.data[0]?._id ?? v.data[0] : undefined
+      localVarValues[v.slug] = v.value ?? localVarValues[v.slug] ?? first ?? null
+    })
+
+  }
+}
+
+onMounted(initLocalVars)
+watch(() => cardDetails.value, initLocalVars, { deep: true })
+
 function handleSelect(val: any, slug: string) {
-  const prev = (props.details?.variables ?? []).find((v: any) => v.slug === slug)?.value
+  // update local immediately for snappy UI
+  localVarValues[slug] = val
+
+  // compare with current prop value to avoid redundant mutation
+  const prev = (cardDetails.value?.variables ?? []).find((v: any) => v.slug === slug)?.value
   if (prev === val) return
+
+  // persist to server
   moveCard.mutate({
     card_id: props.details._id,
     variables: { [slug]: val },
   })
 }
+
 </script>
 
 <style scoped>

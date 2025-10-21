@@ -81,7 +81,8 @@ import { useCreateWorkspaceWithAI, useDescription, useSuggestions } from '../../
 import { useRoute } from "vue-router";
 import Loader from '../../../components/ui/Loader.vue';
 import Button from '../../../components/ui/Button.vue';
-
+import { useWorkspaceStore } from '../../../stores/workspace';
+const workspaceStore = useWorkspaceStore()
 const route = useRoute();
 const { data: suggestions, isPending: isSuggestionPending } = useSuggestions('workspace');
 const { data: descriptionData, isSuccess } = useDescription();
@@ -104,7 +105,7 @@ const audioURL = ref<string | null>(null);
 
 const { mutate: generate, isPending } = useCreateWorkspaceWithAI({
   onSuccess: (aiResponse: any) => {
-    localStorage.setItem("workspace", JSON.stringify(aiResponse));
+    workspaceStore.setWorkspace(aiResponse)
     emit('manual');
   },
   onError: (error: any) => {
@@ -135,12 +136,12 @@ function handleGenerate() {
   localStorage.setItem('mannualWorkspace', 'false');
   generate({ idea: description.value });
 }
-onMounted(()=>{
+onMounted(() => {
   localStorage.setItem('mannualWorkspace', 'false')
 })
 function mannualHandler() {
   localStorage.setItem('mannualWorkspace', 'true')
-  localStorage.removeItem('workspace');
+  workspaceStore.setWorkspace(null)
   localStorage.removeItem('jobId');
   emit('manual', 'mannual');
 }

@@ -26,10 +26,11 @@
                 @click="onLaneClick(lane)"
               >
                 <ProjectCard
+                :loading="isLoading || lane?.status === 'in_progress'"
                   :title="lane.lane_title"
                   subtitle="Mobile Application"
-                  :progress="lane?.progress"
-                  :status="lane?.status"
+                  :progress="lane?.progress ?? 0"
+                  :status="lane?.status ?? ''"
                   :avatars="avatars"
                   date="May 28"
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer"
@@ -185,7 +186,7 @@
 import { ref, onMounted, onUnmounted, computed, defineComponent, h } from 'vue'
 import { useJobId, useWorkspaceId } from '../composables/useQueryParams'
 import ProjectCard from '../components/feature/ProjectCard.vue'
-import StatusTable from '../components/ui/StatusTable.vue'
+
 
 /** Types */
 interface LaneProgressRow {
@@ -221,13 +222,7 @@ const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'https://backend
 /** Derived */
 const lanes = computed<LaneProgressRow[]>(() => taskProgress.value?.progress_details?.lanes_progress ?? [])
 const isLoading = computed(() => !taskProgress.value || ['queued', 'running'].includes(taskProgress.value.status))
-const progressFillClass = computed(() => {
-  const s = taskProgress.value?.status
-  if (s === 'running') return 'progress-running'
-  if (s === 'completed') return 'progress-complete'
-  if (s === 'failed') return 'progress-error'
-  return 'progress-default'
-})
+
 const avatars = [
   'https://randomuser.me/api/portraits/women/1.jpg',
   'https://randomuser.me/api/portraits/men/2.jpg',
@@ -320,17 +315,9 @@ const handleVisibilityChange = () => {
   }
 }
 
-/** UI helpers */
-const formatTime = (iso?: string) => {
-  if (!iso) return '—'
-  try { return new Date(iso).toLocaleString() } catch { return iso }
-}
+
 
 const onLaneClick = (lane: LaneProgressRow) => { console.log('Lane clicked:', lane) }
-const onLaneRowClick = (row: LaneProgressRow) => { onLaneClick(row) }
-
-/** Table columns */
-const columns2 = ['lane_title', 'RND', 'Designing', 'Design Review', 'Spec Doc', 'Development', 'QA', 'Content']
 
 /** Team Workload Data */
 const teamWorkload = ref([
@@ -399,22 +386,6 @@ const getStatusClass = (status: string) => {
   }
 })
 
- const SkeletonTable = defineComponent({
-  name: 'SkeletonTable',
-  setup() {
-    const items = Array.from({ length: 6 })
-    return () => h('div', { class: 'rounded-xl border border-border overflow-hidden' }, [
-      h('div', { class: 'h-10 bg-bg-body/50 animate-pulse' }),
-      h('ul', {}, items.map((_, i) => h('li', { key: i, class: 'flex items-center gap-4 px-4 py-3 border-t border-border animate-pulse' }, [
-        h('div', { class: 'h-4 w-1/5 bg-bg-card/50 rounded' }),
-        h('div', { class: 'h-3 w-1/6 bg-bg-card/50 rounded' }),
-        h('div', { class: 'h-3 w-1/6 bg-bg-card/50 rounded' }),
-        h('div', { class: 'h-3 w-1/6 bg-bg-card/50 rounded' }),
-        h('div', { class: 'h-3 w-1/6 bg-bg-card/50 rounded' })
-      ])))
-    ])
-  }
-})
 </script>
 
 <style scoped>

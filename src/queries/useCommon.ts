@@ -3,7 +3,7 @@ import api, { request } from "../libs/api";
 
 export const uploadFile = (formData: FormData) => {
   return api
-    .post("/upload/file", formData, {
+    .post("/upload/file-common", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

@@ -8,7 +8,7 @@
                 <h3 class="font-manrope text-primary font-bold text-[24px] md:text-[36px] lg:text-[48px] 
                leading-[34px] md:leading-[44px] lg:leading-[56px] tracking-[-1px] mb-4 md:mb-6 text-center">
                     Frequently Asked Questions</h3>
-                <p class="font-manrope text-center text-[#797E86] text-[16px] md:text-[18px] lg:text-[20px] 
+                <p class="font-manrope  text-[#797E86] text-[16px] md:text-[18px] lg:text-[20px] 
                  leading-[24px] lg:leading-[28px] font-normal max-w-[770px] mx-auto text-center">
                     We have compiled list of frequently asked questions to provide you with quick and comprehensive
                     answers.</p>
@@ -49,7 +49,7 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
 import { useTheme } from "../../composables/useTheme";
-const { theme, setTheme } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 const faqs = [
     { question: 'Why do I need Space?', answer: 'Space is an AI-powered workspace that helps you plan, manage, and orchestrate projects—whether it’s for your team, your business, or your personal productivity.' },

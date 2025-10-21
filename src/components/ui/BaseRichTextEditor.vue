@@ -221,12 +221,20 @@ function validateUrl(href: string) {
 const showLinkDialog = ref(false)
 const linkDraft = ref<{ href?: string; text?: string; newTab?: boolean }>({})
 function openLinkPanel() {
-    const attrs = editor.getAttributes('link') || {}
-    const { from, to } = editor.state.selection
-    const selectedText = editor.state.doc.textBetween(from, to) || ''
-    linkDraft.value = { href: attrs.href || '', text: selectedText || '', newTab: (attrs.target === '_blank') ?? true }
-    showLinkDialog.value = true
+  const attrs = editor.getAttributes('link') || {}
+  const { from, to } = editor.state.selection
+  const selectedText = editor.state.doc.textBetween(from, to) || ''
+
+  const newTab = attrs.target == null ? true : attrs.target === '_blank'
+
+  linkDraft.value = {
+    href: attrs.href || '',
+    text: selectedText || '',
+    newTab,
+  }
+  showLinkDialog.value = true
 }
+
 function insertLink({ href, text, newTab }: { href: string; text?: string; newTab: boolean }) {
     const target = newTab ? '_blank' : null
     const rel = newTab ? 'noopener noreferrer nofollow' : null

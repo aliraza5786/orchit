@@ -4,7 +4,7 @@
       {{ ai ? ' Choose Your Lanes' : 'Create Your Lanes' }}
     </h2>
     <p class="text-sm md:text-lg text-text-secondary text-left mt-2 mb-6">
-      {{ ai ? ' Select the components you want to include in your project' : ' Create the components you want to include  in your project'}}
+      {{ ai ? ' Select the components you want to include in your project' : ' Create the components you want to include in your project'}}
 
     </p>
   </div>
@@ -32,7 +32,7 @@
           :id="`lane-${lane.variables.id}`" v-model="selectedLanes" :value="lane.variables.id" />
         <div
           class="w-5 h-5 flex justify-center items-center border border-border bg-bg-card p-0.5 rounded cursor-pointer peer-checked:bg-accent peer-checked:border-none transition-all">
-          <i class="w-4 text-bg-card  fa-solid fa-check  peer-checked:text-white"  ></i>
+          <i class="w-4 text-bg-card  fa-solid fa-check  peer-checked:text-white"></i>
         </div>
       </div>
     </label>
@@ -98,6 +98,8 @@ import { ref, computed, reactive } from 'vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
+import { useWorkspaceStore } from '../../../stores/workspace';
+const workspaceStore = useWorkspaceStore();
 defineProps<{ ai: boolean }>()
 // Define workspace types and helpers
 type UiLane = {
@@ -109,7 +111,7 @@ type UiLane = {
   }
 };
 
-const LANES = JSON.parse(localStorage.getItem('workspace') || '')
+const LANES = workspaceStore.workspace || {}
 const form = ref<{ lanes: UiLane[] }>({ lanes: LANES.lanes || [] });
 const newLane = ref<{
   id: string,
@@ -122,9 +124,9 @@ const newLane = ref<{
 const selectedPlatforms = ref<string[]>([]);
 const localIds = computed(() => {
   try {
-    const raw = localStorage.getItem('workspace')
+    const raw = workspaceStore.workspace
     if (!raw) return [] // no value -> return empty array
-    const data = JSON.parse(raw)
+    const data = raw
     // ensure lanes exists and is an array
     if (!data.lanes || !Array.isArray(data.lanes)) return []
     return data.lanes.map((l: any) => l.variables?.id).filter(Boolean)
@@ -141,7 +143,6 @@ const editMode = ref(false);
 const touched = reactive({
   title: false,
   description: false,
-
   color: false,
 });
 
@@ -154,11 +155,7 @@ const titleError = computed(() => {
 });
 
 const descriptionError = computed(() => (!touched.description ? '' : (newLane.value['lane-description'] || '').trim() ? '' : 'Description is required'));
-
 const colorError = computed(() => (!touched.color ? '' : /^#([0-9A-Fa-f]{6})$/.test(newLane.value['lane-color'] || '') ? '' : 'Pick a valid 6-digit HEX color'));
-
-
-
 
 function handleAddCustomClick() {
   showCustomForm.value = true;
@@ -237,7 +234,7 @@ function safeJSONParse<T>(raw: string | null, fallback: any): T {
 }
 
 function getWorkspace(): Workspace | null {
-  return safeJSONParse<Workspace>(localStorage.getItem('workspace'), null);
+  return safeJSONParse<Workspace>(workspaceStore.workspace, null);
 }
 
 
@@ -245,7 +242,7 @@ function setWorkspace(updater: (prev: Workspace) => Workspace): void {
   const prev = getWorkspace();
   if (!prev) return;
   const next = updater(prev);
-  localStorage.setItem('workspace', JSON.stringify(next));
+  workspaceStore.setWorkspace(next)
 }
 
 function fromUiLane(ui: UiLane, prev?: WsLane): WsLane {
