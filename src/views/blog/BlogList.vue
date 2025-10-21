@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import BlogCard from '../blog/components/BlogCard.vue'
-import { usePublishedBlogs } from "../../queries/useBlogs";
 import { useTheme } from "../../composables/useTheme";
 import BlogCardSkeleton from './skelton/BlogCardSkeleton.vue';
 import CategoryTabsSkeleton from './skelton/CategoryTabsSkeleton.vue';
+import { usePublishedBlogs } from '../../queries/useBlogs.ts';
 
 const { theme } = useTheme();
 
@@ -41,7 +41,7 @@ const blogs = computed(() => {
 // Extract unique categories
 const categories = computed(() => {
   const unique = new Map();
-  blogs.value.forEach((b) => {
+  blogs.value.forEach((b:any) => {
     if (b.category && b.category.slug !== "uncategorized") {
       unique.set(b.category.slug, b.category);
     }
@@ -54,7 +54,7 @@ const filteredBlogs = computed(() => {
   if (!blogs.value) return [];
   if (activeTab.value === 'all') return blogs.value;
   return blogs.value.filter(
-    (b) => b.category?.slug === activeTab.value
+    (b:any) => b.category?.slug === activeTab.value
   );
 });
 </script>

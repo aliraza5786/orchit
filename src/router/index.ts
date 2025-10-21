@@ -92,7 +92,7 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: false },
       },
       {
-        path: "/blogs/:id",
+        path: "/blog/:id",
         name: "BlogDetail",
         component: BlogDetail,
         props: true,

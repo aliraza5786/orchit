@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, watchEffect, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useBlogBySlug, useRelatedBlogs } from "../../queries/useBlogs";
+import { useBlogBySlug, useRelatedBlogs } from "../../queries/useBlogs.ts";
 import { useTheme } from "../../composables/useTheme";
 import BlogSkeleton from "./skelton/BlogSkeleton.vue";
 import RelatedBlogSkeleton from "./skelton/RelatedBlogSkeleton.vue";
@@ -11,7 +11,7 @@ const route = useRoute();
 const router = useRouter();
 
 // Get slug from route
-const slug = computed(() => route.params.slug as string);
+const slug = computed(() => route.params.id as string);
 
 // Fetch main blog by slug
 const { data: blog, isLoading: loadingBlog, refetch: refetchBlog } = useBlogBySlug(slug, {
