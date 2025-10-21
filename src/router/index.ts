@@ -37,12 +37,12 @@ const LandingPageLayout = () =>
   import("../layout/LandingPageLayout/LandingPageLayout.vue");
 
 import LandingHome from "../landingPageViews/LandingHome.vue";
-import Pricing from "../views/pages/Pricing.vue";
-import TermsOfServices from "../views/pages/TermsOfServices.vue";
+import Pricing from "../views/Pricing.vue";
+import TermsOfServices from "../views/TermsOfServices.vue";
 import PrivactPolicy from "../views/pages/PrivactPolicy.vue";
-import ContactUs from "../views/pages/ContactUs.vue";
-import BlogList from "../views/pages/blog/BlogList.vue";
-import BlogDetail from "../views/pages/blog/BlogDetail.vue";
+import ContactUs from "../views/ContactUs.vue";
+import BlogList from "../views/blog/BlogList.vue";
+import BlogDetail from "../views/blog/BlogDetail.vue";
 
 const routes: RouteRecordRaw[] = [
   {
