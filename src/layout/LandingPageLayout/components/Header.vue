@@ -28,18 +28,30 @@
 
                 <!-- Get Started Button -->
                 <div class="flex gap-3">
+                    <div class="lg:flex hidden items-center gap-[12px] md:gap-[16px]">
+                    <!-- Login Link -->
+                    <RouterLink
+                        to="/login"
+                        class="  text-primary font-lato text-[14px] lg:text-[16px] font-medium transition-all duration-300 hover:opacity-70 px-[8px] py-[8px]">
+                        Login
+                    </RouterLink>
+
+                    <!-- Get Started Button -->
                     <button
                         @click="handleGetStarted"
-                        class="hidden lg:flex text-primary items-center gap-[4px] border-2 border rounded-full px-[15px] md:px-[20px] lg:px-[32px] py-[10px] md:py-[13px] lg:py-[18px] font-lato text-[14px] lg:text-[16px] transition leading-[100%]">
+                        class="flex text-primary items-center gap-[4px] border border rounded-full px-[15px] py-[8px] font-lato text-[14px] transition-all duration-300 leading-[100%] hover:bg-accent hover:text-accent-text hover:border-accent hover:scale-105 hover:cursor-pointer">
                         Get Started
                         <div class="flex items-center gap-[4px]">
-                            <img :src="googleLogo" alt="Google" class="w-[18px] md:w-[24px]" />
+                            <img :src="googleLogo" alt="Google"
+                                class="w-[18px] md:w-[24px]" />
                             <img :src="theme === 'dark'
-                                ? darkApple
-                                : lightApple
-                                " alt="Apple icon" class="w-[20px] md:w-[24px]" />
+                                    ? darkApple
+                                    : lightApple
+                                " alt="Apple icon" class="w-[20px] md:w-[24px]"
+                     />
                         </div>
                     </button>
+                </div>
                     <!-- Mobile Hamburger -->
                     <button class="lg:hidden focus:outline-none font-bold text-text-primary text-[20px]"
                         @click="toggleMobileMenu">
@@ -63,17 +75,34 @@
                             {{ item.label }}
                         </RouterLink>
                     </li>
-                    <li> <button
-                        class="flex text-primary items-center gap-[4px] border-2 border rounded-full px-[15px] md:px-[20px] lg:px-[32px] py-[10px] md:py-[13px] lg:py-[18px] font-lato text-[14px] lg:text-[16px] transition leading-[100%]">
+                    <li>
+                        
+                        
+
+                    <div class="flex items-center gap-[12px] md:gap-[16px]">
+                    <!-- Login Link -->
+                    <RouterLink
+                        to="/login"
+                        class="text-primary font-lato text-[14px] lg:text-[16px] font-medium transition-all duration-300 hover:opacity-70 px-[8px] py-[8px]">
+                        Login
+                    </RouterLink>
+
+                    <!-- Get Started Button -->
+                    <button
+                        @click="handleGetStarted"
+                        class="flex text-primary items-center gap-[4px] border border rounded-full px-[15px] py-[8px] font-lato text-[14px] transition-all duration-300 leading-[100%] hover:bg-accent hover:text-accent-text hover:border-accent hover:scale-105 hover:cursor-pointer">
                         Get Started
                         <div class="flex items-center gap-[4px]">
-                            <img :src="googleLogo" alt="Google" class="w-[18px] md:w-[24px]" />
+                            <img :src="googleLogo" alt="Google"
+                                class="w-[18px] md:w-[24px]" />
                             <img :src="theme === 'dark'
-                                ? darkApple
-                                : lightApple
-                                " alt="Apple icon" class="w-[20px] md:w-[24px]" />
+                                    ? darkApple
+                                    : lightApple
+                                " alt="Apple icon" class="w-[20px] md:w-[24px]"
+                     />
                         </div>
                     </button>
+                </div>
                   </li>
                 </ul>
 

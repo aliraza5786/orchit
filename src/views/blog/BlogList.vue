@@ -60,7 +60,7 @@ const filteredBlogs = computed(() => {
 </script>
 
 <template>
-  <section class="float-left w-full px-[15px] py-[40px] md:py-[60px] lg:py-[80px]">
+  <section class=" mx-auto max-w-[1000px] w-full px-[15px] py-[40px] md:py-[60px] lg:py-[80px]">
     <header class="mb-[30px] lg:mb-[48px]">
       <h2
         class="font-manrope text-left text-primary font-bold text-[24px] md:text-[36px] lg:text-[48px] leading-[34px] md:leading-[44px] lg:leading-[56px] tracking-[-1px] mb-[16px]">
@@ -73,10 +73,10 @@ const filteredBlogs = computed(() => {
     </header>
 
     <!-- Tabs -->
-    <div v-if="allLoading">
+    <div v-if="allLoading" >
       <CategoryTabsSkeleton />
     </div>
-    <div v-else class="flex flex-wrap gap-3 mb-8">
+    <div v-else class="flex flex-wrap gap-3 mb-8 ">
       <button @click="activeTab = 'all'"
         class="px-[16px] py-[8px] rounded-full font-manrope text-[14px] font-medium transition border cursor-pointer"
         :class="[
@@ -107,11 +107,11 @@ const filteredBlogs = computed(() => {
     </div>
 
     <!--  Blog list -->
-    <div v-if="allLoading" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-if="allLoading" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 ">
       <BlogCardSkeleton v-for="n in 6" :key="n" />
     </div>
 
-    <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mx-auto max-w-[1000px]">
       <BlogCard v-for="blog in filteredBlogs" :key="blog.id" :blog="blog" />
     </div>
   </section>
