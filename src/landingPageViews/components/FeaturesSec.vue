@@ -55,7 +55,7 @@ import ligtAiproject from '@assets/LandingPageImages/whyusespace/lightAiproject.
 import lightCollboration from '@assets/LandingPageImages/whyusespace/lightCollaboration.webp';
 import lightProjectivity from '@assets/LandingPageImages/whyusespace/lightProductivity.webp';
 import { useTheme } from "../../composables/useTheme";
-const { theme, setTheme } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 interface Project {
     name: string;

@@ -36,6 +36,7 @@ export const keys = {
   createLanes: ["workspace", "create-lanes-ai"] as const,
   updateInvited: ["invited", "update"] as const,
   deleteInvited: ["invited", "delete"] as const,
+  deleteWorkspace: ["workspace", "delete"] as const,
 };
 
 /** -----------------
@@ -195,7 +196,7 @@ export const useCreateWorkspaceWithAI = (options = {}) =>
   useApiMutation<{ data: unknown }, any>(
     {
       key: keys.createWorkspaceAI,
-      url: "/workspace/step-1-ai",
+      url: "common/step-1-ai",
       method: "POST",
     },
     options as any
@@ -316,3 +317,17 @@ export function useUsers(companyId: any) {
     enabled: computed(() => !!unref(companyId)), // don't run until we have an id
   });
 }
+
+type DeleteWorkspaceVars = { id: string | number };
+export const useDeleteWorkspace = (options = {}) =>
+  useApiMutation<any, DeleteWorkspaceVars>(
+    { key: keys.deleteWorkspace } as any,
+    {
+      mutationFn: (vars: DeleteWorkspaceVars) =>
+        request({
+          url: `/workspace/${vars.id}`,
+          method: "DELETE",
+        }),
+      ...(options as any),
+    } as any
+  );

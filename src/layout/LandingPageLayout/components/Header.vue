@@ -1,11 +1,11 @@
 <template>
-    <header class="w-full float-left bg-body text-primary px-[15px] border-b lg:border-b-0"
-        :class="theme === 'dark' ? 'border-gray-800' : 'border-gray-300'">
-        <div class="custom_container">
-            <nav class="flex items-center justify-between py-[15px] md:py-[24px]  border-gray-800 "
-                :class="theme === 'dark' ? 'lg:border-b' : 'border-b-0'">
+    <header
+        class="w-full bg-body text-primary border-b lg:border-b-0" :class="theme === 'dark'? 'border-gray-800':'border-gray-300'">
+        <div class="mx-auto px-10 border-gray-800 " :class="theme === 'dark'? 'lg:border-b':'border-b-0'">
+            <nav
+                class="flex items-center justify-between py-3">
                 <!-- Logo Section -->
-                <RouterLink to="/home">                    
+                <RouterLink to="/" class="transition-opacity duration-300 hover:opacity-80">
                     <img :src="theme === 'dark'
                         ? darkLogo
                         : lightLogo
@@ -16,7 +16,7 @@
                 <ul class="hidden lg:flex items-center gap-[24px]">
                     <li v-for="(item, index) in navItems" :key="index">
                         <RouterLink :to="item.link" :class="[
-                            'transition-colors duration-200 text-primary font-lato text-[16px]',
+                            'transition-all duration-300 text-primary font-lato text-[16px] hover:opacity-70 hover:translate-y-[-2px]',
                             isActive(item.link)
                                 ? 'font-bold'
                                 : 'font-normal',
@@ -83,22 +83,19 @@
 
 <script lang="ts" setup>
 import { useRoute, RouterLink } from "vue-router";
-import { ref } from "vue";
 import { useTheme } from "../../../composables/useTheme";
-import lightLogo from '@assets/LandingPageImages/logo/header-logo.png';
-import darkLogo from '@assets/LandingPageImages/logo/dark_logo.png';
+import lightLogo from '@assets/global/light-logo.png';
+import darkLogo from '@assets/global/dark-logo.png';
 import googleLogo from '@assets/LandingPageImages/header-icons/google.png';
 import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
 import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
+import { ref } from "vue";
 
-const { theme, setTheme } = useTheme(); // light / dark / system
-
+const { theme } = useTheme();
 const route = useRoute();
 
 const navItems = [
     { label: "Home", link: "/home" },
-    { label: "Solutions", link: "/abc" },
-    { label: "Marketplace", link: "/market-place" },
     { label: "Pricing", link: "/pricing" },
     { label: "Contact Sales", link: "/contact-sales" },
 ];

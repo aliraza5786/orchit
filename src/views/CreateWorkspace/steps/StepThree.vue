@@ -2,7 +2,7 @@
   <div class="w-full pt-4">
     <h2 class="text-xl md:text-4xl font-semibold text-text-primary mb-1">Team Resources</h2>
     <p class="text-sm md:text-lg text-text-secondary">
-      {{ ai ? ' AI-recommended team composition for your project' : 'team composition for your project' }}
+      {{ ai ? ' AI-recommended team composition for your project' : 'Team composition for your project' }}
     </p>
   </div>
 
@@ -13,7 +13,7 @@
         <div class="flex gap-4 items-center text-2xl justify-between w-full">
           <div class="flex flex-col text-text-primary text-lg font-semibold">
             <span>
-              <span class="text-xl mr-2">{{ role.role_emoji }}</span> {{ role.title }}
+              <span v-if="role?.role_emoji" class="text-xl mr-2">{{ role.role_emoji }}</span> {{ role.title }}
             </span>
             <p class="text-sm text-text-secondary">{{ role.description }}</p>
           </div>
@@ -105,7 +105,8 @@ import Button from '../../../components/ui/Button.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
-
+import { useWorkspaceStore } from '../../../stores/workspace';
+const workspaceStore = useWorkspaceStore();
 const emit = defineEmits(['next', 'back'])
 defineProps<{ ai: boolean }>()
 interface TeamMember { name: string; email: string }
@@ -211,17 +212,17 @@ function addNewRole() {
 }
 
 function saveToLocalStorage() {
-  const data = localStorage.getItem('workspace')
+  const data = workspaceStore.workspace
   const localWorkspace = data ? JSON.parse(data) : { variables: { roles: [] } }
   localWorkspace.variables.roles = workspace.roles
-  localStorage.setItem('workspace', JSON.stringify(localWorkspace))
+  workspaceStore.setWorkspace(localWorkspace)
 }
 
 onMounted(() => {
   try {
-    const savedWorkspace = localStorage.getItem('workspace')
+    const savedWorkspace = workspaceStore.workspace
     if (savedWorkspace) {
-      const data = JSON.parse(savedWorkspace)
+      const data = savedWorkspace
       workspace.roles = (data.variables.roles || []).map((r: Role) => ({
         ...r,
         showInput: r.showInput ?? false,

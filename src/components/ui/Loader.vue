@@ -7,7 +7,7 @@
     </video> -->
         <div class="text-center text-text-secondary space-y-6 z-10">
             <!-- Logo (you can replace it with your logo URL) -->
-            <img src="../../assets/icons/streamed-logo-icon.svg" alt="Logo" class="w-15 h-15 mx-auto" />
+            <img src="../../assets/global/favicon.png" alt="Logo" class="w-15 h-15 mx-auto" />
 
             <!-- Main loader text -->
             <p class="text-base text-text-secondary font-medium">Assembling Your Project Powerhouse...</p>

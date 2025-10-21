@@ -4,10 +4,10 @@
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
         <div class="flex justify-between gap-2 items-center">
             <div class="flex gap-2 py-2 flex-wrap ">
-                <TypeChanger v-for="(item, index) in ticket.variables"
+                <!-- <TypeChanger v-for="(item, index) in ticket.variables"
                     v-show="item?.type === 'Select' && item?.visible_on_card" :key="index" @click.stop
-                    :default="item?.value" :data="item?.data" :cardId="ticket?._id"
-                    @onselect="(val) => handleSelect(val)" />
+                    :default="`${item?.value}`" :slug="item.slug" :cardId="ticket?._id"
+                    @onselect="(val) => handleSelect(val)" /> -->
             </div>
             <DropMenu @click.stop="" :items="getMenuItems()">
                 <template #trigger>
@@ -32,7 +32,8 @@
 
             <!-- Assignment trigger (stops bubbling) -->
             <div @click.stop>
-                <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to" :seat="ticket?.seat" />
+                <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
+                    :seat="ticket?.seat" />
             </div>
         </div>
 
@@ -42,6 +43,17 @@
                 @update:modelValue="setStartDate" /> -
             <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setDueDate" />
+        </div>
+
+        <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
+            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
+                <i class="fa-regular fa-message"></i>
+                {{ ticket?.comments_count }}
+            </div>
+            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
+                <i class="fa-regular fa-file"></i>
+                {{ ticket?.attachments.length }}
+            </div>
         </div>
     </div>
 
@@ -58,7 +70,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import TypeChanger from '../../../views/Product/components/TypeChanger.vue'
+// import TypeChanger from '../../../views/Product/components/TypeChanger.vue'
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -67,8 +79,10 @@ import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal
 import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
-const {workspaceId} = useRouteIds();
+const { workspaceId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
+
+
 
 type Priority = any
 export interface Ticket {
@@ -128,6 +142,9 @@ const queryClient = useQueryClient()
 const moveCard = useMoveCard({
     onSuccess: () => {
         queryClient.invalidateQueries({
+            queryKey: ['people-lists']
+        })
+        queryClient.invalidateQueries({
             queryKey: ['get-sheets']
         })
         queryClient.invalidateQueries({
@@ -146,12 +163,12 @@ const { mutate: deleteCard, isPending: deletingTicket } = useDeleteTicket(props.
         showDelete.value = false
     }
 })
-const handleSelect = (val: any) => {
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        variables: val,
-    })
-}
+// const handleSelect = (val: any) => {
+//     moveCard.mutate({
+//         card_id: props.ticket._id,
+//         variables: val,
+//     })
+// }
 
 function getMenuItems() {
     return [{
@@ -169,7 +186,8 @@ const assignHandle = (user: any) => {
         card_id: props.ticket._id,
         seat_id: user?._id
     }
-    moveCard.mutate(payload)
+    moveCard.mutate(payload);
+
 }
 defineEmits(['click'])
 </script>

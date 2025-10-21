@@ -1,29 +1,80 @@
 <template>
-  <nav class="flex items-center justify-between   min-h-16  w-full   ">
-    <!-- Logo -->
+  <nav class="flex items-center justify-between min-h-16 w-full">
+    <!-- Left side: Logo + lanes -->
     <div
-      :class="`text-2xl font-bold   ${workspaceStore.background.startsWith('url') ? 'text-text-secondary' : 'text-text-primary'}  flex items-center gap-8`">
-      <div class="flex items-center gap-3 pl-3">
-        <img :src="getWorkspace?.logo ?? dp" alt="Orchit AI Logo" @click="handleClick"
-          class="min-w-10 shadow-2xl rounded-md h-10 cursor-pointer aspect-square object-contain" />
-        <h3 class="text-lg max-w-42 font-medium line-clamp-1 text-text-primary">{{ getWorkspace?.variables?.title }}
-        </h3>
+      :class="`text-2xl font-bold flex items-center gap-8 ${workspaceStore.background.startsWith('url') ? 'text-text-secondary' : 'text-text-primary'}`">
+
+      <!-- Logo + Title (now a dropdown trigger) -->
+      <div class="relative">
+        <button ref="logoBtnRef" class="flex items-center gap-3 pl-3 cursor-pointer rounded-md" aria-haspopup="menu"
+          :aria-expanded="logoMenuOpen ? 'true' : 'false'" @click="toggleLogoMenu"
+          @keydown.down.prevent="openAndFocusFirst" @keydown.enter.prevent="toggleLogoMenu"
+          @keydown.space.prevent="toggleLogoMenu">
+          <img :src="getWorkspace?.logo ?? dp" alt="Workspace menu"
+            class="min-w-10 shadow-2xl rounded-md h-10 cursor-pointer aspect-square object-contain" />
+          <h3 class="text-lg max-w-42 font-medium line-clamp-1 text-text-primary">
+            {{ getWorkspace?.variables?.title }}
+          </h3>
+          <svg class="w-4 h-4 opacity-70 transition-transform duration-200"
+            :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'" viewBox="0 0 20 20" fill="currentColor"
+            aria-hidden="true">
+            <path fill-rule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z"
+              clip-rule="evenodd" />
+          </svg>
+
+        </button>
+        <!-- Dropdown -->
+        <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
+          <div v-show="logoMenuOpen" ref="menuRef"
+            class="absolute z-50 mt-2 w-72 rounded-md border border-black/5 shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-white/60 bg-white dark:bg-neutral-900 dark:border-white/10 origin-top-left"
+            role="menu" aria-label="Workspace switcher" @keydown.esc.stop.prevent="closeLogoMenu">
+            <!-- Home -->
+            <button
+              class="w-full px-3 py-2 cursor-pointer text-left text-sm hover:bg-bg-card/70 rounded-t-xl flex items-center gap-2"
+              role="menuitem" @click="goHome" ref="firstItemRef">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z" stroke="currentColor"
+                  stroke-width="1.5" stroke-linejoin="round" />
+              </svg>
+              Home
+            </button>
+
+            <div class="my-1 h-px bg-black/5 dark:bg-white/10"></div>
+
+            <!-- Workspaces -->
+            <div class="max-h-72 overflow-auto py-1 cursor-pointer">
+              <button v-for="ws in workspaces" :key="ws._id"
+                class="w-full px-3 py-2 text-left text-sm hover:bg-bg-card/70 cursor-pointer flex items-center gap-3"
+                role="menuitem" @click="switchTo(ws)">
+                <img :src="ws.logo ?? dp" alt="" class="w-6 h-6 rounded object-contain bg-white" />
+                <span class="flex-1 line-clamp-1">{{ ws?.variables?.title ?? 'Untitled workspace' }}</span>
+                <span v-if="ws._id === workspaceId"
+                  class="text-xs px-2 py-0.5 rounded-full border border-black/10 dark:border-white/20">
+                  Current
+                </span>
+              </button>
+            </div>
+          </div>
+        </Transition>
       </div>
+
       <!-- Navigation Links -->
       <ul
-        :class="`flex  text-xs font-bold items-center gap-2    ${workspaceStore.background.startsWith('url') ? 'text-white' : 'text-text-primary'}`">
-        <li class="  px-3 py-2 hover:bg-bg-card cursor-pointer  group rounded-lg "
-          :class="workspaceStore.selectedLaneIds.length == 0 ? 'bg-bg-card text-text-primary  ' : ''"
-          @click="workspaceStore.toggleAllLane('')">
+        :class="`flex text-xs font-bold items-center gap-2 ${workspaceStore.background.startsWith('url') ? 'text-white' : 'text-text-primary'}`">
+        <li class="px-3 py-2 hover:bg-bg-card cursor-pointer group rounded-lg"
+          :class="workspaceStore.selectedLaneIds.length == 0 ? 'bg-bg-card text-text-primary' : ''"
+          @click="workspaceStore.toggleAllLane()">
           Main
         </li>
+
         <li v-for="item in getWorkspace?.lanes" :key="item._id" @click="workspaceStore.toggleLane(item._id)">
           <LaneDropdown @update="openUpdateModal" :id="item._id" :label="item?.variables['lane-title']"
-            :link="item?.link" :color="item?.variables['lane-color']"
+            :link="item?.link ?? ''" :color="item?.variables['lane-color']"
             :selected="workspaceStore.isLaneSelected(item._id)" />
         </li>
 
-        <li class="hover:text-accent text-text-primary flex gap-2 items-center text-xs  cursor-pointer px-2 py-1"
+        <li class="hover:text-accent text-text-primary flex gap-2 items-center text-xs cursor-pointer px-2 py-1"
           @click="createLaneHandler">
           <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M13.9998 23.3346V14.0013M13.9998 14.0013V4.66797M13.9998 14.0013H23.3332M13.9998 14.0013H4.6665"
@@ -33,68 +84,125 @@
         </li>
       </ul>
     </div>
-    <div class="flex gap-2">
-      <!-- <Collaborators :avatars="collaborators" :maxVisible="3" size="8" overlapSpace="5" /> -->
-      <button class="  cursor-pointer rounded-lg p-2" @click="handleClick">
-        <i class="fa-solid fa-ellipsis rotate-90 cursor-pointer"></i>
 
+    <!-- Right side -->
+    <div class="flex gap-2">
+      <button class="cursor-pointer rounded-lg p-2" @click="handleClick">
+        <i class="fa-solid fa-ellipsis rotate-90 cursor-pointer"></i>
       </button>
     </div>
   </nav>
 </template>
 
 <script setup lang="ts">
-// import Collaborators from '../../../components/ui/Collaborators.vue';
 import LaneDropdown from './LaneDropdown.vue';
 import { useWorkspaceStore } from '../../../stores/workspace';
 import dp from "../../../assets/global/dummy.jpeg"
-import { ref } from 'vue';
-// import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { useRouter } from 'vue-router';
+import { useWorkspaces } from '../../../queries/useWorkspace';
+import { useWorkspaceId } from '../../../composables/useQueryParams';
 
+const router = useRouter();
 const workspaceStore = useWorkspaceStore();
+const { data: workspaces } = useWorkspaces()
 const laneId = ref('');
+const { workspaceId } = useWorkspaceId();
+// === Logo dropdown state & refs ===
+const logoMenuOpen = ref(false);
+const logoBtnRef = ref<HTMLButtonElement | null>(null);
+const menuRef = ref<HTMLDivElement | null>(null);
+const firstItemRef = ref<HTMLButtonElement | null>(null);
+
+const toggleLogoMenu = async () => {
+  logoMenuOpen.value = !logoMenuOpen.value;
+  if (logoMenuOpen.value) {
+    await nextTick();
+    // Focus first actionable item for a11y
+    firstItemRef.value?.focus();
+  }
+};
+
+const closeLogoMenu = () => {
+  logoMenuOpen.value = false;
+  // Return focus to the trigger
+  logoBtnRef.value?.focus();
+};
+
+const openAndFocusFirst = async () => {
+  if (!logoMenuOpen.value) {
+    logoMenuOpen.value = true;
+    await nextTick();
+  }
+  firstItemRef.value?.focus();
+};
+
+// Close on outside click
+const onDocClick = (e: MouseEvent) => {
+  if (!logoMenuOpen.value) return;
+  const target = e.target as Node;
+  if (menuRef.value && !menuRef.value.contains(target) && logoBtnRef.value && !logoBtnRef.value.contains(target)) {
+    closeLogoMenu();
+  }
+};
+
+// Close on window blur (optional nice touch)
+const onWindowBlur = () => { if (logoMenuOpen.value) closeLogoMenu(); };
+
+onMounted(() => {
+  document.addEventListener('click', onDocClick);
+  window.addEventListener('blur', onWindowBlur);
+});
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick);
+  window.removeEventListener('blur', onWindowBlur);
+});
+
+// Actions
+const goHome = () => {
+  closeLogoMenu();
+  router.push({ path: '/' });
+};
+
+const switchTo = async (ws: any) => {
+  // Call your store action to switch workspaces
+  router.push(`/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ? ws.LatestTask?.job_id : ''}`)
+  closeLogoMenu();
+};
+
 const handleClick = () => {
   workspaceStore.toggleSettingPanel()
-}
+};
 const createLaneHandler = () => {
   workspaceStore.toggleCreateLaneModalWithAI()
-}
-// const collaborators = [
-//   {
-//     name: 'A', image: 'https://i.pravatar.cc/100?img=1', onclick: () => {
-//       workspaceStore.toggleProfilePanel()
-//     }
-//   },
-//   {
-//     name: 'B', image: 'https://i.pravatar.cc/100?img=2', onclick: () => {
-//       workspaceStore.toggleProfilePanel()
-//     }
-//   },
-//   {
-//     name: 'C', image: 'https://i.pravatar.cc/100?img=3', onclick: () => {
-//       workspaceStore.toggleProfilePanel()
-//     }
-//   },
-//   {
-//     name: 'D', image: 'https://i.pravatar.cc/100?img=4', onclick: () => {
-//       workspaceStore.toggleProfilePanel()
-//     }
-//   },
-//   {
-//     name: 'E', image: 'https://i.pravatar.cc/100?img=5', onclick: () => {
-//       workspaceStore.toggleProfilePanel()
-//     }
-//   },
-// ];
+};
+
 const openUpdateModal = (id: any) => {
   laneId.value = id;
-  console.log("id", id);
   workspaceStore.toggleUpdateLaneModal();
-}
-// const router = useRouter()
+};
 
-defineExpose({ laneId })
-defineProps<{
-  getWorkspace: any
-}>()
+defineExpose({ laneId });
+defineProps<{ getWorkspace: any }>();
 </script>
+
+<style scoped>
+/* Prevent accidental text selection while navigating the menu quickly */
+[role="menu"] button {
+  user-select: none;
+}
+
+
+/* Fade + slight scale + slide-down */
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: opacity 160ms ease, transform 160ms ease;
+  will-change: opacity, transform;
+}
+
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+}
+</style>

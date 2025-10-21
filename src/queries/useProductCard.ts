@@ -1,5 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/vue-query";
-import api from "../libs/api";
+import api, { request } from "../libs/api";
+import { useApiMutation } from "../libs/vq";
+import { unref } from "vue";
 
 export const updateProductCard = async (param: any) => {
   const { data } = await api.put(`/sheets/card/${param.id}`, param.payload);
@@ -84,5 +86,80 @@ export const useAddCardPriority = (options = {}) => {
     mutationKey: ["add-workspaces-card-priority"],
     mutationFn: addCardPriority,
     ...options,
+  });
+};
+
+export const useComments = (card_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["comments", card_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/cards/${unref(card_id)}/comments`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+    enabled: !unref(card_id) ? false : true,
+  });
+};
+export const useCreateComment = (options = {}) =>
+  useApiMutation<any>(
+    {
+      key: ["add-comment"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `workspace/cards/${vars.id}/comments`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+export const useDeleteComment = (options = {}) =>
+  useApiMutation<any>(
+    {
+      key: ["delete-comment"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/workspace/comments/${vars.id}`,
+          method: "DELETE",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+export const useUpdateComment = (options = {}) =>
+  useApiMutation<any>(
+    {
+      key: ["update-comment"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `workspace/comments/${vars.id}`,
+          method: "PUT",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+export const useProductCard = (
+  card_id: any,
+  options = {}
+) => {
+  return useQuery({
+    queryKey: ["product-card", card_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `/workspace/card/${unref(card_id)}`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+    enabled: !unref(card_id) ? false : true,
   });
 };

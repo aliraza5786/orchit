@@ -28,19 +28,19 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <!-- <div class="flex items-center gap-2">
           <input type="checkbox" v-model="isInitial" id="isInitial" class="rounded">
           <label for="isInitial" class="text-sm text-text-secondary cursor-pointer">
             This is the initial status
           </label>
-        </div>
-
+        </div> -->
+<!-- 
         <div class="flex items-center gap-2">
           <input type="checkbox" v-model="isFinal" id="isFinal" class="rounded">
           <label for="isFinal" class="text-sm text-text-secondary cursor-pointer">
             This is a final status
           </label>
-        </div>
+        </div> -->
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
@@ -68,7 +68,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
-  (e: 'status:added'): void
+  (e: 'status:added', v:any): void
 }>()
 
 const open = computed({
@@ -121,11 +121,12 @@ function handleSubmit() {
   try {
     const statusData = {
       process_id: props.processId,
-      status_name: statusName.value.trim(),
+      name: statusName.value.trim(),
       category: category.value,
       status_color: statusColor.value,
       is_initial: isInitial.value,
       is_final: isFinal.value,
+       status_name: statusName.value.trim(),     // ✅ required by Omit<WorkflowStatus, 'id'>F
       position_x: Math.random() * 400 + 100,
       position_y: Math.random() * 300 + 100,
       order: workflowState.localStatuses.value.length
@@ -133,7 +134,7 @@ function handleSubmit() {
 
     workflowState.addStatus(statusData)
     toast.success(`Status "${statusName.value}" added`)
-    emit('status:added')
+    emit('status:added', statusData)
     close()
   } catch (error) {
     toast.error('Failed to add status')

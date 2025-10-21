@@ -1,9 +1,8 @@
 <script lang="ts" setup>
-import { ref } from "vue";
 import { RouterLink } from "vue-router";
 import { useTheme } from "../../../composables/useTheme";
 import lightLogo from '@assets/LandingPageImages/footer/lightLogo.webp';
-import darkLogo from '@assets/LandingPageImages/footer/darkLogo.webp';
+import darkLogo from '@assets/global/dark-logo.png';
 import borderGif from '@assets/LandingPageImages/footer/footer-top.gif';
 import linkedIn from '@assets/icons/linkedIn.webp';
 import twitter from '@assets/icons/twitter.webp';
@@ -12,7 +11,7 @@ import lighTwitter from '@assets/icons/lightTwitter.webp';
 
 
 
-const { theme, setTheme } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 // web menu 
 interface FooterSection {
@@ -22,30 +21,26 @@ interface FooterSection {
 
 const sections: FooterSection[] = [
     {
-        title: "AI Task Manager",
+        title: "Resource",
         links: [
-            { name: "Predictive Planner", url: "#" },
-            { name: "Context-Aware Assistant", url: "#" },
-            { name: "Privacy-First AI Tools", url: "#" },
-        ],
+            { name: "Support", url: "/contact-us" },
+            { name: "Blog", url: "/blogs" },        ],
     },
     {
-        title: "Microsoft 365",
+        title: "Company",
         links: [
-            { name: "Slack", url: "#" },
-            { name: "Notion", url: "#" },
-            { name: "Trello", url: "#" },
-            { name: "AI Insights Blog", url: "#" },
+            { name: "Privacy", url: "/terms-of-services" },
+            { name: "Terms", url: "/privacy-policy" },
+
 
         ],
     },
     {
-        title: "Case Studies",
+        title: "Socail",
         links: [
-            { name: "Help Center", url: "#" },
-            { name: "Developer Docs", url: "#" },
-            { name: "API Access", url: "#" },
-            { name: "Our Mission", url: "#" },
+            { name: "Instagram", url: "#" },
+            { name: "Linkedin", url: "#" },
+          
         ],
     },
 ];
@@ -128,7 +123,7 @@ const moblinks: MobFooterMenu[] = [
                         </div>
                     </div>
                     <!-- footer web menu -->
-                    <div class="hidden sm:block" v-for="(section, index) in sections" :key="section.title">
+                    <div class="hidden sm:block" v-for="(section) in sections" :key="section.title">
                         <div class="heading_box mb-[16px]">
                             <h3
                                 class="font-inter text-primary font-semibold text-[18px] md:text-[22.88px] leading-[32px] tracking-normal">

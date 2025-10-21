@@ -8,10 +8,10 @@
 
         <!-- Body -->
         <div class="px-6 flex flex-col gap-4">
-            <!-- Workspace -->
-            <BaseSelectField size="md" label="Workspace" :options="workspaceOptions" placeholder="Choose workspace"
-                :model-value="form.workspace_id" @update:modelValue="setWorkspace" :message="workspaceError"
-                :error="!!workspaceError" />
+             <!-- Emails -->
+            <BaseEmailChip class="w-full" label="User emails" v-model="form.emails" :error="!!emailError"
+                :message="emailError || 'Press Enter after each email'" showName @invalid="onEmailsInvalid"
+                @add="onEmailsAdd" />    
 
             <!-- Role (depends on workspace) -->
             <BaseSelectField size="md" label="Role" :options="roleOptions" placeholder="Choose role"
@@ -19,10 +19,10 @@
                 :disabled="!form.workspace_id || rolesPending"
                 :message="roleError || (rolesPending ? 'Loading roles…' : '')" :error="!!roleError" />
 
-            <!-- Emails -->
-            <BaseEmailChip class="w-full" label="User emails" v-model="form.emails" :error="!!emailError"
-                :message="emailError || 'Press Enter after each email'" showName @invalid="onEmailsInvalid"
-                @add="onEmailsAdd" />
+            <!-- Workspace -->
+            <BaseSelectField size="md" label="Workspace" :options="workspaceOptions" placeholder="Choose workspace"
+                :model-value="form.workspace_id" @update:modelValue="setWorkspace" :message="workspaceError"
+                :error="!!workspaceError" />
         </div>
 
         <!-- Footer -->

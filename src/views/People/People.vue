@@ -14,8 +14,8 @@
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
         @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="localList"
         @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="selected_sheet_id">
-        <template #ticket="{ ticket, index }">
-          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" :index="index" />
+        <template #ticket="{ ticket }">
+          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket"  />
         </template>
         <template #column-footer="{ column }: any">
           <div v-if="!column.showADDNEW" @click="toggleAddNewColumn(column)"
@@ -46,7 +46,7 @@
           </div>
         </div>
         <button v-else
-          class="text-sm text-white py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-accent rounded-lg"
+          class="text-sm text-text-primary py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
           @click.stop="setActiveAddList">
           + Add Team
         </button>

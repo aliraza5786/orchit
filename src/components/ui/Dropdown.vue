@@ -13,8 +13,8 @@
       </span>
       <i
         :class="`${selectedOption?.icon?.prefix} ${selectedOption?.icon?.iconName ? selectedOption?.icon?.iconName : 'file'} ${faIconSizeClass}`"></i>
-      <span :class="labelSizeClass">      <span v-if="prefix" class=" font-bold">{{ prefix }}:</span>
-      {{ selectedOption?.title }}</span>
+      <span :class="labelSizeClass" > <span v-if="prefix" class=" font-bold">{{ prefix }}:</span>
+      <span class="text-nowrap ">  {{ selectedOption?.title }}</span> </span>
 
       <!-- Chevron -->
       <svg :class="[chevronSizeClass, 'text-text-secondary ']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +47,7 @@
             <div class="flex flex-col gap-1 max-w-40">
               <span class="overflow-hidden font-semibold overflow-ellipsis">{{
                 option.title
-              }}</span>
+                }}</span>
               <p v-if="option.description" class="min-w-40 line-clamp-2 text-wrap text-text-secondary text-xs">
                 {{ option.description }}
               </p>

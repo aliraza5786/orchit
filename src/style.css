@@ -1,6 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import "tailwindcss";
 
 /* -------- Base resets & defaults -------- */
@@ -12,8 +12,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --small-color:#000;
-
+  --small-color: #000;
 
   /* colors */
   --text-primary: #2b2c30;
@@ -32,14 +31,13 @@
   --bg-input: #ffffff; /* input & dropdown background */
   --border-input: #d9d9d9; /* input borders */
   --bg-dropdown: #ffffff; /* dropdown menus */
-    /* Use brand hue plus complimentary neon accents */
-    --glow-brand: var(--sidebar-primary);
-    --glow-2: 190 95% 62%; /* cyan */
-    --glow-3: 330 90% 66%; /* pink */
-    --neon-speed: 4s; /* default loop duration */
-      --bg-lavender : rgba(241, 238, 255, 1);
-  
-
+  /* Use brand hue plus complimentary neon accents */
+  --glow-brand: var(--sidebar-primary);
+  --glow-2: 190 95% 62%; /* cyan */
+  --glow-3: 330 90% 66%; /* pink */
+  --neon-speed: 4s; /* default loop duration */
+  --bg-lavender: rgba(241, 238, 255, 1);
+  --orchit-white: #9356c5;
 }
 
 /* dark overrides */
@@ -51,10 +49,10 @@
   --bg-surface: #1a1a1a; /* table headers, panels */
   --bg-card: #2b2c30;
   --sidebar-primary: 224.3 76.3% 48%;
-  --small-color:#82CFFF;
-   --bg-charcoal: #2A2A2C;
-   --bg-lavender :  #27272A;
-  
+  --small-color: #82cfff;
+  --bg-charcoal: #2a2a2c;
+  --bg-lavender: #27272a;
+
   --accent: #9356c5;
   --accent-hover: #6e3b96;
   --accent-text: #ffffff;
@@ -62,14 +60,12 @@
   --bg-input: #1a1a1a; /* dark input backgrounds */
   --border-input: #3e3e42; /* input borders */
   --bg-dropdown: #2b2c30; /* dropdown menus */
-    /* Use brand hue plus complimentary neon accents */
-    --glow-brand: var(--sidebar-primary);
-    --glow-2: 190 95% 62%; /* cyan */
-    --glow-3: 330 90% 66%; /* pink */
-    --neon-speed: 4s; /* default loop duration */
-  
-
-
+  /* Use brand hue plus complimentary neon accents */
+  --glow-brand: var(--sidebar-primary);
+  --glow-2: 190 95% 62%; /* cyan */
+  --glow-3: 330 90% 66%; /* pink */
+  --neon-speed: 4s; /* default loop duration */
+  --orchit-white: #ffffff;
 }
 
 /* -------- Tailwind design tokens (v4) -------- */
@@ -90,11 +86,11 @@
   --color-bg-dropdown-menu-hover: var(--bg-body); /* dropdown menus */
   --color-sky: var(--small-color);
   --font-manrope: "Manrope", sans-serif;
-  --font-lato: "Lato", sans-serif; 
-  --font-inter:"Inter", sans-serif; 
-  --color-bg-charcoal:var(--bg-charcoal);
-  --color-bg-lavender:var(--bg-lavender);
- 
+  --font-lato: "Lato", sans-serif;
+  --font-inter: "Inter", sans-serif;
+  --color-bg-charcoal: var(--bg-charcoal);
+  --color-bg-lavender: var(--bg-lavender);
+  --color-orchit-white:var(--orchit-white)
 }
 
 /* Let the layout behave normally (no forced centering) */
@@ -114,18 +110,19 @@ body {
   width: 100%;
   margin: 0 auto;
 }
-.custom_container{
-  max-width:1280px;
+.custom_container {
+  max-width: 1280px;
   margin: 0 auto;
 }
-
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 1000px var(--bg-card) inset; /* Replace 'white' with your desired background color */
-  -webkit-text-fill-color: var(--text-primary); /* Replace 'black' with your desired text color */
+  -webkit-text-fill-color: var(
+    --text-primary
+  ); /* Replace 'black' with your desired text color */
 }
 ::selection {
   background: rgba(99, 102, 241, 0.25); /* indigo-ish */
@@ -138,21 +135,29 @@ input:-webkit-autofill:active {
 }
 
 @keyframes move-gradient {
-  0% { background-position: 0% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: 0% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Typed custom property to drive sweep progress */
 @property --sweep {
-  syntax: '<angle>';
+  syntax: "<angle>";
   inherits: false;
   initial-value: 0deg;
 }
 
-  @keyframes sweep {
-    from { --sweep: 0deg; }
-    to { --sweep: 360deg; }
+@keyframes sweep {
+  from {
+    --sweep: 0deg;
   }
+  to {
+    --sweep: 360deg;
+  }
+}
 
 /* -------- Utilities using CSS vars -------- */
 @layer utilities {
@@ -183,16 +188,14 @@ input:-webkit-autofill:active {
     /* Chrome/Safari/Edge */
     display: none;
   }
-   /* Apply to containers that need animated neon borders */
-   .neon-flow-border {
+  /* Apply to containers that need animated neon borders */
+  .neon-flow-border {
     position: relative;
     isolation: isolate;
     /* subtle outer glow */
-    box-shadow:
-      0 0 24px hsl(var(--glow-brand) / 0.12),
+    box-shadow: 0 0 24px hsl(var(--glow-brand) / 0.12),
       0 0 8px hsl(var(--glow-2) / 0.18);
   }
-
 
   .neon-flow-border::after {
     /* Crisp neon arc passing over the cut-out */
@@ -201,25 +204,22 @@ input:-webkit-autofill:active {
     inset: 0;
     border-radius: inherit;
     padding: 2px;
-    background:
-      conic-gradient(from 45deg,
-        transparent 0deg,
-        transparent calc(var(--sweep) - 24deg),
-        hsl(var(--glow-brand)) calc(var(--sweep) - 24deg),
-        hsl(var(--glow-2)) calc(var(--sweep) - 12deg),
-        hsl(var(--glow-3)) var(--sweep),
-        hsl(var(--glow-2)) calc(var(--sweep) + 12deg),
-        hsl(var(--glow-brand)) calc(var(--sweep) + 24deg),
-        transparent calc(var(--sweep) + 24deg) 360deg
-      );
-    -webkit-mask:
-      linear-gradient(#000 0 0) content-box,
+    background: conic-gradient(
+      from 45deg,
+      transparent 0deg,
+      transparent calc(var(--sweep) - 24deg),
+      hsl(var(--glow-brand)) calc(var(--sweep) - 24deg),
+      hsl(var(--glow-2)) calc(var(--sweep) - 12deg),
+      hsl(var(--glow-3)) var(--sweep),
+      hsl(var(--glow-2)) calc(var(--sweep) + 12deg),
+      hsl(var(--glow-brand)) calc(var(--sweep) + 24deg),
+      transparent calc(var(--sweep) + 24deg) 360deg
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
-            mask:
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-            mask-composite: exclude;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
     /* mix-blend-mode: screen; */
     animation: sweep var(--neon-speed, 4s) linear infinite;
     pointer-events: none;
@@ -273,20 +273,19 @@ input:-webkit-autofill:active {
   scrollbar-width: none;
 }
 
-
 /* puls */
 
 @keyframes pulse-ring {
   0% {
-      box-shadow: 0 0 0 0 rgba(138, 49, 246, 0.4);
+    box-shadow: 0 0 0 0 rgba(138, 49, 246, 0.4);
   }
 
   70% {
-      box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 20px rgba(59, 130, 246, 0);
   }
 
   100% {
-      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
   }
 }
 

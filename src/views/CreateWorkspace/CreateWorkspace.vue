@@ -59,8 +59,10 @@ const StepOne = StepOneSync
 const StepTwo = defineAsyncComponent(() => import('./steps/StepTwo.vue'))
 const StepThree = defineAsyncComponent(() => import('./steps/StepThree.vue'))
 const StepFour = defineAsyncComponent(() => import('./steps/StepFour.vue'))
+import { useWorkspaceStore } from '../../stores/workspace';
 defineOptions({ name: 'CreateWorkspace' })
 const router = useRouter()
+const workspaceStore = useWorkspaceStore()
 const STEPS = Object.freeze([
   'Get Started',
   'Project Setup',
@@ -70,7 +72,7 @@ const STEPS = Object.freeze([
 ] as const)
 
 
-const currentStep = ref<0 | 1 | 2 | 3 | 4>(0)
+const currentStep = ref<0 | 1 | 2 | 3 | 4>(!workspaceStore.workspace ? 0 : workspaceStore.workspace?.logo ? 4 : 1)
 const isStepperVisible = ref(true)
 const isAI = ref(true)
 type StepOneInst = InstanceType<typeof StepOneSync> | null
@@ -96,8 +98,6 @@ function handleClose() {
   router.push('/')
 }
 function onManualStart(e: any) {
-  console.log(e, '>>>');
-
   isStartOver.value++;
   if (e == 'mannual')
     isAI.value = false
@@ -113,6 +113,9 @@ function goNext() {
     return
   }
   if (currentStep.value === 4 && stepFourRef.value?.createProjectHandler) {
+    if (!localStorage.getItem('token')) {
+      router.push('/login')
+    }
     stepFourRef.value.createProjectHandler()
     return
   }
@@ -131,8 +134,6 @@ function handleSkip() {
 function startOver() {
   currentStep.value = 0
   isStartOver.value++;
-  console.log('>>>  wsss ');
-
 }
 
 

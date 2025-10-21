@@ -1,287 +1,349 @@
 <template>
-    <nav class="flex items-center sticky top-0 justify-between bg-bg-body border-border border-b z-10    w-full">
-        <!-- Logo -->
-        <div class="text-2xl font-bold text-text-primary flex items-center gap-2 px-8 py-4.5">
-            <router-link to="/">
-                <img v-if="theme == 'light'" src="../../../assets/global/light-logo.png" alt="Orchit AI Logo"
-                    class="w-30" />
-                <img v-if="theme == 'dark'" src="../../../assets/global/dark-logo.png" alt="Orchit AI Logo"
-                    class="w-30" />
-            </router-link>
-        </div>
-        <ul class="flex gap-9 items-center text-text-primary font-medium">
-            <!-- Workspaces -->
-            <router-link to="/" custom v-slot="{ navigate, isExactActive }">
-                <li @click="navigate" class="cursor-pointer py-7 border-b"
-                    :class="isExactActive ? 'border-text-primary' : 'border-transparent'">
-                    Workspaces
+  <Loader v-if="isPending" />
+  <nav
+    class="sticky top-0 z-10 w-full border-b border-border bg-bg-body/80 backdrop-blur supports-[backdrop-filter]:bg-bg-body/60"
+    role="navigation" aria-label="Primary">
+    <div class="mx-auto flex max-w-[1400px] items-center justify-between px-6 ">
+      <!-- Brand -->
+      <RouterLink to="/" class="flex items-center gap-2">
+        <img v-if="theme === 'light'" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-30"
+          loading="eager" decoding="async" />
+        <img v-else src="../../../assets/global/dark-logo.png" alt="Orchit AI logo" class="w-30" loading="eager"
+          decoding="async" />
+      </RouterLink>
+
+      <!-- Primary nav -->
+      <ul class="relative hidden items-stretch py-4 gap-9 text-sm font-medium text-text-primary md:flex"
+        ref="linksContainerRef">
+        <!-- Sliding underline indicator -->
+        <div
+          class="pointer-events-none absolute bottom-0 h-[2px] rounded-full bg-text-primary transition-all duration-300 ease-out"
+          :style="{ left: indicatorLeft + 'px', width: indicatorWidth + 'px' }" />
+
+        <RouterLink v-for="link in links" :key="link.to" :to="link.to" custom
+          v-slot="{ navigate, isActive, isExactActive }">
+          <li :ref="el => setLinkRef(link.to, el as HTMLElement)" @click="navigate"
+            class="relative cursor-pointer py-3 transition-colors"
+            :class="[(isActive || (link.exact && isExactActive)) ? 'text-text-primary' : 'text-text-secondary hover:text-text-primary']"
+            @mouseenter="() => previewIndicator(link.to)" @mouseleave="syncIndicatorToRoute()">
+            {{ link.label }}
+          </li>
+        </RouterLink>
+      </ul>
+
+      <!-- Right controls -->
+      <div class="flex items-center gap-4">
+        <!-- Icons -->
+        <button
+          class="grid h-9 w-9 place-items-center rounded-xl border border-transparent text-text-secondary transition-[transform,background,box-shadow]
+                   hover:scale-105 hover:bg-bg-dropdown-menu-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+          aria-label="Notifications" type="button">
+          <i class="fa-regular fa-bell"></i>
+        </button>
+        <button
+          class="grid h-9 w-9 place-items-center rounded-xl border border-transparent text-text-secondary transition-[transform,background,box-shadow]
+                   hover:scale-105 hover:bg-bg-dropdown-menu-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+          aria-label="Help" type="button">
+          <i class="fa-regular fa-circle-question"></i>
+        </button>
+
+        <!-- Avatar + Menu -->
+        <div class="relative" ref="menuRef">
+          <button class="h-9 w-9 overflow-hidden rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
+                     hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+            aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
+            :aria-controls="menuOpen ? 'user-menu' : undefined" @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
+            @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu" type="button">
+            {{ initials }}
+          </button>
+
+          <!-- Dropdown -->
+          <Transition enter-active-class="transition duration-150 ease-out"
+            enter-from-class="opacity-0 -translate-y-1 scale-95" enter-to-class="opacity-100 translate-y-0 scale-100"
+            leave-active-class="transition duration-120 ease-in" leave-from-class="opacity-100 translate-y-0 scale-100"
+            leave-to-class="opacity-0 -translate-y-1 scale-95">
+            <div v-if="menuOpen" id="user-menu"
+              class="absolute right-0 mt-2 w-80 origin-top-right rounded-2xl bg-bg-dropdown p-1.5 text-sm shadow-xl ring-1 ring-black/5"
+              role="menu" @keydown.esc.stop.prevent="closeMenu">
+              <!-- Header -->
+              <div class="flex items-center gap-3 rounded-xl p-3">
+                <div
+                  class="grid h-11 w-11 place-items-center rounded-full bg-orange-500 text-base font-bold text-text-primary">
+                  {{ initials }}
+                </div>
+                <div class="min-w-0">
+                  <p class="truncate font-semibold leading-5">{{ profileData?.u_full_name || '—' }}</p>
+                  <p class="truncate text-xs text-text-secondary">{{ profileData?.u_email || '—' }}</p>
+                </div>
+              </div>
+              <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
+
+              <!-- Items -->
+              <ul class="p-1">
+                <li>
+                  <RouterLink to="/profile"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover" role="menuitem"
+                    @click="closeMenu">
+                    <i class="fa-regular fa-user"></i>
+                    <span>Profile</span>
+                  </RouterLink>
                 </li>
-            </router-link>
-
-            <!-- My Task -->
-            <router-link to="/task" custom v-slot="{ navigate, isActive }">
-                <li @click="navigate" class="cursor-pointer py-7 border-b"
-                    :class="isActive ? 'border-text-primary' : 'border-transparent'">
-                    My Task
+                <li>
+                  <RouterLink to="/settings"
+                    class="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover" role="menuitem"
+                    @click="closeMenu">
+                    <i class="fa-regular fa-gear"></i>
+                    <span>Account settings</span>
+                  </RouterLink>
                 </li>
-            </router-link>
 
-            <!-- Users -->
-            <router-link to="/users" custom v-slot="{ navigate, isActive }">
-                <li @click="navigate" class="cursor-pointer py-7 border-b"
-                    :class="isActive ? 'border-text-primary' : 'border-transparent'">
-                    Users
-                </li>
-            </router-link>
-        </ul>
+                <!-- Theme submenu -->
+                <li class="relative" @mouseenter="openTheme()" @mouseleave="closeTheme()">
+                  <button ref="themeTriggerRef"
+                    class="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                    role="menuitem" aria-haspopup="menu" :aria-expanded="themeOpen ? 'true' : 'false'"
+                    @keydown.right.prevent="openTheme()" @keydown.left.prevent="closeTheme()" type="button">
+                    <span class="flex items-center gap-3">
+                      <i class="fa-regular fa-circle"></i>
+                      Theme
+                    </span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
 
-        <div class="flex items-center gap-4 px-8 py-4.5">
-            <!-- Search -->
-            <!-- <div class="relative">
-                <input type="text" placeholder="Search"
-                    class="pl-8 pr-4 py-1 rounded-md bg-bg-input border-border text-sm border placeholder:text-text-secondary focus:outline-none" />
-                <svg class="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" fill="none"
-                    stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-            </div> -->
-
-            <!-- Icons -->
-
-            <i class="fa-regular fa-bell"></i>
-            <i class="fa-regular fa-circle-question"></i>
-
-            <!-- Avatar + Dropdown -->
-            <div class="relative" ref="menuRef">
-                <button
-                    class="w-8 h-8 cursor-pointer rounded-full bg-orange-500 flex items-center justify-center text-text-primary font-bold overflow-hidden focus:outline-none focus:ring-2 focus:ring-orange-300"
-                    aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'" @click="toggleMenu"
-                    @keydown.enter.prevent="toggleMenu" @keydown.space.prevent="toggleMenu"
-                    @keydown.esc.prevent="closeMenu">
-                    {{ initials }}
-                </button>
-
-                <!-- Dropdown -->
-                <transition enter-active-class="transition ease-out duration-100" enter-from-class="opacity-0 scale-95"
-                    enter-to-class="opacity-100 scale-100" leave-active-class="transition ease-in duration-75"
-                    leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-                    <div v-if="menuOpen"
-                        class="absolute right-0 mt-2 w-80 rounded-xl bg-bg-dropdown shadow-xl ring-1 ring-black/5 py-1 z-50"
-                        role="menu" aria-label="User menu">
-                        <!-- Header block -->
-                        <div class="flex items-center gap-3 p-4">
-                            <div
-                                class="w-11 h-11 rounded-full bg-orange-500 grid place-items-center text-text-primary font-bold">
-                                {{ initials }}
-                            </div>
-                            <div class="min-w-0">
-                                <p class="font-semibold leading-5 truncate">{{ profileData?.u_full_name || '—' }}</p>
-                                <p class="text-sm text-text-secondary -500 truncate">{{ profileData?.u_email || '—' }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="h-px bg-bg-dropdown "></div>
-
-                        <!-- Items -->
-                        <div class="py-1">
-                            <router-link to="/profile"
-                                class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-bg-dropdown-menu-hover transition-all duration-200 rounded-md"
-                                role="menuitem" @click="closeMenu">
-                                <i class="fa-regular fa-user"></i>
-
-                                <span>Profile</span>
-                            </router-link>
-
-                            <router-link to="/settings"
-                                class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-bg-dropdown-menu-hover transition-all duration-200  rounded-md"
-                                role="menuitem" @click="closeMenu">
-                                <i class="fa-regular fa-gear"></i>
-                                <span>Account settings</span>
-                            </router-link>
-
-                            <!-- Theme with submenu -->
-                            <div class="relative" @mouseenter="openTheme()" @mouseleave="closeTheme()">
-                                <button ref="themeTriggerRef"
-                                    class="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-bg-dropdown-menu-hover transition-all duration-200 rounded-md"
-                                    role="menuitem" aria-haspopup="menu" :aria-expanded="themeOpen ? 'true' : 'false'"
-                                    @keydown.right.prevent="openTheme(true)" @keydown.left.prevent="closeTheme(true)">
-                                    <span class="flex items-center gap-3">
-                                        <i class="fa-regular fa-circle"></i>
-
-                                        Theme
-                                    </span>
-                                    <i class="fa-solid fa-chevron-right"></i>
-
-                                </button>
-
-
-                                <!-- Submenu -->
-                                <div v-if="themeOpen" ref="themeMenuRef"
-                                    class="absolute top-0 w-48 rounded-xl bg-bg-dropdown dark:bg-dark-black shadow-lg ring-1 ring-black/5 py-1"
-                                    role="menu" aria-label="Theme submenu" :class="themeFlipLeft
-                                        ? 'right-full '   /* open to the LEFT */
-                                        : 'left-full '">
-                                    <button
-                                        class="w-full text-left px-4 py-2 text-sm hover:bg-bg-dropdown-menu-hover transition-all duration-200 rounded-md"
-                                        @click="setTheme('system')">
-                                        System
-                                    </button>
-                                    <button
-                                        class="w-full text-left px-4 py-2 text-sm hover:bg-bg-dropdown-menu-hover transition-all duration-200 rounded-md"
-                                        @click="setTheme('light')">
-                                        Light
-                                    </button>
-                                    <button
-                                        class="w-full text-left px-4 py-2 text-sm hover:bg-bg-dropdown-menu-hover transition-all duration-200 rounded-md"
-                                        @click="setTheme('dark')">
-                                        Dark
-                                    </button>
-                                </div>
-
-                            </div>
-
-                            <button
-                                class="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-bg-dropdown-menu-hover transition-all duration-200 rounded-md"
-                                role="menuitem" @click="switchAccount">
-                                <i class="fa-solid fa-repeat"></i>
-                                <span>Switch account</span>
-                            </button>
-
-                            <button
-                                class="w-full flex items-center gap-3 px-4 py-2 text-sm hover:bg-bg-dropdown-menu-hover transition-all duration-200 rounded-md"
-                                role="menuitem" @click="handleLogout">
-                                <i class="fa-solid rotate-180 fa-arrow-right-from-bracket"></i>
-
-                                <span>Log out</span>
-                            </button>
-                        </div>
+                  <Transition enter-active-class="transition duration-150 ease-out"
+                    enter-from-class="opacity-0 translate-x-1 scale-95"
+                    enter-to-class="opacity-100 translate-x-0 scale-100"
+                    leave-active-class="transition duration-120 ease-in"
+                    leave-from-class="opacity-100 translate-x-0 scale-100"
+                    leave-to-class="opacity-0 translate-x-1 scale-95">
+                    <div v-if="themeOpen" ref="themeMenuRef"
+                      class="absolute top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
+                      role="menu" :class="themeFlipLeft ? 'right-full mr-2' : 'left-full ml-2'">
+                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                        @click="setTheme('system')" type="button">
+                        System
+                      </button>
+                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                        @click="setTheme('light')" type="button">
+                        Light
+                      </button>
+                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                        @click="setTheme('dark')" type="button">
+                        Dark
+                      </button>
                     </div>
-                </transition>
+                  </Transition>
+                </li>
+
+                <li>
+                  <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                    role="menuitem" type="button" @click="switchAccount">
+                    <i class="fa-solid fa-repeat"></i>
+                    <span>Switch account</span>
+                  </button>
+                </li>
+                <li>
+                  <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                    role="menuitem" type="button" @click="handleLogout">
+                    <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
+                    <span>Log out</span>
+                  </button>
+                </li>
+              </ul>
             </div>
+          </Transition>
         </div>
-    </nav>
+      </div>
+    </div>
+  </nav>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onBeforeUnmount, ref, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue'
+import { useRouter, RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { getProfile } from '../../../services/user'
-// import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useTheme } from '../../../composables/useTheme'
+import Loader from '../../../components/ui/Loader.vue'
+import { useWorkspaceStore } from '../../../stores/workspace'
+const workspaceStore = useWorkspaceStore();
+/* Theme */
 const { theme, setTheme } = useTheme()
+
+/* Router */
 const router = useRouter()
 
-const { data: profile } = useQuery({
-    queryKey: ['profile'],
-    queryFn: getProfile,
+/* Data */
+const { data: profile, isPending } = useQuery({
+  queryKey: ['profile'],
+  queryFn: getProfile,
+  staleTime: 1000 * 60 * 5, // cache for 5 minutes
 })
 
-const profileData = computed(() => profile.value?.data || null)
+const profileData = computed(() => profile.value?.data ?? null)
 
-const initials = computed(() =>
-    profileData.value?.u_full_name
-        ?.split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase() ?? 'U'
-)
+const initials = computed(() => {
+  const name = profileData.value?.u_full_name?.trim() || ''
+  if (!name) return 'U'
+  const parts = name.split(/\s+/).slice(0, 3)
+  return parts.map((n: string) => n[0]).join('').toUpperCase()
+})
 
-/* Dropdown state + a11y */
+/* Menu state */
 const menuOpen = ref(false)
 const themeOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
-
-function toggleMenu() {
-    menuOpen.value = !menuOpen.value
-    if (menuOpen.value) {
-    } else {
-        themeOpen.value = false
-    }
-}
-function closeMenu() {
-    menuOpen.value = false
-    themeOpen.value = false
-}
-// function openMenuAndFocus() {
-//     if (!menuOpen.value) {
-//         menuOpen.value = true
-//         // nextTick(() => { if (which === 'first') firstItemRef.value?.focus() })
-//     }
-// }
-
-/* Theme submenu helpers */
-
-
-/* click outside to close */
-function onClickOutside(e: MouseEvent) {
-    if (!menuRef.value) return
-    if (!menuRef.value.contains(e.target as Node)) closeMenu()
-}
-onMounted(() => document.addEventListener('click', onClickOutside))
-onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
-
-/* Actions */
-async function handleLogout() {
-    try {
-        closeMenu()
-        localStorage.clear();
-        // TODO: call your sign-out logic
-        router.push('/login')
-    } catch (e) {
-        console.error('Logout failed', e)
-    }
-}
-function switchAccount() {
-    closeMenu()
-    // TODO: route to your account switcher
-    router.push('/switch-account')
-}
-
-
-
-// add near other refs
 const themeTriggerRef = ref<HTMLElement | null>(null)
 const themeMenuRef = ref<HTMLElement | null>(null)
 const themeFlipLeft = ref(false)
 
+function toggleMenu() {
+  menuOpen.value = !menuOpen.value
+  if (!menuOpen.value) themeOpen.value = false
+}
+function closeMenu() {
+  menuOpen.value = false
+  themeOpen.value = false
+}
+
+/* Submenu placement */
 function computeThemePlacement() {
-    // how much space to the right of the trigger?
-    const trigger = themeTriggerRef.value
-    if (!trigger) return
-    const rect = trigger.getBoundingClientRect()
-    // submenu width ≈ 192px (w-48) + 8px gap; keep a small safety margin
-    const needed = 200
-    const spaceRight = window.innerWidth - rect.right
-    themeFlipLeft.value = spaceRight < needed
+  const trigger = themeTriggerRef.value
+  if (!trigger) return
+  const rect = trigger.getBoundingClientRect()
+  const needed = 200 // ~w-48 + margin
+  const spaceRight = window.innerWidth - rect.right
+  themeFlipLeft.value = spaceRight < needed
 }
 
-
-function openTheme(focus = false) {
-    if (!themeOpen.value) {
-        themeOpen.value = true
-        nextTick(() => computeThemePlacement())
-    }
-    if (focus) { /* optionally focus first item */ }
+function openTheme() {
+  if (!themeOpen.value) {
+    themeOpen.value = true
+    nextTick(() => computeThemePlacement())
+  }
 }
-function closeTheme(focusParent = false) {
-    themeOpen.value = false
-    if (focusParent) { /* optionally refocus trigger */ }
+function closeTheme() {
+  themeOpen.value = false
 }
 
-// keep placement fresh on resize while the menu is open
+/* Click outside + resize (rAF throttled) */
+let rAF: number | null = null
 function onResize() {
-    if (menuOpen.value && themeOpen.value) computeThemePlacement()
+  if (!menuOpen.value || !themeOpen.value) return
+  if (rAF) cancelAnimationFrame(rAF)
+  rAF = requestAnimationFrame(() => {
+    computeThemePlacement()
+    rAF = null
+  })
 }
+function onClickOutside(e: MouseEvent) {
+  const root = menuRef.value
+  if (!root) return
+  if (!root.contains(e.target as Node)) closeMenu()
+}
+
 onMounted(() => {
-    document.addEventListener('click', onClickOutside)
-    window.addEventListener('resize', onResize)
-})
-onBeforeUnmount(() => {
-    document.removeEventListener('click', onClickOutside)
-    window.removeEventListener('resize', onResize)
+  document.addEventListener('click', onClickOutside)
+  window.addEventListener('resize', onResize)
 })
 
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside)
+  window.removeEventListener('resize', onResize)
+  if (rAF) cancelAnimationFrame(rAF)
+})
+
+/* Actions */
+async function handleLogout() {
+  try {
+    closeMenu()
+    workspaceStore.setWorkspace(null)
+
+    localStorage.clear()
+    router.push('/login')
+  } catch (e) {
+    console.error('Logout failed', e)
+  }
+}
+function switchAccount() {
+  closeMenu()
+  router.push('/switch-account')
+}
+
+/* --- Sliding underline indicator logic --- */
+const links = [
+  { label: 'Workspaces', to: '/', exact: true },
+  { label: 'My Task', to: '/task' },
+  { label: 'Users', to: '/users' },
+]
+
+const linksContainerRef = ref<HTMLElement | null>(null)
+const linkRefs = new Map<string, HTMLElement>()
+const indicatorLeft = ref(0)
+const indicatorWidth = ref(0)
+
+function setLinkRef(path: string, el: HTMLElement | null) {
+  if (!el) return linkRefs.delete(path)
+  linkRefs.set(path, el)
+}
+
+function positionIndicatorForEl(el: HTMLElement | null) {
+  const container = linksContainerRef.value
+  if (!container || !el) return
+  const containerRect = container.getBoundingClientRect()
+  const elRect = el.getBoundingClientRect()
+  indicatorLeft.value = elRect.left - containerRect.left
+  indicatorWidth.value = elRect.width
+}
+
+function syncIndicatorToRoute() {
+  const path = router.currentRoute.value.path
+  // choose the best match (exact first, else startsWith)
+  let target: HTMLElement | undefined
+  if (linkRefs.has(path)) target = linkRefs.get(path)!
+  else {
+    for (const [key, el] of linkRefs.entries()) {
+      if (path.startsWith(key) && key !== '/') { target = el; break }
+    }
+    if (!target) target = linkRefs.get('/')
+  }
+  positionIndicatorForEl(target || null)
+}
+
+function previewIndicator(path: string) {
+  const el = linkRefs.get(path) || null
+  positionIndicatorForEl(el)
+}
+
+watch(() => router.currentRoute.value.path, async () => {
+  await nextTick()
+  syncIndicatorToRoute()
+})
+
+// Resize handling (rAF throttled)
+let rAF2: number | null = null
+function onResizeIndicator() {
+  if (rAF2) cancelAnimationFrame(rAF2)
+  rAF2 = requestAnimationFrame(() => {
+    syncIndicatorToRoute()
+    rAF2 = null
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('resize', onResizeIndicator)
+  nextTick(syncIndicatorToRoute)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResizeIndicator)
+  if (rAF2) cancelAnimationFrame(rAF2)
+})
 </script>
+
+<style scoped>
+/* Reduce layout shift on show/hide by reserving space subtly */
+#user-menu {
+  will-change: transform, opacity;
+}
+</style>

@@ -41,7 +41,7 @@
         <ul class="space-y-3">
           <li v-for="role in project.variables?.roles" class="flex justify-between">
             <span class="flex gap-2 items-center text-text-primary text-base font-semibold">
-              <span class="mr-2 text-lg"> {{ role.role_emoji }}</span>
+              <span v-if="role.role_emoji" class="mr-2 text-lg"> {{ role.role_emoji }}</span>
               {{ role.title }}
             </span>
             <span> {{ role.people.length }} / {{ role.max_num_people }} </span>
@@ -83,9 +83,12 @@ import {
 } from "../../../queries/useWorkspace";
 import { useRouter } from "vue-router";
 import { useCompanyId } from "../../../services/user";
+import { useWorkspaceStore } from '../../../stores/workspace';
+const workspaceStore = useWorkspaceStore();
 const router = useRouter()
 const { mutate: createStep2, isPending } = useCreateLanes({
   onSuccess: (data: any) => {
+    workspaceStore.setWorkspace(null)
     router.push(`/workspace/peak/${data.workspace_id}/${data.job_id}`)
     // emits('back')
   },
@@ -96,10 +99,10 @@ const { mutate: createWorkspace, isPending: createWorkspacePending } =
     onError: (error: any) => console.error("Error creating workspace:", error),
     onSuccess: (data: any) => {
       if (props.ai)
-      createStep2({
-        workspace_id: data._id,
-      });else     router.push(`/workspace/peak/${data._id}`)
-
+        createStep2({
+          workspace_id: data._id,
+        }); else router.push(`/workspace/peak/${data._id}`)
+      workspaceStore.setWorkspace(null)
     },
   });
 
@@ -114,7 +117,7 @@ const project = ref<any>({
 onBeforeMount(() => {
   // Load workspace data from localStorage
   try {
-    const workspace = JSON.parse(localStorage.getItem("workspace") || "{}");
+    const workspace = workspaceStore.workspace ?? {};
     if (workspace) {
       project.value = workspace;
     }
@@ -131,10 +134,10 @@ const total_resorces = computed(() => project.value.variables?.roles ? project.v
   return e.people.length + el;
 }, 0) : 0
 );
-const {data:companyId}= useCompanyId()
+const { data: companyId } = useCompanyId()
 function createProjectHandler() {
   createWorkspace({
-    company_id:companyId?.value?._id,
+    company_id: companyId?.value?._id,
     ...project.value,
   }); // This triggers the workspace creation process
 }
@@ -142,7 +145,7 @@ defineExpose({
   createProjectHandler,
 });
 const props = defineProps<{
-  ai:boolean
+  ai: boolean
 }>()
 const emits = defineEmits(['back'])
 </script>

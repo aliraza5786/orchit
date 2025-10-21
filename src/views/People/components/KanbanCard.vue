@@ -10,7 +10,7 @@
                 </div>
                 <div>
                     <h3 class="text-sm font-medium text-card-foreground leading-tight">
-                        {{ ticket?.name ?? ticket['title'] ?? `Team Member ${index + 1}` }}
+                        {{ ticket?.name ?? ticket['title'] ?? `Team Member ` }}
                     </h3>
                     <!-- <p class="text-text-secondary text-sm"> {{ ticket['email'] ?? 'example@gmail.com' }}</p> -->
                     <p class="text-text-secondary text-xs"> {{ ticket?.role ?? 'e.g. Node Developer' }}</p>
@@ -74,7 +74,7 @@ export interface Ticket {
 
 const props = defineProps<{
     ticket: any
-    index: any
+
 }>()
 
 const { workspaceId } = useWorkspaceId();

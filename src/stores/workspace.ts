@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 
 // Define types for state
 interface WorkspaceState {
+  workspace: any;
   showSettingPanel: boolean;
   showCreateLaneModal: boolean;
   showUpdateLaneModal: boolean;
@@ -11,10 +12,12 @@ interface WorkspaceState {
   menuStyle: "classic" | "modern";
   showFilter: boolean;
   selectedLaneIds: string[]; // Updated to use string[] since ids are strings
+  transitions: any;
 }
 
 export const useWorkspaceStore = defineStore("workspace", {
   state: (): WorkspaceState => ({
+    workspace: null,
     showSettingPanel: false,
     showCreateLaneModal: false,
     showCreateLaneModalWithAI: false,
@@ -24,19 +27,23 @@ export const useWorkspaceStore = defineStore("workspace", {
     menuStyle: "classic",
     showFilter: false,
     selectedLaneIds: [],
+    transitions: {},
   }),
   actions: {
+    setTransition(i: any) {
+      this.transitions = i;
+    },
+    setWorkspace(i: any) {
+      this.workspace = i;
+    },
     toggleSettingPanel() {
       this.showProfilePanel = false;
       setTimeout(() => {
         this.showSettingPanel = !this.showSettingPanel;
       }, 200);
     },
-    toggleAllLane(id:any) {
-
-      // Changed to string
-      this.selectedLaneIds= [];
-      console.log('>>>', this.selectedLaneIds, id);
+    toggleAllLane() {
+      this.selectedLaneIds = [];
     },
     setSettingPanel(val: boolean) {
       this.showProfilePanel = false;
@@ -77,9 +84,7 @@ export const useWorkspaceStore = defineStore("workspace", {
         this.selectedLaneIds.splice(index, 1);
       }
     },
-   
     isLaneSelected(id: string): boolean {
-      // Changed to string
       return this.selectedLaneIds.includes(id);
     },
   },

@@ -177,7 +177,7 @@
             </div>
           </div>
 
-       
+
           <div>
             <h3 class="text-sm font-medium text-text-secondary mb-2">Usage</h3>
             <div class="bg-bg-body rounded-xl p-4 space-y-3">
@@ -192,13 +192,63 @@
             </div>
           </div>
 
+          <hr class="border-t border-border" />
+
+          <div>
+            <h3 class="text-sm font-medium text-text-secondary mb-2">Danger Zone</h3>
+            <div class="bg-bg-body rounded-xl p-4 space-y-3">
+              <div class="flex items-start gap-3">
+                <div class="flex-1">
+                  <h4 class="text-sm font-medium text-text-primary">Delete Workspace</h4>
+                  <p class="text-xs text-text-secondary mt-1">
+                    Permanently delete this workspace and all of its data. This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="w-full px-4 py-2 text-sm rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                @click="openDeleteModal"
+              >
+                Delete Workspace
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
 
       <!-- ===== ACTIVE LOGS ===== -->
       <ActivityTimeline v-else />
     </div>
+
   </div>
+
+  <!-- Delete Workspace Confirmation Modal (Outside side panel for full screen) -->
+  <ConfirmDeleteModal
+    v-model="showDeleteModal"
+    title="Delete Workspace"
+    :item-label="'workspace'"
+    :item-name="displayTitle"
+    :require-match-text="displayTitle"
+    :loading="isDeletingWorkspace"
+    confirm-text="Delete Workspace"
+    size="lg"
+    @confirm="handleDeleteWorkspace"
+    @cancel="showDeleteModal = false"
+  >
+    <template #message>
+      <p class="text-sm text-text-secondary">
+        This action cannot be undone. This will permanently delete the workspace <span class="font-semibold text-text-primary">{{ displayTitle }}</span> and all of its data, including:
+      </p>
+      <ul class="mt-2 text-sm text-text-secondary list-disc list-inside space-y-1">
+        <li>All tasks and cards</li>
+        <li>All team members and permissions</li>
+        <li>All files and attachments</li>
+        <li>All workspace settings</li>
+      </ul>
+    </template>
+  </ConfirmDeleteModal>
 </template>
 
 <script setup lang="ts">
@@ -215,7 +265,7 @@ import SwitchTab from '../../../components/ui/SwitchTab.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 // import Dropdown from '../../../components/ui/Dropdown.vue'
 import { getInitials } from '../../../utilities'
-import { useDeleteInvitedPeople, useInvitePeople, useUpdateWorkspaceDetail, useWorkspacesRoles } from '../../../queries/useWorkspace'
+import { useDeleteInvitedPeople, useDeleteWorkspace, useInvitePeople, useUpdateWorkspaceDetail, useWorkspacesRoles } from '../../../queries/useWorkspace'
 // import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
 // import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -226,7 +276,10 @@ import { useTheme } from '../../../composables/useTheme'
 import dummy from "../../../assets/global/dummy.jpeg"
 import { useRouteIds } from '../../../composables/useQueryParams'
 import { useUploadFile } from '../../../queries/useCommon'
+import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
+import { useRouter } from 'vue-router'
 const queryClient = useQueryClient()
+const router = useRouter()
 const { workspaceId } = useRouteIds();
 const { theme, setTheme } = useTheme()
 const props = defineProps<{ workspace: any }>()
@@ -521,5 +574,33 @@ function selectTheme(th: string) {
 /* ----- Close ----- */
 function closeHandler() {
   workspaceStore.toggleSettingPanel()
+}
+
+/* ----- Delete Workspace ----- */
+const showDeleteModal = ref(false)
+const isDeletingWorkspace = ref(false)
+
+const { mutate: deleteWorkspace } = useDeleteWorkspace({
+  onSuccess: () => {
+    toast.success('Workspace deleted successfully')
+    queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+    showDeleteModal.value = false
+    workspaceStore.toggleSettingPanel()
+    router.push('/')
+  },
+  onError: (err: any) => {
+    isDeletingWorkspace.value = false
+    const message = err?.response?.data?.message || err?.message || 'Failed to delete workspace'
+    toast.error(message)
+  }
+})
+
+function openDeleteModal() {
+  showDeleteModal.value = true
+}
+
+function handleDeleteWorkspace() {
+  isDeletingWorkspace.value = true
+  deleteWorkspace({ id: props.workspace._id })
 }
 </script>

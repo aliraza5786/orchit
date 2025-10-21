@@ -50,7 +50,7 @@
         <div class="space-y-6" v-show="activeStep === 3">
           <BaseEmailChip v-model="emailList" />
 
-          <div class="flex flex-col gap-2.5 w-full">
+          <!-- <div class="flex flex-col gap-2.5 w-full">
             <p class="text-sm text-medium text-text-primary" v-once>Invite link for any email</p>
             <div class="flex items-center gap-3 w-full relative">
               <BaseTextField v-model="inviteLink" class="w-full"
@@ -59,7 +59,7 @@
                 <FontAwesomeIcon class="text-accent cursor-pointer text-base" :icon="['far', 'copy']" />
               </span>
             </div>
-          </div>
+          </div> -->
         </div>
 
         <!-- Nav -->
@@ -96,7 +96,7 @@ import BaseSelectField from '../../components/ui/BaseSelectField.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
 import { useRouter } from 'vue-router'
 import BaseEmailChip from '../../components/ui/BaseEmailChip.vue'
-import { toast } from 'vue-sonner'
+// import { toast } from 'vue-sonner'
 import { useCreateCompany, useInviteCompany } from '../../services/auth'
 import { useRolesList } from '../../queries/useCommon'
 defineOptions({ name: 'OnboardingFlow' })
@@ -140,7 +140,6 @@ const role = ref('')
 const team = ref('')
 const companySize = ref('')
 const emailList = ref<string[]>([])
-const inviteLink = ref('https://chromewebstore.google.com/detail/co....')
 
 // --- UI helpers ---
 const isContinueDisabled = computed(() => {
@@ -155,17 +154,17 @@ function optionClass(id: string) {
 }
 
 // --- Actions ---
-function copyToClipboard() {
-  navigator.clipboard
-    .writeText(inviteLink.value)
-    .then(() => {
-      toast.success('Copied!')
-    })
-    .catch((err) => {
-      console.error('Copy failed:', err)
-      toast.error('Copy failed')
-    })
-}
+// function copyToClipboard() {
+//   navigator.clipboard
+//     .writeText(inviteLink.value)
+//     .then(() => {
+//       toast.success('Copied!')
+//     })
+//     .catch((err) => {
+//       console.error('Copy failed:', err)
+//       toast.error('Copy failed')
+//     })
+// }
 
 function goBack() {
   activeStep.value = Math.max(1, (activeStep.value - 1) as 1 | 2 | 3)

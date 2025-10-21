@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useTheme } from "../composables/useTheme";
-const { theme, setTheme } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 const isYearly = ref(false)
 
@@ -120,8 +120,8 @@ const pricingPlans: Plan[] = [
                     <span class="font-manrope text-[16px] lg:text-[18px] font-medium" :class="{ 'text-text-secondary': isYearly }">Pay
                         Monthly</span>
 
-                    <button @click="isYearly = !isYearly" :aria-pressed="String(isYearly)"
-                        class="relative inline-flex h-7 w-12 items-center cursor-pointer rounded-full bg-gray-700 p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500">
+                    <button @click="isYearly = !isYearly" 
+                        class="relative inline-flex h-7 w-12 items-center rounded-full bg-gray-700 p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500">
                         <span
                             class="h-5 w-5 rounded-full bg-white transform transition-transform duration-250 ease-in-out"
                             :class="{ 'translate-x-5': isYearly, 'translate-x-0': !isYearly }" />

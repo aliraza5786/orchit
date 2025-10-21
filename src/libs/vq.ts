@@ -21,14 +21,14 @@ export function useApiQuery<TData = any, TVariables = undefined>(
     select,
     staleTime,
   }: {
-    key: QueryKey;
+    key: any;
     url: string;
     method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     params?: any;
     variables?: TVariables; // rarely used; POST-as-query
     config?: any;
     extract?: DataExtractor;
-    enabled?: boolean;
+    enabled?: any;
     select?: (d: TData) => any;
     staleTime?: number;
     placeholderData?: TData;
@@ -39,7 +39,8 @@ export function useApiQuery<TData = any, TVariables = undefined>(
   >
 ) {
   return useQuery<TData>({
-    queryKey: key,
+    queryKey: key, // Vue Query will track computed/ref
+    enabled: enabled, // can be a ref/computed,
     queryFn: ({ signal }) =>
       request<TData>({
         url,
@@ -50,7 +51,7 @@ export function useApiQuery<TData = any, TVariables = undefined>(
         extract,
         signal,
       }),
-    enabled,
+
     select,
     staleTime,
 
