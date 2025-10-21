@@ -1,237 +1,230 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import { ref } from 'vue'
+import { computed, watchEffect, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useBlogBySlug, useRelatedBlogs } from "../../queries/useBlogs";
 import { useTheme } from "../../composables/useTheme";
-const { theme, setTheme } = useTheme(); // light / dark / system
-import growth from '@assets/blogPageImages/growth.webp'
-import BlogCard from '../blog/components/BlogCard.vue'
-import spaceImage from '@assets/blogPageImages/introSpace.webp';
-import changelog from '@assets/blogPageImages/changelog.webp';
+import BlogSkeleton from "./skelton/BlogSkeleton.vue";
+import RelatedBlogSkeleton from "./skelton/RelatedBlogSkeleton.vue";
 
+const { theme } = useTheme();
+const route = useRoute();
+const router = useRouter();
 
-// get route id
-const route = useRoute()
-const blogId = Number(route.params.id)
+// Get slug from route
+const slug = computed(() => route.params.slug as string);
 
-// blog data (for now static example)
-const blog = ref({
-  id: blogId,
-  tag: "Product",
-  title: "Introducing Space: a faster way to draft, decide, and ship",
-  subtitle:
-    "Meet Space — your all-in-one workspace for writing, planning, and sharing docs without the busywork.",
-  date: "July 1, 2025",
-  author: {
-    name: "Ava Rahman",
-    role: "Co-founder & CEO",
-    avatar: "https://ui-avatars.com/api/?name=Ava+Rahman&background=random",
-  },
-  image: growth,
-  sections: [
-    {
-      heading: "What you can do today",
-      content: [
-        "Draft with focus using a minimal editor that stays out of the way.",
-        "Collect feedback inline with comments and suggestions.",
-        "Decide with lightweight approvals and tracked outcomes.",
-        "Publish to a public link or your site with one click.",
-      ],
-    },
-    {
-      heading: "Works with your stack",
-      content: [
-        "Embed from videos, Figma frames, and GitHub issues. Paste links and they just work.",
-        "If you want to automate more, our API and webhooks are available on paid plans.",
-      ],
-    },
-    {
-      heading: "Pricing and access",
-      content: [
-        "There's a free plan for small teams and personal projects.",
-        "Paid plans add granular permissions, SSO, and audit trails.",
-      ],
-    },
-    {
-      heading: "What's next",
-      content: [
-        "Shared components libraries for reusable sections.",
-        "Per-doc analytics.",
-      ],
-    },
-  ],
-})
+// Fetch main blog by slug
+const { data: blog, isLoading: loadingBlog, refetch: refetchBlog } = useBlogBySlug(slug, {
+  enabled: computed(() => !!slug.value),
+});
 
-interface Blog {
-  id: number
-  title: string
-  category: string
-  date: string
-  author: string
-  time: string
-  image: string
-  description: string
-}
- 
+// Blog ID 
+const blogId = computed(() => blog.value?._id);
 
-const blogs = ref<Blog[]>([
-  {
-    id: 1,
-    title: 'Introducing Space: a faster way to draft, decide, and ship',
-    category: 'Product',
-    date: 'July 1, 2025',
-    author: 'Ava Rahman',
-    time: '4 min',
-    image: spaceImage,
-    description: 'Meet Space — your all-in-one workspace for writing, planning, and sharing docs without the busywork.',
-  },
-  {
-    id: 2,
-    title: 'Changelog — July 2025',
-    category: 'Changelog',
-    date: 'July 29, 2025',
-    author: 'Jonas Lee',
-    time: '3 min',
-    image: changelog,
-    description: 'Speed boosts, AI-powered summaries, and a simpler sharing flow.',
-  },
- 
- 
- 
-])
+// Fetch related blogs  
+const { data: relatedBlogs, isLoading: loadingRelated, refetch: refetchRelated } = useRelatedBlogs(blogId);
+
+// to refetch related blogs
+watch(blogId, () => {
+  if (blogId.value) refetchRelated();
+});
+
+// Watch slug and refetch blog when it changes
+watch(slug, () => {
+  if (slug.value) {
+    refetchBlog();
+  }
+});
+
+// for Debugging purpose
+watchEffect(() => {
+  console.log("Slug:", slug.value);
+  console.log("Blog ID:", blogId.value);
+  console.log("Related blogs:", relatedBlogs.value);
+});
+
 </script>
 
+
 <template>
-  <section class="float-left w-full py-[40px] md:py-[60px] px-[15px] text-text-primary">
-    <div class="blog_container max-w-[850px] mx-auto">
-      <!-- Tag and meta -->
-      <div class="flex items-center gap-3 mb-4 ">
-        <span class="bg-bg-lavender text-primary px-3 font-manrope py-1 rounded-full font-medium text-[14px]">
-          {{ blog.tag }}
-        </span>
-        <span class="font-manrope font-normal text-[14px] leading-[20px]"
-          :class="theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'"><i class="fa-solid fa-calendar"></i>
-          {{
-            blog.date }}</span>
-        <span class="font-manrope font-normal text-[14px] leading-[20px]"
-          :class="theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'"><i
-            class="fa-solid fa-alarm-clock"></i> 4
-          min read</span>
+  <section class="float-left w-full px-[15px] my-[40px] md:my-[60px] lg:my-[80px]">
+    <div class="detail_container mx-auto max-w-[1000px]">
+      
+      <!-- Main Blog Loading -->
+      <BlogSkeleton v-if="loadingBlog" />
+
+      <!--  Blog Not Found -->
+      <div v-else-if="!blog" class="text-center text-red-500 font-medium my-5">
+        Blog not found.
       </div>
 
-      <!-- Title and subtitle -->
-      <h1
-        class="font-manrope text-left text-primary font-bold text-[24px] md:text-[36px] lg:text-[60px] leading-[34px] md:leading-[44px] lg:leading-[68px] tracking-[-1px] mb-4 md:mb-6">
-        {{ blog.title }}</h1>
-      <p
-        class="font-manrope text-[#797E86] text-[16px] md:text-[18px] lg:text-[20px] leading-[24px] lg:leading-[28px] font-normal mb-[20px] lg:mb-[32px]">
-        {{ blog.subtitle }}</p>
+      <!--  Blog Content -->
+      <div v-else class="animate-fadeIn">
+        <!-- Blog Meta Info -->
+        <div class="flex flex-wrap items-center gap-2 md:gap-4 text-sm text-text-secondary mb-4 md:mb-6">
+          <span>
+            <i class="fa-solid fa-calendar-days mr-1"></i>
+            {{ new Date(blog.published_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }) }}
+          </span>
+          <span>
+            <i class="fa-solid fa-user mr-1"></i>
+            {{ blog.author?.name || "Unknown Author" }}
+          </span>
+          <span>
+            <i class="fa-solid fa-clock mr-1"></i>
+            {{ blog.reading_time }} min
+          </span>
+        </div>
+        <!-- Title -->
+        <h1
+          class="font-manrope text-[28px] md:text-[40px] lg:text-[60px] leading-[60px] font-bold leading-tight text-text-primary mb-[30px] ">
+          {{ blog.title }}
+        </h1>
 
-      <!-- Featured image -->
-      <img :src="blog.image" :alt="blog.title" class="rounded-xl w-full object-cover  mb-[20px] lg:mb-[32px]" />
+        <!-- Featured Image -->
+        <div class="overflow-hidden rounded-xl mb-8 shadow-md">
+          <img v-if="blog.featured_image" :src="blog.featured_image" :alt="blog.featured_image_alt || blog.title"
+            class="w-full h-auto object-cover transition-transform duration-500 hover:scale-105" />
+        </div>
 
-      <!-- Author Info -->
-      <div class="border-b border-border-input mb-[32px]">
-        <div class="flex items-center gap-4 mb-[50px]">
-          <div
-            class="icon bg-bg-lavender flex items-center justify-center font-manrope font-bold text-[20px] text-primary w-[48px] h-[48px] rounded-full">
-            AV</div>
-          <div>
-            <p class="font-medium font-manrope text-[16px] text-primary">{{ blog.author.name }}</p>
-            <p class="text-[14px] font-normal leading-[20px] text-text-secondary">{{ blog.author.role }}</p>
+
+
+        <!-- Blog Content -->
+        <article class="blog_content prose dark:prose-invert max-w-none leading-relaxed text-text-secondary mb-16"
+          v-html="blog.content">
+        </article>
+
+        <!--  Related Blogs -->
+        <section>
+          <h2 class="font-manrope text-[24px] md:text-[32px] font-bold mb-8 text-text-primary">
+            More form Space
+          </h2>
+
+          <!-- Related Blogs Loading -->
+          <RelatedBlogSkeleton v-if="loadingRelated" />
+
+          <div v-else-if="relatedBlogs?.length" class="grid sm:grid-cols-2 gap-8">
+            <div v-for="r in relatedBlogs" :key="r._id" @click="router.push(`/blog/${r.slug}`)"
+              class="cursor-pointer rounded-2xl bg-bg-lavender overflow-hidden border transition-all hover:shadow-xl group"
+               :class="theme === 'dark' ? 'border border-border-input' : 'border border-[#a495e9b5]'">
+              <div class="overflow-hidden">
+                <img v-if="r.featured_image" :src="r.featured_image" :alt="r.featured_image_alt || r.title"
+                  class="w-full aspect-[3/2] h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+              </div>
+
+              <div class="p-5">
+                <h3
+                  class="font-manrope text-[18px] sm:text-[20px] font-semibold leading-[28px] font-normal mb-[8px] text-text-primary group-hover:text-accent transition line-clamp-2">
+                  {{ r.title }}
+                </h3>
+                <p class="line-clamp-3 font-normal font-manrope text-[14px] leading-[20px] text-text-secondary mb-[16px]"
+                  v-html="r.excerpt"></p>
+                <span class="text-accent text-[16px] font-medium group-hover:underline">
+                  Read more →
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <div v-else class="text-text-secondary my-4">No related blogs available.</div>
+        </section>
       </div>
-
-
-      <!-- Table of contents -->
-
-      <div class="border border-border-input bg-bg-lavender py-[40px] px-[25px] rounded-[12px] mb-[32px]">
-        <h2 class="font-semibold text-primary leading-[28px] text-[18px] mb-[16px]">Table of Contents</h2>
-        <ul class="list-decimal ps-4 space-y-3 font-manrope text-[14px] leading-[20px] font-normal text-text-secondary">
-          <li v-for="(sec, index) in blog.sections" :key="index">
-            {{ sec.heading }}
-          </li>
-        </ul>
-      </div>
-
-      <!-- Main content -->
-      <div class="space-y-7 pb-[62px] border-b border-border-input">
-        <p
-          class="font-manrope text-[14px] md:text-[16px]  md:leading-[24px] font-normal text-text-secondary">
-          We built Space for one persistent problem: writing and shipping work takes too much overhead.
-          Too many tools, too many tabs, too many status pages. The result is slow decisions and scattered context.
-        </p>
-
-        <p
-          class="font-manrope text-[14px] md:text-[16px]  md:leading-[24px] font-normal text-text-secondary">
-          Space brings writing, feedback, and publishing into one clean surface.
-          Create a doc, invite the right people, capture decisions, and publish — all without leaving the page.
-        </p>
-
-        <div v-for="(sec, index) in blog.sections" :key="index" class="space-y-4">
-          <h3 class="font-semibold text-primary leading-[28px] text-[18px] mb-[16px]">{{ sec.heading }}</h3>
-          <ul class="list-disc list-inside space-y-3">
-            <li
-              class="font-manrope text-[14px] md:text-[16px]  md:leading-[26px] font-normal text-text-secondary"
-              v-for="(point, idx) in sec.content" :key="idx">
-              {{ point }}
-            </li>
-          </ul>
-        </div>
-
-        <p
-          class="font-manrope text-[14px] md:text-[16px] md:leading-[26px] font-normal text-text-secondary">
-          "Space helped us replace three tools and ship product updates twice as fast." — Early customer</p>
-        <h3 class="font-semibold text-primary leading-[28px] text-[18px] mb-[16px]">Works with your stack</h3>
-        <p
-          class="font-manrope text-[14px] md:text-[16px]  md:leading-[26px] font-normal text-text-secondary">
-          Embed Loom videos, Figma frames, and GitHub issues. Paste links and they just work. If you want to automate
-          more,
-          our API and webhooks are available on paid plans.</p>
-        <h3 class="font-semibold text-primary leading-[28px] text-[18px] mb-[16px]">Pricing and access</h3>
-        <p
-          class="font-manrope text-[14px] md:text-[16px] md:leading-[26px] font-normal text-text-secondary">
-          There's a free plan for small teams and personal projects. Paid plans add granular permissions, SSO, and audit
-          trails.</p>
-        <h3 class="font-semibold text-primary leading-[28px] text-[18px] mb-[16px]">What's next</h3>
-        <ul
-          class="space-y-3 list-disc list-inside  font-manrope text-[14px] md:text-[16px]  md:leading-[26px] font-normal text-text-secondary">
-          <li>Shared component libraries for reusable sections</li>
-          <li>Per-doc analytics</li>
-          <li>Per-doc analytics</li>
-        </ul>
-        <p
-          class="font-manrope text-[14px] md:text-[16px] md:leading-[26px] font-normal text-text-secondary">
-          If you want to try Space with your team, start a workspace and tell us what you think — we read every note.
-        </p>
-      </div>
-      <div
-        class="tagBox border-b border-border-input mb-[30px] lg:mb-[64px] pb-[30px] lg:pb-[64px] flex gap-2 items-center mt-[33px]  text-text-secondary font-normal text-[14px] leading-[20px]">
-        Tags: <span class="bg-bg-lavender text-primary px-3 font-manrope py-1 rounded-full font-medium text-[14px]">
-          launch
-        </span> <span class="bg-bg-lavender text-primary px-3 font-manrope py-1 rounded-full font-medium text-[14px]">
-          {{ blog.tag }}
-        </span> <span class="bg-bg-lavender text-primary px-3 font-manrope py-1 rounded-full font-medium text-[14px]">
-          Workspace
-        </span>
-      </div>
-      <div class="related_blogs">
-        <h3 class="font-semibold text-primary leading-[32px] text-[24px] mb-[20px] lg:mb-[33px]">More from Space</h3>
-      </div>
-
-       <div class="grid md:grid-cols-2 gap-6">
-      <BlogCard
-        v-for="blog in blogs"
-        :key="blog.id"
-        :blog="blog"
-      />
-    </div>
     </div>
   </section>
 </template>
 
-<style scoped>
-section {
-  color-scheme: dark;
+<style>
+.blog_content h2 {
+  font-size: 36px;
+  margin: 15px 0px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 40px;
+}
+
+.blog_content h3 {
+  font-size: 32px;
+  margin: 15px 0px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 40px;
+}
+
+.blog_content h4 {
+  font-size: 20px;
+  margin: 10px 0px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 28px;
+}
+
+.blog_content p {
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 10px;
+  font-weight: 400;
+  font-family: manrope;
+  color: var(--color-text-secondary);
+}
+
+.blog_content p strong {
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 10px;
+  color: var(--color-text-primary);
+}
+
+.blog_content a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@media(max-width:1024px) {
+  .blog_content h2 {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .blog_content h3 {
+    font-size: 22px;
+    line-height: 28px;
+    margin: 10px 0px;
+  }
+
+  .blog_content h4 {
+    font-size: 18px;
+    line-height: 26px;
+  }
+}
+
+@media(max-width:768px) {
+  .blog_content p {
+    font-size: 14px;
+    line-height: 20px;
+    margin-bottom: 10px;
+    color: var(--color-text-secondary);
+  }
+
+}
+
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

@@ -29,7 +29,7 @@
                 <!-- Get Started Button -->
                 <div class="flex gap-3">
                     <button
-                        class="flex text-primary items-center gap-[4px] border-2 border rounded-full px-[15px] md:px-[20px] lg:px-[32px] py-[10px] md:py-[13px] lg:py-[18px] font-lato text-[14px] lg:text-[16px] transition leading-[100%]">
+                        class="hidden lg:flex text-primary items-center gap-[4px] border-2 border rounded-full px-[15px] md:px-[20px] lg:px-[32px] py-[10px] md:py-[13px] lg:py-[18px] font-lato text-[14px] lg:text-[16px] transition leading-[100%]">
                         Get Started
                         <div class="flex items-center gap-[4px]">
                             <img :src="googleLogo" alt="Google" class="w-[18px] md:w-[24px]" />
@@ -52,7 +52,7 @@
             <div v-show="true" class="mobile_nav fixed bg-bg-body inset-0 z-50 lg:hidden transform transition-transform  duration-400 ease-in-out"
                 :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'">
                 <button @click="toggleMobileMenu"
-                    class="mb-4 font-extrabold text-white text-xl text-left bg-accent w-13 h-13 flex justify-center items-center ">
+                    class="mb-4 font-extrabold text-white text-xl text-left bg-[#C74CF0] w-13 h-13 flex justify-center items-center ">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
                 <ul class="flex list-none flex-col space-y-6 p-4">
@@ -62,6 +62,18 @@
                             {{ item.label }}
                         </RouterLink>
                     </li>
+                    <li> <button
+                        class="flex text-primary items-center gap-[4px] border-2 border rounded-full px-[15px] md:px-[20px] lg:px-[32px] py-[10px] md:py-[13px] lg:py-[18px] font-lato text-[14px] lg:text-[16px] transition leading-[100%]">
+                        Get Started
+                        <div class="flex items-center gap-[4px]">
+                            <img :src="googleLogo" alt="Google" class="w-[18px] md:w-[24px]" />
+                            <img :src="theme === 'dark'
+                                ? darkApple
+                                : lightApple
+                                " alt="Apple icon" class="w-[20px] md:w-[24px]" />
+                        </div>
+                    </button>
+                  </li>
                 </ul>
 
             </div>

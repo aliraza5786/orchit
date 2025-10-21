@@ -39,8 +39,7 @@ const PrivactPolicy = () => import("../views/PrivacyPolicy.vue");
 const ContactUs = () => import("../views/ContactUs.vue");
 const BlogList = () => import("../views/blog/BlogList.vue");
 const BlogDetail = () => import("../views/blog/BlogDetail.vue");
-const Test = () => import("../views/blog/test.vue");
-
+ 
 
 const routes: RouteRecordRaw[] = [
   {
@@ -51,11 +50,10 @@ const routes: RouteRecordRaw[] = [
       { path: '/terms-of-services', name: 'terms-of-services', component: TermsOfServices, meta: { requiresAuth: false } },
       { path: '/privacy-policy', name: 'privacy-policy', component: PrivactPolicy, meta: { requiresAuth: false } },
       { path: '/contact-us', name: 'contact-us', component: ContactUs, meta: { requiresAuth: false } },
-      { path: '/blogs', name: 'blogList', component: BlogList, meta: { requiresAuth: false } },
-      { path: '/blogs/:id', name: 'BlogDetail', component: BlogDetail, props: true, meta: { requiresAuth: false } },
-      { path: '/test', name: 'test', component: Test, props: true, meta: { requiresAuth: false } },
-    ],
+      { path: '/blogs', name: 'blogList', component: BlogList, meta: { requiresAuth: false } }, 
+      { path: '/blog/:slug', name: 'BlogDetail', component: BlogDetail, props: true, meta: { requiresAuth: false } },
 
+    ],
   },
   {
     path: "/login",
