@@ -22,12 +22,12 @@
                 </Searchbar>
             </div> -->
         </div>
-        <div class="flex  overflow-x-auto gap-3 p-4">
-            <KanbanSkeleton v-if="isPending && !Lists?.length" />
-            <KanbanBoard v-else @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
+        <KanbanSkeleton v-if="isPending" />
+        <div v-else class="flex  overflow-x-auto gap-3 p-4">
+            <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
-                :variable_id="selected_view_by" :sheet_id="selected_sheet_id" :isRefetching="isFetching">
+                :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
                 <template #ticket="{ ticket }">
                     <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket"  />
                 </template>
@@ -141,11 +141,11 @@ watch((viewBy), (newVal) => {
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending, isFetching, refetch: refetchList } = useSheetList(
+const { data: Lists, isPending, refetch: refetchList } = useSheetList(
     moduleId,
-    selected_sheet_id,
-    computed(() => [...workspaceStore.selectedLaneIds]),
-    selected_view_by,
+    selected_sheet_id,                      // ref
+    computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
+    selected_view_by,                    // ref
 )
 
 const createTeamModal = ref(false);

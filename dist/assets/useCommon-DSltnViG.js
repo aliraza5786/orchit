@@ -1,1 +1,0 @@
-import{N as o,G as a,u as s,E as u}from"./index-DfPzAmTM.js";const r=e=>a.post("/upload/file-common",e,{headers:{"Content-Type":"multipart/form-data"}}).then(t=>t.data),l=(e={})=>s({mutationKey:["upload-file"],mutationFn:r,...e}),i=(e={})=>o({queryKey:["roles"],queryFn:({signal:t})=>u({url:"common/roles",method:"GET",signal:t}),...e});export{r as a,l as b,i as u};

@@ -1,11 +1,6 @@
 <template>
-  <div class="h-full flex  gap-3 relative">
-    <div v-if="isRefetching" class="absolute top-2 right-2 z-10">
-      <div class="bg-bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-text-secondary flex items-center gap-2 shadow-sm">
-        <i class="fa-solid fa-rotate animate-spin"></i>
-        Refreshing...
-      </div>
-    </div>
+  <div class="h-full flex  gap-3 ">
+    <!-- Columns (horizontal) -->
     <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
       :force-fallback="true" class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd">
@@ -46,10 +41,7 @@ const props = withDefaults(defineProps<{
   onBoardUpdate?: (board: Board) => void
   variable_id: string
   sheet_id: string
-  isRefetching?: boolean
-}>(), {
-  isRefetching: false
-})
+}>(), {})
 
 const emit = defineEmits<{
   /** v-model style if you want to two-way bind the board */
