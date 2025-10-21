@@ -36,13 +36,13 @@ const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
 const LandingPageLayout = () =>
   import("../layout/LandingPageLayout/LandingPageLayout.vue");
 
-import LandingHome from "../landingPageViews/LandingHome.vue";
-import Pricing from "../views/Pricing.vue";
-import TermsOfServices from "../views/TermsOfServices.vue";
-import PrivactPolicy from "../views/pages/PrivactPolicy.vue";
-import ContactUs from "../views/ContactUs.vue";
-import BlogList from "../views/blog/BlogList.vue";
-import BlogDetail from "../views/blog/BlogDetail.vue";
+const LandingHome = () => import("../landingPageViews/LandingHome.vue");
+const Pricing = () => import("../views/Pricing.vue");
+const TermsOfServices = () => import("../views/TermsOfServices.vue");
+const PrivactPolicy = () => import("../views/PrivacyPolicy.vue");
+const ContactUs = () => import("../views/ContactUs.vue");
+const BlogList = () => import("../views/blog/BlogList.vue");
+const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 
 const routes: RouteRecordRaw[] = [
   {
