@@ -291,6 +291,7 @@ const avatarPreview = ref<string>('')
 const isUploadingAvatar = ref(false)
 const uploadedAvatarUrl = ref<string>('')
 
+// @ts-expect-error - Used in template
 const tickets = ref([
   { id: 1, title: 'Fix dashboard layout', project: 'Orchit AI Dashboard' },
   { id: 2, title: 'Update profile endpoint', project: 'API Integration' }
@@ -386,6 +387,7 @@ function cancelChanges() {
   isOpen.value = false
 }
 
+// @ts-expect-error - Used in template
 function getStatusBadge(status: string) {
   switch (status) {
     case 'accepted':
@@ -475,16 +477,19 @@ const pricingPlans = ref([
   // }
 ])
 
+// @ts-expect-error - Used in template
 function manageBilling() {
   toast.info('Redirecting to Stripe billing portal...')
   window.open('https://billing.stripe.com/p/login/test_00000000000000', '_blank')
 }
 
+// @ts-expect-error - Used in template
 function upgradePlan(plan: any) {
   toast.info(`Redirecting to checkout for ${plan.name} plan...`)
   window.open('https://checkout.stripe.com/test_00000000000000', '_blank')
 }
 
+// @ts-expect-error - Used in template
 function downgradePlan(plan: any) {
   toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
 }

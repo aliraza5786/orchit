@@ -275,10 +275,6 @@ async function handleLogout() {
     console.error('Logout failed', e)
   }
 }
-function switchAccount() {
-  closeMenu()
-  router.push('/switch-account')
-}
 
 function openAccountSettings() {
   closeMenu()

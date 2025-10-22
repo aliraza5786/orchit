@@ -34,9 +34,15 @@
 
         <!-- Canvas -->
         <div class="relative flex-1 overflow-hidden">
-          <WorkflowCanvas v-if="processId" ref="Canvas" :process-id="processId"
+          <div v-if="isLoading" class="flex items-center justify-center h-full bg-bg-surface">
+            <div class="flex flex-col items-center gap-4">
+              <div class="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
+              <p class="text-sm text-text-secondary">Loading workflow...</p>
+            </div>
+          </div>
+          <WorkflowCanvas v-else-if="processId" ref="Canvas" :process-id="processId"
             :show-transition-labels="showTransitionLabels" @update:workflow="handleWorkflowUpdate"
-            @add:status="handleAddStatus" @add:transition="handleAddTransition" />
+            @add:status="handleAddStatus" @add:transition="handleAddTransition" @edit:node="handleEditNode" />
         </div>
 
         <!-- Footer -->
@@ -70,7 +76,7 @@
   </transition>
 
   <!-- Modals -->
-  <AddStatusModal v-model="showAddStatusModal" :process-id="processId" @status:added="handleStatusAdded" />
+  <AddStatusModal v-model="showAddStatusModal" :process-id="processId" :editing-status="editingStatus" @status:added="handleStatusAdded" />
 
   <AddTransitionModal v-model="showAddTransitionModal" :process-id="processId" :statuses="workflowStatuses"
     @transition:added="handleTransitionAdded" />
@@ -82,8 +88,9 @@ import Button from '../../../components/ui/Button.vue'
 import WorkflowCanvas from '../../../components/feature/workflow/WorkflowCanvas.vue'
 import AddStatusModal from './AddStatusModal.vue'
 import AddTransitionModal from './AddTransitionModal.vue'
-import { useWorkflowData } from '../../../queries/useProcess'
+import { useWorkflowData, useBatchUpdateWorkflow } from '../../../queries/useProcess'
 import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
+import { toast } from 'vue-sonner'
 
 /* Props & emits */
 const props = defineProps<{
@@ -108,9 +115,11 @@ const processId = computed(() => props.process?._id ?? props.process?.id ?? '')
 const processTitle = computed(() => props.process?.title ?? 'Process')
 
 /* Data and local workflow state */
-const { data: workflowData, refetch: refetchWorkflow } = useWorkflowData(processId)
+const { data: workflowData, refetch: refetchWorkflow, isLoading } = useWorkflowData(processId)
 const workflowState = useLocalWorkflowState()
 provide('workflowState', workflowState)
+
+const editingStatus = ref<any>(null)
 
 const workflowStatuses = computed(() => workflowState.localStatuses.value)
 
@@ -130,7 +139,7 @@ watch(
 )
 
 /* UI labels (fixes build issue from inline template literals) */
-const isSaving = computed(() => Boolean(Canvas.value?.isSaving))
+const isSaving = computed(() => isUpdating.value || Boolean(Canvas.value?.isSaving))
 const updateButtonLabel = computed(() => {
   if (isSaving.value) return 'Updating...'
   const changes = workflowState.changeCount.value || 0
@@ -159,9 +168,38 @@ function handleWorkflowUpdate() {
   refetchWorkflow()
 }
 
+const { mutate: batchUpdate, isPending: isUpdating } = useBatchUpdateWorkflow({
+  onSuccess: () => {
+    toast.success('Workflow updated successfully')
+    workflowState.resetChanges()
+    refetchWorkflow()
+    emit('update:modelValue', false)
+    emit('close')
+  },
+  onError: (error: any) => {
+    toast.error('Failed to update workflow')
+    console.error('Workflow update error:', error)
+  }
+})
+
 function handleUpdateWorkflow() {
-  // Persist using the canvas API; guard for null refs
-  Canvas.value?.saveWorkflow()
+  const validation = workflowState.validateWorkflow()
+  if (!validation.isValid) {
+    toast.error('Workflow validation failed: ' + validation.errors.join(', '))
+    return
+  }
+
+  const changes = workflowState.getChanges()
+  if (!workflowState.hasChanges.value) {
+    toast.info('No changes to save')
+    return
+  }
+
+  batchUpdate({
+    processId: processId.value,
+    statuses: changes.statuses,
+    transitions: changes.transitions
+  })
 }
 
 function handleZoomIn() {
@@ -175,12 +213,18 @@ function handleZoomReset() {
 }
 
 function handleStatusAdded(e: any) {
-
   showAddStatusModal.value = false
   Canvas.value?.handleAddNode?.(e)
+  editingStatus.value = null
 }
+
 function handleTransitionAdded() {
   showAddTransitionModal.value = false
+}
+
+function handleEditNode(nodeData: any) {
+  editingStatus.value = nodeData
+  showAddStatusModal.value = true
 }
 </script>
 

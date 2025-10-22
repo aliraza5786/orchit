@@ -1,7 +1,7 @@
 <template>
   <BaseModal v-model="open" size="md">
     <div class="p-6">
-      <h3 class="text-lg font-semibold text-text-primary mb-4">Add Status</h3>
+      <h3 class="text-lg font-semibold text-text-primary mb-4">{{ isEditing ? 'Edit Status' : 'Add Status' }}</h3>
 
       <div class="space-y-4">
         <div>
@@ -46,7 +46,7 @@
       <div class="mt-6 flex justify-end gap-2">
         <Button @click="close" variant="secondary">Cancel</Button>
         <Button @click="handleSubmit" :disabled="!statusName.trim() || isSubmitting">
-          {{ isSubmitting ? 'Adding...' : 'Add Status' }}
+          {{ isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Status' : 'Add Status') }}
         </Button>
       </div>
     </div>
@@ -64,6 +64,7 @@ import { toast } from 'vue-sonner'
 const props = defineProps<{
   modelValue: boolean
   processId: string
+  editingStatus?: any
 }>()
 
 const emit = defineEmits<{
@@ -91,13 +92,23 @@ const categoryColors: Record<string, string> = {
   done: '#10b981'
 }
 
+const isEditing = computed(() => !!props.editingStatus)
+
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
-    statusName.value = ''
-    category.value = 'todo'
-    statusColor.value = '#6b7280'
-    isInitial.value = false
-    isFinal.value = false
+    if (props.editingStatus) {
+      statusName.value = props.editingStatus.name || props.editingStatus.data?.label || ''
+      category.value = props.editingStatus.category || 'todo'
+      statusColor.value = props.editingStatus.status_color || props.editingStatus.data?.status || '#6b7280'
+      isInitial.value = props.editingStatus.is_initial || false
+      isFinal.value = props.editingStatus.is_final || false
+    } else {
+      statusName.value = ''
+      category.value = 'todo'
+      statusColor.value = '#6b7280'
+      isInitial.value = false
+      isFinal.value = false
+    }
   }
 })
 
@@ -119,25 +130,38 @@ function handleSubmit() {
   isSubmitting.value = true
 
   try {
-    const statusData = {
-      process_id: props.processId,
-      name: statusName.value.trim(),
-      category: category.value,
-      status_color: statusColor.value,
-      is_initial: isInitial.value,
-      is_final: isFinal.value,
-       status_name: statusName.value.trim(),     // ✅ required by Omit<WorkflowStatus, 'id'>F
-      position_x: Math.random() * 400 + 100,
-      position_y: Math.random() * 300 + 100,
-      order: workflowState.localStatuses.value.length
+    if (isEditing.value) {
+      const updates = {
+        name: statusName.value.trim(),
+        category: category.value,
+        status_color: statusColor.value,
+        is_initial: isInitial.value,
+        is_final: isFinal.value,
+        status_name: statusName.value.trim(),
+      }
+      workflowState.updateStatus(props.editingStatus.id, updates)
+      toast.success(`Status "${statusName.value}" updated`)
+      emit('status:added', { ...props.editingStatus, ...updates })
+    } else {
+      const statusData = {
+        process_id: props.processId,
+        name: statusName.value.trim(),
+        category: category.value,
+        status_color: statusColor.value,
+        is_initial: isInitial.value,
+        is_final: isFinal.value,
+        status_name: statusName.value.trim(),
+        position_x: Math.random() * 400 + 100,
+        position_y: Math.random() * 300 + 100,
+        order: workflowState.localStatuses.value.length
+      }
+      workflowState.addStatus(statusData)
+      toast.success(`Status "${statusName.value}" added`)
+      emit('status:added', statusData)
     }
-
-    workflowState.addStatus(statusData)
-    toast.success(`Status "${statusName.value}" added`)
-    emit('status:added', statusData)
     close()
   } catch (error) {
-    toast.error('Failed to add status')
+    toast.error(isEditing.value ? 'Failed to update status' : 'Failed to add status')
   } finally {
     isSubmitting.value = false
   }

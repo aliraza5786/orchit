@@ -22,7 +22,7 @@ import { watch } from 'vue'
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
 
-const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges } = useVueFlow()
+const { setNodes, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges } = useVueFlow()
 
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
@@ -128,21 +128,40 @@ watch(
   { immediate: true }
 )
 
-// ---- onConnect: still send to API and add locally ----
+// ---- onConnect: ask for transition name first ----
 function onConnect(conn: Connection) {
+  pendingConnection.value = conn
+  transitionName.value = ''
+  showTransitionModal.value = true
+}
+
+function confirmTransition() {
+  if (!pendingConnection.value) return
+
+  const conn = pendingConnection.value
+  const name = transitionName.value.trim() || 'Transition'
   const id = `${conn.source}-${conn.target}-${crypto.randomUUID?.() ?? Math.random()}`
+
   const payload: VFEdge = {
     ...conn,
     id,
     type: 'step',
-    label: 'Transition',
-    data: { name: 'Transition' },
+    label: name,
+    data: { name },
     style: { stroke: '#1152de', strokeWidth: 2 },
     markerEnd: { type: MarkerType.Arrow, color: '#1152de', width: 18, height: 18 },
   }
 
-  // createTransition({ payload }) // your POST
-  addEdges(payload)             // update UI
+  addEdges(payload)
+  showTransitionModal.value = false
+  pendingConnection.value = null
+  transitionName.value = ''
+}
+
+function cancelTransition() {
+  showTransitionModal.value = false
+  pendingConnection.value = null
+  transitionName.value = ''
 }
 // --- Default (system) nodes like Jira: Start, To Do, Done ---
 
@@ -174,27 +193,27 @@ const defaultEdgeOptions: Partial<VFEdge> = {
 // --- Modal state for create & rename ---
 const showCreateModal = ref(false)
 const createName = ref('')
-const renameId = ref<string | null>(null)
-const renameName = ref('')
+const showTransitionModal = ref(false)
+const transitionName = ref('')
+const pendingConnection = ref<Connection | null>(null)
+
+const emit = defineEmits(['edit:node'])
 
 function openCreateNodeModal() {
   createName.value = ''
   showCreateModal.value = true
 }
 
-function startRename(nodeId: string, currentName: string) {
-  renameId.value = nodeId
-  renameName.value = currentName
+function handleEditNode(nodeId: string, nodeData: any) {
+  const node = getNodes.value.find(n => n.id === nodeId)
+  if (node) {
+    emit('edit:node', {
+      id: nodeId,
+      ...node.data,
+      status_color: nodeData.status || '#6b7280'
+    })
+  }
 }
-
-function confirmRename() {
-  if (!renameId.value) return
-  const name = renameName.value.trim()
-  if (name) updateNode(renameId.value, n => ({ ...n, data: { ...n.data, label: name } }))
-  renameId.value = null
-}
-
-function cancelRename() { renameId.value = null }
 
 // Add a brand-new independent node
 async function handleAddNode(e: any) {
@@ -320,7 +339,7 @@ window.addEventListener('beforeunload', () => {
             <span>
               {{ data.label }}
             </span>
-            <i class="fa-solid fa-edit cursor-pointer" @click.stop="startRename(id, data.label)"></i>
+            <i class="fa-solid fa-edit cursor-pointer" @click.stop="handleEditNode(id, data)"></i>
           </div>
           <!-- connection points -->
           <!-- inside #node-default -->
@@ -333,14 +352,14 @@ window.addEventListener('beforeunload', () => {
       </template>
     </VueFlow>
 
-    <!-- Rename Node Modal -->
-    <div v-if="renameId" class="modal-backdrop" @click.self="cancelRename">
+    <!-- Transition Name Modal -->
+    <div v-if="showTransitionModal" class="modal-backdrop" @click.self="cancelTransition">
       <div class="modal">
-        <h3>Rename node</h3>
-        <input v-model="renameName" placeholder="Node name" @keyup.enter="confirmRename" />
+        <h3>Name this transition</h3>
+        <input v-model="transitionName" placeholder="e.g., Start work, Complete" @keyup.enter="confirmTransition" autofocus />
         <div class="modal-actions">
-          <button class="btn" @click="confirmRename">Save</button>
-          <button class="btn ghost" @click="cancelRename">Cancel</button>
+          <button class="btn" @click="confirmTransition">Add Transition</button>
+          <button class="btn ghost" @click="cancelTransition">Cancel</button>
         </div>
       </div>
     </div>
