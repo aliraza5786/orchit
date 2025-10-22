@@ -6,7 +6,7 @@
             <Dropdown v-model="selected_sheet_id" :options="transformedData" variant="secondary">
                 <template #more>
                     <div @click="createSheet()"
-                        class="  capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
+                        class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
                         <i class="fa-solid fa-plus"></i> Add new
                     </div>
                 </template>
@@ -24,8 +24,8 @@
                 </Searchbar>
             </div>
         </div>
-        <KanbanSkeleton v-if="isPending" />
-        <div v-else class="flex  overflow-x-auto gap-3 p-4">
+        <KanbanSkeleton v-show="isPending" />
+        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
@@ -118,12 +118,10 @@ const { data } = useSheets({
     workspace_id: workspaceId,
     workspace_module_id: moduleId
 });
-const selected_sheet_id = ref<any>('');
+const sheetId = computed(() => data.value ? data.value[0]?._id : '')
+const selected_sheet_id = ref<any>(sheetId);
 const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
-const selected_view_by = ref(viewBy.value);
-watch((viewBy), (newVal) => {
-    selected_view_by.value = newVal
-})
+const selected_view_by = ref(viewBy);
 
 const workspaceStore = useWorkspaceStore();
 

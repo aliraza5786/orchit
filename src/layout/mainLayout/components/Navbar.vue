@@ -273,7 +273,7 @@ function switchAccount() {
 /* --- Sliding underline indicator logic --- */
 const links = [
   { label: 'Workspaces', to: '/', exact: true },
-  { label: 'My Task', to: '/dashoard/task' },
+  { label: 'My Task', to: '/dashboard/task' },
   { label: 'Users', to: '/dashboard/users' },
 ]
 

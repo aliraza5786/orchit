@@ -3,7 +3,6 @@
     <!-- Left side: Logo + lanes -->
     <div
       :class="`text-2xl font-bold flex items-center gap-8 ${workspaceStore.background.startsWith('url') ? 'text-text-secondary' : 'text-text-primary'}`">
-
       <!-- Logo + Title (now a dropdown trigger) -->
       <div class="relative">
         <button ref="logoBtnRef" class="flex items-center gap-3 pl-3 cursor-pointer rounded-md" aria-haspopup="menu"
@@ -27,7 +26,7 @@
         <!-- Dropdown -->
         <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
           <div v-show="logoMenuOpen" ref="menuRef"
-            class="absolute z-50 mt-2 w-72 rounded-md border border-black/5 shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-white/60 bg-white dark:bg-neutral-900 dark:border-white/10 origin-top-left"
+            class="absolute z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-white/60 bg-bg-card origin-top-left"
             role="menu" aria-label="Workspace switcher" @keydown.esc.stop.prevent="closeLogoMenu">
             <!-- Home -->
             <button
@@ -40,7 +39,7 @@
               Home
             </button>
 
-            <div class="my-1 h-px bg-black/5 dark:bg-white/10"></div>
+            <div class="my-1 h-px bg-border"></div>
 
             <!-- Workspaces -->
             <div class="max-h-72 overflow-auto py-1 cursor-pointer">

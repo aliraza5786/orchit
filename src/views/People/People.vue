@@ -8,14 +8,14 @@
         </Searchbar>
       </div>
     </div>
-    <KanbanSkeleton v-if="isListPending" />
-    <div v-else-if="currentView == 'kanban'" class="flex p-4 overflow-x-auto gap-3">
+    <KanbanSkeleton v-show="isListPending" />
+    <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3">
       <KanbanBoard v-if="localList?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
         @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="localList"
         @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="selected_sheet_id">
         <template #ticket="{ ticket }">
-          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket"  />
+          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
         </template>
         <template #column-footer="{ column }: any">
           <div v-if="!column.showADDNEW" @click="toggleAddNewColumn(column)"
