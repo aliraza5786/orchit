@@ -8,8 +8,8 @@
         </Searchbar>
       </div>
     </div>
-    <KanbanSkeleton v-show="isListPending" />
-    <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3">
+    <KanbanSkeleton v-show="isListPending || isListFetchinng" />
+    <div v-show="currentView == 'kanban' && !isListPending && !isListFetchinng" class="flex p-4 overflow-x-auto gap-3">
       <KanbanBoard v-if="localList?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
         @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="localList"
@@ -70,7 +70,6 @@ import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
 import { useCreateTeam, useCreateTeamMember, useDeleteTeam, usePeopleList } from '../../queries/usePeople';
-import KanbanCard from './components/KanbanCard.vue';
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import Button from '../../components/ui/Button.vue';
@@ -78,8 +77,8 @@ import BaseEmailChip from '../../components/ui/BaseEmailChip.vue';
 import { useUpdateInvitedWorkspace } from '../../queries/useWorkspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import DetailPanel from './components/DetailPanel.vue';
-
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
+const KanbanCard = defineAsyncComponent(() => import('./components/KanbanCard.vue'));
 
 const viewData = [
   {
@@ -108,7 +107,7 @@ const { mutate: addList, isPending: addingList } = useCreateTeam({
 });
 
 const localList = ref<any>([]);
-const { data: Lists, isPending: isListPending } = usePeopleList(workspaceId.value, selected_view_id);
+const { data: Lists, isPending: isListPending, isFetching: isListFetchinng } = usePeopleList(workspaceId.value, selected_view_id);
 watch(Lists, (newVal) => {
   localList.value = newVal;
 });

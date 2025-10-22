@@ -160,12 +160,12 @@ export function useSheetList(
   // reactive query key
   const queryKey = computed(() => [
     "sheet-list",
-    {
-      moduleId: unref(module_id),
-      sheetId: unref(sheet_id),
-      laneIds: unref(laneIdsParam),
-      viewBy: unref(view_by),
-    },
+
+    unref(module_id),
+    unref(sheet_id),
+    unref(laneIdsParam),
+    unref(view_by),
+    ,
   ]);
 
   // reactive enabled

@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useMutation } from '@tanstack/vue-query'
+import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
 import Button from '../../components/ui/Button.vue'
@@ -93,7 +93,7 @@ function onFieldInput() {
   // Clear error on any user input (cheaper than a global watch over both fields)
   if (errorMessage.value) errorMessage.value = ''
 }
-
+const queryClient = useQueryClient()
 async function handleLogin() {
   errorMessage.value = ''
   touched.email = true
@@ -107,6 +107,9 @@ async function handleLogin() {
     const data = await mutateAsync({ u_email: email.value, u_password: password.value })
     // adapt if token key differs
     localStorage.setItem('token', data?.data?.token)
+    queryClient.invalidateQueries({ queryKey: ['me'] })
+    queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+    queryClient.invalidateQueries({ queryKey: ['profile'] })
     if (workspaceStore.workspace) {
       router.push('/create-workspace')
     } else

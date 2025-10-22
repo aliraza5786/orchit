@@ -16,25 +16,13 @@
 
             <!-- Cards with transitions -->
             <TransitionGroup name="list" tag="div" class="flex gap-2.5" v-else>
-              <button
-                v-for="lane in lanes"
-                :key="lane.lane_title"
+              <button v-for="lane in lanes" :key="lane.lane_title"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
-                type="button"
-                role="button"
-                aria-label="Open lane details"
-                @click="onLaneClick(lane)"
-              >
-                <ProjectCard
-                :loading="isLoading || lane?.status === 'in_progress'"
-                  :title="lane.lane_title"
-                  subtitle="Mobile Application"
-                  :progress="lane?.progress ?? 0"
-                  :status="lane?.status ?? ''"
-                  :avatars="avatars"
-                  date="May 28"
-                  class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer"
-                />
+                type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
+                <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane.lane_title"
+                  subtitle="Mobile Application" :progress="lane?.progress ?? 0" :status="lane?.status ?? ''"
+                  :avatars="avatars" date="May 28"
+                  class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
               </button>
             </TransitionGroup>
           </div>
@@ -94,98 +82,99 @@
     </div>
 
     <!-- Three Column Stats Section -->
-   
-    
 
-      <!-- Right Column: Team Workload & Recent Activity -->
-      <div class="flex flex-grow  gap-4">
-        <!-- Team Workload -->
-        <div class="bg-bg-card w-full flex-auto p-5 rounded-lg">
-          <div class="mb-4">
-            <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
-            <p class="text-sm text-text-secondary mt-1">
-              Monitor the capacity of your team.
-        
-            </p>
-          </div>
 
-          <div class="space-y-4">
-            <div class="flex items-center justify-between text-sm font-medium text-text-secondary mb-2">
-              <span>Assignee</span>
-              <span>Work distribution</span>
-            </div>
 
-            <!-- Workload items -->
-            <div v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
-              <div class="flex items-center gap-2 w-32 flex-shrink-0">
-                <div v-if="member.avatar"
-                     class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
-                     :style="{ backgroundColor: member.color }">
-                  {{ member.initials }}
-                </div>
-                <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center">
-                  <i class="pi pi-user text-text-secondary"></i>
-                </div>
-                <span class="text-sm text-text-primary truncate">{{ member.name }}</span>
-              </div>
+    <!-- Right Column: Team Workload & Recent Activity -->
+    <div class="flex flex-grow  gap-4">
+      <!-- Team Workload -->
+      <div class="bg-bg-card w-full flex-auto p-5 rounded-lg">
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
+          <p class="text-sm text-text-secondary mt-1">
+            Monitor the capacity of your team.
 
-              <div class="flex-1">
-                <div class="h-6 bg-bg-body rounded overflow-hidden relative">
-                  <div
-                    class="h-full bg-border-subtle transition-all duration-300"
-                    :style="{ width: member.workload + '%' }"
-                  ></div>
-                  <span v-if="member.workload > 10"
-                        class="absolute inset-0 flex items-center justify-start px-2 text-xs text-text-primary font-medium">
-                    {{ member.workload }}%
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          </p>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="bg-bg-card w-full flex-auto p-5 rounded-lg  overflow-hidden flex flex-col">
-          <div class="mb-4">
-            <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
-            <p class="text-sm text-text-secondary mt-1">Stay up to date with what's happening across the project.</p>
+        <div class="space-y-4">
+          <div class="flex items-center justify-between text-sm font-medium text-text-secondary mb-2">
+            <span>Assignee</span>
+            <span>Work distribution</span>
           </div>
 
-          <div class="space-y-4 overflow-y-auto flex-1">
-            <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
-
-            <div v-for="activity in recentActivities" :key="activity.id" class="flex gap-3 pb-4 border-b border-border last:border-0">
-              <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-                   :style="{ backgroundColor: activity.userColor }">
-                {{ activity.userInitials }}
+          <!-- Workload items -->
+          <div v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
+            <div class="flex items-center gap-2 w-32 flex-shrink-0">
+              <div v-if="member.avatar"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                :style="{ backgroundColor: member.color }">
+                {{ member.initials }}
               </div>
+              <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center">
+                <i class="pi pi-user text-text-secondary"></i>
+              </div>
+              <span class="text-sm text-text-primary truncate">{{ member.name }}</span>
+            </div>
 
-              <div class="flex-1 min-w-0">
-                <div class="text-sm text-text-primary">
-                  <span class="font-medium text-accent/90">{{ activity.user  }}</span>
-                  <span class="text-text-secondary"> {{ activity.action }} </span>
-                  <a href="#" class="text-accent/90 hover:underline">{{ activity.item }}</a>
-                  <span v-if="activity.status"
-                        class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
-                        :class="getStatusClass(activity.status)">
-                    {{ activity.status }}
-                  </span>
+            <div class="flex-1">
+              <div class="h-6 bg-bg-body rounded overflow-hidden relative">
+                <div class="h-full bg-border-subtle transition-all duration-300"
+                  :style="{ width: member.workload + '%' }">
                 </div>
-                <div class="text-xs text-text-secondary mt-1">{{ activity.time }}</div>
+                <span v-if="member.workload > 10"
+                  class="absolute inset-0 flex items-center justify-start px-2 text-xs text-text-primary font-medium">
+                  {{ member.workload }}%
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
-   
+
+      <!-- Recent Activity -->
+      <div class="bg-bg-card w-full flex-auto p-5 rounded-lg  overflow-hidden flex flex-col">
+        <div class="mb-4">
+          <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
+          <p class="text-sm text-text-secondary mt-1">Stay up to date with what's happening across the project.</p>
+        </div>
+
+        <div class="space-y-4 overflow-y-auto flex-1">
+          <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
+
+          <div v-for="activity in recentActivities" :key="activity.id"
+            class="flex gap-3 pb-4 border-b border-border last:border-0">
+            <div
+              class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+              :style="{ backgroundColor: activity.userColor }">
+              {{ activity.userInitials }}
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="text-sm text-text-primary">
+                <span class="font-medium text-accent/90">{{ activity.user }}</span>
+                <span class="text-text-secondary"> {{ activity.action }} </span>
+                <a href="#" class="text-accent/90 hover:underline">{{ activity.item }}</a>
+                <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
+                  :class="getStatusClass(activity.status)">
+                  {{ activity.status }}
+                </span>
+              </div>
+              <div class="text-xs text-text-secondary mt-1">{{ activity.time }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, defineComponent, h } from 'vue'
-import { useJobId, useWorkspaceId } from '../composables/useQueryParams'
+import { toParamString, useJobId, useWorkspaceId } from '../composables/useQueryParams'
 import ProjectCard from '../components/feature/ProjectCard.vue'
+import { useRoute } from 'vue-router'
 
 
 /** Types */
@@ -215,8 +204,6 @@ const maxReconnectAttempts = 5
 const debugInfo = ref<any>({})
 
 /** Server configuration */
-const { workspaceId } = useWorkspaceId()
-const { jobId } = useJobId()?.jobId ? useJobId() : { jobId: ref<string | null>(null) }
 const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'https://backend.streamed.space/api/v1/workspace'
 
 /** Derived */
@@ -228,13 +215,14 @@ const avatars = [
   'https://randomuser.me/api/portraits/men/2.jpg',
   'https://randomuser.me/api/portraits/men/3.jpg'
 ]
-
+const route = useRoute();
+const workspaceId = computed<string>(() => toParamString(route?.params?.id));
+const jobId = computed<string>(() => toParamString(route?.params?.jobId));
 /** SSE Connection Management */
 const connect = () => {
   if (eventSource.value && eventSource.value.readyState === EventSource.OPEN) return
   if (reconnectAttempts.value >= maxReconnectAttempts) return
   if (eventSource.value) eventSource.value.close()
-
   const token = localStorage.getItem('token') || ''
   const effectiveJob = localStorage.getItem('jobId') || jobId?.value || workspaceId.value
   const isManual = localStorage.getItem('jobId') ? 'false' : 'true'
@@ -261,11 +249,11 @@ const connect = () => {
     }
 
     eventSource.value.addEventListener('progress', (event: MessageEvent) => {
-      try { taskProgress.value = JSON.parse(event.data) } catch {}
+      try { taskProgress.value = JSON.parse(event.data) } catch { }
     })
 
     eventSource.value.addEventListener('error', (event: any) => {
-      try { debugInfo.value = { ...debugInfo.value, serverError: JSON.parse(event.data) } } catch {}
+      try { debugInfo.value = { ...debugInfo.value, serverError: JSON.parse(event.data) } } catch { }
     })
 
     eventSource.value.onerror = () => {
@@ -373,7 +361,7 @@ const getStatusClass = (status: string) => {
 }
 
 /** Lightweight local skeletons — defined without a second <script> block */
- const SkeletonCard = defineComponent({
+const SkeletonCard = defineComponent({
   name: 'SkeletonCard',
   setup() {
     return () => h('div', { class: 'w-[380px] min-w-[280px] h-[180px] rounded-xl border border-border bg-bg-body/60 animate-pulse p-4' }, [
@@ -390,39 +378,162 @@ const getStatusClass = (status: string) => {
 
 <style scoped>
 /* TransitionGroup animations */
-.list-enter-active, .list-leave-active { transition: all 200ms ease-out; }
-.list-enter-from { opacity: 0; transform: translateY(4px); }
-.list-enter-to { opacity: 1; transform: translateY(0); }
-.list-leave-from { opacity: 1; transform: translateY(0); }
-.list-leave-to { opacity: 0; transform: translateY(4px); }
+.list-enter-active,
+.list-leave-active {
+  transition: all 200ms ease-out;
+}
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.list-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.list-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
+}
 
 /* Progress styles */
-.progress-bar { flex: 1; height: 20px; background-color: #e9ecef; border-radius: 10px; overflow: hidden; }
-.progress-fill { height: 100%; transition: width 240ms ease; border-radius: 10px; }
-.progress-default { background-color: #6c757d; }
-.progress-running { background-color: #007bff; }
-.progress-complete { background-color: #28a745; }
-.progress-error { background-color: #dc3545; }
+.progress-bar {
+  flex: 1;
+  height: 20px;
+  background-color: #e9ecef;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  transition: width 240ms ease;
+  border-radius: 10px;
+}
+
+.progress-default {
+  background-color: #6c757d;
+}
+
+.progress-running {
+  background-color: #007bff;
+}
+
+.progress-complete {
+  background-color: #28a745;
+}
+
+.progress-error {
+  background-color: #dc3545;
+}
 
 /* Existing utility-backed blocks, refined for UX */
-.workspace-progress { max-width: 800px; margin: 0 auto; padding: 16px; }
-.connection-status { padding: 10px; border-radius: 8px; margin-bottom: 12px; font-weight: 600; border: 1px solid transparent; }
-.connected { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
-.disconnected { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
-.progress-info { background: #f8f9fa; padding: 16px; border-radius: 12px; border: 1px solid #dee2e6; }
-.status-info { display: grid; gap: 8px; }
-.status-item { display: flex; gap: 10px; align-items: baseline; }
-.status-queued { color: #6c757d; }
-.status-running { color: #007bff; }
-.status-completed { color: #28a745; }
-.status-failed { color: #dc3545; }
-.error-message { color: #dc3545; background-color: #f8d7da; padding: 10px; border-radius: 5px; }
-.actions { display: flex; gap: 10px; margin-top: 16px; }
-.btn-default { padding: 8px 16px; border: 1px solid #ccc; border-radius: 8px; cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease; background: white; }
-.btn-default:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,0.06); }
-.btn-default:active { transform: translateY(0); box-shadow: none; }
+.workspace-progress {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+.connection-status {
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.connected {
+  background-color: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.disconnected {
+  background-color: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
+.progress-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+}
+
+.status-info {
+  display: grid;
+  gap: 8px;
+}
+
+.status-item {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.status-queued {
+  color: #6c757d;
+}
+
+.status-running {
+  color: #007bff;
+}
+
+.status-completed {
+  color: #28a745;
+}
+
+.status-failed {
+  color: #dc3545;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.btn-default {
+  padding: 8px 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  background: white;
+}
+
+.btn-default:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.06);
+}
+
+.btn-default:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
 
 /* Hover affordances for clickability */
-.rounded-xl, .rounded-lg { transition: box-shadow 150ms ease, border-color 150ms ease; }
-.hoverable:hover { box-shadow: 0 6px 18px rgba(0,0,0,0.07); }
+.rounded-xl,
+.rounded-lg {
+  transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+
+.hoverable:hover {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+}
 </style>

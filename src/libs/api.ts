@@ -94,8 +94,6 @@ export async function request<T = any>(args: {
   extract?: DataExtractor;
 }): Promise<T> {
   try {
-    console.time('cards'); // if fast, the lag is elsewhere (e.g., render)
-
     const res = await api.request({
       url: args.url,
       method: args.method ?? "GET",
@@ -106,8 +104,6 @@ export async function request<T = any>(args: {
     });
 
     const picked = (args.extract ?? defaultExtractor)<T>(res);
-    console.timeEnd('cards'); // if fast, the lag is elsewhere (e.g., render)
-
     // IMPORTANT: no deep clone here
     return picked;
     

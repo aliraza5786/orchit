@@ -22,14 +22,14 @@
                 </Searchbar>
             </div> -->
         </div>
-        <KanbanSkeleton v-if="isPending" />
-        <div v-else class="flex  overflow-x-auto gap-3 p-4">
+        <KanbanSkeleton v-show="isListPending || isListFetching" />
+        <div v-show="!isListPending && !isListFetching" class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
                 :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
                 <template #ticket="{ ticket }">
-                    <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket"  />
+                    <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
                 </template>
                 <template #emptyState="{ column }">
                     <div class="flex flex-col items-center justify-center gap-2 py-10">
@@ -123,8 +123,8 @@ const handleAddColumn = (v: any) => {
 
 // Fetch sheets using `useSheets`
 const { data } = useSheets({
-    workspace_id:workspaceId,
-    workspace_module_id:moduleId
+    workspace_id: workspaceId,
+    workspace_module_id: moduleId
 }, {
     onSuccess: () => {
         refetchList();  // Refetch data on success
@@ -141,7 +141,7 @@ watch((viewBy), (newVal) => {
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending, refetch: refetchList } = useSheetList(
+const { data: Lists, isPending: isListPending, isFetching: isListFetching, refetch: refetchList } = useSheetList(
     moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation

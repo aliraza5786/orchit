@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { useRoute } from "vue-router";
 
 // Always return a string ('' if missing)
-function toParamString(v: unknown): string {
+export function toParamString(v: unknown): string {
   if (Array.isArray(v)) return v[0] ?? "";
   return typeof v === "string" ? v : "";
 }

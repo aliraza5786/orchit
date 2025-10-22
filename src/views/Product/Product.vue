@@ -24,14 +24,14 @@
                 </Searchbar>
             </div>
         </div>
-        <KanbanSkeleton v-show="isPending" />
-        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
+        <KanbanSkeleton v-show="isPending || isListFetching" />
+        <div v-show="!isPending && !isListFetching" class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
                 :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
                 <template #column-footer="column">
-                    
+
                     <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
                         v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
                         Disbale ( you can't drop here )</div>
@@ -66,7 +66,8 @@
         }" />
     <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
         v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
-    <SidePanel v-if="selectedCard?.variables" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
+    <SidePanel v-if="selectedCard?.variables" :details="selectedCard"
+        @close="() => { selectCardHandler({ variables: {} }) }"
         :showPanel="selectedCard?.variables.length > 0 ? true : false" />
     <CreateSheetModal v-model="isCreateSheetModal" />
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
@@ -126,7 +127,7 @@ const selected_view_by = ref(viewBy);
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending, } = useSheetList(
+const { data: Lists, isPending, isFetching: isListFetching } = useSheetList(
     moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation

@@ -1,5 +1,5 @@
 <template>
-  <Loader v-if="isPending" />
+  <Loader v-if="isPending || isFetching" />
   <div v-else
     :class="`h-[100dvh] bg-blend-multiply  text-text-primary  overflow-x-hidden flex flex-col bg-cover bg-no-repeat`"
     :style="{
@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import ProfilePanel from './components/ProfilePanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
@@ -41,12 +41,12 @@ import CreateLaneWithAI from './modals/CreateLaneWithAI.vue';
 import UpdateLaneModal from './modals/UpdateLaneModal.vue';
 import { useSingleWorkspace } from '../../queries/useWorkspace';
 import Loader from '../../components/ui/Loader.vue';
-import { useWorkspaceId } from '../../composables/useQueryParams';
+import { toParamString, } from '../../composables/useQueryParams';
+import { useRoute } from 'vue-router';
 const workspaceStore = useWorkspaceStore();
-const { workspaceId } = useWorkspaceId();
-
-
-const { data: getWorkspace, isPending, isLoading } = useSingleWorkspace(workspaceId.value)
+const route = useRoute();
+ const workspaceId = computed<string>(() => toParamString(route?.params?.id));
+const { data: getWorkspace, isPending, isLoading ,isFetching } = useSingleWorkspace(workspaceId.value)
 const workspaceNavRef = ref<any>(null);
 const isDrawerOpen = ref(true)
 

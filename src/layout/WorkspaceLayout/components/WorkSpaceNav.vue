@@ -11,7 +11,8 @@
           @keydown.space.prevent="toggleLogoMenu">
           <img :src="getWorkspace?.logo ?? dp" alt="Workspace menu"
             class="min-w-10 shadow-2xl rounded-md h-10 cursor-pointer aspect-square object-contain" />
-          <h3 class="text-lg max-w-42 font-medium line-clamp-1 text-text-primary">
+          <h3
+            class="text-lg text-left  font-medium max-w-43  text-nowrap overflow-hidden text-ellipsis text-text-primary">
             {{ getWorkspace?.variables?.title }}
           </h3>
           <svg class="w-4 h-4 opacity-70 transition-transform duration-200"
@@ -26,7 +27,7 @@
         <!-- Dropdown -->
         <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
           <div v-show="logoMenuOpen" ref="menuRef"
-            class="absolute z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-white/60 bg-bg-card origin-top-left"
+            class="absolute z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
             role="menu" aria-label="Workspace switcher" @keydown.esc.stop.prevent="closeLogoMenu">
             <!-- Home -->
             <button
@@ -48,8 +49,7 @@
                 role="menuitem" @click="switchTo(ws)">
                 <img :src="ws.logo ?? dp" alt="" class="w-6 h-6 rounded object-contain bg-white" />
                 <span class="flex-1 line-clamp-1">{{ ws?.variables?.title ?? 'Untitled workspace' }}</span>
-                <span v-if="ws._id === workspaceId"
-                  class="text-xs px-2 py-0.5 rounded-full border border-black/10 dark:border-white/20">
+                <span v-if="ws._id === workspaceId" class="text-xs px-2 py-0.5 rounded-full border border-border ">
                   Current
                 </span>
               </button>
@@ -99,14 +99,16 @@ import { useWorkspaceStore } from '../../../stores/workspace';
 import dp from "../../../assets/global/dummy.jpeg"
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
-import { useWorkspaces } from '../../../queries/useWorkspace';
+import { useSingleWorkspace, useWorkspaces } from '../../../queries/useWorkspace';
 import { useWorkspaceId } from '../../../composables/useQueryParams';
+import { useQueryClient } from '@tanstack/vue-query';
 
 const router = useRouter();
 const workspaceStore = useWorkspaceStore();
 const { data: workspaces } = useWorkspaces()
 const laneId = ref('');
 const { workspaceId } = useWorkspaceId();
+const { data: getWorkspace, refetch } = useSingleWorkspace(useWorkspaceId().workspaceId.value)
 // === Logo dropdown state & refs ===
 const logoMenuOpen = ref(false);
 const logoBtnRef = ref<HTMLButtonElement | null>(null);
@@ -162,10 +164,12 @@ const goHome = () => {
   closeLogoMenu();
   router.push({ path: '/' });
 };
-
+const queryClient = useQueryClient()
 const switchTo = async (ws: any) => {
-  // Call your store action to switch workspaces
   router.push(`/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ? ws.LatestTask?.job_id : ''}`)
+  queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId'] })
+  refetch();
+  // Call your store action to switch workspaces
   closeLogoMenu();
 };
 

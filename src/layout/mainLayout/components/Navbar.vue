@@ -161,7 +161,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { getProfile } from '../../../services/user'
 import { useTheme } from '../../../composables/useTheme'
 import Loader from '../../../components/ui/Loader.vue'
@@ -252,7 +252,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onResize)
   if (rAF) cancelAnimationFrame(rAF)
 })
-
+const queryClient = useQueryClient();
 /* Actions */
 async function handleLogout() {
   try {
@@ -260,7 +260,16 @@ async function handleLogout() {
     workspaceStore.setWorkspace(null)
 
     localStorage.clear()
+
+    await queryClient.cancelQueries({ queryKey: ['me'] })
+    await queryClient.cancelQueries({ queryKey: ['profile'] })
+    await queryClient.cancelQueries({ queryKey: ['workspaces'] })
+    // 3) remove the profile query from cache (RAM)
+    queryClient.removeQueries({ queryKey: ['profile'] })
+    queryClient.removeQueries({ queryKey: ['workspaces'] })
+    queryClient.removeQueries({ queryKey: ['me'] })
     router.push('/login')
+
   } catch (e) {
     console.error('Logout failed', e)
   }

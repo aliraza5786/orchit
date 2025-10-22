@@ -95,15 +95,18 @@ export const useWorkspacesPrompt = () =>
   });
 
 export const useWorkspaces = () =>
-  useApiQuery({
-    key: keys.workspaces,
-    url: "/workspace/all",
-    method: "GET",
-  }, {
-    retry: false,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
+  useApiQuery(
+    {
+      key: keys.workspaces,
+      url: "/workspace/all",
+      method: "GET",
+    },
+    {
+      retry: false,
+      staleTime: 5 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    }
+  );
 
 export const useWorkspacesTitles = () =>
   useApiQuery({
@@ -112,17 +115,21 @@ export const useWorkspacesTitles = () =>
     method: "GET",
   });
 
-export const useSingleWorkspace = (id: string | number) =>
-  useApiQuery({
-    key: keys.singleWorkspace(id),
-    url: `/workspace/${id}`,
-    method: "GET",
-    params: { is_archive: false },
-    enabled: !!id,
-  }, {
-    staleTime: 3 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
+export const useSingleWorkspace = (id: string | number) => {
+  return useApiQuery(
+    {
+      key: keys.singleWorkspace(id),
+      url: `/workspace/${id}`,
+      method: "GET",
+      params: { is_archive: false },
+      enabled: !!id,
+    },
+    {
+      staleTime: 3 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    }
+  );
+};
 
 export const useWorkspacesModules = () =>
   useApiQuery({
