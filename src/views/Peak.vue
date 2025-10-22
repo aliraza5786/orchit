@@ -172,7 +172,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, defineComponent, h } from 'vue'
-import { toParamString, useJobId, useWorkspaceId } from '../composables/useQueryParams'
+import { toParamString } from '../composables/useQueryParams'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { useRoute } from 'vue-router'
 
