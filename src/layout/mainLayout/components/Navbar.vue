@@ -49,7 +49,14 @@
 
         <!-- Avatar + Menu -->
         <div class="relative" ref="menuRef">
-          <button class="h-9 w-9 overflow-hidden rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
+          <button v-if="profileData?.u_profile_image" aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
+            :aria-controls="menuOpen ? 'user-menu' : undefined" @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
+            @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu">
+
+            <img class=" cursor-pointer w-10 h-10 rounded-full" :src="profileData?.u_profile_image" alt="profile_img">
+          </button>
+
+          <button v-else class="h-9 w-9 overflow-hidden rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
                      hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
             aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
             :aria-controls="menuOpen ? 'user-menu' : undefined" @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
@@ -67,7 +74,9 @@
               role="menu" @keydown.esc.stop.prevent="closeMenu">
               <!-- Header -->
               <div class="flex items-center gap-3 rounded-xl p-3">
-                <div
+                <img v-if="profileData?.u_profile_image" class=" w-10 h-10 rounded-full"
+                  :src="profileData?.u_profile_image" alt="profile_img">
+                <div v-else
                   class="grid h-11 w-11 place-items-center rounded-full bg-orange-500 text-base font-bold text-text-primary">
                   {{ initials }}
                 </div>
@@ -80,20 +89,10 @@
 
               <!-- Items -->
               <ul class="p-1">
+              
                 <li>
-                  <RouterLink to="/dashboard/profile"
-                    class="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover" role="menuitem"
-                    @click="closeMenu">
-                    <i class="fa-regular fa-user"></i>
-                    <span>Profile</span>
-                  </RouterLink>
-                </li>
-                <li>
-                  <button
-                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                    role="menuitem"
-                    type="button"
-                    @click="openAccountSettings">
+                  <button class=" cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                    role="menuitem" type="button" @click="openAccountSettings">
                     <i class="fa-regular fa-gear"></i>
                     <span>Account settings</span>
                   </button>
@@ -123,27 +122,21 @@
                       role="menu" :class="themeFlipLeft ? 'right-full mr-2' : 'left-full ml-2'">
                       <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('system')" type="button">
-                       <i class="fa-solid fa-desktop"></i> System
+                        <i class="fa-solid fa-desktop"></i> System
                       </button>
                       <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('light')" type="button">
-                        <i class="fa-regular fa-sun-cloud"></i>  Light
+                        <i class="fa-regular fa-sun-cloud"></i> Light
                       </button>
                       <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('dark')" type="button">
-                        <i class="fa-regular fa-clouds-moon"></i>    Dark
+                        <i class="fa-regular fa-clouds-moon"></i> Dark
                       </button>
                     </div>
                   </Transition>
                 </li>
 
-                <li>
-                  <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                    role="menuitem" type="button" @click="switchAccount">
-                    <i class="fa-solid fa-repeat"></i>
-                    <span>Switch account</span>
-                  </button>
-                </li>
+                
                 <li>
                   <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
                     role="menuitem" type="button" @click="handleLogout">
@@ -158,8 +151,8 @@
       </div>
     </div>
 
-    <AccountSettingsModal v-model="showAccountSettings" />
   </nav>
+  <AccountSettingsModal v-model="showAccountSettings" />
 </template>
 
 <script setup lang="ts">

@@ -3,8 +3,8 @@
     <div class="px-6">
       <h2 class="text-2xl font-semibold text-text-primary mb-6">Account Settings</h2>
 
-      <Tabs :tabs="['General Details', 'Subscription', 'Pricing']">
-        <template #General\ Details>
+      <Tabs :tabs="['Profile', 'Subscription']">
+        <template #Profile>
           <div class="py-4" v-if="profileData">
             <div class="space-y-6">
               <div class="flex items-center gap-6">
@@ -12,17 +12,13 @@
                   <div
                     class="w-24 h-24 rounded-full bg-orange-500 flex items-center justify-center text-text-primary text-2xl font-bold border-4 border-border overflow-hidden">
                     <img v-if="avatarPreview || profileData.u_profile_image"
-                      :src="avatarPreview || profileData.u_profile_image"
-                      class="w-full h-full object-cover"
+                      :src="avatarPreview || profileData.u_profile_image" class="w-full h-full object-cover"
                       alt="Profile" />
                     <span v-else>{{ initials }}</span>
                   </div>
-                  <button
-                    type="button"
+                  <button type="button"
                     class="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white text-xs cursor-pointer"
-                    :disabled="isUploadingAvatar"
-                    @click="triggerAvatarPicker"
-                    aria-label="Change profile picture">
+                    :disabled="isUploadingAvatar" @click="triggerAvatarPicker" aria-label="Change profile picture">
                     <div class="flex flex-col items-center justify-center gap-1">
                       <span v-if="isUploadingAvatar"
                         class="inline-block h-6 w-6 rounded-full border-2 border-white border-t-transparent animate-spin"
@@ -46,10 +42,7 @@
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <BaseTextField label="Full Name" placeholder="Enter your full name" v-model="form.fullName" />
-                <BaseTextField label="Job Title" placeholder="Enter your job title" v-model="form.jobTitle" />
-                <BaseTextField label="Department" placeholder="Enter your department" v-model="form.department" />
-                <BaseTextField label="Location" placeholder="Enter your location" v-model="form.location" />
-                <BaseTextField label="Email Address" v-model="form.email" disabled class="md:col-span-2" />
+                <BaseTextField label="Email Address" v-model="form.email" disabled class="" />
               </div>
 
               <hr class="border-border" />
@@ -63,7 +56,7 @@
                 </div>
               </div>
 
-              <div v-if="profileData.companies?.invitations?.length">
+              <!-- <div v-if="profileData.companies?.invitations?.length">
                 <h4 class="text-sm font-semibold text-text-secondary mb-3">Team Members</h4>
                 <div class="space-y-2">
                   <div v-for="(item, index) in profileData.companies.invitations" :key="index"
@@ -74,18 +67,9 @@
                     </span>
                   </div>
                 </div>
-              </div>
+              </div> -->
 
-              <div v-if="tickets.length">
-                <h4 class="text-sm font-semibold text-text-secondary mb-3">Assigned Tickets</h4>
-                <div class="space-y-2">
-                  <div v-for="ticket in tickets" :key="ticket.id"
-                    class="p-3 bg-bg-card border border-border rounded-lg hover:shadow-sm transition">
-                    <p class="font-medium text-text-primary text-sm">{{ ticket.title }}</p>
-                    <p class="text-xs text-text-secondary">{{ ticket.project }}</p>
-                  </div>
-                </div>
-              </div>
+
 
               <div class="flex justify-end gap-3 pt-4">
                 <Button variant="secondary" @click="cancelChanges">
@@ -108,7 +92,7 @@
         <template #Subscription>
           <div class="py-4">
             <div class="space-y-6">
-              <div class="bg-bg-card rounded-xl p-6 border border-border">
+              <div class="bg-bg-body  rounded-xl p-6 border border-border">
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Current Plan</h3>
                 <div class="flex items-center justify-between mb-4">
                   <div>
@@ -117,24 +101,19 @@
                   </div>
                   <div class="text-right">
                     <p class="text-2xl font-bold text-text-primary">{{ currentPlan.price }}</p>
-                    <p class="text-xs text-text-secondary">per {{ currentPlan.billingCycle === 'Monthly' ? 'month' : 'year' }}</p>
+                    <p class="text-xs text-text-secondary">per {{ currentPlan.billingCycle === 'Monthly' ? 'month' :
+                      'year' }}</p>
                   </div>
                 </div>
                 <p class="text-sm text-text-secondary mb-4">Next billing date: {{ currentPlan.nextBillingDate }}</p>
-                <Button variant="secondary" @click="manageBilling" class="w-full">
-                  <i class="fa-solid fa-credit-card mr-2"></i>
-                  Manage Billing
-                </Button>
-              </div>
-
-              <div class="bg-bg-card rounded-xl p-6 border border-border">
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Usage & Limits</h3>
 
                 <div class="space-y-4">
                   <div>
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-sm font-medium text-text-primary">Storage</span>
-                      <span class="text-sm text-text-secondary">{{ usageData.storage.used }} GB / {{ usageData.storage.limit }} GB</span>
+                      <span class="text-sm text-text-secondary">{{ usageData.storage.used }} GB / {{
+                        usageData.storage.limit }} GB</span>
                     </div>
                     <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
                       <div class="h-full bg-accent rounded-full transition-all"
@@ -146,7 +125,8 @@
                   <div>
                     <div class="flex items-center justify-between mb-2">
                       <span class="text-sm font-medium text-text-primary">Users / Seats</span>
-                      <span class="text-sm text-text-secondary">{{ usageData.users.used }} / {{ usageData.users.limit }}</span>
+                      <span class="text-sm text-text-secondary">{{ usageData.users.used }} / {{ usageData.users.limit
+                        }}</span>
                     </div>
                     <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
                       <div class="h-full bg-accent rounded-full transition-all"
@@ -154,28 +134,80 @@
                     </div>
                     <p class="text-xs text-text-secondary mt-1">{{ usageData.users.remaining }} seats remaining</p>
                   </div>
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-sm font-medium text-text-primary">Workspaces </span>
+                      <span class="text-sm text-text-secondary">{{ usageData.users.used }} / {{ usageData.users.limit
+                        }}</span>
+                    </div>
+                    <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
+                      <div class="h-full bg-accent rounded-full transition-all"
+                        :style="{ width: usageData.users.percentage + '%' }"></div>
+                    </div>
+                    <p class="text-xs text-text-secondary mt-1">{{ usageData.users.remaining }} workspace remaining</p>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-sm font-medium text-text-primary">Token </span>
+                      <span class="text-sm text-text-secondary">{{ usageData.users.used }} / {{ usageData.users.limit
+                        }}</span>
+                    </div>
+                    <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
+                      <div class="h-full bg-accent rounded-full transition-all"
+                        :style="{ width: usageData.users.percentage + '%' }"></div>
+                    </div>
+                    <p class="text-xs text-text-secondary mt-1">{{ usageData.users.remaining }} token remaining</p>
+                  </div>
                 </div>
               </div>
 
-              <div class="bg-bg-card rounded-xl p-6 border border-border">
-                <h3 class="text-lg font-semibold text-text-primary mb-3">Plan Features</h3>
-                <ul class="space-y-2">
-                  <li v-for="(feature, index) in currentPlan.features" :key="index"
-                    class="flex items-center gap-2 text-sm text-text-secondary">
-                    <i class="fa-solid fa-check text-green-500"></i>
-                    <span>{{ feature }}</span>
-                  </li>
-                </ul>
+
+              <div class="bg-bg-body gap-6 items-center flex  rounded-xl p-6 border border-border">
+
+
+                <div class=" border-r border-border pr-6 min-w-80">
+
+                  <h1 class="mb-2 uppercase">Upgrade to Pro</h1>
+                  <div v-for="plan in pricingPlans" :key="plan.name"
+                    class="bg-bg-body rounded-xl  transition-all hover:shadow-lg"
+                    :class="plan.name === currentPlan.name ? 'border-accent shadow-accent/20' : 'border-border'">
+                    <div class="text-left mb-4">
+                      <h3 class="text-xl font-bold text-text-primary mb-2">{{ plan.name }}</h3>
+                      <div class="mb-2">
+                        <span class="text-3xl font-bold text-text-primary">{{ plan.price }}</span>
+                        <span class="text-sm text-text-secondary">/ {{ plan.billingCycle }}</span>
+                      </div>
+                      <p class="text-sm text-text-secondary">{{ plan.description }}</p>
+                    </div>
+
+
+
+                  </div>
+                  <Button class="mt-3 block w-full"> UPGRADE</Button>
+                </div>
+
+                <div>
+
+                  <h3 class="text-lg font-semibold text-text-primary mb-3">Plan Features</h3>
+                  <ul class="space-y-2">
+                    <li v-for="(feature, index) in currentPlan.features" :key="index"
+                      class="flex items-center gap-2 text-sm text-text-secondary">
+                      <i class="fa-solid fa-check text-green-500"></i>
+                      <span>{{ feature }}</span>
+                    </li>
+                  </ul>
+       
+                </div>
               </div>
             </div>
           </div>
         </template>
-
+<!-- 
         <template #Pricing>
           <div class="py-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div v-for="plan in pricingPlans" :key="plan.name"
-                class="bg-bg-card rounded-xl p-6 border-2 transition-all hover:shadow-lg"
+                class="bg-bg-body rounded-xl p-6 border-2 transition-all hover:shadow-lg"
                 :class="plan.name === currentPlan.name ? 'border-accent shadow-accent/20' : 'border-border'">
                 <div class="text-center mb-4">
                   <h3 class="text-xl font-bold text-text-primary mb-2">{{ plan.name }}</h3>
@@ -196,31 +228,20 @@
                   </li>
                 </ul>
 
-                <Button
-                  v-if="plan.name === currentPlan.name"
-                  variant="secondary"
-                  class="w-full"
-                  disabled>
+                <Button v-if="plan.name === currentPlan.name" variant="secondary" class="w-full" disabled>
                   Current Plan
                 </Button>
-                <Button
-                  v-else-if="plan.name === 'Free'"
-                  variant="secondary"
-                  class="w-full"
+                <Button v-else-if="plan.name === 'Free'" variant="secondary" class="w-full"
                   @click="downgradePlan(plan)">
                   Downgrade
                 </Button>
-                <Button
-                  v-else
-                  variant="primary"
-                  class="w-full"
-                  @click="upgradePlan(plan)">
+                <Button v-else variant="primary" class="w-full" @click="upgradePlan(plan)">
                   Upgrade to {{ plan.name }}
                 </Button>
               </div>
             </div>
           </div>
-        </template>
+        </template> -->
       </Tabs>
     </div>
   </BaseModal>
@@ -422,36 +443,36 @@ const pricingPlans = ref([
       'Basic analytics'
     ]
   },
-  {
-    name: 'Pro',
-    price: '$29',
-    billingCycle: 'month',
-    description: 'Best for growing teams',
-    features: [
-      'Unlimited workspaces',
-      '100 GB storage',
-      'Up to 10 team members',
-      'Priority support',
-      'Advanced analytics',
-      'Custom integrations'
-    ]
-  },
-  {
-    name: 'Enterprise',
-    price: '$99',
-    billingCycle: 'month',
-    description: 'For large organizations',
-    features: [
-      'Unlimited everything',
-      'Unlimited storage',
-      'Unlimited team members',
-      '24/7 dedicated support',
-      'Advanced security',
-      'Custom integrations',
-      'SLA guarantee',
-      'Dedicated account manager'
-    ]
-  }
+  // {
+  //   name: 'Pro',
+  //   price: '$29',
+  //   billingCycle: 'month',
+  //   description: 'Best for growing teams',
+  //   features: [
+  //     'Unlimited workspaces',
+  //     '100 GB storage',
+  //     'Up to 10 team members',
+  //     'Priority support',
+  //     'Advanced analytics',
+  //     'Custom integrations'
+  //   ]
+  // },
+  // {
+  //   name: 'Enterprise',
+  //   price: '$99',
+  //   billingCycle: 'month',
+  //   description: 'For large organizations',
+  //   features: [
+  //     'Unlimited everything',
+  //     'Unlimited storage',
+  //     'Unlimited team members',
+  //     '24/7 dedicated support',
+  //     'Advanced security',
+  //     'Custom integrations',
+  //     'SLA guarantee',
+  //     'Dedicated account manager'
+  //   ]
+  // }
 ])
 
 function manageBilling() {

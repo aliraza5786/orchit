@@ -1,9 +1,10 @@
 <template>
     <div class="w-full relative">
         <!-- Tab Headers -->
-        <div ref="tabList" class="flex gap-6 border-b border-gray-200 text-sm font-medium relative ">
+        <div ref="tabList" class="flex sticky top-[-25px] gap-6 border-b border-border bg-bg-body z-10 text-sm font-medium  ">
             <button v-for="(tab, index) in tabs" :key="tab" @click="selectTab(index)" ref="tabRefs"
-                class="py-4 px-6 relative cursor-pointer" :class="selected === index ? 'text-text-primary' : 'text-text-secondary -500'">
+                class="py-4 px-6 relative cursor-pointer"
+                :class="selected === index ? 'text-text-primary' : 'text-text-secondary -500'">
                 {{ tab }}
             </button>
 
@@ -18,7 +19,7 @@
                 width: tabs.length * 100 + '%',
                 transform: `translateX(-${selected * (100 / tabs.length)}%)`
             }">
-                <div v-for="(tab) in tabs" :key="tab" class=" shrink-0 px-2">
+                <div  v-for="(tab) in tabs" :key="tab" class=" px-2">
                     <slot :name="tab"></slot>
                 </div>
             </div>
