@@ -66,9 +66,9 @@
         }" />
     <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
         v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
-    <SidePanel v-if="selectedCard?.variables" :details="selectedCard"
+    <SidePanel v-if="selectedCard?._id" :details="selectedCard"
         @close="() => { selectCardHandler({ variables: {} }) }"
-        :showPanel="selectedCard?.variables.length > 0 ? true : false" />
+        :showPanel="selectedCard?._id ? true : false" />
     <CreateSheetModal v-model="isCreateSheetModal" />
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
 </template>
