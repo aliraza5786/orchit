@@ -22,7 +22,7 @@ import { watch } from 'vue'
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
 
-const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project } = useVueFlow()
+const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges } = useVueFlow()
 
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
@@ -80,8 +80,6 @@ function mapApiEdge(e: any): VFEdge {
 watch(
   [() => isStatues.value, () => isProcess.value],
   async ([s1, s2]) => {
-    console.log(s1, s2, '>>>> stau watching ...', !processWorkflow.value?.raw_transitions.nodes);
-
     if (s1 && s2 && statuses.value && !processWorkflow.value?.raw_transitions.nodes) {
       const newNodes: VFNode[] = statuses.value.map((n: any, i: any) => ({
         id: String(n._id),
@@ -148,12 +146,12 @@ function onConnect(conn: Connection) {
 }
 // --- Default (system) nodes like Jira: Start, To Do, Done ---
 
-type Status = 'To Do' | 'In Progress' | 'Blocked' | 'Done'
+// type Status = 'To Do' | 'In Progress' | 'Blocked' | 'Done'
 
-const nextId = (() => {
-  let i = 1
-  return () => `n-${i++}`
-})()
+// const nextId = (() => {
+//   let i = 1
+//   return () => `n-${i++}`
+// })()
 
 const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(workspaceId.value)
 
@@ -184,23 +182,6 @@ function openCreateNodeModal() {
   showCreateModal.value = true
 }
 
-function confirmCreateNode() {
-  const id = nextId()
-  const pos = project({ x: 60, y: 360 })
-  const name = (createName.value || `Node ${id}`).trim()
-  addNodes({
-    id,
-    position: pos,
-    data: { label: name, status: 'In Progress' as Status },
-    style: { borderRadius: '10px', background: '#fff' },
-  })
-  showCreateModal.value = false
-}
-
-function cancelCreateNode() {
-  showCreateModal.value = false
-}
-
 function startRename(nodeId: string, currentName: string) {
   renameId.value = nodeId
   renameName.value = currentName
@@ -219,13 +200,12 @@ function cancelRename() { renameId.value = null }
 async function handleAddNode(e: any) {
   const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
   const id = makeId();
-
   const pos = project({ x: e.position_x, y: e.position_y }) // place near bottom-left; project to account for zoom/pan
   addNodes({
     id,
     position: pos,
-    data: { label: e.name, status: e.status_name },
-    style: { border: '2px solid #64748b', borderRadius: '10px', background: '#fff' },
+    data: { label: e.name, status: e.status_color },
+    style: { border: '2px solid #64748b', borderRadius: '10px', background: e.status_color},
   })
 
 }
@@ -292,16 +272,15 @@ function mapVFEdgeToApi(e: VFEdge) {
 
 
 function serializeWorkflowPayload() {
+  const currentNodes = getNodes.value   // ✅ not getNodes()
+  const currentEdges = getEdges.value   // ✅ not getEdges()
+
   return {
     workspace_id: workspaceId.value,
-    // optional: send totals/summary if you compute them client-side;
-    // otherwise the server can recompute and return them.
     flow_diagram: {
-      nodes: nodes.value.map(mapVFNodeToApi),
-      edges: edges.value.map(mapVFEdgeToApi),
-      // optional: include meta if you want
-      // meta: { ... }
-    }
+      nodes: currentNodes.map(mapVFNodeToApi),
+      edges: currentEdges.map(mapVFEdgeToApi),
+    },
   }
 }
 
@@ -336,7 +315,7 @@ window.addEventListener('beforeunload', () => {
 
       <!-- Custom node content with connection handles and a status picker -->
       <template #node-default="{ id, data }">
-        <div class="relative min-w-25  rounded-md ">
+        <div class="relative min-w-25  rounded-md " >
           <div class="flex justify-between items-center ">
             <span>
               {{ data.label }}
@@ -353,18 +332,6 @@ window.addEventListener('beforeunload', () => {
         </div>
       </template>
     </VueFlow>
-
-    <!-- Create Node Modal -->
-    <div v-if="showCreateModal" class="modal-backdrop" @click.self="cancelCreateNode">
-      <div class="modal">
-        <h3>Create node</h3>
-        <input v-model="createName" placeholder="Enter node name" @keyup.enter="confirmCreateNode" />
-        <div class="modal-actions">
-          <button class="btn" @click="confirmCreateNode">Create</button>
-          <button class="btn ghost" @click="cancelCreateNode">Cancel</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Rename Node Modal -->
     <div v-if="renameId" class="modal-backdrop" @click.self="cancelRename">
