@@ -94,22 +94,12 @@ const categoryColors: Record<string, string> = {
 
 const isEditing = computed(() => !!props.editingStatus)
 
-watch(() => props.modelValue, (newVal) => {
-  if (newVal) {
-    if (props.editingStatus) {
-      statusName.value = props.editingStatus.name || props.editingStatus.data?.label || ''
-      category.value = props.editingStatus.category || 'todo'
-      statusColor.value = props.editingStatus.status_color || props.editingStatus.data?.status || '#6b7280'
-      isInitial.value = props.editingStatus.is_initial || false
-      isFinal.value = props.editingStatus.is_final || false
-    } else {
-      statusName.value = ''
-      category.value = 'todo'
-      statusColor.value = '#6b7280'
-      isInitial.value = false
-      isFinal.value = false
-    }
-  }
+watch( props, () => {
+      statusName.value =  props.editingStatus?.label || ''
+      category.value = props.editingStatus?.category || 'todo'
+      statusColor.value = props.editingStatus?.status_color || props.editingStatus?.status || '#6b7280'
+      isInitial.value = props.editingStatus?.is_initial || false
+      isFinal.value = props.editingStatus?.is_final || false
 })
 
 function handleCategoryChange() {
