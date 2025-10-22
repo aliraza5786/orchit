@@ -20,8 +20,6 @@ const Pin = () => import("../views/Pin/Pin.vue");
 const LandingLayout = () =>
   import("../layout/mainLayout/LandingPageLayout.vue");
 const Home = () => import("../views/Workspaces/Home.vue");
-const ProfileView = () => import("../views/Profile/ProfileView.vue");
-const ManageAccount = () => import("../views/Profile/ManageAccount.vue");
 const CreateWorkspace = () =>
   import("../views/CreateWorkspace/CreateWorkspace.vue");
 const WorkspaceLayout = () =>
@@ -161,18 +159,6 @@ const routes: RouteRecordRaw[] = [
         path: "users",
         name: "users",
         component: Users,
-        meta: { requiresAuth: true },
-      },
-      {
-        path: "profile",
-        name: "profile",
-        component: ProfileView,
-        meta: { requiresAuth: true },
-      },
-      {
-        path: "manage-account",
-        name: "manage-account",
-        component: ManageAccount,
         meta: { requiresAuth: true },
       },
     ],

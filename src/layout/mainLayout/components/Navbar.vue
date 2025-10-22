@@ -89,12 +89,14 @@
                   </RouterLink>
                 </li>
                 <li>
-                  <RouterLink to="/dashboard/settings"
-                    class="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover" role="menuitem"
-                    @click="closeMenu">
+                  <button
+                    class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                    role="menuitem"
+                    type="button"
+                    @click="openAccountSettings">
                     <i class="fa-regular fa-gear"></i>
                     <span>Account settings</span>
-                  </RouterLink>
+                  </button>
                 </li>
 
                 <!-- Theme submenu -->
@@ -155,6 +157,8 @@
         </div>
       </div>
     </div>
+
+    <AccountSettingsModal v-model="showAccountSettings" />
   </nav>
 </template>
 
@@ -166,9 +170,13 @@ import { getProfile } from '../../../services/user'
 import { useTheme } from '../../../composables/useTheme'
 import Loader from '../../../components/ui/Loader.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
+import AccountSettingsModal from '../modals/AccountSettingsModal.vue'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
 const { theme, setTheme } = useTheme()
+
+/* Account Settings Modal */
+const showAccountSettings = ref(false)
 
 /* Router */
 const router = useRouter()
@@ -277,6 +285,11 @@ async function handleLogout() {
 function switchAccount() {
   closeMenu()
   router.push('/switch-account')
+}
+
+function openAccountSettings() {
+  closeMenu()
+  showAccountSettings.value = true
 }
 
 /* --- Sliding underline indicator logic --- */
