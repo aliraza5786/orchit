@@ -101,7 +101,8 @@ export const useWorkspaces = () =>
     method: "GET",
   }, {
     retry: false,
-    placeholderData: [],
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
 export const useWorkspacesTitles = () =>
@@ -118,6 +119,9 @@ export const useSingleWorkspace = (id: string | number) =>
     method: "GET",
     params: { is_archive: false },
     enabled: !!id,
+  }, {
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
 export const useWorkspacesModules = () =>
@@ -136,18 +140,16 @@ type IdLike =
 
 export const useWorkspacesRoles = (id: IdLike) => {
   const idRef = computed(() => unref(id));
-  const keyRef = computed(() => ["workspaceRoles", idRef.value] as const);
   return useQuery({
-    queryKey: keyRef,
+    queryKey: computed(() => ["workspaceRoles", idRef.value] as const),
     enabled: computed(() => !!idRef.value),
-    queryFn: async ({ queryKey }) => {
-      const [, wid] = queryKey;
-      // WHY: avoid firing without a valid id
+    queryFn: async () => {
+      const wid = idRef.value;
       if (!wid && wid !== 0) return [];
       return await api.get(`/workspace/teams/${wid}`).then((r) => r.data.data);
     },
-    // Optional: stale time to reduce refetch churn if user flips workspaces quickly
-    staleTime: 15_000,
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };
 

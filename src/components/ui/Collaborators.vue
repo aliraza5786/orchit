@@ -1,33 +1,33 @@
 <template>
     <div class="flex items-center">
-        <div :class="['flex', overlapClass]">
+        <div :class="['flex', displayData.overlap]">
             <!-- Visible Avatars -->
-            <img v-if="image" v-for="(collaborator, index) in visibleAvatars" :key="index" :src="collaborator.image"
-                @click="() => {
-                    if (collaborator.onclick) {
+            <template v-if="image">
+                <img v-for="(collaborator, index) in displayData.visible"
+                    :key="index"
+                    :src="collaborator.image"
+                    :alt="collaborator.name"
+                    loading="lazy"
+                    decoding="async"
+                    @click="collaborator.onclick?.()"
+                    :class="`w-${size} h-${size} rounded-full border-2 border-white shadow-md object-cover cursor-pointer`" />
+            </template>
 
-
-                        collaborator.onclick()
-                    }
-                }" :alt="collaborator.name"
-                :class="`w-${size} h-${size} rounded-full border-2 border-white shadow-md object-cover cursor-pointer`" />
-
-            <div v-else v-for="(collaborator, index) in visibleAvatars" :key="`IMG-${index}`" @click="() => {
-                if (collaborator.onclick) {
-
-
-                    collaborator.onclick()
-                }
-            }" :alt="collaborator.name"
-                :class="`w-${size} h-${size} rounded-full text-text-primary flex justify-center items-center  bg-amber-600 border-2 border-border shadow-md object-cover cursor-pointer`">
-                {{ getInitials(collaborator?.name) }}
-            </div>
+            <template v-else>
+                <div v-for="(collaborator, index) in displayData.visible"
+                    :key="`IMG-${index}`"
+                    @click="collaborator.onclick?.()"
+                    :alt="collaborator.name"
+                    :class="`w-${size} h-${size} rounded-full text-text-primary flex justify-center items-center bg-amber-600 border-2 border-border shadow-md object-cover cursor-pointer`">
+                    {{ getCachedInitials(collaborator?.name) }}
+                </div>
+            </template>
 
             <!-- +X more indicator -->
-            <div v-if="extraCount > 0"
-                class="flex items-center justify-center text-xs font-medium bg-gray-300 text-text-secondary -700 border-2 border-white shadow-md rounded-full"
+            <div v-if="displayData.extra > 0"
+                class="flex items-center justify-center text-xs font-medium bg-gray-300 text-text-secondary border-2 border-white shadow-md rounded-full"
                 :class="`w-${size} h-${size}`">
-                +{{ extraCount }}
+                +{{ displayData.extra }}
             </div>
         </div>
     </div>
@@ -49,32 +49,38 @@ const props = defineProps({
     },
     size: {
         type: String,
-        default: '8', // e.g. 8 = 2rem in Tailwind (32px)
+        default: '8',
     },
     image: {
         type: Boolean,
         default: true
-
     }
 })
 
-const extraCount = computed(() =>
-    props.avatars.length > props.maxVisible
-        ? props.avatars.length - props.maxVisible
-        : 0
-)
+// Cache initials to avoid recomputation
+const initialsCache = new Map();
+const getCachedInitials = (name) => {
+    if (!initialsCache.has(name)) {
+        initialsCache.set(name, getInitials(name));
+    }
+    return initialsCache.get(name);
+};
 
-const visibleAvatars = computed(() =>
-    props.avatars.slice(0, props.maxVisible)
-)
+// Combine computed properties for better performance
+const displayData = computed(() => {
+    const total = props.avatars.length;
+    const max = props.maxVisible;
+    const visible = props.avatars.slice(0, max);
+    const extra = total > max ? total - max : 0;
 
-// Dynamic overlap spacing
-const overlapClass = computed(() => {
-    const count = visibleAvatars.value.length
-    if (count <= 2) return '-space-x-2'
-    if (count === 3) return '-space-x-3'
-    if (count === 4) return '-space-x-4'
-    if (count === 5) return '-space-x-2.5'
-    return '-space-x-5'
-})
+    // Calculate overlap class based on visible count
+    let overlap = '-space-x-2';
+    const count = visible.length;
+    if (count === 3) overlap = '-space-x-3';
+    else if (count === 4) overlap = '-space-x-4';
+    else if (count === 5) overlap = '-space-x-2.5';
+    else if (count > 5) overlap = '-space-x-5';
+
+    return { visible, extra, overlap };
+});
 </script>

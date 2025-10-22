@@ -4,43 +4,46 @@ import { h } from "vue"
 import { formatDate } from '../../../utilities/FormatDate';
 import Collaborators from '../../../components/ui/Collaborators.vue';
 import { useRouter } from 'vue-router';
+
 const router = useRouter();
+
+// Memoize formatDate results
+const dateCache = new Map<string, string>();
+const getCachedDate = (dateStr: string) => {
+  if (!dateCache.has(dateStr)) {
+    dateCache.set(dateStr, formatDate(dateStr));
+  }
+  return dateCache.get(dateStr)!;
+};
+
 const handleClick = (row: any) => {
-    if (row.row.LatestTask?.job_id) { localStorage.setItem('jobId', row.row.LatestTask?.job_id) }
-    else {
-        localStorage.removeItem('jobId')
+    const jobId = row.row.LatestTask?.job_id;
+    if (jobId) {
+        localStorage.setItem('jobId', jobId);
+    } else {
+        localStorage.removeItem('jobId');
     }
-    router.push(`/workspace/peak/${row.row._id}/${row.row.LatestTask?.job_id ? row.row.LatestTask?.job_id : ''}`)
+    router.push(`/workspace/peak/${row.row._id}/${jobId || ''}`);
 }
 
+// Move render functions outside to prevent recreation
+const renderProject = ({ row, value }: any) => h('div', { class: 'flex items-center gap-2' }, [
+    row.logo ? h('img', { src: row.logo, alt: value?.title || 'Project', class: 'h-8 w-8 bg-bg-card rounded-full', loading: 'lazy', decoding: 'async' }) : h('div', { class: 'bg-white h-8 w-8 bg-bg-card rounded-full' }),
+    h('span', value?.title || 'Untitled')
+]);
+
+const renderProjectType = ({ value }: any) => h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-');
+
+const renderPeople = ({ value }: any) => h(Collaborators, { avatars: value || [], image: false, maxVisible: 3 });
+
+const renderStartDate = ({ value }: any) => h('span', getCachedDate(value));
+
 const columns = [
-    {
-        key: "variables", label: 'Project', render: ({ row, value }: any) => h('div', { class: 'flex items-center gap-2' }, [
-            row.logo ? h('img', { src: row?.logo, alt: value.title, class: 'h-8 w-8 bg-bg-card rounded-full' }) : h('div', { class: ' bg-white h-8 w-8 bg-bg-card rounded-full' }),
-            h('span', value?.title)
-        ])
-    },
-    {
-        key: 'variables', label: 'Project type',
-        render: ({ value }: any) => h('div', { class: ' capitalize flex items-center gap-2' }, [
-
-            h('span', value?.['workspace-type'] || '-')
-        ])
-    },
-    {
-        key: 'People', label: 'People',
-        render: ({ value }: any) => h('div', { class: ' capitalize flex items-center gap-2' }, [
-            h(Collaborators, { avatars: value, image: false })
-        ])
-    },
-    {
-        key: 'created_at', label: 'Start Date', render: ({ value }: any) => h('div', { class: 'flex items-center gap-2' }, [
-
-            h('span', formatDate(value))
-        ])
-    },
-    // { key: 'Roles', label: 'Team' }
-]
+    { key: "variables", label: 'Project', render: renderProject },
+    { key: 'variables', label: 'Project type', render: renderProjectType },
+    { key: 'People', label: 'People', render: renderPeople },
+    { key: 'created_at', label: 'Start Date', render: renderStartDate },
+];
 
 defineProps<{ data: any[], isPending: boolean }>()
 

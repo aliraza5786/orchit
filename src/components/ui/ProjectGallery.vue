@@ -1,19 +1,18 @@
 <template>
-  <!-- Cards (with transitions) -->
-  <TransitionGroup v-if="!loading && projects?.length" name="card" tag="section"
-    class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4" appear
+  <!-- Cards -->
+  <section v-if="!loading && projects?.length"
+    class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
     :aria-busy="loading ? 'true' : 'false'" aria-live="polite">
     <article v-for="(project, index) in projects" :key="project._id ?? index"
-      class="group relative overflow-hidden rounded-xl  cursor-pointer  border border-border/70 bg-bg-card shadow-sm outline-none transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-orange-300">
+      class="group relative overflow-hidden rounded-xl cursor-pointer border border-border/70 bg-bg-card shadow-sm outline-none transition-all duration-200 hover:shadow-md focus-within:ring-2 focus-within:ring-orange-300">
       <!-- Click surface -->
       <button type="button" class="absolute inset-0 z-10" @click="onClick(project)"
         :aria-label="`Open project ${displayTitle(project)}`" />
-      <!-- Top banner -->
-      <div class="flex h-39 items-center justify-center transition-colors"
+      <!-- Top banner with simple gradient -->
+      <div class="flex h-39 items-center justify-center"
         :style="{ background: bannerBackground(project) }">
         <img :src="project.logo" class="aspect-square h-10 w-10 rounded-md object-cover" alt="" loading="lazy"
-          decoding="async" @load.once="queueColorExtraction(project)"
-          @error="() => markColor(project, hashedColor(displayTitle(project)))" />
+          decoding="async" />
       </div>
 
       <!-- Meta -->
@@ -25,7 +24,7 @@
         </div>
       </div>
     </article>
-  </TransitionGroup>
+  </section>
 
   <!-- Skeletons -->
   <section v-else-if="loading" class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
@@ -51,21 +50,6 @@
 </template>
 
 <style scoped>
-.card-enter-from,
-.card-leave-to {
-  opacity: 0;
-  transform: translateY(6px) scale(0.98);
-}
-
-.card-enter-active,
-.card-leave-active {
-  transition: all 160ms ease;
-}
-
-.card-move {
-  transition: transform 160ms ease;
-}
-
 @keyframes shimmer {
   0% {
     background-position: 200% 0;
@@ -78,7 +62,7 @@
 </style>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 interface Project {
@@ -109,77 +93,17 @@ function formatWhen(iso?: string) {
   return fmt.format(d)
 }
 
-/* ---------- Color extraction (lazy + cached) ---------- */
-const colorMap = ref<Record<string, string>>({})
-
+/* ---------- Simple color generation (no extraction) ---------- */
 function hashedColor(seed: string): string {
   let h = 0
   for (let i = 0; i < (seed?.length || 0); i++) h = (h * 31 + seed.charCodeAt(i)) | 0
   const hue = Math.abs(h) % 360
-  return `linear-gradient(180deg, hsl(${hue} 60% 58%), hsl(${hue} 60% 52%))`
+  return `linear-gradient(135deg, hsl(${hue} 55% 55%), hsl(${hue} 60% 48%))`
 }
 
-function rgbToHex(r: number, g: number, b: number) {
-  const toHex = (n: number) => n.toString(16).padStart(2, '0')
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
-}
-
-function extractDominantColorFromImg(img: HTMLImageElement): string | null {
-  try {
-    const size = 48
-    const c = document.createElement('canvas')
-    const ctx = c.getContext('2d', { willReadFrequently: true })!
-    c.width = size
-    c.height = size
-    ctx.drawImage(img, 0, 0, size, size)
-    const { data } = ctx.getImageData(0, 0, size, size)
-    const buckets: Record<string, number> = {}
-    for (let i = 0; i < data.length; i += 4) {
-      const a = data[i + 3]
-      if (a < 24) continue
-      const r4 = data[i] >> 4
-      const g4 = data[i + 1] >> 4
-      const b4 = data[i + 2] >> 4
-      const key = `${r4},${g4},${b4}`
-      buckets[key] = (buckets[key] || 0) + 1
-    }
-    let best = ''
-    let count = -1
-    for (const k in buckets) if (buckets[k] > count) (count = buckets[k], best = k)
-    if (!best) return null
-    const [r4, g4, b4] = best.split(',').map(Number)
-    const r = (r4 << 4) | r4
-    const g = (g4 << 4) | g4
-    const b = (b4 << 4) | b4
-    return rgbToHex(r, g, b)
-  } catch {
-    return null
-  }
-}
-
-function markColor(p: Project, color: string) {
-  if (!p?.logo) return
-  colorMap.value = { ...colorMap.value, [p.logo]: color }
-}
-
-// build banner CSS from cached or hashed
+// Simple banner background using hash-based color
 function bannerBackground(p: Project) {
-  const key = p.logo
-  const raw = key ? colorMap.value[key] : undefined
-  if (raw && raw.startsWith('#')) return `linear-gradient(180deg, ${raw}, ${raw})`
-  if (raw) return raw
   return hashedColor(displayTitle(p))
-}
-
-// queue extraction on first load of the specific image element
-function queueColorExtraction(p: Project) {
-  if (!p?.logo || colorMap.value[p.logo]) return
-  const img = event?.target as HTMLImageElement | undefined
-  if (!img) return
-  requestIdleCallback?.(() => {
-    const hex = extractDominantColorFromImg(img)
-    markColor(p, hex || hashedColor(displayTitle(p)))
-  }, { timeout: 600 })
 }
 
 /* ---------- Navigation ---------- */
@@ -190,7 +114,4 @@ function onClick(p: Project) {
   router.push(`/workspace/peak/${p._id}/${job ?? ''}`)
 }
 
-/* cleanup (nothing persistent here, but keep pattern ready) */
-onMounted(() => { })
-onBeforeUnmount(() => { })
 </script>
