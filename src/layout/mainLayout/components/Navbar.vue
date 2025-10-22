@@ -89,9 +89,10 @@
 
               <!-- Items -->
               <ul class="p-1">
-              
+
                 <li>
-                  <button class=" cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                  <button
+                    class=" cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
                     role="menuitem" type="button" @click="openAccountSettings">
                     <i class="fa-regular fa-gear"></i>
                     <span>Account settings</span>
@@ -136,7 +137,7 @@
                   </Transition>
                 </li>
 
-                
+
                 <li>
                   <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
                     role="menuitem" type="button" @click="handleLogout">

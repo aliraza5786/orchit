@@ -18,6 +18,10 @@ import '@vue-flow/core/dist/theme-default.css'
 import { useCreateTransition, useProcessStatus, useProcessWorkflow } from '../../../queries/useProcess'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 import { watch } from 'vue'
+import BaseModal from '../../ui/BaseModal.vue'
+import BaseTextField from '../../ui/BaseTextField.vue'
+import Button from '../../ui/Button.vue'
+import Loader from '../../ui/Loader.vue'
 
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
@@ -28,7 +32,7 @@ const { setNodes, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInt
 const { workspaceId } = useWorkspaceId()
 
 const { data: statuses, isSuccess: isStatues } = useProcessStatus(workspaceId.value);
-const { data: processWorkflow, isSuccess: isProcess } = useProcessWorkflow(workspaceId.value)
+const { data: processWorkflow, isSuccess: isProcess, isPending: isProcessPending, isFetching: isProcessFetching } = useProcessWorkflow(workspaceId.value)
 
 // ---- Helpers to normalize API -> VueFlow ----
 function mapApiNode(n: any): VFNode {
@@ -224,7 +228,7 @@ async function handleAddNode(e: any) {
     id,
     position: pos,
     data: { label: e.name, status: e.status_color },
-    style: { border: '2px solid #64748b', borderRadius: '10px', background: e.status_color},
+    style: { border: '2px solid #64748b', borderRadius: '10px', background: e.status_color },
   })
 
 }
@@ -304,9 +308,9 @@ function serializeWorkflowPayload() {
 }
 
 function saveWorkflow() {
-  console.log(' >>> saving workspace');
 
   const payload = serializeWorkflowPayload()
+  console.log(' >>> saving workspace', payload);
   createWorkflow({ payload })
 }
 
@@ -323,8 +327,9 @@ window.addEventListener('beforeunload', () => {
 
 <template>
   <div class="workflow-wrap">
+    <Loader v-if="isProcessPending || isProcessFetching" />
 
-    <VueFlow v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
+    <VueFlow v-else v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
       :nodes-draggable="true" :nodes-connectable="true" :elements-selectable="true" fit-view-on-init
       @connect="onConnect">
 
@@ -334,7 +339,7 @@ window.addEventListener('beforeunload', () => {
 
       <!-- Custom node content with connection handles and a status picker -->
       <template #node-default="{ id, data }">
-        <div class="relative min-w-25  rounded-md " >
+        <div class="relative min-w-25  rounded-md ">
           <div class="flex justify-between items-center ">
             <span>
               {{ data.label }}
@@ -353,13 +358,14 @@ window.addEventListener('beforeunload', () => {
     </VueFlow>
 
     <!-- Transition Name Modal -->
-    <div v-if="showTransitionModal" class="modal-backdrop" @click.self="cancelTransition">
-      <div class="modal">
+    <div v-if="showTransitionModal" class=" modal-backdrop" @click.self="cancelTransition">
+      <div class="modal  border border-border !bg-bg-body text-text-primary">
         <h3>Name this transition</h3>
-        <input v-model="transitionName" placeholder="e.g., Start work, Complete" @keyup.enter="confirmTransition" autofocus />
-        <div class="modal-actions">
-          <button class="btn" @click="confirmTransition">Add Transition</button>
-          <button class="btn ghost" @click="cancelTransition">Cancel</button>
+        <BaseTextField v-model="transitionName" placeholder="e.g., Start work, Complete"
+          @keyup.enter="confirmTransition" autofocus />
+        <div class="modal-actions mt-4">
+          <Button size="sm" @click="confirmTransition">Add Transition</Button>
+          <Button variant="secondary" size="sm" @click="cancelTransition">Cancel</Button>
         </div>
       </div>
     </div>

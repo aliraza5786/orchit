@@ -183,23 +183,24 @@ const { mutate: batchUpdate, isPending: isUpdating } = useBatchUpdateWorkflow({
 })
 
 function handleUpdateWorkflow() {
-  const validation = workflowState.validateWorkflow()
-  if (!validation.isValid) {
-    toast.error('Workflow validation failed: ' + validation.errors.join(', '))
-    return
-  }
+  Canvas.value?.saveWorkflow()
+  // const validation = workflowState.validateWorkflow()
+  // if (!validation.isValid) {
+  //   toast.error('Workflow validation failed: ' + validation.errors.join(', '))
+  //   return
+  // }
 
-  const changes = workflowState.getChanges()
-  if (!workflowState.hasChanges.value) {
-    toast.info('No changes to save')
-    return
-  }
+  // const changes = workflowState.getChanges()
+  // if (!workflowState.hasChanges.value) {
+  //   toast.info('No changes to save')
+  //   return
+  // }
 
-  batchUpdate({
-    processId: processId.value,
-    statuses: changes.statuses,
-    transitions: changes.transitions
-  })
+  // batchUpdate({
+  //   processId: processId.value,
+  //   statuses: changes.statuses,
+  //   transitions: changes.transitions
+  // })
 }
 
 function handleZoomIn() {
