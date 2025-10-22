@@ -137,7 +137,7 @@ const initials =  computed(() =>
 );
 
 function goToManage() {
-  router.push('/manage-account');
+  router.push('/dashboard/manage-account');
 }
 const backgroud = (item: string) => {
   if (item == 'accepted') return 'bg-green-400'

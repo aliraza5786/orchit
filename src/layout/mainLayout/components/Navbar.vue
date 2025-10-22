@@ -81,7 +81,7 @@
               <!-- Items -->
               <ul class="p-1">
                 <li>
-                  <RouterLink to="/profile"
+                  <RouterLink to="/dashboard/profile"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover" role="menuitem"
                     @click="closeMenu">
                     <i class="fa-regular fa-user"></i>
@@ -89,7 +89,7 @@
                   </RouterLink>
                 </li>
                 <li>
-                  <RouterLink to="/settings"
+                  <RouterLink to="/dashboard/settings"
                     class="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover" role="menuitem"
                     @click="closeMenu">
                     <i class="fa-regular fa-gear"></i>
@@ -121,15 +121,15 @@
                       role="menu" :class="themeFlipLeft ? 'right-full mr-2' : 'left-full ml-2'">
                       <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('system')" type="button">
-                        System
+                       <i class="fa-solid fa-desktop"></i> System
                       </button>
                       <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('light')" type="button">
-                        Light
+                        <i class="fa-regular fa-sun-cloud"></i>  Light
                       </button>
                       <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('dark')" type="button">
-                        Dark
+                        <i class="fa-regular fa-clouds-moon"></i>    Dark
                       </button>
                     </div>
                   </Transition>
