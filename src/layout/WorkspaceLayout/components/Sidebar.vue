@@ -22,6 +22,13 @@
             }" />
         </div>
 
+        <div class="mt-auto  text-center ">
+            <SideItem label="Plan" :to="`/workspace/plan`" key="plan" id="plan" :icon="{
+                prefix: 'fa-regular',
+                iconName: 'fa-brain'
+            }" />
+        </div>
+
         <div class="flex-grow flex-col flex gap-1">
             <SideItem v-for="(item, index) in workspace.modules" :key="index" :id="item._id"
                 :label="item.variables['module-title']"

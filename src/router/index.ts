@@ -16,6 +16,7 @@ const CreateProfile = () => import("../views/Auth/CreateProfile.vue");
 const FinishProfile = () => import("../views/FinishProfile.vue");
 const NotFound = () => import("../views/NotFound.vue");
 
+const Plan = () => import("../views/Plan/Plan.vue");
 const Pin = () => import("../views/Pin/Pin.vue");
 const LandingLayout = () =>
   import("../layout/mainLayout/LandingPageLayout.vue");
@@ -183,6 +184,7 @@ const routes: RouteRecordRaw[] = [
       { path: "peak/:id", name: "peak", component: Peak },
       { path: "people/:id", name: "people", component: People },
       { path: "pin/:id/:module_id", name: "pin", component: Pin },
+      { path: "plan", name: "plan", component: Plan },
       { path: "process/:id", name: "process", component: Process },
       { path: "more/:id", name: "more", component: More },
       { path: ":id/:module_id", name: "product", component: Product },

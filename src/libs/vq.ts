@@ -66,6 +66,7 @@ export function useApiMutation<TData = any, TVariables = any>(
     method = "POST",
     config,
     extract = defaultExtractor,
+    
   }: {
     key: QueryKey;
     url: string;

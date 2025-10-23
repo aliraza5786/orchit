@@ -24,8 +24,8 @@
                 </Searchbar>
             </div>
         </div>
-        <KanbanSkeleton v-show="isPending || isListFetching" />
-        <div v-show="!isPending && !isListFetching" class="flex  overflow-x-auto gap-3 p-4">
+        <KanbanSkeleton v-show="isPending" />
+        <div v-show="!isPending " class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
@@ -127,7 +127,7 @@ const selected_view_by = ref(viewBy);
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending, isFetching: isListFetching } = useSheetList(
+const { data: Lists, isPending, isFetching } = useSheetList(
     moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation

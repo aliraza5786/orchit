@@ -53,7 +53,8 @@
             :aria-controls="menuOpen ? 'user-menu' : undefined" @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
             @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu">
 
-            <img class=" object-cover cursor-pointer w-10 h-10 rounded-full" :src="profileData?.u_profile_image" alt="profile_img">
+            <img class=" object-cover cursor-pointer w-10 h-10 rounded-full" :src="profileData?.u_profile_image"
+              alt="profile_img">
           </button>
 
           <button v-else class="h-9 w-9 overflow-hidden rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
@@ -158,7 +159,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onBeforeUnmount, ref, nextTick, watch } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
+import { useRouter, RouterLink, useRoute } from 'vue-router'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { getProfile } from '../../../services/user'
 import { useTheme } from '../../../composables/useTheme'
@@ -243,9 +244,12 @@ function onClickOutside(e: MouseEvent) {
   if (!root) return
   if (!root.contains(e.target as Node)) closeMenu()
 }
-
+const route = useRoute()
 onMounted(() => {
-  document.addEventListener('click', onClickOutside)
+  if (route.query.stripePayment){
+    showAccountSettings.value=true
+  }
+    document.addEventListener('click', onClickOutside)
   window.addEventListener('resize', onResize)
 })
 

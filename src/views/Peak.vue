@@ -20,7 +20,7 @@
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane.lane_title"
-                  subtitle="Mobile Application" :progress="lane?.progress ?? 0" :status="lane?.status ?? ''"
+                  subtitle="Mobile Application" :progress="lane?.progress ?? 0" :totalCard="lane?.total_cards" :status="lane?.status ?? ''"
                   :avatars="avatars" date="May 28"
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
               </button>

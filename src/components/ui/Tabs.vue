@@ -1,7 +1,8 @@
 <template>
     <div class="w-full relative">
         <!-- Tab Headers -->
-        <div ref="tabList" class="flex sticky top-[-25px] gap-6 border-b border-border bg-bg-body z-10 text-sm font-medium  ">
+        <div ref="tabList"
+            class="flex sticky top-[-25px] gap-6 border-b border-border bg-bg-body z-10 text-sm font-medium  ">
             <button v-for="(tab, index) in tabs" :key="tab" @click="selectTab(index)" ref="tabRefs"
                 class="py-4 px-6 relative cursor-pointer"
                 :class="selected === index ? 'text-text-primary' : 'text-text-secondary -500'">
@@ -19,7 +20,7 @@
                 width: tabs.length * 100 + '%',
                 transform: `translateX(-${selected * (100 / tabs.length)}%)`
             }">
-                <div  v-for="(tab) in tabs" :key="tab" class=" px-2">
+                <div v-for="(tab) in tabs" :key="tab" class=" px-2">
                     <slot :name="tab"></slot>
                 </div>
             </div>
@@ -33,9 +34,10 @@ import { ref, onMounted, nextTick, watch, computed } from 'vue'
 
 const props = defineProps<{
     tabs: string[]
+    defaultTab?: any
 }>()
 
-const selected = ref(0)
+const selected = ref(props?.defaultTab ?? 0)
 const tabRefs = ref<HTMLElement[]>([])
 const tabList = ref<HTMLElement | null>(null)
 

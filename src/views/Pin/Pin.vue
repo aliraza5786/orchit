@@ -22,8 +22,8 @@
                 </Searchbar>
             </div> -->
         </div>
-        <KanbanSkeleton v-show="isListPending || isListFetching" />
-        <div v-show="!isListPending && !isListFetching" class="flex  overflow-x-auto gap-3 p-4">
+        <KanbanSkeleton v-show="isListPending " />
+        <div v-show="!isListPending " class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"

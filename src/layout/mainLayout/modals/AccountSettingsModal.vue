@@ -3,7 +3,7 @@
     <div class="px-6">
       <h2 class="text-2xl font-semibold text-text-primary mb-6">Account Settings</h2>
 
-      <Tabs :tabs="['Profile', 'Subscription']">
+      <Tabs :tabs="['Profile', 'Subscription']" :defaultTab="route.query.stripePayment ? 1 : 0">
         <template #Profile>
           <div class="py-4" v-if="profileData">
             <div class="space-y-6">
@@ -102,12 +102,12 @@
                   <div class="text-right">
                     <p class="text-2xl font-bold text-text-primary">{{ currentPackage?.package?.currencySymbol +
                       currentPackage?.package?.amount }}</p>
-                    <p class="text-xs text-text-secondary">per {{ currentPlan.billingCycle === 'Monthly' ? 'month' :
+                    <p class="text-xs text-text-secondary">per {{ currentPlan?.billingCycle === 'Monthly' ? 'month' :
                       'year' }}</p>
                   </div>
                 </div>
-                <p class="text-sm text-text-secondary mb-4">Next billing date: {{ formatDate(currentPackage.renewsAt) +
-                  `, ${extractYear(currentPackage.renewsAt)}` }}</p>
+                <p class="text-sm text-text-secondary mb-4">Next billing date: {{ formatDate(currentPackage?.renewsAt) +
+                  `, ${extractYear(currentPackage?.renewsAt)}` }}</p>
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Usage & Limits</h3>
 
                 <div class="space-y-4">
@@ -138,34 +138,33 @@
 
                 <div class=" border-r border-border pr-6 min-w-80">
 
-                  <h1 class="mb-2 uppercase">Upgrade to {{ currentPackage.nextPackage.name }}</h1>
-                  <div v-if="currentPackage.nextPackage" class="bg-bg-body rounded-xl  transition-all hover:shadow-lg">
+                  <h1 class="mb-2 uppercase">Upgrade to {{ currentPackage?.nextPackage?.name }}</h1>
+                  <div v-if="currentPackage?.nextPackage" class="bg-bg-body rounded-xl  transition-all hover:shadow-lg">
                     <div class="text-left mb-4">
                       <h3 class="text-xl font-bold text-text-primary mb-2">{{ currentPackage.nextPackage.name }}</h3>
                       <div class="mb-2">
                         <span class="text-3xl font-bold text-text-primary">{{
-                          currentPackage.nextPackage.pricing.month.amount +
-                          currentPackage.nextPackage.pricing.month.currencySymbol }} </span>
-                        <span class="text-sm text-text-secondary">/ {{ currentPackage.nextPackage.pricing.month.interval
-                          }}</span>
+                          currentPackage?.nextPackage?.pricing?.month?.amount +
+                          currentPackage?.nextPackage?.pricing?.month?.currencySymbol }} </span>
+                        <span class="text-sm text-text-secondary">/ {{ currentPackage?.nextPackage?.pricing?.month?.interval
+                        }}</span>
                       </div>
-                      <p class="text-sm text-text-secondary">{{ currentPackage.nextPackage.description }}</p>
+                      <p class="text-sm text-text-secondary">{{ currentPackage?.nextPackage?.description }}</p>
                     </div>
-
-
-
                   </div>
-                  <Button class="mt-3 block w-full"> UPGRADE</Button>
+                  <!-- <form action="/create-checkout-session" method="POST"> -->
+                  <Button class="mt-3 block w-full" @click="pay(currentPackage?.nextPackage)"> UPGRADE</Button>
+                  <!-- </form> -->
                 </div>
 
                 <div>
 
                   <h3 class="text-lg font-semibold text-text-primary mb-3">Plan Features</h3>
                   <ul class="space-y-2">
-                    <li v-for="(feature, index) in currentPackage.nextPackage.features" :key="index"
+                    <li v-for="(feature, index) in currentPackage?.nextPackage?.features" :key="index"
                       class="flex items-center gap-2 text-sm text-text-secondary">
                       <i class="fa-solid fa-check text-green-500"></i>
-                      <span>{{ feature.description }}</span>
+                      <span>{{ feature?.description }}</span>
                     </li>
                   </ul>
 
@@ -220,7 +219,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import Tabs from '../../../components/ui/Tabs.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
@@ -230,9 +229,29 @@ import { useQuery, useMutation } from '@tanstack/vue-query'
 import { getProfile, updateProfile } from '../../../services/user'
 import { useUploadFile } from '../../../queries/useCommon'
 import { toast } from 'vue-sonner'
-import { useCurrentPackage } from '../../../queries/usePackages'
+import { useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
+import { useRoute } from 'vue-router'
+const route = useRoute();
+onMounted(() => {
+  if (route.query.stripePayment) {
 
+  }
+
+})
+const { mutate: upgradePackage } = useUpgradePackage({
+  onSuccess: async (data: any) => {
+    window.open(data?.checkoutUrl)
+  }
+})
+function pay(p: any) {
+  console.log(p?.id, '>>>>');
+
+  upgradePackage({
+    "packageId": p?.id,
+    "interval": "month",
+  })
+}
 const props = defineProps<{
   modelValue: boolean
 }>()

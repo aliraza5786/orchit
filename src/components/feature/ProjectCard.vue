@@ -3,28 +3,32 @@
         class="rounded-lg min-w-sm border border-border overflow-hidden flex flex-col justify-between  bg-bg-card w-full ">
         <!-- Header -->
         <div class="px-3 pt-3">
-            <div class="flex justify-between items-start ">
+            <div class="flex justify-between items-start pb-2">
                 <div>
                     <h3 class="text-lg font-semibold text-text-primary  text-left">
                         <!-- <div class="w-6 h-6 rounded-full " :style="`background:${color} ;`">
     
                         </div> -->
-                        
-                        {{ title }}</h3>
+
+                        {{ title }}
+                    </h3>
                     <p class="text-xs text-text-secondary ">{{ subtitle }}</p>
                 </div>
-                <span class="text-xs border rounded-full px-2 py-0.5" :class="getColor(status)">
+                <span v-if="status != 'completed'" class="text-xs border rounded-full px-2 py-0.5"
+                    :class="getColor(status)">
                     {{ status }}
                 </span>
-
+                <span v-if="status == 'completed'" class="text-xs">
+                    Total Cards: {{ totalCard }}
+                </span>
             </div>
             <!-- Progress -->
-            <div class="my-2 pb-3">
+            <div v-if="status != 'completed'" class="mb-2 pb-3">
                 <div class="flex justify-between text-sm text-text-secondary mb-1">
                     <span> {{ status == 'in_progress' ? 'Generating lane with AI...' : 'Progress' }} </span>
                     <span>{{ Math.round(liveProgress) }}%</span>
                 </div>
-                
+
                 <ProgressBar class='mt-2' :progress="liveProgress" fillColor="bg-accent " :indeterminate="!!loading" />
 
                 <!-- always render ProgressBar; feed liveProgress -->
@@ -62,20 +66,21 @@ import ProgressBar from '../ui/ProgressBar.vue';
 import { useIndeterminateProgress } from '../../utilities/IndeterminateProgress';
 
 const props = withDefaults(defineProps<{
-  title: string
-  subtitle: string
-  status: 'completed' | 'failed' | 'in_progress' | 'pending' | string
-  progress?: number
-  avatars: string[]
-  maxVisible?: number
-  date: string
-  loading?: boolean
-  color?: string
+    title: string
+    subtitle: string
+    status: 'completed' | 'failed' | 'in_progress' | 'pending' | string
+    progress?: number
+    avatars: string[]
+    maxVisible?: number
+    date: string
+    loading?: boolean
+    color?: string
+    totalCard?: any
 }>(), {
-  progress: 0,
-  maxVisible: 2,
-  loading: false,
-  color: '#9CA3AF' // neutral fallback
+    progress: 0,
+    maxVisible: 2,
+    loading: false,
+    color: '#9CA3AF' // neutral fallback
 })
 
 // live progress: indeterminate when loading=true
@@ -84,16 +89,16 @@ const liveProgress = computed(() => props.loading ? indeterminate.value : props.
 
 const visibleAvatars = computed(() => props.avatars.slice(0, props.maxVisible))
 const extraCount = computed(() =>
-  props.avatars.length > props.maxVisible ? props.avatars.length - props.maxVisible : 0
+    props.avatars.length > props.maxVisible ? props.avatars.length - props.maxVisible : 0
 )
 
 const getColor = (status: string) => {
-  switch (status) {
-    case 'completed': return 'bg-green-400/40 border-green-400 text-green-400'
-    case 'failed': return 'bg-red-400/40 border-red-400 text-red-400'
-    case 'in_progress': return 'bg-blue-400/20 border-blue-400 text-blue-400'
-    case 'pending': return 'bg-amber-400/20 border-amber-400 text-amber-400'
-    default: return 'progress-default'
-  }
+    switch (status) {
+        case 'completed': return 'bg-green-400/40 border-green-400 text-green-400'
+        case 'failed': return 'bg-red-400/40 border-red-400 text-red-400'
+        case 'in_progress': return 'bg-blue-400/20 border-blue-400 text-blue-400'
+        case 'pending': return 'bg-amber-400/20 border-amber-400 text-amber-400'
+        default: return 'progress-default'
+    }
 }
 </script>

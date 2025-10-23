@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@floating-ui/dom": "^1.7.1",
+    "@stripe/stripe-js": "^8.1.0",
     "@tailwindcss/vite": "^4.1.8",
     "@tanstack/query-async-storage-persister": "^5.89.0",
     "@tanstack/query-persist-client-core": "^5.89.0",
@@ -33,6 +34,7 @@
     "localforage": "^1.10.0",
     "openai": "^5.10.2",
     "pinia": "^3.0.3",
+    "stripe": "^19.1.0",
     "tailwindcss": "^4.1.8",
     "vue": "^3.5.13",
     "vue-router": "^4.5.1",

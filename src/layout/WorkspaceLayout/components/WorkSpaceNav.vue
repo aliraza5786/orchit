@@ -44,7 +44,7 @@
 
             <!-- Workspaces -->
             <div class="max-h-72 overflow-auto py-1 cursor-pointer">
-              <button v-for="ws in workspaces" :key="ws._id"
+              <button v-for="ws in workspaces?.workspaces" :key="ws._id"
                 class="w-full px-3 py-2 text-left text-sm hover:bg-bg-card/70 cursor-pointer flex items-center gap-3"
                 role="menuitem" @click="switchTo(ws)">
                 <img :src="ws.logo ?? dp" alt="" class="w-6 h-6 rounded object-contain bg-white" />
@@ -105,7 +105,7 @@ import { useQueryClient } from '@tanstack/vue-query';
 
 const router = useRouter();
 const workspaceStore = useWorkspaceStore();
-const { data: workspaces } = useWorkspaces()
+const { data: workspaces } = useWorkspaces(1, 30)
 const laneId = ref('');
 const { workspaceId } = useWorkspaceId();
 const { data: getWorkspace, refetch } = useSingleWorkspace(useWorkspaceId().workspaceId.value)
