@@ -76,7 +76,7 @@
   </transition>
 
   <!-- Modals -->
-  <AddStatusModal v-model="showAddStatusModal" :process-id="processId" :editing-status="editingStatus" @status:added="handleStatusAdded" />
+  <AddStatusModal v-model="showAddStatusModal" :process-id="processId" :editing-status="editingStatus" @status:added="handleStatusAdded" @edit:node="handleEditConfirm" />
 
   <AddTransitionModal v-model="showAddTransitionModal" :process-id="processId" :statuses="workflowStatuses"
     @transition:added="handleTransitionAdded" />
@@ -226,6 +226,10 @@ function handleTransitionAdded() {
 function handleEditNode(nodeData: any) {
   editingStatus.value = nodeData
   showAddStatusModal.value = true
+}
+const handleEditConfirm = (id:string, data:any)=>{
+  Canvas.value?.handleConfirmEdit(id, data)
+
 }
 </script>
 

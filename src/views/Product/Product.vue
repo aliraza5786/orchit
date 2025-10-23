@@ -135,7 +135,7 @@ const { data: Lists, isPending, isFetching: isListFetching } = useSheetList(
 )
 
 const createTeamModal = ref(false);
-const selectedCard = ref<{ variables: any }>()
+const selectedCard = ref<any>()
 const selectCardHandler = (card: any) => {
     selectedCard.value = card
 }

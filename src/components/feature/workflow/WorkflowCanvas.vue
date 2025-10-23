@@ -18,7 +18,6 @@ import '@vue-flow/core/dist/theme-default.css'
 import { useCreateTransition, useProcessStatus, useProcessWorkflow } from '../../../queries/useProcess'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 import { watch } from 'vue'
-import BaseModal from '../../ui/BaseModal.vue'
 import BaseTextField from '../../ui/BaseTextField.vue'
 import Button from '../../ui/Button.vue'
 import Loader from '../../ui/Loader.vue'
@@ -26,7 +25,7 @@ import Loader from '../../ui/Loader.vue'
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
 
-const { setNodes, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges } = useVueFlow()
+const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges } = useVueFlow()
 
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
@@ -210,15 +209,25 @@ function openCreateNodeModal() {
 
 function handleEditNode(nodeId: string, nodeData: any) {
   const node = getNodes.value.find(n => n.id === nodeId)
+  console.log(node, '>>>>');
+
   if (node) {
     emit('edit:node', {
       id: nodeId,
       ...node.data,
+
       status_color: nodeData.status || '#6b7280'
     })
   }
 }
+function handleConfirmEdit(id: string, nodeData: any) {
+  console.log('editing ....', nodeData, id);
 
+  if (nodeData) { updateNode(id, n => ({ ...n, data: { ...n.data, label: nodeData.name , status: nodeData.category ,     
+},style: { border: '2px solid #64748b', borderRadius: '10px', background: nodeData.status_color } })) }
+  nextTick();
+
+}
 // Add a brand-new independent node
 async function handleAddNode(e: any) {
   const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
@@ -227,13 +236,13 @@ async function handleAddNode(e: any) {
   addNodes({
     id,
     position: pos,
-    data: { label: e.name, status: e.status_color },
+    data: { label: e.name, status: e.status_name },
     style: { border: '2px solid #64748b', borderRadius: '10px', background: e.status_color },
   })
 
 }
 
-defineExpose({ openCreateNodeModal, handleAddNode, saveWorkflow, isSaving })
+defineExpose({ openCreateNodeModal, handleAddNode, saveWorkflow, isSaving, handleConfirmEdit })
 
 function markerTypeToApi(t?: MarkerType | string) {
   if (!t) return undefined
