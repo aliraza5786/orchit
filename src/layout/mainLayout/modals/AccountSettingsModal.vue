@@ -42,7 +42,7 @@
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <BaseTextField label="Full Name" placeholder="Enter your full name" v-model="form.fullName" />
-                <BaseTextField label="Email Address" v-model="form.email" disabled class="" />
+                <BaseTextField label="Email Address" v-model="form.email" disabled class=" cursor-not-allowed" />
               </div>
 
               <hr class="border-border" />
@@ -96,68 +96,39 @@
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Current Plan</h3>
                 <div class="flex items-center justify-between mb-4">
                   <div>
-                    <p class="text-2xl font-bold text-text-primary">{{ currentPlan.name }}</p>
+                    <p class="text-2xl font-bold text-text-primary">{{ currentPackage?.package?.name }}</p>
                     <p class="text-sm text-text-secondary">{{ currentPlan.billingCycle }}</p>
                   </div>
                   <div class="text-right">
-                    <p class="text-2xl font-bold text-text-primary">{{ currentPlan.price }}</p>
+                    <p class="text-2xl font-bold text-text-primary">{{ currentPackage?.package?.currencySymbol +
+                      currentPackage?.package?.amount }}</p>
                     <p class="text-xs text-text-secondary">per {{ currentPlan.billingCycle === 'Monthly' ? 'month' :
                       'year' }}</p>
                   </div>
                 </div>
-                <p class="text-sm text-text-secondary mb-4">Next billing date: {{ currentPlan.nextBillingDate }}</p>
+                <p class="text-sm text-text-secondary mb-4">Next billing date: {{ formatDate(currentPackage.renewsAt) +
+                  `, ${extractYear(currentPackage.renewsAt)}` }}</p>
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Usage & Limits</h3>
 
                 <div class="space-y-4">
-                  <div>
+                  <div v-for="(item, index) in currentPackage?.features" :key="index">
                     <div class="flex items-center justify-between mb-2">
-                      <span class="text-sm font-medium text-text-primary">Storage</span>
-                      <span class="text-sm text-text-secondary">{{ usageData.storage.used }} GB / {{
+                      <div class="flex flex-col ">
+
+                        <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
+                        <span class="text-xs font-medium text-text-secondary">{{ item.description }}</span>
+                      </div>
+                      <span class="text-sm text-text-secondary">{{ item?.usage.limit }} {{ item?.usage.unit }} / {{
                         usageData.storage.limit }} GB</span>
                     </div>
                     <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
                       <div class="h-full bg-accent rounded-full transition-all"
                         :style="{ width: usageData.storage.percentage + '%' }"></div>
                     </div>
-                    <p class="text-xs text-text-secondary mt-1">{{ usageData.storage.remaining }} GB remaining</p>
+                    <p class="text-xs text-text-secondary mt-1">{{ item?.usage.limits?.storageGB }} GB remaining</p>
                   </div>
 
-                  <div>
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-sm font-medium text-text-primary">Users / Seats</span>
-                      <span class="text-sm text-text-secondary">{{ usageData.users.used }} / {{ usageData.users.limit
-                        }}</span>
-                    </div>
-                    <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
-                      <div class="h-full bg-accent rounded-full transition-all"
-                        :style="{ width: usageData.users.percentage + '%' }"></div>
-                    </div>
-                    <p class="text-xs text-text-secondary mt-1">{{ usageData.users.remaining }} seats remaining</p>
-                  </div>
-                  <div>
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-sm font-medium text-text-primary">Workspaces </span>
-                      <span class="text-sm text-text-secondary">{{ usageData.users.used }} / {{ usageData.users.limit
-                        }}</span>
-                    </div>
-                    <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
-                      <div class="h-full bg-accent rounded-full transition-all"
-                        :style="{ width: usageData.users.percentage + '%' }"></div>
-                    </div>
-                    <p class="text-xs text-text-secondary mt-1">{{ usageData.users.remaining }} workspace remaining</p>
-                  </div>
-                  <div>
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-sm font-medium text-text-primary">Token </span>
-                      <span class="text-sm text-text-secondary">{{ usageData.users.used }} / {{ usageData.users.limit
-                        }}</span>
-                    </div>
-                    <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
-                      <div class="h-full bg-accent rounded-full transition-all"
-                        :style="{ width: usageData.users.percentage + '%' }"></div>
-                    </div>
-                    <p class="text-xs text-text-secondary mt-1">{{ usageData.users.remaining }} token remaining</p>
-                  </div>
+
                 </div>
               </div>
 
@@ -167,17 +138,18 @@
 
                 <div class=" border-r border-border pr-6 min-w-80">
 
-                  <h1 class="mb-2 uppercase">Upgrade to Pro</h1>
-                  <div v-for="plan in pricingPlans" :key="plan.name"
-                    class="bg-bg-body rounded-xl  transition-all hover:shadow-lg"
-                    :class="plan.name === currentPlan.name ? 'border-accent shadow-accent/20' : 'border-border'">
+                  <h1 class="mb-2 uppercase">Upgrade to {{ currentPackage.nextPackage.name }}</h1>
+                  <div v-if="currentPackage.nextPackage" class="bg-bg-body rounded-xl  transition-all hover:shadow-lg">
                     <div class="text-left mb-4">
-                      <h3 class="text-xl font-bold text-text-primary mb-2">{{ plan.name }}</h3>
+                      <h3 class="text-xl font-bold text-text-primary mb-2">{{ currentPackage.nextPackage.name }}</h3>
                       <div class="mb-2">
-                        <span class="text-3xl font-bold text-text-primary">{{ plan.price }}</span>
-                        <span class="text-sm text-text-secondary">/ {{ plan.billingCycle }}</span>
+                        <span class="text-3xl font-bold text-text-primary">{{
+                          currentPackage.nextPackage.pricing.month.amount +
+                          currentPackage.nextPackage.pricing.month.currencySymbol }} </span>
+                        <span class="text-sm text-text-secondary">/ {{ currentPackage.nextPackage.pricing.month.interval
+                          }}</span>
                       </div>
-                      <p class="text-sm text-text-secondary">{{ plan.description }}</p>
+                      <p class="text-sm text-text-secondary">{{ currentPackage.nextPackage.description }}</p>
                     </div>
 
 
@@ -190,19 +162,19 @@
 
                   <h3 class="text-lg font-semibold text-text-primary mb-3">Plan Features</h3>
                   <ul class="space-y-2">
-                    <li v-for="(feature, index) in currentPlan.features" :key="index"
+                    <li v-for="(feature, index) in currentPackage.nextPackage.features" :key="index"
                       class="flex items-center gap-2 text-sm text-text-secondary">
                       <i class="fa-solid fa-check text-green-500"></i>
-                      <span>{{ feature }}</span>
+                      <span>{{ feature.description }}</span>
                     </li>
                   </ul>
-       
+
                 </div>
               </div>
             </div>
           </div>
         </template>
-<!-- 
+        <!-- 
         <template #Pricing>
           <div class="py-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -258,6 +230,8 @@ import { useQuery, useMutation } from '@tanstack/vue-query'
 import { getProfile, updateProfile } from '../../../services/user'
 import { useUploadFile } from '../../../queries/useCommon'
 import { toast } from 'vue-sonner'
+import { useCurrentPackage } from '../../../queries/usePackages'
+import { extractYear, formatDate } from '../../../utilities/FormatDate'
 
 const props = defineProps<{
   modelValue: boolean
@@ -275,7 +249,7 @@ const { data: profile, isLoading, refetch } = useQuery({
   queryFn: getProfile,
   enabled: computed(() => props.modelValue)
 })
-
+const { data: currentPackage } = useCurrentPackage()
 const profileData = computed(() => profile.value?.data || null)
 
 const form = ref({
@@ -367,9 +341,6 @@ const { mutate: updateUser, isPending: isSaving } = useMutation({
 function saveChanges() {
   const payload = {
     u_full_name: form.value.fullName,
-    u_job_title: form.value.jobTitle,
-    u_department: form.value.department,
-    u_location: form.value.location,
     ...(uploadedAvatarUrl.value && { u_profile_image: uploadedAvatarUrl.value })
   }
   updateUser(payload)

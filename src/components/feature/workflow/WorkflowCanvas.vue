@@ -221,10 +221,13 @@ function handleEditNode(nodeId: string, nodeData: any) {
   }
 }
 function handleConfirmEdit(id: string, nodeData: any) {
-  console.log('editing ....', nodeData, id);
-
-  if (nodeData) { updateNode(id, n => ({ ...n, data: { ...n.data, label: nodeData.name , status: nodeData.category ,     
-},style: { border: '2px solid #64748b', borderRadius: '10px', background: nodeData.status_color } })) }
+  if (nodeData) {
+    updateNode(id, n => ({
+      ...n, data: {
+        ...n.data, label: nodeData.name, status: nodeData.category,
+      }, style: { border: '2px solid #64748b', borderRadius: '10px', background: nodeData.status_color }
+    }))
+  }
   nextTick();
 
 }

@@ -27,7 +27,6 @@
           </div>
         </div>
       </div>
-
       <!-- Display Team Members -->
       <div class="text-text-primary">
         <p class="text-sm font-medium text-text-secondary mb-2 flex justify-between items-center gap-2.5">
@@ -107,7 +106,7 @@ import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
 import { useWorkspaceStore } from '../../../stores/workspace';
 const workspaceStore = useWorkspaceStore();
-const emit = defineEmits(['next', 'back'])
+
 defineProps<{ ai: boolean }>()
 interface TeamMember { name: string; email: string }
 interface Role {
@@ -140,7 +139,7 @@ function enforceCapacity(role: Role) {
     role.people.pop()
   }
   role.capacityWarning = role.people.length >= role.max_num_people
-  saveToLocalStorage()
+
 }
 
 function addMemberEmail(role: Role, email: string) {
@@ -153,7 +152,7 @@ function removeMember(role: Role, index: number) {
   const idx = role.emailList.findIndex(e => e.toLowerCase() === removed.email.toLowerCase())
   if (idx !== -1) role.emailList.splice(idx, 1)
   role.capacityWarning = role.people.length >= role.max_num_people
-  saveToLocalStorage()
+
 }
 
 function onEmailsInvalid(role: Role, invalids: string[]) {
@@ -169,20 +168,19 @@ function onEmailsAdd(role: Role, added: string[]) {
       role.capacityWarning = true
     }
   })
-  saveToLocalStorage()
 }
 
 function onEmailsRemove(role: Role, removedEmail: string) {
   const idx = role.people.findIndex(p => p.email.toLowerCase() === removedEmail.toLowerCase())
   if (idx !== -1) role.people.splice(idx, 1)
   role.capacityWarning = role.people.length >= role.max_num_people
-  saveToLocalStorage()
+
 }
 
 function finalizeChips(role: Role) {
   role.showInput = false
   role.capacityWarning = role.people.length >= role.max_num_people
-  saveToLocalStorage()
+
 }
 
 function cancelChips(role: Role) {
@@ -205,7 +203,7 @@ function addNewRole() {
     capacityWarning: false
   }
   workspace.roles.push(newRole)
-  saveToLocalStorage()
+
   form.value.name = ''
   form.value.description = ''
   addTeam.value = false
@@ -213,7 +211,7 @@ function addNewRole() {
 
 function saveToLocalStorage() {
   const data = workspaceStore.workspace
-  const localWorkspace = data ? JSON.parse(data) : { variables: { roles: [] } }
+  const localWorkspace = data ? data : { variables: { roles: [] } }
   localWorkspace.variables.roles = workspace.roles
   workspaceStore.setWorkspace(localWorkspace)
 }
@@ -249,6 +247,8 @@ function increaseMaxPeople(role: Role) {
   role.max_num_people++; // Increase the max number of people
   enforceCapacity(role);  // Ensure the capacity is updated based on the new max value
 }
-
-
+function continueHandler() {
+  saveToLocalStorage()
+}
+defineExpose({ continueHandler })
 </script>

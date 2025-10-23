@@ -53,7 +53,7 @@
             :aria-controls="menuOpen ? 'user-menu' : undefined" @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
             @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu">
 
-            <img class=" cursor-pointer w-10 h-10 rounded-full" :src="profileData?.u_profile_image" alt="profile_img">
+            <img class=" object-cover cursor-pointer w-10 h-10 rounded-full" :src="profileData?.u_profile_image" alt="profile_img">
           </button>
 
           <button v-else class="h-9 w-9 overflow-hidden rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
@@ -74,7 +74,7 @@
               role="menu" @keydown.esc.stop.prevent="closeMenu">
               <!-- Header -->
               <div class="flex items-center gap-3 rounded-xl p-3">
-                <img v-if="profileData?.u_profile_image" class=" w-10 h-10 rounded-full"
+                <img v-if="profileData?.u_profile_image" class=" w-10 h-10 object-cover rounded-full"
                   :src="profileData?.u_profile_image" alt="profile_img">
                 <div v-else
                   class="grid h-11 w-11 place-items-center rounded-full bg-orange-500 text-base font-bold text-text-primary">

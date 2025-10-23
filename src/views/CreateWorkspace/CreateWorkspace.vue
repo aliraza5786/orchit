@@ -22,7 +22,7 @@
       <KeepAlive>
         <StepTwo v-if="currentStep === 2" :ai="isAI" ref="stepTwoRef" @next="goNext2" />
       </KeepAlive>
-      <StepThree v-if="currentStep === 3" :ai="isAI" @next="goNext" />
+      <StepThree v-if="currentStep === 3" :ai="isAI" ref="stepThreeRef" @next="goNext" />
       <StepFour v-if="currentStep === 4" :ai="isAI" ref="stepFourRef" @back="startOver" />
     </div>
     <div v-if="currentStep !== 0"
@@ -81,6 +81,7 @@ type StepFourInst = InstanceType<typeof StepFour> | null
 const isStartOver = ref(0);
 const stepOneRef = shallowRef<StepOneInst>(null)
 const stepTwoRef = shallowRef<StepTwoInst>(null)
+const stepThreeRef = shallowRef<StepTwoInst>(null)
 const stepFourRef = shallowRef<StepFourInst>(null)
 const showSkip = computed(() => currentStep.value === 2 || currentStep.value === 3)
 const stepOnePending = computed<boolean>(() => {
@@ -110,6 +111,11 @@ function goNext() {
   }
   if (currentStep.value === 2 && stepTwoRef.value?.continueHandler) {
     stepTwoRef.value.continueHandler()
+    return
+  }
+  if (currentStep.value === 3 && stepThreeRef.value?.continueHandler) {
+    stepThreeRef.value.continueHandler()
+    goNext2()
     return
   }
   if (currentStep.value === 4 && stepFourRef.value?.createProjectHandler) {

@@ -51,7 +51,7 @@
     </div>
 
     <!-- Selected Lanes -->
-    <div v-if="project?.lanes?.length" class="mb-6 h-full flex-grow flec flex-col">
+    <div v-if="project?.lanes?.length >0" class="mb-6 h-full flex-grow flec flex-col">
       <h3 class="text-lg font-semibold text-text-primary mb-4">
         Selected Project Lanes
       </h3>

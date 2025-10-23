@@ -94,19 +94,24 @@ export const useWorkspacesPrompt = () =>
     method: "GET",
   });
 
-export const useWorkspaces = () =>
-  useApiQuery(
+export const useWorkspaces = (page: any, limit: any) => {
+  return useQuery(
     {
-      key: keys.workspaces,
-      url: "/workspace/all",
-      method: "GET",
-    },
-    {
-      retry: false,
-      staleTime: 5 * 60 * 1000,
-      gcTime: 10 * 60 * 1000,
+      queryKey: [ 'workspaces', page,limit],
+      queryFn: () =>
+        request({
+          url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}`,
+          method: "GET",
+        }),
     }
+    
+    // {
+    //   // retry: false,
+    //   staleTime: 5 * 60 * 1000,
+    //   gcTime: 10 * 60 * 1000,
+    // }
   );
+};
 
 export const useWorkspacesTitles = () =>
   useApiQuery({

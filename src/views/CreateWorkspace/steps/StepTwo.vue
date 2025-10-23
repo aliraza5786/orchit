@@ -170,7 +170,8 @@ function handleCancelLane() {
 
 function handleAddLane() {
   if (!titleError.value && !descriptionError.value) {
-    form.value.lanes.push({ variables: { ...newLane.value, id: `lane${form.value.lanes.length + 1}`, } });
+    selectedLanes.value = [...selectedLanes.value, `lane${form.value.lanes.length + 1}`]
+    form.value.lanes.push({ variables: { ...newLane.value, id: `lane${form.value.lanes.length + 1}` } });
     showCustomForm.value = false;
     resetForm();
   }
@@ -179,10 +180,12 @@ function handleAddLane() {
 function handleUpdateLane() {
   if (!titleError.value && !descriptionError.value) {
     const index = form.value.lanes.findIndex(l => l.variables.id === newLane.value.id);
+
     if (index !== -1) form.value.lanes[index] = { variables: { ...newLane.value } };
     showCustomForm.value = false;
     editMode.value = false;
   }
+  resetForm()
 }
 function resetForm() {
   selectedPlatforms.value = [];
@@ -200,77 +203,13 @@ function editLane(lane: UiLane) {
 
 
 
-
-
-type WsLane = {
-  _id: string;
-  workspace_id?: string;
-  variables: {
-    'lane-title': string;
-    'lane-color': string; // hex
-    'lane-description'?: string;
-
-    [k: string]: unknown;
-  };
-  [k: string]: unknown;
-};
-
-type Workspace = {
-  _id: string;
-  variables: Record<string, unknown>;
-  lanes: WsLane[];
-  modules?: unknown[];
-  logo?: string;
-  [k: string]: unknown;
-};
-
-function safeJSONParse<T>(raw: string | null, fallback: any): T {
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-function getWorkspace(): Workspace | null {
-  return safeJSONParse<Workspace>(workspaceStore.workspace, null);
-}
-
-
-function setWorkspace(updater: (prev: Workspace) => Workspace): void {
-  const prev = getWorkspace();
-  if (!prev) return;
-  const next = updater(prev);
-  workspaceStore.setWorkspace(next)
-}
-
-function fromUiLane(ui: UiLane, prev?: WsLane): WsLane {
-  const base = prev || { _id: ui.variables.id, variables: {} };
-  return {
-    ...base,
-    variables: {
-      ...(base.variables || {}),
-      ...ui.variables,
-    },
-  };
-}
-
-function saveToLocalStorage(): void {
-  const ws = getWorkspace();
-  if (!ws) return;
-  const keepIds = new Set(selectedLanes.value.length ? selectedLanes.value : form.value.lanes.map(l => l.variables.id));
-  const updatedLanes: WsLane[] = form.value.lanes
-    .filter(l => keepIds.has(l.variables.id))  // Keep only selected lanes
-    .map(ui => fromUiLane(ui)); // Convert to WsLane format
-  setWorkspace(prev => ({
-    ...prev,
-    lanes: updatedLanes,
-  }));
+const saveToStoreHandler = () => {
+  const filtered = form.value.lanes.filter((e) => selectedLanes.value.some(a => a == e.variables.id))
+  workspaceStore.setWorkspace({ ...workspaceStore.workspace, variables: { ...workspaceStore.workspace.variables } , lanes: [...filtered] })
 }
 function continueHandler(): void {
   if (form.value.lanes.length > 0) {
-    saveToLocalStorage();
+    saveToStoreHandler()
     emit('next');
   }
 }

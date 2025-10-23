@@ -1,57 +1,81 @@
 <script setup lang="ts">
-import Table from '../../../components/ui/Table.vue';
-import { h } from "vue"
-import { formatDate } from '../../../utilities/FormatDate';
-import Collaborators from '../../../components/ui/Collaborators.vue';
-import { useRouter } from 'vue-router';
+import Table from '../../../components/ui/Table.vue'
+import { h, ref, computed, watch } from 'vue'
+import { formatDate } from '../../../utilities/FormatDate'
+import Collaborators from '../../../components/ui/Collaborators.vue'
+import { useRouter } from 'vue-router'
+import { useWorkspaces } from '../../../queries/useWorkspace'
 
-const router = useRouter();
+const router = useRouter()
 
-// Memoize formatDate results
-const dateCache = new Map<string, string>();
+/* ------------ Column render helpers ------------ */
+const dateCache = new Map<string, string>()
 const getCachedDate = (dateStr: string) => {
-  if (!dateCache.has(dateStr)) {
-    dateCache.set(dateStr, formatDate(dateStr));
-  }
-  return dateCache.get(dateStr)!;
-};
-
-const handleClick = (row: any) => {
-    const jobId = row.row.LatestTask?.job_id;
-    if (jobId) {
-        localStorage.setItem('jobId', jobId);
-    } else {
-        localStorage.removeItem('jobId');
-    }
-    router.push(`/workspace/peak/${row.row._id}/${jobId || ''}`);
+    if (!dateCache.has(dateStr)) dateCache.set(dateStr, formatDate(dateStr))
+    return dateCache.get(dateStr)!
 }
 
-// Move render functions outside to prevent recreation
-const renderProject = ({ row, value }: any) => h('div', { class: 'flex items-center gap-2' }, [
-    row.logo ? h('img', { src: row.logo, alt: value?.title || 'Project', class: 'h-8 w-8 bg-bg-card rounded-full', loading: 'lazy', decoding: 'async' }) : h('div', { class: 'bg-white h-8 w-8 bg-bg-card rounded-full' }),
-    h('span', value?.title || 'Untitled')
-]);
+const handleClick = (rowEvt: any) => {
+    const r = rowEvt.row
+    const jobId = r?.LatestTask?.job_id
+    if (jobId) localStorage.setItem('jobId', jobId)
+    else localStorage.removeItem('jobId')
+    router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
+}
 
-const renderProjectType = ({ value }: any) => h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-');
+const renderProject = ({ row, value }: any) =>
+    h('div', { class: 'flex items-center gap-2' }, [
+        row.logo
+            ? h('img', {
+                src: row.logo,
+                alt: value?.title || 'Project',
+                class: 'h-8 w-8 bg-bg-card rounded-full',
+                loading: 'lazy',
+                decoding: 'async',
+            })
+            : h('div', { class: 'h-8 w-8 rounded-full bg-bg-card' }),
+        h('span', value?.title || 'Untitled'),
+    ])
 
-const renderPeople = ({ value }: any) => h(Collaborators, { avatars: value || [], image: false, maxVisible: 3 });
+const renderProjectType = ({ value }: any) =>
+    h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-')
 
-const renderStartDate = ({ value }: any) => h('span', getCachedDate(value));
+const renderPeople = ({ value }: any) =>
+    h(Collaborators, { avatars: value || [], image: false, maxVisible: 3 })
 
+const renderStartDate = ({ value }: any) =>
+    h('span', getCachedDate(value))
+
+/* ------------ Table columns ------------ */
 const columns = [
-    { key: "variables", label: 'Project', render: renderProject },
+    { key: 'variables', label: 'Project', render: renderProject },
     { key: 'variables', label: 'Project type', render: renderProjectType },
     { key: 'People', label: 'People', render: renderPeople },
     { key: 'created_at', label: 'Start Date', render: renderStartDate },
-];
+] as const
 
-defineProps<{ data: any[], isPending: boolean }>()
+/* ------------ Internal pagination + sort state ------------ */
+const page = ref(1)
+const pageSize = ref(10)
 
+/* ------------ Data fetching (server mode) ------------ */
+/** useWorkspaces must accept reactive { page, pageSize, sort } and refetch when they change */
+const { data, isPending } = useWorkspaces(page, pageSize)
+
+/** Unwrap API shape: { workspaces: any[]; pagination: { totalCount: number } } */
+const items = computed(() => data.value?.workspaces ?? [])
+const totalCount = ref(0)
+
+watch(data, () => {
+    if (data.value?.pagination?.totalCount)
+        totalCount.value = data.value?.pagination?.totalCount;
+})
 </script>
 
 <template>
-    <Table @row-click="handleClick"  :columns="columns" :rows="data || []" :loading="isPending" :skeletonRows="6">
-        <!-- Custom slot for status -->
+    <Table :columns="columns" :rows="items" :loading="isPending" :total="totalCount" v-model:page="page"
+        v-model:pageSize="pageSize" :pageSizes="[10, 20, 50, 100]" @row-click="handleClick">
+        <!-- Optional slots you were using -->
         <template #status="{ row }">
             <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
                 'bg-blue-100 text-blue-600': row.status === 'In progress',
@@ -62,7 +86,6 @@ defineProps<{ data: any[], isPending: boolean }>()
             </span>
         </template>
 
-        <!-- Custom slot for team avatars -->
         <template #team="{ row }">
             <div class="flex -space-x-2">
                 <span v-for="(member, i) in row.Roles" :key="i"
@@ -71,6 +94,5 @@ defineProps<{ data: any[], isPending: boolean }>()
                 </span>
             </div>
         </template>
-
     </Table>
 </template>
