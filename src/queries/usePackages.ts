@@ -24,3 +24,18 @@ export const useUpgradePackage = (options = {}) =>
       ...(options as any),
     } as any
   );
+export const confirmPayment = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["package-payment-confirm"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `billing/confirm-payment`,
+          method: "POST",
+          data: vars,
+        }),
+      ...(options as any),
+    } as any
+  );

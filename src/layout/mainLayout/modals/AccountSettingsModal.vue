@@ -146,8 +146,9 @@
                         <span class="text-3xl font-bold text-text-primary">{{
                           currentPackage?.nextPackage?.pricing?.month?.amount +
                           currentPackage?.nextPackage?.pricing?.month?.currencySymbol }} </span>
-                        <span class="text-sm text-text-secondary">/ {{ currentPackage?.nextPackage?.pricing?.month?.interval
-                        }}</span>
+                        <span class="text-sm text-text-secondary">/ {{
+                          currentPackage?.nextPackage?.pricing?.month?.interval
+                          }}</span>
                       </div>
                       <p class="text-sm text-text-secondary">{{ currentPackage?.nextPackage?.description }}</p>
                     </div>
@@ -229,14 +230,15 @@ import { useQuery, useMutation } from '@tanstack/vue-query'
 import { getProfile, updateProfile } from '../../../services/user'
 import { useUploadFile } from '../../../queries/useCommon'
 import { toast } from 'vue-sonner'
-import { useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
+import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
 import { useRoute } from 'vue-router'
 const route = useRoute();
+const { mutate: confirm } = confirmPayment()
 onMounted(() => {
-  if (route.query.stripePayment) {
-
-  }
+  // if (route.query.stripePayment) {
+  //   confirm()
+  // }
 
 })
 const { mutate: upgradePackage } = useUpgradePackage({
@@ -266,9 +268,17 @@ const isOpen = computed({
 const { data: profile, isLoading, refetch } = useQuery({
   queryKey: ['profile'],
   queryFn: getProfile,
-  enabled: computed(() => props.modelValue)
+  enabled: computed(() => props.modelValue),
+
 })
-const { data: currentPackage } = useCurrentPackage()
+const { data: currentPackage } = useCurrentPackage();
+watch(() => currentPackage.value, () => {
+  if (route.query.stripePayment) {
+    confirm({
+      sessionId: currentPackage.value?.sessionId, packageId: currentPackage?.value.nextPackage?.id, interval: 'month'
+    })
+  }
+})
 const profileData = computed(() => profile.value?.data || null)
 
 const form = ref({

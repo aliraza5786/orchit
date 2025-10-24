@@ -31,7 +31,9 @@
             hover ? 'hover:bg-surface cursor-pointer' : '',
             striped && rIdx % 2 === 1 ? 'bg-bg-surface/40' : '',
             rowClass?.(row, rIdx)
-          ]">
+          ]" :draggable="rowDraggable || false"
+          @dragstart="$emit('row-dragstart', { row, index: rIdx, $event: $event })"
+          @dragend="$emit('row-dragend', { row, index: rIdx, $event: $event })">
           <td v-for="(col, cIdx) in resolvedColumns" :key="col.key" class="px-4.5 py-4 align-middle"
             :class="[col.class, alignClass(col.align)]" :aria-colindex="cIdx + 1">
             <slot :name="col.key" :row="row" :column="col" :index="rIdx">
@@ -136,6 +138,9 @@ export type Row = Record<string, unknown>
 
 const props = withDefaults(
   defineProps<{
+    // props
+    rowDraggable?: boolean
+
     columns: Column[]
     rows: Row[]
     loading?: boolean
@@ -168,6 +173,8 @@ const emit = defineEmits<{
   (e: 'update:pageSize', val: number): void
   (e: 'page-change', payload: { page: number; pageSize: number }): void
   (e: 'row-click', payload: { row: Row; index: number }): void
+  (e: 'row-dragstart', payload: { row: Row; index: number, $event: any }): void
+  (e: 'row-dragend', payload: { row: Row; index: number, $event: any }): void
   (e: 'sort-change', payload: { key: string | null; dir: 'asc' | 'desc' | null }): void
 }>()
 
