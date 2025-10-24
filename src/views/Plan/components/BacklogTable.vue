@@ -16,9 +16,9 @@
       <Table :showHeader="false"
       :pagination="false"
       class="flex-grow h-full" :rowDraggable="true"
-        @row-dragstart="({ row, $event }) => onDragStart($event, row, 'backlog')" @row-dragend="onDragEnd"
+        @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')" @row-dragend="onDragEnd"
         :columns="columns" :rows="normalizedBacklog" :page-size="20" :hover="true" striped
-        :itemKey="(row: any) => row.id" :sorters="sorters" @row-click="({ row }) => $emit('open-ticket', row)">
+        :itemKey="(row: any) => row.id" :sorters="sorters" @row-click="({ row }: any) => $emit('open-ticket', row)">
         <template #select-header>
           <input type="checkbox" :checked="allBacklogChecked" @change="toggleAll('backlog', $event)" />
         </template>
@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import Table from '@/components/ui/Table.vue'
 import Button from '@/components/ui/Button.vue'
 import {
@@ -57,29 +57,20 @@ import {
   priorityClass,
   type Ticket
 } from '../composables/useBacklogStore'
-import { useDragDrop } from '../composables/useDragDrop'
 import { useBacklogList } from '../../../queries/usePlan'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 
 defineProps<{ sorters: Record<string, (a: Ticket, b: Ticket, dir: 'asc' | 'desc') => number> }>()
+const emit = defineEmits(['ticket-dragged-to-sprint', 'open-ticket'])
 
 const { workspaceId } = useWorkspaceId()
 const { data: backlogResp, isPending: isBacklogListPending } = useBacklogList(workspaceId)
 
-/**
- * Normalize backend payload -> internal Ticket[]
- * Backend shape (per sample):
- * data.cards[] = {
- *   card_id, priority, story_points, ...
- *   card: {
- *     _id, variables: { 'card-title', 'card-status', 'card-code', 'card-description', 'priority' },
- *     created_at, assigned_to, ...
- *   }
- * }
- */
-const normalizedBacklog = computed<Ticket[]>(() => {
-  const cards = backlogResp.value?.cards ?? []
-  return cards.map((c: any): Ticket => {
+const normalizedBacklog = ref<Ticket[]>([])
+
+watch(backlogResp, (resp) => {
+  if (!resp?.cards) return
+  normalizedBacklog.value = resp.cards.map((c: any): Ticket => {
     const v = c.card?.variables ?? {}
     const id = c.card?._id ?? c.card_id
     const rawStatus = String(v['card-status'] ?? '').trim()
@@ -89,7 +80,7 @@ const normalizedBacklog = computed<Ticket[]>(() => {
       id,
       key: (v['card-code'] as string) || id?.slice(-6) || 'PRJ-?',
       summary: (v['card-title'] as string) || '(untitled)',
-      type: 'Story', // Unknown from API; defaulting
+      type: 'Story',
       status: mapStatus(rawStatus),
       assignee: c.card?.assigned_to?.name ?? 'Unassigned',
       storyPoints: Number(c.story_points ?? 0) || 0,
@@ -98,7 +89,7 @@ const normalizedBacklog = computed<Ticket[]>(() => {
       description: (v['card-description'] as string) || '',
     }
   })
-})
+}, { immediate: true })
 
 function mapStatus(s: string): Ticket['status'] {
   const normalized = s.toLowerCase()
@@ -118,30 +109,31 @@ function mapPriority(p: string | null | undefined): Ticket['priority'] {
 
 /** Store (single instance) */
 const {
-  sprints,
   selectedBacklogIds,
-  selectedSprintIds,
   allBacklogChecked,
   toggleAll,
   toggleOne,
 } = useBacklogStore()
 
-/**
- * Drag & Drop wiring
- * IMPORTANT: pass the SAME ref the table uses (normalizedBacklog)
- *            so splice/push reactivity updates the UI immediately.
- */
-const {
-  dropOverBacklog,
-  onDropBacklog,
-  onDragStart,
-  onDragEnd,
-} = useDragDrop(
-  normalizedBacklog,   // <— ref<Ticket[]>
-  sprints,
-  selectedBacklogIds,
-  selectedSprintIds
-)
+const dropOverBacklog = ref(false)
+
+function onDragStart(e: DragEvent, ticket: Ticket, from: 'backlog' | 'sprint') {
+  const payload = JSON.stringify({ id: ticket.id, from, ticket })
+  e.dataTransfer?.setData('text/plain', payload)
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+function onDragEnd() {
+  dropOverBacklog.value = false
+}
+
+function onDropBacklog(e: DragEvent) {
+  e.preventDefault()
+  dropOverBacklog.value = false
+  // Backlog doesn't accept drops from sprint (optional feature)
+}
 
 /** Columns for the new shape */
 const columns = computed(() => [

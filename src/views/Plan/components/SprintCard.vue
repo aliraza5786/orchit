@@ -1,59 +1,20 @@
 <template>
-    <!-- <button class="rounded-md px-3 py-1.5 text-xs font-medium text-white"
-                    :class="sprint.started ? 'bg-gray-700 hover:opacity-90' : 'bg-blue-600 hover:bg-blue-700'"
-                    @click="$emit('toggle-start')">
-                    {{ sprint.started ? 'Complete Sprint' : 'Start Sprint' }}
-                </button> -->
-    <div class="rounded-lg flex flex-col    ">
-
-        <!-- <header class="flex flex-wrap items-center justify-between gap-2 ">
-            <div class="flex min-w-0 items-center gap-3"> -->
-
-        <!-- <span v-if="sprint.started" class="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700">In
-                    Progress</span> -->
-        <!-- <span v-else class="rounded-full bg-bg-surface px-2 py-0.5 text-xs text-text-secondary">Planned</span> -->
-        <!-- </div> -->
-        <!-- <div class="flex items-center gap-2">
-                <button class="rounded-md border px-2.5 py-1.5 text-xs hover:bg-bg-surface"
-                    @click="$emit('edit-sprint')">Edit</button>
-              
-            </div> -->
-        <!-- </header> -->
-
-        <!-- <div class="px-2 py-2">
-            <div class="flex items-center justify-between px-2 pb-2">
-                <div class="text-sm text-text-secondary">
-                    {{ sprint.tickets.length }} tickets · {{ sprintPoints(sprint) }} pts
-                </div>
-                <div class="flex items-center gap-2">
-                    <button class="rounded-md border px-2.5 py-1.5 text-xs hover:bg-bg-surface disabled:opacity-40"
-                        :disabled="!selectedSprintIds[sprint.id]?.length"
-                        @click="$emit('move-selected-to-backlog', sprint.id)">
-                        Move to Backlog
-                    </button>
-                    <button class="rounded-md border px-2.5 py-1.5 text-xs hover:bg-bg-surface disabled:opacity-40"
-                        :disabled="!selectedSprintIds[sprint.id]?.length"
-                        @click="$emit('delete-selected-sprint', sprint.id)">
-                        Delete
-                    </button>
-                </div>
-            </div> -->
-
-        <div class="h-[300px]" :class="dropOverSprintId === sprint.id ? 'ring-2 ring-blue-400 rounded-lg' : ''"
-            @dragover.prevent @dragenter="onDragEnterSprint(sprint.id)" @dragleave="onDragLeaveSprint(sprint.id)"
-            @drop="onDropSprint($event, sprint)">
-            <Table v-if="sprint.tickets.length > 0" :row-draggable="true" class="h-full"
-                @row-dragstart="({ row, $event }) => onDragStart($event, row, 'sprint', sprint.id)"
-                @row-dragend="onDragEnd" :columns="columns" :rows="sprint.tickets" :page-size="100" :hover="true"
-                striped :item-key="(row: any) => row.id" @row-click="({ row }) => $emit('open-ticket', row)">
+    <div class="rounded-lg flex flex-col">
+        <div class="h-[300px]" :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''"
+            @dragover.prevent @dragenter="onDragEnterSprint" @dragleave="onDragLeaveSprint"
+            @drop="onDropSprint">
+            <Table v-if="sprintTickets.length > 0" :row-draggable="true" class="h-full"
+                @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'sprint', sprint.id)"
+                @row-dragend="onDragEnd" :columns="columns" :rows="sprintTickets" :page-size="100" :hover="true"
+                striped :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
                 <template #select-header>
                     <input type="checkbox" :checked="allSprintChecked(sprint.id)"
                         @change="toggleAll('sprint', $event, sprint.id)" />
                 </template>
 
                 <template #select="{ row }">
-                    <input type="checkbox" :checked="(selectedSprintIds[sprint.id] || []).includes(row.id)"
-                        @change="toggleOne('sprint', row.id, $event, sprint.id)" />
+                    <input type="checkbox" :checked="(selectedSprintIds[sprint.id] || []).includes((row as any).id)"
+                        @change="toggleOne('sprint', (row as any).id, $event, sprint.id)" />
                 </template>
 
                 <template #summary="{ row }">
@@ -64,12 +25,12 @@
                 </template>
 
                 <template #priority="{ row }">
-                    <span :class="priorityClass(row.priority)">{{ row.priority }}</span>
+                    <span :class="priorityClass((row as any).priority)">{{ (row as any).priority }}</span>
                 </template>
 
                 <template #drag="{ row }">
                     <button class="cursor-grab" title="Drag to Backlog" draggable @click.stop
-                        @dragstart="onDragStart($event, row, 'sprint', sprint.id)" @dragend="onDragEnd">↕</button>
+                        @dragstart="onDragStart($event, row as unknown as Ticket, 'sprint', sprint.id)" @dragend="onDragEnd">↕</button>
                 </template>
             </Table>
             <div v-else class="empty-state flex flex-col h-full justify-center items-center border-dashed border border-border">
@@ -80,28 +41,90 @@
                     section or create new ones to plan the
                     work for this sprint. Select <span class="font-bold">Start sprint</span> when you're ready.</p>
             </div>
-
         </div>
-        <!-- </div> -->
     </div>
 </template>
 
 <script setup lang="ts">
+import { ref, watch } from 'vue'
 import Table from '../../../components/ui/Table.vue'
-import { useBacklogStore, priorityClass, type Sprint } from '../composables/useBacklogStore'
-import { useDragDrop } from '../composables/useDragDrop'
+import { useBacklogStore, priorityClass, type Sprint, type Ticket } from '../composables/useBacklogStore'
+import { useMoveCard } from '../../../queries/usePlan'
+import { toast } from 'vue-sonner'
 
-// Destructure so `sprint` is directly available in the template
-const { sprint } = defineProps<{ sprint: Sprint }>()
-defineEmits(['edit-sprint', 'toggle-start', 'open-ticket', 'move-selected-to-backlog', 'delete-selected-sprint'])
+const props = defineProps<{ sprint: Sprint }>()
+const emit = defineEmits(['edit-sprint', 'toggle-start', 'open-ticket', 'move-selected-to-backlog', 'delete-selected-sprint', 'refresh'])
 
-// Get the store once
 const store = useBacklogStore()
-const { selectedSprintIds, allSprintChecked, toggleAll, toggleOne, sprintPoints } = store
+const { selectedSprintIds, allSprintChecked, toggleAll, toggleOne } = store
 
-// Pass store state into drag/drop composable once (no dynamic imports)
-const { dropOverSprintId, onDropSprint, onDragStart, onDragEnd, onDragEnterSprint, onDragLeaveSprint } =
-    useDragDrop(store.backlog, store.sprints, store.selectedBacklogIds, selectedSprintIds)
+const sprintTickets = ref<Ticket[]>([])
+
+watch(() => props.sprint.tickets, (tickets) => {
+  sprintTickets.value = [...(tickets || [])]
+}, { immediate: true, deep: true })
+
+const dropOverSprint = ref(false)
+
+const { mutate: moveCardApi } = useMoveCard({
+  onSuccess: () => {
+    toast.success('Card moved to sprint successfully')
+    emit('refresh')
+  },
+  onError: (error: any) => {
+    toast.error('Failed to move card: ' + (error.message || 'Unknown error'))
+  }
+})
+
+function onDragStart(e: DragEvent, ticket: Ticket, from: 'backlog' | 'sprint', sprintId?: string) {
+  const payload = JSON.stringify({ id: ticket.id, from, sprintId, ticket })
+  e.dataTransfer?.setData('text/plain', payload)
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = 'move'
+  }
+}
+
+function onDragEnd() {
+  dropOverSprint.value = false
+}
+
+function onDragEnterSprint() {
+  dropOverSprint.value = true
+}
+
+function onDragLeaveSprint() {
+  dropOverSprint.value = false
+}
+
+function onDropSprint(e: DragEvent) {
+  e.preventDefault()
+  dropOverSprint.value = false
+
+  try {
+    const raw = e.dataTransfer?.getData('text/plain')
+    if (!raw) return
+
+    const data = JSON.parse(raw) as { id: string; from: 'backlog' | 'sprint'; sprintId?: string; ticket: Ticket }
+
+    if (data.from !== 'backlog') return
+
+    const isDuplicate = sprintTickets.value.some(t => t.id === data.id)
+    if (isDuplicate) return
+
+    sprintTickets.value.push(data.ticket)
+
+    moveCardApi({
+      id: props.sprint.id,
+      payload: {
+        card_ids: [data.ticket.id],
+        priority: data.ticket.priority.toLowerCase(),
+        story_points: data.ticket.storyPoints || 0
+      }
+    })
+  } catch (error) {
+    console.error('Drop error:', error)
+  }
+}
 
 const columns = [
     { key: 'drag', label: '', width: 36 },
