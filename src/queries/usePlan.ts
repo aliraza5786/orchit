@@ -103,3 +103,18 @@ export const useDeleteSprint = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+export const useRemoveCardFromSprint = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["remove-card-from-sprint"],
+    } as any,
+    {
+      mutationFn: (vars: { sprintId: string; cardId: string }) =>
+        request({
+          url: `/sprints/${vars.sprintId}/cards/${vars.cardId}`,
+          method: "DELETE",
+        }),
+      ...(options as any),
+    } as any
+  );

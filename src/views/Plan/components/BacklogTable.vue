@@ -16,7 +16,7 @@
       <Table :showHeader="false"
       :pagination="false"
       class="flex-grow h-full" :rowDraggable="true"
-        @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')" @row-dragend="onDragEnd"
+        @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')" @row-dragend="({ $event }: any) => onDragEnd($event)"
         :columns="columns" :rows="normalizedBacklog" :page-size="20" :hover="true" striped
         :itemKey="(row: any) => row.id" :sorters="sorters" @row-click="({ row }: any) => $emit('open-ticket', row)">
         <template #select-header>
@@ -61,7 +61,7 @@ import { useBacklogList } from '../../../queries/usePlan'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 
 defineProps<{ sorters: Record<string, (a: Ticket, b: Ticket, dir: 'asc' | 'desc') => number> }>()
-const emit = defineEmits(['ticket-dragged-to-sprint', 'open-ticket'])
+const emit = defineEmits(['ticket-dragged-to-sprint', 'open-ticket', 'ticket-moved-to-backlog'])
 
 const { workspaceId } = useWorkspaceId()
 const { data: backlogResp, isPending: isBacklogListPending } = useBacklogList(workspaceId)
@@ -116,8 +116,10 @@ const {
 } = useBacklogStore()
 
 const dropOverBacklog = ref(false)
+const draggedTicketId = ref<string | null>(null)
 
 function onDragStart(e: DragEvent, ticket: Ticket, from: 'backlog' | 'sprint') {
+  draggedTicketId.value = ticket.id
   const payload = JSON.stringify({ id: ticket.id, from, ticket })
   e.dataTransfer?.setData('text/plain', payload)
   if (e.dataTransfer) {
@@ -125,14 +127,44 @@ function onDragStart(e: DragEvent, ticket: Ticket, from: 'backlog' | 'sprint') {
   }
 }
 
-function onDragEnd() {
+function onDragEnd(e: DragEvent) {
   dropOverBacklog.value = false
+
+  // Check if drop was successful (dropEffect is not 'none')
+  if (e.dataTransfer?.dropEffect !== 'none' && draggedTicketId.value) {
+    // Remove from backlog after successful drop on sprint
+    normalizedBacklog.value = normalizedBacklog.value.filter(
+      t => t.id !== draggedTicketId.value
+    )
+  }
+  draggedTicketId.value = null
 }
 
 function onDropBacklog(e: DragEvent) {
   e.preventDefault()
   dropOverBacklog.value = false
-  // Backlog doesn't accept drops from sprint (optional feature)
+
+  try {
+    const raw = e.dataTransfer?.getData('text/plain')
+    if (!raw) return
+
+    const data = JSON.parse(raw) as { id: string; from: 'backlog' | 'sprint'; sprintId?: string; ticket: Ticket }
+
+    // Only accept drops from sprint
+    if (data.from !== 'sprint') return
+
+    // Check if already exists
+    const isDuplicate = normalizedBacklog.value.some(t => t.id === data.id)
+    if (isDuplicate) return
+
+    // Add to backlog
+    normalizedBacklog.value.push(data.ticket)
+
+    // Notify parent that ticket was moved back to backlog
+    emit('ticket-moved-to-backlog', data.id, data.sprintId)
+  } catch (error) {
+    console.error('Drop error:', error)
+  }
 }
 
 /** Columns for the new shape */

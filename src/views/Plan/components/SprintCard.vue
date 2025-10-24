@@ -5,7 +5,7 @@
             @drop="onDropSprint">
             <Table v-if="sprintTickets.length > 0" :row-draggable="true" class="h-full"
                 @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'sprint', sprint.id)"
-                @row-dragend="onDragEnd" :columns="columns" :rows="sprintTickets" :page-size="100" :hover="true"
+                @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="sprintTickets" :page-size="100" :hover="true"
                 striped :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
                 <template #select-header>
                     <input type="checkbox" :checked="allSprintChecked(sprint.id)"
@@ -65,6 +65,7 @@ watch(() => props.sprint.tickets, (tickets) => {
 }, { immediate: true, deep: true })
 
 const dropOverSprint = ref(false)
+const draggedTicketId = ref<string | null>(null)
 
 const { mutate: moveCardApi } = useMoveCard({
   onSuccess: () => {
@@ -77,6 +78,7 @@ const { mutate: moveCardApi } = useMoveCard({
 })
 
 function onDragStart(e: DragEvent, ticket: Ticket, from: 'backlog' | 'sprint', sprintId?: string) {
+  draggedTicketId.value = ticket.id
   const payload = JSON.stringify({ id: ticket.id, from, sprintId, ticket })
   e.dataTransfer?.setData('text/plain', payload)
   if (e.dataTransfer) {
@@ -84,8 +86,17 @@ function onDragStart(e: DragEvent, ticket: Ticket, from: 'backlog' | 'sprint', s
   }
 }
 
-function onDragEnd() {
+function onDragEnd(e: DragEvent) {
   dropOverSprint.value = false
+
+  // Check if drop was successful on backlog
+  if (e.dataTransfer?.dropEffect !== 'none' && draggedTicketId.value) {
+    // Remove from sprint after successful drop on backlog
+    sprintTickets.value = sprintTickets.value.filter(
+      t => t.id !== draggedTicketId.value
+    )
+  }
+  draggedTicketId.value = null
 }
 
 function onDragEnterSprint() {
@@ -106,13 +117,16 @@ function onDropSprint(e: DragEvent) {
 
     const data = JSON.parse(raw) as { id: string; from: 'backlog' | 'sprint'; sprintId?: string; ticket: Ticket }
 
+    // Only accept drops from backlog
     if (data.from !== 'backlog') return
 
     const isDuplicate = sprintTickets.value.some(t => t.id === data.id)
     if (isDuplicate) return
 
+    // Add to sprint (optimistic update)
     sprintTickets.value.push(data.ticket)
 
+    // Call API
     moveCardApi({
       id: props.sprint.id,
       payload: {

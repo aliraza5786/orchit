@@ -29,9 +29,9 @@
 
           </div>
 
-          <SprintCard :sprint="sprints[0]" @open-ticket="openTicket" @edit-sprint="openEditSprint"
+          <SprintCard v-if="firstSprint" :sprint="firstSprint" @open-ticket="openTicket" @edit-sprint="openEditSprint"
             @toggle-start="toggleStartSprint" @move-selected-to-backlog="moveSelectedToBacklog"
-            @delete-selected-sprint="(id) => deleteSelected('sprint', id)" />
+            @delete-selected-sprint="(id) => deleteSelected('sprint', id)" @refresh="handleRefresh" />
         </section>
         <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
           <div class="flex items-center justify-between">
@@ -45,7 +45,8 @@
             </div>
           </div>
           <BacklogTable :sorters="sorters" @move-selected-to-sprint="moveSelectedToSprint"
-            @delete-selected-backlog="deleteSelected('backlog')" @open-ticket="openTicket" />
+            @delete-selected-backlog="deleteSelected('backlog')" @open-ticket="openTicket"
+            @ticket-moved-to-backlog="handleTicketMovedToBacklog" />
         </section>
 
 
@@ -95,7 +96,8 @@ import { useBacklogStore, type Ticket } from './composables/useBacklogStore'
 import Button from '../../components/ui/Button.vue'
 import Dropdown from '../../components/ui/Dropdown.vue'
 import SearchBar from '../../components/ui/SearchBar.vue'
-import { useBacklogList, useCreateSprint, useDeleteSprint, useSprintDetail, useSprintList, useUpdateSprint } from '../../queries/usePlan'
+import { useBacklogList, useCreateSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintDetail, useSprintList, useUpdateSprint } from '../../queries/usePlan'
+import { toast } from 'vue-sonner'
 import { useWorkspaceId } from '../../composables/useQueryParams'
 import { useQueryClient } from '@tanstack/vue-query'
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue'
@@ -120,14 +122,92 @@ const handleDeleteTicket = () => {
 
   deleteSprint(selectedSprint.value?._id)
 }
-const { data: sprintsList } = useSprintList(workspaceId.value);
+const { data: sprintsList, refetch: refetchSprints } = useSprintList(workspaceId.value);
+const { data: backlogListData, refetch: refetchBacklog } = useBacklogList(workspaceId);
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
 const selectedSprintId = ref(firstSprintId)
 const openSprintMadal = () => {
   sprintModalOpen.value = true
 }
 
-const { data: sprintDetail } = useSprintDetail(firstSprintId)
+const { data: sprintDetailData, refetch: refetchSprintDetail } = useSprintDetail(firstSprintId)
+
+// Convert API sprint to store Sprint format with cards
+const firstSprint = computed(() => {
+  const apiSprint = sprintsList?.value?.sprints[0]
+  if (!apiSprint) return null
+
+  // Map sprint cards from API
+  const sprintCards = (sprintDetailData?.value?.cards || []).map((c: any) => {
+    const v = c.card?.variables || {}
+    const id = c.card?._id || c.card_id
+
+    return {
+      id,
+      key: (v['card-code'] as string) || id?.slice(-6) || 'PRJ-?',
+      summary: (v['card-title'] as string) || '(untitled)',
+      type: 'Story' as const,
+      status: mapStatus(String(v['card-status'] || '').trim()),
+      assignee: c.card?.assigned_to?.name || 'Unassigned',
+      storyPoints: Number(c.story_points || 0),
+      priority: mapPriority(String(v['priority'] || '').trim()),
+      createdAt: c.card?.created_at || new Date().toISOString(),
+      description: (v['card-description'] as string) || '',
+    }
+  })
+
+  return {
+    id: apiSprint._id,
+    name: apiSprint.title || 'Sprint 1',
+    title: apiSprint.title,
+    goal: '',
+    start: '',
+    end: '',
+    started: false,
+    tickets: sprintCards
+  }
+})
+
+function mapStatus(s: string): 'Todo' | 'In Progress' | 'Done' {
+  const normalized = s.toLowerCase()
+  if (normalized.includes('progress')) return 'In Progress'
+  if (normalized.includes('done') || normalized.includes('complete')) return 'Done'
+  return 'Todo'
+}
+
+function mapPriority(p: string): 'Highest' | 'High' | 'Medium' | 'Low' {
+  const s = p.toLowerCase()
+  if (s === 'highest' || s === 'blocker' || s === 'critical') return 'Highest'
+  if (s === 'high' || s === 'major') return 'High'
+  if (s === 'medium' || s === 'normal') return 'Medium'
+  return 'Low'
+}
+
+const { mutate: removeCardFromSprint } = useRemoveCardFromSprint({
+  onSuccess: () => {
+    toast.success('Card removed from sprint successfully')
+    handleRefresh()
+  },
+  onError: (error: any) => {
+    toast.error('Failed to remove card from sprint')
+    console.error('Failed to remove card from sprint:', error)
+  }
+})
+
+function handleRefresh() {
+  refetchSprints()
+  refetchBacklog()
+  refetchSprintDetail()
+}
+
+function handleTicketMovedToBacklog(ticketId: string, sprintId?: string) {
+  if (!sprintId) return
+
+  removeCardFromSprint({
+    sprintId,
+    cardId: ticketId
+  })
+}
 // sorters (example: createdAt)
 const sorters = {
   createdAt: (a: any, b: any, dir: 'asc' | 'desc') => {
