@@ -1,5 +1,7 @@
 import { nextTick, reactive, ref, type Ref } from "vue";
 import type { Ticket, Sprint } from "./useBacklogStore.ts";
+import { useMoveCard } from "../../../queries/usePlan";
+import { toast } from "vue-sonner";
 
 export function useDragDrop(
   backlog: Ref<Ticket[]>,
@@ -9,6 +11,15 @@ export function useDragDrop(
 ) {
   const dropOverBacklog = ref(false);
   const dropOverSprintId = ref<string | null>(null);
+
+  const { mutate: moveCard } = useMoveCard({
+    onSuccess: () => {
+      toast.success('Card moved successfully')
+    },
+    onError: (error: any) => {
+      toast.error('Failed to move card: ' + (error.message || 'Unknown error'))
+    }
+  });
 
   const dragData = reactive<{
     ticket: Ticket | null;
@@ -113,7 +124,7 @@ export function useDragDrop(
     let srcSprintId: string | undefined;
 
     if (p) {
-      moved = takeTicketById(p.id, p.from, p.sprintId); // ← splices from source
+      moved = takeTicketById(p.id, p.from, p.sprintId);
       from = p.from;
       srcSprintId = p.sprintId;
     } else if (dragData.ticket) {
@@ -127,11 +138,20 @@ export function useDragDrop(
     }
     if (!moved) return;
 
-    dedupePush(sprint.tickets, moved); // ← add to target, no dupes
+    dedupePush(sprint.tickets, moved);
     if (from) clearSelectionForMoved(moved.id, from, srcSprintId);
 
     dropOverSprintId.value = null;
     onDragEnd();
+
+    moveCard({
+      id: sprint.id,
+      payload: {
+        card_ids: [moved.id],
+        priority: moved.priority.toLowerCase(),
+        story_points: moved.storyPoints || 0
+      }
+    });
   }
 
   function onDropBacklog(e: DragEvent) {

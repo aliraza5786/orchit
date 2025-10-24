@@ -1,4 +1,6 @@
 import { ref, reactive, watch, computed } from "vue";
+import { useMoveCard } from "../../../queries/usePlan";
+import { toast } from "vue-sonner";
 
 export interface Ticket {
   id: string;
@@ -149,6 +151,15 @@ export function useBacklogStore() {
     return `PRJ-${next}`;
   }
 
+  const { mutate: moveCard } = useMoveCard({
+    onSuccess: () => {
+      toast.success('Cards moved to sprint successfully')
+    },
+    onError: (error: any) => {
+      toast.error('Failed to move cards: ' + (error.message || 'Unknown error'))
+    }
+  });
+
   // Bulk actions
   function moveSelectedToSprint() {
     const s = getActiveSprint();
@@ -160,6 +171,17 @@ export function useBacklogStore() {
     backlog.value = keep;
     s.tickets.push(...moved);
     selectedBacklogIds.value = [];
+
+    if (moved.length > 0) {
+      moveCard({
+        id: s.id,
+        payload: {
+          card_ids: moved.map(t => t.id),
+          priority: moved[0]?.priority?.toLowerCase() || 'medium',
+          story_points: moved.reduce((sum, t) => sum + (t.storyPoints || 0), 0)
+        }
+      });
+    }
   }
   function moveSelectedToBacklog(sprintId: string) {
     const s = sprints.value.find((x) => x.id === sprintId);
