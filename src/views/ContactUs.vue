@@ -8,19 +8,17 @@
                         <h2
                             class="font-manrope text-text-primary font-bold  text-[24px] lg:text-[36px] leading-[34px] lg:leading-[40px] tracking-[-1px] mb-[15px] lg:mb-[24px]">
                             Contact Us</h2>
-                        <ul class="space-y-[16px] font-manrope text-[14px] md:text-[16px] leading-[100%] md:leading-[24px] font-normal" :class="theme === 'light'? 'text-black': 'text-text-secondary'">
-                            <li
-                                class="flex items-center gap-[12px]">
+                        <ul class="space-y-[16px] font-manrope text-[14px] md:text-[16px] leading-[100%] md:leading-[24px] font-normal"
+                            :class="theme === 'light' ? 'text-black' : 'text-text-secondary'">
+                            <li class="flex items-center gap-[12px]">
                                 <span class="text-text-primary text-md md:text-lg"> <i
                                         class="fa-regular fa-circle-check"></i></span> Request a demo
                             </li>
-                            <li
-                                class="flex items-center gap-[12px]">
+                            <li class="flex items-center gap-[12px]">
                                 <span class="text-text-primary text-md md:text-lg"><i
                                         class="fa-regular fa-circle-check"></i></span> Learn which plan fits your team
                             </li>
-                            <li
-                                class="flex items-center gap-[12px]">
+                            <li class="flex items-center gap-[12px]">
                                 <span class="text-text-primary text-md md:text-lg"><i
                                         class="fa-regular fa-circle-check"></i></span> Get onboarding help
                             </li>
@@ -28,7 +26,8 @@
                     </div>
 
                     <div class="border-y border-border py-[25px] md:py-[33px]">
-                        <p class="font-manrope text-[14px] leading-[20px] font-normal mb-[10px]" :class="theme === 'light'? 'text-black': 'text-text-secondary'">
+                        <p class="font-manrope text-[14px] leading-[20px] font-normal mb-[10px]"
+                            :class="theme === 'light' ? 'text-black' : 'text-text-secondary'">
                             Technical issues or product questions?</p>
                         <RouterLink to="#"
                             class="font-manrope  text-[14px] leading-[20px] font-normal text-text-primary hover:text-accent flex items-center gap-[12px]">
@@ -38,8 +37,8 @@
                     <div class="py-[25px] md:py-[33px]">
                         <h3 class="font-manrope  text-[14px] leading-[20px] font-semibold text-text-primary mb-[12px]">
                             What to expect</h3>
-                        <ul
-                            class="list-disc ml-5 space-y-[8px] font-manrope text-[14px] leading-[20px] font-normal "  :class="theme === 'light'? 'text-black': 'text-text-secondary'">
+                        <ul class="list-disc ml-5 space-y-[8px] font-manrope text-[14px] leading-[20px] font-normal "
+                            :class="theme === 'light' ? 'text-black' : 'text-text-secondary'">
                             <li>Response within 24 hours</li>
                             <li>Personalized demo based on your needs</li>
                             <li>Custom pricing for enterprise teams</li>
@@ -51,11 +50,14 @@
                             Trusted by teams at</h3>
                         <div class="flex gap-2">
                             <span
-                                class="bg-bg-charcoal px-3 py-1 rounded-md text-text-secondary  font-manrope text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Microsoft</span>
+                                class="bg-bg-charcoal px-3 py-1 rounded-md text-text-secondary  font-manrope text-[12px] leading-[16px] font-normal"
+                                :class="{ 'bg-gradinet text-white': theme === 'light' }">Microsoft</span>
                             <span
-                                class="bg-bg-charcoal px-3 py-1 rounded-md text-text-secondary font-manrope  text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Stripe</span>
+                                class="bg-bg-charcoal px-3 py-1 rounded-md text-text-secondary font-manrope  text-[12px] leading-[16px] font-normal"
+                                :class="{ 'bg-gradinet text-white': theme === 'light' }">Stripe</span>
                             <span
-                                class="bg-bg-charcoal px-3 py-1 rounded-md  text-text-secondary font-manrope  text-[12px] leading-[16px] font-normal"  :class="{ 'bg-gradinet text-white': theme === 'light' }">Adobe</span>
+                                class="bg-bg-charcoal px-3 py-1 rounded-md  text-text-secondary font-manrope  text-[12px] leading-[16px] font-normal"
+                                :class="{ 'bg-gradinet text-white': theme === 'light' }">Adobe</span>
                         </div>
                     </div>
                 </aside>
@@ -97,16 +99,20 @@
                             <label for="companySize"
                                 class="block text-[14px] font-manrope leading-[20px] font-medium text-text-secondary mb-1">Company
                                 size</label>
-                            <select id="companySize" v-model="form.companySize"
-                                class="w-full px-4 py-2.5 rounded-md bg-bg-body border transition font-manrope  text-[14px] leading-[20px] font-normal text-text-primary focus:outline-none focus:ring-0 focus:border-none"
-                                :class="[errors.companySize ? 'border-red-500' : 'border-border-input', theme === 'dark' ? '' : 'border-0']">
-                                <option disabled value="">Select company size</option>
-                                <option>1–10 employees</option>
-                                <option>11–50 employees</option>
-                                <option>51–200 employees</option>
-                                <option>201–500 employees</option>
-                                <option>500+ employees</option>
-                            </select>
+                            <div class="relative">
+                                <select id="companySize" v-model="form.companySize"
+                                    class="w-full appearance-none px-4 py-2.5 rounded-md bg-bg-body border transition font-manrope  text-[14px] leading-[20px] font-normal text-text-primary focus:outline-none focus:ring-0 focus:border-none"
+                                    :class="[errors.companySize ? 'border-red-500' : 'border-border-input', theme === 'dark' ? '' : 'border-0']">
+                                    <option disabled value="">Select company size</option>
+                                    <option>1–10 employees</option>
+                                    <option>11–50 employees</option>
+                                    <option>51–200 employees</option>
+                                    <option>201–500 employees</option>
+                                    <option>500+ employees</option>
+                                </select>
+                                <i
+                                    class="fa-solid fa-chevron-down absolute text-[10px] right-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"></i>
+                            </div>
                             <p v-if="errors.companySize" class="text-red-400 font-manrope text-[12px] mt-1">{{
                                 errors.companySize }}</p>
                         </div>
@@ -242,6 +248,4 @@ async function handleSubmit() {
 .bg-gradinet {
     background: linear-gradient(142.27deg, #4E3C9E 11.4%, #B5A1F7 84.44%);
 }
-
- 
 </style>

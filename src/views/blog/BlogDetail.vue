@@ -81,7 +81,7 @@ watchEffect(() => {
         </div>
         <!-- Title -->
         <h1
-          class="font-manrope text-[28px] md:text-[40px] lg:text-[60px] leading-[60px] font-bold leading-tight text-text-primary mb-[30px] ">
+          class="font-manrope text-[28px] md:text-[40px] lg:text-[60px] leading-[60px] font-bold text-text-primary mb-[30px] ">
           {{ blog.title }}
         </h1>
 
@@ -118,7 +118,7 @@ watchEffect(() => {
 
               <div class="p-5">
                 <h3
-                  class="font-manrope text-[18px] sm:text-[20px] font-semibold leading-[28px] font-normal mb-[8px] text-text-primary group-hover:text-accent transition line-clamp-2">
+                  class="font-manrope text-[18px] sm:text-[20px] font-semibold leading-[28px] mb-[8px] text-text-primary group-hover:text-accent transition line-clamp-2">
                   {{ r.title }}
                 </h3>
                 <p class="line-clamp-3 font-normal font-manrope text-[14px] leading-[20px] text-text-secondary mb-[16px]"

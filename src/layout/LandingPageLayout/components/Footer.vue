@@ -4,10 +4,7 @@ import { useTheme } from "../../../composables/useTheme";
 import lightLogo from '@assets/LandingPageImages/footer/lightLogo.webp';
 import darkLogo from '@assets/global/dark-logo.png';
 import borderGif from '@assets/LandingPageImages/footer/footer-top.gif';
-import linkedIn from '@assets/icons/linkedIn.webp';
-import twitter from '@assets/icons/twitter.webp';
-import lightLinkedIn from '@assets/icons/lightLinkedIn.webp';
-import lighTwitter from '@assets/icons/lightTwitter.webp';
+ 
 
 
 
@@ -23,26 +20,18 @@ const sections: FooterSection[] = [
     {
         title: "Resource",
         links: [
-            { name: "Support", url: "/contact-us" },
-            { name: "Blog", url: "/blogs" },        ],
+            { name: "Knowledge Center", url: "/knowledge-center" },
+            { name: "Blog", url: "/blogs" },],
     },
     {
         title: "Company",
         links: [
-            { name: "Privacy", url: "/terms-of-services" },
-            { name: "Terms", url: "/privacy-policy" },
-
+            { name: "Privacy Policy", url: "/privacy-policy" },
+            { name: "Terms of Services", url: "/terms-of-services" },
 
         ],
     },
-    {
-        title: "Socail",
-        links: [
-            { name: "Instagram", url: "#" },
-            { name: "Linkedin", url: "#" },
-          
-        ],
-    },
+   
 ];
 
 // mobile menu
@@ -65,7 +54,7 @@ const moblinks: MobFooterMenu[] = [
     },
     {
         name: 'Pricing',
-        url: '#'
+        url: '/pricing'
     },
     {
         name: 'Sales',
@@ -113,14 +102,7 @@ const moblinks: MobFooterMenu[] = [
                             Streamed Space is an AI-powered workspace that unifies project.
                         </p>
 
-                        <div class="fotter_social_links flex gap-3 items-center justify-center  sm:justify-start">
-                            <a href="https://linkedin.com" target="_blank" class="text-primary text-[24px]">
-                                 <img :src="theme ==='dark'? linkedIn : lightLinkedIn" alt="linked In icon" width="20px" loading="lazy">
-                            </a>
-                            <a href="https://twitter.com" target="_blank" class="text-primary text-[24px]">
-                               <img :src="theme==='dark'? twitter: lighTwitter" alt="linked In icon" width="20px" loading="lazy">
-                            </a>
-                        </div>
+
                     </div>
                     <!-- footer web menu -->
                     <div class="hidden sm:block" v-for="(section) in sections" :key="section.title">
@@ -140,6 +122,35 @@ const moblinks: MobFooterMenu[] = [
                             </li>
                         </ul>
                     </div>
+                    <div class="hidden sm:block">
+                        <div class="heading_box mb-[16px]">
+                            <h3
+                                class="font-inter text-primary font-semibold text-[18px] md:text-[22.88px] leading-[32px] tracking-normal">
+                                  Social
+                            </h3>
+                        </div>
+                        <div class="fotter_social_links flex gap-3 items-center justify-center  sm:justify-start">
+                            <a href="https://linkedin.com" target="_blank" class="text-primary text-[22px]">
+                                <i class="fa-brands fa-linkedin"></i>
+                            </a>
+                            <a href="https://twitter.com" target="_blank" class="text-primary text-[22px]">
+                                 <i class="fa-brands fa-square-x-twitter"></i>
+                            </a>
+                            <a href=""  target="_blank" class="text-primary text-[22px]">
+                                <i class="fa-brands fa-discord"></i>
+                            </a>
+                            <a href=""  target="_blank" class="text-primary text-[22px]">
+                                <i class="fa-brands fa-youtube"></i>
+                            </a>
+                            <a href=""  target="_blank" class="text-primary text-[22px]">
+                                <i class="fa-brands fa-instagram"></i>
+                            </a>
+                            <a href=""  target="_blank" class="text-primary text-[22px]">
+                                <i class="fa-brands fa-reddit"></i>
+                            </a>
+                        </div>
+                    </div>
+
 
 
                 </div>
@@ -163,23 +174,15 @@ const moblinks: MobFooterMenu[] = [
         class="copy_write px-[15px] bg-primary float-left w-full  border-t-1 lg:border-t-0  pt-[18px] md:pt-[24px] pb-[18px] md:pb-[24px]  lg:pb-[40px] xl:pb-[72px]"
         :class="theme === 'dark' ? 'border-gray-800' : 'border-gray-300'">
         <div class="custom_container">
-            <div class="copy_write_main flex flex-col gap-2 sm:flex-row justify-between items-center">
-                <p class="font-inter text-primary font-normal text-[12px] sm:text-[14px] leading-[24px] tracking-normal">
+            <div class="copy_write_main">
+                <p
+                    class="font-inter text-center text-primary font-normal text-[12px] sm:text-[14px] leading-[24px] tracking-normal">
                     {{
                         theme === 'dark'
                             ? `Copyright © ${new Date().getFullYear()} Space Technologies`
                             : `${new Date().getFullYear()} © STREAMED INC. All Rights Reserved`
                     }}
-                </p>
-
-                <div class="copy_write_links hidden sm:flex gap-[24px]">
-                    <RouterLink
-                        class="font-inter text-primary font-normal text-[14px] hover:underline leading-[24px] tracking-normal"
-                        to="#">Terms & Conditions</RouterLink>
-                    <RouterLink
-                        class="font-inter text-primary font-normal text-[14px] hover:underline leading-[24px] tracking-normal"
-                        to="#">Privacy Policy</RouterLink>
-                </div>
+                </p>     
             </div>
         </div>
     </section>
