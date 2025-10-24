@@ -1,9 +1,9 @@
 <template>
-  <div class="overflow-auto rounded-lg border border-border bg-card shadow" role="region"
+  <div class="overflow-auto flex flex-col rounded-lg border border-border bg-card shadow" role="region"
     :aria-busy="loading ? 'true' : 'false'" aria-live="polite">
     <table class="min-w-full text-left text-sm" role="grid">
       <!-- Header -->
-      <thead class="sticky top-0 z-[1] bg-bg-surface font-semibold text-text-secondary/90">
+      <thead v-if="showHeader" class="sticky top-0 z-[1] bg-bg-surface font-semibold text-text-secondary/90">
         <tr role="row">
           <th v-for="(col, cIdx) in resolvedColumns" :key="col.key" scope="col" :style="columnStyle(col)"
             class="select-none whitespace-nowrap px-4.5 py-2 text-sm font-medium capitalize text-text-primary"
@@ -68,8 +68,8 @@
     </table>
 
     <!-- Pagination bar -->
-    <div v-if="showPagination"
-      class="flex items-center justify-between gap-3 border-t border-border px-3 py-2 sm:flex-row" role="navigation"
+    <div v-if="showPagination && pagination"
+      class="flex items-center mt-auto sticky bottom-0 bg-bg-surface justify-between gap-3 border-t border-border px-3 py-2 sm:flex-row" role="navigation"
       aria-label="Pagination">
       <div class="text-xs text-text-secondary sm:text-sm">
         <template v-if="!loading">
@@ -122,6 +122,7 @@ import { computed, reactive, h, type VNodeChild, watch, ref } from 'vue'
 
 /** Column config */
 export interface Column<T = Row> {
+
   key: string
   label: string
   sortable?: boolean
@@ -139,6 +140,8 @@ export type Row = Record<string, unknown>
 const props = withDefaults(
   defineProps<{
     // props
+    showHeader?:boolean
+    pagination?:boolean
     rowDraggable?: boolean
 
     columns: Column[]
@@ -157,6 +160,8 @@ const props = withDefaults(
     sorters?: Record<string, (a: Row, b: Row, dir: 'asc' | 'desc') => number>
   }>(),
   {
+    pagination:true,
+    showHeader:true,
     loading: false,
     skeletonRows: 8,
     page: 1,

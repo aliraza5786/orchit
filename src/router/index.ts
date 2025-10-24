@@ -184,7 +184,7 @@ const routes: RouteRecordRaw[] = [
       { path: "peak/:id", name: "peak", component: Peak },
       { path: "people/:id", name: "people", component: People },
       { path: "pin/:id/:module_id", name: "pin", component: Pin },
-      { path: "plan", name: "plan", component: Plan },
+      { path: "plan/:id", name: "plan", component: Plan },
       { path: "process/:id", name: "process", component: Process },
       { path: "more/:id", name: "more", component: More },
       { path: ":id/:module_id", name: "product", component: Product },

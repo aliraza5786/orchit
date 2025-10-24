@@ -71,10 +71,10 @@ const variantClass = computed(() => {
 const sizeClass = computed(() => {
     switch (props.size) {
         case 'sm':
-            return 'text-xs px-3 py-1.5'
+            return 'text-xs px-3 py-1.5 h-[34px]'
         case 'lg':
             return 'text-base px-5 h-12'
-        case 'base': return 'text-sm px-4 h-10'
+        case 'base': return 'text-sm px-4 h-sp10'
         case 'md': return 'text-sm px-4 h-[38px]'
         default:
             return 'text-sm px-4 h-[38px]'
