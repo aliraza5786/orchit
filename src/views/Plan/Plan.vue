@@ -1,6 +1,6 @@
 <template>
   <template v-if="sprintDetailData?.status == 'active'">
-    <ActiveSprint />
+    <ActiveSprint :sptint_id="selectedSprintId" />
   </template>
   <template v-else>
     <div v-if="sprintsList?.sprints.length > 0"
@@ -108,13 +108,13 @@ import { useWorkspaceId } from '../../composables/useQueryParams'
 import { useQueryClient } from '@tanstack/vue-query'
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue'
 import StartSprintModal from './modals/StartSprintModal.vue'
-import CreateBacklogTicket from './modals/CreateBacklogTicket.vue'
+// import CreateBacklogTicket from './modals/CreateBacklogTicket.vue'
 import ActiveSprint from './components/ActiveSprint.vue'
 const { workspaceId } = useWorkspaceId();
 
 const {
-  backlog, sprints,
-  selectedBacklogIds, selectedSprintIds,
+  // backlog, sprints,
+  // selectedBacklogIds, selectedSprintIds,
   moveSelectedToSprint, moveSelectedToBacklog, deleteSelected,
   createTicket, saveSprintMeta, toggleStartSprint
 } = useBacklogStore()
@@ -140,6 +140,7 @@ const { mutate: updateSprint2, isPending: isUpdatingSprint2 } = useUpdateSprint(
         id: selectedSprintId.value,
 
       })
+      refetchSprintDetail();
       queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
       startsprintModalOpen.value = false;
     }
@@ -162,9 +163,9 @@ const { data: sprintsList, refetch: refetchSprints } = useSprintList(workspaceId
 const { data: backlogListData, refetch: refetchBacklog } = useBacklogList(workspaceId);
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
 const selectedSprintId = ref(firstSprintId)
-const openSprintMadal = () => {
-  sprintModalOpen.value = true
-}
+// const openSprintMadal = () => {
+//   sprintModalOpen.value = true
+// }
 
 const { data: sprintDetailData, refetch: refetchSprintDetail } = useSprintDetail(firstSprintId)
 const startsprintModalOpen = ref(false);

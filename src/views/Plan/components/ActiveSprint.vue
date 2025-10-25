@@ -1,47 +1,30 @@
 <template>
-    <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
+    <div
+        class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
+             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
-            <Dropdown v-model="selected_sheet_id" :options="transformedData" variant="secondary">
-                <template #more>
-                    <div @click="createSheet()"
-                        class="  capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
-                        <i class="fa-solid fa-plus"></i> Add new
-                    </div>
-                </template>
-            </Dropdown>
-            <!-- <div class="flex gap-3 items-center ">
-                <Dropdown prefix="View by" v-model="selected_view_by" :options="variables" variant="secondary">
-                    <template #more>
-                        <div @click="isCreateVar = true"
-                            class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
-                            <i class="fa-solid fa-plus"></i> Add new
-                        </div>
-                    </template>
-                </Dropdown>
+            Sprint
+            <div class="flex gap-3 items-center ">
+
                 <Searchbar placeholder="Search in Orchit AI space">
                 </Searchbar>
-            </div> -->
+                <Button size="sm" @click="handleCompleteSprint">{{ isCompletingSprint ? 'Ending...' : 'End' }}</Button>
+            </div>
         </div>
-        <KanbanSkeleton v-show="isListPending" />
-        <div v-show="!isListPending" class="flex  overflow-x-auto gap-3 p-4">
+        <KanbanSkeleton v-show="isPending" />
+        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
                 :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
-                <template #ticket="{ ticket }">
-                    <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
-                </template>
-                <template #emptyState="{ column }">
-                    <div class="flex flex-col items-center justify-center gap-2 py-10">
-                        <img src="../../assets/emptyStates/pin.png" alt="" />
-                        <h1 class="text-sm text-text-primary mt-2">Start creating your pins</h1>
-                        <p class="text-sm text-text-secondary mb-2 text-center">Create pins and add your ideas into the
-                            related pins.</p>
-                        <Button size="sm" @click="plusHandler(column)">Create Pin</Button>
-                    </div>
+                <template #column-footer="column">
+
+                    <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
+                        v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
+                        Disbale ( you can't drop here )</div>
                 </template>
             </KanbanBoard>
-            <div class="min-w-[328px] " @click.stop>
+            <!-- <div class="min-w-[328px] " @click.stop>
                 <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
                     <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
                         @keyup.enter="emitAddColumn" />
@@ -59,7 +42,7 @@
                     @click.stop="setActiveAddList">
                     + Add List
                 </button>
-            </div>
+            </div> -->
         </div>
 
     </div>
@@ -68,39 +51,36 @@
         cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
             showDelete = false
         }" />
-    <CreateTaskModal :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
-        :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal"
-        @submit="" />
-    <SidePanel :pin="true" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
-        :showPanel="selectedCard?.variables.length > 0 ? true : false" />
-    <CreateSheetModal v-model="isCreateSheetModal" />
-    <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
+    <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
+        v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
+    <SidePanel v-if="selectedCard?._id" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
+        :showPanel="selectedCard?._id ? true : false" />
+    <!-- <CreateSheetModal v-model="isCreateSheetModal" /> -->
+    <!-- <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" /> -->
 </template>
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../../stores/workspace';
-import Dropdown from '../../../components/ui/Dropdown.vue';
-import { ReOrderCard, ReOrderList, useAddList, useSheetList, useSheets, useVariables } from '../../../queries/useSheets';
+// import Dropdown from '../../../components/ui/Dropdown.vue';
+import Searchbar from '../../../components/ui/SearchBar.vue';
+import { ReOrderCard, ReOrderList, useAddList, useSheets, useVariables } from '../../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../../components/skeletons/KanbanSkeleton.vue';
-import BaseTextField from '../../../components/ui/BaseTextField.vue';
+// import BaseTextField from '../../../components/ui/BaseTextField.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../../composables/useQueryParams';
 import Button from '../../../components/ui/Button.vue';
-import CreateTaskModal from '../../Product/modals/CreateTaskModal.vue';
-import KanbanCard from '../../Pin/components/KanbanCard.vue';
-import SidePanel from '../../Product/components/SidePanel.vue';
-
-// const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
-// const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
-// const CreateVariableModal = defineAsyncComponent(() => import('./modals/CreateVariableModal.vue'))
-// const ConfirmDeleteModal = defineAsyncComponent(() => import('./modals/ConfirmDeleteModal.vue'))
-// const SidePanel = defineAsyncComponent(() => import('./components/SidePanel.vue'))
+import { useCompleteSprint, useSprintKanban } from '../../../queries/usePlan';
+const props = defineProps<{ sptint_id: any }>()
+const CreateTaskModal = defineAsyncComponent(() => import('../../Product/modals/CreateTaskModal.vue'))
+// const CreateSheetModal = defineAsyncComponent(() => import('../../Product/modals/CreateSheetModal.vue'))
+// const CreateVariableModal = defineAsyncComponent(() => import('../../Product/modals/CreateVariableModal.vue'))
+const ConfirmDeleteModal = defineAsyncComponent(() => import('../../Product/modals/ConfirmDeleteModal.vue'))
+const SidePanel = defineAsyncComponent(() => import('../../Product/components/SidePanel.vue'))
 const KanbanBoard = defineAsyncComponent(() => import('../../../components/feature/kanban/KanbanBoard.vue'));
-const isCreateVar = ref(false)
+// const isCreateVar = ref(false)
 const route = useRoute();
-const { workspaceId, moduleId } = useRouteIds();
-
+const { workspaceId, moduleId } = useRouteIds()
 const { data: variables } = useVariables(workspaceId.value, moduleId.value);
 const queryClient = useQueryClient()
 const { mutate: addList, isPending: addingList } = useAddList({
@@ -125,39 +105,31 @@ const handleAddColumn = (v: any) => {
 const { data } = useSheets({
     workspace_id: workspaceId,
     workspace_module_id: moduleId
-}, {
-    onSuccess: () => {
-        refetchList();  // Refetch data on success
-    }
 });
-const selected_sheet_id = ref<any>(data.value ? data.value[0]._id : null);
-// const showComponent = ref(tr/ue); // Flag to control component rendering
+const sheetId = computed(() => data.value ? data.value[0]?._id : '')
+const selected_sheet_id = ref<any>(sheetId);
 const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
-const selected_view_by = ref(viewBy.value);
-watch((viewBy), (newVal) => {
-    selected_view_by.value = newVal
-})
-
+const selected_view_by = ref(viewBy);
 const workspaceStore = useWorkspaceStore();
-
+const selected_sprint_id = computed(() => props.sptint_id)
+const { mutate: completeSprint, isPending: isCompletingSprint } = useCompleteSprint(selected_sprint_id)
 // usage
-const { data: Lists, isPending: isListPending, isFetching: isListFetching, refetch: refetchList } = useSheetList(
-    moduleId,
-    selected_sheet_id,                      // ref
-    computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
-    selected_view_by,                    // ref
+const { data: Lists, isPending, } = useSprintKanban(
+    selected_sprint_id,                      // ref
+    // ref
 )
-
+const handleCompleteSprint = () => {
+    completeSprint({})
+}
 const createTeamModal = ref(false);
-// const currentView = ref<'kanban' | 'list'>('kanban')
-const selectedCard = ref<{ variables: any }>()
+const selectedCard = ref<any>()
 const selectCardHandler = (card: any) => {
     selectedCard.value = card
 }
-const isCreateSheetModal = ref(false)
-const createSheet = () => {
-    isCreateSheetModal.value = !isCreateSheetModal.value
-}
+// const isCreateSheetModal = ref(false)
+// const createSheet = () => {
+//     isCreateSheetModal.value = !isCreateSheetModal.value
+// }
 
 const reorderList = ReOrderList()
 const reorderCard = ReOrderCard();
@@ -189,24 +161,24 @@ const handleBoardUpdate = (_: any) => {
 
 };
 
-interface IconData {
-    prefix: string;
-    iconName: string;
-}
-interface DropdownOption {
-    _id: string;
-    title: string;
-    icon: IconData
-}
+// interface IconData {
+//     prefix: string;
+//     iconName: string;
+// }
+// interface DropdownOption {
+//     _id: string;
+//     title: string;
+//     icon: IconData
+// }
 // Define the `transformedData` computed property
-const transformedData = computed<DropdownOption[]>(() => {
-    return (data.value || []).map((item: any) => ({
-        _id: item._id,
-        title: item.variables["sheet-title"],
-        description: item.variables["sheet-description"],
-        icon: item["icon"]
-    }));
-});
+// const transformedData = computed<DropdownOption[]>(() => {
+//     return (data.value || []).map((item: any) => ({
+//         _id: item._id,
+//         title: item.variables["sheet-title"],
+//         description: item.variables["sheet-description"],
+//         icon: item["icon"]
+//     }));
+// });
 watch(data, (newSheetId) => {
     if (newSheetId?.length > 0) {
         selected_sheet_id.value = newSheetId[0]?._id; // Trigger the refetch with the new sheet_id
@@ -215,12 +187,12 @@ watch(data, (newSheetId) => {
 // add column 
 const activeAddList = ref(false)
 const newColumn = ref('')
-function setActiveAddList() { activeAddList.value = !activeAddList.value }
-function emitAddColumn() {
-    const t = newColumn.value.trim()
-    if (!t) return
-    handleAddColumn(t)
-}
+// function setActiveAddList() { activeAddList.value = !activeAddList.value }
+// function emitAddColumn() {
+//     const t = newColumn.value.trim()
+//     if (!t) return
+//     handleAddColumn(t)
+// }
 
 const handleUpdateColumn = (newTitle: any) => {
     addList({
@@ -248,12 +220,7 @@ const deleteHandler = (e: any) => {
     localColumnData.value = e;
 }
 const plusHandler = (e: any) => {
-    console.log('>>>', e);
-
     createTeamModal.value = true;
     localColumnData.value = e
-}
-const handleClickTicket = (ticket: any) => {
-    selectedCard.value = ticket
 }
 </script>

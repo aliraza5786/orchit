@@ -28,6 +28,36 @@ export const useSprintCard = (id: any, options = {}) => {
     ...options,
   });
 };
+export const useSprintKanban = (sprint_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["sprint-kanban", sprint_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/cards/sprintgrouped?sprint_id=${unref(
+          sprint_id
+        )}&variable_id=68b6c96e0a95eef7d14e6981`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+  });
+};
+
+export const useCompleteSprint = (sprint_id: any, options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["sprint-complete"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `sprints/${unref(sprint_id)}/complete`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
 export const useSprintDetail = (id: any, options = {}) => {
   return useQuery({
     queryKey: ["sprint-detail", id],

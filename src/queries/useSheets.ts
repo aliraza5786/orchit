@@ -204,6 +204,7 @@ export const useVariables = (
   options = {}
 ) => {
   return useQuery({
+    
     queryKey: ["all-module-variables"],
     queryFn: ({ signal }) =>
       request<any>({
