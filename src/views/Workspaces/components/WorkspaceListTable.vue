@@ -52,7 +52,7 @@ const columns = [
     { key: 'variables', label: 'Project type', render: renderProjectType },
     { key: 'People', label: 'People', render: renderPeople },
     { key: 'created_at', label: 'Start Date', render: renderStartDate },
-] as const
+]
 
 /* ------------ Internal pagination + sort state ------------ */
 const page = ref(1)

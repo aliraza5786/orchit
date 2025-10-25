@@ -307,11 +307,10 @@ const avatarPreview = ref<string>('')
 const isUploadingAvatar = ref(false)
 const uploadedAvatarUrl = ref<string>('')
 
-// @ts-expect-error - Used in template
-const tickets = ref([
-  { id: 1, title: 'Fix dashboard layout', project: 'Orchit AI Dashboard' },
-  { id: 2, title: 'Update profile endpoint', project: 'API Integration' }
-])
+// const tickets = ref([
+//   { id: 1, title: 'Fix dashboard layout', project: 'Orchit AI Dashboard' },
+//   { id: 2, title: 'Update profile endpoint', project: 'API Integration' }
+// ])
 
 watch(profileData, (data) => {
   if (!data) return
@@ -400,19 +399,18 @@ function cancelChanges() {
   isOpen.value = false
 }
 
-// @ts-expect-error - Used in template
-function getStatusBadge(status: string) {
-  switch (status) {
-    case 'accepted':
-      return 'bg-green-500/20 text-green-600'
-    case 'pending':
-      return 'bg-orange-500/20 text-orange-600'
-    case 'rejected':
-      return 'bg-red-500/20 text-red-600'
-    default:
-      return 'bg-gray-500/20 text-gray-600'
-  }
-}
+// function getStatusBadge(status: string) {
+//   switch (status) {
+//     case 'accepted':
+//       return 'bg-green-500/20 text-green-600'
+//     case 'pending':
+//       return 'bg-orange-500/20 text-orange-600'
+//     case 'rejected':
+//       return 'bg-red-500/20 text-red-600'
+//     default:
+//       return 'bg-gray-500/20 text-gray-600'
+//   }
+// }
 
 const currentPlan = ref({
   name: 'Pro',
@@ -490,21 +488,18 @@ const pricingPlans = ref([
   // }
 ])
 
-// @ts-expect-error - Used in template
-function manageBilling() {
-  toast.info('Redirecting to Stripe billing portal...')
-  window.open('https://billing.stripe.com/p/login/test_00000000000000', '_blank')
-}
+// function manageBilling() {
+//   toast.info('Redirecting to Stripe billing portal...')
+//   window.open('https://billing.stripe.com/p/login/test_00000000000000', '_blank')
+// }
 
-// @ts-expect-error - Used in template
-function upgradePlan(plan: any) {
-  toast.info(`Redirecting to checkout for ${plan.name} plan...`)
-  window.open('https://checkout.stripe.com/test_00000000000000', '_blank')
-}
+// function upgradePlan(plan: any) {
+//   toast.info(`Redirecting to checkout for ${plan.name} plan...`)
+//   window.open('https://checkout.stripe.com/test_00000000000000', '_blank')
+// }
 
-// @ts-expect-error - Used in template
-function downgradePlan(plan: any) {
-  toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
-}
+// function downgradePlan(plan: any) {
+//   toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
+// }
 
 </script>

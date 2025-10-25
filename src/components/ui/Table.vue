@@ -132,7 +132,8 @@ export interface Column<T = Row> {
   headerClass?: string
   width?: string | number
   accessor?: (row: T) => unknown
-  render?: (ctx: { row: T; column: Column<T>; value: unknown; index: number }) => VNodeChild
+  // render?: (ctx: { row: T; column: Column<T>; value: unknown; index: number }) => VNodeChild
+    render?: any
 }
 
 export type Row = Record<string, unknown>

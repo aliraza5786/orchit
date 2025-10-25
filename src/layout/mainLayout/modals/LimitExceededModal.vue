@@ -61,17 +61,17 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:modelValue','upgrade'])
 
-const isOpen = computed({
-    get: () => props.modelValue,
-    set: (value) => emit('update:modelValue', value)
-})
+// const isOpen = computed({
+//     // get: () => props.modelValue,
+//     set: (value) => emit('update:modelValue', value)
+// })
 
-const { data: profile, isLoading, refetch } = useQuery({
-    queryKey: ['profile'],
-    queryFn: getProfile,
-    enabled: computed(() => props.modelValue),
+// const { data: profile, isLoading, refetch } = useQuery({
+//     queryKey: ['profile'],
+//     queryFn: getProfile,
+//     enabled: computed(() => props.modelValue),
 
-})
+// })
 watch(() => currentPackage.value, () => {
     if (route.query.stripePayment) {
         confirm({
@@ -79,7 +79,7 @@ watch(() => currentPackage.value, () => {
         })
     }
 })
-const profileData = computed(() => profile.value?.data || null)
+// const profileData = computed(() => profile.value?.data || null)
 
 const form = ref({
     fullName: '',
@@ -94,20 +94,19 @@ const avatarPreview = ref<string>('')
 const isUploadingAvatar = ref(false)
 const uploadedAvatarUrl = ref<string>('')
 
-// @ts-expect-error - Used in template
-const tickets = ref([
-    { id: 1, title: 'Fix dashboard layout', project: 'Orchit AI Dashboard' },
-    { id: 2, title: 'Update profile endpoint', project: 'API Integration' }
-])
+// const tickets = ref([
+//     { id: 1, title: 'Fix dashboard layout', project: 'Orchit AI Dashboard' },
+//     { id: 2, title: 'Update profile endpoint', project: 'API Integration' }
+// ])
 
-watch(profileData, (data) => {
-    if (!data) return
-    form.value.fullName = data.u_full_name || ''
-    form.value.email = data.u_email || ''
-    form.value.jobTitle = data.u_job_title || ''
-    form.value.department = data.u_department || ''
-    form.value.location = data.u_location || ''
-}, { immediate: true })
+// watch(profileData, (data) => {
+//     if (!data) return
+//     form.value.fullName = data.u_full_name || ''
+//     form.value.email = data.u_email || ''
+//     form.value.jobTitle = data.u_job_title || ''
+//     form.value.department = data.u_department || ''
+//     form.value.location = data.u_location || ''
+// }, { immediate: true })
 
 const initials = computed(() =>
     form.value.fullName
@@ -158,7 +157,7 @@ const { mutate: updateUser, isPending: isSaving } = useMutation({
     mutationFn: (payload: any) => updateProfile(payload),
     onSuccess: () => {
         toast.success('Profile updated successfully')
-        refetch()
+        // refetch()
         uploadedAvatarUrl.value = ''
         avatarPreview.value = ''
     },
@@ -175,31 +174,30 @@ function saveChanges() {
     updateUser(payload)
 }
 
-function cancelChanges() {
-    if (profileData.value) {
-        form.value.fullName = profileData.value.u_full_name || ''
-        form.value.jobTitle = profileData.value.u_job_title || ''
-        form.value.department = profileData.value.u_department || ''
-        form.value.location = profileData.value.u_location || ''
-    }
-    avatarPreview.value = ''
-    uploadedAvatarUrl.value = ''
-    isOpen.value = false
-}
+// function cancelChanges() {
+//     if (profileData.value) {
+//         form.value.fullName = profileData.value.u_full_name || ''
+//         form.value.jobTitle = profileData.value.u_job_title || ''
+//         form.value.department = profileData.value.u_department || ''
+//         form.value.location = profileData.value.u_location || ''
+//     }
+//     avatarPreview.value = ''
+//     uploadedAvatarUrl.value = ''
+//     isOpen.value = false
+// }
 
-// @ts-expect-error - Used in template
-function getStatusBadge(status: string) {
-    switch (status) {
-        case 'accepted':
-            return 'bg-green-500/20 text-green-600'
-        case 'pending':
-            return 'bg-orange-500/20 text-orange-600'
-        case 'rejected':
-            return 'bg-red-500/20 text-red-600'
-        default:
-            return 'bg-gray-500/20 text-gray-600'
-    }
-}
+// function getStatusBadge(status: string) {
+//     switch (status) {
+//         case 'accepted':
+//             return 'bg-green-500/20 text-green-600'
+//         case 'pending':
+//             return 'bg-orange-500/20 text-orange-600'
+//         case 'rejected':
+//             return 'bg-red-500/20 text-red-600'
+//         default:
+//             return 'bg-gray-500/20 text-gray-600'
+//     }
+// }
 
 const currentPlan = ref({
     name: 'Pro',
@@ -277,21 +275,18 @@ const pricingPlans = ref([
     // }
 ])
 
-// @ts-expect-error - Used in template
-function manageBilling() {
-    toast.info('Redirecting to Stripe billing portal...')
-    window.open('https://billing.stripe.com/p/login/test_00000000000000', '_blank')
-}
+// function manageBilling() {
+//     toast.info('Redirecting to Stripe billing portal...')
+//     window.open('https://billing.stripe.com/p/login/test_00000000000000', '_blank')
+// }
 
-// @ts-expect-error - Used in template
-function upgradePlan(plan: any) {
-    toast.info(`Redirecting to checkout for ${plan.name} plan...`)
-    window.open('https://checkout.stripe.com/test_00000000000000', '_blank')
-}
+// function upgradePlan(plan: any) {
+//     toast.info(`Redirecting to checkout for ${plan.name} plan...`)
+//     window.open('https://checkout.stripe.com/test_00000000000000', '_blank')
+// }
 
-// @ts-expect-error - Used in template
-function downgradePlan(plan: any) {
-    toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
-}
+// function downgradePlan(plan: any) {
+//     toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
+// }
 
 </script>
