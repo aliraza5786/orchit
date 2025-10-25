@@ -155,6 +155,7 @@
 
   </nav>
   <AccountSettingsModal v-model="showAccountSettings" />
+  <LimitExceededModal @upgrade="handleUgrade" />
 </template>
 
 <script setup lang="ts">
@@ -166,13 +167,17 @@ import { useTheme } from '../../../composables/useTheme'
 import Loader from '../../../components/ui/Loader.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 import AccountSettingsModal from '../modals/AccountSettingsModal.vue'
+import LimitExceededModal from '../modals/LimitExceededModal.vue'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
 const { theme, setTheme } = useTheme()
 
 /* Account Settings Modal */
 const showAccountSettings = ref(false)
-
+function handleUgrade() {
+  showAccountSettings.value = true;
+  workspaceStore.setLimitExccedModal(false)
+}
 /* Router */
 const router = useRouter()
 
@@ -246,10 +251,10 @@ function onClickOutside(e: MouseEvent) {
 }
 const route = useRoute()
 onMounted(() => {
-  if (route.query.stripePayment){
-    showAccountSettings.value=true
+  if (route.query.stripePayment) {
+    showAccountSettings.value = true
   }
-    document.addEventListener('click', onClickOutside)
+  document.addEventListener('click', onClickOutside)
   window.addEventListener('resize', onResize)
 })
 

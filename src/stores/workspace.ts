@@ -13,10 +13,13 @@ interface WorkspaceState {
   showFilter: boolean;
   selectedLaneIds: string[]; // Updated to use string[] since ids are strings
   transitions: any;
+  showLimitExccedModal: boolean;
+  limits:any
 }
 
 export const useWorkspaceStore = defineStore("workspace", {
   state: (): WorkspaceState => ({
+    showLimitExccedModal: false,
     workspace: null,
     showSettingPanel: false,
     showCreateLaneModal: false,
@@ -28,8 +31,15 @@ export const useWorkspaceStore = defineStore("workspace", {
     showFilter: false,
     selectedLaneIds: [],
     transitions: {},
+    limits:{}
   }),
   actions: {
+    setLimitExccedModal(i: any) {
+      this.showLimitExccedModal = i;
+    },
+    setLimit(i: any) {
+      this.limits = i;
+    },
     setTransition(i: any) {
       this.transitions = i;
     },

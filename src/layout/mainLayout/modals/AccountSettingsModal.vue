@@ -234,6 +234,8 @@ import { toast } from 'vue-sonner'
 import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
 import { useRoute, useRouter } from 'vue-router'
+import { useWorkspaceStore } from '../../../stores/workspace'
+const workspaceStore= useWorkspaceStore()
 const route = useRoute();
 const router = useRouter();
 const { data: currentPackage, refetch: reftechCurrentPackage } = useCurrentPackage();
@@ -283,6 +285,7 @@ const { data: profile, isLoading, refetch } = useQuery({
 
 })
 watch(() => currentPackage.value, () => {
+  workspaceStore.setLimit(currentPackage.value)
   if (route.query.stripePayment) {
     confirm({
       sessionId: currentPackage.value?.sessionId, packageId: currentPackage?.value.nextPackage?.id, interval: 'month'

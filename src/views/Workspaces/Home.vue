@@ -8,9 +8,15 @@
         </div>
 
         <div class="flex items-center gap-3">
-          <RouterLink to="/create-workspace">
+          <div to="/create-workspace" @click="() => {
+            if (workspaceStore.limits.features[1]?.usage.limit == workspaceStore.limits.features[1]?.limits.limit) {
+              workspaceStore.setLimitExccedModal(true)
+            }else{
+              router.push('/create-workspace')
+            }
+          }">
             <Button variant="primary">Create a workspace</Button>
-          </RouterLink>
+          </div>
         </div>
       </div>
 
@@ -36,7 +42,7 @@
         No Workspace
       </div>
 
-      <WorkspaceListTable v-else-if="currentView === 'list'"  />
+      <WorkspaceListTable v-else-if="currentView === 'list'" />
 
       <ProjectGallery v-else-if="currentView === 'gallery'" :projects="workspaces" :loading="isPending" />
     </div>
@@ -49,8 +55,10 @@ import Button from '../../components/ui/Button.vue'
 import ProjectGallery from '../../components/ui/ProjectGallery.vue'
 import WorkspaceListTable from './components/WorkspaceListTable.vue'
 import { useWorkspaces } from '../../queries/useWorkspace'
-
-
+import { useWorkspaceStore } from '../../stores/workspace'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+const workspaceStore = useWorkspaceStore()
 // 🔑 pagination + sort state
 const page = ref(1)
 const pageSize = ref(10)
