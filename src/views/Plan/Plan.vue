@@ -1,77 +1,80 @@
 <template>
-
-
-  <div v-if="sprintsList?.sprints.length > 0"
-    class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
-    <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
-      <Dropdown prefix="View By" v-model="selectedSprintId" :options="sprintsList?.sprints" variant="secondary"
-        @edit-option="openEditSprintModal" @delete-option="handleDeleteSprint">
-        <template #more>
-          <div @click="openSprintModal()"
-            class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
-            <i class="fa-solid fa-plus"></i> Add new
-          </div>
-        </template>
-      </Dropdown>
-      <div class="flex gap-3 items-center ">
-        <SearchBar placeholder="Search in Orchit AI space">
-        </SearchBar>
-        <Button size="sm">Start Sprint</Button>
-      </div>
-    </div>
-    <div class="space-y-6 p-4 w-full flex-auto overflow-y-auto">
-      <!-- Header -->
-
-      <div class="flex flex-col gap-6">
-        <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold">Sprint (100 Taks)</h2>
-
-          </div>
-
-          <SprintCard v-if="firstSprint" :sprint="firstSprint" @open-ticket="openTicket" @edit-sprint="openEditSprint"
-            @toggle-start="toggleStartSprint" @move-selected-to-backlog="moveSelectedToBacklog"
-            @delete-selected-sprint="(id) => deleteSelected('sprint', id)" @refresh="handleRefresh" />
-        </section>
-        <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold">Backlog (100 Taks)</h2>
-            <div class="flex items-center gap-2">
-              <button
-                class=" w-8 h-8 rounded-md border  cursor-pointer aspect-square text-sm border-border  hover:bg-gray-50"
-                @click="openCreateBacklogTicket">
-                <i class="text-text-primary fa-regular fa-plus"></i>
-              </button>
+  <template v-if="sprintDetailData?.status == 'active'">
+    <ActiveSprint />
+  </template>
+  <template v-else>
+    <div v-if="sprintsList?.sprints.length > 0"
+      class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
+      <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
+        <Dropdown prefix="View By" v-model="selectedSprintId" :options="sprintsList?.sprints" variant="secondary"
+          @edit-option="openEditSprintModal" @delete-option="handleDeleteSprint">
+          <template #more>
+            <div @click="openSprintModal()"
+              class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
+              <i class="fa-solid fa-plus"></i> Add new
             </div>
-          </div>
-          <BacklogTable :sorters="sorters" @move-selected-to-sprint="moveSelectedToSprint"
-            @delete-selected-backlog="deleteSelected('backlog')" @open-ticket="openTicket"
-            @ticket-moved-to-backlog="handleTicketMovedToBacklog" />
-        </section>
+          </template>
+        </Dropdown>
+        <div class="flex gap-3 items-center ">
+          <SearchBar placeholder="Search in Orchit AI space">
+          </SearchBar>
+          <Button size="sm" @click="openStartSprintModal">Start Sprint</Button>
+        </div>
+      </div>
+      <div class="space-y-6 p-4 w-full flex-auto overflow-y-auto">
+        <!-- Header -->
+
+        <div class="flex flex-col gap-6">
+          <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-semibold">Sprint (100 Taks)</h2>
+
+            </div>
+
+            <SprintCard :sprintId="selectedSprintId" v-if="firstSprint" :sprint="firstSprint" @open-ticket="openTicket"
+              @edit-sprint="openEditSprint" @toggle-start="toggleStartSprint"
+              @move-selected-to-backlog="moveSelectedToBacklog"
+              @delete-selected-sprint="(id) => deleteSelected('sprint', id)" @refresh="handleRefresh" />
+          </section>
+          <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
+            <div class="flex items-center justify-between">
+              <h2 class="text-sm font-semibold">Backlog ({{ backlogListData?.backlog_items?.length }} Taks)</h2>
+              <div class="flex items-center gap-2">
+                <button
+                  class=" w-8 h-8 rounded-md border  cursor-pointer aspect-square text-sm border-border  hover:bg-gray-50"
+                  @click="openCreateBacklogTicket">
+                  <i class="text-text-primary fa-regular fa-plus"></i>
+                </button>
+              </div>
+            </div>
+            <BacklogTable :sorters="sorters" @move-selected-to-sprint="moveSelectedToSprint"
+              @delete-selected-backlog="deleteSelected('backlog')" @open-ticket="openTicket"
+              @ticket-moved-to-backlog="handleTicketMovedToBacklog" />
+          </section>
+
+
+        </div>
 
 
       </div>
-
-
     </div>
-  </div>
-  <div v-else
-    class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
-    <div class="empty-state w-full flex flex-col h-full justify-center items-center ">
-      <img src="../../assets/emptyStates/sprint-plan.svg" class="mb-4" alt="backlog-plan">
-      <h6 class="text-sm text-text-primary font-semibold mb-1 text-center">Plan your sprint</h6>
-      <p class="text-sm text-text-primary/90 mb-3 max-w-120 text-center">Drag work items from the <span
-          class="font-bold">
-          Backlog
-        </span>
-        section or create new ones to plan the
-        work for this sprint. Select <span class="font-bold">Start sprint</span> when you're ready.</p>
-      <Button @click="openSprintModal">Create Sprint</Button>
+    <div v-else
+      class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
+      <div class="empty-state w-full flex flex-col h-full justify-center items-center ">
+        <img src="../../assets/emptyStates/sprint-plan.svg" class="mb-4" alt="backlog-plan">
+        <h6 class="text-sm text-text-primary font-semibold mb-1 text-center">Plan your sprint</h6>
+        <p class="text-sm text-text-primary/90 mb-3 max-w-120 text-center">Drag work items from the <span
+            class="font-bold">
+            Backlog
+          </span>
+          section or create new ones to plan the
+          work for this sprint. Select <span class="font-bold">Start sprint</span> when you're ready.</p>
+        <Button @click="openSprintModal">Create Sprint</Button>
+      </div>
     </div>
-  </div>
+  </template>
 
   <!-- Modals -->
-
   <ConfirmDeleteModal @click.stop="" v-model="showSprintDelete" title="Delete Sprint" itemLabel="Sprint"
     :itemName="selectedSprint?.title" :requireMatchText="selectedSprint?.title" confirmText="Delete Ticket"
     cancelText="Cancel" size="md" :loading="isDeleting" @confirm="handleDeleteTicket" @cancel="() => {
@@ -83,6 +86,9 @@
   <TicketModal v-model="ticketModalOpen" :editing="!!editingTicket" :ticket="editingTicket" @save="handleSaveTicket" />
   <SprintModal v-model="sprintModalOpen" @save="saveSprintHandler" :sprint="selectedSprint"
     :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" />
+  <StartSprintModal :sprint="selectedSprint" v-model="startsprintModalOpen" @save="startSprintHandler"
+    :creatingSprint="isStartingSprint || isUpdatingSprint2" />
+  <!-- <CreateBacklogTicket /> -->
 </template>
 
 <script setup lang="ts">
@@ -96,12 +102,16 @@ import { useBacklogStore, type Ticket } from './composables/useBacklogStore'
 import Button from '../../components/ui/Button.vue'
 import Dropdown from '../../components/ui/Dropdown.vue'
 import SearchBar from '../../components/ui/SearchBar.vue'
-import { useBacklogList, useCreateSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintDetail, useSprintList, useUpdateSprint } from '../../queries/usePlan'
+import { useBacklogList, useCreateSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintCard, useSprintDetail, useSprintList, useStartSprint, useUpdateSprint } from '../../queries/usePlan'
 import { toast } from 'vue-sonner'
 import { useWorkspaceId } from '../../composables/useQueryParams'
 import { useQueryClient } from '@tanstack/vue-query'
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue'
+import StartSprintModal from './modals/StartSprintModal.vue'
+import CreateBacklogTicket from './modals/CreateBacklogTicket.vue'
+import ActiveSprint from './components/ActiveSprint.vue'
 const { workspaceId } = useWorkspaceId();
+
 const {
   backlog, sprints,
   selectedBacklogIds, selectedSprintIds,
@@ -122,6 +132,32 @@ const handleDeleteTicket = () => {
 
   deleteSprint(selectedSprint.value?._id)
 }
+const { mutate: updateSprint2, isPending: isUpdatingSprint2 } = useUpdateSprint(
+  {
+    onSuccess: (data: any) => {
+      saveSprintMeta({ name: data.title })
+      startSprint({
+        id: selectedSprintId.value,
+
+      })
+      queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
+      startsprintModalOpen.value = false;
+    }
+  }
+)
+const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint()
+const startSprintHandler = (e: any) => {
+  console.log('helo', selectedSprint.value, e);
+
+  updateSprint2({
+    id: selectedSprintId.value,
+    payload: {
+      goal: e.goal,
+      start_date: e.start,
+      end_date: e.end
+    }
+  })
+}
 const { data: sprintsList, refetch: refetchSprints } = useSprintList(workspaceId.value);
 const { data: backlogListData, refetch: refetchBacklog } = useBacklogList(workspaceId);
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
@@ -131,16 +167,21 @@ const openSprintMadal = () => {
 }
 
 const { data: sprintDetailData, refetch: refetchSprintDetail } = useSprintDetail(firstSprintId)
+const startsprintModalOpen = ref(false);
+const openStartSprintModal = () => {
+  startsprintModalOpen.value = true
 
+}
+const { data: sprintData } = useSprintCard(selectedSprintId);
 // Convert API sprint to store Sprint format with cards
 const firstSprint = computed(() => {
-  const apiSprint = sprintsList?.value?.sprints[0]
+  const apiSprint = sprintData?.value?.backlog_items
   if (!apiSprint) return null
 
   // Map sprint cards from API
-  const sprintCards = (sprintDetailData?.value?.cards || []).map((c: any) => {
-    const v = c.card?.variables || {}
-    const id = c.card?._id || c.card_id
+  const sprintCards = (sprintData?.value?.backlog_items || []).map((c: any) => {
+    const v = c?.card?.variables || {}
+    const id = c?.card?._id || c.card_id
 
     return {
       id,
@@ -148,10 +189,10 @@ const firstSprint = computed(() => {
       summary: (v['card-title'] as string) || '(untitled)',
       type: 'Story' as const,
       status: mapStatus(String(v['card-status'] || '').trim()),
-      assignee: c.card?.assigned_to?.name || 'Unassigned',
+      assignee: c?.card?.assigned_to?.name || 'Unassigned',
       storyPoints: Number(c.story_points || 0),
       priority: mapPriority(String(v['priority'] || '').trim()),
-      createdAt: c.card?.created_at || new Date().toISOString(),
+      createdAt: c?.card?.created_at || new Date().toISOString(),
       description: (v['card-description'] as string) || '',
     }
   })
@@ -200,11 +241,13 @@ function handleRefresh() {
   refetchSprintDetail()
 }
 
-function handleTicketMovedToBacklog(ticketId: string, sprintId?: string) {
-  if (!sprintId) return
+function handleTicketMovedToBacklog(ticketId: string) {
+  console.log('>>> moving back to backlog');
+
+  if (!selectedSprintId) return
 
   removeCardFromSprint({
-    sprintId,
+    sprintId: selectedSprintId,
     cardId: ticketId
   })
 }

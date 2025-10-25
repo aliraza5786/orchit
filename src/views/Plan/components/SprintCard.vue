@@ -1,48 +1,51 @@
 <template>
-    <div class="rounded-lg flex flex-col">
-        <div class="h-[300px]" :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''"
-            @dragover.prevent @dragenter="onDragEnterSprint" @dragleave="onDragLeaveSprint"
-            @drop="onDropSprint">
-            <Table v-if="sprintTickets.length > 0" :row-draggable="true" class="h-full"
-                @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'sprint', sprint.id)"
-                @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="sprintTickets" :page-size="100" :hover="true"
-                striped :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
-                <template #select-header>
-                    <input type="checkbox" :checked="allSprintChecked(sprint.id)"
-                        @change="toggleAll('sprint', $event, sprint.id)" />
-                </template>
+  <div class="rounded-lg flex flex-col">
+    <div class="h-[300px]" :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''" @dragover.prevent
+      @dragenter="onDragEnterSprint" @dragleave="onDragLeaveSprint" @drop="onDropSprint">
+      <Table :showHeader="false" :pagination="false" v-if="sprintTickets.length > 0" :row-draggable="true"
+        class="h-full" @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'sprint', sprint.id)"
+        @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="sprintTickets" :page-size="100"
+        :hover="true" striped :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
+        <template #select-header>
+          <input type="checkbox" :checked="allSprintChecked(sprint.id)"
+            @change="toggleAll('sprint', $event, sprint.id)" />
+        </template>
 
-                <template #select="{ row }">
-                    <input type="checkbox" :checked="(selectedSprintIds[sprint.id] || []).includes((row as any).id)"
-                        @change="toggleOne('sprint', (row as any).id, $event, sprint.id)" />
-                </template>
+        <template #select="{ row }">
+          <input type="checkbox" :checked="(selectedSprintIds[sprint.id] || []).includes((row as any).id)"
+            @change="toggleOne('sprint', (row as any).id, $event, sprint.id)" />
+        </template>
 
-                <template #summary="{ row }">
-                    <div class="flex items-center gap-2">
-                        <span class="inline-block rounded-full border px-2 py-0.5 text-xs">{{ row.key }}</span>
-                        <span class="truncate">{{ row.summary }}</span>
-                    </div>
-                </template>
+        <template #summary="{ row }">
+          <div class="flex items-center gap-2">
+            <span class="inline-block rounded-full border px-2 py-0.5 text-xs">{{ row.key }}</span>
+            <span class="truncate">{{ row.summary }}</span>
+          </div>
+        </template>
 
-                <template #priority="{ row }">
-                    <span :class="priorityClass((row as any).priority)">{{ (row as any).priority }}</span>
-                </template>
+        <template #priority="{ row }">
+          <span :class="priorityClass((row as any).priority)">{{ (row as any).priority }}</span>
+        </template>
 
-                <template #drag="{ row }">
-                    <button class="cursor-grab" title="Drag to Backlog" draggable @click.stop
-                        @dragstart="onDragStart($event, row as unknown as Ticket, 'sprint', sprint.id)" @dragend="onDragEnd">↕</button>
-                </template>
-            </Table>
-            <div v-else class="empty-state flex flex-col h-full justify-center items-center border-dashed border border-border">
-                <img src="../../../assets/emptyStates/sprint-plan.svg" class="mb-4" alt="backlog-plan">
-                <h6 class="text-sm text-text-primary font-semibold mb-1 text-center">Plan your sprint</h6>
-                <p class="text-sm text-text-primary/90 mb-3 max-w-120 text-center">Drag work items from the <span class="font-bold"> Backlog
-                    </span>
-                    section or create new ones to plan the
-                    work for this sprint. Select <span class="font-bold">Start sprint</span> when you're ready.</p>
-            </div>
-        </div>
+        <template #drag="{ row }">
+          <button class="cursor-grab" title="Drag to Backlog" draggable @click.stop
+            @dragstart="onDragStart($event, row as unknown as Ticket, 'sprint', sprint.id)"
+            @dragend="onDragEnd">↕</button>
+        </template>
+      </Table>
+      <div v-else
+        class="empty-state flex flex-col h-full justify-center items-center border-dashed border border-border">
+        <img src="../../../assets/emptyStates/sprint-plan.svg" class="mb-4" alt="backlog-plan">
+        <h6 class="text-sm text-text-primary font-semibold mb-1 text-center">Plan your sprint</h6>
+        <p class="text-sm text-text-primary/90 mb-3 max-w-120 text-center">Drag work items from the <span
+            class="font-bold">
+            Backlog
+          </span>
+          section or create new ones to plan the
+          work for this sprint. Select <span class="font-bold">Start sprint</span> when you're ready.</p>
+      </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -52,7 +55,7 @@ import { useBacklogStore, priorityClass, type Sprint, type Ticket } from '../com
 import { useMoveCard } from '../../../queries/usePlan'
 import { toast } from 'vue-sonner'
 
-const props = defineProps<{ sprint: Sprint }>()
+const props = defineProps<{ sprint: Sprint, sprintId: any }>()
 const emit = defineEmits(['edit-sprint', 'toggle-start', 'open-ticket', 'move-selected-to-backlog', 'delete-selected-sprint', 'refresh'])
 
 const store = useBacklogStore()
@@ -128,7 +131,7 @@ function onDropSprint(e: DragEvent) {
 
     // Call API
     moveCardApi({
-      id: props.sprint.id,
+      id: props.sprintId,
       payload: {
         card_ids: [data.ticket.id],
         priority: data.ticket.priority.toLowerCase(),
@@ -141,14 +144,14 @@ function onDropSprint(e: DragEvent) {
 }
 
 const columns = [
-    { key: 'drag', label: '', width: 36 },
-    { key: 'select', label: '', width: 36 },
-    { key: 'summary', label: 'Summary', sortable: true },
-    { key: 'type', label: 'Type', width: 80, sortable: true },
-    { key: 'priority', label: 'Priority', width: 100, sortable: true },
-    { key: 'assignee', label: 'Assignee', width: 120, sortable: true },
-    { key: 'storyPoints', label: 'SP', width: 60, sortable: true, align: 'right' as const },
-    { key: 'status', label: 'Status', width: 120, sortable: true },
-    { key: 'createdAt', label: 'Created', width: 140, sortable: true },
+
+  { key: 'select', label: '', width: 36 },
+  { key: 'summary', label: 'Summary', sortable: true },
+  // { key: 'type', label: 'Type', width: 80, sortable: true },
+  { key: 'status', label: 'Status', width: 120, sortable: true },
+  // { key: 'priority', label: 'Priority', width: 100, sortable: true },
+  { key: 'assignee', label: 'Assignee', width: 120, sortable: true },
+  // { key: 'storyPoints', label: 'SP', width: 60, sortable: true, align: 'right' as const },
+  // { key: 'createdAt', label: 'Created', width: 140, sortable: true },
 ]
 </script>

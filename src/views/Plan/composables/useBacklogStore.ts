@@ -153,11 +153,13 @@ export function useBacklogStore() {
 
   const { mutate: moveCard } = useMoveCard({
     onSuccess: () => {
-      toast.success('Cards moved to sprint successfully')
+      toast.success("Cards moved to sprint successfully");
     },
     onError: (error: any) => {
-      toast.error('Failed to move cards: ' + (error.message || 'Unknown error'))
-    }
+      toast.error(
+        "Failed to move cards: " + (error.message || "Unknown error")
+      );
+    },
   });
 
   // Bulk actions
@@ -176,10 +178,10 @@ export function useBacklogStore() {
       moveCard({
         id: s.id,
         payload: {
-          card_ids: moved.map(t => t.id),
-          priority: moved[0]?.priority?.toLowerCase() || 'medium',
-          story_points: moved.reduce((sum, t) => sum + (t.storyPoints || 0), 0)
-        }
+          card_ids: moved.map((t) => t.id),
+          priority: moved[0]?.priority?.toLowerCase() || "medium",
+          story_points: moved.reduce((sum, t) => sum + (t.storyPoints || 0), 0),
+        },
       });
     }
   }

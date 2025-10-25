@@ -1,3 +1,4 @@
+import { useRoute } from "vue-router";
 import { request } from "../libs/api";
 import { useApiMutation, useApiQuery } from "../libs/vq";
 
@@ -24,8 +25,10 @@ export const useUpgradePackage = (options = {}) =>
       ...(options as any),
     } as any
   );
-export const confirmPayment = (options = {}) =>
-  useApiMutation<any, any>(
+export const confirmPayment = (payload: any, options = {}) => {
+  const route= useRoute()
+  console.log(payload,route.query.session_id, '>>>>');
+  return useApiMutation<any, any>(
     {
       key: ["package-payment-confirm"],
     } as any,
@@ -34,8 +37,9 @@ export const confirmPayment = (options = {}) =>
         request({
           url: `billing/confirm-payment`,
           method: "POST",
-          data: vars,
+          data: { ...payload, ...vars, sessionId:route.query.session_id },
         }),
       ...(options as any),
     } as any
   );
+};

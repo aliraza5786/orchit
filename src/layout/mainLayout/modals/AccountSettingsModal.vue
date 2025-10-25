@@ -101,7 +101,7 @@
                   </div>
                   <div class="text-right">
                     <p class="text-2xl font-bold text-text-primary">{{ currentPackage?.package?.currencySymbol +
-                      currentPackage?.package?.amount }}</p>
+                      currentPackage?.package?.pricing[0]?.amount }}</p>
                     <p class="text-xs text-text-secondary">per {{ currentPlan?.billingCycle === 'Monthly' ? 'month' :
                       'year' }}</p>
                   </div>
@@ -133,9 +133,8 @@
               </div>
 
 
-              <div class="bg-bg-body gap-6 items-center flex  rounded-xl p-6 border border-border">
-
-
+              <div class="bg-bg-body gap-6 items-center flex  rounded-xl p-6 border border-border"
+                v-if="currentPackage?.nextPackage">
                 <div class=" border-r border-border pr-6 min-w-80">
 
                   <h1 class="mb-2 uppercase">Upgrade to {{ currentPackage?.nextPackage?.name }}</h1>
@@ -154,10 +153,10 @@
                     </div>
                   </div>
                   <!-- <form action="/create-checkout-session" method="POST"> -->
-                  <Button class="mt-3 block w-full" @click="pay(currentPackage?.nextPackage)"> UPGRADE</Button>
+                  <Button class="mt-3 block w-full uppercase" @click="pay(currentPackage?.nextPackage)"> {{ isUpgrading
+                    ? 'Upgrading...' : 'UPGRADE' }}</Button>
                   <!-- </form> -->
                 </div>
-
                 <div>
 
                   <h3 class="text-lg font-semibold text-text-primary mb-3">Plan Features</h3>
@@ -174,6 +173,7 @@
             </div>
           </div>
         </template>
+
         <!-- 
         <template #Pricing>
           <div class="py-4">
@@ -213,7 +213,8 @@
               </div>
             </div>
           </div>
-        </template> -->
+        </template>
+         -->
       </Tabs>
     </div>
   </BaseModal>
@@ -232,23 +233,33 @@ import { useUploadFile } from '../../../queries/useCommon'
 import { toast } from 'vue-sonner'
 import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 const route = useRoute();
-const { mutate: confirm } = confirmPayment()
-onMounted(() => {
-  // if (route.query.stripePayment) {
-  //   confirm()
-  // }
+const router = useRouter();
+const { data: currentPackage, refetch: reftechCurrentPackage } = useCurrentPackage();
+const sessionId = route.query.session_id;
 
+const { mutate: confirm } = confirmPayment({
+  sessionId: sessionId, interval: 'month'
+}, {
+  onSuccess: () => {
+    reftechCurrentPackage();
+    router.push('/')
+  }
 })
-const { mutate: upgradePackage } = useUpgradePackage({
+onMounted(async () => {
+  const sessionId = route.query.session_id;
+  console.log(route.query.session_id, sessionId);
+  if (sessionId) {
+    confirm({ packageId: await currentPackage?.value.nextPackage?.id, })
+  }
+})
+const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
   onSuccess: async (data: any) => {
     window.open(data?.checkoutUrl)
   }
 })
 function pay(p: any) {
-  console.log(p?.id, '>>>>');
-
   upgradePackage({
     "packageId": p?.id,
     "interval": "month",
@@ -271,7 +282,6 @@ const { data: profile, isLoading, refetch } = useQuery({
   enabled: computed(() => props.modelValue),
 
 })
-const { data: currentPackage } = useCurrentPackage();
 watch(() => currentPackage.value, () => {
   if (route.query.stripePayment) {
     confirm({
@@ -493,4 +503,5 @@ function upgradePlan(plan: any) {
 function downgradePlan(plan: any) {
   toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
 }
+
 </script>

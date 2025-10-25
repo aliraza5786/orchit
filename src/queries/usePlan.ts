@@ -16,12 +16,24 @@ export const useSprintList = (workspace_id: any, options = {}) => {
     ...options,
   });
 };
+export const useSprintCard = (id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["sprint-cards", id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `sprints/${unref(id)}/backlog`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+  });
+};
 export const useSprintDetail = (id: any, options = {}) => {
   return useQuery({
     queryKey: ["sprint-detail", id],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `sprints/detail/${unref(id)}`,
+        url: `sprints/detail/${unref(id)}?include_cards=true`,
         method: "GET",
         signal,
       }),
@@ -88,6 +100,21 @@ export const useUpdateSprint = (options = {}) =>
       ...(options as any),
     } as any
   );
+export const useStartSprint = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["start-sprint"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/sprints/${vars.id}/start`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
 
 export const useDeleteSprint = (options = {}) =>
   useApiMutation<any, any>(
@@ -112,8 +139,9 @@ export const useRemoveCardFromSprint = (options = {}) =>
     {
       mutationFn: (vars: { sprintId: string; cardId: string }) =>
         request({
-          url: `/sprints/${vars.sprintId}/cards/${vars.cardId}`,
-          method: "DELETE",
+          url: `sprints/${unref(vars.sprintId)}/cards/remove `,
+          method: "POST",
+          data: { card_ids: [vars.cardId] },
         }),
       ...(options as any),
     } as any

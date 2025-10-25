@@ -1,24 +1,21 @@
 <template>
   <section class="space-y-3 flex flex-col overflow-y-auto">
-    <!-- Empty state -->
-    <div v-if="!isBacklogListPending && normalizedBacklog.length === 0"
-      class="empty-state flex flex-col justify-center items-center">
-      <img src="../../../assets/emptyStates/plan-backlog.svg" class="mb-4" alt="backlog-plan" />
-      <h6 class="text-sm text-text-primary font-semibold mb-1">Get started in the backlog</h6>
-      <p class="text-sm text-text-primary/90 mb-3">Plan and start a sprint to see issues here.</p>
-      <Button>Add Task Backlog</Button>
-    </div>
-
     <!-- Table -->
-    <div v-else class="rounded-lg border h-[300px] border-border bg-bg-body flex flex-col"
+    <div class="rounded-lg border h-[300px] border-border  flex flex-col"
       :class="dropOverBacklog ? 'ring-2 ring-blue-400' : ''" @dragover.prevent @dragenter="dropOverBacklog = true"
       @dragleave="dropOverBacklog = false" @drop="onDropBacklog($event)">
-      <Table :showHeader="false"
-      :pagination="false"
-      class="flex-grow h-full" :rowDraggable="true"
-        @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')" @row-dragend="({ $event }: any) => onDragEnd($event)"
-        :columns="columns" :rows="normalizedBacklog" :page-size="20" :hover="true" striped
-        :itemKey="(row: any) => row.id" :sorters="sorters" @row-click="({ row }: any) => $emit('open-ticket', row)">
+      <div v-if="!isBacklogListPending && normalizedBacklog.length === 0"
+        class="empty-state flex flex-col justify-center items-center h-full">
+        <img src="../../../assets/emptyStates/plan-backlog.svg" class="mb-4" alt="backlog-plan" />
+        <h6 class="text-sm text-text-primary font-semibold mb-1">Get started in the backlog</h6>
+        <p class="text-sm text-text-primary/90 mb-3">Plan and start a sprint to see issues here.</p>
+        <Button>Add Task Backlog</Button>
+      </div>
+      <Table v-else :showHeader="false" :pagination="false" class="flex-grow h-full" :rowDraggable="true"
+        @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')"
+        @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="normalizedBacklog"
+        :page-size="20" :hover="true" striped :itemKey="(row: any) => row.id" :sorters="sorters"
+        @row-click="({ row }: any) => $emit('open-ticket', row)">
         <template #select-header>
           <input type="checkbox" :checked="allBacklogChecked" @change="toggleAll('backlog', $event)" />
         </template>

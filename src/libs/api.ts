@@ -47,7 +47,9 @@ function serializeClone<T>(value: T): T {
   try {
     // @ts-ignore
     if (typeof structuredClone === "function") return structuredClone(value);
-  } catch {/* ignore */}
+  } catch {
+    /* ignore */
+  }
   return JSON.parse(JSON.stringify(value));
 }
 
@@ -94,6 +96,8 @@ export async function request<T = any>(args: {
   extract?: DataExtractor;
 }): Promise<T> {
   try {
+    console.log(args.data, ">>>");
+
     const res = await api.request({
       url: args.url,
       method: args.method ?? "GET",
@@ -106,7 +110,6 @@ export async function request<T = any>(args: {
     const picked = (args.extract ?? defaultExtractor)<T>(res);
     // IMPORTANT: no deep clone here
     return picked;
-    
   } catch (err) {
     // Keep errors plain/cloneable for devtools/extension messaging
     throw normalizeAxiosError(err);
