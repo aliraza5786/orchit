@@ -125,7 +125,7 @@
                       <div class="h-full bg-accent rounded-full transition-all"
                         :style="{ width: item?.usage.percentage + '%' }"></div>
                     </div>
-                    <p class="text-xs text-text-secondary mt-1">{{ item?.usage.limits?.storageGB }} {{item?.limits?.unit}} remaining</p>
+                    <!-- <p class="text-xs text-text-secondary mt-1">{{ item?.usage.limits?.storageGB }} {{item?.limits?.unit}} remaining</p> -->
                   </div>
 
 
