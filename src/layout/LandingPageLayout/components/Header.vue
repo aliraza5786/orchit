@@ -1,9 +1,10 @@
 <template>
-    <header
-        class="w-full bg-body text-primary border-b lg:border-b-0" :class="theme === 'dark'? 'border-gray-800':'border-gray-300'">
-        <div class="mx-auto px-10 border-gray-800 " :class="theme === 'dark'? 'lg:border-b':'border-b-0'">
-            <nav
-                class="flex items-center justify-between py-3">
+    <header class="w-full bg-body text-primary border-b"
+        :class="theme === 'dark' ? 'border-gray-800' : 'border-gray-300'">
+        <div class="mx-auto px-10">
+            <nav class="flex items-center justify-between "
+            :class="theme === 'dark'? 'py-[12px]':'py-[11px]' "
+            >
                 <!-- Logo Section -->
                 <RouterLink to="/" class="transition-opacity duration-300 hover:opacity-80">
                     <img :src="theme === 'dark'
@@ -16,9 +17,9 @@
                 <ul class="hidden lg:flex items-center gap-[24px]">
                     <li v-for="(item, index) in navItems" :key="index">
                         <RouterLink :to="item.link" :class="[
-                            'transition-all duration-300 text-primary font-lato text-[16px] hover:opacity-70 hover:translate-y-[-2px]',
+                            'active_style transition-all relative duration-300 text-primary font-lato text-[16px] hover:opacity-70 hover:translate-y-[-2px]',
                             isActive(item.link)
-                                ? 'font-bold'
+                                ? 'font-bold is_active text-accent'
                                 : 'font-normal',
                         ]">
                             {{ item.label }}
@@ -29,29 +30,25 @@
                 <!-- Get Started Button -->
                 <div class="flex gap-3">
                     <div class="lg:flex hidden items-center gap-[12px] md:gap-[16px]">
-                    <!-- Login Link -->
-                    <RouterLink
-                        to="/login"
-                        class="  text-primary font-lato text-[14px] lg:text-[16px] font-medium transition-all duration-300 hover:opacity-70 px-[8px] py-[8px]">
-                        Login
-                    </RouterLink>
+                        <!-- Login Link -->
+                        <RouterLink to="/login"
+                            class="  text-primary font-lato text-[14px] lg:text-[16px] font-medium transition-all duration-300 hover:opacity-70 px-[8px] py-[8px]">
+                            Login
+                        </RouterLink>
 
-                    <!-- Get Started Button -->
-                    <button
-                        @click="handleGetStarted"
-                        class="flex text-primary items-center gap-[4px] border border rounded-full px-[15px] py-[8px] font-lato text-[14px] transition-all duration-300 leading-[100%] hover:bg-accent hover:text-accent-text hover:border-accent hover:scale-105 hover:cursor-pointer">
-                        Get Started
-                        <div class="flex items-center gap-[4px]">
-                            <img :src="googleLogo" alt="Google"
-                                class="w-[18px] md:w-[24px]" />
-                            <img :src="theme === 'dark'
+                        <!-- Get Started Button -->
+                        <button @click="handleGetStarted"
+                            class="flex text-primary items-center gap-[4px] border rounded-full px-[15px] py-[8px] font-lato text-[14px] transition-all duration-300 leading-[100%] hover:bg-accent hover:text-accent-text hover:border-accent hover:scale-105 hover:cursor-pointer">
+                            Get Started
+                            <div class="flex items-center gap-[4px]">
+                                <img :src="googleLogo" alt="Google" class="w-[18px] md:w-[24px]" />
+                                <img :src="theme === 'dark'
                                     ? darkApple
                                     : lightApple
-                                " alt="Apple icon" class="w-[20px] md:w-[24px]"
-                     />
-                        </div>
-                    </button>
-                </div>
+                                    " alt="Apple icon" class="w-[20px] md:w-[24px]" />
+                            </div>
+                        </button>
+                    </div>
                     <!-- Mobile Hamburger -->
                     <button class="lg:hidden focus:outline-none font-bold text-text-primary text-[20px]"
                         @click="toggleMobileMenu">
@@ -62,7 +59,8 @@
 
             </nav>
             <!-- Mobile Menu -->
-            <div v-show="true" class="mobile_nav fixed bg-bg-body inset-0 z-50 lg:hidden transform transition-transform  duration-400 ease-in-out"
+            <div v-show="true"
+                class="mobile_nav fixed bg-bg-body inset-0 z-50 lg:hidden transform transition-transform  duration-400 ease-in-out"
                 :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'">
                 <button @click="toggleMobileMenu"
                     class="mb-4 font-extrabold text-white text-xl text-left bg-[#C74CF0] w-13 h-13 flex justify-center items-center ">
@@ -76,34 +74,30 @@
                         </RouterLink>
                     </li>
                     <li>
-                        
-                        
 
-                    <div class="flex items-center gap-[12px] md:gap-[16px]">
-                    <!-- Login Link -->
-                    <RouterLink
-                        to="/login"
-                        class="text-primary font-lato text-[14px] lg:text-[16px] font-medium transition-all duration-300 hover:opacity-70 px-[8px] py-[8px]">
-                        Login
-                    </RouterLink>
 
-                    <!-- Get Started Button -->
-                    <button
-                        @click="handleGetStarted"
-                        class="flex text-primary items-center gap-[4px] border border rounded-full px-[15px] py-[8px] font-lato text-[14px] transition-all duration-300 leading-[100%] hover:bg-accent hover:text-accent-text hover:border-accent hover:scale-105 hover:cursor-pointer">
-                        Get Started
-                        <div class="flex items-center gap-[4px]">
-                            <img :src="googleLogo" alt="Google"
-                                class="w-[18px] md:w-[24px]" />
-                            <img :src="theme === 'dark'
-                                    ? darkApple
-                                    : lightApple
-                                " alt="Apple icon" class="w-[20px] md:w-[24px]"
-                     />
+
+                        <div class="flex items-center gap-[12px] md:gap-[16px]">
+                            <!-- Login Link -->
+                            <RouterLink to="/login"
+                                class="text-primary font-lato text-[14px] lg:text-[16px] font-medium transition-all duration-300 hover:opacity-70 px-[8px] py-[8px]">
+                                Login
+                            </RouterLink>
+
+                            <!-- Get Started Button -->
+                            <button @click="handleGetStarted"
+                                class="flex text-primary items-center gap-[4px] border rounded-full px-[15px] py-[8px] font-lato text-[14px] transition-all duration-300 leading-[100%] hover:bg-accent hover:text-accent-text hover:border-accent hover:scale-105 hover:cursor-pointer">
+                                Get Started
+                                <div class="flex items-center gap-[4px]">
+                                    <img :src="googleLogo" alt="Google" class="w-[18px] md:w-[24px]" />
+                                    <img :src="theme === 'dark'
+                                        ? darkApple
+                                        : lightApple
+                                        " alt="Apple icon" class="w-[20px] md:w-[24px]" />
+                                </div>
+                            </button>
                         </div>
-                    </button>
-                </div>
-                  </li>
+                    </li>
                 </ul>
 
             </div>
@@ -127,7 +121,7 @@ const router = useRouter();
 const navItems = [
     { label: "Home", link: "/home" },
     { label: "Pricing", link: "/pricing" },
-    { label: "Contact Sales", link: "/contact-sales" },
+    { label: "Contact Sales", link: "/contact-us" },
 ];
 
 const isActive = (link: string) => route.path === link;
@@ -140,9 +134,31 @@ const toggleMobileMenu = () => {
 };
 //  Close menu when link is clicked
 const closeMenu = () => {
-    mobileMenuOpen.value = false;}
+    mobileMenuOpen.value = false;
+}
 
 const handleGetStarted = () => {
     router.push('/register');
 };
 </script>
+
+<style scoped>
+.active_style {
+    position: relative;
+}
+
+.active_style::after {
+    position: absolute;
+    width: 0%;
+    height: 1px;
+    background-color: #9356c5;
+    bottom: -30px;
+    left: 0;
+    content: '';
+    transition: width 0.4s ease;
+}
+
+.active_style.is_active::after {
+    width: 100%;
+}
+</style>
