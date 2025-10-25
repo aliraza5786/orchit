@@ -1,4 +1,4 @@
-<template>
+<template> 
   <div class="flex min-h-screen ">
     <!-- Sidebar -->
     <aside :class="[
@@ -111,8 +111,8 @@
           </div>
 
           <div v-else>
-            <StartGuide v-if="activeTab.slug == 'start-guide'" />
-            <div v-else>
+            <!-- <StartGuide v-if="activeTab.slug == 'start-guide'" /> -->
+            <div>
               <h2 class="font-manrope text-text-primary font-bold text-[24px] lg:text-[34px] leading-[34px] lg:leading-[40px] tracking-[-1px] mb-[10px] lg:mb-[16px]">{{ activeTab.label }}</h2>
               <KnowledgeArticle :slug="activeTab.slug" />
             </div>
@@ -188,7 +188,7 @@ const sections = computed(() => {
       },
     ],
   };
-  return [manualSection, ...apiSections,];
+  return [...apiSections,];
 });
 
 const route = useRoute();
