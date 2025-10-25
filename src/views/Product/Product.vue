@@ -25,7 +25,7 @@
             </div>
         </div>
         <KanbanSkeleton v-show="isPending" />
-        <div v-show="!isPending " class="flex  overflow-x-auto gap-3 p-4">
+        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
@@ -66,8 +66,7 @@
         }" />
     <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
         v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
-    <SidePanel v-if="selectedCard?._id" :details="selectedCard"
-        @close="() => { selectCardHandler({ variables: {} }) }"
+    <SidePanel v-if="selectedCard?._id" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
         :showPanel="selectedCard?._id ? true : false" />
     <CreateSheetModal v-model="isCreateSheetModal" />
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
@@ -120,10 +119,16 @@ const { data } = useSheets({
     workspace_module_id: moduleId
 });
 const sheetId = computed(() => data.value ? data.value[0]?._id : '')
-const selected_sheet_id = ref<any>(sheetId);
-const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
-const selected_view_by = ref(viewBy);
+watch(sheetId, () => {
+    selected_sheet_id.value = sheetId.value;
+})
 
+const selected_sheet_id = ref<any>();
+const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
+const selected_view_by = ref();
+watch(viewBy, () => {
+    selected_view_by.value = viewBy.value;
+})
 const workspaceStore = useWorkspaceStore();
 
 // usage

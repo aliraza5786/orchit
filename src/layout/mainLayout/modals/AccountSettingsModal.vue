@@ -101,7 +101,7 @@
                   </div>
                   <div class="text-right">
                     <p class="text-2xl font-bold text-text-primary">{{ currentPackage?.package?.currencySymbol +
-                      currentPackage?.package?.pricing[0]?.amount }}</p>
+                      currentPackage?.package?.amount }}</p>
                     <p class="text-xs text-text-secondary">per {{ currentPlan?.billingCycle === 'Monthly' ? 'month' :
                       'year' }}</p>
                   </div>
@@ -119,13 +119,13 @@
                         <span class="text-xs font-medium text-text-secondary">{{ item.description }}</span>
                       </div>
                       <span class="text-sm text-text-secondary">{{ item?.usage.limit }} {{ item?.usage.unit }} / {{
-                        usageData.storage.limit }} GB</span>
+                        item.limits.limit }} {{item?.limits?.unit}}</span>
                     </div>
                     <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
                       <div class="h-full bg-accent rounded-full transition-all"
-                        :style="{ width: usageData.storage.percentage + '%' }"></div>
+                        :style="{ width: item?.usage.percentage + '%' }"></div>
                     </div>
-                    <p class="text-xs text-text-secondary mt-1">{{ item?.usage.limits?.storageGB }} GB remaining</p>
+                    <p class="text-xs text-text-secondary mt-1">{{ item?.usage.limits?.storageGB }} {{item?.limits?.unit}} remaining</p>
                   </div>
 
 

@@ -2,12 +2,12 @@
     <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
             <Dropdown v-model="selected_sheet_id" :options="transformedData" variant="secondary">
-                <template #more>
+                <!-- <template #more>
                     <div @click="createSheet()"
                         class="  capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
                         <i class="fa-solid fa-plus"></i> Add new
                     </div>
-                </template>
+                </template> -->
             </Dropdown>
             <!-- <div class="flex gap-3 items-center ">
                 <Dropdown prefix="View by" v-model="selected_view_by" :options="variables" variant="secondary">

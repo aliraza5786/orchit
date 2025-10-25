@@ -12,7 +12,7 @@
 
                         {{ title }}
                     </h3>
-                    <p class="text-xs text-text-secondary ">{{ subtitle }}</p>
+                    <p class="text-xs text-text-secondary text-left ">{{ subtitle }}</p>
                 </div>
                 <span v-if="status != 'completed'" class="text-xs border rounded-full px-2 py-0.5"
                     :class="getColor(status)">
