@@ -1,4 +1,4 @@
-<template> 
+<template>
   <div class="flex min-h-screen ">
     <!-- Sidebar -->
     <aside :class="[
@@ -8,16 +8,18 @@
 
       <!-- Scrollable Sidebar -->
       <div
-        class="h-screen  flex flex-col justify-between bg-bg-body z-50 overflow-y-auto bg-bg-primary custom-scrollbar transition-all"
-        :class="theme === 'dark' ? 'dark_scroll' : 'light_scroll'">
-
+        class="h-screen  flex flex-col md:border-r justify-between bg-bg-body z-50 overflow-y-auto bg-bg-primary custom-scrollbar transition-all"
+        :class="theme === 'dark' ? 'dark_scroll border-border-input' : 'light_scroll'">
         <div>
           <!-- Header -->
           <div class="flex items-center justify-between px-4 py-4 border-b border-border-input md:border-0">
             <div
-              class="text-[16px] font-manrope leading-[24px] font-semibold text-text-secondary flex items-center gap-2">
-              <i class="fa-regular fa-house text-text-primary"></i>
-              Docs
+              class="text-[14px] font-manrope leading-[24px] font-semibold text-text-secondary flex gap-4  w-full items-center">
+              <RouterLink to="/"><img :src="theme === 'dark' ? darkLogo : lightLogo" alt="logo" fetchpriority="high"
+                  width="100px"></RouterLink>
+              <span class="border-l-2 border-border-input ps-4 pb-2 "> <i
+                  class="fa-regular fa-house text-text-primary"></i>
+                Docs</span>
             </div>
             <button @click="sidebarOpen = false" class="md:hidden text-text-primary ">
               <i class="fa-solid fa-xmark font-bold"></i>
@@ -25,8 +27,7 @@
           </div>
 
           <!-- Search -->
-          <div class="p-4 hidden md:block"
-            :class="theme === 'dark' ? 'border-y border-border-input' : 'border-y border-black'">
+          <div class="px-4 hidden md:block">
             <div class="relative">
               <i class="fa-light fa-magnifying-glass absolute top-[11px] left-[10px] text-text-secondary"></i>
               <input type="text" placeholder="Search..." @click="openSearch"
@@ -44,34 +45,26 @@
           </div>
 
           <!-- Navigation -->
-          <nav v-else class="px-2 py-4 space-y-2 w-64 md:w-[100%]">
+          <nav v-else class="px-2 py-6 space-y-2 w-64 md:w-[100%]">
             <div v-for="(section, sIndex) in sections" :key="sIndex" class="space-y-1 mb-[24px]">
-              <h3 class="text-[16px] font-semibold uppercase font-manrope px-2 mb-1 flex justify-between items-center"
+              <h3 class="text-[14px] font-semibold uppercase font-manrope px-2 mb-1 flex justify-between items-center"
                 :class="theme === 'dark' ? 'text-text-secondary' : 'text-black'">
                 {{ section.title }}
                 <i class="fa-solid fa-chevron-right text-[8px]"
-                :class="theme === 'dark' ? 'text-text-secondary' : 'text-black'"
-                ></i>
+                  :class="theme === 'dark' ? 'text-text-secondary' : 'text-black'"></i>
               </h3>
               <div v-for="(item, iIndex) in section.items" :key="iIndex" @click="selectTab(item)"
-                class="cursor-pointer ml-2 mr-1 px-3 py-2 font-medium rounded-lg text-[14px] font-manrope  transition-colors"
+                class="cursor-pointer ml-2 border-l px-3 py-2 mb-0  font-bold text-[14px] font-manrope transition-colors"
                 :class="{
-                  'bg-bg-lavender font-semibold text-text-primary': activeTab.slug === item.slug,
-                  'text-text-secondary hover:bg-bg-lavender': activeTab.slug !== item.slug && theme === 'dark',
-                  'text-black hover:bg-black hover:text-white': activeTab.slug !== item.slug && theme !== 'dark',
-                  'text-white bg-black hover:bg-black': activeTab.slug == item.slug && theme !== 'dark',
+                  'text-[#9356c5] ': activeTab.slug === item.slug,
+                  'text-text-secondary': activeTab.slug !== item.slug && theme === 'dark',
+                  'text-black hover:text-black': activeTab.slug !== item.slug && theme !== 'dark',
+
                 }">
                 {{ item.label }}
               </div>
             </div>
           </nav>
-        </div>
-
-        <!-- Footer -->
-        <div class="border-t border-border-input p-3 text-[14px] leading-[24px] font-manrope"
-          :class="theme === 'dark' ? 'text-text-secondary' : 'text-black'">
-          <p class=" cursor-pointer transition-colors">Linear Developers</p>
-          <p class=" cursor-pointer transition-colors">Contact support</p>
         </div>
       </div>
 
@@ -81,6 +74,7 @@
     <!-- ======== Main Content ======== -->
     <main class="flex-1 mx-auto h-screen bg-bg-body overflow-y-auto bg-bg-primary custom-scrollbar transition-all"
       :class="theme === 'dark' ? 'dark_scroll' : 'light_scroll'">
+
       <!-- Mobile Header -->
       <header class="md:hidden flex items-center justify-between p-4  bg-bg-body sticky top-0 z-40"
         :class="theme === 'dark' ? 'border-b border-border-input' : 'border-b border-black'">
@@ -90,15 +84,24 @@
           </button>
           <span class="text-xl pb-1"> |</span>
           <div
-            class="text-[16px] font-manrope leading-[24px] font-semibold text-text-secondary flex items-center gap-2">
+            class="text-[14px] font-manrope leading-[24px] font-semibold text-text-secondary flex items-center gap-2">
             <i class="fa-regular fa-house text-text-primary"></i>
             Docs
           </div>
         </div>
+        <RouterLink to="/"><img class="me-25" :src="theme === 'dark' ? darkLogo : lightLogo" alt="logo" fetchpriority="high"
+            width="100px" ></RouterLink>
+
         <button @click="openSearch"><i
             class="fa-regular fa-magnifying-glass text-text-primary text-[18px] "></i></button>
       </header>
 
+      <!-- web header -->
+      <header class="py-[18px] hidden md:block border-b-1 border-border-input sticky top-0 z-50 bg-bg-body/90 bg-blur-sm">
+        <h2
+          class="font-manrope text-text-primary text-center font-bold text-[24px]  leading-[34px] tracking-[-1px] m-0">
+          {{ activeTab.label }}</h2>
+      </header>
       <div class="p-[15px] md:p-10 max-w-[1088px] mx-auto">
         <div class="mb-8">
 
@@ -112,10 +115,7 @@
 
           <div v-else>
             <!-- <StartGuide v-if="activeTab.slug == 'start-guide'" /> -->
-            <div>
-              <h2 class="font-manrope text-text-primary font-bold text-[24px] lg:text-[34px] leading-[34px] lg:leading-[40px] tracking-[-1px] mb-[10px] lg:mb-[16px]">{{ activeTab.label }}</h2>
-              <KnowledgeArticle :slug="activeTab.slug" />
-            </div>
+            <KnowledgeArticle :slug="activeTab.slug" />
           </div>
 
         </div>
@@ -144,14 +144,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watchEffect, computed, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, watchEffect, computed, nextTick } from 'vue'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import StartGuide from './components/StartGuide.vue'
 import { useTheme } from "../../composables/useTheme";
 const { theme } = useTheme();
 import { useActiveKnowledgeCategories } from "../../queries/useKnowledge";
 import KnowledgeSidebarSkeleton from "./skelton/KnowledgeSidebarSkeleton.vue"
 import KnowledgeArticle from './components/KnowledgeArticle.vue';
+import lightLogo from '@assets/global/light-logo.png';
+import darkLogo from '@assets/global/dark-logo.png';
 
 /**
  * Fetch API data
@@ -242,7 +244,7 @@ function closeSearch() {
 }
 </script>
 
-<style scoped> 
+<style scoped>
 /* ===== Scrollbar Styling (only for this page) ===== */
 /* Light mode */
 .light_scroll.custom-scrollbar::-webkit-scrollbar {

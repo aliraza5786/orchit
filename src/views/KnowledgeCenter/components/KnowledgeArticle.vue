@@ -28,35 +28,35 @@ const { data: articleData, isLoading, isError } = useKnowledgeBySlug(slugRef)
 
 <style>
 .artile_content h2 {
-  font-size: 34px;
+  font-size: 28px;
   margin: 15px 0px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 40px;
+  line-height: 34px;
   font-family: manrope;
   letter-spacing: -1px;
 }
 .artile_content h2 *{
-  font-size: 34px; 
+  font-size: 28px; 
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 40px;
+  line-height: 34px;
   font-family: manrope;
   letter-spacing: -1px;
 }
 
 .artile_content h3 {
-  font-size: 32px;
+  font-size: 24px;
   margin: 15px 0px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 40px;
+  line-height: 30px;
 }
 .artile_content h3 * {
-  font-size: 32px; 
+  font-size: 24px; 
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 40px;
+  line-height: 30px;
 }
 
 .artile_content h4 {
@@ -85,8 +85,11 @@ const { data: articleData, isLoading, isError } = useKnowledgeBySlug(slugRef)
 .artile_content p strong {
   font-size: 16px;
   line-height: 24px;
-  margin-bottom: 10px;
-  color: var(--color-text-primary);
+  margin-bottom: 10px; 
+  color: var(--color-text-primary) !important;
+}
+.artile_content p span{
+  color: var(--color-text-secondary);
 }
 
 .artile_content ul {
@@ -110,7 +113,7 @@ const { data: articleData, isLoading, isError } = useKnowledgeBySlug(slugRef)
   line-height: 24px;
   font-weight: 500;
   font-family: manrope;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary) !important;
 }
 
 
@@ -144,10 +147,12 @@ const { data: articleData, isLoading, isError } = useKnowledgeBySlug(slugRef)
 
 @media(max-width:768px) {
   .artile_content p {
-    font-size: 14px;
-    line-height: 20px;
+    font-size: 14px; 
     margin-bottom: 10px;
     color: var(--color-text-secondary);
+  }
+  .artile_content ul li span, .artile_content ul li, .artile_content ul li strong{
+    font-size: 14px; 
   }
 
 }
