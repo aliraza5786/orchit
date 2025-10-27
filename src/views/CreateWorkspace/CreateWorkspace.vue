@@ -28,7 +28,7 @@
       <StepFour v-if="currentStep === 4" :ai="isAI" ref="stepFourRef" @back="startOver" />
     </div>
     <div v-if="currentStep !== 0"
-      class="flex z-1 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t py-6 border-border">
+      class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t py-6 border-border">
       <Button variant="secondary" size="md" @click="goBack">
         <div class="flex items-center gap-2">
           <i class="text-base fa-solid fa-arrow-left"></i> Back
@@ -94,7 +94,7 @@ const stepOnePending = computed<boolean>(() => {
 })
 
 const continueDisabled = computed(() => currentStep.value === 1 && stepOnePending.value)
-const continueLabel = computed(() => (currentStep.value === 1 && stepOnePending.value) ? 'Continuing...' : 'Continue')
+const continueLabel = computed(() => (currentStep.value === 1 && stepOnePending.value) ? 'Continuing...' : currentStep.value === 4 ? 'Complete' :'Continue')
 
 /** Handlers (stable) */
 function handleClose() {
@@ -122,7 +122,7 @@ function goNext() {
   }
   if (currentStep.value === 4 && stepFourRef.value?.createProjectHandler) {
     if (!localStorage.getItem('token')) {
-      router.push('/login')
+      router.push('/register')
     }
     stepFourRef.value.createProjectHandler()
     return

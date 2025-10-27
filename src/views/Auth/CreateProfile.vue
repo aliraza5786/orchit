@@ -71,7 +71,7 @@
           </Button>
 
           <div class="flex gap-4 items-center">
-            <router-link to="/"><button
+            <router-link :to="`${workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}  `"><button
                 class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link>
             <Button size="md" type="submit" @click="continueHandler" :disabled="isContinueDisabled">
               {{ creatingProfile || invitingPeople ? 'Continuing...' : 'Continue' }}
@@ -99,7 +99,9 @@ import BaseEmailChip from '../../components/ui/BaseEmailChip.vue'
 // import { toast } from 'vue-sonner'
 import { useCreateCompany, useInviteCompany } from '../../services/auth'
 import { useRolesList } from '../../queries/useCommon'
+import { useWorkspaceStore } from '../../stores/workspace'
 defineOptions({ name: 'OnboardingFlow' })
+const workspaceStore = useWorkspaceStore()
 const companyID = ref()
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   onSuccess: (data: any) => {
@@ -109,7 +111,10 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
 });
 const { mutate: invitePeople, isPending: invitingPeople } = useInviteCompany({
   onSuccess: () => {
-    router.push('/finish-profile');
+    if (workspaceStore.workspace) {
+      router.push('/create-workspace')
+    } else
+      router.push('/finish-profile');
   }
 });
 

@@ -208,7 +208,7 @@ const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'https://backend
 
 /** Derived */
 const lanes = computed<LaneProgressRow[]>(() => taskProgress.value?.progress_details?.lanes_progress ?? [])
-const isLoading = computed(() => !taskProgress.value || ['queued', 'running'].includes(taskProgress.value.status))
+const isLoading = ref(false)
 
 const avatars = [
   'https://randomuser.me/api/portraits/women/1.jpg',
@@ -217,24 +217,27 @@ const avatars = [
 ]
 const route = useRoute();
 const workspaceId = computed<string>(() => toParamString(route?.params?.id));
-const jobId = computed<string>(() => toParamString(route?.params?.jobId));
+const jobId = computed<string>(() => toParamString(route?.params?.job_id));
 /** SSE Connection Management */
 const connect = () => {
   if (eventSource.value && eventSource.value.readyState === EventSource.OPEN) return
   if (reconnectAttempts.value >= maxReconnectAttempts) return
   if (eventSource.value) eventSource.value.close()
   const token = localStorage.getItem('token') || ''
-  const effectiveJob = localStorage.getItem('jobId') || jobId?.value || workspaceId.value
-  const isManual = localStorage.getItem('jobId') ? 'false' : 'true'
+  const effectiveJob = localStorage.getItem('jobId') ? localStorage.getItem('jobId'): jobId?.value ? jobId?.value  : workspaceId.value
+  const isManual = localStorage.getItem('jobId') || jobId?.value ? 'false' : 'true'
   const sseUrl = `${SERVER_BASE_URL}/step2/tasks/${effectiveJob}/stream?token=${token}&is_manual=${isManual}`
 
   try {
     eventSource.value = new EventSource(sseUrl, { withCredentials: false })
 
     eventSource.value.onopen = () => {
+      isLoading.value= true
+
       isConnected.value = true
       reconnectAttempts.value = 0
       debugInfo.value = { ...debugInfo.value, connectionStatus: 'Connected', lastConnected: new Date().toISOString(), url: sseUrl }
+      isLoading.value= false
     }
 
     eventSource.value.onmessage = (event) => {

@@ -77,7 +77,7 @@
 import { computed, onMounted, ref, watch } from 'vue';
 import AudioRecorder from '../components/AudioRecorder.vue';
 import { toast } from 'vue-sonner';
-import { useCreateWorkspaceWithAI, useDescription, useSuggestions } from '../../../queries/useWorkspace';
+import {  useCreateWorkspaceWithAIPrivate, useDescription, useSuggestions } from '../../../queries/useWorkspace';
 import { useRoute } from "vue-router";
 import Loader from '../../../components/ui/Loader.vue';
 import Button from '../../../components/ui/Button.vue';
@@ -103,7 +103,7 @@ const description = ref('');
 const isRecording = ref(false);
 const audioURL = ref<string | null>(null);
 
-const { mutate: generate, isPending } = useCreateWorkspaceWithAI({
+const { mutate: generate, isPending } = useCreateWorkspaceWithAIPrivate({
   onSuccess: (aiResponse: any) => {
     workspaceStore.setWorkspace(aiResponse)
     emit('manual');
