@@ -22,8 +22,6 @@
             }" />
         </div>
 
-        
-
         <div class="">
             <SideItem v-for="(item, index) in workspace.modules" :key="index" :id="item._id"
                 :label="item.variables['module-title']"

@@ -118,7 +118,7 @@
                         <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
                         <span class="text-xs font-medium text-text-secondary">{{ item.description }}</span>
                       </div>
-                      <span class="text-sm text-text-secondary">{{ item?.usage.limit }} {{ item?.usage.unit }} / {{
+                      <span class="text-sm text-text-secondary">{{ item?.usage.current }} {{ item?.usage.unit }} / {{
                         item.limits.limit }} {{item?.limits?.unit}}</span>
                     </div>
                     <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">

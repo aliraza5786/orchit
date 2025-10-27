@@ -1,0 +1,1 @@
+import{J as o,u as a,G as u,H as s}from"./index-BZn88Tk7.js";const r=e=>s.post("/upload/file-common",e,{headers:{"Content-Type":"multipart/form-data"}}).then(t=>t.data),l=(e={})=>a({mutationKey:["upload-file"],mutationFn:r,...e}),i=(e={})=>o({queryKey:["roles"],queryFn:({signal:t})=>u({url:"common/roles",method:"GET",signal:t}),...e});export{l as a,i as u};
