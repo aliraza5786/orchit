@@ -12,7 +12,7 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <span v-if="status != 'completed'" class="text-xs border rounded-full px-2 py-0.5"
+      <span v-if="!totalCard && status" class="text-xs border rounded-full px-2 py-0.5"
             :class="getColor(status)">
         {{ status }}
       </span>
@@ -56,6 +56,7 @@ const props = withDefaults(defineProps<{
   color?: string
   totalCard?: any
 }>(), {
+  totalCard:0,
   progress: 0,
   maxVisible: 2,
   loading: false,

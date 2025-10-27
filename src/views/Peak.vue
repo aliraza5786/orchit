@@ -16,13 +16,27 @@
 
             <!-- Cards with transitions -->
             <TransitionGroup name="list" tag="div" class="flex gap-2.5" v-else>
-              <button v-for="lane in lanes" :key="lane.lane_title"
+              <button v-if="cardProgress" v-for="lane in lanes" :key="lane?.lane_title"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
-                <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane.lane_title"
-                  subtitle="Mobile Application" :progress="lane?.progress ?? 0" :totalCard="lane?.total_cards" :status="lane?.status ?? ''"
-                  :avatars="avatars" date="May 28"
+                <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
+                  subtitle="Mobile Application"
+                  :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
+                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : lane?.status" :avatars="avatars"
+                  date="May 28"
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
+
+              </button>
+              <button v-else v-for="lane in lanes2" :key="`2-${lane?.lane_title}`"
+                class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
+                type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
+                <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
+                  subtitle="Mobile Application"
+                  :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
+                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : lane?.status" :avatars="avatars"
+                  date="May 28"
+                  class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
+
               </button>
             </TransitionGroup>
           </div>
@@ -190,7 +204,7 @@ interface TaskProgress {
   percent: number
   message: string
   progress_details?: { lanes_progress?: LaneProgressRow[] }
-  result?: { sheet_lists?: number; cards?: number }
+  result?: { sheet_lists?: number; cards?: number, lanes_summary: any }
   error?: string
   updated_at: string
 }
@@ -206,8 +220,11 @@ const debugInfo = ref<any>({})
 /** Server configuration */
 const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'https://backend.streamed.space/api/v1/workspace'
 
+const cardProgress = computed(() => taskProgress.value?.percent == 100 ? true : false)
 /** Derived */
-const lanes = computed<LaneProgressRow[]>(() => taskProgress.value?.progress_details?.lanes_progress ?? [])
+const lanes = computed<LaneProgressRow[]>(() => taskProgress.value?.result?.lanes_summary ?? [])
+const lanes2 = computed<LaneProgressRow[]>(() => taskProgress.value?.progress_details?.lanes_progress ?? [])
+
 const isLoading = ref(false)
 
 const avatars = [
@@ -224,7 +241,7 @@ const connect = () => {
   if (reconnectAttempts.value >= maxReconnectAttempts) return
   if (eventSource.value) eventSource.value.close()
   const token = localStorage.getItem('token') || ''
-  const effectiveJob = localStorage.getItem('jobId') ? localStorage.getItem('jobId'): jobId?.value ? jobId?.value  : workspaceId.value
+  const effectiveJob = jobId?.value ? jobId?.value : localStorage.getItem('jobId') ? localStorage.getItem('jobId') : workspaceId.value
   const isManual = localStorage.getItem('jobId') || jobId?.value ? 'false' : 'true'
   const sseUrl = `${SERVER_BASE_URL}/step2/tasks/${effectiveJob}/stream?token=${token}&is_manual=${isManual}`
 
@@ -232,12 +249,12 @@ const connect = () => {
     eventSource.value = new EventSource(sseUrl, { withCredentials: false })
 
     eventSource.value.onopen = () => {
-      isLoading.value= true
+      isLoading.value = true
 
       isConnected.value = true
       reconnectAttempts.value = 0
       debugInfo.value = { ...debugInfo.value, connectionStatus: 'Connected', lastConnected: new Date().toISOString(), url: sseUrl }
-      isLoading.value= false
+      isLoading.value = false
     }
 
     eventSource.value.onmessage = (event) => {
@@ -376,7 +393,16 @@ const SkeletonCard = defineComponent({
     ])
   }
 })
+const getCardProgress = (total, status_dis) => {
+  if (total == 0) {
+    return 0
+  }
+  const done = status_dis['Done'] ?? 0
+  const progress = done / total * 100;
+  console.log(done, '>>', total);
 
+  return progress
+}
 </script>
 
 <style scoped>

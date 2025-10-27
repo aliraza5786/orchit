@@ -90,7 +90,15 @@
         </template>
 
         <template #Subscription>
-          <div class="py-4">
+          <div class="w-full h-full flex justify-center items-center" v-if="isPending || isConfirming">
+            <!-- Centered spinner -->
+
+            <div role="status" aria-label="Loading"
+              class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
+
+
+          </div>
+          <div v-else class="py-4">
             <div class="space-y-6">
               <div class="bg-bg-body  rounded-xl p-6 border border-border">
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Current Plan</h3>
@@ -119,7 +127,7 @@
                         <span class="text-xs font-medium text-text-secondary">{{ item.description }}</span>
                       </div>
                       <span class="text-sm text-text-secondary">{{ item?.usage.current }} {{ item?.usage.unit }} / {{
-                        item.limits.limit }} {{item?.limits?.unit}}</span>
+                        item.limits.limit }} {{ item?.limits?.unit }}</span>
                     </div>
                     <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
                       <div class="h-full bg-accent rounded-full transition-all"
@@ -147,7 +155,7 @@
                           currentPackage?.nextPackage?.pricing?.month?.currencySymbol }} </span>
                         <span class="text-sm text-text-secondary">/ {{
                           currentPackage?.nextPackage?.pricing?.month?.interval
-                          }}</span>
+                        }}</span>
                       </div>
                       <p class="text-sm text-text-secondary">{{ currentPackage?.nextPackage?.description }}</p>
                     </div>
@@ -235,13 +243,13 @@ import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../q
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
 import { useRoute, useRouter } from 'vue-router'
 import { useWorkspaceStore } from '../../../stores/workspace'
-const workspaceStore= useWorkspaceStore()
+const workspaceStore = useWorkspaceStore()
 const route = useRoute();
 const router = useRouter();
-const { data: currentPackage, refetch: reftechCurrentPackage } = useCurrentPackage();
+const { data: currentPackage, refetch: reftechCurrentPackage, isPending } = useCurrentPackage();
 const sessionId = route.query.session_id;
 
-const { mutate: confirm } = confirmPayment({
+const { mutate: confirm, isPending: isConfirming } = confirmPayment({
   sessionId: sessionId, interval: 'month'
 }, {
   onSuccess: () => {

@@ -7,9 +7,9 @@
         </div>
 
         <!-- Tabs -->
-        <div class="px-6">
+        <!-- <div class="px-6">
             <SwitchTab :options="tabs" v-model="currentTab" />
-        </div>
+        </div> -->
 
         <!-- Body -->
         <div class="px-6 py-4 space-y-6">
@@ -106,7 +106,7 @@ import IconPicker from '../components/IconPicker.vue';
 const route = useRoute();
 const queryClient = useQueryClient()
 const { workspaceId, moduleId } = useRouteIds()
-type IconPrefix = 'pi';
+type IconPrefix = 'fa';
 type IconRef = { prefix: IconPrefix; iconName: string }
 
 const form = ref<{ title: string, description: string, icon: IconRef | null }>({ title: '', description: '', icon: null })

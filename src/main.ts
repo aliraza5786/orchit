@@ -6,7 +6,8 @@ import App from './App.vue'
 import router from "./router";
 import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query"
 import { Toaster } from 'vue-sonner'
-
+import '@/assets/fontawesome/css/fontawesome.min.css';
+import '@/assets/fontawesome/css/regular.min.css';
 
 const app = createApp(App)
 
