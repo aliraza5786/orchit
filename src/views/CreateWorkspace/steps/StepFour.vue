@@ -1,5 +1,5 @@
 <template>
-  <Loader v-if="(createWorkspacePending || isPending)"></Loader>
+  <Loader v-if="(createWorkspacePending || isPending || isLoader)"></Loader>
   <div v-else class="w-full flex flex-col">
     <!-- Header -->
     <div class="text-left w-full mb-6 pt-4">
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Selected Lanes -->
-    <div v-if="project?.lanes?.length >0" class="mb-6 h-full flex-grow flec flex-col">
+    <div v-if="project?.lanes?.length > 0" class="mb-6 h-full flex-grow flec flex-col">
       <h3 class="text-lg font-semibold text-text-primary mb-4">
         Selected Project Lanes
       </h3>
@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeMount, ref } from "vue";
+import { computed, onBeforeMount, ref, watch } from "vue";
 import Loader from "../../../components/ui/Loader.vue";
 import {
   useCreateLanes,
@@ -84,12 +84,14 @@ import {
 import { useRouter } from "vue-router";
 import { useCompanyId } from "../../../services/user";
 import { useWorkspaceStore } from '../../../stores/workspace';
+const isLoader = ref(false);
+
 const workspaceStore = useWorkspaceStore();
 const router = useRouter()
 const { mutate: createStep2, isPending } = useCreateLanes({
   onSuccess: (data: any) => {
-    workspaceStore.setWorkspace(null)
     router.push(`/workspace/peak/${data.workspace_id}/${data.job_id}`)
+    workspaceStore.setWorkspace(null)
     // emits('back')
   },
 });
@@ -105,7 +107,10 @@ const { mutate: createWorkspace, isPending: createWorkspacePending } =
       workspaceStore.setWorkspace(null)
     },
   });
-
+watch(()=>createWorkspacePending.value, (newVal) => {
+  if (newVal == true)
+    isLoader.value = true
+})
 const project = ref<any>({
   title: "",
   description: "",

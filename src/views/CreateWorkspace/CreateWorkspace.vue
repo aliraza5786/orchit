@@ -22,11 +22,13 @@
       <KeepAlive>
         <StepTwo v-if="currentStep === 2" :ai="isAI" ref="stepTwoRef" @next="goNext2" />
       </KeepAlive>
-      <StepThree v-if="currentStep === 3" :ai="isAI" ref="stepThreeRef" @next="goNext" />
+      <KeepAlive>
+        <StepThree v-if="currentStep === 3" :ai="isAI" ref="stepThreeRef" @next="goNext" />
+      </KeepAlive>
       <StepFour v-if="currentStep === 4" :ai="isAI" ref="stepFourRef" @back="startOver" />
     </div>
     <div v-if="currentStep !== 0"
-      class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t py-6 border-border">
+      class="flex z-1 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t py-6 border-border">
       <Button variant="secondary" size="md" @click="goBack">
         <div class="flex items-center gap-2">
           <i class="text-base fa-solid fa-arrow-left"></i> Back
