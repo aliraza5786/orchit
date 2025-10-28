@@ -7,17 +7,17 @@
             <div class="flex gap-2 flex-wrap items-center">
 
                 <span v-if="ticket['card-type']"
-                    class="text-[10px] px-2 py-1 rounded bg-bg-surface/60 text-text-secondary font-medium uppercase">
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium uppercase">
                     {{ ticket['card-type'] }}
                 </span>
                 <span v-if="ticket['card-status']"
-                    class="text-[10px] px-2 py-1 rounded bg-accent/20 text-accent font-medium">
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium">
                     {{ ticket['card-status'] }}
                 </span>
             </div>
 
             <div
-                class="product-menu-icon transition-all py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
+                class="product-menu-icon transition-all w-6 py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
                 <DropMenu @click.stop="" :items="getMenuItems()">
                     <template #trigger>
                         <i class="cursor-pointer text-sm fa-solid fa-ellipsis"></i>
