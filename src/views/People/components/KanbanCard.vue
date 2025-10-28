@@ -13,8 +13,9 @@
                         {{ ticket?.name ?? ticket['title'] ?? `Team Member ` }}
                     </h3>
                     <!-- <p class="text-text-secondary text-sm"> {{ ticket['email'] ?? 'example@gmail.com' }}</p> -->
-                    <p class="text-text-secondary text-xs"> {{ ticket?.role ?? 'e.g. Node Developer' }}</p>
+                    <p class="text-text-secondary text-xs"> {{ ticket?.role ?? ticket?.role_title ?? 'e.g. Node   Developer' }}</p>
                 </div>
+              
             </div>
             <DropMenu @click.stop="" :items="getMenuItems()">
                 <template #trigger>
@@ -22,6 +23,8 @@
                 </template>
             </DropMenu>
 
+        </div>
+        <div v-if="ticket?.status == 'unassigned'" class="w-6 h-6 cursor-pointer ml-auto  text-xs flex justify-center items-center  bg-bg-body/60 rounded-full"> <i class="fa-regular fa-plus"></i>
         </div>
         <!-- <p v-html="ticket['card-description']"
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">

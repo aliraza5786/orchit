@@ -15,7 +15,7 @@
         :error="!!titleError" :message="titleError" @blur="touched.title = true" />
 
       <!-- Lane (required) -->
-      <div class="flex flex-col">
+      <div class="flex flex-col" v-if="laneOptions.length>0">
         <BaseSelectField size="md" label="Lane" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
           :model-value="form.lane_id" @update:modelValue="setLane" />
       </div>
