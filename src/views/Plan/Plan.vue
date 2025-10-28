@@ -31,9 +31,13 @@
             <h2 class="text-sm font-semibold">Sprint (100 Taks)</h2>
 
           </div>
+          <div v-if="isSprintPending" class="w-full h-full min-h-[250px] flex justify-center items-center">
+            <div role="status" aria-label="Loading"
+              class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
 
-          <SprintCard :sprintId="selectedSprintId" v-if="firstSprint" :sprint="firstSprint" @open-ticket="openTicket"
-            @edit-sprint="openEditSprint" @toggle-start="toggleStartSprint"
+          </div>
+          <SprintCard v-else :sprintId="selectedSprintId" v-if="firstSprint" :sprint="firstSprint"
+            @open-ticket="openTicket" @edit-sprint="openEditSprint" @toggle-start="toggleStartSprint"
             @move-selected-to-backlog="moveSelectedToBacklog"
             @delete-selected-sprint="(id) => deleteSelected('sprint', id)" @refresh="handleRefresh" />
         </section>
@@ -48,7 +52,12 @@
               </button>
             </div>
           </div>
-          <BacklogTable :sorters="sorters" @move-selected-to-sprint="moveSelectedToSprint"
+          <div v-if="isBacklogPenidng" class="w-full h-full  min-h-[250px] flex justify-center items-center">
+            <div role="status" aria-label="Loading"
+              class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
+
+          </div>
+          <BacklogTable v-else :sorters="sorters" @move-selected-to-sprint="moveSelectedToSprint"
             @delete-selected-backlog="deleteSelected('backlog')" @open-ticket="openTicket"
             @ticket-moved-to-backlog="handleTicketMovedToBacklog" />
         </section>
@@ -90,6 +99,7 @@
   <StartSprintModal :sprint="selectedSprint" v-model="startsprintModalOpen" @save="startSprintHandler"
     :creatingSprint="isStartingSprint || isUpdatingSprint2" />
   <!-- <CreateBacklogTicket v-model="isCreateTicketModalOpen" /> -->
+
 </template>
 
 <script setup lang="ts">
@@ -157,8 +167,8 @@ const startSprintHandler = (e: any) => {
     }
   })
 }
-const { data: sprintsList, refetch: refetchSprints } = useSprintList(workspaceId.value);
-const { data: backlogListData, refetch: refetchBacklog } = useBacklogList(workspaceId);
+const { data: sprintsList, refetch: refetchSprints, } = useSprintList(workspaceId.value);
+const { data: backlogListData, refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(workspaceId);
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
 const selectedSprintId = ref(firstSprintId.value)
 watch(() => firstSprintId.value, (newVal) => {
@@ -174,7 +184,13 @@ const openStartSprintModal = () => {
   startsprintModalOpen.value = true
 
 }
-const { data: sprintData } = useSprintCard(selectedSprintId);
+const { data: sprintData, isPending: isSprintPending } = useSprintCard(selectedSprintId);
+const loadingState = ref(false);
+watch(() => isSprintPending.value, (newVal) => {
+  console.log(newVal, isSprintPending.value, '>>>> laoding state changes');
+
+  // loadingState.value=newVal; 
+})
 // Convert API sprint to store Sprint format with cards
 const firstSprint = computed(() => {
   const apiSprint = sprintData?.value?.backlog_items

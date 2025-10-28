@@ -96,8 +96,6 @@ export async function request<T = any>(args: {
   extract?: DataExtractor;
 }): Promise<T> {
   try {
-    console.log(args.data, ">>>");
-
     const res = await api.request({
       url: args.url,
       method: args.method ?? "GET",

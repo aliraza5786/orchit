@@ -2,7 +2,7 @@
   <div class="rounded-lg flex flex-col">
     <div class="h-[300px]" :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''" @dragover.prevent
       @dragenter="onDragEnterSprint" @dragleave="onDragLeaveSprint" @drop="onDropSprint">
-      <Table :showHeader="false" :pagination="false" v-if="sprintTickets.length > 0" :row-draggable="true"
+      <Table  :showHeader="false" :pagination="false" v-if="sprintTickets.length > 0" :row-draggable="true"
         class="h-full" @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'sprint', sprint.id)"
         @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="sprintTickets" :page-size="100"
         :hover="true" striped :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
@@ -56,6 +56,10 @@ import { useMoveCard } from '../../../queries/usePlan'
 import { toast } from 'vue-sonner'
 
 const props = defineProps<{ sprint: Sprint, sprintId: any }>()
+watch(props, (newVal)=>{
+console.log('props changes', newVal);
+
+})
 const emit = defineEmits(['edit-sprint', 'toggle-start', 'open-ticket', 'move-selected-to-backlog', 'delete-selected-sprint', 'refresh'])
 
 const store = useBacklogStore()
