@@ -126,7 +126,7 @@ function submit() {
   if (!canSubmit.value || inviting.value) return
   invitePeople(
     {payload: {
-        company_id: company_id.value,
+        company_id: company_id.value._id,
         role: form.role_id,
         emails: form.emails.map(email => ({
           email,
