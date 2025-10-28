@@ -28,7 +28,7 @@
         <tr v-for="(row, rIdx) in visibleRows" :key="rowKey(row, rIdx)" role="row" :aria-rowindex="rowIndex(rIdx)"
           tabindex="0" @click="emitRowClick(row, rIdx)" @keydown.enter.prevent="emitRowClick(row, rIdx)"
           class="transition-colors duration-150" :class="[
-            hover ? 'hover:bg-surface cursor-pointer' : '',
+            hover ? 'hover:bg-bg-surface/60 cursor-pointer' : '',
             striped && rIdx % 2 === 1 ? 'bg-bg-surface/40' : '',
             rowClass?.(row, rIdx)
           ]" :draggable="rowDraggable || false"

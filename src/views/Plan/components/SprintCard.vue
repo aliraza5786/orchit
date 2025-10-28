@@ -5,7 +5,7 @@
       <Table  :showHeader="false" :pagination="false" v-if="sprintTickets.length > 0" :row-draggable="true"
         class="h-full" @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'sprint', sprint.id)"
         @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="sprintTickets" :page-size="100"
-        :hover="true" striped :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
+        :hover="true"  :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
         <template #select-header>
           <input type="checkbox" :checked="allSprintChecked(sprint.id)"
             @change="toggleAll('sprint', $event, sprint.id)" />

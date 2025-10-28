@@ -32,7 +32,7 @@
       <div class="flex flex-col gap-6">
         <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold">Sprint (100 Taks)</h2>
+            <h2 class="text-sm font-semibold">Sprint ({{firstSprint?.tickets?.length}} Taks)</h2>
 
           </div>
           <div v-if="isSprintPending" class="w-full h-full min-h-[250px] flex justify-center items-center">
@@ -47,7 +47,7 @@
         </section>
         <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold">Backlog ({{ backlogListData?.backlog_items?.length }} Taks)</h2>
+            <h2 class="text-sm font-semibold">Backlog ({{ backlogResp?.cards?.length }} Tasks)</h2>
             <div class="flex items-center gap-2">
               <button
                 class=" w-8 h-8 rounded-md border  cursor-pointer aspect-square text-sm border-border  hover:bg-gray-50"
@@ -132,6 +132,8 @@ const {
   moveSelectedToSprint, moveSelectedToBacklog, deleteSelected,
   createTicket, saveSprintMeta, toggleStartSprint
 } = useBacklogStore()
+const { data: backlogResp,  } = useBacklogList(workspaceId)
+
 // delete sprint
 const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
   onSuccess: () => {

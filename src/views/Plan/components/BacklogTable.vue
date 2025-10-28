@@ -14,7 +14,7 @@
       <Table v-else :showHeader="false"  :pagination="false" class="flex-grow h-full" :rowDraggable="true"
         @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')"
         @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="normalizedBacklog"
-        :page-size="20" :hover="true" striped :itemKey="(row: any) => row.id" :sorters="sorters"
+        :page-size="20" :hover="true"  :itemKey="(row: any) => row.id" :sorters="sorters"
         @row-click="({ row }: any) => $emit('open-ticket', row)">
         <!-- <template #select-header>
           <input type="checkbox" :checked="allBacklogChecked" @change="toggleAll('backlog', $event)" />
@@ -127,12 +127,12 @@ function mapPriority(p: string | null | undefined): Ticket['priority'] {
 }
 
 /** Store (single instance) */
-const {
-  selectedBacklogIds,
-  allBacklogChecked,
-  toggleAll,
-  toggleOne,
-} = useBacklogStore()
+// const {
+//   selectedBacklogIds,
+//   allBacklogChecked,
+//   toggleAll,
+//   toggleOne,
+// } = useBacklogStore()
 
 const dropOverBacklog = ref(false)
 const draggedTicketId = ref<string | null>(null)
