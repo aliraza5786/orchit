@@ -20,13 +20,14 @@
           _id: 'viewer'
         },
         {
-          title: 'Admin',
-          _id: 'admin'
-        },
-        {
           title: 'Editor',
           _id: 'editor'
         },
+        {
+          title: 'Admin',
+          _id: 'admin'
+        }
+
       ]" placeholder="Choose role" :model-value="form.role_id" @update:modelValue="v => (form.role_id = v)"
         :disabled="!form.workspace_id" :message="roleError" :error="!!roleError" />
 
@@ -53,6 +54,8 @@ import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
 import Button from '../../../components/ui/Button.vue'
+import { useInviteCompany } from '../../../services/auth'
+import { useCompanyId, useProfile } from '../../../services/user'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
@@ -117,15 +120,19 @@ const canSubmit = computed(
 function onEmailsInvalid(_bad: string[]) { }
 function onEmailsAdd() { }
 
-const { mutate: invitePeople, isPending: inviting } = useInvitePeople()
-
+const { mutate: invitePeople, isPending: inviting } = useInviteCompany()
+const {data:company_id} = useCompanyId()
 function submit() {
   if (!canSubmit.value || inviting.value) return
   invitePeople(
-    {
-      workspace_id: form.workspace_id,
-      workspace_role_id: form.role_id,
-      emails: form.emails.map(e => ({ name: inferName(e), email: e })),
+    {payload: {
+        company_id: company_id.value,
+        role: form.role_id,
+        emails: form.emails.map(email => ({
+          email,
+          name: inferName(email),
+        })),
+      }
     },
     {
       onSuccess: (res: any) => {
