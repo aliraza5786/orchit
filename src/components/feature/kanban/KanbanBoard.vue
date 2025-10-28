@@ -3,19 +3,20 @@
     <!-- Columns (horizontal) -->
     <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
-      :force-fallback="true" class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd">
+      :force-fallback="true" class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd" @start="onStart">
       <!-- Each column -->
       <template #item="{ element: column }">
         <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface  " style="height: calc(100dvh - 190px);">
-          <KanbanColumn @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id" :variable_id="variable_id"
-            @update:column="(e) => emit('update:column', e)" @select:ticket="(v: Ticket) => emit('select:ticket', v)"
+          <KanbanColumn :canDragList="canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
+            :variable_id="variable_id" @update:column="(e) => emit('update:column', e)"
+            @select:ticket="(v: Ticket) => emit('select:ticket', v)"
             @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd">
             <template #emptyState="{ column }">
               <slot name="emptyState" :column="column"></slot>
             </template>
 
             <template #ticket="{ ticket }">
-              <slot name="ticket" :ticket="ticket" >
+              <slot name="ticket" :ticket="ticket">
               </slot>
             </template>
             <template #footer="{ column }">
@@ -35,6 +36,12 @@ import KanbanColumn from './KanbanColumn.vue'
 export interface Ticket { _id: string | number;[k: string]: any }
 export interface Column { _id: string | number; title: string; cards: Ticket[]; transitions: any }
 export interface Board { columns: Column[] }
+const canDragList = ref(true);
+const onStart = () => {
+  console.log(">>> strating");
+
+  canDragList.value = false
+};
 
 const props = withDefaults(defineProps<{
   board: Column[]
@@ -84,7 +91,7 @@ function onColumnsEnd(e: any) {
   if (id != null) {
     pushUpdate('column', { id, oldIndex, newIndex })
   }
-
+  canDragList.value = true;
 }
 
 function onTicketEnd(e: any) {

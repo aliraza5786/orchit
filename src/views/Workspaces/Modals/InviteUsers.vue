@@ -1,46 +1,54 @@
 <template>
-    <BaseModal v-model="isOpen" size="md" modalClass="!py-0">
-        <!-- Header -->
-        <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
-            <h2 class="text-xl font-semibold">Invite Users</h2>
-            <p class="text-sm text-text-secondary mt-1">Select a workspace, add emails, and pick a role.</p>
-        </div>
+  <BaseModal v-model="isOpen" size="md" modalClass="!py-0">
+    <!-- Header -->
+    <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
+      <h2 class="text-xl font-semibold">Invite Users</h2>
+      <p class="text-sm text-text-secondary mt-1">Select a workspace, add emails, and pick a role.</p>
+    </div>
 
-        <!-- Body -->
-        <div class="px-6 flex flex-col gap-4">
-             <!-- Emails -->
-            <BaseEmailChip class="w-full" label="User emails" v-model="form.emails" :error="!!emailError"
-                :message="emailError || 'Press Enter after each email'" showName @invalid="onEmailsInvalid"
-                @add="onEmailsAdd" />    
+    <!-- Body -->
+    <div class="px-6 flex flex-col gap-4">
+      <!-- Emails -->
+      <BaseEmailChip class="w-full" label="User emails" v-model="form.emails" :error="!!emailError"
+        :message="emailError || 'Press Enter after each email'" showName @invalid="onEmailsInvalid"
+        @add="onEmailsAdd" />
 
-            <!-- Role (depends on workspace) -->
-            <BaseSelectField size="md" label="Role" :options="roleOptions" placeholder="Choose role"
-                :model-value="form.role_id" @update:modelValue="v => (form.role_id = v)"
-                :disabled="!form.workspace_id || rolesPending"
-                :message="roleError || (rolesPending ? 'Loading roles…' : '')" :error="!!roleError" />
+      <!-- Role (depends on workspace) -->
+      <BaseSelectField size="md" label="Permission" :options="[
+        {
+          title: 'Viewer',
+          _id: 'viewer'
+        },
+        {
+          title: 'Admin',
+          _id: 'admin'
+        },
+        {
+          title: 'Editor',
+          _id: 'editor'
+        },
+      ]" placeholder="Choose role" :model-value="form.role_id" @update:modelValue="v => (form.role_id = v)"
+        :disabled="!form.workspace_id" :message="roleError" :error="!!roleError" />
 
-            <!-- Workspace -->
-            <BaseSelectField size="md" label="Workspace" :options="workspaceOptions ?? []" placeholder="Choose workspace"
-                :model-value="form.workspace_id" @update:modelValue="setWorkspace" :message="workspaceError"
-                :error="!!workspaceError" />
-        </div>
 
-        <!-- Footer -->
-        <div class="flex justify-end gap-2 p-6 mt-6 sticky bottom-0 bg-bg-body border-t border-border">
-            <Button variant="secondary" @click="cancel">Cancel</Button>
-            <Button variant="primary" :disabled="!canSubmit || inviting" @click="submit">
-                {{ inviting ? 'Inviting…' : 'Send Invites' }}
-            </Button>
-        </div>
-    </BaseModal>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-2 p-6 mt-6 sticky bottom-0 bg-bg-body border-t border-border">
+      <Button variant="secondary" @click="cancel">Cancel</Button>
+      <Button variant="primary" :disabled="!canSubmit || inviting" @click="submit">
+        {{ inviting ? 'Inviting…' : 'Send Invites' }}
+      </Button>
+    </div>
+  </BaseModal>
 </template>
 
 <!-- File: src/components/modals/InviteUsersModal.vue -->
 <script setup lang="ts">
-import { computed, reactive, watch, toRef } from 'vue'
+import { computed, reactive, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
-import { useWorkspaces, useWorkspacesRoles, useInvitePeople } from '../../../queries/useWorkspace'
+import { useWorkspaces, useInvitePeople } from '../../../queries/useWorkspace'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
@@ -70,7 +78,7 @@ const { data: workspaces, } = useWorkspaces(1, 100)
 type SelectValue = string | number | null
 const form = reactive({
   workspace_id: null as SelectValue,
-  role_id: null as SelectValue,
+  role_id: 'viewer' as SelectValue,
   emails: [] as string[],
 })
 
@@ -91,20 +99,8 @@ const workspaceOptions = computed<Option[]>(() =>
   }))
 )
 
-/** Pass a real ref for reactivity */
-const workspaceIdRef = toRef(form, 'workspace_id')
 
-/** Roles for the selected workspace — now reactive */
-const { data: roles, isPending: rolesPending } = useWorkspacesRoles(workspaceIdRef)
 
-const roleOptions = computed<Option[]>(() =>
-  (roles?.value ?? []).map((r: any) => ({
-    _id: r.role_id ?? r.id,
-    title: r.title ?? r.name ?? 'Role',
-  }))
-)
-
-const workspaceError = computed(() => (!form.workspace_id ? 'Workspace is required' : ''))
 const roleError = computed(() => (!form.role_id ? 'Role is required' : ''))
 const invalidEmails = computed<string[]>(() => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -117,13 +113,9 @@ const canSubmit = computed(
   () => !!form.workspace_id && !!form.role_id && form.emails.length > 0 && invalidEmails.value.length === 0
 )
 
-function setWorkspace(v: SelectValue) {
-  form.workspace_id = v
-  form.role_id = null // WHY: roles depend on workspace; force re-select to avoid mismatched role
-}
 
-function onEmailsInvalid(_bad: string[]) {}
-function onEmailsAdd() {}
+function onEmailsInvalid(_bad: string[]) { }
+function onEmailsAdd() { }
 
 const { mutate: invitePeople, isPending: inviting } = useInvitePeople()
 

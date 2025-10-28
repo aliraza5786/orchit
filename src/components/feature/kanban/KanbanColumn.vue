@@ -30,9 +30,10 @@
     </div>
 
     <!-- Tickets list -->
-    <Draggable v-model="localTickets" item-key="_id" class="flex-1 p-4 space-y-3 overflow-y-auto"
-      :group="{ name: 'tickets', pull: true, put: true }" :animation="180" :ghost-class="'kanban-ghost'"
-      :chosen-class="'kanban-chosen'" @start="onStart" @end="onEnd" :drag-class="'kanban-dragging'" @change="onTicketsChange">
+    <Draggable :disabled="!canDragList" v-model="localTickets" item-key="_id"
+      class="flex-1 p-4 space-y-3 overflow-y-auto" :group="{ name: 'tickets', pull: true, put: true }" :animation="180"
+      :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" @start="onStart" @end="onEnd"
+      :drag-class="'kanban-dragging'" @change="onTicketsChange">
       <template #item="{ element: ticket }">
         <div>
           <slot name="ticket" @click="() => {
@@ -40,7 +41,7 @@
           }" :ticket="ticket">
             <KanbanTicket @click="() => {
               emit('select:ticket', ticket)
-            }" :ticket="ticket"  />
+            }" :ticket="ticket" />
           </slot>
         </div>
       </template>
@@ -70,7 +71,7 @@ type Id = string | number
 export interface Ticket { _id: Id;[k: string]: any }
 export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any }
 
-const props = defineProps<{ column: Column, variable_id: string, sheet_id: string }>()
+const props = defineProps<{ column: Column, variable_id: string, sheet_id: string, canDragList:boolean }>()
 const emit = defineEmits<{
   (e: 'update:column', payload: { title: string, oldTitle: string }): void
   (e: 'delete:column', payload: { columnId: Id; title: string }): void
@@ -86,9 +87,9 @@ const emit = defineEmits<{
 }>()
 const workspaceStore = useWorkspaceStore()
 const onStart = () => {
-  console.log(props?.column?.transitions , '>>>>');
-  
-  workspaceStore.setTransition({...props?.column?.transitions, currentColumn:props.column?.title})
+  console.log(props?.column?.transitions, '>>>>');
+
+  workspaceStore.setTransition({ ...props?.column?.transitions, currentColumn: props.column?.title })
 }
 const onEnd = () => {
   workspaceStore.setTransition({})
