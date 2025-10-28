@@ -41,7 +41,7 @@ const renderProjectType = ({ value }: any) =>
     h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-')
 
 const renderPeople = ({ value }: any) =>
-    h(Collaborators, { avatars: value || [], image: false, maxVisible: 3 })
+    h(Collaborators, { avatars: value || [], image: true, maxVisible: 3 })
 
 const renderStartDate = ({ value }: any) =>
     h('span', getCachedDate(value))

@@ -55,10 +55,10 @@
       </div>
 
       <!-- Tabs -->
-      <SwitchTab v-model="switchState" :options="[
+      <!-- <SwitchTab v-model="switchState" :options="[
         { label: 'Details', value: 'details' },
         { label: 'Active logs', value: 'active-logs' }
-      ]" />
+      ]" /> -->
       <!-- Appearance / Theme Mode -->
       <div class=" mt-5">
         <h3 class="text-sm font-medium text-text-secondary mb-2">Theme Mode</h3>
@@ -85,19 +85,19 @@
         <hr class="mt-6 border-t border-border" />
 
         <!-- ===== SHARE / INVITE ===== -->
-        <div>
+        <!-- <div>
           <div class="flex items-end flex-col gap-2">
             <BaseEmailChip class="w-full" label="Share" v-model="inviteEmails" :error="!!emailError"
               :message="emailError" showName @invalid="onEmailsInvalid" @add="onEmailsAdd" />
-      
+
           </div>
 
           <div class="mt-4 flex gap-3">
-            <!-- <button
+           <button
               class="flex-1 border rounded-md py-2 px-4 text-sm flex items-center justify-center gap-1 border-border hover:bg-bg-surface transition-colors"
               type="button" @click="copyInviteLink">
               <FontAwesomeIcon :icon="['fas', 'link']" /> Copy Link
-            </button> -->
+            </button>
 
             <button
               class="flex-1 cursor-pointer rounded-md py-2 px-4 text-sm bg-accent text-accent-text hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
@@ -105,7 +105,7 @@
               {{ inviting ? 'Sending…' : 'Share' }}
             </button>
           </div>
-        </div>
+        </div> -->
 
         <!-- Members list -->
         <div class="mt-4 space-y-3">
@@ -195,7 +195,7 @@
           <hr class="border-t border-border" />
 
           <div>
-            <h3 class="text-sm font-medium text-text-secondary mb-2">Danger Zone</h3>
+            <!-- <h3 class="text-sm font-medium text-text-secondary mb-2">Danger Zone</h3> -->
             <div class="bg-bg-body rounded-xl p-4 space-y-3">
               <div class="flex items-start gap-3">
                 <div class="flex-1">
@@ -205,11 +205,9 @@
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
+              <button type="button"
                 class="w-full px-4 py-2 text-sm rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                @click="openDeleteModal"
-              >
+                @click="openDeleteModal">
                 Delete Workspace
               </button>
             </div>
@@ -225,21 +223,13 @@
   </div>
 
   <!-- Delete Workspace Confirmation Modal (Outside side panel for full screen) -->
-  <ConfirmDeleteModal
-    v-model="showDeleteModal"
-    title="Delete Workspace"
-    :item-label="'workspace'"
-    :item-name="displayTitle"
-    :require-match-text="displayTitle"
-    :loading="isDeletingWorkspace"
-    confirm-text="Delete Workspace"
-    size="lg"
-    @confirm="handleDeleteWorkspace"
-    @cancel="showDeleteModal = false"
-  >
+  <ConfirmDeleteModal v-model="showDeleteModal" title="Delete Workspace" :item-label="'workspace'"
+    :item-name="displayTitle" :require-match-text="displayTitle" :loading="isDeletingWorkspace"
+    confirm-text="Delete Workspace" size="lg" @confirm="handleDeleteWorkspace" @cancel="showDeleteModal = false">
     <template #message>
       <p class="text-sm text-text-secondary">
-        This action cannot be undone. This will permanently delete the workspace <span class="font-semibold text-text-primary">{{ displayTitle }}</span> and all of its data, including:
+        This action cannot be undone. This will permanently delete the workspace <span
+          class="font-semibold text-text-primary">{{ displayTitle }}</span> and all of its data, including:
       </p>
       <ul class="mt-2 text-sm text-text-secondary list-disc list-inside space-y-1">
         <li>All tasks and cards</li>
@@ -439,9 +429,9 @@ function sendInvites() {
       emails: inviteEmails.value.map(e => ({ name: extractNameFromEmail(e), email: e }))
     },
     {
-      onSuccess: (data:any) => {
-        if(data?.failed)
-        toast.error(data?.failedInvites[0]?.error)
+      onSuccess: (data: any) => {
+        if (data?.failed)
+          toast.error(data?.failedInvites[0]?.error)
         else toast.success('Invite sent successfully')
         queryClient.invalidateQueries({ queryKey: ['workspaces'] })
         inviteEmails.value = []

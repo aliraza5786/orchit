@@ -41,10 +41,8 @@
                         :seat="ticket?.seat" />
                 </div>
 
-                <div @click.stop class="flex items-center gap-2 text-xs text-text-secondary">
-                    <DatePicker placeholder="start date" :model-value="startDate" theme="dark" emit-as="ymd"
-                        @update:modelValue="setStartDate" />
-                    <span>-</span>
+                <div @click.stop
+                    class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary">
                     <DatePicker placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                         @update:modelValue="setDueDate" />
                 </div>

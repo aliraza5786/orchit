@@ -1,5 +1,5 @@
 <template>
-    <div class="flex bg-bg-body justify-center items-center z-3  fixed top-0 bottom-0 min-h-[100dvh] w-[100vw]">
+    <div class="flex bg-bg-body justify-center items-center z-20  fixed top-0 bottom-0 min-h-[100dvh] w-[100vw]">
 
         <!-- <video autoplay muted loop playsinline class="absolute inset-0 z-0 w-full h-full object-cover ">
       <source src="../../assets/videos/Glowing-particles-overlay.mp4" type="video/mp4" />

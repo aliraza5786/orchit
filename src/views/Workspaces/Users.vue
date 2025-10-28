@@ -48,6 +48,7 @@ import { useCompanyId } from "../../services/user";
 import Table from "../../components/ui/Table.vue";
 import { useUsers } from "../../queries/useWorkspace";
 import Button from "../../components/ui/Button.vue";
+import Collaborators from "../../components/ui/Collaborators.vue";
 const InviteUsers = defineAsyncComponent(() => import("./Modals/InviteUsers.vue"));
 const { data: companyId } = useCompanyId();
 const { data, isPending } = useUsers(companyId)
@@ -74,9 +75,10 @@ const columns = [
     },
     {
         key: 'variables', label: 'Spaces',
-        render: ({ row }: any) => h('div', { class: ' capitalize flex items-center gap-2' }, [
-            h('span', row['workspace_title'])
-        ])
+
+        render: ({ row }: any) => h(Collaborators, { avatars: row.workspaces || [], image: true, maxVisible: 3 })
+
+
     },
     {
         key: 'variables', label: 'Role',
