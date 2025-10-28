@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-auto flex flex-col rounded-lg border border-border bg-card shadow" role="region"
+  <div class="overflow-auto flex flex-col rounded-lg border border-border bg-bg-card/90 shadow" role="region"
     :aria-busy="loading ? 'true' : 'false'" aria-live="polite">
     <table class="min-w-full text-left text-sm" role="grid">
       <!-- Header -->

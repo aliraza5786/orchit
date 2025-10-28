@@ -16,12 +16,25 @@
             @change="toggleOne('sprint', (row as any).id, $event, sprint.id)" />
         </template>
 
+
+
         <template #summary="{ row }">
-          <div class="flex items-center gap-2">
-            <span class="inline-block rounded-full border px-2 py-0.5 text-xs">{{ row.key }}</span>
+          <div class="flex items-center gap-2 text-text-secondary float-start">
+            <img src="../../../assets/icons/ticket-code.svg" alt="">
+            <span class="inline-block rounded-full px-2 py-0.5 text-xs">{{ row.key }}</span>
             <span class="truncate">{{ row.summary }}</span>
           </div>
         </template>
+
+        <template #status="{ row }">
+          <span :class="mapStatus(row.status)" class="px-2 py-1 rounded-md">{{ row.status }}</span>
+        </template>
+        <template #assignee="{ row }">
+          <span v-if="row.assignee == 'Unassigned'"
+            class="  float-end flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6  min-h-6 bg-gray-500/10 rounded-full  ">UA</span>
+          <span v-else class="  text-xs aspect-square max-w-6 flex justify-center items-center text-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full  ">{{ getInitials(row.assignee) }}</span>
+        </template>
+       
 
         <template #priority="{ row }">
           <span :class="priorityClass((row as any).priority)">{{ (row as any).priority }}</span>
@@ -149,7 +162,7 @@ function onDropSprint(e: DragEvent) {
 
 const columns = [
 
-  { key: 'select', label: '', width: 36 },
+  // { key: 'select', label: '', width: 36 },
   { key: 'summary', label: 'Summary', sortable: true },
   // { key: 'type', label: 'Type', width: 80, sortable: true },
   { key: 'status', label: 'Status', width: 120, sortable: true },
@@ -158,4 +171,24 @@ const columns = [
   // { key: 'storyPoints', label: 'SP', width: 60, sortable: true, align: 'right' as const },
   // { key: 'createdAt', label: 'Created', width: 140, sortable: true },
 ]
+function mapStatus(s: string) {
+  const normalized = s.toLowerCase()
+  switch (normalized.trim()) {
+    case 'todo':
+      return 'bg-gray-500/10 text-gray-500'
+          case 'to do':
+      return 'bg-gray-500/10 text-gray-500'
+    case 'in progress':
+      return 'bg-gray-amber/10 text-amber-500'
+    case 'done':
+      return 'bg-green-500/10 text-green-500'
+
+
+    default:
+      break;
+  }
+  if (normalized.includes('progress')) return 'In Progress'
+  if (normalized.includes('done') || normalized.includes('complete')) return 'Done'
+  return 'Todo'
+}
 </script>
