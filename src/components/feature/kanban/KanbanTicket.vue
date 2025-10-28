@@ -1,21 +1,29 @@
 <template>
-    <div @click="$emit('click')" class=" bg-bg-card rounded-lg p-4 pt-0 shadow-sm cursor-grab border-t-4
+    <div @click="$emit('click')" class="product-ticket relative bg-bg-card rounded-lg p-4 pt-0 shadow-sm cursor-grab border-t-4
              hover:shadow-md transition-all duration-200 active:cursor-grabbing" :class="priorityBorderClass"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
-        <div class="flex justify-between gap-2 items-center">
-            <div class="flex gap-2 py-2 flex-wrap ">
-                <!-- <TypeChanger v-for="(item, index) in ticket.variables"
+        <!-- <div class="flex justify-between gap-2 items-center"> -->
+        <!-- <div class="flex gap-2 py-2 flex-wrap "> -->
+        <!-- <TypeChanger v-for="(item, index) in ticket.variables"
                     v-show="item?.type === 'Select' && item?.visible_on_card" :key="index" @click.stop
                     :default="`${item?.value}`" :slug="item.slug" :cardId="ticket?._id"
                     @onselect="(val) => handleSelect(val)" /> -->
-            </div>
-            <DropMenu @click.stop="" :items="getMenuItems()">
+        <!-- </div> -->
+
+        <div
+            class="product-menu-icon absolute transition-all py-1 px-2 h-6 flex justify-center items-center  duration-100 ease-in-out top-2 left-[85%]   bg-bg-surface/40 rounded-md">
+
+            <DropMenu @click.stop="" class="mt-[-3px]" :items="getMenuItems()">
                 <template #trigger>
-                    <i class=" cursor-pointer fa-solid fa-ellipsis"></i>
+                    <div
+                        class=" rounded-full aspect-square w-4 max-h-4 border border-text-primary flex justify-center items-center">
+                        <i class=" cursor-pointer rotate-90 text-[10px]  fa-solid fa-ellipsis"></i>
+                    </div>
                 </template>
             </DropMenu>
         </div>
-        <div class="flex items-start justify-between mb-2">
+        <!-- </div> -->
+        <div class="flex items-start justify-between mb-2 mt-3">
             <h3 class="text-sm font-medium text-card-foreground leading-tight">
                 {{ ticket['card-title'] }}
             </h3>
@@ -30,11 +38,7 @@
                 <span>{{ ticket['card-code'] }}</span>
             </div>
 
-            <!-- Assignment trigger (stops bubbling) -->
-            <div @click.stop>
-                <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
-                    :seat="ticket?.seat" />
-            </div>
+
         </div>
 
         <!-- Bottom Info -->
@@ -45,14 +49,24 @@
                 @update:modelValue="setDueDate" />
         </div>
 
-        <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
-            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
-                <i class="fa-regular fa-message"></i>
-                {{ ticket?.comments_count }}
+        <div class="flex justify-between items-center mt-3">
+            <!-- Assignment trigger (stops bubbling) -->
+            <div @click.stop>
+                <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
+                    :seat="ticket?.seat" />
             </div>
-            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
-                <i class="fa-regular fa-file"></i>
-                {{ ticket?.attachments.length }}
+            <div class="flex justify-end  items-center text-xs   text-text-secondary ">
+
+                <div
+                    class="flex justify-center items-center text-xs gap-1 text-text-secondary  hover:bg-bg-surface/40 p-2 rounded-md">
+                    <i class="fa-regular fa-message"></i>
+                    {{ ticket?.comments_count }}
+                </div>
+                <div
+                    class="flex justify-center items-center text-xs gap-1 text-text-secondary  hover:bg-bg-surface/40 p-2 rounded-md">
+                    <i class="fa-regular fa-file"></i>
+                    {{ ticket?.attachments.length }}
+                </div>
             </div>
         </div>
     </div>
@@ -191,3 +205,12 @@ const assignHandle = (user: any) => {
 }
 defineEmits(['click'])
 </script>
+<style scoped>
+.product-menu-icon {
+    visibility: hidden;
+}
+
+.product-ticket:hover .product-menu-icon {
+    visibility: visible;
+}
+</style>
