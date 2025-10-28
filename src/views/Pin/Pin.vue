@@ -41,7 +41,7 @@
                     </div>
                 </template>
             </KanbanBoard>
-            <div class="min-w-[328px] " @click.stop>
+            <div class="min-w-[328px]" @click.stop>
                 <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
                     <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
                         @keyup.enter="emitAddColumn" />
@@ -72,7 +72,7 @@
         :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal"
         @submit="" />
     <SidePanel :pin="true" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
-        :showPanel="selectedCard?.variables.length > 0 ? true : false" />
+        :showPanel="selectedCard?._id ? true : false" />
     <CreateSheetModal size="md" v-model="isCreateSheetModal" />
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
 </template>

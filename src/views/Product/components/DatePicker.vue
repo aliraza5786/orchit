@@ -1,26 +1,45 @@
 <template>
   <div ref="root" class="relative inline-block text-left">
     <!-- Trigger -->
-    <button type="button" class="inline-flex text-xs w-full items-center transition" :class="[
-      disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
-      theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'
-    ]" @click="toggle" :disabled="disabled">
+    <button
+      type="button"
+      class="inline-flex text-xs w-full items-center transition"
+      :class="[
+        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+        theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'
+      ]"
+      @click="toggle"
+      :disabled="disabled"
+    >
       <span v-if="selectedDate">{{ formattedLabel }}</span>
-      <span v-else class="opacity-70">{{placeholder}}</span>
+      <span v-else class="opacity-70">{{ placeholder }}</span>
     </button>
 
     <!-- Popover -->
     <Teleport to="body">
       <transition name="dp-scale">
-        <div v-if="open" ref="popover" class="absolute z-50 mt-2 w-[280px] rounded-xl shadow-lg border p-3 select-none"
-          :style="dropdownStyles" :class="theme === 'dark'
+        <div
+          v-if="open"
+          ref="popover"
+          class="z-[9999] rounded-xl shadow-lg border p-3 select-none"
+          :style="{
+            position: 'fixed',
+            top: coords.top + 'px',
+            left: coords.left + 'px',
+            width: POPOVER_W + 'px',
+          }"
+          :class="theme === 'dark'
             ? 'bg-bg-dropdown border-border text-text-primary'
-            : 'bg-bg-dropdown border-border text-text-primary'" @keydown.esc.prevent.stop="close">
+            : 'bg-bg-dropdown border-border text-text-primary'"
+          @keydown.esc.prevent.stop="close"
+          role="dialog"
+          aria-modal="true"
+        >
           <!-- Header -->
           <div class="flex items-center justify-between mb-2">
-            <button class="px-2 py-1 rounded hover:bg-bg-dropdown-menu-hover " @click="prevMonth">‹</button>
+            <button class="px-2 py-1 rounded hover:bg-bg-dropdown-menu-hover" @click="prevMonth">‹</button>
             <div class="text-sm font-semibold">{{ monthFormatter.format(viewMonth) }}</div>
-            <button class="px-2 py-1 rounded hover:bg-bg-dropdown-menu-hover " @click="nextMonth">›</button>
+            <button class="px-2 py-1 rounded hover:bg-bg-dropdown-menu-hover" @click="nextMonth">›</button>
           </div>
 
           <!-- Weekdays -->
@@ -29,26 +48,37 @@
           </div>
 
           <!-- Days -->
-          <div class="grid grid-cols-7 gap-1">
+          <div class="grid grid-cols-7 gap-1 max-h-[320px] overflow-auto">
             <div v-for="(box, i) in boxes" :key="i">
-              <button v-if="box.date" class="w-9 h-9 rounded-full text-sm flex items-center justify-center
-                         hover:bg-bg-dropdown-menu-hover transition" :class="[
-                          isSameDay(box.date, today) ? 'ring-1 ring-gray-400' : '',
-                          isSameDay(box.date, selectedDate) ? (theme === 'dark' ? 'bg-bg-card text-text-primary' : 'bg-bg-card text-text-primary') : '',
-                          box.disabled ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''
-                        ]" :disabled="box.disabled" @click="pickDate(box.date!)">{{ box.date.getDate() }}</button>
+              <button
+                v-if="box.date"
+                class="w-9 h-9 rounded-full text-sm flex items-center justify-center hover:bg-bg-dropdown-menu-hover transition"
+                :class="[
+                  isSameDay(box.date, today) ? 'ring-1 ring-gray-400' : '',
+                  isSameDay(box.date, selectedDate) ? 'bg-bg-card text-text-primary' : '',
+                  box.disabled ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''
+                ]"
+                :disabled="box.disabled"
+                @click="pickDate(box.date!)"
+              >{{ box.date.getDate() }}</button>
               <div v-else class="w-9 h-9" />
             </div>
           </div>
 
           <!-- Footer -->
           <div class="flex items-center justify-between mt-3">
-            <button v-if="clearable && selectedDate"
+            <button
+              v-if="clearable && selectedDate"
               class="text-xs px-2 py-1 rounded border hover:bg-bg-dropdown-hover"
-              :class="theme === 'dark' ? 'border-border ' : 'border-border'" @click="clear">Clear</button>
+              :class="theme === 'dark' ? 'border-border' : 'border-border'"
+              @click="clear"
+            >Clear</button>
             <div class="flex-1"></div>
-            <button class="text-xs px-3 py-1 rounded border hover:bg-bg-dropdown-menu-hover dark:hover:bg-white/10"
-              :class="theme === 'dark' ? 'border-border' : 'border-border'" @click="close">Done</button>
+            <button
+              class="text-xs px-3 py-1 rounded border hover:bg-bg-dropdown-menu-hover"
+              :class="theme === 'dark' ? 'border-border' : 'border-border'"
+              @click="close"
+            >Done</button>
           </div>
         </div>
       </transition>
@@ -57,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onBeforeUnmount, nextTick } from 'vue'
+import { ref, watch, computed, onBeforeUnmount, nextTick, onMounted } from 'vue'
 
 const props = withDefaults(defineProps<{
   modelValue: string | number | Date | null
@@ -67,7 +97,7 @@ const props = withDefaults(defineProps<{
   maxDate?: string | number | Date | null
   theme?: 'light' | 'dark'
   emitAs?: 'ymd' | 'iso' | 'date'
-  placeholder:string
+  placeholder: string
 }>(), {
   disabled: false,
   clearable: true,
@@ -77,11 +107,18 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{ (e: 'update:modelValue', v: any): void }>()
 
+/** Refs & state **/
 const root = ref<HTMLElement | null>(null)
 const popover = ref<HTMLElement | null>(null)
 const open = ref(false)
-const dropdownStyles = ref<{ top: string; left: string; width: string }>({ top: '0px', left: '0px', width: '0px' })
+const coords = ref({ top: 0, left: 0 })
 
+/** Sizing / constants **/
+const GAP = 8
+const POPOVER_W = 280
+const ASSUMED_H = 320 // used before measurement
+
+/** Dates **/
 const selectedDate = ref<Date | null>(coerceDate(props.modelValue))
 const viewMonth = ref<Date>(selectedDate.value ? startOfMonth(selectedDate.value) : startOfMonth(new Date()))
 const today = startOfDay(new Date())
@@ -96,55 +133,81 @@ watch(() => props.modelValue, (v) => {
   if (d) viewMonth.value = startOfMonth(d)
 })
 
+/** Open / close **/
 function toggle() {
   if (props.disabled) return
   open.value = !open.value
   if (open.value) {
-    nextTick(positionAndBind)
+    nextTick(() => {
+      position()
+      bind()
+    })
   } else {
     unbind()
   }
 }
-
-function positionAndBind() {
-  const btn = root.value?.querySelector('button')
-  if (btn) {
-    const rect = btn.getBoundingClientRect()
-    dropdownStyles.value = {
-      top: `${rect.bottom + window.scrollY}px`,
-      left: `${rect.left + window.scrollX}px`,
-      width: `280px`,
-    }
-  }
-  // close on outside anywhere (use pointerdown for snappy feel, capture = true)
-  document.addEventListener('pointerdown', onOutside, true)
-  window.addEventListener('scroll', close, true)
-  window.addEventListener('resize', close, true)
-}
-
-function unbind() {
-  document.removeEventListener('pointerdown', onOutside, true)
-  window.removeEventListener('scroll', close, true)
-  window.removeEventListener('resize', close, true)
-}
-
-function onOutside(e: PointerEvent) {
-  const t = e.target as Node
-  if (!root.value?.contains(t) && !popover.value?.contains(t)) {
-    close()
-  }
-}
-
 function close() {
   open.value = false
   unbind()
 }
 
-/* Month nav */
+/** Positioning: fixed + flip (left/right, above/below) + clamp **/
+function position() {
+  const btn = root.value?.querySelector('button')
+  if (!btn) return
+  const rect = btn.getBoundingClientRect()
+  const vw = document.documentElement.clientWidth
+  const vh = document.documentElement.clientHeight
+
+  const mh = (popover.value?.offsetHeight || ASSUMED_H)
+
+  // Horizontal: default align left edge, flip if overflowing
+  const canShowRight = vw - rect.left >= POPOVER_W + GAP
+  let left = canShowRight ? rect.left : rect.right - POPOVER_W
+  // Clamp within viewport
+  left = Math.min(Math.max(left, GAP), vw - POPOVER_W - GAP)
+
+  // Vertical: default below, flip above if not enough space
+  const canShowBelow = vh - rect.bottom >= mh + GAP
+  let top = canShowBelow ? rect.bottom + GAP : rect.top - mh - GAP
+  // Clamp vertically (if extremely small viewports)
+  top = Math.min(Math.max(top, GAP), vh - mh - GAP)
+
+  coords.value = { top, left }
+}
+
+/** Rebind / listeners **/
+function bind() {
+  // close on outside (capture for reliability)
+  document.addEventListener('pointerdown', onOutside, true)
+  // reposition on scroll/resize to keep it attached to trigger
+  window.addEventListener('scroll', onViewportChange, true)
+  window.addEventListener('resize', onViewportChange, true)
+}
+function unbind() {
+  document.removeEventListener('pointerdown', onOutside, true)
+  window.removeEventListener('scroll', onViewportChange, true)
+  window.removeEventListener('resize', onViewportChange, true)
+}
+function onViewportChange() {
+  if (!open.value) return
+  position()
+}
+function onOutside(e: PointerEvent) {
+  const t = e.target as Node
+  if (!root.value?.contains(t) && !popover.value?.contains(t)) close()
+}
+onMounted(() => {
+  // In case fonts/images load and change sizes, keep it accurate
+  if (open.value) nextTick(position)
+})
+onBeforeUnmount(unbind)
+
+/** Month nav **/
 function prevMonth() { viewMonth.value = addMonths(viewMonth.value, -1) }
 function nextMonth() { viewMonth.value = addMonths(viewMonth.value, 1) }
 
-/* Grid */
+/** Grid **/
 const boxes = computed(() => {
   const start = startOfMonth(viewMonth.value)
   const firstWeekday = start.getDay()
@@ -157,9 +220,8 @@ const boxes = computed(() => {
   const max = coerceDate(props.maxDate)
   for (let d = 1; d <= days; d++) {
     const date = new Date(viewMonth.value.getFullYear(), viewMonth.value.getMonth(), d)
-    const disabled = (min && date < startOfDay(min)) || (max && date > startOfDay(max))
-    const assignDisable = disabled != null ? disabled : false;
-    out.push({ date, disabled: assignDisable })
+    const disabled = (min && date < startOfDay(min)) || (max && date > startOfDay(max)) || false
+    out.push({ date, disabled })
   }
 
   const remainder = out.length % 7
@@ -167,7 +229,7 @@ const boxes = computed(() => {
   return out
 })
 
-/* Actions */
+/** Actions **/
 function pickDate(d: Date) {
   selectedDate.value = d
   let payload: any
@@ -182,14 +244,14 @@ function clear() {
   emit('update:modelValue', null)
 }
 
-/* Label */
+/** Label **/
 const formattedLabel = computed(() =>
   selectedDate.value
     ? new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(selectedDate.value)
     : ''
 )
 
-/* Utils */
+/** Utils **/
 function coerceDate(v: any): Date | null {
   if (!v && v !== 0) return null
   const d = v instanceof Date ? v : new Date(v)
@@ -207,8 +269,6 @@ function isSameDay(a: Date | null, b: Date | null) {
 }
 function pad(n: number) { return n < 10 ? `0${n}` : `${n}` }
 function formatYMD(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }
-
-onBeforeUnmount(unbind)
 </script>
 
 <style scoped>
@@ -218,7 +278,6 @@ onBeforeUnmount(unbind)
   transition: opacity 120ms ease, transform 120ms ease;
   transform-origin: top left;
 }
-
 .dp-scale-enter-from,
 .dp-scale-leave-to {
   opacity: 0;
