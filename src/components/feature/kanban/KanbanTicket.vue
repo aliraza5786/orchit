@@ -5,15 +5,19 @@
 
         <div class="flex justify-between gap-2 items-start mb-3">
             <div class="flex gap-2 flex-wrap items-center">
-                <span v-if="ticket?.card_type?.title" class="text-[10px] px-2 py-1 rounded bg-bg-surface/60 text-text-secondary font-medium uppercase">
-                    {{ ticket.card_type.title }}
+
+                <span v-if="ticket['card-type']"
+                    class="text-[10px] px-2 py-1 rounded bg-bg-surface/60 text-text-secondary font-medium uppercase">
+                    {{ ticket['card-type'] }}
                 </span>
-                <span v-if="ticket?.card_status?.title" class="text-[10px] px-2 py-1 rounded bg-accent/20 text-accent font-medium">
-                    {{ ticket.card_status.title }}
+                <span v-if="ticket['card-status']"
+                    class="text-[10px] px-2 py-1 rounded bg-accent/20 text-accent font-medium">
+                    {{ ticket['card-status'] }}
                 </span>
             </div>
 
-            <div class="product-menu-icon transition-all py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
+            <div
+                class="product-menu-icon transition-all py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
                 <DropMenu @click.stop="" :items="getMenuItems()">
                     <template #trigger>
                         <i class="cursor-pointer text-sm fa-solid fa-ellipsis"></i>
@@ -22,7 +26,7 @@
             </div>
         </div>
 
-        <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2">
+        <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
             {{ ticket['card-title'] }}
         </h3>
 
@@ -62,7 +66,6 @@
             size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {
                 showDelete = false
             }">
-
         </ConfirmDeleteModal>
     </div>
 </template>

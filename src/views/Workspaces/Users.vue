@@ -18,9 +18,9 @@
                 <!-- Custom slot for status -->
                 <template #status="{ row }">
                     <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
-                        'bg-blue-100 text-blue-600': row.status === 'In progress',
-                        'bg-red-100 text-red-600': row.status === 'Live',
-                        'bg-green-100 text-green-600': row.status === 'Done'
+                        'bg-blue-100 text-blue-600': row.status === 'pending',
+                        'bg-red-100 text-red-600': row.status === 'rejected',
+                        'bg-green-100 text-green-600': row.status === 'accepted'
                     }">
                         {{ row.status }}
                     </span>
@@ -51,6 +51,18 @@ import Button from "../../components/ui/Button.vue";
 const InviteUsers = defineAsyncComponent(() => import("./Modals/InviteUsers.vue"));
 const { data: companyId } = useCompanyId();
 const { data, isPending } = useUsers(companyId)
+function getStatusStyle(status: any) {
+    switch (status) {
+        case 'pending':
+            return 'bg-amber-600/10 text-amber-600'
+        case 'accepted':
+            return 'bg-green-600/10 text-green-600'
+        case 'rejected':
+            return 'bg-red-600/10 text-red-600'
+        default:
+            break;
+    }
+}
 const columns = [
     {
         key: "variables", label: 'Name', render: ({ row }: any) =>
@@ -74,7 +86,7 @@ const columns = [
     },
     {
         key: 'variables', label: 'Status',
-        render: ({ row}: any) => h('div', { class: ' capitalize flex items-center gap-2' }, [
+        render: ({ row }: any) => h('div', { class: `capitalize flex items-center gap-2 rounded-md inline w-fit px-2 py-1 ${getStatusStyle(row['seat_status'])}` }, [
             h('span', row['seat_status'])
         ])
     }
