@@ -64,11 +64,11 @@
         cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
             showDelete = false
         }" />
-    <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
+    <CreateTaskModal  :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
         v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
     <SidePanel v-if="selectedCard?._id" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
         :showPanel="selectedCard?._id ? true : false" />
-    <CreateSheetModal v-model="isCreateSheetModal" />
+    <CreateSheetModal size="md" v-model="isCreateSheetModal" />
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
 </template>
 <script setup lang="ts">
