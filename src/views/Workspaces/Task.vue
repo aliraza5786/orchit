@@ -11,7 +11,7 @@
 
             <div v-if="data && data?.length == 0"
                 class="flex py-10 justify-center items-center text-sm text-text-secondary">No Workspace</div>
-            <Table @row-click="handleClick" :columns="columns" :rows="data?.data?.cards || []" :loading="isPending"
+            <Table @row-click="(row:any)=>handleClick(row)" :columns="columns" :rows="data?.data?.cards || []" :loading="isPending"
                 :skeletonRows="6">
                 <!-- Custom slot for status -->
                 <template #status="{ row }">
@@ -39,7 +39,7 @@
 
         <TaskDetailsModal
             v-model="showTaskModal"
-            :card-id="selectedCardId"
+            :cardId="selectedCardId"
             @close="closeModal"
         />
     </div>
@@ -49,7 +49,7 @@ import { h, ref } from "vue";
 import { useUserId } from "../../services/user";
 import { useTasks } from "../../queries/useWorkspace";
 import Table from "../../components/ui/Table.vue";
-import TaskDetailsModal from "./modals/TaskDetailsModal.vue";
+import TaskDetailsModal from "./Modals/TaskDetailsModal.vue";
 
 const { data: userId } = useUserId();
 const { data, isPending } = useTasks(userId)
@@ -81,8 +81,8 @@ const columns = [
 ]
 
 const handleClick = (row: any) => {
-    if (row && row._id) {
-        selectedCardId.value = row._id;
+    if (row.row && row.row._id) {
+        selectedCardId.value = row?.row._id;
         showTaskModal.value = true;
     }
 }
