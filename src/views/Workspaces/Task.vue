@@ -36,15 +36,27 @@
 
             </Table>
         </div>
+
+        <TaskDetailsModal
+            v-model="showTaskModal"
+            :card-id="selectedCardId"
+            @close="closeModal"
+        />
     </div>
 </template>
 <script setup lang="ts">
-import { h } from "vue";
+import { h, ref } from "vue";
 import { useUserId } from "../../services/user";
 import { useTasks } from "../../queries/useWorkspace";
 import Table from "../../components/ui/Table.vue";
+import TaskDetailsModal from "./modals/TaskDetailsModal.vue";
+
 const { data: userId } = useUserId();
 const { data, isPending } = useTasks(userId)
+
+const showTaskModal = ref(false);
+const selectedCardId = ref('');
+
 const columns = [
     {
         key: "variables", label: 'Task name', render: ({ value }: any) =>
@@ -68,7 +80,15 @@ const columns = [
     }
 ]
 
-const handleClick = () => {
+const handleClick = (row: any) => {
+    if (row && row._id) {
+        selectedCardId.value = row._id;
+        showTaskModal.value = true;
+    }
+}
 
+const closeModal = () => {
+    showTaskModal.value = false;
+    selectedCardId.value = '';
 }
 </script>
