@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/vue-query";
 import { api } from "../libs/api";  
-import { unref, computed } from "vue";
+import { unref, computed, type Ref } from "vue";
 
 
 // ---------------------------

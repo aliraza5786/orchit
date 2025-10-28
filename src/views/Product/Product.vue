@@ -119,13 +119,13 @@ const { data } = useSheets({
     workspace_module_id: moduleId
 });
 const sheetId = computed(() => data.value ? data.value[0]?._id : '')
+const selected_sheet_id = ref<any>(sheetId.value);
 watch(sheetId, () => {
     selected_sheet_id.value = sheetId.value;
 })
 
-const selected_sheet_id = ref<any>();
 const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
-const selected_view_by = ref();
+const selected_view_by = ref(viewBy.value);
 watch(viewBy, () => {
     selected_view_by.value = viewBy.value;
 })

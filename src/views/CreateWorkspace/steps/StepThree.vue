@@ -18,13 +18,31 @@
             <p class="text-sm text-text-secondary">{{ role.description }}</p>
           </div>
           <!-- Update max number of people -->
-          <div class="flex items-center gap-3 text-text-primary">
-            <button @click="decreaseMaxPeople(role)"
-              class="w-8 h-8 aspect-square rounded-full bg-bg-card flex items-center justify-center text-xl">−</button>
-            <span class="text-lg">{{ role.max_num_people }}</span>
-            <button @click="increaseMaxPeople(role)"
-              class="w-8 h-8 aspect-square rounded-full bg-bg-card flex items-center justify-center text-xl">+</button>
-          </div>
+         <!-- Update max number of people -->
+<div class="flex items-center gap-3 text-text-primary">
+  <!-- minus OR delete -->
+  <button
+    @click="role.max_num_people === 1 ? deleteRole(role.id) : decreaseMaxPeople(role)"
+    class="w-8 cursor-pointer h-8 aspect-square rounded-full bg-bg-card flex items-center justify-center text-xl"
+    :title="role.max_num_people === 1 ? 'Remove team' : 'Decrease capacity'"
+    :aria-label="role.max_num_people === 1 ? 'Remove team' : 'Decrease capacity'"
+  >
+    <!-- icon changes with state -->
+    <span v-if="role.max_num_people > 1">−</span>
+    <!-- simple trash icon (emoji or swap with your icon set) -->
+    <span v-else class="text-base cursor-pointer"><i class="fa-regular fa-trash"></i></span>
+  </button>
+
+  <span class="text-lg">{{ role.max_num_people }}</span>
+
+  <button
+    @click="increaseMaxPeople(role)"
+    class="w-8 h-8 aspect-square cursor-pointer rounded-full bg-bg-card flex items-center justify-center text-xl"
+    title="Increase capacity"
+    aria-label="Increase capacity"
+  >+</button>
+</div>
+
         </div>
       </div>
       <!-- Display Team Members -->
@@ -250,5 +268,15 @@ function increaseMaxPeople(role: Role) {
 function continueHandler() {
   saveToLocalStorage()
 }
+
+function deleteRole(roleId: string) {
+  const idx = workspace.roles.findIndex((r: Role) => r.id === roleId)
+  if (idx !== -1) {
+    workspace.roles.splice(idx, 1)
+    // optional: persist if you want immediate save-on-delete
+    // saveToLocalStorage()
+  }
+}
+
 defineExpose({ continueHandler })
 </script>

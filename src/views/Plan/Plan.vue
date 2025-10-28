@@ -88,7 +88,7 @@
     :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" />
   <StartSprintModal :sprint="selectedSprint" v-model="startsprintModalOpen" @save="startSprintHandler"
     :creatingSprint="isStartingSprint || isUpdatingSprint2" />
-  <!-- <CreateBacklogTicket /> -->
+  <!-- <CreateBacklogTicket v-model="isCreateTicketModalOpen" /> -->
 </template>
 
 <script setup lang="ts">
@@ -96,7 +96,6 @@ import BacklogTable from './components/BacklogTable.vue'
 import SprintCard from './components/SprintCard.vue'
 import TicketModal from './modals/TicketModal.vue'
 import SprintModal from './modals/SprintModal.vue'
-
 import { computed, nextTick, ref } from 'vue'
 import { useBacklogStore, type Ticket } from './composables/useBacklogStore'
 import Button from '../../components/ui/Button.vue'
@@ -111,7 +110,7 @@ import StartSprintModal from './modals/StartSprintModal.vue'
 // import CreateBacklogTicket from './modals/CreateBacklogTicket.vue'
 import ActiveSprint from './components/ActiveSprint.vue'
 const { workspaceId } = useWorkspaceId();
-
+const isCreateTicketModalOpen = ref(false)
 const {
   // backlog, sprints,
   // selectedBacklogIds, selectedSprintIds,
@@ -128,8 +127,6 @@ const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
 const selectedSprint = ref(null)
 const showSprintDelete = ref(false)
 const handleDeleteTicket = () => {
-  console.log(selectedSprint, '>>>');
-
   deleteSprint(selectedSprint.value?._id)
 }
 const { mutate: updateSprint2, isPending: isUpdatingSprint2 } = useUpdateSprint(
@@ -267,9 +264,10 @@ const editingTicket = ref<Ticket | null>(null)
 let createTarget: 'backlog' | 'sprint' = 'backlog'
 
 function openCreateBacklogTicket() {
+  isCreateTicketModalOpen.value = true;
   editingTicket.value = null
   createTarget = 'backlog'
-  ticketModalOpen.value = true
+  // ticketModalOpen.value = true
 }
 function openCreateSprintTicket() {
   editingTicket.value = null

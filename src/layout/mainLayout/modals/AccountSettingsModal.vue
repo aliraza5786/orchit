@@ -90,7 +90,15 @@
         </template>
 
         <template #Subscription>
-          <div class="py-4">
+          <div class="w-full h-full flex justify-center items-center" v-if="isPending || isConfirming">
+            <!-- Centered spinner -->
+
+            <div role="status" aria-label="Loading"
+              class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
+
+
+          </div>
+          <div v-else class="py-4">
             <div class="space-y-6">
               <div class="bg-bg-body  rounded-xl p-6 border border-border">
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Current Plan</h3>
@@ -118,8 +126,8 @@
                         <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
                         <span class="text-xs font-medium text-text-secondary">{{ item.description }}</span>
                       </div>
-                      <span class="text-sm text-text-secondary">{{ item?.usage.limit }} {{ item?.usage.unit }} / {{
-                        item.limits.limit }} {{item?.limits?.unit}}</span>
+                      <span class="text-sm text-text-secondary">{{ item?.usage.current }} {{ item?.usage.unit }} / {{
+                        item.limits.limit }} {{ item?.limits?.unit }}</span>
                     </div>
                     <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
                       <div class="h-full bg-accent rounded-full transition-all"
@@ -147,7 +155,7 @@
                           currentPackage?.nextPackage?.pricing?.month?.currencySymbol }} </span>
                         <span class="text-sm text-text-secondary">/ {{
                           currentPackage?.nextPackage?.pricing?.month?.interval
-                          }}</span>
+                        }}</span>
                       </div>
                       <p class="text-sm text-text-secondary">{{ currentPackage?.nextPackage?.description }}</p>
                     </div>
@@ -235,13 +243,13 @@ import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../q
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
 import { useRoute, useRouter } from 'vue-router'
 import { useWorkspaceStore } from '../../../stores/workspace'
-const workspaceStore= useWorkspaceStore()
+const workspaceStore = useWorkspaceStore()
 const route = useRoute();
 const router = useRouter();
-const { data: currentPackage, refetch: reftechCurrentPackage } = useCurrentPackage();
+const { data: currentPackage, refetch: reftechCurrentPackage, isPending } = useCurrentPackage();
 const sessionId = route.query.session_id;
 
-const { mutate: confirm } = confirmPayment({
+const { mutate: confirm, isPending: isConfirming } = confirmPayment({
   sessionId: sessionId, interval: 'month'
 }, {
   onSuccess: () => {
@@ -307,11 +315,10 @@ const avatarPreview = ref<string>('')
 const isUploadingAvatar = ref(false)
 const uploadedAvatarUrl = ref<string>('')
 
-// @ts-expect-error - Used in template
-const tickets = ref([
-  { id: 1, title: 'Fix dashboard layout', project: 'Orchit AI Dashboard' },
-  { id: 2, title: 'Update profile endpoint', project: 'API Integration' }
-])
+// const tickets = ref([
+//   { id: 1, title: 'Fix dashboard layout', project: 'Orchit AI Dashboard' },
+//   { id: 2, title: 'Update profile endpoint', project: 'API Integration' }
+// ])
 
 watch(profileData, (data) => {
   if (!data) return
@@ -400,19 +407,18 @@ function cancelChanges() {
   isOpen.value = false
 }
 
-// @ts-expect-error - Used in template
-function getStatusBadge(status: string) {
-  switch (status) {
-    case 'accepted':
-      return 'bg-green-500/20 text-green-600'
-    case 'pending':
-      return 'bg-orange-500/20 text-orange-600'
-    case 'rejected':
-      return 'bg-red-500/20 text-red-600'
-    default:
-      return 'bg-gray-500/20 text-gray-600'
-  }
-}
+// function getStatusBadge(status: string) {
+//   switch (status) {
+//     case 'accepted':
+//       return 'bg-green-500/20 text-green-600'
+//     case 'pending':
+//       return 'bg-orange-500/20 text-orange-600'
+//     case 'rejected':
+//       return 'bg-red-500/20 text-red-600'
+//     default:
+//       return 'bg-gray-500/20 text-gray-600'
+//   }
+// }
 
 const currentPlan = ref({
   name: 'Pro',
@@ -490,21 +496,18 @@ const pricingPlans = ref([
   // }
 ])
 
-// @ts-expect-error - Used in template
-function manageBilling() {
-  toast.info('Redirecting to Stripe billing portal...')
-  window.open('https://billing.stripe.com/p/login/test_00000000000000', '_blank')
-}
+// function manageBilling() {
+//   toast.info('Redirecting to Stripe billing portal...')
+//   window.open('https://billing.stripe.com/p/login/test_00000000000000', '_blank')
+// }
 
-// @ts-expect-error - Used in template
-function upgradePlan(plan: any) {
-  toast.info(`Redirecting to checkout for ${plan.name} plan...`)
-  window.open('https://checkout.stripe.com/test_00000000000000', '_blank')
-}
+// function upgradePlan(plan: any) {
+//   toast.info(`Redirecting to checkout for ${plan.name} plan...`)
+//   window.open('https://checkout.stripe.com/test_00000000000000', '_blank')
+// }
 
-// @ts-expect-error - Used in template
-function downgradePlan(plan: any) {
-  toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
-}
+// function downgradePlan(plan: any) {
+//   toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
+// }
 
 </script>

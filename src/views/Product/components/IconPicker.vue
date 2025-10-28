@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from 'vue';
 import Button from '../../../components/ui/Button.vue';
 import { primeIcons } from '../../../data/primeIconsNames';
 
-type IconPrefix = 'pi';
+type IconPrefix = 'fa';
 
 type IconValue = { prefix: IconPrefix; iconName: string } | null;
 
@@ -23,15 +23,15 @@ const query = ref('');
 const page = ref(1);
 const pageSize = 120;
 
-const activePrefixes = ref<IconPrefix[]>(['pi']);
+const activePrefixes = ref<IconPrefix[]>(['fa']);
 
 onMounted(() => {
   const items: CatalogItem[] = primeIcons.map((name) => {
-    const iconName = `pi-${name}`;
+    const iconName = `fa-${name}`;
     return {
-      prefix: 'pi' as IconPrefix,
+      prefix: 'fa' as IconPrefix,
       iconName,
-      renderClasses: ['pi', iconName],
+      renderClasses: ['fa-regular', iconName],
       label: name,
     };
   });
@@ -115,10 +115,8 @@ function openIconLibrary() {
     <div v-if="modelValue" class="mt-4 p-3 bg-bg-input rounded-lg flex items-center gap-2">
       <i :class="[modelValue.prefix, modelValue.iconName]" class="text-xl" />
       <div class="min-w-0">
-        <p class="font-medium truncate">{{ modelValue.prefix }} {{ modelValue.iconName }}</p>
-        <code class="text-xs block break-all">
-          { prefix: '{{ modelValue.prefix }}', iconName: '{{ modelValue.iconName }}' }
-        </code>
+        <p class="font-medium truncate"> {{ modelValue.iconName }}</p>
+
       </div>
       <img src="../../../assets/icons/cross.svg" @click="select(null)" class="ml-auto cursor-pointer"
         alt="Clear icon" />

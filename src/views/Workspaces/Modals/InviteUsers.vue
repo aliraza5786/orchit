@@ -65,7 +65,7 @@ const isOpen = computed({
 })
 
 const queryClient = useQueryClient()
-const { data: workspaces, } = useWorkspaces()
+const { data: workspaces, } = useWorkspaces(1, 100)
 
 type SelectValue = string | number | null
 const form = reactive({

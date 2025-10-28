@@ -9,7 +9,7 @@
 
         <div class="flex items-center gap-3">
           <div to="/create-workspace" @click="() => {
-            if (workspaceStore.limits.features[1]?.usage.limit == workspaceStore.limits.features[1]?.limits.limit) {
+            if (workspaceStore.limits.features[1]?.usage.current >= workspaceStore.limits.features[1]?.limits.limit) {
               workspaceStore.setLimitExccedModal(true)
             }else{
               router.push('/create-workspace')

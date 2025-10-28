@@ -216,6 +216,16 @@ export const useCreateWorkspaceWithAI = (options = {}) =>
     options as any
   );
 
+  export const useCreateWorkspaceWithAIPrivate = (options = {}) =>
+    useApiMutation<{ data: unknown }, any>(
+      {
+        key: keys.createWorkspaceAI,
+        url: "workspace/step-1-ai",
+        method: "POST",
+      },
+      options as any
+    );
+  
 export const useCreateWorkspace = (options = {}) =>
   useApiMutation<{ data: unknown }, any>(
     {
