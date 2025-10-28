@@ -47,7 +47,7 @@
         <!-- Footer -->
         <div class="flex justify-end gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border">
             <Button variant="secondary" @click="cancel">Cancel</Button>
-            <Button variant="primary" :disabled="!isValid" @click="save">Start</Button>
+            <Button variant="primary" :disabled="!isValid" @click="save">{{creatingSprint?'Starting...':'Start'}}</Button>
         </div>
     </BaseModal>
 </template>
@@ -69,7 +69,7 @@ const emit = defineEmits<{
 
 /** Props */
 const props = withDefaults(
-    defineProps<{ modelValue: boolean; sprint: Sprint }>(),
+    defineProps<{ modelValue: boolean; sprint: Sprint , creatingSprint:boolean}>(),
     { modelValue: false }
 )
 

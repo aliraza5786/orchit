@@ -16,7 +16,9 @@
       <div class="flex gap-3 items-center ">
         <SearchBar placeholder="Search in Orchit AI space">
         </SearchBar>
-        <Button v-if="sprintDetailData?.status == 'active'" size="sm" @click="handleCompleteSprint">{{ isCompletingSprint ? 'Ending...' : 'End' }}</Button>
+        <Button v-if="sprintDetailData?.status == 'active'" size="sm" @click="handleCompleteSprint">{{
+          isCompletingSprint ?
+          'Ending...' : 'End' }}</Button>
         <Button v-else size="sm" @click="openStartSprintModal">Start Sprint</Button>
 
       </div>
@@ -99,7 +101,7 @@
   <SprintModal v-model="sprintModalOpen" @save="saveSprintHandler" :sprint="selectedSprint"
     :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" />
   <StartSprintModal :sprint="selectedSprint" v-model="startsprintModalOpen" @save="startSprintHandler"
-    :creatingSprint="isStartingSprint || isUpdatingSprint2" />
+    :creatingSprint="isStartingSprint || isUpdatingSprint2"   />
   <!-- <CreateBacklogTicket v-model="isCreateTicketModalOpen" /> -->
 
 </template>
@@ -150,13 +152,17 @@ const { mutate: updateSprint2, isPending: isUpdatingSprint2 } = useUpdateSprint(
         id: selectedSprintId.value,
 
       })
-      refetchSprintDetail();
-      queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
+      // queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
       startsprintModalOpen.value = false;
     }
   }
 )
-const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint()
+const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint({
+  onSuccess:()=>{
+    refetchSprintDetail();
+
+  }
+})
 const startSprintHandler = (e: any) => {
   console.log('helo', selectedSprint.value, e);
 
@@ -373,9 +379,13 @@ function handleDeleteSprint(e: any) {
   selectedSprint.value = e;
   showSprintDelete.value = true
 }
-const { mutate: completeSprint, isPending: isCompletingSprint } = useCompleteSprint(selectedSprintId)
+const { mutate: completeSprint, isPending: isCompletingSprint } = useCompleteSprint(selectedSprintId, {
+  onSuccess: () => {
+    refetchSprintDetail();
+  }
+})
 
 const handleCompleteSprint = () => {
-    completeSprint({})
+  completeSprint({})
 }
 </script>
