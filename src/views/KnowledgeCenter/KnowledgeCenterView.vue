@@ -17,9 +17,9 @@
               class="text-[14px] font-manrope leading-[24px] font-semibold text-text-secondary flex gap-4  w-full items-center">
               <RouterLink to="/"><img :src="theme === 'dark' ? darkLogo : lightLogo" alt="logo" fetchpriority="high"
                   width="100px"></RouterLink>
-              <span class="border-l-2 border-border-input ps-4 pb-2 "> <i
+              <!-- <span class="border-l-2 border-border-input ps-4 pb-2 "> <i
                   class="fa-regular fa-house text-text-primary"></i>
-                Docs</span>
+                Docs</span> -->
             </div>
             <button @click="sidebarOpen = false" class="md:hidden text-text-primary ">
               <i class="fa-solid fa-xmark font-bold"></i>
