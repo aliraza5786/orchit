@@ -16,7 +16,9 @@
       <div class="flex gap-3 items-center ">
         <SearchBar placeholder="Search in Orchit AI space">
         </SearchBar>
-        <Button size="sm" @click="openStartSprintModal">Start Sprint</Button>
+        <Button v-if="sprintDetailData?.status == 'active'" size="sm" @click="handleCompleteSprint">{{ isCompletingSprint ? 'Ending...' : 'End' }}</Button>
+        <Button v-else size="sm" @click="openStartSprintModal">Start Sprint</Button>
+
       </div>
     </div>
     <template v-if="sprintDetailData?.status == 'active'">
@@ -112,7 +114,7 @@ import { useBacklogStore, type Ticket } from './composables/useBacklogStore'
 import Button from '../../components/ui/Button.vue'
 import Dropdown from '../../components/ui/Dropdown.vue'
 import SearchBar from '../../components/ui/SearchBar.vue'
-import { useBacklogList, useCreateSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintCard, useSprintDetail, useSprintList, useStartSprint, useUpdateSprint } from '../../queries/usePlan'
+import { useBacklogList, useCompleteSprint, useCreateSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintCard, useSprintDetail, useSprintList, useStartSprint, useUpdateSprint } from '../../queries/usePlan'
 import { toast } from 'vue-sonner'
 import { useWorkspaceId } from '../../composables/useQueryParams'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -370,5 +372,10 @@ function openEditSprintModal(e: any) {
 function handleDeleteSprint(e: any) {
   selectedSprint.value = e;
   showSprintDelete.value = true
+}
+const { mutate: completeSprint, isPending: isCompletingSprint } = useCompleteSprint(selectedSprintId)
+
+const handleCompleteSprint = () => {
+    completeSprint({})
 }
 </script>

@@ -2,15 +2,7 @@
     <div
         class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
              rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  ">
-        <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
-            Sprint
-            <div class="flex gap-3 items-center ">
-
-                <Searchbar placeholder="Search in Orchit AI space">
-                </Searchbar>
-                <Button size="sm" @click="handleCompleteSprint">{{ isCompletingSprint ? 'Ending...' : 'End' }}</Button>
-            </div>
-        </div>
+       
         <KanbanSkeleton v-show="isPending" />
         <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
@@ -112,15 +104,12 @@ const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
 const selected_view_by = ref(viewBy);
 const workspaceStore = useWorkspaceStore();
 const selected_sprint_id = computed(() => props.sptint_id)
-const { mutate: completeSprint, isPending: isCompletingSprint } = useCompleteSprint(selected_sprint_id)
 // usage
 const { data: Lists, isPending, } = useSprintKanban(
     selected_sprint_id,                      // ref
     // ref
 )
-const handleCompleteSprint = () => {
-    completeSprint({})
-}
+
 const createTeamModal = ref(false);
 const selectedCard = ref<any>()
 const selectCardHandler = (card: any) => {
