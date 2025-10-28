@@ -35,15 +35,18 @@
         </p>
 
         <div class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 flex-1">
                 <div @click.stop>
                     <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
                         :seat="ticket?.seat" />
                 </div>
 
-                <div v-if="dueDate" class="flex items-center gap-1 text-xs text-text-secondary">
-                    <i class="fa-regular fa-calendar text-[10px]"></i>
-                    <span>{{ formatDate(dueDate) }}</span>
+                <div @click.stop class="flex items-center gap-2 text-xs text-text-secondary">
+                    <DatePicker placeholder="start date" :model-value="startDate" theme="dark" emit-as="ymd"
+                        @update:modelValue="setStartDate" />
+                    <span>-</span>
+                    <DatePicker placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
+                        @update:modelValue="setDueDate" />
                 </div>
             </div>
 
@@ -77,27 +80,11 @@ import { useQueryClient } from '@tanstack/vue-query'
 import DropMenu from '../../ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
 import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
+import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
 const { workspaceId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
-
-function formatDate(dateStr: string | null): string {
-    if (!dateStr) return ''
-    const date = new Date(dateStr)
-    const today = new Date()
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-
-    if (date.toDateString() === today.toDateString()) {
-        return 'Today'
-    } else if (date.toDateString() === tomorrow.toDateString()) {
-        return 'Tomorrow'
-    }
-
-    const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
-    return date.toLocaleDateString(undefined, options)
-}
 
 
 
@@ -132,7 +119,9 @@ const priorityBorderClass = computed(
 )
 const showDelete = ref(false)
 const dueDate = ref<string | null>(props.ticket['end-date'] ?? null)
+const startDate = ref<string | null>(props.ticket['start-date'] ?? null)
 watch(() => props.ticket?.['end-date'], v => { dueDate.value = v ?? null })
+watch(() => props.ticket?.['start-date'], v => { startDate.value = v ?? null })
 const queryClient = useQueryClient()
 const moveCard = useMoveCard({
     onSuccess: () => {
@@ -182,8 +171,22 @@ const assignHandle = (user: any) => {
         seat_id: user?._id
     }
     moveCard.mutate(payload);
-
 }
+
+const setStartDate = (date: string | null) => {
+    moveCard.mutate({
+        card_id: props.ticket._id,
+        variables: { 'start-date': date }
+    })
+}
+
+const setDueDate = (date: string | null) => {
+    moveCard.mutate({
+        card_id: props.ticket._id,
+        variables: { 'end-date': date }
+    })
+}
+
 defineEmits(['click'])
 </script>
 <style scoped>
