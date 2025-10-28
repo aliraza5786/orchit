@@ -20,7 +20,7 @@
                 :message="roleError || (rolesPending ? 'Loading roles…' : '')" :error="!!roleError" />
 
             <!-- Workspace -->
-            <BaseSelectField size="md" label="Workspace" :options="workspaceOptions" placeholder="Choose workspace"
+            <BaseSelectField size="md" label="Workspace" :options="workspaceOptions ?? []" placeholder="Choose workspace"
                 :model-value="form.workspace_id" @update:modelValue="setWorkspace" :message="workspaceError"
                 :error="!!workspaceError" />
         </div>
@@ -78,13 +78,14 @@ watch(
   () => props.defaultWorkspaceId,
   id => {
     if (id && !form.workspace_id) form.workspace_id = id as SelectValue
+    else form.workspace_id = workspaceOptions.value[0]._id
   },
   { immediate: true }
 )
 
 type Option = { _id: string | number; title: string }
 const workspaceOptions = computed<Option[]>(() =>
-  (workspaces?.value ?? []).map((w: any) => ({
+  (workspaces?.value?.workspaces ?? []).map((w: any) => ({
     _id: w._id ?? w.id,
     title: w?.variables?.title ?? w.title ?? String(w._id ?? w.id),
   }))
