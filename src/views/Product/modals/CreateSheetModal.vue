@@ -2,7 +2,7 @@
     <BaseModal v-model="model" size="lg">
         <!-- Header -->
         <div class="flex justify-between items-start  px-6 border-b border-border pb-4">
-            <h2 class="text-xl font-semibold">Add a new board</h2>
+            <h2 class="text-xl font-semibold">Add a new Sheet</h2>
 
         </div>
 
@@ -17,7 +17,7 @@
             <section v-if="currentTab === 'manual'" class="space-y-4">
                 <!-- Icon picker placeholder -->
                 <IconPicker v-model="form.icon" />
-                <BaseTextField v-model="form.title" label="Board name" size="lg" placeholder="Design Ideas" />
+                <BaseTextField v-model="form.title" label="Sheet name" size="lg" placeholder="Design Ideas" />
                 <BaseTextField v-model="form.description" label="Description" size="lg"
                     placeholder="a small description" textarea />
 
