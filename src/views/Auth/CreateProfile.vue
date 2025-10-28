@@ -3,14 +3,14 @@
     <template #form>
       <div class="max-w-[500px] md:mx-auto w-full">
         <!-- Step 1 -->
-        <div class="mb-12 space-y-2" v-show="activeStep === 1">
-          <h2 class="text-[32px] font-medium text-text-primary" v-once>How will you use Orchit AI?</h2>
-          <p class="text-base sm:text-nowrap font-medium text-text-secondary" v-once>
+        <div class="mb-6 md:mb-12 space-y-2" v-show="activeStep === 1">
+          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>How will you use Orchit AI?</h2>
+          <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
             This will help us personalize your experience in Orchit AI.
           </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" v-show="activeStep === 1">
+        <div class="how_help_steps grid sm:grid-cols-3 gap-4" v-show="activeStep === 1">
           <label v-for="option in options" :key="option._id"
             class="border rounded-xl py-4 px-2.5 cursor-pointer transition-all aspect-square"
             :class="optionClass(option._id)" v-memo="[selected, option._id]">
@@ -24,15 +24,15 @@
         </div>
 
         <!-- Step 2 -->
-        <div class="pb-3 space-y-2 mb-12" v-show="activeStep === 2">
-          <h2 class="text-[32px] font-medium" v-once>Tell us about your company</h2>
-          <p class="text-base sm:text-nowrap font-medium text-text-secondary" v-once>
+        <div class="space-y-2 mb-6 md:mb-12" v-show="activeStep === 2">
+          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>Tell us about your company</h2>
+          <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
             This will help us personalize your experience in Orchit AI.
           </p>
         </div>
 
         <div class="space-y-6" v-show="activeStep === 2">
-          <BaseTextField v-model="team" label="Company Name" placeholder="Select team" size="lg" />
+          <BaseTextField v-model="team" label="Company Name" placeholder="Company name" size="lg" />
           <BaseSelectField v-model="role" label="What role do you perform in your company?" :options="rolesList || []"
             placeholder="Select team" size="lg" />
           <BaseSelectField v-model="companySize" label="What’s your company size?" :options="companySizeOptions"
@@ -40,9 +40,9 @@
         </div>
 
         <!-- Step 3 -->
-        <div class="mb-12 space-y-2" v-show="activeStep === 3">
-          <h2 class="text-[32px] font-medium" v-once>Invite your team</h2>
-          <p class="text-base sm:text-nowrap font-medium text-text-secondary" v-once>
+        <div class="mb-6 md:mb-12 space-y-2" v-show="activeStep === 3">
+          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>Invite your team</h2>
+          <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
             Invite your teammates to your first project.
           </p>
         </div>
@@ -63,7 +63,7 @@
         </div>
 
         <!-- Nav -->
-        <div class="flex justify-between items-center mt-[132px]">
+        <div class="flex justify-between items-center mt-[40px] md:mt-[60px]  lg:mt-[132px]">
           <Button variant="secondary" size="md" type="button" @click="goBack" :disabled="activeStep === 1">
             <div class="flex items-center gap-1">
               <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
@@ -198,3 +198,17 @@ function continueHandler() {
   activeStep.value = (activeStep.value + 1) as 1 | 2 | 3
 }
 </script>
+
+<style scoped>
+@media(max-width:640px){
+   .how_help_steps{
+       grid-template-columns: 1fr 1fr !important; 
+  }
+}
+@media(max-width:350px){
+   .how_help_steps{
+       grid-template-columns: 1fr !important; 
+  }
+}
+ 
+</style>

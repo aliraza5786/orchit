@@ -1,12 +1,12 @@
 <template>
   <Loader v-if="(createWorkspacePending || isPending || isLoader)"></Loader>
-  <div v-else class="w-full flex flex-col">
+  <div v-else class="w-full flex flex-col mb-[80px]">
     <!-- Header -->
-    <div class="text-left w-full mb-6 pt-4">
-      <h2 class="text-xl md:text-4xl font-semibold text-text-primary mb-1">
+    <div class="text-left w-full mb-6 ">
+      <h2 class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0">
         Project Summary
       </h2>
-      <p class="text-sm md:text-lg text-text-secondary">
+      <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">
         Review your project details before creation
       </p>
     </div>
@@ -55,15 +55,15 @@
       <h3 class="text-lg font-semibold text-text-primary mb-4">
         Selected Project Lanes
       </h3>
-      <div class="grid grid-cols-3 flex-wrap gap-4">
+      <div class="grid  grid-cols-2 md:grid-cols-3 flex-wrap gap-3 md:gap-4">
         <div v-for="lane in project.lanes" class="bg-bg-surface text-text-primary px-4 py-3 rounded-lg">
           <div class="flex gap-4 items-center">
             <div class="w-4 h-4 rounded-full aspect-square" :style="`background:${lane.variables['lane-color']}`"></div>
-            <div>
+            <div class="flex-1 min-w-0">
               <p class="text-sm font-medium">
                 {{ lane.variables["lane-title"] }}
               </p>
-              <p class="text-xs text-text-secondary line-clamp-2">
+              <p class="text-xs text-text-secondary line-clamp-2 ">
                 {{ lane.variables["lane-description"] }}
               </p>
             </div>

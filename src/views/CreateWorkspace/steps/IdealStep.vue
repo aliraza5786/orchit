@@ -1,10 +1,10 @@
 <template>
   <Loader v-if="(route.params.id && isPending)" />
   <div>
-    <h2 v-once class="text-2xl md:text-5xl font-semibold text-text-primary text-center mb-1">
+    <h2 v-once class="text-2xl md:text-5xl font-semibold text-text-primary text-center m-0">
       Welcome to Orchit AI Space
     </h2>
-    <p v-once class="text-sm md:text-base text-text-secondary text-center mt-5.5 mb-6">
+    <p v-once class="text-sm md:text-base text-text-secondary text-center mt-3 sm:mt-5.5 mb-0 md:mb-6">
       Describe your project, and we'll build the plan instantly with AI magic.
     </p>
   </div>
@@ -49,9 +49,9 @@
         </div>
       </div>
 
-      <div v-else class="suggestions flex gap-3 max-w-[800px] w-full">
+      <div v-else class="suggestions flex overflow-auto gap-3 max-w-[800px] w-full">
         <div v-for="(suggestion, idx) in suggestions" :key="idx" @click="handleSuggestionClick(suggestion)"
-          class="flex h-[136px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:h-[60px] max-sm:p-[15px] hover:bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
+          class="flex min-w-[160px] h-[136px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:p-[15px] hover:bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
           <span
             class="text-text-secondary line-clamp-3 text-base font-normal leading-5 hover:text-text-primary transition-colors max-md:static max-md:w-auto max-md:h-auto max-sm:text-sm max-sm:leading-[18px]">
             {{ suggestion.description }}

@@ -1,16 +1,16 @@
 <template>
-  <div class="h-screen flex items-center w-screen justify-center bg-bg-body">
-    <div class=" shadow-xl rounded-lg overflow-hidden flex w-full h-full p-4">
+  <div class="bg-bg-body">
+    <div class=" shadow-xl rounded-lg flex flex-wrap w-full md:h-full p-4">
       <!-- Left Panel -->
-      <div class="w-full md:w-1/2 md:p-10 flex flex-col flex-auto justify-center items-center">
+      <div class="w-full lg:w-1/2 py-7 md:py-10 lg:pr-[15px] flex flex-col flex-auto justify-center items-center">
         <slot name="form" />
       </div>
 
       <!-- Right Panel with video background -->
       <div
-        class="hidden md:flex md:w-1/2 max-w-[663px] rounded-4xl relative ml-auto overflow-hidden items-center justify-center bg-black ">
+        class="hidden md:flex w-full lg:w-1/2 max-w-full lg:max-w-[663px] rounded-4xl relative min-h-screen lg:ml-auto overflow-hidden items-center justify-center bg-black ">
         <!-- Video background -->
-        <video autoplay muted loop playsinline class="absolute inset-0 w-full h-full object-cover opacity-60 z-0">
+        <video autoplay muted loop playsinline class="absolute inset-0 w-full  h-full object-cover opacity-60 z-0">
           <source src="../../assets/videos/Glowing-particles-overlay.mp4" type="video/mp4" />
           Your browser does not support the video tag.
         </video>

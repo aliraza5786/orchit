@@ -1,7 +1,7 @@
 <template>
   <div :key="isStartOver"
-    class="py-15 px-2 pt-30 w-full justify-start items-center max-h-[100dvh] flex flex-col h-[100dvh] overflow-hidden relative">
-    <div class="flex justify-between items-center fixed top-0 w-full flex-row px-5 bg-bg-surface border-b border-border"
+    class="px-2 pt-[100px] md:pt-[120px] lg:pt-[170px] pb-[40px] md:pb-[60px] lg:pb-[100px] w-full justify-start items-center flex flex-col relative">
+    <div class="flex justify-between items-center fixed top-0 z-1 w-full flex-row px-5 bg-bg-surface border-b border-border h-[60px] lg:h-[70px]"
       v-show="isStepperVisible">
       <div class="flex max-md:flex-wrap max-md:gap-2 text-sm max-md:text-[9px] py-5 justify-start gap-4"
         v-memo="[currentStep]">
@@ -14,7 +14,7 @@
       <i class="cursor-pointer fa-regular fa-close" @click="handleClose" aria-label="Close"></i>
     </div>
     <div
-      class="z-2 overflow-y-auto px-3 py-5 h-auto flex-grow relative flex flex-col gap-10 max-w-[800px] mx-auto w-full items-center">
+      class="z-0 overflow-y-auto px-3 h-auto flex-grow relative flex flex-col gap-10 max-w-[800px] mx-auto w-full items-center">
       <template v-if="currentStep === 0">
         <IdealStep @manual="onManualStart" />
       </template>
@@ -28,7 +28,7 @@
       <StepFour v-if="currentStep === 4" :ai="isAI" ref="stepFourRef" @back="startOver" />
     </div>
     <div v-if="currentStep !== 0"
-      class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t py-6 border-border">
+      class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t items-center border-border h-[80px]">
       <Button variant="secondary" size="md" @click="goBack">
         <div class="flex items-center gap-2">
           <i class="text-base fa-solid fa-arrow-left"></i> Back
