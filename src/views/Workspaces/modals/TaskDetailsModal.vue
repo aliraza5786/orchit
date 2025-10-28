@@ -22,6 +22,7 @@
             <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
               @click="closeModal" aria-label="Close modal">
               <i class="fa-solid fa-xmark text-xl"></i>
+              test
             </button>
           </div>
 
