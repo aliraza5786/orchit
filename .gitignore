@@ -22,3 +22,9 @@ node_modules
 *.sw?
 
 src/views/pages/blog/test.vue
+src/queries/useNotifications.ts
+src/views/KnowledgeCenter/Notification.vue
+src/views/KnowledgeCenter/NotificationItem.vue
+
+
+
