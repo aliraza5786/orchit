@@ -1,38 +1,38 @@
 <template>
   <div class="w-full">
-    <h2 class="text-xl md:text-4xl font-semibold text-text-primary text-left ">
+    <h2 class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0 ">
       {{ ai ? ' Choose Your Lanes' : 'Create Your Lanes' }}
     </h2>
-    <p class="text-sm md:text-lg text-text-secondary text-left mt-2 mb-6">
+    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">
       {{ ai ? ' Select the components you want to include in your project' : ' Create the components you want to include in your project'}}
 
     </p>
   </div>
 
-  <div class="flex flex-col pb-4 items-start gap-4 w-full">
+  <div class="flex flex-col items-start gap-4 w-full pb-[80px]">
     <!-- Display Lanes (adapted to workspace.lanes structure) -->
     <label v-for="lane in form.lanes" :key="lane.variables.id" :for="`lane-${lane.variables.id}`"
-      class="rounded-lg relative flex justify-between items-center w-full p-4 cursor-pointer transition-all bg-bg-surface border border-border">
-      <div class="flex gap-3">
-        <div class="w-9 h-9 text-text-primary rounded-lg" :style="{ background: lane.variables['lane-color'] }"></div>
-        <div class="flex flex-col gap-1">
+      class="rounded-lg relative flex justify-between gap-4 lg:gap-5 items-center w-full p-4 cursor-pointer transition-all bg-bg-surface border border-border">
+      <div class="flex gap-3 flex-1 min-w-0">
+        <div class="w-9 h-9 shrink-0 text-text-primary rounded-lg" :style="{ background: lane.variables['lane-color'] }"></div>
+        <div class="flex flex-col gap-1 min-w-0">
           <h3 class="font-medium capitalize text-sm text-text-primary">{{ lane.variables['lane-title'] }}</h3>
           <p class="text-[11px] text-text-secondary text-start line-clamp-1">{{ lane.variables['lane-description'] }}
           </p>
         </div>
       </div>
 
-      <div class="flex gap-2">
+      <div class="flex gap-3 items-center">
         <button
           class="w-5 h-5 text-base aspect-square flex justify-center items-center rounded cursor-pointer text-accent"
           @click.stop="editLane(lane)">
-          <i class="fa-solid fa-edit text-text-primary"></i>
+          <i class="fa-solid fa-edit text-text-primary text-[20px]"></i>
         </button>
         <input type="checkbox" class="sr-only peer" :name="`lane-${lane.variables.id}`"
           :id="`lane-${lane.variables.id}`" v-model="selectedLanes" :value="lane.variables.id" />
         <div
-          class="w-5 h-5 flex justify-center items-center border border-border bg-bg-card p-0.5 rounded cursor-pointer peer-checked:bg-accent peer-checked:border-none transition-all">
-          <i class="w-4 text-bg-card  fa-solid fa-check  peer-checked:text-white"></i>
+          class="w-[20px] h-[20px] flex justify-center items-center border border-border bg-bg-card p-0.5 rounded cursor-pointer peer-checked:bg-accent peer-checked:border-none transition-all">
+          <i class="w-4 text-bg-card fa-solid fa-check  peer-checked:text-white"></i>
         </div>
       </div>
     </label>
