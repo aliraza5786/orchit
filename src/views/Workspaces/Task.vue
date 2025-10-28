@@ -88,6 +88,7 @@ const handleClick = (row: any) => {
 }
 
 const closeModal = () => {
+    
     showTaskModal.value = false;
     selectedCardId.value = '';
 }
