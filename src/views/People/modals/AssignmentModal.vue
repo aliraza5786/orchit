@@ -21,7 +21,7 @@
                         @click="pickPerson(m)" :class="{ 'bg-bg-muted': selectedEmail === m.email }">
                         <div class="flex items-center gap-3 min-w-0">
                             <div class="h-9 w-9 bg-white capitalize rounded-full flex items-center justify-center text-xs font-semibold"
-                                :style="{ backgroundColor: pickColor(m.email) }">
+                                :style="{ backgroundColor: avatarColor({ email:m.email}) }">
                                 {{ getInitials(m.name || m.email) }}
                             </div>
                             <div class="min-w-0">
@@ -59,6 +59,7 @@ import { computed, onMounted, ref } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import Button from '../../../components/ui/Button.vue'
 import { getInitials } from '../../../utilities';
+import { avatarColor } from '../../../utilities/avatarColor';
 
 type Person = { id?: string | number; name?: string; email: string }
 type Invite = { name?: string; email: string }

@@ -1,31 +1,36 @@
 <template>
-    <div @click="$emit('click')" class=" bg-bg-card rounded-lg p-4  shadow-sm cursor-grab
+    <div @click="$emit('click')" class=" group bg-bg-card rounded-lg p-4  shadow-sm cursor-grab
              hover:shadow-md transition-all duration-200 active:cursor-grabbing"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
 
         <div class="flex justify-between gap-2 items-start">
-            <div class="flex items-start gap-2 ">
-                <div class="w-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full ">
+            <div class="flex items-center gap-2  ">
+                <img v-if="ticket?.avatar" :src="ticket?.avatar" class="w-10 h-10 rounded-full" alt="avartar">
+                <div v-else class="w-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full "
+                    :style="{ backgroundColor: ticket?.name ? avatarColor({  email: ticket?.email, }) : '' }">
                     {{ getInitials(ticket?.name) }} <i v-if="!ticket?.name" class="fa-solid fa-user text-white"></i>
                 </div>
-                <div>
-                    <h3 class="text-sm font-medium text-card-foreground leading-tight">
+                <div class="">
+                    <h3 class="text-sm font-medium mb-1 text-card-foreground leading-tight">
                         {{ ticket?.name ?? ticket['title'] ?? `Team Member ` }}
                     </h3>
                     <!-- <p class="text-text-secondary text-sm"> {{ ticket['email'] ?? 'example@gmail.com' }}</p> -->
-                    <p class="text-text-secondary text-xs"> {{ ticket?.role ?? ticket?.role_title ?? 'e.g. Node   Developer' }}</p>
+                    <p class="text-text-secondary text-xs"> {{ ticket?.email }}</p>
                 </div>
-              
+
             </div>
-            <DropMenu @click.stop="" :items="getMenuItems()">
-                <template #trigger>
-                    <i class=" cursor-pointer fa-solid fa-ellipsis"></i>
-                </template>
-            </DropMenu>
+            <div class="group-hover:flex justify-center items-center hidden w-6 h-6 bg-bg-surface/40 rounded-md ">
+
+                <DropMenu @click.stop="" :items="getMenuItems()">
+                    <template #trigger>
+                        <i class=" cursor-pointer fa-solid fa-ellipsis"></i>
+                    </template>
+                </DropMenu>
+            </div>
 
         </div>
-        <div v-if="ticket?.status == 'unassigned'" class="w-6 h-6 cursor-pointer ml-auto  text-xs flex justify-center items-center  bg-bg-body/60 rounded-full"> <i class="fa-regular fa-plus"></i>
-        </div>
+        <!-- <div v-if="ticket?.status == 'unassigned'" class="w-6 h-6 cursor-pointer ml-auto  text-xs flex justify-center items-center  bg-bg-body/60 rounded-full"> <i class="fa-regular fa-plus"></i>
+        </div> -->
         <!-- <p v-html="ticket['card-description']"
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
         </p> -->
@@ -59,6 +64,7 @@ import { useWorkspaceId } from '../../../composables/useQueryParams'
 import { useCompanyId } from '../../../services/user'
 import AssignmentModal from '../modals/AssignmentModal.vue'
 import { getInitials } from '../../../utilities'
+import { avatarColor } from '../../../utilities/avatarColor'
 const showAddMembers = ref(false);
 type Priority = any
 export interface Ticket {

@@ -8,8 +8,8 @@
         </Searchbar>
       </div>
     </div>
-    <KanbanSkeleton v-show="isListPending || isListFetchinng" />
-    <div v-show="currentView == 'kanban' && !isListPending && !isListFetchinng" class="flex p-4 overflow-x-auto gap-3">
+    <KanbanSkeleton v-show="isListPending" />
+    <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3">
       <KanbanBoard v-if="localList?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
         @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="localList"
@@ -24,7 +24,7 @@
           </div>
           <div v-else-if="column.showADDNEW" class="p-4 space-y-2 bg-bg-surface m-4 rounded-md">
             <p class="text-sm text-text-primary">{{ column.title }} {{ column.cards.length + 1 }}</p>
-            <BaseEmailChip placeholder="team member email" v-model="column.email" />
+            <BaseEmailChip :maxEmails="1" placeholder="team member email" v-model="column.email" />
             <p class="text-sm text-text-secondary">You can assign user later</p>
             <Button size="md" @click="addSeatToColumn(column)">{{ isPending ? 'Adding...' : 'Add Seat' }}</Button>
             <i class="fa-solid fa-close cursor-pointer ml-2" @click="toggleAddNewColumn(column)"></i>
@@ -98,23 +98,25 @@ const selected_view_id = ref('role');
 const showDelete = ref(false);
 const localColumn = ref();
 const { workspaceId } = useRouteIds();
+const localList = ref<any>([]);
+
 const { mutate: addList, isPending: addingList } = useCreateTeam({
   onSuccess: (data: any) => {
+
     localList.value = [...(localList.value || []), data];
     newColumn.value = '';
     activeAddList.value = false;
   },
 });
 
-const localList = ref<any>([]);
-const { data: Lists, isPending: isListPending, isFetching: isListFetchinng } = usePeopleList(workspaceId.value, selected_view_id);
+const { data: Lists, isPending: isListPending } = usePeopleList(workspaceId.value, selected_view_id);
 watch(Lists, (newVal) => {
-  localList.value = newVal;
-});
+  // deep-ish clone so we don't mutate vue-query cache objects
+  localList.value = newVal ? JSON.parse(JSON.stringify(newVal)) : []
+})
 onMounted(() => {
-  localList.value = Lists.value;
-});
-
+  localList.value = Lists.value ? JSON.parse(JSON.stringify(Lists.value)) : []
+})
 const currentView = ref<'kanban' | 'list'>('kanban');
 const selectedCard = ref<any>();
 const selectCardHandler = (card: any) => {
@@ -154,12 +156,16 @@ function setActiveAddList() {
 }
 
 function emitAddColumn() {
+  console.log('>>> clicking on adding pepople ');
+
   const t = newColumn.value.trim();
-  if (!t) return;
+  // if (!t) return;
   handleAddColumn(t);
 }
 
 const handleAddColumn = (name: any) => {
+  console.log('>>> clicking on adding pepople ');
+
   const payload = {
     workspace_id: workspaceId.value,
     title: name,
@@ -204,22 +210,43 @@ const handleDelete = (e: any) => {
   localColumn.value = e;
 };
 const { mutate: createTeam, isPending } = useCreateTeamMember({
-  onSuccess: () => {
+  onSuccess: (data: any) => {
     newColumn.value = '';
     activeAddList.value = false;
+    console.log(localColumn.value, '>>>. id local column');
+
+    const idx = localList.value.findIndex((e: any) => e._id === localColumn.value._id)
+    if (idx === -1) return
+
+    const col = localList.value[idx]
+
+
+    const nextCards = [...(col.cards ?? []), data?.added_seats[0]]
+    const nextCol = { ...col, cards: nextCards }
+
+    // replace column (new identity) and array (new identity)
+    localList.value = [
+      ...localList.value.slice(0, idx),
+      nextCol,
+      ...localList.value.slice(idx + 1)
+    ]
     queryClient.invalidateQueries({ queryKey: ['people-lists'] });
   }
 });
 const handlePLus = (column: any) => {
   localColumn.value = column;
   const payload = {
-    name: extractNameFromEmail(column.email[0]),
-    email: column.email[0],
-    role_id: column._id,
-    workspace_id: workspaceId.value,
+    name: column?.email ? extractNameFromEmail(column?.email[0]) : '',
+    email: column?.email ? column?.email[0] : '',
+    role_id: column?._id,
+    workspace_id: workspaceId?.value,
     additional_seats: 1,
     // max_num_people: column.cards.length + 1,
   };
+
+
+
+
   createTeam({ id: column._id, payload });
 };
 /** Optional: Name extraction for chip display */
