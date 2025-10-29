@@ -34,6 +34,17 @@
                     </div>
                 </template>
 
+                <!-- Custom slot for assignee -->
+                <template #assignee="{ row }">
+                    <div class="flex justify-center" @click.stop>
+                        <AssigmentDropdown
+                            :assigneeId="row.assigned_to"
+                            :seat="row.seat"
+                            @assign="(user: any) => handleAssign(user, row._id as string)"
+                        />
+                    </div>
+                </template>
+
             </Table>
         </div>
 
@@ -50,21 +61,33 @@ import { useUserId } from "../../services/user";
 import { useTasks } from "../../queries/useWorkspace";
 import Table from "../../components/ui/Table.vue";
 import TaskDetailsModal from "./Modals/TaskDetailsModal.vue";
+import AssigmentDropdown from "../../views/Product/components/AssigmentDropdown.vue";
+import { useMoveCard } from "../../queries/useSheets";
+import { useQueryClient } from "@tanstack/vue-query";
 
 const { data: userId } = useUserId();
 const { data, isPending } = useTasks(userId)
+const queryClient = useQueryClient();
 
 const showTaskModal = ref(false);
 const selectedCardId = ref('');
 
+const moveCard = useMoveCard({
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['tasks'] })
+  }
+})
+
+const handleAssign = (user: any, cardId: string) => {
+  if (cardId) {
+    moveCard.mutate({ card_id: cardId, assigned_to: user?.user_info?._id })
+  }
+}
+
 const columns = [
     {
         key: "variables", label: 'Task name', render: ({ value }: any) =>
-            h('div', { class: ' capitalize flex flex-col items-start gap-1' }, [
-                h('span',{class:'text-sm text-text-primary'}, value['card-title'] ),
-                h('p', {class:'max-w-50 line-clamp-1 text-xs text-text-secondary'},  value['card-description'])
-            ]),
-
+            h('span', { class: 'text-sm text-text-primary capitalize' }, value['card-title']),
     },
     {
         key: 'variables', label: 'Status',
@@ -77,6 +100,9 @@ const columns = [
         render: ({ value }: any) => h('div', { class: ' capitalize flex items-center gap-2' }, [
             h('span', value['end-date'])
         ])
+    },
+    {
+        key: 'assignee', label: 'Assignee', align: 'center' as const
     }
 ]
 
