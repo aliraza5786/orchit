@@ -182,7 +182,7 @@ export const useInvitedWorkspace = (id: string | number) =>
 export const useInvitedSpace = (id: string | number) =>
   useApiQuery({
     key: keys.invitedSpace(id),
-    url: `/workspace/company/invitation/${id}`,
+    url: `/common/company/invitation/${id}`,
     method: "GET",
     enabled: !!id,
   });

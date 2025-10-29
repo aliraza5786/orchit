@@ -185,3 +185,18 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
     ...options,
   });
 };
+export const useDashboardActivities = (workspace_id: Ref<string> | string, options = {}) => {
+  return useQuery({
+    queryKey: ["dashboard-activities", workspace_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/${unref(workspace_id)}/activities`,
+        method: "GET",
+        signal,
+      }),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: !!unref(workspace_id),
+    ...options,
+  });
+};

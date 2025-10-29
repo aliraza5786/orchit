@@ -16,10 +16,11 @@
 
             <!-- Cards with transitions -->
             <TransitionGroup name="list" tag="div" class="flex gap-2.5" v-else>
-              <button  v-if="cardProgress" v-for="lane in lanes" :key="lane?.lane_title"
+              <button v-if="cardProgress" v-for="lane in lanes" :key="lane?.lane_title"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
-                <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']" :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
+                <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']"
+                  :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
                   subtitle="Mobile Application"
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
@@ -27,7 +28,7 @@
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
 
               </button>
-              <button  v-else v-for="lane in lanes2" :key="`2-${lane?.lane_title}`"
+              <button v-else v-for="lane in lanes2" :key="`2-${lane?.lane_title}`"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :ai="true" :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
@@ -100,9 +101,9 @@
 
 
     <!-- Right Column: Team Workload & Recent Activity -->
-    <div class="flex flex-grow  gap-4">
+    <div class="flex flex-grow max-h-[60vh]   gap-4">
       <!-- Team Workload -->
-      <div class="bg-bg-card w-full flex-auto p-5 rounded-lg">
+      <div class="bg-bg-card w-full  max-h-full flex-auto p-5 rounded-lg">
         <div class="mb-4">
           <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
           <p class="text-sm text-text-secondary mt-1">
@@ -150,7 +151,7 @@
               </div>
               <div v-else-if="member.avatar"
                 class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-                :style="{ backgroundColor: avatarColor({email:member?.assignee_id})}">
+                :style="{ backgroundColor: avatarColor({ email: member?.assignee_id }) }">
                 {{ member.initials }}
               </div>
               <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center flex-shrink-0">
@@ -176,7 +177,7 @@
       </div>
 
       <!-- Recent Activity -->
-      <div class="bg-bg-card w-full flex-auto p-5 rounded-lg  overflow-hidden flex flex-col">
+      <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto  flex flex-col">
         <div class="mb-4">
           <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
           <p class="text-sm text-text-secondary mt-1">Stay up to date with what's happening across the project.</p>
@@ -185,18 +186,18 @@
         <div class="space-y-4 overflow-y-auto flex-1">
           <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
 
-          <div v-for="activity in recentActivities" :key="activity.id"
+          <div v-for="activity in dashboardActiviesData?.activities" :key="activity.id"
             class="flex gap-3 pb-4 border-b border-border last:border-0">
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-              :style="{ backgroundColor: activity.userColor }">
-              {{ activity.userInitials }}
+              :style="{ backgroundColor: avatarColor({ email: activity.user.email }) }">
+              {{ getInitials(activity.user.name) }}
             </div>
 
             <div class="flex-1 min-w-0">
               <div class="text-sm text-text-primary">
-                <span class="font-medium text-accent/90">{{ activity.user }}</span>
-                <span class="text-text-secondary"> {{ activity.action }} </span>
+                <span class="font-medium text-accent/90">{{ activity.user.name }}</span>
+                <span class="text-text-secondary"> {{ activity.message }} </span>
                 <a href="#" class="text-accent/90 hover:underline">{{ activity.item }}</a>
                 <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
                   :class="getStatusClass(activity.status)">
@@ -218,7 +219,7 @@ import { ref, onMounted, onUnmounted, computed, defineComponent, h } from 'vue'
 import { toParamString } from '../composables/useQueryParams'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { useRoute } from 'vue-router'
-import { useDashboardTeams } from '../queries/usePeople'
+import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople'
 import { getInitials, generateAvatarColor } from '../utilities'
 import type { TeamWorkloadMember } from '../types'
 import { avatarColor } from '../utilities/avatarColor'
@@ -361,9 +362,10 @@ const handleVisibilityChange = () => {
 const onLaneClick = (lane: LaneProgressRow) => { console.log('Lane clicked:', lane) }
 
 const { data: dashboardTeamsData, isPending: isLoadingTeams, error: teamsError, refetch: refetchTeams } = useDashboardTeams(workspaceId)
+const { data: dashboardActiviesData, isPending: isLoadingActivities, } = useDashboardActivities(workspaceId)
 
 const teamWorkload = computed(() => {
- 
+
 
   if (!dashboardTeamsData.value?.team_workload) {
     console.log('Returning empty array - no team workload data')

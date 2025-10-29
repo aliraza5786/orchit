@@ -26,7 +26,7 @@
 
                 <!-- Text type -->
                 <select v-model="textType" @change="setTextType"
-                    :class="['text-sm bg-transparent focus:outline-none rounded-md px-1 py-1 text-white']">
+                    :class="['text-sm bg-transparent focus:outline-none rounded-md px-1 py-1 text-text-primary']">
                     <option value="paragraph">Normal text</option>
                     <option value="heading1">Heading 1</option>
                     <option value="heading2">Heading 2</option>

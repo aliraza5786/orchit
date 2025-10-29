@@ -168,21 +168,21 @@ function getMenuItems() {
   }]
 }
 function showActions() {
-  const title = props.column.title.trim().toLowerCase();
+  const title = props?.column?.title.trim().toLowerCase();
   console.log(title);
-
-  switch (title) {
-    case 'administrator':
-      return false
-    case 'to do':
-      return false
-    case 'done':
-      return false
-    case 'in progress':
-      return false
-    default:
-      return true;
-  }
+  if (title)
+    switch (title) {
+      case 'administrator':
+        return false
+      case 'to do':
+        return false
+      case 'done':
+        return false
+      case 'in progress':
+        return false
+      default:
+        return true;
+    }
 }
 const handleDeleteColumn = () => {
   emit('delete:column', { title: props.column.title, columnId: props.column?._id })

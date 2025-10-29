@@ -22,11 +22,11 @@
                 </Searchbar>
             </div> -->
         </div>
-        <KanbanSkeleton v-show="isListPending " />
-        <div v-show="!isListPending " class="flex  overflow-x-auto gap-3 p-4">
+        <KanbanSkeleton v-show="isListPending" />
+        <div v-show="!isListPending" class="flex  overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
-                @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
+                @select:ticket="selectCardHandler" :board="localList" @onBoardUpdate="handleBoardUpdate"
                 :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
                 <template #ticket="{ ticket }">
                     <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
@@ -68,7 +68,7 @@
         cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
             showDelete = false
         }" />
-    <CreateTaskModal :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
+    <CreateTaskModal size="md" :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
         :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal"
         @submit="" />
     <SidePanel :pin="true" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
@@ -77,7 +77,7 @@
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
 </template>
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import { ReOrderCard, ReOrderList, useAddList, useSheetList, useSheets, useVariables } from '../../queries/useSheets';
@@ -95,7 +95,7 @@ import CreateSheetModal from '../Product/modals/CreateSheetModal.vue';
 // const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
 // const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
 // const CreateVariableModal = defineAsyncComponent(() => import('./modals/CreateVariableModal.vue'))
-// const ConfirmDeleteModal = defineAsyncComponent(() => import('./modals/ConfirmDeleteModal.vue'))
+const ConfirmDeleteModal = defineAsyncComponent(() => import('../Product/modals/ConfirmDeleteModal.vue'))
 // const SidePanel = defineAsyncComponent(() => import('./components/SidePanel.vue'))
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 const isCreateVar = ref(false)
@@ -105,7 +105,18 @@ const { workspaceId, moduleId } = useRouteIds();
 const { data: variables } = useVariables(workspaceId.value, moduleId.value);
 const queryClient = useQueryClient()
 const { mutate: addList, isPending: addingList } = useAddList({
-    onSuccess: () => {
+    onSuccess: (data: any, payload: any) => {
+        console.log(payload, '???payload ', );
+
+        if (payload.is_trash) {
+            const newList = localList.value.filter((e: any) => e.title != payload.value);
+
+            localList.value = newList;
+
+        }
+        else
+            localList.value = [...(localList.value || []), { title: data?.value }];
+
         queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
         newColumn.value = ''
         showDelete.value = false;
@@ -140,6 +151,7 @@ watch((viewBy), (newVal) => {
 })
 
 const workspaceStore = useWorkspaceStore();
+const localList = ref<any>([]);
 
 // usage
 const { data: Lists, isPending: isListPending, refetch: refetchList } = useSheetList(
@@ -148,10 +160,16 @@ const { data: Lists, isPending: isListPending, refetch: refetchList } = useSheet
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
     selected_view_by,                    // ref
 )
-
+watch(Lists, (newVal) => {
+    // deep-ish clone so we don't mutate vue-query cache objects
+    localList.value = newVal ? JSON.parse(JSON.stringify(newVal)) : []
+})
+onMounted(() => {
+    localList.value = Lists.value ? JSON.parse(JSON.stringify(Lists.value)) : []
+})
 const createTeamModal = ref(false);
 // const currentView = ref<'kanban' | 'list'>('kanban')
-const selectedCard = ref<{_id:any, variables: any }>()
+const selectedCard = ref<{ _id: any, variables: any }>()
 const selectCardHandler = (card: any) => {
     selectedCard.value = card
 }

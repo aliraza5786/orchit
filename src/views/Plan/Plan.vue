@@ -97,9 +97,9 @@
     }">
 
   </ConfirmDeleteModal>
-  <TicketModal v-model="ticketModalOpen" :editing="!!editingTicket" :ticket="editingTicket" @save="handleSaveTicket" />
+  <!-- <TicketModal v-model="ticketModalOpen" :editing="!!editingTicket" :ticket="editingTicket" @save="handleSaveTicket" />
   <SprintModal v-model="sprintModalOpen" @save="saveSprintHandler" :sprint="selectedSprint"
-    :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" />
+    :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" /> -->
   <StartSprintModal :sprint="selectedSprint" v-model="startsprintModalOpen" @save="startSprintHandler"
     :creatingSprint="isStartingSprint || isUpdatingSprint2"   />
   <!-- <CreateBacklogTicket v-model="isCreateTicketModalOpen" /> -->
@@ -109,14 +109,14 @@
 <script setup lang="ts">
 import BacklogTable from './components/BacklogTable.vue'
 import SprintCard from './components/SprintCard.vue'
-import TicketModal from './modals/TicketModal.vue'
-import SprintModal from './modals/SprintModal.vue'
+// import TicketModal from './modals/TicketModal.vue'
+// import SprintModal from './modals/SprintModal.vue'
 import { computed, ref, watch } from 'vue'
 import { useBacklogStore, type Ticket } from './composables/useBacklogStore'
 import Button from '../../components/ui/Button.vue'
 import Dropdown from '../../components/ui/Dropdown.vue'
 import SearchBar from '../../components/ui/SearchBar.vue'
-import { useBacklogList, useCompleteSprint, useCreateSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintCard, useSprintDetail, useSprintList, useStartSprint, useUpdateSprint } from '../../queries/usePlan'
+import { useBacklogList, useCompleteSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintCard, useSprintDetail, useSprintList, useStartSprint, useUpdateSprint } from '../../queries/usePlan'
 import { toast } from 'vue-sonner'
 import { useWorkspaceId } from '../../composables/useQueryParams'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -130,7 +130,7 @@ const {
   // backlog, sprints,
   // selectedBacklogIds, selectedSprintIds,
   moveSelectedToSprint, moveSelectedToBacklog, deleteSelected,
-  createTicket, saveSprintMeta, toggleStartSprint
+   saveSprintMeta, toggleStartSprint
 } = useBacklogStore()
 const { data: backlogResp,  } = useBacklogList(workspaceId)
 
@@ -141,7 +141,7 @@ const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
     showSprintDelete.value = false
   }
 })
-const selectedSprint = ref<any>({})
+const selectedSprint = ref<any>(null)
 const showSprintDelete = ref(false)
 const handleDeleteTicket = () => {
   deleteSprint(selectedSprint.value?._id)
@@ -195,7 +195,7 @@ const openStartSprintModal = () => {
 
 }
 const { data: sprintData, isPending: isSprintPending } = useSprintCard(selectedSprintId);
-// const loadingState = ref(false);
+
 watch(() => isSprintPending.value, (newVal) => {
   console.log(newVal, isSprintPending.value, '>>>> laoding state changes');
 
@@ -299,73 +299,69 @@ function openCreateBacklogTicket() {
   createTarget = 'backlog'
   // ticketModalOpen.value = true
 }
-// function openCreateSprintTicket() {
-//   editingTicket.value = null
-//   createTarget = 'sprint'
-//   ticketModalOpen.value = true
-// }
+
 function openTicket(t: Ticket) {
   editingTicket.value = t
   createTarget = 'backlog' // not used on edit path
   ticketModalOpen.value = true
 }
-function handleSaveTicket(partial: Partial<Ticket>) {
-  if (editingTicket.value) {
-    Object.assign(editingTicket.value, partial)
-  } else {
-    createTicket(createTarget, {
-      summary: partial.summary!,
-      type: partial.type as Ticket['type'],
-      status: (partial.status as Ticket['status']) || 'Todo',
-      assignee: (partial.assignee?.trim() || 'Unassigned'),
-      storyPoints: Number(partial.storyPoints) || 0,
-      priority: partial.priority as Ticket['priority'],
-      description: partial.description || ''
-    })
-  }
-}
+// function handleSaveTicket(partial: Partial<Ticket>) {
+//   if (editingTicket.value) {
+//     Object.assign(editingTicket.value, partial)
+//   } else {
+//     createTicket(createTarget, {
+//       summary: partial.summary!,
+//       type: partial.type as Ticket['type'],
+//       status: (partial.status as Ticket['status']) || 'Todo',
+//       assignee: (partial.assignee?.trim() || 'Unassigned'),
+//       storyPoints: Number(partial.storyPoints) || 0,
+//       priority: partial.priority as Ticket['priority'],
+//       description: partial.description || ''
+//     })
+//   }
+// }
 
 // Sprint modal state (edit only)
 const sprintModalOpen = ref(false)
 function openEditSprint() { sprintModalOpen.value = true }
 const queryClient = useQueryClient();
-const { mutate: createSprint, isPending: creatingSprint } = useCreateSprint({
-  onSuccess: (data: any) => {
-    saveSprintMeta({ name: data.title })
-    queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
-    sprintModalOpen.value = false;
-  }
-});
-const { mutate: updateSprint, isPending: isUpdatingSprint } = useUpdateSprint(
-  {
-    onSuccess: (data: any) => {
-      saveSprintMeta({ name: data.title })
-      queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
-      sprintModalOpen.value = false;
-    }
-  }
-)
-function saveSprintHandler(e: any) {
-  if (selectedSprint.value) {
-    updateSprint(
-      {
-        id: selectedSprint.value?._id,
-        payload: {
-          "workspace_id": workspaceId.value,
-          "title": e.name,
-        }
-      }
-    )
-  } else {
-    createSprint({
-      payload: {
-        "workspace_id": workspaceId.value,
-        "title": e.name,
-      }
-    });
-  }
+// const { mutate: createSprint } = useCreateSprint({
+//   onSuccess: (data: any) => {
+//     saveSprintMeta({ name: data.title })
+//     queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
+//     sprintModalOpen.value = false;
+//   }
+// });
+// const { mutate: updateSprint, } = useUpdateSprint(
+//   {
+//     onSuccess: (data: any) => {
+//       saveSprintMeta({ name: data.title })
+//       queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
+//       sprintModalOpen.value = false;
+//     }
+//   }
+// )
+// function saveSprintHandler(e: any) {
+//   if (selectedSprint.value) {
+//     updateSprint(
+//       {
+//         id: selectedSprint.value?._id,
+//         payload: {
+//           "workspace_id": workspaceId.value,
+//           "title": e.name,
+//         }
+//       }
+//     )
+//   } else {
+//     createSprint({
+//       payload: {
+//         "workspace_id": workspaceId.value,
+//         "title": e.name,
+//       }
+//     });
+//   }
 
-}
+// }
 function openSprintModal() {
   selectedSprint.value = null;
 

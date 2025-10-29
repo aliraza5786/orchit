@@ -102,7 +102,6 @@ const localList = ref<any>([]);
 
 const { mutate: addList, isPending: addingList } = useCreateTeam({
   onSuccess: (data: any) => {
-
     localList.value = [...(localList.value || []), data];
     newColumn.value = '';
     activeAddList.value = false;

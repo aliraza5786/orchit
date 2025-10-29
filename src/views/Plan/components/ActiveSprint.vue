@@ -1,22 +1,24 @@
 <template>
-    <div
-        class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
-             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  ">
-       
-        <KanbanSkeleton v-show="isPending" />
-        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
-            <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
-                @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
-                @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
-                :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
-                <template #column-footer="column">
+    <div class="flex gap-2 flex-auto overflow-y-auto">
 
-                    <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
-                        v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
-                        Disbale ( you can't drop here )</div>
-                </template>
-            </KanbanBoard>
-            <!-- <div class="min-w-[328px] " @click.stop>
+        <div
+            class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
+             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto  flex  ">
+
+            <KanbanSkeleton v-show="isPending" />
+            <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
+                <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
+                    @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
+                    @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
+                    :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
+                    <template #column-footer="column">
+
+                        <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
+                            v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
+                            Disbale ( you can't drop here )</div>
+                    </template>
+                </KanbanBoard>
+                <!-- <div class="min-w-[328px] " @click.stop>
                 <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
                     <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
                         @keyup.enter="emitAddColumn" />
@@ -35,18 +37,20 @@
                     + Add List
                 </button>
             </div> -->
-        </div>
+            </div>
 
+        </div>
+        <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
+            :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete workspace"
+            cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
+                showDelete = false
+            }" />
+        <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title"
+            :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal"
+            @submit="" />
+        <SidePanel v-if="selectedCard?._id" :details="selectedCard"
+            @close="() => { selectCardHandler({ variables: {} }) }" :showPanel="selectedCard?._id ? true : false" />
     </div>
-    <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
-        :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete workspace"
-        cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
-            showDelete = false
-        }" />
-    <CreateTaskModal :selectedVariable="selected_view_by" :listId="localColumnData?.title" :sheet_id="selected_sheet_id"
-        v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
-    <SidePanel v-if="selectedCard?._id" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
-        :showPanel="selectedCard?._id ? true : false" />
     <!-- <CreateSheetModal v-model="isCreateSheetModal" /> -->
     <!-- <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" /> -->
 </template>
@@ -62,7 +66,7 @@ import KanbanSkeleton from '../../../components/skeletons/KanbanSkeleton.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../../composables/useQueryParams';
 // import Button from '../../../components/ui/Button.vue';
-import {  useSprintKanban } from '../../../queries/usePlan';
+import { useSprintKanban } from '../../../queries/usePlan';
 const props = defineProps<{ sptint_id: any }>()
 const CreateTaskModal = defineAsyncComponent(() => import('../../Product/modals/CreateTaskModal.vue'))
 // const CreateSheetModal = defineAsyncComponent(() => import('../../Product/modals/CreateSheetModal.vue'))
