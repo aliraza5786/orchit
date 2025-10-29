@@ -3,23 +3,25 @@
       <div
         v-if="modelValue"
         class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center"
+        @click="emit('update:modelValue', false)"
         @keydown.esc="emit('update:modelValue', false)"
       >
         <div
-          class="bg-bg-body w-full max-w-[860px] max-h-[80vh] overflow-auto mx-4 rounded-xl shadow-lg   shadow-accent/30 py-6 relative"
+          class="bg-bg-body w-full max-w-[860px] max-h-[80vh] overflow-auto mx-4 rounded-xl shadow-lg shadow-accent/30 py-6 relative"
           :class="[{'!max-w-[500px]': size=='md'},modalClass]"
           role="dialog"
           aria-modal="true"
+          @click.stop
         >
           <!-- Close Button -->
           <button
-            class="absolute top-6 cursor-pointer right-4 text-text-secondary -500 hover:text-text-primary text-xl"
-            @click="emit('update:modelValue', false)"
+            class="absolute top-6 cursor-pointer right-4 text-text-secondary hover:text-text-primary text-xl z-10"
+            @click.stop="emit('update:modelValue', false)"
           >
           <img src="../../assets/icons/cross.svg"
           alt="">
           </button>
-  
+
           <!-- Slot content -->
           <slot />
         </div>
