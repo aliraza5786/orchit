@@ -20,8 +20,9 @@
                         class="flex items-center justify-between gap-3  px-3 py-3 cursor-pointer hover:bg-bg-muted"
                         @click="pickPerson(m)" :class="{ 'bg-bg-muted': selectedEmail === m.email }">
                         <div class="flex items-center gap-3 min-w-0">
-                            <div class="h-9 w-9 bg-white capitalize rounded-full flex items-center justify-center text-xs font-semibold"
-                                :style="{ backgroundColor: avatarColor({ email:m.email}) }">
+                            <img v-if="m?.profile_image" class="h-9 w-9 rounded-full aspect-square" :src="m?.profile_image" alt="avatar">
+                            <div v-else class="h-9 w-9 bg-white capitalize rounded-full flex items-center justify-center text-xs font-semibold"
+                                :style="{ backgroundColor: avatarColor({ email: m.email }) }">
                                 {{ getInitials(m.name || m.email) }}
                             </div>
                             <div class="min-w-0">
@@ -45,8 +46,7 @@
         <div class="flex items-center justify-between gap-3 p-6 mt-3 pb-2 border-t border-border bg-bg-body">
             <div class="flex gap-2 justify-between w-full">
                 <Button variant="secondary" @click="close">Cancel</Button>
-                <Button variant="primary" :disabled="((!selectedEmail || isSubmitting) ? true : false)"
-                    @click="submit">
+                <Button variant="primary" :disabled="((!selectedEmail || isSubmitting) ? true : false)" @click="submit">
                     {{ isSubmitting ? 'Assigning…' : 'Assign' }}
                 </Button>
             </div>

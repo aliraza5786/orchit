@@ -3,7 +3,7 @@
     <!-- Header -->
     <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
       <h2 class="text-xl font-semibold">Invite Users</h2>
-      <p class="text-sm text-text-secondary mt-1">Select a workspace, add emails, and pick a role.</p>
+      <p class="text-sm text-text-secondary mt-1"> Add emails, and pick a permission.</p>
     </div>
 
     <!-- Body -->
@@ -121,11 +121,12 @@ function onEmailsInvalid(_bad: string[]) { }
 function onEmailsAdd() { }
 
 const { mutate: invitePeople, isPending: inviting } = useInviteCompany()
-const {data:company_id} = useCompanyId()
+const { data: company_id } = useCompanyId()
 function submit() {
   if (!canSubmit.value || inviting.value) return
   invitePeople(
-    {payload: {
+    {
+      payload: {
         company_id: company_id.value._id,
         role: form.role_id,
         emails: form.emails.map(email => ({

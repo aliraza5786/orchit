@@ -10,7 +10,7 @@
     </div>
     <KanbanSkeleton v-show="isListPending" />
     <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3">
-      <KanbanBoard v-if="localList?.length > 0" @onPlus="(e) => handlePLus(e)"
+      <KanbanBoard :plusIcon="false" v-if="localList?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
         @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="localList"
         @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="selected_sheet_id">

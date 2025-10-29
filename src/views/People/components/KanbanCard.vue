@@ -135,6 +135,7 @@ const assignHandle = () => {
 }
 const { mutate: deleleSeat, isPending: deletingTicket } = useDeleteSeat({
     onSuccess: () => {
+        
         queryClient.invalidateQueries({ queryKey: ['people-lists'] })
     }
 })

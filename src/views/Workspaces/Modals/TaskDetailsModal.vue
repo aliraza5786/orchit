@@ -1,10 +1,6 @@
 <template>
-  <BaseModal :modelValue="modelValue" @update:modelValue="closeModal">
-    <div>
-      <div class="relative backdrop-blur
-                      rounded-2xl shadow-[0_20px_60px_-10px_rgba(0,0,0,.7)]
-                     w-full max-w-4xl max-h-[90vh] overflow-hidden
-                      flex flex-col">
+  <BaseModal :modelValue="modelValue" @update:modelValue="closeModal" class="!pt-0">
+   
 
         <div v-if="isLoading" class="flex items-center justify-center py-20">
           <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
@@ -12,12 +8,9 @@
 
         <template v-else-if="cardDetails">
           <div
-            class="sticky top-0 z-10 backdrop-blur border-b border-orchit-white/5 px-6 pb-4 flex items-center justify-between">
+            class="sticky top-0 z-1 backdrop-blur border-b border-orchit-white/5 px-6 pb-4 flex items-center justify-between">
             <h5 id="modal-title" class="text-lg font-semibold tracking-tight">Task Details</h5>
-            <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
-              @click.stop="closeModal" aria-label="Close modal">
-              <i class="fa-solid fa-xmark text-xl"></i>
-            </button>
+          
           </div>
 
           <div class="flex-1 overflow-y-auto py-6 px-6">
@@ -222,9 +215,8 @@
             </div>
           </div>
         </template>
-      </div>
+   
 
-    </div>
   </BaseModal>
 </template>
 

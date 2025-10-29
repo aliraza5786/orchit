@@ -7,7 +7,7 @@
       <!-- Each column -->
       <template #item="{ element: column }">
         <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface  " style="height: calc(100dvh - 190px);">
-          <KanbanColumn :canDragList="canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
+          <KanbanColumn :plusIcon="plusIcon" :canDragList="canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
             :variable_id="variable_id" @update:column="(e) => emit('update:column', e)"
             @select:ticket="(v: Ticket) => emit('select:ticket', v)"
             @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd">
@@ -48,7 +48,8 @@ const props = withDefaults(defineProps<{
   onBoardUpdate?: (board: Board) => void
   variable_id: string
   sheet_id: string
-}>(), {})
+  plusIcon?:boolean
+}>(), {plusIcon:true})
 
 const emit = defineEmits<{
   /** v-model style if you want to two-way bind the board */

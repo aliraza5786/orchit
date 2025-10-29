@@ -49,21 +49,11 @@ import Table from "../../components/ui/Table.vue";
 import { useUsers } from "../../queries/useWorkspace";
 import Button from "../../components/ui/Button.vue";
 import Collaborators from "../../components/ui/Collaborators.vue";
+import { getStatusStyle } from "../../utilities/stausStyle";
 const InviteUsers = defineAsyncComponent(() => import("./Modals/InviteUsers.vue"));
 const { data: companyId } = useCompanyId();
 const { data, isPending } = useUsers(companyId)
-function getStatusStyle(status: any) {
-    switch (status) {
-        case 'pending':
-            return 'bg-amber-600/10 text-amber-600'
-        case 'accepted':
-            return 'bg-green-600/10 text-green-600'
-        case 'rejected':
-            return 'bg-red-600/10 text-red-600'
-        default:
-            break;
-    }
-}
+
 const columns = [
     {
         key: "variables", label: 'Name', render: ({ row }: any) =>

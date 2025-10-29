@@ -1,8 +1,8 @@
 <template>
   <div class="relative" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
-    <template v-if="assignedUser?.avatar_url || assignedUser?._id || seat?._id">
-      <img v-if="assignedUser?.avatar_url" :src="assignedUser?.avatar_url" class="w-6 h-6 rounded-full" alt=""
+    <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id">
+      <img v-if="assignedUser?.user?.avatar || assignedUser?.u_profile_image" :src="assignedUser?.user?.avatar ??assignedUser?.u_profile_image" class="w-6 h-6 rounded-full" alt=""
         @click="toggle" />
       <div v-else @click="toggle"
         class="w-6 aspect-square rounded-full text-[10px]  bg-bg-surface font-semibold text-text-primary flex items-center justify-center"
@@ -36,7 +36,7 @@
           <li v-for="u in filteredUsers" :key="u._id" @click.stop="assign(u._id)"
             class="flex items-center justify-between px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer">
             <div class="flex items-center gap-3 min-w-0">
-              <img v-if="u.avatar_url" :src="u.avatar_url" class="w-8 h-8 rounded-full" alt="" />
+              <img v-if="u?.user?.avatar" :src="u?.user?.avatar" class="w-6 h-6 rounded-full" alt="" />
               <div v-else
                 class="w-6 min-w-6 aspect-square border-border border rounded-full text-xs font-semibold text-text-primary flex items-center justify-center"
                 :style="{ backgroundColor: u?.email ? avatarColor({ name: u.name ?? u.title, email: u.email, _id: u?._id }) : '' }">
@@ -45,7 +45,7 @@
 
               <div class="min-w-0">
                 <div class="text-xs font-medium truncate">{{ u.name || u.title }}</div>
-                <div class="text-[10px] text-text-secondary truncate">{{ u.email }}</div>
+                <div class="text-[10px] text-text-secondary truncate">{{ u?.role_title }}</div>
               </div>
             </div>
           </li>

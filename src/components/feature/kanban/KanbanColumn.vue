@@ -20,11 +20,11 @@
           {{ localTickets.length }}
         </span>
       </div>
-      <i class="cursor-pointer fa-solid fa-plus" @click="emit('onPlus', column)" />
+      <i class="cursor-pointer fa-solid fa-plus" v-if="plusIcon" @click="emit('onPlus', column)" />
 
-      <DropMenu :items="getMenuItems()">
+      <DropMenu v-if="showActions()" :items="getMenuItems()">
         <template #trigger>
-          <i class="fa-solid fa-ellipsis"></i>
+          <i class="fa-solid fa-ellipsis cursor-pointer"></i>
         </template>
       </DropMenu>
     </div>
@@ -71,7 +71,7 @@ type Id = string | number
 export interface Ticket { _id: Id;[k: string]: any }
 export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any }
 
-const props = defineProps<{ column: Column, variable_id: string, sheet_id: string, canDragList:boolean }>()
+const props = defineProps<{ column: Column, variable_id: string, sheet_id: string, canDragList: boolean, plusIcon: boolean }>()
 const emit = defineEmits<{
   (e: 'update:column', payload: { title: string, oldTitle: string }): void
   (e: 'delete:column', payload: { columnId: Id; title: string }): void
@@ -102,6 +102,8 @@ const titleInputRef = ref<HTMLInputElement | null>(null)
 watch(() => props.column.title, (v) => { localTitle.value = v })
 
 function beginEdit() {
+  const isEditable = showActions();
+  if (!isEditable) return;
   isEditingTitle.value = true
   nextTick(() => {
     if (titleInputRef.value) {
@@ -164,6 +166,23 @@ function getMenuItems() {
       handleDeleteColumn();
     }
   }]
+}
+function showActions() {
+  const title = props.column.title.trim().toLowerCase();
+  console.log(title);
+
+  switch (title) {
+    case 'administrator':
+      return false
+    case 'to do':
+      return false
+    case 'done':
+      return false
+    case 'in progress':
+      return false
+    default:
+      return true;
+  }
 }
 const handleDeleteColumn = () => {
   emit('delete:column', { title: props.column.title, columnId: props.column?._id })
