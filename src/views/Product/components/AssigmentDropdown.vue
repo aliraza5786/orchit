@@ -81,7 +81,7 @@ const emit = defineEmits<{
 const { workspaceId } = useRouteIds()
 const { data: roles } = useWorkspacesRoles(workspaceId.value)
 
-const assignedUser = ref<any>(props.assigneeId)
+const assignedUser = ref<any>(props.assigneeId ?? props.seat)
 const open = ref(false)
 const query = ref('')
 const searchRef = ref<HTMLInputElement | null>(null)

@@ -16,10 +16,10 @@
 
             <!-- Cards with transitions -->
             <TransitionGroup name="list" tag="div" class="flex gap-2.5" v-else>
-              <button v-if="cardProgress" v-for="lane in lanes" :key="lane?.lane_title"
+              <button  v-if="cardProgress" v-for="lane in lanes" :key="lane?.lane_title"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
-                <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
+                <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']" :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
                   subtitle="Mobile Application"
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
@@ -27,10 +27,10 @@
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
 
               </button>
-              <button v-else v-for="lane in lanes2" :key="`2-${lane?.lane_title}`"
+              <button  v-else v-for="lane in lanes2" :key="`2-${lane?.lane_title}`"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
-                <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
+                <ProjectCard :ai="true" :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
                   subtitle="Mobile Application"
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
@@ -131,10 +131,7 @@
           <!-- Error State -->
           <div v-else-if="teamsError" class="text-center py-8">
             <p class="text-sm text-red-500 mb-2">Failed to load team workload</p>
-            <button
-              @click="() => refetchTeams()"
-              class="text-xs text-accent hover:underline"
-            >
+            <button @click="() => refetchTeams()" class="text-xs text-accent hover:underline">
               Try again
             </button>
           </div>
@@ -148,13 +145,12 @@
           <!-- Workload items -->
           <div v-else v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
             <div class="flex items-center gap-2 w-32 flex-shrink-0">
-              <div v-if="member.avatarUrl"
-                class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                <img :src="member.avatarUrl" :alt="member.name" class="w-full h-full object-cover" />
+              <div v-if="member.avatar_url" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                <img :src="member.avatar_url" :alt="member.name" class="w-full h-full object-cover" />
               </div>
               <div v-else-if="member.avatar"
                 class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-                :style="{ backgroundColor: member.color }">
+                :style="{ backgroundColor: avatarColor({email:member?.assignee_id})}">
                 {{ member.initials }}
               </div>
               <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center flex-shrink-0">
@@ -164,14 +160,10 @@
             </div>
 
             <div class="flex-1">
-              <div
-                class="h-6 bg-bg-body rounded overflow-hidden relative group cursor-help"
-                :title="`${member.totalTasks} task${member.totalTasks !== 1 ? 's' : ''} • ${member.totalHours}h`"
-              >
-                <div
-                  class="h-full bg-border-subtle transition-all duration-300"
-                  :style="{ width: member.workload + '%' }"
-                >
+              <div class="h-6 bg-bg-body rounded overflow-hidden relative group cursor-help"
+                :title="`${member.totalTasks} task${member.totalTasks !== 1 ? 's' : ''} • ${member.totalHours}h`">
+                <div class="h-full bg-border-subtle transition-all duration-300"
+                  :style="{ width: member.workload + '%' }">
                 </div>
                 <span v-if="member.workload > 10"
                   class="absolute inset-0 flex items-center justify-start px-2 text-xs text-text-primary font-medium">
@@ -229,6 +221,7 @@ import { useRoute } from 'vue-router'
 import { useDashboardTeams } from '../queries/usePeople'
 import { getInitials, generateAvatarColor } from '../utilities'
 import type { TeamWorkloadMember } from '../types'
+import { avatarColor } from '../utilities/avatarColor'
 
 
 /** Types */
@@ -371,15 +364,15 @@ const { data: dashboardTeamsData, isPending: isLoadingTeams, error: teamsError, 
 
 const teamWorkload = computed(() => {
   console.log('Dashboard Teams Data:', dashboardTeamsData.value)
-  console.log('Has team_workload?', dashboardTeamsData.value?.data?.team_workload)
-  console.log('Team workload array:', dashboardTeamsData.value?.data?.team_workload)
+  console.log('Has team_workload?', dashboardTeamsData.value?.team_workload)
+  console.log('Team workload array:', dashboardTeamsData.value?.team_workload)
 
-  if (!dashboardTeamsData.value?.data?.team_workload) {
+  if (!dashboardTeamsData.value?.team_workload) {
     console.log('Returning empty array - no team workload data')
     return []
   }
 
-  const mapped = dashboardTeamsData.value.data.team_workload.map((member: TeamWorkloadMember) => ({
+  const mapped = dashboardTeamsData.value.team_workload.map((member: TeamWorkloadMember) => ({
     id: member.assignee_id || 'unassigned',
     name: member.assignee_name,
     initials: member.initials || getInitials(member.assignee_name) || '',
@@ -395,7 +388,7 @@ const teamWorkload = computed(() => {
   return mapped
 })
 
-const teamSize = computed(() => dashboardTeamsData.value?.data?.team_size || 0)
+const teamSize = computed(() => dashboardTeamsData.value?.team_size || 0)
 
 /** Recent Activities Data */
 const recentActivities = ref([

@@ -1,42 +1,43 @@
 <template>
   <!-- remove the confetti overlay div -->
 
-<!-- Header -->
-<div class="relative p-3 rounded-lg min-w-sm border border-border overflow-hidden flex flex-col justify-between bg-bg-card w-full">
-  <div class="flex justify-between items-start pb-2">
-    <div>
-      <h3 class="text-lg font-semibold text-text-primary text-left">
-        {{ title }}
-      </h3>
-      <p class="text-xs text-text-secondary text-left ">{{ subtitle }}</p>
+  <!-- Header -->
+  <div
+    class="relative p-3 rounded-lg min-w-sm border border-border overflow-hidden flex flex-col justify-between bg-bg-card w-full">
+    <div class="flex justify-between items-start pb-2">
+      <div>
+        <h3 class="text-lg font-semibold text-text-primary text-left">
+          {{ title }}
+        </h3>
+        <p class="text-xs text-text-secondary text-left ">{{ subtitle }}</p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span v-if="!totalCard && status" class="text-xs border rounded-full px-2 py-0.5" :class="getColor(status)">
+          {{ status }}
+        </span>
+
+
+      </div>
     </div>
 
-    <div class="flex items-center gap-2">
-      <span v-if="!totalCard && status" class="text-xs border rounded-full px-2 py-0.5"
-            :class="getColor(status)">
-        {{ status }}
-      </span>
-      <span v-else class="text-xs">Total Cards: {{ totalCard }}</span>
-
-     
+    <!-- Progress -->
+    <div class=" ">
+      <div class="flex justify-between text-sm text-text-secondary mb-1">
+        <div> <span>{{ status == 'in_progress' ? 'Generating lane with AI...' : 'Progress' }}</span> <i
+            v-if="status == 'in_progress'" class="fa-regular text-left fa-arrows-spin animate-spin duration-250"></i>
+        </div>
+        <span v-if="ai">{{ Math.round(liveProgress) }}% <!-- 🎉 shows only at 100%, re-animates on each completion -->
+          <span v-if="atHundred" :key="confettiIconKey" class="confetti-icon select-none" aria-label="Completed">
+            🎉
+          </span></span>
+        <span v-else>
+       {{ doneCard }}  / {{ totalCard }}
+        </span>
+      </div>
+      <ProgressBar class="mt-2" :progress="liveProgress" fillColor="bg-accent" :indeterminate="!!loading" />
     </div>
   </div>
-
-  <!-- Progress -->
-  <div class=" ">
-    <div class="flex justify-between text-sm text-text-secondary mb-1">
-   <div>  <span>{{ status == 'in_progress' ? 'Generating lane with AI...'  : 'Progress' }}</span> <i v-if="status == 'in_progress'" class="fa-regular text-left fa-arrows-spin animate-spin duration-250"></i></div> 
-      <span>{{ Math.round(liveProgress) }}%  <!-- 🎉 shows only at 100%, re-animates on each completion -->
-      <span v-if="atHundred"
-            :key="confettiIconKey"
-            class="confetti-icon select-none"
-            aria-label="Completed">
-        🎉
-      </span></span> 
-    </div>
-    <ProgressBar class="mt-2" :progress="liveProgress" fillColor="bg-accent" :indeterminate="!!loading" />
-  </div>
-</div>
 
 </template>
 <script setup lang="ts">
@@ -55,8 +56,10 @@ const props = withDefaults(defineProps<{
   loading?: boolean
   color?: string
   totalCard?: any
+  ai?: boolean,
+  doneCard?:any
 }>(), {
-  totalCard:0,
+  totalCard: 0,
   progress: 0,
   maxVisible: 2,
   loading: false,
@@ -93,16 +96,28 @@ function getColor(status: string) {
 </script>
 <style scoped>
 .confetti-icon {
-  font-size: 1.1rem;         /* tweak as you like */
+  font-size: 1.1rem;
+  /* tweak as you like */
   line-height: 1;
   animation: confetti-pop 600ms ease-out forwards;
   transform-origin: center;
-  filter: drop-shadow(0 1px 0.5px rgba(0,0,0,.2));
+  filter: drop-shadow(0 1px 0.5px rgba(0, 0, 0, .2));
 }
 
 @keyframes confetti-pop {
-  0%   { transform: scale(.2) rotate(-18deg); opacity: 0; }
-  55%  { transform: scale(1.25) rotate(10deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  0% {
+    transform: scale(.2) rotate(-18deg);
+    opacity: 0;
+  }
+
+  55% {
+    transform: scale(1.25) rotate(10deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
 }
 </style>
