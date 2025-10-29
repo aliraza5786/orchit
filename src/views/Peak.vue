@@ -22,7 +22,7 @@
                 <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
                   subtitle="Mobile Application"
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
-                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : lane?.status" :avatars="avatars"
+                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
 
@@ -33,7 +33,7 @@
                 <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
                   subtitle="Mobile Application"
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
-                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : lane?.status" :avatars="avatars"
+                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
 
@@ -107,7 +107,7 @@
           <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
           <p class="text-sm text-text-secondary mt-1">
             Monitor the capacity of your team.
-
+            <span v-if="teamSize > 0" class="ml-1">({{ teamSize }} member{{ teamSize !== 1 ? 's' : '' }})</span>
           </p>
         </div>
 
@@ -117,24 +117,61 @@
             <span>Work distribution</span>
           </div>
 
+          <!-- Loading State -->
+          <template v-if="isLoadingTeams">
+            <div v-for="n in 3" :key="n" class="flex items-center gap-3 animate-pulse">
+              <div class="flex items-center gap-2 w-32 flex-shrink-0">
+                <div class="w-8 h-8 rounded-full bg-bg-body"></div>
+                <div class="h-4 w-20 bg-bg-body rounded"></div>
+              </div>
+              <div class="flex-1 h-6 bg-bg-body rounded"></div>
+            </div>
+          </template>
+
+          <!-- Error State -->
+          <div v-else-if="teamsError" class="text-center py-8">
+            <p class="text-sm text-red-500 mb-2">Failed to load team workload</p>
+            <button
+              @click="() => refetchTeams()"
+              class="text-xs text-accent hover:underline"
+            >
+              Try again
+            </button>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else-if="teamWorkload.length === 0" class="text-center py-8">
+            <i class="pi pi-users text-3xl text-text-secondary mb-2"></i>
+            <p class="text-sm text-text-secondary">No team members assigned yet</p>
+          </div>
+
           <!-- Workload items -->
-          <div v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
+          <div v-else v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
             <div class="flex items-center gap-2 w-32 flex-shrink-0">
-              <div v-if="member.avatar"
-                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
+              <div v-if="member.avatarUrl"
+                class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                <img :src="member.avatarUrl" :alt="member.name" class="w-full h-full object-cover" />
+              </div>
+              <div v-else-if="member.avatar"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
                 :style="{ backgroundColor: member.color }">
                 {{ member.initials }}
               </div>
-              <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center">
+              <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center flex-shrink-0">
                 <i class="pi pi-user text-text-secondary"></i>
               </div>
-              <span class="text-sm text-text-primary truncate">{{ member.name }}</span>
+              <span class="text-sm text-text-primary truncate" :title="member.name">{{ member.name }}</span>
             </div>
 
             <div class="flex-1">
-              <div class="h-6 bg-bg-body rounded overflow-hidden relative">
-                <div class="h-full bg-border-subtle transition-all duration-300"
-                  :style="{ width: member.workload + '%' }">
+              <div
+                class="h-6 bg-bg-body rounded overflow-hidden relative group cursor-help"
+                :title="`${member.totalTasks} task${member.totalTasks !== 1 ? 's' : ''} • ${member.totalHours}h`"
+              >
+                <div
+                  class="h-full bg-border-subtle transition-all duration-300"
+                  :style="{ width: member.workload + '%' }"
+                >
                 </div>
                 <span v-if="member.workload > 10"
                   class="absolute inset-0 flex items-center justify-start px-2 text-xs text-text-primary font-medium">
@@ -189,6 +226,9 @@ import { ref, onMounted, onUnmounted, computed, defineComponent, h } from 'vue'
 import { toParamString } from '../composables/useQueryParams'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { useRoute } from 'vue-router'
+import { useDashboardTeams } from '../queries/usePeople'
+import { getInitials, generateAvatarColor } from '../utilities'
+import type { TeamWorkloadMember } from '../types'
 
 
 /** Types */
@@ -327,14 +367,25 @@ const handleVisibilityChange = () => {
 
 const onLaneClick = (lane: LaneProgressRow) => { console.log('Lane clicked:', lane) }
 
-/** Team Workload Data */
-const teamWorkload = ref([
-  { id: 1, name: 'Unassigned', initials: '', avatar: false, color: '#6B7280', workload: 13 },
-  { id: 2, name: 'Amal Lashari', initials: 'AL', avatar: true, color: '#3B82F6', workload: 35 },
-  { id: 3, name: 'Anam Rehman', initials: 'AR', avatar: true, color: '#3B82F6', workload: 8 },
-  { id: 4, name: 'Sufian', initials: 'S', avatar: true, color: '#6B7280', workload: 8 },
-  { id: 5, name: 'Arooj Sajjad', initials: 'AS', avatar: true, color: '#EF4444', workload: 5 }
-])
+const { data: dashboardTeamsData, isPending: isLoadingTeams, error: teamsError, refetch: refetchTeams } = useDashboardTeams(workspaceId)
+
+const teamWorkload = computed(() => {
+  if (!dashboardTeamsData.value?.data?.team_workload) return []
+
+  return dashboardTeamsData.value.data.team_workload.map((member: TeamWorkloadMember) => ({
+    id: member.assignee_id || 'unassigned',
+    name: member.assignee_name,
+    initials: member.initials || getInitials(member.assignee_name) || '',
+    avatar: !!member.avatar_url || !!member.assignee_id,
+    avatarUrl: member.avatar_url,
+    color: generateAvatarColor(member.assignee_id, member.assignee_name),
+    workload: member.work_distribution_percentage,
+    totalTasks: member.total_tasks,
+    totalHours: member.total_hours
+  }))
+})
+
+const teamSize = computed(() => dashboardTeamsData.value?.data?.team_size || 0)
 
 /** Recent Activities Data */
 const recentActivities = ref([
@@ -393,7 +444,7 @@ const SkeletonCard = defineComponent({
     ])
   }
 })
-const getCardProgress = (total, status_dis) => {
+const getCardProgress = (total: number, status_dis: any) => {
   if (total == 0) {
     return 0
   }
