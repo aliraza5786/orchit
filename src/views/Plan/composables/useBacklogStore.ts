@@ -7,7 +7,7 @@ export interface Ticket {
   key: string;
   summary: string;
   type: "Story" | "Bug" | "Task";
-  status: "Todo" | "In Progress" | "Done";
+  status: "Todo" | "In Progress" | "Done" | any;
   assignee?: string;
   storyPoints?: number;
   priority: "Highest" | "High" | "Medium" | "Low";

@@ -49,13 +49,13 @@
 import { computed, reactive, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
-import { useWorkspaces, useInvitePeople } from '../../../queries/useWorkspace'
+import { useWorkspaces } from '../../../queries/useWorkspace'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
 import Button from '../../../components/ui/Button.vue'
 import { useInviteCompany } from '../../../services/auth'
-import { useCompanyId, useProfile } from '../../../services/user'
+import { useCompanyId } from '../../../services/user'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void

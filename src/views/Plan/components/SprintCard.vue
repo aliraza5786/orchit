@@ -2,10 +2,10 @@
   <div class="rounded-lg flex flex-col">
     <div class="h-[300px]" :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''" @dragover.prevent
       @dragenter="onDragEnterSprint" @dragleave="onDragLeaveSprint" @drop="onDropSprint">
-      <Table  :showHeader="false" :pagination="false" v-if="sprintTickets.length > 0" :row-draggable="true"
+      <Table :showHeader="false" :pagination="false" v-if="sprintTickets.length > 0" :row-draggable="true"
         class="h-full" @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'sprint', sprint.id)"
         @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="sprintTickets" :page-size="100"
-        :hover="true"  :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
+        :hover="true" :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
         <template #select-header>
           <input type="checkbox" :checked="allSprintChecked(sprint.id)"
             @change="toggleAll('sprint', $event, sprint.id)" />
@@ -27,14 +27,16 @@
         </template>
 
         <template #status="{ row }">
-          <span :class="mapStatus(row.status)" class="px-2 py-1 rounded-md">{{ row.status }}</span>
+          <span :class="getStatusStyle(row.status)" class="px-2 py-1 rounded-md">{{ row.status }}</span>
         </template>
         <template #assignee="{ row }">
           <span v-if="row.assignee == 'Unassigned'"
             class="  float-end flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6  min-h-6 bg-gray-500/10 rounded-full  ">UA</span>
-          <span v-else class="  text-xs aspect-square max-w-6 flex justify-center items-center text-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full  ">{{ getInitials(row.assignee) }}</span>
+          <span v-else
+            class="  text-xs aspect-square max-w-6 flex justify-center items-center text-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full  ">{{
+              getInitials(`${row.assignee}` ) }}</span>
         </template>
-       
+
 
         <template #priority="{ row }">
           <span :class="priorityClass((row as any).priority)">{{ (row as any).priority }}</span>
@@ -67,10 +69,12 @@ import Table from '../../../components/ui/Table.vue'
 import { useBacklogStore, priorityClass, type Sprint, type Ticket } from '../composables/useBacklogStore'
 import { useMoveCard } from '../../../queries/usePlan'
 import { toast } from 'vue-sonner'
+import { getStatusStyle } from '../../../utilities/stausStyle'
+import { getInitials } from '../../../utilities'
 
 const props = defineProps<{ sprint: Sprint, sprintId: any }>()
-watch(props, (newVal)=>{
-console.log('props changes', newVal);
+watch(props, (newVal) => {
+  console.log('props changes', newVal);
 
 })
 const emit = defineEmits(['edit-sprint', 'toggle-start', 'open-ticket', 'move-selected-to-backlog', 'delete-selected-sprint', 'refresh'])
@@ -171,24 +175,5 @@ const columns = [
   // { key: 'storyPoints', label: 'SP', width: 60, sortable: true, align: 'right' as const },
   // { key: 'createdAt', label: 'Created', width: 140, sortable: true },
 ]
-function mapStatus(s: string) {
-  const normalized = s.toLowerCase()
-  switch (normalized.trim()) {
-    case 'todo':
-      return 'bg-gray-500/10 text-gray-500'
-          case 'to do':
-      return 'bg-gray-500/10 text-gray-500'
-    case 'in progress':
-      return 'bg-gray-amber/10 text-amber-500'
-    case 'done':
-      return 'bg-green-500/10 text-green-500'
 
-
-    default:
-      break;
-  }
-  if (normalized.includes('progress')) return 'In Progress'
-  if (normalized.includes('done') || normalized.includes('complete')) return 'Done'
-  return 'Todo'
-}
 </script>

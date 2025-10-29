@@ -146,7 +146,7 @@
 <script setup lang="ts">
 import { ref, watchEffect, computed, nextTick } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
-import StartGuide from './components/StartGuide.vue'
+// import StartGuide from './components/StartGuide.vue'
 import { useTheme } from "../../composables/useTheme";
 const { theme } = useTheme();
 import { useActiveKnowledgeCategories } from "../../queries/useKnowledge";
@@ -171,7 +171,7 @@ const sections = computed(() => {
   const apiSections = knowledgeData.value.map((section) => ({
     title: section?.title || 'Untitled',
     items: Array.isArray(section?.knowledge)
-      ? section.knowledge.map((item) => ({
+      ? section.knowledge.map((item:any) => ({
         label: item?.title || '',
         slug: item?.slug || '',
         description: item?.description || '',
@@ -179,17 +179,17 @@ const sections = computed(() => {
       : [],
   }));
 
-  // one manual section
-  const manualSection = {
-    title: "Getting started",
-    items: [
-      {
-        label: "Start Guide",
-        slug: "start-guide",
-        description: "Get in touch with our support team for help.",
-      },
-    ],
-  };
+  // // one manual section
+  // const manualSection = {
+  //   title: "Getting started",
+  //   items: [
+  //     {
+  //       label: "Start Guide",
+  //       slug: "start-guide",
+  //       description: "Get in touch with our support team for help.",
+  //     },
+  //   ],
+  // };
   return [...apiSections,];
 });
 
@@ -222,7 +222,7 @@ watchEffect(() => {
   }
 });
 
-function selectTab(item) {
+function selectTab(item:any) {
   activeTab.value = item;
   sidebarOpen.value = false;
   router.push(`/knowledge-center/${item.slug}`);

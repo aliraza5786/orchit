@@ -80,7 +80,7 @@ const isOpen = computed({
 })
 
 /** Local form */
-const form = reactive<Partial<Sprint>>({
+const form = reactive<any>({
     goal: '',
     start: '',
     end: '',

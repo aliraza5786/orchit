@@ -111,7 +111,7 @@ import BacklogTable from './components/BacklogTable.vue'
 import SprintCard from './components/SprintCard.vue'
 import TicketModal from './modals/TicketModal.vue'
 import SprintModal from './modals/SprintModal.vue'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useBacklogStore, type Ticket } from './composables/useBacklogStore'
 import Button from '../../components/ui/Button.vue'
 import Dropdown from '../../components/ui/Dropdown.vue'
@@ -141,7 +141,7 @@ const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
     showSprintDelete.value = false
   }
 })
-const selectedSprint = ref(null)
+const selectedSprint = ref<any>({})
 const showSprintDelete = ref(false)
 const handleDeleteTicket = () => {
   deleteSprint(selectedSprint.value?._id)
@@ -178,7 +178,7 @@ const startSprintHandler = (e: any) => {
   })
 }
 const { data: sprintsList, refetch: refetchSprints, } = useSprintList(workspaceId.value);
-const { data: backlogListData, refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(workspaceId);
+const {  refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(workspaceId);
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
 const selectedSprintId = ref(firstSprintId.value)
 watch(() => firstSprintId.value, (newVal) => {
@@ -195,7 +195,7 @@ const openStartSprintModal = () => {
 
 }
 const { data: sprintData, isPending: isSprintPending } = useSprintCard(selectedSprintId);
-const loadingState = ref(false);
+// const loadingState = ref(false);
 watch(() => isSprintPending.value, (newVal) => {
   console.log(newVal, isSprintPending.value, '>>>> laoding state changes');
 
@@ -299,11 +299,11 @@ function openCreateBacklogTicket() {
   createTarget = 'backlog'
   // ticketModalOpen.value = true
 }
-function openCreateSprintTicket() {
-  editingTicket.value = null
-  createTarget = 'sprint'
-  ticketModalOpen.value = true
-}
+// function openCreateSprintTicket() {
+//   editingTicket.value = null
+//   createTarget = 'sprint'
+//   ticketModalOpen.value = true
+// }
 function openTicket(t: Ticket) {
   editingTicket.value = t
   createTarget = 'backlog' // not used on edit path

@@ -54,15 +54,15 @@
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../../stores/workspace';
 // import Dropdown from '../../../components/ui/Dropdown.vue';
-import Searchbar from '../../../components/ui/SearchBar.vue';
+// import Searchbar from '../../../components/ui/SearchBar.vue';
 import { ReOrderCard, ReOrderList, useAddList, useSheets, useVariables } from '../../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../../components/skeletons/KanbanSkeleton.vue';
 // import BaseTextField from '../../../components/ui/BaseTextField.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../../composables/useQueryParams';
-import Button from '../../../components/ui/Button.vue';
-import { useCompleteSprint, useSprintKanban } from '../../../queries/usePlan';
+// import Button from '../../../components/ui/Button.vue';
+import {  useSprintKanban } from '../../../queries/usePlan';
 const props = defineProps<{ sptint_id: any }>()
 const CreateTaskModal = defineAsyncComponent(() => import('../../Product/modals/CreateTaskModal.vue'))
 // const CreateSheetModal = defineAsyncComponent(() => import('../../Product/modals/CreateSheetModal.vue'))

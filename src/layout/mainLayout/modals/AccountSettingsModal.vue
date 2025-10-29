@@ -436,66 +436,66 @@ const currentPlan = ref({
   ]
 })
 
-const usageData = ref({
-  storage: {
-    used: 45,
-    limit: 100,
-    remaining: 55,
-    percentage: 45
-  },
-  users: {
-    used: 7,
-    limit: 10,
-    remaining: 3,
-    percentage: 70
-  }
-})
+// const usageData = ref({
+//   storage: {
+//     used: 45,
+//     limit: 100,
+//     remaining: 55,
+//     percentage: 45
+//   },
+//   users: {
+//     used: 7,
+//     limit: 10,
+//     remaining: 3,
+//     percentage: 70
+//   }
+// })
 
-const pricingPlans = ref([
-  {
-    name: 'Free',
-    price: '$0',
-    billingCycle: 'month',
-    description: 'Perfect for personal use',
-    features: [
-      '3 workspaces',
-      '5 GB storage',
-      'Up to 3 team members',
-      'Basic support',
-      'Basic analytics'
-    ]
-  },
-  // {
-  //   name: 'Pro',
-  //   price: '$29',
-  //   billingCycle: 'month',
-  //   description: 'Best for growing teams',
-  //   features: [
-  //     'Unlimited workspaces',
-  //     '100 GB storage',
-  //     'Up to 10 team members',
-  //     'Priority support',
-  //     'Advanced analytics',
-  //     'Custom integrations'
-  //   ]
-  // },
-  // {
-  //   name: 'Enterprise',
-  //   price: '$99',
-  //   billingCycle: 'month',
-  //   description: 'For large organizations',
-  //   features: [
-  //     'Unlimited everything',
-  //     'Unlimited storage',
-  //     'Unlimited team members',
-  //     '24/7 dedicated support',
-  //     'Advanced security',
-  //     'Custom integrations',
-  //     'SLA guarantee',
-  //     'Dedicated account manager'
-  //   ]
-  // }
-])
+// const pricingPlans = ref([
+//   {
+//     name: 'Free',
+//     price: '$0',
+//     billingCycle: 'month',
+//     description: 'Perfect for personal use',
+//     features: [
+//       '3 workspaces',
+//       '5 GB storage',
+//       'Up to 3 team members',
+//       'Basic support',
+//       'Basic analytics'
+//     ]
+//   },
+//   // {
+//   //   name: 'Pro',
+//   //   price: '$29',
+//   //   billingCycle: 'month',
+//   //   description: 'Best for growing teams',
+//   //   features: [
+//   //     'Unlimited workspaces',
+//   //     '100 GB storage',
+//   //     'Up to 10 team members',
+//   //     'Priority support',
+//   //     'Advanced analytics',
+//   //     'Custom integrations'
+//   //   ]
+//   // },
+//   // {
+//   //   name: 'Enterprise',
+//   //   price: '$99',
+//   //   billingCycle: 'month',
+//   //   description: 'For large organizations',
+//   //   features: [
+//   //     'Unlimited everything',
+//   //     'Unlimited storage',
+//   //     'Unlimited team members',
+//   //     '24/7 dedicated support',
+//   //     'Advanced security',
+//   //     'Custom integrations',
+//   //     'SLA guarantee',
+//   //     'Dedicated account manager'
+//   //   ]
+//   // }
+// ])
 
 // function manageBilling() {
 //   toast.info('Redirecting to Stripe billing portal...')

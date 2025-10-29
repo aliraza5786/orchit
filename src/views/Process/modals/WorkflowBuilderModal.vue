@@ -76,7 +76,8 @@
   </transition>
 
   <!-- Modals -->
-  <AddStatusModal v-model="showAddStatusModal" :process-id="processId" :editing-status="editingStatus" @status:added="handleStatusAdded" @edit:node="handleEditConfirm" />
+  <AddStatusModal v-model="showAddStatusModal" :process-id="processId" :editing-status="editingStatus"
+    @status:added="handleStatusAdded" @edit:node="handleEditConfirm" />
 
   <AddTransitionModal v-model="showAddTransitionModal" :process-id="processId" :statuses="workflowStatuses"
     @transition:added="handleTransitionAdded" />
@@ -88,9 +89,9 @@ import Button from '../../../components/ui/Button.vue'
 import WorkflowCanvas from '../../../components/feature/workflow/WorkflowCanvas.vue'
 import AddStatusModal from './AddStatusModal.vue'
 import AddTransitionModal from './AddTransitionModal.vue'
-import { useWorkflowData, useBatchUpdateWorkflow } from '../../../queries/useProcess'
+import { useWorkflowData } from '../../../queries/useProcess'
 import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
-import { toast } from 'vue-sonner'
+// import { toast } from 'vue-sonner'
 
 /* Props & emits */
 const props = defineProps<{
@@ -139,7 +140,7 @@ watch(
 )
 
 /* UI labels (fixes build issue from inline template literals) */
-const isSaving = computed(() => isUpdating.value || Boolean(Canvas.value?.isSaving))
+const isSaving = computed(() => Boolean(Canvas.value?.isSaving))
 const updateButtonLabel = computed(() => {
   if (isSaving.value) return 'Updating...'
   const changes = workflowState.changeCount.value || 0
@@ -168,19 +169,19 @@ function handleWorkflowUpdate() {
   refetchWorkflow()
 }
 
-const { mutate: batchUpdate, isPending: isUpdating } = useBatchUpdateWorkflow({
-  onSuccess: () => {
-    toast.success('Workflow updated successfully')
-    workflowState.resetChanges()
-    refetchWorkflow()
-    emit('update:modelValue', false)
-    emit('close')
-  },
-  onError: (error: any) => {
-    toast.error('Failed to update workflow')
-    console.error('Workflow update error:', error)
-  }
-})
+// const { mutate: batchUpdate, isPending: isUpdating } = useBatchUpdateWorkflow({
+//   onSuccess: () => {
+//     toast.success('Workflow updated successfully')
+//     workflowState.resetChanges()
+//     refetchWorkflow()
+//     emit('update:modelValue', false)
+//     emit('close')
+//   },
+//   onError: (error: any) => {
+//     toast.error('Failed to update workflow')
+//     console.error('Workflow update error:', error)
+//   }
+// })
 
 function handleUpdateWorkflow() {
   Canvas.value?.saveWorkflow()
@@ -227,7 +228,7 @@ function handleEditNode(nodeData: any) {
   editingStatus.value = nodeData
   showAddStatusModal.value = true
 }
-const handleEditConfirm = (id:string, data:any)=>{
+const handleEditConfirm = (id: string, data: any) => {
   Canvas.value?.handleConfirmEdit(id, data)
 
 }

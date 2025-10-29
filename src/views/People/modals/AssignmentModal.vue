@@ -94,7 +94,7 @@ const selectedEmail = ref<string>('') // Selected email
 const emailError = ref('') // Email error for validation
 
 // Filter directory based on search query
-const filteredMembers = computed(() => {
+const filteredMembers:any = computed(() => {
     const q = query.value.trim().toLowerCase()
     return props.directory.filter(p => (p.name?.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)))
 })
@@ -141,10 +141,5 @@ onMounted(() => {
     if (isOpen.value) query.value = ''
 })
 
-function pickColor(seed: string) {
-    let hash = 0
-    for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0
-    const hue = hash % 360
-    return `hsl(${hue} 80% 85%)`
-}
+
 </script>

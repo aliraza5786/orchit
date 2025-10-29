@@ -118,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, h, type VNodeChild, watch, ref } from 'vue'
+import { computed, reactive, h, watch, ref } from 'vue'
 
 /** Column config */
 export interface Column<T = Row> {

@@ -251,13 +251,11 @@ import theme5 from '../../../assets/theme/theme5.svg'
 import theme6 from '../../../assets/theme/theme6.svg'
 import theme7 from '../../../assets/theme/theme7.svg'
 import ActivityTimeline from './ActivityTimeline.vue'
-import SwitchTab from '../../../components/ui/SwitchTab.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 // import Dropdown from '../../../components/ui/Dropdown.vue'
 import { getInitials } from '../../../utilities'
 import { useDeleteInvitedPeople, useDeleteWorkspace, useInvitePeople, useUpdateWorkspaceDetail, useWorkspacesRoles } from '../../../queries/useWorkspace'
 // import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
-import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
 // import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import DropMenu from '../../../components/ui/DropMenu.vue'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -285,7 +283,7 @@ const { data: roles } = useWorkspacesRoles(props.workspace._id)
 const deleteUser = useDeleteInvitedPeople({
   onSuccess: () => queryClient.invalidateQueries({ queryKey: ['workspaces'] })
 })
-const { mutate: invitePeople, isPending: inviting } = useInvitePeople()
+const { mutate: invitePeople } = useInvitePeople()
 
 /* ----- UI State ----- */
 const switchState = ref<'details' | 'active-logs'>('details')
@@ -397,12 +395,12 @@ watch(
 
 const canInvite = computed(() => inviteEmails.value.length > 0 && !emailError.value && !!inviteRole.value)
 
-function onEmailsInvalid(bad: string[]) {
-  emailError.value = bad.length ? `Invalid: ${bad.join(', ')}` : ''
-}
-function onEmailsAdd() {
-  emailError.value = ''
-}
+// function onEmailsInvalid(bad: string[]) {
+//   emailError.value = bad.length ? `Invalid: ${bad.join(', ')}` : ''
+// }
+// function onEmailsAdd() {
+//   emailError.value = ''
+// }
 
 function extractNameFromEmail(email: string) {
   const local = (email.split('@')[0] || '').split('+')[0]

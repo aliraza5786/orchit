@@ -57,8 +57,8 @@ import { computed, ref, watch } from 'vue'
 import Table from '@/components/ui/Table.vue'
 import Button from '@/components/ui/Button.vue'
 import {
-  useBacklogStore,
-  priorityClass,
+  // useBacklogStore,
+  // priorityClass,
   type Ticket
 } from '../composables/useBacklogStore'
 import { useBacklogList } from '../../../queries/usePlan'

@@ -171,12 +171,12 @@ const assignHandle = (user: any) => {
     moveCard.mutate(payload);
 }
 
-const setStartDate = (date: string | null) => {
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        variables: { 'start-date': date }
-    })
-}
+// const setStartDate = (date: string | null) => {
+//     moveCard.mutate({
+//         card_id: props.ticket._id,
+//         variables: { 'start-date': date }
+//     })
+// }
 
 const setDueDate = (date: string | null) => {
     moveCard.mutate({

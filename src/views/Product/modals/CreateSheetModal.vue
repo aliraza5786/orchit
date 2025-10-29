@@ -94,7 +94,6 @@ import { computed, ref } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
-import SwitchTab from '../../../components/ui/SwitchTab.vue';
 // import IconPicker from '../components/IconPicker.vue';
 import { useCreateWorkspaceSheet } from '../../../queries/useSheets';
 import { useRoute } from 'vue-router';

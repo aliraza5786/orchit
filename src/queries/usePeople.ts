@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/vue-query";
 import { request } from "../libs/api";
 import { useApiMutation } from "../libs/vq";
 import { unref, type Ref } from "vue";
-import type { DashboardTeamsResponse } from "../types";
+// import type { DashboardTeamsData } from "../types";
 
 export const usePeopleList = (workspace_id: any, viewID: any, options = {}) => {
   return useQuery({
@@ -174,7 +174,7 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
   return useQuery({
     queryKey: ["dashboard-teams", workspace_id],
     queryFn: ({ signal }) =>
-      request<DashboardTeamsResponse>({
+      request<any>({
         url: `workspace/dashboard-teams/${unref(workspace_id)}`,
         method: "GET",
         signal,

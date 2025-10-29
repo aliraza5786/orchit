@@ -20,11 +20,7 @@ export interface DashboardTeamsData {
   team_size: number
 }
 
-export interface DashboardTeamsResponse {
-  status: boolean
-  message: string
-  data: DashboardTeamsData
-}
+
 
   // e.g., in `src/types/google.d.ts`
 export {};

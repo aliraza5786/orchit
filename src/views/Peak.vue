@@ -363,9 +363,7 @@ const onLaneClick = (lane: LaneProgressRow) => { console.log('Lane clicked:', la
 const { data: dashboardTeamsData, isPending: isLoadingTeams, error: teamsError, refetch: refetchTeams } = useDashboardTeams(workspaceId)
 
 const teamWorkload = computed(() => {
-  console.log('Dashboard Teams Data:', dashboardTeamsData.value)
-  console.log('Has team_workload?', dashboardTeamsData.value?.team_workload)
-  console.log('Team workload array:', dashboardTeamsData.value?.team_workload)
+ 
 
   if (!dashboardTeamsData.value?.team_workload) {
     console.log('Returning empty array - no team workload data')

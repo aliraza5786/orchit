@@ -142,7 +142,7 @@ watch((viewBy), (newVal) => {
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending: isListPending, isFetching: isListFetching, refetch: refetchList } = useSheetList(
+const { data: Lists, isPending: isListPending, refetch: refetchList } = useSheetList(
     moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
@@ -151,7 +151,7 @@ const { data: Lists, isPending: isListPending, isFetching: isListFetching, refet
 
 const createTeamModal = ref(false);
 // const currentView = ref<'kanban' | 'list'>('kanban')
-const selectedCard = ref<{ variables: any }>()
+const selectedCard = ref<{_id:any, variables: any }>()
 const selectCardHandler = (card: any) => {
     selectedCard.value = card
 }

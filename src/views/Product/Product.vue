@@ -132,7 +132,7 @@ watch(viewBy, () => {
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending, isFetching } = useSheetList(
+const { data: Lists, isPending } = useSheetList(
     moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation

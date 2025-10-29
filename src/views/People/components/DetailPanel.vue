@@ -12,8 +12,9 @@
             <div class="bg-bg-surface/50 p-2 rounded-lg flex gap-2 items-center">
                 <img v-if="details?.avatar" :src="details?.avatar" class="w-10 h-10 rounded-full" alt="avartar">
 
-                <div v-else class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full "
-                    :style="{ backgroundColor: details?.name ? avatarColor({  email: details?.email }) : '' }">
+                <div v-else
+                    class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full "
+                    :style="{ backgroundColor: details?.name ? avatarColor({ email: details?.email }) : '' }">
                     {{ getInitials(details?.name) }} <i v-if="!details?.name" class="fa-solid fa-user text-white"></i>
                 </div>
                 <div>
@@ -99,7 +100,7 @@ import SwitchTab from '../../../components/ui/SwitchTab.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import { getInitials } from '../../../utilities'
 import { avatarColor } from '../../../utilities/avatarColor'
-const localVarValues = reactive({
+const localVarValues = reactive<any>({
 
 })
 const activeTab = ref<'details' | 'tasks' | 'history'>('details')

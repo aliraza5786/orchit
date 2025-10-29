@@ -69,8 +69,8 @@ const props = withDefaults(defineProps<{
 const indeterminate = useIndeterminateProgress(() => !!props.loading)
 const liveProgress = computed(() => (props.loading ? indeterminate.value : props.progress))
 
-const visibleAvatars = computed(() => props.avatars.slice(0, props.maxVisible))
-const extraCount = computed(() => (props.avatars.length > props.maxVisible ? props.avatars.length - props.maxVisible : 0))
+// const visibleAvatars = computed(() => props.avatars.slice(0, props.maxVisible))
+// const extraCount = computed(() => (props.avatars.length > props.maxVisible ? props.avatars.length - props.maxVisible : 0))
 
 // === confetti icon state ===
 const atHundred = computed(() => Math.round(liveProgress.value) >= 100)
@@ -80,9 +80,9 @@ watch(atHundred, (is100, was100) => {
   if (is100 && !was100) confettiIconKey.value++ // reanimate each time we newly hit 100
 })
 
-function startConfetti() {
+// function startConfetti() {
   // no-op: keeping the click handler harmless if you still have it on the root
-}
+// }
 
 function getColor(status: string) {
   switch (status) {
