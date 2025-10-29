@@ -370,9 +370,16 @@ const onLaneClick = (lane: LaneProgressRow) => { console.log('Lane clicked:', la
 const { data: dashboardTeamsData, isPending: isLoadingTeams, error: teamsError, refetch: refetchTeams } = useDashboardTeams(workspaceId)
 
 const teamWorkload = computed(() => {
-  if (!dashboardTeamsData.value?.data?.team_workload) return []
+  console.log('Dashboard Teams Data:', dashboardTeamsData.value)
+  console.log('Has team_workload?', dashboardTeamsData.value?.data?.team_workload)
+  console.log('Team workload array:', dashboardTeamsData.value?.data?.team_workload)
 
-  return dashboardTeamsData.value.data.team_workload.map((member: TeamWorkloadMember) => ({
+  if (!dashboardTeamsData.value?.data?.team_workload) {
+    console.log('Returning empty array - no team workload data')
+    return []
+  }
+
+  const mapped = dashboardTeamsData.value.data.team_workload.map((member: TeamWorkloadMember) => ({
     id: member.assignee_id || 'unassigned',
     name: member.assignee_name,
     initials: member.initials || getInitials(member.assignee_name) || '',
@@ -383,6 +390,9 @@ const teamWorkload = computed(() => {
     totalTasks: member.total_tasks,
     totalHours: member.total_hours
   }))
+
+  console.log('Mapped team workload:', mapped)
+  return mapped
 })
 
 const teamSize = computed(() => dashboardTeamsData.value?.data?.team_size || 0)
