@@ -18,7 +18,7 @@
         </SearchBar>
         <Button v-if="sprintDetailData?.status == 'active'" size="sm" @click="handleCompleteSprint">{{
           isCompletingSprint ?
-          'Ending...' : 'End' }}</Button>
+            'Ending...' : 'End' }}</Button>
         <Button v-else size="sm" @click="openStartSprintModal">Start Sprint</Button>
 
       </div>
@@ -32,7 +32,7 @@
       <div class="flex flex-col gap-6">
         <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold">Sprint ({{firstSprint?.tickets?.length}} Taks)</h2>
+            <h2 class="text-sm font-semibold">Sprint ({{ firstSprint?.tickets?.length }} Taks)</h2>
 
           </div>
           <div v-if="isSprintPending" class="w-full h-full min-h-[250px] flex justify-center items-center">
@@ -101,7 +101,7 @@
   <SprintModal v-model="sprintModalOpen" @save="saveSprintHandler" :sprint="selectedSprint"
     :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" /> -->
   <StartSprintModal :sprint="selectedSprint" v-model="startsprintModalOpen" @save="startSprintHandler"
-    :creatingSprint="isStartingSprint || isUpdatingSprint2"   />
+    :creatingSprint="isStartingSprint || isUpdatingSprint2" />
   <!-- <CreateBacklogTicket v-model="isCreateTicketModalOpen" /> -->
 
 </template>
@@ -130,9 +130,9 @@ const {
   // backlog, sprints,
   // selectedBacklogIds, selectedSprintIds,
   moveSelectedToSprint, moveSelectedToBacklog, deleteSelected,
-   saveSprintMeta, toggleStartSprint
+  saveSprintMeta, toggleStartSprint
 } = useBacklogStore()
-const { data: backlogResp,  } = useBacklogList(workspaceId)
+const { data: backlogResp, } = useBacklogList(workspaceId)
 
 // delete sprint
 const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
@@ -160,7 +160,7 @@ const { mutate: updateSprint2, isPending: isUpdatingSprint2 } = useUpdateSprint(
   }
 )
 const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint({
-  onSuccess:()=>{
+  onSuccess: () => {
     refetchSprintDetail();
 
   }
@@ -178,7 +178,7 @@ const startSprintHandler = (e: any) => {
   })
 }
 const { data: sprintsList, refetch: refetchSprints, } = useSprintList(workspaceId.value);
-const {  refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(workspaceId);
+const { refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(workspaceId);
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
 const selectedSprintId = ref(firstSprintId.value)
 watch(() => firstSprintId.value, (newVal) => {
@@ -291,18 +291,18 @@ const sorters = {
 // Ticket modal state
 const ticketModalOpen = ref(false)
 const editingTicket = ref<Ticket | null>(null)
-let createTarget: 'backlog' | 'sprint' = 'backlog'
+// const createTarget = ref<'backlog' | 'sprint'>('backlog')
 
 function openCreateBacklogTicket() {
   isCreateTicketModalOpen.value = true;
   editingTicket.value = null
-  createTarget = 'backlog'
+  // createTarget.value = 'backlog'
   // ticketModalOpen.value = true
 }
 
 function openTicket(t: Ticket) {
   editingTicket.value = t
-  createTarget = 'backlog' // not used on edit path
+  // createTarget.value = 'backlog' // not used on edit path
   ticketModalOpen.value = true
 }
 // function handleSaveTicket(partial: Partial<Ticket>) {

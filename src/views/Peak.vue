@@ -362,7 +362,7 @@ const handleVisibilityChange = () => {
 const onLaneClick = (lane: LaneProgressRow) => { console.log('Lane clicked:', lane) }
 
 const { data: dashboardTeamsData, isPending: isLoadingTeams, error: teamsError, refetch: refetchTeams } = useDashboardTeams(workspaceId)
-const { data: dashboardActiviesData, isPending: isLoadingActivities, } = useDashboardActivities(workspaceId)
+const { data: dashboardActiviesData, } = useDashboardActivities(workspaceId)
 
 const teamWorkload = computed(() => {
 
@@ -391,38 +391,38 @@ const teamWorkload = computed(() => {
 const teamSize = computed(() => dashboardTeamsData.value?.team_size || 0)
 
 /** Recent Activities Data */
-const recentActivities = ref([
-  {
-    id: 1,
-    user: 'Streamed Bot',
-    userInitials: 'VB',
-    userColor: '#06B6D4',
-    action: 'updated field "RemoteWorkItemLink" on',
-    item: 'VFC-33073: IPU: Agenda Multilingual Issue (global issue)',
-    status: 'DEPLOYED-PROD',
-    time: 'about 4 hours ago'
-  },
-  {
-    id: 2,
-    user: 'Streamed Bot',
-    userInitials: 'VB',
-    userColor: '#06B6D4',
-    action: 'updated field "RemoteWorkItemLink" on',
-    item: 'VFC-31468: Show/Hide Team Members on Booth',
-    status: 'REOPENED',
-    time: 'about 4 hours ago'
-  },
-  {
-    id: 3,
-    user: 'Streamed Bot',
-    userInitials: 'VB',
-    userColor: '#06B6D4',
-    action: 'updated field "RemoteWorkItemLink" on',
-    item: 'VFC-32359: Favicon not displaying after uploading from Event Settings',
-    status: '',
-    time: 'about 4 hours ago'
-  }
-])
+// const recentActivities = ref([
+//   {
+//     id: 1,
+//     user: 'Streamed Bot',
+//     userInitials: 'VB',
+//     userColor: '#06B6D4',
+//     action: 'updated field "RemoteWorkItemLink" on',
+//     item: 'VFC-33073: IPU: Agenda Multilingual Issue (global issue)',
+//     status: 'DEPLOYED-PROD',
+//     time: 'about 4 hours ago'
+//   },
+//   {
+//     id: 2,
+//     user: 'Streamed Bot',
+//     userInitials: 'VB',
+//     userColor: '#06B6D4',
+//     action: 'updated field "RemoteWorkItemLink" on',
+//     item: 'VFC-31468: Show/Hide Team Members on Booth',
+//     status: 'REOPENED',
+//     time: 'about 4 hours ago'
+//   },
+//   {
+//     id: 3,
+//     user: 'Streamed Bot',
+//     userInitials: 'VB',
+//     userColor: '#06B6D4',
+//     action: 'updated field "RemoteWorkItemLink" on',
+//     item: 'VFC-32359: Favicon not displaying after uploading from Event Settings',
+//     status: '',
+//     time: 'about 4 hours ago'
+//   }
+// ])
 
 /** Helper function for status classes */
 const getStatusClass = (status: string) => {
