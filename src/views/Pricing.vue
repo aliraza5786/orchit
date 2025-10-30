@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useTheme } from "../composables/useTheme";
+import { useWorkspaceStore } from '../stores/workspace';
 const { theme } = useTheme(); // light / dark / system
 
 const isYearly = ref(false)
@@ -96,6 +97,10 @@ const pricingPlans: Plan[] = [
         ]
     }
 ]
+const workspaceStore = useWorkspaceStore()
+function handleClick() {
+    workspaceStore.setPricing(true)
+}
 </script>
 
 <template>
@@ -117,24 +122,27 @@ const pricingPlans: Plan[] = [
             <div class="mb-[30px] lg:mb-[50px] flex justify-center">
                 <div
                     class="toggle_btn flex items-center justify-center gap-[10px] lg:gap-[24px] w-[290px] lg:w-[349px] h-[55px] lg:h-[59px] rounded-[30px] border border-border-input">
-                    <span class="font-manrope text-[16px] lg:text-[18px] font-medium" :class="{ 'text-text-secondary': isYearly }">Pay
+                    <span class="font-manrope text-[16px] lg:text-[18px] font-medium"
+                        :class="{ 'text-text-secondary': isYearly }">Pay
                         Monthly</span>
 
-                    <button @click="isYearly = !isYearly" 
+                    <button @click="isYearly = !isYearly"
                         class="relative inline-flex h-7 w-12 items-center rounded-full bg-gray-700 p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500">
                         <span
                             class="h-5 w-5 rounded-full bg-white transform transition-transform duration-250 ease-in-out"
                             :class="{ 'translate-x-5': isYearly, 'translate-x-0': !isYearly }" />
                     </button>
 
-                    <span class="font-manrope text-[16px] lg:text-[18px] font-medium" :class="{ 'text-text-secondary': !isYearly }">Pay
+                    <span class="font-manrope text-[16px] lg:text-[18px] font-medium"
+                        :class="{ 'text-text-secondary': !isYearly }">Pay
                         Yearly</span>
                 </div>
             </div>
             <!-- Cards -->
             <div class="grid md:grid-cols-3  gap-[25px] md:gap-[15px] xl:gap-[44px]">
                 <div v-for="plan in pricingPlans" :key="plan.name"
-                    class="relative group rounded-2xl border p-[28px] flex flex-col justify-between transition-all duration-300 hover:scale-[1.01]" :class="theme==='light'?'border-[#a495e9b5]':'border-border-input'">
+                    class="relative group rounded-2xl border p-[28px] flex flex-col justify-between transition-all duration-300 hover:scale-[1.01]"
+                    :class="theme === 'light' ? 'border-[#a495e9b5]' : 'border-border-input'">
                     <!-- Gradient border -->
                     <div class="absolute  inset-0 rounded-2xl p-[1px] bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 transition-opacity duration-300"
                         :class="{
@@ -168,38 +176,44 @@ const pricingPlans: Plan[] = [
                                         </span>
                                     </transition>
                                 </div>
-                                <span class="text-[14px] leading-[21px] text-text-secondary font-normal ml-2">/ {{ isYearly ? 'year' : 'month' }}</span>
+                                <span class="text-[14px] leading-[21px] text-text-secondary font-normal ml-2">/ {{
+                                    isYearly ? 'year' : 'month' }}</span>
                             </div>
                         </div>
 
                         <!-- Button -->
-                        <button class="w-full py-[14px] rounded-[12px] font-manrope font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]" :class="[
-                            // Dark Theme
-                            theme === 'dark'
-                                ? (plan.highlighted
-                                    ? 'bg-white text-black hover:bg-gray-200' 
-                                    : 'bg-bg-charcoal text-white hover:bg-white hover:text-black'  
-                                )
-                                // Light Theme
-                                : (plan.highlighted
-                                    ? 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white' 
-                                    : 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white' 
-                                )
-                           ]">
-                            {{ plan.button }}
-                        </button>
+                        <router-link to="/register"> <button @click="handleClick"
+                                class="w-full py-[14px] cursor-pointer rounded-[12px] font-manrope font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
+                                :class="[
+                                    // Dark Theme
+                                    theme === 'dark'
+                                        ? (plan.highlighted
+                                            ? 'bg-white text-black hover:bg-gray-200'
+                                            : 'bg-bg-charcoal text-white hover:bg-white hover:text-black'
+                                        )
+                                        // Light Theme
+                                        : (plan.highlighted
+                                            ? 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white'
+                                            : 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white'
+                                        )
+                                ]">
+                                {{ plan.button }}
+                            </button> </router-link>
                     </div>
 
                     <!-- Features -->
                     <div class="mt-8 text-left relative z-10">
-                        <p class="text-[14px] font-manrope text-text-primary text-left leading-[21px] font-normal pb-[8px] border-b border-border mb-[14px] ">Features included:</p>
+                        <p
+                            class="text-[14px] font-manrope text-text-primary text-left leading-[21px] font-normal pb-[8px] border-b border-border mb-[14px] ">
+                            Features included:</p>
                         <ul class="space-y-[14px]">
                             <li v-for="feature in plan.features" :key="feature.text"
                                 class="flex items-start gap-2 text-sm">
                                 <span v-if="feature.available"
                                     class="text-green-400 font-bold text-lg leading-none">✓</span>
                                 <span v-else class="text-text-secondary font-bold text-lg leading-none">✕</span>
-                                <span class="text-[14px] font-manrope  text-left leading-[21px] font-normal" :class="[feature.available ? 'text-text-primary' : 'text-text-secondary', theme==='dark'? 'text-black':'']">
+                                <span class="text-[14px] font-manrope  text-left leading-[21px] font-normal"
+                                    :class="[feature.available ? 'text-text-primary' : 'text-text-secondary', theme === 'dark' ? 'text-black' : '']">
                                     {{ feature.text }}
                                 </span>
                             </li>
@@ -232,6 +246,7 @@ const pricingPlans: Plan[] = [
 .price-container {
     font-variant-numeric: tabular-nums;
 }
+
 .bg-gradinet {
     background: linear-gradient(142.27deg, #4E3C9E 11.4%, #B5A1F7 84.44%);
 }

@@ -17,7 +17,7 @@
             <h2 class="text-2xl font-semibold text-text-primary leading-tight">
               You’ve reached your workspace limit
             </h2>
-            <p class="text-text-secondary mt-1">
+            <p v-if="used && limit" class="text-text-secondary mt-1">
               You’ve used {{ used }} of {{ limit }} workspaces on your current plan.
               Upgrade to create more workspaces and keep your team moving.
             </p>
@@ -172,7 +172,7 @@
   }
   
   function close() {
-    workspaceStore.showLimitExccedModal = false
+    workspaceStore.setLimitExccedModal(false) 
   }
   
   const emit = defineEmits<{

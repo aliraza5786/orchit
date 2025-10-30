@@ -110,7 +110,9 @@ async function handleLogin() {
     queryClient.invalidateQueries({ queryKey: ['me'] })
     queryClient.invalidateQueries({ queryKey: ['workspaces'] })
     queryClient.invalidateQueries({ queryKey: ['profile'] })
-    if (workspaceStore.workspace) {
+    if (workspaceStore.pricing) {
+      router.push(`/dashboard?stripePayment=${true}`)
+    } else if (workspaceStore.workspace) {
       router.push('/create-workspace')
     } else
       router.push('/dashboard')

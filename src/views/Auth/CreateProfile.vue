@@ -4,7 +4,8 @@
       <div class="max-w-[500px] md:mx-auto w-full">
         <!-- Step 1 -->
         <div class="mb-6 md:mb-12 space-y-2" v-show="activeStep === 1">
-          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>How will you use Orchit AI?</h2>
+          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>
+            How will you use Orchit AI?</h2>
           <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
             This will help us personalize your experience in Orchit AI.
           </p>
@@ -25,7 +26,8 @@
 
         <!-- Step 2 -->
         <div class="space-y-2 mb-6 md:mb-12" v-show="activeStep === 2">
-          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>Tell us about your company</h2>
+          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>
+            Tell us about your company</h2>
           <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
             This will help us personalize your experience in Orchit AI.
           </p>
@@ -41,7 +43,8 @@
 
         <!-- Step 3 -->
         <div class="mb-6 md:mb-12 space-y-2" v-show="activeStep === 3">
-          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>Invite your team</h2>
+          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>
+            Invite your team</h2>
           <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
             Invite your teammates to your first project.
           </p>
@@ -71,12 +74,14 @@
           </Button>
 
           <div class="flex gap-4 items-center">
-            <router-link :to="`${workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`"><button
+            <router-link
+              :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`"><button
                 class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link>
             <Button size="md" type="submit" @click="continueHandler" :disabled="isContinueDisabled">
               {{ creatingProfile || invitingPeople ? 'Continuing...' : 'Continue' }}
             </Button>
           </div>
+
         </div>
       </div>
 
@@ -111,7 +116,9 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
 });
 const { mutate: invitePeople, isPending: invitingPeople } = useInviteCompany({
   onSuccess: () => {
-    if (workspaceStore.workspace) {
+    if (workspaceStore.pricing) {
+      router.push(`/dashboard?stripePayment=${true}`)
+    } else if (workspaceStore.workspace) {
       router.push('/create-workspace')
     } else
       router.push('/finish-profile');
@@ -200,15 +207,15 @@ function continueHandler() {
 </script>
 
 <style scoped>
-@media(max-width:640px){
-   .how_help_steps{
-       grid-template-columns: 1fr 1fr !important; 
+@media(max-width:640px) {
+  .how_help_steps {
+    grid-template-columns: 1fr 1fr !important;
   }
 }
-@media(max-width:350px){
-   .how_help_steps{
-       grid-template-columns: 1fr !important; 
+
+@media(max-width:350px) {
+  .how_help_steps {
+    grid-template-columns: 1fr !important;
   }
 }
- 
 </style>

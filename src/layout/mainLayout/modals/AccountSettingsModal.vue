@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="isOpen" size="lg" :modalClass="'!max-w-[900px]'">
+  <BaseModal v-model="isOpen" @update:modelValue="() => router.push('/')" size="lg" :modalClass="'!max-w-[900px]'">
     <div class="px-6">
       <h2 class="text-2xl font-semibold text-text-primary mb-6">Account Settings</h2>
 
@@ -18,14 +18,14 @@
                   </div>
                   <button type="button"
                     class="absolute inset-0 rounded-full bg-black/60  transition grid place-items-center text-white text-xs cursor-pointer"
-                    :class="isUploading ?'opacity-100':'opacity-0 group-hover:opacity-100'"
+                    :class="isUploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
                     :disabled="isUploadingAvatar" @click="triggerAvatarPicker" aria-label="Change profile picture">
                     <div class="flex flex-col items-center justify-center gap-1">
                       <span v-if="isUploadingAvatar || isUploading"
                         class="inline-block h-6 w-6 rounded-full  border-2 border-white border-t-transparent animate-spin"
                         aria-hidden="true"></span>
                       <i v-else class="fa-solid fa-camera text-xl"></i>
-                      <span v-if="!isUploadingAvatar&&!isUploading" class="text-xs">Change</span>
+                      <span v-if="!isUploadingAvatar && !isUploading" class="text-xs">Change</span>
                     </div>
                   </button>
                   <input ref="avatarInputRef" type="file" accept="image/*" class="hidden" @change="onAvatarPicked" />
@@ -342,7 +342,7 @@ function triggerAvatarPicker() {
   avatarInputRef.value?.click()
 }
 
-const { mutate: uploadFileMutation , isPending:isUploading } = useUploadFile({
+const { mutate: uploadFileMutation, isPending: isUploading } = useUploadFile({
   onSuccess: (data: any) => {
     const url = data?.data?.url
     if (!url) {
@@ -406,6 +406,7 @@ function cancelChanges() {
   avatarPreview.value = ''
   uploadedAvatarUrl.value = ''
   isOpen.value = false
+  router.push('/')
 }
 
 // function getStatusBadge(status: string) {

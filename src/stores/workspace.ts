@@ -15,6 +15,7 @@ interface WorkspaceState {
   transitions: any;
   showLimitExccedModal: boolean;
   limits:any
+  pricing:boolean
 }
 
 export const useWorkspaceStore = defineStore("workspace", {
@@ -31,9 +32,14 @@ export const useWorkspaceStore = defineStore("workspace", {
     showFilter: false,
     selectedLaneIds: [],
     transitions: {},
-    limits:{}
+    limits:{},
+    pricing:true
   }),
   actions: {
+    setPricing(p:boolean){
+      this.pricing = p;
+
+    },
     setLimitExccedModal(i: any) {
       this.showLimitExccedModal = i;
     },

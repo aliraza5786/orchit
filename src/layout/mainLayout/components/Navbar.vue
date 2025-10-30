@@ -175,8 +175,14 @@ const { theme, setTheme } = useTheme()
 /* Account Settings Modal */
 const showAccountSettings = ref(false)
 function handleUgrade() {
-  showAccountSettings.value = true;
-  workspaceStore.setLimitExccedModal(false)
+  router.push(`/dashboard?stripePayment=${true}`)
+  nextTick()
+  setTimeout(()=>{
+    showAccountSettings.value = true;
+    workspaceStore.setLimitExccedModal(false)
+
+  }, 100)
+  
 }
 /* Router */
 const router = useRouter()
