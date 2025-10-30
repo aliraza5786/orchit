@@ -14,10 +14,10 @@
         </div>
 
         <!-- Moving Product Section -->
-        <div class="overflow-hidden pb-10 md:pb-16 lg:pb-20 pt-10 lg:pt-14 ">
+        <div class="overflow-auto pb-10 md:pb-16 lg:pb-20 pt-10 lg:pt-14 ">
             <div class="flex gap-[14px] px-4 animate-marquee will-change-transform ">
                 <!-- Repeat marquee twice for continuous loop -->
-                <div v-for="n in 3" :key="n" class="flex gap-[14px] flex-shrink-0 ">
+                <div v-for="n in 5" :key="n" class="flex gap-[14px] flex-shrink-0 ">
                     <div v-for="(product, index) in products" :key="index" class="product_box w-[260px] border border-border-input 
                    shadow-[0px_4px_6px_-4px_#00000040,0px_10px_15px_-3px_#00000040]
                     pt-[29px] pl-[34px] rounded-[22px] 
@@ -75,10 +75,11 @@ const products: Product[] = [
 .animate-marquee {
     display: flex;
     width: max-content;
-    animation: marquee 50s linear infinite;
+    animation: marquee 120s linear infinite;
 }
 
 .animate-marquee:hover {
     animation-play-state: paused;
+    cursor: pointer;
 }
 </style>

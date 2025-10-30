@@ -1,7 +1,7 @@
 <template>
   <div class="overflow-auto flex flex-col rounded-lg border border-border bg-card shadow" role="region"
     :aria-busy="loading ? 'true' : 'false'" aria-live="polite">
-    <table class="min-w-full text-left text-sm" role="grid">
+    <table class="min-w-[700px] text-left text-sm" role="grid">
       <!-- Header -->
       <thead v-if="showHeader" class="sticky top-0 z-[1] bg-bg-surface font-semibold text-text-secondary/90">
         <tr role="row">
@@ -69,7 +69,7 @@
 
     <!-- Pagination bar -->
     <div v-if="showPagination && pagination"
-      class="flex items-center mt-auto sticky bottom-0 bg-bg-surface justify-between gap-3 border-t border-border px-3 py-2 sm:flex-row" role="navigation"
+      class="flex items-center mt-auto sticky bottom-0 bg-bg-surface justify-between gap-3 border-t border-border px-3 py-2 sm:flex-row min-w-[700px]" role="navigation"
       aria-label="Pagination">
       <div class="text-xs text-text-secondary sm:text-sm">
         <template v-if="!loading">

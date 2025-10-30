@@ -8,7 +8,7 @@
           <p class="text-sm text-text-secondary mt-2">Last update on Sep 12, 2024 - 09.45 AM</p>
 
           <!-- Cards Row -->
-          <div class="flex gap-2.5 overflow-x-auto w-full py-8">
+          <div class="flex gap-2.5 overflow-x-auto w-full py-8 custom_scroll_bar">
             <!-- Loading skeletons -->
             <template v-if="isLoading">
               <SkeletonCard v-for="n in 3" :key="n" />
@@ -100,7 +100,7 @@
 
 
     <!-- Right Column: Team Workload & Recent Activity -->
-    <div class="flex flex-grow  gap-4">
+    <div class="flex flex-grow flex-col sm:flex-row  gap-4">
       <!-- Team Workload -->
       <div class="bg-bg-card w-full flex-auto p-5 rounded-lg">
         <div class="mb-4">
@@ -564,5 +564,30 @@ const getCardProgress = (total, status_dis) => {
 
 .hoverable:hover {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07);
+}
+
+
+.custom_scroll_bar::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+  .custom_scroll_bar::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+}
+
+  .custom_scroll_bar::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+   .custom_scroll_bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox support */
+  .custom_scroll_bar {
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
 }
 </style>

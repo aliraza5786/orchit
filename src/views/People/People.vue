@@ -9,7 +9,7 @@
       </div>
     </div>
     <KanbanSkeleton v-show="isListPending || isListFetchinng" />
-    <div v-show="currentView == 'kanban' && !isListPending && !isListFetchinng" class="flex p-4 overflow-x-auto gap-3">
+    <div v-show="currentView == 'kanban' && !isListPending && !isListFetchinng" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar">
       <KanbanBoard v-if="localList?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
         @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="localList"
@@ -243,3 +243,31 @@ const handleClickTicket = (ticket: any) => {
   selectedCard.value = ticket
 }
 </script>
+
+
+<style>
+  
+.custom_scroll_bar::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+  .custom_scroll_bar::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+}
+
+  .custom_scroll_bar::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+   .custom_scroll_bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Firefox support */
+  .custom_scroll_bar {
+  scrollbar-width: thin;
+  scrollbar-color: #888 transparent;
+}
+</style>

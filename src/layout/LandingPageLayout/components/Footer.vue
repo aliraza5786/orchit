@@ -4,7 +4,7 @@ import { useTheme } from "../../../composables/useTheme";
 import lightLogo from '@assets/LandingPageImages/footer/lightLogo.webp';
 import darkLogo from '@assets/global/dark-logo.png';
 import borderGif from '@assets/LandingPageImages/footer/footer-top.gif';
- 
+
 
 
 
@@ -31,7 +31,7 @@ const sections: FooterSection[] = [
 
         ],
     },
-   
+
 ];
 
 // mobile menu
@@ -44,41 +44,14 @@ const moblinks: MobFooterMenu[] = [
         name: 'Home',
         url: '/home'
     },
-    {
-        name: 'About',
-        url: '#'
-    },
-    {
-        name: 'Marketplace',
-        url: '#'
-    },
+    { name: "Knowledge Center", url: "/knowledge-center" },
+    { name: "Blog", url: "/blogs" },
     {
         name: 'Pricing',
         url: '/pricing'
     },
-    {
-        name: 'Sales',
-        url: '#'
-    },
-    {
-        name: 'Team',
-        url: '#'
-    },
-    {
-        name: 'Portfolio',
-        url: '#    '
-    },
-    {
-        name: 'News',
-        url: '#'
-    },
-    {
-        name: 'History',
-        url: '#'
-    },
-
-
-
+     { name: "Privacy Policy", url: "/privacy-policy" },
+     { name: "Terms of Services", url: "/terms-of-services" },
 ]
 
 </script>
@@ -122,11 +95,11 @@ const moblinks: MobFooterMenu[] = [
                             </li>
                         </ul>
                     </div>
-                    <div class="hidden sm:block">
-                        <div class="heading_box mb-[16px]">
+                    <div class="">
+                        <div class="heading_box mb-[16px] hidden sm:block">
                             <h3
                                 class="font-inter text-primary font-semibold text-[18px] md:text-[22.88px] leading-[32px] tracking-normal">
-                                  Social
+                                Social
                             </h3>
                         </div>
                         <div class="fotter_social_links flex gap-3 items-center justify-center  sm:justify-start">
@@ -134,18 +107,18 @@ const moblinks: MobFooterMenu[] = [
                                 <i class="fa-brands fa-linkedin"></i>
                             </a>
                             <a href="https://twitter.com" target="_blank" class="text-primary text-[22px]">
-                                 <i class="fa-brands fa-square-x-twitter"></i>
+                                <i class="fa-brands fa-square-x-twitter"></i>
                             </a>
-                            <a href=""  target="_blank" class="text-primary text-[22px]">
+                            <a href="" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-discord"></i>
                             </a>
-                            <a href=""  target="_blank" class="text-primary text-[22px]">
+                            <a href="" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-youtube"></i>
                             </a>
-                            <a href=""  target="_blank" class="text-primary text-[22px]">
+                            <a href="" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-instagram"></i>
                             </a>
-                            <a href=""  target="_blank" class="text-primary text-[22px]">
+                            <a href="" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-reddit"></i>
                             </a>
                         </div>
@@ -182,7 +155,7 @@ const moblinks: MobFooterMenu[] = [
                             ? `Copyright © ${new Date().getFullYear()} Space Technologies`
                             : `${new Date().getFullYear()} © STREAMED INC. All Rights Reserved`
                     }}
-                </p>     
+                </p>
             </div>
         </div>
     </section>

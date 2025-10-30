@@ -2,7 +2,7 @@
   <!-- remove the confetti overlay div -->
 
 <!-- Header -->
-<div class="relative p-3 rounded-lg min-w-sm border border-border overflow-hidden flex flex-col justify-between bg-bg-card w-full">
+<div class="relative p-3 rounded-lg min-w-[300px] sm:min-w-sm border border-border overflow-hidden flex flex-col justify-between bg-bg-card w-full">
   <div class="flex justify-between items-start pb-2">
     <div>
       <h3 class="text-lg font-semibold text-text-primary text-left">

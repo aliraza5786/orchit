@@ -5,13 +5,13 @@ import Faqs from './components/Faqs.vue';
 import FeaturesSec from './components/FeaturesSec.vue';
 import GetStartedStepsSec from './components/GetStartedStepsSec.vue';
 import HeroBanner from './components/HeroBanner.vue';
-import SmarterProjectSec from './components/SmarterProjectSec.vue';
+import SmarterProjectSec from './components/SmarterProjectSec.vue'; 
 
 </script>
 
 <template>
     <HeroBanner />
-    <SmarterProjectSec />
+    <SmarterProjectSec /> 
     <GetStartedStepsSec />
     <FeaturesSec />
     <AchieveMoreSec />
