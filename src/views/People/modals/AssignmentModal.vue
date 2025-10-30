@@ -20,8 +20,10 @@
                         class="flex items-center justify-between gap-3  px-3 py-3 cursor-pointer hover:bg-bg-muted"
                         @click="pickPerson(m)" :class="{ 'bg-bg-muted': selectedEmail === m.email }">
                         <div class="flex items-center gap-3 min-w-0">
-                            <img v-if="m?.profile_image" class="h-9 w-9 rounded-full aspect-square" :src="m?.profile_image" alt="avatar">
-                            <div v-else class="h-9 w-9 bg-white capitalize rounded-full flex items-center justify-center text-xs font-semibold"
+                            <img v-if="m?.profile_image" class="h-9 w-9 rounded-full aspect-square"
+                                :src="m?.profile_image" alt="avatar">
+                            <div v-else
+                                class="h-9 w-9 bg-white capitalize rounded-full flex items-center justify-center text-xs font-semibold"
                                 :style="{ backgroundColor: avatarColor({ email: m.email }) }">
                                 {{ getInitials(m.name || m.email) }}
                             </div>
@@ -94,7 +96,7 @@ const selectedEmail = ref<string>('') // Selected email
 const emailError = ref('') // Email error for validation
 
 // Filter directory based on search query
-const filteredMembers:any = computed(() => {
+const filteredMembers: any = computed(() => {
     const q = query.value.trim().toLowerCase()
     return props.directory.filter(p => (p.name?.toLowerCase().includes(q) || p.email.toLowerCase().includes(q)))
 })

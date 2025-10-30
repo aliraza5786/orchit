@@ -143,7 +143,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/finish-profile",
-    name: "finish-profile",
+    name: "finishProfile",
     component: FinishProfile,
     meta: { requiresAuth: false },
   },

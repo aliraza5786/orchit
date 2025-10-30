@@ -32,7 +32,7 @@
             🎉
           </span></span>
         <span v-else>
-       {{ doneCard }}  / {{ totalCard }}
+       {{ doneCard ??0 }}  / {{ totalCard }}
         </span>
       </div>
       <ProgressBar class="mt-2" :progress="liveProgress" fillColor="bg-accent" :indeterminate="!!loading" />

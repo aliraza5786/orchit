@@ -5,7 +5,7 @@
 
         <div class="flex justify-between gap-2 items-start">
             <div class="flex items-center gap-2  ">
-                <img v-if="ticket?.avatar" :src="ticket?.avatar" class="w-10 h-10 rounded-full" alt="avartar">
+                <img v-if="ticket?.avatar" :src="ticket?.avatar" class="w-10 h-10 rounded-full object-cover" alt="avartar">
                 <div v-else class="w-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full "
                     :style="{ backgroundColor: ticket?.name ? avatarColor({  email: ticket?.email, }) : '' }">
                     {{ getInitials(ticket?.name) }} <i v-if="!ticket?.name" class="fa-solid fa-user text-white"></i>

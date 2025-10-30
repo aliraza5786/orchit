@@ -1,5 +1,5 @@
 export function getStatusStyle(s: any) {
-  const status = s.trim().toLowerCase();
+  const status = s? s.trim().toLowerCase():"";
   switch (status) {
     case "pending":
       return "bg-amber-600/10 text-amber-600";

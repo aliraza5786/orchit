@@ -1,7 +1,4 @@
 <template>
-
-
-
   <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
     <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
       <Dropdown prefix="View By" v-model="selectedSprintId" :options="sprintsList?.sprints" variant="secondary"
@@ -97,26 +94,26 @@
     }">
 
   </ConfirmDeleteModal>
-  <!-- <TicketModal v-model="ticketModalOpen" :editing="!!editingTicket" :ticket="editingTicket" @save="handleSaveTicket" />
+  <!-- <TicketModal v-model="ticketModalOpen" :editing="!!editingTicket" :ticket="editingTicket" @save="handleSaveTicket" /> -->
   <SprintModal v-model="sprintModalOpen" @save="saveSprintHandler" :sprint="selectedSprint"
-    :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" /> -->
+    :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" />
   <StartSprintModal :sprint="selectedSprint" v-model="startsprintModalOpen" @save="startSprintHandler"
     :creatingSprint="isStartingSprint || isUpdatingSprint2" />
   <!-- <CreateBacklogTicket v-model="isCreateTicketModalOpen" /> -->
-
+  <!-- <CreateSheetModal v-model="sprintModalOpen" size="md"  /> -->
 </template>
 
 <script setup lang="ts">
 import BacklogTable from './components/BacklogTable.vue'
 import SprintCard from './components/SprintCard.vue'
 // import TicketModal from './modals/TicketModal.vue'
-// import SprintModal from './modals/SprintModal.vue'
+import SprintModal from './modals/SprintModal.vue'
 import { computed, ref, watch } from 'vue'
 import { useBacklogStore, type Ticket } from './composables/useBacklogStore'
 import Button from '../../components/ui/Button.vue'
 import Dropdown from '../../components/ui/Dropdown.vue'
 import SearchBar from '../../components/ui/SearchBar.vue'
-import { useBacklogList, useCompleteSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintCard, useSprintDetail, useSprintList, useStartSprint, useUpdateSprint } from '../../queries/usePlan'
+import { useBacklogList, useCompleteSprint, useCreateSprint, useDeleteSprint, useRemoveCardFromSprint, useSprintCard, useSprintDetail, useSprintList, useStartSprint, useUpdateSprint } from '../../queries/usePlan'
 import { toast } from 'vue-sonner'
 import { useWorkspaceId } from '../../composables/useQueryParams'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -124,6 +121,7 @@ import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue'
 import StartSprintModal from './modals/StartSprintModal.vue'
 // import CreateBacklogTicket from './modals/CreateBacklogTicket.vue'
 import ActiveSprint from './components/ActiveSprint.vue'
+// import CreateSheetModal from '../Product/modals/CreateSheetModal.vue'
 const { workspaceId } = useWorkspaceId();
 const isCreateTicketModalOpen = ref(false)
 const {
@@ -325,45 +323,46 @@ function openTicket(t: Ticket) {
 const sprintModalOpen = ref(false)
 function openEditSprint() { sprintModalOpen.value = true }
 const queryClient = useQueryClient();
-// const { mutate: createSprint } = useCreateSprint({
-//   onSuccess: (data: any) => {
-//     saveSprintMeta({ name: data.title })
-//     queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
-//     sprintModalOpen.value = false;
-//   }
-// });
-// const { mutate: updateSprint, } = useUpdateSprint(
-//   {
-//     onSuccess: (data: any) => {
-//       saveSprintMeta({ name: data.title })
-//       queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
-//       sprintModalOpen.value = false;
-//     }
-//   }
-// )
-// function saveSprintHandler(e: any) {
-//   if (selectedSprint.value) {
-//     updateSprint(
-//       {
-//         id: selectedSprint.value?._id,
-//         payload: {
-//           "workspace_id": workspaceId.value,
-//           "title": e.name,
-//         }
-//       }
-//     )
-//   } else {
-//     createSprint({
-//       payload: {
-//         "workspace_id": workspaceId.value,
-//         "title": e.name,
-//       }
-//     });
-//   }
+const { mutate: createSprint, isPending: creatingSprint } = useCreateSprint({
+  onSuccess: (data: any) => {
+    saveSprintMeta({ name: data.title })
+    queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
+    sprintModalOpen.value = false;
+  }
+});
+const { mutate: updateSprint, isPending: isUpdatingSprint } = useUpdateSprint(
+  {
+    onSuccess: (data: any) => {
+      saveSprintMeta({ name: data.title })
+      queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
+      sprintModalOpen.value = false;
+    }
+  }
+)
+function saveSprintHandler(e: any) {
+  if (selectedSprint.value) {
+    updateSprint(
+      {
+        id: selectedSprint.value?._id,
+        payload: {
+          "workspace_id": workspaceId.value,
+          "title": e.name,
+        }
+      }
+    )
+  } else {
+    createSprint({
+      payload: {
+        "workspace_id": workspaceId.value,
+        "title": e.name,
+      }
+    });
+  }
 
-// }
+}
 function openSprintModal() {
   selectedSprint.value = null;
+  console.log('>>> felo');
 
   sprintModalOpen.value = true;
 

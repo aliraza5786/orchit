@@ -11,7 +11,7 @@
                 <Button @click="open()"> Invite Users</Button>
             </div>
 
-            <div v-if="data && data?.length == 0"
+            <div v-if="data && data?.users?.length == 0"
                 class="flex py-10 justify-center items-center text-sm text-text-secondary">No Workspace</div>
             <Table @row-click="handleClick" :columns="columns" :rows="data?.data?.users || []" :loading="isPending"
                 :skeletonRows="6">
@@ -78,7 +78,7 @@ const columns = [
     },
     {
         key: 'variables', label: 'Status',
-        render: ({ row }: any) => h('div', { class: `capitalize flex items-center gap-2 rounded-md inline w-fit px-2 py-1 ${getStatusStyle(row['seat_status'])}` }, [
+        render: ({ row }: any) => h('div', { class: `capitalize flex items-center gap-2 rounded-md inline w-fit px-2 py-1 ${getStatusStyle(row?.seat_status)}` }, [
             h('span', row['seat_status'])
         ])
     }

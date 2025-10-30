@@ -172,6 +172,8 @@ function showActions() {
   console.log(title);
   if (title)
     switch (title) {
+      case 'admin':
+      return false
       case 'administrator':
         return false
       case 'to do':
