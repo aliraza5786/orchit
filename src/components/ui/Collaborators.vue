@@ -2,22 +2,14 @@
     <div class="flex items-center">
         <div :class="['flex', displayData.overlap]">
             <!-- Visible Avatars -->
-            <template v-if="image">
-                <img v-for="(collaborator, index) in displayData.visible"
-                    :key="index"
-                    :src="collaborator.image"
-                    :alt="collaborator.name"
-                    loading="lazy"
-                    decoding="async"
-                    @click="collaborator.onclick?.()"
+            <template v-for="(collaborator, index) in displayData.visible" :key="index">
+                <img v-if="image && (collaborator?.logo ?? collaborator?.image ?? collaborator?.profile_image)"
+                    :src="collaborator?.logo ?? collaborator?.image ?? collaborator?.profile_image"
+                    :alt="collaborator.name" loading="lazy" decoding="async" @click="collaborator.onclick?.()"
                     :class="`w-${size} h-${size} rounded-full border-2 border-white shadow-md object-cover cursor-pointer`" />
-            </template>
 
-            <template v-else>
-                <div v-for="(collaborator, index) in displayData.visible"
-                    :key="`IMG-${index}`"
-                    @click="collaborator.onclick?.()"
-                    :alt="collaborator.name"
+                <div v-else @click="collaborator.onclick?.()" :alt="collaborator.name"
+                    :style="{ backgroundColor: avatarColor({ email: collaborator?.email }) }"
                     :class="`w-${size} h-${size} rounded-full text-text-primary flex justify-center items-center bg-amber-600 border-2 border-border shadow-md object-cover cursor-pointer`">
                     {{ getCachedInitials(collaborator?.name) }}
                 </div>
@@ -37,6 +29,7 @@
 <script setup>
 import { computed } from 'vue'
 import { getInitials } from '../../utilities'
+import { avatarColor } from '../../utilities/avatarColor';
 
 const props = defineProps({
     avatars: {

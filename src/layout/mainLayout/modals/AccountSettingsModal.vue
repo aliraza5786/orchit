@@ -17,14 +17,15 @@
                     <span v-else>{{ initials }}</span>
                   </div>
                   <button type="button"
-                    class="absolute inset-0 rounded-full bg-black/60 opacity-0 group-hover:opacity-100 transition grid place-items-center text-white text-xs cursor-pointer"
+                    class="absolute inset-0 rounded-full bg-black/60  transition grid place-items-center text-white text-xs cursor-pointer"
+                    :class="isUploading ?'opacity-100':'opacity-0 group-hover:opacity-100'"
                     :disabled="isUploadingAvatar" @click="triggerAvatarPicker" aria-label="Change profile picture">
                     <div class="flex flex-col items-center justify-center gap-1">
-                      <span v-if="isUploadingAvatar"
-                        class="inline-block h-6 w-6 rounded-full border-2 border-white border-t-transparent animate-spin"
+                      <span v-if="isUploadingAvatar || isUploading"
+                        class="inline-block h-6 w-6 rounded-full  border-2 border-white border-t-transparent animate-spin"
                         aria-hidden="true"></span>
                       <i v-else class="fa-solid fa-camera text-xl"></i>
-                      <span v-if="!isUploadingAvatar" class="text-xs">Change</span>
+                      <span v-if="!isUploadingAvatar&&!isUploading" class="text-xs">Change</span>
                     </div>
                   </button>
                   <input ref="avatarInputRef" type="file" accept="image/*" class="hidden" @change="onAvatarPicked" />
@@ -341,7 +342,7 @@ function triggerAvatarPicker() {
   avatarInputRef.value?.click()
 }
 
-const { mutate: uploadFileMutation } = useUploadFile({
+const { mutate: uploadFileMutation , isPending:isUploading } = useUploadFile({
   onSuccess: (data: any) => {
     const url = data?.data?.url
     if (!url) {
@@ -435,66 +436,66 @@ const currentPlan = ref({
   ]
 })
 
-const usageData = ref({
-  storage: {
-    used: 45,
-    limit: 100,
-    remaining: 55,
-    percentage: 45
-  },
-  users: {
-    used: 7,
-    limit: 10,
-    remaining: 3,
-    percentage: 70
-  }
-})
+// const usageData = ref({
+//   storage: {
+//     used: 45,
+//     limit: 100,
+//     remaining: 55,
+//     percentage: 45
+//   },
+//   users: {
+//     used: 7,
+//     limit: 10,
+//     remaining: 3,
+//     percentage: 70
+//   }
+// })
 
-const pricingPlans = ref([
-  {
-    name: 'Free',
-    price: '$0',
-    billingCycle: 'month',
-    description: 'Perfect for personal use',
-    features: [
-      '3 workspaces',
-      '5 GB storage',
-      'Up to 3 team members',
-      'Basic support',
-      'Basic analytics'
-    ]
-  },
-  // {
-  //   name: 'Pro',
-  //   price: '$29',
-  //   billingCycle: 'month',
-  //   description: 'Best for growing teams',
-  //   features: [
-  //     'Unlimited workspaces',
-  //     '100 GB storage',
-  //     'Up to 10 team members',
-  //     'Priority support',
-  //     'Advanced analytics',
-  //     'Custom integrations'
-  //   ]
-  // },
-  // {
-  //   name: 'Enterprise',
-  //   price: '$99',
-  //   billingCycle: 'month',
-  //   description: 'For large organizations',
-  //   features: [
-  //     'Unlimited everything',
-  //     'Unlimited storage',
-  //     'Unlimited team members',
-  //     '24/7 dedicated support',
-  //     'Advanced security',
-  //     'Custom integrations',
-  //     'SLA guarantee',
-  //     'Dedicated account manager'
-  //   ]
-  // }
-])
+// const pricingPlans = ref([
+//   {
+//     name: 'Free',
+//     price: '$0',
+//     billingCycle: 'month',
+//     description: 'Perfect for personal use',
+//     features: [
+//       '3 workspaces',
+//       '5 GB storage',
+//       'Up to 3 team members',
+//       'Basic support',
+//       'Basic analytics'
+//     ]
+//   },
+//   // {
+//   //   name: 'Pro',
+//   //   price: '$29',
+//   //   billingCycle: 'month',
+//   //   description: 'Best for growing teams',
+//   //   features: [
+//   //     'Unlimited workspaces',
+//   //     '100 GB storage',
+//   //     'Up to 10 team members',
+//   //     'Priority support',
+//   //     'Advanced analytics',
+//   //     'Custom integrations'
+//   //   ]
+//   // },
+//   // {
+//   //   name: 'Enterprise',
+//   //   price: '$99',
+//   //   billingCycle: 'month',
+//   //   description: 'For large organizations',
+//   //   features: [
+//   //     'Unlimited everything',
+//   //     'Unlimited storage',
+//   //     'Unlimited team members',
+//   //     '24/7 dedicated support',
+//   //     'Advanced security',
+//   //     'Custom integrations',
+//   //     'SLA guarantee',
+//   //     'Dedicated account manager'
+//   //   ]
+//   // }
+// ])
 
 // function manageBilling() {
 //   toast.info('Redirecting to Stripe billing portal...')

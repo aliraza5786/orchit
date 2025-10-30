@@ -19,10 +19,11 @@
               <button v-if="cardProgress" v-for="lane in lanes" :key="lane?.lane_title"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
-                <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
+                <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']"
+                  :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
                   subtitle="Mobile Application"
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
-                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : lane?.status" :avatars="avatars"
+                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
 
@@ -30,10 +31,10 @@
               <button v-else v-for="lane in lanes2" :key="`2-${lane?.lane_title}`"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
-                <ProjectCard :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
+                <ProjectCard :ai="true" :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
                   subtitle="Mobile Application"
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
-                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : lane?.status" :avatars="avatars"
+                  :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
 
@@ -102,12 +103,12 @@
     <!-- Right Column: Team Workload & Recent Activity -->
     <div class="flex flex-grow flex-col sm:flex-row  gap-4">
       <!-- Team Workload -->
-      <div class="bg-bg-card w-full flex-auto p-5 rounded-lg">
+      <div class="bg-bg-card w-full  max-h-full flex-auto p-5 rounded-lg">
         <div class="mb-4">
           <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
           <p class="text-sm text-text-secondary mt-1">
             Monitor the capacity of your team.
-
+            <span v-if="teamSize > 0" class="ml-1">({{ teamSize }} member{{ teamSize !== 1 ? 's' : '' }})</span>
           </p>
         </div>
 
@@ -117,22 +118,51 @@
             <span>Work distribution</span>
           </div>
 
+          <!-- Loading State -->
+          <template v-if="isLoadingTeams">
+            <div v-for="n in 3" :key="n" class="flex items-center gap-3 animate-pulse">
+              <div class="flex items-center gap-2 w-32 flex-shrink-0">
+                <div class="w-8 h-8 rounded-full bg-bg-body"></div>
+                <div class="h-4 w-20 bg-bg-body rounded"></div>
+              </div>
+              <div class="flex-1 h-6 bg-bg-body rounded"></div>
+            </div>
+          </template>
+
+          <!-- Error State -->
+          <div v-else-if="teamsError" class="text-center py-8">
+            <p class="text-sm text-red-500 mb-2">Failed to load team workload</p>
+            <button @click="() => refetchTeams()" class="text-xs text-accent hover:underline">
+              Try again
+            </button>
+          </div>
+
+          <!-- Empty State -->
+          <div v-else-if="teamWorkload.length === 0" class="text-center py-8">
+            <i class="pi pi-users text-3xl text-text-secondary mb-2"></i>
+            <p class="text-sm text-text-secondary">No team members assigned yet</p>
+          </div>
+
           <!-- Workload items -->
-          <div v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
+          <div v-else v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
             <div class="flex items-center gap-2 w-32 flex-shrink-0">
-              <div v-if="member.avatar"
-                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium"
-                :style="{ backgroundColor: member.color }">
+              <div v-if="member.avatarUrl" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+                <img :src="member.avatarUrl" :alt="member.name" class="w-full h-full object-cover" />
+              </div>
+              <div v-else-if="member.avatar"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+                :style="{ backgroundColor: avatarColor({ email: member?.assignee_id }) }">
                 {{ member.initials }}
               </div>
-              <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center">
+              <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center flex-shrink-0">
                 <i class="pi pi-user text-text-secondary"></i>
               </div>
-              <span class="text-sm text-text-primary truncate">{{ member.name }}</span>
+              <span class="text-sm text-text-primary truncate" :title="member.name">{{ member.name }}</span>
             </div>
 
             <div class="flex-1">
-              <div class="h-6 bg-bg-body rounded overflow-hidden relative">
+              <div class="h-6 bg-bg-body rounded overflow-hidden relative group cursor-help"
+                :title="`${member.totalTasks} task${member.totalTasks !== 1 ? 's' : ''} • ${member.totalHours}h`">
                 <div class="h-full bg-border-subtle transition-all duration-300"
                   :style="{ width: member.workload + '%' }">
                 </div>
@@ -147,7 +177,7 @@
       </div>
 
       <!-- Recent Activity -->
-      <div class="bg-bg-card w-full flex-auto p-5 rounded-lg  overflow-hidden flex flex-col">
+      <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto  flex flex-col">
         <div class="mb-4">
           <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
           <p class="text-sm text-text-secondary mt-1">Stay up to date with what's happening across the project.</p>
@@ -156,18 +186,18 @@
         <div class="space-y-4 overflow-y-auto flex-1">
           <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
 
-          <div v-for="activity in recentActivities" :key="activity.id"
+          <div v-for="activity in dashboardActiviesData?.activities" :key="activity.id"
             class="flex gap-3 pb-4 border-b border-border last:border-0">
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-              :style="{ backgroundColor: activity.userColor }">
-              {{ activity.userInitials }}
+              :style="{ backgroundColor: avatarColor({ email: activity.user.email }) }">
+              {{ getInitials(activity.user.name) }}
             </div>
 
             <div class="flex-1 min-w-0">
               <div class="text-sm text-text-primary">
-                <span class="font-medium text-accent/90">{{ activity.user }}</span>
-                <span class="text-text-secondary"> {{ activity.action }} </span>
+                <span class="font-medium text-accent/90">{{ activity.user.name }}</span>
+                <span class="text-text-secondary"> {{ activity.message }} </span>
                 <a href="#" class="text-accent/90 hover:underline">{{ activity.item }}</a>
                 <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
                   :class="getStatusClass(activity.status)">
@@ -189,6 +219,10 @@ import { ref, onMounted, onUnmounted, computed, defineComponent, h } from 'vue'
 import { toParamString } from '../composables/useQueryParams'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { useRoute } from 'vue-router'
+import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople'
+import { getInitials, generateAvatarColor } from '../utilities'
+import type { TeamWorkloadMember } from '../types'
+import { avatarColor } from '../utilities/avatarColor'
 
 
 /** Types */
@@ -327,48 +361,68 @@ const handleVisibilityChange = () => {
 
 const onLaneClick = (lane: LaneProgressRow) => { console.log('Lane clicked:', lane) }
 
-/** Team Workload Data */
-const teamWorkload = ref([
-  { id: 1, name: 'Unassigned', initials: '', avatar: false, color: '#6B7280', workload: 13 },
-  { id: 2, name: 'Amal Lashari', initials: 'AL', avatar: true, color: '#3B82F6', workload: 35 },
-  { id: 3, name: 'Anam Rehman', initials: 'AR', avatar: true, color: '#3B82F6', workload: 8 },
-  { id: 4, name: 'Sufian', initials: 'S', avatar: true, color: '#6B7280', workload: 8 },
-  { id: 5, name: 'Arooj Sajjad', initials: 'AS', avatar: true, color: '#EF4444', workload: 5 }
-])
+const { data: dashboardTeamsData, isPending: isLoadingTeams, error: teamsError, refetch: refetchTeams } = useDashboardTeams(workspaceId)
+const { data: dashboardActiviesData, } = useDashboardActivities(workspaceId)
+
+const teamWorkload = computed(() => {
+
+
+  if (!dashboardTeamsData.value?.team_workload) {
+    console.log('Returning empty array - no team workload data')
+    return []
+  }
+
+  const mapped = dashboardTeamsData.value.team_workload.map((member: TeamWorkloadMember) => ({
+    id: member.assignee_id || 'unassigned',
+    name: member.assignee_name,
+    initials: member.initials || getInitials(member.assignee_name) || '',
+    avatar: !!member.avatar_url || !!member.assignee_id,
+    avatarUrl: member.avatar_url,
+    color: generateAvatarColor(member.assignee_id, member.assignee_name),
+    workload: member.work_distribution_percentage,
+    totalTasks: member.total_tasks,
+    totalHours: member.total_hours
+  }))
+
+  console.log('Mapped team workload:', mapped)
+  return mapped
+})
+
+const teamSize = computed(() => dashboardTeamsData.value?.team_size || 0)
 
 /** Recent Activities Data */
-const recentActivities = ref([
-  {
-    id: 1,
-    user: 'Streamed Bot',
-    userInitials: 'VB',
-    userColor: '#06B6D4',
-    action: 'updated field "RemoteWorkItemLink" on',
-    item: 'VFC-33073: IPU: Agenda Multilingual Issue (global issue)',
-    status: 'DEPLOYED-PROD',
-    time: 'about 4 hours ago'
-  },
-  {
-    id: 2,
-    user: 'Streamed Bot',
-    userInitials: 'VB',
-    userColor: '#06B6D4',
-    action: 'updated field "RemoteWorkItemLink" on',
-    item: 'VFC-31468: Show/Hide Team Members on Booth',
-    status: 'REOPENED',
-    time: 'about 4 hours ago'
-  },
-  {
-    id: 3,
-    user: 'Streamed Bot',
-    userInitials: 'VB',
-    userColor: '#06B6D4',
-    action: 'updated field "RemoteWorkItemLink" on',
-    item: 'VFC-32359: Favicon not displaying after uploading from Event Settings',
-    status: '',
-    time: 'about 4 hours ago'
-  }
-])
+// const recentActivities = ref([
+//   {
+//     id: 1,
+//     user: 'Streamed Bot',
+//     userInitials: 'VB',
+//     userColor: '#06B6D4',
+//     action: 'updated field "RemoteWorkItemLink" on',
+//     item: 'VFC-33073: IPU: Agenda Multilingual Issue (global issue)',
+//     status: 'DEPLOYED-PROD',
+//     time: 'about 4 hours ago'
+//   },
+//   {
+//     id: 2,
+//     user: 'Streamed Bot',
+//     userInitials: 'VB',
+//     userColor: '#06B6D4',
+//     action: 'updated field "RemoteWorkItemLink" on',
+//     item: 'VFC-31468: Show/Hide Team Members on Booth',
+//     status: 'REOPENED',
+//     time: 'about 4 hours ago'
+//   },
+//   {
+//     id: 3,
+//     user: 'Streamed Bot',
+//     userInitials: 'VB',
+//     userColor: '#06B6D4',
+//     action: 'updated field "RemoteWorkItemLink" on',
+//     item: 'VFC-32359: Favicon not displaying after uploading from Event Settings',
+//     status: '',
+//     time: 'about 4 hours ago'
+//   }
+// ])
 
 /** Helper function for status classes */
 const getStatusClass = (status: string) => {
@@ -393,7 +447,7 @@ const SkeletonCard = defineComponent({
     ])
   }
 })
-const getCardProgress = (total, status_dis) => {
+const getCardProgress = (total: number, status_dis: any) => {
   if (total == 0) {
     return 0
   }

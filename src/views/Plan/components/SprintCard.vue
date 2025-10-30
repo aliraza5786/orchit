@@ -5,7 +5,7 @@
       <Table :showHeader="false" :pagination="false" v-if="sprintTickets.length > 0" :row-draggable="true"
         class="h-full" @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'sprint', sprint.id)"
         @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="sprintTickets" :page-size="100"
-        :hover="true" striped :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
+        :hover="true" :item-key="(row: any) => row.id" @row-click="({ row }: any) => $emit('open-ticket', row)">
         <template #select-header>
           <input type="checkbox" :checked="allSprintChecked(sprint.id)"
             @change="toggleAll('sprint', $event, sprint.id)" />
@@ -16,12 +16,27 @@
             @change="toggleOne('sprint', (row as any).id, $event, sprint.id)" />
         </template>
 
+
+
         <template #summary="{ row }">
-          <div class="flex items-center gap-2">
-            <span class="inline-block rounded-full border px-2 py-0.5 text-xs">{{ row.key }}</span>
+          <div class="flex items-center gap-2 text-text-secondary float-start">
+            <img src="../../../assets/icons/ticket-code.svg" alt="">
+            <span class="inline-block rounded-full px-2 py-0.5 text-xs">{{ row.key }}</span>
             <span class="truncate">{{ row.summary }}</span>
           </div>
         </template>
+
+        <template #status="{ row }">
+          <span :class="getStatusStyle(row.status)" class="px-2 py-1 rounded-md">{{ row.status }}</span>
+        </template>
+        <template #assignee="{ row }">
+          <span v-if="row.assignee == 'Unassigned'"
+            class="  float-end flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6  min-h-6 bg-gray-500/10 rounded-full  ">UA</span>
+          <span v-else
+            class="  text-xs aspect-square max-w-6 flex justify-center items-center text-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full  ">{{
+              getInitials(`${row.assignee}` ) }}</span>
+        </template>
+
 
         <template #priority="{ row }">
           <span :class="priorityClass((row as any).priority)">{{ (row as any).priority }}</span>
@@ -54,8 +69,14 @@ import Table from '../../../components/ui/Table.vue'
 import { useBacklogStore, priorityClass, type Sprint, type Ticket } from '../composables/useBacklogStore'
 import { useMoveCard } from '../../../queries/usePlan'
 import { toast } from 'vue-sonner'
+import { getStatusStyle } from '../../../utilities/stausStyle'
+import { getInitials } from '../../../utilities'
 
 const props = defineProps<{ sprint: Sprint, sprintId: any }>()
+watch(props, (newVal) => {
+  console.log('props changes', newVal);
+
+})
 const emit = defineEmits(['edit-sprint', 'toggle-start', 'open-ticket', 'move-selected-to-backlog', 'delete-selected-sprint', 'refresh'])
 
 const store = useBacklogStore()
@@ -145,7 +166,7 @@ function onDropSprint(e: DragEvent) {
 
 const columns = [
 
-  { key: 'select', label: '', width: 36 },
+  // { key: 'select', label: '', width: 36 },
   { key: 'summary', label: 'Summary', sortable: true },
   // { key: 'type', label: 'Type', width: 80, sortable: true },
   { key: 'status', label: 'Status', width: 120, sortable: true },
@@ -154,4 +175,5 @@ const columns = [
   // { key: 'storyPoints', label: 'SP', width: 60, sortable: true, align: 'right' as const },
   // { key: 'createdAt', label: 'Created', width: 140, sortable: true },
 ]
+
 </script>

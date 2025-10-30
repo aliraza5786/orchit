@@ -11,16 +11,16 @@
                 <Button @click="open()"> Invite Users</Button>
             </div>
 
-            <div v-if="data && data?.length == 0"
+            <div v-if="data && data?.users?.length == 0"
                 class="flex py-10 justify-center items-center text-sm text-text-secondary">No Workspace</div>
             <Table @row-click="handleClick" :columns="columns" :rows="data?.data?.users || []" :loading="isPending"
                 :skeletonRows="6">
                 <!-- Custom slot for status -->
                 <template #status="{ row }">
                     <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
-                        'bg-blue-100 text-blue-600': row.status === 'In progress',
-                        'bg-red-100 text-red-600': row.status === 'Live',
-                        'bg-green-100 text-green-600': row.status === 'Done'
+                        'bg-blue-100 text-blue-600': row.status === 'pending',
+                        'bg-red-100 text-red-600': row.status === 'rejected',
+                        'bg-green-100 text-green-600': row.status === 'accepted'
                     }">
                         {{ row.status }}
                     </span>
@@ -48,9 +48,12 @@ import { useCompanyId } from "../../services/user";
 import Table from "../../components/ui/Table.vue";
 import { useUsers } from "../../queries/useWorkspace";
 import Button from "../../components/ui/Button.vue";
+import Collaborators from "../../components/ui/Collaborators.vue";
+import { getStatusStyle } from "../../utilities/stausStyle";
 const InviteUsers = defineAsyncComponent(() => import("./Modals/InviteUsers.vue"));
 const { data: companyId } = useCompanyId();
 const { data, isPending } = useUsers(companyId)
+
 const columns = [
     {
         key: "variables", label: 'Name', render: ({ row }: any) =>
@@ -62,9 +65,10 @@ const columns = [
     },
     {
         key: 'variables', label: 'Spaces',
-        render: ({ row }: any) => h('div', { class: ' capitalize flex items-center gap-2' }, [
-            h('span', row['workspace_title'])
-        ])
+
+        render: ({ row }: any) => h(Collaborators, { avatars: row.workspaces || [], image: true, maxVisible: 3 })
+
+
     },
     {
         key: 'variables', label: 'Role',
@@ -74,7 +78,7 @@ const columns = [
     },
     {
         key: 'variables', label: 'Status',
-        render: ({ row}: any) => h('div', { class: ' capitalize flex items-center gap-2' }, [
+        render: ({ row }: any) => h('div', { class: `capitalize flex items-center gap-2 rounded-md inline w-fit px-2 py-1 ${getStatusStyle(row?.seat_status)}` }, [
             h('span', row['seat_status'])
         ])
     }

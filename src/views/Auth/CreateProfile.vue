@@ -71,7 +71,7 @@
           </Button>
 
           <div class="flex gap-4 items-center">
-            <router-link :to="`${workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}  `"><button
+            <router-link :to="`${workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`"><button
                 class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link>
             <Button size="md" type="submit" @click="continueHandler" :disabled="isContinueDisabled">
               {{ creatingProfile || invitingPeople ? 'Continuing...' : 'Continue' }}

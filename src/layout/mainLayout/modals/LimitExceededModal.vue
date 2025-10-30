@@ -102,7 +102,7 @@
           <Button variant="secondary" @click="close">
             Not now
           </Button>
-          <Button :loading="isUpgrading" variant="primary" class="sm:ml-2" @click="onUpgrade">
+          <Button  variant="primary" class="sm:ml-2" @click="onUpgrade">
             Upgrade plan
           </Button>
         </div>
@@ -116,7 +116,7 @@
   import Button from '../../../components/ui/Button.vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useWorkspaceStore } from '../../../stores/workspace'
-  import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
+  import { confirmPayment, useCurrentPackage } from '../../../queries/usePackages'
   
   const workspaceStore = useWorkspaceStore()
   const route = useRoute()
@@ -156,11 +156,11 @@
     confirm({ packageId: currentPackage?.value?.nextPackage?.id })
   }
   
-  const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
-    onSuccess: (data: any) => {
-      window.open(data?.checkoutUrl)
-    }
-  })
+  // const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
+  //   onSuccess: (data: any) => {
+  //     window.open(data?.checkoutUrl)
+  //   }
+  // })
   
   function onUpgrade() {
     // Prefer letting parent handle it (you already emit 'upgrade' in your old file)

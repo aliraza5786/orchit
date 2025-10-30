@@ -3,7 +3,8 @@
         class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
              rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
-            <Dropdown v-model="selected_sheet_id" :options="transformedData" variant="secondary">
+            <Dropdown  @edit-option="openEditSprintModal" v-model="selected_sheet_id" @delete-option="handleDeleteSheetModal" :options="transformedData"
+                variant="secondary">
                 <template #more>
                     <div @click="createSheet()"
                         class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
@@ -12,7 +13,7 @@
                 </template>
             </Dropdown>
             <div class="flex gap-3 items-center ">
-                <Dropdown prefix="View by" v-model="selected_view_by" :options="variables" variant="secondary">
+                <Dropdown :actions="false" prefix="View by" v-model="selected_view_by" :options="variables" variant="secondary">
                     <template #more>
                         <div @click="isCreateVar = true"
                             class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
@@ -68,15 +69,19 @@
         v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" @submit="" />
     <SidePanel v-if="selectedCard?._id" :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
         :showPanel="selectedCard?._id ? true : false" />
-    <CreateSheetModal v-model="isCreateSheetModal" />
+    <CreateSheetModal size="md" :sheet="selectedSheettoAction" v-model="isCreateSheetModal" />
     <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
+    <ConfirmDeleteModal @click.stop="" v-model="showDeleteModal" title="Delete Sheet" itemLabel="Sheet"
+        :itemName="selectedSheettoAction?.title" :requireMatchText="selectedSheettoAction?.title"
+        confirmText="Delete Sheet" cancelText="Cancel" size="md" :loading="isDeleting" @confirm="handleDeleteSheet"
+        @cancel="() => { showDeleteModal = false }" />
 </template>
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import Searchbar from '../../components/ui/SearchBar.vue';
-import { ReOrderCard, ReOrderList, useAddList, useSheetList, useSheets, useVariables } from '../../queries/useSheets';
+import { ReOrderCard, ReOrderList, useAddList, useSheetList, useSheets, useUpdateWorkspaceSheet, useVariables } from '../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
@@ -114,7 +119,7 @@ const handleAddColumn = (v: any) => {
 }
 
 // Fetch sheets using `useSheets`
-const { data } = useSheets({
+const { data ,refetch: refetchSheets } = useSheets({
     workspace_id: workspaceId,
     workspace_module_id: moduleId
 });
@@ -132,7 +137,7 @@ watch(viewBy, () => {
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending, isFetching } = useSheetList(
+const { data: Lists, isPending,  } = useSheetList(
     moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
@@ -240,5 +245,28 @@ const deleteHandler = (e: any) => {
 const plusHandler = (e: any) => {
     createTeamModal.value = true;
     localColumnData.value = e
+}
+const showDeleteModal = ref(false)
+const selectedSheettoAction = ref<any>()
+function handleDeleteSheetModal(opt: any) {
+    showDeleteModal.value = true
+    selectedSheettoAction.value = opt;
+}
+const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
+    onSuccess: () => {
+        refetchSheets();
+        showDeleteModal.value = false
+    }
+})
+function handleDeleteSheet() {
+    updateSheet({
+        sheet_id: selectedSheettoAction.value?._id,
+        workspace_module_id: moduleId.value,
+        is_trash: true,
+    })
+}
+function openEditSprintModal(opt: any) {
+    isCreateSheetModal.value = true;
+    selectedSheettoAction.value = opt;
 }
 </script>

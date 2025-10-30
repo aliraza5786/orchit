@@ -1,5 +1,5 @@
 <template>
-  <div class="overflow-auto flex flex-col rounded-lg border border-border bg-card shadow" role="region"
+  <div class="overflow-auto flex flex-col rounded-lg border border-border bg-bg-card/90 shadow" role="region"
     :aria-busy="loading ? 'true' : 'false'" aria-live="polite">
     <table class="min-w-[700px] text-left text-sm" role="grid">
       <!-- Header -->
@@ -28,7 +28,7 @@
         <tr v-for="(row, rIdx) in visibleRows" :key="rowKey(row, rIdx)" role="row" :aria-rowindex="rowIndex(rIdx)"
           tabindex="0" @click="emitRowClick(row, rIdx)" @keydown.enter.prevent="emitRowClick(row, rIdx)"
           class="transition-colors duration-150" :class="[
-            hover ? 'hover:bg-surface cursor-pointer' : '',
+            hover ? 'hover:bg-bg-surface/60 cursor-pointer' : '',
             striped && rIdx % 2 === 1 ? 'bg-bg-surface/40' : '',
             rowClass?.(row, rIdx)
           ]" :draggable="rowDraggable || false"
@@ -118,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, h, type VNodeChild, watch, ref } from 'vue'
+import { computed, reactive, h, watch, ref } from 'vue'
 
 /** Column config */
 export interface Column<T = Row> {

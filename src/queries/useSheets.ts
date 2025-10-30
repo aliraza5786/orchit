@@ -32,6 +32,16 @@ export const useCreateWorkspaceSheet = (options = {}) =>
     options as any
   );
 
+  export const useUpdateWorkspaceSheet = (options = {}) =>
+    useApiMutation<{ data: unknown }, any>(
+      {
+        key: ["upadte-sheet"],
+        url: "/workspace/sheet/update",
+        method: "PATCH",
+      },
+      options as any
+    );
+  
 // PATCH /workspace/sheet-list/update
 export const useMoveList = (options = {}) =>
   useApiMutation<{ data: unknown }, { payload: any }>(

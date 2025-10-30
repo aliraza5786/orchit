@@ -9,14 +9,21 @@
 
         <!-- Body -->
         <div class="py-4 px-5">
-            <div class="bg-bg-surface/50 p-2 rounded-lg flex gap-2">
-                <img src="../../../assets/global/Avatar.svg" alt="" class=" w-12 h-12 rounded-full">
+            <div class="bg-bg-surface/50 p-2 rounded-lg flex gap-2 items-center">
+                <img v-if="details?.avatar" :src="details?.avatar" class="w-10 h-10 rounded-full" alt="avartar">
+
+                <div v-else
+                    class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full "
+                    :style="{ backgroundColor: details?.name ? avatarColor({ email: details?.email }) : '' }">
+                    {{ getInitials(details?.name) }} <i v-if="!details?.name" class="fa-solid fa-user text-white"></i>
+                </div>
                 <div>
-                    <h1 class="text-base font-medium text-text-primary cursor-pointer">{{ props.details.name ??
-                        props.details.title }}</h1>
+                    <h1 class="text-base font-medium text-text-primary cursor-pointer">{{ details.name ??
+                        details.title }}</h1>
+                    <p class="text-sm  font-medium text-text-secondary cursor-pointer">{{ details.email }}</p>
                 </div>
             </div>
-            <SwitchTab v-model="activeTab" :options="tabOptions" />
+            <SwitchTab v-model="activeTab" class="my-2" :options="tabOptions" />
 
             <div class="flex flex-col mt-2">
                 <h1 class="text-base font-medium text-text-primary cursor-pointer">
@@ -47,9 +54,10 @@
                     <div v-for="(item, index) in peopleVar" :key="index"
                         class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4">
                         {{ item.title }}
-                        <TypeChanger :key="index" :placeholder="`select ${item.title}`" @click.stop
-                            :default="item?.value ?? `select ${item.title}`" :data="item?.data" :cardId="details?._id"
-                            @onselect="(val: any) => handleSelect(val, item._id)" />
+                        <BaseSelectField size="sm" :model-value="localVarValues[item.slug]" :key="index"
+                            :placeholder="` ${item.title}`" @click.stop :default="item?.value ?? `select ${item.title}`"
+                            :options="item?.data.map((e: any) => ({ _id: e, title: e }))" :cardId="details?._id"
+                            @update:modelValue="(val: any) => handleSelect(val, item._id)" />
 
                     </div>
                 </div>
@@ -81,15 +89,20 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useMoveCard } from '../../../queries/useSheets'
 import { nextTick } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import ProgressBar from '../../../components/ui/ProgressBar.vue'
 import { usePeopleVar, useUpdateVar } from '../../../queries/usePeople'
-import TypeChanger from '../../Product/components/TypeChanger.vue'
+// import TypeChanger from '../../Product/components/TypeChanger.vue'
 import SwitchTab from '../../../components/ui/SwitchTab.vue'
+import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
+import { getInitials } from '../../../utilities'
+import { avatarColor } from '../../../utilities/avatarColor'
+const localVarValues = reactive<any>({
 
+})
 const activeTab = ref<'details' | 'tasks' | 'history'>('details')
 const tabOptions = [
     { label: 'Details', value: 'details' },

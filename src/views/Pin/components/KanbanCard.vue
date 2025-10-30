@@ -37,12 +37,12 @@
       
 
         <!-- Bottom Info -->
-        <!-- <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
+        <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
             <DatePicker placeholder="set start date" :model-value="startDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setStartDate" /> -
             <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setDueDate" />
-        </div> -->
+        </div>
 
       
     </div>
@@ -63,11 +63,9 @@ import { computed, ref, watch } from 'vue'
 import TypeChanger from '../../../views/Product/components/TypeChanger.vue'
 import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
-// import DropMenu from '../../ui/DropMenu.vue'
-// import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
-// import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
 import DropMenu from '../../../components/ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
+import DatePicker from '../../../views/Product/components/DatePicker.vue'
 
 type Priority = any
 export interface Ticket {
@@ -160,6 +158,20 @@ function getMenuItems() {
 }
 const handleDeleteTicket = () => {
     deleteCard({})
+}
+
+const setStartDate = (date: string | null) => {
+    moveCard.mutate({
+        card_id: props.ticket._id,
+        variables: { 'start-date': date }
+    })
+}
+
+const setDueDate = (date: string | null) => {
+    moveCard.mutate({
+        card_id: props.ticket._id,
+        variables: { 'end-date': date }
+    })
 }
 
 const emit = defineEmits(['click'])

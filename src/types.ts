@@ -3,7 +3,25 @@ export interface SelectOption {
     value: string
     icon?: string
   }
-  
+
+export interface TeamWorkloadMember {
+  assignee_id: string | null
+  assignee_name: string
+  avatar_url: string | null
+  initials?: string
+  work_distribution_percentage: number
+  total_tasks: number
+  total_hours: number
+}
+
+export interface DashboardTeamsData {
+  team_workload: TeamWorkloadMember[]
+  total_capacity: number
+  team_size: number
+}
+
+
+
   // e.g., in `src/types/google.d.ts`
 export {};
 

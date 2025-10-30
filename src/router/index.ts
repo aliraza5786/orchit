@@ -42,7 +42,7 @@ const PrivactPolicy = () => import("../views/PrivacyPolicy.vue");
 const ContactUs = () => import("../views/ContactUs.vue");
 const BlogList = () => import("../views/blog/BlogList.vue");
 const BlogDetail = () => import("../views/blog/BlogDetail.vue");
-const KnowledgeCenter = () => import("../layout/KnowledgeCenterLayout/KnowledgeCenter.vue");
+// const KnowledgeCenter = () => import("../layout/KnowledgeCenterLayout/KnowledgeCenter.vue");
 const KnowledgeCenterView = () => import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
 
 
@@ -143,7 +143,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/finish-profile",
-    name: "finish-profile",
+    name: "finishProfile",
     component: FinishProfile,
     meta: { requiresAuth: false },
   },

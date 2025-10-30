@@ -1,58 +1,62 @@
 <template>
-    <div @click="$emit('click')" class=" bg-bg-card rounded-lg p-4 pt-0 shadow-sm cursor-grab border-t-4
+    <div @click="$emit('click')" class="product-ticket relative bg-bg-card rounded-lg p-4 shadow-sm cursor-grab border-t-4
              hover:shadow-md transition-all duration-200 active:cursor-grabbing" :class="priorityBorderClass"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
-        <div class="flex justify-between gap-2 items-center">
-            <div class="flex gap-2 py-2 flex-wrap ">
-                <!-- <TypeChanger v-for="(item, index) in ticket.variables"
-                    v-show="item?.type === 'Select' && item?.visible_on_card" :key="index" @click.stop
-                    :default="`${item?.value}`" :slug="item.slug" :cardId="ticket?._id"
-                    @onselect="(val) => handleSelect(val)" /> -->
+
+        <div class="flex justify-between gap-2 items-start mb-3">
+            <div class="flex gap-2 flex-wrap items-center">
+
+                <span v-if="ticket['card-type']"
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium uppercase">
+                    {{ ticket['card-type'] }}
+                </span>
+                <span v-if="ticket['card-status']"
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium">
+                    {{ ticket['card-status'] }}
+                </span>
             </div>
-            <DropMenu @click.stop="" :items="getMenuItems()">
-                <template #trigger>
-                    <i class=" cursor-pointer fa-solid fa-ellipsis"></i>
-                </template>
-            </DropMenu>
+
+            <div
+                class="product-menu-icon transition-all w-6 py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
+                <DropMenu @click.stop="" :items="getMenuItems()">
+                    <template #trigger>
+                        <i class="cursor-pointer text-sm fa-solid fa-ellipsis"></i>
+                    </template>
+                </DropMenu>
+            </div>
         </div>
-        <div class="flex items-start justify-between mb-2">
-            <h3 class="text-sm font-medium text-card-foreground leading-tight">
-                {{ ticket['card-title'] }}
-            </h3>
-        </div>
+
+        <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+            {{ ticket['card-title'] }}
+        </h3>
+
         <p v-html="ticket['card-description']" v-once
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
         </p>
-        <!-- Footer Meta -->
-        <div class="flex justify-between items-center mt-2">
-            <div class="flex items-center gap-2 text-xs  text-text-secondary uppercase">
-                <img src="../../../assets/icons/ticket.svg" class="w-4" alt="ticket" />
-                <span>{{ ticket['card-code'] }}</span>
+
+        <div class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
+            <div class="flex items-center gap-3 flex-1">
+                <div @click.stop>
+                    <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
+                        :seat="ticket?.seat" />
+                </div>
+
+                <div @click.stop
+                    class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary">
+                    <DatePicker placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
+                        @update:modelValue="setDueDate" />
+                </div>
             </div>
 
-            <!-- Assignment trigger (stops bubbling) -->
-            <div @click.stop>
-                <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
-                    :seat="ticket?.seat" />
-            </div>
-        </div>
-
-        <!-- Bottom Info -->
-        <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
-            <DatePicker placeholder="set start date" :model-value="startDate" theme="dark" emit-as="ymd"
-                @update:modelValue="setStartDate" /> -
-            <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
-                @update:modelValue="setDueDate" />
-        </div>
-
-        <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
-            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
-                <i class="fa-regular fa-message"></i>
-                {{ ticket?.comments_count }}
-            </div>
-            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
-                <i class="fa-regular fa-file"></i>
-                {{ ticket?.attachments.length }}
+            <div class="flex items-center gap-2">
+                <div class="flex items-center gap-1 text-xs text-text-secondary">
+                    <i class="fa-regular fa-message text-[10px]"></i>
+                    <span>{{ ticket?.comments_count }}</span>
+                </div>
+                <div class="flex items-center gap-1 text-xs text-text-secondary">
+                    <i class="fa-regular fa-file text-[10px]"></i>
+                    <span>{{ ticket?.attachments.length }}</span>
+                </div>
             </div>
         </div>
     </div>
@@ -63,20 +67,18 @@
             size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {
                 showDelete = false
             }">
-
         </ConfirmDeleteModal>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-// import TypeChanger from '../../../views/Product/components/TypeChanger.vue'
-import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
 import DropMenu from '../../ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
 import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
+import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
 const { workspaceId } = useRouteIds();
@@ -115,29 +117,9 @@ const priorityBorderClass = computed(
 )
 const showDelete = ref(false)
 const dueDate = ref<string | null>(props.ticket['end-date'] ?? null)
-watch(() => props.ticket?.end_date, v => { dueDate.value = v ?? null })
-const sd = computed(() => props.ticket['start-date'])
-const ed = computed(() => props.ticket['end-date'])
 const startDate = ref<string | null>(props.ticket['start-date'] ?? null)
-watch(sd, () => startDate.value = sd.value)
-watch(ed, () => dueDate.value = ed.value)
-
-function setDueDate(v: string | null) {
-    if (!props.ticket?._id) return
-    dueDate.value = v
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        end_date: v
-    })
-}
-function setStartDate(v: string | null) {
-    if (!props.ticket?._id) return
-    startDate.value = v
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        start_date: v
-    })
-}
+watch(() => props.ticket?.['end-date'], v => { dueDate.value = v ?? null })
+watch(() => props.ticket?.['start-date'], v => { startDate.value = v ?? null })
 const queryClient = useQueryClient()
 const moveCard = useMoveCard({
     onSuccess: () => {
@@ -187,7 +169,30 @@ const assignHandle = (user: any) => {
         seat_id: user?._id
     }
     moveCard.mutate(payload);
-
 }
+
+// const setStartDate = (date: string | null) => {
+//     moveCard.mutate({
+//         card_id: props.ticket._id,
+//         variables: { 'start-date': date }
+//     })
+// }
+
+const setDueDate = (date: string | null) => {
+    moveCard.mutate({
+        card_id: props.ticket._id,
+        variables: { 'end-date': date }
+    })
+}
+
 defineEmits(['click'])
 </script>
+<style scoped>
+.product-menu-icon {
+    visibility: hidden;
+}
+
+.product-ticket:hover .product-menu-icon {
+    visibility: visible;
+}
+</style>

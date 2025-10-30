@@ -2,7 +2,7 @@
     <BaseModal v-model="model" size="lg">
         <!-- Header -->
         <div class="flex justify-between items-start  px-6 border-b border-border pb-4">
-            <h2 class="text-xl font-semibold">Add a new board</h2>
+            <h2 class="text-xl font-semibold">{{ sheet ? 'Update sheet ' : 'Add a new Sheet' }}</h2>
 
         </div>
 
@@ -17,15 +17,17 @@
             <section v-if="currentTab === 'manual'" class="space-y-4">
                 <!-- Icon picker placeholder -->
                 <IconPicker v-model="form.icon" />
-                <BaseTextField v-model="form.title" label="Board name" size="lg" placeholder="Design Ideas" />
-                <BaseTextField v-model="form.description" label="Description" size="lg"
-                    placeholder="a small description" textarea />
+                <BaseTextField v-model="form.title" label="Sheet name" size="lg" placeholder="Design Ideas"
+                    :error="!!errors.title" :message="errors.title" />
 
+                <BaseTextField v-model="form.description" label="Description" size="lg"
+                    placeholder="a small description" textarea :error="!!errors.description"
+                    :message="errors.description" />
                 <div class="flex justify-end gap-2 pt-2">
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary  border"
                         @click="close">Cancel</button>
                     <!-- replace the commented button -->
-                    <Button class="px-4" @click="submitManual">{{ creatingSheet ? 'Adding...' : 'Add board'
+                    <Button class="px-4" @click="submitManual">{{ creatingSheet || isDeleting ? 'Saving...' : 'Save'
                         }}</Button>
                 </div>
             </section>
@@ -90,13 +92,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
-import SwitchTab from '../../../components/ui/SwitchTab.vue';
 // import IconPicker from '../components/IconPicker.vue';
-import { useCreateWorkspaceSheet } from '../../../queries/useSheets';
+import { useCreateWorkspaceSheet, useUpdateWorkspaceSheet } from '../../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useOpenAIGeneration } from '../../../queries/useOpenAIGeneration';
@@ -109,14 +110,82 @@ const { workspaceId, moduleId } = useRouteIds()
 type IconPrefix = 'fa';
 type IconRef = { prefix: IconPrefix; iconName: string }
 
-const form = ref<{ title: string, description: string, icon: IconRef | null }>({ title: '', description: '', icon: null })
+const form = ref<{ title: string, description: string, icon: IconRef | null }>({
+    title: '', description: '', icon: null
+})
+
+// ⬅️ add simple error state
+const errors = ref<{ title?: string; description?: string }>({})
+
+// ⬅️ tiny validator
+function validateManual() {
+    const next: { title?: string; description?: string } = {}
+    if (!form.value.title?.trim()) next.title = 'Please enter a sheet name.'
+    if (!form.value.description?.trim()) next.description = 'Please enter a description.'
+    errors.value = next
+    return Object.keys(next).length === 0
+}
+
+function submitManual() {
+    // ⬅️ block submit if invalid
+    if (!validateManual()) return
+    if (props.sheet)
+        updateSheet({
+            sheet_id: props.sheet?._id
+            , icon: form.value.icon,
+            variables: {
+                'sheet-title': form.value.title,
+                'sheet-description': form.value.description
+            },
+            is_ai_generated: false,
+            workspace_id: workspaceId.value,
+            workspace_module_id: moduleId.value,
+        }
+
+        )
+    else createSheet({
+        icon: form.value.icon,
+        variables: {
+            'sheet-title': form.value.title,
+            'sheet-description': form.value.description
+        },
+        is_ai_generated: false,
+        workspace_id: workspaceId.value,
+        workspace_module_id: moduleId.value,
+    })
+
+}
+
+// ⬅️ clear field-specific errors once user types
+watch(() => form.value.title, (v) => {
+    if (v?.trim() && errors.value.title) errors.value.title = undefined
+})
+watch(() => form.value.description, (v) => {
+    if (v?.trim() && errors.value.description) errors.value.description = undefined
+})
+
+function close() {
+    form.value = { title: "", description: "", icon: null }
+    errors.value = {} // ⬅️ reset errors on close
+    model.value = false
+}
 const { mutate: createSheet, isPending: creatingSheet } = useCreateWorkspaceSheet({
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['sheets'] })
         close()
     }
 })
-const props = defineProps<{ modelValue: boolean }>()
+const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
+    onSuccess: () => {
+        close()
+    }
+})
+const props = defineProps<{ modelValue: boolean, sheet: any }>()
+watch(props, () => {
+    if (props.sheet) {
+        form.value = props.sheet
+    }
+})
 // change your emit typing
 const emit = defineEmits<{
     (e: 'update:modelValue', v: boolean): void
@@ -129,36 +198,13 @@ const emit = defineEmits<{
     (e: 'submit:template', payload: { id: string }): void
 }>()
 
-// function serializeIcon(i: IconRef | null | undefined) {
-//     return i ? `${i.prefix}:${i.iconName}` : undefined
-// }
-
-function submitManual() {
-    createSheet(
-        {
-            icon: form.value.icon,
-            variables: { 'sheet-title': form.value.title, 'sheet-description': form.value.description },
-            is_ai_generated: false,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-        }
-    )
-    // emit('submit:manual', {
-    //     title,
-    //     description,
-    //     icon: serializeIcon(icon)
-    // })
-}
 
 const model = computed({
     get: () => props.modelValue,
     set: (v: boolean) => emit('update:modelValue', v)
 })
 
-function close() {
-    form.value = { title: "", description: "", icon: null };
-    model.value = false
-}
+
 
 const tabs = [
     { label: 'Manual', value: 'manual' },

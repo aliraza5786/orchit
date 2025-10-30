@@ -24,18 +24,18 @@
                 }" />
             </div>
 
-            <div class="flex sm:block flex-row pin_task">
-                <SideItem v-for="(item, index) in workspace.modules" :key="index" :id="item._id"
-                    :label="item.variables['module-title']"
-                    :to="`/${item.variables['module-title'] == 'pin' ? 'workspace/pin' : 'workspace'}/${workspaceId}/${item._id}`"
-                    :icon="item?.variables['module-icon']" />
-            </div>
-            <div class="sm:mt-auto  text-center sm:flex-grow flex-col flex gap-1 ">
-                <SideItem label="Plan" :to="`/workspace/plan/${workspaceId}`" key="plan" id="plan" :icon="{
-                    prefix: 'fa-regular',
-                    iconName: 'fa-brain'
-                }" />
-            </div>
+        <div class="flex sm:block flex-row pin_task">
+            <SideItem v-for="(item, index) in workspace.modules" :key="index" :id="item._id"
+                :label="item.variables['module-title']"
+                :to="`/${item?.variables['module-title'].toLowerCase() == 'pin' ? 'workspace/pin' : 'workspace'}/${workspaceId}/${item._id}`"
+                :icon="item?.variables['module-icon']" />
+        </div>
+        <div class="sm:mt-auto  text-center sm:flex-grow flex-col flex gap-1 ">
+            <SideItem label="Plan" :to="`/workspace/plan/${workspaceId}`" key="plan" id="plan" :icon="{
+                prefix: 'fa-regular',
+                iconName: 'fa-brain'
+            }" />
+        </div>
 
 
             <!-- Draggable Navigation Items -->

@@ -57,7 +57,7 @@
             </div>
 
             <!-- Right: row actions -->
-            <div class="pl-2 flex items-center relative">
+            <div v-if="actions" class="pl-2 flex items-center relative">
               <!-- Kebab: visible on hover/focus OR when toggled -->
               <button
                 class="opacity-0 cursor-pointer group-hover:opacity-100 focus:opacity-100 transition rounded-md px-1.5 py-1 text-text-secondary hover:bg-bg-dropdown-menu-hover"
@@ -115,12 +115,14 @@ const props = withDefaults(
     variant?: "secondary" | "primary";
     icon?: IconData;
     size?: "sm" | "md";
+    actions?:boolean
   }>(),
   {
     options: () => [],
     modelValue: "",
     variant: "primary",
     size: "md",
+    actions:true
   }
 );
 

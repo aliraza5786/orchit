@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="lg">
+  <BaseModal v-model="isOpen" modalClass="!py-0" :size="size">
     <!-- Header -->
     <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
       <h2 class="text-xl font-semibold">Create Ticket</h2>
@@ -15,7 +15,7 @@
         :error="!!titleError" :message="titleError" @blur="touched.title = true" />
 
       <!-- Lane (required) -->
-      <div class="flex flex-col">
+      <div class="flex flex-col" v-if="laneOptions.length>0">
         <BaseSelectField size="md" label="Lane" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
           :model-value="form.lane_id" @update:modelValue="setLane" />
       </div>
@@ -83,8 +83,8 @@ const emit = defineEmits<{
 
 /** Props */
 const props = withDefaults(
-  defineProps<{ modelValue: boolean; sheet_id?: string; listId?: string | number, selectedVariable: any, pin?: Boolean }>(),
-  { modelValue: false }
+  defineProps<{ modelValue: boolean; sheet_id?: string; listId?: string | number, selectedVariable: any, pin?: Boolean, size?:string }>(),
+  { modelValue: false , size:'lg'}
 )
 const queryClient = useQueryClient()
 const { workspaceId, moduleId } = useRouteIds()

@@ -10,8 +10,8 @@
       <div
         class="sticky top-0 z-10 bg-transparent border-b border-orchit-white/5 px-6 py-4 flex items-center justify-between">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
-        <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition" @click="()=>emit('close')"
-          aria-label="Close details">
+        <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+          @click="() => emit('close')" aria-label="Close details">
           <i class="fa-solid fa-xmark text-xl"></i>
         </button>
       </div>
@@ -106,8 +106,23 @@
 
 
               </template>
+              <template v-if="isPending">
+                <div class="bg-bg-surface/40 w-full animate-pulse h-8 p-1">
 
-              <template v-if="cardDetails?.variables" v-for="(item, index) in cardDetails?.variables" :key="item.slug || `var-${index}`">
+                </div>
+                <div class="bg-bg-surface/40 w-full animate-pulse h-8 p-1">
+
+                </div>
+                <div class="bg-bg-surface/40 w-full animate-pulse h-8 p-1">
+
+                </div>
+                <div class="bg-bg-surface/40 w-full animate-pulse h-6 p-1">
+
+
+                </div>
+              </template>
+              <template v-else-if="cardDetails?.variables" v-for="(item, index) in cardDetails?.variables"
+                :key="item.slug || `var-${index}`">
                 <div v-if="item?.type === 'Select'" class="space-y-2 sm:col-span-1">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">{{ item.title }}</div>
                   <BaseSelectField size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
@@ -265,7 +280,7 @@ const props = defineProps({
   details: { type: Object as () => any, default: () => ({}) }
 })
 const emit = defineEmits(['close', 'update:details', 'comment:post', 'priority:change'])
-const { data: cardDetails } = useProductCard(props.details._id);
+const { data: cardDetails, isPending } = useProductCard(props.details._id);
 /* -------------------- Tabs -------------------- */
 const activeTab = ref<'details' | 'comments' | 'attachment' | 'history'>('details')
 const tabOptions = [
@@ -476,7 +491,7 @@ const localVarValues = reactive<Record<string, any>>({})
 
 // initialize + keep in sync when props.details changes (e.g., after invalidateQueries)
 const initLocalVars = () => {
-  if (cardDetails?.value?.variables){
+  if (cardDetails?.value?.variables) {
     const vars = cardDetails.value.variables ?? []
     vars.forEach((v: any) => {
       if (!v || v.type !== 'Select') return

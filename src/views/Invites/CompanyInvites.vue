@@ -30,10 +30,11 @@
                         <p class="text-sm leading-relaxed">{{ error }}</p>
                     </div>
                     <div class="mt-4 flex gap-2">
-                        <button class="px-4 py-2 rounded-md border text-sm border-border " @click="() => refetch()">Try
-                            again</button>
-                        <button class="px-4 py-2 rounded-md bg-black text-text-primary text-sm  " @click="goHome">Go to
-                            home</button>
+                        <Button variant="secondary" class="px-4 py-2 rounded-md border text-sm border-border "
+                            @click="() => refetch()">Try
+                            again</Button>
+                        <Button @click="goHome">Go to
+                            home</Button>
                     </div>
                 </div>
 
@@ -46,9 +47,11 @@
                         </p>
                     </div>
                     <div class="mt-4 flex gap-2">
-                        <button class="px-4 py-2 rounded-md bg-black text-sm text-text-primary"
-                            @click="goToWorkspace">Open
-                            workspace</button>
+                        <router-link to="/">
+                            <button class="px-4 cursor-pointer py-2 rounded-md bg-black text-sm text-text-primary"
+                                @click="goToWorkspace">Open
+                                Orchit</button>
+                        </router-link>
                     </div>
                 </div>
                 <!-- Declined -->
@@ -67,9 +70,9 @@
                 <div v-else class="p-6">
                     <!-- Workspace + Inviter -->
                     <div class="flex items-start gap-4">
-                        <img v-if="data.workspace_logo" :src="data.workspace_logo" alt=""
-                            class="h-12 w-12 rounded-xl object-contain border border-border" />
-                        <div v-else="data.workspace_logo" :src="data.workspace_logo" alt=""
+                        <img v-if="data.company?.owner?.profile_image" :src="data.company?.owner?.profile_image" alt=""
+                            class="h-12 w-12 rounded-xl object-cover border border-border" />
+                        <div v-else="data.workspace_logo"
                             class="h-12 w-12 bg-bg-surface flex justify-center items-center  rounded-xl object-contain border border-border">
                             {{ getInitials(data?.company?.title) }}</div>
                         <div>
@@ -102,7 +105,7 @@
                             {{ acting && actionType === 'accepted' ? 'Joining…' : 'Accept invitation' }}
                         </Button>
 
-                        <button class="px-4 py-2 rounded-md text-sm border dark:border-border 353D50]  hover:bg-gray-50 dark:hover:bg-[#1a1a1f]
+                        <button class="px-4 py-2 cursor-pointer rounded-md text-sm border border-border
                          disabled:opacity-60 disabled:cursor-not-allowed" :disabled="acting || data.is_expire"
                             @click="decline">
                             <span v-if="acting && actionType === 'decline'">Declining…</span>
@@ -132,8 +135,8 @@ import { useRouter } from 'vue-router'
 import { useInvitedSpace } from '../../queries/useWorkspace'
 import api from '../../libs/api'
 import { useRouteIds } from '../../composables/useQueryParams'
-import Button from '../../components/ui/Button.vue'
 import { getInitials } from '../../utilities'
+import Button from '../../components/ui/Button.vue'
 const router = useRouter()
 const { token } = useRouteIds()
 const { data, refetch, isPending } = useInvitedSpace(token.value)
@@ -164,7 +167,7 @@ async function accept() {
     actionType.value = 'accepted'
     error.value = null
     try {
-        await api.post(`/workspace/company/invitations/accept`, { token: token.value })
+        await api.post(`/common/invite-accept`, { token: token.value })
         accepted.value = true
     } catch (e: any) {
         error.value = e?.response?.data?.message || 'Could not accept the invitation.'
@@ -180,7 +183,7 @@ async function decline() {
     actionType.value = 'decline'
     error.value = null
     try {
-        await api.post(`/workspace/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'rejected' })
+        await api.post(`/common/invite-accept`, { status: 'rejected', token: encodeURIComponent(token.value) })
         declined.value = true
     } catch (e: any) {
         error.value = e?.response?.data?.message || 'Could not decline the invitation.'
