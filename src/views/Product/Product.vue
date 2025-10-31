@@ -1,7 +1,7 @@
 <template>
     <div
         class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
-             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  scrollbar-visble ">
+             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  scrollbar-visible ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
             <Dropdown @edit-option="openEditSprintModal" v-model="selected_sheet_id"
                 @delete-option="handleDeleteSheetModal" :options="transformedData" variant="secondary">
@@ -27,7 +27,7 @@
             </div>
         </div>
         <KanbanSkeleton v-show="isPending" />
-        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4 scrollbar-visble">
+        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4 scrollbar-visible">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
@@ -271,3 +271,26 @@ function openEditSprintModal(opt: any) {
     selectedSheettoAction.value = opt;
 }
 </script>
+<style scoped>
+/* Force visible scrollbars only where applied */
+.scrollbar-visible::-webkit-scrollbar {
+  display: block !important;
+  height: 8px; /* horizontal scrollbar height */
+  width: 8px;  /* vertical scrollbar width */
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.4);
+  border-radius: 8px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(150, 150, 150, 0.6);
+}
+
+.scrollbar-visible {
+  scrollbar-width: thin !important; /* Firefox */
+  scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+
+</style>
