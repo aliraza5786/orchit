@@ -4,7 +4,8 @@
       @keydown.esc="close">
       <div class="relative flex h-full w-full flex-col bg-bg-body" role="dialog" aria-modal="true" tabindex="0">
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-border px-6 py-4">
+         <div class="overflow-x-auto">
+          <div class="flex items-center min-w-max justify-between border-b border-border px-[15px] lg:px-6 py-4">
           <div class="flex items-center gap-4">
             <h2 class="flex items-center gap-2 text-xl font-semibold text-text-primary">
               <i class="fa-solid fa-diagram-project text-accent" aria-hidden="true" />
@@ -17,7 +18,7 @@
             </label>
           </div>
 
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 ms-5">
             <Button variant="secondary" size="sm" @click="handleAddStatus">
               <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Status
             </Button>
@@ -31,6 +32,8 @@
             </button>
           </div>
         </div>
+         </div>
+        
 
         <!-- Canvas -->
         <div class="relative flex-1 overflow-hidden">

@@ -1,7 +1,7 @@
 <template>
   <BaseModal v-model="isOpen" modalClass="!py-0" :size="size">
     <!-- Header -->
-    <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
+    <div class="sticky top-0 z-10 flex flex-col items-start px-[15px] md:px-6  pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
       <h2 class="text-xl font-semibold">Create Ticket</h2>
       <p class="text-sm text-text-secondary mt-1">
         Provide the details below and click <span class="font-medium">Add Ticket</span>.
@@ -9,7 +9,7 @@
     </div>
 
     <!-- Body -->
-    <div class="px-6 grid grid-cols-2 gap-4">
+    <div class="px-[15px] md:px-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
       <!-- Title -->
       <BaseTextField v-model="form.title" label="Ticket Title" placeholder="e.g., Implement real-time notifications"
         :error="!!titleError" :message="titleError" @blur="touched.title = true" />
@@ -48,13 +48,13 @@
       </div>
     </div>
 
-    <div class="px-6 mt-2">
+    <div class="px-[15px] md:px-6 mt-2 text_editor">
       <BaseRichTextEditor label="Description" placeholder="What needs to be done, acceptance criteria, links…"
         @blur="touched.description = true" v-model="form.description" />
     </div>
 
     <!-- Footer -->
-    <div class="flex justify-end gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border">
+    <div class="flex justify-end gap-2 px-[15px] md:px-6  p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border">
       <Button variant="secondary" @click="cancel">Cancel</Button>
       <Button variant="primary" :disabled="!isValid || isSubmitting" @click="create">
         {{ isSubmitting ? 'Adding…' : 'Add Ticket' }}
@@ -261,3 +261,9 @@ function create() {
   addTicket(payload)
 }
 </script>
+
+<style>
+   .text_editor select option{
+      color: #000;
+   }
+</style>

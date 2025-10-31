@@ -10,13 +10,13 @@
           </div>
         </template>
       </Dropdown>
-      <div class="flex gap-3 items-center ">
+      <div class="flex gap-3 items-center overflow-x-auto ">
         <SearchBar placeholder="Search in Orchit AI space">
         </SearchBar>
         <Button v-if="sprintDetailData?.status == 'active'" size="sm" @click="handleCompleteSprint">{{
           isCompletingSprint ?
             'Ending...' : 'End' }}</Button>
-        <Button v-else size="sm" @click="openStartSprintModal">Start Sprint</Button>
+        <Button class="text-nowrap" v-else size="sm" @click="openStartSprintModal">Start Sprint</Button>
 
       </div>
     </div>
@@ -47,7 +47,7 @@
             <h2 class="text-sm font-semibold">Backlog ({{ backlogResp?.cards?.length }} Tasks)</h2>
             <div class="flex items-center gap-2">
               <button
-                class=" w-8 h-8 rounded-md border  cursor-pointer aspect-square text-sm border-border  hover:bg-gray-50"
+                class=" w-8 h-8 rounded-md border  cursor-pointer aspect-square text-sm border-border "
                 @click="openCreateBacklogTicket">
                 <i class="text-text-primary fa-regular fa-plus"></i>
               </button>

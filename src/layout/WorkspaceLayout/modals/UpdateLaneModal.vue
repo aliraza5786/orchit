@@ -2,13 +2,13 @@
     <BaseModal v-model="workspaceStore.showUpdateLaneModal" modalClass="!py-0" size="lg">
         <!-- Header -->
         <div
-            class="sticky flex-col top-0 flex justify-between pt-6 items-start bg-light-black px-6 border-b border-border pb-4 mb-4">
+            class="sticky bg-bg-body/50 backdrop-blur-sm z-10 flex-col top-0 flex justify-between pt-6 items-start bg-light-black px-6 border-b border-border pb-4 mb-4">
             <h2 class="text-xl font-semibold">Update Lane</h2>
             <Stepper :steps="steps" :currentStep="currentStep" />
         </div>
 
         <!-- Step 1: Basics -->
-        <div v-if="currentStep === 0" class="space-y-8 px-6">
+        <div v-if="currentStep === 0" class="space-y-8 px-[15px] sm:px-6">
             <div class="space-y-2.5">
                 <h3 class="text-2xl font-semibold text-text-primary ">Project Basics</h3>
                 <p class="text-sm text-text-secondary  mt-1">
@@ -29,7 +29,7 @@
         </div>
 
         <!-- Step 2: Color -->
-        <div v-else-if="currentStep === 1" class="space-y-8 px-6">
+        <div v-else-if="currentStep === 1" class="space-y-8 px-[15px] sm:px-6">
             <div>
                 <h3 class="text-2xl font-semibold text-text-primary ">Choose Color</h3>
                 <p class="text-sm text-text-secondary mt-1">
@@ -52,7 +52,7 @@
             <div class="mt-6">
                 <label class="block text-base font-medium text-text-primary  mb-4">Or Choose Predefined
                     Color</label>
-                <div class="grid grid-cols-6 gap-3 p-4.5 border border-border rounded-md">
+                <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 p-4.5 border border-border rounded-md">
                     <div v-for="color in predefinedColors" :key="color.label" @click="selectColor(color.value)" :class="[
                         'rounded-lg cursor-pointer border-2 transition py-5 px-3 flex justify-center items-center flex-col gap-2',
                         form.color_code === color.value ? 'border-border scale-105 bg-bg-dropdown ' : 'border-transparent'
@@ -65,8 +65,8 @@
         </div>
 
         <!-- Step 3: Platforms -->
-        <div v-else-if="currentStep === 2" class="space-y-8 px-6">
-            <h3 class="text-2xl font-semibold text-text-primary ">Platform Targeting</h3>
+        <div v-else-if="currentStep === 2" class="space-y-8 px-[15px] sm:px-6">
+            <h3 class="text-2xl font-semibold text-text-primary my-2 ">Platform Targeting</h3>
             <p class="text-sm text-text-secondary  mt-1">Select which operating systems this project lane
                 will support.</p>
 
@@ -94,7 +94,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex justify-end mt-8 sticky bottom-0 dark:bg-light-black gap-2 p-6 border-t border-border">
+        <div class="flex justify-end mt-8 bg-bg-body/50 backdrop-blur-sm z-1 sticky bottom-0 dark:bg-light-black gap-2 px-[15px] sm:px-6 p-6 border-t border-border">
             <Button variant="secondary" @click="prevStep">
                 {{ currentStep === 0 ? 'Cancel' : 'Back' }}
             </Button>

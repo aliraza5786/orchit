@@ -1,12 +1,12 @@
 <template>
     <BaseModal v-model="workspaceStore.showCreateLaneModalWithAI" size="lg">
         <!-- Header -->
-        <div class="flex justify-between items-start px-6 border-b border-border pb-6">
+        <div class="flex justify-between items-start px-[15px] sm:px-6 border-b border-border pb-6">
             <h2 class="text-xl font-semibold">Create a New Lane</h2>
         </div>
 
         <!-- Main Content -->
-        <div class="flex flex-col gap-6 px-6 py-5">
+        <div class="flex flex-col gap-6 px-[15px] sm:px-6 py-5">
             <!-- Step 1: AI Lane Creation -->
             <div>
 
@@ -16,7 +16,7 @@
                         class="neon-flow-border bg-bg-input after:p-4  flex h-[200px] items-start gap-2.5 self-stretch shadow-[-1px_-1px_0_0_rgba(255,255,255,0.20)_inset,1px_1px_1px_0_rgba(255,255,255,0.60)_inset] backdrop-blur-[5px]  pl-[17px] pr-[48px] py-[30px] rounded-3xl max-sm:h-[120px] max-sm:px-5 max-sm:py-5">
                         <textarea autofocus :disabled="isPending" v-if="!isRecording && !audioURL" v-model="description"
                             placeholder="Ask  Orchit AI to create a lane..."
-                            class="w-full h-full  text-text-primary text-base font-normal leading-7 resize-none outline-none placeholder:opacity-70" />
+                            class="w-full h-full  text-text-primary text-sm sm:text-base font-normal leading-7 resize-none outline-none placeholder:opacity-70" />
 
                         <!-- AI Generation Button -->
                         <transition v-if="!description" name="fade-slide" appear>
@@ -44,7 +44,7 @@
                 <div v-if="isSuggestionPending" class="suggestions flex gap-3 max-w-[800px] w-full" aria-busy="true"
                     aria-live="polite">
                     <div v-for="n in 3" :key="n"
-                        class="flex h-[136px] flex-[1_0_0] rounded-xl border border-border/20 bg-bg-card/50 p-[17px] backdrop-blur-sm">
+                        class="flex h-[136px]  flex-[1_0_0] rounded-xl border border-border/20 bg-bg-card/50 p-[17px] backdrop-blur-sm">
                         <div class="w-full space-y-2 animate-pulse">
                             <div class="h-4 w-5/6 rounded bg-border/40"></div>
                             <div class="h-4 w-4/6 rounded bg-border/30"></div>
@@ -62,9 +62,9 @@
                             description = suggestion.description
                         }
                     }"
-                        class="flex h-[136px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:h-[60px] max-sm:p-[15px] hover:bg-bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
+                        class="flex max-h-[125px] min-w-[200px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl  max-md:p-5  max-sm:p-[15px] hover:bg-bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
                         <span
-                            class="text-text-secondary line-clamp-3 text-base font-normal leading-5 hover:text-text-primary transition-colors max-md:static max-md:w-auto max-md:h-auto max-sm:text-sm max-sm:leading-[18px]">
+                            class="text-[14px] text-text-secondary line-clamp-3 text-base font-normal leading-5 hover:text-text-primary transition-colors max-md:static max-md:w-auto max-md:h-auto max-sm:text-sm max-sm:leading-[18px]">
                             {{ suggestion.description }}
                         </span>
                     </div>
@@ -72,12 +72,12 @@
             </div>
         </div>
 
-        <div class="flex w-full px-6 text-sm text-text-secondary  items-center gap-4 mt-6">
+        <div class="flex w-full  px-[15px] sm:px-6 text-sm text-text-secondary  items-center gap-4 mt-6">
             <hr class=" flex-auto text-border">
             <span>OR</span>
             <hr class="flex-auto text-border">
         </div>
-        <div class="px-6 mt-5">
+        <div class=" px-[15px] sm:px-6 mt-5">
             <Button variant="primary" color="dark" :block="true" @click="createManualHandler">
                 Create Manually
             </Button>

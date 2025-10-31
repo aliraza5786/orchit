@@ -2,7 +2,7 @@
     <nav class="flex items-center justify-between min-h-16 w-full overflow-x-auto">
       <!-- Left side: Logo + lanes -->
       <div
-        :class="`text-2xl font-bold flex items-center min-w-[320px] gap-4 sm:gap-8 ${workspaceStore.background.startsWith('url') ? 'text-text-secondary' : 'text-text-primary'}`">
+        :class="`text-2xl font-bold flex items-center min-w-max gap-4 sm:gap-8 ${workspaceStore.background.startsWith('url') ? 'text-text-secondary' : 'text-text-primary'}`">
         <!-- Logo + Title (now a dropdown trigger) -->
         <div class="relative">
           <button ref="logoBtnRef" class="flex items-center gap-2 sm:gap-3 pl-3 cursor-pointer rounded-md"
