@@ -21,6 +21,12 @@
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
           </p>
+
+          <div class="text-center mt-4">
+            <router-link to="/forgot-password" class="text-sm text-accent hover:underline">
+              Forgot password?
+            </router-link>
+          </div>
         </form>
 
         <p class="text-sm font-medium text-text-secondary text-center mt-6" v-once>

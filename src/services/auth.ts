@@ -56,3 +56,12 @@ export const useInviteCompany = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+export const forgotPassword = (payload: { u_email: string }) =>
+  api.post("/auth/forget-password", payload).then((res) => res.data);
+
+export const verifyResetToken = (payload: { token: string }) =>
+  api.post("/auth/verify-reset-token", payload).then((res) => res.data);
+
+export const resetPassword = (payload: { token: string; new_password: string; confirm_password: string }) =>
+  api.post("/auth/reset-password", payload).then((res) => res.data);

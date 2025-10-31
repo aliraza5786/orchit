@@ -13,6 +13,8 @@ const Login = () => import("../views/Auth/Login.vue");
 const Register = () => import("../views/Auth/Register.vue");
 const OtpVerification = () => import("../views/Auth/OtpVerification.vue");
 const CreateProfile = () => import("../views/Auth/CreateProfile.vue");
+const ForgotPassword = () => import("../views/Auth/ForgotPassword.vue");
+const ResetPassword = () => import("../views/Auth/ResetPassword.vue");
 const FinishProfile = () => import("../views/FinishProfile.vue");
 const NotFound = () => import("../views/NotFound.vue");
 
@@ -133,6 +135,18 @@ const routes: RouteRecordRaw[] = [
     path: "/otp-verification/:email",
     name: "Otp",
     component: OtpVerification,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/forgot-password",
+    name: "ForgotPassword",
+    component: ForgotPassword,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/reset-password",
+    name: "ResetPassword",
+    component: ResetPassword,
     meta: { requiresAuth: false },
   },
   {
