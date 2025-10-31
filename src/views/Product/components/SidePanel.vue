@@ -269,7 +269,7 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
-import { useUploadFile } from '../../../queries/useCommon'
+import { usePrivateUploadFile } from '../../../queries/useCommon'
 import SwitchTab from '../../../components/ui/SwitchTab.vue'
 
 const { workspaceId } = useRouteIds()
@@ -459,7 +459,7 @@ const moveCard = useMoveCard({
 
 /* -------------------- Comment attachments -------------------- */
 const commentAttachments = ref<File[]>([])
-const { mutate: uploadFile } = useUploadFile({
+const { mutate: uploadFile } = usePrivateUploadFile({
   onSuccess: (data: any) => { commentAttachments.value = [data] }
 })
 function handleFileChange(event: any) {

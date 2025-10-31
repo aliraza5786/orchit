@@ -1,7 +1,8 @@
 <template>
   <div class="w-full">
     <h2 v-once class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0">Project Details</h2>
-    <p v-once class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">Let's refine your project details</p>
+    <p v-once class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">Let's refine your
+      project details</p>
   </div>
 
   <div class="space-y-6 pb-[80px] w-full">
@@ -42,7 +43,7 @@ import BaseMultiSelect from '../../../components/ui/BaseMultiSelect.vue';
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue';
 import FileUploader from '../../../components/ui/FileUploader.vue';
 import { useIndustries, useWorkspacesTitles } from '../../../queries/useWorkspace';
-import { useUploadFile } from '../../../queries/useCommon';
+import { useUploadFile, usePrivateUploadFile } from '../../../queries/useCommon';
 import { toast } from 'vue-sonner';
 import { useWorkspaceStore } from '../../../stores/workspace';
 const workspaceStore = useWorkspaceStore();
@@ -158,6 +159,26 @@ const { mutate, isPending } = useUploadFile({
     toast.error('File upload failed. Please try again.');
   },
 });
+const { mutate: privateMutate, isPending: isPrivatePending } = usePrivateUploadFile({
+  onSuccess: (data: any) => {
+    const url: string | undefined = data?.data?.url;
+    if (!url) {
+      toast.error('Upload succeeded but no URL was returned.');
+      return;
+    }
+    setWorkspace(prev => ({
+      ...prev,
+      logo: url,
+      variables: { ...(prev.variables || {}), ...form.value },
+    }));
+    emit('next');
+    return;
+  },
+  onError: (err: any) => {
+    console.error('File upload failed', err);
+    toast.error('File upload failed. Please try again.');
+  },
+});
 
 function continueHandler() {
   if (!isValid.value) {
@@ -169,7 +190,10 @@ function continueHandler() {
   if (logo.value instanceof File) {
     const fd = new FormData();
     fd.append('file', logo.value);
-    mutate(fd);
+    if (localStorage.getItem('token')) {
+      privateMutate(fd);
+    } else
+      mutate(fd);
     return;
   }
 
@@ -181,7 +205,7 @@ function continueHandler() {
   emit('next');
 }
 
-defineExpose({ continueHandler, isPending });
+defineExpose({ continueHandler, isPending, isPrivatePending });
 </script>
 
 <style scoped>

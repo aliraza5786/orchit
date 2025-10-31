@@ -238,7 +238,7 @@ import Button from '../../../components/ui/Button.vue'
 import InfoRow from '../../../components/ui/InfoRow.vue'
 import { useQuery, useMutation } from '@tanstack/vue-query'
 import { getProfile, updateProfile } from '../../../services/user'
-import { useUploadFile } from '../../../queries/useCommon'
+import { usePrivateUploadFile } from '../../../queries/useCommon'
 import { toast } from 'vue-sonner'
 import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
@@ -342,7 +342,7 @@ function triggerAvatarPicker() {
   avatarInputRef.value?.click()
 }
 
-const { mutate: uploadFileMutation, isPending: isUploading } = useUploadFile({
+const { mutate: uploadFileMutation, isPending: isUploading } = usePrivateUploadFile({
   onSuccess: (data: any) => {
     const url = data?.data?.url
     if (!url) {

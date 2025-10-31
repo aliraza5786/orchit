@@ -33,7 +33,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     selectedLaneIds: [],
     transitions: {},
     limits:{},
-    pricing:true
+    pricing:false
   }),
   actions: {
     setPricing(p:boolean){

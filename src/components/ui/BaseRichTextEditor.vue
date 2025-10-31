@@ -117,7 +117,7 @@ import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
-import { useUploadFile } from '../../queries/useCommon'
+import { usePrivateUploadFile } from '../../queries/useCommon'
 import LinkDialog from './LinkDialog.vue'
 
 const props = withDefaults(defineProps<{
@@ -157,7 +157,7 @@ function setTextType() {
     else editor.chain().focus().setParagraph().run()
 }
 
-const { mutate: uploadFile } = useUploadFile({
+const { mutate: uploadFile } = usePrivateUploadFile({
     onSuccess: (resp: any) => {
         const uploadedFileUrl = resp.data.url as string
         const fileName = resp.data.name as string

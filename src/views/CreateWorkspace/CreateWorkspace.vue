@@ -87,10 +87,24 @@ const stepThreeRef = shallowRef<StepTwoInst>(null)
 const stepFourRef = shallowRef<StepFourInst>(null)
 const showSkip = computed(() => currentStep.value === 2 || currentStep.value === 3)
 const stepOnePending = computed<boolean>(() => {
-  const inst = stepOneRef.value as unknown as { isPending?: boolean | { value: boolean } } | null
+  const inst = stepOneRef.value as unknown as {
+    isPending?: boolean | { value: boolean }
+    isPrivatePending?: boolean | { value: boolean }
+  } | null
+
   if (!inst) return false
-  const raw = (inst as any).isPending
-  return typeof raw === 'object' && raw && 'value' in raw ? !!raw.value : !!raw
+
+  const pending =
+    typeof inst.isPending === 'object'
+      ? inst.isPending?.value
+      : inst.isPending
+
+  const privatePending =
+    typeof inst.isPrivatePending === 'object'
+      ? inst.isPrivatePending?.value
+      : inst.isPrivatePending
+
+  return !!(pending || privatePending)
 })
 
 const continueDisabled = computed(() => currentStep.value === 1 && stepOnePending.value)
