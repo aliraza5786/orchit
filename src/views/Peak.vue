@@ -277,7 +277,7 @@ const connect = () => {
   const token = localStorage.getItem('token') || ''
   const effectiveJob = jobId?.value ? jobId?.value : localStorage.getItem('jobId') ? localStorage.getItem('jobId') : workspaceId.value
   const isManual = localStorage.getItem('jobId') || jobId?.value ? 'false' : 'true'
-  const sseUrl = `${SERVER_BASE_URL}/step2/tasks/${effectiveJob}/stream?token=${token}&is_manual=${isManual}`
+  const sseUrl = `${SERVER_BASE_URL}common/step2/tasks/${effectiveJob}/stream?token=${token}&is_manual=${isManual}`
 
   try {
     eventSource.value = new EventSource(sseUrl, { withCredentials: false })
