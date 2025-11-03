@@ -36,7 +36,7 @@
           </li>
 
           <li v-for="item in getWorkspace?.lanes" :key="item._id" @click="workspaceStore.toggleLane(item._id)">
-            <LaneDropdown @update="openUpdateModal" :id="item._id" :label="item?.variables['lane-title']"
+            <LaneDropdown  @update="openUpdateModal" :id="item._id" :label="item?.variables['lane-title']"
               :link="item?.link ?? ''" :color="item?.variables['lane-color']"
               :selected="workspaceStore.isLaneSelected(item._id)" />
           </li>

@@ -22,7 +22,7 @@
       leave-active-class="transition duration-150 ease-in" enter-from-class="opacity-0 scale-95"
       enter-to-class="opacity-100 scale-100" leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95">
-      <div v-if="isOpen" class="absolute z-50 mt-2 w-[250px] bg-bg-dropdown   rounded-md shadow " @click.stop="">
+      <div v-if="isOpen" class="fixed z-50 mt-2 w-[250px] bg-bg-dropdown   rounded-md shadow " @click.stop="">
         <!-- Name Input -->
         <div class="px-3 py-3.5 ">
           <input v-model="currentName"
