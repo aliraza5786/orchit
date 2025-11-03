@@ -8,6 +8,8 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+
+
 *.local
 
 # Editor directories and files
@@ -27,4 +29,4 @@ src/views/KnowledgeCenter/Notification.vue
 src/views/KnowledgeCenter/NotificationItem.vue
 
 
-
+.env

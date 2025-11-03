@@ -10,7 +10,7 @@
                 </div>
                 <Button size="lg" :block="true" @click="register"> Explore Home</Button>
                 <Button size="lg" :block="true" @click="createWS" variant="secondary" class="mt-4"> Let’s Start
-                    Creating Your First Work Spacee</Button>
+                    Creating Your First WorkSpace</Button>
             </div>
         </template>
     </AuthLayout>

@@ -204,12 +204,12 @@
             <div class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden">
               <textarea v-model="newComment" rows="3" class="w-full p-3 bg-transparent outline-none text-sm"
                 placeholder="Write a comment" />
-              <div class="flex items-center justify-between p-2 border-t border-orchit-white/10">
-                <input type="file" multiple @change="handleFileChange" class="text-xs text-text-secondary
-                         file:mr-3 file:px-3 file:py-1.5 file:rounded-md
+              <div class="grid grid-cols-3 items-center w-full justify-between p-2 border-t border-orchit-white/10">
+                <input type="file" multiple @change="handleFileChange" class=" text-xs text-text-secondary
+                         file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md
                          file:border file:border-orchit-white/10 file:bg-orchit-white/10
-                         hover:file:bg-orchit-white/15 file:text-text-primary transition" />
-                <Button variant="primary" size="sm" @click="postComment"
+                         hover:file:bg-orchit-white/15 file:text-text-primary transition inline w-fit" />
+                <Button variant="primary" class="" size="sm" @click="postComment"
                   :disabled="!newComment.trim() && !commentAttachments.length">
                   {{ isPostingComment ? 'Posting…' : 'Post' }}
                 </Button>

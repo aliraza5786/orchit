@@ -13,10 +13,11 @@
       <div class="flex gap-3 items-center ">
         <SearchBar placeholder="Search in Orchit AI space">
         </SearchBar>
-        <Button v-if="sprintDetailData?.status == 'active'" size="sm" @click="handleCompleteSprint">{{
-          isCompletingSprint ?
-            'Ending...' : 'End' }}</Button>
-        <Button v-else size="sm" @click="openStartSprintModal">Start Sprint</Button>
+        <Button  v-if="sprintDetailData?.status == 'active'"
+          size="sm" @click="handleCompleteSprint">{{
+            isCompletingSprint ?
+              'Ending...' : 'End' }}</Button>
+        <Button v-else size="sm" @click="openStartSprintModal" :disabled="!firstSprint || firstSprint.tickets.length == 0">Start Sprint</Button>
 
       </div>
     </div>
@@ -45,13 +46,13 @@
         <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold">Backlog ({{ backlogResp?.cards?.length }} Tasks)</h2>
-            <div class="flex items-center gap-2">
+            <!-- <div class="flex items-center gap-2">
               <button
                 class=" w-8 h-8 rounded-md border  cursor-pointer aspect-square text-sm border-border  hover:bg-gray-50"
                 @click="openCreateBacklogTicket">
                 <i class="text-text-primary fa-regular fa-plus"></i>
               </button>
-            </div>
+            </div> -->
           </div>
           <div v-if="isBacklogPenidng" class="w-full h-full  min-h-[250px] flex justify-center items-center">
             <div role="status" aria-label="Loading"
@@ -123,7 +124,7 @@ import StartSprintModal from './modals/StartSprintModal.vue'
 import ActiveSprint from './components/ActiveSprint.vue'
 // import CreateSheetModal from '../Product/modals/CreateSheetModal.vue'
 const { workspaceId } = useWorkspaceId();
-const isCreateTicketModalOpen = ref(false)
+// const isCreateTicketModalOpen = ref(false)
 const {
   // backlog, sprints,
   // selectedBacklogIds, selectedSprintIds,
@@ -291,12 +292,12 @@ const ticketModalOpen = ref(false)
 const editingTicket = ref<Ticket | null>(null)
 // const createTarget = ref<'backlog' | 'sprint'>('backlog')
 
-function openCreateBacklogTicket() {
-  isCreateTicketModalOpen.value = true;
-  editingTicket.value = null
-  // createTarget.value = 'backlog'
-  // ticketModalOpen.value = true
-}
+// function openCreateBacklogTicket() {
+//   isCreateTicketModalOpen.value = true;
+//   editingTicket.value = null
+//   // createTarget.value = 'backlog'
+//   // ticketModalOpen.value = true
+// }
 
 function openTicket(t: Ticket) {
   editingTicket.value = t

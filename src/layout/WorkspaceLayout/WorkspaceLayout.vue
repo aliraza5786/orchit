@@ -12,7 +12,7 @@
     <div class="flex flex-grow items-start h-full max-w-full overflow-x-hidden "
       style="max-height:calc(100dvh - 55px);">
       <Sidebar :workspace="getWorkspace" :isLoading="isPending || isLoading" />
-       <div class="dashboard_content h-full w-full  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] "
+       <div class="dashboard_content h-full w-full  z-[1]  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] "
         style="max-width: calc(100vw - 70px); max-height: calc(100dvh - 65px);">
         <router-view />
         <ProfilePanel />

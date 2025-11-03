@@ -78,7 +78,7 @@
       <div class="my-1 h-px bg-border"></div>
 
       <!-- Workspaces -->
-      <div class="max-h-72 overflow-auto py-1 cursor-pointer">
+      <div class="max-h-72  py-1 cursor-pointer">
         <button v-for="ws in workspaces?.workspaces" :key="ws._id"
           class="w-full px-3 py-2 text-left text-sm hover:bg-bg-card/70 cursor-pointer flex items-center gap-3"
           role="menuitem" @click="switchTo(ws)">

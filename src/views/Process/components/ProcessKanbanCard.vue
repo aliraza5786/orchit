@@ -21,7 +21,7 @@
         </template>
       </DropMenu>
     </div>
-
+<!-- 
     <div class="mt-3 flex items-center justify-between">
       <div class="flex items-center gap-2">
         <span class="text-xs text-text-secondary flex items-center gap-1">
@@ -33,7 +33,7 @@
           {{ ticket?.transition_count || 0 }} transitions
         </span>
       </div>
-    </div>
+    </div> -->
   </div>
 
   <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Process" itemLabel="process"

@@ -252,7 +252,7 @@ const maxReconnectAttempts = 5
 const debugInfo = ref<any>({})
 
 /** Server configuration */
-const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'https://backend.orchit.ai/api/v1/'
+const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'https://backend.streamed.space/api/v1/'
 
 const cardProgress = computed(() => taskProgress.value?.percent == 100 ? true : false)
 /** Derived */

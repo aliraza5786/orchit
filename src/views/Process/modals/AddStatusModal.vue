@@ -133,7 +133,7 @@ function handleSubmit() {
         status_name: statusName.value.trim(),
       }
       workflowState.updateStatus(props.editingStatus.id, updates)
-      toast.success(`Status "${statusName.value}" updated`)
+      // toast.success(`Status "${statusName.value}" updated`)
       emit('edit:node', props.editingStatus.id, updates)
     } else {
 
@@ -152,7 +152,7 @@ function handleSubmit() {
         order: workflowState.localStatuses.value.length
       }
       workflowState.addStatus(statusData)
-      toast.success(`Status "${statusName.value}" added`)
+      // toast.success(`Status "${statusName.value}" added`)
       emit('status:added', statusData)
     }
     close()

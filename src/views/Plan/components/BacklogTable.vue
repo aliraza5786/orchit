@@ -9,7 +9,7 @@
         <img src="../../../assets/emptyStates/plan-backlog.svg" class="mb-4" alt="backlog-plan" />
         <h6 class="text-sm text-text-primary font-semibold mb-1">Get started in the backlog</h6>
         <p class="text-sm text-text-primary/90 mb-3">Plan and start a sprint to see issues here.</p>
-        <Button>Add Task Backlog</Button>
+        <!-- <Button>Add Task Backlog</Button> -->
       </div>
       <Table v-else :showHeader="false"  :pagination="false" class="flex-grow h-full" :rowDraggable="true"
         @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')"
@@ -55,7 +55,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Table from '@/components/ui/Table.vue'
-import Button from '@/components/ui/Button.vue'
+// import Button from '@/components/ui/Button.vue'
 import {
   // useBacklogStore,
   // priorityClass,

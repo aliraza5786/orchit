@@ -10,10 +10,10 @@
       {{
         currentName
       }}
-      <div @click.stop="isOpen = !isOpen"
+      <div @click.stop="toggleDropdown"
         class="transition-all duration-400 flex items-center  bg-bg-card  w-8 p-1  -right-8 top-0 h-8  group-hover:right-0  absolute"
         :class="{ 'block ': isOpen || selected }">
-        <i class="fa-solid fa-ellipsis" ></i>
+        <i class="fa-solid fa-ellipsis"></i>
       </div>
     </a>
 
@@ -22,7 +22,7 @@
       leave-active-class="transition duration-150 ease-in" enter-from-class="opacity-0 scale-95"
       enter-to-class="opacity-100 scale-100" leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95">
-      <div v-if="isOpen" class="absolute z-50 mt-2 w-[250px] bg-bg-dropdown   rounded-md shadow " @click.stop="">
+      <div v-if="isOpen" class="fixed z-50 mt-2 w-[250px] bg-bg-dropdown   rounded-md shadow " @click.stop="">
         <!-- Name Input -->
         <div class="px-3 py-3.5 ">
           <input v-model="currentName"
@@ -75,24 +75,24 @@
         <div class=" border-t  border-border text-sm text-text-primary  font-medium">
           <div class=" flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
             @click="handleEdit">
-            <i class="fa-regular fa-pen-to-square" ></i>
+            <i class="fa-regular fa-pen-to-square"></i>
 
             Edit
           </div>
           <div class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
             @click="handleDuplicateLane">
-            <i class="fa-regular fa-copy" ></i>
+            <i class="fa-regular fa-copy"></i>
             Duplicate
           </div>
           <div
             class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer border-b border-border"
             @click="handleUpdateLane({ is_archive: true })">
-            <i class="fa-regular fa-folder-closed" ></i> Archive
+            <i class="fa-regular fa-folder-closed"></i> Archive
           </div>
           <div @click="() => {
             showDelete = true
           }" class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover text-[#DC043B] cursor-pointer">
-            <i class="fa-regular fa-trash-can" ></i> Delete
+            <i class="fa-regular fa-trash-can"></i> Delete
           </div>
         </div>
 
@@ -120,7 +120,7 @@
 
   </div>
   <ConfirmDeleteModal v-model="showDelete" title="Delete Lane" itemLabel="lane" :itemName="label"
-    :requireMatchText="label" confirmText="Delete workspace" cancelText="Cancel" size="md" :loading="isDeleting"
+    :requireMatchText="label" confirmText="Delete Lane" cancelText="Cancel" size="md" :loading="isDeleting"
     @confirm="handleDelete" @cancel="">
     <!-- Optional extra content -->
     <template #extra>
@@ -231,5 +231,16 @@ const handleEdit = () => {
   isOpen.value = false;
   emit('update', props.id)
 }
+
+function toggleDropdown(e: MouseEvent) {
+  e.stopPropagation()
+  window.dispatchEvent(new CustomEvent('close-all-dropdowns'))
+  isOpen.value = !isOpen.value
+}
+
+window.addEventListener('close-all-dropdowns', () => {
+  isOpen.value = false
+})
+
 
 </script>

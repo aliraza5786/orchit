@@ -92,10 +92,33 @@ watch(
           label: n.title, "status": "To Do"
         },
       }))
+
       await nextTick()
       setNodes(newNodes)
       await nextTick()
       nodes.value = newNodes;
+      await nextTick()
+      const defaultTransitions: VFEdge[] = []
+      for (let i = 0; i < newNodes.length - 1; i++) {
+        defaultTransitions.push({
+          id: `edge-${newNodes[i].id}-${newNodes[i + 1].id}`,
+          source: newNodes[i].id,
+          target: newNodes[i + 1].id,
+          type: 'step',
+          label: 'Auto Transition',
+          animated: false,
+          style: { stroke: '#1152de', strokeWidth: 2 },
+          markerEnd: {
+            type: MarkerType.Arrow,
+            color: '#1152de',
+            width: 18,
+            height: 18,
+          },
+        })
+      }
+      if (!processWorkflow.value?.raw_transitions.nodes)
+        setEdges(defaultTransitions)
+      await nextTick()
       // stop() // remove the watcher so it fires only once
     }
   },
@@ -103,9 +126,9 @@ watch(
 )
 // ---- WATCH: put API data into VueFlow ----
 watch(
-  () => processWorkflow.value,
-  async (resp: any) => {
-    const fd = resp?.raw_transitions
+ isProcessFetching,
+  async () => {
+    const fd = processWorkflow.value?.raw_transitions
     if (!fd)
       return
     const incomingNodes = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
@@ -127,6 +150,8 @@ watch(
       await nextTick()
 
     })
+
+    await nextTick()
   },
   { immediate: true }
 )

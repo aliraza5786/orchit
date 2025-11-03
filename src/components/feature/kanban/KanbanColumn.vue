@@ -36,13 +36,13 @@
       :drag-class="'kanban-dragging'" @change="onTicketsChange">
       <template #item="{ element: ticket }">
         <div>
-          <slot name="ticket" @click="() => {
-            emit('select:ticket', ticket)
-          }" :ticket="ticket">
-            <KanbanTicket @click="() => {
-              emit('select:ticket', ticket)
-            }" :ticket="ticket" />
-          </slot>
+          <slot name="ticket" :ticket="ticket">
+  <KanbanTicket
+    @click="() => emit('select:ticket', ticket)"
+    :ticket="ticket"
+  />
+</slot>
+
         </div>
       </template>
       <template #footer>
