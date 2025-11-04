@@ -30,7 +30,8 @@
             class="p-4 border rounded-lg hover:border-primary transition-all text-left group"
             :class="selectedModuleId === module._id ? 'border-primary bg-primary/5' : 'border-border'">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-bg-input flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+              <div
+                class="w-10 h-10 rounded-lg bg-bg-input flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                 <i :class="`${module?.variables?.['module-icon']?.prefix} ${module?.variables?.['module-icon']?.iconName}`"
                   class="text-lg"></i>
               </div>
@@ -55,11 +56,13 @@
             class="p-4 border rounded-lg hover:border-primary transition-all text-left group"
             :class="selectedSheetId === sheet._id ? 'border-primary bg-primary/5' : 'border-border'">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-bg-input flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                <i class="fa-regular fa-table text-lg"></i>
+              <div
+                class="w-10 h-10 rounded-lg bg-bg-input flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                <i
+                  :class="`${sheet?.variables['sheet-icon']?.prefix} ${sheet?.variables['sheet-icon']?.iconName} text-lg`"></i>
               </div>
               <div>
-                <p class="font-medium">{{ sheet.sheet_title || 'Untitled Sheet' }}</p>
+                <p class="font-medium">{{ sheet?.variables['sheet-title'] || 'Untitled Sheet' }}</p>
               </div>
             </div>
           </button>
@@ -69,18 +72,18 @@
       <div v-else-if="currentStep === 3">
         <h3 class="text-lg font-medium mb-4">Ticket Details</h3>
         <div class="grid grid-cols-2 gap-4">
-          <BaseTextField v-model="form.title" label="Ticket Title"
-            placeholder="e.g., Implement real-time notifications" :error="!!titleError" :message="titleError"
-            @blur="touched.title = true" />
+          <BaseTextField v-model="form.title" label="Ticket Title" placeholder="e.g., Implement real-time notifications"
+            :error="!!titleError" :message="titleError" @blur="touched.title = true" />
 
           <div class="flex flex-col" v-if="laneOptions.length > 0">
-            <BaseSelectField size="md" label="Lane" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
-              :model-value="form.lane_id" @update:modelValue="setLane" :error="!!laneError" :message="laneError" />
+            <BaseSelectField size="md" label="Lane" :options="laneOptions" placeholder="Select lane"
+              :allowCustom="false" :model-value="form.lane_id" @update:modelValue="setLane" :error="!!laneError"
+              :message="laneError" />
           </div>
 
           <BaseSelectField size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable"
-            :key="getVarKey(item)" v-model="form.variables[item.slug]" :options="mapOptions(item.data)" :label="item.title"
-            placeholder="Select value" :allowCustom="true" />
+            :key="getVarKey(item)" v-model="form.variables[item.slug]" :options="mapOptions(item.data)"
+            :label="item.title" placeholder="Select value" :allowCustom="true" />
 
           <div class="flex gap-1 flex-col">
             <label class="text-sm">Start date</label>
@@ -161,7 +164,7 @@ const selectedSheetId = ref<string | null>(null)
 const { data: workspaceData, isLoading: loadingModules } = useSingleWorkspace(workspaceId.value)
 const modules = computed(() => workspaceData.value?.modules || [])
 
-const { data: sheetsData, isLoading: loadingSheets } = useSheets(
+const { data: sheetsData, isFetching: loadingSheets, refetch: refetchSheet } = useSheets(
   {
     workspace_module_id: selectedModuleId,
     workspace_id: workspaceId
@@ -170,6 +173,9 @@ const { data: sheetsData, isLoading: loadingSheets } = useSheets(
     enabled: computed(() => !!selectedModuleId.value)
   }
 )
+watch(() => selectedModuleId.value, () => {
+  refetchSheet()
+})
 const sheets = computed(() => sheetsData.value || [])
 
 const { data: lanes } = useLanes(workspaceId.value)
