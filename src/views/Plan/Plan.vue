@@ -103,7 +103,7 @@
 
   <TaskDetailsModal v-model="showTaskModal" :cardId="editingTicket?.id" @close="closeModal" />
 
-  <CreateBacklogTicket v-model="isCreateTicketModalOpen" />
+  <CreateBacklogTicketWithModuleSelection v-model="isCreateTicketModalOpen" />
   <!-- <CreateSheetModal v-model="sprintModalOpen" size="md"  /> -->
 </template>
 
@@ -123,7 +123,7 @@ import { useWorkspaceId } from '../../composables/useQueryParams'
 import { useQueryClient } from '@tanstack/vue-query'
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue'
 import StartSprintModal from './modals/StartSprintModal.vue'
-import CreateBacklogTicket from './modals/CreateBacklogTicket.vue'
+import CreateBacklogTicketWithModuleSelection from './modals/CreateBacklogTicketWithModuleSelection.vue'
 import ActiveSprint from './components/ActiveSprint.vue'
 import TaskDetailsModal from '../Workspaces/Modals/TaskDetailsModal.vue'
 const showTaskModal = ref(false);
