@@ -257,6 +257,7 @@ function extractNameFromEmail(email: string) {
 }
 // Handle toggling of "Add Seat" form for each column
 const toggleAddNewColumn = (column: any) => {
+  window.dispatchEvent(new CustomEvent('close-all-showADDNEW'));
   column.showADDNEW = !column.showADDNEW;
 };
 

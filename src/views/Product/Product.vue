@@ -62,7 +62,7 @@
 
     </div>
     <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
-        :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete workspace"
+        :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete List"
         cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
             showDelete = false
         }" />

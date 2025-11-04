@@ -161,10 +161,10 @@
               <div class="flex items-center gap-3 mb-2">
                 <div
                   class="h-8 w-8 rounded-full bg-accent/15 text-accent flex items-center justify-center text-xs font-semibold">
-                  {{ initials(c.created_by?.u_full_name) }}
+                  {{ initials(c.commented_by?.u_full_name) }}
                 </div>
                 <div class="flex-1">
-                  <div class="text-sm font-medium">{{ c.created_by?.u_full_name }}</div>
+                  <div class="text-sm font-medium">{{ c.commented_by?.u_full_name }}</div>
                   <div class="text-xs text-text-secondary">{{ formatDateTime(c.created_at) }}</div>
                 </div>
                 <div v-if="isMine(c)" class="flex items-center gap-2">
@@ -205,7 +205,7 @@
               <textarea v-model="newComment" rows="3" class="w-full p-3 bg-transparent outline-none text-sm"
                 placeholder="Write a comment" />
               <div class="grid grid-cols-3 items-center w-full justify-between p-2 border-t border-orchit-white/10">
-                <input type="file" multiple @change="handleFileChange" class=" text-xs text-text-secondary
+                <input type="file" multiple @change="handleFileChange" class=" max-w-full text-ellipsis text-xs text-text-secondary
                          file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md
                          file:border file:border-orchit-white/10 file:bg-orchit-white/10
                          hover:file:bg-orchit-white/15 file:text-text-primary transition inline w-fit" />
@@ -409,7 +409,19 @@ const isMine = (c: any) => c?.created_by?._id === currentUserId.value
 
 const editingId = ref<string | null>(null)
 const editText = ref('')
-const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateComment()
+const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateComment({
+  onSuccess: (updatedComment: any) => {
+    // Find and update the comment in local state immediately
+    const idx = comments.value.findIndex((c: any) => c._id === updatedComment._id)
+    if (idx > -1) {
+      comments.value[idx] = { ...comments.value[idx], comment_text:updatedComment.comment_text }
+    }
+    // Exit edit mode once done
+    editingId.value = null
+    editText.value = ''
+  },
+})
+
 const { mutate: deleteComment } = useDeleteComment()
 
 function beginEdit(c: any) { editingId.value = c._id; editText.value = c.comment_text ?? '' }

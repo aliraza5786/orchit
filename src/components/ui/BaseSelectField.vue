@@ -17,7 +17,7 @@
         theme === 'dark' ? 'bg-bg-input border-border ' : 'bg-bg-input border-border ',
         error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-black'
       ]" @click="toggleDropdown">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 max-w-full">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
         <span :class="selected ? ' line-clamp-1 overflow-ellipsis ' : 'text-text-secondary'">
           {{ selected?.title || placeholder }}

@@ -63,14 +63,13 @@
 
         <!-- Modals -->
         <ConfirmDeleteModal v-model="showDelete" title="Delete List" itemLabel="list" :itemName="localColumnData?.title"
-            :requireMatchText="localColumnData?.title" confirmText="Delete workspace" cancelText="Cancel" size="md"
+            :requireMatchText="localColumnData?.title" confirmText="Delete List" cancelText="Cancel" size="md"
             :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => (showDelete = false)" />
 
         <CreateTaskModal size="md" :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
             :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" />
 
-        <SidePanel :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
-            @close="() => selectCardHandler({ variables: {} })" />
+   
 
         <CreateSheetModal :sheet="selectedSheettoAction" size="md" v-model="isCreateSheetModal" />
         <CreateVariableModal v-if="isCreateVar" v-model="isCreateVar" :sheetID="selected_sheet_id" />
@@ -79,6 +78,8 @@
             confirmText="Delete Sheet" cancelText="Cancel" size="md" :loading="isDeleting" @confirm="handleDeleteSheet"
             @cancel="() => { showDeleteModal = false }" />
     </div>
+    <SidePanel :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
+    @close="() => selectCardHandler({ variables: {} })" />
 </template>
 
 <script setup lang="ts">

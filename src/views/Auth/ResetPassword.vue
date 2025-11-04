@@ -58,16 +58,17 @@
 
           <form @submit.prevent="handleResetPassword" class="space-y-4 w-full">
             <BaseTextField
-              v-model="newPassword"
-              label="New Password"
-              placeholder="Enter new password"
-              size="lg"
-              type="password"
-              :error="newPasswordHasError"
-              :message="newPasswordError"
-              @blur="touched.newPassword = true"
-              @update:modelValue="onFieldInput"
-            />
+  v-model="newPassword"
+  label="New Password"
+  type="password"
+  placeholder="Enter new password"
+  size="lg"
+  :error="newPasswordHasError"
+  :message="newPasswordError"
+  @blur="touched.newPassword = true"
+  @update:modelValue="onFieldInput"
+/>
+
 
             <BaseTextField
               v-model="confirmPassword"
@@ -111,10 +112,10 @@
                 </li>
               </ul>
             </div>
-
             <Button :disabled="submitDisabled" size="lg" :block="true" type="submit">
-              {{ submitLabel }}
-            </Button>
+  {{ submitLabel }}
+</Button>
+
 
             <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
               {{ errorMessage }}
@@ -161,35 +162,39 @@ const hasLowerCase = computed(() => /[a-z]/.test(newPassword.value))
 
 const newPasswordError = computed(() => {
   if (!touched.newPassword) return ''
-  if (!newPassword.value) return 'Password is required'
-  if (!hasMinLength.value) return 'Password must be at least 8 characters'
-  if (!hasNumber.value) return 'Password must contain a number'
-  if (!hasSpecialChar.value) return 'Password must contain a special character'
-  if (!hasUpperCase.value) return 'Password must contain an uppercase letter'
-  if (!hasLowerCase.value) return 'Password must contain a lowercase letter'
+  const pwd = newPassword.value.trim()
+  if (!pwd) return 'Password is required'
+  if (!hasMinLength.value) return 'Password must be at least 8 characters long'
+  if (!hasNumber.value) return 'Password must contain at least one number'
+  if (!hasSpecialChar.value) return 'Password must contain at least one special character'
+  if (!hasUpperCase.value) return 'Password must contain at least one uppercase letter'
+  if (!hasLowerCase.value) return 'Password must contain at least one lowercase letter'
   return ''
 })
 const newPasswordHasError = computed(() => !!newPasswordError.value)
 
 const confirmPasswordError = computed(() => {
   if (!touched.confirmPassword) return ''
-  if (!confirmPassword.value) return 'Please confirm your password'
-  if (confirmPassword.value !== newPassword.value) return 'Passwords do not match'
+  if (!confirmPassword.value.trim()) return 'Please confirm your password'
+  if (confirmPassword.value.trim() !== newPassword.value.trim()) return 'Passwords do not match'
   return ''
 })
 const confirmPasswordHasError = computed(() => !!confirmPasswordError.value)
+
 
 const isFormValid = computed(() => !newPasswordError.value && !confirmPasswordError.value)
 
 const { mutateAsync: verifyToken } = useMutation({ mutationFn: verifyResetToken })
 const { mutateAsync: resetPass, isPending } = useMutation({ mutationFn: resetPassword })
 
-const submitDisabled = computed(() => isPending.value || !isFormValid.value)
 const submitLabel = computed(() => (isPending.value ? 'Resetting...' : 'Reset password'))
 
 function onFieldInput() {
   if (errorMessage.value) errorMessage.value = ''
+  if (touched.newPassword && newPassword.value) touched.newPassword = false
+  if (touched.confirmPassword && confirmPassword.value) touched.confirmPassword = false
 }
+
 
 onMounted(async () => {
   if (!token.value) {
@@ -207,12 +212,18 @@ onMounted(async () => {
   }
 })
 
-async function handleResetPassword() {
-  errorMessage.value = ''
+function validateForm() {
   touched.newPassword = true
   touched.confirmPassword = true
 
-  if (!isFormValid.value) {
+  if (!newPassword.value.trim() || !confirmPassword.value.trim()) return false
+  if (newPasswordError.value || confirmPasswordError.value) return false
+  return true
+}
+
+async function handleResetPassword() {
+  errorMessage.value = ''
+  if (!validateForm()) {
     errorMessage.value = 'Please fill all fields correctly.'
     return
   }
@@ -220,15 +231,15 @@ async function handleResetPassword() {
   try {
     await resetPass({
       token: token.value,
-      new_password: newPassword.value,
-      confirm_password: confirmPassword.value
+      new_password: newPassword.value.trim(),
+      confirm_password: confirmPassword.value.trim(),
     })
     resetSuccess.value = true
-    setTimeout(() => {
-      router.push('/login')
-    }, 3000)
+    setTimeout(() => router.push('/login'), 3000)
   } catch (err: any) {
     errorMessage.value = err?.message || 'Failed to reset password. Please try again.'
   }
 }
+const submitDisabled = computed(() => isPending.value || !isFormValid.value)
+
 </script>

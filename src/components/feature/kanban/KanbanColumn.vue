@@ -87,8 +87,6 @@ const emit = defineEmits<{
 }>()
 const workspaceStore = useWorkspaceStore()
 const onStart = () => {
-  console.log(props?.column?.transitions, '>>>>');
-
   workspaceStore.setTransition({ ...props?.column?.transitions, currentColumn: props.column?.title })
 }
 const onEnd = () => {
@@ -169,7 +167,6 @@ function getMenuItems() {
 }
 function showActions() {
   const title = props?.column?.title.trim().toLowerCase();
-  console.log(title);
   if (title)
     switch (title) {
       case 'admin':
@@ -189,6 +186,9 @@ function showActions() {
 const handleDeleteColumn = () => {
   emit('delete:column', { title: props.column.title, columnId: props.column?._id })
 }
+window.addEventListener('close-all-showADDNEW', () => {
+  props.column.showADDNEW = false;
+})
 </script>
 
 <style scoped>

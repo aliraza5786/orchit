@@ -2,7 +2,7 @@
   <BaseModal :modelValue="modelValue" @update:modelValue="closeModal" class="!pt-0">
    
 
-        <div v-if="isLoading" class="flex items-center justify-center py-20">
+        <div v-if="isLoading || isFetching" class="flex items-center justify-center py-20">
           <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
         </div>
 
@@ -228,7 +228,7 @@ import { useLanes, useMoveCard } from '../../../queries/useSheets'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
-import { useQueryClient } from '@tanstack/vue-query'
+// import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteIds } from '../../../composables/useQueryParams'
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
@@ -247,7 +247,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'close'])
 const card_Id = ref(props.cardId);
 
-const { data: cardDetails, isLoading, refetch } = useProductCard(card_Id)
+const { data: cardDetails, isLoading, isFetching, refetch } = useProductCard(card_Id)
 
 const details = computed(() => cardDetails.value || {})
 
@@ -445,12 +445,12 @@ const attachments = computed(() =>
   }))
 )
 
-const queryClient = useQueryClient()
+// const queryClient = useQueryClient()
 const moveCard = useMoveCard({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['tasks'] })
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-    queryClient.invalidateQueries({ queryKey: ['product-card', props.cardId] })
+    // queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    // queryClient.invalidateQueries({ queryKey: ['product-card', props.cardId] })
   }
 })
 

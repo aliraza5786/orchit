@@ -11,7 +11,7 @@
         <p class="text-sm text-text-primary/90 mb-3">Plan and start a sprint to see issues here.</p>
         <!-- <Button>Add Task Backlog</Button> -->
       </div>
-      <Table v-else :showHeader="false"  :pagination="false" class="flex-grow h-full" :rowDraggable="true"
+      <Table  v-else :showHeader="false"  :pagination="false" class="flex-grow h-full" :rowDraggable="true"
         @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')"
         @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="normalizedBacklog"
         :page-size="20" :hover="true"  :itemKey="(row: any) => row.id" :sorters="sorters"
