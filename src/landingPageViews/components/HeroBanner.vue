@@ -31,7 +31,7 @@ const {
 //  Computed list — use API data if available, else fallback to examples
 const suggestionList = computed(() => {
   if (promptSuggestions?.value?.length) {
-    return promptSuggestions.value.map((item: any) => item.prompt_text);
+    return promptSuggestions.value.map((item: any) => item.prompt);
   }
   return examples;
 });
@@ -173,7 +173,7 @@ async function handleSubmit(value: string) {
 .animate-marquee {
     display: flex;
     width: max-content;
-    animation: marquee 200s linear infinite;
+    animation: marquee 400s linear infinite;
     will-change: transform;
 }
 
@@ -190,7 +190,7 @@ async function handleSubmit(value: string) {
 .animate-marquee2 {
     display: flex;
     width: max-content;
-    animation: marquee2 200s linear infinite;
+    animation: marquee2 400s linear infinite;
     will-change: transform;
 
 }
