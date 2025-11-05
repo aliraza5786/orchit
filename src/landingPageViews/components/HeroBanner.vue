@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import HeroBannerInput from "./HeroBannerInput.vue";
 import { useTheme } from "../../composables/useTheme";
 import mouse from "@assets/LandingPageImages/bnanerInputIcons/mouse.png"
-
+import { usePromptSuggestions } from "../../queries/usePropmpSuggestions";
 const { theme } = useTheme();
 
 const examples = [
@@ -17,6 +17,24 @@ const examples = [
     "🚗 I want to open a car rental service.",
     "📸 I want to become a professional photographer."
 ];
+
+// Call the query and auto-refetch on mount
+const {
+  data: promptSuggestions, 
+  isError,
+  error,
+  refetch,
+} = usePromptSuggestions({
+  refetchOnMount: true, // automatically fetch when rendered
+});
+
+//  Computed list — use API data if available, else fallback to examples
+const suggestionList = computed(() => {
+  if (promptSuggestions?.value?.length) {
+    return promptSuggestions.value.map((item: any) => item.prompt_text);
+  }
+  return examples;
+});
 
 const projectInputRef = ref<{ setValue: (val: string) => void } | null>(null);
 const isLoading = ref(false);
@@ -85,12 +103,12 @@ async function handleSubmit(value: string) {
                 Or try
                 these
                 examples:</p>
-             <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
                 <div class="examples-container flex gap-[15px] lg:gap-[24px] px-4 mb-[15px] lg:mb-[24px]
                     snap-x snap-mandatory animate-marquee
                    hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
                     <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                        <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)"
+                        <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
                             class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
                     text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
                     transition-all duration-300 whitespace-nowrap "
@@ -104,7 +122,7 @@ async function handleSubmit(value: string) {
                 <div
                     class="examples-container pb-1 flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2 snap-x snap-mandatory hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
                     <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                        <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)"
+                        <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
                             class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
                     text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
                     transition-all duration-300 whitespace-nowrap "

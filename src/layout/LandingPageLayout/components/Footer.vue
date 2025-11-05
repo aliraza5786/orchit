@@ -103,22 +103,22 @@ const moblinks: MobFooterMenu[] = [
                             </h3>
                         </div>
                         <div class="fotter_social_links flex gap-3 items-center justify-center  sm:justify-start">
-                            <a href="https://linkedin.com" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://www.linkedin.com/in/orchit-ai-990b40396/" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-linkedin"></i>
                             </a>
-                            <a href="https://twitter.com" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://x.com/Orchitai1" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-square-x-twitter"></i>
                             </a>
-                            <a href="" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://discord.com/channels/@me" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-discord"></i>
                             </a>
-                            <a href="" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://www.youtube.com/@orchit.ai1" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-youtube"></i>
                             </a>
-                            <a href="" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://www.instagram.com/orchit.ai/" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-instagram"></i>
                             </a>
-                            <a href="" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://www.reddit.com/user/Brief_Challenge_5466/" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-reddit"></i>
                             </a>
                         </div>
