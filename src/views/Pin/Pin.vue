@@ -69,7 +69,7 @@
         <CreateTaskModal size="md" :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
             :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" />
 
-   
+
 
         <CreateSheetModal :sheet="selectedSheettoAction" size="md" v-model="isCreateSheetModal" />
         <CreateVariableModal v-if="isCreateVar" v-model="isCreateVar" :sheetID="selected_sheet_id" />
@@ -79,7 +79,7 @@
             @cancel="() => { showDeleteModal = false }" />
     </div>
     <SidePanel :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
-    @close="() => selectCardHandler({ variables: {} })" />
+        @close="() => selectCardHandler({ variables: {} })" />
 </template>
 
 <script setup lang="ts">
@@ -163,9 +163,13 @@ const { mutate: addList, isPending: addingList } = useAddList({
     onSuccess: (data: any, payload: any) => {
         if (payload.is_trash) {
             localList.value = localList.value.filter((e: any) => e.title !== payload.value);
+            showDelete.value = false
         } else {
-            localList.value.push({ title: data?.value });
+            localList.value= [...localList.value, { title: data?.value }];
         }
+        activeAddList.value = false;
+
+        newColumn.value = '';
         queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
         Object.assign({ newColumn: '', showDelete: false, activeAddList: false });
     }
@@ -280,8 +284,11 @@ const showDeleteModal = ref(false)
 const selectedSheettoAction = ref<any>()
 const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
     onSuccess: () => {
-        refetchSheets();
+        console.log('>>. clicong');
+        
         showDeleteModal.value = false
+        refetchSheets();
+        
     }
 })
 function handleDeleteSheetModal(opt: any) {

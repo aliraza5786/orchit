@@ -1,5 +1,5 @@
 <template>
-  <div class="relative" ref="wrapperRef" @click.stop @keydown.esc="close">
+  <div class="relative w-8" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
     <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id">
       <img v-if="assignedUser?.avatar || assignedUser?.u_profile_image"

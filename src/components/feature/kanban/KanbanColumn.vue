@@ -37,10 +37,7 @@
       <template #item="{ element: ticket }">
         <div>
           <slot name="ticket" :ticket="ticket">
-  <KanbanTicket
-    @click="() => emit('select:ticket', ticket)"
-    :ticket="ticket"
-  />
+ 
 </slot>
 
         </div>
@@ -64,7 +61,6 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
-import KanbanTicket from './KanbanTicket.vue'
 import DropMenu from '../../ui/DropMenu.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 type Id = string | number

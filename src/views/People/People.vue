@@ -33,18 +33,18 @@
       </KanbanBoard>
       <!-- Add Column -->
       <div class="min-w-[328px]" @click.stop>
-        <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
+        <form @submit.prevent="" v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
           <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
-            @keyup.enter="emitAddColumn" />
+            />
           <p class="text-xs mt-1.5">You can add details while editing</p>
           <div class="flex items-center mt-3 gap-3">
-            <Button @click="emitAddColumn" variant="primary"
+            <Button @click="emitAddColumn" type="submit"  variant="primary"
               class="px-3 py-1 bg-accent cursor-pointer text-white rounded">
               {{ addingList ? 'Adding...' : 'Add Team' }}
             </Button>
             <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
           </div>
-        </div>
+        </form>
         <button v-else
           class="text-sm text-text-primary py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
           @click.stop="setActiveAddList">
@@ -55,7 +55,7 @@
   </div>
   <!-- ConfirmDeleteModal Component -->
   <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
-    :itemName="localColumn?.title" :requireMatchText="localColumn?.title" confirmText="Delete workspace"
+    :itemName="localColumn?.title" :requireMatchText="localColumn?.title" confirmText="Delete List"
     cancelText="Cancel" size="md" :loading="isDeletingList" @confirm="handleDeleteColumn"
     @cancel="() => { showDelete = false }" />
 
@@ -215,12 +215,15 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
     console.log(localColumn.value, '>>>. id local column');
 
     const idx = localList.value.findIndex((e: any) => e._id === localColumn.value._id)
+
+    
     if (idx === -1) return
+    console.log(idx , 'index>>>');
 
     const col = localList.value[idx]
 
 
-    const nextCards = [...(col.cards ?? []), data?.added_seats[0]]
+    const nextCards = [...(col.cards ?? []), data?.assigned_seat]
     const nextCol = { ...col, cards: nextCards }
 
     // replace column (new identity) and array (new identity)
