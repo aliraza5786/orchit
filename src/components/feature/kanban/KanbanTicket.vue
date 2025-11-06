@@ -1,5 +1,9 @@
 <template>
-    <div @click="$emit('click')" class="product-ticket relative bg-bg-card rounded-lg p-4 shadow-sm cursor-grab border-t-4
+    <div @click="() => {
+        console.log('>>> clicking >>> ');
+
+        emit('select')
+    }" class="product-ticket relative bg-bg-card rounded-lg p-4 shadow-sm cursor-grab border-t-4
              hover:shadow-md transition-all duration-200 active:cursor-grabbing" :class="priorityBorderClass"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
 
@@ -186,9 +190,9 @@ const setDueDate = (date: string | null) => {
 }
 
 const { data: variables } = useVariables(workspaceId.value, moduleId.value)
-const selectedVarSlug = computed(() => variables.value.filter((e:any) => e._id == props.selectedVar))
+const selectedVarSlug = computed(() => variables.value.filter((e: any) => e._id == props.selectedVar))
 
-defineEmits(['click'])
+const emit = defineEmits(['select'])
 </script>
 <style scoped>
 .product-menu-icon {

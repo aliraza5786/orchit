@@ -2,8 +2,8 @@
   <div class="relative w-8" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
     <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id">
-      <img v-if="assignedUser?.avatar || assignedUser?.u_profile_image"
-        :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image" class="w-6 h-6 object-cover rounded-full"
+      <img v-if="assignedUser?.avatar?.src || assignedUser?.user?.avatar || assignedUser?.u_profile_image"
+        :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar" class="w-6 h-6 object-cover rounded-full"
         alt="" @click="toggle" />
       <div v-else-if="assignedUser?.u_full_name || assignedUser?.name" @click="toggle"
         class="w-6 aspect-square rounded-full text-[10px]  bg-bg-surface font-semibold text-text-primary flex items-center justify-center"
@@ -197,6 +197,8 @@ watch(open, async (v) => {
 /** Actions **/
 function assign(userId: string) {
   const user = membersData.value.find((u: any) => u._id === userId)
+
+  
   if (user) {
     assignedUser.value = user
     emit('assign', user)

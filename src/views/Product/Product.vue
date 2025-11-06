@@ -39,7 +39,11 @@
                         Disbale ( you can't drop here )</div>
                 </template>
                 <template #ticket="{ ticket }">
-                    <KanbanTicket :selectedVar="selected_view_by" @click="selectCardHandler" :ticket="ticket" />
+                    <KanbanTicket :selectedVar="selected_view_by" @select="()=>{
+                        
+                        selectCardHandler(ticket)
+                        
+                    }" :ticket="ticket" />
                 </template>
             </KanbanBoard>
             <div class="min-w-[328px] " @click.stop>
@@ -152,6 +156,8 @@ const { data: Lists, isPending, } = useSheetList(
 const createTeamModal = ref(false);
 const selectedCard = ref<any>()
 const selectCardHandler = (card: any) => {
+    console.log('>> click ', card);
+    
     selectedCard.value = card
 }
 const isCreateSheetModal = ref(false)

@@ -81,7 +81,7 @@
               </div>
               <div class="space-y-2 ">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
-                <AssigmentDropdown @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
+                <AssigmentDropdown @assign="(user)=>assignHandle(user)" :assigneeId="curentAssigne" :seat="details.seat" />
               </div>
               <template v-if="!pin">
                 <div class="space-y-2">
@@ -384,7 +384,7 @@ const setEndDate = (e: any) => moveCard.mutate({ card_id: props.details._id, var
 
 const curentAssigne = computed(() => props.details.assigned_to)
 const assignHandle = (user: any) => {
-  moveCard.mutate({ card_id: props.details._id, assigned_to: user?.user_info?._id })
+  moveCard.mutate({ card_id: props.details._id, seat_id: user?._id })
 }
 
 /* -------------------- Comments -------------------- */

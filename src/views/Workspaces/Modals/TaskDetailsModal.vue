@@ -378,7 +378,7 @@ const setEndDate = (e: any) => {
 const curentAssigne = computed(() => details.value?.assigned_to)
 const assignHandle = (user: any) => {
   if (details.value._id) {
-    moveCard.mutate({ card_id: details.value._id, assigned_to: user?.user_info?._id })
+    moveCard.mutate({ card_id: details.value._id, seat_id: user?._id })
   }
 }
 

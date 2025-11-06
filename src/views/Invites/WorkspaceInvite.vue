@@ -46,8 +46,8 @@
             </p>
           </div>
           <div class="mt-4 flex gap-2">
-            <button class="px-4 py-2 rounded-md bg-black text-sm text-text-primary" @click="goToWorkspace">Open
-              workspace</button>
+            <Button  @click="goToWorkspace">Open
+              workspace</Button>
           </div>
         </div>
         <!-- Declined -->
