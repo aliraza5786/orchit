@@ -151,8 +151,8 @@
               </div>
               <div v-else-if="member.avatar"
                 class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-                :style="{ backgroundColor: avatarColor({ email: member?.assignee_id }) }">
-                {{ member.initials }}
+                :style="{ backgroundColor: avatarColor({ name: member?.name }) }">
+                {{ getInitials(member.name) }}
               </div>
               <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center flex-shrink-0">
                 <i class="pi pi-user text-text-secondary"></i>

@@ -191,7 +191,8 @@ const { data: variables } = useVariables(
 const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
   onSuccess: () => {
     reset()
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] }) 
+    queryClient.invalidateQueries({ queryKey: ['backlog-list'] }) 
     isOpen.value = false
   }
 })

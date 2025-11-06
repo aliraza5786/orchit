@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
@@ -121,7 +121,7 @@ const newLane = ref<{
 
 }>({ id: '', 'lane-title': '', 'lane-description': '', 'lane-color': '#4169E1' });
 
-const selectedPlatforms = ref<string[]>([]);
+// const selectedPlatforms = ref<string[]>([]);
 const localIds = computed(() => {
   try {
     const raw = workspaceStore.workspace
@@ -169,31 +169,43 @@ function handleCancelLane() {
 }
 
 function handleAddLane() {
-  if (!titleError.value && !descriptionError.value) {
-    selectedLanes.value = [...selectedLanes.value, `lane${form.value.lanes.length + 1}`]
-    form.value.lanes.push({ variables: { ...newLane.value, id: `lane${form.value.lanes.length + 1}` } });
-    showCustomForm.value = false;
-    resetForm();
-  }
+  if (!validateLaneForm()) return
+
+  const newId = `lane${form.value.lanes.length + 1}`
+  selectedLanes.value.push(newId)
+  form.value.lanes.push({
+    variables: { ...newLane.value, id: newId }
+  })
+
+  showCustomForm.value = false
+  resetForm()
 }
 
 function handleUpdateLane() {
-  if (!titleError.value && !descriptionError.value) {
-    const index = form.value.lanes.findIndex(l => l.variables.id === newLane.value.id);
+  if (!validateLaneForm()) return
 
-    if (index !== -1) form.value.lanes[index] = { variables: { ...newLane.value } };
-    showCustomForm.value = false;
-    editMode.value = false;
-  }
+  const index = form.value.lanes.findIndex(l => l.variables.id === newLane.value.id)
+  if (index !== -1) form.value.lanes[index] = { variables: { ...newLane.value } }
+
+  showCustomForm.value = false
+  editMode.value = false
   resetForm()
 }
-function resetForm() {
-  selectedPlatforms.value = [];
-  newLane.value = { id: '', 'lane-title': '', 'lane-description': '', 'lane-color': '#4169E1' }
-  touched.title = false;
-  touched.description = false;
 
+
+
+function resetForm() {
+  newLane.value = {
+    id: '',
+    'lane-title': '',
+    'lane-description': '',
+    'lane-color': '#4169E1',
+  }
+  touched.title = false
+  touched.description = false
+  touched.color = false
 }
+
 /** Edit existing lane */
 function editLane(lane: UiLane) {
   newLane.value = { ...lane.variables }
@@ -213,9 +225,28 @@ function continueHandler(): void {
     emit('next');
   }
 }
+function validateLaneForm() {
+  touched.title = true
+  touched.description = true
+  touched.color = true
+
+  // Trigger computed error updates
+  const isValid = !titleError.value && !descriptionError.value && !colorError.value
+
+  return isValid
+}
 
 defineExpose({ continueHandler });
 const emit = defineEmits(['next']);
+watch(() => newLane.value['lane-title'], v => {
+  if (v?.trim() && touched.title) touched.title = false
+})
+watch(() => newLane.value['lane-description'], v => {
+  if (v?.trim() && touched.description) touched.description = false
+})
+watch(() => newLane.value['lane-color'], v => {
+  if (/^#([0-9A-Fa-f]{6})$/.test(v) && touched.color) touched.color = false
+})
 
 </script>
 

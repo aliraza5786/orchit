@@ -46,7 +46,7 @@
             </p>
           </div>
           <div class="mt-4 flex gap-2">
-            <Button  @click="goToWorkspace">Open
+            <Button @click="goToWorkspace">Open
               workspace</Button>
           </div>
         </div>
@@ -92,9 +92,8 @@
 
           <!-- Actions -->
           <div class="mt-6 flex flex-wrap gap-2">
-            <Button 
-              :disabled="data.is_expire || acting" @click="accept">
-{{ acting && actionType === 'accepted' ? 'Joining…' : 'Accept invitation' }}
+            <Button :disabled="data.is_expire || acting" @click="accept">
+              {{ acting && actionType === 'accepted' ? 'Joining…' : 'Accept invitation' }}
             </Button>
 
             <button class="px-4 py-2 rounded-md text-sm border dark:border-border 353D50]  hover:bg-gray-50 dark:hover:bg-[#1a1a1f]
@@ -121,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInvitedWorkspace } from '../../queries/useWorkspace'
 import api from '../../libs/api'
@@ -154,6 +153,7 @@ function toTitle(s?: string) {
 /** ---- actions ---- */
 async function accept() {
   if (!data.value || data.value.status == 'expired') return
+
   acting.value = true
   actionType.value = 'accepted'
   error.value = null
@@ -189,13 +189,27 @@ function goHome() {
   router.push({ name: 'home' }).catch(() => { }) // adjust route name
 }
 function goToWorkspace() {
-  if (data.value?.workspace_id) {
-    router.push({ name: 'workspace', params: { id: data.value.workspace_id } }).catch(() => { })
+  if (data.value?.workspace?._id) {
+    if (!data.value?.job_id) {
+      localStorage.removeItem('jobId')
+      router.push(`/workspace/peak/${data.value?.workspace?._id}`)
+    }else{
+      router.push(`/workspace/peak/${data.value?.workspace?._id}/${data.value?.job_id}`)
+    }
   } else {
     goHome()
   }
 }
 
-
+watch(() => data.value, () => {
+  if (data.value.status == 'rejected') {
+    declined.value = true;
+    return
+  }
+  if (data.value.status == 'accepted') {
+    accepted.value = true;
+    return
+  }
+})
 
 </script>
