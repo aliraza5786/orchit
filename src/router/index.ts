@@ -158,7 +158,7 @@ const routes: RouteRecordRaw[] = [
     path: "/finish-profile",
     name: "finishProfile",
     component: FinishProfile,
-    meta: { requiresAuth: false },
+    meta: { requiresAuth: true },
   },
   // Invites (note unique names)
   {
@@ -238,7 +238,8 @@ router.beforeEach((to, _from, next) => {
     isLoggedIn &&
     to.name != "workspaceInvite" &&
     to.name != "create-workspace" &&
-    to.name != "spaceInvite"
+    to.name != "spaceInvite" &&
+    to.name != "create-profile"
   )
     return next("/dashboard");
   if (
