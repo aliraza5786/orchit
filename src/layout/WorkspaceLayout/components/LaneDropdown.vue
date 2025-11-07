@@ -82,7 +82,7 @@
           <div class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
             @click="handleDuplicateLane">
             <i class="fa-regular fa-copy"></i>
-            Duplicate
+            {{ isDuplicating ? 'Duplicating...' : 'Duplicate' }}
           </div>
           <div
             class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer border-b border-border"
@@ -157,6 +157,7 @@ const props = defineProps<{
   label: string
   color: string
   selected: boolean
+  lanes: any
 }>()
 const { mutate: deleteLane, isPending: isDeleting } = useDeleteWorkspaceLane({
   onSuccess: () => {
@@ -174,9 +175,11 @@ const { mutate: updateLane } = useUpdateWorkspaceLane({
     isOpen.value = false
   }
 });
-const { mutate: duplicateLane } = useDuplicateWorkspaceLane({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['workspaces', 'sheet-list'] });
+const { mutate: duplicateLane, isPending: isDuplicating } = useDuplicateWorkspaceLane({
+  onSuccess: (data: any) => {
+
+    emit('duplicate', data)
+    // queryClient.invalidateQueries({ queryKey: ['workspaces'] });
     isOpen.value = false
   }
 });
@@ -225,7 +228,7 @@ const handleDelete = () => {
   isOpen.value = false;
   deleteLane({ id: props.id });
 }
-const emit = defineEmits(['update'])
+const emit = defineEmits(['update', 'duplicate'])
 
 const handleEdit = () => {
   isOpen.value = false;
@@ -241,6 +244,5 @@ function toggleDropdown(e: MouseEvent) {
 window.addEventListener('close-all-dropdowns', () => {
   isOpen.value = false
 })
-
 
 </script>

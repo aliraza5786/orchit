@@ -17,7 +17,7 @@
         theme === 'dark' ? 'bg-bg-input border-border ' : 'bg-bg-input border-border ',
         error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-black'
       ]" @click="toggleDropdown">
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 max-w-full">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
         <span :class="selected ? ' line-clamp-1 overflow-ellipsis ' : 'text-text-secondary'">
           {{ selected?.title || placeholder }}
@@ -30,17 +30,26 @@
 
     <!-- Options Dropdown -->
     <Teleport to="body">
-      <div v-if="isOpen" class="absolute z-50 mt-2 rounded-md max-h-64 overflow-auto shadow border w-full"
-        :style="dropdownStyles"
-        :class="theme === 'dark' ? 'bg-bg-input text-text-primary border-border ' : 'bg-bg-input text-text-primary border-border'">
-        <div v-for="(option, index) in options" :key="option._id ?? index" @click="selectOption(option)"
-          class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
-          :class="{ 'bg-bg-dropdown ': option._id === selected?._id }">
-          <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
-          <span>{{ option.title }}</span>
-        </div>
-      </div>
-    </Teleport>
+  <div
+    v-if="isOpen"
+    ref="dropdownRef"
+    class="absolute z-50 mt-2 rounded-md max-h-64 overflow-auto shadow border w-full"
+    :style="dropdownStyles"
+    :class="theme === 'dark' ? 'bg-bg-input text-text-primary border-border' : 'bg-bg-input text-text-primary border-border'"
+  >
+    <div
+      v-for="(option, index) in options"
+      :key="option._id ?? index"
+      @click="selectOption(option)"
+      class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
+      :class="{ 'bg-bg-dropdown': option._id === selected?._id }"
+    >
+      <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
+      <span>{{ option.title }}</span>
+    </div>
+  </div>
+</Teleport>
+
 
     <!-- Message -->
     <p v-if="message" class="mt-2 text-xs"
@@ -49,7 +58,6 @@
     </p>
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
@@ -84,83 +92,87 @@ const emit = defineEmits<{
 const isOpen = ref(false)
 const wrapperRef = ref<HTMLElement | null>(null)
 const triggerRef = ref<HTMLElement | null>(null)
+const dropdownRef = ref<HTMLElement | null>(null)
 const dropdownStyles = ref({ top: '0px', left: '0px', width: '100%' })
 const selected = ref<Option | null>(null)
 
-const handleClickOutside = (event: MouseEvent) => {
-  // dropdown is teleported, so only clicks inside the trigger/wrapper should keep it open
-  if (wrapperRef.value && !wrapperRef.value.contains(event.target as Node)) {
+/** Handle click outside **/
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as Node
+  if (
+    !wrapperRef.value?.contains(target) &&
+    !dropdownRef.value?.contains(target)
+  ) {
     isOpen.value = false
+    removeOutsideListener()
   }
 }
 
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-  initSelection() // initialize from modelValue/defaultValue once mounted
-})
+function addOutsideListener() {
+  document.addEventListener('mousedown', handleClickOutside)
+}
+
+function removeOutsideListener() {
+  document.removeEventListener('mousedown', handleClickOutside)
+}
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside)
+  removeOutsideListener()
 })
 
 function toggleDropdown() {
   isOpen.value = !isOpen.value
-  if (!isOpen.value) return
-  nextTick(() => {
-    if (triggerRef.value) {
-      const rect = triggerRef.value.getBoundingClientRect()
-      dropdownStyles.value = {
-        top: `${rect.bottom + window.scrollY}px`,
-        left: `${rect.left + window.scrollX}px`,
-        width: `${rect.width}px`,
+  if (isOpen.value) {
+    nextTick(() => {
+      if (triggerRef.value) {
+        const rect = triggerRef.value.getBoundingClientRect()
+        dropdownStyles.value = {
+          top: `${rect.bottom + window.scrollY}px`,
+          left: `${rect.left + window.scrollX}px`,
+          width: `${rect.width}px`,
+        }
       }
-    }
-  })
+      addOutsideListener()
+    })
+  } else {
+    removeOutsideListener()
+  }
 }
 
 function selectOption(option: Option) {
   selected.value = option
   emit('update:modelValue', option._id)
   isOpen.value = false
+  removeOutsideListener()
 }
 
-/** Initialize/Sync selection */
+/** Sync logic **/
 function initSelection() {
   const initial = props.modelValue ?? props.defaultValue
   if (initial !== undefined && initial !== null) {
     const found = props.options.find((o:any) => o._id === initial)
     if (found) {
       selected.value = found
-      // only emit if parent hasn't provided a modelValue
       if (props.modelValue == null && props.defaultValue != null) {
         emit('update:modelValue', found._id)
       }
-    } else {
-      selected.value = null
-    }
-  } else {
-    selected.value = null
-  }
+    } else selected.value = null
+  } else selected.value = null
 }
 
-// react when modelValue changes from parent
+onMounted(() => initSelection())
+
 watch(() => props.modelValue, (val) => {
-  if (val === null || val === undefined) {
-    selected.value = null
-  } else {
-    const hit = props.options.find((o :any)=> o._id === val)
+  if (val === null || val === undefined) selected.value = null
+  else {
+    const hit = props.options.find((o:any) => o._id === val)
     selected.value = hit ?? null
   }
 })
 
-// if options arrive async, (re)try initialization
 watch(() => props.options, () => {
-  // re-evaluate selection when options update
-  const byModel = props.options.find((o :any)=> o._id === props.modelValue)
-  if (byModel) {
-    selected.value = byModel
-  } else {
-    initSelection()
-  }
+  const byModel = props.options.find((o:any) => o._id === props.modelValue)
+  if (byModel) selected.value = byModel
+  else initSelection()
 }, { deep: true })
 </script>

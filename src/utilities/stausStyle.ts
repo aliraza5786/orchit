@@ -7,6 +7,8 @@ export function getStatusStyle(s: any) {
       return "bg-blue-600/10 text-blue-600  border-blue-600 ";
     case "to do":
       return "bg-gray-600/10 text-gray-600 border-gray-600";
+      case "todo":
+        return "bg-gray-600/10 text-gray-600 border-gray-600";
     case "done":
       return "bg-green-600/10 text-green-600  border-green-600";
     case "accepted":

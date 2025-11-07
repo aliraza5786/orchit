@@ -151,10 +151,8 @@ export const useProductCard = (
   card_id: any,
   options = {}
 ) => {
-  console.log(card_id, '>>>Z');
-  
   return useQuery({
-    queryKey: ["product-card", unref(card_id)],
+    queryKey: [`product-card-${unref(card_id)}`],
     queryFn: ({ signal }) =>
       request<any>({
         url: `/workspace/card/${unref(card_id)}`,

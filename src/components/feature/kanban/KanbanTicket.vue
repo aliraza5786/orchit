@@ -1,16 +1,20 @@
 <template>
-    <div @click="$emit('click')" class="product-ticket relative bg-bg-card rounded-lg p-4 shadow-sm cursor-grab border-t-4
+    <div @click="() => {
+        console.log('>>> clicking >>> ');
+
+        emit('select')
+    }" class="product-ticket relative bg-bg-card rounded-lg p-4 shadow-sm cursor-grab border-t-4
              hover:shadow-md transition-all duration-200 active:cursor-grabbing" :class="priorityBorderClass"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
 
         <div class="flex justify-between gap-2 items-start mb-3">
             <div class="flex gap-2 flex-wrap items-center">
 
-                <span v-if="ticket['card-type']"
+                <span v-if="ticket['card-type'] && selectedVarSlug[0]?.slug != 'card-type'"
                     class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium uppercase">
                     {{ ticket['card-type'] }}
                 </span>
-                <span v-if="ticket['card-status']"
+                <span v-if="ticket['card-status'] && selectedVarSlug[0]?.slug != 'card-status'"
                     class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium">
                     {{ ticket['card-status'] }}
                 </span>
@@ -73,7 +77,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
+import { useDeleteTicket, useMoveCard, useVariables } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
 import DropMenu from '../../ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
@@ -81,7 +85,7 @@ import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdo
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
-const { workspaceId } = useRouteIds();
+const { workspaceId, moduleId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 
 
@@ -103,7 +107,7 @@ export interface Ticket {
 
 const props = defineProps<{
     ticket: any
-
+    selectedVar: any
 }>()
 
 const priorityBorderMap: Record<Priority, string> = {
@@ -185,7 +189,10 @@ const setDueDate = (date: string | null) => {
     })
 }
 
-defineEmits(['click'])
+const { data: variables } = useVariables(workspaceId.value, moduleId.value)
+const selectedVarSlug = computed(() => variables.value.filter((e: any) => e._id == props.selectedVar))
+
+const emit = defineEmits(['select'])
 </script>
 <style scoped>
 .product-menu-icon {

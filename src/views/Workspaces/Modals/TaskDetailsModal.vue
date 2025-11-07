@@ -2,7 +2,7 @@
   <BaseModal :modelValue="modelValue" @update:modelValue="closeModal" class="!pt-0">
    
 
-        <div v-if="isLoading" class="flex items-center justify-center py-20">
+        <div v-if="isLoading || isFetching" class="flex items-center justify-center py-20">
           <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
         </div>
 
@@ -247,7 +247,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'close'])
 const card_Id = ref(props.cardId);
 
-const { data: cardDetails, isLoading, refetch } = useProductCard(card_Id)
+const { data: cardDetails, isLoading, isFetching, refetch } = useProductCard(card_Id)
 
 const details = computed(() => cardDetails.value || {})
 
@@ -378,7 +378,7 @@ const setEndDate = (e: any) => {
 const curentAssigne = computed(() => details.value?.assigned_to)
 const assignHandle = (user: any) => {
   if (details.value._id) {
-    moveCard.mutate({ card_id: details.value._id, assigned_to: user?.user_info?._id })
+    moveCard.mutate({ card_id: details.value._id, seat_id: user?._id })
   }
 }
 
@@ -448,9 +448,9 @@ const attachments = computed(() =>
 const queryClient = useQueryClient()
 const moveCard = useMoveCard({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['tasks'] })
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-    queryClient.invalidateQueries({ queryKey: ['product-card', props.cardId] })
+    queryClient.invalidateQueries({ queryKey: ['backlog-list'] })
+    // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    // queryClient.invalidateQueries({ queryKey: ['product-card', props.cardId] })
   }
 })
 
