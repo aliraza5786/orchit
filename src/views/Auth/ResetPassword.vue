@@ -158,11 +158,11 @@ const { mutateAsync: resetPass, isPending } = useMutation({ mutationFn: resetPas
 
 const submitLabel = computed(() => (isPending.value ? 'Resetting...' : 'Reset password'))
 
-function onFieldInput() {
-  if (errorMessage.value) errorMessage.value = ''
-  if (touched.value.newPassword && newPassword.value) touched.value.newPassword = false
-  if (touched.value.confirmPassword && confirmPassword.value) touched.value.confirmPassword = false
-}
+// function onFieldInput() {
+//   if (errorMessage.value) errorMessage.value = ''
+//   if (touched.value.newPassword && newPassword.value) touched.value.newPassword = false
+//   if (touched.value.confirmPassword && confirmPassword.value) touched.value.confirmPassword = false
+// }
 
 onMounted(async () => {
   if (!token.value) {
