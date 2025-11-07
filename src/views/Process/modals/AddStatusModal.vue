@@ -113,6 +113,7 @@ function updateColorInput() {
 }
 
 function close() {
+  statusName.value=''
   open.value = false
 }
 

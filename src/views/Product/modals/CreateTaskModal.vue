@@ -201,7 +201,7 @@ const touched = reactive({
 
 const isValid = computed(() =>
   !!form.title.trim() &&
-  !!form.lane_id &&
+ 
   (!props.pin ? !!form.startDate && !!form.endDate : true) &&
   !titleError.value &&
   !startDateError.value &&
@@ -272,7 +272,7 @@ const descriptionError = computed(() =>
 function create() {
   // mark all as touched
   touched.title = true
-  touched.lane = true
+
   touched.description = true
   if (!props.pin) {
     touched.startDate = true

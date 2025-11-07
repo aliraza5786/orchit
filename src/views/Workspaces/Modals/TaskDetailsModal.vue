@@ -228,7 +228,7 @@ import { useLanes, useMoveCard } from '../../../queries/useSheets'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdown.vue'
-// import { useQueryClient } from '@tanstack/vue-query'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteIds } from '../../../composables/useQueryParams'
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
@@ -445,10 +445,10 @@ const attachments = computed(() =>
   }))
 )
 
-// const queryClient = useQueryClient()
+const queryClient = useQueryClient()
 const moveCard = useMoveCard({
   onSuccess: () => {
-    // queryClient.invalidateQueries({ queryKey: ['tasks'] })
+    queryClient.invalidateQueries({ queryKey: ['backlog-list'] })
     // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
     // queryClient.invalidateQueries({ queryKey: ['product-card', props.cardId] })
   }

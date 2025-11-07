@@ -233,6 +233,8 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
       ...localList.value.slice(idx + 1)
     ]
     queryClient.invalidateQueries({ queryKey: ['people-lists'] });
+    queryClient.invalidateQueries({ queryKey: ['workspaceRoles'] });
+    
   }
 });
 const handlePLus = (column: any) => {

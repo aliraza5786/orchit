@@ -21,7 +21,7 @@
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']"
                   :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
-                  subtitle="Mobile Application"
+                  subtitle=""
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
@@ -32,7 +32,7 @@
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :ai="true" :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
-                  subtitle="Mobile Application"
+                  subtitle=""
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"

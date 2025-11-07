@@ -5,19 +5,20 @@
       <img v-if="assignedUser?.avatar?.src || assignedUser?.user?.avatar || assignedUser?.u_profile_image"
         :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar" class="w-6 h-6 object-cover rounded-full"
         alt="" @click="toggle" />
-      <div v-else-if="assignedUser?.u_full_name || assignedUser?.name" @click="toggle"
+      <abbr :title="assignedUser?.u_full_name" v-else-if="assignedUser?.u_full_name || assignedUser?.name" @click="toggle"
         class="w-6 aspect-square rounded-full text-[10px]  bg-bg-surface font-semibold text-text-primary flex items-center justify-center"
         :style="{ backgroundColor: assignedUser?.u_full_name ?? assignedUser?.title ? avatarColor({ name: assignedUser?.u_full_name ?? assignedUser?.title, _id: assignedUser?._id }) : '' }">
         {{ getInitials(assignedUser?.u_full_name ?? assignedUser?.name) }}
-      </div>
-      <div v-else
+      </abbr>
+      <abbr :title="assignedUser?.title" v-else
       @click="toggle"
         class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center ">
         <i class="fa-regular fa-user text-xs"></i>
-      </div>
+      </abbr>
     </template>
 
     <button v-else type="button"
+
       class="inline-flex items-center gap-2 rounded-full border border-border px-1 py-1 text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition"
       @click="toggle" :disabled="disabled">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor">

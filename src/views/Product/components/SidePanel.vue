@@ -8,7 +8,7 @@
              border border-orchit-white/5 overflow-hidden" role="complementary" aria-label="Details panel">
       <!-- Header -->
       <div
-        class="sticky top-0 z-10 bg-transparent border-b border-orchit-white/5 px-6 py-4 flex items-center justify-between">
+        class="sticky top-0 z-10  backdrop-blur-2xl border-b border-orchit-white/5 px-6 py-4 flex items-center justify-between">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
         <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
           @click="() => emit('close')" aria-label="Close details">

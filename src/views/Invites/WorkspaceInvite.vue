@@ -32,8 +32,8 @@
           <div class="mt-4 flex gap-2">
             <button class="px-4 py-2 rounded-md border text-sm border-border " @click="() => refetch()">Try
               again</button>
-            <button class="px-4 py-2 rounded-md bg-black text-text-primary text-sm  " @click="goHome">Go to
-              home</button>
+            <Button  @click="goHome">Go to
+              home</Button>
           </div>
         </div>
 
@@ -58,8 +58,8 @@
             <p class="text-sm leading-relaxed">We’ve let the workspace know you won’t be joining.</p>
           </div>
           <div class="mt-4 flex gap-2">
-            <button class="px-4 py-2 rounded-md bg-black text-white text-sm dark:bg-white text-primary"
-              @click="goHome">Go to home</button>
+            <Button 
+              @click="goHome">Go to home</Button>
           </div>
         </div>
         <!-- Invite details -->
@@ -158,7 +158,7 @@ async function accept() {
   actionType.value = 'accepted'
   error.value = null
   try {
-    await api.post(`/workspace/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'accepted' })
+    await api.post(`/common/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'accepted' })
     accepted.value = true
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Could not accept the invitation.'
@@ -174,7 +174,7 @@ async function decline() {
   actionType.value = 'decline'
   error.value = null
   try {
-    await api.post(`/workspace/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'rejected' })
+    await api.post(`/common/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'rejected' })
     declined.value = true
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Could not decline the invitation.'
