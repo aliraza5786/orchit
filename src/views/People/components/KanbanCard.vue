@@ -5,9 +5,11 @@
 
         <div class="flex justify-between gap-2 items-start w-full">
             <div class="flex items-center gap-2 w-[90%] ">
-                <img v-if="ticket?.avatar" :src="ticket?.avatar" class="min-w-10 w-10 h-10 rounded-full object-cover" alt="avartar">
-                <div v-else class="w-10 min-w-10 overflow-hidden overflow-ellipsis aspect-square bg-bg-surface flex justify-center items-center rounded-full "
-                    :style="{ backgroundColor: ticket?.name ? avatarColor({  email: ticket?.email, }) : '' }">
+                <img v-if="ticket?.avatar" :src="ticket?.avatar" class="min-w-10 w-10 h-10 rounded-full object-cover"
+                    alt="avartar">
+                <div v-else
+                    class="w-10 min-w-10 overflow-hidden overflow-ellipsis aspect-square bg-bg-surface flex justify-center items-center rounded-full "
+                    :style="{ backgroundColor: ticket?.name ? avatarColor({ email: ticket?.email, }) : '' }">
                     {{ getInitials(ticket?.name) }} <i v-if="!ticket?.name" class="fa-solid fa-user text-white"></i>
                 </div>
                 <div class=" max-w-[70%]">
@@ -40,18 +42,19 @@
         </div>
         <!-- </div> -->
     </div>
-    <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Team seat" itemLabel="Seat"
-        :itemName="ticket.title" :requireMatchText="ticket.title" confirmText="Delete Seat" cancelText="Cancel"
-        size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {
-            showDelete = false
-        }">
-    </ConfirmDeleteModal>
+    <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.stop @pointerdown.stop>
+        <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Team seat" itemLabel="Seat"
+            :itemName="ticket.title" :requireMatchText="ticket.title" confirmText="Delete Seat" cancelText="Cancel"
+            size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {
+                showDelete = false
+            }">
+        </ConfirmDeleteModal>
 
 
-    <AssignmentModal :isSubmitting="inviting" v-model="showAddMembers" :members="people?.people"
-        :directory="people?.people" @submit="({ invite }) => sendInvites(invite)" />
+        <AssignmentModal :isSubmitting="inviting" v-model="showAddMembers" :members="people?.people"
+            :directory="people?.people" @submit="({ invite }) => sendInvites(invite)" />
 
-
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -135,7 +138,7 @@ const assignHandle = () => {
 }
 const { mutate: deleleSeat, isPending: deletingTicket } = useDeleteSeat({
     onSuccess: () => {
-        
+
         queryClient.invalidateQueries({ queryKey: ['people-lists'] })
     }
 })
