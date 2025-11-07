@@ -212,7 +212,19 @@ const routes: RouteRecordRaw[] = [
   { path: "/:pathMatch(.*)*", name: "NotFound", component: NotFound },
 ];
 
-const router = createRouter({ history: createWebHistory(), routes });
+const router = createRouter({ history: createWebHistory(), routes,
+
+    scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) {
+      // If user clicked back/forward, restore position
+      return savedPosition
+    } else {
+      // Always scroll to top for new pages
+      return { top: 0, behavior: 'smooth' } 
+    }
+  },
+  
+ });
 
 // Guard: check any matched record (works with nested routes)
 router.beforeEach((to, _from, next) => {
@@ -230,5 +242,8 @@ router.beforeEach((to, _from, next) => {
     return next("/dashboard");
   return next();
 });
+
+
+
 
 export default router;
