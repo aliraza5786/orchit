@@ -21,7 +21,7 @@
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']"
                   :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
-                  subtitle="Mobile Application"
+                  subtitle=""
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
@@ -32,7 +32,7 @@
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :ai="true" :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
-                  subtitle="Mobile Application"
+                  subtitle=""
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
@@ -151,8 +151,8 @@
               </div>
               <div v-else-if="member.avatar"
                 class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-                :style="{ backgroundColor: avatarColor({ email: member?.assignee_id }) }">
-                {{ member.initials }}
+                :style="{ backgroundColor: avatarColor({ name: member?.name }) }">
+                {{ getInitials(member.name) }}
               </div>
               <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center flex-shrink-0">
                 <i class="pi pi-user text-text-secondary"></i>

@@ -1,11 +1,12 @@
 export function getInitials(name: string) {
-  if (name)
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  else return;
+  if (!name) return;
+
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2); // ✅ Only keep first two letters
 }
 
 export function generateAvatarColor(id: string | null, name: string): string {

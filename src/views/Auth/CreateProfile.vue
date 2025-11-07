@@ -80,9 +80,9 @@
           </Button>
 
           <div class="flex gap-4 items-center ml-auto">
-            <router-link
+            <!-- <router-link
               :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`"><button
-                class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link>
+                class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link> -->
             <Button size="md" type="submit" @click="continueHandler">
               {{ creatingProfile || invitingPeople ? 'Continuing...' : activeStep == 3 ? 'Invite' : 'Continue' }}
             </Button>

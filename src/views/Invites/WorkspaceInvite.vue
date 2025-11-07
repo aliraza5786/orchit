@@ -32,8 +32,8 @@
           <div class="mt-4 flex gap-2">
             <button class="px-4 py-2 rounded-md border text-sm border-border " @click="() => refetch()">Try
               again</button>
-            <button class="px-4 py-2 rounded-md bg-black text-text-primary text-sm  " @click="goHome">Go to
-              home</button>
+            <Button  @click="goHome">Go to
+              home</Button>
           </div>
         </div>
 
@@ -46,8 +46,8 @@
             </p>
           </div>
           <div class="mt-4 flex gap-2">
-            <button class="px-4 py-2 rounded-md bg-black text-sm text-text-primary" @click="goToWorkspace">Open
-              workspace</button>
+            <Button @click="goToWorkspace">Open
+              workspace</Button>
           </div>
         </div>
         <!-- Declined -->
@@ -58,8 +58,8 @@
             <p class="text-sm leading-relaxed">We’ve let the workspace know you won’t be joining.</p>
           </div>
           <div class="mt-4 flex gap-2">
-            <button class="px-4 py-2 rounded-md bg-black text-white text-sm dark:bg-white text-primary"
-              @click="goHome">Go to home</button>
+            <Button 
+              @click="goHome">Go to home</Button>
           </div>
         </div>
         <!-- Invite details -->
@@ -92,9 +92,8 @@
 
           <!-- Actions -->
           <div class="mt-6 flex flex-wrap gap-2">
-            <Button 
-              :disabled="data.is_expire || acting" @click="accept">
-{{ acting && actionType === 'accepted' ? 'Joining…' : 'Accept invitation' }}
+            <Button :disabled="data.is_expire || acting" @click="accept">
+              {{ acting && actionType === 'accepted' ? 'Joining…' : 'Accept invitation' }}
             </Button>
 
             <button class="px-4 py-2 rounded-md text-sm border dark:border-border 353D50]  hover:bg-gray-50 dark:hover:bg-[#1a1a1f]
@@ -121,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInvitedWorkspace } from '../../queries/useWorkspace'
 import api from '../../libs/api'
@@ -154,11 +153,12 @@ function toTitle(s?: string) {
 /** ---- actions ---- */
 async function accept() {
   if (!data.value || data.value.status == 'expired') return
+
   acting.value = true
   actionType.value = 'accepted'
   error.value = null
   try {
-    await api.post(`/workspace/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'accepted' })
+    await api.post(`/common/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'accepted' })
     accepted.value = true
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Could not accept the invitation.'
@@ -174,7 +174,7 @@ async function decline() {
   actionType.value = 'decline'
   error.value = null
   try {
-    await api.post(`/workspace/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'rejected' })
+    await api.post(`/common/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'rejected' })
     declined.value = true
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Could not decline the invitation.'
@@ -189,13 +189,27 @@ function goHome() {
   router.push({ name: 'home' }).catch(() => { }) // adjust route name
 }
 function goToWorkspace() {
-  if (data.value?.workspace_id) {
-    router.push({ name: 'workspace', params: { id: data.value.workspace_id } }).catch(() => { })
+  if (data.value?.workspace?._id) {
+    if (!data.value?.job_id) {
+      localStorage.removeItem('jobId')
+      router.push(`/workspace/peak/${data.value?.workspace?._id}`)
+    }else{
+      router.push(`/workspace/peak/${data.value?.workspace?._id}/${data.value?.job_id}`)
+    }
   } else {
     goHome()
   }
 }
 
-
+watch(() => data.value, () => {
+  if (data.value.status == 'rejected') {
+    declined.value = true;
+    return
+  }
+  if (data.value.status == 'accepted') {
+    accepted.value = true;
+    return
+  }
+})
 
 </script>

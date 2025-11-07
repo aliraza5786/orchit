@@ -192,18 +192,17 @@ const endDateError = computed(() => {
     if (form.startDate && form.endDate && form.endDate < form.startDate) return 'End date cannot be before start date'
     return ''
 })
-const laneError = computed(() => {
-    if (!touched.lane) return ''
-    if (form.lane_id === null || form.lane_id === undefined || form.lane_id === '') return 'Lane is required'
-    return ''
-})
+// const laneError = computed(() => {
+//     if (!touched.lane) return ''
+//     if (form.lane_id === null || form.lane_id === undefined || form.lane_id === '') return 'Lane is required'
+//     return ''
+// })
 
 const isValid = computed(
     () =>
         !titleError.value &&
         !startDateError.value &&
         !endDateError.value &&
-        !laneError.value &&
         !!form.title.trim() &&
         (!props.pin ? !!form.startDate &&
             !!form.endDate : true)
