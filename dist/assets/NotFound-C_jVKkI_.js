@@ -1,0 +1,1 @@
+import{H as t,i as o,o as n,e as s}from"./index-BRH08Fos.js";const r={},c={class:"p-8 text-center text-red-500"};function a(d,e){return n(),o("div",c,e[0]||(e[0]=[s("h2",null,"404 | Page Not Found",-1)]))}const l=t(r,[["render",a]]);export{l as default};
