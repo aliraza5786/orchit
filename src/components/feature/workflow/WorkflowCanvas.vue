@@ -81,7 +81,7 @@ function mapApiEdge(e: any): VFEdge {
   }
 }
 watch(
-  [() => isStatues.value, () => isProcess.value, isProcessFetching],
+  [() => isStatues.value, () => isProcess.value],
   async ([s1, s2]) => {
     if (s1 && s2 && statuses.value && !processWorkflow.value?.raw_transitions.nodes) {
       const newNodes: VFNode[] = statuses.value.map((n: any, i: any) => ({
@@ -89,7 +89,7 @@ watch(
         type: n.type ?? 'default',
         position: { x: 300 * i, y: 34 },   // numbers, not strings
         data: {
-          label: n.value, "status": "To Do"
+          label: n.title, "status": "To Do"
         },
       }))
 

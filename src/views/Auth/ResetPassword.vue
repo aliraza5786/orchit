@@ -11,13 +11,17 @@
           <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="fa-solid fa-times text-red-600 text-2xl"></i>
           </div>
-          <h2 class="text-2xl font-medium mb-4 text-text-primary">Reset link expired</h2>
+          <h2 class="text-2xl font-medium mb-4 text-text-primary">
+            Reset link expired
+          </h2>
           <p class="text-sm text-text-secondary mb-8">
             This password reset link has expired or is invalid.<br />
             Please request a new one.
           </p>
           <router-link to="/forgot-password">
-            <Button size="md" variant="primary">Request new reset link</Button>
+            <Button size="md" variant="primary">
+              Request new reset link
+            </Button>
           </router-link>
           <div class="mt-6">
             <router-link to="/login" class="text-sm text-text-secondary hover:text-text-primary">
@@ -30,26 +34,52 @@
           <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="fa-solid fa-check text-green-600 text-2xl"></i>
           </div>
-          <h2 class="text-2xl font-medium mb-4 text-text-primary">Password reset successful</h2>
+          <h2 class="text-2xl font-medium mb-4 text-text-primary">
+            Password reset successful
+          </h2>
           <p class="text-sm text-text-secondary mb-8">
             Your password has been successfully reset.<br />
             You can now sign in with your new password.
           </p>
           <router-link to="/login">
-            <Button size="md" variant="primary">Go to login</Button>
+            <Button size="md" variant="primary">
+              Go to login
+            </Button>
           </router-link>
         </div>
 
         <div v-else>
-          <h2 class="text-[32px] font-medium mb-4 text-center text-text-primary">Reset your password</h2>
-          <p class="text-sm text-text-secondary text-center mb-8">Enter your new password below....</p>
+          <h2 class="text-[32px] font-medium mb-4 text-center text-text-primary">
+            Reset your password
+          </h2>
+          <p class="text-sm text-text-secondary text-center mb-8">
+            Enter your new password below.
+          </p>
 
           <form @submit.prevent="handleResetPassword" class="space-y-4 w-full">
-            <BaseTextField v-model="newPassword" label="New Password" type="password" placeholder="Enter new password"
-              size="lg" :error="newPasswordHasError" :message="newPasswordError" @blur="touched.newPassword = true" />
-            <BaseTextField v-model="confirmPassword" label="Confirm Password" type="password"
-              placeholder="Confirm new password" size="lg" :error="confirmPasswordHasError"
-              :message="confirmPasswordError" @blur="touched.confirmPassword = true" />
+            <BaseTextField
+              v-model="newPassword"
+              label="New Password"
+              placeholder="Enter new password"
+              size="lg"
+              type="password"
+              :error="newPasswordHasError"
+              :message="newPasswordError"
+              @blur="touched.newPassword = true"
+              @update:modelValue="onFieldInput"
+            />
+
+            <BaseTextField
+              v-model="confirmPassword"
+              label="Confirm Password"
+              placeholder="Confirm new password"
+              size="lg"
+              type="password"
+              :error="confirmPasswordHasError"
+              :message="confirmPasswordError"
+              @blur="touched.confirmPassword = true"
+              @update:modelValue="onFieldInput"
+            />
 
             <div class="bg-bg-card border border-border rounded-lg p-4">
               <p class="text-xs text-text-secondary mb-2">Password requirements:</p>
@@ -86,7 +116,9 @@
               {{ submitLabel }}
             </Button>
 
-            <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">{{ errorMessage }}</p>
+            <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
+              {{ errorMessage }}
+            </p>
           </form>
         </div>
       </div>
@@ -95,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useMutation } from '@tanstack/vue-query'
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
@@ -116,10 +148,10 @@ const verifying = ref(true)
 const tokenExpired = ref(false)
 const resetSuccess = ref(false)
 
-const touched = ref({
+const touched = {
   newPassword: false,
   confirmPassword: false,
-})
+}
 
 const hasMinLength = computed(() => newPassword.value.length >= 8)
 const hasNumber = computed(() => /\d/.test(newPassword.value))
@@ -128,27 +160,23 @@ const hasUpperCase = computed(() => /[A-Z]/.test(newPassword.value))
 const hasLowerCase = computed(() => /[a-z]/.test(newPassword.value))
 
 const newPasswordError = computed(() => {
-  console.log(touched.value, '>>>');
-
-  if (!touched.value.newPassword) return ''
-  const pwd = newPassword.value.trim()
-  if (!pwd) return 'Password is required'
-  if (!hasMinLength.value) return 'Password must be at least 8 characters long'
-  if (!hasNumber.value) return 'Password must contain at least one number'
-  if (!hasSpecialChar.value) return 'Password must contain at least one special character'
-  if (!hasUpperCase.value) return 'Password must contain at least one uppercase letter'
-  if (!hasLowerCase.value) return 'Password must contain at least one lowercase letter'
+  if (!touched.newPassword) return ''
+  if (!newPassword.value) return 'Password is required'
+  if (!hasMinLength.value) return 'Password must be at least 8 characters'
+  if (!hasNumber.value) return 'Password must contain a number'
+  if (!hasSpecialChar.value) return 'Password must contain a special character'
+  if (!hasUpperCase.value) return 'Password must contain an uppercase letter'
+  if (!hasLowerCase.value) return 'Password must contain a lowercase letter'
   return ''
 })
+const newPasswordHasError = computed(() => !!newPasswordError.value)
 
 const confirmPasswordError = computed(() => {
-  if (!touched.value.confirmPassword) return ''
-  if (!confirmPassword.value.trim()) return 'Please confirm your password'
-  if (confirmPassword.value.trim() !== newPassword.value.trim()) return 'Passwords do not match'
+  if (!touched.confirmPassword) return ''
+  if (!confirmPassword.value) return 'Please confirm your password'
+  if (confirmPassword.value !== newPassword.value) return 'Passwords do not match'
   return ''
 })
-
-const newPasswordHasError = computed(() => !!newPasswordError.value)
 const confirmPasswordHasError = computed(() => !!confirmPasswordError.value)
 
 const isFormValid = computed(() => !newPasswordError.value && !confirmPasswordError.value)
@@ -156,12 +184,11 @@ const isFormValid = computed(() => !newPasswordError.value && !confirmPasswordEr
 const { mutateAsync: verifyToken } = useMutation({ mutationFn: verifyResetToken })
 const { mutateAsync: resetPass, isPending } = useMutation({ mutationFn: resetPassword })
 
+const submitDisabled = computed(() => isPending.value || !isFormValid.value)
 const submitLabel = computed(() => (isPending.value ? 'Resetting...' : 'Reset password'))
 
 function onFieldInput() {
   if (errorMessage.value) errorMessage.value = ''
-  if (touched.value.newPassword && newPassword.value) touched.value.newPassword = false
-  if (touched.value.confirmPassword && confirmPassword.value) touched.value.confirmPassword = false
 }
 
 onMounted(async () => {
@@ -180,50 +207,28 @@ onMounted(async () => {
   }
 })
 
-function validateForm() {
-  touched.value.newPassword = true
-  touched.value.confirmPassword = true
-
-  if (!newPassword.value.trim() || !confirmPassword.value.trim()) return false
-  if (newPasswordError.value || confirmPasswordError.value) return false
-  return true
-}
-
 async function handleResetPassword() {
   errorMessage.value = ''
+  touched.newPassword = true
+  touched.confirmPassword = true
 
-  // Mark all fields as touched
-  touched.value.newPassword = true
-  touched.value.confirmPassword = true
-
-  // Check for validation
-  if (!validateForm()) {
+  if (!isFormValid.value) {
+    errorMessage.value = 'Please fill all fields correctly.'
     return
   }
 
-  // Proceed with password reset
   try {
     await resetPass({
       token: token.value,
-      new_password: newPassword.value.trim(),
-      confirm_password: confirmPassword.value.trim(),
+      new_password: newPassword.value,
+      confirm_password: confirmPassword.value
     })
     resetSuccess.value = true
-    setTimeout(() => router.push('/login'), 3000)
+    setTimeout(() => {
+      router.push('/login')
+    }, 3000)
   } catch (err: any) {
     errorMessage.value = err?.message || 'Failed to reset password. Please try again.'
   }
 }
-
-const submitDisabled = computed(() => isPending.value || !isFormValid.value)
-
-watch(newPassword, () => {
-  console.log('wating');
-
-  touched.value.newPassword = true;  // Mark as touched when user types
-})
-
-watch(confirmPassword, () => {
-  touched.value.confirmPassword = true;  // Mark as touched when user types
-})
 </script>

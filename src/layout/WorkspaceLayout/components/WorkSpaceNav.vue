@@ -1,67 +1,66 @@
 <template>
-  <nav class="flex items-center justify-between min-h-16 w-full overflow-x-auto">
-    <!-- Left side: Logo + lanes -->
-    <div
-      :class="`text-2xl font-bold flex items-center min-w-[320px] gap-4 sm:gap-8 ${workspaceStore.background.startsWith('url') ? 'text-text-secondary' : 'text-text-primary'}`">
-      <!-- Logo + Title (now a dropdown trigger) -->
-      <div class="relative">
-        <button ref="logoBtnRef" class="flex items-center gap-2 sm:gap-3 pl-3 cursor-pointer rounded-md"
-          aria-haspopup="menu" :aria-expanded="logoMenuOpen ? 'true' : 'false'" @click="toggleLogoMenu"
-          @keydown.down.prevent="openAndFocusFirst" @keydown.enter.prevent="toggleLogoMenu"
-          @keydown.space.prevent="toggleLogoMenu">
-          <img :src="getWorkspace?.logo ?? dp" alt="Workspace menu"
-            class="min-w-10 shadow-2xl rounded-md h-10 cursor-pointer aspect-square object-contain" />
-          <h3
-            class="text-lg text-left  font-medium max-w-43  text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block">
-            {{ getWorkspace?.variables?.title }}
-          </h3>
-          <svg class="w-4 h-4 opacity-70 transition-transform duration-200"
-            :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'" viewBox="0 0 20 20" fill="currentColor"
-            aria-hidden="true">
-            <path fill-rule="evenodd"
-              d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z"
-              clip-rule="evenodd" />
-          </svg>
+    <nav class="flex items-center justify-between min-h-16 w-full overflow-x-auto">
+      <!-- Left side: Logo + lanes -->
+      <div
+        :class="`text-2xl font-bold flex items-center min-w-[320px] gap-4 sm:gap-8 ${workspaceStore.background.startsWith('url') ? 'text-text-secondary' : 'text-text-primary'}`">
+        <!-- Logo + Title (now a dropdown trigger) -->
+        <div class="relative">
+          <button ref="logoBtnRef" class="flex items-center gap-2 sm:gap-3 pl-3 cursor-pointer rounded-md"
+            aria-haspopup="menu" :aria-expanded="logoMenuOpen ? 'true' : 'false'" @click="toggleLogoMenu"
+            @keydown.down.prevent="openAndFocusFirst" @keydown.enter.prevent="toggleLogoMenu"
+            @keydown.space.prevent="toggleLogoMenu">
+            <img :src="getWorkspace?.logo ?? dp" alt="Workspace menu"
+              class="min-w-10 shadow-2xl rounded-md h-10 cursor-pointer aspect-square object-contain" />
+            <h3
+              class="text-lg text-left  font-medium max-w-43  text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block">
+              {{ getWorkspace?.variables?.title }}
+            </h3>
+            <svg class="w-4 h-4 opacity-70 transition-transform duration-200"
+              :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'" viewBox="0 0 20 20" fill="currentColor"
+              aria-hidden="true">
+              <path fill-rule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z"
+                clip-rule="evenodd" />
+            </svg>
 
-        </button>
+          </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <ul
+          :class="`flex text-xs font-bold items-center gap-2 ${workspaceStore.background.startsWith('url') ? 'text-white' : 'text-text-primary'}`">
+          <li class="px-3 py-2 hover:bg-bg-card cursor-pointer group rounded-lg"
+            :class="workspaceStore.selectedLaneIds.length == 0 ? 'bg-bg-card text-text-primary' : ''"
+            @click="workspaceStore.toggleAllLane()">
+            Main
+          </li>
+
+          <li v-for="item in getWorkspace?.lanes" :key="item._id" @click="workspaceStore.toggleLane(item._id)">
+            <LaneDropdown @update="openUpdateModal" :id="item._id" :label="item?.variables['lane-title']"
+              :link="item?.link ?? ''" :color="item?.variables['lane-color']"
+              :selected="workspaceStore.isLaneSelected(item._id)" />
+          </li>
+
+          <li class="hover:text-accent text-text-primary flex gap-2 items-center text-xs cursor-pointer px-2 py-1"
+            @click="createLaneHandler">
+            <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.9998 23.3346V14.0013M13.9998 14.0013V4.66797M13.9998 14.0013H23.3332M13.9998 14.0013H4.6665"
+                stroke="currentColor" stroke-opacity="0.8" stroke-width="2.8" stroke-linecap="round" />
+            </svg>
+            New lane
+          </li>
+        </ul>
       </div>
 
-      <!-- Navigation Links -->
-      <ul
-        :class="`flex text-xs font-bold overflow-x-auto items-center gap-2 ${workspaceStore.background.startsWith('url') ? 'text-white' : 'text-text-primary'}`">
-        <li class="px-3 py-2 hover:bg-bg-card cursor-pointer group rounded-lg"
-          :class="workspaceStore.selectedLaneIds.length == 0 ? 'bg-bg-card text-text-primary' : ''"
-          @click="workspaceStore.toggleAllLane()">
-          Main
-        </li>
-
-        <li v-for="item in localWorkspace?.lanes" :key="item._id" @click="workspaceStore.toggleLane(item._id)">
-          <LaneDropdown @duplicate="duplicateHandler" :lanes="localWorkspace" @update="openUpdateModal" :id="item._id"
-            :label="item?.variables['lane-title']" :link="item?.link ?? ''" :color="item?.variables['lane-color']"
-            :selected="workspaceStore.isLaneSelected(item._id)" />
-        </li>
-
-        <li
-          class="hover:text-accent text-nowrap text-text-primary flex gap-2 items-center text-xs cursor-pointer px-2 py-1"
-          @click="createLaneHandler">
-          <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13.9998 23.3346V14.0013M13.9998 14.0013V4.66797M13.9998 14.0013H23.3332M13.9998 14.0013H4.6665"
-              stroke="currentColor" stroke-opacity="0.8" stroke-width="2.8" stroke-linecap="round" />
-          </svg>
-          New lane
-        </li>
-      </ul>
-    </div>
-
-    <!-- Right side -->
-    <div class="flex gap-2">
-      <button class="cursor-pointer rounded-lg p-2" @click="handleClick">
-        <i class="fa-solid fa-ellipsis rotate-90 cursor-pointer"></i>
-      </button>
-    </div>
-  </nav>
+      <!-- Right side -->
+      <div class="flex gap-2">
+        <button class="cursor-pointer rounded-lg p-2" @click="handleClick">
+          <i class="fa-solid fa-ellipsis rotate-90 cursor-pointer"></i>
+        </button>
+      </div>
+    </nav> 
   <!-- Dropdown -->
-  <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
+   <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
     <div v-show="logoMenuOpen" ref="menuRef"
       class="absolute top-10 left-[11px] z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
       role="menu" aria-label="Workspace switcher" @keydown.esc.stop.prevent="closeLogoMenu">
@@ -99,7 +98,7 @@
 import LaneDropdown from './LaneDropdown.vue';
 import { useWorkspaceStore } from '../../../stores/workspace';
 import dp from "../../../assets/global/dummy.jpeg"
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSingleWorkspace, useWorkspaces } from '../../../queries/useWorkspace';
 import { useWorkspaceId } from '../../../composables/useQueryParams';
@@ -110,17 +109,7 @@ const workspaceStore = useWorkspaceStore();
 const { data: workspaces } = useWorkspaces(1, 30)
 const laneId = ref('');
 const { workspaceId } = useWorkspaceId();
-const { data: getWorkspace, refetch, isFetched } = useSingleWorkspace(useWorkspaceId().workspaceId.value)
-
-const localWorkspace = ref(getWorkspace.value);
-
-const duplicateHandler = (data: any) => {
-  localWorkspace.value = { ...localWorkspace, lanes: [...localWorkspace.value?.lanes, data] }
-}
-watch(() => isFetched, () => {
-  localWorkspace.value = getWorkspace.value
-})
-
+const { data: getWorkspace, refetch } = useSingleWorkspace(useWorkspaceId().workspaceId.value)
 // === Logo dropdown state & refs ===
 const logoMenuOpen = ref(false);
 const logoBtnRef = ref<HTMLButtonElement | null>(null);

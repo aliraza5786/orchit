@@ -37,7 +37,10 @@
       <template #item="{ element: ticket }">
         <div>
           <slot name="ticket" :ticket="ticket">
- 
+  <KanbanTicket
+    @click="() => emit('select:ticket', ticket)"
+    :ticket="ticket"
+  />
 </slot>
 
         </div>
@@ -61,11 +64,12 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
+import KanbanTicket from './KanbanTicket.vue'
 import DropMenu from '../../ui/DropMenu.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 type Id = string | number
 export interface Ticket { _id: Id;[k: string]: any }
-export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any ,showADDNEW?:any}
+export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any }
 
 const props = defineProps<{ column: Column, variable_id: string, sheet_id: string, canDragList: boolean, plusIcon: boolean }>()
 const emit = defineEmits<{
@@ -83,6 +87,8 @@ const emit = defineEmits<{
 }>()
 const workspaceStore = useWorkspaceStore()
 const onStart = () => {
+  console.log(props?.column?.transitions, '>>>>');
+
   workspaceStore.setTransition({ ...props?.column?.transitions, currentColumn: props.column?.title })
 }
 const onEnd = () => {
@@ -163,6 +169,7 @@ function getMenuItems() {
 }
 function showActions() {
   const title = props?.column?.title.trim().toLowerCase();
+  console.log(title);
   if (title)
     switch (title) {
       case 'admin':
@@ -182,9 +189,6 @@ function showActions() {
 const handleDeleteColumn = () => {
   emit('delete:column', { title: props.column.title, columnId: props.column?._id })
 }
-window.addEventListener('close-all-showADDNEW', () => {
-  props.column.showADDNEW = false;
-})
 </script>
 
 <style scoped>

@@ -389,7 +389,7 @@ export const useProcessStatus = (workspace_id: any, options = {}) => {
     queryKey: ["process-status", workspace_id],
     queryFn: ({ signal }) => {
       return request<any>({
-        url: `common/cardstatus-process?workspace_id=${workspace_id}`,
+        url: `common/cardstatus-sheet?workspace_id=${workspace_id}`,
         method: "GET",
         signal,
       });

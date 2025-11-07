@@ -8,7 +8,7 @@
              border border-orchit-white/5 overflow-hidden" role="complementary" aria-label="Details panel">
       <!-- Header -->
       <div
-        class="sticky top-0 z-10  backdrop-blur-2xl border-b border-orchit-white/5 px-6 py-4 flex items-center justify-between">
+        class="sticky top-0 z-10 bg-transparent border-b border-orchit-white/5 px-6 py-4 flex items-center justify-between">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
         <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
           @click="() => emit('close')" aria-label="Close details">
@@ -81,7 +81,7 @@
               </div>
               <div class="space-y-2 ">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
-                <AssigmentDropdown @assign="(user)=>assignHandle(user)" :assigneeId="curentAssigne" :seat="details.seat" />
+                <AssigmentDropdown @assign="assignHandle" :assigneeId="curentAssigne" :seat="details.seat" />
               </div>
               <template v-if="!pin">
                 <div class="space-y-2">
@@ -161,10 +161,10 @@
               <div class="flex items-center gap-3 mb-2">
                 <div
                   class="h-8 w-8 rounded-full bg-accent/15 text-accent flex items-center justify-center text-xs font-semibold">
-                  {{ initials(c.commented_by?.u_full_name) }}
+                  {{ initials(c.created_by?.u_full_name) }}
                 </div>
                 <div class="flex-1">
-                  <div class="text-sm font-medium">{{ c.commented_by?.u_full_name }}</div>
+                  <div class="text-sm font-medium">{{ c.created_by?.u_full_name }}</div>
                   <div class="text-xs text-text-secondary">{{ formatDateTime(c.created_at) }}</div>
                 </div>
                 <div v-if="isMine(c)" class="flex items-center gap-2">
@@ -205,7 +205,7 @@
               <textarea v-model="newComment" rows="3" class="w-full p-3 bg-transparent outline-none text-sm"
                 placeholder="Write a comment" />
               <div class="grid grid-cols-3 items-center w-full justify-between p-2 border-t border-orchit-white/10">
-                <input type="file" multiple @change="handleFileChange" class=" max-w-full text-ellipsis text-xs text-text-secondary
+                <input type="file" multiple @change="handleFileChange" class=" text-xs text-text-secondary
                          file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md
                          file:border file:border-orchit-white/10 file:bg-orchit-white/10
                          hover:file:bg-orchit-white/15 file:text-text-primary transition inline w-fit" />
@@ -384,7 +384,7 @@ const setEndDate = (e: any) => moveCard.mutate({ card_id: props.details._id, var
 
 const curentAssigne = computed(() => props.details.assigned_to)
 const assignHandle = (user: any) => {
-  moveCard.mutate({ card_id: props.details._id, seat_id: user?._id })
+  moveCard.mutate({ card_id: props.details._id, assigned_to: user?.user_info?._id })
 }
 
 /* -------------------- Comments -------------------- */
@@ -409,19 +409,7 @@ const isMine = (c: any) => c?.created_by?._id === currentUserId.value
 
 const editingId = ref<string | null>(null)
 const editText = ref('')
-const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateComment({
-  onSuccess: (updatedComment: any) => {
-    // Find and update the comment in local state immediately
-    const idx = comments.value.findIndex((c: any) => c._id === updatedComment._id)
-    if (idx > -1) {
-      comments.value[idx] = { ...comments.value[idx], comment_text:updatedComment.comment_text }
-    }
-    // Exit edit mode once done
-    editingId.value = null
-    editText.value = ''
-  },
-})
-
+const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateComment()
 const { mutate: deleteComment } = useDeleteComment()
 
 function beginEdit(c: any) { editingId.value = c._id; editText.value = c.comment_text ?? '' }

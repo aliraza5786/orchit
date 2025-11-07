@@ -218,7 +218,7 @@ export const useVariables = (
     queryKey: ["all-module-variables"],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `/workspace/catalog/${workspace_id}/card-variables/${unref(module_id) ?? module_id}`,
+        url: `/workspace/catalog/${workspace_id}/card-variables/${module_id}`,
         method: "GET",
         signal,
       }),

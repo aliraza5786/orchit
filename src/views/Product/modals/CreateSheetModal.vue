@@ -2,7 +2,7 @@
     <BaseModal v-model="model" size="lg">
         <!-- Header -->
         <div class="flex justify-between items-start  px-6 border-b border-border pb-4">
-            <h2 class="text-xl font-semibold">{{ sheet?._id ? 'Update sheet ' : 'Add a new Sheet' }}</h2>
+            <h2 class="text-xl font-semibold">{{ sheet ? 'Update sheet ' : 'Add a new Sheet' }}</h2>
 
         </div>
 
@@ -129,7 +129,7 @@ function validateManual() {
 function submitManual() {
     // ⬅️ block submit if invalid
     if (!validateManual()) return
-    if ( props.sheet?._id)
+    if (props.sheet)
         updateSheet({
             sheet_id: props.sheet?._id
             , icon: form.value.icon,

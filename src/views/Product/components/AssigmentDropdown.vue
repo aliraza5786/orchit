@@ -1,24 +1,17 @@
 <template>
-  <div class="relative w-8" ref="wrapperRef" @click.stop @keydown.esc="close">
+  <div class="relative" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
     <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id">
-      <img v-if="assignedUser?.avatar?.src || assignedUser?.user?.avatar || assignedUser?.u_profile_image"
-        :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar" class="w-6 h-6 object-cover rounded-full"
-        alt="" @click="toggle" />
-      <abbr :title="assignedUser?.u_full_name" v-else-if="assignedUser?.u_full_name || assignedUser?.name" @click="toggle"
+      <img v-if="assignedUser?.user?.avatar || assignedUser?.u_profile_image" :src="assignedUser?.user?.avatar ??assignedUser?.u_profile_image" class="w-6 h-6 rounded-full" alt=""
+        @click="toggle" />
+      <div v-else @click="toggle"
         class="w-6 aspect-square rounded-full text-[10px]  bg-bg-surface font-semibold text-text-primary flex items-center justify-center"
-        :style="{ backgroundColor: assignedUser?.u_full_name ?? assignedUser?.title ? avatarColor({ name: assignedUser?.u_full_name ?? assignedUser?.title, _id: assignedUser?._id }) : '' }">
-        {{ getInitials(assignedUser?.u_full_name ?? assignedUser?.name) }}
-      </abbr>
-      <abbr :title="assignedUser?.title" v-else
-      @click="toggle"
-        class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center ">
-        <i class="fa-regular fa-user text-xs"></i>
-      </abbr>
+        :style="{ backgroundColor:  assignedUser?.u_full_name ?? assignedUser?.title ? avatarColor({ name: assignedUser?.u_full_name ?? assignedUser?.title, _id: assignedUser?._id }) : '' }">
+        {{ getInitials(assignedUser?.u_full_name ??assignedUser?.name ?? assignedUser?.title ?? seat?.title) }}
+      </div>
     </template>
 
     <button v-else type="button"
-
       class="inline-flex items-center gap-2 rounded-full border border-border px-1 py-1 text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition"
       @click="toggle" :disabled="disabled">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor">
@@ -43,16 +36,13 @@
           <li v-for="u in filteredUsers" :key="u._id" @click.stop="assign(u._id)"
             class="flex items-center justify-between px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer">
             <div class="flex items-center gap-3 min-w-0">
-              <img v-if="u?.user?.avatar" :src="u?.user?.avatar" class="w-6 h-6 rounded-full object-cover" alt="" />
-              <div v-else-if="u.name"
-                class="w-6 min-w-6 aspect-square border-border border rounded-full text-xs font-semibold text-text-primary flex items-center justify-center"
-                :style="{ backgroundColor: u?.email ? avatarColor({ name: u.name, email: u.email, _id: u?._id }) : '' }">
-                {{ getInitials(u.name) }}
-              </div>
+              <img v-if="u?.user?.avatar" :src="u?.user?.avatar" class="w-6 h-6 rounded-full" alt="" />
               <div v-else
-                class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center ">
-                <i class="fa-regular fa-user text-xs"></i>
+                class="w-6 min-w-6 aspect-square border-border border rounded-full text-xs font-semibold text-text-primary flex items-center justify-center"
+                :style="{ backgroundColor: u?.email ? avatarColor({ name: u.name ?? u.title, email: u.email, _id: u?._id }) : '' }">
+                {{ getInitials(u.name || u.title) }}
               </div>
+
               <div class="min-w-0">
                 <div class="text-xs font-medium truncate">{{ u.name || u.title }}</div>
                 <div class="text-[10px] text-text-secondary truncate">{{ u?.role_title }}</div>
@@ -198,8 +188,6 @@ watch(open, async (v) => {
 /** Actions **/
 function assign(userId: string) {
   const user = membersData.value.find((u: any) => u._id === userId)
-
-  
   if (user) {
     assignedUser.value = user
     emit('assign', user)

@@ -11,6 +11,7 @@
         <!-- Body -->
         <div class="px-6 grid grid-cols-2 gap-4">
 
+
             <!-- Start date -->
             <div class="flex gap-1 flex-col">
                 <label class="text-sm">Start date</label>
@@ -40,12 +41,13 @@
                     rows="2" placeholder="Ship onboarding flow" />
             </div>
 
+
         </div>
 
         <!-- Footer -->
         <div class="flex justify-end gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border">
             <Button variant="secondary" @click="cancel">Cancel</Button>
-            <Button variant="primary" :disabled="!isValid" @click="save">{{creatingSprint ? 'Starting...' : 'Start'}}</Button>
+            <Button variant="primary" :disabled="!isValid" @click="save">{{creatingSprint?'Starting...':'Start'}}</Button>
         </div>
     </BaseModal>
 </template>
@@ -53,9 +55,10 @@
 <script setup lang="ts">
 import { reactive, computed, watch } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
+// import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
-import DatePicker from '../../Product/components/DatePicker.vue'
 import type { Sprint } from '../composables/useBacklogStore'
+import DatePicker from '../../Product/components/DatePicker.vue'
 
 /** Emits */
 const emit = defineEmits<{
@@ -66,7 +69,7 @@ const emit = defineEmits<{
 
 /** Props */
 const props = withDefaults(
-    defineProps<{ modelValue: boolean; sprint: Sprint, creatingSprint: boolean}>(),
+    defineProps<{ modelValue: boolean; sprint: Sprint , creatingSprint:boolean}>(),
     { modelValue: false }
 )
 
@@ -99,13 +102,13 @@ watch(
 /** Touched + validation */
 const touched = reactive({ start: false, end: false })
 
-const startError = computed(() => {
-    if (!form.start && touched.start) return 'Start date is required'
-    return ''
-})
+
+
+// Start is optional here; add a rule if you want it required
+const startError = computed(() => '')
 
 const endError = computed(() => {
-    if (!form.end && touched.end) return 'End date is required'
+    if (!touched.end) return ''
     if (form.start && form.end) {
         const s = toDayStartMs(form.start)
         const e = toDayStartMs(form.end)
@@ -114,16 +117,15 @@ const endError = computed(() => {
     return ''
 })
 
-const isValid = computed(() => {
-    return !startError.value && !endError.value
-})
+const isValid = computed(() =>
+    !endError.value
+)
 
 /** Handlers */
 function setStartDate(v: string | null) {
     form.start = v || ''
     touched.start = true
 }
-
 function setEndDate(v: string | null) {
     form.end = v || ''
     touched.end = true
@@ -139,10 +141,12 @@ function save() {
     touched.end = true
     if (!isValid.value) return
     emit('save', {
+
         goal: form.goal ?? '',
         start: form.start || '',
         end: form.end || '',
     })
+
 }
 
 /** Utils */
@@ -150,7 +154,6 @@ function resetTouched() {
     touched.start = false
     touched.end = false
 }
-
 function toDayStartMs(val?: string | null) {
     if (!val) return NaN
     return new Date(`${val}T00:00:00`).getTime()

@@ -38,13 +38,6 @@
                         v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
                         Disbale ( you can't drop here )</div>
                 </template>
-                <template #ticket="{ ticket }">
-                    <KanbanTicket :selectedVar="selected_view_by" @select="()=>{
-                        
-                        selectCardHandler(ticket)
-                        
-                    }" :ticket="ticket" />
-                </template>
             </KanbanBoard>
             <div class="min-w-[328px] " @click.stop>
                 <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
@@ -69,7 +62,7 @@
 
     </div>
     <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
-        :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete List"
+        :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete workspace"
         cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
             showDelete = false
         }" />
@@ -96,7 +89,6 @@ import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../composables/useQueryParams';
 import Button from '../../components/ui/Button.vue';
-import KanbanTicket from '../../components/feature/kanban/KanbanTicket.vue';
 
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
 const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
@@ -156,8 +148,6 @@ const { data: Lists, isPending, } = useSheetList(
 const createTeamModal = ref(false);
 const selectedCard = ref<any>()
 const selectCardHandler = (card: any) => {
-    console.log('>> click ', card);
-    
     selectedCard.value = card
 }
 const isCreateSheetModal = ref(false)
@@ -284,25 +274,23 @@ function openEditSprintModal(opt: any) {
 <style scoped>
 /* Force visible scrollbars only where applied */
 .scrollbar-visible::-webkit-scrollbar {
-    display: block !important;
-    height: 8px;
-    /* horizontal scrollbar height */
-    width: 8px;
-    /* vertical scrollbar width */
+  display: block !important;
+  height: 8px; /* horizontal scrollbar height */
+  width: 8px;  /* vertical scrollbar width */
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb {
-    background-color: rgba(150, 150, 150, 0.4);
-    border-radius: 8px;
+  background-color: rgba(150, 150, 150, 0.4);
+  border-radius: 8px;
 }
 
 .scrollbar-visible::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(150, 150, 150, 0.6);
+  background-color: rgba(150, 150, 150, 0.6);
 }
 
 .scrollbar-visible {
-    scrollbar-width: thin !important;
-    /* Firefox */
-    scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+  scrollbar-width: thin !important; /* Firefox */
+  scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
 }
+
 </style>

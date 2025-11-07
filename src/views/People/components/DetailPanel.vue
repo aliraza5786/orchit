@@ -55,8 +55,7 @@
                         class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4">
                         {{ item.title }}
                         <BaseSelectField size="sm" :model-value="localVarValues[item.slug]" :key="index"
-                            :placeholder="` ${item.title}`" @click.stop
-                            :defaultValue="getDefaultValue(item?._id) "
+                            :placeholder="` ${item.title}`" @click.stop :default="item?.value ?? `select ${item.title}`"
                             :options="item?.data.map((e: any) => ({ _id: e, title: e }))" :cardId="details?._id"
                             @update:modelValue="(val: any) => handleSelect(val, item._id)" />
 
@@ -111,11 +110,7 @@ const tabOptions = [
     { label: 'History', value: 'history' },
 ]
 const { data: peopleVar } = usePeopleVar()
-const { mutate: UpdateVar } = useUpdateVar({
-    onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["people-lists"] })
-    }
-});
+const { mutate: UpdateVar } = useUpdateVar();
 const props = defineProps({
     showPanel: { type: Boolean, default: true },
     details: { type: Object as () => any, default: () => ({}) }
@@ -213,13 +208,6 @@ const handleSelect = (val: any, slug: any) => {
         // ariable_id: id,
 
     })
-}
-
-function getDefaultValue (id: any)  {
-    
-    const sbn = props?.details?.variable_values.filter((e: any) => e.module_variable_id == id);
-    console.log(sbn[0]?.value , '>>>');
-    return sbn[0]?.value;
 }
 </script>
 

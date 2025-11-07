@@ -35,7 +35,7 @@ const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
 const LandingPageLayout = () =>
-  import("../layout/LandingPageLayout/LandingPageLayout.vue");
+import("../layout/LandingPageLayout/LandingPageLayout.vue");
 
 const LandingHome = () => import("../landingPageViews/LandingHome.vue");
 const Pricing = () => import("../views/Pricing.vue");
@@ -45,8 +45,9 @@ const ContactUs = () => import("../views/ContactUs.vue");
 const BlogList = () => import("../views/blog/BlogList.vue");
 const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 // const KnowledgeCenter = () => import("../layout/KnowledgeCenterLayout/KnowledgeCenter.vue");
-const KnowledgeCenterView = () =>
-  import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
+const KnowledgeCenterView = () => import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
+
+
 
 const routes: RouteRecordRaw[] = [
   {
@@ -101,22 +102,22 @@ const routes: RouteRecordRaw[] = [
         component: BlogDetail,
         props: true,
         meta: { requiresAuth: false },
-      },
+      },   
     ],
   },
-  // knowledge center
+  // knowledge center 
   {
     path: "/knowledge-center",
-    component: KnowledgeCenterView,
+    component:KnowledgeCenterView,
     children: [
-      {
+        {
         path: "/knowledge-center/:slug",
         name: "KnowledgeCenter",
         component: KnowledgeCenterView,
         props: true,
         meta: { requiresAuth: false },
       },
-    ],
+    ]
   },
   {
     path: "/login",
@@ -233,13 +234,7 @@ router.beforeEach((to, _from, next) => {
   const isLoggedIn = isAuthenticated();
 
   if (authRequired && !isLoggedIn) return next("/login");
-  if (
-    !authRequired &&
-    isLoggedIn &&
-    to.name != "workspaceInvite" &&
-    to.name != "create-workspace" &&
-    to.name != "spaceInvite"
-  )
+  if (!authRequired && isLoggedIn && to.name === "Login")
     return next("/dashboard");
   if (
     !authRequired &&

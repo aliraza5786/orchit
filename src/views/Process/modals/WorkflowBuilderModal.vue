@@ -158,7 +158,6 @@ function close() {
 }
 
 function handleAddStatus() {
-  editingStatus.value='';
   showAddStatusModal.value = true
 }
 
@@ -216,7 +215,6 @@ function handleZoomReset() {
 }
 
 function handleStatusAdded(e: any) {
-
   showAddStatusModal.value = false
   Canvas.value?.handleAddNode?.(e)
   editingStatus.value = null

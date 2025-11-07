@@ -48,9 +48,9 @@
                     </div>
                     <div class="mt-4 flex gap-2">
                         <router-link to="/">
-                            <Button 
+                            <button class="px-4 cursor-pointer py-2 rounded-md bg-black text-sm text-text-primary"
                                 @click="goToWorkspace">Open
-                                Orchit</Button>
+                                Orchit</button>
                         </router-link>
                     </div>
                 </div>
@@ -62,8 +62,8 @@
                         <p class="text-sm leading-relaxed">We’ve let the workspace know you won’t be joining.</p>
                     </div>
                     <div class="mt-4 flex gap-2">
-                        <Button 
-                            @click="goHome">Go to home</Button>
+                        <button class="px-4 py-2 rounded-md bg-black text-white text-sm dark:bg-white text-primary"
+                            @click="goHome">Go to home</button>
                     </div>
                 </div>
                 <!-- Invite details -->
@@ -130,7 +130,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInvitedSpace } from '../../queries/useWorkspace'
 import api from '../../libs/api'
@@ -206,12 +206,5 @@ function goToWorkspace() {
 }
 
 
-watch(()=>data.value, ()=>{
-  if (data.value.status == 'rejected') {
-    declined.value= true;
-    return}
-    if (data.value.status == 'accepted') {
-    accepted.value= true;
-    return}
-})
+
 </script>
