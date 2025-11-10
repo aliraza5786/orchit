@@ -73,6 +73,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useNotificationsQuery } from "../../../queries/useNotifications";
 import { useTheme } from "../../../composables/useTheme";
 import router from "../../../router";
+import userSocket from "../../../libs/socket";
 const { theme } = useTheme();
 
 const isOpen = ref(false);
@@ -158,6 +159,10 @@ function openNotification(notification: any) {
 }
 
 const markAllRead = () => markAllReadMutation.mutate();
+userSocket.initializeSocket();
+userSocket.on("new_notification", (data:any) => {
+  console.log("New Notification:", data);
+});
 </script>
 
 <style scoped>
