@@ -26,7 +26,7 @@ export interface Notification {
 const dummyNotifications : Notification[] = [
   {
     id: "1",
-    title: "Welcome to Streamed PMS",
+    title: "Welcome to Orchit AI",
     body: "We’re glad you joined! Explore the platform to learn more.",
     actor_name: "System",
     action: "Welcome message",

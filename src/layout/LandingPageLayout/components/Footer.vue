@@ -72,7 +72,7 @@ const moblinks: MobFooterMenu[] = [
                         </figure>
                         <p
                             class="text-center sm:text-left max-w-[375px] sm:max-w-[246px] mb-[15px] lg:mb-[36px] font-normal mx-auto sm:mx-0  font-inter text-primary text-[14px] sm:text-[15px] leading-[22px] sm:leading-[24px] tracking-normal">
-                            Streamed Space is an AI-powered workspace that unifies project.
+                            Orchit AI is an AI-powered workspace that unifies project.
                         </p>
 
 
@@ -153,7 +153,7 @@ const moblinks: MobFooterMenu[] = [
                     {{
                         theme === 'dark'
                             ? `Copyright © ${new Date().getFullYear()} Space Technologies`
-                            : `${new Date().getFullYear()} © STREAMED INC. All Rights Reserved`
+                            : `${new Date().getFullYear()} © Orchit AI. All Rights Reserved`
                     }}
                 </p>
             </div>

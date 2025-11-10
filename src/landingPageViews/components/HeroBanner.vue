@@ -76,7 +76,7 @@ async function handleSubmit(value: string) {
                 <!-- Heading -->
                 <h2 :class="theme === 'dark' ? 'heading-ingradient' : ''"
                     class="text-[30px] sm:text-[40px] lg:text-[72px] leading-[100%] font-manrope font-bold text-primary mb-[10px] text-center">
-                    Welcome to Streamed Space
+                    Welcome to Orchit AI
                 </h2>
 
                 <p class="font-manrope text-[16px] md:text-[18px] lg:text-[24px] mb-[24px] text-center"
