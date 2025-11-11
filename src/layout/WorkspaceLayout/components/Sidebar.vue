@@ -2,7 +2,7 @@
 
     <SidebarSkeleton v-if="isLoading" />
         <aside
-            class="w-full sm:w-fit  bg-bg-body z-1 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row  sm:flex-col items-center gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static">
+            class="w-full sm:w-fit  bg-transparent z-1 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row  sm:flex-col items-center gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static">
 
             <div class="sm:mt-auto  text-center ">
                 <SideItem label="Peak" :to="`/workspace/peak/${workspaceId}/${jobId ? jobId : ''}`" key="peak" id="peak"
@@ -24,7 +24,7 @@
                 }" />
             </div>
 
-        <div class="flex  flex-col gap-1  pin_task ">
+        <div class="flex  flex-col gap-1 max-md:flex-row  pin_task ">
             <SideItem v-for="(item, index) in workspace.modules" :key="index" :id="item._id"
                 :label="item.variables['module-title']"
                 :to="`/${item?.variables['module-title'].toLowerCase() == 'pin' ? 'workspace/pin' : 'workspace'}/${workspaceId}/${item._id}`"

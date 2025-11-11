@@ -152,7 +152,7 @@ const moblinks: MobFooterMenu[] = [
                     class="font-inter text-center text-primary font-normal text-[12px] sm:text-[14px] leading-[24px] tracking-normal">
                     {{
                         theme === 'dark'
-                            ? `Copyright © ${new Date().getFullYear()} Space Technologies`
+                            ? `Copyright © ${new Date().getFullYear()} Orchit AI Technologies`
                             : `${new Date().getFullYear()} © Orchit AI. All Rights Reserved`
                     }}
                 </p>

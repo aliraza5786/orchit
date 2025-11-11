@@ -27,7 +27,7 @@
             <BaseEmailChip :maxEmails="1" placeholder="team member email" v-model="column.email" />
             <p class="text-sm text-text-secondary">You can assign user later</p>
             <Button size="md" @click="addSeatToColumn(column)">{{ isPending ? 'Adding...' : 'Add Seat' }}</Button>
-            <i class="fa-solid fa-close cursor-pointer ml-2" @click="toggleAddNewColumn(column)"></i>
+            <i class="fa-solid fa-close cursor-pointer ml-2" @click="toggleAddNewColumn('')"></i>
           </div>
         </template>
       </KanbanBoard>

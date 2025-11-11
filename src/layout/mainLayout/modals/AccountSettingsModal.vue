@@ -91,7 +91,7 @@
         </template>
 
         <template #Subscription>
-          <div class="w-full h-full flex justify-center items-center" v-if="isPending || isConfirming">
+          <div class="w-full flex justify-center items-center py-10" v-if="isPending || isConfirming">
             <!-- Centered spinner -->
 
             <div role="status" aria-label="Loading"
@@ -99,7 +99,7 @@
 
 
           </div>
-          <div v-else class="py-4">
+          <div v-else class="py-4 overflow-y-auto max-h-full">
             <div class="space-y-6">
               <div class="bg-bg-body  rounded-xl p-6 border border-border">
                 <h3 class="text-lg font-semibold text-text-primary mb-4">Current Plan</h3>
@@ -143,26 +143,26 @@
 
 
               <div class="bg-bg-body gap-6 items-center flex  rounded-xl p-6 border border-border"
-                v-if="currentPackage?.nextPackage">
+                v-if="currentPackage?.nextPackages" v-for="nextPackage in currentPackage?.nextPackages">
                 <div class=" border-r border-border pr-6 min-w-80">
 
-                  <h1 class="mb-2 uppercase">Upgrade to {{ currentPackage?.nextPackage?.name }}</h1>
-                  <div v-if="currentPackage?.nextPackage" class="bg-bg-body rounded-xl  transition-all hover:shadow-lg">
+                  <h1 class="mb-2 uppercase">Upgrade to {{ nextPackage?.name }}</h1>
+                  <div  class="bg-bg-body rounded-xl  transition-all hover:shadow-lg">
                     <div class="text-left mb-4">
-                      <h3 class="text-xl font-bold text-text-primary mb-2">{{ currentPackage.nextPackage.name }}</h3>
+                      <h3 class="text-xl font-bold text-text-primary mb-2">{{ nextPackage.name }}</h3>
                       <div class="mb-2">
                         <span class="text-3xl font-bold text-text-primary">{{
-                          currentPackage?.nextPackage?.pricing?.month?.amount +
-                          currentPackage?.nextPackage?.pricing?.month?.currencySymbol }} </span>
+                          nextPackage?.pricing?.month?.amount +
+                          nextPackage?.pricing?.month?.currencySymbol }} </span>
                         <span class="text-sm text-text-secondary">/ {{
-                          currentPackage?.nextPackage?.pricing?.month?.interval
+                          nextPackage?.pricing?.month?.interval
                         }}</span>
                       </div>
-                      <p class="text-sm text-text-secondary">{{ currentPackage?.nextPackage?.description }}</p>
+                      <p class="text-sm text-text-secondary">{{ nextPackage?.description }}</p>
                     </div>
                   </div>
                   <!-- <form action="/create-checkout-session" method="POST"> -->
-                  <Button class="mt-3 block w-full uppercase" @click="pay(currentPackage?.nextPackage)"> {{ isUpgrading
+                  <Button class="mt-3 block w-full uppercase" @click="pay(nextPackage)"> {{ isUpgrading
                     ? 'Upgrading...' : 'UPGRADE' }}</Button>
                   <!-- </form> -->
                 </div>
@@ -170,7 +170,7 @@
 
                   <h3 class="text-lg font-semibold text-text-primary mb-3">Plan Features</h3>
                   <ul class="space-y-2">
-                    <li v-for="(feature, index) in currentPackage?.nextPackage?.features" :key="index"
+                    <li v-for="(feature, index) in nextPackage?.features" :key="index"
                       class="flex items-center gap-2 text-sm text-text-secondary">
                       <i class="fa-solid fa-check text-green-500"></i>
                       <span>{{ feature?.description }}</span>
