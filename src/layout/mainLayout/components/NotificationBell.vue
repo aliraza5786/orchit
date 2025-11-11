@@ -4,9 +4,9 @@
     <button @click="toggleDropdown" class="relative flex items-center justify-center mt-2  rounded-full cursor-pointer">
       <i class="fa-solid fa-bell text-primary text-[20px] font-bold"></i>
 
-      <span v-if="unreadCount > 0"
+      <span v-if="count > 0"
         class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold rounded-full px-[5px] py-[1px]">
-        {{ unreadCount }}
+        {{ count }}
       </span>
     </button>
 
@@ -74,6 +74,7 @@ import { useNotificationsQuery } from "../../../queries/useNotifications";
 import { useTheme } from "../../../composables/useTheme";
 import router from "../../../router";
 import userSocket from "../../../libs/socket";
+import { toast } from "vue-sonner";
 const { theme } = useTheme();
 
 const isOpen = ref(false);
@@ -160,8 +161,15 @@ function openNotification(notification: any) {
 
 const markAllRead = () => markAllReadMutation.mutate();
 userSocket.initializeSocket();
+const count = ref(0)
+userSocket.on("unread_count_update", (data:any) => {
+  console.log("New unread_count_update:", data);
+  count.value= data?.count
+  toast.info('new notification is received')
+});
 userSocket.on("new_notification", (data:any) => {
-  console.log("New Notification:", data);
+  console.log("New new_notification:", data);
+  // count.value= data?.count
 });
 </script>
 
