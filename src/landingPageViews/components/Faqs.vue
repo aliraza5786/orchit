@@ -52,11 +52,11 @@ import { useTheme } from "../../composables/useTheme";
 const { theme } = useTheme(); // light / dark / system
 
 const faqs = [
-    { question: 'Why do I need Space?', answer: 'Space is an AI-powered workspace that helps you plan, manage, and orchestrate projects—whether it’s for your team, your business, or your personal productivity.' },
-    { question: 'How does Space protect my data?', answer: 'Space uses advanced encryption...' },
-    { question: 'Does Space work in the background?', answer: 'Yes, Space can run background tasks...' },
-    { question: 'Can I use Space on the go?', answer: 'Absolutely. Space works across devices.' },
-    { question: 'Can I use Space with multiple tools?', answer: 'Yes, Space integrates with Slack, GitHub...' }
+    { question: 'Why do I need Orchit AI?', answer: 'Orchit AI is an AI-powered workspace that helps you plan, manage, and orchestrate projects—whether it’s for your team, your business, or your personal productivity.' },
+    { question: 'How does Orchit AI protect my data?', answer: 'Orchit AI uses advanced encryption...' },
+    { question: 'Does Orchit AI work in the background?', answer: 'Yes, Orchit AI can run background tasks...' },
+    { question: 'Can I use Orchit AI on the go?', answer: 'Absolutely. Orchit AI works across devices.' },
+    { question: 'Can I use Orchit AI with multiple tools?', answer: 'Yes, Orchit AI integrates with Slack, GitHub...' }
 ]
 
 const openIndex = ref<number | null>(0);

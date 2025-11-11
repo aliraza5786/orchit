@@ -32,16 +32,26 @@ export const useCreateWorkspaceSheet = (options = {}) =>
     options as any
   );
 
-  export const useUpdateWorkspaceSheet = (options = {}) =>
-    useApiMutation<{ data: unknown }, any>(
-      {
-        key: ["upadte-sheet"],
-        url: "/workspace/sheet/update",
-        method: "PATCH",
-      },
-      options as any
-    );
-  
+export const useCreateWorkspaceSheetAI = (options = {}) =>
+  useApiMutation<{ data: unknown }, any>(
+    {
+      key: ["product-sheet-ai"],
+      url: "/workspace/generate-sheet-ai",
+      method: "POST",
+    },
+    options as any
+  );
+
+export const useUpdateWorkspaceSheet = (options = {}) =>
+  useApiMutation<{ data: unknown }, any>(
+    {
+      key: ["upadte-sheet"],
+      url: "/workspace/sheet/update",
+      method: "PATCH",
+    },
+    options as any
+  );
+
 // PATCH /workspace/sheet-list/update
 export const useMoveList = (options = {}) =>
   useApiMutation<{ data: unknown }, { payload: any }>(
@@ -214,11 +224,12 @@ export const useVariables = (
   options = {}
 ) => {
   return useQuery({
-    
     queryKey: ["all-module-variables"],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `/workspace/catalog/${workspace_id}/card-variables/${unref(module_id) ?? module_id}`,
+        url: `/workspace/catalog/${workspace_id}/card-variables/${
+          unref(module_id) ?? module_id
+        }`,
         method: "GET",
         signal,
       }),

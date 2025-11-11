@@ -4,18 +4,19 @@ import './style.css'
 import   './styles/theme.css'
 import App from './App.vue'
 import router from "./router";
-import { VueQueryPlugin, QueryClient } from "@tanstack/vue-query"
+import { VueQueryPlugin,  } from "@tanstack/vue-query"
 import { Toaster } from 'vue-sonner'
 import '@/assets/fontawesome/css/fontawesome.min.css';
 import '@/assets/fontawesome/css/regular.min.css';
+import { queryClient } from './libs/queryClient'
 
 const app = createApp(App)
 
 
 app.component('Toaster', Toaster)
-const queryClient = new QueryClient()
+
 app.use(createPinia())
-app.use(VueQueryPlugin, { queryClient })
+.use(VueQueryPlugin, { queryClient })   // ← make sure this is here
 app.use(router)
 
 app.mount("#app")

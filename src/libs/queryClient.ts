@@ -4,16 +4,17 @@ import { QueryClient } from '@tanstack/vue-query'
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 2 * 60_000,
+      staleTime: 1000 * 60 * 5, // 5 minutes
       gcTime: 10 * 60_000,
       retry: 1,
+      
+      // networkMode: 'online',
       refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-      refetchOnMount: true,
-      networkMode: 'online',
+      refetchOnReconnect: false, // (optional)
+      refetchOnMount: false,   
     },
     mutations: {
-      networkMode: 'online',
+      // networkMode: 'online',
       retry: 0,
     },
   },

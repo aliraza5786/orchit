@@ -38,10 +38,10 @@
           <span :class="mapStatus(row.status)" class="px-2 py-1 rounded-md">{{ row.status }}</span>
         </template>
         <template #assignee="{ row }">
-          <span v-if="!row "
+          <span v-if="row?.assignee == 'Unassigned'"
             class="  float-end flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6  min-h-6 bg-gray-500/10 rounded-full  ">UA</span>
-            <div class=" w-6 h-6 rounded-full" v-else-if="row?.assignee. u_profile_image"> <img :src="row?.assignee. u_profile_image" alt=""></div>
-          <span v-else class="  text-xs aspect-square max-w-6 flex justify-center items-center text-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full  ">{{ getInitials(row?.assignee. u_full_name) }}</span>
+            <div class="   float-end  w-6 h-6 rounded-full" v-else-if="row?.assignee.u_profile_image"> <img :src="row?.assignee. u_profile_image" alt=""></div>
+          <span v-else class="   float-end   text-xs aspect-square max-w-6 flex justify-center items-center text-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full  ">{{ getInitials(row?.assignee. u_full_name) }}</span>
         </template>
 
         <template #drag="{ row }">
