@@ -88,13 +88,13 @@
 import { ref, reactive, computed } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import BaseModal from '../../../components/ui/BaseModal.vue'
-import Stepper from '../../../components/ui/Stepper.vue'
+// import Stepper from '../../../components/ui/Stepper.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
-import BaseMultiSelect from '../../../components/ui/BaseMultiSelect.vue'
+// import BaseMultiSelect from '../../../components/ui/BaseMultiSelect.vue'
 import Button from '../../../components/ui/Button.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
-import { usePlatforms, useTechnologies, useUserType } from '../../../queries/useWorkspace'
+// import { usePlatforms, useTechnologies, useUserType } from '../../../queries/useWorkspace'
 import { useUpdateWorkspaceLane, useWorkspaceLane } from '../../../queries/useLane'
 import { watch } from 'vue'
 
@@ -102,13 +102,13 @@ const props = defineProps<{ id: string }>()
 const workspaceStore = useWorkspaceStore()
 const queryClient = useQueryClient()
 
-const steps = ['Basics', 'Color', 'Platform']
+// const steps = ['Basics', 'Color', 'Platform']
 const currentStep = ref(0)
 const isPending = ref(false)
 
-const platforms = usePlatforms().data ?? []
-const technologies = useTechnologies().data ?? []
-const userTypes = useUserType().data ?? []
+// const platforms = usePlatforms().data ?? []
+// const technologies = useTechnologies().data ?? []
+// const userTypes = useUserType().data ?? []
 
 
 // Form state
@@ -223,9 +223,9 @@ const selectColor = (hex: string) => {
     form.value.color_code = hex
 }
 
-const togglePlatform = (platformId: string) => {
-    const idx = form.value.platforms.indexOf(platformId)
-    if (idx > -1) form.value.platforms.splice(idx, 1)
-    else form.value.platforms.push(platformId)
-}
+// const togglePlatform = (platformId: string) => {
+//     const idx = form.value.platforms.indexOf(platformId)
+//     if (idx > -1) form.value.platforms.splice(idx, 1)
+//     else form.value.platforms.push(platformId)
+// }
 </script>

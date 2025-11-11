@@ -21,9 +21,7 @@ const examples = [
 // Call the query and auto-refetch on mount
 const {
   data: promptSuggestions, 
-  isError,
-  error,
-  refetch,
+ 
 } = usePromptSuggestions({
   refetchOnMount: true, // automatically fetch when rendered
 });

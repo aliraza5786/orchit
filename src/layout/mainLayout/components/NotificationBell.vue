@@ -100,11 +100,11 @@ onBeforeUnmount(() => {
 });
 
 // notifications logic
-const { notificationsQuery, unreadCountQuery, markReadMutation, markAllReadMutation } =
+const { notificationsQuery,  markReadMutation, markAllReadMutation } =
   useNotificationsQuery();
 
 const notifications = computed(() => notificationsQuery.data?.value || []);
-const unreadCount = computed(() => unreadCountQuery.data?.value || 0);
+// const unreadCount = computed(() => unreadCountQuery.data?.value || 0);
 
 // Utility helpers
 function initials(name: string) {

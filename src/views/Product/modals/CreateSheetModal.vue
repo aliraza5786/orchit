@@ -45,7 +45,7 @@
                 <!-- AI Input -->
                 <div class="relative w-full">
                     <div class="neon-flow-border bg-bg-input flex h-[200px] p-4 rounded-2xl relative">
-                        <textarea v-if="!isRecording && !audioURL" v-model="description" :disabled="isCreatingSheet"
+                        <textarea v-if="!isRecording && !audioURL" v-model="description" 
                             placeholder="Ask Orchit AI to create a sheet..."
                             class="w-full h-full resize-none outline-none bg-transparent text-sm" />
 
@@ -125,20 +125,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
 import IconPicker from '../components/IconPicker.vue'
 import AudioRecorder from '../../../views/CreateWorkspace/components/AudioRecorder.vue'
 
-import { useRoute } from 'vue-router'
+// import { useRoute } from 'vue-router'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteIds } from '../../../composables/useQueryParams'
-import { useOpenAIGeneration } from '../../../queries/useOpenAIGeneration'
+// import { useOpenAIGeneration } from '../../../queries/useOpenAIGeneration'
 import { extractJSONFromResponse } from '../../../utilities/extractJson'
 import { useCreateWorkspaceSheet, useCreateWorkspaceSheetAI, useUpdateWorkspaceSheet } from '../../../queries/useSheets'
-import { useSuggestions } from '../../../queries/useWorkspace'
+// import { useSuggestions } from '../../../queries/useWorkspace'
 
 const props = defineProps<{ modelValue: boolean, sheet: any }>()
 
@@ -218,23 +218,23 @@ const audioURL = ref<string | null>(null)
 const description = ref('')
 const isPending = ref(false)
 
-const { data: suggestionData, isPending: isSuggestionPending } = useSuggestions('sheet')
+// const { data: suggestionData, isPending: isSuggestionPending } = useSuggestions('sheet')
 
-function typeEffect(text: string) {
-    description.value = ''
-    text.split('').forEach((char, i) =>
-        setTimeout(() => (description.value += char), i * 18)
-    )
-}
+// function typeEffect(text: string) {
+//     description.value = ''
+//     text.split('').forEach((char, i) =>
+//         setTimeout(() => (description.value += char), i * 18)
+//     )
+// }
 
 const { mutate: generateAI } = useCreateWorkspaceSheetAI({
     onSuccess: (data: any) => {
-        const result = extractJSONFromResponse(data)
+        const result:any = extractJSONFromResponse(data) ?? {}
         createSheet({
-            icon: result.icon,
+            icon: result?.icon ??'',
             variables: {
-                'sheet-title': result.title,
-                'sheet-description': result.description
+                'sheet-title': result?.title ??'',
+                'sheet-description': result?.description ??''
             },
             is_ai_generated: true,
             workspace_id: workspaceId.value,

@@ -34,11 +34,11 @@ class WSService {
     socket.emit(event, data, cb);
   }
 
-  on(event: string, cb: Function) {
+  on(event: string, cb: any) {
     socket.on(event, cb);
   }
 
-  off(event: string, cb?: Function) {
+  off(event: string, cb?: any) {
     socket.off(event, cb);
   }
 
