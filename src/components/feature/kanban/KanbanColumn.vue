@@ -151,6 +151,7 @@ function onTicketsChange(evt: any) {
     toColumnId: props.column._id,
     oldIndex: moved.oldIndex ?? null,
     newIndex: moved.newIndex ?? null,
+
   })
 }
 function getMenuItems() {

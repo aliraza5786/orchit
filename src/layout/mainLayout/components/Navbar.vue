@@ -3,7 +3,7 @@
   <nav
     class="sticky top-0 z-10 w-full border-b border-border bg-bg-body/80 backdrop-blur supports-[backdrop-filter]:bg-bg-body/60"
     role="navigation" aria-label="Primary">
-    <div class="mx-auto flex max-w-[1400px] items-center justify-between px-6 ">
+    <div class="mx-auto flex max-w-[1400px] items-center justify-between px-6 max-md:p-4 ">
       <!-- Brand -->
       <RouterLink to="/" class="flex items-center gap-2">
         <img v-if="theme === 'light'" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-30"

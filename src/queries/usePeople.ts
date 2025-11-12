@@ -200,3 +200,34 @@ export const useDashboardActivities = (workspace_id: Ref<string> | string, optio
     ...options,
   });
 };
+export const ReOrderList = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["reorder-list-people"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/workspace/${vars.id}/roles/sort-order`,
+          method: "PUT",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+export const ReOrderCard = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["reorder-card-people"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `workspace/roles/${vars.id}/team/sort-order`,
+          method: "PUT",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );

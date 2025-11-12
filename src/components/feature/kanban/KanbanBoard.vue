@@ -88,9 +88,10 @@ function onColumnsEnd(e: any) {
   // Model should be updated now; grab the moved column
   const moved = localBoard.value.columns[newIndex]
   const id = moved?.title ? moved?.title : ""
+  const _id = moved?._id 
 
   if (id != null) {
-    pushUpdate('column', { id, oldIndex, newIndex })
+    pushUpdate('column', { id, oldIndex, newIndex ,_id})
   }
   canDragList.value = true;
 }

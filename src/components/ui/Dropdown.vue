@@ -32,7 +32,7 @@
       enter-to-class="opacity-100 scale-100" leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95">
       <div v-if="open"
-        class="absolute max-h-[500px] overflow-y-auto z-12 mt-1 w-full min-w-fit rounded-md border border-border shadow-lg bg-bg-dropdown"
+        class="absolute max-h-[500px] overflow-visible  z-12 mt-1 w-full min-w-fit rounded-md border border-border shadow-lg bg-bg-dropdown"
         :class="menuBorderClass" @click.stop>
         <ul :class="['py-1 z-[2]', listTextSizeClass]">
           <li v-for="option in options" :key="option._id"
@@ -68,19 +68,26 @@
               </button>
 
               <!-- Inline action bar -->
-              <div v-if="actionOpenId === option._id && confirmDeleteId !== option._id"
-                class="ml-1 inline-flex  items-center gap-1" @click.stop>
-                <button
-                  class="rounded-md cursor-pointer px-2 py-1 text-xs border border-border hover:bg-bg-dropdown-menu-hover"
-                  @click.stop="onEdit(option)">
-                  Edit
-                </button>
-                <button
-                  class="rounded-md cursor-pointer px-2 py-1 text-xs border border-border hover:bg-red-50 text-red-600"
-                  @click.stop="onDelete(option)">
-                  Delete
-                </button>
-              </div>
+         <!-- Sub dropdown menu for row actions -->
+<div v-if="actionOpenId === option._id" class="absolute left-[100%] right-0 top-full mt-1 z-[20]" @click.stop>
+  <div
+    class="rounded-md border border-border bg-bg-dropdown shadow-lg w-28 py-1 flex flex-col text-sm"
+  >
+    <button
+      class="px-3 py-1.5 text-left hover:bg-bg-dropdown-menu-hover cursor-pointer"
+      @click.stop="onEdit(option)"
+    >
+    <i class="fa-regular fa-edit"></i>   Edit
+    </button>
+    <button
+      class="px-3 py-1.5 text-left  text-red-600 cursor-pointer"
+      @click.stop="onDelete(option)"
+    >
+   <i class="fa-regular fa-trash"></i>   Delete
+    </button>
+  </div>
+</div>
+
             </div>
           </li>
 

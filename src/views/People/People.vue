@@ -69,7 +69,7 @@ import { defineAsyncComponent, ref, watch, onMounted } from 'vue';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
-import { useCreateTeam, useCreateTeamMember, useDeleteTeam, usePeopleList } from '../../queries/usePeople';
+import { ReOrderCard, ReOrderList, useCreateTeam, useCreateTeamMember, useDeleteTeam, usePeopleList } from '../../queries/usePeople';
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import Button from '../../components/ui/Button.vue';
@@ -97,7 +97,7 @@ const viewData = [
 const selected_view_id = ref('role');
 const showDelete = ref(false);
 const localColumn = ref();
-const { workspaceId } = useRouteIds();
+const { workspaceId ,moduleId} = useRouteIds();
 const localList = ref<any>([]);
 
 const { mutate: addList, isPending: addingList } = useCreateTeam({
@@ -122,29 +122,7 @@ const selectCardHandler = (card: any) => {
   selectedCard.value = card;
 };
 
-// const reorderList = ReOrderList();
-// const reorderCard = ReOrderCard();
 
-function onReorder(a: any) {
-  if (a.type === 'column') {
-    // updateList.mutate({
-    //   id:a.meta.id,
-    //   payload: {
-    //     workspace_id: workspaceId.value,
-    //     workspace_module_id: moduleId.value,
-    //     moved_value: a.meta.id,
-    //     new_index: a.meta.newIndex,
-    //   },
-    // });
-  } else {
-    updateList.mutate({
-      id: a.meta.moved._id,
-      payload: {
-        roleId: a.meta.toColumnId,
-      },
-    });
-  }
-}
 
 const handleBoardUpdate = (_: any) => { };
 const activeAddList = ref(false);
@@ -273,6 +251,35 @@ const addSeatToColumn = (column: any) => {
 
 const handleClickTicket = (ticket: any) => {
   selectedCard.value = ticket
+}
+
+
+const reorderList = ReOrderList()
+const reorderCard = ReOrderCard();
+function onReorder(a: any) {
+  console.log(a , '>>');
+  
+    if (a.type == 'column')
+        reorderList.mutate({
+            id:workspaceId.value,
+            payload: {
+              "role_id": a.meta._id,
+
+                new_sort_order: a.meta.newIndex
+            }
+        })
+    else {
+        reorderCard.mutate({
+          id:a.meta.toColumnId,
+
+            payload: {
+              "team_member_id": a.meta.moved._id,
+              "new_sort_order":  a.meta.newIndex
+            
+                // sheet_id: selected_sheet_id.value
+            }
+        })
+    }
 }
 </script>
 
