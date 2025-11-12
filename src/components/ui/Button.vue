@@ -3,7 +3,7 @@
       :type="type"
       :disabled="disabled || loading"
       :class="[
-        'relative cursor-pointer inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition',
+        'relative cursor-pointer disabled:cursor-not-allowed  inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition',
         sizeClass,
         variantClass,
         block ? 'w-full' : '',

@@ -16,7 +16,8 @@
         <Button v-if="sprintDetailData?.status == 'active'" size="sm" @click="handleCompleteSprint">{{
           isCompletingSprint ?
             'Ending...' : 'End' }}</Button>
-        <Button v-else size="sm" @click="openStartSprintModal">Start Sprint</Button>
+        <Button v-else size="sm" @click="openStartSprintModal"
+          :disabled="!firstSprint || firstSprint.tickets.length == 0">Start Sprint</Button>
 
       </div>
     </div>
@@ -47,7 +48,7 @@
             <h2 class="text-sm font-semibold">Backlog ({{ backlogResp?.cards?.length }} Tasks)</h2>
             <div class="flex items-center gap-2">
               <button
-                class=" w-8 h-8 rounded-md border  cursor-pointer aspect-square text-sm border-border  hover:bg-gray-50"
+                class=" w-8 h-8 rounded-md border  cursor-pointer aspect-square text-sm border-border  hover:bg-bg-surface/80"
                 @click="openCreateBacklogTicket">
                 <i class="text-text-primary fa-regular fa-plus"></i>
               </button>
@@ -99,7 +100,10 @@
     :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint" />
   <StartSprintModal :sprint="selectedSprint" v-model="startsprintModalOpen" @save="startSprintHandler"
     :creatingSprint="isStartingSprint || isUpdatingSprint2" />
-  <!-- <CreateBacklogTicket v-model="isCreateTicketModalOpen" /> -->
+
+  <TaskDetailsModal v-model="showTaskModal" :cardId="editingTicket?.id" @close="closeModal" />
+
+  <CreateBacklogTicketWithModuleSelection v-model="isCreateTicketModalOpen" />
   <!-- <CreateSheetModal v-model="sprintModalOpen" size="md"  /> -->
 </template>
 
@@ -119,8 +123,17 @@ import { useWorkspaceId } from '../../composables/useQueryParams'
 import { useQueryClient } from '@tanstack/vue-query'
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue'
 import StartSprintModal from './modals/StartSprintModal.vue'
-// import CreateBacklogTicket from './modals/CreateBacklogTicket.vue'
+import CreateBacklogTicketWithModuleSelection from './modals/CreateBacklogTicketWithModuleSelection.vue'
 import ActiveSprint from './components/ActiveSprint.vue'
+import TaskDetailsModal from '../Workspaces/Modals/TaskDetailsModal.vue'
+const showTaskModal = ref(false);
+// const selectedCardId = ref('');
+// const rowClickHandler= (rowId:any)=>{
+//   selectedCardId.value=rowId;
+// }
+const closeModal = () => {
+  showTaskModal.value = false;
+}
 // import CreateSheetModal from '../Product/modals/CreateSheetModal.vue'
 const { workspaceId } = useWorkspaceId();
 const isCreateTicketModalOpen = ref(false)
@@ -192,7 +205,7 @@ const openStartSprintModal = () => {
   startsprintModalOpen.value = true
 
 }
-const { data: sprintData, isPending: isSprintPending } = useSprintCard(selectedSprintId);
+const { data: sprintData, isPending: isSprintPending, refetch: refetchSprintData } = useSprintCard(selectedSprintId);
 
 watch(() => isSprintPending.value, (newVal) => {
   console.log(newVal, isSprintPending.value, '>>>> laoding state changes');
@@ -262,6 +275,7 @@ const { mutate: removeCardFromSprint } = useRemoveCardFromSprint({
 })
 
 function handleRefresh() {
+  refetchSprintData();
   refetchSprints()
   refetchBacklog()
   refetchSprintDetail()
@@ -300,6 +314,7 @@ function openCreateBacklogTicket() {
 
 function openTicket(t: Ticket) {
   editingTicket.value = t
+  showTaskModal.value = true;
   // createTarget.value = 'backlog' // not used on edit path
   ticketModalOpen.value = true
 }

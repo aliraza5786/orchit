@@ -44,7 +44,7 @@
 
       <WorkspaceListTable v-else-if="currentView === 'list'" />
 
-      <ProjectGallery v-else-if="currentView === 'gallery'" :projects="workspaces" :loading="isPending" />
+      <ProjectGallery v-else-if="currentView === 'gallery'" :projects="workspaces?.workspaces" :loading="isPending" />
     </div>
   </div>
 </template>

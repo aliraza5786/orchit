@@ -117,7 +117,7 @@ import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
-import { useUploadFile } from '../../queries/useCommon'
+import { usePrivateUploadFile } from '../../queries/useCommon'
 import LinkDialog from './LinkDialog.vue'
 
 const props = withDefaults(defineProps<{
@@ -157,7 +157,7 @@ function setTextType() {
     else editor.chain().focus().setParagraph().run()
 }
 
-const { mutate: uploadFile } = useUploadFile({
+const { mutate: uploadFile } = usePrivateUploadFile({
     onSuccess: (resp: any) => {
         const uploadedFileUrl = resp.data.url as string
         const fileName = resp.data.name as string
@@ -173,12 +173,37 @@ const { mutate: uploadFile } = useUploadFile({
 function handleImageUpload(e: Event) {
     const files = (e.target as HTMLInputElement).files
     if (!files) return
-    Array.from(files).forEach(file => {
+
+    // Gather all upload promises for images
+    const uploadPromises = Array.from(files).map((file) => {
         const fd = new FormData()
         fd.append('file', file)
-        uploadFile(fd)
+        return uploadFile(fd)
     })
+
+    // Wait for all uploads to complete
+    Promise.all(uploadPromises)
+        .then((responses) => {
+            // For each uploaded image, insert it into the editor
+            responses.forEach((resp: any) => {
+                const uploadedFileUrl = resp.data.url as string
+                const fileName = resp.data.name as string
+
+                // Move the cursor to the end of the editor
+                const { doc } = editor.state
+                const endPos = doc.content.size // Get the current end position of the content
+                editor.commands.setTextSelection(endPos) // Set cursor position to the end
+
+                // Insert image at the current cursor position (now at the end)
+                editor.commands.insertContent(`<img src="${uploadedFileUrl}" alt="${fileName}" />`)
+            })
+        })
+        .catch((error) => {
+            console.error('Error uploading images:', error)
+        })
 }
+
+
 function handleFileUpload(e: Event) {
     const files = (e.target as HTMLInputElement).files
     if (!files) return

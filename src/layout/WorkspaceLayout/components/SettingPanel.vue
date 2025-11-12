@@ -263,7 +263,7 @@ import { toast } from 'vue-sonner'
 import { useTheme } from '../../../composables/useTheme'
 import dummy from "../../../assets/global/dummy.jpeg"
 import { useRouteIds } from '../../../composables/useQueryParams'
-import { useUploadFile } from '../../../queries/useCommon'
+import { usePrivateUploadFile } from '../../../queries/useCommon'
 import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
 import { useRouter } from 'vue-router'
 const queryClient = useQueryClient()
@@ -348,7 +348,7 @@ const logoPreview = ref<string>('')
 function triggerLogoPicker() {
   logoInputRef.value?.click()
 }
-const { mutate } = useUploadFile({
+const { mutate } = usePrivateUploadFile({
   onSuccess: (data: any) => {
     const url: string | undefined = data?.data?.url;
     if (!url) {

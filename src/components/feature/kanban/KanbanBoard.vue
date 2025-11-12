@@ -6,7 +6,7 @@
       :force-fallback="true" class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd" @start="onStart">
       <!-- Each column -->
       <template #item="{ element: column }">
-        <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface  " style="height: calc(100dvh - 190px);">
+        <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface h-full " >
           <KanbanColumn :plusIcon="plusIcon" :canDragList="canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
             :variable_id="variable_id" @update:column="(e) => emit('update:column', e)"
             @select:ticket="(v: Ticket) => emit('select:ticket', v)"

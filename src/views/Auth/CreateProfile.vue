@@ -34,11 +34,16 @@
         </div>
 
         <div class="space-y-6" v-show="activeStep === 2">
-          <BaseTextField v-model="team" label="Company Name" placeholder="Company name" size="lg" />
+          <BaseTextField v-model="team" label="Company Name" placeholder="Company name" size="lg" :error="!!errors.team"
+            :message="errors.team" />
+
           <BaseSelectField v-model="role" label="What role do you perform in your company?" :options="rolesList || []"
-            placeholder="Select team" size="lg" />
+            placeholder="Select Role" size="lg" :error="!!errors.role" :message="errors.role" />
+
           <BaseSelectField v-model="companySize" label="What’s your company size?" :options="companySizeOptions"
-            placeholder="Select team" size="lg" />
+            placeholder="Select Company size" size="lg" :error="!!errors.companySize" :message="errors.companySize" />
+
+
         </div>
 
         <!-- Step 3 -->
@@ -51,7 +56,7 @@
         </div>
 
         <div class="space-y-6" v-show="activeStep === 3">
-          <BaseEmailChip v-model="emailList" />
+          <BaseEmailChip v-model="emailList" :error="!!errors.emailList" :message="errors.emailList" />
 
           <!-- <div class="flex flex-col gap-2.5 w-full">
             <p class="text-sm text-medium text-text-primary" v-once>Invite link for any email</p>
@@ -66,19 +71,20 @@
         </div>
 
         <!-- Nav -->
-        <div class="flex justify-between items-center mt-[40px] md:mt-[60px]  lg:mt-[132px]">
-          <Button variant="secondary" size="md" type="button" @click="goBack" :disabled="activeStep === 1">
+        <div class="flex justify-between  items-center mt-[40px] md:mt-[60px]  lg:mt-[132px]">
+          <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
+            :disabled="activeStep === 1">
             <div class="flex items-center gap-1">
               <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
             </div>
           </Button>
 
-          <div class="flex gap-4 items-center">
-            <router-link
+          <div class="flex gap-4 items-center ml-auto">
+            <!-- <router-link
               :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`"><button
-                class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link>
-            <Button size="md" type="submit" @click="continueHandler" :disabled="isContinueDisabled">
-              {{ creatingProfile || invitingPeople ? 'Continuing...' : 'Continue' }}
+                class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link> -->
+            <Button size="md" type="submit" @click="continueHandler">
+              {{ creatingProfile || invitingPeople ? 'Continuing...' : activeStep == 3 ? 'Invite' : 'Continue' }}
             </Button>
           </div>
 
@@ -91,7 +97,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, watch } from 'vue'
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import teamIcon from '../../assets/platform/team.svg'
 import personalIcon from '../../assets/platform/personal-use.svg'
@@ -107,6 +113,17 @@ import { useRolesList } from '../../queries/useCommon'
 import { useWorkspaceStore } from '../../stores/workspace'
 defineOptions({ name: 'OnboardingFlow' })
 const workspaceStore = useWorkspaceStore()
+const errors = ref<{ team?: string; role?: string; companySize?: string; emailList?: string }>({})
+
+function validateCompanyStep() {
+  const next: { team?: string; role?: string; companySize?: string } = {}
+  if (!team.value.trim()) next.team = 'Please enter your company name.'
+  if (!role.value) next.role = 'Please select your role.'
+  if (!companySize.value) next.companySize = 'Please select your company size.'
+  errors.value = next
+  return Object.keys(next).length === 0
+}
+
 const companyID = ref()
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   onSuccess: (data: any) => {
@@ -154,12 +171,18 @@ const companySize = ref('')
 const emailList = ref<string[]>([])
 
 // --- UI helpers ---
-const isContinueDisabled = computed(() => {
-  if (activeStep.value === 1) return !selected.value
-  if (activeStep.value === 2) return !(role.value && companySize.value && team.value)
-  if (activeStep.value === 3) return !emailList.value.every((e) => e && e.trim() !== '')
-  return true
-})
+function validateInviteStep() {
+  const next: { emailList?: string } = {}
+
+  // check if there is at least one non-empty email
+  if (!emailList.value.length || !emailList.value.some(e => e && e.trim() !== '')) {
+    next.emailList = 'Please add at least one email to invite.'
+  }
+
+  errors.value = { ...errors.value, ...next }
+  return Object.keys(next).length === 0
+}
+
 
 function optionClass(id: string) {
   return id === selected.value ? 'bg-accent/30 border-accent' : 'border-border'
@@ -184,6 +207,7 @@ function goBack() {
 
 function continueHandler() {
   if (activeStep.value === 2) {
+    if (!validateCompanyStep()) return
     const payload = {
       title: team.value,
       type: selected.value,
@@ -193,7 +217,10 @@ function continueHandler() {
     createProfile({ payload })
     return
   }
+
   if (activeStep.value === 3) {
+    if (!validateInviteStep()) return // ✅ stop if no emails
+
     invitePeople({
       payload: {
         company_id: companyID.value,
@@ -202,8 +229,19 @@ function continueHandler() {
     })
     return
   }
+
   activeStep.value = (activeStep.value + 1) as 1 | 2 | 3
 }
+
+watch(team, (v: any) => { if (v?.trim() && errors.value.team) errors.value.team = undefined })
+watch(role, (v) => { if (v && errors.value.role) errors.value.role = undefined })
+watch(companySize, (v) => { if (v && errors.value.companySize) errors.value.companySize = undefined })
+watch(emailList, (v) => {
+  if (Array.isArray(v) && v.some(e => e && e.trim() !== '') && errors.value.emailList) {
+    errors.value.emailList = undefined
+  }
+})
+
 </script>
 
 <style scoped>

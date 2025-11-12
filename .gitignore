@@ -8,6 +8,14 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+
 *.local
 
 # Editor directories and files
@@ -21,10 +29,4 @@ node_modules
 *.sln
 *.sw?
 
-src/views/pages/blog/test.vue
-src/queries/useNotifications.ts
-src/views/KnowledgeCenter/Notification.vue
-src/views/KnowledgeCenter/NotificationItem.vue
-
-
-
+ 

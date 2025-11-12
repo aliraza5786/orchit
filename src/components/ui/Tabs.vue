@@ -1,5 +1,5 @@
 <template>
-    <div class="w-full relative">
+    <div class="w-full relative h-full">
         <!-- Tab Headers -->
         <div ref="tabList"
             class="flex sticky top-[-25px] gap-6 border-b border-border bg-bg-body z-10 text-sm font-medium  ">
@@ -15,12 +15,12 @@
         </div>
 
         <!-- Tab Content -->
-        <div class="mt-4 overflow-hidden relative">
-            <div :class="`grid ${gridColsClass} transition-all duration-300 ease-in-out`" :style="{
+        <div class="mt-4 overflow-hidden relative h-[90%]">
+            <div class="flex transition-transform duration-300 ease-in-out" :style="{
                 width: tabs.length * 100 + '%',
                 transform: `translateX(-${selected * (100 / tabs.length)}%)`
             }">
-                <div v-for="(tab) in tabs" :key="tab" class=" px-2">
+                <div v-for="(tab) in tabs" :key="tab" class="px-2 w-[50%] shrink-0 flex-grow h-[500px]">
                     <slot :name="tab"></slot>
                 </div>
             </div>
@@ -30,7 +30,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch, computed } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 
 const props = defineProps<{
     tabs: string[]
@@ -71,14 +71,14 @@ onMounted(() => {
 
 watch(selected, updateIndicator)
 
-const gridColsClass = computed(() => {
-    return {
-        1: 'grid-cols-1',
-        2: 'grid-cols-2',
-        3: 'grid-cols-3',
-        4: 'grid-cols-4',
-        5: 'grid-cols-5',
-    }[props.tabs.length] || 'grid-cols-1'
-})
+// const gridColsClass = computed(() => {
+//     return {
+//         1: 'grid-cols-1',
+//         2: 'grid-cols-2',
+//         3: 'grid-cols-3',
+//         4: 'grid-cols-4',
+//         5: 'grid-cols-5',
+//     }[props.tabs.length] || 'grid-cols-1'
+// })
 
 </script>

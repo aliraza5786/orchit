@@ -10,11 +10,29 @@ export const uploadFile = (formData: FormData) => {
     })
     .then((res) => res.data);
 };
+export const uploadPrivateFile = (formData: FormData) => {
+  return api
+    .post("/upload/file", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    })
+    .then((res) => res.data);
+};
 
 export const useUploadFile = (options = {}) => {
   return useMutation({
     mutationKey: ["upload-file"],
     mutationFn: uploadFile,
+    ...options,
+  });
+};
+
+
+export const usePrivateUploadFile = (options = {}) => {
+  return useMutation({
+    mutationKey: ["p-upload-file"],
+    mutationFn: uploadPrivateFile,
     ...options,
   });
 };

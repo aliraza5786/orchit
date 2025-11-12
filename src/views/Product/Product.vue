@@ -1,10 +1,10 @@
 <template>
     <div
         class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
-             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  ">
+             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  scrollbar-visible ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
-            <Dropdown  @edit-option="openEditSprintModal" v-model="selected_sheet_id" @delete-option="handleDeleteSheetModal" :options="transformedData"
-                variant="secondary">
+            <Dropdown @edit-option="openEditSprintModal" v-model="selected_sheet_id"
+                @delete-option="handleDeleteSheetModal" :options="transformedData" variant="secondary">
                 <template #more>
                     <div @click="createSheet()"
                         class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
@@ -13,7 +13,8 @@
                 </template>
             </Dropdown>
             <div class="flex gap-3 items-center ">
-                <Dropdown :actions="false" prefix="View by" v-model="selected_view_by" :options="variables" variant="secondary">
+                <Dropdown :actions="false" prefix="View by" v-model="selected_view_by" :options="variables"
+                    variant="secondary">
                     <template #more>
                         <div @click="isCreateVar = true"
                             class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
@@ -26,7 +27,7 @@
             </div>
         </div>
         <KanbanSkeleton v-show="isPending" />
-        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
+        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4 scrollbar-visible">
             <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
@@ -36,6 +37,13 @@
                     <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
                         v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
                         Disbale ( you can't drop here )</div>
+                </template>
+                <template #ticket="{ ticket }">
+                    <KanbanTicket :selectedVar="selected_view_by" @select="()=>{
+                        
+                        selectCardHandler(ticket)
+                        
+                    }" :ticket="ticket" />
                 </template>
             </KanbanBoard>
             <div class="min-w-[328px] " @click.stop>
@@ -61,7 +69,7 @@
 
     </div>
     <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
-        :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete workspace"
+        :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete List"
         cancelText="Cancel" size="md" :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => {
             showDelete = false
         }" />
@@ -88,6 +96,7 @@ import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../composables/useQueryParams';
 import Button from '../../components/ui/Button.vue';
+import KanbanTicket from '../../components/feature/kanban/KanbanTicket.vue';
 
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
 const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
@@ -119,7 +128,7 @@ const handleAddColumn = (v: any) => {
 }
 
 // Fetch sheets using `useSheets`
-const { data ,refetch: refetchSheets } = useSheets({
+const { data, refetch: refetchSheets } = useSheets({
     workspace_id: workspaceId,
     workspace_module_id: moduleId
 });
@@ -137,7 +146,7 @@ watch(viewBy, () => {
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending,  } = useSheetList(
+const { data: Lists, isPending, } = useSheetList(
     moduleId,
     selected_sheet_id,                      // ref
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
@@ -147,6 +156,8 @@ const { data: Lists, isPending,  } = useSheetList(
 const createTeamModal = ref(false);
 const selectedCard = ref<any>()
 const selectCardHandler = (card: any) => {
+    console.log('>> click ', card);
+    
     selectedCard.value = card
 }
 const isCreateSheetModal = ref(false)
@@ -270,3 +281,28 @@ function openEditSprintModal(opt: any) {
     selectedSheettoAction.value = opt;
 }
 </script>
+<style scoped>
+/* Force visible scrollbars only where applied */
+.scrollbar-visible::-webkit-scrollbar {
+    display: block !important;
+    height: 8px;
+    /* horizontal scrollbar height */
+    width: 8px;
+    /* vertical scrollbar width */
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb {
+    background-color: rgba(150, 150, 150, 0.4);
+    border-radius: 8px;
+}
+
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(150, 150, 150, 0.6);
+}
+
+.scrollbar-visible {
+    scrollbar-width: thin !important;
+    /* Firefox */
+    scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+</style>

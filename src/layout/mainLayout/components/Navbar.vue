@@ -34,7 +34,7 @@
       <!-- Right controls -->
       <div class="flex items-center gap-4">
         <!-- Icons -->
-        <button
+        <!-- <button
           class="grid h-9 w-9 place-items-center rounded-xl border border-transparent text-text-secondary transition-[transform,background,box-shadow]
                    hover:scale-105 hover:bg-bg-dropdown-menu-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
           aria-label="Notifications" type="button">
@@ -45,7 +45,10 @@
                    hover:scale-105 hover:bg-bg-dropdown-menu-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
           aria-label="Help" type="button">
           <i class="fa-regular fa-circle-question"></i>
-        </button>
+        </button> -->
+
+          <!-- notificaion icon -->
+           <NotificationBell/>
 
         <!-- Avatar + Menu -->
         <div class="relative" ref="menuRef">
@@ -64,6 +67,8 @@
             @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu" type="button">
             {{ initials }}
           </button>
+
+        
 
           <!-- Dropdown -->
           <Transition enter-active-class="transition duration-150 ease-out"
@@ -168,6 +173,7 @@ import Loader from '../../../components/ui/Loader.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 import AccountSettingsModal from '../modals/AccountSettingsModal.vue'
 import LimitExceededModal from '../modals/LimitExceededModal.vue'
+import NotificationBell from './NotificationBell.vue'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
 const { theme, setTheme } = useTheme()

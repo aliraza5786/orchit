@@ -1,4 +1,4 @@
-<template>
+<template> 
     <header class="w-full bg-body text-primary border-b"
         :class="theme === 'dark' ? 'border-gray-800' : 'border-gray-300'">
         <div class="mx-auto px-[15px] lg:px-10">
@@ -106,6 +106,7 @@ import darkLogo from '@assets/global/dark-logo.png';
 import googleLogo from '@assets/LandingPageImages/header-icons/google.png';
 import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
 import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
+ 
 
 const { theme } = useTheme();
 const route = useRoute();

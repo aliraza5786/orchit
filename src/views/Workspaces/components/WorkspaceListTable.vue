@@ -29,7 +29,7 @@ const renderProject = ({ row, value }: any) =>
             ? h('img', {
                 src: row.logo,
                 alt: value?.title || 'Project',
-                class: 'h-8 w-8 bg-bg-card rounded-full',
+                class: 'h-8 w-8 bg-bg-card rounded-full object-cover',
                 loading: 'lazy',
                 decoding: 'async',
             })

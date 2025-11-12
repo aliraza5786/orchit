@@ -8,11 +8,12 @@ export interface Ticket {
   summary: string;
   type: "Story" | "Bug" | "Task";
   status: "Todo" | "In Progress" | "Done" | any;
-  assignee?: string;
+  assignee?: any;
   storyPoints?: number;
   priority: "Highest" | "High" | "Medium" | "Low";
   createdAt: string;
   description?: string;
+  
 }
 export interface Sprint {
   id: string;

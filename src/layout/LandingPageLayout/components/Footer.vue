@@ -72,7 +72,7 @@ const moblinks: MobFooterMenu[] = [
                         </figure>
                         <p
                             class="text-center sm:text-left max-w-[375px] sm:max-w-[246px] mb-[15px] lg:mb-[36px] font-normal mx-auto sm:mx-0  font-inter text-primary text-[14px] sm:text-[15px] leading-[22px] sm:leading-[24px] tracking-normal">
-                            Streamed Space is an AI-powered workspace that unifies project.
+                            Orchit AI is an AI-powered workspace that unifies project.
                         </p>
 
 
@@ -103,22 +103,22 @@ const moblinks: MobFooterMenu[] = [
                             </h3>
                         </div>
                         <div class="fotter_social_links flex gap-3 items-center justify-center  sm:justify-start">
-                            <a href="https://linkedin.com" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://www.linkedin.com/in/orchit-ai-990b40396/" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-linkedin"></i>
                             </a>
-                            <a href="https://twitter.com" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://x.com/Orchitai1" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-square-x-twitter"></i>
                             </a>
-                            <a href="" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://discord.com/channels/@me" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-discord"></i>
                             </a>
-                            <a href="" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://www.youtube.com/@orchit.ai1" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-youtube"></i>
                             </a>
-                            <a href="" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://www.instagram.com/orchit.ai/" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-instagram"></i>
                             </a>
-                            <a href="" target="_blank" class="text-primary text-[22px]">
+                            <a href="https://www.reddit.com/user/Brief_Challenge_5466/" target="_blank" class="text-primary text-[22px]">
                                 <i class="fa-brands fa-reddit"></i>
                             </a>
                         </div>
@@ -152,8 +152,8 @@ const moblinks: MobFooterMenu[] = [
                     class="font-inter text-center text-primary font-normal text-[12px] sm:text-[14px] leading-[24px] tracking-normal">
                     {{
                         theme === 'dark'
-                            ? `Copyright © ${new Date().getFullYear()} Space Technologies`
-                            : `${new Date().getFullYear()} © STREAMED INC. All Rights Reserved`
+                            ? `Copyright © ${new Date().getFullYear()} Orchit AI Technologies`
+                            : `${new Date().getFullYear()} © Orchit AI. All Rights Reserved`
                     }}
                 </p>
             </div>

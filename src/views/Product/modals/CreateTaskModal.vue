@@ -10,15 +10,30 @@
 
     <!-- Body -->
     <div class="px-6 grid grid-cols-2 gap-4">
-      <!-- Title -->
-      <BaseTextField v-model="form.title" label="Ticket Title" placeholder="e.g., Implement real-time notifications"
-        :error="!!titleError" :message="titleError" @blur="touched.title = true" />
+      <BaseTextField
+  v-model="form.title"
+  label="Ticket Title"
+  placeholder="e.g., Implement real-time notifications"
+  :error="!!titleError"
+  :message="titleError"
+  @blur="touched.title = true"
+/>
 
-      <!-- Lane (required) -->
-      <div class="flex flex-col" v-if="laneOptions.length>0">
-        <BaseSelectField size="md" label="Lane" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
-          :model-value="form.lane_id" @update:modelValue="setLane" />
-      </div>
+<!-- Lane -->
+<div class="flex flex-col" v-if="laneOptions.length>0">
+  <BaseSelectField
+    size="md"
+    label="Lane"
+    :options="laneOptions"
+    placeholder="Select lane"
+    :allowCustom="false"
+    :model-value="form.lane_id"
+    @update:modelValue="setLane"
+    :error="!!laneError"
+    :message="laneError"
+  />
+</div>
+
 
       <!-- Dynamic Select Variables -->
       <BaseSelectField size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable"
@@ -49,14 +64,19 @@
     </div>
 
     <div class="px-6 mt-2">
-      <BaseRichTextEditor label="Description" placeholder="What needs to be done, acceptance criteria, links…"
-        @blur="touched.description = true" v-model="form.description" />
+      <BaseRichTextEditor
+  label="Description"
+  placeholder="What needs to be done, acceptance criteria, links…"
+  v-model="form.description"
+  @blur="touched.description = true"
+/>
+<p v-if="descriptionError" class="text-xs text-red-500 mt-1 px-1">{{ descriptionError }}</p>
     </div>
 
     <!-- Footer -->
     <div class="flex justify-end gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border">
       <Button variant="secondary" @click="cancel">Cancel</Button>
-      <Button variant="primary" :disabled="!isValid || isSubmitting" @click="create">
+      <Button variant="primary" :disabled=" isSubmitting" @click="create">
         {{ isSubmitting ? 'Adding…' : 'Add Ticket' }}
       </Button>
     </div>
@@ -179,35 +199,17 @@ const touched = reactive({
   lane: false
 })
 
-const titleError = computed(() => (touched.title && !form.title.trim() ? 'Title is required' : ''))
-const startDateError = computed(() => {
-  if (!touched.startDate) return ''
-  if (!form.startDate) return 'Start date is required'
-  return ''
-})
-const endDateError = computed(() => {
-  if (!touched.endDate) return ''
-  if (!form.endDate) return 'End date is required'
-  if (form.startDate && form.endDate && form.endDate < form.startDate) return 'End date cannot be before start date'
-  return ''
-})
-const laneError = computed(() => {
-  if (!touched.lane) return ''
-  if (form.lane_id === null || form.lane_id === undefined || form.lane_id === '') return 'Lane is required'
-  return ''
-})
-
-const isValid = computed(
-  () =>
-    !titleError.value &&
-    !startDateError.value &&
-    !endDateError.value &&
-    !laneError.value &&
-    !!form.title.trim() &&
-    (!props.pin ? !!form.startDate &&
-      !!form.endDate : true)
-
+const isValid = computed(() =>
+  !!form.title.trim() &&
+ 
+  (!props.pin ? !!form.startDate && !!form.endDate : true) &&
+  !titleError.value &&
+  !startDateError.value &&
+  !endDateError.value &&
+  !laneError.value &&
+  !descriptionError.value
 )
+
 
 /** Date + Lane handlers */
 function setStartDate(v: string | null) {
@@ -243,21 +245,65 @@ function reset() {
 }
 const selectedVar = computed(() => variables.value.find((e:any) => e?._id == props.selectedVariable))
 
+const titleError = computed(() => (touched.title && !form.title.trim() ? 'Title is required' : ''))
+
+const startDateError = computed(() => {
+  if (!touched.startDate) return ''
+  if (!form.startDate) return 'Start date is required'
+  return ''
+})
+
+const endDateError = computed(() => {
+  if (!touched.endDate) return ''
+  if (!form.endDate) return 'End date is required'
+  if (form.startDate && form.endDate && form.endDate < form.startDate) return 'End date cannot be before start date'
+  return ''
+})
+
+const laneError = computed(() => {
+  if (!touched.lane) return ''
+  if (!form.lane_id) return 'Lane is required'
+  return ''
+})
+
+const descriptionError = computed(() => 
+  touched.description && !form.description.trim() ? 'Description is required' : ''
+)
 function create() {
+  // mark all as touched
   touched.title = true
+
+  touched.description = true
   if (!props.pin) {
     touched.startDate = true
     touched.endDate = true
   }
+
+  // prevent submission if invalid
   if (!isValid.value || isSubmitting.value) return
+
   const payload = {
     sheet_list_id: props.listId,
     workspace_id: workspaceId.value,
     sheet_id: props.sheet_id,
-    workspace_lane_id: form.lane_id, // ✅ included and required
-    variables: { ...form.variables, [`${selectedVar.value?.slug}`]: props.listId, ['card-title']: form.title.trim(), ['card-description']: form.description.trim(), ['start-date']: form.startDate, ['end-date']: form.endDate, },
+    workspace_lane_id: form.lane_id,
+    variables: {
+      ...form.variables,
+      [`${selectedVar.value?.slug}`]: props.listId,
+      ['card-title']: form.title.trim(),
+      ['card-description']: form.description.trim(),
+      ['start-date']: form.startDate,
+      ['end-date']: form.endDate,
+    },
     createdAt: new Date().toISOString()
   }
+
   addTicket(payload)
 }
+watch(() => form.title, (v) => { if (v?.trim() && touched.title) touched.title = false })
+watch(() => form.lane_id, (v) => { if (v && touched.lane) touched.lane = false })
+watch(() => form.startDate, (v) => { if (v && touched.startDate) touched.startDate = false })
+watch(() => form.endDate, (v) => { if (v && touched.endDate) touched.endDate = false })
+watch(() => form.description, (v) => { if (v?.trim() && touched.description) touched.description = false })
+
 </script>

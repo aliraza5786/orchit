@@ -81,7 +81,7 @@ function mapApiEdge(e: any): VFEdge {
   }
 }
 watch(
-  [() => isStatues.value, () => isProcess.value],
+  [() => isStatues.value, () => isProcess.value, isProcessFetching],
   async ([s1, s2]) => {
     if (s1 && s2 && statuses.value && !processWorkflow.value?.raw_transitions.nodes) {
       const newNodes: VFNode[] = statuses.value.map((n: any, i: any) => ({
@@ -89,13 +89,36 @@ watch(
         type: n.type ?? 'default',
         position: { x: 300 * i, y: 34 },   // numbers, not strings
         data: {
-          label: n.title, "status": "To Do"
+          label: n.value, "status": "To Do"
         },
       }))
+
       await nextTick()
       setNodes(newNodes)
       await nextTick()
       nodes.value = newNodes;
+      await nextTick()
+      const defaultTransitions: VFEdge[] = []
+      for (let i = 0; i < newNodes.length - 1; i++) {
+        defaultTransitions.push({
+          id: `edge-${newNodes[i].id}-${newNodes[i + 1].id}`,
+          source: newNodes[i].id,
+          target: newNodes[i + 1].id,
+          type: 'step',
+          label: 'Auto Transition',
+          animated: false,
+          style: { stroke: '#1152de', strokeWidth: 2 },
+          markerEnd: {
+            type: MarkerType.Arrow,
+            color: '#1152de',
+            width: 18,
+            height: 18,
+          },
+        })
+      }
+      if (!processWorkflow.value?.raw_transitions.nodes)
+        setEdges(defaultTransitions)
+      await nextTick()
       // stop() // remove the watcher so it fires only once
     }
   },
@@ -103,9 +126,9 @@ watch(
 )
 // ---- WATCH: put API data into VueFlow ----
 watch(
-  () => processWorkflow.value,
-  async (resp: any) => {
-    const fd = resp?.raw_transitions
+ isProcessFetching,
+  async () => {
+    const fd = processWorkflow.value?.raw_transitions
     if (!fd)
       return
     const incomingNodes = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
@@ -127,6 +150,8 @@ watch(
       await nextTick()
 
     })
+
+    await nextTick()
   },
   { immediate: true }
 )

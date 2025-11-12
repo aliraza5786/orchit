@@ -1,7 +1,7 @@
 <template>
   <BaseModal v-model="workspaceStore.showCreateLaneModal" modalClass="!py-0" size="lg">
     <!-- Header -->
-    <div class="sticky flex-col top-0 flex justify-between items-start pt-6 px-6 border-b border-border  pb-4 mb-4">
+    <div class="sticky flex-col top-0 flex justify-between bg-bg-body/90 z-1 items-start pt-6 px-6 border-b border-border  pb-4 mb-4">
       <h2 class="text-xl font-semibold">Create a New Lane</h2>
       <Stepper :steps="steps" :currentStep="currentStep" />
     </div>
@@ -97,7 +97,7 @@
     </div>
 
     <!-- Footer -->
-    <div class="flex justify-end mt-8 sticky bottom-0 gap-2 p-6 border-t border-border">
+    <div class="flex justify-end mt-8 sticky bottom-0 bg-bg-body/90  gap-2 p-6 border-t border-border">
       <Button variant="secondary" @click="prev">
         {{ currentStep === 0 ? 'Cancel' : 'Back' }}
       </Button>

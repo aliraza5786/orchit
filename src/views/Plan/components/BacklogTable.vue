@@ -9,9 +9,9 @@
         <img src="../../../assets/emptyStates/plan-backlog.svg" class="mb-4" alt="backlog-plan" />
         <h6 class="text-sm text-text-primary font-semibold mb-1">Get started in the backlog</h6>
         <p class="text-sm text-text-primary/90 mb-3">Plan and start a sprint to see issues here.</p>
-        <Button>Add Task Backlog</Button>
+        <!-- <Button>Add Task Backlog</Button> -->
       </div>
-      <Table v-else :showHeader="false"  :pagination="false" class="flex-grow h-full" :rowDraggable="true"
+      <Table  v-else :showHeader="false"  :pagination="false" class="flex-grow h-full" :rowDraggable="true"
         @row-dragstart="({ row, $event }: any) => onDragStart($event, row, 'backlog')"
         @row-dragend="({ $event }: any) => onDragEnd($event)" :columns="columns" :rows="normalizedBacklog"
         :page-size="20" :hover="true"  :itemKey="(row: any) => row.id" :sorters="sorters"
@@ -38,9 +38,10 @@
           <span :class="mapStatus(row.status)" class="px-2 py-1 rounded-md">{{ row.status }}</span>
         </template>
         <template #assignee="{ row }">
-          <span v-if="row.assignee == 'Unassigned'"
+          <span v-if="row?.assignee == 'Unassigned'"
             class="  float-end flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6  min-h-6 bg-gray-500/10 rounded-full  ">UA</span>
-          <span v-else class="  text-xs aspect-square max-w-6 flex justify-center items-center text-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full  ">{{ getInitials(row.assignee) }}</span>
+            <div class="   float-end  w-6 h-6 rounded-full" v-else-if="row?.assignee.u_profile_image"> <img :src="row?.assignee. u_profile_image" alt=""></div>
+          <span v-else class="   float-end   text-xs aspect-square max-w-6 flex justify-center items-center text-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full  ">{{ getInitials(row?.assignee. u_full_name) }}</span>
         </template>
 
         <template #drag="{ row }">
@@ -55,7 +56,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Table from '@/components/ui/Table.vue'
-import Button from '@/components/ui/Button.vue'
+// import Button from '@/components/ui/Button.vue'
 import {
   // useBacklogStore,
   // priorityClass,
@@ -87,7 +88,7 @@ watch(backlogResp, (resp) => {
       summary: (v['card-title'] as string) || '(untitled)',
       type: 'Story',
       status: rawStatus,
-      assignee: c.card?.assigned_to?.name ?? 'Unassigned',
+      assignee: c.card?.assigned_to ?? 'Unassigned',
       storyPoints: Number(c.story_points ?? 0) || 0,
       priority: mapPriority(rawPriority),
       createdAt: c.card?.created_at ?? new Date().toISOString(),
