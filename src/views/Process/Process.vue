@@ -67,7 +67,7 @@
     cancelText="Cancel" size="md" :loading="isDeletingList" @confirm="handleDeleteColumn"
     @cancel="() => { showDelete = false }" />
 
-  <WorkflowBuilderModal v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
+  <WorkflowBuilderModal  v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
 
   <CreateProcessSheetModal v-model="isCreateSheetModal" @created="handleSheetCreated" />
 </template>
