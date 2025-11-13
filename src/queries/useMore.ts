@@ -1,0 +1,34 @@
+import { request } from "../libs/api";
+import { useApiMutation } from "../libs/vq";
+
+export const useCreateModule = (options = {}) =>
+    useApiMutation<any, any>(
+      {
+        key: ["create-module"],
+      } as any,
+      {
+        mutationFn: (vars: any) =>
+          request({
+            url: `/workspace/modules/save`,
+            method: "POST",
+            data: vars.payload,
+          }),
+        ...(options as any),
+      } as any
+    );
+    export const useCreateModuleAI = (options = {}) =>
+      useApiMutation<any, any>(
+        {
+          key: ["create-module-ai"],
+        } as any,
+        {
+          mutationFn: (vars: any) =>
+            request({
+              url: `workspace/modules/create-with-ai`,
+              method: "POST",
+              data: vars.payload,
+            }),
+          ...(options as any),
+        } as any
+      );
+    

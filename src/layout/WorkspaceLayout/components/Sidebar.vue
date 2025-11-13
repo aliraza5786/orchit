@@ -2,35 +2,35 @@
 
     <SidebarSkeleton v-if="isLoading" />
         <aside
-            class="w-full sm:w-fit  bg-transparent z-1 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row  sm:flex-col items-center gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static">
+            class="w-full sm:w-fit  bg-transparent z-1 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row  sm:flex-col   gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static">
 
-            <div class="sm:mt-auto  text-center ">
-                <SideItem label="Peak" :to="`/workspace/peak/${workspaceId}/${jobId ? jobId : ''}`" key="peak" id="peak"
+            <div class=" text-center ">
+                <SideItem label="Peak" :to="`/workspace/peak/${workspaceId}/${workspace?.job_id ? workspace?.job_id : ''}`" key="peak" id="peak"
                     :icon="{
                         prefix: 'fa-regular',
                         iconName: 'fa-home'
                     }" />
             </div>
-            <div class="sm:mt-auto  text-center ">
+            <div class=" text-center ">
                 <SideItem label="People" :to="`/workspace/people/${workspaceId}`" key="people" id="people" :icon="{
                     prefix: 'fa-regular',
                     iconName: 'fa-users'
                 }" />
             </div>
-            <div class="sm:mt-auto  text-center ">
+            <div class=" text-center ">
                 <SideItem label="Process" :to="`/workspace/process/${workspaceId}`" key="process" id="process" :icon="{
                     prefix: 'fa-regular',
                     iconName: 'fa-diagram-project'
                 }" />
             </div>
 
-        <div class="flex  flex-col gap-1 max-md:flex-row  pin_task ">
+        <div class="flex  flex-col gap-1 max-md:flex-row pin_task ">
             <SideItem v-for="(item, index) in workspace.modules" :key="index" :id="item._id"
                 :label="item.variables['module-title']"
                 :to="`/${item?.variables['module-title'].toLowerCase() == 'pin' ? 'workspace/pin' : 'workspace'}/${workspaceId}/${item._id}`"
                 :icon="item?.variables['module-icon']" />
         </div>
-        <div class="sm:mt-auto   text-center sm:flex-grow flex-col flex gap-1 ">
+        <div class="  text-center  flex-col flex gap-1 ">
             <SideItem label="Plan" :to="`/workspace/plan/${workspaceId}`" key="plan" id="plan" :icon="{
                 prefix: 'fa-regular',
                 iconName: 'fa-brain'
@@ -52,10 +52,10 @@
 </Draggable> -->
 
             <!-- Static More Item -->
-            <div class="sm:mt-auto sm:pt-4 hidden sm:block text-center ">
-                <SideItem id="more" label="More" :to="`/workspace/more/${workspaceId}`" :icon="{
+            <div class="  hidden sm:block text-center ">
+                <SideItem id="more" label="Add" :to="`/workspace/more/${workspaceId}`" :icon="{
                     prefix: 'fa-solid',
-                    iconName: 'fa-grid-2'
+                    iconName: 'fa-plus'
                 }" />
 
             </div>

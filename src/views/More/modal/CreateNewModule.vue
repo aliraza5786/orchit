@@ -3,7 +3,9 @@
         <!-- Header -->
         <div class="flex justify-between items-start px-6 border-b border-border pb-4">
             <h2 class="text-xl font-semibold">
-                {{ sheet?._id ? 'Update Sheet' : 'Add a new Sheet' }}
+                <!-- {{ sheet?._id ? -->
+                Add New Module
+                <!-- //   : 'Add a new Sheet' }} -->
             </h2>
         </div>
 
@@ -24,7 +26,7 @@
             <section v-if="currentTab === 'manual'" class="space-y-4">
                 <IconPicker v-model="form.icon" />
 
-                <BaseTextField v-model="form.title" label="Sheet name" size="lg" placeholder="Design Ideas"
+                <BaseTextField v-model="form.title" label="Module name" size="lg" placeholder="Module name"
                     :error="!!errors.title" :message="errors.title" />
 
                 <BaseTextField v-model="form.description" label="Description" size="lg" textarea
@@ -34,7 +36,7 @@
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
                         @click="close">Cancel</button>
                     <Button class="px-4" @click="submitManual">
-                        {{ creatingSheet || isUpdating ? 'Saving...' : 'Save' }}
+                        {{ creatingModule ? 'Saving...' : 'Save' }}
                     </Button>
                 </div>
             </section>
@@ -117,7 +119,7 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <Button variant="secondary" @click="close">Cancel</Button>
                     <Button :disabled="!chosenTemplate" @click="submitTemplate">
-                        {{ creatingSheet ? 'Adding...' : 'Add board' }}
+                        {{ creatingModule ? 'Adding...' : 'Add board' }}
                     </Button>
                 </div>
             </section>
@@ -126,11 +128,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
-import IconPicker from '../components/IconPicker.vue'
 import AudioRecorder from '../../../views/CreateWorkspace/components/AudioRecorder.vue'
 
 // import { useRoute } from 'vue-router'
@@ -139,20 +140,20 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 // import { useOpenAIGeneration } from '../../../queries/useOpenAIGeneration'
 import { extractJSONFromResponse } from '../../../utilities/extractJson'
 import { useCreateWorkspaceSheet, useCreateWorkspaceSheetAI, useUpdateWorkspaceSheet } from '../../../queries/useSheets'
+import IconPicker from '../../Product/components/IconPicker.vue'
+import { useCreateModule, useCreateModuleAI } from '../../../queries/useMore'
 // import { useSuggestions } from '../../../queries/useWorkspace'
 
-const props = defineProps<{ modelValue: boolean, sheet: any }>()
+const props = defineProps<{ modelValue: boolean }>()
 
 const emit = defineEmits(['update:modelValue'])
 
 const queryClient = useQueryClient()
 const { workspaceId, moduleId } = useRouteIds()
 
-const form = ref({ title: props?.sheet?.title, description: props?.sheet?.description, icon: props?.sheet?.icon })
+const form = ref({ title: '', description: '', icon: null })
 const errors = ref<{ title?: string; description?: string }>({})
-watch(props, () => {
-    form.value = props.sheet
-})
+
 function validateManual() {
     const next: any = {}
     if (!form.value.title.trim()) next.title = 'Please enter a sheet name.'
@@ -161,49 +162,49 @@ function validateManual() {
     return Object.keys(next).length === 0
 }
 
-const { mutate: createSheet, isPending: creatingSheet } = useCreateWorkspaceSheet({
+const { mutate: createModule, isPending: creatingModule } = useCreateModule({
     onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['sheets'] })
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] })
         close()
     }
 })
 
-const { mutate: updateSheet, isPending: isUpdating } = useUpdateWorkspaceSheet({
-    onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['sheets'] })
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-        close()
-    }
-})
+// const { mutate: updateSheet, isPending: isUpdating } = useUpdateWorkspaceSheet({
+//     onSuccess: () => close()
+// })
 
 function submitManual() {
     if (!validateManual()) return
 
-    if (props.sheet?._id) {
-        updateSheet({
-            sheet_id: props.sheet._id,
-            icon: form.value.icon,
-            variables: {
-                'sheet-title': form.value.title,
-                'sheet-description': form.value.description
+    // if (props.sheet?._id) {
+    //     updateSheet({
+    //         sheet_id: props.sheet._id,
+    //         icon: form.value.icon,
+    //         variables: {
+    //             'sheet-title': form.value.title,
+    //             'sheet-description': form.value.description
+    //         },
+    //         is_ai_generated: false,
+    //         workspace_id: workspaceId.value,
+    //         workspace_module_id: moduleId.value,
+    //     })
+    // } else {
+    createModule({
+        payload: {
+            module: {
+                icon: form.value.icon,
+                variables: {
+                    'module-title': form.value.title,
+                    'module-description': form.value.description,
+                    'module-icon': form.value.icon,
+
+                },
+                is_ai_generated: false,
             },
-            is_ai_generated: false,
             workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-        })
-    } else {
-        createSheet({
-            icon: form.value.icon,
-            variables: {
-                'sheet-title': form.value.title,
-                'sheet-description': form.value.description
-            },
-            is_ai_generated: false,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-        })
-    }
+        }
+    })
+    // }
 }
 
 function close() {
@@ -235,22 +236,19 @@ const isPending = ref(false)
 //     )
 // }
 
-const { mutate: generateAI, isPending: isAiPending } = useCreateWorkspaceSheetAI({
+const { mutate: generateAI, isPending: isAiPending } = useCreateModuleAI({
     onSuccess: () => {
-        // const result: any = extractJSONFromResponse(data) ?? {}
-        // createSheet({
-        //     icon: result?.icon ?? '',
-        //     variables: {
-        //         'sheet-title': result?.title ?? '',
-        //         'sheet-description': result?.description ?? ''
-        //     },
-        //     is_ai_generated: true,
-        //     workspace_id: workspaceId.value,
-        //     workspace_module_id: moduleId.value,
-        // })
-        queryClient.invalidateQueries({ queryKey: ['sheets'] })
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+        description.value = ''
         close();
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+        // const result: any = extractJSONFromResponse(data) ?? {}
+        // createModule({
+        //     payload: {
+        //         ...data,
+        //         workspace_id: workspaceId.value,
+        //     }
+
+        // })
         isPending.value = false
     },
     onError: () => { isPending.value = false }
@@ -260,9 +258,11 @@ function handleGenerateSheet() {
     if (!description.value.trim()) return
     isPending.value = true
     generateAI({
-        module_id: moduleId.value,
-        idea: description.value,
-        workspace_id: workspaceId.value
+        payload: {
+
+            idea: description.value,
+            workspace_id: workspaceId.value
+        }
     })
 }
 
@@ -272,6 +272,7 @@ function handleGenerateSheet() {
 const tabs = [
     { label: 'Manual', value: 'manual' },
     { label: 'Generate with AI', value: 'ai' },
+    // { label: 'Templates', value: 'templates' }
 ]
 
 const currentTab = ref('manual')
@@ -319,7 +320,7 @@ const chosenTemplate = ref<Template | null>(null)
 function chooseTemplate(tpl: Template) { chosenTemplate.value = tpl }
 function submitTemplate() {
     if (!chosenTemplate.value) return
-    createSheet({
+    createModule({
         icon: null,
         variables: {
             'sheet-title': chosenTemplate.value.title,

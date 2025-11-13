@@ -16,7 +16,9 @@
                 <Dropdown :actions="false" prefix="View by" v-model="selected_view_by" :options="variables"
                     variant="secondary">
                     <template #more>
-                        <div @click="isCreateVar = true"
+                        <div @click="()=>{
+      
+                            isCreateVar = true}"
                             class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
                             <i class="fa-solid fa-plus"></i> Add new
                         </div>
@@ -162,6 +164,7 @@ const selectCardHandler = (card: any) => {
 }
 const isCreateSheetModal = ref(false)
 const createSheet = () => {
+    selectedSheettoAction.value = {}
     isCreateSheetModal.value = !isCreateSheetModal.value
 }
 
@@ -210,7 +213,8 @@ const transformedData = computed<DropdownOption[]>(() => {
         _id: item._id,
         title: item.variables["sheet-title"],
         description: item.variables["sheet-description"],
-        icon: item["icon"]
+        icon: item["icon"], 
+        status:item?.generation_status,
     }));
 });
 watch(data, (newSheetId) => {

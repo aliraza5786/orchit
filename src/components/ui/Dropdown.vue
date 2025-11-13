@@ -54,6 +54,8 @@
                   {{ option.description }}
                 </p>
               </div>
+              <i
+            v-if="option?.status == 'running'" class="fa-regular text-left fa-arrows-spin animate-spin duration-250"></i>
             </div>
 
             <!-- Right: row actions -->
