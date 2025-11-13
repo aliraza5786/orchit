@@ -145,7 +145,7 @@
             <div>
               <h3 class="text-sm font-semibold tracking-wide mb-3">History</h3>
               <ol class="relative border-l border-orchit-white/10 pl-5 space-y-4 ml-1">
-                <li v-for="(h, i) in cardDetails.history" :key="i" class="group">
+                <li v-for="(h, i) in cardDetails?.history" :key="i" class="group">
                   <span
                     class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-accent/70 ring-4 ring-accent/10"></span>
                   <div
@@ -304,8 +304,7 @@ const tabOptions = [
 
 /* -------------------- Title -------------------- */
 const editingTitle = ref(false)
-const localTitle = ref(cardDetails.value['card-title'])
-watch(() => cardDetails.value, (val) => { localTitle.value = val['card-title'] })
+const localTitle = ref(cardDetails.value ? cardDetails.value['card-title'] : '')
 
 const titleInput = ref<HTMLInputElement | null>(null)
 function editTitle() {
@@ -320,8 +319,7 @@ function saveTitle() {
 }
 
 /* -------------------- Description -------------------- */
-const description = ref(cardDetails.value['card-description'])
-watch(() => props.details, () => { description.value = props.details['card-description'] })
+const description = ref(cardDetails.value ? cardDetails.value['card-description'] : '')
 
 const editingDesc = ref(false)
 const descEditorWrap = ref<HTMLElement | null>(null)
@@ -371,8 +369,13 @@ const dateISO = computed({
 })
 
 const { data: lanes } = useLanes(workspaceId.value)
-const lane = ref(cardDetails.value['workspace_lane_id'] ?? '')
-watch(() => cardDetails.value, (v) => { lane.value = v['workspace_lane_id'] })
+const lane = ref(cardDetails.value ? cardDetails.value['workspace_lane_id'] : '')
+watch(  [() => cardDetails.value, () => isFetching.value],
+ (() => { 
+
+  localTitle.value = cardDetails.value['card-title']; description.value = cardDetails.value['card-description']; lane.value = cardDetails.value['workspace_lane_id'] 
+
+}))
 
 const laneOptions = computed<any[]>(() =>
   (lanes?.value ?? []).map((el: any) => ({ _id: el._id, title: el?.variables?.['lane-title'] ?? String(el._id) }))
@@ -382,7 +385,7 @@ function setLane(v: any) {
   moveCard.mutate({ card_id: props.details._id, 'workspace_lane_id': v })
 }
 
-const form = ref<any>({ startDate: cardDetails.value['start-date'], endDate: cardDetails.value['end-date'] })
+const form = ref<any>({ startDate: cardDetails.value ? cardDetails.value['start-date'] : "", endDate: cardDetails.value ? cardDetails.value['end-date'] : '' })
 const startDate = computed(() => props.details['start-date'])
 const endDate = computed(() => props.details['end-date'])
 watch(startDate, (v) => { form.value = { ...form.value, startDate: v } })

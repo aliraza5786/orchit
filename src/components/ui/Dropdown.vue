@@ -114,6 +114,7 @@ interface Option {
   prefix?: string | any;
   icon?: IconData;
   description?: string;
+  status?:string
 }
 
 const props = withDefaults(

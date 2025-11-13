@@ -403,7 +403,7 @@ function cancelEditEdge() {
   selectedEdgeId.value = null
   editEdgeName.value = ''
 }
-function onEdgeClick({event, edge}) {
+function onEdgeClick({event, edge}:{event:any, edge:any}) {
   console.log('>>> click',edge);
   
   openEditEdge(edge)

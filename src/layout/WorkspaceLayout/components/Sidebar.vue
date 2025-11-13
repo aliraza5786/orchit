@@ -68,8 +68,11 @@
 import { ref, watch } from 'vue'
 import SideItem from './SideItem.vue';
 import { useRouteIds } from '../../../composables/useQueryParams';
-const { workspaceId, jobId } = useRouteIds()
-const props = defineProps<{ workspace: { modules: any }, isLoading: boolean }>()
+const { workspaceId, 
+    // jobId
+
+ } = useRouteIds()
+const props = defineProps<{ workspace: { modules: any, job_id:string }, isLoading: boolean }>()
 const modules = ref([]);
 watch(() => props.workspace, (newWorkspace) => {
     if (!newWorkspace) {

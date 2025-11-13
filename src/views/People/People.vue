@@ -97,7 +97,7 @@ const viewData = [
 const selected_view_id = ref('role');
 const showDelete = ref(false);
 const localColumn = ref();
-const { workspaceId ,moduleId} = useRouteIds();
+const { workspaceId} = useRouteIds();
 const localList = ref<any>([]);
 
 const { mutate: addList, isPending: addingList } = useCreateTeam({

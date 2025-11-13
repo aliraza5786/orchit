@@ -137,7 +137,7 @@ import AudioRecorder from '../../../views/CreateWorkspace/components/AudioRecord
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteIds } from '../../../composables/useQueryParams'
 // import { useOpenAIGeneration } from '../../../queries/useOpenAIGeneration'
-import { extractJSONFromResponse } from '../../../utilities/extractJson'
+// import { extractJSONFromResponse } from '../../../utilities/extractJson'
 import { useCreateWorkspaceSheet, useCreateWorkspaceSheetAI, useUpdateWorkspaceSheet } from '../../../queries/useSheets'
 // import { useSuggestions } from '../../../queries/useWorkspace'
 

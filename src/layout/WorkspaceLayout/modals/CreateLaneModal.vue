@@ -94,30 +94,30 @@ const descriptionError = computed(() => {
   return ''
 })
 
-const userTypeError = computed(() => {
-  if (!touched.user_type) return ''
-  if (form.value.user_types.length === 0) return 'Select at least one user type'
-  return ''
-})
+// const userTypeError = computed(() => {
+//   if (!touched.user_type) return ''
+//   if (form.value.user_types.length === 0) return 'Select at least one user type'
+//   return ''
+// })
 
-const technologiesError = computed(() => {
-  if (!touched.technologies) return ''
-  if (form.value.technologies.length === 0) return 'Select at least one technology'
-  return ''
-})
+// const technologiesError = computed(() => {
+//   if (!touched.technologies) return ''
+//   if (form.value.technologies.length === 0) return 'Select at least one technology'
+//   return ''
+// })
 
-const platformsError = computed(() => {
-  if (!touched.platforms) return ''
-  if (form.value.platforms.length === 0) return 'Select at least one platform'
-  return ''
-})
+// const platformsError = computed(() => {
+//   if (!touched.platforms) return ''
+//   if (form.value.platforms.length === 0) return 'Select at least one platform'
+//   return ''
+// })
 
 /* ----- State ----- */
 const workspaceStore = useWorkspaceStore()
 
 const queryClient = useQueryClient()
 
-const steps = ['Basics', 'Color', 'Platform']
+// const steps = ['Basics', 'Color', 'Platform']
 const currentStep = ref(0)
 
 
