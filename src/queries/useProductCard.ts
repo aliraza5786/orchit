@@ -147,12 +147,11 @@ export const useUpdateComment = (options = {}) =>
       ...(options as any),
     } as any
   );
-export const useProductCard = (
-  card_id: any,
-  options = {}
-) => {
+export const useProductCard = (card_id: any, options = {}) => {
+  console.log(" i am calling >>>", unref(card_id));
+
   return useQuery({
-    queryKey: [`product-card-${unref(card_id)}`],
+    queryKey: [`cardDetail`, card_id],
     queryFn: ({ signal }) =>
       request<any>({
         url: `/workspace/card/${unref(card_id)}`,

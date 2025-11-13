@@ -1,6 +1,11 @@
 <template>
+  <div v-if="isFetching || isPending" class="flex justify-center min-h-[400px] items-center h-full w-full">
+
+    <div role="status" aria-label="Loading"
+      class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
+  </div>
   <!-- Slide-in panel -->
-  <Transition name="panel" appear>
+  <Transition v-else name="panel" appear>
     <div v-show="showPanel" class="flex flex-col max-w-[380px] min-w-[380px] h-full
      overflow-y-auto
              bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
@@ -81,7 +86,8 @@
               </div>
               <div class="space-y-2 ">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
-                <AssigmentDropdown @assign="(user)=>assignHandle(user)" :assigneeId="curentAssigne" :seat="details.seat" />
+                <AssigmentDropdown @assign="(user) => assignHandle(user)" :assigneeId="curentAssigne"
+                  :seat="cardDetails.seat" />
               </div>
               <template v-if="!pin">
                 <div class="space-y-2">
@@ -139,7 +145,7 @@
             <div>
               <h3 class="text-sm font-semibold tracking-wide mb-3">History</h3>
               <ol class="relative border-l border-orchit-white/10 pl-5 space-y-4 ml-1">
-                <li v-for="(h, i) in details.history" :key="i" class="group">
+                <li v-for="(h, i) in cardDetails.history" :key="i" class="group">
                   <span
                     class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-accent/70 ring-4 ring-accent/10"></span>
                   <div
@@ -280,7 +286,13 @@ const props = defineProps({
   details: { type: Object as () => any, default: () => ({}) }
 })
 const emit = defineEmits(['close', 'update:details', 'comment:post', 'priority:change'])
-const { data: cardDetails, isPending } = useProductCard(props.details._id);
+const propsID = ref(props.details._id);
+const { data: cardDetails, isPending, isFetching } = useProductCard(propsID);
+watch(props, () => {
+  console.log('chaning props, >>>');
+
+  propsID.value = props.details._id
+})
 /* -------------------- Tabs -------------------- */
 const activeTab = ref<'details' | 'comments' | 'attachment' | 'history'>('details')
 const tabOptions = [
@@ -292,8 +304,8 @@ const tabOptions = [
 
 /* -------------------- Title -------------------- */
 const editingTitle = ref(false)
-const localTitle = ref(props.details['card-title'] ?? '')
-watch(() => props.details['card-title'], (val) => { localTitle.value = val })
+const localTitle = ref(cardDetails.value['card-title'])
+watch(() => cardDetails.value, (val) => { localTitle.value = val['card-title'] })
 
 const titleInput = ref<HTMLInputElement | null>(null)
 function editTitle() {
@@ -308,7 +320,7 @@ function saveTitle() {
 }
 
 /* -------------------- Description -------------------- */
-const description = ref(props.details['card-description'])
+const description = ref(cardDetails.value['card-description'])
 watch(() => props.details, () => { description.value = props.details['card-description'] })
 
 const editingDesc = ref(false)
@@ -331,6 +343,8 @@ async function startEditDesc() {
   focusProseMirror(descEditorWrap.value || undefined)
 }
 function finishDescEdit(attachmentsFromEditor?: any[]) {
+  console.log(attachmentsFromEditor, '???');
+
   moveCard.mutate({
     card_id: props.details._id,
     attachments: attachmentsFromEditor ?? [],
@@ -357,8 +371,8 @@ const dateISO = computed({
 })
 
 const { data: lanes } = useLanes(workspaceId.value)
-const lane = ref(props.details['workspace_lane_id'] ?? '')
-watch(() => props.details['workspace_lane_id'], (v) => { lane.value = v })
+const lane = ref(cardDetails.value['workspace_lane_id'] ?? '')
+watch(() => cardDetails.value, (v) => { lane.value = v['workspace_lane_id'] })
 
 const laneOptions = computed<any[]>(() =>
   (lanes?.value ?? []).map((el: any) => ({ _id: el._id, title: el?.variables?.['lane-title'] ?? String(el._id) }))
@@ -368,7 +382,7 @@ function setLane(v: any) {
   moveCard.mutate({ card_id: props.details._id, 'workspace_lane_id': v })
 }
 
-const form = ref<any>({ startDate: props.details['start-date'], endDate: props.details['end-date'] })
+const form = ref<any>({ startDate: cardDetails.value['start-date'], endDate: cardDetails.value['end-date'] })
 const startDate = computed(() => props.details['start-date'])
 const endDate = computed(() => props.details['end-date'])
 watch(startDate, (v) => { form.value = { ...form.value, startDate: v } })
@@ -382,15 +396,15 @@ const endDateError = computed(() =>
 const setStartDate = (e: any) => moveCard.mutate({ card_id: props.details._id, variables: { 'start-date': e } })
 const setEndDate = (e: any) => moveCard.mutate({ card_id: props.details._id, variables: { 'end-date': e } })
 
-const curentAssigne = computed(() => props.details.assigned_to)
+const curentAssigne = computed(() => cardDetails.value.assigned_to)
 const assignHandle = (user: any) => {
   moveCard.mutate({ card_id: props.details._id, seat_id: user?._id })
 }
 
 /* -------------------- Comments -------------------- */
-const comments = ref<any>([])
 const commentId = computed(() => props.details?._id)
 const { data: commentsData } = useComments(commentId)
+const comments = ref<any>(commentsData.value?.comments)
 watch(() => commentsData.value, () => { comments.value = commentsData.value?.comments })
 
 const { mutate: createComment, isPending: isPostingComment } = useCreateComment({
@@ -414,7 +428,7 @@ const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateComment
     // Find and update the comment in local state immediately
     const idx = comments.value.findIndex((c: any) => c._id === updatedComment._id)
     if (idx > -1) {
-      comments.value[idx] = { ...comments.value[idx], comment_text:updatedComment.comment_text }
+      comments.value[idx] = { ...comments.value[idx], comment_text: updatedComment.comment_text }
     }
     // Exit edit mode once done
     editingId.value = null
@@ -448,8 +462,10 @@ function removeComment(c: any) {
 }
 
 /* -------------------- Attachments (tab) -------------------- */
-const attachments = computed(() =>
-  (props.details?.attachments ?? []).map((f: any) => ({
+const attachments = computed(() => {
+  console.log(props.details?.attachments, '>>>');
+
+  return cardDetails.value?.attachments.map((f: any) => ({
     _id: f._id ?? f.id ?? crypto.randomUUID?.() ?? Math.random(),
     name: f.name ?? f.filename ?? 'file',
     url: f.url,
@@ -457,6 +473,7 @@ const attachments = computed(() =>
       : (f.type ?? f.kind ?? '').toLowerCase().includes('video') ? 'video'
         : 'file'
   }))
+}
 )
 
 /* -------------------- Mutations / cache -------------------- */
@@ -472,7 +489,10 @@ const moveCard = useMoveCard({
 /* -------------------- Comment attachments -------------------- */
 const commentAttachments = ref<File[]>([])
 const { mutate: uploadFile } = usePrivateUploadFile({
-  onSuccess: (data: any) => { commentAttachments.value = [data] }
+  onSuccess: (data: any) => {
+    commentAttachments.value = [data]
+    // queryClient.invalidateQueries({ queryKey: [`product-card-${cardDetails?.value?._id}`] })
+  }
 })
 function handleFileChange(event: any) {
   const files = event.target.files
