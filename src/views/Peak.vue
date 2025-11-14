@@ -282,15 +282,13 @@ const connect = () => {
   }
 
   es.onmessage = (event: MessageEvent) => {
-    console.log(' i am tring', event);
-
     if (isStopped) return
     try {
       
       taskProgress.value = JSON.parse(event.data) 
 
       // Close automatically when completed/final state
-      const status = taskProgress.value.status 
+      const status = taskProgress.value?.status ??'cancels'
       if (['completed', 'failed', 'canceled'].includes(status)) {
         disconnect()
       }
