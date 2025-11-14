@@ -20,8 +20,7 @@
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']"
-                  :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
-                  subtitle=""
+                  :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title" subtitle=""
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
@@ -216,14 +215,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, defineComponent, h } from 'vue'
-import { toParamString } from '../composables/useQueryParams'
-import ProjectCard from '../components/feature/ProjectCard.vue'
 import { useRoute } from 'vue-router'
+import ProjectCard from '../components/feature/ProjectCard.vue'
+import { toParamString } from '../composables/useQueryParams'
 import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople'
 import { getInitials, generateAvatarColor } from '../utilities'
-import type { TeamWorkloadMember } from '../types'
 import { avatarColor } from '../utilities/avatarColor'
-
+import type { TeamWorkloadMember } from '../types'
 
 /** Types */
 interface LaneProgressRow {
@@ -238,141 +236,144 @@ interface TaskProgress {
   percent: number
   message: string
   progress_details?: { lanes_progress?: LaneProgressRow[] }
-  result?: { sheet_lists?: number; cards?: number, lanes_summary: any }
+  result?: { sheet_lists?: number; cards?: number; lanes_summary: any }
   error?: string
   updated_at: string
 }
 
 /** Reactive state */
+
+const isLoading = ref(false)
+
+/**
+ * IMPORTANT FLAG:
+ * Once the component is unmounted, this becomes true
+ * and we NEVER create new EventSource or schedule reconnects.
+ */
 const isConnected = ref(false)
 const taskProgress = ref<TaskProgress | null>(null)
 const eventSource = ref<EventSource | null>(null)
-const reconnectAttempts = ref(0)
-const maxReconnectAttempts = 5
-const debugInfo = ref<any>({})
 
-/** Server configuration */
-const SERVER_BASE_URL = import.meta.env.VITE_SERVER_BASE_URL || 'https://backend.streamed.space/api/v1/'
+/** Ensure no reconnect or re-init after unmount */
+let isStopped = false
 
-const cardProgress = computed(() => taskProgress.value?.percent == 100 ? true : false)
-/** Derived */
-const lanes = computed<LaneProgressRow[]>(() => taskProgress.value?.result?.lanes_summary ?? [])
-const lanes2 = computed<LaneProgressRow[]>(() => taskProgress.value?.progress_details?.lanes_progress ?? [])
+const SERVER_BASE_URL =
+  import.meta.env.VITE_SERVER_BASE_URL || 'https://backend.streamed.space/api/v1/'
 
-const isLoading = ref(false)
+const connect = () => {
+  if (isStopped) return
+  if (eventSource.value) return // prevent duplicate connections
+
+  const token = localStorage.getItem('token') || ''
+  const paramJob = jobId.value
+  const storedJob = localStorage.getItem('jobId')
+  const effectiveJob = paramJob || storedJob || workspaceId.value
+  const isManual = paramJob || storedJob ? 'false' : 'true'
+
+  const url = `${SERVER_BASE_URL}common/step2/tasks/${effectiveJob}/stream?token=${token}&is_manual=${isManual}`
+
+  const es = new EventSource(url)
+  eventSource.value = es
+
+  es.onopen = () => {
+
+    if (isStopped) return
+    isConnected.value = true
+  }
+
+  es.onmessage = (event: MessageEvent) => {
+    console.log(' i am tring', event);
+
+    if (isStopped) return
+    try {
+      
+      taskProgress.value = JSON.parse(event.data) 
+
+      // Close automatically when completed/final state
+      const status = taskProgress.value.status 
+      if (['completed', 'failed', 'canceled'].includes(status)) {
+        disconnect()
+      }
+    } catch (_) { }
+  }
+
+  es.onerror = () => {
+    // DO NOT RECONNECT
+    disconnect()
+  }
+
+  eventSource.value.addEventListener('progress', (event: MessageEvent) => {
+    console.log('>> trki g');
+    
+      try { taskProgress.value = JSON.parse(event.data) } catch { }
+    })
+}
+
+const disconnect = () => {
+  isConnected.value = false
+  if (eventSource.value) {
+    eventSource.value.close()
+    eventSource.value = null
+  }
+}
+
+/** Lifecycle */
+onMounted(() => {
+  isStopped = false
+  connect()
+})
+
+onUnmounted(() => {
+  isStopped = true
+  disconnect()
+})
+
+
+
+/** Derived state */
+const cardProgress = computed(() =>
+  taskProgress.value?.percent === 100 ? true : false
+)
+
+const lanes = computed<LaneProgressRow[]>(
+  () => taskProgress.value?.result?.lanes_summary ?? []
+)
+const lanes2 = computed<LaneProgressRow[]>(
+  () => taskProgress.value?.progress_details?.lanes_progress ?? []
+)
 
 const avatars = [
   'https://randomuser.me/api/portraits/women/1.jpg',
   'https://randomuser.me/api/portraits/men/2.jpg',
   'https://randomuser.me/api/portraits/men/3.jpg'
 ]
-const route = useRoute();
-const workspaceId = computed<string>(() => toParamString(route?.params?.id));
-const jobId = computed<string>(() => toParamString(route?.params?.job_id));
-/** SSE Connection Management */
-const connect = () => {
-  if (eventSource.value && eventSource.value.readyState === EventSource.OPEN) return
-  if (reconnectAttempts.value >= maxReconnectAttempts) return
-  if (eventSource.value) eventSource.value.close()
-  const token = localStorage.getItem('token') || ''
-  const effectiveJob = jobId?.value ? jobId?.value : localStorage.getItem('jobId') ? localStorage.getItem('jobId') : workspaceId.value
-  const isManual = localStorage.getItem('jobId') || jobId?.value ? 'false' : 'true'
-  const sseUrl = `${SERVER_BASE_URL}common/step2/tasks/${effectiveJob}/stream?token=${token}&is_manual=${isManual}`
 
-  try {
-    eventSource.value = new EventSource(sseUrl, { withCredentials: false })
+const route = useRoute()
+const workspaceId = computed<string>(() => toParamString(route?.params?.id))
+const jobId = computed<string>(() => toParamString(route?.params?.job_id))
 
-    eventSource.value.onopen = () => {
-      isLoading.value = true
 
-      isConnected.value = true
-      reconnectAttempts.value = 0
-      debugInfo.value = { ...debugInfo.value, connectionStatus: 'Connected', lastConnected: new Date().toISOString(), url: sseUrl }
-      isLoading.value = false
-    }
 
-    eventSource.value.onmessage = (event) => {
-      try {
-        const data: TaskProgress = JSON.parse(event.data)
-        taskProgress.value = data
-        debugInfo.value = { ...debugInfo.value, lastMessage: data, lastMessageTime: new Date().toISOString() }
-        if (['completed', 'failed', 'canceled'].includes(data.status)) setTimeout(disconnect, 1200)
-      } catch (error: any) {
-        debugInfo.value = { ...debugInfo.value, parseError: error?.message, rawMessage: event.data }
-      }
-    }
-
-    eventSource.value.addEventListener('progress', (event: MessageEvent) => {
-      try { taskProgress.value = JSON.parse(event.data) } catch { }
-    })
-
-    eventSource.value.addEventListener('error', (event: any) => {
-      try { debugInfo.value = { ...debugInfo.value, serverError: JSON.parse(event.data) } } catch { }
-    })
-
-    eventSource.value.onerror = () => {
-      isConnected.value = false
-      debugInfo.value = { ...debugInfo.value, connectionError: true, errorTime: new Date().toISOString(), readyState: eventSource.value?.readyState }
-
-      if (reconnectAttempts.value < maxReconnectAttempts) {
-        reconnectAttempts.value++
-        const delay = Math.min(30000, 1000 * 2 ** reconnectAttempts.value)
-        setTimeout(connect, delay)
-      }
-    }
-  } catch (error: any) {
-    debugInfo.value = { ...debugInfo.value, creationError: error?.message, errorTime: new Date().toISOString() }
-  }
+/** Click handler for lanes */
+const onLaneClick = (lane: LaneProgressRow) => {
+  console.log('Lane clicked:', lane)
 }
 
-const disconnect = () => {
-  if (eventSource.value) {
-    eventSource.value.close()
-    eventSource.value = null
-  }
-  isConnected.value = false
-  debugInfo.value = { ...debugInfo.value, disconnectedAt: new Date().toISOString() }
-}
-
-const reconnect = () => {
-  disconnect()
-  reconnectAttempts.value = 0
-  setTimeout(connect, 600)
-}
-
-/** Lifecycle */
-onMounted(() => {
-  connect()
-  document.addEventListener('visibilitychange', handleVisibilityChange)
-})
-
-onUnmounted(() => {
-  disconnect()
-  document.removeEventListener('visibilitychange', handleVisibilityChange)
-})
-
-const handleVisibilityChange = () => {
-  if (!document.hidden && !isConnected.value && (!eventSource.value || eventSource.value.readyState === EventSource.CLOSED)) {
-    reconnect()
-  }
-}
-
-
-
-const onLaneClick = (lane: LaneProgressRow) => { console.log('Lane clicked:', lane) }
-
-const { data: dashboardTeamsData, isPending: isLoadingTeams, error: teamsError, refetch: refetchTeams } = useDashboardTeams(workspaceId)
-const { data: dashboardActiviesData, } = useDashboardActivities(workspaceId)
+/** Queries for team + activities */
+const {
+  data: dashboardTeamsData,
+  isPending: isLoadingTeams,
+  error: teamsError,
+  refetch: refetchTeams
+} = useDashboardTeams(workspaceId)
+const { data: dashboardActiviesData } = useDashboardActivities(workspaceId)
 
 const teamWorkload = computed(() => {
-
-
   if (!dashboardTeamsData.value?.team_workload) {
-    console.log('Returning empty array - no team workload data')
     return []
   }
 
-  const mapped = dashboardTeamsData.value.team_workload.map((member: TeamWorkloadMember) => ({
+  return dashboardTeamsData.value.team_workload.map((member: TeamWorkloadMember) => ({
     id: member.assignee_id || 'unassigned',
     name: member.assignee_name,
     initials: member.initials || getInitials(member.assignee_name) || '',
@@ -383,48 +384,11 @@ const teamWorkload = computed(() => {
     totalTasks: member.total_tasks,
     totalHours: member.total_hours
   }))
-
-  console.log('Mapped team workload:', mapped)
-  return mapped
 })
 
 const teamSize = computed(() => dashboardTeamsData.value?.team_size || 0)
 
-/** Recent Activities Data */
-// const recentActivities = ref([
-//   {
-//     id: 1,
-//     user: 'Streamed Bot',
-//     userInitials: 'VB',
-//     userColor: '#06B6D4',
-//     action: 'updated field "RemoteWorkItemLink" on',
-//     item: 'VFC-33073: IPU: Agenda Multilingual Issue (global issue)',
-//     status: 'DEPLOYED-PROD',
-//     time: 'about 4 hours ago'
-//   },
-//   {
-//     id: 2,
-//     user: 'Streamed Bot',
-//     userInitials: 'VB',
-//     userColor: '#06B6D4',
-//     action: 'updated field "RemoteWorkItemLink" on',
-//     item: 'VFC-31468: Show/Hide Team Members on Booth',
-//     status: 'REOPENED',
-//     time: 'about 4 hours ago'
-//   },
-//   {
-//     id: 3,
-//     user: 'Streamed Bot',
-//     userInitials: 'VB',
-//     userColor: '#06B6D4',
-//     action: 'updated field "RemoteWorkItemLink" on',
-//     item: 'VFC-32359: Favicon not displaying after uploading from Event Settings',
-//     status: '',
-//     time: 'about 4 hours ago'
-//   }
-// ])
-
-/** Helper function for status classes */
+/** Status chip styling */
 const getStatusClass = (status: string) => {
   const classes: Record<string, string> = {
     'DEPLOYED-PROD': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
@@ -434,30 +398,36 @@ const getStatusClass = (status: string) => {
   return classes[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
 }
 
-/** Lightweight local skeletons — defined without a second <script> block */
+/** Local skeleton component */
 const SkeletonCard = defineComponent({
   name: 'SkeletonCard',
   setup() {
-    return () => h('div', { class: 'w-[380px] min-w-[280px] h-[180px] rounded-xl border border-border bg-bg-body/60 animate-pulse p-4' }, [
-      h('div', { class: 'h-5 w-2/3 rounded bg-bg-card/50 mb-2' }),
-      h('div', { class: 'h-3 w-1/2 rounded bg-bg-card/50 mb-4' }),
-      h('div', { class: 'h-2 w-full rounded bg-bg-card/50 mb-1' }),
-      h('div', { class: 'h-2 w-11/12 rounded bg-bg-card/50 mb-1' }),
-      h('div', { class: 'h-2 w-10/12 rounded bg-bg-card/50' })
-    ])
+    return () =>
+      h(
+        'div',
+        {
+          class:
+            'w-[380px] min-w-[280px] h-[180px] rounded-xl border border-border bg-bg-body/60 animate-pulse p-4'
+        },
+        [
+          h('div', { class: 'h-5 w-2/3 rounded bg-bg-card/50 mb-2' }),
+          h('div', { class: 'h-3 w-1/2 rounded bg-bg-card/50 mb-4' }),
+          h('div', { class: 'h-2 w-full rounded bg-bg-card/50 mb-1' }),
+          h('div', { class: 'h-2 w-11/12 rounded bg-bg-card/50 mb-1' }),
+          h('div', { class: 'h-2 w-10/12 rounded bg-bg-card/50' })
+        ]
+      )
   }
 })
-const getCardProgress = (total: number, status_dis: any) => {
-  if (total == 0) {
-    return 0
-  }
-  const done = status_dis['Done'] ?? 0
-  const progress = done / total * 100;
-  console.log(done, '>>', total);
 
-  return progress
+/** Card progress helper */
+const getCardProgress = (total: number, status_dis: any) => {
+  if (!total) return 0
+  const done = status_dis['Done'] ?? 0
+  return (done / total) * 100
 }
 </script>
+
 
 <style scoped>
 /* TransitionGroup animations */
@@ -626,21 +596,21 @@ const getCardProgress = (total: number, status_dis: any) => {
   height: 3px;
 }
 
-  .custom_scroll_bar::-webkit-scrollbar-thumb {
+.custom_scroll_bar::-webkit-scrollbar-thumb {
   background-color: #888;
   border-radius: 10px;
 }
 
-  .custom_scroll_bar::-webkit-scrollbar-thumb:hover {
+.custom_scroll_bar::-webkit-scrollbar-thumb:hover {
   background-color: #555;
 }
 
-   .custom_scroll_bar::-webkit-scrollbar-track {
+.custom_scroll_bar::-webkit-scrollbar-track {
   background: transparent;
 }
 
 /* Firefox support */
-  .custom_scroll_bar {
+.custom_scroll_bar {
   scrollbar-width: thin;
   scrollbar-color: #888 transparent;
 }
