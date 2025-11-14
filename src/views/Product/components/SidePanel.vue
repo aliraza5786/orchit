@@ -319,7 +319,7 @@ function saveTitle() {
 }
 
 /* -------------------- Description -------------------- */
-const description = ref(cardDetails.value ? cardDetails.value['card-description'] : '')
+const description = ref(cardDetails?.value ? cardDetails?.value['card-description'] : '')
 
 const editingDesc = ref(false)
 const descEditorWrap = ref<HTMLElement | null>(null)
@@ -369,12 +369,12 @@ const dateISO = computed({
 })
 
 const { data: lanes } = useLanes(workspaceId.value)
-const lane = ref(cardDetails.value ? cardDetails.value['workspace_lane_id'] : '')
+const lane = ref(cardDetails?.value ? cardDetails.value['workspace_lane_id'] : '')
 watch(  [() => cardDetails.value, () => isFetching.value],
  (() => { 
-
-  localTitle.value = cardDetails.value['card-title']; description.value = cardDetails.value['card-description']; lane.value = cardDetails.value['workspace_lane_id'] 
-
+if (cardDetails?.value){
+  localTitle.value = cardDetails?.value['card-title']; description.value = cardDetails.value['card-description']; lane.value = cardDetails.value['workspace_lane_id'] 
+}
 }))
 
 const laneOptions = computed<any[]>(() =>
@@ -399,7 +399,7 @@ const endDateError = computed(() =>
 const setStartDate = (e: any) => moveCard.mutate({ card_id: props.details._id, variables: { 'start-date': e } })
 const setEndDate = (e: any) => moveCard.mutate({ card_id: props.details._id, variables: { 'end-date': e } })
 
-const curentAssigne = computed(() => cardDetails.value.assigned_to)
+const curentAssigne = computed(() => cardDetails?.value.assigned_to)
 const assignHandle = (user: any) => {
   moveCard.mutate({ card_id: props.details._id, seat_id: user?._id })
 }

@@ -5,7 +5,7 @@
             class="w-full sm:w-fit  bg-transparent z-1 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row  sm:flex-col   gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static">
 
             <div class=" text-center ">
-                <SideItem label="Peak" :to="`/workspace/peak/${workspaceId}/${workspace?.job_id ? workspace?.job_id : ''}`" key="peak" id="peak"
+                <SideItem label="Peak" :to="`/workspace/peak/${workspaceId}/${workspace?.generation_task?.job_id ? workspace?.generation_task?.job_id : ''}`" key="peak" id="peak"
                     :icon="{
                         prefix: 'fa-regular',
                         iconName: 'fa-home'
@@ -72,7 +72,7 @@ const { workspaceId,
     // jobId
 
  } = useRouteIds()
-const props = defineProps<{ workspace: { modules: any, job_id:string }, isLoading: boolean }>()
+const props = defineProps<{ workspace: { modules: any, generation_task:any }, isLoading: boolean }>()
 const modules = ref([]);
 watch(() => props.workspace, (newWorkspace) => {
     if (!newWorkspace) {
