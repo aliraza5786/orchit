@@ -10,14 +10,14 @@
         </div>
 
         <!-- Tabs -->
-        <div class="px-6 pt-4 border-b border-border flex gap-6 text-sm font-medium">
+        <!-- <div class="px-6 pt-4 border-b border-border flex gap-6 text-sm font-medium">
             <button v-for="t in tabs" :key="t.value" @click="currentTab = t.value" class="pb-3 relative"
                 :class="currentTab === t.value ? 'text-text-primary' : 'text-text-secondary'">
                 {{ t.label }}
 
                 <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-accent"></div>
             </button>
-        </div>
+        </div> -->
 
         <!-- Body -->
         <div class="px-6 py-6 space-y-6">
@@ -69,7 +69,16 @@
                         </transition>
                     </div>
                 </div>
-
+                <div class="flex w-full px-6 text-sm text-text-secondary  items-center gap-4 mt-6">
+                    <hr class=" flex-auto text-border">
+                    <span>OR</span>
+                    <hr class="flex-auto text-border">
+                </div>
+                <div class="px-6 mt-5">
+                    <Button variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
+                        Create Manually
+                    </Button>
+                </div>
                 <!-- Suggestions -->
                 <!-- <p class="text-xs text-text-secondary text-center">Or try these examples:</p>
   
@@ -211,6 +220,7 @@ function close() {
     form.value = { title: '', description: '', icon: null }
     errors.value = {}
     model.value = false
+    currentTab.value='ai'
 }
 
 const model = computed({
@@ -269,13 +279,13 @@ function handleGenerateSheet() {
 /* ----------------------------------
    TEMPLATES TAB
 ----------------------------------*/
-const tabs = [
-    { label: 'Manual', value: 'manual' },
-    { label: 'Generate with AI', value: 'ai' },
-    // { label: 'Templates', value: 'templates' }
-]
+// const tabs = [
+//     { label: 'Manual', value: 'manual' },
+//     { label: 'Generate with AI', value: 'ai' },
+//     // { label: 'Templates', value: 'templates' }
+// ]
 
-const currentTab = ref('manual')
+const currentTab = ref('ai')
 
 type Template = { id: string; title: string; subtitle: string; cover: string; tags: string[] }
 
