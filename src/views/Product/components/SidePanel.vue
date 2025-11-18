@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isFetching || isPending" class="flex justify-center min-h-[400px] items-center h-full w-full">
+  <div v-if="isFetching || isPending" class="flex max-w-[380px] justify-center min-h-[400px] items-center h-full w-full">
 
     <div role="status" aria-label="Loading"
       class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>

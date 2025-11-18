@@ -4,15 +4,17 @@
       <Dropdown :actions="false" prefix="View By" v-model="selected_view_id" :options="viewData" variant="secondary">
       </Dropdown>
       <div class="flex gap-3 items-center ">
-        <Searchbar placeholder="Search in Orchit AI space">
-        </Searchbar>
+        <SearchBar class="max-w-[250px]" @onChange="(e:any) => {
+                    searchQuery = e
+                }" placeholder="Search in Orchit AI space">
+                </SearchBar>
       </div>
     </div>
     <KanbanSkeleton v-show="isListPending" />
     <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar">
-      <KanbanBoard :plusIcon="false" v-if="localList?.length > 0" @onPlus="(e) => handlePLus(e)"
+      <KanbanBoard :plusIcon="false" v-if="filteredBoard?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
-        @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="localList"
+        @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="filteredBoard"
         @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="selected_sheet_id">
         <template #ticket="{ ticket }">
           <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
@@ -64,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch, onMounted } from 'vue';
+import { defineAsyncComponent, ref, watch, onMounted, computed } from 'vue';
 // import { ReOrderCard, ReOrderList } from '../../queries/useSheets';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
@@ -77,9 +79,11 @@ import BaseEmailChip from '../../components/ui/BaseEmailChip.vue';
 import { useUpdateInvitedWorkspace } from '../../queries/useWorkspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import DetailPanel from './components/DetailPanel.vue';
+import Fuse from 'fuse.js';
+import { debounce } from 'lodash';
+import SearchBar from '../../components/ui/SearchBar.vue';
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 const KanbanCard = defineAsyncComponent(() => import('./components/KanbanCard.vue'));
-
 const viewData = [
   {
     title: 'Role',
@@ -281,6 +285,28 @@ function onReorder(a: any) {
         })
     }
 }
+
+// reactive search query
+const searchQuery = ref('')
+const debouncedQuery = ref('')
+
+watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
+// computed filtered board
+
+const fuse = computed(() => {
+  const allCards = localList.value.flatMap((col:any) => col.cards.map((card:any) => ({ ...card, columnId: col.title })))
+  return new Fuse(allCards, { keys: ['title', 'name'], threshold: 0.3 })
+})
+
+const filteredBoard = computed(() => {
+  if (!searchQuery.value) return localList.value
+  const results = fuse.value.search(searchQuery.value).map((r :any)=> r.item)
+  return localList.value.map((col:any) => ({
+    ...col,
+    cards: results.filter((c:any) => c.columnId === col.title)
+  }))
+})
+
 </script>
 
 

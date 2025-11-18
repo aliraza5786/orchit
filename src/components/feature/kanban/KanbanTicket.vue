@@ -1,7 +1,5 @@
 <template>
     <div @click="() => {
-        console.log('>>> clicking >>> ');
-
         emit('select')
     }" class="product-ticket relative bg-bg-card rounded-lg p-4 shadow-sm cursor-grab border-t-4
              hover:shadow-md transition-all duration-200 active:cursor-grabbing" :class="priorityBorderClass"

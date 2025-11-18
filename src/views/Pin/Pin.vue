@@ -12,6 +12,11 @@
                     </div>
                 </template>
             </Dropdown>
+
+            <SearchBar class="max-w-[250px]" @onChange="(e) => {
+                    searchQuery = e
+                }" placeholder="Search in Orchit AI space">
+                </SearchBar>
         </div>
 
         <!-- Kanban Skeleton -->
@@ -21,7 +26,7 @@
         <div v-show="!isListPending" class="flex overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
                 @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
-                @onBoardUpdate="handleBoardUpdate" :board="localList" :variable_id="selected_view_by"
+                @onBoardUpdate="handleBoardUpdate" :board="filteredBoard" :variable_id="selected_view_by"
                 :sheet_id="selected_sheet_id">
                 <template #ticket="{ ticket }">
                     <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
@@ -78,7 +83,7 @@
             confirmText="Delete Sheet" cancelText="Cancel" size="md" :loading="isDeleting" @confirm="handleDeleteSheet"
             @cancel="() => { showDeleteModal = false }" />
     </div>
-    <SidePanel :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
+    <SidePanel  v-if="selectedCard?._id" :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
         @close="() => selectCardHandler({ variables: {} })" />
 </template>
 
@@ -107,7 +112,9 @@ import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import CreateTaskModal from '../Product/modals/CreateTaskModal.vue';
 import SidePanel from '../Product/components/SidePanel.vue';
 import CreateSheetModal from '../Product/modals/CreateSheetModal.vue';
-
+import Fuse from 'fuse.js';
+import { debounce } from 'lodash';
+import SearchBar from '../../components/ui/SearchBar.vue';
 const ConfirmDeleteModal = defineAsyncComponent(() => import('../Product/modals/ConfirmDeleteModal.vue'));
 const CreateVariableModal = defineAsyncComponent(() => import('../Product/modals/CreateVariableModal.vue'));
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
@@ -306,4 +313,26 @@ function openEditSprintModal(opt: any) {
     isCreateSheetModal.value = true;
     selectedSheettoAction.value = opt;
 }
+
+// reactive search query
+const searchQuery = ref('')
+const debouncedQuery = ref('')
+
+watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
+// computed filtered board
+
+const fuse = computed(() => {
+  const allCards = localList.value.flatMap((col:any) => col.cards.map((card:any) => ({ ...card, columnId: col.title })))
+  return new Fuse(allCards, { keys: ['card-title', 'card-description'], threshold: 0.3 })
+})
+
+const filteredBoard = computed(() => {
+  if (!searchQuery.value) return localList.value
+  const results = fuse.value.search(searchQuery.value).map((r :any)=> r.item)
+  return localList.value.map((col:any) => ({
+    ...col,
+    cards: results.filter((c:any) => c.columnId === col.title)
+  }))
+})
+
 </script>

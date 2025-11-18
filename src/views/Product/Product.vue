@@ -16,24 +16,27 @@
                 <Dropdown :actions="false" prefix="View by" v-model="selected_view_by" :options="variables"
                     variant="secondary">
                     <template #more>
-                        <div @click="()=>{
-      
-                            isCreateVar = true}"
+                        <div @click="() => {
+
+                            isCreateVar = true
+                        }"
                             class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
                             <i class="fa-solid fa-plus"></i> Add new
                         </div>
                     </template>
                 </Dropdown>
-                <Searchbar placeholder="Search in Orchit AI space">
+                <Searchbar @onChange="(e) => {
+                    searchQuery = e
+                }" placeholder="Search in Orchit AI space">
                 </Searchbar>
             </div>
         </div>
         <KanbanSkeleton v-show="isPending" />
         <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4 scrollbar-visible">
-            <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
+            <KanbanBoard @onPlus="plusHandler" :board="filteredBoard" @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
-                @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
-                :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
+                @select:ticket="selectCardHandler" @onBoardUpdate="handleBoardUpdate" :variable_id="selected_view_by"
+                :sheet_id="selected_sheet_id">
                 <template #column-footer="column">
 
                     <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
@@ -41,10 +44,10 @@
                         Disbale ( you can't drop here )</div>
                 </template>
                 <template #ticket="{ ticket }">
-                    <KanbanTicket :selectedVar="selected_view_by" @select="()=>{
-                        
+                    <KanbanTicket :selectedVar="selected_view_by" @select="() => {
+
                         selectCardHandler(ticket)
-                        
+
                     }" :ticket="ticket" />
                 </template>
             </KanbanBoard>
@@ -99,6 +102,9 @@ import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../composables/useQueryParams';
 import Button from '../../components/ui/Button.vue';
 import KanbanTicket from '../../components/feature/kanban/KanbanTicket.vue';
+import Fuse from 'fuse.js';
+import { debounce } from 'lodash';
+
 
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
 const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
@@ -159,7 +165,7 @@ const createTeamModal = ref(false);
 const selectedCard = ref<any>()
 const selectCardHandler = (card: any) => {
     console.log('>> click ', card);
-    
+
     selectedCard.value = card
 }
 const isCreateSheetModal = ref(false)
@@ -213,8 +219,8 @@ const transformedData = computed<DropdownOption[]>(() => {
         _id: item._id,
         title: item.variables["sheet-title"],
         description: item.variables["sheet-description"],
-        icon: item["icon"], 
-        status:item?.generation_status,
+        icon: item["icon"],
+        status: item?.generation_status,
     }));
 });
 watch(data, (newSheetId) => {
@@ -284,6 +290,30 @@ function openEditSprintModal(opt: any) {
     isCreateSheetModal.value = true;
     selectedSheettoAction.value = opt;
 }
+
+
+// reactive search query
+const searchQuery = ref('')
+const debouncedQuery = ref('')
+
+watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
+// computed filtered board
+
+const fuse = computed(() => {
+  const allCards = Lists.value.flatMap((col:any) => col.cards.map((card:any) => ({ ...card, columnId: col.title })))
+  return new Fuse(allCards, { keys: ['card-title', 'card-description'], threshold: 0.3 })
+})
+
+const filteredBoard = computed(() => {
+  if (!searchQuery.value) return Lists.value
+  const results = fuse.value.search(searchQuery.value).map((r :any)=> r.item)
+  return Lists.value.map((col:any) => ({
+    ...col,
+    cards: results.filter((c:any) => c.columnId === col.title)
+  }))
+})
+
+
 </script>
 <style scoped>
 /* Force visible scrollbars only where applied */
