@@ -25,7 +25,7 @@
         :rows="filteredTickets"
         :page-size="100"
         :hover="true"
-        :item-key="(row) => row.id"
+        :item-key="(row:any) => row.id"
         @row-dragstart="({ row, $event }) => onDragStart($event, row, 'sprint', sprint.id)"
         @row-dragend="({ $event }) => onDragEnd($event)"
         @row-click="({ row }) => $emit('open-ticket', row)"
@@ -137,7 +137,7 @@ const { mutate: moveCardApi } = useMoveCard({
   onError: (error: any) => { toast.error('Failed to move card: ' + (error.message || 'Unknown error')) }
 })
 
-function onDragStart(e: DragEvent, ticket: Ticket, from: 'backlog' | 'sprint', sprintId?: string) {
+function onDragStart(e: DragEvent, ticket: any, from: 'backlog' | 'sprint', sprintId?: string) {
   draggedTicketId.value = ticket.id
   const payload = JSON.stringify({ id: ticket.id, from, sprintId, ticket })
   e.dataTransfer?.setData('text/plain', payload)

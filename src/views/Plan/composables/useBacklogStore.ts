@@ -45,7 +45,7 @@ function loadFromLS<T>(key: string, fallback: T): T {
   }
 }
 
-export function priorityClass(p: Ticket["priority"]) {
+export function priorityClass(p: any) {
   switch (p) {
     case "Highest":
       return "rounded-md bg-red-50 px-2 py-0.5 text-xs text-red-700";

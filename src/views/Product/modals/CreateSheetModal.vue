@@ -279,67 +279,67 @@ function handleGenerateSheet() {
 /* ----------------------------------
    TEMPLATES TAB
 ----------------------------------*/
-const tabs = [
-    { label: 'Manual', value: 'manual' },
-    { label: 'Generate with AI', value: 'ai' },
-]
+// const tabs = [
+//     { label: 'Manual', value: 'manual' },
+//     { label: 'Generate with AI', value: 'ai' },
+// ]
 
 const currentTab = ref('ai')
 
-type Template = { id: string; title: string; subtitle: string; cover: string; tags: string[] }
+// type Template = { id: string; title: string; subtitle: string; cover: string; tags: string[] }
 
-const templates = ref<Template[]>([
-    {
-        id: 'concept',
-        title: 'Product Concept',
-        subtitle: 'Early stage ideation board.',
-        cover: 'https://placehold.co/600x300',
-        tags: ['Experience Design', 'Development']
-    },
-    {
-        id: 'launch',
-        title: 'Launch Prep',
-        subtitle: 'Prepare assets for product launch.',
-        cover: 'https://placehold.co/600x300',
-        tags: ['Marketing', 'Project Management']
-    }
-])
+// const templates = ref<Template[]>([
+//     {
+//         id: 'concept',
+//         title: 'Product Concept',
+//         subtitle: 'Early stage ideation board.',
+//         cover: 'https://placehold.co/600x300',
+//         tags: ['Experience Design', 'Development']
+//     },
+//     {
+//         id: 'launch',
+//         title: 'Launch Prep',
+//         subtitle: 'Prepare assets for product launch.',
+//         cover: 'https://placehold.co/600x300',
+//         tags: ['Marketing', 'Project Management']
+//     }
+// ])
 
-const search = ref('')
-const tags = ref([
-    { name: 'Experience Design' },
-    { name: 'Development' },
-    { name: 'Marketing' },
-    { name: 'Project Management' }
-])
-const activeTags = ref(new Set<string>())
+// const search = ref('')
+// const tags = ref([
+//     { name: 'Experience Design' },
+//     { name: 'Development' },
+//     { name: 'Marketing' },
+//     { name: 'Project Management' }
+// ])
+// const activeTags = ref(new Set<string>())
 
-function toggleTag(t: string) {
-    activeTags.value.has(t) ? activeTags.value.delete(t) : activeTags.value.add(t)
-}
+// function toggleTag(t: string) {
+//     activeTags.value.has(t) ? activeTags.value.delete(t) : activeTags.value.add(t)
+// }
 
-const filteredTemplates = computed(() =>
-    templates.value.filter(t =>
-        (!search.value || t.title.toLowerCase().includes(search.value.toLowerCase())) &&
-        (activeTags.value.size === 0 || t.tags.some(tag => activeTags.value.has(tag)))
-    )
-)
+// const filteredTemplates = computed(() =>
+//     templates.value.filter(t =>
+//         (!search.value || t.title.toLowerCase().includes(search.value.toLowerCase())) &&
+//         (activeTags.value.size === 0 || t.tags.some(tag => activeTags.value.has(tag)))
+//     )
+// )
 
-const chosenTemplate = ref<Template | null>(null)
-function chooseTemplate(tpl: Template) { chosenTemplate.value = tpl }
-function submitTemplate() {
-    if (!chosenTemplate.value) return
-    createSheet({
-        icon: null,
-        variables: {
-            'sheet-title': chosenTemplate.value.title,
-            'sheet-description': chosenTemplate.value.subtitle
-        },
-        is_ai_generated: false,
-        workspace_id: workspaceId.value,
-        workspace_module_id: moduleId.value,
-    })
-}
+// const chosenTemplate = ref<Template | null>(null)
+// function chooseTemplate(tpl: Template) { chosenTemplate.value = tpl }
+// function submitTemplate() {
+//     if (!chosenTemplate.value) return
+//     createSheet({
+//         icon: null,
+//         variables: {
+//             'sheet-title': chosenTemplate.value.title,
+//             'sheet-description': chosenTemplate.value.subtitle
+//         },
+//         is_ai_generated: false,
+//         workspace_id: workspaceId.value,
+//         workspace_module_id: moduleId.value,
+//     })
+// }
 </script>
 
 <style scoped>
