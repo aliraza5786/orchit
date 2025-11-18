@@ -1,6 +1,6 @@
 <template>
     <div class="flex gap-2 flex-auto overflow-y-auto">
-
+      
         <div
             class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
              rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto  flex  ">
@@ -9,13 +9,20 @@
             <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">
                 <KanbanBoard @onPlus="plusHandler" @delete:column="(e: any) => deleteHandler(e)"
                     @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
-                    @select:ticket="selectCardHandler" :board="Lists" @onBoardUpdate="handleBoardUpdate"
+                    @select:ticket="selectCardHandler" :board="filteredBoard" @onBoardUpdate="handleBoardUpdate"
                     :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
                     <template #column-footer="column">
 
                         <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
                             v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
                             Disbale ( you can't drop here )</div>
+                    </template>
+                    <template #ticket="{ ticket }">
+                        <KanbanTicket :selectedVar="selected_view_by" @select="() => {
+
+                            selectCardHandler(ticket)
+
+                        }" :ticket="ticket" />
                     </template>
                 </KanbanBoard>
                 <!-- <div class="min-w-[328px] " @click.stop>
@@ -67,7 +74,12 @@ import { useQueryClient } from '@tanstack/vue-query';
 import { useRouteIds } from '../../../composables/useQueryParams';
 // import Button from '../../../components/ui/Button.vue';
 import { useSprintKanban } from '../../../queries/usePlan';
-const props = defineProps<{ sptint_id: any }>()
+import KanbanTicket from '../../../components/feature/kanban/KanbanTicket.vue';
+import Fuse from 'fuse.js';
+import { debounce } from 'lodash';
+// import SearchBar from '../../../components/ui/SearchBar.vue';
+
+const props = defineProps<{ sptint_id: any ,searchQuery:string}>()
 const CreateTaskModal = defineAsyncComponent(() => import('../../Product/modals/CreateTaskModal.vue'))
 // const CreateSheetModal = defineAsyncComponent(() => import('../../Product/modals/CreateSheetModal.vue'))
 // const CreateVariableModal = defineAsyncComponent(() => import('../../Product/modals/CreateVariableModal.vue'))
@@ -216,4 +228,22 @@ const plusHandler = (e: any) => {
     createTeamModal.value = true;
     localColumnData.value = e
 }
+const searchQuery = computed(()=>props.searchQuery)
+const debouncedQuery = ref('')
+watch(searchQuery, debounce((val: string) => { debouncedQuery.value = val }, 200))
+const fuse = computed(() => {
+  const allCards = Lists.value.flatMap((col: any) =>
+    col.cards.map((card: any) => ({ ...card, columnId: col.title }))
+  )
+  return new Fuse(allCards, { keys: ['card-title', 'card-description', 'card-key'], threshold: 0.3 })
+})
+const filteredBoard = computed(() => {
+  if (!searchQuery.value) return Lists.value
+  const results = fuse.value.search(searchQuery.value).map(r => r.item)
+  return Lists.value.map((col: any) => ({
+    ...col,
+    cards: results.filter((c: any) => c.columnId === col.title)
+  }))
+})
+
 </script>

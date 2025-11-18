@@ -11,7 +11,9 @@
         </template>
       </Dropdown>
       <div class="flex gap-3 items-center ">
-        <SearchBar placeholder="Search in Orchit AI space">
+        <SearchBar v-if="sprintDetailData?.status == 'active'" placeholder="Search in Orchit AI space"
+        @onChange="(e)=>{searchQuery= e}"
+        >
         </SearchBar>
         <Button v-if="sprintDetailData?.status == 'active'" size="sm" @click="handleCompleteSprint">{{
           isCompletingSprint ?
@@ -22,7 +24,7 @@
       </div>
     </div>
     <template v-if="sprintDetailData?.status == 'active'">
-      <ActiveSprint :sptint_id="selectedSprintId" />
+      <ActiveSprint :sptint_id="selectedSprintId" :searchQuery="searchQuery" />
     </template>
     <div v-else class="space-y-6 p-4 w-full flex-auto overflow-y-auto">
       <!-- Header -->
@@ -127,6 +129,7 @@ import CreateBacklogTicketWithModuleSelection from './modals/CreateBacklogTicket
 import ActiveSprint from './components/ActiveSprint.vue'
 import TaskDetailsModal from '../Workspaces/Modals/TaskDetailsModal.vue'
 const showTaskModal = ref(false);
+const searchQuery = ref('')
 // const selectedCardId = ref('');
 // const rowClickHandler= (rowId:any)=>{
 //   selectedCardId.value=rowId;
