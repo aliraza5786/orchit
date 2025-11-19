@@ -31,47 +31,51 @@
                 </Searchbar>
             </div>
         </div>
-        <KanbanSkeleton v-show="isPending" />
-        <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4 scrollbar-visible">
-            <KanbanBoard @onPlus="plusHandler" :board="filteredBoard" @delete:column="(e: any) => deleteHandler(e)"
-                @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
-                @select:ticket="selectCardHandler" @onBoardUpdate="handleBoardUpdate" :variable_id="selected_view_by"
-                :sheet_id="selected_sheet_id">
-                <template #column-footer="column">
+        <template v-if="view == 'kanban'">
+            <KanbanSkeleton v-show="isPending" />
+            <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4 scrollbar-visible">
+                <KanbanBoard @onPlus="plusHandler" :board="filteredBoard" @delete:column="(e: any) => deleteHandler(e)"
+                    @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
+                    @select:ticket="selectCardHandler" @onBoardUpdate="handleBoardUpdate"
+                    :variable_id="selected_view_by" :sheet_id="selected_sheet_id">
+                    <template #column-footer="column">
 
-                    <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
-                        v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
-                        Disbale ( you can't drop here )</div>
-                </template>
-                <template #ticket="{ ticket }">
-                    <KanbanTicket :selectedVar="selected_view_by" @select="() => {
+                        <div class=" mx-auto text-text-secondary/80  m-2 w-[90%] h-full justify-center flex items-center  border border-dashed border-border"
+                            v-if="workspaceStore?.transitions?.all_allowed && !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) && workspaceStore.transitions.currentColumn != column.column.title">
+                            Disbale ( you can't drop here )</div>
+                    </template>
+                    <template #ticket="{ ticket }">
+                        <KanbanTicket :selectedVar="selected_view_by" @select="() => {
 
-                        selectCardHandler(ticket)
+                            selectCardHandler(ticket)
 
-                    }" :ticket="ticket" />
-                </template>
-            </KanbanBoard>
-            <div class="min-w-[328px] " @click.stop>
-                <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
-                    <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
-                        @keyup.enter="emitAddColumn" />
-                    <p class="text-xs mt-1.5">You can add details while editing</p>
-                    <div class="flex items-center mt-3 gap-3">
-                        <Button @click="emitAddColumn" varaint="primary"
-                            class="px-3 py-1 bg-accent cursor-pointer text-white rounded">{{ addingList ?
-                                'Adding...' :
-                                'Add list' }}</Button>
-                        <i class="fa-solid fa-close" @click="setActiveAddList"></i>
+                        }" :ticket="ticket" />
+                    </template>
+                </KanbanBoard>
+                <div class="min-w-[328px] " @click.stop>
+                    <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
+                        <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
+                            @keyup.enter="emitAddColumn" />
+                        <p class="text-xs mt-1.5">You can add details while editing</p>
+                        <div class="flex items-center mt-3 gap-3">
+                            <Button @click="emitAddColumn" varaint="primary"
+                                class="px-3 py-1 bg-accent cursor-pointer text-white rounded">{{ addingList ?
+                                    'Adding...' :
+                                    'Add list' }}</Button>
+                            <i class="fa-solid fa-close" @click="setActiveAddList"></i>
+                        </div>
                     </div>
+                    <button v-else
+                        class="text-sm text-text-primary   py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+                        @click.stop="setActiveAddList">
+                        + Add List
+                    </button>
                 </div>
-                <button v-else
-                    class="text-sm text-text-primary   py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-                    @click.stop="setActiveAddList">
-                    + Add List
-                </button>
             </div>
-        </div>
-
+        </template>
+        <template v-if="view == 'table'">
+            <TableView :columns="columns" :rows="normalizedTableData" />
+        </template>
     </div>
     <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
         :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete List"
@@ -90,7 +94,7 @@
         @cancel="() => { showDeleteModal = false }" />
 </template>
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, h, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import Searchbar from '../../components/ui/SearchBar.vue';
@@ -104,7 +108,9 @@ import Button from '../../components/ui/Button.vue';
 import KanbanTicket from '../../components/feature/kanban/KanbanTicket.vue';
 import Fuse from 'fuse.js';
 import { debounce } from 'lodash';
-
+import TableView from '../../components/feature/TableView/TableView.vue';
+import { getStatusStyle } from '../../utilities/stausStyle';
+const view = ref('table')
 
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
 const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
@@ -296,24 +302,49 @@ function openEditSprintModal(opt: any) {
 const searchQuery = ref('')
 const debouncedQuery = ref('')
 
-watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
+watch(searchQuery, debounce((val: any) => { debouncedQuery.value = val }, 200))
 // computed filtered board
 
 const fuse = computed(() => {
-  const allCards = Lists.value.flatMap((col:any) => col.cards.map((card:any) => ({ ...card, columnId: col.title })))
-  return new Fuse(allCards, { keys: ['card-title', 'card-description'], threshold: 0.3 })
+    const allCards = Lists.value.flatMap((col: any) => col.cards.map((card: any) => ({ ...card, columnId: col.title })))
+    return new Fuse(allCards, { keys: ['card-title', 'card-description'], threshold: 0.3 })
 })
 
 const filteredBoard = computed(() => {
-  if (!searchQuery.value) return Lists.value
-  const results = fuse.value.search(searchQuery.value).map((r :any)=> r.item)
-  return Lists.value.map((col:any) => ({
-    ...col,
-    cards: results.filter((c:any) => c.columnId === col.title)
-  }))
+    if (!searchQuery.value) return Lists.value
+    const results = fuse.value.search(searchQuery.value).map((r: any) => r.item)
+    return Lists.value.map((col: any) => ({
+        ...col,
+        cards: results.filter((c: any) => c.columnId === col.title)
+    }))
 })
 
+const columns = [
+    {
+        key: "card-title", label: 'Task name', render: ({ value }: any) =>
+            h('span', { class: 'text-sm text-text-primary capitalize' }, value),
+    },
+    {
+        key: 'card-description', label: 'Status',
+        render: ({ value }: any) => h('div', { class: ` capitalize flex items-center inline px-2 py-1 rounded-md  gap-2 ${getStatusStyle(value['card-status'])} ` }, [
+            h('span', value)
+        ])
+    },
+    {
+        key: 'card-status', label: 'Due Date',
+        render: ({ value }: any) => h('div', { class: ' capitalize flex items-center gap-2 ' }, [
+            h('span', value['end-date'])
+        ])
+    }
 
+]
+const normalizedTableData = computed(() => {
+    let array: any = [];
+    Lists.value.forEach((col: any) => { array = [...array, ...col?.cards] })
+    console.log(array, 'array ');
+    return array
+
+})
 </script>
 <style scoped>
 /* Force visible scrollbars only where applied */
