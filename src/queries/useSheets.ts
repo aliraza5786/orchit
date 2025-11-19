@@ -241,15 +241,18 @@ export const useLanes = (
 
   options = {}
 ) => {
+  console.log(unref(workspace_id), "workspace_id");
+
   return useQuery({
-    queryKey: ["all-module-lanes"],
-    queryFn: ({ signal }) =>
+    queryKey: ["all-module-lanes", unref(workspace_id)],
+    queryFn: async ({ signal }) =>
       request<any>({
-        url: `/workspace/lane-by-workspace/${workspace_id}`,
+        url: `/workspace/lane-by-workspace/${ await unref(workspace_id)}`,
         method: "GET",
         signal,
       }),
     ...options,
+    // enabled:   unref(/) ?? workspace_id ? true :false
   });
 };
 

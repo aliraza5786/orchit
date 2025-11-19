@@ -70,7 +70,7 @@
   v-model="form.description"
   @blur="touched.description = true"
 />
-<p v-if="descriptionError" class="text-xs text-red-500 mt-1 px-1">{{ descriptionError }}</p>
+<!-- <p v-if="descriptionError" class="text-xs text-red-500 mt-1 px-1">{{ descriptionError }}</p> -->
     </div>
 
     <!-- Footer -->
@@ -206,8 +206,7 @@ const isValid = computed(() =>
   !titleError.value &&
   !startDateError.value &&
   !endDateError.value &&
-  !laneError.value &&
-  !descriptionError.value
+  !laneError.value 
 )
 
 
@@ -266,9 +265,9 @@ const laneError = computed(() => {
   return ''
 })
 
-const descriptionError = computed(() => 
-  touched.description && !form.description.trim() ? 'Description is required' : ''
-)
+// const descriptionError = computed(() => 
+//   touched.description && !form.description.trim() ? 'Description is required' : ''
+// )
 function create() {
   // mark all as touched
   touched.title = true

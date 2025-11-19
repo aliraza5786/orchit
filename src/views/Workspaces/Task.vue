@@ -3,7 +3,7 @@
         <div class="max-w-[1440px] w-full mx-auto md:px-15 md:py-20 px-5 py-10  ">
             <div class="flex justify-between items-center flex-wrap gap-5 mb-8">
                 <div class="flex flex-col gap-2 max-md:gap-1 ">
-                    <h1 class="text-2xl font-medium text-text-primary ">My Taks</h1>
+                    <h1 class="text-2xl font-medium text-text-primary ">My Tasks</h1>
                     <p class="text-sm text-text-secondary">View and manage your assigned tasks.
                     </p>
                 </div>
@@ -45,7 +45,7 @@
             </Table>
         </div>
 
-        <TaskDetailsModal v-model="showTaskModal" :cardId="selectedCardId" @close="closeModal" />
+        <TaskDetailsModal v-model="showTaskModal" v-if="showTaskModal" :cardId="selectedCardId" @close="closeModal" />
     </div>
 </template>
 <script setup lang="ts">

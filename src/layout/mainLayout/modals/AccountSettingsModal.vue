@@ -7,10 +7,10 @@
         <template #Profile>
           <div class="py-4" v-if="profileData">
             <div class="space-y-6">
-              <div class="flex items-center gap-6">
+              <div class="flex items-center gap-6 max-md:gap-2"  >
                 <div class="relative group">
                   <div
-                    class="w-24 h-24 rounded-full bg-orange-500 flex items-center justify-center text-text-primary text-2xl font-bold border-4 border-border overflow-hidden">
+                    class="w-24 h-24 max-md:w-12 max-md:h-12 max-md:text-sm rounded-full bg-orange-500 flex items-center justify-center text-text-primary text-2xl font-bold border-4 border-border overflow-hidden">
                     <img v-if="avatarPreview || profileData.u_profile_image"
                       :src="avatarPreview || profileData.u_profile_image" class="w-full h-full object-cover"
                       alt="Profile" />
@@ -32,10 +32,10 @@
                 </div>
 
                 <div class="flex-1">
-                  <h3 class="text-xl font-semibold capitalize text-text-primary">
+                  <h3 class="text-xl max-md:text-sm font-semibold capitalize text-text-primary">
                     {{ form.fullName }}
                   </h3>
-                  <p class="text-text-secondary">{{ form.email }}</p>
+                  <p class="text-text-secondary max-md:text-xs">{{ form.email }}</p>
                 </div>
               </div>
 
