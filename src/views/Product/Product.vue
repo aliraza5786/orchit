@@ -125,10 +125,10 @@ import KanbanTicket from '../../components/feature/kanban/KanbanTicket.vue';
 import Fuse from 'fuse.js';
 import { debounce } from 'lodash';
 import TableView from '../../components/feature/TableView/TableView.vue';
-import { getStatusStyle } from '../../utilities/stausStyle';
+// import { getStatusStyle } from '../../utilities/stausStyle';
 import BaseSelectField from '../../components/ui/BaseSelectField.vue';
 import { useProductVarsData } from '../../queries/useProductCard';
-import { Background } from '@vue-flow/background';
+// import { Background } from '@vue-flow/background';
 const view = ref('table')
 
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
@@ -335,7 +335,7 @@ const filteredBoard = computed(() => {
         cards: results.filter((c: any) => c.columnId === col.title)
     }))
 })
-import ticket from '../../assets/icons/ticket.svg'
+// import ticket from '../../assets/icons/ticket.svg'
 const columns = [
     // {
     //     key: "card-code", label: '#', render: ({ value }: any) =>
@@ -420,7 +420,7 @@ const moveCard = useMoveCard({
 function handleChangeTicket(id: any, key: any, value: any) {
     moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } })
 }
-const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
+const { mutate: addTicket, } = useAddTicket({
     onSuccess: () => {
         // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
     }

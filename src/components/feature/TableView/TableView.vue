@@ -33,7 +33,7 @@
               <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
                 @blur="finishEdit(ticket)"
                 class="w-full p-1 border border-border rounded focus:outline-none focus:ring focus:ring-blue-300"
-                :ref="el => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
+                :ref="(el:any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
 
               <!-- Display value -->
               <span v-else class="cursor-text hover:underline" @click="editField(ticket, col?.key)">
@@ -130,10 +130,10 @@ function getByPath(obj: any, path: string): any {
   if (!path.includes('.')) return obj[path]
   return path.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), obj)
 }
-function cellValue(row: Row, col: Column) {
+function cellValue(row: Row, col: any) {
   return col?.accessor ? col.accessor(row) : getByPath(row, col.key)
 }
-const RenderCell = (p: { row: Row; column: Column; index: number }) => {
+const RenderCell = (p: { row: Row; column: any; index: number }) => {
   const val = cellValue(p.row, p.column)
   if (p.column?.render) return p.column.render({ row: p?.row, column: p?.column, value: val, index: p?.index })
   return h('span', String(val ?? ''))
