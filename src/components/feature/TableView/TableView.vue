@@ -13,8 +13,19 @@
       </thead>
 
       <tbody>
+        <template v-if="isPending">
+          <tr v-for="n in 5" :key="'sk-' + n" class="animate-pulse border-b border-border">
+            <td class="p-2">
+              <div class="w-4 h-4 bg-bg-surface rounded"></div>
+            </td>
+
+            <td v-for="col in columns" :key="col.key" class="p-2">
+              <div class="w-full h-4 bg-bg-surface rounded"></div>
+            </td>
+          </tr>
+        </template>
         <!-- Hover Insert Row -->
-        <template v-for="(ticket, index) in tickets" :key="ticket?.id">
+        <template v-else v-for="(ticket, index) in tickets" :key="ticket?.id">
           <tr v-if="hoverIndex === index && !hasActiveEmptyRow"
             class="relative bg-bg-surface/50 transition-all cursor-pointer" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
@@ -33,7 +44,7 @@
               <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
                 @blur="finishEdit(ticket)"
                 class="w-full p-1 border border-border rounded focus:outline-none focus:ring focus:ring-blue-300"
-                :ref="(el:any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
+                :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
 
               <!-- Display value -->
               <span v-else class="cursor-text hover:underline" @click="editField(ticket, col?.key)">
@@ -48,7 +59,8 @@
         </template>
 
         <!-- Add Row at End -->
-        <tr v-if="!hasActiveEmptyRow" class=" bg-bg-surface transition sticky bottom-0 cursor-pointer border-t border-border"
+        <tr v-if="!hasActiveEmptyRow"
+          class=" bg-bg-surface transition sticky bottom-0 cursor-pointer border-t border-border"
           @mouseenter="hoverIndex = tickets?.length" @mouseleave="hoverIndex = null">
           <td class="p-2" @click="insertEmptyRow(tickets?.length)">
             <span
@@ -74,11 +86,12 @@ type Row = Record<string, any>
 const props = withDefaults(defineProps<{
   columns: Column[]
   rows: Row[]
+  isPending: boolean
 }>(), {})
 
 const emit = defineEmits<{
   (e: 'update:rows', val: Row[]): void
-  (e: 'create', val:any): void
+  (e: 'create', val: any): void
 }>()
 
 const tickets = reactive<Row[]>(props.rows || [])

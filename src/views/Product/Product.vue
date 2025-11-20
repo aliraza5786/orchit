@@ -90,7 +90,7 @@
             </div>
         </template>
         <template v-if="view == 'table'">
-            <TableView :columns="columns" :rows="normalizedTableData" @create="handleCreateTicket" />
+            <TableView :isPending="isPending" :columns="columns" :rows="normalizedTableData" @create="handleCreateTicket" />
         </template>
     </div>
     <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
@@ -129,7 +129,7 @@ import TableView from '../../components/feature/TableView/TableView.vue';
 import BaseSelectField from '../../components/ui/BaseSelectField.vue';
 import { useProductVarsData } from '../../queries/useProductCard';
 // import { Background } from '@vue-flow/background';
-const view = ref('table')
+const view = ref('kanban')
 
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
 const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
@@ -426,8 +426,6 @@ const { mutate: addTicket, } = useAddTicket({
     }
 })
 function handleCreateTicket(title: any) {
-    console.log(title, 'titele');
-
     const payload = {
         sheet_list_id: 'To Do',
         workspace_id: workspaceId.value,
