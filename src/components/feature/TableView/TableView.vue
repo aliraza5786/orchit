@@ -27,7 +27,7 @@
         <!-- Hover Insert Row -->
         <template v-else v-for="(ticket, index) in tickets" :key="ticket?.id">
           <tr v-if="hoverIndex === index && !hasActiveEmptyRow"
-            class="relative bg-bg-surface/50 transition-all cursor-pointer" @mouseleave="hoverIndex = null">
+            class="relative bg-bg-surface/50 transition-all cursor-pointer  border  border-accent" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
               <span
                 class="absolute left-[-6px] top-[-6px] bg-bg-card border border-border w-6 h-6 text-sm rounded-md flex justify-center items-center shadow-sm hover:bg-bg-card/10">+</span>
@@ -60,13 +60,13 @@
 
         <!-- Add Row at End -->
         <tr v-if="!hasActiveEmptyRow"
-          class=" bg-bg-surface transition sticky bottom-0 cursor-pointer border-t border-border"
+          class=" bg-bg-surface transition sticky bottom-0 cursor-pointer border-t h-2 border-accent"
           @mouseenter="hoverIndex = tickets?.length" @mouseleave="hoverIndex = null">
           <td class="p-2" @click="insertEmptyRow(tickets?.length)">
             <span
               class="plus inline-flex w-5 h-5 border border-border rounded-full justify-center items-center text-secondary hover:bg-bg-surface/200 transition">+</span>
           </td>
-          <td :colspan="columns.length" class="p-2 text-text-secondary border-border ">Add New Row</td>
+          <td :colspan="columns.length" class="p-2 text-text-secondary border-accent ">Add New Row</td>
         </tr>
       </tbody>
     </table>

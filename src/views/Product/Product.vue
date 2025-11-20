@@ -346,7 +346,7 @@ const columns = [
             h('input', {
                 onFocusout: (e: any) => {
                     handleChangeTicket(row?._id, 'card-title', e?.target?.value)
-                }, class: 'text-sm cursor-pointer text-text-primary capitalize outline-none border-none focus:border  active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md', defaultValue: value
+                }, class: 'text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border  active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md', defaultValue: value
             },),
     },
     {
@@ -358,7 +358,8 @@ const columns = [
             return h('div', { class: ' capitalize flex items-center gap-2 ' }, [
 
                 h(BaseSelectField, {
-                    options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: status.value, defaultValue: status.value,
+                    class:'w-full',
+                    options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: status.value, defaultValue: 'To Do',
                     "onUpdate": (val: any) => {
 
                         handleChangeTicket(row?._id, 'card-status', val)
@@ -376,6 +377,8 @@ const columns = [
             return h('div', { class: ' capitalize flex items-center gap-2 ' }, [
 
                 h(BaseSelectField, {
+                    class:'w-full border-none',
+
                     options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: type.value, defaultValue: type.value, "onUpdate": (val: any) => {
 
                         handleChangeTicket(row?._id, 'card-type', val)
