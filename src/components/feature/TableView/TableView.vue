@@ -1,104 +1,60 @@
 <template>
-  <div class="kanban-table space-y-4">
-    <h2 class="text-xl font-semibold">Jira-like Table View</h2>
+  <div class="kanban-table space-y-4 px-4 h-[85vh] overflow-y-auto">
 
-    <table class="w-full border-collapse shadow-sm rounded-lg overflow-hidden bg-bg-card">
-      <thead class="bg-bg-surface border-b border-border">
+    <table
+      class="w-full border-collapse border-border  shadow-sm rounded-lg  overflow-hidden bg-bg-body/80 h-[200px] overflow-y-auto">
+      <thead class="bg-bg-surface border-b border-border sticky top-0 z-1">
         <tr>
-          <th class="w-8 p-2"></th>
-          <th class="text-left p-2 font-medium">Title</th>
-          <th class="text-left p-2 font-medium">Description</th>
-          <th class="text-left p-2 font-medium">Status</th>
+          <th class="w-8 p-1"></th>
+          <th v-for="col in columns" :key="col?.key" class="text-left p-1 font-medium">
+            {{ col?.label }}
+          </th>
         </tr>
       </thead>
 
       <tbody>
-        <template v-for="(ticket, index) in tickets" :key="ticket.id">
-          
-          <!-- Add Row Above -->
-          <tr
-            v-if="hoverIndex === index && !hasActiveEmptyRow"
-            class="relative bg-bg-surface/50 transition-all cursor-pointer"
-            @mouseleave="hoverIndex = null"
-          >
+        <!-- Hover Insert Row -->
+        <template v-for="(ticket, index) in tickets" :key="ticket?.id">
+          <tr v-if="hoverIndex === index && !hasActiveEmptyRow"
+            class="relative bg-bg-surface/50 transition-all cursor-pointer" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
               <span
-                class="absolute left-[-6px] top-[-6px] bg-bg-card border border-border w-6 h-6 text-sm rounded-md flex justify-center items-center shadow-sm hover:bg-bg-card/10"
-              >+</span>
+                class="absolute left-[-6px] top-[-6px] bg-bg-card border border-border w-6 h-6 text-sm rounded-md flex justify-center items-center shadow-sm hover:bg-bg-card/10">+</span>
             </td>
-            <td class="!p-0" colspan="3"></td>
+            <td class="!p-0" :colspan="columns?.length"></td>
           </tr>
 
           <!-- Actual Row -->
-          <tr
-            @mouseenter="hoverIndex = index"
-            class="hover:bg-surface/50 transition-colors border-b border-border"
-          >
+          <tr @mouseenter="hoverIndex = index" class="hover:bg-surface/50 transition-colors border-b border-border">
             <td class="p-2"></td>
 
-            <!-- Title -->
-            <td class="p-2">
-              <input
-                v-if="editing.id === ticket.id && editing.field === 'title'"
-                v-model="ticket.title"
+            <td v-for="col in columns" :key="col?.key" class="p-2">
+              <!-- Editable input -->
+              <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
                 @blur="finishEdit(ticket)"
-                class="w-full p-1 border rounded focus:outline-none focus:ring focus:ring-blue-300"
-                :ref="el => el && editing.id === ticket.id && editing.field === 'title' && (titleInput = el)"
-              />
+                class="w-full p-1 border border-border rounded focus:outline-none focus:ring focus:ring-blue-300"
+                :ref="el => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
 
-              <span
-                v-else
-                class="cursor-text text-text-primary hover:underline"
-                @click="editField(ticket, 'title')"
-              >
-                {{ ticket.title || 'Click to edit' }}
+              <!-- Display value -->
+              <span v-else class="cursor-text hover:underline" @click="editField(ticket, col?.key)">
+                {{ ticket[col?.key] || 'Click to edit' }}
               </span>
-            </td>
 
-            <!-- Description -->
-            <td class="p-2">
-              <input
-                v-if="editing.id === ticket.id && editing.field === 'description'"
-                v-model="ticket.description"
-                @blur="stopEditing"
-                class="w-full p-1 border rounded focus:outline-none focus:ring focus:ring-blue-300"
-              />
-              <span
-                v-else
-                class="cursor-text text-text-secondary hover:underline"
-                @click="editField(ticket, 'description')"
-              >
-                {{ ticket.description || 'Click to edit' }}
-              </span>
-            </td>
-
-            <!-- Status -->
-            <td class="p-2">
-              <select
-                v-model="ticket.status"
-                class="p-1 border rounded bg-bg-card focus:ring focus:ring-blue-300"
-              >
-                <option>To Do</option>
-                <option>In Progress</option>
-                <option>Done</option>
-              </select>
+              <slot v-else :name="col.key" :row="ticket" :column="col" :index="`r-${ticket._id}`">
+                <component :is="RenderCell" :row="ticket" :column="col" :index="ticket._id" />
+              </slot>
             </td>
           </tr>
         </template>
 
         <!-- Add Row at End -->
-        <tr
-          v-if="!hasActiveEmptyRow"
-          class="hover:bg-blue-50 transition cursor-pointer border-t border-border"
-          @mouseenter="hoverIndex = tickets.length"
-          @mouseleave="hoverIndex = null"
-        >
-          <td class="p-2" @click="insertEmptyRow(tickets.length)">
+        <tr v-if="!hasActiveEmptyRow" class=" bg-bg-surface transition sticky bottom-0 cursor-pointer border-t border-border"
+          @mouseenter="hoverIndex = tickets?.length" @mouseleave="hoverIndex = null">
+          <td class="p-2" @click="insertEmptyRow(tickets?.length)">
             <span
-              class="plus inline-flex w-5 h-5 border border-border rounded-full justify-center items-center text-secondary hover:bg-bg-surface/200 transition"
-            >+</span>
+              class="plus inline-flex w-5 h-5 border border-border rounded-full justify-center items-center text-secondary hover:bg-bg-surface/200 transition">+</span>
           </td>
-          <td colspan="3" class="p-2 text-text-secondary">Add New Ticket</td>
+          <td :colspan="columns.length" class="p-2 text-text-secondary border-border ">Add New Row</td>
         </tr>
       </tbody>
     </table>
@@ -106,173 +62,81 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, nextTick, computed, watch } from 'vue';
+import { reactive, ref, nextTick, computed, watch, h } from 'vue'
 
-/** Column config */
-export interface Column<T = any> {
-  key: string;
-  label: string;
-  width?: string | number;
-  align?: 'left' | 'center' | 'right';
-  headerAlign?: 'left' | 'center' | 'right';
-  class?: string;
-  headerClass?: string;
-  sortable?: boolean;
-  accessor?: (row: T) => unknown;
-  render?: (ctx: { row: T; column: Column<T>; value: unknown; index: number }) => any;
+interface Column {
+  key: string
+  label: string
 }
 
-/** Row type */
-export type Row = Record<string, unknown>;
+type Row = Record<string, any>
 
-/** Props */
-const props = withDefaults(
-  defineProps<{
-    columns: Column[];
-    rows: Row[];
-    loading?: boolean;
-    skeletonRows?: number;
-  }>(),
-  {
-    loading: false,
-    skeletonRows: 6,
-  }
-);
+const props = withDefaults(defineProps<{
+  columns: Column[]
+  rows: Row[]
+}>(), {})
 
-/** Emits */
 const emit = defineEmits<{
-  (e: 'update:rows', val: Row[]): void;
-}>();
+  (e: 'update:rows', val: Row[]): void
+  (e: 'create', val:any): void
+}>()
 
-/** Local reactive rows for editing */
-const tickets = reactive<Row[]>(props.rows || []);
+const tickets = reactive<Row[]>(props.rows || [])
 
-/** Watch parent rows prop */
-watch(
-  () => props.rows,
-  newRows => {
-    if (newRows) {
-      tickets.splice(0, tickets.length, ...newRows);
-    }
-  }
-);
+watch(() => props.rows, newRows => {
+  if (newRows) tickets.splice(0, tickets.length, ...newRows)
+})
 
-/** Editing state */
-const editing = reactive<{ id: string | number | null; field: string }>({
-  id: null,
-  field: '',
-});
+const editing = reactive<{ id: string | number | null; field: string }>({ id: null, field: '' })
+const hoverIndex = ref<number | null>(null)
+const titleInput = ref<HTMLInputElement | null>(null)
 
-/** Hover row index for + insert row */
-const hoverIndex = ref<number | null>(null);
+const hasActiveEmptyRow = computed(() =>
+  tickets.some(t => editing.id === t.id && !t[editing.field])
+)
 
-/** Ref for auto-focusing title input */
-const titleInput = ref<HTMLInputElement | null>(null);
-
-/** Hide + row if there's an empty active row being edited */
-const hasActiveEmptyRow = computed(() => {
-  return tickets.some(
-    t =>
-      editing.id === t.id &&
-      editing.field === 'title' &&
-      (!t.title || t.title.toString().trim() === '')
-  );
-});
-
-/** Edit a field (title/description/etc.) */
 const editField = (ticket: Row, field: string) => {
-  editing.id = ticket.id;
-  editing.field = field;
+  editing.id = ticket.id
+  editing.field = field
+  nextTick(() => titleInput.value?.focus())
+}
 
-  nextTick(() => {
-    if (field === 'title' && titleInput.value) {
-      titleInput.value.focus();
-    }
-  });
-};
-
-/** Stop editing */
 const stopEditing = () => {
-  editing.id = null;
-  editing.field = '';
-};
+  editing.id = null
+  editing.field = ''
+}
 
-/** Finish editing: remove empty row if needed */
 const finishEdit = (ticket: Row) => {
-  const title = ticket.title?.toString() || '';
-  if (!title.trim()) {
-    const index = tickets.findIndex(t => t.id === ticket.id);
-    if (index !== -1) tickets.splice(index, 1);
+
+  if (!ticket[editing.field]?.trim()) {
+    const index = tickets.findIndex(t => t.id === ticket.id)
+    if (index !== -1) tickets.splice(index, 1)
   }
-  stopEditing();
-  emit('update:rows', tickets.slice());
-};
+  stopEditing()
+  emit('update:rows', tickets.slice())
+  emit('create', ticket)
+}
 
-/** Insert empty row at index */
 const insertEmptyRow = (index: number) => {
-  const newTicket: Row = {
-    id: Date.now(),
-    title: '',
-    description: '',
-    status: 'To Do',
-  };
-  tickets.splice(index, 0, newTicket);
-  editField(newTicket, 'title');
-  hoverIndex.value = null;
-  emit('update:rows', tickets.slice());
-};
+  const newRow: Row = { id: Date.now() }
+  props.columns.forEach(col => newRow[col.key] = '')
+  tickets.splice(index, 0, newRow)
+  editField(newRow, props.columns[0]?.key || '')
+  hoverIndex.value = null
+  emit('update:rows', tickets.slice())
+}
+function getByPath(obj: any, path: string): any {
+  if (!obj || !path) return undefined
+  if (!path.includes('.')) return obj[path]
+  return path.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), obj)
+}
+function cellValue(row: Row, col: Column) {
+  return col?.accessor ? col.accessor(row) : getByPath(row, col.key)
+}
+const RenderCell = (p: { row: Row; column: Column; index: number }) => {
+  const val = cellValue(p.row, p.column)
+  if (p.column?.render) return p.column.render({ row: p?.row, column: p?.column, value: val, index: p?.index })
+  return h('span', String(val ?? ''))
+}
 
-/** Skeleton rows */
-const resolvedSkeletonRows = computed(() => props.skeletonRows ?? 6);
-
-/** Auto-focus any input already focused on mount */
-nextTick(() => {
-  const input = document.querySelector<HTMLInputElement>('input:focus');
-  input?.focus();
-});
 </script>
-
-<style scoped>
-.kanban-table {
-  padding: 16px;
-  font-family: Arial, sans-serif;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  border: 1px solid #ccc;
-  padding: 8px;
-}
-
-input {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.hover-add-row {
-  background-color: #f9f9f9;
-  cursor: pointer;
-}
-
-.hover-add-row .plus {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  text-align: center;
-  border: 1px solid #888;
-  border-radius: 50%;
-  margin-left: 4px;
-  font-weight: bold;
-  line-height: 14px;
-  color: #444;
-}
-
-.hover-add-row:hover {
-  background-color: #e0f7fa;
-}
-</style>

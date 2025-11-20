@@ -13,7 +13,7 @@
                 </template>
             </Dropdown>
             <div class="flex gap-3 items-center ">
-                <Dropdown :actions="false" prefix="View by" v-model="selected_view_by" :options="variables"
+                <Dropdown v-if="view=='kanban'" :actions="false" prefix="View by" v-model="selected_view_by" :options="variables"
                     variant="secondary">
                     <template #more>
                         <div @click="() => {
@@ -29,7 +29,23 @@
                     searchQuery = e
                 }" placeholder="Search in Orchit AI space">
                 </Searchbar>
+
+                <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
+                <button class="aspect-square  cursor-pointer rounded-sm p-0 px-0.5"
+                    :class="view === 'kanban' ? 'text-accent bg-accent-text' : ' hover:bg-border/50 backdrop-blur-2xl  transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                    title="List view" @click="view = 'kanban'">
+                    <i class="fa-solid fa-chart-kanban"></i>
+                </button>
+
+                <button @click="view = 'table'" class="aspect-square  cursor-pointer rounded-sm p-0 px-0.5"
+                    :class="view === 'table' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                    title="Gallery view">
+                    <i class="fa-solid fa-align-left"></i>
+                </button>
             </div>
+            </div>
+
+           
         </div>
         <template v-if="view == 'kanban'">
             <KanbanSkeleton v-show="isPending" />
@@ -74,7 +90,7 @@
             </div>
         </template>
         <template v-if="view == 'table'">
-            <TableView :columns="columns" :rows="normalizedTableData" />
+            <TableView :columns="columns" :rows="normalizedTableData" @create="handleCreateTicket" />
         </template>
     </div>
     <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
@@ -98,7 +114,7 @@ import { computed, defineAsyncComponent, h, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import Searchbar from '../../components/ui/SearchBar.vue';
-import { ReOrderCard, ReOrderList, useAddList, useSheetList, useSheets, useUpdateWorkspaceSheet, useVariables } from '../../queries/useSheets';
+import { ReOrderCard, ReOrderList, useAddList, useAddTicket, useMoveCard, useSheetList, useSheets, useUpdateWorkspaceSheet, useVariables } from '../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
@@ -110,6 +126,9 @@ import Fuse from 'fuse.js';
 import { debounce } from 'lodash';
 import TableView from '../../components/feature/TableView/TableView.vue';
 import { getStatusStyle } from '../../utilities/stausStyle';
+import BaseSelectField from '../../components/ui/BaseSelectField.vue';
+import { useProductVarsData } from '../../queries/useProductCard';
+import { Background } from '@vue-flow/background';
 const view = ref('table')
 
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
@@ -152,7 +171,7 @@ watch(sheetId, () => {
     selected_sheet_id.value = sheetId.value;
 })
 
-const viewBy = computed(() => variables.value ? variables.value[0]?._id : '')
+const viewBy = computed(() => variables?.value ? variables?.value[0]?._id : '')
 const selected_view_by = ref(viewBy.value);
 watch(viewBy, () => {
     selected_view_by.value = viewBy.value;
@@ -170,8 +189,6 @@ const { data: Lists, isPending, } = useSheetList(
 const createTeamModal = ref(false);
 const selectedCard = ref<any>()
 const selectCardHandler = (card: any) => {
-    console.log('>> click ', card);
-
     selectedCard.value = card
 }
 const isCreateSheetModal = ref(false)
@@ -223,8 +240,8 @@ interface DropdownOption {
 const transformedData = computed<DropdownOption[]>(() => {
     return (data.value || []).map((item: any) => ({
         _id: item._id,
-        title: item.variables["sheet-title"],
-        description: item.variables["sheet-description"],
+        title: item?.variables["sheet-title"],
+        description: item?.variables["sheet-description"],
         icon: item["icon"],
         status: item?.generation_status,
     }));
@@ -318,33 +335,113 @@ const filteredBoard = computed(() => {
         cards: results.filter((c: any) => c.columnId === col.title)
     }))
 })
-
+import ticket from '../../assets/icons/ticket.svg'
 const columns = [
+    // {
+    //     key: "card-code", label: '#', render: ({ value }: any) =>
+    //         h('div', { class: ' capitalize flex items-center gap-2 ', }, [h('img', { src: ticket }), h('span', { class: 'text-sm text-text-primary capitalize' }), h('span', { class: 'text-sm text-text-primary capitalize' }, value)]),
+    // },
     {
-        key: "card-title", label: 'Task name', render: ({ value }: any) =>
-            h('span', { class: 'text-sm text-text-primary capitalize' }, value),
+        key: "card-title", label: 'Title', render: ({ row, value }: any) =>
+            h('input', {
+                onFocusout: (e: any) => {
+                    handleChangeTicket(row?._id, 'card-title', e?.target?.value)
+                }, class: 'text-sm cursor-pointer text-text-primary capitalize outline-none border-none focus:border  active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md', defaultValue: value
+            },),
     },
     {
-        key: 'card-description', label: 'Status',
-        render: ({ value }: any) => h('div', { class: ` capitalize flex items-center inline px-2 py-1 rounded-md  gap-2 ${getStatusStyle(value['card-status'])} ` }, [
+        key: 'card-status', label: 'Status',
+        render: ({ row, value }: any) => {
+            const { data } = useProductVarsData(workspaceId, moduleId, 'card-status')
+            const status = ref(value)
+
+            return h('div', { class: ' capitalize flex items-center gap-2 ' }, [
+
+                h(BaseSelectField, {
+                    options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: status.value, defaultValue: status.value,
+                    "onUpdate": (val: any) => {
+
+                        handleChangeTicket(row?._id, 'card-status', val)
+                        // row["card-status"] = val; // write back to row
+                    },
+                })
+            ])
+        }
+    },
+    {
+        key: 'card-type', label: 'Type',
+        render: ({ row, value }: any) => {
+            const { data } = useProductVarsData(workspaceId, moduleId, 'card-type')
+            const type = ref(value)
+            return h('div', { class: ' capitalize flex items-center gap-2 ' }, [
+
+                h(BaseSelectField, {
+                    options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: type.value, defaultValue: type.value, "onUpdate": (val: any) => {
+
+                        handleChangeTicket(row?._id, 'card-type', val)
+                        // row["card-status"] = val; // write back to row
+                    },
+                })
+            ])
+        }
+    },
+    {
+        key: 'end-date', label: 'Due Date',
+        render: ({ value }: any) => h('div', { class: ' capitalize flex items-center gap-2 ' }, [
             h('span', value)
         ])
     },
     {
-        key: 'card-status', label: 'Due Date',
-        render: ({ value }: any) => h('div', { class: ' capitalize flex items-center gap-2 ' }, [
-            h('span', value['end-date'])
+        key: 'lane', label: 'Lane',
+        render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
+            h('div', { class: `w-3 h-3 rounded-full  `, style: `background:${value?.variables ? value?.variables['lane-color'] : ''}` }, ''), h('span', value?.variables ? value?.variables['lane-title'] : '')
         ])
     }
-
 ]
 const normalizedTableData = computed(() => {
     let array: any = [];
-    Lists.value.forEach((col: any) => { array = [...array, ...col?.cards] })
-    console.log(array, 'array ');
+    (Lists.value ?? []).forEach((col: any) => { array = [...array, ...col?.cards] })
     return array
 
 })
+
+const getOptions = (options: any) => {
+    // console.log(options, 'options');
+
+    return options.map((el: any) => ({ _id: el.value, title: el.value }))
+}
+const moveCard = useMoveCard({
+    onSuccess: () => {
+        // queryClient.invalidateQueries({ queryKey: ['get-sheets'] })
+        // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+        // queryClient.invalidateQueries({ queryKey: ['roles'] })
+    }
+})
+function handleChangeTicket(id: any, key: any, value: any) {
+    moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } })
+}
+const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
+    onSuccess: () => {
+        // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    }
+})
+function handleCreateTicket(title: any) {
+    console.log(title, 'titele');
+
+    const payload = {
+        sheet_list_id: 'To Do',
+        workspace_id: workspaceId.value,
+        sheet_id: selected_sheet_id.value,
+        // workspace_lane_id: form.lane_id,
+        variables: {
+            ['card-title']: title['card-title'].trim(),
+
+        },
+        createdAt: new Date().toISOString()
+    }
+    addTicket(payload)
+
+}
 </script>
 <style scoped>
 /* Force visible scrollbars only where applied */

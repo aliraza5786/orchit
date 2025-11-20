@@ -87,6 +87,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: string | number | null): void
+  (e: 'update', v: string | number | null): void
 }>()
 
 const isOpen = ref(false)
@@ -142,6 +143,9 @@ function toggleDropdown() {
 function selectOption(option: Option) {
   selected.value = option
   emit('update:modelValue', option._id)
+  console.log(' i am cnmnfmnf');
+  
+  emit('update', option._id)
   isOpen.value = false
   removeOutsideListener()
 }
@@ -149,8 +153,10 @@ function selectOption(option: Option) {
 /** Sync logic **/
 function initSelection() {
   const initial = props.modelValue ?? props.defaultValue
+  
   if (initial !== undefined && initial !== null) {
-    const found = props.options.find((o:any) => o._id === initial)
+    const found = props.options.find((o:any) => o._id === initial || o.title==initial)
+    
     if (found) {
       selected.value = found
       if (props.modelValue == null && props.defaultValue != null) {
