@@ -420,16 +420,16 @@ const columns = [
             ]), h('span', value ? value?.u_full_name : '')
         ])
     },
-    {
-        key: 'aassigne', label: 'Assignee',
-        render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
-            h('div', { class: ` rounded-full  ` }, [
-            value?.u_profile_image ?    h('img', { class:'w-6 h-6 rounded-full', src: value?.u_profile_image }):
-            h('div', { class:'w-6 h-6 rounded-full flex justify-center items-center ' , style: `background:${value?.u_full_name ? avatarColor({name:value.u_full_name, email:value.u_email}) : ''}` }, getInitials(value?.u_full_name))
+    // {
+    //     key: 'aassigne', label: 'Assignee',
+    //     render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
+    //         h('div', { class: ` rounded-full  ` }, [
+    //         value?.u_profile_image ?    h('img', { class:'w-6 h-6 rounded-full', src: value?.u_profile_image }):
+    //         h('div', { class:'w-6 h-6 rounded-full flex justify-center items-center ' , style: `background:${value?.u_full_name ? avatarColor({name:value.u_full_name, email:value.u_email}) : ''}` }, getInitials(value?.u_full_name))
             
-            ]), h('span', value ? value?.u_full_name : '')
-        ])
-    }
+    //         ]), h('span', value ? value?.u_full_name : '')
+    //     ])
+    // }
 
 ]
 const normalizedTableData = computed(() => {
