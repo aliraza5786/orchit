@@ -1,67 +1,78 @@
 <template>
   <div class="kanban-table space-y-4 px-4 h-[85vh] overflow-y-auto">
 
-    <table
-    class="w-full table-fixed border-collapse border-border shadow-sm rounded-lg overflow-hidden bg-bg-body/80 h-[200px] overflow-y-auto"
-    >
-      <thead class="bg-bg-surface border-b border-border sticky top-0 z-1">
-        <tr>
-          <th class="w-8 p-1"></th>
-          <th v-for="col in columns" :key="col?.key"  class="text-left p-1 font-medium relative select-none"
-          :style="{ width: columnWidths[col.key] + 'px' }">
-            {{ col?.label }}
-            <div
-    class="absolute right-0 top-0 h-full w-2 cursor-col-resize z-10 hover:bg-accent/30"
-  @mousedown="(e) => startResize(e, col.key)"
-  ></div>
+    <table class="w-full table-fixed border-collapse rounded-md shadow-sm 
+             bg-bg-body/20 text-sm
+             border border-border/60">
+
+      <!-- HEADER -->
+      <thead class="bg-bg-surface border-b border-border sticky top-0 z-20">
+        <tr class="text-text-secondary">
+          <th class="w-2 p-0"></th>
+          <th v-for="col in columns" :key="col?.key" class="relative font-bold p-2 uppercase text-left text-[11px] tracking-wide
+                   border-r border-border/40 select-none whitespace-nowrap"
+            :style="{ width: columnWidths[col.key] + 'px' }">
+            <span>{{ col?.label }}</span>
+
+            <!-- Column Resize Handle (Jira style: taller + visible on hover) -->
+            <div class="absolute right-0 top-0 h-full w-2 cursor-col-resize z-30
+                     hover:bg-accent/20 active:bg-accent/40 transition" @mousedown="(e) => startResize(e, col.key)">
+            </div>
           </th>
         </tr>
       </thead>
 
-      <tbody>
+      <!-- BODY -->
+      <tbody class="bg-bg-surface/20">
+
+        <!-- SKELETON LOADING -->
         <template v-if="isPending">
-          <tr v-for="n in 5" :key="'sk-' + n" class="animate-pulse border-b border-border">
-            <td class="p-2">
+          <tr v-for="n in 5" :key="'sk-' + n" class="border-b border-border animate-pulse">
+            <td class="p-3">
               <div class="w-4 h-4 bg-bg-surface rounded"></div>
             </td>
 
-            <td v-for="col in columns" :key="col.key" class="p-2"   :style="{ width: columnWidths[col.key] + 'px' }"
-            >
+            <td v-for="col in columns" :key="col.key" class="p-3 border-r border-border"
+              :style="{ width: columnWidths[col.key] + 'px' }">
               <div class="w-full h-4 bg-bg-surface rounded"></div>
             </td>
           </tr>
         </template>
-        <!-- Hover Insert Row -->
+
+        <!-- ROW INSERT HOVER -->
         <template v-else v-for="(ticket, index) in tickets" :key="ticket?.id">
-          <tr v-if="hoverIndex === index && !hasActiveEmptyRow"
-            class="relative bg-bg-surface/50 transition-all cursor-pointer  border  border-accent" @mouseleave="hoverIndex = null">
+          <tr v-if="hoverIndex === index && !hasActiveEmptyRow" class="relative bg-bg-surface/20 transition-all cursor-pointer 
+                   border border-accent" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
-              <span
-                class="absolute left-[-6px] top-[-6px] bg-bg-card border border-border w-6 h-6 text-sm rounded-md flex justify-center items-center shadow-sm hover:bg-bg-card/10">+</span>
+              <span class="absolute left-[-6px] top-[-6px] bg-bg-surface border border-border 
+                       w-6 h-6 text-sm rounded-md flex justify-center items-center 
+                       shadow-sm hover:bg-bg-surface/70">+</span>
             </td>
             <td class="!p-0" :colspan="columns?.length"></td>
           </tr>
 
-          <!-- Actual Row -->
-          <tr @mouseenter="hoverIndex = index" class="hover:bg-surface/50 transition-colors border-b border-border">
+          <!-- ACTUAL ROW -->
+          <tr @mouseenter="hoverIndex = index"
+            class="border-b border-border !bg-bg-surface/20 hover:bg-bg-surface/40 transition-colors">
             <td class="p-2"></td>
 
-            <td v-for="col in columns" :key="col?.key" class="p-2"
-      
-  :style="{ width: columnWidths[col.key] + 'px' }"
+            <td v-for="col in columns" :key="col?.key" class="p-2 border-r border-border truncate"
+              :style="{ width: columnWidths[col.key] + 'px' }">
 
-            >
               <!-- Editable input -->
               <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
-                @blur="finishEdit(ticket)"
-                class="w-full p-1 border border-border rounded focus:outline-none focus:ring focus:ring-blue-300"
-                :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
+                @blur="finishEdit(ticket)" class="w-full p-1 border border-border/60 rounded-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-300
+                       bg-bg-surface"
+                :ref="(el) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
 
               <!-- Display value -->
-              <span v-else class="cursor-text hover:underline" @click="editField(ticket, col?.key)">
+              <span v-else class="cursor-text hover:underline text-text-primary truncate block"
+                @click="editField(ticket, col?.key)">
                 {{ ticket[col?.key] || 'Click to edit' }}
               </span>
 
+              <!-- Slot Renderer -->
               <slot v-else :name="col.key" :row="ticket" :column="col" :index="`r-${ticket._id}`">
                 <component :is="RenderCell" :row="ticket" :column="col" :index="ticket._id" />
               </slot>
@@ -69,16 +80,20 @@
           </tr>
         </template>
 
-        <!-- Add Row at End -->
-        <tr v-if="!hasActiveEmptyRow"
-          class=" bg-bg-surface transition sticky bottom-0 cursor-pointer border-t h-2 border-accent"
-          @mouseenter="hoverIndex = tickets?.length" @mouseleave="hoverIndex = null">
+        <!-- ADD NEW ROW FOOTER -->
+        <tr v-if="!hasActiveEmptyRow" class="sticky bottom-0 bg-bg-surface border-t border-border cursor-pointer
+                 transition hover:bg-bg-surface/70" @mouseenter="hoverIndex = tickets?.length"
+          @mouseleave="hoverIndex = null">
           <td class="p-2" @click="insertEmptyRow(tickets?.length)">
-            <span
-              class="plus inline-flex w-5 h-5 border border-border rounded-full justify-center items-center text-secondary hover:bg-bg-surface/200 transition">+</span>
+            <span class="inline-flex w-5 h-5 border border-border rounded-full 
+                     justify-center items-center text-secondary
+                     hover:bg-bg-surface/50 transition">+</span>
           </td>
-          <td :colspan="columns.length" class="p-2 text-text-secondary border-accent ">Add New Row</td>
+          <td :colspan="columns.length" class="p-2 text-text-secondary">
+            Add New Row
+          </td>
         </tr>
+
       </tbody>
     </table>
   </div>

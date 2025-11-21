@@ -343,11 +343,15 @@ const columns = [
     // },
     {
         key: "card-title", label: 'Title', render: ({ row, value }: any) =>
-            h('input', {
+        h('div',   [ h('a', {
+                 class: 'text-sm underline text-blue-500 w-full overflow-ellipsis cursor-pointer  ',
+            }, row['card-code']), h('input', {
                 onFocusout: (e: any) => {
                     handleChangeTicket(row?._id, 'card-title', e?.target?.value)
                 }, class: 'text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border  active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md', defaultValue: value
             },),
+        
+        ])
     },
     {
         key: 'card-status', label: 'Status',
