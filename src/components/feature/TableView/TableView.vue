@@ -2,12 +2,18 @@
   <div class="kanban-table space-y-4 px-4 h-[85vh] overflow-y-auto">
 
     <table
-      class="w-full border-collapse border-border  shadow-sm rounded-lg  overflow-hidden bg-bg-body/80 h-[200px] overflow-y-auto">
+    class="w-full table-fixed border-collapse border-border shadow-sm rounded-lg overflow-hidden bg-bg-body/80 h-[200px] overflow-y-auto"
+    >
       <thead class="bg-bg-surface border-b border-border sticky top-0 z-1">
         <tr>
           <th class="w-8 p-1"></th>
-          <th v-for="col in columns" :key="col?.key" class="text-left p-1 font-medium">
+          <th v-for="col in columns" :key="col?.key"  class="text-left p-1 font-medium relative select-none"
+          :style="{ width: columnWidths[col.key] + 'px' }">
             {{ col?.label }}
+            <div
+    class="absolute right-0 top-0 h-full w-2 cursor-col-resize z-10 hover:bg-accent/30"
+  @mousedown="(e) => startResize(e, col.key)"
+  ></div>
           </th>
         </tr>
       </thead>
@@ -19,7 +25,8 @@
               <div class="w-4 h-4 bg-bg-surface rounded"></div>
             </td>
 
-            <td v-for="col in columns" :key="col.key" class="p-2">
+            <td v-for="col in columns" :key="col.key" class="p-2"   :style="{ width: columnWidths[col.key] + 'px' }"
+            >
               <div class="w-full h-4 bg-bg-surface rounded"></div>
             </td>
           </tr>
@@ -39,7 +46,11 @@
           <tr @mouseenter="hoverIndex = index" class="hover:bg-surface/50 transition-colors border-b border-border">
             <td class="p-2"></td>
 
-            <td v-for="col in columns" :key="col?.key" class="p-2">
+            <td v-for="col in columns" :key="col?.key" class="p-2"
+      
+  :style="{ width: columnWidths[col.key] + 'px' }"
+
+            >
               <!-- Editable input -->
               <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
                 @blur="finishEdit(ticket)"
@@ -150,6 +161,43 @@ const RenderCell = (p: { row: Row; column: any; index: number }) => {
   const val = cellValue(p.row, p.column)
   if (p.column?.render) return p.column.render({ row: p?.row, column: p?.column, value: val, index: p?.index })
   return h('span', String(val ?? ''))
+}
+
+// resize control 
+// Track column widths
+const columnWidths = reactive<Record<string, number>>({})
+
+// Initialize widths on mount
+watch(() => props.columns, cols => {
+  cols.forEach(col => {
+    if (!columnWidths[col.key]) columnWidths[col.key] = 150 // default width
+  })
+}, { immediate: true })
+
+let resizingCol: string | null = null
+let startX = 0
+let startWidth = 0
+
+const startResize = (e: MouseEvent, colKey: string) => {
+  resizingCol = colKey
+  startX = e.clientX
+  startWidth = columnWidths[colKey]
+
+  document.addEventListener("mousemove", onResize)
+  document.addEventListener("mouseup", stopResize)
+}
+
+const onResize = (e: MouseEvent) => {
+  if (!resizingCol) return
+  const dx = e.clientX - startX
+  const newWidth = Math.max(80, startWidth + dx)
+  columnWidths[resizingCol] = newWidth
+}
+
+const stopResize = () => {
+  resizingCol = null
+  document.removeEventListener("mousemove", onResize)
+  document.removeEventListener("mouseup", stopResize)
 }
 
 </script>
