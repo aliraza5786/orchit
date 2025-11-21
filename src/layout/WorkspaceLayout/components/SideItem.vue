@@ -47,7 +47,7 @@ let stopped = false;
 
 /** --- SSE URL --- **/
 const SERVER_BASE_URL =
-  import.meta.env.VITE_SERVER_BASE_URL || "https://backend.streamed.space/api/v1/";
+  import.meta.env.VITE_SERVER_BASE_URL || "https://backend.orchit.ai/api/v1/";
 
 /**
  * Open SSE stream for job progress
