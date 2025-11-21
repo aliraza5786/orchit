@@ -13,8 +13,8 @@
                 </template>
             </Dropdown>
             <div class="flex gap-3 items-center ">
-                <Dropdown v-if="view=='kanban'" :actions="false" prefix="View by" v-model="selected_view_by" :options="variables"
-                    variant="secondary">
+                <Dropdown v-if="view == 'kanban'" :actions="false" prefix="View by" v-model="selected_view_by"
+                    :options="variables" variant="secondary">
                     <template #more>
                         <div @click="() => {
 
@@ -31,21 +31,21 @@
                 </Searchbar>
 
                 <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
-                <button class="aspect-square  cursor-pointer rounded-sm p-0 px-0.5"
-                    :class="view === 'kanban' ? 'text-accent bg-accent-text' : ' hover:bg-border/50 backdrop-blur-2xl  transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
-                    title="List view" @click="view = 'kanban'">
-                    <i class="fa-solid fa-chart-kanban"></i>
-                </button>
+                    <button class="aspect-square  cursor-pointer rounded-sm p-0 px-0.5"
+                        :class="view === 'kanban' ? 'text-accent bg-accent-text' : ' hover:bg-border/50 backdrop-blur-2xl  transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                        title="List view" @click="view = 'kanban'">
+                        <i class="fa-solid fa-chart-kanban"></i>
+                    </button>
 
-                <button @click="view = 'table'" class="aspect-square  cursor-pointer rounded-sm p-0 px-0.5"
-                    :class="view === 'table' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
-                    title="Gallery view">
-                    <i class="fa-solid fa-align-left"></i>
-                </button>
-            </div>
+                    <button @click="view = 'table'" class="aspect-square  cursor-pointer rounded-sm p-0 px-0.5"
+                        :class="view === 'table' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                        title="Gallery view">
+                        <i class="fa-solid fa-align-left"></i>
+                    </button>
+                </div>
             </div>
 
-           
+
         </div>
         <template v-if="view == 'kanban'">
             <KanbanSkeleton v-show="isPending" />
@@ -90,7 +90,8 @@
             </div>
         </template>
         <template v-if="view == 'table'">
-            <TableView :isPending="isPending" :columns="columns" :rows="normalizedTableData" @create="handleCreateTicket" />
+            <TableView :isPending="isPending" :columns="columns" :rows="normalizedTableData"
+                @create="handleCreateTicket" />
         </template>
     </div>
     <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
@@ -128,6 +129,8 @@ import TableView from '../../components/feature/TableView/TableView.vue';
 // import { getStatusStyle } from '../../utilities/stausStyle';
 import BaseSelectField from '../../components/ui/BaseSelectField.vue';
 import { useProductVarsData } from '../../queries/useProductCard';
+import { getInitials } from '../../utilities';
+import { avatarColor } from '../../utilities/avatarColor';
 // import { Background } from '@vue-flow/background';
 const view = ref('kanban')
 
@@ -343,15 +346,18 @@ const columns = [
     // },
     {
         key: "card-title", label: 'Title', render: ({ row, value }: any) =>
-        h('div',   [ h('a', {
-                 class: 'text-sm underline text-blue-500 w-full overflow-ellipsis cursor-pointer  ',
+            h('div', [h('a', {
+                onClick: () => {
+                    selectedCard.value=row
+                },
+                class: 'text-sm underline text-blue-500 w-full overflow-ellipsis cursor-pointer  ',
             }, row['card-code']), h('input', {
                 onFocusout: (e: any) => {
                     handleChangeTicket(row?._id, 'card-title', e?.target?.value)
                 }, class: 'text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border  active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md', defaultValue: value
             },),
-        
-        ])
+
+            ])
     },
     {
         key: 'card-status', label: 'Status',
@@ -362,7 +368,7 @@ const columns = [
             return h('div', { class: ' capitalize flex items-center gap-2 ' }, [
 
                 h(BaseSelectField, {
-                    class:'w-full',
+                    class: 'w-full',
                     options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: status.value, defaultValue: 'To Do',
                     "onUpdate": (val: any) => {
 
@@ -381,7 +387,7 @@ const columns = [
             return h('div', { class: ' capitalize flex items-center gap-2 ' }, [
 
                 h(BaseSelectField, {
-                    class:'w-full border-none',
+                    class: 'w-full border-none',
 
                     options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: type.value, defaultValue: type.value, "onUpdate": (val: any) => {
 
@@ -403,7 +409,28 @@ const columns = [
         render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
             h('div', { class: `w-3 h-3 rounded-full  `, style: `background:${value?.variables ? value?.variables['lane-color'] : ''}` }, ''), h('span', value?.variables ? value?.variables['lane-title'] : '')
         ])
+    },
+    {
+        key: 'created_by', label: 'Owner',
+        render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
+            h('div', { class: ` rounded-full  ` }, [
+            value?.u_profile_image ?    h('img', { class:'w-6 h-6 rounded-full', src: value?.u_profile_image }):
+            h('div', { class:'w-6 h-6 rounded-full flex justify-center items-center ' , style: `background:${value?.u_full_name ? avatarColor({name:value.u_full_name, email:value.u_email}) : ''}` }, getInitials(value?.u_full_name))
+            
+            ]), h('span', value ? value?.u_full_name : '')
+        ])
+    },
+    {
+        key: 'aassigne', label: 'Assignee',
+        render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
+            h('div', { class: ` rounded-full  ` }, [
+            value?.u_profile_image ?    h('img', { class:'w-6 h-6 rounded-full', src: value?.u_profile_image }):
+            h('div', { class:'w-6 h-6 rounded-full flex justify-center items-center ' , style: `background:${value?.u_full_name ? avatarColor({name:value.u_full_name, email:value.u_email}) : ''}` }, getInitials(value?.u_full_name))
+            
+            ]), h('span', value ? value?.u_full_name : '')
+        ])
     }
+
 ]
 const normalizedTableData = computed(() => {
     let array: any = [];
