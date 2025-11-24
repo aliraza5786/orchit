@@ -90,7 +90,9 @@
             </div>
         </template>
         <template v-if="view == 'table'">
-            <TableView :isPending="isPending || isVariablesPending" :columns="columns" :rows="normalizedTableData"
+            <TableView @addVar="() => {
+                isCreateVar = true
+            }" :isPending="isPending || isVariablesPending" :columns="columns" :rows="normalizedTableData"
                 @create="handleCreateTicket" />
         </template>
     </div>
@@ -145,7 +147,7 @@ const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/
 const isCreateVar = ref(false)
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds()
-const { data: variables, isPending:isVariablesPending } = useVariables(workspaceId.value, moduleId.value);
+const { data: variables, isPending: isVariablesPending } = useVariables(workspaceId.value, moduleId.value);
 const queryClient = useQueryClient()
 const { mutate: addList, isPending: addingList } = useAddList({
     onSuccess: () => {
@@ -353,94 +355,94 @@ const laneOptions = computed<any[]>(() =>
 
 
 const columns = computed(() => {
-  return [
-    {
-      key: "card-title",
-      label: "Title",
-      render: ({ row, value }: any) =>
-        h("div", [
-          h(
-            "a",
-            {
-              onClick: () => {
-                selectedCard.value = row;
-              },
-              class:
-                "text-sm underline text-blue-500 w-full overflow-ellipsis cursor-pointer",
-            },
-            row["card-code"]
-          ),
-          h("input", {
-            onFocusout: (e: any) => {
-              handleChangeTicket(row?._id, "card-title", e?.target?.value);
-            },
-            class:
-              "text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md",
-            defaultValue: value,
-          }),
-        ]),
-    },
-   
-    {
-        key: 'end-date', label: 'Due Date',
-        render: ({ row, value }: any) => {
-            const date = ref<any>(value)
-            return h(DatePicker, {
-                class: ' capitalize flex items-center gap-2 ', placeholder: "Set start date", modelValue: date.value,
-                "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e)
-            })
-        }
-    },
-    {
-        key: 'lane', label: 'Lane',
-        render: ({ row, value }: any) => h(BaseSelectField, {
-            class: 'capitalize flex items-center gap-2 ', size: "sm", options: laneOptions.value ?? [], placeholder: "Select lane", allowCustom: false,
-            modelValue: value?._id, "onUpdate:modelValue": (e: any) => setLane(row?._id, e)
-        })
-    },
-    {
-        key: 'created_by', label: 'Owner',
-        render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
-            h('div', { class: ` rounded-full  ` }, [
-                value?.u_profile_image ? h('img', { class: 'w-6 h-6 rounded-full', src: value?.u_profile_image }) :
-                    h('div', { class: 'w-6 h-6 rounded-full flex justify-center items-center ', style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ''}` }, getInitials(value?.u_full_name))
+    return [
+        {
+            key: "card-title",
+            label: "Title",
+            render: ({ row, value }: any) =>
+                h("div", [
+                    h(
+                        "a",
+                        {
+                            onClick: () => {
+                                selectedCard.value = row;
+                            },
+                            class:
+                                "text-sm underline text-blue-500 w-full overflow-ellipsis cursor-pointer",
+                        },
+                        row["card-code"]
+                    ),
+                    h("input", {
+                        onFocusout: (e: any) => {
+                            handleChangeTicket(row?._id, "card-title", e?.target?.value);
+                        },
+                        class:
+                            "text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md",
+                        defaultValue: value,
+                    }),
+                ]),
+        },
 
-            ]), h('span', value ? value?.u_full_name : '')
-        ])
-    },
-    {
-        key: 'seat', label: 'Assignee',
-        render: ({ row, value }: any) => h(AssigmentDropdown, {
-            class: 'capitalize flex items-center gap-2 ', "onAssign": (user: any) => assignHandle(row?._id, user), assigneeId: value,
-            seat: value, name: true
-        })
-    },
-    
-    ...(
-      variables.value
-        ?.filter((e: any) => e?.type?.title === "Select")
-        .map((e: any) => ({
-          key: e.slug,
-          label: e.slug,
-          render: ({ row, value }: any) => {
-            const type = ref(value);
-            return h("div", { class: "capitalize flex items-center gap-2" }, [
-              h(BaseSelectField, {
-                class: "w-full border-none",
-                options: getOptions(e.data ?? []),
-                size: "sm",
-                modelValue: type.value,
-                defaultValue: type.value,
-                "onUpdate": (val: any) => {
-                  handleChangeTicket(row?._id, e.slug, val);
-                },
-              }),
-            ]);
-          },
-          visible:false
-        })) ?? []
-    ),
-  ];
+        {
+            key: 'end-date', label: 'Due Date',
+            render: ({ row, value }: any) => {
+                const date = ref<any>(value)
+                return h(DatePicker, {
+                    class: ' capitalize flex items-center gap-2 ', placeholder: "Set start date", modelValue: date.value,
+                    "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e)
+                })
+            }
+        },
+        {
+            key: 'lane', label: 'Lane',
+            render: ({ row, value }: any) => h(BaseSelectField, {
+                class: 'capitalize flex items-center gap-2 ', size: "sm", options: laneOptions.value ?? [], placeholder: "Select lane", allowCustom: false,
+                modelValue: value?._id, "onUpdate:modelValue": (e: any) => setLane(row?._id, e)
+            })
+        },
+        {
+            key: 'created_by', label: 'Owner',
+            render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
+                h('div', { class: ` rounded-full  ` }, [
+                    value?.u_profile_image ? h('img', { class: 'w-6 h-6 rounded-full', src: value?.u_profile_image }) :
+                        h('div', { class: 'w-6 h-6 rounded-full flex justify-center items-center ', style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ''}` }, getInitials(value?.u_full_name))
+
+                ]), h('span', value ? value?.u_full_name : '')
+            ])
+        },
+        {
+            key: 'seat', label: 'Assignee',
+            render: ({ row, value }: any) => h(AssigmentDropdown, {
+                class: 'capitalize flex items-center gap-2 ', "onAssign": (user: any) => assignHandle(row?._id, user), assigneeId: value,
+                seat: value, name: true
+            })
+        },
+
+        ...(
+            variables.value
+                ?.filter((e: any) => e?.type?.title === "Select")
+                .map((e: any) => ({
+                    key: e.slug,
+                    label: e.slug,
+                    render: ({ row, value }: any) => {
+                        const type = ref(value);
+                        return h("div", { class: "capitalize flex items-center gap-2" }, [
+                            h(BaseSelectField, {
+                                class: "w-full border-none",
+                                options: getOptions(e.data ?? []),
+                                size: "sm",
+                                modelValue: type.value,
+                                defaultValue: type.value,
+                                "onUpdate": (val: any) => {
+                                    handleChangeTicket(row?._id, e.slug, val);
+                                },
+                            }),
+                        ]);
+                    },
+                    visible: false
+                })) ?? []
+        ),
+    ];
 });
 const assignHandle = (cardId: any, user: any) => {
     console.log(cardId, user, '>>>> card >>>');
