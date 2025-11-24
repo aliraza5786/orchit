@@ -117,7 +117,7 @@
 
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold">
-              Backlog ({{ backlogResp?.cards?.length }} Tasks)
+              Backlog ({{ backlogResp?.cards?.length }} Tasks)             
             </h2>
             <div class="flex items-center gap-2">
               <button class="h-8 w-22 flex items-center justify-center gap-2 rounded-md border cursor-pointer aspect-square text-sm border-border  hover:bg-bg-body ">
@@ -143,7 +143,6 @@
           </div>
           <BacklogTable
             v-else
-            :sorters="sorters"
             @move-selected-to-sprint="moveSelectedToSprint"
             @delete-selected-backlog="deleteSelected('backlog')"
             @open-ticket="openTicket"
@@ -247,7 +246,7 @@ import BacklogTable from "./components/BacklogTable.vue";
 import SprintCard from "./components/SprintCard.vue";
 // import TicketModal from './modals/TicketModal.vue'
 import SprintModal from "./modals/SprintModal.vue";
-import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
 import Dropdown from "../../components/ui/Dropdown.vue";
@@ -357,7 +356,7 @@ watch(
   () => selectedSprintId.value,
   (id) => {
     selectedSprint.value =
-      sprintsList.value?.sprints.find((s) => s._id === id) || null;
+      sprintsList.value?.sprints.find((s: any) => s._id === id) || null;
   }
 );
 
@@ -455,24 +454,17 @@ function handleRefresh() {
   refetchSprintDetail();
 }
 
-function handleTicketMovedToBacklog(ticketId: string) {
-  console.log(">>> moving back to backlog");
-
-  if (!selectedSprintId) return;
-
-  removeCardFromSprint({
-    sprintId: selectedSprintId,
-    cardId: ticketId,
+function handleTicketMovedToBacklog(ticketIds: string[] | string, sprintId?: string) {
+  const ids = Array.isArray(ticketIds) ? ticketIds : [ticketIds];
+  const sourceSprintId = sprintId || selectedSprintId.value;
+  if (!sourceSprintId || !ids.length) return;
+  ids.forEach((id) => {
+    removeCardFromSprint({
+      sprintId: sourceSprintId,
+      cardId: id,
+    });
   });
 }
-// sorters (example: createdAt)
-const sorters = {
-  createdAt: (a: any, b: any, dir: "asc" | "desc") => {
-    const av = new Date(a.createdAt).getTime();
-    const bv = new Date(b.createdAt).getTime();
-    return dir === "asc" ? av - bv : bv - av;
-  },
-};
 
 // Ticket modal state
 const ticketModalOpen = ref(false);
@@ -578,13 +570,14 @@ const handleCompleteSprint = () => {
 
 // resize sections 
 
-const containerRef = ref(null);
+const containerRef = ref<HTMLElement | null>(null);
 const leftWidth = ref(0);
 
 let resizing = false;
 const minWidth = 500; //  New minimum width (your requirement)
 
 onMounted(() => {
+  if (!containerRef.value) return;
   const full = containerRef.value.offsetWidth;
   leftWidth.value = full / 2; // start at 50%
 });
@@ -595,9 +588,10 @@ function startResize() {
   document.addEventListener("mouseup", stopResize);
 }
 
-function handleResize(e) {
+function handleResize(e: MouseEvent) {
   if (!resizing) return;
 
+  if (!containerRef.value) return;
   const rect = containerRef.value.getBoundingClientRect();
   const pos = e.clientX - rect.left;
 

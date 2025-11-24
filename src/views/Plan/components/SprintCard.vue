@@ -15,103 +15,53 @@
       @dragleave="onDragLeaveSprint"
       @drop="onDropSprint"
     >
-      <Table
-        v-if="filteredTickets.length > 0"
-        :showHeader="false"
-        :pagination="false"
-        :row-draggable="true"
-        class="h-full"
-        :columns="columns"
-        :rows="filteredTickets"
-        :page-size="100"
-        :hover="true"
-        :item-key="(row:any) => row.id"
-        @row-dragstart="
-          ({ row, $event }) => onDragStart($event, row, 'sprint', sprint.id)
-        "
-        @row-dragend="({ $event }) => onDragEnd($event)"
-        @row-click="({ row }) => $emit('open-ticket', row)"
-      >
-        <!-- SELECT CHECKBOX -->
-        <!-- <template #select="{ row }">
+      <!-- Tickets List -->
+      <div v-if="filteredTickets.length > 0" class="flex flex-col h-full overflow-y-auto">
+        <div
+          v-for="ticket in filteredTickets"
+          :key="ticket.id"
+          draggable="true"
+          class="flex items-center gap-3 px-4 py-3 border-b border-border hover:bg-bg-surface/60 cursor-pointer transition-colors"
+          @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"
+          @dragend="onDragEnd($event)"
+          @click="$emit('open-ticket', ticket)"
+        >
+          <!-- Checkbox -->
           <input
             type="checkbox"
-            :checked="selectedIds.includes(row.id)"
-            @change="toggleSelect(row.id)"
-          />
-        </template> -->
-
-        <template #select-header>
-          <input
-            type="checkbox"
-            :checked="allSprintChecked(sprint.id)"
-            @change="toggleAll('sprint', $event, sprint.id)"
-          />
-        </template>
-
-        <template #select="{ row }: any">
-          <input
-            type="checkbox"
-            :checked="(selectedSprintIds[sprint.id] || []).includes(row.id)"
-            @change="toggleOne('sprint', row.id, $event, sprint.id)"
-          />
-        </template>
-
-        <template #summary="{ row }">
-          <div class="flex items-center gap-2 text-text-secondary float-start">
-            <img src="../../../assets/icons/ticket-code.svg" alt="" />
-            <span class="inline-block rounded-full px-2 py-0.5 text-xs">{{
-              row.key
-            }}</span>
-            <span class="truncate">{{ row.summary }}</span>
-          </div>
-        </template>
-
-        <template #status="{ row }">
-          <span
-            :class="getStatusStyle(row.status)"
-            class="px-2 py-1 rounded-md"
-            >{{ row.status }}</span
-          >
-        </template>
-
-        <template #assignee="{ row }: any">
-          <span
-            v-if="row?.assignee == 'Unassigned'"
-            class="float-end flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6 min-h-6 bg-gray-500/10 rounded-full"
-            >UA</span
-          >
-          <div
-            v-else-if="row.assignee.u_profile_image"
-            class="w-6 h-6 rounded-full"
-          >
-            <img :src="row.assignee.u_profile_image" alt="" />
-          </div>
-          <span
-            v-else
-            class="text-xs aspect-square max-w-6 flex justify-center items-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full"
-          >
-            {{ getInitials(row.assignee.u_full_name ?? "") }}
-          </span>
-        </template>
-
-        <template #priority="{ row }">
-          <span :class="priorityClass(row.priority)">{{ row.priority }}</span>
-        </template>
-
-        <template #drag="{ row }">
-          <button
-            class="cursor-grab"
-            title="Drag to Backlog"
-            draggable
+            class="accent-accent flex-shrink-0"
+            :checked="selectedIds.includes(ticket.id)"
             @click.stop
-            @dragstart="onDragStart($event, row, 'sprint', sprint.id)"
-            @dragend="onDragEnd"
-          >
-            ↕
-          </button>
-        </template>
-      </Table>
+            @change="handleCheckboxChange(ticket.id, $event)"
+          />
+
+          <!-- Summary -->
+          <div class="flex items-center text-text-secondary flex-1 min-w-0">
+            <span class="truncate">{{ ticket.summary }}</span>
+          </div>
+
+          <!-- Assignee -->
+          <div class="flex-shrink-0">
+            <span
+              v-if="ticket?.assignee == 'Unassigned'"
+              class="flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6 min-h-6 bg-gray-500/10 rounded-full"
+              >UA</span
+            >
+            <div
+              v-else-if="ticket.assignee?.u_profile_image"
+              class="w-6 h-6 rounded-full"
+            >
+              <img :src="ticket.assignee.u_profile_image" alt="" />
+            </div>
+            <span
+              v-else
+              class="text-xs aspect-square max-w-6 flex justify-center items-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full"
+            >
+              {{ getInitials(ticket.assignee?.u_full_name ?? "") }}
+            </span>
+          </div>
+        </div>
+      </div>
 
       <!-- Empty State -->
       <div
@@ -139,18 +89,13 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
-import Table from "../../../components/ui/Table.vue";
 import {
-  useBacklogStore,
-  priorityClass,
   type Sprint,
   type Ticket,
 } from "../composables/useBacklogStore";
 import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
-import { getStatusStyle } from "../../../utilities/stausStyle";
 import { getInitials } from "../../../utilities";
-import SearchBar from "../../../components/ui/SearchBar.vue";
 
 const props = defineProps<{ sprint: Sprint; sprintId: any }>();
 const emit = defineEmits([
@@ -162,15 +107,15 @@ const emit = defineEmits([
   "refresh",
 ]);
 
-const store = useBacklogStore();
-const { selectedSprintIds, allSprintChecked, toggleAll, toggleOne } = store;
-
 // Tickets state
 const sprintTickets = ref<Ticket[]>([]);
+const selectedIds = ref<string[]>([]);
 watch(
   () => props.sprint.tickets,
   (tickets) => {
     sprintTickets.value = [...(tickets || [])];
+    const validIds = new Set(sprintTickets.value.map((t) => t.id));
+    selectedIds.value = selectedIds.value.filter((id) => validIds.has(id));
   },
   { immediate: true, deep: true }
 );
@@ -180,7 +125,6 @@ const searchQuery = ref("");
 const filteredTickets = computed(() => {
   if (!searchQuery.value) return sprintTickets.value;
   const q = searchQuery.value.toLowerCase();
-  console.log(sprintTickets.value, "these are all tickets");
   return sprintTickets.value.filter(
     (ticket) =>
       ticket.key.toLowerCase().includes(q) ||
@@ -191,7 +135,7 @@ const filteredTickets = computed(() => {
 
 // Drag & Drop
 const dropOverSprint = ref(false);
-const draggedTicketId = ref<string | null>(null);
+const draggedTicketIds = ref<string[]>([]);
 const { mutate: moveCardApi } = useMoveCard({
   onSuccess: () => {
     toast.success("Card moved to sprint successfully");
@@ -208,20 +152,36 @@ function onDragStart(
   from: "backlog" | "sprint",
   sprintId?: string
 ) {
-  draggedTicketId.value = ticket.id;
-  const payload = JSON.stringify({ id: ticket.id, from, sprintId, ticket });
+  const selection = selectedIds.value.includes(ticket.id)
+    ? [...selectedIds.value]
+    : [ticket.id];
+  const tickets = selection
+    .map((id) => sprintTickets.value.find((t) => t.id === id))
+    .filter(Boolean) as Ticket[];
+  draggedTicketIds.value = selection;
+  const payload = JSON.stringify({
+    id: ticket.id,
+    ids: selection,
+    from,
+    sprintId,
+    ticket,
+    tickets,
+  });
   e.dataTransfer?.setData("text/plain", payload);
   if (e.dataTransfer) e.dataTransfer.effectAllowed = "move";
 }
 
 function onDragEnd(e: DragEvent) {
   dropOverSprint.value = false;
-  if (e.dataTransfer?.dropEffect !== "none" && draggedTicketId.value) {
+  if (e.dataTransfer?.dropEffect !== "none" && draggedTicketIds.value.length) {
     sprintTickets.value = sprintTickets.value.filter(
-      (t) => t.id !== draggedTicketId.value
+      (t) => !draggedTicketIds.value.includes(t.id)
+    );
+    selectedIds.value = selectedIds.value.filter(
+      (id) => !draggedTicketIds.value.includes(id)
     );
   }
-  draggedTicketId.value = null;
+  draggedTicketIds.value = [];
 }
 
 function onDragEnterSprint() {
@@ -238,32 +198,54 @@ function onDropSprint(e: DragEvent) {
     const raw = e.dataTransfer?.getData("text/plain");
     if (!raw) return;
     const data = JSON.parse(raw) as {
-      id: string;
+      id?: string;
+      ids?: string[];
       from: "backlog" | "sprint";
       sprintId?: string;
-      ticket: Ticket;
+      ticket?: Ticket;
+      tickets?: Ticket[];
     };
     if (data.from !== "backlog") return;
-    if (sprintTickets.value.some((t) => t.id === data.id)) return;
-    sprintTickets.value.push(data.ticket);
+    const incomingTickets = (data.tickets && data.tickets.length
+      ? data.tickets
+      : data.ticket
+        ? [data.ticket]
+        : []
+    ).filter(Boolean) as Ticket[];
 
-    moveCardApi({
-      id: props.sprintId,
-      payload: {
-        card_ids: [data.ticket.id],
-        priority: data.ticket.priority.toLowerCase(),
-        story_points: data.ticket.storyPoints || 0,
-      },
+    const deduped = incomingTickets.filter(
+      (incoming) => !sprintTickets.value.some((t) => t.id === incoming.id)
+    );
+
+    if (!deduped.length) return;
+    sprintTickets.value.push(...deduped);
+
+    deduped.forEach((ticket) => {
+      moveCardApi({
+        id: props.sprintId,
+        payload: {
+          card_ids: [ticket.id],
+          priority: (ticket.priority || "Medium").toLowerCase(),
+          story_points: ticket.storyPoints || 0,
+        },
+      });
     });
   } catch (error) {
     console.error("Drop error:", error);
   }
 }
 
-// Columns
-const columns = [
-  { key: "summary", label: "Summary", sortable: true },
-  { key: "status", label: "Status", width: 120, sortable: true },
-  { key: "assignee", label: "Assignee", width: 120, sortable: true },
-];
+function toggleRowSelection(id: string, checked: boolean) {
+  if (checked) {
+    if (!selectedIds.value.includes(id)) selectedIds.value.push(id);
+  } else {
+    selectedIds.value = selectedIds.value.filter((existing) => existing !== id);
+  }
+}
+
+function handleCheckboxChange(id: string, event: Event) {
+  const checked = (event.target as HTMLInputElement).checked;
+  toggleRowSelection(id, checked);
+}
+
 </script>
