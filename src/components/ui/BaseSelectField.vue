@@ -17,7 +17,7 @@
         theme === 'dark' ? 'bg-bg-input border-border ' : 'bg-bg-input border-border ',
         error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-black'
       ]" @click="toggleDropdown">
-      <div class="flex items-center gap-2 max-w-full">
+      <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
         <span :class="selected ? ' line-clamp-1 overflow-ellipsis ' : 'text-text-secondary'">
           {{ selected?.title || placeholder }}
@@ -155,6 +155,8 @@ function initSelection() {
   const initial = props.modelValue ?? props.defaultValue
   
   if (initial !== undefined && initial !== null) {
+    console.log(props.options, '>>>');
+
     const found = props.options.find((o:any) => o._id === initial || o.title==initial)
     
     if (found) {
@@ -171,12 +173,16 @@ onMounted(() => initSelection())
 watch(() => props.modelValue, (val) => {
   if (val === null || val === undefined) selected.value = null
   else {
+    console.log(props.options, '>>>');
+    
     const hit = props.options.find((o:any) => o._id === val)
     selected.value = hit ?? null
   }
 })
 
 watch(() => props.options, () => {
+  console.log(props.options, '>>>');
+
   const byModel = props.options.find((o:any) => o._id === props.modelValue)
   if (byModel) selected.value = byModel
   else initSelection()

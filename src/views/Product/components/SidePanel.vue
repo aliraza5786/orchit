@@ -289,8 +289,6 @@ const emit = defineEmits(['close', 'update:details', 'comment:post', 'priority:c
 const propsID = ref(props.details._id);
 const { data: cardDetails, isPending, isFetching } = useProductCard(propsID);
 watch(props, () => {
-  console.log('chaning props, >>>');
-
   propsID.value = props.details._id
 })
 /* -------------------- Tabs -------------------- */

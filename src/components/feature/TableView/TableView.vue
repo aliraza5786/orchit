@@ -7,7 +7,7 @@
 
       <!-- HEADER -->
       <!-- HEADER -->
-      <thead class="bg-bg-surface border-b border-border sticky top-0 z-20">
+      <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-10">
         <tr class="text-text-secondary">
           <th class="w-2 p-0"></th>
           <th v-for="col in visibleColumns" :key="col?.key" class="relative font-bold p-2 uppercase text-left text-[11px] tracking-wide

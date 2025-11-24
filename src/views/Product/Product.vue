@@ -90,7 +90,7 @@
             </div>
         </template>
         <template v-if="view == 'table'">
-            <TableView :isPending="isPending" :columns="columns" :rows="normalizedTableData"
+            <TableView :isPending="isPending || isVariablesPending" :columns="columns" :rows="normalizedTableData"
                 @create="handleCreateTicket" />
         </template>
     </div>
@@ -115,7 +115,7 @@ import { computed, defineAsyncComponent, h, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import Searchbar from '../../components/ui/SearchBar.vue';
-import { ReOrderCard, ReOrderList, useAddList, useAddTicket, useMoveCard, useSheetList, useSheets, useUpdateWorkspaceSheet, useVariables } from '../../queries/useSheets';
+import { ReOrderCard, ReOrderList, useAddList, useAddTicket, useLanes, useMoveCard, useSheetList, useSheets, useUpdateWorkspaceSheet, useVariables } from '../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
@@ -131,6 +131,8 @@ import BaseSelectField from '../../components/ui/BaseSelectField.vue';
 import { useProductVarsData } from '../../queries/useProductCard';
 import { getInitials } from '../../utilities';
 import { avatarColor } from '../../utilities/avatarColor';
+import AssigmentDropdown from './components/AssigmentDropdown.vue';
+import DatePicker from './components/DatePicker.vue';
 // import { Background } from '@vue-flow/background';
 const view = ref('kanban')
 
@@ -143,7 +145,7 @@ const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/
 const isCreateVar = ref(false)
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds()
-const { data: variables } = useVariables(workspaceId.value, moduleId.value);
+const { data: variables, isPending:isVariablesPending } = useVariables(workspaceId.value, moduleId.value);
 const queryClient = useQueryClient()
 const { mutate: addList, isPending: addingList } = useAddList({
     onSuccess: () => {
@@ -338,100 +340,114 @@ const filteredBoard = computed(() => {
         cards: results.filter((c: any) => c.columnId === col.title)
     }))
 })
+
+const { data: lanes } = useLanes(workspaceId)
+
 // import ticket from '../../assets/icons/ticket.svg'
-const columns = [
-    // {
-    //     key: "card-code", label: '#', render: ({ value }: any) =>
-    //         h('div', { class: ' capitalize flex items-center gap-2 ', }, [h('img', { src: ticket }), h('span', { class: 'text-sm text-text-primary capitalize' }), h('span', { class: 'text-sm text-text-primary capitalize' }, value)]),
-    // },
+const laneOptions = computed<any[]>(() =>
+    (lanes?.value ?? []).map((el: any) => ({ _id: el._id, title: el?.variables?.['lane-title'] ?? String(el._id) }))
+)
+// const { data: statusData } = useProductVarsData(workspaceId, moduleId, 'card-status')
+// const { data: typeData } = useProductVarsData(workspaceId, moduleId, 'card-type')
+
+
+
+const columns = computed(() => {
+  return [
     {
-        key: "card-title", label: 'Title', render: ({ row, value }: any) =>
-            h('div', [h('a', {
-                onClick: () => {
-                    selectedCard.value=row
-                },
-                class: 'text-sm underline text-blue-500 w-full overflow-ellipsis cursor-pointer  ',
-            }, row['card-code']), h('input', {
-                onFocusout: (e: any) => {
-                    handleChangeTicket(row?._id, 'card-title', e?.target?.value)
-                }, class: 'text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border  active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md', defaultValue: value
-            },),
-
-            ])
+      key: "card-title",
+      label: "Title",
+      render: ({ row, value }: any) =>
+        h("div", [
+          h(
+            "a",
+            {
+              onClick: () => {
+                selectedCard.value = row;
+              },
+              class:
+                "text-sm underline text-blue-500 w-full overflow-ellipsis cursor-pointer",
+            },
+            row["card-code"]
+          ),
+          h("input", {
+            onFocusout: (e: any) => {
+              handleChangeTicket(row?._id, "card-title", e?.target?.value);
+            },
+            class:
+              "text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md",
+            defaultValue: value,
+          }),
+        ]),
     },
-    {
-        key: 'card-status', label: 'Status',
-        render: ({ row, value }: any) => {
-            const { data } = useProductVarsData(workspaceId, moduleId, 'card-status')
-            const status = ref(value)
-
-            return h('div', { class: ' capitalize flex items-center gap-2 ' }, [
-
-                h(BaseSelectField, {
-                    class: 'w-full',
-                    options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: status.value, defaultValue: 'To Do',
-                    "onUpdate": (val: any) => {
-
-                        handleChangeTicket(row?._id, 'card-status', val)
-                        // row["card-status"] = val; // write back to row
-                    },
-                })
-            ])
-        }
-    },
-    {
-        key: 'card-type', label: 'Type',
-        render: ({ row, value }: any) => {
-            const { data } = useProductVarsData(workspaceId, moduleId, 'card-type')
-            const type = ref(value)
-            return h('div', { class: ' capitalize flex items-center gap-2 ' }, [
-
-                h(BaseSelectField, {
-                    class: 'w-full border-none',
-
-                    options: getOptions(data.value?.values ?? []) || [], size: 'sm', modelValue: type.value, defaultValue: type.value, "onUpdate": (val: any) => {
-
-                        handleChangeTicket(row?._id, 'card-type', val)
-                        // row["card-status"] = val; // write back to row
-                    },
-                })
-            ])
-        }
-    },
+   
     {
         key: 'end-date', label: 'Due Date',
-        render: ({ value }: any) => h('div', { class: ' capitalize flex items-center gap-2 ' }, [
-            h('span', value)
-        ])
+        render: ({ row, value }: any) => {
+            const date = ref<any>(value)
+            return h(DatePicker, {
+                class: ' capitalize flex items-center gap-2 ', placeholder: "Set start date", modelValue: date.value,
+                "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e)
+            })
+        }
     },
     {
         key: 'lane', label: 'Lane',
-        render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
-            h('div', { class: `w-3 h-3 rounded-full  `, style: `background:${value?.variables ? value?.variables['lane-color'] : ''}` }, ''), h('span', value?.variables ? value?.variables['lane-title'] : '')
-        ])
+        render: ({ row, value }: any) => h(BaseSelectField, {
+            class: 'capitalize flex items-center gap-2 ', size: "sm", options: laneOptions.value ?? [], placeholder: "Select lane", allowCustom: false,
+            modelValue: value?._id, "onUpdate:modelValue": (e: any) => setLane(row?._id, e)
+        })
     },
     {
         key: 'created_by', label: 'Owner',
         render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
             h('div', { class: ` rounded-full  ` }, [
-            value?.u_profile_image ?    h('img', { class:'w-6 h-6 rounded-full', src: value?.u_profile_image }):
-            h('div', { class:'w-6 h-6 rounded-full flex justify-center items-center ' , style: `background:${value?.u_full_name ? avatarColor({name:value.u_full_name, email:value.u_email}) : ''}` }, getInitials(value?.u_full_name))
-            
+                value?.u_profile_image ? h('img', { class: 'w-6 h-6 rounded-full', src: value?.u_profile_image }) :
+                    h('div', { class: 'w-6 h-6 rounded-full flex justify-center items-center ', style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ''}` }, getInitials(value?.u_full_name))
+
             ]), h('span', value ? value?.u_full_name : '')
         ])
     },
-    // {
-    //     key: 'aassigne', label: 'Assignee',
-    //     render: ({ value }: any) => h('div', { class: 'capitalize flex items-center gap-2 ' }, [
-    //         h('div', { class: ` rounded-full  ` }, [
-    //         value?.u_profile_image ?    h('img', { class:'w-6 h-6 rounded-full', src: value?.u_profile_image }):
-    //         h('div', { class:'w-6 h-6 rounded-full flex justify-center items-center ' , style: `background:${value?.u_full_name ? avatarColor({name:value.u_full_name, email:value.u_email}) : ''}` }, getInitials(value?.u_full_name))
-            
-    //         ]), h('span', value ? value?.u_full_name : '')
-    //     ])
-    // }
+    {
+        key: 'seat', label: 'Assignee',
+        render: ({ row, value }: any) => h(AssigmentDropdown, {
+            class: 'capitalize flex items-center gap-2 ', "onAssign": (user: any) => assignHandle(row?._id, user), assigneeId: value,
+            seat: value, name: true
+        })
+    },
+    
+    ...(
+      variables.value
+        ?.filter((e: any) => e?.type?.title === "Select")
+        .map((e: any) => ({
+          key: e.slug,
+          label: e.slug,
+          render: ({ row, value }: any) => {
+            const type = ref(value);
+            return h("div", { class: "capitalize flex items-center gap-2" }, [
+              h(BaseSelectField, {
+                class: "w-full border-none",
+                options: getOptions(e.data ?? []),
+                size: "sm",
+                modelValue: type.value,
+                defaultValue: type.value,
+                "onUpdate": (val: any) => {
+                  handleChangeTicket(row?._id, e.slug, val);
+                },
+              }),
+            ]);
+          },
+          visible:false
+        })) ?? []
+    ),
+  ];
+});
+const assignHandle = (cardId: any, user: any) => {
+    console.log(cardId, user, '>>>> card >>>');
 
-]
+    moveCard.mutate({ card_id: cardId, seat_id: user?._id })
+}
+
 const normalizedTableData = computed(() => {
     let array: any = [];
     (Lists.value ?? []).forEach((col: any) => { array = [...array, ...col?.cards] })
@@ -442,7 +458,7 @@ const normalizedTableData = computed(() => {
 const getOptions = (options: any) => {
     // console.log(options, 'options');
 
-    return options.map((el: any) => ({ _id: el.value, title: el.value }))
+    return options.map((el: any) => ({ _id: el.value ?? el, title: el.value ?? el }))
 }
 const moveCard = useMoveCard({
     onSuccess: () => {
@@ -474,6 +490,12 @@ function handleCreateTicket(title: any) {
     addTicket(payload)
 
 }
+const setStartDate = (card_id: any, e: any) => moveCard.mutate({ card_id: card_id, variables: { 'start-date': e } })
+function setLane(id: any, v: any) {
+
+    moveCard.mutate({ card_id: id, 'workspace_lane_id': v })
+}
+
 </script>
 <style scoped>
 /* Force visible scrollbars only where applied */

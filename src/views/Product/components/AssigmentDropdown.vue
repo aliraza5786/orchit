@@ -2,7 +2,7 @@
   <div class="relative min-w-8" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
     <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id" >
-      <div class="flex gap-2">
+      <div class="flex gap-2 items-center">
       <img v-if="assignedUser?.avatar?.src || assignedUser?.user?.avatar || assignedUser?.u_profile_image"
         :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar"
         class="w-6 h-6 object-cover rounded-full" alt="" @click="toggle" />
@@ -16,7 +16,7 @@
         class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center ">
         <i class="fa-regular fa-user text-xs"></i>
       </abbr>
-      <span v-if="name" class="text-sm text-text-primary ">{{assignedUser?.name || assignedUser?.title || assignedUser?.u_full_name}}</span>
+      <span v-if="name" class="text-sm text-text-primary ">{{(assignedUser?.name || assignedUser?.title || assignedUser?.u_full_name) ??'unAssigned'}}</span>
     </div>
     </template>
 
