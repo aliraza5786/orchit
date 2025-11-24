@@ -1,7 +1,7 @@
 <template>
   <div class="kanban-table space-y-4 px-4 h-[85vh] overflow-y-auto">
 
-    <table class="w-full table-auto border-collapse rounded-md shadow-sm 
+    <table class="w-full table-fixed border-collapse rounded-md shadow-sm 
              bg-bg-body/20 text-sm
              border border-border/60">
 
@@ -11,7 +11,7 @@
           <th class="w-2 p-0"></th>
           <th v-for="col in visibleColumns" :key="col?.key" class="relative font-bold p-2 uppercase text-left text-[11px] tracking-wide
              border-r border-border/40 select-none whitespace-nowrap min-w-[200px]"
-             :style="{ width: columnWidths[col.key] ? columnWidths[col.key] + 'px' : 'auto' }"
+             :style="{ width: columnWidths[col.key] ? columnWidths[col.key] + 'px' : '100%' }"
              >
             <span>{{ col?.label }}</span>
 
