@@ -1,13 +1,13 @@
 <template>
-  <section class="space-y-3 flex flex-col overflow-y-auto">
+  <section class="space-y-3 flex flex-col overflow-y-auto h-full">
     <!-- Search Input -->
-    <div class="mb-2">
+    <!-- <div class="mb-2">
       <SearchBar type="text"  @onChange="(e) => searchQuery = e" placeholder="Search tickets..."
         class="w-[250px]" />
-    </div>
+    </div> -->
 
     <!-- Table -->
-    <div class="rounded-lg border h-[300px] border-border flex flex-col"
+    <div class="rounded-lg  h-full flex flex-col justify-center h-full"
       :class="dropOverBacklog ? 'ring-2 ring-blue-400' : ''" @dragover.prevent @dragenter="dropOverBacklog = true"
       @dragleave="dropOverBacklog = false" @drop="onDropBacklog($event)">
       <!-- Empty State -->
@@ -19,7 +19,7 @@
       </div>
 
       <!-- Tickets Table -->
-      <Table v-else :showHeader="false" :pagination="false" class="flex-grow h-full" :rowDraggable="true"
+      <Table v-else :showHeader="false" :pagination="false" class="flex-grow h-full min-w-max" :rowDraggable="true"
         @row-dragstart="({ row, $event }:any) => onDragStart($event, row, 'backlog')"
         @row-dragend="({ $event }:any) => onDragEnd($event)" :columns="columns" :rows="filteredBacklog" :page-size="20"
         :hover="true" :itemKey="(row:any) => row.id" :sorters="sorters" @row-click="({ row }:any) => $emit('open-ticket', row)">
@@ -37,7 +37,7 @@
 
         <template #assignee="{ row }">
           <span v-if="row?.assignee === 'Unassigned'"
-            class="float-end flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6 min-h-6 bg-gray-500/10 rounded-full">UA</span>
+            class="float-end flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6 min-h-6 bg-gray-500/10 rounded-full ">UA</span>
           <div v-else-if="row?.assignee.u_profile_image" class="float-end w-6 h-6 rounded-full">
             <img :src="row.assignee.u_profile_image" alt="">
           </div>
