@@ -25,8 +25,8 @@
           <!-- Toggle Columns Button -->
           <th class="w-10 p-2 text-center relative">
             <div class="relative inline-block">
-              <button @click.stop="showColumnMenu = !showColumnMenu" class="p-1 rounded hover:bg-bg-surface/50">
-                ⚙️
+              <button @click.stop="showColumnMenu = !showColumnMenu" class="p-1 rounded hover:bg-bg-surface/50 cursor-pointer">
+                <i class="fa-regular fa-columns-3"></i>
               </button>
 
               <!-- Column Toggle Menu -->

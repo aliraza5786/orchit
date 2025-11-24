@@ -92,7 +92,7 @@
         <template v-if="view == 'table'">
             <TableView @addVar="() => {
                 isCreateVar = true
-            }" :isPending="isPending || isVariablesPending" :columns="columns" :rows="normalizedTableData"
+            }" :isPending="isPending || isVariablesPending" :columns="columns" :rows="filteredBoard"
                 @create="handleCreateTicket" />
         </template>
     </div>
@@ -130,7 +130,6 @@ import { debounce } from 'lodash';
 import TableView from '../../components/feature/TableView/TableView.vue';
 // import { getStatusStyle } from '../../utilities/stausStyle';
 import BaseSelectField from '../../components/ui/BaseSelectField.vue';
-import { useProductVarsData } from '../../queries/useProductCard';
 import { getInitials } from '../../utilities';
 import { avatarColor } from '../../utilities/avatarColor';
 import AssigmentDropdown from './components/AssigmentDropdown.vue';
@@ -335,13 +334,33 @@ const fuse = computed(() => {
 })
 
 const filteredBoard = computed(() => {
-    if (!searchQuery.value) return Lists.value
-    const results = fuse.value.search(searchQuery.value).map((r: any) => r.item)
-    return Lists.value.map((col: any) => ({
-        ...col,
-        cards: results.filter((c: any) => c.columnId === col.title)
-    }))
+    if (view.value === 'kanban') {
+        // Kanban filtering by columns
+        if (!searchQuery.value) return Lists.value
+
+        const results = fuse.value.search(searchQuery.value).map((r: any) => r.item)
+        return Lists.value.map((col: any) => ({
+            ...col,
+            cards: results.filter((c: any) => c.columnId === col.title)
+        }))
+    } else {
+        // Table filtering by flat tickets
+        const query = searchQuery.value?.trim()
+        if (!query) {
+            let array: any = [];
+            (Lists.value ?? []).forEach((col: any) => { array = [...array, ...col?.cards] })
+            return array
+
+        }
+
+        const fuseTable = new Fuse(normalizedTableData.value, {
+            keys: ['card-title', 'card-description'], // include keys you want searchable
+            threshold: 0.3
+        })
+        return fuseTable.search(query).map(r => r.item)
+    }
 })
+
 
 const { data: lanes } = useLanes(workspaceId)
 
@@ -478,18 +497,21 @@ const { mutate: addTicket, } = useAddTicket({
     }
 })
 function handleCreateTicket(title: any) {
-    const payload = {
-        sheet_list_id: 'To Do',
-        workspace_id: workspaceId.value,
-        sheet_id: selected_sheet_id.value,
-        // workspace_lane_id: form.lane_id,
-        variables: {
-            ['card-title']: title['card-title'].trim(),
+    if (title['card-title']) {
+        const payload = {
+            sheet_list_id: 'To Do',
+            workspace_id: workspaceId.value,
+            sheet_id: selected_sheet_id.value,
+            // workspace_lane_id: form.lane_id,
+            variables: {
+                ['card-title']: title['card-title'].trim(),
 
-        },
-        createdAt: new Date().toISOString()
+            },
+            createdAt: new Date().toISOString()
+        }
+
+        addTicket(payload)
     }
-    addTicket(payload)
 
 }
 const setStartDate = (card_id: any, e: any) => moveCard.mutate({ card_id: card_id, variables: { 'start-date': e } })
@@ -497,6 +519,7 @@ function setLane(id: any, v: any) {
 
     moveCard.mutate({ card_id: id, 'workspace_lane_id': v })
 }
+
 
 </script>
 <style scoped>

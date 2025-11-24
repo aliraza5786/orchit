@@ -142,9 +142,7 @@ function toggleDropdown() {
 
 function selectOption(option: Option) {
   selected.value = option
-  emit('update:modelValue', option._id)
-  console.log(' i am cnmnfmnf');
-  
+  emit('update:modelValue', option._id)  
   emit('update', option._id)
   isOpen.value = false
   removeOutsideListener()
@@ -155,8 +153,6 @@ function initSelection() {
   const initial = props.modelValue ?? props.defaultValue
   
   if (initial !== undefined && initial !== null) {
-    console.log(props.options, '>>>');
-
     const found = props.options.find((o:any) => o._id === initial || o.title==initial)
     
     if (found) {
@@ -172,17 +168,13 @@ onMounted(() => initSelection())
 
 watch(() => props.modelValue, (val) => {
   if (val === null || val === undefined) selected.value = null
-  else {
-    console.log(props.options, '>>>');
-    
+  else {    
     const hit = props.options.find((o:any) => o._id === val)
     selected.value = hit ?? null
   }
 })
 
 watch(() => props.options, () => {
-  console.log(props.options, '>>>');
-
   const byModel = props.options.find((o:any) => o._id === props.modelValue)
   if (byModel) selected.value = byModel
   else initSelection()
