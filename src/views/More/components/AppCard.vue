@@ -28,6 +28,7 @@ export type AppItem = {
   description: string
   categories: string[]
   status: 'current' | 'soon'
+  icon:any,
   color: string // tailwind bg-* class
 }
 

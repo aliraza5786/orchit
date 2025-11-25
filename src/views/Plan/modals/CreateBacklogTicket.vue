@@ -110,7 +110,7 @@ type Variable = {
     data: string[]
     slug: string
 }
-const { data: variables } = useVariables(workspaceId.value, moduleId.value)
+const { data: variables } = useVariables(workspaceId.value, moduleId.value, props.sheet_id)
 
 /** Modal open proxy */
 const isOpen = computed({

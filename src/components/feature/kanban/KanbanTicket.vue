@@ -187,7 +187,7 @@ const setDueDate = (date: string | null) => {
     })
 }
 
-const { data: variables } = useVariables(workspaceId.value, moduleId.value)
+const { data: variables } = useVariables(workspaceId.value, moduleId.value, '')
 const selectedVarSlug = computed(() => (variables?.value ?? []).filter((e: any) => e._id == props.selectedVar))
 
 const emit = defineEmits(['select'])
