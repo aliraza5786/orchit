@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-lg flex flex-col h-full">
+  <div class=" h-full min-h-0 ">
     <!-- Search Input -->
     <!-- <div class="mb-2">
       <SearchBar type="text"  @onChange="(e) => searchQuery = e" placeholder="Search tickets..."
@@ -8,57 +8,67 @@
 
     <!-- Sprint Table -->
     <div
-      class="h-full"
       :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''"
       @dragover.prevent
       @dragenter="onDragEnterSprint"
       @dragleave="onDragLeaveSprint"
       @drop="onDropSprint"
+      class="h-full box-border"
     >
       <!-- Tickets List -->
-      <div v-if="filteredTickets.length > 0" class="flex flex-col h-full overflow-y-auto">
-        <div
-          v-for="ticket in filteredTickets"
-          :key="ticket.id"
-          draggable="true"
-          class="flex items-center gap-3 px-4 py-3 border-b border-border hover:bg-bg-surface/60 cursor-pointer transition-colors"
-          @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"
-          @dragend="onDragEnd($event)"
-          @click="$emit('open-ticket', ticket)"
+      <div v-if="filteredTickets.length > 0" class=" overflow-y-auto h-[calc(100%-50px)]">
+        <div class="flex flex-col flex-1 gap-3 min-w-0"
         >
-          <!-- Checkbox -->
-          <input
-            type="checkbox"
-            class="accent-accent flex-shrink-0"
-            :checked="selectedIds.includes(ticket.id)"
-            @click.stop
-            @change="handleCheckboxChange(ticket.id, $event)"
-          />
+          <div
+            v-for="ticket in filteredTickets"
+            :key="ticket.id"
+            draggable="true"
+            :class="[
+              'flex items-center bg-bg-charcoal  gap-3 px-4 py-[14px] hover:bg-bg-body cursor-pointer transition-colors rounded-[8px]',
+              selectedIds.includes(ticket.id)
+                ? 'border-2 border-[#5a2d7f]'
+                : 'border border-border-input',
+            ]"
+            @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"
+            @dragend="onDragEnd($event)"
+            @click="$emit('open-ticket', ticket)"
+          >
+            <!-- Checkbox -->
+            <input
+              type="checkbox"
+              class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
+              :checked="selectedIds.includes(ticket.id)"
+              @click.stop
+              @change="handleCheckboxChange(ticket.id, $event)"
+            />
 
-          <!-- Summary -->
-          <div class="flex items-center text-text-secondary flex-1 min-w-0">
-            <span class="truncate">{{ ticket.summary }}</span>
-          </div>
-
-          <!-- Assignee -->
-          <div class="flex-shrink-0">
-            <span
-              v-if="ticket?.assignee == 'Unassigned'"
-              class="flex justify-center text-gray-500 items-center text-xs aspect-square max-w-6 min-h-6 bg-gray-500/10 rounded-full"
-              >UA</span
-            >
+            <!-- Summary -->
             <div
-              v-else-if="ticket.assignee?.u_profile_image"
-              class="w-6 h-6 rounded-full"
+              class="flex items-center text-[14px] font-sans font-medium capitalize text-text-secondary flex-1 min-w-0"
             >
-              <img :src="ticket.assignee.u_profile_image" alt="" />
+              <span class="truncate">{{ ticket.summary }}</span>
             </div>
-            <span
-              v-else
-              class="text-xs aspect-square max-w-6 flex justify-center items-center min-h-6 bg-accent/30 text-accent border-accent border rounded-full"
-            >
-              {{ getInitials(ticket.assignee?.u_full_name ?? "") }}
-            </span>
+
+            <!-- Assignee -->
+            <div class="flex-shrink-0">
+              <span
+                v-if="ticket?.assignee == 'Unassigned'"
+                class="flex justify-center text-gray-500 items-center text-xs aspect-square w-7 h-7 bg-bg-body rounded-full border-border-input border-2"
+                >UA</span
+              >
+              <div
+                v-else-if="ticket.assignee?.u_profile_image"
+                class="w-6 h-6 rounded-full"
+              >
+                <img :src="ticket.assignee.u_profile_image" alt="" />
+              </div>
+              <span
+                v-else
+                class="text-xs aspect-square w-7 flex justify-center items-center h-7 bg-accent/30 text-accent border-accent border rounded-full"
+              >
+                {{ getInitials(ticket.assignee?.u_full_name ?? "") }}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -66,7 +76,7 @@
       <!-- Empty State -->
       <div
         v-else
-        class="empty-state flex flex-col h-full justify-center items-center border-dashed border border-border"
+        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-full min-h-0"
       >
         <img
           src="../../../assets/emptyStates/sprint-plan.svg"
@@ -89,10 +99,7 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from "vue";
-import {
-  type Sprint,
-  type Ticket,
-} from "../composables/useBacklogStore";
+import { type Sprint, type Ticket } from "../composables/useBacklogStore";
 import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
@@ -206,9 +213,10 @@ function onDropSprint(e: DragEvent) {
       tickets?: Ticket[];
     };
     if (data.from !== "backlog") return;
-    const incomingTickets = (data.tickets && data.tickets.length
-      ? data.tickets
-      : data.ticket
+    const incomingTickets = (
+      data.tickets && data.tickets.length
+        ? data.tickets
+        : data.ticket
         ? [data.ticket]
         : []
     ).filter(Boolean) as Ticket[];
@@ -247,5 +255,33 @@ function handleCheckboxChange(id: string, event: Event) {
   const checked = (event.target as HTMLInputElement).checked;
   toggleRowSelection(id, checked);
 }
-
 </script>
+
+<style scoped>
+.custom-checkbox {
+  appearance: none; /* remove native checkbox UI */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.custom-checkbox:checked {
+  background-color: #5a2d7f;
+  border-color: #5a2d7f !important;
+}
+
+.custom-checkbox:checked::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin: 3px auto;
+}
+</style>

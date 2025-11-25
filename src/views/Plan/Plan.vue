@@ -1,10 +1,7 @@
 <template>
-  <div
-    class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex"
+  <div class="flex-auto flex-grow h-full min-h-0 bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex"
   >
-    <div
-      class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1"
-    >
+    <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1 box-border">
        <Dropdown
         v-model="selectedSprintId"
         :options="sprintsList?.sprints"
@@ -101,11 +98,10 @@
     <template v-if="sprintDetailData?.status == 'active'">
       <ActiveSprint :sptint_id="selectedSprintId" :searchQuery="searchQuery" />
     </template>
-    <div v-else class="space-y-6 p-4 w-full flex-auto overflow-y-auto">
+    <div v-else class="p-4 w-full min-w-0  box-border h-full min-h-0">
       <!-- Header -->
-      <div class="flex gap-6 h-full" ref="containerRef">
-        <section
-          class="space-y-4 bg-bg-surface/30 p-4 rounded-md relative group"
+      <div class="flex gap-6 h-full max-h-screen min-h-0 pb-4 box-border " ref="containerRef">
+        <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md relative group overflow-hidden box-border h-full min-h-0"
           :style="{ width: leftWidth + 'px' }"
         >
           <!-- Resize Handle (appears on hover) -->
@@ -149,7 +145,7 @@
             @ticket-moved-to-backlog="handleTicketMovedToBacklog"
           />
         </section>
-        <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md flex-1">
+        <section class="space-y-7 bg-bg-surface/30 p-4 rounded-md relative group ovrflow-hidden flex-1 h-full min-h-0 box-border">
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold">
               Sprint ({{ firstSprint?.tickets?.length }} Taks)
