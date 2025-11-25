@@ -17,7 +17,7 @@
         theme === 'dark' ? 'bg-bg-input border-border ' : 'bg-bg-input border-border ',
         error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-black'
       ]" @click="toggleDropdown">
-      <div class="flex items-center gap-2 max-w-full">
+      <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
         <span :class="selected ? ' line-clamp-1 overflow-ellipsis ' : 'text-text-secondary'">
           {{ selected?.title || placeholder }}
@@ -142,9 +142,7 @@ function toggleDropdown() {
 
 function selectOption(option: Option) {
   selected.value = option
-  emit('update:modelValue', option._id)
-  console.log(' i am cnmnfmnf');
-  
+  emit('update:modelValue', option._id)  
   emit('update', option._id)
   isOpen.value = false
   removeOutsideListener()
@@ -170,7 +168,7 @@ onMounted(() => initSelection())
 
 watch(() => props.modelValue, (val) => {
   if (val === null || val === undefined) selected.value = null
-  else {
+  else {    
     const hit = props.options.find((o:any) => o._id === val)
     selected.value = hit ?? null
   }

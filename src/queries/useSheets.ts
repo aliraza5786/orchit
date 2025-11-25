@@ -134,7 +134,7 @@ export const useSheets = (
   const wId = computed(() => unref(queryParams.workspace_id));
 
   return useQuery({
-    queryKey: keys.sheets(wmId.value, wId.value),
+    queryKey: keys.sheets(queryParams.workspace_module_id, wId.value),
     enabled: computed(() => !!wmId.value),
     queryFn: ({ signal }) =>
       request<any>({
@@ -181,7 +181,7 @@ export function useSheetList(
   const queryKey = computed(() => [
     "sheet-list",
 
-    unref(module_id),
+    module_id,
     unref(sheet_id),
     unref(laneIdsParam),
     unref(view_by),
@@ -221,15 +221,16 @@ export function useSheetList(
 export const useVariables = (
   workspace_id: any,
   module_id: any,
+  sheetId: any,
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["all-module-variables"],
+    queryKey: ["all-module-variables", sheetId],
     queryFn: ({ signal }) =>
       request<any>({
         url: `/workspace/catalog/${workspace_id}/card-variables/${
           unref(module_id) ?? module_id
-        }`,
+        }?sheet_id=${unref(sheetId)}`,
         method: "GET",
         signal,
       }),
@@ -247,7 +248,7 @@ export const useLanes = (
     queryKey: ["all-module-lanes", unref(workspace_id)],
     queryFn: async ({ signal }) =>
       request<any>({
-        url: `/workspace/lane-by-workspace/${ await unref(workspace_id)}`,
+        url: `/workspace/lane-by-workspace/${await unref(workspace_id)}`,
         method: "GET",
         signal,
       }),
@@ -299,6 +300,21 @@ export const ReOrderCard = (options = {}) =>
         request({
           url: `workspace/cards/group-card-order`,
           method: "PATCH",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+export const useVarVisibilty = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["var-visibility"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `workspace/sheet-column-preferences`,
+          method: "POST",
           data: vars.payload,
         }),
       ...(options as any),

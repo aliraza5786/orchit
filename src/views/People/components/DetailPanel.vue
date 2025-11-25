@@ -55,8 +55,7 @@
                         class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4">
                         {{ item.title }}
                         <BaseSelectField size="sm" :model-value="localVarValues[item.slug]" :key="index"
-                            :placeholder="` ${item.title}`" @click.stop
-                            :defaultValue="getDefaultValue(item?._id) "
+                            :placeholder="` ${item.title}`" @click.stop :defaultValue="getDefaultValue(item?._id)"
                             :options="item?.data.map((e: any) => ({ _id: e, title: e }))" :cardId="details?._id"
                             @update:modelValue="(val: any) => handleSelect(val, item._id)" />
 
@@ -215,11 +214,12 @@ const handleSelect = (val: any, slug: any) => {
     })
 }
 
-function getDefaultValue (id: any)  {
-    
-    const sbn = props?.details?.variable_values.filter((e: any) => e.module_variable_id == id);
-    console.log(sbn[0]?.value , '>>>');
-    return sbn[0]?.value;
+function getDefaultValue(id: any) {
+    if (props?.details?.variable_values) {
+        const sbn = props?.details?.variable_values.filter((e: any) => e.module_variable_id == id);
+        console.log(sbn[0]?.value, '>>>');
+        return sbn[0]?.value;
+    }
 }
 </script>
 

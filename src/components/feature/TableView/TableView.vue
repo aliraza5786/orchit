@@ -6,12 +6,13 @@
              border border-border/60">
 
       <!-- HEADER -->
-      <!-- HEADER -->
-      <thead class="bg-bg-surface border-b border-border sticky top-0 z-20">
+      <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-10">
         <tr class="text-text-secondary">
           <th class="w-2 p-0"></th>
           <th v-for="col in visibleColumns" :key="col?.key" class="relative font-bold p-2 uppercase text-left text-[11px] tracking-wide
-             border-r border-border/40 select-none whitespace-nowrap" :style="{ width: columnWidths[col.key] + 'px' }">
+             border-r border-border/40 select-none whitespace-nowrap min-w-[200px]"
+             :style="{ width: columnWidths[col.key] ? columnWidths[col.key] + 'px' : '100%' }"
+             >
             <span>{{ col?.label }}</span>
 
             <!-- Column Resize Handle -->
@@ -21,11 +22,10 @@
           </th>
 
           <!-- Toggle Columns Button -->
-          <!-- Toggle Columns Button -->
           <th class="w-10 p-2 text-center relative">
             <div class="relative inline-block">
-              <button @click.stop="showColumnMenu = !showColumnMenu" class="p-1 rounded hover:bg-bg-surface/50">
-                ⚙️
+              <button @click.stop="showColumnMenu = !showColumnMenu" class="p-1 rounded hover:bg-bg-surface/50 cursor-pointer">
+                <i class="fa-regular fa-columns-3"></i>
               </button>
 
               <!-- Column Toggle Menu -->
@@ -33,9 +33,12 @@
                 class="column-menu absolute w-[200px] right-0 mt-2 bg-bg-surface border border-border rounded shadow p-2 z-50">
                 <div v-for="col in props.columns" :key="'toggle-' + col.key" class="flex items-center space-x-2">
                   <span @click="toggleColumn(col.key)" class="cursor-pointer text-lg">
-                    <i :class="visibleColumnKeys.includes(col.key) ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'" ></i>
+                    <i :class="visibleColumnKeys.includes(col.key) ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'"></i>
                   </span>
                   <span>{{ col.label }}</span>
+                </div>
+                <div @click="emit('addVar')" class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
+                  <i class="fa-solid fa-plus"></i> Add new
                 </div>
               </div>
 
@@ -89,7 +92,7 @@
                 @blur="finishEdit(ticket)" class="w-full p-1 border border-border/60 rounded-sm
                        focus:outline-none focus:ring-2 focus:ring-blue-300
                        bg-bg-surface"
-                :ref="(el:any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
+                :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
 
               <!-- Display value -->
               <span v-else class="cursor-text hover:underline text-text-primary truncate block"
@@ -106,7 +109,7 @@
         </template>
 
         <!-- ADD NEW ROW FOOTER -->
-        <tr v-if="!hasActiveEmptyRow"  @click="insertEmptyRow(tickets?.length)" class="sticky bottom-0 bg-bg-surface border-t border-border cursor-pointer
+        <tr v-if="!hasActiveEmptyRow" @click="insertEmptyRow(tickets?.length)" class="sticky bottom-0 bg-bg-surface border-t border-border cursor-pointer
                  transition hover:bg-bg-surface/70" @mouseenter="hoverIndex = tickets?.length"
           @mouseleave="hoverIndex = null">
           <!-- <td class="p-2">
@@ -117,7 +120,7 @@
           <td :colspan="columns.length" class="p-2 text-text-secondary">
             <span class="inline-flex w-5 h-5 border border-border rounded-full 
                      justify-center items-center text-secondary
-                     hover:bg-bg-surface/50 transition">+</span>     Add New Row
+                     hover:bg-bg-surface/50 transition">+</span> Add New Row
           </td>
         </tr>
 
@@ -147,6 +150,9 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'update:rows', val: Row[]): void
   (e: 'create', val: any): void
+  (e: 'toggleVisibility', val: any, v:any): void
+  (e: 'addVar'): void
+
 }>()
 
 const tickets = reactive<Row[]>(props.rows || [])
@@ -209,12 +215,13 @@ const RenderCell = (p: { row: Row; column: any; index: number }) => {
 
 // resize control 
 // Track column widths
-const columnWidths = reactive<Record<string, number>>({})
+const columnWidths = reactive<Record<string, any>>({})
 
 // Initialize widths on mount
 watch(() => props.columns, cols => {
-  cols.forEach(col => {
-    if (!columnWidths[col.key]) columnWidths[col.key] = 150 // default width
+  cols.forEach((col, indx) => {
+    if (indx == 0) columnWidths[col.key] = null // start with null, i.e., auto
+    else if (!columnWidths[col.key]) columnWidths[col.key] = 150 // default width
   })
 }, { immediate: true })
 
@@ -272,8 +279,10 @@ document.addEventListener('click', (e) => {
 const toggleColumn = (key: string) => {
   const index = visibleColumnKeys.value.indexOf(key)
   if (index === -1) {
+    emit('toggleVisibility', key, true)
     visibleColumnKeys.value.push(key)
   } else {
+    emit('toggleVisibility', key, false)
     visibleColumnKeys.value.splice(index, 1)
   }
 }
