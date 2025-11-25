@@ -35,14 +35,14 @@
           v-if="sprintDetailData?.status == 'active'"
           size="sm"
           @click="handleCompleteSprint"
-          :variant="theme === 'dark' ? 'primary' : 'ghost'"
+          :variant="theme === 'dark' ? 'primary' : 'primary'"
           class="border-border-input border"
           >{{ isCompletingSprint ? "Ending..." : "End" }}</Button
         >
         <Button
           v-else
           size="sm"
-          :variant="theme === 'dark' ? 'primary' : 'ghost'"
+          :variant="theme === 'dark' ? 'primary' : 'primary'"
           class="border-border-input border"
           @click="openStartSprintModal"
           :disabled="!firstSprint || firstSprint.tickets.length == 0"
@@ -99,19 +99,15 @@
     <div v-else class="p-4 w-full min-w-0 box-border h-full min-h-0">
       <!-- Header -->
       <div
-        class="flex gap-6 h-full max-h-screen min-h-0 pb-4 box-border"
+        class="flex gap-2 h-full max-h-screen min-h-0 box-border overflow-x-auto group"
         ref="containerRef"
       >
         <section
-          class="space-y-4 p-4 rounded-md relative group overflow-hidden box-border h-full min-h-0"
+          class="space-y-4 p-4 rounded-md relative group overflow-hidden box-border h-full min-h-0 min-w-[400px]"
           :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
           :style="{ width: leftWidth + 'px' }"
         >
-          <!-- Resize Handle (appears on hover) -->
-          <div
-            class="absolute top-0 right-0 h-full w-[5px] opacity-0 group-hover:opacity-100 bg-transparent hover:bg-accent cursor-col-resize transition"
-            @mousedown="startResize"
-          ></div>
+          
 
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold flex gap-2 items-center">
@@ -120,8 +116,7 @@
                 class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
                 v-model="checkedAll"
               />
-              Backlog ({{ backlogResp?.cards?.length }} Tasks)
-              {{  checkedAll }}
+               Backlog ({{ backlogResp?.cards?.length }} {{ backlogResp?.cards?.length > 1 ? 'Tasks' : 'Task' }})
             </h2>
             <div class="flex items-center gap-2">
               <button
@@ -158,13 +153,23 @@
             @open-create-ticket="openCreateBacklogTicket"
           />
         </section>
+         <!-- Resize Handle (appears on hover) -->
+          <div
+            class=" h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
+            @mousedown="startResize"
+          ></div>
         <section
-          class="space-y-7 p-4 rounded-md relative group ovrflow-hidden flex-1 h-full min-h-0 box-border"
+          class="space-y-6 p-4 rounded-md relative group ovrflow-hidden flex-1 h-full min-h-0 box-border  min-w-[400px]"
           :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
         >
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold">
-              Sprint ({{ firstSprint?.tickets?.length }} Taks)
+            <h2 class="text-sm font-semibold flex gap-2 items-center mt-1">
+               <input
+                type="checkbox"
+                class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
+                v-model="checkedSprintAll"
+              />
+              Sprint ({{ firstSprint?.tickets?.length }} {{ firstSprint?.tickets?.length >1 ? 'Tasks': 'Task' }})
             </h2>
           </div>
           <div
@@ -182,6 +187,7 @@
             :searchQuery="searchQuery"
             :sprintId="selectedSprintId"
             v-if="firstSprint"
+            :checkedSprintAll = checkedSprintAll
             :sprint="firstSprint"
             @open-ticket="openTicket"
             @edit-sprint="openEditSprint"
@@ -290,6 +296,7 @@ const { theme } = useTheme();
 const showTaskModal = ref(false);
 const searchQuery = ref("");
 const checkedAll = ref(false);
+const checkedSprintAll = ref(false);
 // const selectedCardId = ref('');
 // const rowClickHandler= (rowId:any)=>{
 //   selectedCardId.value=rowId;

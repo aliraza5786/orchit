@@ -11,14 +11,14 @@
     >
       <!-- Tickets List -->
       <div v-if="filteredTickets.length > 0" class=" overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
-        <div class="flex flex-col flex-1 gap-1 min-w-0 me-1"
+        <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1"
         >
           <div
             v-for="ticket in filteredTickets"
             :key="ticket.id"
             draggable="true"
             :class="[
-            'flex items-center  gap-3 px-4 py-[10px] cursor-pointer transition-colors rounded-[8px]',
+            'flex items-center  gap-3 p-[8px] cursor-pointer transition-colors rounded-[8px]',
               selectedIds.includes(ticket.id)
                 ? 'border-2 border-[#5a2d7f]'
                 : 'border border-border-input',
@@ -49,7 +49,7 @@
             <div class="flex-shrink-0">
               <span
                 v-if="ticket?.assignee == 'Unassigned'"
-                class="flex justify-center text-gray-500 items-center text-xs aspect-square w-7 h-7 bg-bg-body rounded-full border-border-input border-2"
+                class="flex justify-center text-gray-500 items-center text-[11px] aspect-square w-[24px] h-[24px] bg-bg-body rounded-full border-border-input border-2"
                 >UA</span
               >
               <div
@@ -60,7 +60,7 @@
               </div>
               <span
                 v-else
-                class="text-xs aspect-square w-7 flex justify-center items-center h-7 bg-accent/30 text-accent border-accent border rounded-full"
+                class="text-[11px] aspect-square w-[24px] flex justify-center items-center h-[24px] bg-accent/30 text-accent border-accent border rounded-full"
               >
                 {{ getInitials(ticket.assignee?.u_full_name ?? "") }}
               </span>
@@ -102,7 +102,7 @@ import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
 const { theme } = useTheme();
  
-const props = defineProps<{ sprint: Sprint; sprintId: any; searchQuery?: string }>();
+const props = defineProps<{ sprint: Sprint; sprintId: any; searchQuery?: string,   checkedSprintAll:Boolean }>();
 
 const emit = defineEmits([
   "edit-sprint",
@@ -268,6 +268,19 @@ function handleCheckboxChange(id: string, event: Event) {
   const checked = (event.target as HTMLInputElement).checked;
   toggleRowSelection(id, checked);
 }
+
+
+watch(
+  () => props.checkedSprintAll,
+  (newVal) => {
+    if (newVal) {
+     selectedIds.value = filteredTickets.value.map(t => t.id) // select all
+     console.log(filteredTickets.value)
+    } else {
+     selectedIds.value = []  
+    }
+  }
+);
 </script>
 
 <style scoped>
