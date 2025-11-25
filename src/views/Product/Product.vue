@@ -144,7 +144,15 @@ const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/
 const isCreateVar = ref(false)
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds()
-const { data: variables, isPending: isVariablesPending } = useVariables(workspaceId.value, moduleId.value);
+const { data, refetch: refetchSheets, isPending: isSheetPending } = useSheets({
+    workspace_id: workspaceId,
+    workspace_module_id: moduleId
+});
+const sheetId = computed(() => data.value ? data.value[0]?._id : '')
+
+const selected_sheet_id = ref<any>(sheetId.value);
+
+const { data: variables, isPending: isVariablesPending } = useVariables(workspaceId.value, moduleId.value, selected_sheet_id);
 const queryClient = useQueryClient()
 const { mutate: addList, isPending: addingList } = useAddList({
     onSuccess: () => {
@@ -165,12 +173,7 @@ const handleAddColumn = (v: any) => {
 }
 
 // Fetch sheets using `useSheets`
-const { data, refetch: refetchSheets, isPending: isSheetPending } = useSheets({
-    workspace_id: workspaceId,
-    workspace_module_id: moduleId
-});
-const sheetId = computed(() => data.value ? data.value[0]?._id : '')
-const selected_sheet_id = ref<any>(sheetId.value);
+
 watch(sheetId, () => {
     selected_sheet_id.value = sheetId.value;
 })

@@ -221,15 +221,16 @@ export function useSheetList(
 export const useVariables = (
   workspace_id: any,
   module_id: any,
+  sheetId: any,
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["all-module-variables"],
+    queryKey: ["all-module-variables", sheetId],
     queryFn: ({ signal }) =>
       request<any>({
         url: `/workspace/catalog/${workspace_id}/card-variables/${
           unref(module_id) ?? module_id
-        }`,
+        }?sheet_id=${unref(sheetId)}`,
         method: "GET",
         signal,
       }),
@@ -304,18 +305,18 @@ export const ReOrderCard = (options = {}) =>
       ...(options as any),
     } as any
   );
-  export const useVarVisibilty = (options = {}) =>
-    useApiMutation<any, any>(
-      {
-        key: ["var-visibility"],
-      } as any,
-      {
-        mutationFn: (vars: any) =>
-          request({
-            url: `workspace/sheet-column-preferences`,
-            method: "POST",
-            data: vars.payload,
-          }),
-        ...(options as any),
-      } as any
-    );
+export const useVarVisibilty = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["var-visibility"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `workspace/sheet-column-preferences`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
