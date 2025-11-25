@@ -61,7 +61,7 @@
     cancelText="Cancel" size="md" :loading="isDeletingList" @confirm="handleDeleteColumn"
     @cancel="() => { showDelete = false }" />
 
-  <DetailPanel :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
+  <DetailPanel :details="selectedCard" @close="() => { selectCardHandler({ }) }"
     :showPanel="selectedCard?.title ? true : false" />
 </template>
 
