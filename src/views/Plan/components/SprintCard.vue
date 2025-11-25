@@ -1,11 +1,5 @@
 <template>
-  <div class=" h-full min-h-0 ">
-    <!-- Search Input -->
-    <!-- <div class="mb-2">
-      <SearchBar type="text"  @onChange="(e) => searchQuery = e" placeholder="Search tickets..."
-        class="w-[250px]" />
-    </div> -->
-
+  <div class=" h-full min-h-0 "> 
     <!-- Sprint Table -->
     <div
       :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''"
@@ -16,19 +10,20 @@
       class="h-full box-border"
     >
       <!-- Tickets List -->
-      <div v-if="filteredTickets.length > 0" class=" overflow-y-auto h-[calc(100%-50px)]">
-        <div class="flex flex-col flex-1 gap-3 min-w-0"
+      <div v-if="filteredTickets.length > 0" class=" overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
+        <div class="flex flex-col flex-1 gap-1 min-w-0 me-1"
         >
           <div
             v-for="ticket in filteredTickets"
             :key="ticket.id"
             draggable="true"
             :class="[
-              'flex items-center bg-bg-charcoal  gap-3 px-4 py-[14px] hover:bg-bg-body cursor-pointer transition-colors rounded-[8px]',
+            'flex items-center  gap-3 px-4 py-[10px] cursor-pointer transition-colors rounded-[8px]',
               selectedIds.includes(ticket.id)
                 ? 'border-2 border-[#5a2d7f]'
                 : 'border border-border-input',
-            ]"
+              theme === 'dark' ? 'bg-bg-body hover:bg-bg-surface': 'bg-bg-charcoal hover:bg-bg-body'  
+            ]" 
             @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"
             @dragend="onDragEnd($event)"
             @click="$emit('open-ticket', ticket)"
@@ -36,10 +31,11 @@
             <!-- Checkbox -->
             <input
               type="checkbox"
-              class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
+              class="custom-checkbox  border border-border-input flex-shrink-0"
               :checked="selectedIds.includes(ticket.id)"
               @click.stop
               @change="handleCheckboxChange(ticket.id, $event)"
+              :class="theme==='dark'? 'bg-bg-charcoal':'bg-bg-body '"
             />
 
             <!-- Summary -->
@@ -103,8 +99,11 @@ import { type Sprint, type Ticket } from "../composables/useBacklogStore";
 import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
+import { useTheme } from "../../../composables/useTheme";
+const { theme } = useTheme();
+ 
+const props = defineProps<{ sprint: Sprint; sprintId: any; searchQuery?: string }>();
 
-const props = defineProps<{ sprint: Sprint; sprintId: any }>();
 const emit = defineEmits([
   "edit-sprint",
   "toggle-start",
@@ -127,18 +126,32 @@ watch(
   { immediate: true, deep: true }
 );
 
-// Search
-const searchQuery = ref("");
+// Search 
+// const filteredTickets = computed(() => {
+//   if (!searchQuery.value) return sprintTickets.value;
+//   const q = searchQuery.value.toLowerCase();
+//   return sprintTickets.value.filter(
+//     (ticket) =>
+//       ticket.key.toLowerCase().includes(q) ||
+//       ticket.summary.toLowerCase().includes(q) ||
+//       (ticket.assignee?.u_full_name ?? "").toLowerCase().includes(q)
+//   );
+// });
+
 const filteredTickets = computed(() => {
-  if (!searchQuery.value) return sprintTickets.value;
-  const q = searchQuery.value.toLowerCase();
-  return sprintTickets.value.filter(
-    (ticket) =>
-      ticket.key.toLowerCase().includes(q) ||
-      ticket.summary.toLowerCase().includes(q) ||
-      (ticket.assignee?.u_full_name ?? "").toLowerCase().includes(q)
-  );
+  const query = props.searchQuery?.toLowerCase() || "";
+  if (!query) return sprintTickets.value;
+
+  return sprintTickets.value.filter((ticket) => {
+    const assigneeName = ticket.assignee?.u_full_name ?? "";
+    return (
+      ticket.key.toLowerCase().includes(query) ||
+      ticket.summary.toLowerCase().includes(query) ||
+      assigneeName.toLowerCase().includes(query)
+    );
+  });
 });
+
 
 // Drag & Drop
 const dropOverSprint = ref(false);
@@ -284,4 +297,30 @@ function handleCheckboxChange(id: string, event: Event) {
   transform: rotate(45deg);
   margin: 3px auto;
 }
+
+.tickets-scroll::-webkit-scrollbar {
+  width: 8px;             /* width of the vertical scrollbar */
+}
+
+.tickets-scroll::-webkit-scrollbar-track {
+  background: var(--bg-lavender); /* or a color you like */
+  border-radius: 4px;
+}
+
+.tickets-scroll::-webkit-scrollbar-thumb {
+  background-color: #5a2d7f; /* scrollbar thumb color */
+  border-radius: 4px;
+  border: 2px solid transparent; /* optional for padding effect */
+}
+
+.tickets-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #7f4bbf; /* hover color */
+}
+
+/* Firefox */
+.tickets-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #5a2d7f var(--bg-lavender);
+}
+
 </style>

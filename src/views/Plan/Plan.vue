@@ -1,8 +1,11 @@
 <template>
-  <div class="flex-auto flex-grow h-full min-h-0 bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex"
+  <div
+    class="flex-auto flex-grow h-full min-h-0 bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex"
   >
-    <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1 box-border">
-       <Dropdown
+    <div
+      class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1 box-border"
+    >
+      <Dropdown
         v-model="selectedSprintId"
         :options="sprintsList?.sprints"
         variant="secondary"
@@ -19,10 +22,6 @@
         </template>
       </Dropdown>
       <div class="flex gap-3 items-center">
-        <!-- <SearchBar v-if="sprintDetailData?.status == 'active'" placeholder="Search in Orchit AI space"
-        @onChange="(e)=>{searchQuery= e}"
-        >
-        </SearchBar> -->
         <SearchBar
           placeholder="Search in sprint"
           @onChange="
@@ -67,11 +66,11 @@
             <transition name="fade">
               <ul
                 v-if="openElipseDrop"
-                class="absolute right-0 mt-2 w-44 border border-border-input rounded-[8px] bg-bg-card shadow-xl py-3 z-50"
+                class="absolute right-0 mt-2 w-44 border border-border-input rounded-[8px] bg-bg-dropdown shadow-xl py-3 z-50"
                 @click.stop
               >
                 <li
-                  class="px-4 py-2 text-[14px] font-manrope font-medium text-gray-800 hover:bg-bg-body cursor-pointer"
+                  class="px-4 py-2 text-[14px] font-manrope font-medium text-text-secondary hover:bg-bg-body cursor-pointer"
                   @click="openEditSprintModal(selectedSprint)"
                 >
                   Edit Sprint
@@ -87,37 +86,48 @@
             </transition>
           </div>
         </div>
-         <button
-               
-              class="flex items-center font-normal justify-center border border-border-input rounded-[8px] w-[36px] h-[36px] text-primary hover:bg-bg-body"
-            >
-             <i class="fa-sharp fa-thin fa-arrows-up-down-left-right"></i>
-            </button>
+        <button
+          class="flex items-center font-normal justify-center border border-border-input rounded-[8px] w-[36px] h-[36px] text-primary hover:bg-bg-body"
+        >
+          <i class="fa-sharp fa-thin fa-arrows-up-down-left-right"></i>
+        </button>
       </div>
     </div>
     <template v-if="sprintDetailData?.status == 'active'">
       <ActiveSprint :sptint_id="selectedSprintId" :searchQuery="searchQuery" />
     </template>
-    <div v-else class="p-4 w-full min-w-0  box-border h-full min-h-0">
+    <div v-else class="p-4 w-full min-w-0 box-border h-full min-h-0">
       <!-- Header -->
-      <div class="flex gap-6 h-full max-h-screen min-h-0 pb-4 box-border " ref="containerRef">
-        <section class="space-y-4 bg-bg-surface/30 p-4 rounded-md relative group overflow-hidden box-border h-full min-h-0"
+      <div
+        class="flex gap-6 h-full max-h-screen min-h-0 pb-4 box-border"
+        ref="containerRef"
+      >
+        <section
+          class="space-y-4 p-4 rounded-md relative group overflow-hidden box-border h-full min-h-0"
+          :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
           :style="{ width: leftWidth + 'px' }"
         >
           <!-- Resize Handle (appears on hover) -->
           <div
             class="absolute top-0 right-0 h-full w-[5px] opacity-0 group-hover:opacity-100 bg-transparent hover:bg-accent cursor-col-resize transition"
             @mousedown="startResize"
-          >           
-          </div>
+          ></div>
 
           <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold">
-              Backlog ({{ backlogResp?.cards?.length }} Tasks)             
+            <h2 class="text-sm font-semibold flex gap-2 items-center">
+              <input
+                type="checkbox"
+                class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
+                v-model="checkedAll"
+              />
+              Backlog ({{ backlogResp?.cards?.length }} Tasks)
+              {{  checkedAll }}
             </h2>
             <div class="flex items-center gap-2">
-              <button class="h-8 w-22 flex items-center justify-center gap-2 rounded-md border cursor-pointer aspect-square text-sm border-border  hover:bg-bg-body ">
-                 <img :src="filter" alt="icon" class="w-[16px]"> Filters
+              <button
+                class="h-8 w-22 flex items-center justify-center gap-2 rounded-md border cursor-pointer aspect-square text-sm border-border hover:bg-bg-body"
+              >
+                <img :src="filter" alt="icon" class="w-[16px]" /> Filters
               </button>
               <button
                 class="w-8 h-8 rounded-md border cursor-pointer aspect-square text-sm border-border hover:bg-bg-body"
@@ -139,13 +149,19 @@
           </div>
           <BacklogTable
             v-else
+            :checkedAll="checkedAll"
+            :searchQuery="searchQuery"
             @move-selected-to-sprint="moveSelectedToSprint"
             @delete-selected-backlog="deleteSelected('backlog')"
             @open-ticket="openTicket"
             @ticket-moved-to-backlog="handleTicketMovedToBacklog"
+            @open-create-ticket="openCreateBacklogTicket"
           />
         </section>
-        <section class="space-y-7 bg-bg-surface/30 p-4 rounded-md relative group ovrflow-hidden flex-1 h-full min-h-0 box-border">
+        <section
+          class="space-y-7 p-4 rounded-md relative group ovrflow-hidden flex-1 h-full min-h-0 box-border"
+          :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
+        >
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold">
               Sprint ({{ firstSprint?.tickets?.length }} Taks)
@@ -163,6 +179,7 @@
           </div>
           <SprintCard
             v-else
+            :searchQuery="searchQuery"
             :sprintId="selectedSprintId"
             v-if="firstSprint"
             :sprint="firstSprint"
@@ -247,7 +264,7 @@ import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
 import Dropdown from "../../components/ui/Dropdown.vue";
 import SearchBar from "../../components/ui/SearchBar.vue";
-import filter from "@assets/icons/filter.svg"
+import filter from "@assets/icons/filter.svg";
 import {
   useBacklogList,
   useCompleteSprint,
@@ -272,6 +289,7 @@ import { useTheme } from "../../composables/useTheme";
 const { theme } = useTheme();
 const showTaskModal = ref(false);
 const searchQuery = ref("");
+const checkedAll = ref(false);
 // const selectedCardId = ref('');
 // const rowClickHandler= (rowId:any)=>{
 //   selectedCardId.value=rowId;
@@ -450,7 +468,10 @@ function handleRefresh() {
   refetchSprintDetail();
 }
 
-function handleTicketMovedToBacklog(ticketIds: string[] | string, sprintId?: string) {
+function handleTicketMovedToBacklog(
+  ticketIds: string[] | string,
+  sprintId?: string
+) {
   const ids = Array.isArray(ticketIds) ? ticketIds : [ticketIds];
   const sourceSprintId = sprintId || selectedSprintId.value;
   if (!sourceSprintId || !ids.length) return;
@@ -561,21 +582,18 @@ const handleCompleteSprint = () => {
   completeSprint({});
 };
 
-
-
-
-// resize sections 
+// resize sections
 
 const containerRef = ref<HTMLElement | null>(null);
 const leftWidth = ref(0);
 
 let resizing = false;
-const minWidth = 500; //  New minimum width (your requirement)
+const minWidth = 400; //  New minimum width (your requirement)
 
 onMounted(() => {
   if (!containerRef.value) return;
   const full = containerRef.value.offsetWidth;
-  leftWidth.value = full / 2; // start at 50%
+  leftWidth.value = full / 3; // start at 50%
 });
 
 function startResize() {
@@ -593,8 +611,7 @@ function handleResize(e: MouseEvent) {
 
   // Apply min and max limits
   if (pos < minWidth) leftWidth.value = minWidth;
-  else if (pos > rect.width - minWidth)
-    leftWidth.value = rect.width - minWidth;
+  else if (pos > rect.width - minWidth) leftWidth.value = rect.width - minWidth;
   else leftWidth.value = pos;
 }
 
@@ -604,3 +621,32 @@ function stopResize() {
   document.removeEventListener("mouseup", stopResize);
 }
 </script>
+
+<style scoped>
+.custom-checkbox {
+  appearance: none; /* remove native checkbox UI */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.custom-checkbox:checked {
+  background-color: #5a2d7f;
+  border-color: #5a2d7f !important;
+}
+
+.custom-checkbox:checked::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin: 3px auto;
+}
+</style>

@@ -1,5 +1,5 @@
 <template>
-  <section class="h-full min-h-0 ">
+  <section class="h-full min-h-0">
     <!-- Search Input -->
     <!-- <div class="mb-2">
       <SearchBar type="text"  @onChange="(e) => searchQuery = e" placeholder="Search tickets..."
@@ -8,7 +8,7 @@
 
     <!-- Table -->
     <div
-      class="rounded-lg flex flex-col  h-full"
+      class="rounded-lg flex flex-col h-full"
       :class="dropOverBacklog ? 'ring-2 ring-blue-400' : ''"
       @dragover.prevent
       @dragenter="dropOverBacklog = true"
@@ -28,23 +28,29 @@
         <h6 class="text-sm text-text-primary font-semibold mb-1">
           Get started in the backlog
         </h6>
-        <p class="text-sm text-text-primary/90 mb-3">
+        <p class="text-sm text-text-primary/90 mb-4">
           Plan and start a sprint to see issues here.
         </p>
+        <button @click="$emit('open-create-ticket')" class="relative cursor-pointer inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition text-xs px-3 py-1.5 h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"> 
+          Create  Ticket
+        </button>
       </div>
 
       <!-- Tickets List -->
-      <div v-else class=" overflow-y-auto h-[calc(100%-50px)]">
-        <div class="flex flex-col flex-1 gap-3 min-w-0">
+      <div v-else class="overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
+        <div class="flex flex-col flex-1 gap-1 min-w-0 me-1">
           <div
             v-for="ticket in filteredBacklog"
             :key="ticket.id"
             draggable="true"
             :class="[
-              'flex items-center bg-bg-charcoal  gap-3 px-4 py-[14px] hover:bg-bg-body cursor-pointer transition-colors rounded-[8px]',
+              'flex items-center  gap-3 px-4 py-[10px] cursor-pointer transition-colors rounded-[8px]',
               selectedBacklogIds.includes(ticket.id)
                 ? 'border-2 border-[#5a2d7f]'
                 : 'border border-border-input',
+              theme === 'dark'
+                ? 'bg-bg-body hover:bg-bg-surface'
+                : 'bg-bg-charcoal hover:bg-bg-body',
             ]"
             @dragstart="onDragStart($event, ticket, 'backlog')"
             @dragend="onDragEnd($event)"
@@ -99,21 +105,34 @@ import { type Ticket } from "../composables/useBacklogStore";
 import { useBacklogList } from "../../../queries/usePlan";
 import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { getInitials } from "../../../utilities";
+import { useTheme } from "../../../composables/useTheme";
+const { theme } = useTheme();
 
 const emit = defineEmits([
   "ticket-dragged-to-sprint",
   "open-ticket",
   "ticket-moved-to-backlog",
+  "open-create-ticket",
 ]);
+const props = defineProps({
+  searchQuery: {
+    type: String,
+    default: "",
+  },
+  checkedAll:{
+    type:Boolean,
+    default:false
+  }
+});
 
 const { workspaceId } = useWorkspaceId();
 const { data: backlogResp, isPending: isBacklogListPending } =
-  useBacklogList(workspaceId);
+useBacklogList(workspaceId);
 
 const normalizedBacklog = ref<Ticket[]>([]);
 const dropOverBacklog = ref(false);
 const draggedTicketIds = ref<string[]>([]);
-const searchQuery = ref("");
+// const searchQuery = ref("");
 const selectedBacklogIds = ref<string[]>([]);
 
 // Normalize incoming backlog data
@@ -152,17 +171,36 @@ watch(normalizedBacklog, (tickets) => {
 });
 
 // Filter tickets based on search query
+// const filteredBacklog = computed(() => {
+//   if (!searchQuery.value) return normalizedBacklog.value;
+//   const q = searchQuery.value.toLowerCase();
+//   return normalizedBacklog.value.filter(
+//     (ticket) =>
+//       ticket.key.toLowerCase().includes(q) ||
+//       ticket.summary.toLowerCase().includes(q) ||
+//       (typeof ticket.assignee === "string"
+//         ? ticket.assignee.toLowerCase().includes(q)
+//         : ticket.assignee?.u_full_name?.toLowerCase().includes(q))
+//   );
+// });
 const filteredBacklog = computed(() => {
-  if (!searchQuery.value) return normalizedBacklog.value;
-  const q = searchQuery.value.toLowerCase();
-  return normalizedBacklog.value.filter(
-    (ticket) =>
+  console.log(props.searchQuery, "this is query");
+  if (!props.searchQuery) return normalizedBacklog.value;
+
+  const q = props.searchQuery.toLowerCase();
+
+  return normalizedBacklog.value.filter((ticket) => {
+    const assigneeName =
+      typeof ticket.assignee === "string"
+        ? ticket.assignee
+        : ticket.assignee?.u_full_name || "";
+
+    return (
       ticket.key.toLowerCase().includes(q) ||
       ticket.summary.toLowerCase().includes(q) ||
-      (typeof ticket.assignee === "string"
-        ? ticket.assignee.toLowerCase().includes(q)
-        : ticket.assignee?.u_full_name?.toLowerCase().includes(q))
-  );
+      assigneeName.toLowerCase().includes(q)
+    );
+  });
 });
 
 // Map priority to standard values
@@ -255,6 +293,19 @@ function handleCheckboxChange(id: string, event: Event) {
   const checked = (event.target as HTMLInputElement).checked;
   toggleRowSelection(id, checked);
 }
+
+
+watch(
+  () => props.checkedAll,
+  (newVal) => {
+    if (newVal) {
+     selectedBacklogIds.value = normalizedBacklog.value.map(t => t.id) // select all
+     console.log(selectedBacklogIds.value)
+    } else {
+     selectedBacklogIds.value = [] // deselect all
+    }
+  }
+);
 </script>
 
 <style scoped>
@@ -283,5 +334,30 @@ function handleCheckboxChange(id: string, event: Event) {
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
   margin: 3px auto;
+}
+
+.tickets-scroll::-webkit-scrollbar {
+  width: 8px; /* width of the vertical scrollbar */
+}
+
+.tickets-scroll::-webkit-scrollbar-track {
+  background: var(--bg-lavender); /* or a color you like */
+  border-radius: 4px;
+}
+
+.tickets-scroll::-webkit-scrollbar-thumb {
+  background-color: #5a2d7f; /* scrollbar thumb color */
+  border-radius: 4px;
+  border: 2px solid transparent; /* optional for padding effect */
+}
+
+.tickets-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: #7f4bbf; /* hover color */
+}
+
+/* Firefox */
+.tickets-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #5a2d7f var(--bg-lavender);
 }
 </style>
