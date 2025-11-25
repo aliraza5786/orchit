@@ -59,7 +59,7 @@ import BaseTextAreaField from "../../../components/ui/BaseTextAreaField.vue";
 /** Emits */
 const emit = defineEmits<{
   (e: "update:modelValue", v: boolean): void;
-  (e: "save", v: Partial<Sprint>): void;
+  (e: "save", v:any): void;
   (e: "close"): void;
 }>();
 
@@ -118,7 +118,7 @@ function resetTouched() {
 /** Hydrate form when sprint changes or when opened */
 watch(
   () => props.sprint,
-  (s) => {
+  (s:any) => {
     if (!s) {
       form.name = "";
       return;
