@@ -134,7 +134,7 @@ export const useSheets = (
   const wId = computed(() => unref(queryParams.workspace_id));
 
   return useQuery({
-    queryKey: keys.sheets(wmId.value, wId.value),
+    queryKey: keys.sheets(queryParams.workspace_module_id, wId.value),
     enabled: computed(() => !!wmId.value),
     queryFn: ({ signal }) =>
       request<any>({
@@ -181,7 +181,7 @@ export function useSheetList(
   const queryKey = computed(() => [
     "sheet-list",
 
-    unref(module_id),
+    module_id,
     unref(sheet_id),
     unref(laneIdsParam),
     unref(view_by),
@@ -247,7 +247,7 @@ export const useLanes = (
     queryKey: ["all-module-lanes", unref(workspace_id)],
     queryFn: async ({ signal }) =>
       request<any>({
-        url: `/workspace/lane-by-workspace/${ await unref(workspace_id)}`,
+        url: `/workspace/lane-by-workspace/${await unref(workspace_id)}`,
         method: "GET",
         signal,
       }),
@@ -304,3 +304,18 @@ export const ReOrderCard = (options = {}) =>
       ...(options as any),
     } as any
   );
+  export const useVarVisibilty = (options = {}) =>
+    useApiMutation<any, any>(
+      {
+        key: ["var-visibility"],
+      } as any,
+      {
+        mutationFn: (vars: any) =>
+          request({
+            url: `workspace/sheet-column-preferences`,
+            method: "POST",
+            data: vars.payload,
+          }),
+        ...(options as any),
+      } as any
+    );

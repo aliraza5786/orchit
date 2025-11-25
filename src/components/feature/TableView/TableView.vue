@@ -22,7 +22,6 @@
           </th>
 
           <!-- Toggle Columns Button -->
-          <!-- Toggle Columns Button -->
           <th class="w-10 p-2 text-center relative">
             <div class="relative inline-block">
               <button @click.stop="showColumnMenu = !showColumnMenu" class="p-1 rounded hover:bg-bg-surface/50 cursor-pointer">
@@ -151,6 +150,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'update:rows', val: Row[]): void
   (e: 'create', val: any): void
+  (e: 'toggleVisibility', val: any, v:any): void
   (e: 'addVar'): void
 
 }>()
@@ -279,8 +279,10 @@ document.addEventListener('click', (e) => {
 const toggleColumn = (key: string) => {
   const index = visibleColumnKeys.value.indexOf(key)
   if (index === -1) {
+    emit('toggleVisibility', key, true)
     visibleColumnKeys.value.push(key)
   } else {
+    emit('toggleVisibility', key, false)
     visibleColumnKeys.value.splice(index, 1)
   }
 }

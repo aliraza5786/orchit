@@ -44,12 +44,10 @@
                     </button>
                 </div>
             </div>
-
-
         </div>
         <template v-if="view == 'kanban'">
-            <KanbanSkeleton v-show="isPending" />
-            <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4 scrollbar-visible">
+            <KanbanSkeleton v-show="isPending || isSheetPending" />
+            <div v-show="!isPending && !isSheetPending" class="flex  overflow-x-auto gap-3 p-4 scrollbar-visible">
                 <KanbanBoard @onPlus="plusHandler" :board="filteredBoard" @delete:column="(e: any) => deleteHandler(e)"
                     @update:column="(e: any) => handleUpdateColumn(e)" @reorder="onReorder" @addColumn="handleAddColumn"
                     @select:ticket="selectCardHandler" @onBoardUpdate="handleBoardUpdate"
@@ -90,7 +88,7 @@
             </div>
         </template>
         <template v-if="view == 'table'">
-            <TableView @addVar="() => {
+            <TableView @toggleVisibility="toggleVisibilityHandler" @addVar="() => {
                 isCreateVar = true
             }" :isPending="isPending || isVariablesPending" :columns="columns" :rows="filteredBoard"
                 @create="handleCreateTicket" />
@@ -117,7 +115,7 @@ import { computed, defineAsyncComponent, h, ref, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import Searchbar from '../../components/ui/SearchBar.vue';
-import { ReOrderCard, ReOrderList, useAddList, useAddTicket, useLanes, useMoveCard, useSheetList, useSheets, useUpdateWorkspaceSheet, useVariables } from '../../queries/useSheets';
+import { ReOrderCard, ReOrderList, useAddList, useAddTicket, useLanes, useMoveCard, useSheetList, useSheets, useUpdateWorkspaceSheet, useVarVisibilty, useVariables } from '../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
@@ -167,7 +165,7 @@ const handleAddColumn = (v: any) => {
 }
 
 // Fetch sheets using `useSheets`
-const { data, refetch: refetchSheets } = useSheets({
+const { data, refetch: refetchSheets, isPending: isSheetPending } = useSheets({
     workspace_id: workspaceId,
     workspace_module_id: moduleId
 });
@@ -441,8 +439,8 @@ const columns = computed(() => {
             variables.value
                 ?.filter((e: any) => e?.type?.title === "Select")
                 .map((e: any) => ({
-                    key: e.slug,
-                    label: e.slug,
+                    key: e?.slug,
+                    label: e?.slug,
                     render: ({ row, value }: any) => {
                         const type = ref(value);
                         return h("div", { class: "capitalize flex items-center gap-2" }, [
@@ -450,15 +448,15 @@ const columns = computed(() => {
                                 class: "w-full border-none",
                                 options: getOptions(e.data ?? []),
                                 size: "sm",
-                                modelValue: type.value,
-                                defaultValue: type.value,
+                                modelValue: type?.value,
+                                defaultValue: type?.value,
                                 "onUpdate": (val: any) => {
                                     handleChangeTicket(row?._id, e.slug, val);
                                 },
                             }),
                         ]);
                     },
-                    visible: false
+                    visible: e?.is_visible
                 })) ?? []
         ),
     ];
@@ -519,8 +517,17 @@ function setLane(id: any, v: any) {
 
     moveCard.mutate({ card_id: id, 'workspace_lane_id': v })
 }
-
-
+const { mutate: toggleVisibility } = useVarVisibilty()
+const toggleVisibilityHandler = (key: any, visible:any) => {
+    toggleVisibility({
+        payload: {
+            "sheet_id": selected_sheet_id.value,
+            "workspace_id": workspaceId.value,
+            "variable_slug": key,
+            is_visible:visible
+        }
+    })
+}
 </script>
 <style scoped>
 /* Force visible scrollbars only where applied */
