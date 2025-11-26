@@ -108,7 +108,7 @@
             <span>{{ commentLists.length }} comments</span>
             <div v-for="c in commentLists" :key="c._id" class="flex gap-3 mt-4 border-b border-border pb-2">
               <img v-if="c.user_id?.u_profile_image" class="w-8 h-8 bg-bg-surface rounded-full" :src="c.user_id.u_profile_image" />
-              <div v-else class="w-8 h-8 rounded-full bg-accent/40 flex justify-center items-center">{{ getInitials(c?.user_id?.u_full_name) }}</div>
+              <div v-else class="w-8 h-8 rounded-full bg-accent/40 flex justify-center items-center">{{ getInitials(c?.user_id?.u_full_name??'') }}</div>
               <div>
                 <p class="font-medium capitalize">{{ c?.user_id?.u_full_name }}</p>
                 <p class="text-text-secondary text-xs">{{ c?.time }}</p>
@@ -123,7 +123,7 @@
   </template>
   
   <script setup lang="ts">
-  import { ref, watch, computed } from 'vue';
+  import { ref, watch } from 'vue';
   import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
   import Button from '../../components/ui/Button.vue';
   import Dropdown from '../../components/ui/Dropdown.vue';
@@ -143,7 +143,7 @@
   }
   
   const commentLists = ref<Comment[]>([]);
-  const selected_sheet_id = ref<string | undefined>();
+  const selected_sheet_id = ref<string>('');
   const comment = ref('');
   const { moduleId, workspaceId } = useRouteIds();
   

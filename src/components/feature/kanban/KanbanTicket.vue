@@ -105,7 +105,7 @@ export interface Ticket {
 
 const props = defineProps<{
     ticket: any
-    selectedVar: any
+    selectedVar?: any
     footer?:boolean
 }>()
 

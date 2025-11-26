@@ -36,7 +36,7 @@
 
 <script setup lang="ts">
 import KanbanTicket from '../../../components/feature/kanban/KanbanTicket.vue';
-const props = defineProps<{
+defineProps<{
     columns: Array<{
         title: string,
         cards?: Array<any>
