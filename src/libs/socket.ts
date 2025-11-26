@@ -3,7 +3,7 @@ import { io } from "socket.io-client";
 
 const token = localStorage.getItem("token");
 
-export const socket = io('https://backend.streamed.space/', {
+export const socket = io('https://backend.orchit.ai/api/v1/', {
   transports: ["websocket"],
   withCredentials: true,
   auth: {
