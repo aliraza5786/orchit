@@ -17,6 +17,7 @@ const ForgotPassword = () => import("../views/Auth/ForgotPassword.vue");
 const ResetPassword = () => import("../views/Auth/ResetPassword.vue");
 const FinishProfile = () => import("../views/FinishProfile.vue");
 const NotFound = () => import("../views/NotFound.vue");
+const ModuleDetail=()=> import( "../views/More/ModuleDetail.vue");
 
 const Plan = () => import("../views/Plan/Plan.vue");
 const Pin = () => import("../views/Pin/Pin.vue");
@@ -218,6 +219,7 @@ const routes: RouteRecordRaw[] = [
       { path: "plan/:id", name: "plan", component: Plan },
       { path: "process/:id", name: "process", component: Process },
       { path: "more/:id", name: "more", component: More },
+      { path: "more/detail/:id/:module_id", name: "moreDetail", component: ModuleDetail },
       { path: ":id/:module_id", name: "product", component: Product },
     ],
   },

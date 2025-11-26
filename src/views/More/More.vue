@@ -14,23 +14,22 @@
           </div>
         </div>
         <div class="mt-5 flex flex-wrap gap-2">
-         
+
           <button v-if="isCatPending" v-for="i in ['3', '2', '2']" :key="i"
             class="rounded-full border-border w-26 h-8 cursor-pointer border px-4 py-1.5 text-sm transition-all  animate-pulse bg-bg-surface">
 
           </button>
           <template v-else>
             <button @click="activeCategory = ''"
-            class="rounded-full cursor-pointer border px-4 py-1.5 text-sm transition-all"
-            :class="activeCategory == '' ? 'border-border bg-accent text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-accent/50'">
-            All
-          </button>
-          <button  v-for="cat in categories" :key="cat?._id" @click="activeCategory = cat?._id"
-            class="rounded-full cursor-pointer border px-4 py-1.5 text-sm transition-all"
-            :class="activeCategory === cat?._id ? 'border-border bg-accent text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-accent/50'">
-            {{ cat?.title
-            }}
-          </button>
+              class="rounded-full cursor-pointer border px-4 py-1.5 text-sm transition-all"
+              :class="activeCategory == '' ? 'border-border bg-accent text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-accent/50'">
+              All
+            </button>
+            <button v-for="cat in categories" :key="cat?._id" @click="activeCategory = cat?._id"
+              class="rounded-full cursor-pointer border px-4 py-1.5 text-sm transition-all"
+              :class="activeCategory === cat?._id ? 'border-border bg-accent text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-accent/50'">
+              {{ cat?.title  }}
+            </button>
           </template>
 
         </div>
@@ -48,17 +47,7 @@
           <AppCard v-else v-for="app in filteredModules" :key="app?._id" :app="app" action-label="Open" />
         </div>
 
-
       </section>
-
-      <!-- <section class="mt-10">
-        <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold">Coming Soon</h2>
-        </div>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <AppCard v-for="app in filteredSoon" :key="app.id" :app="app" action-label="Add" />
-        </div>
-      </section> -->
     </main>
   </div>
   <CreateNewModule size="md" v-model="isCreateModuleModal" />

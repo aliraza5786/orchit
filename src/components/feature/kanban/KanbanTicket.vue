@@ -36,7 +36,7 @@
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
         </p>
 
-        <div class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
+        <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
                 <div @click.stop>
                     <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
@@ -55,7 +55,7 @@
                     <i class="fa-regular fa-message text-[10px]"></i>
                     <span>{{ ticket?.comments_count }}</span>
                 </div>
-                <div class="flex items-center gap-1 text-xs text-text-secondary">
+                <div v-if="ticket?.attachments" class="flex items-center gap-1 text-xs text-text-secondary">
                     <i class="fa-regular fa-file text-[10px]"></i>
                     <span>{{ ticket?.attachments.length }}</span>
                 </div>
@@ -106,6 +106,7 @@ export interface Ticket {
 const props = defineProps<{
     ticket: any
     selectedVar: any
+    footer?:boolean
 }>()
 
 const priorityBorderMap: Record<Priority, string> = {

@@ -8,9 +8,12 @@
       <div class="min-w-0 flex-1">
         <div class="flex items-center justify-between gap-2">
           <h3 class="truncate text-sm font-semibold">{{ app.title }}</h3>
-          <button class="rounded-xl border border-border bg-bg-surface/30 px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-bg-surface">
-            {{ actionLabel }}
-          </button>
+          <router-link :to="`/workspace/more/detail/${workspaceId}/${app?._id}`">
+            <button  class="rounded-xl cursor-pointer border border-border bg-bg-surface/30 px-3 py-1 text-xs font-medium text-text-secondary transition hover:bg-bg-surface">
+              {{ actionLabel }}
+            </button>
+
+          </router-link> 
         </div>
         <p class="mt-1 line-clamp-2 text-xs text-text-secondary">{{ app.description }}</p>
       </div>
@@ -20,9 +23,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useWorkspaceId } from '../../../composables/useQueryParams'
 
 export type AppItem = {
-  id: string
+  _id: string
   title: string
   tag: string
   description: string
@@ -31,6 +35,7 @@ export type AppItem = {
   icon:any,
   color: string // tailwind bg-* class
 }
+const {workspaceId} = useWorkspaceId()
 
 const props = defineProps<{ app: AppItem; actionLabel?: string }>()
 // const  app  = toRef<any>(props)

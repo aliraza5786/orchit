@@ -46,15 +46,75 @@ export const useMPCatlog = (options = {}) => {
   });
 };
 
-export const useMarketModules = (queryParam:any,options = {}) => {
+export const useMarketModules = (queryParam: any, options = {}) => {
   return useQuery({
     queryKey: ["marketplace-modules", queryParam],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `common/market-modules?marketplace_category_id=${unref(queryParam)}`,
+        url: `common/market-modules?marketplace_category_id=${unref(
+          queryParam
+        )}`,
         method: "GET",
         signal,
       }),
     ...options,
   });
 };
+
+export const useModuleList = (queryParam: any, options = {}) => {
+  return useQuery({
+    queryKey: ["module-list", queryParam],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `common/market-modules?marketplace_category_id=${unref(
+          queryParam
+        )}`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+  });
+};
+export const useModuleDetail = (id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["module-detail", id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `/common/workspace-modules-filter?workspace_module_id=${unref(id)}`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+  });
+};
+
+export const useModuleLists = (id: string, sheetId: any, options = {}) => {
+  return useQuery({
+    queryKey: ["module-lists", sheetId, id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `common/market-modules/cards-grouped?module_id=${id}&sheet_id=${unref(
+          sheetId
+        )}`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+  });
+};
+
+export const useCreateComment = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["create-comment-module"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `common/workspace-module-comments`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
