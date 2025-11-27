@@ -3,7 +3,7 @@
     <!-- Label + Tooltip -->
     <label
       v-if="label"
-      class="text-[16px] font-medium mb-2 flex items-center"
+      class="text-[16px] font-medium mb-1 flex items-center"
       :class="[theme === 'dark' ? 'text-white' : 'text-text-primary', ]"
     >
       {{ label }}
