@@ -150,25 +150,14 @@ const isOpen = computed({
 /** Local form */
 const form = reactive<any>({
   goal: "",
-  start: "",
+  start: new Date().toISOString().slice(0, 10),
   end: "",
   sprint_name: "",
   duration: null,
 });
 
-/** Hydrate form when sprint changes or when opened */
-watch(
-  () => props.sprint,
-  (s) => {
-    if (!s) return;
-    form.goal = s.goal ?? "";
-    form.start = s.start ?? "";
-    form.end = s.end ?? "";
-    form.sprint_name = s.title ?? "";
-    resetTouched();
-  },
-  { immediate: true }
-);
+
+
 
 /** Touched + validation */
 const touched = reactive({ start: false, end: false });
@@ -275,4 +264,25 @@ const durationDays = computed(() => {
     ? form.duration * 7
     : (toDayStartMs(form.end) - toDayStartMs(form.start)) / 86400000;
 });
+
+/** Hydrate form when sprint changes or when opened */
+watch(
+  () => props.sprint,
+  (s) => {
+    if (!s) {
+      form.start = new Date().toISOString().slice(0, 10); // default today
+      form.end = "";
+      form.sprint_name = "";
+      form.goal = "";
+      resetTouched();
+      return;
+    }
+    form.goal = s.goal ?? "";
+    form.start = s.start ?? new Date().toISOString().slice(0, 10);
+    form.end = s.end ?? "";
+    form.sprint_name = s.title ?? "";
+    resetTouched();
+  },
+  { immediate: true }
+);
 </script>
