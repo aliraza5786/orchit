@@ -3,11 +3,11 @@
     <div class="px-6">
       <h2 class="text-2xl font-semibold text-text-primary mb-6">Account Settings</h2>
 
-      <Tabs :tabs="['Profile', 'Subscription']" :defaultTab="route.query.stripePayment ? 1 : 0">
+      <Tabs :tabs="['Profile', 'Subscription', 'Roles']" :defaultTab="route.query.stripePayment ? 1 : 0">
         <template #Profile>
           <div class="py-4" v-if="profileData">
             <div class="space-y-6">
-              <div class="flex items-center gap-6 max-md:gap-2"  >
+              <div class="flex items-center gap-6 max-md:gap-2">
                 <div class="relative group">
                   <div
                     class="w-24 h-24 max-md:w-12 max-md:h-12 max-md:text-sm rounded-full bg-orange-500 flex items-center justify-center text-text-primary text-2xl font-bold border-4 border-border overflow-hidden">
@@ -147,7 +147,7 @@
                 <div class=" border-r border-border pr-6 min-w-80">
 
                   <h1 class="mb-2 uppercase">Upgrade to {{ nextPackage?.name }}</h1>
-                  <div  class="bg-bg-body rounded-xl  transition-all hover:shadow-lg">
+                  <div class="bg-bg-body rounded-xl  transition-all hover:shadow-lg">
                     <div class="text-left mb-4">
                       <h3 class="text-xl font-bold text-text-primary mb-2">{{ nextPackage.name }}</h3>
                       <div class="mb-2">
@@ -156,7 +156,7 @@
                           nextPackage?.pricing?.month?.currencySymbol }} </span>
                         <span class="text-sm text-text-secondary">/ {{
                           nextPackage?.pricing?.month?.interval
-                        }}</span>
+                          }}</span>
                       </div>
                       <p class="text-sm text-text-secondary">{{ nextPackage?.description }}</p>
                     </div>
@@ -180,6 +180,73 @@
                 </div>
               </div>
             </div>
+          </div>
+        </template>
+
+        <template #Roles>
+          <div class="space-y-6 h-full  flex overflow-y-auto gap-2">
+
+            <!-- 1️⃣ SHOW ROLES LIST -->
+            <div class="min-w-[250px] max-w-[300px] sticky top-0 border-r border-border p-2">
+              <h2 class="text-2xl flex  font-semibold mb-4">Roles</h2>
+
+              <div class="space-y-3">
+                <button v-for="role in roles" :key="role._id" @click="selectedRole = role"
+                  :class="`${selectedRole?._id == role?._id ? '  border-accent bg-accent/30' : 'border-border bg-bg-body'} `"
+                  class="w-full text-left px-4 py-3 border cursor-pointer  rounded-lg  hover:bg-bg-surface transition">
+                  <h3 class="text-sm font-semibold text-text-primary">{{ role.title }}</h3>
+                  <p class="text-xs text-text-secondary">{{ role.description }}</p>
+                </button>
+              </div>
+
+            </div>
+
+            <hr class="border-border my-4" />
+
+            <!-- 2️⃣ SHOW PERMISSIONS OF SELECTED ROLE -->
+            <div v-if="selectedRole" class="w-full">
+              <h2 class="text-lg  mb-4">
+                Permissions for: <span class="font-semibold">
+
+                  {{ selectedRole.title }}
+                </span>
+              </h2>
+
+              <div v-for="category in selectedRole?.permission_categories" :key="category?.category"
+                class="border border-border mb-3 cursor-pointer rounded-xl overflow-hidden bg-bg-body/30 shadow-sm">
+                <!-- Category Header -->
+                <button @click="toggle(category?.category)"
+                  class="w-full px-5 cursor-pointer py-4 flex justify-between items-center bg-bg-surface/30 hover:bg-bg-surface/80 transition">
+                  <span class="text-lg font-medium text-text-primary">
+                    {{ category?.category_title }}
+                  </span>
+
+                  <svg :class="[
+                    'w-5 h-5 text-text-secondary transition-transform',
+                    open[category?.category] ? 'rotate-180' : ''
+                  ]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                <!-- Permission List -->
+                <div v-if="open[category?.category]" class="px-5 py-4 space-y-4">
+                  <div v-for="perm in category?.permissions" :key="perm._id"
+                    class="flex justify-between items-center border-b border-border pb-3 last:border-b-0">
+                    <div>
+                      <p class="font-medium text-text-primary">{{ perm.title }}</p>
+                      <p class="text-sm text-text-secondary">{{ perm.description }}</p>
+                    </div>
+
+                    <input type="checkbox" v-model="selected" @change="() => { updatePermissionHandler() }"
+                      :value="perm._id" class="h-5 w-5 rounded border-border accent-accent cursor-pointer" />
+                  </div>
+                </div>
+              </div>
+
+
+            </div>
+
           </div>
         </template>
 
@@ -237,19 +304,22 @@ import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
 import InfoRow from '../../../components/ui/InfoRow.vue'
 import { useQuery, useMutation } from '@tanstack/vue-query'
-import { getProfile, updateProfile } from '../../../services/user'
+import { getProfile, updateProfile, useCompanyId } from '../../../services/user'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
 import { toast } from 'vue-sonner'
-import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
+import { confirmPayment, useCurrentPackage, useRoles, useRolesPermisions, useUpdatePermissions, useUpgradePackage } from '../../../queries/usePackages'
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
 import { useRoute, useRouter } from 'vue-router'
 import { useWorkspaceStore } from '../../../stores/workspace'
 const workspaceStore = useWorkspaceStore()
 const route = useRoute();
 const router = useRouter();
+
+const selectedRole = ref(null)
+
 const { data: currentPackage, refetch: reftechCurrentPackage, isPending } = useCurrentPackage();
 const sessionId = route.query.session_id;
-
+// const { data: roles } = useRolesPermisions();
 const { mutate: confirm, isPending: isConfirming } = confirmPayment({
   sessionId: sessionId, interval: 'month'
 }, {
@@ -511,5 +581,46 @@ const currentPlan = ref({
 // function downgradePlan(plan: any) {
 //   toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
 // }
+const open = ref<Record<string, boolean>>({});
+// watch(roles, (newVal) => {
+//   if (newVal)
+//     newVal[0].categories.forEach((cat: any) => (open.value[cat.category] = false));
+// })
 
+const toggle = (key: string) => {
+  open.value[key] = !open.value[key];
+};
+
+// Track selected permissions
+const selected = ref<string[]>([]);
+const { data: id } = useCompanyId();
+const { data: roles } = useRoles(id)
+const { mutate: updatePermissions } = useUpdatePermissions(selectedRole)
+watch(roles, (roles) => {
+  if (!roles) return;
+  selectedRole.value = roles[0]
+});
+watch(selectedRole, (roles) => {
+  if (!roles) return;
+
+  const enabledPermissions: string[] = [];
+
+  roles?.permission_categories.forEach((category: any) => {
+    category.permissions.forEach((perm: any) => {
+      if (perm.enabled) {
+        enabledPermissions.push(perm._id);
+      }
+    });
+  });
+
+  selected.value = enabledPermissions;
+});
+const updatePermissionHandler = () => {
+  updatePermissions(
+    {
+
+      "permission_ids": selected.value
+    }
+  )
+}
 </script>
