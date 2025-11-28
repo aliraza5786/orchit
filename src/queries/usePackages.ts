@@ -2,6 +2,7 @@ import { useRoute } from "vue-router";
 import { request } from "../libs/api";
 import { useApiMutation, useApiQuery } from "../libs/vq";
 import { useQuery } from "@tanstack/vue-query";
+import { unref } from "vue";
 
 export const useCurrentPackage = () => {
   return useApiQuery({
@@ -55,4 +56,36 @@ export const useRolesPermisions = (options = {}) => {
       }),
     ...options,
   });
+};
+export const useRoles = (id:any,options = {}) => {
+  return useQuery({
+    queryKey: ["roles"],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `/roles/company-roles?company_id=${unref(id)?._id}`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+  });
+};
+
+
+export const useUpdatePermissions = (id:any, options = {}) => {
+  console.log(id, unref(id), '>>>>>');
+  
+  return useApiMutation<any, any>(
+    {
+      key: ["update-permissions", id],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/roles/company-roles/${unref(id)?._id}?allow_system_update=true`,
+          method: "PUT",
+          data: { ...vars, },
+        }),
+      ...(options as any),
+    } as any
+  );
 };
