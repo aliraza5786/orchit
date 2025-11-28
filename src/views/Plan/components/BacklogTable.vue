@@ -273,6 +273,7 @@ function onDropBacklog(e: DragEvent) {
     const ids =
       data.ids && data.ids.length ? data.ids : data.id ? [data.id] : [];
     if (ids.length) emit("ticket-moved-to-backlog", ids, data.sprintId);
+    console.log(data.sprintId, "sprintId ....");
   } catch (error) {
     console.error("Drop error:", error);
   }

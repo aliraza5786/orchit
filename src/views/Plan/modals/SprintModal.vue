@@ -2,7 +2,7 @@
   <BaseModal v-model="isOpen" modalClass="!py-0" size="md">
     <!-- Header -->
     <div
-      class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4"
+      class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border  bg-bg-input pb-4"
     >
       <h2 class="text-xl font-semibold">Add New Sprint</h2>
       <!-- <p class="text-sm text-text-secondary mt-1">
@@ -11,7 +11,7 @@
     </div>
 
     <!-- Body -->
-    <div class="px-6 gap-4">
+    <div class="px-6 gap-4  bg-bg-input pt-5 pb-8">
       <!-- Name (required) -->
       <BaseTextField
         class="rounded-1"
@@ -25,20 +25,22 @@
 
       <!-- spacer to keep grid balanced -->
       <!-- Description -->
-      <BaseTextAreaField
+       <div class="mt-3">
+  <BaseTextAreaField
         v-model="form.description"
         label="Description"
         placeholder="Sprint description..."
         type="textarea"
-        :rows="4"
-        class="mt-4"
+        :rows="4" 
       />
+       </div>
+    
       <div></div>
     </div>
 
     <!-- Footer -->
     <div
-      class="flex justify-end gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border"
+      class="flex justify-end gap-2 p-6 sticky bottom-0  bg-bg-input border-t border-border"
     >
       <Button variant="secondary" @click="cancel">Cancel</Button>
       <Button variant="primary" :disabled="!isValid" @click="save">{{

@@ -11,7 +11,7 @@
 
     <!-- Trigger -->
     <div ref="triggerRef"
-      class="relative px-3 py-2 rounded-xl w-full border text-sm cursor-pointer flex justify-between items-center"
+      class="relative px-3 py-2 rounded-md w-full border text-sm cursor-pointer flex justify-between items-center"
       :class="[
         size === 'md' ? 'h-10': size === 'sm' ? 'h-8 !rounded-md' : 'h-12',
         theme === 'dark' ? 'bg-bg-input border-border ' : 'bg-bg-input border-border ',

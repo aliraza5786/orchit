@@ -96,6 +96,9 @@
     <template v-if="sprintDetailData?.status == 'active'">
       <ActiveSprint :sptint_id="selectedSprintId" :searchQuery="searchQuery" />
     </template>
+    <template v-else-if="isStartingSprint">
+          <KanbanSkeleton/>
+    </template>
     <div v-else class="p-4 w-full min-w-0 box-border h-full min-h-0">
       <!-- Header -->
       <div
@@ -107,8 +110,6 @@
           :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
           :style="{ width: leftWidth + 'px' }"
         >
-          
-
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold flex gap-2 items-center">
               <input
@@ -116,7 +117,8 @@
                 class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
                 v-model="checkedAll"
               />
-               Backlog ({{ backlogResp?.cards?.length }} {{ backlogResp?.cards?.length > 1 ? 'Tasks' : 'Task' }})
+              Backlog ({{ backlogResp?.cards?.length }}
+              {{ backlogResp?.cards?.length > 1 ? "Tasks" : "Task" }})
             </h2>
             <div class="flex items-center gap-2">
               <button
@@ -153,23 +155,24 @@
             @open-create-ticket="openCreateBacklogTicket"
           />
         </section>
-         <!-- Resize Handle (appears on hover) -->
-          <div
-            class=" h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
-            @mousedown="startResize"
-          ></div>
+        <!-- Resize Handle (appears on hover) -->
+        <div
+          class="h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
+          @mousedown="startResize"
+        ></div>
         <section
-          class="space-y-6 p-4 rounded-md relative group ovrflow-hidden flex-1 h-full min-h-0 box-border  min-w-[400px]"
+          class="space-y-6 p-4 rounded-md relative group ovrflow-hidden flex-1 h-full min-h-0 box-border min-w-[400px]"
           :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
         >
           <div class="flex items-center justify-between">
             <h2 class="text-sm font-semibold flex gap-2 items-center mt-1">
-               <input
+              <input
                 type="checkbox"
                 class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
                 v-model="checkedSprintAll"
               />
-              Sprint ({{ firstSprint?.tickets?.length }} {{ firstSprint?.tickets?.length >1 ? 'Tasks': 'Task' }})
+              Sprint ({{ firstSprint?.tickets?.length }}
+              {{ firstSprint?.tickets?.length > 1 ? "Tasks" : "Task" }})
             </h2>
           </div>
           <div
@@ -187,7 +190,7 @@
             :searchQuery="searchQuery"
             :sprintId="selectedSprintId"
             v-if="firstSprint"
-            :checkedSprintAll = checkedSprintAll
+            :checkedSprintAll="checkedSprintAll"
             :sprint="firstSprint"
             @open-ticket="openTicket"
             @edit-sprint="openEditSprint"
@@ -223,7 +226,7 @@
     itemLabel="Sprint"
     :itemName="selectedSprint?.title"
     :requireMatchText="selectedSprint?.title"
-    confirmText="Delete Ticket"
+    confirmText="Delete Sprint"
     cancelText="Cancel"
     size="md"
     :loading="isDeleting"
@@ -249,6 +252,8 @@
     @save="startSprintHandler"
     :creatingSprint="isStartingSprint || isUpdatingSprint2"
   />
+  
+
 
   <TaskDetailsModal
     v-model="showTaskModal"
@@ -292,6 +297,7 @@ import CreateBacklogTicketWithModuleSelection from "./modals/CreateBacklogTicket
 import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
+import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
 const { theme } = useTheme();
 const showTaskModal = ref(false);
 const searchQuery = ref("");
@@ -335,8 +341,16 @@ const { mutate: updateSprint2, isPending: isUpdatingSprint2 } = useUpdateSprint(
   {
     onSuccess: (data: any) => {
       saveSprintMeta({ name: data.title });
+      console.log(data, "this is testing data");
       startSprint({
         id: selectedSprintId.value,
+        payload: {
+          title: data.title,
+          start_date: data.start_date,
+          end_date: data.end_date,
+          goal: data.goal,
+          duration: Number(data.duration_days),  
+        },
       });
       // queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
       startsprintModalOpen.value = false;
@@ -354,9 +368,11 @@ const startSprintHandler = (e: any) => {
   updateSprint2({
     id: selectedSprintId.value,
     payload: {
-      goal: e.goal,
+      title: e.title,
+      duration: e.duration,
       start_date: e.start,
       end_date: e.end,
+      goal: e.goal,
     },
   });
 };
@@ -386,9 +402,11 @@ watch(
 // }
 
 const { data: sprintDetailData, refetch: refetchSprintDetail } =
-  useSprintDetail(firstSprintId);
+  // useSprintDetail(firstSprintId);
+  useSprintDetail(selectedSprintId);
 const startsprintModalOpen = ref(false);
 const openStartSprintModal = () => {
+  console.log(firstSprint.value, "this is sprint");
   startsprintModalOpen.value = true;
 };
 const {
@@ -405,6 +423,11 @@ watch(
     // loadingState.value=newVal;
   }
 );
+
+watch(() => selectedSprintId.value, () => {
+  refetchSprintDetail();
+});
+
 // Convert API sprint to store Sprint format with cards
 const firstSprint = computed(() => {
   const apiSprint = sprintData?.value?.backlog_items;
@@ -567,7 +590,6 @@ function saveSprintHandler(e: any) {
 function openSprintModal() {
   selectedSprint.value = null;
   console.log(">>> felo");
-
   sprintModalOpen.value = true;
 }
 function openEditSprintModal(e: any) {

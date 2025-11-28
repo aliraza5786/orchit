@@ -3,7 +3,7 @@
       
         <div
             class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
-             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto  flex  ">
+            shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto  flex  ">
 
             <KanbanSkeleton v-show="isPending" />
             <div v-show="!isPending" class="flex  overflow-x-auto gap-3 p-4">

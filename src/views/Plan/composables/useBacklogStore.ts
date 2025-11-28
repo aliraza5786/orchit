@@ -24,6 +24,7 @@ export interface Sprint {
   end?: string;
   started: boolean;
   tickets: Ticket[];
+ duration?: string | number;
 }
 
 const LS_PREFIX = "jira-like:";

@@ -3,7 +3,7 @@
     <!-- Trigger -->
     <button
       type="button"
-      class="inline-flex text-xs w-full items-center transition"
+      class="inline-flex text-xs w-full items-start transition"
       :class="[
         disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
         theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'
@@ -11,8 +11,8 @@
       @click="toggle"
       :disabled="disabled"
     >
-      <span v-if="selectedDate">{{ formattedLabel }}</span>
-      <span v-else class="opacity-70">{{ placeholder }}</span>
+      <span class="text-[14px]" v-if="selectedDate">{{ formattedLabel }}</span>
+      <span v-else class="opacity-70 text-[14px]">{{ placeholder }}</span> 
     </button>
 
     <!-- Popover -->
@@ -21,7 +21,7 @@
         <div
           v-if="open"
           ref="popover"
-          class="z-[9999] rounded-xl shadow-lg border p-3 select-none"
+          class="z-[9999] rounded-md shadow-lg border p-3 select-none"
           :style="{
             position: 'fixed',
             top: coords.top + 'px',
@@ -52,10 +52,10 @@
             <div v-for="(box, i) in boxes" :key="i">
               <button
                 v-if="box.date"
-                class="w-9 h-9 rounded-full text-sm flex items-center justify-center hover:bg-bg-dropdown-menu-hover transition"
+                class="h-8 w-8 rounded-full text-sm flex items-center justify-center hover:bg-bg-dropdown-menu-hover hover:text-text-primary transition"
                 :class="[
-                  isSameDay(box.date, today) ? 'ring-1 ring-gray-400' : '',
-                  isSameDay(box.date, selectedDate) ? 'bg-bg-card text-text-primary' : '',
+                  isSameDay(box.date, today) ? 'border border-gray-400' : '',
+                  isSameDay(box.date, selectedDate) ? 'bg-accent text-white border border-accent hover:bg-accent' : '',
                   box.disabled ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''
                 ]"
                 :disabled="box.disabled"
