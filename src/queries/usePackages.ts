@@ -72,8 +72,7 @@ export const useRoles = (id:any,options = {}) => {
 
 
 export const useUpdatePermissions = (id:any, options = {}) => {
-  console.log(id, unref(id), '>>>>>');
-  
+ 
   return useApiMutation<any, any>(
     {
       key: ["update-permissions", id],

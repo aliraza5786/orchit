@@ -119,7 +119,7 @@ import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 /** Emits */
 const emit = defineEmits<{
   (e: "update:modelValue", v: boolean): void;
-  (e: "save", v: Partial<Sprint>): void;
+  (e: "save", v: any): void;
   (e: "close"): void;
 }>();
 
