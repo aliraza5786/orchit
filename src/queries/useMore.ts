@@ -80,7 +80,9 @@ export const useModuleDetail = (id: any, options = {}) => {
     queryKey: ["module-detail", id],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `/common/workspace-modules-filter?workspace_module_id=${unref(id)}`,
+        url: `/common/workspace-modules-filter?workspace_module_id=${unref(
+          id
+        )}`,
         method: "GET",
         signal,
       }),
@@ -112,6 +114,21 @@ export const useCreateComment = (options = {}) =>
       mutationFn: (vars: any) =>
         request({
           url: `common/workspace-module-comments`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+export const useUseModule = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["use-module"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `common/workspace-modules/clone`,
           method: "POST",
           data: vars.payload,
         }),
