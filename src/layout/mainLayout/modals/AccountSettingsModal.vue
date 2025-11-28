@@ -307,7 +307,7 @@ import { useQuery, useMutation } from '@tanstack/vue-query'
 import { getProfile, updateProfile, useCompanyId } from '../../../services/user'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
 import { toast } from 'vue-sonner'
-import { confirmPayment, useCurrentPackage, useRoles, useRolesPermisions, useUpdatePermissions, useUpgradePackage } from '../../../queries/usePackages'
+import { confirmPayment, useCurrentPackage, useRoles, useUpdatePermissions, useUpgradePackage } from '../../../queries/usePackages'
 import { extractYear, formatDate } from '../../../utilities/FormatDate'
 import { useRoute, useRouter } from 'vue-router'
 import { useWorkspaceStore } from '../../../stores/workspace'
@@ -315,7 +315,7 @@ const workspaceStore = useWorkspaceStore()
 const route = useRoute();
 const router = useRouter();
 
-const selectedRole = ref(null)
+const selectedRole = ref<any>(null)
 
 const { data: currentPackage, refetch: reftechCurrentPackage, isPending } = useCurrentPackage();
 const sessionId = route.query.session_id;
