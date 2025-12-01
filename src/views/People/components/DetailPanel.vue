@@ -130,8 +130,7 @@
             @update:modelValue="handleRoleChange"
           /> -->
           <select
-            v-model="selectedRole"
-            @change="handleRoleChange($event.target.value)"
+            v-model="selectedRole" 
             class="custom-select outline-0 "
           >
             <option disabled value="">Select Role</option>
@@ -344,14 +343,12 @@ const { mutate: assignRole } = useAssignRole({
   onError: (err: any) => console.error(err),
 });
 
-const handleRoleChange = (roleId: string) => {
-  selectedRole.value = roleId;
-
+ watch(selectedRole, (newRole) => {
   assignRole({
-    id: props.details?._id!, // team member or card id
-    workspace_access_role_id: roleId,
+    id: props.details?._id!,
+    workspace_access_role_id: newRole,
   });
-};
+});
 
 watch(
   () => props.details?.workspace_access_role_id,
