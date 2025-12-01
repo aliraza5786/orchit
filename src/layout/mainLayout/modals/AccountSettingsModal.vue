@@ -184,10 +184,10 @@
         </template>
 
         <template #Roles>
-          <div class="space-y-6 h-full  flex overflow-y-auto gap-2">
+          <div class="space-y-6 h-full  flex overflow-hidden gap-2">
 
             <!-- 1️⃣ SHOW ROLES LIST -->
-            <div class="min-w-[250px] max-w-[300px] sticky top-0 border-r border-border p-2">
+            <div class="min-w-[250px] max-w-[300px] sticky top-0 border-r border-border p-2 overflow-y-auto">
               <h2 class="text-2xl flex  font-semibold mb-4">Roles</h2>
 
               <div class="space-y-3">
@@ -204,7 +204,7 @@
             <hr class="border-border my-4" />
 
             <!-- 2️⃣ SHOW PERMISSIONS OF SELECTED ROLE -->
-            <div v-if="selectedRole" class="w-full">
+            <div v-if="selectedRole" class="w-full overflow-y-auto">
               <h2 class="text-lg  mb-4">
                 Permissions for: <span class="font-semibold">
 
@@ -594,7 +594,9 @@ const toggle = (key: string) => {
 // Track selected permissions
 const selected = ref<string[]>([]);
 const { data: id } = useCompanyId();
-const { data: roles } = useRoles(id)
+const { data: roles } = useRoles(id, {
+  enabled: computed(() => !!id?.value)
+})
 const { mutate: updatePermissions } = useUpdatePermissions(selectedRole)
 watch(roles, (roles) => {
   if (!roles) return;

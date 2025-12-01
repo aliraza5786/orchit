@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/vue-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import { request } from "../libs/api";
 import { useApiMutation } from "../libs/vq";
-import { unref, type Ref } from "vue";
+import { unref, type Ref } from "vue"; 
 // import type { DashboardTeamsData } from "../types";
 
 export const usePeopleList = (workspace_id: any, viewID: any, options = {}) => {
@@ -231,3 +231,44 @@ export const ReOrderCard = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+
+
+// work space roles
+export const useWorkspaceRoles = (workspace_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["workspace-roles", workspace_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `roles/workspace-access-roles/without-permission?workspace_id=${workspace_id.value}`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!workspace_id,
+    ...options,
+  });
+};
+
+
+ interface AssignRolePayload {
+  id: string;
+  workspace_access_role_id: string;
+}
+
+export const useAssignRole = (options = {}) => {
+  return useApiMutation<any, AssignRolePayload>(
+    {
+      key: ["assign-role"],
+    } as any,
+    {
+      mutationFn: (vars: AssignRolePayload) =>
+        request({
+          url: `common/team/${vars.id}`,
+          method: "PUT",
+          data: { workspace_access_role_id: vars.workspace_access_role_id },
+        }),
+      ...(options as any),
+    } as any
+  );
+};
+
