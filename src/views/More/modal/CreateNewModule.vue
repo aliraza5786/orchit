@@ -152,8 +152,10 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import IconPicker from '../../Product/components/IconPicker.vue'
 import { useCreateModule, useCreateModuleAI } from '../../../queries/useMore'
 // import { useSuggestions } from '../../../queries/useWorkspace'
+import { usePermissions } from '../../../composables/usePermissions'
 
 const props = defineProps<{ modelValue: boolean }>()
+const { canCreateModule } = usePermissions()
 
 const emit = defineEmits(['update:modelValue'])
 
@@ -184,6 +186,9 @@ const { mutate: createModule, isPending: creatingModule } = useCreateModule({
 
 function submitManual() {
     if (!validateManual()) return
+    if (!canCreateModule.value) {
+        return
+    }
 
     // if (props.sheet?._id) {
     //     updateSheet({
@@ -266,6 +271,9 @@ const { mutate: generateAI, isPending: isAiPending } = useCreateModuleAI({
 
 function handleGenerateSheet() {
     if (!description.value.trim()) return
+    if (!canCreateModule.value) {
+        return
+    }
     isPending.value = true
     generateAI({
         payload: {
@@ -330,6 +338,9 @@ const chosenTemplate = ref<Template | null>(null)
 function chooseTemplate(tpl: Template) { chosenTemplate.value = tpl }
 function submitTemplate() {
     if (!chosenTemplate.value) return
+    if (!canCreateModule.value) {
+        return
+    }
     createModule({
         icon: null,
         variables: {

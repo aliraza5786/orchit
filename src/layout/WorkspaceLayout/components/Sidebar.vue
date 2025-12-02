@@ -54,7 +54,7 @@
 </Draggable> -->
 
         <!-- Static More Item -->
-        <div class="  hidden sm:block text-center ">
+        <div v-if="canCreateModule" class="  hidden sm:block text-center ">
             <SideItem id="more" label="Add" :to="`/workspace/more/${workspaceId}`" :icon="{
                 prefix: 'fa-solid',
                 iconName: 'fa-plus'
@@ -70,10 +70,12 @@
 import { ref, watch } from 'vue'
 import SideItem from './SideItem.vue';
 import { useRouteIds } from '../../../composables/useQueryParams';
+import { usePermissions } from '../../../composables/usePermissions';
 const { workspaceId,
     // jobId
 
 } = useRouteIds()
+const { canCreateModule } = usePermissions()
 const props = defineProps<{ workspace: { modules: any, generation_task: any }, isLoading: boolean }>()
 const modules = ref([]);
 watch(props, () => {

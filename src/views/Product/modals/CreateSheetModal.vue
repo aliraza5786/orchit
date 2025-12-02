@@ -149,8 +149,10 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import { useCreateWorkspaceSheet, useCreateWorkspaceSheetAI, useUpdateWorkspaceSheet } from '../../../queries/useSheets'
 import Button from '../../../components/ui/Button.vue'
 // import { useSuggestions } from '../../../queries/useWorkspace'
+import { usePermissions } from '../../../composables/usePermissions'
 
 const props = defineProps<{ modelValue: boolean, sheet: any }>()
+const { canCreateSheet, canEditSheet } = usePermissions()
 
 const emit = defineEmits(['update:modelValue'])
 
@@ -190,6 +192,7 @@ function submitManual() {
     if (!validateManual()) return
 
     if (props.sheet?._id) {
+        if (!canEditSheet.value) return
         updateSheet({
             sheet_id: props.sheet._id,
             icon: form.value.icon,
@@ -202,6 +205,7 @@ function submitManual() {
             workspace_module_id: moduleId.value,
         })
     } else {
+        if (!canCreateSheet.value) return
         createSheet({
             icon: form.value.icon,
             variables: {
@@ -268,6 +272,7 @@ const { mutate: generateAI, isPending: isAiPending } = useCreateWorkspaceSheetAI
 
 function handleGenerateSheet() {
     if (!description.value.trim()) return
+    if (!canCreateSheet.value) return
     isPending.value = true
     generateAI({
         module_id: moduleId.value,

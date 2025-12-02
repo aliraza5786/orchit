@@ -94,6 +94,8 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import DatePicker from '../components/DatePicker.vue'
 import { useQueryClient } from '@tanstack/vue-query'
+import { usePermissions } from '../../../composables/usePermissions'
+const { canCreateCard } = usePermissions()
 
 /** Emits */
 const emit = defineEmits<{
@@ -280,6 +282,7 @@ function create() {
 
   // prevent submission if invalid
   if (!isValid.value || isSubmitting.value) return
+  if (!canCreateCard.value) return
 
   const payload = {
     sheet_list_id: props.listId,

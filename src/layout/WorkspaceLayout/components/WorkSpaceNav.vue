@@ -41,7 +41,7 @@
             :selected="workspaceStore.isLaneSelected(item._id)" />
         </li>
 
-        <li
+        <li v-if="canCreateLane"
           class="hover:text-accent text-nowrap text-text-primary flex gap-2 items-center text-xs cursor-pointer px-2 py-1"
           @click="createLaneHandler">
           <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -104,6 +104,8 @@ import { useRouter } from 'vue-router';
 import { useSingleWorkspace, useWorkspaces } from '../../../queries/useWorkspace';
 import { useWorkspaceId } from '../../../composables/useQueryParams';
 import { useQueryClient } from '@tanstack/vue-query';
+import { usePermissions } from '../../../composables/usePermissions';
+const { canCreateLane } = usePermissions()
 
 const router = useRouter();
 const workspaceStore = useWorkspaceStore();

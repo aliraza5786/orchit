@@ -88,3 +88,25 @@ export const useUpdatePermissions = (id:any, options = {}) => {
     } as any
   );
 };
+
+
+// workspace roles
+
+export const useWorkspaceRoles = (workspace_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ['workspace-roles', workspace_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `roles/workspace-access-roles/without-permission?workspace_id=${workspace_id}`,
+        method: 'GET',
+        signal,
+      }),
+    enabled: !!workspace_id,
+    ...options,
+  })
+}
+
+
+
+
+ 

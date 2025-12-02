@@ -69,7 +69,9 @@ import { useCreateWorkspaceLane } from '../../../queries/useLane'
 import { reactive, computed } from 'vue'
 // import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
+import { usePermissions } from '../../../composables/usePermissions'
 const { workspaceId } = useWorkspaceId();
+const { canCreateLane } = usePermissions()
 
 
 // validations
@@ -146,6 +148,7 @@ function next() {
   touched.title = true;
   touched.description = true
   if (titleError.value || descriptionError.value) return
+  if (!canCreateLane.value) return
 
 
 

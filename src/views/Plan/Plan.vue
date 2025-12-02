@@ -127,6 +127,7 @@
                 <img :src="filter" alt="icon" class="w-[16px]" /> Filters
               </button>
               <button
+                v-if="canCreateCard"
                 class="w-8 h-8 rounded-md border cursor-pointer aspect-square text-sm border-border hover:bg-bg-body"
                 @click="openCreateBacklogTicket"
               >
@@ -298,7 +299,9 @@ import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
 import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
+import { usePermissions } from "../../composables/usePermissions";
 const { theme } = useTheme();
+const { canCreateCard } = usePermissions();
 const showTaskModal = ref(false);
 const searchQuery = ref("");
 const checkedAll = ref(false);

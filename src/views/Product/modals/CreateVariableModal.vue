@@ -88,8 +88,10 @@
   import { useRouteIds } from '../../../composables/useQueryParams';
   import { useCreateVar } from '../../../queries/useSheets';
   import { useQueryClient } from '@tanstack/vue-query';
+  import { usePermissions } from '../../../composables/usePermissions';
   
   const { moduleId, workspaceId } = useRouteIds()
+  const { canCreateVariable } = usePermissions()
   
   /** Props & Emits */
   const emit = defineEmits<{
@@ -171,6 +173,7 @@ const isValid = computed(() => {
   /** Actions */
   function submit() {
     if (!isValid.value) return
+    if (!canCreateVariable.value) return
     const payload = {
       description: description.value,
       title: dropdownTitle.value.trim(),

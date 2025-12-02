@@ -21,8 +21,8 @@
                 @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEdit" class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10
                              focus:outline-none focus:ring-2 focus:ring-accent/40 transition" type="text"
                 aria-label="Edit title" />
-              <h1 v-else key="title-view" class="text-2xl font-semibold tracking-tight cursor-text rounded-lg px-2 py-1
-                             hover:bg-orchit-white/5 transition" @click="editTitle" aria-label="Card title">
+              <h1 v-else key="title-view" class="text-2xl font-semibold tracking-tight rounded-lg px-2 py-1 transition"
+                :class="canEditCard ? 'cursor-text hover:bg-orchit-white/5' : ''" @click="canEditCard ? editTitle() : null" aria-label="Card title">
                 {{ localTitle || 'Untitled' }}
               </h1>
             </Transition>
@@ -64,12 +64,12 @@
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
                   <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
-                    :model-value="lane" @update:modelValue="setLane" />
+                    :model-value="lane" @update:modelValue="setLane" :disabled="!canEditCard" />
                 </div>
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
                   <AssigmentDropdown :name="true" :workspaceId="cardDetails.workspace_id" @assign="assignHandle"
-                    :assigneeId="curentAssigne" :seat="details.seat" />
+                    :assigneeId="curentAssigne" :seat="details.seat" :disabled="!canAssignCard" />
                 </div>
                 <template v-if="!pin">
                   <div class="space-y-2">
@@ -231,6 +231,8 @@ import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdo
 import { useQueryClient } from '@tanstack/vue-query'
 // import { useRouteIds } from '../../../composables/useQueryParams'
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
+import { usePermissions } from '../../../composables/usePermissions'
+const { canCreateComment, canEditComment, canEditCard, canAssignCard } = usePermissions()
 import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
@@ -270,6 +272,7 @@ function editTitle() {
 }
 
 function saveTitle() {
+  if (!canEditCard.value) return
   if (!localTitle.value.trim()) localTitle.value = details.value?.['card-title'] ?? ''
   if (details.value._id) {
     moveCard.mutate({ card_id: details.value._id, variables: { 'card-title': localTitle.value.trim() } })
@@ -347,6 +350,7 @@ const laneOptions = computed<any[]>(() =>
 )
 
 function setLane(v: any) {
+  if (!canEditCard.value) return
   lane.value = v
   if (details.value._id) {
     moveCard.mutate({ card_id: details.value._id, 'workspace_lane_id': v })
@@ -365,12 +369,14 @@ const endDateError = computed(() =>
 )
 
 const setStartDate = (e: any) => {
+  if (!canEditCard.value) return
   if (details.value._id) {
     moveCard.mutate({ card_id: details.value._id, variables: { 'start-date': e } })
   }
 }
 
 const setEndDate = (e: any) => {
+  if (!canEditCard.value) return
   if (details.value._id) {
     moveCard.mutate({ card_id: details.value._id, variables: { 'end-date': e } })
   }
@@ -378,8 +384,9 @@ const setEndDate = (e: any) => {
 
 const curentAssigne = computed(() => details.value?.assigned_to)
 const assignHandle = (user: any) => {
+  if (!canAssignCard.value) return
   if (details.value._id) {
-    moveCard.mutate({ card_id: details.value._id, seat_id: user?._id })
+moveCard.mutate({ card_id: details.value._id, seat_id: user?._id })
   }
 }
 
@@ -416,6 +423,7 @@ function cancelEdit() { editingId.value = null; editText.value = ''; editingTitl
 function saveEdit(c: any) {
   const text = editText.value.trim()
   if (!text) return
+  if (!canEditComment.value) return
   const idx = comments.value.findIndex((x: any) => x._id === c._id)
   const prev = idx > -1 ? { ...comments.value[idx] } : null
   if (idx > -1) comments.value[idx] = { ...comments.value[idx], comment_text: text }
@@ -472,6 +480,7 @@ function handleFileChange(event: any) {
 function postComment() {
   const comment_text = newComment.value.trim()
   if (!comment_text && !commentAttachments.value.length) return
+  if (!canCreateComment.value) return
   if (details.value._id) {
     createComment({
       id: details.value._id,

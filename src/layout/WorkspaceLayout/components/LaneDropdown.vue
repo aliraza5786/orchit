@@ -24,7 +24,7 @@
       leave-to-class="opacity-0 scale-95">
       <div v-if="isOpen" class="fixed z-50 mt-2 w-[250px] bg-bg-dropdown   rounded-md shadow " @click.stop="">
         <!-- Name Input -->
-        <div class="px-3 py-3.5 ">
+        <div v-if="canEditLane" class="px-3 py-3.5 ">
           <input v-model="currentName"
             @change.stop="() => handleUpdateLane({ variables: { 'lane-title': currentName } })" placeholder="Enter name"
             class="w-full text-text-primary bg-bg-input px-3 py-2 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 "
@@ -73,23 +73,23 @@
 
         <!-- Action List -->
         <div class=" border-t  border-border text-sm text-text-primary  font-medium">
-          <div class=" flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
+          <div v-if="canEditLane" class=" flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
             @click="handleEdit">
             <i class="fa-regular fa-pen-to-square"></i>
 
             Edit
           </div>
-          <div class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
+          <div v-if="canCreateLane" class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
             @click="handleDuplicateLane">
             <i class="fa-regular fa-copy"></i>
             {{ isDuplicating ? 'Duplicating...' : 'Duplicate' }}
           </div>
-          <div
+          <div v-if="canEditLane"
             class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer border-b border-border"
             @click="handleUpdateLane({ is_archive: true })">
             <i class="fa-regular fa-folder-closed"></i> Archive
           </div>
-          <div @click="() => {
+          <div v-if="canEditLane" @click="() => {
             showDelete = true
           }" class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover text-[#DC043B] cursor-pointer">
             <i class="fa-regular fa-trash-can"></i> Delete
@@ -137,6 +137,8 @@ import { useDeleteWorkspaceLane, useDuplicateWorkspaceLane, useUpdateWorkspaceLa
 import { useQueryClient } from '@tanstack/vue-query'
 // import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
+import { usePermissions } from '../../../composables/usePermissions'
+const { canEditLane, canCreateLane } = usePermissions()
 const showDelete = ref(false)
 const queryClient = useQueryClient()
 const colors = [
@@ -212,19 +214,23 @@ const handleClickOutside = (event: any) => {
   }
 }
 function selectColor(color: any) {
+  if (!canEditLane.value) return
   handleUpdateLane({ variables: { 'lane-color': color.color }, lane_id: props.id })
   selectedColor.value = color
   showColors.value = false
 }
 const handleUpdateLane = (payload: any) => {
+  if (!canEditLane.value) return
   updateLane({ payload: { ...payload, lane_id: props.id } })
 }
 
 const handleDuplicateLane = () => {
+  if (!canCreateLane.value) return
   duplicateLane({ id: props.id });
 
 }
 const handleDelete = () => {
+  if (!canEditLane.value) return
   isOpen.value = false;
   deleteLane({ id: props.id });
 }
