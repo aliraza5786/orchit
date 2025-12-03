@@ -1,5 +1,5 @@
 <template>
-  <div class="flex bg-bg-body flex-col min-h-[600px] h-full w-80 rounded-lg transition-all duration-200"
+  <div class="flex bg-bg-body flex-col min-h-[565px] h-full w-80 rounded-lg transition-all duration-200"
     :class="columnBgClass">
     <!-- Column header -->
     <div class="flex items-center justify-between w-full p-4 border-b border-border cursor-grab">
@@ -64,7 +64,7 @@ import Draggable from 'vuedraggable'
 import DropMenu from '../../ui/DropMenu.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 import { usePermissions } from '../../../composables/usePermissions';
-const {  canDeleteVariable } = usePermissions();
+const {  canDeleteVariable, canEditVariable } = usePermissions();
 type Id = string | number
 export interface Ticket { _id: Id;[k: string]: any }
 export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any ,showADDNEW?:any}
@@ -98,6 +98,7 @@ const titleInputRef = ref<HTMLInputElement | null>(null)
 watch(() => props.column.title, (v) => { localTitle.value = v })
 
 function beginEdit() {
+  if(canEditVariable.value) return
   const isEditable = showActions();
   if (!isEditable) return;
 

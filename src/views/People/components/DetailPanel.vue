@@ -109,6 +109,7 @@
               :defaultValue="getDefaultValue(item?._id)"
               :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
               :cardId="details?._id"
+              :canEditCard="!canEditUser"
               @update:modelValue="(val: any) => handleSelect(val, item._id)"
             />
           </div>
@@ -117,26 +118,30 @@
         <!-- work space  -->
         <div class="mt-5 pt-3 border-t border-border-input relstive">
           <span class="text-sm inline-block mb-1">Select Role</span>
-          <!-- <BaseSelectField
+          <BaseSelectField
             size="sm"
             :model-value="selectedRole"
             :options="
-              (workspaceRoles || []).map((r:any) => ({
-                _id: r._id,
+             (workspaceRoles || []).map((r:any) => ({
+                 _id: r._id,
                 title: r.title,
-              }))
+             }))
             "
             placeholder="Select Role" 
-          /> -->
-          <select
-            v-model="selectedRole" 
-            class="custom-select outline-0 "
+            @click.stop="handleRoleClick"
+            @update:modelValue="handleRoleChange"
+            :canEditCard="!canEditUser"
+          />
+          <!-- <select
+            v-model="selectedRole"
+            class="custom-select outline-0"
+            :canEditCard="!canEditUser"
           >
             <option disabled value="">Select Role</option>
             <option v-for="r in workspaceRoles" :key="r._id" :value="r._id">
               {{ r.title }}
             </option>
-          </select>
+          </select> -->
         </div>
       </section>
 
@@ -195,6 +200,9 @@ import { avatarColor } from "../../../utilities/avatarColor";
 
 // workspace roles
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
+
+import { usePermissions } from "../../../composables/usePermissions";
+const { canInviteUser, canEditUser, canDeleteUser } = usePermissions();
 
 const localVarValues = reactive<any>({});
 const activeTab = ref<"details" | "tasks" | "history">("details");
@@ -342,7 +350,7 @@ const { mutate: assignRole } = useAssignRole({
   onError: (err: any) => console.error(err),
 });
 
- watch(selectedRole, (newRole) => {
+watch(selectedRole, (newRole) => {
   assignRole({
     id: props.details?._id!,
     workspace_access_role_id: newRole,
@@ -355,12 +363,34 @@ watch(
     selectedRole.value = newRoleId ?? "";
   }
 );
+
+import { toast } from "vue-sonner"; // or your toast library
+
+function handleRoleClick() {
+  if (!canEditUser) {
+    toast.error("You have no permission to edit user details");
+  }
+}
+
+function handleRoleChange(newRole: any) {
+  if (!canEditUser) {
+    toast.error("You have no permission to edit user details");
+    return;
+  }
+
+  selectedRole.value = newRole;
+
+  assignRole({
+    id: props.details?._id!,
+    workspace_access_role_id: newRole,
+  });
+}
 </script>
 
 <style scoped>
- .custom-select {
+.custom-select {
   width: 100%;
-  height: 32px;            /* same as size="sm" */
+  height: 32px; /* same as size="sm" */
   padding: 0 12px;
   border-radius: 6px;
   border: 1px solid var(--border, #d1d5db);
@@ -388,5 +418,4 @@ watch(
   color: var(--text-primary, #111);
   border: 0;
 }
-
 </style>

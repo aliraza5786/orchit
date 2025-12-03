@@ -45,7 +45,7 @@
           :class="
             selected
               ? ' line-clamp-1 overflow-ellipsis '
-              : 'text-text-secondary'
+              : 'text-text-secondary line-clamp-1 overflow-ellipsis'
           "
         >
           {{ selected?.title || placeholder }}

@@ -20,8 +20,9 @@
           <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
         </template>
         <template #column-footer="{ column }: any">
-          <div v-if="!column.showADDNEW" @click="toggleAddNewColumn(column)"
-            class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary cursor-pointer border-dashed mb-4 mx-4 rounded-md">
+          <div  v-if="!column.showADDNEW" @click="toggleAddNewColumn(column)"
+            :disabled="!canInviteUser" :class="canInviteUser? 'cursor-pointer':'cursor-not-allowed'"
+            class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md">
             <i class="fa-solid fa-plus"></i> Add Seat
           </div>
           <div v-else-if="column.showADDNEW" class="p-4 space-y-2 bg-bg-surface m-4 rounded-md">
@@ -40,16 +41,16 @@
             />
           <p class="text-xs mt-1.5">You can add details while editing</p>
           <div class="flex items-center mt-3 gap-3">
-            <Button @click="emitAddColumn" type="submit"  variant="primary"
-              class="px-3 py-1 bg-accent cursor-pointer text-white rounded">
+            <Button :disabled="!canInviteUser" :class="canInviteUser? 'cursor-pointer':'cursor-not-allowed'" @click="emitAddColumn" type="submit"  variant="primary"
+              class="px-3 py-1 bg-accent  text-white rounded">
               {{ addingList ? 'Adding...' : 'Add Team' }}
             </Button>
             <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
           </div>
         </form>
         <button v-else
-          class="text-sm text-text-primary py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-          @click.stop="setActiveAddList">
+          class="text-sm text-text-primary py-2.5  font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+          @click.stop="setActiveAddList" :disabled="!canCreateVariable" :class="canCreateVariable? 'cursor-pointer':'cursor-not-allowed'">
           + Add Team
         </button>
       </div>
@@ -84,6 +85,10 @@ import { debounce } from 'lodash';
 import SearchBar from '../../components/ui/SearchBar.vue';
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 const KanbanCard = defineAsyncComponent(() => import('./components/KanbanCard.vue'));
+
+import { usePermissions } from '../../composables/usePermissions'
+const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canInviteUser, canViewUser, canEditUser, canDeleteUser} = usePermissions()
+
 const viewData = [
   {
     title: 'Role',
@@ -244,6 +249,7 @@ function extractNameFromEmail(email: string) {
 }
 // Handle toggling of "Add Seat" form for each column
 const toggleAddNewColumn = (column: any) => {
+  if(!canInviteUser.value) return
   window.dispatchEvent(new CustomEvent('close-all-showADDNEW'));
   column.showADDNEW = !column.showADDNEW;
 };

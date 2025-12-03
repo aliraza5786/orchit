@@ -115,7 +115,7 @@ export function usePermissions() {
   const canInviteUser = computed(() => hasPermission("workspace.user.invite"));
   const canViewUser = computed(() => hasPermission("workspace.user.view_all"));
   const canEditUser = computed(() => hasPermission("workspace.user.update"));
-
+  const canDeleteUser = computed(() => hasPermission("workspace.user.delete"));
   // ---- Module Permissions ----
   const canCreateModule = computed(() =>
     hasPermission("workspace.module.create")
@@ -168,6 +168,7 @@ export function usePermissions() {
     canInviteUser,
     canViewUser,
     canEditUser,
+    canDeleteUser,
     canDeleteSheet
   };
 }
