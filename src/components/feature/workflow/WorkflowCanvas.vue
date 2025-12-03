@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, onMounted, onUnmounted } from 'vue'
 import {
   VueFlow,
   Handle,
@@ -25,11 +25,13 @@ import Loader from '../../ui/Loader.vue'
 const showEditEdgeModal = ref(false)
 const editEdgeName = ref('')
 const selectedEdgeId = ref<string | null>(null)
+const selectedEdgeSource = ref<string>('')
+const selectedEdgeTarget = ref<string>('')
 
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
 
-const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges } = useVueFlow()
+const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
@@ -374,6 +376,8 @@ function openEditEdge(edge: VFEdge) {
   console.log(edge, 'edge');
   
   selectedEdgeId.value = edge.id
+  selectedEdgeSource.value = edge.source
+  selectedEdgeTarget.value = edge.target
   // prefer existing label, fallback to data.name, else empty
   editEdgeName.value = String(edge.label ?? edge.data?.name ?? '')
   showEditEdgeModal.value = true
@@ -387,7 +391,13 @@ function confirmEditEdge() {
   setEdges(eds =>
     eds.map(e =>
       e.id === selectedEdgeId.value
-        ? { ...e, label: name || e.label, data: { ...(e.data ?? {}), name: name || e.data?.name } }
+        ? {
+            ...e,
+            label: name || e.label,
+            source: selectedEdgeSource.value,
+            target: selectedEdgeTarget.value,
+            data: { ...(e.data ?? {}), name: name || e.data?.name }
+          }
         : e
     )
   )
@@ -404,10 +414,37 @@ function cancelEditEdge() {
   editEdgeName.value = ''
 }
 function onEdgeClick({event, edge}:{event:any, edge:any}) {
-  console.log('>>> click',edge);
-  
   openEditEdge(edge)
   event.stopPropagation()
+}
+
+function deleteEdge() {
+  if (!selectedEdgeId.value) return
+  const confirmed = window.confirm('Are you sure you want to delete this transition?')
+  if (!confirmed) return
+
+  setEdges(eds => eds.filter(e => e.id !== selectedEdgeId.value))
+  
+  showEditEdgeModal.value = false
+  selectedEdgeId.value = null
+  editEdgeName.value = ''
+}
+
+onMounted(() => {
+  window.addEventListener('workflow:zoom', handleZoomEvent)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('workflow:zoom', handleZoomEvent)
+})
+
+function handleZoomEvent(e: Event) {
+  const detail = (e as CustomEvent).detail
+  if (!detail) return
+  
+  if (detail.action === 'in') zoomIn()
+  if (detail.action === 'out') zoomOut()
+  if (detail.action === 'reset') fitView({ padding: 0.2 })
 }
 
 </script>
@@ -473,13 +510,37 @@ function onEdgeClick({event, edge}:{event:any, edge:any}) {
 <div v-if="showEditEdgeModal" class="modal-backdrop" @click.self="cancelEditEdge">
   <div class="modal border border-border !bg-bg-body text-text-primary">
     <h3>Edit transition</h3>
-    <BaseTextField
-      v-model="editEdgeName"
-      placeholder="Transition name"
-      @keyup.enter="confirmEditEdge"
-      autofocus
-    />
+    
+    <div class="mb-3">
+      <label class="block text-xs text-text-secondary mb-1">Name</label>
+      <BaseTextField
+        v-model="editEdgeName"
+        placeholder="Transition name"
+        @keyup.enter="confirmEditEdge"
+        autofocus
+      />
+    </div>
+
+    <div class="mb-3">
+      <label class="block text-xs text-text-secondary mb-1">From</label>
+      <select v-model="selectedEdgeSource" class="w-full p-2 border border-border rounded-md bg-bg-surface text-sm">
+        <option v-for="node in nodes" :key="node.id" :value="node.id">
+          {{ node.data.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-xs text-text-secondary mb-1">To</label>
+      <select v-model="selectedEdgeTarget" class="w-full p-2 border border-border rounded-md bg-bg-surface text-sm">
+        <option v-for="node in nodes" :key="node.id" :value="node.id">
+          {{ node.data.label }}
+        </option>
+      </select>
+    </div>
     <div class="modal-actions mt-4">
+      <Button size="sm" variant="danger" @click="deleteEdge">Delete</Button>
+      <div class="flex-1"></div>
       <Button size="sm" @click="confirmEditEdge">Save</Button>
       <Button variant="secondary" size="sm" @click="cancelEditEdge">Cancel</Button>
     </div>
