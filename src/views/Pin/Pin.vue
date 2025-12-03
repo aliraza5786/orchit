@@ -3,10 +3,10 @@
 
         <!-- Header -->
         <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
-            <Dropdown @edit-option="openEditSprintModal" v-model="selected_sheet_id" :options="transformedData"
-                variant="secondary" @delete-option="handleDeleteSheetModal">
+            <Dropdown   v-model="selected_sheet_id" :options="transformedData"
+                variant="secondary" v-bind="dropdownListeners"  :canEdit="canEditSheet" :canDelete="canDeleteSheet" >
                 <template #more>
-                    <div @click="toggleCreateSheet"
+                    <div @click="toggleCreateSheet" v-if="canCreateSheet"
                         class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap">
                         <i class="fa-solid fa-plus"></i> Add new
                     </div>
@@ -39,7 +39,7 @@
                         <p class="text-sm text-text-secondary mb-2 text-center">
                             Create pins and add your ideas into the related pins.
                         </p>
-                        <Button size="sm" @click="plusHandler(column)">Create Pin</Button>
+                        <Button :disabled="!canCreateVariable" size="sm" @click="plusHandler(column)">Create Pin</Button>
                     </div>
                 </template>
             </KanbanBoard>
@@ -59,8 +59,9 @@
                     </div>
                 </div>
                 <button v-else
-                    class="text-sm text-text-primary py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-                    @click.stop="toggleAddList">
+                    class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+                    :class="!canCreateVariable ? 'cursor-not-allowed': 'cursor-pointer'"
+                    @click.stop="toggleAddList" :disabled="!canCreateVariable">
                     + Add List
                 </button>
             </div>
@@ -118,6 +119,9 @@ import SearchBar from '../../components/ui/SearchBar.vue';
 const ConfirmDeleteModal = defineAsyncComponent(() => import('../Product/modals/ConfirmDeleteModal.vue'));
 const CreateVariableModal = defineAsyncComponent(() => import('../Product/modals/CreateVariableModal.vue'));
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
+
+import { usePermissions } from '../../composables/usePermissions'
+const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet } = usePermissions()
 
 // State
 const isCreateVar = ref(false);
@@ -191,6 +195,14 @@ function handleAddColumn(value: string) {
         value
     });
 }
+const dropdownListeners = computed(() => {
+  const listeners: Record<string, Function> = {}
+
+  if (canEditSheet.value) listeners['onEdit-option'] = openEditSprintModal
+  if (canDeleteSheet.value) listeners['onDelete-option'] = handleDeleteSheetModal
+
+  return listeners
+})
 
 function emitAddColumn() {
     const trimmed = newColumn.value.trim();
@@ -285,6 +297,7 @@ const transformedData = computed(() =>
         title: item.variables['sheet-title'],
         description: item.variables['sheet-description'],
         icon: item.icon
+
     }))
 );
 
@@ -300,6 +313,7 @@ const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
     }
 })
 function handleDeleteSheetModal(opt: any) {
+    
     showDeleteModal.value = true
     selectedSheettoAction.value = opt;
 }

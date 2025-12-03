@@ -44,18 +44,19 @@
               </div>
               <span class="text-sm text-text-primary  font-medium">{{ selectedColor.label }}</span>
             </div>
-            <svg class="w-4 h-4 text-text-secondary " fill="none" stroke="currentColor" stroke-width="2"
+            <svg v-if="canEditLane" class="w-4 h-4 text-text-secondary " fill="none" stroke="currentColor" stroke-width="2"
               viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
             </svg>
           </div>
+          
 
           <!-- Submenu (moved outside for correct hover detection) -->
           <Transition name="fade-scale" enter-active-class="transition duration-200 ease-out"
             leave-active-class="transition duration-150 ease-in" enter-from-class="opacity-0 scale-95"
             enter-to-class="opacity-100 scale-100" leave-from-class="opacity-100 scale-100"
             leave-to-class="opacity-0 scale-95">
-            <div v-if="showColors"
+            <div v-if="showColors && canEditLane"
               class="absolute top-0 left-full ml-0 min-w-[246px] bg-bg-dropdown p-3 shadow-lg rounded-lg z-50"
               @mouseenter="showColors = true" @mouseleave="showColors = false">
 
@@ -89,7 +90,7 @@
             @click="handleUpdateLane({ is_archive: true })">
             <i class="fa-regular fa-folder-closed"></i> Archive
           </div>
-          <div v-if="canEditLane" @click="() => {
+          <div v-if="canDeleteLane" @click="() => {
             showDelete = true
           }" class="flex items-center gap-2 px-4 py-2 hover:bg-bg-dropdown-menu-hover text-[#DC043B] cursor-pointer">
             <i class="fa-regular fa-trash-can"></i> Delete
@@ -138,7 +139,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 // import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
 import { usePermissions } from '../../../composables/usePermissions'
-const { canEditLane, canCreateLane } = usePermissions()
+const { canEditLane, canCreateLane, canDeleteLane } = usePermissions()
 const showDelete = ref(false)
 const queryClient = useQueryClient()
 const colors = [

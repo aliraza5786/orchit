@@ -126,8 +126,7 @@
                 title: r.title,
               }))
             "
-            placeholder="Select Role"
-            @update:modelValue="handleRoleChange"
+            placeholder="Select Role" 
           /> -->
           <select
             v-model="selectedRole" 

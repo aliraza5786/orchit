@@ -30,6 +30,7 @@
             }
           "
         >
+        
         </SearchBar>
         <Button
           v-if="sprintDetailData?.status == 'active'"
@@ -299,13 +300,13 @@ import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
 import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
-import { usePermissions } from "../../composables/usePermissions";
 const { theme } = useTheme();
-const { canCreateCard } = usePermissions();
 const showTaskModal = ref(false);
 const searchQuery = ref("");
 const checkedAll = ref(false);
 const checkedSprintAll = ref(false);
+import { usePermissions } from "../../composables/usePermissions"; 
+const { canCreateCard } = usePermissions()
 // const selectedCardId = ref('');
 // const rowClickHandler= (rowId:any)=>{
 //   selectedCardId.value=rowId;

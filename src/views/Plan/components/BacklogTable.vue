@@ -31,7 +31,9 @@
         <p class="text-sm text-text-primary/90 mb-4">
           Plan and start a sprint to see issues here.
         </p>
-        <button @click="$emit('open-create-ticket')" class="relative cursor-pointer inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition text-xs px-3 py-1.5 h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"> 
+        <button :disabled="!canCreateCard" @click="$emit('open-create-ticket')" class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition text-xs px-3 py-1.5 h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"
+          :class="canCreateCard ? 'cursor-pointer':'cursor-not-allowed'"
+        > 
           Create  Ticket
         </button>
       </div>
@@ -107,6 +109,9 @@ import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
 const { theme } = useTheme();
+
+import { usePermissions } from '../../../composables/usePermissions'
+const { canCreateCard } = usePermissions()
 
 const emit = defineEmits([
   "ticket-dragged-to-sprint",

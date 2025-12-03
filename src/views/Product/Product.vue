@@ -4,9 +4,10 @@
              rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  scrollbar-visible ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
             <Dropdown @edit-option="openEditSprintModal" v-model="selected_sheet_id"
+                :canEdit="canEditSheet" :canDelete="canDeleteSheet"
                 @delete-option="handleDeleteSheetModal" :options="transformedData" variant="secondary">
                 <template #more>
-                    <div @click="createSheet()"
+                    <div v-if="canCreateSheet" @click="createSheet()"
                         class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
                         <i class="fa-solid fa-plus"></i> Add new
                     </div>
@@ -16,7 +17,7 @@
                 <Dropdown v-if="view == 'kanban'" :actions="false" prefix="View by" v-model="selected_view_by"
                     :options="variables" variant="secondary">
                     <template #more>
-                        <div @click="() => {
+                        <div v-if="canCreateVariable" @click="() => {
 
                             isCreateVar = true
                         }"
@@ -80,7 +81,9 @@
                         </div>
                     </div>
                     <button v-else
-                        class="text-sm text-text-primary   py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+                       :disabled="!canCreateVariable"
+                        class="text-sm text-text-primary   py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+                        :class="!canCreateVariable ? 'cursor-not-allowed': 'cursor-pointer'"
                         @click.stop="setActiveAddList">
                         + Add List
                     </button>
@@ -132,6 +135,9 @@ import { getInitials } from '../../utilities';
 import { avatarColor } from '../../utilities/avatarColor';
 import AssigmentDropdown from './components/AssigmentDropdown.vue';
 import DatePicker from './components/DatePicker.vue';
+
+import { usePermissions } from '../../composables/usePermissions'
+const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet} = usePermissions()
 // import { Background } from '@vue-flow/background';
 const view = ref('kanban')
 

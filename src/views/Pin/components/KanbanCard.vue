@@ -67,6 +67,9 @@ import DropMenu from '../../../components/ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 
+import { usePermissions } from '../../../composables/usePermissions';
+const { canViewCard, canDeleteCard } = usePermissions();
+
 type Priority = any
 export interface Ticket {
     _id: string | number
@@ -137,25 +140,28 @@ const handleSelect = (val: any) => {
     })
 }
 
-function getMenuItems() {
-    return [{
-        label: 'View Card', danger: true, action: () => {
-            emit('click', props.ticket)
-        },
-        icon: {
-            prefix: 'fa-regular',
-            iconName: 'fa-eye'
+function getMenuItems(): { label: string; icon?: any; action?: () => void }[] {
+  return [
+    canViewCard.value
+      ? {
+          label: 'View Card',
+          action: () => emit('click', props.ticket),
+          icon: { prefix: 'fa-regular', iconName: 'fa-eye' },
         }
-    }, {
-        label: 'Delete', danger: true, action: () => {
+      : null,
+    canDeleteCard.value
+      ? {
+          label: 'Delete',
+          danger: true,
+          action: () => {
             showDelete.value = true
-        }, icon: {
-            prefix: 'fa-regular',
-            iconName: 'fa-trash'
+          },
+          icon: { prefix: 'fa-regular', iconName: 'fa-trash' },
         }
-    },
-    ]
+      : null,
+  ].filter(Boolean) as { label: string; icon?: any; action?: () => void }[]
 }
+
 const handleDeleteTicket = () => {
     deleteCard({})
 }

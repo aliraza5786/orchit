@@ -19,6 +19,7 @@
             </div>
 
             <div
+                v-if="canDeleteCard"
                 class="product-menu-icon transition-all w-6 py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
                 <DropMenu @click.stop="" :items="getMenuItems()">
                     <template #trigger>
@@ -38,7 +39,7 @@
 
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
-                <div @click.stop>
+                <div v-if="canAssignCard" @click.stop>
                     <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
                         :seat="ticket?.seat" />
                 </div>
@@ -83,6 +84,10 @@ import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdo
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
+
+import { usePermissions } from '../../../composables/usePermissions'
+const { canDeleteCard,  canAssignCard } = usePermissions()
+
 const { workspaceId, moduleId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 
@@ -106,7 +111,7 @@ export interface Ticket {
 const props = defineProps<{
     ticket: any
     selectedVar?: any
-    footer?:boolean
+    footer?:boolean 
 }>()
 
 const priorityBorderMap: Record<Priority, string> = {
@@ -155,13 +160,21 @@ const { mutate: deleteCard, isPending: deletingTicket } = useDeleteTicket(props.
 //     })
 // }
 
-function getMenuItems() {
-    return [{
-        label: 'Delete', danger: true, action: () => {
-            showDelete.value = true
+function getMenuItems(): { label: string; danger: boolean; action: () => void }[] {
+  return [
+    canDeleteCard.value
+      ? {
+          label: "Delete",
+          danger: true,
+          action: () => {
+            showDelete.value = true;
+          },
         }
-    },
-    ]
+      : null,
+  ].filter(
+    (item): item is { label: string; danger: boolean; action: () => void } =>
+      item !== null
+  );
 }
 const handleDeleteTicket = () => {
     deleteCard({})

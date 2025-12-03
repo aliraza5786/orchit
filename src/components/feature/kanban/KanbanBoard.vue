@@ -7,7 +7,7 @@
       <!-- Each column -->
       <template #item="{ element: column }">
         <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface h-full " >
-          <KanbanColumn :plusIcon="plusIcon" :canDragList="canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
+          <KanbanColumn :plusIcon="plusIcon  && canCreateCard" :canDragList="canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
             :variable_id="variable_id" @update:column="(e) => emit('update:column', e)"
             @select:ticket="(v: Ticket) => emit('select:ticket', v)"
             @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd">
@@ -30,18 +30,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
 import Draggable from 'vuedraggable'
 import KanbanColumn from './KanbanColumn.vue'
+
+import { usePermissions } from '../../../composables/usePermissions';
+const { canCreateCard, canEditCard } = usePermissions();
+
 export interface Ticket { _id: string | number;[k: string]: any }
 export interface Column { _id: string | number; title: string; cards: Ticket[]; transitions: any }
 export interface Board { columns: Column[] }
-const canDragList = ref(true);
+const canDragList = ref(canEditCard.value);
+console.log(canEditCard.value, "canEditCard.value") // only allow drag if user can edit card
+watchEffect(() => {
+  canDragList.value = canEditCard.value;
+});
+
 const onStart = () => {
   console.log(">>> strating");
-
   canDragList.value = false
 };
+
 
 const props = withDefaults(defineProps<{
   board: Column[]

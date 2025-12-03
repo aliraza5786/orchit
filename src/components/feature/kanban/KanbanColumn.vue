@@ -22,7 +22,7 @@
       </div>
       <i class="cursor-pointer fa-solid fa-plus" v-if="plusIcon" @click="emit('onPlus', column)" />
 
-      <DropMenu v-if="showActions()" :items="getMenuItems()">
+      <DropMenu v-if="showActions() && canDeleteVariable " :items="getMenuItems()">
         <template #trigger>
           <i class="fa-solid fa-ellipsis cursor-pointer"></i>
         </template>
@@ -63,6 +63,8 @@ import { computed, nextTick, ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import DropMenu from '../../ui/DropMenu.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
+import { usePermissions } from '../../../composables/usePermissions';
+const {  canDeleteVariable } = usePermissions();
 type Id = string | number
 export interface Ticket { _id: Id;[k: string]: any }
 export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any ,showADDNEW?:any}
@@ -98,6 +100,7 @@ watch(() => props.column.title, (v) => { localTitle.value = v })
 function beginEdit() {
   const isEditable = showActions();
   if (!isEditable) return;
+
   isEditingTitle.value = true
   nextTick(() => {
     if (titleInputRef.value) {
@@ -155,9 +158,10 @@ function onTicketsChange(evt: any) {
   })
 }
 function getMenuItems() {
+  // Only return Delete if user has delete permission
+  if (!canDeleteVariable) return [];
   return [{
     label: 'Delete', danger: true, action: () => {
-
       handleDeleteColumn();
     }
   }]

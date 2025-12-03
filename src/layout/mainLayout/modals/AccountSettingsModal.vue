@@ -11,7 +11,7 @@
       </h2>
 
       <Tabs
-        :tabs="['Profile', 'Subscription', 'CompanyRoles', 'WorkspaceRoles']"
+        :tabs="['Profile', 'Subscription']"
         :defaultTab="route.query.stripePayment ? 1 : 0"
       >
         <template #Profile>
@@ -304,10 +304,10 @@
           </div>
         </template>
 
-        <template #CompanyRoles>
-          <div class="space-y-6 h-full flex overflow-hidden gap-2">
+        <!-- <template #CompanyRoles>
+          <div class="space-y-6 h-full flex overflow-hidden gap-2"> -->
             <!-- 1️⃣ SHOW ROLES LIST -->
-            <div
+            <!-- <div
               class="min-w-[250px] max-w-[300px] sticky top-0 border-r border-border p-2 overflow-y-auto"
             >
               <h2 class="text-2xl flex font-semibold mb-4">Roles</h2>
@@ -334,10 +334,10 @@
               </div>
             </div>
 
-            <hr class="border-border my-4" />
+            <hr class="border-border my-4" /> -->
 
             <!-- 2️⃣ SHOW PERMISSIONS OF SELECTED ROLE -->
-            <div v-if="selectedRole" class="w-full overflow-y-auto">
+            <!-- <div v-if="selectedRole" class="w-full overflow-y-auto">
               <h2 class="text-lg mb-4">
                 Permissions for:
                 <span class="font-semibold">
@@ -349,9 +349,9 @@
                 v-for="category in selectedRole?.permission_categories"
                 :key="category?.category"
                 class="border border-border mb-3 cursor-pointer rounded-xl overflow-hidden bg-bg-body/30 shadow-sm"
-              >
+              > -->
                 <!-- Category Header -->
-                <button
+                <!-- <button
                   @click="toggle(category?.category)"
                   class="w-full px-5 cursor-pointer py-4 flex justify-between items-center bg-bg-surface/30 hover:bg-bg-surface/80 transition"
                 >
@@ -375,10 +375,10 @@
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
-                </button>
+                </button> -->
 
                 <!-- Permission List -->
-                <div
+                <!-- <div
                   v-if="open[category?.category]"
                   class="px-5 py-4 space-y-4"
                 >
@@ -412,104 +412,9 @@
               </div>
             </div>
           </div>
-        </template>
+        </template> -->
 
-        <template #WorkspaceRoles>
-          <div class="space-y-6 h-full flex overflow-hidden gap-2">
-            <!-- 1️⃣ Workspace Roles List -->
-            <div
-              class="min-w-[250px] max-w-[300px] sticky top-0 border-r border-border p-2 overflow-y-auto"
-            >
-              <h2 class="text-2xl flex font-semibold mb-4">Workspace Roles</h2>
-
-              <div class="space-y-3">
-                <button
-                  v-for="role in workspaceRoles?.data"
-                  :key="role._id"
-                  @click="selectedWorkspaceRole = role"
-                  :class="`${
-                    selectedWorkspaceRole?._id === role?._id
-                      ? 'border-accent bg-accent/30'
-                      : 'border-border bg-bg-body'
-                  }`"
-                  class="w-full text-left px-4 py-3 border cursor-pointer rounded-lg hover:bg-bg-surface transition"
-                >
-                  <h3 class="text-sm font-semibold text-text-primary">
-                    {{ role.title }}
-                  </h3>
-                  <p class="text-xs text-text-secondary">
-                    {{ role.description }}
-                  </p>
-                </button>
-              </div>
-            </div>
-
-            <!-- 2️⃣ Workspace Permissions -->
-            <div v-if="selectedWorkspaceRole" class="w-full overflow-y-auto">
-              <h2 class="text-lg mb-4">
-                Permissions for:
-                <span class="font-semibold">
-                  {{ selectedWorkspaceRole.title }}
-                </span>
-              </h2>
-
-              <div
-                v-for="category in selectedWorkspaceRole.permission_categories"
-                :key="category.category"
-                class="border border-border mb-3 cursor-pointer rounded-xl overflow-hidden bg-bg-body/30 shadow-sm"
-              >
-                <button
-                  @click="toggle(category.category)"
-                  class="w-full px-5 py-4 flex justify-between items-center bg-bg-surface/30 hover:bg-bg-surface/80 transition"
-                >
-                  <span class="text-lg font-medium text-text-primary">
-                    {{ category.category_title }}
-                  </span>
-                  <svg
-                    :class="[
-                      'w-5 h-5 text-text-secondary transition-transform',
-                      open[category.category] ? 'rotate-180' : '',
-                    ]"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-
-                <div v-if="open[category.category]" class="px-5 py-4 space-y-4">
-                  <div
-                    v-for="perm in category.permissions"
-                    :key="perm._id"
-                    class="flex justify-between items-center border-b border-border pb-3 last:border-b-0"
-                  >
-                    <div>
-                      <p class="font-medium text-text-primary">
-                        {{ perm.title }}
-                      </p>
-                      <p class="text-sm text-text-secondary">
-                        {{ perm.description }}
-                      </p>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      v-model="workspaceSelected"
-                      :value="perm._id"
-                      class="h-5 w-5 rounded border-border accent-accent cursor-pointer"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template>
+         
 
         <!-- 
         <template #Pricing>
