@@ -99,6 +99,9 @@ export function usePermissions() {
   const canEditComment = computed(() =>
     hasPermission("workspace.comment.update")
   );
+   const canDeleteComment = computed(() =>
+    hasPermission("workspace.delete.update")
+  );
 
   // ---- Attachment Permissions ----
   const canViewAttachment = computed(() =>
@@ -157,6 +160,7 @@ export function usePermissions() {
     canCreateComment,
     canViewComment,
     canEditComment,
+    canDeleteComment,
 
     canViewAttachment,
     canUploadAttachment,

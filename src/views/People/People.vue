@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
+  <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border  overflow-x-auto flex-col flex  ">
     <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
       <Dropdown :actions="false" prefix="View By" v-model="selected_view_id" :options="viewData" variant="secondary">
       </Dropdown>

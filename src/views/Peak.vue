@@ -1,7 +1,7 @@
 <template>
   <div class=" flex flex-col gap-4 h-full overflow-x-auto w-full flex-auto">
     <!-- Header / Overview -->
-    <div class="p-5 rounded-lg bg-bg-card space-y-6">
+    <div class="p-5 rounded-[6px] bg-bg-card space-y-6">
       <div class="flex items-center justify-between">
         <div class="flex flex-col w-full">
           <h3 class="text-2xl text-text-primary font-semibold">Project Overview</h3>

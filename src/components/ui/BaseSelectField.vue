@@ -5,7 +5,7 @@
   >
     <!-- Label + Tooltip -->
     <label
-      v-if="label"
+      v-if="label" 
       :class="[
         ' font-medium mb-1 flex items-center',
         theme === 'dark' ? 'text-white' : 'text-text-primary',
@@ -25,7 +25,7 @@
     <!-- Trigger -->
     <div
       ref="triggerRef"
-      class="relative px-3 py-2 rounded-md w-full border text-sm cursor-pointer flex justify-between items-center"
+      class="relative px-3 py-2 rounded-md w-full border text-sm  flex justify-between items-center"
       :class="[
         size === 'md' ? 'h-10' : size === 'sm' ? 'h-8 !rounded-md' : 'h-12',
         theme === 'dark'
@@ -34,8 +34,10 @@
         error
           ? 'border-red-500 focus-within:ring-red-500'
           : 'focus-within:ring-black',
+        canEditCard ? ' cursor-not-allowed' : 'cursor-pointer'  
       ]"
       @click="toggleDropdown"
+      :disabled="canEditCard"
     >
       <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
@@ -127,6 +129,7 @@ const props = withDefaults(
     size?: "sm" | "md" | "lg";
     tooltip?: string;
     theme?: "light" | "dark";
+    canEditCard?: boolean
   }>(),
   {
     size: "md",
@@ -190,7 +193,9 @@ onBeforeUnmount(() => {
 //     removeOutsideListener()
 //   }
 // }
+
 function toggleDropdown() {
+   if (props.canEditCard) return;
   isOpen.value = !isOpen.value;
 
   if (isOpen.value) {
@@ -230,6 +235,7 @@ function toggleDropdown() {
 }
 
 function selectOption(option: Option) {
+ 
   selected.value = option;
   emit("update:modelValue", option._id);
   emit("update", option._id);

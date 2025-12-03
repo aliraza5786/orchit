@@ -1,7 +1,7 @@
 <template>
   <div class="relative min-w-8" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
-    <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id" >
+    <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id" :class="canAssignCard?'cursor-pointer':'cursor-not-allowed'" :disabled="!canAssignCard" >
       <div class="flex gap-2 items-center">
       <img v-if="assignedUser?.avatar?.src || assignedUser?.user?.avatar || assignedUser?.u_profile_image"
         :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar"
@@ -22,7 +22,7 @@
 
     <button v-else type="button"
       class="inline-flex items-center gap-2 rounded-full border border-border px-1 py-1 text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition"
-      @click="toggle" :disabled="disabled">
+      @click="toggle" :disabled="disabled || !canAssignCard" :class="canAssignCard?'cursor-pointer':'cursor-not-allowed'" >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor">
         <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z" />
       </svg>
@@ -128,9 +128,12 @@ const filteredUsers = computed(() => {
     (u.email || '').toLowerCase().includes(q)
   )
 })
-
+import { usePermissions } from '../../../composables/usePermissions';
+const {canCreateComment, canEditComment, canAssignCard, canEditCard} = usePermissions();
 /** Open/close **/
-function toggle() { open.value = !open.value }
+function toggle() {
+if (!canAssignCard.value) return;
+   open.value = !open.value }
 function close() { open.value = false }
 function onDocClick() { if (open.value) close() }
 

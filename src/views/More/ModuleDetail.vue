@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full h-full overflow-y-auto bg-bg-card rounded-lg border border-border overflow-hidden">
+  <div class="flex flex-col w-full h-full overflow-y-auto bg-bg-card rounded-6px border border-border overflow-hidden">
 
     <!-- Header -->
     <header class="sticky top-0 w-full z-10 bg-bg-card/80 backdrop-blur border-b border-border">

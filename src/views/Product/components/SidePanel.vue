@@ -9,15 +9,15 @@
     <div v-show="showPanel" class="flex flex-col max-w-[380px] min-w-[380px] h-full
      overflow-y-auto
              bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
-             rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)]
+             rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)]
              border border-orchit-white/5 overflow-hidden" role="complementary" aria-label="Details panel">
       <!-- Header -->
       <div
-        class="sticky top-0 z-10  backdrop-blur-2xl border-b border-orchit-white/5 px-6 py-4 flex items-center justify-between">
+        class="sticky top-0 z-10 border-b  border-border px-6 py-[9px] flex items-center justify-between bg-bg-card">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
         <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
           @click="() => emit('close')" aria-label="Close details">
-          <i class="fa-solid fa-xmark text-xl"></i>
+          <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
@@ -26,12 +26,12 @@
         <!-- Title row -->
         <div class="capitalize">
           <Transition name="fade-scale" mode="out-in">
-            <input v-if="editingTitle" key="title-edit" ref="titleInput" v-model="localTitle" @blur="saveTitle"
+            <input :disabled="!canEditCard" :title="!canEditCard ? 'You do not have permission to edit this card' : ''" v-if="editingTitle" key="title-edit" ref="titleInput" v-model="localTitle" @blur="saveTitle"
               @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEdit" class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10
                      focus:outline-none focus:ring-2 focus:ring-accent/40 transition" type="text"
               aria-label="Edit title" />
-            <h1 v-else key="title-view" class="text-2xl font-semibold tracking-tight cursor-text rounded-lg px-2 py-1
-                     hover:bg-orchit-white/5 transition" @click="editTitle" aria-label="Card title">
+            <h1 v-else key="title-view" :class="canEditCard? 'cursor-text':'cursor-not-allowed'" class="text-2xl font-semibold tracking-tight rounded-lg px-2 py-1
+                     hover:bg-orchit-white/5 transition" @click="editTitle" aria-label="Card title" :title="!canEditCard ? 'You do not have permission to edit this card' : ''" >
               {{ localTitle || 'Untitled' }}
             </h1>
           </Transition>
@@ -43,9 +43,9 @@
 
           <Transition name="fade-scale" mode="out-in">
             <!-- view mode -->
-            <div v-if="!editingDesc" key="desc-view" class="text-[15px] leading-6 text-text-secondary whitespace-pre-wrap cursor-text
+            <div v-if="!editingDesc" key="desc-view" class="text-[15px] leading-6 text-text-secondary whitespace-pre-wrap 
                      rounded-xl px-4 py-3 border border-orchit-white/10 bg-orchit-white/5
-                     hover:border-orchit-white/20 transition" @click="startEditDesc">
+                     hover:border-orchit-white/20 transition" :disabled="!canEditCard" :class="canEditCard? 'cursor-text':'cursor-not-allowed'" @click="startEditDesc">
               <div v-if="description" v-html="description"></div>
               <span v-else class="opacity-60">Click to add a description…</span>
             </div>
@@ -59,7 +59,7 @@
         </div>
 
         <!-- Tabs (segmented) -->
-        <SwitchTab v-model="activeTab" :options="tabOptions" size="md" />
+        <SwitchTab v-model="activeTab" :options="tabOptions" size="md" :beforeChange="handleTabPermission" />
         <!-- Sections -->
         <Transition name="section" mode="out-in">
           <!-- TAB: Details -->
@@ -81,12 +81,12 @@
               class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div class="space-y-2">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
-                <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
+                <BaseSelectField :canEditCard="!canEditCard" size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
                   :model-value="lane" @update:modelValue="setLane" />
               </div>
               <div class="space-y-2 ">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
-                <AssigmentDropdown @assign="(user) => assignHandle(user)" :assigneeId="curentAssigne"
+                <AssigmentDropdown  @assign="(user) => assignHandle(user)" :assigneeId="curentAssigne"
                   :seat="cardDetails.seat" />
               </div>
               <template v-if="!pin">
@@ -94,7 +94,7 @@
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Start Date</div>
                   <div class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10">
                     <i class="fa-regular fa-calendar"></i>
-                    <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
+                    <DatePicker :disabled="!canEditCard" placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
                       @update:modelValue="setStartDate" />
                   </div>
                 </div>
@@ -104,7 +104,7 @@
                   <div class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
                     :class="endDateError ? 'border-red-500' : 'border-orchit-white/10'">
                     <i class="fa-regular fa-calendar"></i>
-                    <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
+                    <DatePicker :disabled="!canEditCard" placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
                       @update:modelValue="setEndDate" />
                   </div>
                   <p v-if="endDateError" class="text-xs text-red-400 mt-1">{{ endDateError }}</p>
@@ -131,7 +131,7 @@
                 :key="item.slug || `var-${index}`">
                 <div v-if="item?.type === 'Select'" class="space-y-2 sm:col-span-1">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">{{ item.title }}</div>
-                  <BaseSelectField size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
+                  <BaseSelectField :canEditCard="!canEditCard" size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
                     placeholder="Select option" :allowCustom="false" :model-value="localVarValues[item.slug]"
                     @update:modelValue="(val: any) => handleSelect(val, item.slug)" />
                 </div>
@@ -174,9 +174,9 @@
                   <div class="text-xs text-text-secondary">{{ formatDateTime(c.created_at) }}</div>
                 </div>
                 <div v-if="isMine(c)" class="flex items-center gap-2">
-                  <button v-if="editingId !== c._id" class="text-xs text-accent hover:underline"
+                  <button v-if="editingId !== c._id" :disabled="!canEditComment"  class="text-xs text-accent hover:underline"
                     @click="beginEdit(c)">Edit</button>
-                  <button class="text-xs text-red-400 hover:underline" @click="removeComment(c)">Delete</button>
+                  <button :disabled="!canDeleteComment" class="text-xs text-red-400 hover:underline" @click="removeComment(c)">Delete</button>
                 </div>
               </div>
 
@@ -189,8 +189,8 @@
                            focus:ring-2 focus:ring-accent/40 outline-none" />
                   <div class="flex items-center gap-2 justify-end">
                     <Button variant="secondary" size="sm" @click="cancelEdit">Cancel</Button>
-                    <Button class="btn" size="sm" @click="saveEdit(c)"
-                      :disabled="!editText.trim() || isUpdatingComment">
+                    <Button class="btn" size="sm"   @click="saveEdit(c)"
+                      :disabled="!editText.trim() || isUpdatingComment || !canEditComment">
                       {{ isUpdatingComment ? 'Saving…' : 'Save' }}
                     </Button>
                   </div>
@@ -208,7 +208,7 @@
 
             <!-- New comment -->
             <div class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden">
-              <textarea v-model="newComment" rows="3" class="w-full p-3 bg-transparent outline-none text-sm"
+              <textarea :disabled="!canCreateComment || !canEditComment" v-model="newComment" rows="3" :class="(canCreateComment || canEditComment) ? 'cursor-text': 'cursor-not-allowed'" class="w-full p-3 bg-transparent outline-none text-sm"
                 placeholder="Write a comment" />
               <div class="grid grid-cols-3 items-center w-full justify-between p-2 border-t border-orchit-white/10">
                 <input type="file" multiple @change="handleFileChange" class=" max-w-full text-ellipsis text-xs text-text-secondary
@@ -216,7 +216,7 @@
                          file:border file:border-orchit-white/10 file:bg-orchit-white/10
                          hover:file:bg-orchit-white/15 file:text-text-primary transition inline w-fit" />
                 <Button variant="primary" class="" size="sm" @click="postComment"
-                  :disabled="!newComment.trim() && !commentAttachments.length">
+                  :disabled="!newComment.trim() && !commentAttachments.length || !canCreateComment">
                   {{ isPostingComment ? 'Posting…' : 'Post' }}
                 </Button>
               </div>
@@ -278,6 +278,10 @@ import Button from '../../../components/ui/Button.vue'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
 import SwitchTab from '../../../components/ui/SwitchTab.vue'
 
+import { usePermissions } from '../../../composables/usePermissions';
+import { toast } from 'vue-sonner'
+ const {canCreateComment, canEditComment,canViewComment, canDeleteComment, canEditCard, canViewAttachment, } = usePermissions();
+
 const { workspaceId } = useRouteIds()
 
 const props = defineProps({
@@ -295,7 +299,7 @@ watch(props, () => {
 const activeTab = ref<'details' | 'comments' | 'attachment' | 'history'>('details')
 const tabOptions = [
   { label: 'Details', value: 'details' },
-  { label: 'Comments', value: 'comments' },
+  { label: 'Comments', value: 'comments', disabled:canViewComment},
   { label: 'History', value: 'history' },
   { label: 'Attachment', value: 'attachment' },
 ]
@@ -305,16 +309,31 @@ const editingTitle = ref(false)
 const localTitle = ref(cardDetails.value ? cardDetails.value['card-title'] : '')
 
 const titleInput = ref<HTMLInputElement | null>(null)
-function editTitle() {
+function editTitle() { 
+  if(!canEditCard.value) return;
   editingTitle.value = true
   nextTick(() => { titleInput.value?.focus(); titleInput.value?.select() })
 }
 
-function saveTitle() {
+ function saveTitle() {
   if (!localTitle.value.trim()) localTitle.value = props.details['card-title'] ?? ''
-  moveCard.mutate({ card_id: props.details._id, variables: { 'card-title': localTitle.value.trim() } })
+  
+  if (canEditCard.value) {
+    moveCard.mutate({
+      card_id: props.details._id,
+      variables: { 'card-title': localTitle.value.trim() }
+    })
+  } else {
+    // Reset the value to the original title
+    localTitle.value = cardDetails.value?.['card-title'] ?? ''
+    toast.error('You do not have permission to do that');
+    console.log("you  dont have access to do that");
+    
+  }
+
   editingTitle.value = false
 }
+
 
 /* -------------------- Description -------------------- */
 const description = ref(cardDetails?.value ? cardDetails?.value['card-description'] : '')
@@ -334,6 +353,7 @@ function focusProseMirror(container?: HTMLElement | null) {
   sel?.addRange(range)
 }
 async function startEditDesc() {
+  if(!canEditCard.value) return;
   editingDesc.value = true
   await nextTick()
   focusProseMirror(descEditorWrap.value || undefined)
@@ -358,13 +378,23 @@ onMounted(() => document.addEventListener('mousedown', onDocMouseDown))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMouseDown))
 
 /* -------------------- Meta & Fields -------------------- */
+// const local = reactive({
+//   posted_on: props.details?.posted_on ?? props.details?.created_at ?? new Date().toISOString(),
+// })
 const local = reactive({
-  posted_on: props.details?.posted_on ?? props.details?.created_at ?? new Date().toISOString(),
+  // prefer server values; otherwise keep empty so UI shows placeholder
+  posted_on: props.details?.posted_on ?? props.details?.created_at ?? '',
 })
+
+// const dateISO = computed({
+//   get: () => new Date(local.posted_on).toISOString().slice(0, 10),
+//   set: (v: string) => { local.posted_on = new Date(v + 'T00:00:00').toISOString() }
+// })
 const dateISO = computed({
-  get: () => new Date(local.posted_on).toISOString().slice(0, 10),
-  set: (v: string) => { local.posted_on = new Date(v + 'T00:00:00').toISOString() }
+  get: () => local.posted_on ? new Date(local.posted_on).toISOString().slice(0, 10) : '',
+  set: (v: string) => { local.posted_on = v ? new Date(v + 'T00:00:00').toISOString() : '' }
 })
+
 
 const { data: lanes } = useLanes(workspaceId.value)
 const lane = ref(cardDetails?.value ? cardDetails.value['workspace_lane_id'] : '')
@@ -383,19 +413,33 @@ function setLane(v: any) {
   moveCard.mutate({ card_id: props.details._id, 'workspace_lane_id': v })
 }
 
-const form = ref<any>({ startDate: cardDetails.value ? cardDetails.value['start-date'] : "", endDate: cardDetails.value ? cardDetails.value['end-date'] : '' })
-const startDate = computed(() => props.details['start-date'])
-const endDate = computed(() => props.details['end-date'])
-watch(startDate, (v) => { form.value = { ...form.value, startDate: v } })
-watch(endDate, (v) => { form.value = { ...form.value, endDate: v } })
+// const form = ref<any>({ startDate: cardDetails.value ? cardDetails.value['start-date'] : "", endDate: cardDetails.value ? cardDetails.value['end-date'] : '' })
+// const startDate = computed(() => props.details['start-date'])
+// const endDate = computed(() => props.details['end-date'])
+// watch(startDate, (v) => { form.value = { ...form.value, startDate: v } })
+// watch(endDate, (v) => { form.value = { ...form.value, endDate: v } })
+const form = ref<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null })
+
+// keep form in sync with server cardDetails once loaded
+watch(() => cardDetails.value, (v) => {
+  form.value.startDate = v?.['start-date'] ?? null
+  form.value.endDate   = v?.['end-date'] ?? null
+}, { immediate: true, deep: true })
+
 
 const endDateError = computed(() =>
   (form?.value.startDate && form.value.endDate && form.value.endDate < form.value.startDate)
     ? 'End date cannot be before start date'
     : ''
 )
-const setStartDate = (e: any) => moveCard.mutate({ card_id: props.details._id, variables: { 'start-date': e } })
-const setEndDate = (e: any) => moveCard.mutate({ card_id: props.details._id, variables: { 'end-date': e } })
+ const setStartDate = (e: any) => {
+  form.value.startDate = e ?? null
+  moveCard.mutate({ card_id: props.details._id, variables: { 'start-date': e } })
+}
+const setEndDate = (e: any) => {
+  form.value.endDate = e ?? null
+  moveCard.mutate({ card_id: props.details._id, variables: { 'end-date': e } })
+}
 
 const curentAssigne = computed(() => cardDetails?.value.assigned_to)
 const assignHandle = (user: any) => {
@@ -553,6 +597,19 @@ function handleSelect(val: any, slug: string) {
     variables: { [slug]: val },
   })
 }
+
+function handleTabPermission(targetTab: any) {
+  if (targetTab === "comments" && !canViewComment.value) {
+    toast.error("You do not have permission to view comments")
+    return false
+  }
+  if (targetTab === "attachment" && !canViewAttachment.value) {
+    toast.error("You do not have permission to view attachments")
+    return false
+  }
+  return true
+}
+
 
 </script>
 
