@@ -129,7 +129,7 @@ const filteredUsers = computed(() => {
   )
 })
 import { usePermissions } from '../../../composables/usePermissions';
-const {canCreateComment, canEditComment, canAssignCard, canEditCard} = usePermissions();
+const { canAssignCard} = usePermissions();
 /** Open/close **/
 function toggle() {
 if (!canAssignCard.value) return;

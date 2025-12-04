@@ -3,6 +3,7 @@ import { request } from "../libs/api";
 import { useApiMutation, useApiQuery } from "../libs/vq";
 import { useQuery } from "@tanstack/vue-query";
 import { unref } from "vue";
+import api from "../libs/api";
 
 export const useCurrentPackage = () => {
   return useApiQuery({
@@ -57,32 +58,44 @@ export const useRolesPermisions = (options = {}) => {
     ...options,
   });
 };
+
 export const useRoles = (id:any,options = {}) => {
   return useQuery({
     queryKey: ["roles"],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `/roles/company-roles?company_id=${unref(id)?._id}`,
+        url: `/roles/workspace-access-roles?company_id=${unref(id)?._id}`,
         method: "GET",
         signal,
       }),
     ...options,
   });
 };
+// export const usePermissionRoles = (id:any,options = {}) => {
+//   return useQuery({
+//     queryKey: ["roles"],
+//     queryFn: ({ signal }) =>
+//       request<any>({
+//         url: `/roles/workspace-access-roles/without-permission?company_id=${unref(id)?._id}`,
+//         method: "GET",
+//         signal,
+//       }),
+//     ...options,
+//   });
+// };
 
 
-export const useUpdatePermissions = (id:any, options = {}) => {
- 
+export const useUpdatePermissions = (options = {}) => {
   return useApiMutation<any, any>(
     {
-      key: ["update-permissions", id],
+      key: ["update-permissions"],
     } as any,
     {
-      mutationFn: (vars: any) =>
+      mutationFn: ({ roleId, payload }: { roleId: string; payload: any }) =>
         request({
-          url: `/roles/company-roles/${unref(id)?._id}?allow_system_update=true`,
+          url: `/roles/workspace-access-roles/${roleId}`,
           method: "PUT",
-          data: { ...vars, },
+          data: payload,
         }),
       ...(options as any),
     } as any
@@ -90,21 +103,30 @@ export const useUpdatePermissions = (id:any, options = {}) => {
 };
 
 
-// workspace roles
+ 
 
-export const useWorkspaceRoles = (workspace_id: any, options = {}) => {
+
+export const fetchWorkspacePermissions = async ({ signal }: any) => {
+  try {
+    const { data } = await api.get(
+      "/roles/workspace-access-roles/without-permission",
+      { signal }
+    );
+
+    return data?.data || [];
+  } catch (err) {
+    console.warn("⚠️ Permissions API failed");
+    return [];
+  }
+};
+export const useWorkspacePermissions = (options = {}) => {
   return useQuery({
-    queryKey: ['workspace-roles', workspace_id],
-    queryFn: ({ signal }) =>
-      request<any>({
-        url: `roles/workspace-access-roles/without-permission?workspace_id=${workspace_id}`,
-        method: 'GET',
-        signal,
-      }),
-    enabled: !!workspace_id,
+    queryKey: ["workspace-permissions"],
+    queryFn: fetchWorkspacePermissions,
+    staleTime: 1000 * 60 * 5, // optional
     ...options,
-  })
-}
+  });
+};
 
 
 

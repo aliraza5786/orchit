@@ -80,7 +80,7 @@ const saving = ref(false)
 // Initialize transitions and statuses when modal opens
 watch(open, (isOpen) => {
   if (isOpen) {
-    transitions.value = workflowState.localTransitions.value.map(t => ({
+    transitions.value = workflowState.localTransitions.value.map((t:any) => ({
       ...t,
       rulesText: t.rules?.map((r: any) => r.description).join('\n') || ''
     }))

@@ -202,7 +202,7 @@ import { avatarColor } from "../../../utilities/avatarColor";
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
 
 import { usePermissions } from "../../../composables/usePermissions";
-const { canInviteUser, canEditUser, canDeleteUser } = usePermissions();
+const { canEditUser,  } = usePermissions();
 
 const localVarValues = reactive<any>({});
 const activeTab = ref<"details" | "tasks" | "history">("details");

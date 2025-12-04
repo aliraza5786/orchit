@@ -11,7 +11,7 @@
       </h2>
 
       <Tabs
-        :tabs="['Profile', 'Subscription']"
+        :tabs="['Profile', 'Subscription', 'WorkspaceRoles']"
         :defaultTab="route.query.stripePayment ? 1 : 0"
       >
         <template #Profile>
@@ -304,10 +304,10 @@
           </div>
         </template>
 
-        <!-- <template #CompanyRoles>
-          <div class="space-y-6 h-full flex overflow-hidden gap-2"> -->
-            <!-- 1️⃣ SHOW ROLES LIST -->
-            <!-- <div
+        <template #WorkspaceRoles>
+          <div class="space-y-6 h-full flex overflow-hidden gap-2">
+            <!-- SHOW ROLES LIST -->
+            <div
               class="min-w-[250px] max-w-[300px] sticky top-0 border-r border-border p-2 overflow-y-auto"
             >
               <h2 class="text-2xl flex font-semibold mb-4">Roles</h2>
@@ -334,10 +334,10 @@
               </div>
             </div>
 
-            <hr class="border-border my-4" /> -->
+            <hr class="border-border my-4" />
 
-            <!-- 2️⃣ SHOW PERMISSIONS OF SELECTED ROLE -->
-            <!-- <div v-if="selectedRole" class="w-full overflow-y-auto">
+            <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
+            <div v-if="selectedRole" class="w-full overflow-y-auto">
               <h2 class="text-lg mb-4">
                 Permissions for:
                 <span class="font-semibold">
@@ -349,9 +349,9 @@
                 v-for="category in selectedRole?.permission_categories"
                 :key="category?.category"
                 class="border border-border mb-3 cursor-pointer rounded-xl overflow-hidden bg-bg-body/30 shadow-sm"
-              > -->
+              >
                 <!-- Category Header -->
-                <!-- <button
+                <button
                   @click="toggle(category?.category)"
                   class="w-full px-5 cursor-pointer py-4 flex justify-between items-center bg-bg-surface/30 hover:bg-bg-surface/80 transition"
                 >
@@ -375,10 +375,10 @@
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
-                </button> -->
+                </button>
 
                 <!-- Permission List -->
-                <!-- <div
+                <div
                   v-if="open[category?.category]"
                   class="px-5 py-4 space-y-4"
                 >
@@ -412,9 +412,9 @@
               </div>
             </div>
           </div>
-        </template> -->
+        </template>
 
-         
+       
 
         <!-- 
         <template #Pricing>
@@ -463,7 +463,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, nextTick } from "vue";
 import BaseModal from "../../../components/ui/BaseModal.vue";
 import Tabs from "../../../components/ui/Tabs.vue";
 import BaseTextField from "../../../components/ui/BaseTextField.vue";
@@ -482,8 +482,7 @@ import {
   useCurrentPackage,
   useRoles,
   useUpdatePermissions,
-  useUpgradePackage,
-  useWorkspaceRoles,
+  useUpgradePackage, 
 } from "../../../queries/usePackages";
 import { extractYear, formatDate } from "../../../utilities/FormatDate";
 import { useRoute, useRouter } from "vue-router";
@@ -797,12 +796,27 @@ const { data: id } = useCompanyId();
 const { data: roles } = useRoles(id, {
   enabled: computed(() => !!id?.value),
 });
-const { mutate: updatePermissions } = useUpdatePermissions(selectedRole);
-watch(roles, (roles) => {
-  if (!roles) return;
+const { mutate: updatePermissions } = useUpdatePermissions();
+
+watch(roles, async (roles) => {
+  if (!roles || !roles.length) return;
+  
   selectedRole.value = roles[0];
+
+  // Wait for Vue to render and reactive objects to populate
+  await nextTick();
+
+  const enabledPermissions: string[] = [];
+  selectedRole.value.permission_categories.forEach((category: any) => {
+    category.permissions.forEach((perm: any) => {
+      if (perm.enabled) enabledPermissions.push(perm._id);
+    });
+  });
+  selected.value = enabledPermissions;
 });
+
 watch(selectedRole, (roles) => {
+  console.log(selectedRole)
   if (!roles) return;
 
   const enabledPermissions: string[] = [];
@@ -817,40 +831,40 @@ watch(selectedRole, (roles) => {
 
   selected.value = enabledPermissions;
 });
+
+// const updatePermissionHandler = () => {
+//   updatePermissions({
+//     permission_ids: selected.value,
+//   });
+// }; 
+
 const updatePermissionHandler = () => {
+  if (!selectedRole.value?._id) return;
+
   updatePermissions({
-    permission_ids: selected.value,
+    roleId: selectedRole.value._id,   // send the ID separately
+    payload: {
+      title: selectedRole.value.title,
+      description: selectedRole.value.description,
+      is_admin: selectedRole.value.is_admin,
+      is_editor: selectedRole.value.is_editor,
+      is_viewer: selectedRole.value.is_viewer,
+      permission_ids: selected.value,
+    },
   });
 };
 
-// use workspace roles
-const workspaceId = computed(() => workspaceStore?.workspace?.id); 
-console.log(workspaceId.value, 'workspace ids')
-const { data: workspaceRoles } = useWorkspaceRoles(workspaceId, {
-  enabled: computed(() => !!workspaceId.value), // query runs only when ID exists
-});
-const selectedWorkspaceRole = ref<any>(null);
 
-// Auto-select the first role
-watch(workspaceRoles, (roles) => {
-  if (roles?.data?.length) {
-    selectedWorkspaceRole.value = roles.data[0];
-  }
-});
 
-const workspaceSelected = ref<string[]>([])
-watch(selectedWorkspaceRole, (role) => {
-  if (!role) return
-
-  const enabled: string[] = []
-  role.permission_categories.forEach((cat: any) => {
-    cat.permissions.forEach((p: any) => {
-      if (p.enabled) enabled.push(p._id)
-    })
-  })
-
-  workspaceSelected.value = enabled
-})
+// use workspace roles 
+// import { useWorkspacePermissions } from "../../../queries/usePackages";
+// const { data: permissions} = useWorkspacePermissions();
+// const workspaceRoles = ref([]);
+// const selectedWorkspaceRole = ref<any>(null);
+// watchEffect(() => {
+//   console.log("Updated permissions:", toRaw(permissions.value));
+//   workspaceRoles.value = toRaw(permissions.value); 
+// });
 
 // ADD API LATER WHEN PROVIDED: updateWorkspacePermissions()
 

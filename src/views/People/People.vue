@@ -87,7 +87,7 @@ const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/
 const KanbanCard = defineAsyncComponent(() => import('./components/KanbanCard.vue'));
 
 import { usePermissions } from '../../composables/usePermissions'
-const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canInviteUser, canViewUser, canEditUser, canDeleteUser} = usePermissions()
+const {  canCreateVariable,  canInviteUser} = usePermissions()
 
 const viewData = [
   {
