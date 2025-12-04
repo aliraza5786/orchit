@@ -94,6 +94,7 @@
             <TableView @toggleVisibility="toggleVisibilityHandler" @addVar="() => {
                 isCreateVar = true
             }" :isPending="isPending || isVariablesPending" :columns="columns" :rows="filteredBoard"
+                :canCreate="canCreateCard" :canCreateVariable="canCreateVariable"
                 @create="handleCreateTicket" />
         </template>
     </div>
@@ -137,7 +138,7 @@ import AssigmentDropdown from './components/AssigmentDropdown.vue';
 import DatePicker from './components/DatePicker.vue';
 
 import { usePermissions } from '../../composables/usePermissions'
-const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet} = usePermissions()
+const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canCreateCard, canEditCard, canAssignCard} = usePermissions()
 // import { Background } from '@vue-flow/background';
 const view = ref('kanban')
 
@@ -405,6 +406,7 @@ const columns = computed(() => {
                         class:
                             "text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md",
                         defaultValue: value,
+                        disabled: !canEditCard.value,
                     }),
                 ]),
         },
@@ -415,6 +417,7 @@ const columns = computed(() => {
                 const date = ref<any>(value)
                 return h(DatePicker, {
                     class: ' capitalize flex items-center gap-2 ', placeholder: "Set start date", modelValue: date.value,
+                    disabled: !canEditCard.value,
                     "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e)
                 })
             }
@@ -423,6 +426,7 @@ const columns = computed(() => {
             key: 'lane', label: 'Lane',
             render: ({ row, value }: any) => h(BaseSelectField, {
                 class: 'capitalize flex items-center gap-2 ', size: "sm", options: laneOptions.value ?? [], placeholder: "Select lane", allowCustom: false,
+                canEditCard: !canEditCard.value,
                 modelValue: value?._id, "onUpdate:modelValue": (e: any) => setLane(row?._id, e)
             })
         },
@@ -440,7 +444,7 @@ const columns = computed(() => {
             key: 'seat', label: 'Assignee',
             render: ({ row, value }: any) => h(AssigmentDropdown, {
                 class: 'capitalize flex items-center gap-2 ', "onAssign": (user: any) => assignHandle(row?._id, user), assigneeId: value,
-                seat: value, name: true
+                seat: value, name: true, disabled: !canAssignCard.value
             })
         },
 
@@ -459,6 +463,7 @@ const columns = computed(() => {
                                 size: "sm",
                                 modelValue: type?.value,
                                 defaultValue: type?.value,
+                                canEditCard: !canEditCard.value,
                                 "onUpdate": (val: any) => {
                                     handleChangeTicket(row?._id, e.slug, val);
                                 },
@@ -521,7 +526,17 @@ function handleCreateTicket(title: any) {
     }
 
 }
-const setStartDate = (card_id: any, e: any) => moveCard.mutate({ card_id: card_id, variables: { 'start-date': e } })
+const setStartDate = (card_id: any, e: any) => {
+    // Optimistic Update
+    const listIndex = Lists.value.findIndex((l: any) => l.cards.some((c: any) => c._id === card_id));
+    if (listIndex !== -1) {
+        const cardIndex = Lists.value[listIndex].cards.findIndex((c: any) => c._id === card_id);
+        if (cardIndex !== -1) {
+            Lists.value[listIndex].cards[cardIndex]['end-date'] = e;
+        }
+    }
+    moveCard.mutate({ card_id: card_id, variables: { 'start-date': e } })
+}
 function setLane(id: any, v: any) {
 
     moveCard.mutate({ card_id: id, 'workspace_lane_id': v })

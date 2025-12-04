@@ -37,7 +37,7 @@
                   </span>
                   <span>{{ col.label }}</span>
                 </div>
-                <div @click="emit('addVar')" class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
+                <div v-if="canCreateVariable" @click="emit('addVar')" class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
                   <i class="fa-solid fa-plus"></i> Add new
                 </div>
               </div>
@@ -70,7 +70,7 @@
         <!-- ROW INSERT HOVER -->
         <template v-else v-for="(ticket, index) in tickets" :key="ticket?.id">
           <tr v-if="hoverIndex === index && !hasActiveEmptyRow" class="relative bg-bg-surface/20 transition-all cursor-pointer 
-                   border border-accent" @mouseleave="hoverIndex = null">
+                  border border-accent" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
               <span class="absolute left-[-6px] top-[-6px] bg-bg-surface border border-border 
                        w-6 h-6 text-sm rounded-md flex justify-center items-center 
@@ -109,7 +109,7 @@
         </template>
 
         <!-- ADD NEW ROW FOOTER -->
-        <tr v-if="!hasActiveEmptyRow" @click="insertEmptyRow(tickets?.length)" class="sticky bottom-0 bg-bg-surface border-t border-border cursor-pointer
+        <tr v-if="!hasActiveEmptyRow && canCreate" @click="insertEmptyRow(tickets?.length)" class="sticky bottom-0 bg-bg-surface border-t border-border cursor-pointer
                  transition hover:bg-bg-surface/70" @mouseenter="hoverIndex = tickets?.length"
           @mouseleave="hoverIndex = null">
           <!-- <td class="p-2">
@@ -123,7 +123,6 @@
                      hover:bg-bg-surface/50 transition">+</span> Add New Row
           </td>
         </tr>
-
       </tbody>
     </table>
   </div>
@@ -136,7 +135,6 @@ interface Column {
   key: string
   label: string
   visible?: boolean // optional, default true
-
 }
 
 type Row = Record<string, any>
@@ -145,7 +143,12 @@ const props = withDefaults(defineProps<{
   columns: Column[]
   rows: Row[]
   isPending: boolean
-}>(), {})
+  canCreate?: boolean
+  canCreateVariable?: boolean
+}>(), {
+  canCreate: true,
+  canCreateVariable: true
+})
 
 const emit = defineEmits<{
   (e: 'update:rows', val: Row[]): void
