@@ -46,12 +46,58 @@ const renderPeople = ({ value }: any) =>
 const renderStartDate = ({ value }: any) =>
     h('span', getCachedDate(value))
 
+const renderCompanyAdmin = ({ row }: any) => {
+  const owner = row?.owner;
+  if (!owner) return h('span', '-');
+
+  // Function to get initials from name
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
+  }
+
+  // Function to generate consistent color from string
+  const getColorFromString = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 60%, 50%)`; // adjust saturation/lightness as needed
+  }
+
+  // Render avatar or initials
+  return h('div', { class: 'flex items-center gap-2' }, [
+    owner.profile_img
+      ? h('img', {
+          src: owner.profile_img,
+          alt: owner.name,
+          class: 'h-6 w-6 rounded-full object-cover',
+          loading: 'lazy',
+          decoding: 'async',
+        })
+      : h('div', {
+          class: 'h-8 w-8 border-primary border-2 shadow-md flex items-center justify-center rounded-full text-white text-xs font-medium',
+          style: { backgroundColor: getColorFromString(owner.name) }
+        }, getInitials(owner.name)),
+    h('span', owner.name)
+  ]);
+};
+
+
+ 
+
 /* ------------ Table columns ------------ */
 const columns = [
     { key: 'variables', label: 'Project', render: renderProject },
     { key: 'variables', label: 'Project type', render: renderProjectType },
     { key: 'People', label: 'People', render: renderPeople },
     { key: 'created_at', label: 'Start Date', render: renderStartDate },
+    { key: 'admin', label: 'Workspace Owner', render:  renderCompanyAdmin },
+
 ]
 
 /* ------------ Internal pagination + sort state ------------ */

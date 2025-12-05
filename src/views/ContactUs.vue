@@ -148,7 +148,7 @@
                         </div>
                     </transition>
                     <p class="text-[12px] font-manrope leading-[16px] font-normal text-text-primary text-center">You can
-                        also email us at  <a class="font-semibold" href="mailto:sales@company.com">sales@company.com</a>
+                        also email us at  <a class="font-semibold" href="mailto:sales@company.com">sales@orchit.ai</a>
                     </p>
                 </div>
             </div>

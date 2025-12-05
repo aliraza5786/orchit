@@ -1,5 +1,6 @@
 <template>
   <div class="bg-bg-body">
+    <Header/>
     <div class=" lg:shadow-xl rounded-lg flex flex-wrap w-full md:h-full p-4">
       <!-- Left Panel -->
       <div class="w-full lg:w-1/2 py-7 md:py-10 lg:pr-[15px] flex flex-col flex-auto justify-center items-center">
@@ -50,6 +51,7 @@
 </template>
 
 <script setup lang="ts">
+import Header from '../LandingPageLayout/components/Header.vue';
 // <script setup lang="ts">
 defineProps<{
   activeStep?: number
