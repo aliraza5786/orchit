@@ -355,3 +355,14 @@ export const useDeleteWorkspace = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+
+
+  export const useSingleWorkspaceCompany = (workspaceIdCompany: Ref<string | number>, options = {}) => {
+  return useQuery({
+    queryKey: ["workspaceCompany", workspaceIdCompany],
+    queryFn: ({ signal }) => request({ url: `/workspace/${workspaceIdCompany.value}`, method: "GET", signal }),
+    ...options,
+  });
+};
+

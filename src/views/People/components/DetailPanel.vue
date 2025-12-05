@@ -102,7 +102,7 @@
             {{ item.title }}
             <BaseSelectField
               size="sm"
-              :model-value="localVarValues[item.slug]"
+              :model-value="localVarValues[item._id]"
               :key="index"
               :placeholder="` ${item.title}`"
               @click.stop
@@ -131,6 +131,7 @@
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
             :canEditCard="!canEditUser"
+            :key="workspaceRoles?.length"
           />
           <!-- <select
             v-model="selectedRole"
@@ -182,11 +183,11 @@
         </ul>
       </section>
     </div>
-  </div>
+  </div>  
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch, watchEffect } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -196,8 +197,8 @@ import { usePeopleVar, useUpdateVar } from "../../../queries/usePeople";
 import SwitchTab from "../../../components/ui/SwitchTab.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 import { getInitials } from "../../../utilities";
-import { avatarColor } from "../../../utilities/avatarColor";
-import { useCompanyId } from "../../../services/user";
+import { avatarColor } from "../../../utilities/avatarColor"; 
+import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
 
 // workspace roles
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
@@ -241,6 +242,18 @@ watch(
   () => {
     description.value = props.details["card-description"];
   }
+);
+
+watch(
+  () => props.details,
+  () => {
+    if (props.details?.variable_values) {
+      props.details.variable_values.forEach((v: any) => {
+        localVarValues[v.module_variable_id] = v.value;
+      });
+    }
+  },
+  { immediate: true, deep: true }
 );
 const emit = defineEmits([
   "close",
@@ -310,6 +323,7 @@ const moveCard = useMoveCard({
 const handleSelect = (val: any, slug: any) => {
   // console.log(ticketID.value, '>>>');
   console.log(slug, "slug", val);
+  localVarValues[slug] = val;
 
   UpdateVar({
     id: props.details._id,
@@ -335,14 +349,16 @@ function getDefaultValue(id: any) {
   }
 }
 
-// workspace roles
-const { data: companies } = useCompanyId();
-const companId = computed(() => companies.value?._id ?? null);
-console.log(companId.value, "yaeah"); // now it will print first company ID 
+// workspace roles 
+const workspaceId = computed(() => props.details?.workspace_id); 
+const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
+  enabled: computed(() => !!workspaceId.value), //reactive
+});
+const newCompanyId = computed(() => workspaceData.value?.company_id ?? null);
+ 
 
-// const workspaceId = computed(() => props.details?.workspace_id);  
-const { data: workspaceRoles } = useWorkspaceRoles(companId, {  
-  enabled: computed(() => !!companId.value),// query runs only when ID exists
+const { data: workspaceRoles } = useWorkspaceRoles(newCompanyId, {  
+  enabled: computed(() => !!newCompanyId.value),// query runs only when ID exists
 });
 const selectedRole = ref(props.details?.workspace_access_role_id ?? "");
 // Mutation
@@ -376,6 +392,8 @@ watch(
   },
   { immediate: true }
 );
+
+ 
 
 import { toast } from "vue-sonner"; // or your toast library
 
