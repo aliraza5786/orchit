@@ -77,7 +77,7 @@
 
   <!-- Modals -->
   <AddStatusModal v-model="showAddStatusModal" :process-id="processId" :editing-status="editingStatus"
-    @status:added="handleStatusAdded" @edit:node="handleEditConfirm" @delete:status="handleDeleteStatus" />
+    @status:added="handleStatusAdded" @edit:node="handleEditConfirm" />
 
   <AddTransitionModal v-model="showAddTransitionModal" :process-id="processId" :statuses="workflowStatuses"
     @transition:added="handleTransitionAdded" />
@@ -185,12 +185,7 @@ function handleWorkflowUpdate() {
 // })
 
 function handleUpdateWorkflow() {
-  console.log("handleUpdateWorkflow called", Canvas.value);
-  if (Canvas.value) {
-    Canvas.value.saveWorkflow()
-  } else {
-    console.error("Canvas ref is null");
-  }
+  Canvas.value?.saveWorkflow()
   // const validation = workflowState.validateWorkflow()
   // if (!validation.isValid) {
   //   toast.error('Workflow validation failed: ' + validation.errors.join(', '))
@@ -238,12 +233,6 @@ function handleEditNode(nodeData: any) {
 const handleEditConfirm = (id: string, data: any) => {
   Canvas.value?.handleConfirmEdit(id, data)
 
-}
-
-const handleDeleteStatus = (id: string) => {
-  Canvas.value?.handleDeleteNode(id)
-  showAddStatusModal.value = false
-  editingStatus.value = null
 }
 </script>
 

@@ -45,7 +45,6 @@
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
-        <Button v-if="isEditing" @click="handleDelete" variant="danger" class="mr-auto">Delete</Button>
         <Button @click="close" variant="secondary">Cancel</Button>
         <Button @click="handleSubmit" :disabled="!statusName.trim() || isSubmitting">
           {{ isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Status' : 'Add Status') }}
@@ -73,7 +72,6 @@ const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
   (e: 'status:added', v: any): void
   (e: 'edit:node', v: string, data: any): void
-  (e: 'delete:status', v: string): void
 }>()
 
 const open = computed({
@@ -117,13 +115,6 @@ function updateColorInput() {
 function close() {
   statusName.value=''
   open.value = false
-}
-
-function handleDelete() {
-  if (confirm('Are you sure you want to delete this status?')) {
-    emit('delete:status', props.editingStatus.id)
-    close()
-  }
 }
 
 function handleSubmit() {

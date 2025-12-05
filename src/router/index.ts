@@ -230,7 +230,7 @@ const routes: RouteRecordRaw[] = [
 // const router = createRouter({ history: createWebHistory(), routes });
 const router = createRouter({ history: createWebHistory(), routes,
 
-    scrollBehavior(to, from, savedPosition) {
+    scrollBehavior(_, __, savedPosition) {
     if (savedPosition) {
       // If user clicked back/forward, restore position
       return savedPosition

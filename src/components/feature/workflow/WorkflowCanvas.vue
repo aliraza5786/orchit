@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, onMounted, onUnmounted } from "vue";
+import { nextTick, ref, onMounted, onUnmounted } from 'vue'
 import {
   VueFlow,
   Handle,
@@ -9,92 +9,63 @@ import {
   type Edge as VFEdge,
   type Connection,
   MarkerType,
-  updateEdge,
-} from "@vue-flow/core";
-import { Background } from "@vue-flow/background";
-import { Controls } from "@vue-flow/controls";
+} from '@vue-flow/core'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
 // import { MiniMap } from '@vue-flow/minimap'
-import "@vue-flow/core/dist/style.css";
-import "@vue-flow/core/dist/theme-default.css";
-import {
-  useCreateTransition,
-  useProcessStatus,
-  useProcessWorkflow,
-} from "../../../queries/useProcess";
-import { useWorkspaceId } from "../../../composables/useQueryParams";
-import { watch } from "vue";
-import BaseTextField from "../../ui/BaseTextField.vue";
-import Button from "../../ui/Button.vue";
-import Loader from "../../ui/Loader.vue";
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
+import { useCreateTransition, useProcessStatus, useProcessWorkflow } from '../../../queries/useProcess'
+import { useWorkspaceId } from '../../../composables/useQueryParams'
+import { watch } from 'vue'
+import BaseTextField from '../../ui/BaseTextField.vue'
+import Button from '../../ui/Button.vue'
+import Loader from '../../ui/Loader.vue'
 // --- Modal state for editing an existing transition (edge) ---
-const showEditEdgeModal = ref(false);
-const editEdgeName = ref("");
-const selectedEdgeId = ref<string | null>(null);
-const selectedEdgeSource = ref<string>("");
-const selectedEdgeTarget = ref<string>("");
+const showEditEdgeModal = ref(false)
+const editEdgeName = ref('')
+const selectedEdgeId = ref<string | null>(null)
 
-const nodes = ref<VFNode[]>([]);
-const edges = ref<VFEdge[]>([]);
+const nodes = ref<VFNode[]>([])
+const edges = ref<VFEdge[]>([])
 
-const {
-  setNodes,
-  updateNode,
-  addEdges,
-  setEdges,
-  onNodesInitialized,
-  fitView,
-  updateNodeInternals,
-  addNodes,
-  project,
-  getNodes,
-  getEdges,
-  zoomIn,
-  zoomOut,
-} = useVueFlow();
+const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 
 // ---- API hooks ----
-const { workspaceId } = useWorkspaceId();
+const { workspaceId } = useWorkspaceId()
 
-const { data: statuses, isSuccess: isStatues } = useProcessStatus(
-  workspaceId.value
-);
-const {
-  data: processWorkflow,
-  isSuccess: isProcess,
-  isPending: isProcessPending,
-  isFetching: isProcessFetching,
-  refetch,
-} = useProcessWorkflow(workspaceId.value);
+const { data: statuses, isSuccess: isStatues } = useProcessStatus(workspaceId.value);
+const { data: processWorkflow, isSuccess: isProcess, isPending: isProcessPending, isFetching: isProcessFetching, refetch } = useProcessWorkflow(workspaceId.value)
 
 // ---- Helpers to normalize API -> VueFlow ----
 function mapApiNode(n: any): VFNode {
   return {
     id: n.id,
-    type: n.type ?? "default",
+    type: n.type ?? 'default',
     position: n.position,
     data: n.data,
     style: n.style,
     // (optional) dimensions aren’t required by VueFlow; it will measure.
-  };
+  }
 }
 
 // Replace your normalizeMarkerType with this:
 function normalizeMarkerType(t?: string): MarkerType {
-  const key = (t ?? "arrow").toLowerCase();
-  if (key === "arrow") return MarkerType.Arrow;
-  if (key === "arrowclosed") return MarkerType.ArrowClosed;
+  const key = (t ?? 'arrow').toLowerCase()
+  if (key === 'arrow') return MarkerType.Arrow
+  if (key === 'arrowclosed') return MarkerType.ArrowClosed
   // add other mappings here if you use them; default to Arrow
-  return MarkerType.Arrow;
+  return MarkerType.Arrow
 }
 
 function mapApiEdge(e: any): VFEdge {
   // Accept either snake_case or camelCase from API
-  const marker = e.markerEnd || e.marker_end;
-  const style = e.style;
+  const marker = e.markerEnd || e.marker_end
+  const style = e.style
 
   return {
     id: e.id || e.flow_metadata?.transition_id,
-    type: e.type ?? "step",
+    type: e.type ?? 'step',
     source: e.source ?? e.flow_metadata?.source_node?.id,
     target: e.target ?? e.flow_metadata?.target_node?.id,
     sourceHandle: e.sourceHandle ?? e.source_handle,
@@ -102,143 +73,127 @@ function mapApiEdge(e: any): VFEdge {
     label: e.label,
     data: e.data,
     animated: e.animated ?? false,
-    style: style
-      ? { ...style, strokeWidth: Number(style.strokeWidth ?? 2) }
-      : undefined,
+    style: style ? { ...style, strokeWidth: Number(style.strokeWidth ?? 2) } : undefined,
     markerEnd: marker
       ? {
-          type: normalizeMarkerType(marker.type),
-          color: marker.color,
-          width: Number(marker.width ?? 18),
-          height: Number(marker.height ?? 18),
-        }
+        type: normalizeMarkerType(marker.type),
+        color: marker.color,
+        width: Number(marker.width ?? 18),
+        height: Number(marker.height ?? 18),
+      }
       : undefined,
-  };
+  }
 }
 watch(
   [() => isStatues.value, () => isProcess.value, isProcessFetching],
   async ([s1, s2]) => {
-    if (
-      s1 &&
-      s2 &&
-      statuses.value &&
-      !processWorkflow.value?.raw_transitions.nodes
-    ) {
+    if (s1 && s2 && statuses.value && !processWorkflow.value?.raw_transitions.nodes) {
       const newNodes: VFNode[] = statuses.value.map((n: any, i: any) => ({
         id: String(n._id),
-        type: n.type ?? "default",
-        position: { x: 300 * i, y: 34 }, // numbers, not strings
+        type: n.type ?? 'default',
+        position: { x: 300 * i, y: 34 },   // numbers, not strings
         data: {
-          label: n.value,
-          status: "To Do",
+          label: n.value, "status": "To Do"
         },
-      }));
+      }))
 
-      await nextTick();
-      setNodes(newNodes);
-      await nextTick();
+      await nextTick()
+      setNodes(newNodes)
+      await nextTick()
       nodes.value = newNodes;
-      await nextTick();
-      const defaultTransitions: VFEdge[] = [];
+      await nextTick()
+      const defaultTransitions: VFEdge[] = []
       for (let i = 0; i < newNodes.length - 1; i++) {
         defaultTransitions.push({
           id: `edge-${newNodes[i].id}-${newNodes[i + 1].id}`,
           source: newNodes[i].id,
           target: newNodes[i + 1].id,
-          type: "step",
-          label: "Auto Transition",
+          type: 'step',
+          label: 'Auto Transition',
           animated: false,
-          style: { stroke: "#1152de", strokeWidth: 2 },
+          style: { stroke: '#1152de', strokeWidth: 2 },
           markerEnd: {
             type: MarkerType.Arrow,
-            color: "#1152de",
+            color: '#1152de',
             width: 18,
             height: 18,
           },
-        });
+        })
       }
       if (!processWorkflow.value?.raw_transitions.nodes)
-        setEdges(defaultTransitions);
-      await nextTick();
+        setEdges(defaultTransitions)
+      await nextTick()
       // stop() // remove the watcher so it fires only once
     }
   },
   { immediate: true }
-);
-// ---- WATCH: put API data into VueFlow ----
+)
 // ---- WATCH: put API data into VueFlow ----
 watch(
-  processWorkflow,
-  async (newVal) => {
-    const fd = newVal?.raw_transitions;
-    if (!fd) return;
-    const incomingNodes = Array.isArray(fd.nodes)
-      ? fd.nodes.map(mapApiNode)
-      : [];
+ isProcessFetching,
+  async () => {
+    const fd = processWorkflow.value?.raw_transitions
+    if (!fd)
+      return
+    const incomingNodes = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
     let incomingEdges: any;
     if (Array.isArray(fd.edges)) {
-      incomingEdges = fd.edges.map(mapApiEdge);
+      incomingEdges = fd.edges.map(mapApiEdge)
     }
     // 1) put nodes in first
-    await nextTick();
-    setNodes(incomingNodes);
-    await nextTick();
+    await nextTick()
+    setNodes(incomingNodes)
+    await nextTick()
 
     // 2) after nodes & handles are mounted/measured, then add edges
     onNodesInitialized(async () => {
       // (optional) make sure handle bounds are fresh
-      incomingNodes.forEach((n: any) => updateNodeInternals(n.id));
-      setEdges(incomingEdges);
-      fitView({ padding: 0.2 }); // nice-to-have
-      await nextTick();
-    });
+      incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
+      setEdges(incomingEdges)
+      fitView({ padding: 0.2 }) // nice-to-have
+      await nextTick()
 
-    await nextTick();
+    })
+
+    await nextTick()
   },
   { immediate: true }
-);
+)
 
 // ---- onConnect: ask for transition name first ----
 function onConnect(conn: Connection) {
-  pendingConnection.value = conn;
-  transitionName.value = "";
-  showTransitionModal.value = true;
+  pendingConnection.value = conn
+  transitionName.value = ''
+  showTransitionModal.value = true
 }
 
 function confirmTransition() {
-  if (!pendingConnection.value) return;
+  if (!pendingConnection.value) return
 
-  const conn = pendingConnection.value;
-  const name = transitionName.value.trim() || "Transition";
-  const id = `${conn.source}-${conn.target}-${
-    crypto.randomUUID?.() ?? Math.random()
-  }`;
+  const conn = pendingConnection.value
+  const name = transitionName.value.trim() || 'Transition'
+  const id = `${conn.source}-${conn.target}-${crypto.randomUUID?.() ?? Math.random()}`
 
   const payload: VFEdge = {
     ...conn,
     id,
-    type: "step",
+    type: 'step',
     label: name,
     data: { name },
-    style: { stroke: "#1152de", strokeWidth: 2 },
-    markerEnd: {
-      type: MarkerType.Arrow,
-      color: "#1152de",
-      width: 18,
-      height: 18,
-    },
-  };
+    style: { stroke: '#1152de', strokeWidth: 2 },
+    markerEnd: { type: MarkerType.Arrow, color: '#1152de', width: 18, height: 18 },
+  }
 
-  addEdges(payload);
-  showTransitionModal.value = false;
-  pendingConnection.value = null;
-  transitionName.value = "";
+  addEdges(payload)
+  showTransitionModal.value = false
+  pendingConnection.value = null
+  transitionName.value = ''
 }
 
 function cancelTransition() {
-  showTransitionModal.value = false;
-  pendingConnection.value = null;
-  transitionName.value = "";
+  showTransitionModal.value = false
+  pendingConnection.value = null
+  transitionName.value = ''
 }
 // --- Default (system) nodes like Jira: Start, To Do, Done ---
 
@@ -249,173 +204,126 @@ function cancelTransition() {
 //   return () => `n-${i++}`
 // })()
 
-const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(
-  workspaceId.value,
-  {
-    onSuccess: (data: any) => {
-      console.log("Workflow saved successfully", data);
-      // Optional: Add a toast here if you have a toast library available
-      // toast.success("Workflow saved successfully");
-    },
-    onError: (error: any) => {
-      console.error("Failed to save workflow:", error);
-      alert(`Failed to save workflow: ${error.message || 'Unknown error'}`);
-    }
+const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(workspaceId.value, {
+  onSuccess:()=>{
+    refetch();
   }
-);
+})
 
 const defaultEdgeOptions: Partial<VFEdge> = {
   // sharp/right-angle like Jira
-  type: "step",
+  type: 'step',
   animated: false,
   style: { strokeWidth: 2 },
   markerEnd: {
     type: MarkerType.Arrow,
-    color: "#3b82f6",
+    color: '#3b82f6',
     width: 18,
     height: 18,
   },
   labelBgPadding: [6, 2],
   labelBgBorderRadius: 6,
-};
+}
+
 
 // --- Modal state for create & rename ---
-const showCreateModal = ref(false);
-const createName = ref("");
-const showTransitionModal = ref(false);
-const transitionName = ref("");
-const pendingConnection = ref<Connection | null>(null);
+const showCreateModal = ref(false)
+const createName = ref('')
+const showTransitionModal = ref(false)
+const transitionName = ref('')
+const pendingConnection = ref<Connection | null>(null)
 
-const emit = defineEmits(["edit:node"]);
+const emit = defineEmits(['edit:node'])
 
 function openCreateNodeModal() {
-  createName.value = "";
-  showCreateModal.value = true;
+  createName.value = ''
+  showCreateModal.value = true
 }
 
 function handleEditNode(nodeId: string, nodeData: any) {
-  const node = getNodes.value.find((n) => n.id === nodeId);
-  console.log(node, ">>>>");
+  const node = getNodes.value.find(n => n.id === nodeId)
+  console.log(node, '>>>>');
 
   if (node) {
-    emit("edit:node", {
+    emit('edit:node', {
       id: nodeId,
       ...node.data,
 
-      status_color: nodeData.status || "#6b7280",
-    });
+      status_color: nodeData.status || '#6b7280'
+    })
   }
 }
 function handleConfirmEdit(id: string, nodeData: any) {
   if (nodeData) {
-    updateNode(id, (n) => ({
-      ...n,
-      data: {
-        ...n.data,
-        label: nodeData.name,
-        status: nodeData.category,
-      },
-      style: {
-        border: "2px solid #64748b",
-        borderRadius: "10px",
-        background: nodeData.status_color,
-      },
-    }));
+    updateNode(id, n => ({
+      ...n, data: {
+        ...n.data, label: nodeData.name, status: nodeData.category,
+      }, style: { border: '2px solid #64748b', borderRadius: '10px', background: nodeData.status_color }
+    }))
   }
   nextTick();
-}
 
-function handleDeleteNode(id: string) {
-  setNodes((nds) => nds.filter((n) => n.id !== id));
-  setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
 }
-
 // Add a brand-new independent node
 async function handleAddNode(e: any) {
-  const makeId = () =>
-    crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`;
+  const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
   const id = makeId();
-  const pos = project({ x: e.position_x, y: e.position_y }); // place near bottom-left; project to account for zoom/pan
-
-  // Extract only necessary fields to avoid sending conflicting data (like process_id) to backend
-  const { name, category, status_color, status_name, is_initial, is_final } = e;
-
+  const pos = project({ x: e.position_x, y: e.position_y }) // place near bottom-left; project to account for zoom/pan
   addNodes({
     id,
     position: pos,
-    data: {
-      label: name,
-      status: status_name,
-      name,
-      category,
-      status_color,
-      status_name,
-      is_initial,
-      is_final,
-    },
-    style: {
-      border: "2px solid #64748b",
-      borderRadius: "10px",
-      background: status_color,
-    },
-  });
+    data: { label: e.name, status: e.status_name },
+    style: { border: '2px solid #64748b', borderRadius: '10px', background: e.status_color },
+  })
+
 }
 
-defineExpose({
-  openCreateNodeModal,
-  handleAddNode,
-  saveWorkflow,
-  isSaving,
-  handleConfirmEdit,
-  handleDeleteNode,
-});
+defineExpose({ openCreateNodeModal, handleAddNode, saveWorkflow, isSaving, handleConfirmEdit })
 
 function markerTypeToApi(t?: MarkerType | string) {
-  if (!t) return undefined;
+  if (!t) return undefined
   // VueFlow enum values stringify to names; also accept strings
-  const key = String(t).toLowerCase();
+  const key = String(t).toLowerCase()
   // normalize common cases
-  if (key.includes("arrowclosed")) return "arrowclosed";
-  if (key.includes("arrow")) return "arrow";
-  if (key.includes("circle")) return "circle";
-  if (key.includes("square")) return "square";
-  if (key.includes("diamond")) return "diamond";
-  if (key.includes("dot")) return "dot";
-  return "arrow";
+  if (key.includes('arrowclosed')) return 'arrowclosed'
+  if (key.includes('arrow')) return 'arrow'
+  if (key.includes('circle')) return 'circle'
+  if (key.includes('square')) return 'square'
+  if (key.includes('diamond')) return 'diamond'
+  if (key.includes('dot')) return 'dot'
+  return 'arrow'
 }
 
 function mapVFNodeToApi(n: VFNode) {
   // Send what your GET returned under flow_diagram.nodes
   return {
     id: n.id,
-    type: n.type ?? "default",
+    type: n.type ?? 'default',
     position: n.position,
     // dimensions are optional; backend can store last known box if you want
     data: n.data,
     style: n.style,
-  };
+  }
 }
 
 function mapVFEdgeToApi(e: VFEdge) {
   // narrow markerEnd which is EdgeMarkerType (object | string | undefined)
-  const m = e.markerEnd;
+  const m = e.markerEnd
   const marker_end = m
     ? (() => {
-        const mt = typeof m === "string" ? m : (m as any).type;
-        return {
-          type: markerTypeToApi(mt as MarkerType | string), // ← now safe
-          color: typeof m === "string" ? undefined : (m as any).color,
-          width:
-            typeof m === "string" ? undefined : Number((m as any).width ?? 18),
-          height:
-            typeof m === "string" ? undefined : Number((m as any).height ?? 18),
-        };
-      })()
-    : undefined;
+      const mt = typeof m === 'string' ? m : (m as any).type
+      return {
+        type: markerTypeToApi(mt as MarkerType | string), // ← now safe
+        color: typeof m === 'string' ? undefined : (m as any).color,
+        width: typeof m === 'string' ? undefined : Number((m as any).width ?? 18),
+        height: typeof m === 'string' ? undefined : Number((m as any).height ?? 18),
+      }
+    })()
+    : undefined
 
   return {
     id: e.id,
-    type: e.type ?? "step",
+    type: e.type ?? 'step',
     source: e.source,
     target: e.target,
     source_handle: e.sourceHandle,
@@ -423,20 +331,17 @@ function mapVFEdgeToApi(e: VFEdge) {
     label: e.label,
     data: e.data,
     style: e.style
-      ? {
-          ...(e.style as Record<string, any>),
-          strokeWidth: Number((e.style as any).strokeWidth ?? 2),
-        }
+      ? { ...(e.style as Record<string, any>), strokeWidth: Number((e.style as any).strokeWidth ?? 2) }
       : undefined,
-    marker_end, // ← use the narrowed value
+    marker_end,                 // ← use the narrowed value
     animated: !!e.animated,
-  };
+  }
 }
 
+
 function serializeWorkflowPayload() {
-  // Use local refs 'nodes' and 'edges' which are v-model bound to VueFlow
-  const currentNodes = nodes.value; 
-  const currentEdges = edges.value;
+  const currentNodes = getNodes.value   // ✅ not getNodes()
+  const currentEdges = getEdges.value   // ✅ not getEdges()
 
   return {
     workspace_id: workspaceId.value,
@@ -444,152 +349,119 @@ function serializeWorkflowPayload() {
       nodes: currentNodes.map(mapVFNodeToApi),
       edges: currentEdges.map(mapVFEdgeToApi),
     },
-  };
+  }
 }
 
 function saveWorkflow() {
-  console.log("saveWorkflow called");
-  try {
-    const payload = serializeWorkflowPayload();
-    console.log(" >>> saving workspace", payload);
-    createWorkflow({ payload });
-  } catch (err) {
-    console.error("Error preparing save payload:", err);
-    alert("Failed to prepare save payload. Check console for details.");
-  }
+
+  const payload = serializeWorkflowPayload()
+  console.log(' >>> saving workspace', payload);
+  createWorkflow({ payload })
 }
+
 
 // watch(nodes, scheduleSave, { deep: true })
 // watch(edges, scheduleSave, { deep: true })
 
 // Optional safety net when navigating away
-window.addEventListener("beforeunload", () => {
-  if (isSaving.value) return;
-  try {
-    saveWorkflow();
-  } catch {}
-});
+window.addEventListener('beforeunload', () => {
+  if (isSaving.value) return
+  try { saveWorkflow() } catch { }
+})
+
 
 function openEditEdge(edge: VFEdge) {
-  console.log(edge, "edge");
-
-  selectedEdgeId.value = edge.id;
-  selectedEdgeSource.value = edge.source;
-  selectedEdgeTarget.value = edge.target;
+  console.log(edge, 'edge');
+  
+  selectedEdgeId.value = edge.id
   // prefer existing label, fallback to data.name, else empty
-  editEdgeName.value = String(edge.label ?? edge.data?.name ?? "");
-  showEditEdgeModal.value = true;
+  editEdgeName.value = String(edge.label ?? edge.data?.name ?? '')
+  showEditEdgeModal.value = true
 }
 
 function confirmEditEdge() {
-  if (!selectedEdgeId.value) return;
-  const name = editEdgeName.value.trim();
+  if (!selectedEdgeId.value) return
+  const name = editEdgeName.value.trim()
 
   // Update the edge’s label (and mirror into data.name to keep your API shape consistent)
-  setEdges((eds) =>
-    eds.map((e) =>
+  setEdges(eds =>
+    eds.map(e =>
       e.id === selectedEdgeId.value
-        ? {
-            ...e,
-            label: name || e.label,
-            // source: selectedEdgeSource.value, // No longer updating source/target here
-            // target: selectedEdgeTarget.value,
-            data: { ...(e.data ?? {}), name: name || e.data?.name },
-          }
+        ? { ...e, label: name || e.label, data: { ...(e.data ?? {}), name: name || e.data?.name } }
         : e
     )
-  );
+  )
 
   // reset modal
-  showEditEdgeModal.value = false;
-  selectedEdgeId.value = null;
-  editEdgeName.value = "";
+  showEditEdgeModal.value = false
+  selectedEdgeId.value = null
+  editEdgeName.value = ''
 }
 
 function cancelEditEdge() {
-  showEditEdgeModal.value = false;
-  selectedEdgeId.value = null;
-  editEdgeName.value = "";
+  showEditEdgeModal.value = false
+  selectedEdgeId.value = null
+  editEdgeName.value = ''
 }
-function onEdgeClick({ event, edge }: { event: any; edge: any }) {
-  openEditEdge(edge);
-  event.stopPropagation();
-}
-
-function deleteEdge() {
-  if (!selectedEdgeId.value) return;
-  const confirmed = window.confirm(
-    "Are you sure you want to delete this transition?"
-  );
-  if (!confirmed) return;
-
-  setEdges((eds) => eds.filter((e) => e.id !== selectedEdgeId.value));
-
-  showEditEdgeModal.value = false;
-  selectedEdgeId.value = null;
-  editEdgeName.value = "";
+function onEdgeClick({event, edge}:{event:any, edge:any}) {
+  console.log('>>> click',edge);
+  
+  openEditEdge(edge)
+  event.stopPropagation()
 }
 
-function onEdgeUpdate({
-  edge,
-  connection,
-}: {
-  edge: VFEdge;
-  connection: Connection;
-}) {
-  setEdges((eds) => updateEdge(edge, connection, eds));
-}
 
+// zoom in zoom out
 onMounted(() => {
-  window.addEventListener("workflow:zoom", handleZoomEvent);
-});
+  window.addEventListener('workflow:zoom', handleZoomEvent)
+})
 
 onUnmounted(() => {
-  window.removeEventListener("workflow:zoom", handleZoomEvent);
-});
+  window.removeEventListener('workflow:zoom', handleZoomEvent)
+})
 
 function handleZoomEvent(e: Event) {
-  const detail = (e as CustomEvent).detail;
-  if (!detail) return;
-
-  if (detail.action === "in") zoomIn();
-  if (detail.action === "out") zoomOut();
-  if (detail.action === "reset") fitView({ padding: 0.2 });
+  const detail = (e as CustomEvent).detail
+  if (!detail) return
+  
+  if (detail.action === 'in') zoomIn()
+  if (detail.action === 'out') zoomOut()
+  if (detail.action === 'reset') fitView({ padding: 0.2 })
 }
+
 </script>
 
 <template>
   <div class="workflow-wrap">
     <Loader v-if="isProcessPending || isProcessFetching" />
+
     <VueFlow
-      v-else
-      v-model:nodes="nodes"
-      v-model:edges="edges"
-      :default-edge-options="defaultEdgeOptions"
-      :nodes-draggable="true"
-      :nodes-connectable="true"
-      :elements-selectable="true"
-      :edges-updatable="true"
-      fit-view-on-init
-      @connect="onConnect"
-      @edge-click="onEdgeClick"
-      @edge-update="onEdgeUpdate"
-    >
+  v-else
+  v-model:nodes="nodes"
+  v-model:edges="edges"
+  :default-edge-options="defaultEdgeOptions"
+  :nodes-draggable="true"
+  :nodes-connectable="true"
+  :elements-selectable="true"
+  fit-view-on-init
+  @connect="onConnect"
+  @edge-click="onEdgeClick"
+>
+
+
+
       <Background />
       <!-- <MiniMap /> -->
       <Controls />
 
       <!-- Custom node content with connection handles and a status picker -->
       <template #node-default="{ id, data }">
-        <div class="relative min-w-25 rounded-[60px]">
-          <div class="flex justify-between items-center">
+        <div class="relative min-w-25  rounded-md ">
+          <div class="flex justify-between items-center ">
             <span>
               {{ data.label }}
             </span>
-            <i
-              class="fa-solid fa-edit cursor-pointer"
-              @click.stop="handleEditNode(id, data)"
-            ></i>
+            <i class="fa-solid fa-edit cursor-pointer" @click.stop="handleEditNode(id, data)"></i>
           </div>
           <!-- connection points -->
           <!-- inside #node-default -->
@@ -597,65 +469,42 @@ function handleZoomEvent(e: Event) {
           <Handle id="out-right" type="source" :position="Position.Right" />
           <Handle id="out-bottom" type="source" :position="Position.Bottom" />
           <Handle id="in-left" type="target" :position="Position.Left" />
+
         </div>
       </template>
     </VueFlow>
 
     <!-- Transition Name Modal -->
-    <div
-      v-if="showTransitionModal"
-      class="modal-backdrop"
-      @click.self="cancelTransition"
-    >
-      <div class="modal border border-border !bg-bg-body text-text-primary">
+    <div v-if="showTransitionModal" class=" modal-backdrop" @click.self="cancelTransition">
+      <div class="modal  border border-border !bg-bg-body text-text-primary">
         <h3>Name this transition</h3>
-        <BaseTextField
-          v-model="transitionName"
-          placeholder="e.g., Start work, Complete"
-          @keyup.enter="confirmTransition"
-          autofocus
-        />
+        <BaseTextField v-model="transitionName" placeholder="e.g., Start work, Complete"
+          @keyup.enter="confirmTransition" autofocus />
         <div class="modal-actions mt-4">
           <Button size="sm" @click="confirmTransition">Add Transition</Button>
-          <Button variant="secondary" size="sm" @click="cancelTransition"
-            >Cancel</Button
-          >
+          <Button variant="secondary" size="sm" @click="cancelTransition">Cancel</Button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Edit Transition Modal -->
-  <div
-    v-if="showEditEdgeModal"
-    class="modal-backdrop"
-    @click.self="cancelEditEdge"
-  >
-    <div class="modal border border-border !bg-bg-body text-text-primary">
-      <h3>Edit transition</h3>
-
-      <div class="mb-3">
-        <label class="block text-xs text-text-secondary mb-1">Name</label>
-        <BaseTextField
-          v-model="editEdgeName"
-          placeholder="Transition name"
-          @keyup.enter="confirmEditEdge"
-          autofocus
-        />
-      </div>
-
-      <!-- Removed Source/Target dropdowns as requested -->
-
-      <div class="modal-actions mt-4">
-        <Button size="sm" variant="danger" @click="deleteEdge">Delete</Button>
-        <div class="flex-1"></div>
-        <Button size="sm" @click="confirmEditEdge">Save</Button>
-        <Button variant="secondary" size="sm" @click="cancelEditEdge"
-          >Cancel</Button
-        >
-      </div>
+<div v-if="showEditEdgeModal" class="modal-backdrop" @click.self="cancelEditEdge">
+  <div class="modal border border-border !bg-bg-body text-text-primary">
+    <h3>Edit transition</h3>
+    <BaseTextField
+      v-model="editEdgeName"
+      placeholder="Transition name"
+      @keyup.enter="confirmEditEdge"
+      autofocus
+    />
+    <div class="modal-actions mt-4">
+      <Button size="sm" @click="confirmEditEdge">Save</Button>
+      <Button variant="secondary" size="sm" @click="cancelEditEdge">Cancel</Button>
     </div>
   </div>
+</div>
+
 </template>
 
 <style scoped>
@@ -688,7 +537,7 @@ function handleZoomEvent(e: Event) {
 }
 
 .btn:hover {
-  opacity: 0.9;
+  opacity: .9
 }
 
 .hint {
@@ -696,6 +545,9 @@ function handleZoomEvent(e: Event) {
   color: #6b7280;
   font-size: 12px;
 }
+
+
+
 
 /* Make connection handles visible and clickable */
 :deep(.vue-flow__handle) {
@@ -715,7 +567,7 @@ function handleZoomEvent(e: Event) {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, .35);
   display: grid;
   place-items: center;
   z-index: 50;
@@ -726,7 +578,7 @@ function handleZoomEvent(e: Event) {
   border-radius: 12px;
   padding: 16px;
   width: 320px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .15);
 }
 
 .modal h3 {
@@ -783,6 +635,7 @@ function handleZoomEvent(e: Event) {
   border-color: #2563eb !important;
   z-index: 10;
 }
+
 
 /* Selected edge */
 :deep(.vue-flow__edge-path) {
