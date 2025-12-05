@@ -127,7 +127,7 @@
                 title: r.title,
              }))
             "
-            placeholder="Select Role" 
+            placeholder="Select Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
             :canEditCard="!canEditUser"
@@ -186,7 +186,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, onMounted, reactive, ref, watch, watchEffect } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -197,12 +197,13 @@ import SwitchTab from "../../../components/ui/SwitchTab.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor";
+import { useCompanyId } from "../../../services/user";
 
 // workspace roles
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
 
 import { usePermissions } from "../../../composables/usePermissions";
-const { canEditUser,  } = usePermissions();
+const { canEditUser } = usePermissions();
 
 const localVarValues = reactive<any>({});
 const activeTab = ref<"details" | "tasks" | "history">("details");
@@ -335,19 +336,24 @@ function getDefaultValue(id: any) {
 }
 
 // workspace roles
-const workspaceId = computed(() => props.details?.workspace_id);
-const { data: workspaceRoles } = useWorkspaceRoles(workspaceId, {
-  enabled: computed(() => !!workspaceId.value), // query runs only when ID exists
+const { data: companies } = useCompanyId();
+const companId = computed(() => companies.value?._id ?? null);
+console.log(companId.value, "yaeah"); // now it will print first company ID 
+
+// const workspaceId = computed(() => props.details?.workspace_id);  
+const { data: workspaceRoles } = useWorkspaceRoles(companId, {  
+  enabled: computed(() => !!companId.value),// query runs only when ID exists
 });
 const selectedRole = ref(props.details?.workspace_access_role_id ?? "");
 // Mutation
 const { mutate: assignRole } = useAssignRole({
   onSuccess: () => {
     console.log("Role assigned successfully!");
-    // Optionally refetch people or roles
-    queryClient.invalidateQueries({ queryKey: ["workspaceRoles"] });
+    // Optionally refetch people or roles 
+    queryClient.invalidateQueries({ queryKey: ["people-lists"]});  
+
   },
-  onError: (err: any) => console.error(err),
+  onError: (err: any) => console.error(err), 
 });
 
 watch(selectedRole, (newRole) => {
@@ -362,6 +368,13 @@ watch(
   (newRoleId) => {
     selectedRole.value = newRoleId ?? "";
   }
+);
+watch(
+  () => props.details?._id,
+  () => {
+    selectedRole.value = props.details?.workspace_access_role_id ?? "";
+  },
+  { immediate: true }
 );
 
 import { toast } from "vue-sonner"; // or your toast library

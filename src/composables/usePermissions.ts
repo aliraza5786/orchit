@@ -27,12 +27,17 @@ export function usePermissions() {
   });
 
   //  Admin check
+  // const isAdmin = computed(() => {
+  //   const role = userAccessRole.value;
+  //   if (!role || !role.access_role) return false;
+
+  //   const admin = role.access_role.is_admin;
+  //   return admin === true || admin === "true" || admin === 1;
+  // });
   const isAdmin = computed(() => {
     const role = userAccessRole.value;
-    if (!role || !role.access_role) return false;
-
-    const admin = role.access_role.is_admin;
-    return admin === true || admin === "true" || admin === 1;
+    if (!role) return false;
+    return role.is_owner === true;
   });
 
   //  Permissions array from backend ({ slug, enabled })
@@ -61,13 +66,18 @@ export function usePermissions() {
   const canViewLane = computed(() => hasPermission("workspace.lane.view_all"));
   const canEditLane = computed(() => hasPermission("workspace.lane.update"));
   const canDeleteLane = computed(() => hasPermission("workspace.lane.delete"));
-  
 
   // ---- Sheet Permissions ----
-  const canCreateSheet = computed(() => hasPermission("workspace.sheet.create"));
-  const canViewSheet = computed(() => hasPermission("workspace.sheet.view_all"));
+  const canCreateSheet = computed(() =>
+    hasPermission("workspace.sheet.create")
+  );
+  const canViewSheet = computed(() =>
+    hasPermission("workspace.sheet.view_all")
+  );
   const canEditSheet = computed(() => hasPermission("workspace.sheet.update"));
-  const canDeleteSheet = computed(() => hasPermission("workspace.sheet.delete"));
+  const canDeleteSheet = computed(() =>
+    hasPermission("workspace.sheet.delete")
+  );
   // ---- Card Permissions ----
   const canCreateCard = computed(() => hasPermission("workspace.card.create"));
   const canViewCard = computed(() => hasPermission("workspace.card.view_all"));
@@ -85,8 +95,8 @@ export function usePermissions() {
   const canEditVariable = computed(() =>
     hasPermission("workspace.variable.update")
   );
-   const canDeleteVariable = computed(() =>
-    hasPermission("workspace.variable.update")
+  const canDeleteVariable = computed(() =>
+    hasPermission("workspace.variable.delete")
   );
 
   // ---- Comment Permissions ----
@@ -99,8 +109,8 @@ export function usePermissions() {
   const canEditComment = computed(() =>
     hasPermission("workspace.comment.update")
   );
-   const canDeleteComment = computed(() =>
-    hasPermission("workspace.delete.update")
+  const canDeleteComment = computed(() =>
+    hasPermission("workspace.delete.delete")
   );
 
   // ---- Attachment Permissions ----
@@ -169,6 +179,6 @@ export function usePermissions() {
     canViewUser,
     canEditUser,
     canDeleteUser,
-    canDeleteSheet
+    canDeleteSheet,
   };
 }

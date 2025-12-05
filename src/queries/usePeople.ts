@@ -235,16 +235,16 @@ export const ReOrderCard = (options = {}) =>
 
 
 // work space roles
-export const useWorkspaceRoles = (workspace_id: any, options = {}) => {
+export const useWorkspaceRoles = (company_id: any, options = {}) => {
   return useQuery({
-    queryKey: ["workspace-roles", workspace_id],
+    queryKey: ["workspace-roles", company_id],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `roles/workspace-access-roles/without-permission?workspace_id=${workspace_id.value}`,
+        url: `roles/workspace-access-roles?company_id=${company_id.value}`,
         method: "GET",
         signal,
       }),
-    enabled: !!workspace_id,
+    enabled: !!company_id,
     ...options,
   });
 };
