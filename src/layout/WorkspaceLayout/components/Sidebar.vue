@@ -118,7 +118,7 @@ import { ref, watch } from "vue";
 import SideItem from "./SideItem.vue";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { usePermissions } from "../../../composables/usePermissions";
-import WorkSpaceDropdown  from "./workSpaceDropdown.vue";
+// import WorkSpaceDropdown  from "./workSpaceDropdown.vue";
 
 const {
   workspaceId,

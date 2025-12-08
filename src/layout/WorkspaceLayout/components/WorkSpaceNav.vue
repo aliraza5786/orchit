@@ -203,8 +203,7 @@ import {
 } from "../../../queries/useWorkspace";
 import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { useQueryClient } from "@tanstack/vue-query";
-import { usePermissions } from "../../../composables/usePermissions";
-import Logo from "@assets/global/favicon.png";
+import { usePermissions } from "../../../composables/usePermissions"; 
 const { canCreateLane } = usePermissions();
 const router = useRouter();
 const workspaceStore = useWorkspaceStore();
