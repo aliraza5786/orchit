@@ -50,16 +50,16 @@
           >Start Sprint</Button
         >
 
-        <div class="relative inline-block">
+        <div class="relative inline-block"  ref="elipseWrapper">
           <!-- wrapper that listens for outside click -->
-          <div @click.outside="openElipseDrop = false">
+          <div>
             <!-- Toggle Button -->
             <button
               @click.stop="openElipseDrop = !openElipseDrop"
-              class="flex items-center justify-center border border-border-input rounded-[8px] w-[36px] h-[36px] text-primary hover:bg-bg-body"
+              class="flex items-center  cursor-pointer justify-center border border-border-input rounded-[8px] w-[36px] h-[36px] text-primary hover:bg-bg-body"
             >
               <i
-                class="fa-solid fa-ellipsis-vertical text-md cursor-pointer"
+                class="fa-solid fa-ellipsis-vertical text-md"
               ></i>
             </button>
 
@@ -290,6 +290,7 @@ import {
   useStartSprint,
   useUpdateSprint,
 } from "../../queries/usePlan";
+
 import { toast } from "vue-sonner";
 import { useWorkspaceId } from "../../composables/useQueryParams";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -311,7 +312,13 @@ const { canCreateCard } = usePermissions()
 // const rowClickHandler= (rowId:any)=>{
 //   selectedCardId.value=rowId;
 // }
+import { onClickOutside } from '@vueuse/core' 
+const elipseWrapper = ref<HTMLElement | null>(null)
 const openElipseDrop = ref(false);
+onClickOutside(elipseWrapper, () => {
+  openElipseDrop.value = false
+})
+
 const closeModal = () => {
   showTaskModal.value = false;
 };

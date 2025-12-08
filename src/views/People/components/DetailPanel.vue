@@ -8,7 +8,7 @@
   >
     <!-- Header -->
     <div
-      class="py-4 flex justify-between items-center border-b border-border px-5 sticky top-0 bg-bg-card z-1"
+      class="pt-[17px] pb-[18px] flex justify-between items-center border-b border-border px-5 sticky top-0 bg-bg-card z-1"
     >
       <h5 class="text-[16px] font-medium">Profile</h5>
       <i
