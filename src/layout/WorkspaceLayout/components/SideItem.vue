@@ -1,6 +1,6 @@
 <template>
   <div @click="clickHandler"
-    class="group cursor-pointer flex flex-col w-[48px] h-[48px] items-center justify-center gap-1.5 px-2 py-3.5 rounded-lg text-xs text-text-secondary transition-all relative hover:bg-bg-card hover:text-text-primary select-none"
+    class="group cursor-pointer flex items-center  gap-1.5 px-2 py-3.5 rounded-lg text-xs text-text-secondary transition-all relative hover:bg-bg-card hover:text-text-primary select-none"
     :class="[
       progress == 'processing' && status == 'running' ?
         'disbled !cursor-not-allowed opacity-50' :
@@ -9,6 +9,7 @@
           : workspaceStore.background.startsWith('url')
             ? 'text-text-primary bg-bg-card'
             : ' text-text-secondary',
+      expanded ? 'w-[48px] h-[48px] sm:w-full sm:h-[38px] justify-start' : 'flex-col w-[48px] h-[48px] justify-center'      
     ]">
     <!-- Drag Icon -->
     <img src="../../../assets/icons/Layer.svg"
@@ -19,7 +20,9 @@
     <i v-else :class="`${icon?.prefix} ${icon?.iconName}`"></i>
     <!-- <FontAwesomeIcon  :icon="[icon.prefix, icon.iconName]"/> -->
     <!-- <FontAwesomeIcon :icon="faGrid2" />      Label -->
-    <span class="whitespace-nowrap text-[10px] font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3">
+    <span class="whitespace-nowrap text-[10px] font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
+    :class="expanded? 'text-start' : ''" 
+    >
       {{ label }}
     </span>
   </div>
@@ -37,7 +40,8 @@ const props = defineProps<{
   id: string;     // this is job_id
   icon: any;
   to: string;
-  status?: string
+  status?: string,
+  expanded?: boolean
 }>();
 
 /** --- STATE --- **/
@@ -146,6 +150,7 @@ function clickHandler() {
   if (progress.value == 'processing' && props.status == 'running') return
   router.push(props.to)
 }
+
 
 </script>
 

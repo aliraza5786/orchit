@@ -8,12 +8,14 @@
       backgroundSize: '110%',
       backgroundPosition: 'center'
     }">
-    <WorkSpaceNav :getWorkspace="getWorkspace" ref="workspaceNavRef" />
+    <WorkSpaceNav :getWorkspace="getWorkspace" ref="workspaceNavRef" @toggle-sidebar="toggleSidebar" :expanded="sidebarExpanded" />
     <div class="flex flex-grow items-start h-full max-w-full overflow-x-hidden "
       style="max-height:calc(100dvh - 55px);">
-      <Sidebar :workspace="getWorkspace" :isLoading="isPending || isLoading" />
-       <div class="dashboard_content h-full w-full  z-[1]  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] "
-        style="max-width: calc(100vw - 70px); max-height: calc(100dvh - 65px);">
+        <Sidebar :workspace="getWorkspace" :isLoading="isPending || isLoading"
+       :expanded="sidebarExpanded" />
+       <div class="dashboard_content h-full w-full z-[1]  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
+        :style="dashboardContentStyle"
+        >
         <router-view />
         <ProfilePanel />
         <FilterDrawer v-model="filters" :open="isDrawerOpen" />
@@ -28,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import ProfilePanel from './components/ProfilePanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
@@ -54,6 +56,39 @@ const filters = ref({
   tags: [],
   status: []
 })
+
+// sidebar toggle concept
+const sidebarExpanded = ref(true);
+const isSmallScreen = ref(window.innerWidth < 640); // sm breakpoint
+const handleResize = () => {
+  isSmallScreen.value = window.innerWidth < 640;
+};
+// Update sidebar automatically if screen is small
+watch(isSmallScreen, (val) => {
+  if (val) {
+    sidebarExpanded.value = false;
+  } else {
+    sidebarExpanded.value = true; // or keep previous state if you want
+  }
+});
+onMounted(() => {
+  window.addEventListener('resize', handleResize);
+  handleResize(); // initial check
+});
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize);
+});
+// Toggle function for button
+function toggleSidebar() {
+  sidebarExpanded.value = !sidebarExpanded.value;
+}
+
+const dashboardContentStyle = computed(() => ({
+  maxWidth: sidebarExpanded.value
+    ? 'calc(100vw - 250px)'
+    : 'calc(100vw - 70px)',
+  maxHeight: 'calc(100dvh - 65px)'
+}));
 </script>
 
 <style scoped>
