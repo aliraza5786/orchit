@@ -11,11 +11,12 @@
       }`"
     >
       <!-- Logo + Title (now a dropdown trigger) -->
-      <div class="relative flex items-center">
-        <div class="block sm:hidden">
+      <div class="relative flex items-center ps-2">
+        <div :class="expanded ? 'w-[235px]' : 'w-auto'">
           <button
             ref="logoBtnRef"
-            class="flex items-center pl-3 cursor-pointer rounded-md"
+            class="flex items-center justify-between cursor-pointer rounded-md w-full"
+            :class="expanded? 'border-border-input  hover:shadow-md px-2 py-1 border hover:border-accent':''"
             aria-haspopup="menu"
             :aria-expanded="logoMenuOpen ? 'true' : 'false'"
             @click="toggleLogoMenu"
@@ -23,18 +24,21 @@
             @keydown.enter.prevent="toggleLogoMenu"
             @keydown.space.prevent="toggleLogoMenu"
           >
-            <img
-              :src="getWorkspace?.logo ?? dp"
-              alt="Workspace menu"
-              class="min-w-10 shadow-2xl rounded-md h-10 cursor-pointer aspect-square object-contain me-2"
-            />
-            <h3
-              class="text-lg text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block"
-            >
-              {{ getWorkspace?.variables?.title }}
-            </h3>
+            <div class="flex items-center">
+              <img
+                :src="getWorkspace?.logo ?? dp"
+                alt="Workspace menu"
+                class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover"
+              />
+              <h3
+                v-if="expanded"
+                class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
+              >
+                {{ getWorkspace?.variables?.title }}
+              </h3>
+            </div>
             <svg
-              class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1 mt-1"
+              class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1"
               :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -50,39 +54,10 @@
         </div>
         <div
           class="flex items-center justify-between transition-all duration-200"
-          :class="expanded ? 'w-[250px]' : 'w-auto'"
         >
-          <!-- Logo  and icon for unexpand-->
-          <div 
-            class="w-[40px] relative "
-            @mouseenter="hoveringLogo = true"
-            @mouseleave="hoveringLogo = false"
-          >
-            <RouterLink
-              v-if="!expanded && !hoveringLogo"
-              to="/"
-              class="transition-opacity duration-300"
-            >
-              <img :src="Logo" alt="Logo" class="max-w-[40px] object-contain" />
-            </RouterLink>
-             <RouterLink
-            v-if="expanded"
-            to="/"
-            class="transition-opacity duration-300"
-          >
-            <img :src="Logo" alt="Logo" class="max-w-[40px] object-contain" />
-          </RouterLink>
-            <i
-              v-show="!expanded && hoveringLogo"
-              class="fa-solid fa-sidebar ms-3 left-[-2px] top-[-12px] absolute text-[16px] hover:text-[18px] cursor-w-resize text-text-secondary "
-              @click="handleSidebarToggle"
-            >
-            </i>
-          </div> 
           <!-- Icon (toggle sidebar) -->
           <i
-            v-if="expanded"
-            class="fa-solid fa-sidebar ms-3 text-[16px] hover:text-[18px] cursor-w-resize text-text-secondary shrink-0 "
+            class="fa-solid fa-sidebar ms-3 text-[16px] hover:text-[18px] cursor-w-resize text-text-secondary shrink-0"
             @click="handleSidebarToggle"
           ></i>
         </div>
@@ -162,7 +137,7 @@
     <div
       v-show="logoMenuOpen"
       ref="menuRef"
-      class="absolute top-10 left-[11px] z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
+      class="absolute top-12 left-[11px] z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
       role="menu"
       aria-label="Workspace switcher"
       @keydown.esc.stop.prevent="closeLogoMenu"
@@ -199,7 +174,7 @@
           <img
             :src="ws.logo ?? dp"
             alt=""
-            class="w-6 h-6 rounded object-contain bg-white"
+            class="w-6 h-6 rounded-full object-cover bg-white"
           />
           <span class="flex-1 line-clamp-1">{{
             ws?.variables?.title ?? "Untitled workspace"
@@ -351,9 +326,6 @@ const openUpdateModal = (id: any) => {
 
 defineExpose({ laneId });
 defineProps<{ getWorkspace: any; expanded?: Boolean }>();
-
-// sidebar toogle and icon
-const hoveringLogo = ref(false);
 </script>
 
 <style scoped>

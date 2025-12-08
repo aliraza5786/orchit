@@ -1,13 +1,13 @@
 <template>
   <SidebarSkeleton v-if="isLoading" />
   <aside
-    class="overflow-y-auto bg-transparent z-2 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static transition-all duration-200"
+    class="overflow-y-auto bg-transparent z-1 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static transition-all duration-200"
     :class="{ 'w-full sm:w-[250px]': expanded, 'w-full sm:w-16': !expanded }"
   >
     <!-- Workspace Logo Component -->
-    <div class="hidden sm:block">
+    <!-- <div class="hidden sm:block">
        <WorkSpaceDropdown :expanded="expanded" />
-    </div>
+    </div> -->
 
     <div class="text-center">
       <SideItem
