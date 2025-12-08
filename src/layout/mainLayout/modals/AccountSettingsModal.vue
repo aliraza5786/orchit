@@ -314,7 +314,7 @@
 
               <div class="space-y-3">
                 <button
-                  v-for="role in roles"
+                  v-for="role in roles?.filter((r:any) => !r.is_admin)"
                   :key="role._id"
                   @click="selectedRole = role"
                   :class="`${
@@ -801,7 +801,10 @@ const { mutate: updatePermissions } = useUpdatePermissions();
 watch(roles, async (roles) => {
   if (!roles || !roles.length) return;
   
-  selectedRole.value = roles[0];
+   //  Only set default if user did not select anything yet
+  if (!selectedRole.value) {
+    selectedRole.value = roles[1];
+  }
 
   // Wait for Vue to render and reactive objects to populate
   await nextTick();
@@ -853,6 +856,26 @@ const updatePermissionHandler = () => {
     },
   });
 };
+
+watch(isOpen, async (open) => {
+  if (open && roles?.value?.length) {
+    // Use previously selected role if exists
+    // Otherwise default to first non-admin role
+    if (!selectedRole.value) {
+      selectedRole.value = roles.value.find((r: any) => !r.is_admin) || roles.value[0];
+    }
+
+    // Set selected permissions for that role
+    await nextTick();
+    const enabledPermissions: string[] = [];
+    selectedRole.value.permission_categories.forEach((category: any) => {
+      category.permissions.forEach((perm: any) => {
+        if (perm.enabled) enabledPermissions.push(perm._id);
+      });
+    });
+    selected.value = enabledPermissions;
+  }
+});
 
 
 
