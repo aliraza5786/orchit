@@ -124,7 +124,8 @@ export const useSingleWorkspace = (id: string | number) => {
   return useApiQuery(
     {
       key: keys.singleWorkspace(id),
-      url: `/workspace/${id}`,
+      url: `/workspace/${unref(id)}`,
+      // url: `/workspace/${id}`,
       method: "GET",
       params: { is_archive: false },
       enabled: !!id,

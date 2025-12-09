@@ -11,7 +11,7 @@
       </div>
     </div>
     <KanbanSkeleton v-show="isListPending" />
-    <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar">
+    <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar h-full">
       <KanbanBoard :plusIcon="false" v-if="filteredBoard?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
         @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="filteredBoard"

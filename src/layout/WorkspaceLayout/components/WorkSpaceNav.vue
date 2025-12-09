@@ -53,7 +53,7 @@
           </button>
         </div>
         <div
-          class="flex items-center justify-between transition-all duration-200"
+          class="flex items-center justify-center transition-all duration-200 w-[40px] h-[50px]"
         >
           <!-- Icon (toggle sidebar) -->
           <i

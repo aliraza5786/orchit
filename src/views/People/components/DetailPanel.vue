@@ -133,16 +133,65 @@
             :canEditCard="!canEditUser"
             :key="workspaceRoles?.length"
           />
-          <!-- <select
-            v-model="selectedRole"
-            class="custom-select outline-0"
-            :canEditCard="!canEditUser"
-          >
-            <option disabled value="">Select Role</option>
-            <option v-for="r in workspaceRoles" :key="r._id" :value="r._id">
-              {{ r.title }}
-            </option>
-          </select> -->
+
+           <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
+           <div v-if="selectedRoleData" class="w-full mt-4">
+              <h2 class="text-xs uppercase text-text-secondary font-semibold mb-2">
+                Permissions
+              </h2>
+
+              <div
+                v-for="category in selectedRoleData?.permission_categories"
+                :key="category?.category"
+                class="border border-border mb-2 rounded-lg overflow-hidden bg-bg-surface/30"
+              >
+                <!-- Category Header -->
+                <button
+                  @click="togglePermissionCategory(category?.category)"
+                  class="w-full px-3 py-2 flex justify-between items-center hover:bg-bg-surface transition"
+                >
+                  <span class="text-sm font-medium text-text-primary">
+                    {{ category?.category_title }}
+                  </span>
+
+                  <i
+                    :class="[
+                      'fa-solid fa-chevron-down text-xs text-text-secondary transition-transform',
+                      openPermissions[category?.category] ? 'rotate-180' : '',
+                    ]"
+                  ></i>
+                </button>
+
+                <!-- Permission List -->
+                <div
+                  v-if="openPermissions[category?.category]"
+                  class="px-3 py-2 space-y-2 border-t border-border bg-bg-card"
+                >
+                  <div
+                    v-for="perm in category?.permissions"
+                    :key="perm._id"
+                    class="flex items-start gap-2"
+                  >
+                   <input
+                      type="checkbox"
+                      v-model="selectedPermissions"
+                      :value="perm._id"
+                      @change="handlePermissionUpdate"
+                      class="h-4 w-4 mt-0.5 rounded border-border accent-accent cursor-pointer flex-shrink-0"
+                    />
+                    
+                    <div>
+                      <p class="text-xs font-medium text-text-primary">
+                        {{ perm.title }}
+                      </p>
+                      <p class="text-[11px] text-text-secondary leading-tight">
+                        {{ perm.description }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
         </div>
       </section>
 
@@ -202,6 +251,8 @@ import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
 
 // workspace roles
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
+import { useUpdatePermissions } from "../../../queries/usePackages"; // Import permissions update hook
+import { toast } from "vue-sonner";
 
 import { usePermissions } from "../../../composables/usePermissions";
 const { canEditUser } = usePermissions();
@@ -394,9 +445,6 @@ watch(
 );
 
  
-
-import { toast } from "vue-sonner"; // or your toast library
-
 function handleRoleClick() {
   if (!canEditUser) {
     toast.error("You have no permission to edit user details");
@@ -414,6 +462,59 @@ function handleRoleChange(newRole: any) {
   assignRole({
     id: props.details?._id!,
     workspace_access_role_id: newRole,
+  });
+}
+
+// Permissions Display Logic
+const selectedRoleData = computed(() => {
+  if (!workspaceRoles.value || !selectedRole.value) return null;
+  return workspaceRoles.value.find((r: any) => r._id === selectedRole.value);
+});
+
+const openPermissions = ref<Record<string, boolean>>({});
+const selectedPermissions = ref<string[]>([]);
+const { mutate: updatePermissions } = useUpdatePermissions();
+
+function togglePermissionCategory(category: string) {
+  openPermissions.value[category] = !openPermissions.value[category];
+}
+
+watch(selectedRoleData, (role) => {
+  if (!role) return;
+  const enabledPermissions: string[] = [];
+  role.permission_categories.forEach((category: any) => {
+    category.permissions.forEach((perm: any) => {
+      if (perm.enabled) enabledPermissions.push(perm._id);
+    });
+  });
+  selectedPermissions.value = enabledPermissions;
+}, { immediate: true });
+
+
+function handlePermissionUpdate() {
+   if (!selectedRoleData.value?._id) return;
+   
+   // Optimistic update for role object in workspaceRoles is tricky without refetch, 
+   // but updatePermissions invalidates queries usually.
+   updatePermissions({
+    roleId: selectedRoleData.value._id,
+    payload: {
+      title: selectedRoleData.value.title,
+      description: selectedRoleData.value.description,
+      is_admin: selectedRoleData.value.is_admin,
+      is_editor: selectedRoleData.value.is_editor,
+      is_viewer: selectedRoleData.value.is_viewer,
+      permission_ids: selectedPermissions.value,
+    },
+  }, {
+     onSuccess: () => {
+         toast.success("Permissions updated successfully");
+         queryClient.invalidateQueries({ queryKey: ["workspace-roles"] });
+     },
+     onError: (err: any) => {
+         console.error("Failed to update permissions", err);
+         toast.error("Failed to update permissions");
+     }
   });
 }
 </script>
