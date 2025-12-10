@@ -115,12 +115,21 @@ const { workspaceId } = useWorkspaceId();
 const { data: getWorkspace, refetch, isFetched } = useSingleWorkspace(useWorkspaceId().workspaceId.value)
 
 const localWorkspace = ref(getWorkspace.value);
-
+const saveToLocalStorage = () =>{
+  if(getWorkspace.value){
+    const currentName = getWorkspace.value.variables
+    localStorage.setItem('currentName', currentName.title)
+  }else{
+    return null;
+  }
+}
+saveToLocalStorage();
 const duplicateHandler = (data: any) => {
   localWorkspace.value = { ...localWorkspace, lanes: [...localWorkspace.value?.lanes, data] }
 }
 watch(() => isFetched, () => {
-  localWorkspace.value = getWorkspace.value
+  localWorkspace.value = getWorkspace.value;
+  
 })
 
 // === Logo dropdown state & refs ===

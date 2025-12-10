@@ -3,7 +3,7 @@
         class="flex-auto  bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
              rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card  border border-border  overflow-x-auto flex-col flex  scrollbar-visible ">
         <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
-            <Dropdown @edit-option="openEditSprintModal" v-model="selected_sheet_id"
+            <Dropdown v-if="view !== 'mindmap'" @edit-option="openEditSprintModal" v-model="selected_sheet_id"
                 :canEdit="canEditSheet" :canDelete="canDeleteSheet"
                 @delete-option="handleDeleteSheetModal" :options="transformedData" variant="secondary">
                 <template #more>
@@ -42,6 +42,11 @@
                         :class="view === 'table' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
                         title="Gallery view">
                         <i class="fa-solid fa-align-left"></i>
+                    </button>
+                    <button @click="view = 'mindmap'" class="aspect-square  cursor-pointer rounded-sm p-0 px-0.5"
+                        :class="view === 'mindmap' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                        title="MindMap view">
+                        <i class="fa-solid fa-chart-diagram"></i>
                     </button>
                 </div>
             </div>
@@ -97,6 +102,39 @@
                 :canCreate="canCreateCard" :canCreateVariable="canCreateVariable"
                 @create="handleCreateTicket" />
         </template>
+        <!-- MindMap View -->
+       <template v-if="view === 'mindmap'">
+  <div ref="mindMapRef" class="w-full h-[80vh] rounded-md relative">
+    <!-- Your mind map renders here -->
+  </div>
+  <!-- Popup container -->
+  <div 
+    v-if="activeAddList"
+    class="absolute top-40 left-70 bg-bg-body rounded-lg p-4 shadow-lg z-100 min-w-[328px] border"
+    @click.stop
+  >
+    <BaseTextField
+      :autofocus="true"
+      v-model="newColumn"
+      placeholder="Add New list"
+      @keyup.enter="emitAddColumn"
+    />
+    <p class="text-xs mt-1.5">You can add details while editing</p>
+
+    <div class="flex items-center mt-3 gap-3">
+      <Button
+        @click="emitAddColumn"
+        varaint="primary"
+        class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+      >
+        {{ addingList ? 'Adding...' : 'Add list' }}
+      </Button>
+      <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
+    </div>
+  </div>
+      </template>
+
+
     </div>
     <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete List" itemLabel="list"
         :itemName="localColumnData?.title" :requireMatchText="localColumnData?.title" confirmText="Delete List"
@@ -113,13 +151,31 @@
         :itemName="selectedSheettoAction?.title" :requireMatchText="selectedSheettoAction?.title"
         confirmText="Delete Sheet" cancelText="Cancel" size="md" :loading="isDeleting" @confirm="handleDeleteSheet"
         @cancel="() => { showDeleteModal = false }" />
+        <ConfirmDeleteModal 
+        v-model="showTicketDelete" 
+        title="Delete Ticket" 
+        itemLabel="Ticket" 
+        :itemName="ticketToDelete?.title" 
+        :requireMatchText="ticketToDelete?.title" 
+        confirmText="Delete Ticket" 
+        cancelText="Cancel" 
+        size="md" 
+        :loading="deletingTicket" 
+        @confirm="handleDeleteTicket" 
+        @cancel="() => { showTicketDelete = false; ticketToDelete = null }"
+        />
+
+         <div>
+     
+  </div>
+  
 </template>
 <script setup lang="ts">
-import { computed, defineAsyncComponent, h, ref, watch } from 'vue';
+import { computed, defineAsyncComponent, h, ref, watch, watchEffect, nextTick } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import Searchbar from '../../components/ui/SearchBar.vue';
-import { ReOrderCard, ReOrderList, useAddList, useAddTicket, useLanes, useMoveCard, useSheetList, useSheets, useUpdateWorkspaceSheet, useVarVisibilty, useVariables } from '../../queries/useSheets';
+import { ReOrderCard, ReOrderList, useAddList, useAddTicket, useLanes, useMoveCard, useSheetList,useDeleteTicket, useSheets,useAllSheetsList, useUpdateWorkspaceSheet, useVarVisibilty, useVariables } from '../../queries/useSheets';
 import { useRoute } from 'vue-router';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
@@ -136,12 +192,50 @@ import { getInitials } from '../../utilities';
 import { avatarColor } from '../../utilities/avatarColor';
 import AssigmentDropdown from './components/AssigmentDropdown.vue';
 import DatePicker from './components/DatePicker.vue';
-
+import MindElixir from 'mind-elixir';
+import { toast } from 'vue-sonner';
 import { usePermissions } from '../../composables/usePermissions'
+const props = defineProps<{
+    ticket: any
+    selectedVar?: any
+    footer?:boolean 
+}>()
+
 const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canCreateCard, canEditCard, canAssignCard} = usePermissions()
+const showDeleteModal = ref(false)
+const ticketToDelete = ref<any>(null)
+const showTicketDelete = ref(false)
+
+const { mutate: deleteCard, isPending: deletingTicket } = useDeleteTicket(ticketToDelete.value?._id, {
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    showTicketDelete.value = false
+    ticketToDelete.value = null
+    toast.success('Ticket deleted successfully')
+  },
+  onError: (err) => {
+    toast.error('Failed to delete ticket')
+    console.error(err)
+  },
+})
+
+// Open modal
+const openDeleteTicketModal = (ticket: any) => {
+  ticketToDelete.value = ticket
+  console.log("ticket", ticketToDelete.value);
+  
+  showTicketDelete.value = true
+}
+
+// Handle delete
+const handleDeleteTicket = () => {
+  if (!ticketToDelete.value?._id) return
+  deleteCard(ticketToDelete.value._id)
+}
 // import { Background } from '@vue-flow/background';
 const view = ref('kanban')
-
+const mindMapRef = ref<HTMLElement | null>(null);
+const mindMapInstance = ref<any>(null);
 const CreateTaskModal = defineAsyncComponent(() => import('./modals/CreateTaskModal.vue'))
 const CreateSheetModal = defineAsyncComponent(() => import('./modals/CreateSheetModal.vue'))
 const CreateVariableModal = defineAsyncComponent(() => import('./modals/CreateVariableModal.vue'))
@@ -155,6 +249,7 @@ const { data, refetch: refetchSheets, isPending: isSheetPending } = useSheets({
     workspace_id: workspaceId,
     workspace_module_id: moduleId
 });
+
 const sheetId = computed(() => data.value ? data.value[0]?._id : '')
 
 const selected_sheet_id = ref<any>(sheetId.value);
@@ -199,6 +294,12 @@ const { data: Lists, isPending, } = useSheetList(
     computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
     selected_view_by,                    // ref
 )
+const { 
+  data: allSheetsData, 
+  refetch: refetchAllSheets, 
+  isPending: isAllSheetsPending 
+} = useAllSheetsList(moduleId, viewBy, computed(() => [...workspaceStore.selectedLaneIds]),);
+console.log("sheets data", allSheetsData.value);
 
 const createTeamModal = ref(false);
 const selectedCard = ref<any>()
@@ -304,7 +405,7 @@ const plusHandler = (e: any) => {
     createTeamModal.value = true;
     localColumnData.value = e
 }
-const showDeleteModal = ref(false)
+
 const selectedSheettoAction = ref<any>()
 function handleDeleteSheetModal(opt: any) {
     showDeleteModal.value = true
@@ -552,8 +653,277 @@ const toggleVisibilityHandler = (key: any, visible:any) => {
         }
     })
 }
+// mindmap
+function buildMindMapDataAllSheets(sheetsData: any[]) {
+  const root = { id: 'root', topic: localStorage.getItem('currentName'), isRoot: true, children: [] as any[] }; 
+  if (!Array.isArray(sheetsData)) return root;
+
+  sheetsData.forEach((sheet, sheetIdx) => {
+    const variables = sheet.variables || {};
+    const variableTitle = variables['sheet-title'] || `Variable ${sheetIdx + 1}`;
+
+    const variableNode = {
+      id: `variable-${sheetIdx}`,
+      topic: variableTitle,
+      children: [] as any[],
+    };
+
+    const sheetLists = Array.isArray(sheet.sheet_lists) ? sheet.sheet_lists : [];
+
+    sheetLists.forEach((sheetList, listIdx) => {
+      const sheetListNode = {
+        id: `sheetlist-${sheetIdx}-${listIdx}`,
+        topic: sheetList.title || `Untitled Sheet List ${listIdx + 1}`,
+        children: [] as any[],
+      };
+
+      const cards = Array.isArray(sheetList.cards) ? sheetList.cards : [];
+      cards.forEach((card, cardIdx) => {
+        
+        sheetListNode.children.push({
+          id: `card-${sheetIdx}-${listIdx}-${cardIdx}`,
+          topic: card['card-title'] || `Untitled Card ${cardIdx + 1}`,
+        });
+      });
+
+      variableNode.children.push(sheetListNode);
+    });
+
+    root.children.push(variableNode);
+  });
+
+  return root;
+}
+
+watchEffect(() => {
+  if (view.value === 'mindmap' && mindMapRef.value && allSheetsData.value?.sheets) {
+    nextTick(() => {
+      const rootNode = buildMindMapDataAllSheets(allSheetsData.value.sheets);
+
+      if (mindMapInstance.value) {
+        mindMapInstance.value.destroy?.();
+        mindMapInstance.value = null;
+      }
+
+      const hideMenu = () => {
+        const menu = document.querySelector('.mind-elixir .context-menu');
+        if (!menu) return;
+        menu.style.display = '';
+        menu.style.visibility = '';
+        menu.style.opacity = '';
+        menu.style.pointerEvents = '';
+        menu.classList.remove('show', 'visible', 'open');
+        menu.hidden = true;
+        requestAnimationFrame(() => {
+          if (menu) menu.hidden = true;
+        });
+      };
+
+      const instance = new MindElixir({
+        el: mindMapRef.value,
+        direction: MindElixir.RIGHT,
+        draggable: true,
+        contextMenu: true,
+        contextMenuOption: {
+          link: false,
+          focus: true,
+          addChild: false,
+          addParent: false,
+          summary: false,
+          extend: [
+            {
+              id: 'cm-addVariable',
+              name: 'Add Variable',
+              onclick: () => {
+                const node = mindMapInstance.value?.currentNode?.nodeObj;
+                if (!node) return;
+
+                if (node.isRoot) {
+                  createSheet();
+                } else {
+                  toast.error('Add Variable is only allowed on the root node.');
+                }
+                hideMenu();
+              },
+            },
+            {
+              id: 'cm-addList',
+              name: 'Add List',
+              onclick: () => {
+                const node = mindMapInstance.value?.currentNode?.nodeObj;
+                if (!node) return;
+
+                if (node.id?.startsWith('variable')) {
+                  setActiveAddList();
+                } else {
+                  toast.error('Add List is only allowed on variable nodes.');
+                }
+                hideMenu();
+              },
+            },
+           {
+            id: 'cm-deleteList',
+            name: 'Delete List',
+            onclick: () => {
+                const node = mindMapInstance.value?.currentNode?.nodeObj;
+                if (!node) return;
+
+                // Only allow deletion on variable nodes
+                if (node.id?.startsWith('sheetlist')) {
+                // Find the column data based on node.id
+                const [_, sheetIdx] = node.id.split('-').map(Number);
+                const sheet = allSheetsData.value?.sheets?.[sheetIdx];
+                const variableNode = sheet?.variables; // adjust if needed
+                localColumnData.value = {
+                    ...variableNode,
+                    title: node.topic, // or actual list title
+                };
+
+                showDelete.value = true; // open modal
+                } else {
+                toast.error('Delete List is only allowed on variable nodes.');
+                }
+
+                hideMenu();
+            },
+            },
+            {
+              id: 'cm-addTask',
+              name: 'Add Task',
+              onclick: () => {
+                const node = mindMapInstance.value?.currentNode?.nodeObj;
+                if (!node) return;
+
+                if (node.id?.startsWith('sheetlist')) {
+                  createTeamModal.value = true;
+                } else {
+                  toast.error('Add Task is only allowed on sheet list nodes.');
+                }
+                hideMenu();
+              },
+            },
+            
+            {
+              id: 'cm-viewCard',
+              name: 'View Ticket Details',
+              onclick: () => {
+                const node = mindMapInstance.value?.currentNode?.nodeObj;
+                console.log("node id for card", mindMapInstance.value);
+                
+                if (!node) return;
+
+                if (node.id?.startsWith('card')) {
+                  const [_, sheetIdx, listIdx, cardIdx] = node.id.split('-').map(Number);
+                  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
+                  const sheetList = sheet?.sheet_lists?.[listIdx];
+                  const card = sheetList?.cards?.[cardIdx];
+
+                  if (card) selectCardHandler(card);
+                } else {
+                  toast.error('Ticket Details can only be viewed on card nodes.');
+                }
+
+                hideMenu();
+              },
+            },
+            {
+  id: 'cm-deleteTicket',
+  name: 'Delete Ticket',
+  onclick: () => {
+    const node = mindMapInstance.value?.currentNode?.nodeObj
+    if (!node) return
+
+    if (node.id?.startsWith('card')) {
+      const [_, sheetIdx, listIdx, cardIdx] = node.id.split('-').map(Number)
+      const sheet = allSheetsData.value?.sheets?.[sheetIdx]
+      const sheetList = sheet?.sheet_lists?.[listIdx]
+      const card = sheetList?.cards?.[cardIdx]
+
+      if (card) {
+        openDeleteTicketModal(card)
+      }
+    } else {
+      toast.error('Delete Ticket is only allowed on card nodes.')
+    }
+
+    hideMenu()
+  },
+},
+          ],
+        },
+
+        before: {
+          addChild(el, obj) {
+            const current = this.currentNode.nodeObj;
+            if (!current) return false;
+
+            if (current.id?.startsWith('card')) {
+              toast.error("Cannot add a child to a card node.");
+              return false;
+            }
+
+            const parent = current.parent;
+            if (parent && parent.children) {
+              const lastChild = parent.children[parent.children.length - 1];
+              if (lastChild === current) {
+                toast.error("Cannot add a child to the last node.");
+                return false;
+              }
+            }
+
+            return true;
+          },
+
+          insertSibling(el, obj) {
+            const current = this.currentNode.nodeObj;
+            if (!current) return false;
+
+            if (current.id?.startsWith('card')) {
+              toast.error("Cannot add a sibling to a card node.");
+              return false;
+            }
+
+            return true;
+          },
+        },
+
+        renderNode(nodeData, nodeEl) {
+          const topicEl = nodeEl.querySelector('me-tpc') || nodeEl;
+          topicEl.textContent = nodeData.topic;
+        },
+      });
+
+      mindMapInstance.value = instance;
+      instance.init({ nodeData: rootNode });
+
+      // === Dynamic context menu filtering per node type ===
+      mindMapRef.value?.addEventListener('contextmenu', () => {
+        // Slight delay to ensure menu exists in DOM
+        setTimeout(() => {
+          const node = mindMapInstance.value?.currentNode?.nodeObj;
+          if (!node) return;
+
+          const menuItems = document.querySelectorAll('.mind-elixir .context-menu li');
+
+          menuItems.forEach((li) => {
+            const id = li.id;
+
+            // Show only relevant item based on node type
+            if (node.isRoot) li.style.display = id === 'Add Variable' ? '' : 'none';
+            else if (node.id?.startsWith('variable')) li.style.display = id === 'Add List' ? '' : 'none';
+            else if (node.id?.startsWith('sheetlist')) li.style.display = id === 'Add Task' || id === 'Delete List' ? '' : 'none';
+            else if (node.id?.startsWith('card')) li.style.display = id === 'View Ticket Details' ||id=== 'Delete Ticket' ? '' : 'none';
+          });
+        }, 10);
+      });
+    });
+  }
+});
+
+
 </script>
 <style scoped>
+@import 'https://cdn.jsdelivr.net/npm/mind-elixir/dist/style.css';
 /* Force visible scrollbars only where applied */
 .scrollbar-visible::-webkit-scrollbar {
     display: block !important;
@@ -576,5 +946,36 @@ const toggleVisibilityHandler = (key: any, visible:any) => {
     scrollbar-width: thin !important;
     /* Firefox */
     scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+::v-deep(.mind-elixir-toolbar.lt) {
+    display: none !important;
+}
+/* Hide default context menu items in MindElixir */
+::v-deep(.mind-elixir .context-menu #cm-down) {
+  display: none !important;
+}
+::v-deep(.mind-elixir .context-menu #cm-add_child) {
+  display: none !important;
+}
+::v-deep(.mind-elixir .context-menu #cm-fucus) {
+  display: none !important;
+}
+::v-deep(.mind-elixir .context-menu #cm-fucus) {
+  display: none !important;
+}
+::v-deep(.mind-elixir .context-menu #cm-unfucus) {
+  display: none !important;
+}
+::v-deep(.mind-elixir .context-menu #cm-add_parent) {
+  display: none !important;
+}
+::v-deep(.mind-elixir .context-menu #cm-add_sibling) {
+  display: none !important;
+}
+::v-deep(.mind-elixir .context-menu #cm-up) {
+  display: none !important;
+}
+::v-deep(.mind-elixir .context-menu #cm-down) {
+  display: none !important;
 }
 </style>
