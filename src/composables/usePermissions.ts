@@ -137,6 +137,18 @@ export function usePermissions() {
     hasPermission("workspace.module.update")
   );
 
+
+  // ---- Dynamic Module Permissions ----
+  const canAccessModule = (
+    moduleId: string,
+    action: "create" | "view_all" | "update" | "delete"
+  ) => {
+    // If no module ID provided, check base module permissions? 
+    // Or strictly check specific module permission.
+    // Based on user request, they want to handle "View ABC Module", so specific.
+    return hasPermission(`workspace.module.${action}.${moduleId}`);
+  };
+
   return {
     // Core
     isAdmin,
@@ -180,5 +192,7 @@ export function usePermissions() {
     canEditUser,
     canDeleteUser,
     canDeleteSheet,
+    // Dynamic
+    canAccessModule,
   };
 }

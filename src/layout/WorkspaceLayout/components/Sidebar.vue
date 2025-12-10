@@ -55,7 +55,7 @@
 
     <div class="flex flex-col gap-1 max-md:flex-row pin_task">
       <SideItem
-        v-for="(item, index) in workspace.modules"
+        v-for="(item, index) in filteredModules"
         :key="index"
         :id="item._id"
         :label="item.variables['module-title']"
@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import SideItem from "./SideItem.vue";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { usePermissions } from "../../../composables/usePermissions";
@@ -124,12 +124,21 @@ const {
   workspaceId,
   // jobId
 } = useRouteIds();
-const { canCreateModule } = usePermissions();
+
+const { canCreateModule, canAccessModule } = usePermissions();
 const props = defineProps<{
   workspace: { modules: any; generation_task: any };
   isLoading: boolean;
   expanded: boolean;
 }>();
+
+const filteredModules = computed(() => {
+  if (!props.workspace?.modules) return [];
+  console.log(props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all')), "these are all modules")
+  
+  return props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
+});
+
 const modules = ref([]);
 watch(props, () => {
   if (!props) {
@@ -137,6 +146,7 @@ watch(props, () => {
   }
   modules.value = props.workspace.modules;
 });
+
 
  
 </script>

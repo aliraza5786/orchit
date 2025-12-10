@@ -117,7 +117,7 @@
 
         <!-- work space  -->
         <div class="mt-5 pt-3 border-t border-border-input relstive">
-          <span class="text-sm inline-block mb-1">Select Role</span>
+          <span class="text-base font-medium text-text-primary mb-1 block">Select Role</span>
           <BaseSelectField
             size="sm"
             :model-value="selectedRole"
@@ -135,8 +135,8 @@
           />
 
            <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
-           <div v-if="selectedRoleData" class="w-full mt-4">
-              <h2 class="text-xs uppercase text-text-secondary font-semibold mb-2">
+           <div v-if="selectedRoleData && !selectedRoleData.is_admin" class="w-full mt-4">
+              <h2 class="text-base font-medium text-text-primary mb-1">
                 Permissions
               </h2>
 

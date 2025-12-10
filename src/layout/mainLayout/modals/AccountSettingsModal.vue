@@ -11,7 +11,7 @@
       </h2>
 
       <Tabs
-        :tabs="['Profile', 'Subscription', 'WorkspaceRoles']"
+        :tabs="['Profile', 'Subscription']"
         :defaultTab="route.query.stripePayment ? 1 : 0"
       >
         <template #Profile>
@@ -304,9 +304,8 @@
           </div>
         </template>
 
-        <template #WorkspaceRoles>
-          <div class="space-y-6 h-full flex overflow-hidden gap-2">
-            <!-- SHOW ROLES LIST -->
+        <!-- <template #WorkspaceRoles>
+          <div class="space-y-6 h-full flex overflow-hidden gap-2"> 
             <div
               class="min-w-[250px] max-w-[300px] sticky top-0 border-r border-border p-2 overflow-y-auto"
             >
@@ -335,8 +334,7 @@
             </div>
 
             <hr class="border-border my-4" />
-
-            <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
+ 
             <div v-if="selectedRole" class="w-full overflow-y-auto">
               <h2 class="text-lg mb-4">
                 Permissions for:
@@ -349,8 +347,7 @@
                 v-for="category in selectedRole?.permission_categories"
                 :key="category?.category"
                 class="border border-border mb-3 cursor-pointer rounded-xl overflow-hidden bg-bg-body/30 shadow-sm"
-              >
-                <!-- Category Header -->
+              > 
                 <button
                   @click="toggle(category?.category)"
                   class="w-full px-5 cursor-pointer py-4 flex justify-between items-center bg-bg-surface/30 hover:bg-bg-surface/80 transition"
@@ -376,8 +373,7 @@
                     />
                   </svg>
                 </button>
-
-                <!-- Permission List -->
+ 
                 <div
                   v-if="open[category?.category]"
                   class="px-5 py-4 space-y-4"
@@ -412,7 +408,7 @@
               </div>
             </div>
           </div>
-        </template>
+        </template> -->
 
        
 
@@ -780,115 +776,97 @@ const currentPlan = ref({
 // function downgradePlan(plan: any) {
 //   toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
 // }
-const open = ref<Record<string, boolean>>({});
+
+// permissions role code cmmnted below
+
+// const open = ref<Record<string, boolean>>({});
 // watch(roles, (newVal) => {
 //   if (newVal)
 //     newVal[0].categories.forEach((cat: any) => (open.value[cat.category] = false));
 // })
 
-const toggle = (key: string) => {
-  open.value[key] = !open.value[key];
-};
+// const toggle = (key: string) => {
+//   open.value[key] = !open.value[key];
+// };
 
-// Track selected permissions
-const selected = ref<string[]>([]);
-const { data: id } = useCompanyId();
-const { data: roles } = useRoles(id, {
-  enabled: computed(() => !!id?.value),
-});
-const { mutate: updatePermissions } = useUpdatePermissions();
+// // Track selected permissions
+// const selected = ref<string[]>([]);
+// const { data: id } = useCompanyId();
+// const { data: roles } = useRoles(id, {
+//   enabled: computed(() => !!id?.value),
+// });
+// const { mutate: updatePermissions } = useUpdatePermissions();
 
-watch(roles, async (roles) => {
-  if (!roles || !roles.length) return;
+// watch(roles, async (roles) => {
+//   if (!roles || !roles.length) return;
   
-   //  Only set default if user did not select anything yet
-  if (!selectedRole.value) {
-    selectedRole.value = roles[1];
-  }
+//    //  Only set default if user did not select anything yet
+//   if (!selectedRole.value) {
+//     selectedRole.value = roles[1];
+//   }
 
-  // Wait for Vue to render and reactive objects to populate
-  await nextTick();
+//   // Wait for Vue to render and reactive objects to populate
+//   await nextTick();
 
-  const enabledPermissions: string[] = [];
-  selectedRole.value.permission_categories.forEach((category: any) => {
-    category.permissions.forEach((perm: any) => {
-      if (perm.enabled) enabledPermissions.push(perm._id);
-    });
-  });
-  selected.value = enabledPermissions;
-});
-
-watch(selectedRole, (roles) => {
-  console.log(selectedRole)
-  if (!roles) return;
-
-  const enabledPermissions: string[] = [];
-
-  roles?.permission_categories.forEach((category: any) => {
-    category.permissions.forEach((perm: any) => {
-      if (perm.enabled) {
-        enabledPermissions.push(perm._id);
-      }
-    });
-  });
-
-  selected.value = enabledPermissions;
-});
-
-// const updatePermissionHandler = () => {
-//   updatePermissions({
-//     permission_ids: selected.value,
+//   const enabledPermissions: string[] = [];
+//   selectedRole.value.permission_categories.forEach((category: any) => {
+//     category.permissions.forEach((perm: any) => {
+//       if (perm.enabled) enabledPermissions.push(perm._id);
+//     });
 //   });
-// }; 
-
-const updatePermissionHandler = () => {
-  if (!selectedRole.value?._id) return;
-
-  updatePermissions({
-    roleId: selectedRole.value._id,   // send the ID separately
-    payload: {
-      title: selectedRole.value.title,
-      description: selectedRole.value.description,
-      is_admin: selectedRole.value.is_admin,
-      is_editor: selectedRole.value.is_editor,
-      is_viewer: selectedRole.value.is_viewer,
-      permission_ids: selected.value,
-    },
-  });
-};
-
-watch(isOpen, async (open) => {
-  if (open && roles?.value?.length) {
-    // Use previously selected role if exists
-    // Otherwise default to first non-admin role
-    if (!selectedRole.value) {
-      selectedRole.value = roles.value.find((r: any) => !r.is_admin) || roles.value[0];
-    }
-
-    // Set selected permissions for that role
-    await nextTick();
-    const enabledPermissions: string[] = [];
-    selectedRole.value.permission_categories.forEach((category: any) => {
-      category.permissions.forEach((perm: any) => {
-        if (perm.enabled) enabledPermissions.push(perm._id);
-      });
-    });
-    selected.value = enabledPermissions;
-  }
-});
-
-
-
-// use workspace roles 
-// import { useWorkspacePermissions } from "../../../queries/usePackages";
-// const { data: permissions} = useWorkspacePermissions();
-// const workspaceRoles = ref([]);
-// const selectedWorkspaceRole = ref<any>(null);
-// watchEffect(() => {
-//   console.log("Updated permissions:", toRaw(permissions.value));
-//   workspaceRoles.value = toRaw(permissions.value); 
+//   selected.value = enabledPermissions;
 // });
 
-// ADD API LATER WHEN PROVIDED: updateWorkspacePermissions()
+// watch(selectedRole, (roles) => {
+//   console.log(selectedRole)
+//   if (!roles) return;
 
+//   const enabledPermissions: string[] = [];
+
+//   roles?.permission_categories.forEach((category: any) => {
+//     category.permissions.forEach((perm: any) => {
+//       if (perm.enabled) {
+//         enabledPermissions.push(perm._id);
+//       }
+//     });
+//   });
+
+//   selected.value = enabledPermissions;
+// }); 
+
+// const updatePermissionHandler = () => {
+//   if (!selectedRole.value?._id) return;
+
+//   updatePermissions({
+//     roleId: selectedRole.value._id, 
+//     payload: {
+//       title: selectedRole.value.title,
+//       description: selectedRole.value.description,
+//       is_admin: selectedRole.value.is_admin,
+//       is_editor: selectedRole.value.is_editor,
+//       is_viewer: selectedRole.value.is_viewer,
+//       permission_ids: selected.value,
+//     },
+//   });
+// };
+
+// watch(isOpen, async (open) => {
+//   if (open && roles?.value?.length) {
+//     // Use previously selected role if exists
+//     // Otherwise default to first non-admin role
+//     if (!selectedRole.value) {
+//       selectedRole.value = roles.value.find((r: any) => !r.is_admin) || roles.value[0];
+//     }
+
+//     // Set selected permissions for that role
+//     await nextTick();
+//     const enabledPermissions: string[] = [];
+//     selectedRole.value.permission_categories.forEach((category: any) => {
+//       category.permissions.forEach((perm: any) => {
+//         if (perm.enabled) enabledPermissions.push(perm._id);
+//       });
+//     });
+//     selected.value = enabledPermissions;
+//   }
+// }); 
 </script>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed } from "vue";
 import { useTheme } from "../composables/useTheme";
 import { useWorkspaceStore } from "../stores/workspace";
 import { usePackages } from "../queries/usePricing";

@@ -6,8 +6,9 @@
     >
       <h2 class="text-xl font-semibold">Invite Users</h2>
       <p class="text-sm text-text-secondary mt-1">
-        Add emails, and pick a permission.
+        Add emails, workspace role and pick role based permission.
       </p>
+      <button  @click="cancel" class="absolute top-4 cursor-pointer right-4 text-text-secondary hover:text-text-primary text-xl z-10"><img data-v-4ef80912="" src="/src/assets/icons/cross.svg" alt=""></button>
     </div>
 
     <!-- Body -->
@@ -51,7 +52,7 @@
       
 
       <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
-      <div v-if="selectedRoleData" class="w-full mt-2">
+      <div v-if="selectedRoleData && !selectedRoleData.is_admin" class="w-full mt-2">
         <h2 class="text-base font-medium mb-1 flex items-center text-text-primary">
           Permissions
         </h2>
@@ -167,7 +168,7 @@ const isOpen = computed({
 });
 
 const queryClient = useQueryClient();
-const { data: workspaces } = useWorkspaces(1, 100);
+// const { data: workspaces } = useWorkspaces(1, 100);
 
 type SelectValue = string | number | null;
 const form = reactive({
@@ -332,16 +333,19 @@ const canSubmit = computed(
 );
 
 // to track seleted role
-const selectedRole = computed(() => {
+ computed(() => {
   return workspaceRoles.value?.find((r: any) => r._id === form.workspace_access_role_id) || null;
 });
+// const selectedRole = computed(() => {
+//   return workspaceRoles.value?.find((r: any) => r._id === form.workspace_access_role_id) || null;
+// });
 
  
 
 function onEmailsInvalid(_bad: string[]) {}
 function onEmailsAdd() {}
 const { mutate: invitePeople, isPending: inviting } = useCreateTeamMember();
-const { data: company_id } = useCompanyId();
+// const { data: company_id } = useCompanyId();
 function submit() {
   if (!canSubmit.value || inviting.value) return;
     const users = form.emails.map(email => ({
