@@ -235,19 +235,32 @@ export const ReOrderCard = (options = {}) =>
 
 
 // work space roles
-export const useWorkspaceRoles = (company_id: any, options = {}) => {
+export const useWorkspaceRoles = (
+  params: { company_id: any; workspace_id?: any },
+  options = {}
+) => {
+  const { company_id, workspace_id } = params;
+
   return useQuery({
-    queryKey: ["workspace-roles", company_id],
-    queryFn: ({ signal }) =>
-      request<any>({
-        url: `roles/workspace-access-roles?company_id=${company_id.value}`,
+    queryKey: ["workspace-roles", company_id?.value, workspace_id?.value],
+    queryFn: ({ signal }) => {
+      let url = `roles/workspace-access-roles?company_id=${company_id.value}`;
+      
+      if (workspace_id?.value) {
+        url += `&workspace_id=${workspace_id.value}`;
+      }
+
+      return request<any>({
+        url,
         method: "GET",
         signal,
-      }),
-    enabled: !!company_id,
+      });
+    },
+    enabled: !!company_id?.value,
     ...options,
   });
 };
+
 
 
  interface AssignRolePayload {
@@ -271,4 +284,20 @@ export const useAssignRole = (options = {}) => {
     } as any
   );
 };
+
+// team role
+export const useWorkspaceTeamRoles = (workspace_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["team-roles", workspace_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/workspace-roles/${workspace_id.value}`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!workspace_id,
+    ...options,
+  });
+};
+
 

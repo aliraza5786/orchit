@@ -405,11 +405,12 @@ const workspaceId = computed(() => props.details?.workspace_id);
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
-const newCompanyId = computed(() => workspaceData.value?.company_id ?? null);
- 
-
-const { data: workspaceRoles } = useWorkspaceRoles(newCompanyId, {  
-  enabled: computed(() => !!newCompanyId.value),// query runs only when ID exists
+const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
+const { data: workspaceRoles } = useWorkspaceRoles( {
+    company_id: newCompanyId,
+    workspace_id:  workspaceId
+  }, {  
+ enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
 });
 const selectedRole = ref(props.details?.workspace_access_role_id ?? "");
 // Mutation

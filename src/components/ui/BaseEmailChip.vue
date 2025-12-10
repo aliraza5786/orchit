@@ -14,7 +14,7 @@
     <!-- Input wrapper (same shell as BaseTextField) -->
     <div class="relative">
       <div :class="[
-        'flex items-center gap-2 border rounded-xl px-3 py-2 w-full text-sm focus-within:ring-2',
+        'flex items-center gap-2 border rounded-[6px] px-3 py-2 w-full text-sm focus-within:ring-2',
         size === 'md' ? 'min-h-10' : 'min-h-12',
         error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-border',
         theme === 'dark' ? 'bg-[#131318] border-border ' : ' border-border bg-bg-input',
