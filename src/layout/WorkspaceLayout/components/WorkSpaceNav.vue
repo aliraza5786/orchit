@@ -127,6 +127,11 @@
 
     <!-- Right side -->
     <div class="flex gap-2">
+      <button class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-1 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20" @click="workspaceStore.toggleChatBotPanel()" v-tooltip="'Ask any question'">
+        <i class="fa-solid fa-sparkles"></i>
+        Ask Ai
+      </button>
+
       <button class="cursor-pointer rounded-lg p-2" @click="handleClick">
         <i class="fa-solid fa-ellipsis rotate-90 cursor-pointer"></i>
       </button>

@@ -10,7 +10,7 @@
       <span
         v-if="tooltip"
         class="inline-block text-text-secondary -400 ml-1 cursor-help"
-        :title="tooltip"
+        v-tooltip="tooltip"
       >
         <img src="../../assets/icons/info.svg" alt="info" />
       </span>

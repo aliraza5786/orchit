@@ -12,6 +12,10 @@ import { queryClient } from './libs/queryClient'
 
 const app = createApp(App)
 
+import vTooltip from './directives/vTooltip'
+app.directive('tooltip', vTooltip)
+
+
 
 app.component('Toaster', Toaster)
 

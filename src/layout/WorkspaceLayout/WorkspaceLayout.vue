@@ -20,6 +20,7 @@
         <ProfilePanel />
         <FilterDrawer v-model="filters" :open="isDrawerOpen" />
         <SettingPanel :workspace="getWorkspace" />
+        <ChatBotPanel />
       </div>
     </div>
   </div>
@@ -34,6 +35,7 @@ import { computed, ref, onUnmounted, onMounted, watch } from 'vue';
 import { useWorkspaceStore } from '../../stores/workspace';
 import ProfilePanel from './components/ProfilePanel.vue';
 import SettingPanel from './components/SettingPanel.vue';
+import ChatBotPanel from './components/ChatBotPanel.vue';
 import Sidebar from './components/Sidebar.vue';
 import WorkSpaceNav from './components/WorkSpaceNav.vue';
 import FilterDrawer from './components/FilterDrawer.vue';

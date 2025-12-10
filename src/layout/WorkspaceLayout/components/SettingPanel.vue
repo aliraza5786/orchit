@@ -40,7 +40,7 @@
         <div class="min-w-0">
           <template v-if="!isEditingTitle">
             <h3 class="text-2xl font-medium truncate cursor-text text-text-primary" @click="startEditTitle"
-              title="Click to rename">
+              v-tooltip="'Click to rename'">
               {{ editableTitle }}
             </h3>
           </template>
