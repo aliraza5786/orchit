@@ -133,15 +133,14 @@ import { computed, reactive, watch, ref } from "vue";
 import type { Ref } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { toast } from "vue-sonner";
-import {
-  useWorkspaces,
+import { 
   useSingleWorkspaceCompany,
 } from "../../../queries/useWorkspace";
 import BaseModal from "../../../components/ui/BaseModal.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 import BaseEmailChip from "../../../components/ui/BaseEmailChip.vue";
 import Button from "../../../components/ui/Button.vue"; 
-import { useCompanyId } from "../../../services/user";
+// import { useCompanyId } from "../../../services/user";
 import {
   useWorkspaceRoles,
   useWorkspaceTeamRoles,

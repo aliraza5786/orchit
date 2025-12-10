@@ -302,116 +302,7 @@
               </div>
             </div>
           </div>
-        </template>
-
-        <!-- <template #WorkspaceRoles>
-          <div class="space-y-6 h-full flex overflow-hidden gap-2"> 
-            <div
-              class="min-w-[250px] max-w-[300px] sticky top-0 border-r border-border p-2 overflow-y-auto"
-            >
-              <h2 class="text-2xl flex font-semibold mb-4">Roles</h2>
-
-              <div class="space-y-3">
-                <button
-                  v-for="role in roles?.filter((r:any) => !r.is_admin)"
-                  :key="role._id"
-                  @click="selectedRole = role"
-                  :class="`${
-                    selectedRole?._id == role?._id
-                      ? '  border-accent bg-accent/30'
-                      : 'border-border bg-bg-body'
-                  } `"
-                  class="w-full text-left px-4 py-3 border cursor-pointer rounded-lg hover:bg-bg-surface transition"
-                >
-                  <h3 class="text-sm font-semibold text-text-primary">
-                    {{ role.title }}
-                  </h3>
-                  <p class="text-xs text-text-secondary">
-                    {{ role.description }}
-                  </p>
-                </button>
-              </div>
-            </div>
-
-            <hr class="border-border my-4" />
- 
-            <div v-if="selectedRole" class="w-full overflow-y-auto">
-              <h2 class="text-lg mb-4">
-                Permissions for:
-                <span class="font-semibold">
-                  {{ selectedRole.title }}
-                </span>
-              </h2>
-
-              <div
-                v-for="category in selectedRole?.permission_categories"
-                :key="category?.category"
-                class="border border-border mb-3 cursor-pointer rounded-xl overflow-hidden bg-bg-body/30 shadow-sm"
-              > 
-                <button
-                  @click="toggle(category?.category)"
-                  class="w-full px-5 cursor-pointer py-4 flex justify-between items-center bg-bg-surface/30 hover:bg-bg-surface/80 transition"
-                >
-                  <span class="text-lg font-medium text-text-primary">
-                    {{ category?.category_title }}
-                  </span>
-
-                  <svg
-                    :class="[
-                      'w-5 h-5 text-text-secondary transition-transform',
-                      open[category?.category] ? 'rotate-180' : '',
-                    ]"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
- 
-                <div
-                  v-if="open[category?.category]"
-                  class="px-5 py-4 space-y-4"
-                >
-                  <div
-                    v-for="perm in category?.permissions"
-                    :key="perm._id"
-                    class="flex justify-between items-center border-b border-border pb-3 last:border-b-0"
-                  >
-                    <div>
-                      <p class="font-medium text-text-primary">
-                        {{ perm.title }}
-                      </p>
-                      <p class="text-sm text-text-secondary">
-                        {{ perm.description }}
-                      </p>
-                    </div>
-
-                    <input
-                      type="checkbox"
-                      v-model="selected"
-                      @change="
-                        () => {
-                          updatePermissionHandler();
-                        }
-                      "
-                      :value="perm._id"
-                      class="h-5 w-5 rounded border-border accent-accent cursor-pointer"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </template> -->
-
-       
-
+        </template> 
         <!-- 
         <template #Pricing>
           <div class="py-4">
@@ -459,7 +350,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import BaseModal from "../../../components/ui/BaseModal.vue";
 import Tabs from "../../../components/ui/Tabs.vue";
 import BaseTextField from "../../../components/ui/BaseTextField.vue";
@@ -468,16 +359,13 @@ import InfoRow from "../../../components/ui/InfoRow.vue";
 import { useQuery, useMutation } from "@tanstack/vue-query";
 import {
   getProfile,
-  updateProfile,
-  useCompanyId,
+  updateProfile, 
 } from "../../../services/user";
 import { usePrivateUploadFile } from "../../../queries/useCommon";
 import { toast } from "vue-sonner";
 import {
   confirmPayment,
-  useCurrentPackage,
-  useRoles,
-  useUpdatePermissions,
+  useCurrentPackage, 
   useUpgradePackage, 
 } from "../../../queries/usePackages";
 import { extractYear, formatDate } from "../../../utilities/FormatDate";
@@ -486,8 +374,7 @@ import { useWorkspaceStore } from "../../../stores/workspace";
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
 const router = useRouter();
-
-const selectedRole = ref<any>(null);
+ 
 
 const {
   data: currentPackage,
@@ -777,96 +664,4 @@ const currentPlan = ref({
 //   toast.warning(`You are about to downgrade to ${plan.name} plan. Please contact support.`)
 // }
 
-// permissions role code cmmnted below
-
-// const open = ref<Record<string, boolean>>({});
-// watch(roles, (newVal) => {
-//   if (newVal)
-//     newVal[0].categories.forEach((cat: any) => (open.value[cat.category] = false));
-// })
-
-// const toggle = (key: string) => {
-//   open.value[key] = !open.value[key];
-// };
-
-// // Track selected permissions
-// const selected = ref<string[]>([]);
-// const { data: id } = useCompanyId();
-// const { data: roles } = useRoles(id, {
-//   enabled: computed(() => !!id?.value),
-// });
-// const { mutate: updatePermissions } = useUpdatePermissions();
-
-// watch(roles, async (roles) => {
-//   if (!roles || !roles.length) return;
-  
-//    //  Only set default if user did not select anything yet
-//   if (!selectedRole.value) {
-//     selectedRole.value = roles[1];
-//   }
-
-//   // Wait for Vue to render and reactive objects to populate
-//   await nextTick();
-
-//   const enabledPermissions: string[] = [];
-//   selectedRole.value.permission_categories.forEach((category: any) => {
-//     category.permissions.forEach((perm: any) => {
-//       if (perm.enabled) enabledPermissions.push(perm._id);
-//     });
-//   });
-//   selected.value = enabledPermissions;
-// });
-
-// watch(selectedRole, (roles) => {
-//   console.log(selectedRole)
-//   if (!roles) return;
-
-//   const enabledPermissions: string[] = [];
-
-//   roles?.permission_categories.forEach((category: any) => {
-//     category.permissions.forEach((perm: any) => {
-//       if (perm.enabled) {
-//         enabledPermissions.push(perm._id);
-//       }
-//     });
-//   });
-
-//   selected.value = enabledPermissions;
-// }); 
-
-// const updatePermissionHandler = () => {
-//   if (!selectedRole.value?._id) return;
-
-//   updatePermissions({
-//     roleId: selectedRole.value._id, 
-//     payload: {
-//       title: selectedRole.value.title,
-//       description: selectedRole.value.description,
-//       is_admin: selectedRole.value.is_admin,
-//       is_editor: selectedRole.value.is_editor,
-//       is_viewer: selectedRole.value.is_viewer,
-//       permission_ids: selected.value,
-//     },
-//   });
-// };
-
-// watch(isOpen, async (open) => {
-//   if (open && roles?.value?.length) {
-//     // Use previously selected role if exists
-//     // Otherwise default to first non-admin role
-//     if (!selectedRole.value) {
-//       selectedRole.value = roles.value.find((r: any) => !r.is_admin) || roles.value[0];
-//     }
-
-//     // Set selected permissions for that role
-//     await nextTick();
-//     const enabledPermissions: string[] = [];
-//     selectedRole.value.permission_categories.forEach((category: any) => {
-//       category.permissions.forEach((perm: any) => {
-//         if (perm.enabled) enabledPermissions.push(perm._id);
-//       });
-//     });
-//     selected.value = enabledPermissions;
-//   }
-// }); 
 </script>
