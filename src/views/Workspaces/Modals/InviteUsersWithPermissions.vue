@@ -82,12 +82,12 @@
           <!-- Permission List -->
           <div
             v-if="openPermissions[category?.category]"
-            class="px-3 py-2 space-y-2 border-t border-border bg-bg-card"
+            class="py-2 border-t border-border bg-bg-input"
           >
             <div
               v-for="perm in category?.permissions"
               :key="perm._id"
-              class="flex items-start gap-2"
+              class="flex items-start gap-2 hover:bg-bg-body py-2 px-3"
             >
               <input
                 type="checkbox"
@@ -384,6 +384,9 @@ function submit() {
         queryClient.invalidateQueries({ queryKey: ["all-users"] });
         queryClient.invalidateQueries({ queryKey: ['people-lists'] });
         queryClient.invalidateQueries({ queryKey: ['workspaceRoles'] });
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+        queryClient.invalidateQueries({ queryKey: ['people'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-teams'] });
         emit("invited", res);
         reset();
         isOpen.value = false;

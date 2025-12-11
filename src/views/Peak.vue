@@ -214,7 +214,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, defineComponent, h } from 'vue'
+import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { toParamString } from '../composables/useQueryParams'
@@ -321,6 +321,8 @@ onMounted(() => {
   connect()
 })
 
+
+
 onUnmounted(() => {
   isStopped = true
   disconnect()
@@ -424,6 +426,11 @@ const getCardProgress = (total: number, status_dis: any) => {
   const done = status_dis['Done'] ?? 0
   return (done / total) * 100
 }
+
+watch([workspaceId, jobId], () => {
+  disconnect()
+  connect()
+})
 </script>
 
 

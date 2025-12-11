@@ -301,3 +301,52 @@ export const useWorkspaceTeamRoles = (workspace_id: any, options = {}) => {
 };
 
 
+
+// custom roles permissions
+export const useAllPermissions = (
+  params: { scope?: any; workspace_id?: any },
+  options = {}
+) => {
+  const { scope, workspace_id } = params;
+  return useQuery({
+    queryKey: ["all-permissions", scope?.value, workspace_id?.value],
+    queryFn: ({ signal }) => {
+      let url = `roles/permissions/grouped`;
+      const queryParams = new URLSearchParams();
+      
+      if (scope?.value) queryParams.append('scope', scope.value);
+      if (workspace_id?.value) queryParams.append('workspace_id', workspace_id.value);
+      
+      const queryString = queryParams.toString();
+      if (queryString) url += `?${queryString}`;
+
+      return request<any>({
+        url,
+        method: "GET",
+        signal,
+      });
+    },
+    ...options,
+  });
+};
+
+// create custom roles
+
+export const useCreateRole = (options = {}) =>
+  useApiMutation<any>(
+    {
+      key: ["create-role"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/roles/workspace-access-roles`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+
+ 
