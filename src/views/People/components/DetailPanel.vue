@@ -253,6 +253,7 @@ import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
 import { useUpdatePermissions } from "../../../queries/usePackages"; // Import permissions update hook
 import { toast } from "vue-sonner";
+import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
 
 import { usePermissions } from "../../../composables/usePermissions";
 const { canEditUser } = usePermissions();
@@ -495,6 +496,13 @@ watch(selectedRoleData, (role) => {
 function handlePermissionUpdate() {
    if (!selectedRoleData.value?._id) return;
    
+   const allPermissions: any[] = [];
+   selectedRoleData.value.permission_categories.forEach((cat: any) => {
+     cat.permissions.forEach((p: any) => allPermissions.push(p));
+   });
+
+   const formatted = formatPermissionsPayload(allPermissions, selectedPermissions.value);
+
    // Optimistic update for role object in workspaceRoles is tricky without refetch, 
    // but updatePermissions invalidates queries usually.
    updatePermissions({
@@ -505,7 +513,9 @@ function handlePermissionUpdate() {
       is_admin: selectedRoleData.value.is_admin,
       is_editor: selectedRoleData.value.is_editor,
       is_viewer: selectedRoleData.value.is_viewer,
-      permission_ids: selectedPermissions.value,
+      permission_ids: formatted.permission_ids,
+      module_permissions: formatted.module_permissions,
+      workspace_id: workspaceId.value
     },
   }, {
      onSuccess: () => {

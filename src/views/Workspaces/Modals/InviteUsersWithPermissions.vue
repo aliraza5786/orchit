@@ -147,6 +147,7 @@ import {
   useCreateTeamMember
 } from "../../../queries/usePeople";
 import { useUpdatePermissions } from "../../../queries/usePackages";
+import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
 
 const emit = defineEmits<{
   (e: "update:modelValue", v: boolean): void;
@@ -225,7 +226,7 @@ const { data: workspaceRoles, refetch: refetchWorkspaceRoles } = useWorkspaceRol
   }
 );
 watch(workspaceIdRef, () => {
-  if (workspaceIdRef.value) {
+  if (workspaceIdRef.value &&  newCompanyId.value ) {
     refetchWorkspaceRoles();
   }
 });
@@ -287,6 +288,13 @@ function onRoleChange(val: any) {
 function handlePermissionUpdate() {
   if (!selectedRoleData.value?._id) return;
 
+  const allPermissions: any[] = [];
+  selectedRoleData.value.permission_categories.forEach((cat: any) => {
+    cat.permissions.forEach((p: any) => allPermissions.push(p));
+  });
+
+  const formatted = formatPermissionsPayload(allPermissions, selectedPermissions.value);
+
   updatePermissions(
     {
       roleId: selectedRoleData.value._id,
@@ -296,7 +304,9 @@ function handlePermissionUpdate() {
         is_admin: selectedRoleData.value.is_admin,
         is_editor: selectedRoleData.value.is_editor,
         is_viewer: selectedRoleData.value.is_viewer,
-        permission_ids: selectedPermissions.value,
+        permission_ids: formatted.permission_ids,
+        module_permissions: formatted.module_permissions,
+        workspace_id: form.workspace_id
       },
     },
     {
@@ -351,11 +361,13 @@ function submit() {
     name: inferName(email),
     email,
   }));
+   const firstUser = users[0];
   invitePeople(
     {
       id: form.role_id,
-      payload: {  
-        users,
+       payload: {  
+        name: firstUser.name,
+        email: firstUser.email,
         workspace_id: form.workspace_id,
         workspace_access_role_id: form.workspace_access_role_id,
         role_id: form.role_id, // role id 
