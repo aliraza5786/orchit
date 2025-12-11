@@ -20,7 +20,7 @@
         <ProfilePanel />
         <FilterDrawer v-model="filters" :open="isDrawerOpen" />
         <SettingPanel :workspace="getWorkspace" />
-        <ChatBotPanel />
+        <ChatBotPanel :workspace="getWorkspace" />
       </div>
     </div>
   </div>

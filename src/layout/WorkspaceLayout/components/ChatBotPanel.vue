@@ -38,6 +38,15 @@
 
     <!-- Input Area -->
     <div class="p-4 border-t border-border bg-bg-card">
+      <!-- Context Indicator -->
+      <div v-if="contextTitle" class="mb-2 flex items-center gap-1.5">
+        <span class="text-[10px] uppercase font-bold text-text-secondary tracking-wider">Context:</span>
+        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/10 border border-accent/20 text-accent text-xs font-medium">
+           <i class="fa-solid fa-layer-group text-[10px]"></i>
+           {{ contextTitle }}
+        </div>
+      </div>
+      
       <div class="relative">
         <textarea
           placeholder="Ask anything..."
@@ -57,9 +66,40 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useWorkspaceStore } from '../../../stores/workspace'
 
+const props = defineProps<{ workspace?: any }>()
 const workspaceStore = useWorkspaceStore()
+const route = useRoute()
+
+// Calculate context based on route params and workspace lanes
+// Calculate context based on route params and workspace lanes
+const contextTitle = computed(() => {
+  const routeName = (route.name as string)?.toLowerCase()
+  if (!routeName) return 'Workspace'
+
+  // Handle static/known routes
+  if (routeName.includes('peak')) return 'Project Overview'
+  if (routeName.includes('plan')) return 'Project Plan'
+  if (routeName.includes('process')) return 'Process'
+  if (routeName.includes('people')) return 'People'
+  if (routeName.includes('more')) return 'More'
+
+  // Handle dynamic modules via ID
+  const moduleId = route.params.module_id || route.params.job_id
+  
+  if (moduleId && props.workspace?.lanes) {
+    const lane = props.workspace.lanes.find((l: any) => l._id === moduleId)
+    if (lane?.variables?.['lane-title']) {
+       return lane.variables['lane-title']
+    }
+  }
+
+  // Fallback
+  return 'Workspace'
+})
 
 function closeHandler() {
   workspaceStore.toggleChatBotPanel()

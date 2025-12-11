@@ -20,7 +20,7 @@ const createTooltip = () => {
     opacity: '0',
     transition: 'opacity 0.2s ease',
     pointerEvents: 'none',
-    backgroundColor: '#1f2937', // Dark gray
+    backgroundColor: '#7D68C8', // Dark gray
     color: '#ffffff',
     fontSize: '12px',
     lineHeight: '1.4',
@@ -38,7 +38,7 @@ const createTooltip = () => {
     width: '8px',
     height: '8px',
     transform: 'rotate(45deg)',
-    backgroundColor: '#1f2937'
+    backgroundColor: '#7D68C8'
   });
   
   tooltipEl.appendChild(arrowEl);
