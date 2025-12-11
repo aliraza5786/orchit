@@ -117,7 +117,12 @@
 
         <!-- work space  -->
         <div class="mt-5 pt-3 border-t border-border-input relstive">
-          <span class="text-base font-medium text-text-primary mb-1 block">Select Role</span>
+          <div class="flex items-center justify-between mb-1">
+             <span class="text-base font-medium text-text-primary block">Select Role</span>
+             <button @click="showAddRoleModal = true" class="text-xs font-medium text-accent hover:underline">
+               + Add Custom Role
+             </button>
+          </div>
           <BaseSelectField
             size="sm"
             :model-value="selectedRole"
@@ -165,12 +170,12 @@
                 <!-- Permission List -->
                 <div
                   v-if="openPermissions[category?.category]"
-                  class="px-3 py-2 space-y-2 border-t border-border bg-bg-card"
+                  class=" py-2 border-t border-border bg-bg-card"
                 >
                   <div
                     v-for="perm in category?.permissions"
                     :key="perm._id"
-                    class="flex items-start gap-2"
+                    class="flex items-start gap-2 px-3 py-2 hover:bg-bg-input"
                   >
                    <input
                       type="checkbox"
@@ -230,13 +235,21 @@
             </p>
           </li>
         </ul>
-      </section>
+      </section> 
+
     </div>
+    <AddCustomRoleModal
+      v-if="showAddRoleModal"
+      :show="showAddRoleModal"
+      :workspaceId="workspaceId"
+      :companyId="newCompanyId"
+      @close="showAddRoleModal = false"
+    />
   </div>  
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -528,6 +541,11 @@ function handlePermissionUpdate() {
      }
   });
 }
+
+// Add Role Modal
+const showAddRoleModal = ref(false);
+const AddCustomRoleModal = defineAsyncComponent(() => import('../modals/AddCustomRoleModal.vue'));
+
 </script>
 
 <style scoped>
