@@ -222,7 +222,15 @@ const {
 } = useSingleWorkspace(useWorkspaceId().workspaceId.value);
 
 const localWorkspace = ref(getWorkspace.value);
-
+const saveToLocalStorage = () =>{
+  if(getWorkspace.value){
+    const currentName = getWorkspace.value.variables
+    localStorage.setItem('currentName', currentName.title)
+  }else{
+    return null;
+  }
+}
+saveToLocalStorage();
 const duplicateHandler = (data: any) => {
   localWorkspace.value = {
     ...localWorkspace,
