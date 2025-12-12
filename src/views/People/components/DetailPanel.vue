@@ -132,10 +132,10 @@
           />
 
            <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
-           <div v-if="selectedRoleData && !selectedRoleData.is_admin" class="w-full mt-4">
+           <div v-if="selectedRoleData && !selectedRoleData.is_admin && isAdmin" class="w-full mt-4">
               <h2 class="text-base font-medium text-text-primary mb-1">
                 Permissions
-              </h2>
+              </h2> 
 
               <div
                 v-for="category in selectedRoleData?.permission_categories"
@@ -261,7 +261,7 @@ import { toast } from "vue-sonner";
 import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
 
 import { usePermissions } from "../../../composables/usePermissions";
-const { canEditUser } = usePermissions();
+const { canEditUser, isAdmin } = usePermissions();
 
 const localVarValues = reactive<any>({});
 const activeTab = ref<"details" | "tasks" | "history">("details");
@@ -377,9 +377,7 @@ const moveCard = useMoveCard({
     });
   },
 });
-const handleSelect = (val: any, slug: any) => {
-  // console.log(ticketID.value, '>>>');
-  console.log(slug, "slug", val);
+const handleSelect = (val: any, slug: any) => { 
   localVarValues[slug] = val;
 
   UpdateVar({

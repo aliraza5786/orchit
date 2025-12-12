@@ -27,7 +27,7 @@ export function usePermissions() {
 
   //  Admin check
   const isAdmin = computed(() => {
-    const role = userAccessRole.value;
+    const role = userAccessRole.value; 
     if (!role) return false;
 
     // Check for is_owner or is_admin (handle various truthy formats)
@@ -152,8 +152,7 @@ export function usePermissions() {
     const modulePerms = permissionsList.value.filter(
       (p: any) => p.category === "module_management"
     );
-
-    console.log(modulePerms, "overall")
+ 
 
     // console.log(permissionsList.value, "..");
     if (!modulePerms) return false;
@@ -223,5 +222,6 @@ export function usePermissions() {
     canDeleteSheet,
     // Dynamic
     canAccessModule,
+    
   };
 }

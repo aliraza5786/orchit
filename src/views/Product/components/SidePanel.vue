@@ -5,6 +5,7 @@
       class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
   </div>
   <!-- Slide-in panel -->
+   
   <Transition v-else name="panel" appear>
     <div v-show="showPanel" class="flex flex-col max-w-[380px] min-w-[380px] h-full
      overflow-y-auto
@@ -23,6 +24,29 @@
 
       <!-- Body -->
       <div class="py-5 px-6 flex flex-col gap-5 flex-grow">
+        <!-- card type -->
+        <template
+        v-for="(item, index) in cardDetails?.variables"
+        :key="item.slug || `var-${index}`"
+      >
+        <div
+          v-if="item?.type === 'Select' && item.slug == 'card-type'"
+          class="space-y-2 sm:col-span-1"
+        >
+          <div class="text-xs uppercase tracking-wider text-text-secondary">
+            {{ item.title }}
+          </div>
+          <BaseSelectField
+            :canEditCard="!canEditCard"
+            size="sm"
+            :options="item?.data.map((e:any) => ({ _id: e, title: e }))"
+            placeholder="Select option"
+            :allowCustom="false"
+            :model-value="localVarValues[item.slug]"
+            @update:modelValue="(val) => handleSelect(val, item.slug)"
+          />
+        </div>
+      </template>
         <!-- Title row -->
         <div class="capitalize">
           <Transition name="fade-scale" mode="out-in">
@@ -36,6 +60,7 @@
             </h1>
           </Transition>
         </div>
+        <!-- <div>{{ cardType }}</div> -->
 
         <!-- Description -->
         <div>
@@ -129,7 +154,7 @@
               </template>
               <template v-else-if="cardDetails?.variables" v-for="(item, index) in cardDetails?.variables"
                 :key="item.slug || `var-${index}`">
-                <div v-if="item?.type === 'Select'" class="space-y-2 sm:col-span-1">
+                <div v-if="item.type === 'Select' && item.slug !== 'card-type'" class="space-y-2 sm:col-span-1">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">{{ item.title }}</div>
                   <BaseSelectField :canEditCard="!canEditCard" size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
                     placeholder="Select option" :allowCustom="false" :model-value="localVarValues[item.slug]"
@@ -292,6 +317,8 @@ const props = defineProps({
 const emit = defineEmits(['close', 'update:details', 'comment:post', 'priority:change'])
 const propsID = ref(props.details._id);
 const { data: cardDetails, isPending, isFetching } = useProductCard(propsID);
+const cardType = computed(() => cardDetails.value?.["card-type"]);
+ 
 watch(props, () => {
   propsID.value = props.details._id
 })
