@@ -16,9 +16,7 @@ export function usePermissions() {
   //  Get workspace (query → store fallback)
   const workspace = computed(() => {
     return workspaceData.value || workspaceStore.workspace || null;
-  }); 
-  console.log( workspace.value, "thessssssssssssss")
-
+  });
 
   //  Extract user_access_role
   const userAccessRole = computed(() => {
@@ -34,28 +32,39 @@ export function usePermissions() {
 
     // Check for is_owner or is_admin (handle various truthy formats)
     const admin = role.is_admin ?? role.access_role?.is_admin;
-    return role.is_owner === true || admin === true || admin === "true" || admin === 1;
+    return (
+      role.is_owner === true ||
+      admin === true ||
+      admin === "true" ||
+      admin === 1
+    );
   });
 
   //  Permissions array from backend ({ slug, enabled })
   const permissionsList = computed(() => {
-    const role = userAccessRole.value; 
+    const role = userAccessRole.value;
     if (!role) return [];
     return role.permissions || role.access_role?.permissions || [];
   });
 
   //  Main Permission Checker
   const hasPermission = (slug: string): boolean => {
+    if (isAdmin.value) return true;
+
     const list = permissionsList.value;
-    console.log(list, ",,,,,,,,,,,,,,,")
-    if (isAdmin.value) return true; 
     if (!list || !list.length) return false;
 
     const match = list.find(
-      (p: { slug: string; enabled: boolean | string | number }) => p.slug === slug
+      (p: { slug: string; enabled: boolean | string | number }) =>
+        p.slug === slug
     );
 
-    return !!match && (match.enabled === true || match.enabled === "true" || match.enabled === 1);
+    return (
+      !!match &&
+      (match.enabled === true ||
+        match.enabled === "true" ||
+        match.enabled === 1)
+    );
   };
 
   // ---- Lane Permissions ----
@@ -134,16 +143,39 @@ export function usePermissions() {
     hasPermission("workspace.module.update")
   );
 
-
   // ---- Dynamic Module Permissions ----
   const canAccessModule = (
     moduleId: string,
     action: "create" | "view_all" | "update" | "delete"
   ) => {
-    // If no module ID provided, check base module permissions? 
-    // Or strictly check specific module permission.
-    // Based on user request, they want to handle "View ABC Module", so specific.
-    return hasPermission(`workspace.module.${action}.${moduleId}`) && hasPermission(`workspace.module.${action}`);
+    // find relevant permission in permissions list
+    const modulePerms = permissionsList.value.filter(
+      (p: any) => p.category === "module_management"
+    );
+
+    console.log(modulePerms, "overall")
+
+    // console.log(permissionsList.value, "..");
+    if (!modulePerms) return false;
+
+    // Separate static and dynamic permissions
+    // const staticPermissions = modulePerms.filter(
+    //   (p: any) => !p._id.includes("_") && !p.slug.match(/\.\w{24}$/)
+    // );
+
+    const dynamicPermissions = modulePerms.filter((p: any) =>
+      p._id.includes("_")
+    );
+
+    for (let i = 0; i < dynamicPermissions.length; i++) {
+      if (dynamicPermissions[i].slug.includes(moduleId)) {
+       return hasPermission(`workspace.module.${action}.${moduleId}`);
+      }
+     else{
+       return hasPermission(`workspace.module.${action}`);
+     }
+    }
+    return hasPermission(`workspace.module.${action}`); 
   };
 
   return {

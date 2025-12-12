@@ -130,8 +130,7 @@ const props = defineProps<{
   workspace: { modules: any; generation_task: any };
   isLoading: boolean;
   expanded: boolean;
-}>();
-console.log(props.workspace.modules, "thsss is i");
+}>(); 
 
 const filteredModules = computed(() => {
   if (!props.workspace?.modules) return [];
