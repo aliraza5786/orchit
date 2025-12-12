@@ -150,7 +150,7 @@ const selectedPermissionIds = ref<string[]>([]);
 const openCategories = ref<Record<string, boolean>>({});
 
 // Fetch Permissions
-const { data: rawPermissionsData, isPending: isPermissionsPending } = useAllPermissions({
+const { data: rawPermissionsData } = useAllPermissions({
   scope: computed(() => 'workspace'),
   workspace_id: computed(() => props.workspaceId || workspaceId.value),
 });

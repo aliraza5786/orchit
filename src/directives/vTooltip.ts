@@ -128,13 +128,13 @@ export const vTooltip: ObjectDirective = {
       hideTooltip();
     });
   },
-  updated(el: HTMLElement, binding: DirectiveBinding) {
-      // If the tooltip value changes while hovering, we could update it. 
-      // For now, simple behavior is fine.
-  },
-  unmounted(el: HTMLElement) {
-    // No explicit cleanup needed for global element
-  }
+  // updated(el: HTMLElement, binding: DirectiveBinding) {
+  //     // If the tooltip value changes while hovering, we could update it. 
+  //     // For now, simple behavior is fine.
+  // },
+  // unmounted(el: HTMLElement) {
+  //   // No explicit cleanup needed for global element
+  // }
 };
 
 export default vTooltip;
