@@ -59,8 +59,7 @@
               {{ localTitle || 'Untitled' }}
             </h1>
           </Transition>
-        </div>
-        <!-- <div>{{ cardType }}</div> -->
+        </div> 
 
         <!-- Description -->
         <div>
@@ -316,8 +315,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'update:details', 'comment:post', 'priority:change'])
 const propsID = ref(props.details._id);
-const { data: cardDetails, isPending, isFetching } = useProductCard(propsID);
-const cardType = computed(() => cardDetails.value?.["card-type"]);
+const { data: cardDetails, isPending, isFetching } = useProductCard(propsID); 
  
 watch(props, () => {
   propsID.value = props.details._id
