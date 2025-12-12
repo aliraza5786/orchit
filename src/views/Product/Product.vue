@@ -199,8 +199,7 @@
     </template>
     <!-- MindMap View -->
     <template v-if="view === 'mindmap'">
-      <div ref="mindMapRef" class="w-full h-[90vh] rounded-md relative">
-      </div>
+      <div ref="mindMapRef" class="w-full h-[90vh] rounded-md relative"></div>
       <!-- Popup container -->
       <div
         v-if="activeAddList"
@@ -296,20 +295,24 @@
       }
     "
   />
- <ConfirmDeleteModal
-  v-model="showTicketDelete"
-  title="Delete Ticket"
-  itemLabel="Ticket"
-  :itemName="ticketToDelete?.title"
-  :requireMatchText="ticketToDelete?.title"
-  confirmText="Delete Ticket"
-  cancelText="Cancel"
-  size="md"
-  :loading="isDeletingTicket"
-  @confirm="handleDeleteTicket"
-  @cancel="() => { showTicketDelete = false; ticketToDelete = null }"
-/>
-
+  <ConfirmDeleteModal
+    v-model="showTicketDelete"
+    title="Delete Ticket"
+    itemLabel="Ticket"
+    :itemName="ticketToDelete?.title"
+    :requireMatchText="ticketToDelete?.title"
+    confirmText="Delete Ticket"
+    cancelText="Cancel"
+    size="md"
+    :loading="isDeletingTicket"
+    @confirm="handleDeleteTicket"
+    @cancel="
+      () => {
+        showTicketDelete = false;
+        ticketToDelete = null;
+      }
+    "
+  />
 
   <div></div>
 </template>
@@ -360,11 +363,6 @@ import MindElixir from "mind-elixir";
 import { toast } from "vue-sonner";
 import { usePermissions } from "../../composables/usePermissions";
 import { request, toApiMessage } from "../../libs/api";
-const props = defineProps<{
-  ticket: any;
-  selectedVar?: any;
-  footer?: boolean;
-}>();
 
 const {
   canEditSheet,
@@ -391,8 +389,23 @@ const { workspaceId, moduleId } = useRouteIds();
 const queryClient = useQueryClient();
 const createTeamModal = ref(false);
 const selectedCard = ref<any>();
+declare global {
+  interface Window {
+    toggleMenu: (el: HTMLElement) => void;
+    handleEdit: (e: Event) => void;
+    handleDelete: (e: Event) => void;
+    handleStatusChange: (
+      e: Event,
+      sheetIdx: number,
+      listIdx: number,
+      cardIdx: number
+    ) => void;
+  }
+}
+
 // delete ticket
 const deleteTicket = async () => {
+  console.log("ticket delete", selectedDeleteId.value);
 
   if (!selectedDeleteId.value) return;
 
@@ -423,13 +436,6 @@ const deleteTicket = async () => {
   }
 };
 
-const openDeleteTicketModal = (ticket: any) => {
-  console.log("ticket id", ticket);
-  
-  ticketToDelete.value = ticket;
-  selectedDeleteId.value = ticket._id;
-  showTicketDelete.value = true;
-};
 const handleDeleteTicket = async () => {
   await deleteTicket();
 };
@@ -444,10 +450,10 @@ const handleEditTicket = async (card: any, newStatus: string) => {
     await request({
       url: "/workspace/cards/update",
       method: "PATCH",
-      data:{
+      data: {
         card_id: card._id,
-        variables: { "card-status": newStatus }
-      }
+        variables: { "card-status": newStatus },
+      },
     });
 
     // Update local state for immediate UI feedback
@@ -464,11 +470,25 @@ const handleEditTicket = async (card: any, newStatus: string) => {
   }
 };
 
+interface Card {
+  _id: string;
+  // other fields
+}
+
+interface SheetList {
+  cards: Card[];
+  // other fields
+}
+
+interface Sheet {
+  sheet_lists: SheetList[];
+  // other fields
+}
 
 const removeCardFromState = (cardId: string) => {
-  allSheetsData.value?.sheets?.forEach((sheet) => {
-    sheet.sheet_lists?.forEach((list) => {
-      list.cards = list.cards.filter((card) => card._id !== cardId);
+  allSheetsData.value?.sheets?.forEach((sheet: Sheet) => {
+    sheet.sheet_lists?.forEach((list: SheetList) => {
+      list.cards = list.cards.filter((card: Card) => card._id !== cardId);
     });
   });
 };
@@ -551,13 +571,9 @@ const { data: Lists, isPending } = useSheetList(
   computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
   selected_view_by // ref
 );
-const {
-  data: allSheetsData,
-  refetch: refetchAllSheets,
-  isPending: isAllSheetsPending,
-} = useAllSheetsList(
+const { data: allSheetsData, refetch: refetchAllSheets } = useAllSheetsList(
   moduleId,
-   selected_view_by,
+  selected_view_by,
   computed(() => [...workspaceStore.selectedLaneIds])
 );
 
@@ -996,20 +1012,39 @@ function buildMindMapDataAllSheets(sheetsData: any[]) {
       ? sheet.sheet_lists
       : [];
 
-    sheetLists.forEach((sheetList, listIdx) => {
-      
+    // Types
+    interface Seat {
+      status?: string;
+    }
+
+    interface Card {
+      seat?: Seat;
+      ["card-title"]?: string;
+      ["card-status"]?: string;
+      ["card-code"]?: string;
+    }
+
+    interface SheetList {
+      title?: string;
+      cards: Card[];
+    }
+
+    // MAIN LOOP
+    sheetLists.forEach((sheetList: SheetList, listIdx: number) => {
       const sheetListNode = {
         id: `sheetlist-${sheetIdx}-${listIdx}`,
         topic: sheetList.title || `Untitled Sheet List ${listIdx + 1}`,
         children: [] as any[],
       };
 
-      const cards = Array.isArray(sheetList.cards) ? sheetList.cards : [];
+      const cards: Card[] = Array.isArray(sheetList.cards)
+        ? sheetList.cards
+        : [];
 
-      cards.forEach((card, cardIdx) => {
-        const seat = card.seat;
+      cards.forEach((card: Card, cardIdx: number) => {
+        const seat: Seat | undefined = card.seat;
 
-        const getInitials = (name: string | null | undefined) => {
+        const getInitials = (name: string | null | undefined): string => {
           if (!name) return "UN";
           return name
             .split(" ")
@@ -1019,156 +1054,142 @@ function buildMindMapDataAllSheets(sheetsData: any[]) {
             .slice(0, 2);
         };
 
-        const initials = getInitials(seat?.status);
-        const assigned = seat?.status === "assigned";
-        const statusTitle = card["card-status"] || "To Do";
-        const statusBg = STATUS_COLORS[statusTitle] || "#D3D3D3";
-        const allSheetTitles = sheetLists.map((sl) => sl.title || "Untitled");
-        const truncatedTitle = (card["card-title"] || "Untitled").slice(0, 25);
-        const cardHtml = `
-        <div class="card-content" style="
-          width: 350px;
-          height: 110px;
-          background: #AFF4EF;
-          padding: 5px;
-          border-radius: 8px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          font-family: DM Sans, sans-serif;
-          margin: 0;
-          pointer-events:auto;
-        ">
-          <div style="display:flex; justify-content:space-between;">
-            <div style="
-              width:auto;
-              height:40px;
-              display:flex;
-              color:#2B2C30;
-              align-items:center;
-              overflow:hidden;
-              text-overflow:ellipsis;
-              white-space:nowrap;
-              font-weight:500;
-              font-size:14px;
-              padding-left:10px;
-            ">
-              ${truncatedTitle}...
-            </div>
+        const initials: string = getInitials(seat?.status);
+        const assigned: boolean = seat?.status === "assigned";
+        const statusTitle: string = card["card-status"] || "To Do";
+        const statusBg: string = STATUS_COLORS[statusTitle] || "#D3D3D3";
 
-                <select class="status-select" style="
-                background:${statusBg};
-                pointer-events:auto;
-                color:#2B2C30;
-                border:none;
-                border-radius:20px;
-                font-size:11px;
-                font-weight:500;
-                height:30px;
-                display:flex;
-                justify-content:center;
-                align-items:center;
-                padding:5px 12px;
-                margin-top:7px;
-                cursor:pointer;
-              " onchange="handleStatusChange(event, ${sheetIdx}, ${listIdx}, ${cardIdx})">
-                ${allSheetTitles
-                  .map(
-                    (title) =>
-                      `<option value="${title}" ${
-                        title === statusTitle ? "selected" : ""
-                      } style="pointer-events:auto;">${title}</option>`
-                  )
-                  .join("")}
-              </select>
+        const allSheetTitles: string[] = sheetLists.map(
+          (sl: SheetList) => sl.title || "Untitled"
+        );
 
+        const truncatedTitle: string = (card["card-title"] || "Untitled").slice(
+          0,
+          25
+        );
 
-            <div class="menu-wrapper"
-              style="position:relative; margin-right:10px; margin-top:-35px; height:20px; width:20px; pointer-events:auto; cursor:pointer;"
-              onclick="event.stopPropagation(); event.stopImmediatePropagation(); toggleMenu(this);"
+        const cardHtml: string = `
+      <div class="card-content" style=" 
+        width: 350px;
+        height: 110px;
+        background: #AFF4EF;
+        padding: 5px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-family: DM Sans, sans-serif;
+        margin: 0;
+        pointer-events:auto;
+      ">
+        <div style="display:flex; justify-content:space-between;">
+          <div style="
+            width:auto;
+            height:40px;
+            display:flex;
+            color:#2B2C30;
+            align-items:center;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+            font-weight:500;
+            font-size:14px;
+            padding-left:10px;
+          ">
+            ${truncatedTitle}...
+          </div>
+
+          <select class="status-select" style="
+            background:${statusBg};      
+            pointer-events:auto;
+            color:#2B2C30;
+            border:none;
+            border-radius:20px;
+            font-size:11px;
+            font-weight:500;
+            height:30px;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            padding:5px 12px;
+            margin-top:7px;
+            cursor:pointer;
+          " onchange="handleStatusChange(event, ${sheetIdx}, ${listIdx}, ${cardIdx})">
+            ${allSheetTitles
+              .map(
+                (title) =>
+                  `<option value="${title}" ${
+                    title === statusTitle ? "selected" : ""
+                  } style="pointer-events:auto;">${title}</option>`
+              )
+              .join("")}
+          </select>
+
+          <div class="menu-wrapper" 
+            style="position:relative; margin-right:10px; margin-top:-35px; height:20px; width:20px; pointer-events:auto; cursor:pointer;"
+            onclick="event.stopPropagation(); event.stopImmediatePropagation(); toggleMenu(this);"
+            onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
+            onpointerdown="event.stopPropagation(); event.stopImmediatePropagation();"
+            data-cardid="card-${sheetIdx}-${listIdx}-${cardIdx}"
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" >
+              <circle cx="5.23717" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+              <circle cx="10.0008" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+              <circle cx="14.7626" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+            </svg>
+
+            <ul class="menu-dropdown" 
+              style="display:none; pointer-events:auto; position:absolute; top:70px; right:0; background:white; border:1px solid #ccc; border-radius:6px; list-style:none; padding-top: -30px;width:100px; height: 80px; font-size:13px; z-index:9999; overflow: hidden;"
+              onclick="event.stopPropagation(); event.stopImmediatePropagation();"
               onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
-              onpointerdown="event.stopPropagation(); event.stopImmediatePropagation();"
-            data-cardid="card-${sheetIdx}-${listIdx}-${cardIdx}">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <circle cx="5.23717" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-                <circle cx="10.0008" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-                <circle cx="14.7626" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-              </svg>
+            >
+              <li style="margin-top:-25px; padding-left: 5px; padding-right: 5px; cursor:pointer;"  
+                onclick="handleEdit(event)"
+              >Edit Ticket</li>
 
-              <!-- DROPDOWN MENU -->
-              <ul class="menu-dropdown" style="
-                  display:none;
-                  position:absolute;
-                  top:70px;
-                  right:0;
-                  background:white;
-                  border:1px solid #ccc;
-                  border-radius:6px;
-                  list-style:none;
-                  padding-top: -30px;
-                  width:100px;
-                  height: 80px;
-                  font-size:13px;
-                  z-index:9999;
-                  overflow: hidden;
-                "
-                onclick="event.stopPropagation(); event.stopImmediatePropagation();"
-                onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
-              >
-                <li style="margin-top:-25px; padding-left: 5px; padding-right: 5px; cursor:pointer;" onclick="handleEdit(event)">Edit Ticket</li>
-                <li style="margin-top: -25px; padding-left: 5px; padding-right: 5px; cursor:pointer;" onclick="handleDelete(event)">Delete Ticket</li>
-              </ul>
-            </div>
+              <li style="margin-top:-45px; padding-left: 5px; padding-right: 5px; cursor:pointer;" 
+                onclick="handleDelete(event)"
+              >Delete Ticket</li>
+            </ul>
+          </div>
+        </div>
 
+        <div style="display:flex; justify-content:space-between; margin-top:20px; width:320px; height:100px; overflow:hidden; margin-left:10px;">
+          <div style="height:30px; width:100px; font-size:12px; display:flex;">
+            <span style="margin-top:-25px !important;">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="20" height="20" rx="3.33333" fill="#29BF7F"/> <path d="M6.43164 14.3018L9.29004 12.167L9.29102 12.166C9.47176 12.0328 9.69053 11.9609 9.91504 11.9609C10.0834 11.9609 10.2482 12.0017 10.3965 12.0781L10.5391 12.166L10.54 12.167L13.373 14.291V5.91699H6.43164V14.3018ZM14.4316 14.3789C14.4277 14.5672 14.3725 14.7506 14.2725 14.9102C14.1723 15.0699 14.0303 15.1996 13.8623 15.2852C13.6944 15.3706 13.5064 15.4094 13.3184 15.3965C13.1304 15.3835 12.9495 15.3196 12.7949 15.2119L12.79 15.208L9.91504 13.0518L7.01465 15.209C6.83427 15.3432 6.61546 15.4161 6.39062 15.417H6.38965C6.2298 15.4164 6.07171 15.38 5.92773 15.3105V15.3096C5.75087 15.2261 5.60123 15.0946 5.49609 14.9297C5.3907 14.7642 5.33364 14.5721 5.33301 14.376V5.87402C5.3338 5.7361 5.36234 5.59971 5.41602 5.47266C5.46971 5.3456 5.54812 5.23049 5.64648 5.13379C5.74485 5.0371 5.86131 4.96069 5.98926 4.90918C6.1165 4.85797 6.2525 4.83272 6.38965 4.83398V4.83301H13.3906C13.6661 4.83457 13.9302 4.94494 14.125 5.13965C14.3198 5.33446 14.4301 5.59852 14.4316 5.87402V14.3789Z" fill="white" stroke="white" stroke-width="0.333333"/> </svg>
+            </span>
+            <span style="color:#2B2C30B2; margin-top:-30px !important; font-size: 14px; display:flex; margin-left:-10px;">
+              ${card["card-code"] || "N/A"}
+            </span>
           </div>
 
           <div style="
+            height:26px;
+            width:26px;
+            padding:5px;
+            color:white;
+            border:1px solid white;
             display:flex;
-            justify-content:space-between;
-            margin-top:20px;
-            width:320px;
-            height:100px;
-            overflow:hidden;
-            margin-left:10px;
+            justify-content:center;
+            border-radius:50%;
+            align-items:center;
+            background:${assigned ? "#4ADE80" : "#9CA3AF"};
           ">
-            <div style="height:30px; width:100px; font-size:12px; display:flex;">
-              <span style="margin-top:-25px !important;">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="20" height="20" rx="3.33333" fill="#29BF7F"/>
-                  <path d="M6.43164 14.3018L9.29004 12.167L9.29102 12.166C9.47176 12.0328 9.69053 11.9609 9.91504 11.9609C10.0834 11.9609 10.2482 12.0017 10.3965 12.0781L10.5391 12.166L10.54 12.167L13.373 14.291V5.91699H6.43164V14.3018ZM14.4316 14.3789C14.4277 14.5672 14.3725 14.7506 14.2725 14.9102C14.1723 15.0699 14.0303 15.1996 13.8623 15.2852C13.6944 15.3706 13.5064 15.4094 13.3184 15.3965C13.1304 15.3835 12.9495 15.3196 12.7949 15.2119L12.79 15.208L9.91504 13.0518L7.01465 15.209C6.83427 15.3432 6.61546 15.4161 6.39062 15.417H6.38965C6.2298 15.4164 6.07171 15.38 5.92773 15.3105V15.3096C5.75087 15.2261 5.60123 15.0946 5.49609 14.9297C5.3907 14.7642 5.33364 14.5721 5.33301 14.376V5.87402C5.3338 5.7361 5.36234 5.59971 5.41602 5.47266C5.46971 5.3456 5.54812 5.23049 5.64648 5.13379C5.74485 5.0371 5.86131 4.96069 5.98926 4.90918C6.1165 4.85797 6.2525 4.83272 6.38965 4.83398V4.83301H13.3906C13.6661 4.83457 13.9302 4.94494 14.125 5.13965C14.3198 5.33446 14.4301 5.59852 14.4316 5.87402V14.3789Z" fill="white" stroke="white" stroke-width="0.333333"/>
-                </svg>
-              </span>
-
-              <span style="color:#2B2C30B2; margin-top:-30px !important; font-size: 14px; display:flex; margin-left:-10px;">
-                ${card["card-code"] || "N/A"}
-              </span>
-            </div>
-
-            <div style="
-              height:26px;
-              width:26px;
-              padding:5px;
-              color:white;
-              border:1px solid white;
-              display:flex;
-              justify-content:center;
-              border-radius:50%;
-              align-items:center;
-              background:${assigned ? "#4ADE80" : "#9CA3AF"};
-            ">
-              <span>${initials}</span>
-            </div>
+            <span>${initials}</span>
           </div>
         </div>
-        `;
+      </div>
+    `;
 
-        const isLastCard = cardIdx === cards.length - 1;
+        const isLastCard: boolean = cardIdx === cards.length - 1;
+
         sheetListNode.children.push({
           id: `card-${sheetIdx}-${listIdx}-${cardIdx}`,
-          dangerouslySetInnerHTML: `<div disabled id="card-inner-${sheetIdx}-${listIdx}-${cardIdx}" style="pointer-events:auto; height: 110px; ">${cardHtml}</div>`,
+          dangerouslySetInnerHTML: `<div disabled id="card-inner-${sheetIdx}-${listIdx}-${cardIdx}" style="pointer-events:auto; height: 110px; width: 0px;">${cardHtml}</div>`,
           expanded: false,
           isLastCard,
-          selectable: false
+          selectable: false,
         });
       });
 
@@ -1196,31 +1217,38 @@ watchEffect(() => {
       }
 
       const hideMenu = () => {
-        const menu = document.querySelector(".mind-elixir .context-menu");
+        const menu = document.querySelector(
+          ".mind-elixir .context-menu"
+        ) as HTMLElement | null;
         if (!menu) return;
+
         menu.style.display = "";
         menu.style.visibility = "";
         menu.style.opacity = "";
         menu.style.pointerEvents = "";
+
         menu.classList.remove("show", "visible", "open");
+
         menu.hidden = true;
+
         requestAnimationFrame(() => {
           if (menu) menu.hidden = true;
         });
       };
 
       const instance = new MindElixir({
-        el: mindMapRef.value,
+        el: mindMapRef.value as HTMLElement,
         direction: MindElixir.RIGHT,
         draggable: true,
         contextMenu: true,
-        allowHtml: true,
+
         contextMenuOption: {
           link: false,
           focus: true,
           addChild: false,
           addParent: false,
           summary: false,
+
           extend: [
             {
               id: "cm-addVariable",
@@ -1258,10 +1286,12 @@ watchEffect(() => {
               onclick: () => {
                 const node = mindMapInstance.value?.currentNode?.nodeObj;
                 if (!node) return;
+
                 if (node.id?.startsWith("sheetlist")) {
                   const [_, sheetIdx] = node.id.split("-").map(Number);
                   const sheet = allSheetsData.value?.sheets?.[sheetIdx];
                   const variableNode = sheet?.variables;
+
                   localColumnData.value = {
                     ...variableNode,
                     title: node.topic,
@@ -1292,60 +1322,6 @@ watchEffect(() => {
             },
           ],
         },
-
-        before: {
-          addChild(el, obj) {
-            const current = this.currentNode.nodeObj;
-            if (!current) return false;
-
-            if (current.id?.startsWith("card")) {
-              toast.error("Cannot add a child to a card node.");
-              return false;
-            }
-
-            const parent = current.parent;
-            if (parent && parent.children) {
-              const lastChild = parent.children[parent.children.length - 1];
-              if (lastChild === current) {
-                toast.error("Cannot add a child to the last node.");
-                return false;
-              }
-            }
-
-            return true;
-          },
-
-          insertSibling(el, obj) {
-            const current = this.currentNode.nodeObj;
-            if (!current) return false;
-
-            if (current.id?.startsWith("card")) {
-              toast.error("Cannot add a sibling to a card node.");
-              return false;
-            }
-
-            return true;
-          },
-          electNode(el, nodeObj) {
-      if (nodeObj.id?.startsWith("card")) {
-        return false;
-      }
-      const parent = nodeObj.parent;
-      if (parent && parent.children) {
-        const lastChild = parent.children[parent.children.length - 1];
-        if (lastChild === nodeObj) {
-          return false;
-        }
-      }
-
-      return true;
-    },
-        },
-
-        renderNode(nodeData, nodeEl) {
-          const topicEl = nodeEl.querySelector("me-tpc") || nodeEl;
-          topicEl.textContent = nodeData.topic;
-        },
       });
 
       mindMapInstance.value = instance;
@@ -1355,21 +1331,24 @@ watchEffect(() => {
           const node = mindMapInstance.value?.currentNode?.nodeObj;
           if (!node) return;
 
-          const menuItems = document.querySelectorAll(
-            ".mind-elixir .context-menu li"
-          );
+          // Get all menu items as HTMLElements
+          const menuItems = Array.from(
+            document.querySelectorAll(".mind-elixir .context-menu li")
+          ) as HTMLElement[];
 
           menuItems.forEach((li) => {
             const id = li.id;
-            if (node.isRoot)
+
+            if (node.isRoot) {
               li.style.display = id === "Add Variable" ? "" : "none";
-            else if (node.id?.startsWith("variable"))
+            } else if (node.id?.startsWith("variable")) {
               li.style.display = id === "Add List" ? "" : "none";
-            else if (node.id?.startsWith("sheetlist"))
+            } else if (node.id?.startsWith("sheetlist")) {
               li.style.display =
                 id === "Add Task" || id === "Delete List" ? "" : "none";
-            else if (node.id?.startsWith("card"))
+            } else if (node.id?.startsWith("card")) {
               li.style.display = "none";
+            }
           });
         }, 10);
       });
@@ -1377,45 +1356,53 @@ watchEffect(() => {
   }
 });
 
-  window.toggleMenu = function (el) {
-    const menu = el.querySelector(".menu-dropdown");
-    const isOpen = menu.style.display === "block";
-    menu.style.display = isOpen ? "none" : "block";
-    document.addEventListener('click', function(event) {
-    if (!event.target.closest('.menu-wrapper')) {
-      document.querySelectorAll('.menu-dropdown').forEach(menu => menu.style.display = 'none');
+window.toggleMenu = function (el: HTMLElement) {
+  const menu = el.querySelector(".menu-dropdown") as HTMLElement;
+  const isOpen = menu.style.display === "block";
+  menu.style.display = isOpen ? "none" : "block";
+
+  document.addEventListener("click", function (event) {
+    if (!(event.target as HTMLElement).closest(".menu-wrapper")) {
+      document.querySelectorAll(".menu-dropdown").forEach((menu) => {
+        (menu as HTMLElement).style.display = "none";
+      });
     }
   });
-  };
-
-  window.handleEdit = function (e) {
-  e.stopPropagation();
-  e.stopImmediatePropagation();
-
-  const wrapper = e.target.closest(".menu-wrapper");
-  if (!wrapper) return;
-
-  const cardId = wrapper.getAttribute("data-cardid"); 
-  if (!cardId) return;
-  const [_, sheetIdx, listIdx, cardIdx] = cardId.split("-").map(Number);
-  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
-  const sheetList = sheet?.sheet_lists?.[listIdx];
-  const card = sheetList?.cards?.[cardIdx];
-
-  if (!card) return;
-  selectCardHandler(card);
-  document.querySelectorAll(".menu-dropdown")
-          .forEach(m => (m.style.display = "none"));
 };
 
-window.handleDelete = (e) => {
+window.handleEdit = function (e: Event) {
   e.stopPropagation();
   e.stopImmediatePropagation();
 
-  const wrapper = e.target.closest(".menu-wrapper");
+  const target = e.target as HTMLElement;
+  const wrapper = target.closest(".menu-wrapper") as HTMLElement | null;
   if (!wrapper) return;
 
-  const cardId = wrapper.getAttribute("data-cardid"); 
+  const cardId = wrapper.getAttribute("data-cardid");
+  if (!cardId) return;
+
+  const [_, sheetIdx, listIdx, cardIdx] = cardId.split("-").map(Number);
+  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
+  const sheetList = sheet?.sheet_lists?.[listIdx];
+  const card = sheetList?.cards?.[cardIdx];
+  if (!card) return;
+
+  selectCardHandler(card);
+
+  document.querySelectorAll(".menu-dropdown").forEach((m) => {
+    (m as HTMLElement).style.display = "none";
+  });
+};
+
+window.handleDelete = function (e: Event) {
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+
+  const target = e.target as HTMLElement;
+  const wrapper = target.closest(".menu-wrapper") as HTMLElement | null;
+  if (!wrapper) return;
+
+  const cardId = wrapper.getAttribute("data-cardid");
   if (!cardId) return;
 
   const [_, sheetIdx, listIdx, cardIdx] = cardId.split("-").map(Number);
@@ -1423,29 +1410,32 @@ window.handleDelete = (e) => {
   const sheet = allSheetsData.value?.sheets?.[sheetIdx];
   const sheetList = sheet?.sheet_lists?.[listIdx];
   const card = sheetList?.cards?.[cardIdx];
-
   if (!card) return;
 
   ticketToDelete.value = card;
-
-  // THE MISSING LINE — REQUIRED
   selectedDeleteId.value = card._id;
-
   showTicketDelete.value = true;
 
-  document
-    .querySelectorAll(".menu-dropdown")
-    .forEach((m) => (m.style.display = "none"));
+  document.querySelectorAll(".menu-dropdown").forEach((m) => {
+    (m as HTMLElement).style.display = "none";
+  });
 };
 
-
-window.handleStatusChange = function (e: Event, sheetIdx: number, listIdx: number, cardIdx: number) {
-  const card = allSheetsData.value?.sheets?.[sheetIdx]?.sheet_lists?.[listIdx]?.cards?.[cardIdx];
+window.handleStatusChange = function (
+  e: Event,
+  sheetIdx: number,
+  listIdx: number,
+  cardIdx: number
+) {
+  const card =
+    allSheetsData.value?.sheets?.[sheetIdx]?.sheet_lists?.[listIdx]?.cards?.[
+      cardIdx
+    ];
   if (!card) return;
+
   const newStatus = (e.target as HTMLSelectElement).value;
   handleEditTicket(card, newStatus);
 };
-
 </script>
 <style scoped>
 @import "https://cdn.jsdelivr.net/npm/mind-elixir/dist/style.css";
@@ -1503,7 +1493,7 @@ window.handleStatusChange = function (e: Event, sheetIdx: number, listIdx: numbe
 ::v-deep(.mind-elixir .context-menu #cm-down) {
   display: none !important;
 }
-::v-deep(.mind-elixir .map-container .selected){
+::v-deep(.mind-elixir .map-container .selected) {
   box-shadow: none;
   outline: none;
 }
