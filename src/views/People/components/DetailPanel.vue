@@ -119,19 +119,11 @@
         <div class="mt-5 pt-3 border-t border-border-input relstive">
           <div class="flex items-center justify-between mb-1">
              <span class="text-base font-medium text-text-primary block">Select Role</span>
-             <button @click="showAddRoleModal = true" class="text-xs font-medium text-accent hover:underline">
-               + Add Custom Role
-             </button>
           </div>
           <BaseSelectField
             size="sm"
             :model-value="selectedRole"
-            :options="
-             (workspaceRoles || []).map((r:any) => ({
-                 _id: r._id,
-                title: r.title,
-             }))
-            "
+            :options="roleOptions"
             placeholder="Select Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
@@ -438,7 +430,23 @@ const { mutate: assignRole } = useAssignRole({
   onError: (err: any) => console.error(err), 
 });
 
+const roleOptions = computed(() => {
+  const roles = (workspaceRoles.value || []).map((r: any) => ({
+    _id: r._id,
+    title: r.title,
+  }));
+  roles.push({
+    _id: 'ADD_NEW_ROLE',
+    title: '+ Add New Role',
+    customClass: 'text-accent font-medium sticky bottom-0  hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown   border-t border-border w-full',
+    isAction: true
+  });
+  return roles;
+});
+
 watch(selectedRole, (newRole) => {
+  if (newRole === 'ADD_NEW_ROLE') return;
+  
   assignRole({
     id: props.details?._id!,
     workspace_access_role_id: newRole,
@@ -469,6 +477,11 @@ function handleRoleClick() {
 function handleRoleChange(newRole: any) {
   if (!canEditUser) {
     toast.error("You have no permission to edit user details");
+    return;
+  }
+
+  if (newRole === 'ADD_NEW_ROLE') {
+    showAddRoleModal.value = true;
     return;
   }
 

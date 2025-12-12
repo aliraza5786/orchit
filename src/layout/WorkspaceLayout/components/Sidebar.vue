@@ -131,11 +131,11 @@ const props = defineProps<{
   isLoading: boolean;
   expanded: boolean;
 }>();
+console.log(props.workspace.modules, "thsss is i");
 
 const filteredModules = computed(() => {
   if (!props.workspace?.modules) return [];
   console.log(props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all')), "these are all modules")
-  
   return props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
 });
 

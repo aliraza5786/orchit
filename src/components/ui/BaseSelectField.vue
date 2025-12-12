@@ -84,7 +84,7 @@
           :key="option._id ?? index"
           @click="selectOption(option)"
           class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
-          :class="{ 'bg-bg-dropdown': option._id === selected?._id }"
+          :class="[{ 'bg-bg-dropdown': option._id === selected?._id }, option.customClass]"
         >
           <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
           <span>{{ option.title }}</span>
@@ -115,6 +115,8 @@ interface Option {
   title: string;
   _id: string | number;
   icon?: string;
+  customClass?: string;
+  isAction?: boolean;
 }
 
 const props = withDefaults(
@@ -235,6 +237,13 @@ function toggleDropdown() {
 }
 
 function selectOption(option: Option) {
+  if (option.isAction) {
+    emit("update:modelValue", option._id);
+    emit("update", option._id);
+    isOpen.value = false;
+    removeOutsideListener();
+    return;
+  }
  
   selected.value = option;
   emit("update:modelValue", option._id);

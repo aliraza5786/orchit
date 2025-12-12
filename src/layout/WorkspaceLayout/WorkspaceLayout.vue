@@ -50,6 +50,7 @@ const workspaceStore = useWorkspaceStore();
 const route = useRoute();
  const workspaceId = computed<string>(() => toParamString(route?.params?.id));
 const { data: getWorkspace, isPending, isLoading ,isFetching } = useSingleWorkspace(workspaceId.value)
+console.log(getWorkspace.value, "workspace data");
 const workspaceNavRef = ref<any>(null);
 const isDrawerOpen = ref(true)
 
