@@ -319,6 +319,7 @@
 <script setup lang="ts">
 import {
   computed,
+  onMounted,
   defineAsyncComponent,
   h,
   ref,
@@ -1125,33 +1126,38 @@ function buildMindMapDataAllSheets(sheetsData: any[]) {
               .join("")}
           </select>
 
-          <div class="menu-wrapper" 
-            style="position:relative; margin-right:10px; margin-top:-35px; height:20px; width:20px; pointer-events:auto; cursor:pointer;"
-            onclick="event.stopPropagation(); event.stopImmediatePropagation(); toggleMenu(this);"
-            onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
-            onpointerdown="event.stopPropagation(); event.stopImmediatePropagation();"
-            data-cardid="card-${sheetIdx}-${listIdx}-${cardIdx}"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" >
-              <circle cx="5.23717" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-              <circle cx="10.0008" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-              <circle cx="14.7626" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-            </svg>
+          <div 
+  style="position:relative; margin-right:10px; margin-top:-35px; height:20px; width:20px; pointer-events:auto;"
+>
+  <svg 
+    width="20" height="20" viewBox="0 0 20 20" fill="none" 
+    class="menu-wrapper" 
+    style="cursor:pointer; pointer-events:auto;"
+    onclick="event.stopPropagation(); event.stopImmediatePropagation(); toggleMenu(this);"
+    onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
+    onpointerdown="event.stopPropagation(); event.stopImmediatePropagation();" 
+    data-cardid="card-${sheetIdx}-${listIdx}-${cardIdx}"
+  >
+    <circle cx="5.23717" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+    <circle cx="10.0008" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+    <circle cx="14.7626" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+  </svg>
 
-            <ul class="menu-dropdown" 
-              style="display:none; pointer-events:auto; position:absolute; top:70px; right:0; background:white; border:1px solid #ccc; border-radius:6px; list-style:none; padding-top: -30px;width:100px; height: 80px; font-size:13px; z-index:9999; overflow: hidden;"
-              onclick="event.stopPropagation(); event.stopImmediatePropagation();"
-              onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
-            >
-              <li style="margin-top:-25px; padding-left: 5px; padding-right: 5px; cursor:pointer;"  
-                onclick="handleEdit(event)"
-              >Edit Ticket</li>
+  <ul class="menu-dropdown" 
+    style="display:none; pointer-events:auto; position:absolute; top:70px; right:0; background:white; border-radius:6px; list-style:none; padding-top: -30px;width:100px; height: 80px; font-size:13px; z-index:9999; overflow: hidden;"
+    onclick="event.stopPropagation(); event.stopImmediatePropagation();"
+    onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
+  >
+    <li style="margin-top:-25px; padding-left: 5px; padding-right: 5px; cursor:pointer; color: #2B2C30;"  
+      onclick="handleEdit(event)"
+    >Edit Ticket</li>
 
-              <li style="margin-top:-45px; padding-left: 5px; padding-right: 5px; cursor:pointer;" 
-                onclick="handleDelete(event)"
-              >Delete Ticket</li>
-            </ul>
-          </div>
+    <li style="margin-top:-45px; padding-left: 5px; padding-right: 5px; cursor:pointer; color: #2B2C30;" 
+      onclick="handleDelete(event)"
+    >Delete Ticket</li>
+  </ul>
+</div>
+
         </div>
 
         <div style="display:flex; justify-content:space-between; margin-top:20px; width:320px; height:100px; overflow:hidden; margin-left:10px;">
@@ -1159,7 +1165,7 @@ function buildMindMapDataAllSheets(sheetsData: any[]) {
             <span style="margin-top:-25px !important;">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="20" height="20" rx="3.33333" fill="#29BF7F"/> <path d="M6.43164 14.3018L9.29004 12.167L9.29102 12.166C9.47176 12.0328 9.69053 11.9609 9.91504 11.9609C10.0834 11.9609 10.2482 12.0017 10.3965 12.0781L10.5391 12.166L10.54 12.167L13.373 14.291V5.91699H6.43164V14.3018ZM14.4316 14.3789C14.4277 14.5672 14.3725 14.7506 14.2725 14.9102C14.1723 15.0699 14.0303 15.1996 13.8623 15.2852C13.6944 15.3706 13.5064 15.4094 13.3184 15.3965C13.1304 15.3835 12.9495 15.3196 12.7949 15.2119L12.79 15.208L9.91504 13.0518L7.01465 15.209C6.83427 15.3432 6.61546 15.4161 6.39062 15.417H6.38965C6.2298 15.4164 6.07171 15.38 5.92773 15.3105V15.3096C5.75087 15.2261 5.60123 15.0946 5.49609 14.9297C5.3907 14.7642 5.33364 14.5721 5.33301 14.376V5.87402C5.3338 5.7361 5.36234 5.59971 5.41602 5.47266C5.46971 5.3456 5.54812 5.23049 5.64648 5.13379C5.74485 5.0371 5.86131 4.96069 5.98926 4.90918C6.1165 4.85797 6.2525 4.83272 6.38965 4.83398V4.83301H13.3906C13.6661 4.83457 13.9302 4.94494 14.125 5.13965C14.3198 5.33446 14.4301 5.59852 14.4316 5.87402V14.3789Z" fill="white" stroke="white" stroke-width="0.333333"/> </svg>
             </span>
-            <span style="color:#2B2C30B2; margin-top:-30px !important; font-size: 14px; display:flex; margin-left:-10px;">
+            <span style="color:#2B2C30B2; margin-top:-30px !important; font-size: 14px; display:flex; margin-left:-3px;">
               ${card["card-code"] || "N/A"}
             </span>
           </div>
@@ -1174,9 +1180,11 @@ function buildMindMapDataAllSheets(sheetsData: any[]) {
             justify-content:center;
             border-radius:50%;
             align-items:center;
+            margin-top: 5px;
+            pointer-events:none;
             background:${assigned ? "#4ADE80" : "#9CA3AF"};
-          ">
-            <span>${initials}</span>
+          " onclick="event.stopPropagation();">
+            <span style="font-size: 13px;">${initials}</span>
           </div>
         </div>
       </div>
@@ -1201,6 +1209,25 @@ function buildMindMapDataAllSheets(sheetsData: any[]) {
 
   return root;
 }
+
+const onWheelZoom = (e: WheelEvent) => {
+  if (!e.shiftKey) return; // use Shift instead of Ctrl
+  e.preventDefault();
+  e.stopPropagation();
+
+  const zoomIn = e.deltaY < 0;
+  if (zoomIn) mindMapInstance.value?.execCommand?.("zoomIn");
+  else mindMapInstance.value?.execCommand?.("zoomOut");
+};
+
+onMounted(() => {
+  nextTick(() => {
+    const container = mindMapRef.value;
+    if (!container) return;
+    container.addEventListener("wheel", onWheelZoom, { passive: false });
+  });
+});
+
 
 watchEffect(() => {
   if (
@@ -1355,20 +1382,23 @@ watchEffect(() => {
     });
   }
 });
-
 window.toggleMenu = function (el: HTMLElement) {
-  const menu = el.querySelector(".menu-dropdown") as HTMLElement;
+  const menu = el.nextElementSibling as HTMLElement;
+  if (!menu) return;
+
   const isOpen = menu.style.display === "block";
   menu.style.display = isOpen ? "none" : "block";
-
-  document.addEventListener("click", function (event) {
+  const handleClickOutside = (event: MouseEvent) => {
     if (!(event.target as HTMLElement).closest(".menu-wrapper")) {
-      document.querySelectorAll(".menu-dropdown").forEach((menu) => {
-        (menu as HTMLElement).style.display = "none";
+      document.querySelectorAll(".menu-dropdown").forEach((m) => {
+        (m as HTMLElement).style.display = "none";
       });
+      document.removeEventListener("click", handleClickOutside);
     }
-  });
+  };
+  document.addEventListener("click", handleClickOutside);
 };
+
 
 window.handleEdit = function (e: Event) {
   e.stopPropagation();
