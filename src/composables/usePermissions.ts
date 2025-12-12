@@ -22,29 +22,29 @@ export function usePermissions() {
   const userAccessRole = computed(() => {
     const ws = workspace.value;
     if (!ws) return null;
-
     return ws.user_access_role || ws.data?.user_access_role || null;
   });
 
   //  Admin check
-  // const isAdmin = computed(() => {
-  //   const role = userAccessRole.value;
-  //   if (!role || !role.access_role) return false;
-
-  //   const admin = role.access_role.is_admin;
-  //   return admin === true || admin === "true" || admin === 1;
-  // });
   const isAdmin = computed(() => {
     const role = userAccessRole.value;
     if (!role) return false;
-    return role.is_owner === true;
+
+    // Check for is_owner or is_admin (handle various truthy formats)
+    const admin = role.is_admin ?? role.access_role?.is_admin;
+    return (
+      role.is_owner === true ||
+      admin === true ||
+      admin === "true" ||
+      admin === 1
+    );
   });
 
   //  Permissions array from backend ({ slug, enabled })
   const permissionsList = computed(() => {
     const role = userAccessRole.value;
     if (!role) return [];
-    return role.permissions || [];
+    return role.permissions || role.access_role?.permissions || [];
   });
 
   //  Main Permission Checker
@@ -52,13 +52,19 @@ export function usePermissions() {
     if (isAdmin.value) return true;
 
     const list = permissionsList.value;
-    if (!list.length) return false;
+    if (!list || !list.length) return false;
 
     const match = list.find(
-      (p: { slug: string; enabled: boolean }) => p.slug === slug
+      (p: { slug: string; enabled: boolean | string | number }) =>
+        p.slug === slug
     );
 
-    return !!match && match.enabled === true;
+    return (
+      !!match &&
+      (match.enabled === true ||
+        match.enabled === "true" ||
+        match.enabled === 1)
+    );
   };
 
   // ---- Lane Permissions ----
@@ -137,6 +143,41 @@ export function usePermissions() {
     hasPermission("workspace.module.update")
   );
 
+  // ---- Dynamic Module Permissions ----
+  const canAccessModule = (
+    moduleId: string,
+    action: "create" | "view_all" | "update" | "delete"
+  ) => {
+    // find relevant permission in permissions list
+    const modulePerms = permissionsList.value.filter(
+      (p: any) => p.category === "module_management"
+    );
+
+    console.log(modulePerms, "overall")
+
+    // console.log(permissionsList.value, "..");
+    if (!modulePerms) return false;
+
+    // Separate static and dynamic permissions
+    // const staticPermissions = modulePerms.filter(
+    //   (p: any) => !p._id.includes("_") && !p.slug.match(/\.\w{24}$/)
+    // );
+
+    const dynamicPermissions = modulePerms.filter((p: any) =>
+      p._id.includes("_")
+    );
+
+    for (let i = 0; i < dynamicPermissions.length; i++) {
+      if (dynamicPermissions[i].slug.includes(moduleId)) {
+       return hasPermission(`workspace.module.${action}.${moduleId}`);
+      }
+     else{
+       return hasPermission(`workspace.module.${action}`);
+     }
+    }
+    return hasPermission(`workspace.module.${action}`); 
+  };
+
   return {
     // Core
     isAdmin,
@@ -180,5 +221,7 @@ export function usePermissions() {
     canEditUser,
     canDeleteUser,
     canDeleteSheet,
+    // Dynamic
+    canAccessModule,
   };
 }

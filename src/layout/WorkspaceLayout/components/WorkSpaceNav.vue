@@ -1,52 +1,124 @@
 <template>
-  <nav class="flex items-center justify-between min-h-16 w-full overflow-x-auto">
+  <nav
+    class="flex items-center justify-between min-h-16 w-full overflow-x-auto"
+  >
     <!-- Left side: Logo + lanes -->
     <div
-      :class="`text-2xl font-bold flex items-center min-w-[320px] gap-4 sm:gap-8 ${workspaceStore.background.startsWith('url') ? 'text-text-secondary' : 'text-text-primary'}`">
+      :class="`text-2xl font-bold flex items-center min-w-[320px] gap-4 sm:gap-8 ${
+        workspaceStore.background.startsWith('url')
+          ? 'text-text-secondary'
+          : 'text-text-primary'
+      }`"
+    >
       <!-- Logo + Title (now a dropdown trigger) -->
-      <div class="relative">
-        <button ref="logoBtnRef" class="flex items-center gap-2 sm:gap-3 pl-3 cursor-pointer rounded-md"
-          aria-haspopup="menu" :aria-expanded="logoMenuOpen ? 'true' : 'false'" @click="toggleLogoMenu"
-          @keydown.down.prevent="openAndFocusFirst" @keydown.enter.prevent="toggleLogoMenu"
-          @keydown.space.prevent="toggleLogoMenu">
-          <img :src="getWorkspace?.logo ?? dp" alt="Workspace menu"
-            class="min-w-10 shadow-2xl rounded-md h-10 cursor-pointer aspect-square object-contain" />
-          <h3
-            class="text-lg text-left  font-medium max-w-43  text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block">
-            {{ getWorkspace?.variables?.title }}
-          </h3>
-          <svg class="w-4 h-4 opacity-70 transition-transform duration-200"
-            :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'" viewBox="0 0 20 20" fill="currentColor"
-            aria-hidden="true">
-            <path fill-rule="evenodd"
-              d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z"
-              clip-rule="evenodd" />
-          </svg>
-
-        </button>
+      <div class="relative flex items-center ps-2">
+        <div :class="expanded ? 'w-[235px]' : 'w-auto'">
+          <button
+            ref="logoBtnRef"
+            class="flex items-center justify-between cursor-pointer rounded-md w-full"
+            :class="expanded? 'border-border-input  hover:shadow-md px-2 py-1 border hover:border-accent':''"
+            aria-haspopup="menu"
+            :aria-expanded="logoMenuOpen ? 'true' : 'false'"
+            @click="toggleLogoMenu"
+            @keydown.down.prevent="openAndFocusFirst"
+            @keydown.enter.prevent="toggleLogoMenu"
+            @keydown.space.prevent="toggleLogoMenu"
+          >
+            <div class="flex items-center">
+              <img
+                :src="getWorkspace?.logo ?? dp"
+                alt="Workspace menu"
+                class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover"
+              />
+              <h3
+                v-if="expanded"
+                class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
+              >
+                {{ getWorkspace?.variables?.title }}
+              </h3>
+            </div>
+            <svg
+              class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1"
+              :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 11.17l3.71-3.94a.75.75 0 111.08 1.04l-4.24 4.5a.75.75 0 01-1.08 0l-4.24-4.5a.75.75 0 01.02-1.06z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          class="flex items-center justify-center transition-all duration-200 w-[40px] h-[50px]"
+        >
+          <!-- Icon (toggle sidebar) -->
+          <i
+            class="fa-solid fa-sidebar ms-3 text-[16px] hover:text-[18px] cursor-w-resize text-text-secondary shrink-0"
+            @click="handleSidebarToggle"
+          ></i>
+        </div>
       </div>
 
       <!-- Navigation Links -->
       <ul
-        :class="`flex text-xs font-bold overflow-x-auto items-center gap-2 ${workspaceStore.background.startsWith('url') ? 'text-white' : 'text-text-primary'}`">
-        <li class="px-3 py-2 hover:bg-bg-card cursor-pointer group rounded-lg"
-          :class="workspaceStore.selectedLaneIds.length == 0 ? 'bg-bg-card text-text-primary' : ''"
-          @click="workspaceStore.toggleAllLane()">
+        :class="`flex text-xs font-bold overflow-x-auto items-center gap-2 ${
+          workspaceStore.background.startsWith('url')
+            ? 'text-white'
+            : 'text-text-primary'
+        }`"
+      >
+        <li
+          class="px-3 py-2 hover:bg-bg-card cursor-pointer group rounded-lg"
+          :class="
+            workspaceStore.selectedLaneIds.length == 0
+              ? 'bg-bg-card text-text-primary'
+              : ''
+          "
+          @click="workspaceStore.toggleAllLane()"
+        >
           Main
         </li>
 
-        <li v-for="item in localWorkspace?.lanes" :key="item._id" @click="workspaceStore.toggleLane(item._id)">
-          <LaneDropdown @duplicate="duplicateHandler" :lanes="localWorkspace" @update="openUpdateModal" :id="item._id"
-            :label="item?.variables['lane-title']" :link="item?.link ?? ''" :color="item?.variables['lane-color']"
-            :selected="workspaceStore.isLaneSelected(item._id)" />
+        <li
+          v-for="item in localWorkspace?.lanes"
+          :key="item._id"
+          @click="workspaceStore.toggleLane(item._id)"
+        >
+          <LaneDropdown
+            @duplicate="duplicateHandler"
+            :lanes="localWorkspace"
+            @update="openUpdateModal"
+            :id="item._id"
+            :label="item?.variables['lane-title']"
+            :link="item?.link ?? ''"
+            :color="item?.variables['lane-color']"
+            :selected="workspaceStore.isLaneSelected(item._id)"
+          />
         </li>
 
-        <li v-if="canCreateLane"
+        <li
+          v-if="canCreateLane"
           class="hover:text-accent text-nowrap text-text-primary flex gap-2 items-center text-xs cursor-pointer px-2 py-1"
-          @click="createLaneHandler">
-          <svg width="16" height="16" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13.9998 23.3346V14.0013M13.9998 14.0013V4.66797M13.9998 14.0013H23.3332M13.9998 14.0013H4.6665"
-              stroke="currentColor" stroke-opacity="0.8" stroke-width="2.8" stroke-linecap="round" />
+          @click="createLaneHandler"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 28 28"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M13.9998 23.3346V14.0013M13.9998 14.0013V4.66797M13.9998 14.0013H23.3332M13.9998 14.0013H4.6665"
+              stroke="currentColor"
+              stroke-opacity="0.8"
+              stroke-width="2.8"
+              stroke-linecap="round"
+            />
           </svg>
           New lane
         </li>
@@ -55,6 +127,11 @@
 
     <!-- Right side -->
     <div class="flex gap-2">
+      <button class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-1 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20" @click="workspaceStore.toggleChatBotPanel()" v-tooltip="'Ask any question'">
+        <i class="fa-solid fa-sparkles"></i>
+        Ask Ai
+      </button>
+
       <button class="cursor-pointer rounded-lg p-2" @click="handleClick">
         <i class="fa-solid fa-ellipsis rotate-90 cursor-pointer"></i>
       </button>
@@ -62,16 +139,28 @@
   </nav>
   <!-- Dropdown -->
   <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
-    <div v-show="logoMenuOpen" ref="menuRef"
-      class="absolute top-10 left-[11px] z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
-      role="menu" aria-label="Workspace switcher" @keydown.esc.stop.prevent="closeLogoMenu">
+    <div
+      v-show="logoMenuOpen"
+      ref="menuRef"
+      class="absolute top-12 left-[11px] z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
+      role="menu"
+      aria-label="Workspace switcher"
+      @keydown.esc.stop.prevent="closeLogoMenu"
+    >
       <!-- Home -->
       <button
         class="w-full px-3 py-2 cursor-pointer text-left text-sm hover:bg-bg-card/70 rounded-t-xl flex items-center gap-2"
-        role="menuitem" @click="goHome" ref="firstItemRef">
+        role="menuitem"
+        @click="goHome"
+        ref="firstItemRef"
+      >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z" stroke="currentColor"
-            stroke-width="1.5" stroke-linejoin="round" />
+          <path
+            d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linejoin="round"
+          />
         </svg>
         Home
       </button>
@@ -79,40 +168,58 @@
       <div class="my-1 h-px bg-border"></div>
 
       <!-- Workspaces -->
-      <div class="max-h-72  py-1 cursor-pointer">
-        <button v-for="ws in workspaces?.workspaces" :key="ws._id"
+      <div class="max-h-72 py-1 cursor-pointer">
+        <button
+          v-for="ws in workspaces?.workspaces"
+          :key="ws._id"
           class="w-full px-3 py-2 text-left text-sm hover:bg-bg-card/70 cursor-pointer flex items-center gap-3"
-          role="menuitem" @click="switchTo(ws)">
-          <img :src="ws.logo ?? dp" alt="" class="w-6 h-6 rounded object-contain bg-white" />
-          <span class="flex-1 line-clamp-1">{{ ws?.variables?.title ?? 'Untitled workspace' }}</span>
-          <span v-if="ws._id === workspaceId" class="text-xs px-2 py-0.5 rounded-full border border-border ">
+          role="menuitem"
+          @click="switchTo(ws)"
+        >
+          <img
+            :src="ws.logo ?? dp"
+            alt=""
+            class="w-6 h-6 rounded-full object-cover bg-white"
+          />
+          <span class="flex-1 line-clamp-1">{{
+            ws?.variables?.title ?? "Untitled workspace"
+          }}</span>
+          <span
+            v-if="ws._id === workspaceId"
+            class="text-xs px-2 py-0.5 rounded-full border border-border"
+          >
             Current
           </span>
         </button>
       </div>
     </div>
   </Transition>
-
 </template>
 
 <script setup lang="ts">
-import LaneDropdown from './LaneDropdown.vue';
-import { useWorkspaceStore } from '../../../stores/workspace';
-import dp from "../../../assets/global/dummy.jpeg"
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
-import { useRouter } from 'vue-router';
-import { useSingleWorkspace, useWorkspaces } from '../../../queries/useWorkspace';
-import { useWorkspaceId } from '../../../composables/useQueryParams';
-import { useQueryClient } from '@tanstack/vue-query';
-import { usePermissions } from '../../../composables/usePermissions';
-const { canCreateLane } = usePermissions()
-
+import LaneDropdown from "./LaneDropdown.vue";
+import { useWorkspaceStore } from "../../../stores/workspace";
+import dp from "../../../assets/global/dummy.jpeg";
+import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { useRouter } from "vue-router";
+import {
+  useSingleWorkspace,
+  useWorkspaces,
+} from "../../../queries/useWorkspace";
+import { useWorkspaceId } from "../../../composables/useQueryParams";
+import { useQueryClient } from "@tanstack/vue-query";
+import { usePermissions } from "../../../composables/usePermissions"; 
+const { canCreateLane } = usePermissions();
 const router = useRouter();
 const workspaceStore = useWorkspaceStore();
-const { data: workspaces } = useWorkspaces(1, 30)
-const laneId = ref('');
+const { data: workspaces } = useWorkspaces(1, 30);
+const laneId = ref("");
 const { workspaceId } = useWorkspaceId();
-const { data: getWorkspace, refetch, isFetched } = useSingleWorkspace(useWorkspaceId().workspaceId.value)
+const {
+  data: getWorkspace,
+  refetch,
+  isFetched,
+} = useSingleWorkspace(useWorkspaceId().workspaceId.value);
 
 const localWorkspace = ref(getWorkspace.value);
 const saveToLocalStorage = () =>{
@@ -125,12 +232,22 @@ const saveToLocalStorage = () =>{
 }
 saveToLocalStorage();
 const duplicateHandler = (data: any) => {
-  localWorkspace.value = { ...localWorkspace, lanes: [...localWorkspace.value?.lanes, data] }
-}
-watch(() => isFetched, () => {
-  localWorkspace.value = getWorkspace.value;
-  
-})
+  localWorkspace.value = {
+    ...localWorkspace,
+    lanes: [...localWorkspace.value?.lanes, data],
+  };
+};
+watch(
+  () => isFetched,
+  () => {
+    localWorkspace.value = getWorkspace.value;
+  }
+);
+// toggle side bar
+const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
+const handleSidebarToggle = () => {
+  emit("toggle-sidebar");
+};
 
 // === Logo dropdown state & refs ===
 const logoMenuOpen = ref(false);
@@ -165,42 +282,53 @@ const openAndFocusFirst = async () => {
 const onDocClick = (e: MouseEvent) => {
   if (!logoMenuOpen.value) return;
   const target = e.target as Node;
-  if (menuRef.value && !menuRef.value.contains(target) && logoBtnRef.value && !logoBtnRef.value.contains(target)) {
+  if (
+    menuRef.value &&
+    !menuRef.value.contains(target) &&
+    logoBtnRef.value &&
+    !logoBtnRef.value.contains(target)
+  ) {
     closeLogoMenu();
   }
 };
 
 // Close on window blur (optional nice touch)
-const onWindowBlur = () => { if (logoMenuOpen.value) closeLogoMenu(); };
+const onWindowBlur = () => {
+  if (logoMenuOpen.value) closeLogoMenu();
+};
 
 onMounted(() => {
-  document.addEventListener('click', onDocClick);
-  window.addEventListener('blur', onWindowBlur);
+  document.addEventListener("click", onDocClick);
+  window.addEventListener("blur", onWindowBlur);
 });
 onBeforeUnmount(() => {
-  document.removeEventListener('click', onDocClick);
-  window.removeEventListener('blur', onWindowBlur);
+  document.removeEventListener("click", onDocClick);
+  window.removeEventListener("blur", onWindowBlur);
 });
 
 // Actions
 const goHome = () => {
   closeLogoMenu();
-  router.push({ path: '/' });
+  router.push({ path: "/" });
 };
-const queryClient = useQueryClient()
+const queryClient = useQueryClient();
 const switchTo = async (ws: any) => {
-  router.push(`/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ? ws.LatestTask?.job_id : ''}`)
-  queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId'] })
+  router.push(
+    `/workspace/peak/${ws._id}/${
+      ws.LatestTask?.job_id ? ws.LatestTask?.job_id : ""
+    }`
+  );
+  queryClient.invalidateQueries({ queryKey: ["workspaces", "byId"] });
   refetch();
   // Call your store action to switch workspaces
   closeLogoMenu();
 };
 
 const handleClick = () => {
-  workspaceStore.toggleSettingPanel()
+  workspaceStore.toggleSettingPanel();
 };
 const createLaneHandler = () => {
-  workspaceStore.toggleCreateLaneModalWithAI()
+  workspaceStore.toggleCreateLaneModalWithAI();
 };
 
 const openUpdateModal = (id: any) => {
@@ -209,7 +337,7 @@ const openUpdateModal = (id: any) => {
 };
 
 defineExpose({ laneId });
-defineProps<{ getWorkspace: any }>();
+defineProps<{ getWorkspace: any; expanded?: Boolean }>();
 </script>
 
 <style scoped>
@@ -217,7 +345,6 @@ defineProps<{ getWorkspace: any }>();
 [role="menu"] button {
   user-select: none;
 }
-
 
 /* Fade + slight scale + slide-down */
 .fade-scale-enter-active,

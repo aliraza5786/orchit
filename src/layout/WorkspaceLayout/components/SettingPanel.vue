@@ -1,6 +1,6 @@
 <template>
   <div :class="[
-    'max-w-[358px] flex-grow rounded-lg overflow-y-auto overflow-x-hidden relative transition-all',
+    'max-w-[358px] flex-grow rounded-[6px] overflow-y-auto overflow-x-hidden relative transition-all',
     'text-text-primary bg-bg-card',
     workspaceStore.showSettingPanel ? 'translate-x-0 min-w-[350px] w-full h-full' : 'translate-x-100 !max-w-0 h-0'
   ]">
@@ -40,7 +40,7 @@
         <div class="min-w-0">
           <template v-if="!isEditingTitle">
             <h3 class="text-2xl font-medium truncate cursor-text text-text-primary" @click="startEditTitle"
-              title="Click to rename">
+              v-tooltip="'Click to rename'">
               {{ editableTitle }}
             </h3>
           </template>

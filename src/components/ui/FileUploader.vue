@@ -7,7 +7,7 @@
             theme === 'dark' ? 'text-white' : 'text-text-primary'
         ]">
             {{ label }}
-            <span v-if="tooltip" class="inline-block text-text-secondary -400 ml-1 cursor-help" :title="tooltip">
+            <span v-if="tooltip" class="inline-block text-text-secondary -400 ml-1 cursor-help" v-tooltip="tooltip">
                 <img src="../../assets/icons/info.svg" alt="info" />
             </span>
         </label>

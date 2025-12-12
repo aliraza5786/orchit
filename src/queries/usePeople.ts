@@ -235,19 +235,32 @@ export const ReOrderCard = (options = {}) =>
 
 
 // work space roles
-export const useWorkspaceRoles = (company_id: any, options = {}) => {
+export const useWorkspaceRoles = (
+  params: { company_id: any; workspace_id?: any },
+  options = {}
+) => {
+  const { company_id, workspace_id } = params;
+
   return useQuery({
-    queryKey: ["workspace-roles", company_id],
-    queryFn: ({ signal }) =>
-      request<any>({
-        url: `roles/workspace-access-roles?company_id=${company_id.value}`,
+    queryKey: ["workspace-roles", company_id?.value, workspace_id?.value],
+    queryFn: ({ signal }) => {
+      let url = `roles/workspace-access-roles?company_id=${company_id.value}`;
+      
+      if (workspace_id?.value) {
+        url += `&workspace_id=${workspace_id.value}`;
+      }
+
+      return request<any>({
+        url,
         method: "GET",
         signal,
-      }),
-    enabled: !!company_id,
+      });
+    },
+    enabled: !!company_id?.value,
     ...options,
   });
 };
+
 
 
  interface AssignRolePayload {
@@ -272,3 +285,68 @@ export const useAssignRole = (options = {}) => {
   );
 };
 
+// team role
+export const useWorkspaceTeamRoles = (workspace_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["team-roles", workspace_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/workspace-roles/${workspace_id.value}`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!workspace_id,
+    ...options,
+  });
+};
+
+
+
+// custom roles permissions
+export const useAllPermissions = (
+  params: { scope?: any; workspace_id?: any },
+  options = {}
+) => {
+  const { scope, workspace_id } = params;
+  return useQuery({
+    queryKey: ["all-permissions", scope?.value, workspace_id?.value],
+    queryFn: ({ signal }) => {
+      let url = `roles/permissions/grouped`;
+      const queryParams = new URLSearchParams();
+      
+      if (scope?.value) queryParams.append('scope', scope.value);
+      if (workspace_id?.value) queryParams.append('workspace_id', workspace_id.value);
+      
+      const queryString = queryParams.toString();
+      if (queryString) url += `?${queryString}`;
+
+      return request<any>({
+        url,
+        method: "GET",
+        signal,
+      });
+    },
+    ...options,
+  });
+};
+
+// create custom roles
+
+export const useCreateRole = (options = {}) =>
+  useApiMutation<any>(
+    {
+      key: ["create-role"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/roles/workspace-access-roles`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+
+ 

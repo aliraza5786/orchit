@@ -9,7 +9,7 @@
       ]"
     >
       {{ label }}
-      <span v-if="tooltip" class="inline-block text-text-secondary  ml-1 cursor-help" :title="tooltip">
+      <span v-if="tooltip" class="inline-block text-text-secondary  ml-1 cursor-help" v-tooltip="tooltip">
         <img src="../../assets/icons/info.svg" alt="info" />
       </span>
     </label>

@@ -8,7 +8,7 @@
   >
     <!-- Header -->
     <div
-      class="py-4 flex justify-between items-center border-b border-border px-5 sticky top-0 bg-bg-card z-1"
+      class="pt-[17px] pb-[18px] flex justify-between items-center border-b border-border px-5 sticky top-0 bg-bg-card z-1"
     >
       <h5 class="text-[16px] font-medium">Profile</h5>
       <i
@@ -117,32 +117,78 @@
 
         <!-- work space  -->
         <div class="mt-5 pt-3 border-t border-border-input relstive">
-          <span class="text-sm inline-block mb-1">Select Role</span>
+          <div class="flex items-center justify-between mb-1">
+             <span class="text-base font-medium text-text-primary block">Select Role</span>
+          </div>
           <BaseSelectField
             size="sm"
             :model-value="selectedRole"
-            :options="
-             (workspaceRoles || []).map((r:any) => ({
-                 _id: r._id,
-                title: r.title,
-             }))
-            "
+            :options="roleOptions"
             placeholder="Select Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
             :canEditCard="!canEditUser"
             :key="workspaceRoles?.length"
           />
-          <!-- <select
-            v-model="selectedRole"
-            class="custom-select outline-0"
-            :canEditCard="!canEditUser"
-          >
-            <option disabled value="">Select Role</option>
-            <option v-for="r in workspaceRoles" :key="r._id" :value="r._id">
-              {{ r.title }}
-            </option>
-          </select> -->
+
+           <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
+           <div v-if="selectedRoleData && !selectedRoleData.is_admin" class="w-full mt-4">
+              <h2 class="text-base font-medium text-text-primary mb-1">
+                Permissions
+              </h2>
+
+              <div
+                v-for="category in selectedRoleData?.permission_categories"
+                :key="category?.category"
+                class="border border-border mb-2 rounded-lg overflow-hidden bg-bg-surface/30"
+              >
+                <!-- Category Header -->
+                <button
+                  @click="togglePermissionCategory(category?.category)"
+                  class="w-full px-3 py-2 flex justify-between items-center hover:bg-bg-surface transition"
+                >
+                  <span class="text-sm font-medium text-text-primary">
+                    {{ category?.category_title }}
+                  </span>
+
+                  <i
+                    :class="[
+                      'fa-solid fa-chevron-down text-xs text-text-secondary transition-transform',
+                      openPermissions[category?.category] ? 'rotate-180' : '',
+                    ]"
+                  ></i>
+                </button>
+
+                <!-- Permission List -->
+                <div
+                  v-if="openPermissions[category?.category]"
+                  class=" py-2 border-t border-border bg-bg-card"
+                >
+                  <div
+                    v-for="perm in category?.permissions"
+                    :key="perm._id"
+                    class="flex items-start gap-2 px-3 py-2 hover:bg-bg-input"
+                  >
+                   <input
+                      type="checkbox"
+                      v-model="selectedPermissions"
+                      :value="perm._id"
+                      @change="handlePermissionUpdate"
+                      class="h-4 w-4 mt-0.5 rounded border-border accent-accent cursor-pointer flex-shrink-0"
+                    />
+                    
+                    <div>
+                      <p class="text-xs font-medium text-text-primary">
+                        {{ perm.title }}
+                      </p>
+                      <p class="text-[11px] text-text-secondary leading-tight">
+                        {{ perm.description }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
         </div>
       </section>
 
@@ -181,13 +227,21 @@
             </p>
           </li>
         </ul>
-      </section>
+      </section> 
+
     </div>
+    <AddCustomRoleModal
+      v-if="showAddRoleModal"
+      :show="showAddRoleModal"
+      :workspaceId="workspaceId"
+      :companyId="newCompanyId"
+      @close="showAddRoleModal = false"
+    />
   </div>  
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -202,6 +256,9 @@ import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
 
 // workspace roles
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
+import { useUpdatePermissions } from "../../../queries/usePackages"; // Import permissions update hook
+import { toast } from "vue-sonner";
+import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
 
 import { usePermissions } from "../../../composables/usePermissions";
 const { canEditUser } = usePermissions();
@@ -354,11 +411,12 @@ const workspaceId = computed(() => props.details?.workspace_id);
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
-const newCompanyId = computed(() => workspaceData.value?.company_id ?? null);
- 
-
-const { data: workspaceRoles } = useWorkspaceRoles(newCompanyId, {  
-  enabled: computed(() => !!newCompanyId.value),// query runs only when ID exists
+const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
+const { data: workspaceRoles } = useWorkspaceRoles( {
+    company_id: newCompanyId,
+    workspace_id:  workspaceId
+  }, {  
+ enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
 });
 const selectedRole = ref(props.details?.workspace_access_role_id ?? "");
 // Mutation
@@ -372,7 +430,23 @@ const { mutate: assignRole } = useAssignRole({
   onError: (err: any) => console.error(err), 
 });
 
+const roleOptions = computed(() => {
+  const roles = (workspaceRoles.value || []).map((r: any) => ({
+    _id: r._id,
+    title: r.title,
+  }));
+  roles.push({
+    _id: 'ADD_NEW_ROLE',
+    title: '+ Add New Role',
+    customClass: 'text-accent font-medium sticky bottom-0  hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown   border-t border-border w-full',
+    isAction: true
+  });
+  return roles;
+});
+
 watch(selectedRole, (newRole) => {
+  if (newRole === 'ADD_NEW_ROLE') return;
+  
   assignRole({
     id: props.details?._id!,
     workspace_access_role_id: newRole,
@@ -394,9 +468,6 @@ watch(
 );
 
  
-
-import { toast } from "vue-sonner"; // or your toast library
-
 function handleRoleClick() {
   if (!canEditUser) {
     toast.error("You have no permission to edit user details");
@@ -409,6 +480,11 @@ function handleRoleChange(newRole: any) {
     return;
   }
 
+  if (newRole === 'ADD_NEW_ROLE') {
+    showAddRoleModal.value = true;
+    return;
+  }
+
   selectedRole.value = newRole;
 
   assignRole({
@@ -416,6 +492,73 @@ function handleRoleChange(newRole: any) {
     workspace_access_role_id: newRole,
   });
 }
+
+// Permissions Display Logic
+const selectedRoleData = computed(() => {
+  if (!workspaceRoles.value || !selectedRole.value) return null;
+  return workspaceRoles.value.find((r: any) => r._id === selectedRole.value);
+});
+
+const openPermissions = ref<Record<string, boolean>>({});
+const selectedPermissions = ref<string[]>([]);
+const { mutate: updatePermissions } = useUpdatePermissions();
+
+function togglePermissionCategory(category: string) {
+  openPermissions.value[category] = !openPermissions.value[category];
+}
+
+watch(selectedRoleData, (role) => {
+  if (!role) return;
+  const enabledPermissions: string[] = [];
+  role.permission_categories.forEach((category: any) => {
+    category.permissions.forEach((perm: any) => {
+      if (perm.enabled) enabledPermissions.push(perm._id);
+    });
+  });
+  selectedPermissions.value = enabledPermissions;
+}, { immediate: true });
+
+
+function handlePermissionUpdate() {
+   if (!selectedRoleData.value?._id) return;
+   
+   const allPermissions: any[] = [];
+   selectedRoleData.value.permission_categories.forEach((cat: any) => {
+     cat.permissions.forEach((p: any) => allPermissions.push(p));
+   });
+
+   const formatted = formatPermissionsPayload(allPermissions, selectedPermissions.value);
+
+   // Optimistic update for role object in workspaceRoles is tricky without refetch, 
+   // but updatePermissions invalidates queries usually.
+   updatePermissions({
+    roleId: selectedRoleData.value._id,
+    payload: {
+      title: selectedRoleData.value.title,
+      description: selectedRoleData.value.description,
+      is_admin: selectedRoleData.value.is_admin,
+      is_editor: selectedRoleData.value.is_editor,
+      is_viewer: selectedRoleData.value.is_viewer,
+      permission_ids: formatted.permission_ids,
+      module_permissions: formatted.module_permissions,
+      workspace_id: workspaceId.value
+    },
+  }, {
+     onSuccess: () => {
+         toast.success("Permissions updated successfully");
+         queryClient.invalidateQueries({ queryKey: ["workspace-roles"] });
+     },
+     onError: (err: any) => {
+         console.error("Failed to update permissions", err);
+         toast.error("Failed to update permissions");
+     }
+  });
+}
+
+// Add Role Modal
+const showAddRoleModal = ref(false);
+const AddCustomRoleModal = defineAsyncComponent(() => import('../modals/AddCustomRoleModal.vue'));
+
 </script>
 
 <style scoped>

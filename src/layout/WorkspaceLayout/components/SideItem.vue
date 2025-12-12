@@ -1,25 +1,46 @@
 <template>
-  <div @click="clickHandler"
-    class="group cursor-pointer flex flex-col w-[48px] h-[48px] items-center justify-center gap-1.5 px-2 py-3.5 rounded-lg text-xs text-text-secondary transition-all relative hover:bg-bg-card hover:text-text-primary select-none"
+  <div
+    @click="clickHandler"
+    class="group cursor-pointer flex items-center px-2 py-3.5 rounded-lg text-xs text-text-secondary transition-all relative hover:bg-bg-card hover:text-text-primary select-none"
     :class="[
-      progress == 'processing' && status == 'running' ?
-        'disbled !cursor-not-allowed opacity-50' :
-        isActive
-          ? 'text-text-primary bg-bg-card '
-          : workspaceStore.background.startsWith('url')
-            ? 'text-text-primary bg-bg-card'
-            : ' text-text-secondary',
-    ]">
+      progress == 'processing' && status == 'running'
+        ? 'disbled !cursor-not-allowed opacity-50'
+        : isActive
+        ? 'text-text-primary bg-bg-card '
+        : workspaceStore.background.startsWith('url')
+        ? 'text-text-primary bg-bg-card'
+        : ' text-text-secondary',
+      expanded
+        ? 'w-[48px] h-[48px] sm:w-full sm:h-[38px] justify-start gap-2.5'
+        : 'flex-col w-[48px] h-[48px] justify-center gap-1.5 ',
+    ]"
+  >
     <!-- Drag Icon -->
-    <img src="../../../assets/icons/Layer.svg"
-      class="absolute top-1 left-1 opacity-0 group-hover:opacity-100 w-2 drag-handle cursor-grab" alt="" />
-    <i v-if="progress == 'processing' && status == 'running'"
-      class="fa-regular opacity-50 text-left fa-arrows-spin animate-spin duration-250"></i>
+    <!-- <img
+      src="../../../assets/icons/Layer.svg"
+      class="absolute top-1 left-1 opacity-0 group-hover:opacity-100 w-2 drag-handle cursor-grab"
+      alt=""
+    /> -->
+    <i
+      v-if="progress == 'processing' && status == 'running'"
+      class="fa-regular opacity-50 text-left fa-arrows-spin animate-spin duration-250"
+    ></i>
     <!-- Icon -->
-    <i v-else :class="`${icon?.prefix} ${icon?.iconName}`"></i>
+    <i
+      v-else
+      :class="[
+        icon?.prefix,
+        icon?.iconName,
+        expanded ? 'text-[16px]' : 'text-[14px]',
+      ]"
+    >
+    </i>
     <!-- <FontAwesomeIcon  :icon="[icon.prefix, icon.iconName]"/> -->
     <!-- <FontAwesomeIcon :icon="faGrid2" />      Label -->
-    <span class="whitespace-nowrap text-[10px] font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3">
+    <span
+      class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
+      :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
+    >
       {{ label }}
     </span>
   </div>
@@ -34,20 +55,22 @@ import { useWorkspaceStore } from "../../../stores/workspace";
 const props = defineProps<{
   label: string;
   jobId?: string;
-  id: string;     // this is job_id
+  id: string; // this is job_id
   icon: any;
   to: string;
-  status?: string
+  status?: string;
+  expanded?: boolean;
 }>();
 
 /** --- STATE --- **/
-const progress = ref<any>('');   // store only progress as required
-const eventSource = ref<EventSource | null>(null)
+const progress = ref<any>(""); // store only progress as required
+const eventSource = ref<EventSource | null>(null);
 let stopped = false;
 
 /** --- SSE URL --- **/
 const SERVER_BASE_URL =
-  import.meta.env.VITE_SERVER_BASE_URL || "https://backend.streamed.space/api/v1/";
+  import.meta.env.VITE_SERVER_BASE_URL ||
+  "https://backend.streamed.space/api/v1/";
 
 /**
  * Open SSE stream for job progress
@@ -55,11 +78,11 @@ const SERVER_BASE_URL =
  */
 const connectStream = () => {
   if (stopped) return;
-  if (!props.id) return;           // no job id → no stream
-  if (props.status != 'running') return;  // already done → skip
-  if (eventSource.value) return;           // prevent multiple streams
+  if (!props.id) return; // no job id → no stream
+  if (props.status != "running") return; // already done → skip
+  if (eventSource.value) return; // prevent multiple streams
 
-  const token = localStorage.getItem('token') || ''
+  const token = localStorage.getItem("token") || "";
   const url = `${SERVER_BASE_URL}workspace/modules/generation/${props?.jobId}/stream?token=${token}`;
 
   const es = new EventSource(url);
@@ -78,14 +101,14 @@ const connectStream = () => {
         progress.value = data.status;
 
         // Auto-close at 100%
-        if (progress.value == 'completed') {
+        if (progress.value == "completed") {
           disconnectStream();
         }
       }
-    } catch (_) { }
+    } catch (_) {}
   };
-  eventSource.value.addEventListener('progress', (event: MessageEvent) => {
-    console.log('>> trki g');
+  eventSource.value.addEventListener("progress", (event: MessageEvent) => {
+    console.log(">> trki g");
 
     try {
       const data = JSON.parse(event.data);
@@ -93,12 +116,12 @@ const connectStream = () => {
         progress.value = data.status;
 
         // Auto-close at 100%
-        if (progress.value == 'completed') {
+        if (progress.value == "completed") {
           disconnectStream();
         }
       }
-    } catch { }
-  })
+    } catch {}
+  });
   es.onerror = () => {
     // DO NOT RECONNECT
     disconnectStream();
@@ -116,7 +139,7 @@ const disconnectStream = () => {
 /** Lifecycle */
 onMounted(() => {
   stopped = false;
-  connectStream();      // connect once
+  connectStream(); // connect once
 });
 
 /** Close on unmount */
@@ -141,16 +164,15 @@ watch(
 const route = useRoute();
 const workspaceStore = useWorkspaceStore();
 const isActive = computed(() => route.fullPath === props.to);
-const router = useRouter()
+const router = useRouter();
 function clickHandler() {
-  if (progress.value == 'processing' && props.status == 'running') return
-  router.push(props.to)
+  if (progress.value == "processing" && props.status == "running") return;
+  router.push(props.to);
 }
-
 </script>
 
 <style scoped>
-.icons-div>* {
+.icons-div > * {
   width: 14px !important;
   height: 14px !important;
 }

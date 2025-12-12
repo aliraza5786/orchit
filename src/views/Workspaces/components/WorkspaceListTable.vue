@@ -5,6 +5,7 @@ import { formatDate } from '../../../utilities/FormatDate'
 import Collaborators from '../../../components/ui/Collaborators.vue'
 import { useRouter } from 'vue-router'
 import { useWorkspaces } from '../../../queries/useWorkspace'
+import InviteUsersWithPermissions from '../Modals/InviteUsersWithPermissions.vue'
 
 const router = useRouter()
 
@@ -23,6 +24,15 @@ const handleClick = (rowEvt: any) => {
     router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
 }
 
+const showInviteModal = ref(false)
+const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
+
+
+const openInviteModal = (workspaceId: string | number) => {
+    selectedInvitingWorkspaceId.value = workspaceId
+    showInviteModal.value = true
+}
+
 const renderProject = ({ row, value }: any) =>
     h('div', { class: 'flex items-center gap-2' }, [
         row.logo
@@ -34,14 +44,32 @@ const renderProject = ({ row, value }: any) =>
                 decoding: 'async',
             })
             : h('div', { class: 'h-8 w-8 rounded-full bg-bg-card' }),
-        h('span', value?.title || 'Untitled'),
+        h('span', { 
+            class: 'cursor-pointer hover:underline',
+            onClick: (e: Event) => {
+                e.stopPropagation()
+                handleClick({ row })
+            }
+        }, value?.title || 'Untitled'),
     ])
 
 const renderProjectType = ({ value }: any) =>
     h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-')
 
-const renderPeople = ({ value }: any) =>
-    h(Collaborators, { avatars: value || [], image: true, maxVisible: 3 })
+const renderPeople = ({ row, value }: any) =>
+    h('div', { class: 'flex items-center -space-x-3' }, [
+        h(Collaborators, { avatars: value || [], image: true, maxVisible: 3 }),
+        h('button', {
+            class: 'flex justify-center items-center rounded-full border border-border text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition  h-8 w-8 cursor-pointer',
+            onClick: (e: Event) => {
+                e.stopPropagation()
+                openInviteModal(row._id)
+            },
+             title: 'Invite Users' 
+        }, [
+            h('i', { class: 'fa-solid fa-plus text-gray-500 text-xs' })
+        ])
+    ])
 
 const renderStartDate = ({ value }: any) =>
     h('span', getCachedDate(value))
@@ -120,7 +148,7 @@ watch(data, () => {
 
 <template>
     <Table :columns="columns" :rows="items" :loading="isPending" :total="totalCount" v-model:page="page"
-        v-model:pageSize="pageSize" :pageSizes="[10, 20, 50, 100]" @row-click="handleClick">
+        v-model:pageSize="pageSize" :pageSizes="[10, 20, 50, 100]" >
         <!-- Optional slots you were using -->
         <template #status="{ row }">
             <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
@@ -141,4 +169,5 @@ watch(data, () => {
             </div>
         </template>
     </Table>
+    <InviteUsersWithPermissions v-model="showInviteModal" :defaultWorkspaceId="selectedInvitingWorkspaceId" />
 </template>
