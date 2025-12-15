@@ -1,7 +1,8 @@
 <template>
   <SidebarSkeleton v-if="isLoading" />
+  <div class="sidebar_mobile bottom-0 start-0 fixed sm:static overflow-hidden z-2 sm:z-1 sm:h-full">
   <aside
-    class="overflow-y-auto bg-transparent z-1 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static transition-all duration-200"
+    class="sm:overflow-y-auto whitespace-nowrap overflow-x-auto bg-transparent z-1 sm:min-w-[36px] sm:px-2 sm:max-h-full h-[70px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2.5 sm:pt-0 pb-2.5  transition-all duration-200"
     :class="{ 'w-full sm:w-[250px]': expanded, 'w-full sm:w-16': !expanded }"
   >
     <!-- Workspace Logo Component -->
@@ -9,7 +10,7 @@
        <WorkSpaceDropdown :expanded="expanded" />
     </div> -->
 
-    <div class="text-center">
+    <div class="text-center min-w-max">
       <SideItem
         label="Peak"
         :to="`/workspace/peak/${workspaceId}/${
@@ -26,7 +27,7 @@
         :expanded="expanded"
       />
     </div>
-    <div class="text-center">
+    <div class="text-center min-w-max">
       <SideItem
         label="People"
         :to="`/workspace/people/${workspaceId}`"
@@ -39,7 +40,7 @@
         :expanded="expanded"
       />
     </div>
-    <div class="text-center">
+    <div class="text-center min-w-max">
       <SideItem
         label="Process"
         :to="`/workspace/process/${workspaceId}`"
@@ -53,7 +54,7 @@
       />
     </div>
 
-    <div class="flex flex-col gap-1 max-md:flex-row pin_task">
+    <div class="flex flex-col gap-1 max-sm:flex-row pin_task min-w-max">
       <SideItem
         v-for="(item, index) in filteredModules"
         :key="index"
@@ -70,7 +71,7 @@
         :expanded="expanded"
       />
     </div>
-    <div class="text-center flex-col flex gap-1">
+    <div class="text-center flex-col flex gap-1 min-w-max">
       <SideItem
         label="Plan"
         :to="`/workspace/plan/${workspaceId}`"
@@ -98,7 +99,7 @@
 </Draggable> -->
 
     <!-- Static More Item -->
-    <div v-if="canCreateModule" class="hidden sm:block text-center">
+    <div v-if="canCreateModule" class="text-center min-w-max">
       <SideItem
         id="more"
         label="Add"
@@ -111,6 +112,7 @@
       />
     </div>
   </aside>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -166,12 +168,16 @@ watch(props, () => {
 
 @media (max-width: 639px) {
   aside {
-    justify-content: center;
+    /* justify-content: center; */
     gap: 8px;
   }
 
   .pin_task {
     gap: 8px;
+  }
+  .sidebar_mobile{
+     width:100%;
+     padding:0   15px;
   }
 }
 </style>
