@@ -46,7 +46,7 @@
 
 <!-- File: src/components/modals/InviteUsersModal.vue -->
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { computed, reactive, watch, ref } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 import { useWorkspaces } from '../../../queries/useWorkspace'
@@ -76,7 +76,10 @@ const isOpen = computed({
 })
 
 const queryClient = useQueryClient()
-const { data: workspaces, } = useWorkspaces(1, 100)
+const page = ref(1);
+const limit = ref(100);
+
+const { data: workspaces } = useWorkspaces(page, limit);
 
 type SelectValue = string | number | null
 const form = reactive({

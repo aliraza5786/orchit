@@ -406,7 +406,6 @@ declare global {
 
 // delete ticket
 const deleteTicket = async () => {
-  console.log("ticket delete", selectedDeleteId.value);
 
   if (!selectedDeleteId.value) return;
 
@@ -431,7 +430,6 @@ const deleteTicket = async () => {
     toast.success("Ticket deleted successfully");
   } catch (err) {
     toast.error(toApiMessage(err));
-    console.error(err);
   } finally {
     isDeletingTicket.value = false;
   }
@@ -463,7 +461,6 @@ const handleEditTicket = async (card: any, newStatus: string) => {
     toast.success("Ticket status updated successfully");
     await refetchAllSheets();
   } catch (err) {
-    console.error(err);
     toast.error(toApiMessage(err));
   } finally {
     isEditingTicket.value = false;
@@ -590,29 +587,44 @@ const createSheet = () => {
 const reorderList = ReOrderList();
 const reorderCard = ReOrderCard();
 function onReorder(a: any) {
-  if (a.type == "column")
-    reorderList.mutate({
-      payload: {
-        workspace_id: workspaceId.value,
-        workspace_module_id: moduleId.value,
-        variable_id: selected_view_by.value,
-        moved_value: a.meta.id,
-        new_index: a.meta.newIndex,
+  if (a.type === "column") {
+    reorderList.mutate(
+      {
+        payload: {
+          workspace_id: workspaceId.value,
+          workspace_module_id: moduleId.value,
+          variable_id: selected_view_by.value,
+          moved_value: a.meta.id,
+          new_index: a.meta.newIndex,
+        },
       },
-    });
-  else {
-    reorderCard.mutate({
-      payload: {
-        workspace_id: workspaceId.value,
-        card_id: a.meta.moved._id,
-        group_value: a.meta.fromColumnId,
-        group_variable_id: selected_view_by.value,
-        new_index: a.meta.newIndex,
-        sheet_id: selected_sheet_id.value,
+      {
+        onSuccess: () => {
+          refetchAllSheets();
+        },
+      }
+    );
+  } else {
+    reorderCard.mutate(
+      {
+        payload: {
+          workspace_id: workspaceId.value,
+          card_id: a.meta.moved._id,
+          group_value: a.meta.fromColumnId,
+          group_variable_id: selected_view_by.value,
+          new_index: a.meta.newIndex,
+          sheet_id: selected_sheet_id.value,
+        },
       },
-    });
+      {
+        onSuccess: () => {
+          refetchAllSheets();
+        },
+      }
+    );
   }
 }
+
 const handleBoardUpdate = (_: any) => {};
 
 interface IconData {
@@ -899,7 +911,6 @@ const columns = computed(() => {
   ];
 });
 const assignHandle = (cardId: any, user: any) => {
-  console.log(cardId, user, ">>>> card >>>");
 
   moveCard.mutate({ card_id: cardId, seat_id: user?._id });
 };
@@ -913,7 +924,6 @@ const normalizedTableData = computed(() => {
 });
 
 const getOptions = (options: any) => {
-  // console.log(options, 'options');
 
   return options.map((el: any) => ({
     _id: el.value ?? el,

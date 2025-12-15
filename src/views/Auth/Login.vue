@@ -85,18 +85,19 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { useMutation, useQueryClient } from "@tanstack/vue-query";
+import { useMutation } from "@tanstack/vue-query";
 import AuthLayout from "../../layout/AuthLayout/AuthLayout.vue";
 import BaseTextField from "../../components/ui/BaseTextField.vue";
 import Button from "../../components/ui/Button.vue";
 import { login } from "../../services/auth";
+import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
 const workspaceStore = useWorkspaceStore();
 defineOptions({ name: "LoginPage" });
 
 // --- Constants (non-reactive) ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+const authStore = useAuthStore()
 // --- State ---
 const email = ref("");
 const password = ref("");
@@ -135,12 +136,9 @@ const submitLabel = computed(() =>
   isPending.value ? "Signing In..." : "Continue"
 );
 
-// --- Handlers (stable) ---
 function onFieldInput() {
-  // Clear error on any user input (cheaper than a global watch over both fields)
   if (errorMessage.value) errorMessage.value = "";
 }
-const queryClient = useQueryClient();
 async function handleLogin() {
   errorMessage.value = "";
   touched.email = true;
@@ -150,24 +148,24 @@ async function handleLogin() {
     errorMessage.value = "Please fill all fields correctly.";
     return;
   }
+
   try {
     const data = await mutateAsync({
       u_email: email.value,
       u_password: password.value,
     });
-    // adapt if token key differs
     localStorage.setItem("token", data?.data?.token);
-    queryClient.invalidateQueries({ queryKey: ["me"] });
-    queryClient.invalidateQueries({ queryKey: ["workspaces"] });
-    queryClient.invalidateQueries({ queryKey: ["profile"] });
+    await authStore.bootstrap();
+    
     if (workspaceStore.pricing) {
-      router.push(`/dashboard?stripePayment=${true}`);
-    } else if (workspaceStore.workspace) {
-      router.push("/create-workspace");
-    } else router.push("/dashboard");
+      router.push(`/dashboard?stripePayment=true`);
+    } else {
+      router.push("/dashboard");
+    }
   } catch (err: any) {
     errorMessage.value =
       err?.response?.data?.message || "Login failed. Please try again.";
   }
 }
+
 </script>
