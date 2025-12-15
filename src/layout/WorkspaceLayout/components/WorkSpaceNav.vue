@@ -24,19 +24,38 @@
             @keydown.enter.prevent="toggleLogoMenu"
             @keydown.space.prevent="toggleLogoMenu"
           >
-            <div class="flex items-center">
-              <img
-                :src="localWorkspace?.logo ?? dp"
-                alt="Workspace menu"
-                class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover"
-              />
-              <h3
-                v-if="expanded"
-                class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
-              >
-                {{ localWorkspace?.variables?.title }}
-              </h3>
-            </div>
+           <div class="flex items-center min-h-[25px]">
+                <!-- Loader -->
+                <div
+                  v-if="isWorkspaceLoading"
+                  class="flex items-center gap-2"
+                >
+                 <div class="w-[25px] h-[25px] rounded-full border-2 border-t-transparent animate-spin"
+                style="border-color: #AFF4EF #AFF4EF transparent #29BF7F;"
+              ></div>
+
+                  <div
+                    v-if="expanded"
+                    class="h-4 w-32 bg-border rounded animate-pulse color-[#AFF4EF] hidden sm:block"
+                  ></div>
+                </div>
+
+                <!-- Workspace content -->
+                <div v-else class="flex items-center">
+                  <img
+                    :src="localWorkspace.logo ?? dp"
+                    alt="Workspace menu"
+                    class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover"
+                  />
+                  <h3
+                    v-if="expanded"
+                    class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
+                  >
+                    {{ localWorkspace.variables.title }}
+                  </h3>
+                </div>
+              </div>
+
             <svg
               class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1"
               :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'"
@@ -200,7 +219,7 @@
 import LaneDropdown from "./LaneDropdown.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import dp from "../../../assets/global/dummy.jpeg";
-import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useWorkspaces } from "../../../queries/useWorkspace"; // keep workspaces listing
 import { useWorkspaceId } from "../../../composables/useQueryParams";
@@ -216,7 +235,13 @@ const limit = ref(30);
 const { data: workspaces } = useWorkspaces(page, limit);
 const laneId = ref("");
 const { workspaceId } = useWorkspaceId();
-
+const isWorkspaceLoading = computed(() => {
+  return (
+    !localWorkspace.value ||
+    !localWorkspace.value.logo ||
+    !localWorkspace.value.variables?.title
+  );
+});
 // Local reactive workspace
 const localWorkspace = ref<any>(null);
 
