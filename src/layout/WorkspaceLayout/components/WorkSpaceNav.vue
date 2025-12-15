@@ -30,7 +30,7 @@
                   v-if="isWorkspaceLoading"
                   class="flex items-center gap-2"
                 >
-                 <div class="w-[25px] h-[25px] rounded-full border-2 border-t-transparent animate-spin"
+                 <div class="w-[20px] h-[20px] rounded-full border-2 border-t-transparent animate-spin"
                 style="border-color: #AFF4EF #AFF4EF transparent #29BF7F;"
               ></div>
 
