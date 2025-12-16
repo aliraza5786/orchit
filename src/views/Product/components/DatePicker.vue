@@ -1,18 +1,25 @@
 <template>
-  <div ref="root" class="relative inline-block text-left">
+    <div ref="root" class="relative inline-block text-left h-full w-full group">
     <!-- Trigger -->
     <button
       type="button"
-      class="inline-flex text-xs w-full items-start transition"
+      class="inline-flex text-xs w-full items-center transition h-[32px] px-2 rounded-sm"
       :class="[
-        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-bg-surface-hover',
         theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'
       ]"
       @click="toggle"
       :disabled="disabled"
     >
-      <span class="text-[14px]" v-if="selectedDate">{{ formattedLabel }}</span>
-      <span v-else class="opacity-70 text-[14px]">{{ placeholder }}</span> 
+      <span class="text-[14px] truncate" v-if="selectedDate">{{ formattedLabel }}</span>
+      <template v-else>
+         <!-- Hover State -->
+         <span v-if="emptyText" class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 text-xs text-text-secondary truncate">
+            <i class="fa-solid fa-plus text-[10px]"></i> Add {{ emptyText }}
+         </span>
+         <!-- Fallback Placeholder -->
+         <span v-else class="opacity-70 text-[14px] truncate">{{ placeholder }}</span> 
+      </template>
     </button>
 
     <!-- Popover -->
@@ -98,6 +105,7 @@ const props = withDefaults(defineProps<{
   theme?: 'light' | 'dark'
   emitAs?: 'ymd' | 'iso' | 'date'
   placeholder: string
+  emptyText?: string
 }>(), {
   disabled: false,
   clearable: true,
