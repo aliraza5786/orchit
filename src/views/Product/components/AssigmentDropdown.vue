@@ -1,26 +1,28 @@
 <template>
-  <div class="relative w-8" ref="wrapperRef" @click.stop @keydown.esc="close">
+  <div class="relative min-w-8" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
-    <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id">
+    <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id" :class="canAssignCard?'cursor-pointer':'cursor-not-allowed'" :disabled="!canAssignCard" >
+      <div class="flex gap-2 items-center">
       <img v-if="assignedUser?.avatar?.src || assignedUser?.user?.avatar || assignedUser?.u_profile_image"
-        :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar" class="w-6 h-6 object-cover rounded-full"
-        alt="" @click="toggle" />
-      <abbr :title="assignedUser?.u_full_name" v-else-if="assignedUser?.u_full_name || assignedUser?.name" @click="toggle"
+        :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar"
+        class="w-6 h-6 object-cover rounded-full" alt="" @click="toggle" />
+      <abbr :title="assignedUser?.u_full_name" v-else-if="assignedUser?.u_full_name || assignedUser?.name"
+        @click="toggle"
         class="w-6 aspect-square rounded-full text-[10px]  bg-bg-surface font-semibold text-text-primary flex items-center justify-center"
         :style="{ backgroundColor: assignedUser?.u_full_name ?? assignedUser?.title ? avatarColor({ name: assignedUser?.u_full_name ?? assignedUser?.title, _id: assignedUser?._id }) : '' }">
         {{ getInitials(assignedUser?.u_full_name ?? assignedUser?.name) }}
       </abbr>
-      <abbr :title="assignedUser?.title" v-else
-      @click="toggle"
+      <abbr :title="assignedUser?.title" v-else @click="toggle"
         class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center ">
         <i class="fa-regular fa-user text-xs"></i>
       </abbr>
+      <span v-if="name" class="text-sm text-text-primary ">{{(assignedUser?.name || assignedUser?.title || assignedUser?.u_full_name) ??'unAssigned'}}</span>
+    </div>
     </template>
 
     <button v-else type="button"
-
       class="inline-flex items-center gap-2 rounded-full border border-border px-1 py-1 text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition"
-      @click="toggle" :disabled="disabled">
+      @click="toggle" :disabled="disabled || !canAssignCard" :class="canAssignCard?'cursor-pointer':'cursor-not-allowed'" >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 opacity-70" viewBox="0 0 24 24" fill="currentColor">
         <path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6z" />
       </svg>
@@ -79,6 +81,8 @@ const props = defineProps<{
   assigneeId?: any
   disabled?: boolean
   seat: any
+  workspaceId?: any
+  name?:any
 }>()
 
 const emit = defineEmits<{
@@ -89,7 +93,7 @@ const emit = defineEmits<{
 
 /** Data **/
 const { workspaceId } = useRouteIds()
-const { data: roles } = useWorkspacesRoles(workspaceId.value)
+const { data: roles } = useWorkspacesRoles(props?.workspaceId ??workspaceId.value )
 
 const assignedUser = ref<any>(props.assigneeId ?? props.seat)
 const open = ref(false)
@@ -124,9 +128,12 @@ const filteredUsers = computed(() => {
     (u.email || '').toLowerCase().includes(q)
   )
 })
-
+import { usePermissions } from '../../../composables/usePermissions';
+const { canAssignCard} = usePermissions();
 /** Open/close **/
-function toggle() { open.value = !open.value }
+function toggle() {
+if (!canAssignCard.value) return;
+   open.value = !open.value }
 function close() { open.value = false }
 function onDocClick() { if (open.value) close() }
 
@@ -199,7 +206,7 @@ watch(open, async (v) => {
 function assign(userId: string) {
   const user = membersData.value.find((u: any) => u._id === userId)
 
-  
+
   if (user) {
     assignedUser.value = user
     emit('assign', user)

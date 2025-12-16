@@ -10,7 +10,7 @@
       ]"
     >
       {{ label }}
-      <span v-if="tooltip" class="inline-block text-text-secondary  ml-1 cursor-help" :title="tooltip">
+      <span v-if="tooltip" class="inline-block text-text-secondary  ml-1 cursor-help" v-tooltip="tooltip">
         <img src="../../assets/icons/info.svg" alt="info" />
       </span>
     </label>
@@ -19,7 +19,7 @@
     <div class="relative">
       <div
         :class="[
-          'flex items-center border rounded-xl px-3 py-2 w-full text-sm focus-within:ring-2',
+          'flex items-center border rounded-md px-3 py-2 w-full text-sm focus-within:ring-2',
           size === 'md' ? 'h-10' : 'h-12',
           error ? 'border-red-500 focus-within:ring-red-500' : ' focus-within:ring-black',
           theme == 'dark' ? 'bg-[#131318] border-border  ' : 'bg-bg-input border-border'
@@ -113,7 +113,7 @@ const props = withDefaults(
     placeholder?: string;
     type?: string;
     size?: any;
-    theme?: 'dark' | 'light';
+    theme?: 'dark' | 'light'; 
   }>(),
   {
     size: 'md',

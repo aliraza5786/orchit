@@ -3,14 +3,14 @@
     <!-- Label + Tooltip -->
     <label
       v-if="label"
-      class="text-[16px] font-medium mb-2 flex items-center"
+      class="text-[16px] font-medium mb-1 flex items-center"
       :class="[theme === 'dark' ? 'text-white' : 'text-text-primary', ]"
     >
       {{ label }}
       <span
         v-if="tooltip"
         class="inline-block text-text-secondary -400 ml-1 cursor-help"
-        :title="tooltip"
+        v-tooltip="tooltip"
       >
         <img src="../../assets/icons/info.svg" alt="info" />
       </span>

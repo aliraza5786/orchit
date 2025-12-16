@@ -21,7 +21,7 @@
                 </div>
 
             </div>
-            <div class="group-hover:flex justify-center items-center hidden w-6 h-6 bg-bg-surface/40 rounded-md ">
+            <div v-if="getMenuItems().length > 0" class="group-hover:flex justify-center items-center hidden w-6 h-6 bg-bg-surface/40 rounded-md ">
 
                 <DropMenu @click.stop="" :items="getMenuItems()">
                     <template #trigger>
@@ -68,6 +68,9 @@ import { useCompanyId } from '../../../services/user'
 import AssignmentModal from '../modals/AssignmentModal.vue'
 import { getInitials } from '../../../utilities'
 import { avatarColor } from '../../../utilities/avatarColor'
+
+import { usePermissions } from '../../../composables/usePermissions'
+const {   canInviteUser,  canEditUser, canDeleteUser} = usePermissions()
 const showAddMembers = ref(false);
 type Priority = any
 export interface Ticket {
@@ -98,40 +101,90 @@ const members = ref([]);
 const showDelete = ref(false)
 const queryClient = useQueryClient()
 
-function getMenuItems() {
-    return [
-        {
-            label: 'Assign User', danger: true,
-            action: () => {
-                showAddMembers.value = true
-            },
-            icon: {
-                prefix: 'fa-regular',
-                iconName: 'fa-user-plus'
-            }
-        },
-        ...(props.ticket.name ? [{
-            label: 'UnAssign User', danger: true,
-            action: () => {
-                unassignHandler()
-            },
-            icon: {
-                prefix: 'fa-regular',
-                iconName: 'fa-user-minus'
-            }
-        }] : []),
-        {
-            label: 'Delete Seat', danger: true, action: () => {
-                showDelete.value = true
-            },
-            icon: {
-                prefix: 'fa-regular',
-                iconName: 'fa-trash'
-            }
+// function getMenuItems() {
+//     return [
+//         {
+//             label: 'Assign User', danger: true,
+//             action: () => {
+//                 showAddMembers.value = true
+//             },
+//             icon: {
+//                 prefix: 'fa-regular',
+//                 iconName: 'fa-user-plus'
+//             }
+//         },
+//         ...(props.ticket.name ? [{
+//             label: 'UnAssign User', danger: true,
+//             action: () => {
+//                 unassignHandler()
+//             },
+//             icon: {
+//                 prefix: 'fa-regular',
+//                 iconName: 'fa-user-minus'
+//             }
+//         }] : []),
+//         {
+//             label: 'Delete Seat', danger: true, action: () => {
+//                 showDelete.value = true
+//             },
+//             icon: {
+//                 prefix: 'fa-regular',
+//                 iconName: 'fa-trash'
+//             }
 
-        },
-    ]
+//         },
+//     ]
+// }
+
+function getMenuItems() {
+  return [
+    // Assign User
+    canInviteUser.value
+      ? {
+          label: 'Assign User',
+          danger: true,
+          action: () => {
+            showAddMembers.value = true
+          },
+          icon: {
+            prefix: 'fa-regular',
+            iconName: 'fa-user-plus'
+          }
+        }
+      : null,
+
+    // Unassign User (based on ticket.name)
+    props.ticket.name && canEditUser.value
+      ? {
+          label: 'UnAssign User',
+          danger: true,
+          action: () => {
+            unassignHandler()
+          },
+          icon: {
+            prefix: 'fa-regular',
+            iconName: 'fa-user-minus'
+          }
+        }
+      : null,
+
+    // Delete Seat
+    canDeleteUser.value
+      ? {
+          label: 'Delete Seat',
+          danger: true,
+          action: () => {
+            showDelete.value = true
+          },
+          icon: {
+            prefix: 'fa-regular',
+            iconName: 'fa-trash'
+          }
+        }
+      : null
+  ].filter(Boolean) as { label: string; icon?: any; action?: () => void }[]
 }
+
 
 const assignHandle = () => {
     // moveCard.mutate(payload)

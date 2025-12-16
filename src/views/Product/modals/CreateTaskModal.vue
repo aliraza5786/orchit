@@ -70,7 +70,7 @@
   v-model="form.description"
   @blur="touched.description = true"
 />
-<p v-if="descriptionError" class="text-xs text-red-500 mt-1 px-1">{{ descriptionError }}</p>
+<!-- <p v-if="descriptionError" class="text-xs text-red-500 mt-1 px-1">{{ descriptionError }}</p> -->
     </div>
 
     <!-- Footer -->
@@ -94,6 +94,8 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import DatePicker from '../components/DatePicker.vue'
 import { useQueryClient } from '@tanstack/vue-query'
+import { usePermissions } from '../../../composables/usePermissions'
+const { canCreateCard } = usePermissions()
 
 /** Emits */
 const emit = defineEmits<{
@@ -129,7 +131,7 @@ type Variable = {
   data: string[]
   slug: string
 }
-const { data: variables } = useVariables(workspaceId.value, moduleId.value)
+const { data: variables } = useVariables(workspaceId.value, moduleId.value, props.sheet_id)
 
 /** Modal open proxy */
 const isOpen = computed({
@@ -206,8 +208,7 @@ const isValid = computed(() =>
   !titleError.value &&
   !startDateError.value &&
   !endDateError.value &&
-  !laneError.value &&
-  !descriptionError.value
+  !laneError.value 
 )
 
 
@@ -266,9 +267,9 @@ const laneError = computed(() => {
   return ''
 })
 
-const descriptionError = computed(() => 
-  touched.description && !form.description.trim() ? 'Description is required' : ''
-)
+// const descriptionError = computed(() => 
+//   touched.description && !form.description.trim() ? 'Description is required' : ''
+// )
 function create() {
   // mark all as touched
   touched.title = true
@@ -281,6 +282,7 @@ function create() {
 
   // prevent submission if invalid
   if (!isValid.value || isSubmitting.value) return
+  if (!canCreateCard.value) return
 
   const payload = {
     sheet_list_id: props.listId,

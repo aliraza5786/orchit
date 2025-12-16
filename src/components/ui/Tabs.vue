@@ -16,11 +16,11 @@
 
         <!-- Tab Content -->
         <div class="mt-4 overflow-hidden relative h-[90%]">
-            <div class="flex transition-transform duration-300 ease-in-out" :style="{
+            <div class=" flex transition-transform duration-300 ease-in-out" :style="{
                 width: tabs.length * 100 + '%',
                 transform: `translateX(-${selected * (100 / tabs.length)}%)`
             }">
-                <div v-for="(tab) in tabs" :key="tab" class="px-2 w-[50%] shrink-0 flex-grow h-[500px]">
+                <div v-for="(tab) in tabs" :key="tab" class="px-2 max-w-[850px] w-full shrink-0 flex-grow h-[500px]">
                     <slot :name="tab"></slot>
                 </div>
             </div>

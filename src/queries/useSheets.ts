@@ -134,7 +134,7 @@ export const useSheets = (
   const wId = computed(() => unref(queryParams.workspace_id));
 
   return useQuery({
-    queryKey: keys.sheets(wmId.value, wId.value),
+    queryKey: keys.sheets(queryParams.workspace_module_id, wId.value),
     enabled: computed(() => !!wmId.value),
     queryFn: ({ signal }) =>
       request<any>({
@@ -181,7 +181,7 @@ export function useSheetList(
   const queryKey = computed(() => [
     "sheet-list",
 
-    unref(module_id),
+    module_id,
     unref(sheet_id),
     unref(laneIdsParam),
     unref(view_by),
@@ -217,19 +217,82 @@ export function useSheetList(
     ...options,
   });
 }
+//all sheets for mindmap
+export function useAllSheetsList(
+  module_id: MaybeRef<string | null | undefined>,
+  view_by: MaybeRef<string | null | undefined>,
+  laneIds: MaybeRef<string[] | string | null | undefined>,
+  options: Omit<
+    UseQueryOptions<any, any, any, any>,
+    "queryKey" | "queryFn"
+  > = {}
+) {
+  // normalize laneIds
+  const laneIdsParam = computed<string | undefined>(() => {
+    const v = unref(laneIds);
+    if (v == null) return undefined;
+    if (Array.isArray(v)) {
+      const s = Array.from(
+        new Set(v.map((x) => String(x).trim()).filter(Boolean))
+      ).join(",");
+      return s || undefined;
+    }
+    const one = String(v).trim();
+    return one || undefined;
+  });
+
+  // query key (no sheet_id)
+  const queryKey = computed(() => [
+    "sheet-list-all",
+    unref(module_id),
+    unref(view_by),
+    unref(laneIdsParam),
+  ]);
+
+  // enabled condition
+  const enabled = computed(() =>
+    Boolean(unref(module_id) && unref(view_by))
+  );
+
+  return useQuery({
+    retry: 0,
+    queryKey,
+    enabled,
+    placeholderData: (prev) => prev,
+    queryFn: async () => {
+      const params: any = {
+        module_id: unref(module_id)!,
+        variable_id: unref(view_by)!,
+      };
+
+      if (unref(laneIdsParam)) {
+        params.lane_ids = unref(laneIdsParam)!;
+      }
+
+      // Fetch ALL SHEETS (no sheet_id)
+      return request({
+        url: "/workspace/cards/grouped",
+        method: "GET",
+        params,
+      });
+    },
+    ...options,
+  });
+}
 
 export const useVariables = (
   workspace_id: any,
   module_id: any,
+  sheetId: any,
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["all-module-variables"],
+    queryKey: ["all-module-variables", sheetId],
     queryFn: ({ signal }) =>
       request<any>({
         url: `/workspace/catalog/${workspace_id}/card-variables/${
           unref(module_id) ?? module_id
-        }`,
+        }?sheet_id=${unref(sheetId)}`,
         method: "GET",
         signal,
       }),
@@ -241,15 +304,18 @@ export const useLanes = (
 
   options = {}
 ) => {
+  console.log(unref(workspace_id), "workspace_id");
+
   return useQuery({
-    queryKey: ["all-module-lanes"],
-    queryFn: ({ signal }) =>
+    queryKey: ["all-module-lanes", unref(workspace_id)],
+    queryFn: async ({ signal }) =>
       request<any>({
-        url: `/workspace/lane-by-workspace/${workspace_id}`,
+        url: `/workspace/lane-by-workspace/${await unref(workspace_id)}`,
         method: "GET",
         signal,
       }),
     ...options,
+    // enabled:   unref(/) ?? workspace_id ? true :false
   });
 };
 
@@ -296,6 +362,21 @@ export const ReOrderCard = (options = {}) =>
         request({
           url: `workspace/cards/group-card-order`,
           method: "PATCH",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+export const useVarVisibilty = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["var-visibility"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `workspace/sheet-column-preferences`,
+          method: "POST",
           data: vars.payload,
         }),
       ...(options as any),

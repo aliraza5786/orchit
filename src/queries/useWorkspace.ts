@@ -94,23 +94,23 @@ export const useWorkspacesPrompt = () =>
     method: "GET",
   });
 
-export const useWorkspaces = (page: any, limit: any) => {
-  return useQuery(
-    {
-      queryKey: [ 'workspaces', page,limit],
-      queryFn: () =>
-        request({
-          url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}`,
-          method: "GET",
-        }),
-    }
-    
-    // {
-    //   // retry: false,
-    //   staleTime: 5 * 60 * 1000,
-    //   gcTime: 10 * 60 * 1000,
-    // }
-  );
+export const useWorkspaces = (page: Ref<number>, limit: Ref<number>) => {
+  return useQuery({
+    queryKey: computed(() => [
+      "workspaces",
+      unref(page),
+      unref(limit),
+    ]),
+    queryFn: () =>
+      request({
+        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}`,
+        method: "GET",
+      }),
+
+    staleTime: 0,
+    refetchOnMount: "always",
+    placeholderData: (previousData) => previousData,
+  });
 };
 
 export const useWorkspacesTitles = () =>
@@ -124,7 +124,8 @@ export const useSingleWorkspace = (id: string | number) => {
   return useApiQuery(
     {
       key: keys.singleWorkspace(id),
-      url: `/workspace/${id}`,
+      url: `/workspace/${unref(id)}`,
+      // url: `/workspace/${id}`,
       method: "GET",
       params: { is_archive: false },
       enabled: !!id,
@@ -355,3 +356,14 @@ export const useDeleteWorkspace = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+
+
+  export const useSingleWorkspaceCompany = (workspaceIdCompany: Ref<string | number>, options = {}) => {
+  return useQuery({
+    queryKey: ["workspaceCompany", workspaceIdCompany],
+    queryFn: ({ signal }) => request({ url: `/workspace/${workspaceIdCompany.value}`, method: "GET", signal }),
+    ...options,
+  });
+};
+

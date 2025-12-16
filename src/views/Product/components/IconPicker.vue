@@ -95,7 +95,7 @@ function openIconLibrary() {
         <div class="grid gap-2 col-span-full grid-cols-[repeat(auto-fill,minmax(90px,1fr))] max-h-[360px] overflow-auto pr-1
                  rounded-lg border-border" @scroll="onScroll">
           <button v-for="item in visibleIcons" :key="item.prefix + item.iconName" type="button" @click="select(item)"
-            :aria-label="`${item.prefix} ${item.iconName}`" :title="`${item.prefix} ${item.iconName}`" class="group grid place-items-center gap-1.5 p-2 bg-bg-body cursor-pointer
+            :aria-label="`${item.prefix} ${item.iconName}`" v-tooltip="`${item.prefix} ${item.iconName}`" class="group grid place-items-center gap-1.5 p-2 bg-bg-body cursor-pointer
                    border border-transparent rounded-lg text-text-secondary
                    hover:border-border focus:outline-none focus:ring-2 focus:ring-accent">
             <i :class="item.renderClasses" class="text-base"></i>

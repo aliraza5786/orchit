@@ -147,12 +147,9 @@ export const useUpdateComment = (options = {}) =>
       ...(options as any),
     } as any
   );
-export const useProductCard = (
-  card_id: any,
-  options = {}
-) => {
+export const useProductCard = (card_id: any, options = {}) => {
   return useQuery({
-    queryKey: [`product-card-${unref(card_id)}`],
+    queryKey: [`cardDetail`, card_id],
     queryFn: ({ signal }) =>
       request<any>({
         url: `/workspace/card/${unref(card_id)}`,
@@ -161,5 +158,25 @@ export const useProductCard = (
       }),
     ...options,
     enabled: !unref(card_id) ? false : true,
+  });
+};
+export const useProductVarsData = (
+  ws_id: any,
+  module_id: any,
+  var_slug: any,
+  options = {}
+) => {
+  return useQuery({
+    queryKey: [`product-var-data`, module_id, ws_id, var_slug],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/catalog/variable/values?workspace_id=${unref(
+          ws_id
+        )}&module_id=${unref(module_id)}&variable_slug=${unref(var_slug)}`,
+        method: "GET",
+        signal,
+      }),
+    ...options,
+    enabled: !unref(var_slug) ? false : true,
   });
 };

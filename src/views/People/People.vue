@@ -1,25 +1,28 @@
 <template>
-  <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border  overflow-x-auto flex-col flex  ">
+  <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border  overflow-x-auto flex-col flex  ">
     <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
       <Dropdown :actions="false" prefix="View By" v-model="selected_view_id" :options="viewData" variant="secondary">
       </Dropdown>
       <div class="flex gap-3 items-center ">
-        <Searchbar placeholder="Search in Orchit AI space">
-        </Searchbar>
+        <SearchBar class="max-w-[250px]" @onChange="(e:any) => {
+                    searchQuery = e
+                }" placeholder="Search in Orchit AI space">
+                </SearchBar>
       </div>
     </div>
     <KanbanSkeleton v-show="isListPending" />
-    <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar">
-      <KanbanBoard :plusIcon="false" v-if="localList?.length > 0" @onPlus="(e) => handlePLus(e)"
+    <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar h-full">
+      <KanbanBoard :plusIcon="false" v-if="filteredBoard?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
-        @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="localList"
+        @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="filteredBoard"
         @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="selected_sheet_id">
         <template #ticket="{ ticket }">
           <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
         </template>
         <template #column-footer="{ column }: any">
-          <div v-if="!column.showADDNEW" @click="toggleAddNewColumn(column)"
-            class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary cursor-pointer border-dashed mb-4 mx-4 rounded-md">
+          <div  v-if="!column.showADDNEW" @click="toggleAddNewColumn(column)"
+            :disabled="!canInviteUser" :class="canInviteUser? 'cursor-pointer':'cursor-not-allowed'"
+            class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md">
             <i class="fa-solid fa-plus"></i> Add Seat
           </div>
           <div v-else-if="column.showADDNEW" class="p-4 space-y-2 bg-bg-surface m-4 rounded-md">
@@ -38,16 +41,16 @@
             />
           <p class="text-xs mt-1.5">You can add details while editing</p>
           <div class="flex items-center mt-3 gap-3">
-            <Button @click="emitAddColumn" type="submit"  variant="primary"
-              class="px-3 py-1 bg-accent cursor-pointer text-white rounded">
+            <Button :disabled="!canInviteUser" :class="canInviteUser? 'cursor-pointer':'cursor-not-allowed'" @click="emitAddColumn" type="submit"  variant="primary"
+              class="px-3 py-1 bg-accent  text-white rounded">
               {{ addingList ? 'Adding...' : 'Add Team' }}
             </Button>
             <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
           </div>
         </form>
         <button v-else
-          class="text-sm text-text-primary py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-          @click.stop="setActiveAddList">
+          class="text-sm text-text-primary py-2.5  font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+          @click.stop="setActiveAddList" :disabled="!canCreateVariable" :class="canCreateVariable? 'cursor-pointer':'cursor-not-allowed'">
           + Add Team
         </button>
       </div>
@@ -59,17 +62,17 @@
     cancelText="Cancel" size="md" :loading="isDeletingList" @confirm="handleDeleteColumn"
     @cancel="() => { showDelete = false }" />
 
-  <DetailPanel :details="selectedCard" @close="() => { selectCardHandler({ variables: {} }) }"
+  <DetailPanel :details="selectedCard" @close="() => { selectCardHandler({ }) }"
     :showPanel="selectedCard?.title ? true : false" />
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch, onMounted } from 'vue';
+import { defineAsyncComponent, ref, watch, onMounted, computed } from 'vue';
 // import { ReOrderCard, ReOrderList } from '../../queries/useSheets';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
-import { useCreateTeam, useCreateTeamMember, useDeleteTeam, usePeopleList } from '../../queries/usePeople';
+import { ReOrderCard, ReOrderList, useCreateTeam, useCreateTeamMember, useDeleteTeam, usePeopleList } from '../../queries/usePeople';
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import Button from '../../components/ui/Button.vue';
@@ -77,8 +80,14 @@ import BaseEmailChip from '../../components/ui/BaseEmailChip.vue';
 import { useUpdateInvitedWorkspace } from '../../queries/useWorkspace';
 import Dropdown from '../../components/ui/Dropdown.vue';
 import DetailPanel from './components/DetailPanel.vue';
+import Fuse from 'fuse.js';
+import { debounce } from 'lodash';
+import SearchBar from '../../components/ui/SearchBar.vue';
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 const KanbanCard = defineAsyncComponent(() => import('./components/KanbanCard.vue'));
+
+import { usePermissions } from '../../composables/usePermissions'
+const {  canCreateVariable,  canInviteUser} = usePermissions()
 
 const viewData = [
   {
@@ -97,7 +106,7 @@ const viewData = [
 const selected_view_id = ref('role');
 const showDelete = ref(false);
 const localColumn = ref();
-const { workspaceId } = useRouteIds();
+const { workspaceId} = useRouteIds();
 const localList = ref<any>([]);
 
 const { mutate: addList, isPending: addingList } = useCreateTeam({
@@ -122,29 +131,7 @@ const selectCardHandler = (card: any) => {
   selectedCard.value = card;
 };
 
-// const reorderList = ReOrderList();
-// const reorderCard = ReOrderCard();
 
-function onReorder(a: any) {
-  if (a.type === 'column') {
-    // updateList.mutate({
-    //   id:a.meta.id,
-    //   payload: {
-    //     workspace_id: workspaceId.value,
-    //     workspace_module_id: moduleId.value,
-    //     moved_value: a.meta.id,
-    //     new_index: a.meta.newIndex,
-    //   },
-    // });
-  } else {
-    updateList.mutate({
-      id: a.meta.moved._id,
-      payload: {
-        roleId: a.meta.toColumnId,
-      },
-    });
-  }
-}
 
 const handleBoardUpdate = (_: any) => { };
 const activeAddList = ref(false);
@@ -262,6 +249,7 @@ function extractNameFromEmail(email: string) {
 }
 // Handle toggling of "Add Seat" form for each column
 const toggleAddNewColumn = (column: any) => {
+  if(!canInviteUser.value) return
   window.dispatchEvent(new CustomEvent('close-all-showADDNEW'));
   column.showADDNEW = !column.showADDNEW;
 };
@@ -274,6 +262,57 @@ const addSeatToColumn = (column: any) => {
 const handleClickTicket = (ticket: any) => {
   selectedCard.value = ticket
 }
+
+
+const reorderList = ReOrderList()
+const reorderCard = ReOrderCard();
+function onReorder(a: any) {
+  console.log(a , '>>');
+  
+    if (a.type == 'column')
+        reorderList.mutate({
+            id:workspaceId.value,
+            payload: {
+              "role_id": a.meta._id,
+
+                new_sort_order: a.meta.newIndex
+            }
+        })
+    else {
+        reorderCard.mutate({
+          id:a.meta.toColumnId,
+
+            payload: {
+              "team_member_id": a.meta.moved._id,
+              "new_sort_order":  a.meta.newIndex
+            
+                // sheet_id: selected_sheet_id.value
+            }
+        })
+    }
+}
+
+// reactive search query
+const searchQuery = ref('')
+const debouncedQuery = ref('')
+
+watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
+// computed filtered board
+
+const fuse = computed(() => {
+  const allCards = localList.value.flatMap((col:any) => col.cards.map((card:any) => ({ ...card, columnId: col.title })))
+  return new Fuse(allCards, { keys: ['title', 'name'], threshold: 0.3 })
+})
+
+const filteredBoard = computed(() => {
+  if (!searchQuery.value) return localList.value
+  const results = fuse.value.search(searchQuery.value).map((r :any)=> r.item)
+  return localList.value.map((col:any) => ({
+    ...col,
+    cards: results.filter((c:any) => c.columnId === col.title)
+  }))
+})
+
 </script>
 
 

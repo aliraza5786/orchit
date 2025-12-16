@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref } from 'vue'
+import { nextTick, ref, onMounted, onUnmounted } from 'vue'
 import {
   VueFlow,
   Handle,
@@ -21,17 +21,21 @@ import { watch } from 'vue'
 import BaseTextField from '../../ui/BaseTextField.vue'
 import Button from '../../ui/Button.vue'
 import Loader from '../../ui/Loader.vue'
+// --- Modal state for editing an existing transition (edge) ---
+const showEditEdgeModal = ref(false)
+const editEdgeName = ref('')
+const selectedEdgeId = ref<string | null>(null)
 
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
 
-const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges } = useVueFlow()
+const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
 
 const { data: statuses, isSuccess: isStatues } = useProcessStatus(workspaceId.value);
-const { data: processWorkflow, isSuccess: isProcess, isPending: isProcessPending, isFetching: isProcessFetching } = useProcessWorkflow(workspaceId.value)
+const { data: processWorkflow, isSuccess: isProcess, isPending: isProcessPending, isFetching: isProcessFetching, refetch } = useProcessWorkflow(workspaceId.value)
 
 // ---- Helpers to normalize API -> VueFlow ----
 function mapApiNode(n: any): VFNode {
@@ -200,7 +204,11 @@ function cancelTransition() {
 //   return () => `n-${i++}`
 // })()
 
-const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(workspaceId.value)
+const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(workspaceId.value, {
+  onSuccess:()=>{
+    refetch();
+  }
+})
 
 const defaultEdgeOptions: Partial<VFEdge> = {
   // sharp/right-angle like Jira
@@ -360,15 +368,87 @@ window.addEventListener('beforeunload', () => {
   if (isSaving.value) return
   try { saveWorkflow() } catch { }
 })
+
+
+function openEditEdge(edge: VFEdge) {
+  console.log(edge, 'edge');
+  
+  selectedEdgeId.value = edge.id
+  // prefer existing label, fallback to data.name, else empty
+  editEdgeName.value = String(edge.label ?? edge.data?.name ?? '')
+  showEditEdgeModal.value = true
+}
+
+function confirmEditEdge() {
+  if (!selectedEdgeId.value) return
+  const name = editEdgeName.value.trim()
+
+  // Update the edge’s label (and mirror into data.name to keep your API shape consistent)
+  setEdges(eds =>
+    eds.map(e =>
+      e.id === selectedEdgeId.value
+        ? { ...e, label: name || e.label, data: { ...(e.data ?? {}), name: name || e.data?.name } }
+        : e
+    )
+  )
+
+  // reset modal
+  showEditEdgeModal.value = false
+  selectedEdgeId.value = null
+  editEdgeName.value = ''
+}
+
+function cancelEditEdge() {
+  showEditEdgeModal.value = false
+  selectedEdgeId.value = null
+  editEdgeName.value = ''
+}
+function onEdgeClick({event, edge}:{event:any, edge:any}) {
+  console.log('>>> click',edge);
+  
+  openEditEdge(edge)
+  event.stopPropagation()
+}
+
+
+// zoom in zoom out
+onMounted(() => {
+  window.addEventListener('workflow:zoom', handleZoomEvent)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('workflow:zoom', handleZoomEvent)
+})
+
+function handleZoomEvent(e: Event) {
+  const detail = (e as CustomEvent).detail
+  if (!detail) return
+  
+  if (detail.action === 'in') zoomIn()
+  if (detail.action === 'out') zoomOut()
+  if (detail.action === 'reset') fitView({ padding: 0.2 })
+}
+
 </script>
 
 <template>
   <div class="workflow-wrap">
     <Loader v-if="isProcessPending || isProcessFetching" />
 
-    <VueFlow v-else v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
-      :nodes-draggable="true" :nodes-connectable="true" :elements-selectable="true" fit-view-on-init
-      @connect="onConnect">
+    <VueFlow
+  v-else
+  v-model:nodes="nodes"
+  v-model:edges="edges"
+  :default-edge-options="defaultEdgeOptions"
+  :nodes-draggable="true"
+  :nodes-connectable="true"
+  :elements-selectable="true"
+  fit-view-on-init
+  @connect="onConnect"
+  @edge-click="onEdgeClick"
+>
+
+
 
       <Background />
       <!-- <MiniMap /> -->
@@ -407,6 +487,24 @@ window.addEventListener('beforeunload', () => {
       </div>
     </div>
   </div>
+
+  <!-- Edit Transition Modal -->
+<div v-if="showEditEdgeModal" class="modal-backdrop" @click.self="cancelEditEdge">
+  <div class="modal border border-border !bg-bg-body text-text-primary">
+    <h3>Edit transition</h3>
+    <BaseTextField
+      v-model="editEdgeName"
+      placeholder="Transition name"
+      @keyup.enter="confirmEditEdge"
+      autofocus
+    />
+    <div class="modal-actions mt-4">
+      <Button size="sm" @click="confirmEditEdge">Save</Button>
+      <Button variant="secondary" size="sm" @click="cancelEditEdge">Cancel</Button>
+    </div>
+  </div>
+</div>
+
 </template>
 
 <style scoped>

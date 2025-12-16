@@ -16,6 +16,7 @@ interface WorkspaceState {
   showLimitExccedModal: boolean;
   limits:any
   pricing:boolean
+  showChatBotPanel: boolean
 }
 
 export const useWorkspaceStore = defineStore("workspace", {
@@ -33,7 +34,8 @@ export const useWorkspaceStore = defineStore("workspace", {
     selectedLaneIds: [],
     transitions: {},
     limits:{},
-    pricing:false
+    pricing:false,
+    showChatBotPanel: false
   }),
   actions: {
     setPricing(p:boolean){
@@ -54,6 +56,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     toggleSettingPanel() {
       this.showProfilePanel = false;
+      this.showChatBotPanel = false;
       setTimeout(() => {
         this.showSettingPanel = !this.showSettingPanel;
       }, 200);
@@ -84,8 +87,16 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     toggleProfilePanel() {
       this.showSettingPanel = false;
+      this.showChatBotPanel = false;
       setTimeout(() => {
         this.showProfilePanel = !this.showProfilePanel;
+      }, 200);
+    },
+    toggleChatBotPanel() {
+      this.showSettingPanel = false;
+      this.showProfilePanel = false;
+      setTimeout(() => {
+        this.showChatBotPanel = !this.showChatBotPanel;
       }, 200);
     },
     toggleFilter() {

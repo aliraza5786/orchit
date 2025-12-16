@@ -1,6 +1,6 @@
 <template>
   <div :class="[
-    'max-w-[358px] flex-grow rounded-lg overflow-y-auto overflow-x-hidden relative transition-all',
+    'max-w-[358px] flex-grow rounded-[6px] overflow-y-auto overflow-x-hidden relative transition-all',
     'text-text-primary bg-bg-card',
     workspaceStore.showSettingPanel ? 'translate-x-0 min-w-[350px] w-full h-full' : 'translate-x-100 !max-w-0 h-0'
   ]">
@@ -40,7 +40,7 @@
         <div class="min-w-0">
           <template v-if="!isEditingTitle">
             <h3 class="text-2xl font-medium truncate cursor-text text-text-primary" @click="startEditTitle"
-              title="Click to rename">
+              v-tooltip="'Click to rename'">
               {{ editableTitle }}
             </h3>
           </template>
@@ -255,6 +255,8 @@ import { useWorkspaceStore } from '../../../stores/workspace'
 // import Dropdown from '../../../components/ui/Dropdown.vue'
 import { getInitials } from '../../../utilities'
 import { useDeleteInvitedPeople, useDeleteWorkspace, useInvitePeople, useUpdateWorkspaceDetail, useWorkspacesRoles } from '../../../queries/useWorkspace'
+import { usePermissions } from '../../../composables/usePermissions'
+const { canInviteUser, canEditUser } = usePermissions()
 // import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 // import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import DropMenu from '../../../components/ui/DropMenu.vue'
@@ -393,7 +395,7 @@ watch(
   { immediate: true }
 )
 
-const canInvite = computed(() => inviteEmails.value.length > 0 && !emailError.value && !!inviteRole.value)
+const canInvite = computed(() => canInviteUser.value && inviteEmails.value.length > 0 && !emailError.value && !!inviteRole.value)
 
 // function onEmailsInvalid(bad: string[]) {
 //   emailError.value = bad.length ? `Invalid: ${bad.join(', ')}` : ''
@@ -420,6 +422,7 @@ function extractNameFromEmail(email: string) {
 // }
 function sendInvites() {
   if (!canInvite.value) return
+  if (!canInviteUser.value) return
   invitePeople(
     {
       workspace_id: props.workspace._id,
@@ -478,6 +481,7 @@ function getMenuItems(user: any) {
 }
 
 function handleRemoveUser(user: any) {
+  if (!canEditUser.value) return
   deleteUser.mutate({ id: user.id })
 }
 

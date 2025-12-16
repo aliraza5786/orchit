@@ -8,14 +8,14 @@
         </div>
 
         <!-- Tabs -->
-        <div class="px-6 pt-4 border-b border-border flex gap-6 text-sm font-medium">
+        <!-- <div class="px-6 pt-4 border-b border-border flex gap-6 text-sm font-medium">
             <button v-for="t in tabs" :key="t.value" @click="currentTab = t.value" class="pb-3 relative"
                 :class="currentTab === t.value ? 'text-text-primary' : 'text-text-secondary'">
                 {{ t.label }}
 
                 <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-accent"></div>
             </button>
-        </div>
+        </div> -->
 
         <!-- Body -->
         <div class="px-6 py-6 space-y-6">
@@ -44,8 +44,9 @@
 
                 <!-- AI Input -->
                 <div class="relative w-full">
-                    <div class="neon-flow-border bg-bg-input flex h-[200px] p-4 rounded-2xl relative">
-                        <textarea v-if="!isRecording && !audioURL" v-model="description" 
+                    <div
+                        :class="`${isAiPending || isPending ? 'neon-flow-border' : ''} bg-bg-input flex h-[200px] p-4 rounded-2xl relative`">
+                        <textarea v-if="!isRecording && !audioURL" v-model="description"
                             placeholder="Ask Orchit AI to create a sheet..."
                             class="w-full h-full resize-none outline-none bg-transparent text-sm" />
 
@@ -66,7 +67,16 @@
                         </transition>
                     </div>
                 </div>
-
+                <div class="flex w-full px-6 text-sm text-text-secondary  items-center gap-4 mt-6">
+                    <hr class=" flex-auto text-border">
+                    <span>OR</span>
+                    <hr class="flex-auto text-border">
+                </div>
+                <div class="px-6 mt-5">
+                    <Button variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
+                        Create Manually
+                    </Button>
+                </div>
                 <!-- Suggestions -->
                 <!-- <p class="text-xs text-text-secondary text-center">Or try these examples:</p>
   
@@ -89,7 +99,7 @@
             </section>
 
             <!-- TEMPLATES TAB -->
-            <section v-else class="space-y-4">
+            <!-- <section v-else class="space-y-4">
                 <input v-model="search" class="w-full border rounded-lg p-2 text-sm border-border"
                     placeholder="Search" />
 
@@ -119,16 +129,15 @@
                         {{ creatingSheet ? 'Adding...' : 'Add board' }}
                     </Button>
                 </div>
-            </section>
+            </section> -->
         </div>
     </BaseModal>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
-import Button from '../../../components/ui/Button.vue'
 import IconPicker from '../components/IconPicker.vue'
 import AudioRecorder from '../../../views/CreateWorkspace/components/AudioRecorder.vue'
 
@@ -136,20 +145,25 @@ import AudioRecorder from '../../../views/CreateWorkspace/components/AudioRecord
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteIds } from '../../../composables/useQueryParams'
 // import { useOpenAIGeneration } from '../../../queries/useOpenAIGeneration'
-import { extractJSONFromResponse } from '../../../utilities/extractJson'
+// import { extractJSONFromResponse } from '../../../utilities/extractJson'
 import { useCreateWorkspaceSheet, useCreateWorkspaceSheetAI, useUpdateWorkspaceSheet } from '../../../queries/useSheets'
+import Button from '../../../components/ui/Button.vue'
 // import { useSuggestions } from '../../../queries/useWorkspace'
+import { usePermissions } from '../../../composables/usePermissions'
 
 const props = defineProps<{ modelValue: boolean, sheet: any }>()
+const { canCreateSheet, canEditSheet } = usePermissions()
 
 const emit = defineEmits(['update:modelValue'])
 
 const queryClient = useQueryClient()
 const { workspaceId, moduleId } = useRouteIds()
 
-const form = ref({ title: '', description: '', icon: null })
+const form = ref({ title: props?.sheet?.title, description: props?.sheet?.description, icon: props?.sheet?.icon })
 const errors = ref<{ title?: string; description?: string }>({})
-
+watch(props, () => {
+    form.value = props.sheet
+})
 function validateManual() {
     const next: any = {}
     if (!form.value.title.trim()) next.title = 'Please enter a sheet name.'
@@ -161,18 +175,24 @@ function validateManual() {
 const { mutate: createSheet, isPending: creatingSheet } = useCreateWorkspaceSheet({
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['sheets'] })
+        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
         close()
     }
 })
 
 const { mutate: updateSheet, isPending: isUpdating } = useUpdateWorkspaceSheet({
-    onSuccess: () => close()
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['sheets'] })
+        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+        close()
+    }
 })
 
 function submitManual() {
     if (!validateManual()) return
 
     if (props.sheet?._id) {
+        if (!canEditSheet.value) return
         updateSheet({
             sheet_id: props.sheet._id,
             icon: form.value.icon,
@@ -185,6 +205,7 @@ function submitManual() {
             workspace_module_id: moduleId.value,
         })
     } else {
+        if (!canCreateSheet.value) return
         createSheet({
             icon: form.value.icon,
             variables: {
@@ -202,6 +223,7 @@ function close() {
     form.value = { title: '', description: '', icon: null }
     errors.value = {}
     model.value = false
+    currentTab.value='ai'
 }
 
 const model = computed({
@@ -227,19 +249,22 @@ const isPending = ref(false)
 //     )
 // }
 
-const { mutate: generateAI } = useCreateWorkspaceSheetAI({
-    onSuccess: (data: any) => {
-        const result:any = extractJSONFromResponse(data) ?? {}
-        createSheet({
-            icon: result?.icon ??'',
-            variables: {
-                'sheet-title': result?.title ??'',
-                'sheet-description': result?.description ??''
-            },
-            is_ai_generated: true,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-        })
+const { mutate: generateAI, isPending: isAiPending } = useCreateWorkspaceSheetAI({
+    onSuccess: () => {
+        // const result: any = extractJSONFromResponse(data) ?? {}
+        // createSheet({
+        //     icon: result?.icon ?? '',
+        //     variables: {
+        //         'sheet-title': result?.title ?? '',
+        //         'sheet-description': result?.description ?? ''
+        //     },
+        //     is_ai_generated: true,
+        //     workspace_id: workspaceId.value,
+        //     workspace_module_id: moduleId.value,
+        // })
+        queryClient.invalidateQueries({ queryKey: ['sheets'] })
+        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+        close();
         isPending.value = false
     },
     onError: () => { isPending.value = false }
@@ -247,6 +272,7 @@ const { mutate: generateAI } = useCreateWorkspaceSheetAI({
 
 function handleGenerateSheet() {
     if (!description.value.trim()) return
+    if (!canCreateSheet.value) return
     isPending.value = true
     generateAI({
         module_id: moduleId.value,
@@ -258,68 +284,67 @@ function handleGenerateSheet() {
 /* ----------------------------------
    TEMPLATES TAB
 ----------------------------------*/
-const tabs = [
-    { label: 'Manual', value: 'manual' },
-    { label: 'Generate with AI', value: 'ai' },
-    { label: 'Templates', value: 'templates' }
-]
+// const tabs = [
+//     { label: 'Manual', value: 'manual' },
+//     { label: 'Generate with AI', value: 'ai' },
+// ]
 
-const currentTab = ref('manual')
+const currentTab = ref('ai')
 
-type Template = { id: string; title: string; subtitle: string; cover: string; tags: string[] }
+// type Template = { id: string; title: string; subtitle: string; cover: string; tags: string[] }
 
-const templates = ref<Template[]>([
-    {
-        id: 'concept',
-        title: 'Product Concept',
-        subtitle: 'Early stage ideation board.',
-        cover: 'https://placehold.co/600x300',
-        tags: ['Experience Design', 'Development']
-    },
-    {
-        id: 'launch',
-        title: 'Launch Prep',
-        subtitle: 'Prepare assets for product launch.',
-        cover: 'https://placehold.co/600x300',
-        tags: ['Marketing', 'Project Management']
-    }
-])
+// const templates = ref<Template[]>([
+//     {
+//         id: 'concept',
+//         title: 'Product Concept',
+//         subtitle: 'Early stage ideation board.',
+//         cover: 'https://placehold.co/600x300',
+//         tags: ['Experience Design', 'Development']
+//     },
+//     {
+//         id: 'launch',
+//         title: 'Launch Prep',
+//         subtitle: 'Prepare assets for product launch.',
+//         cover: 'https://placehold.co/600x300',
+//         tags: ['Marketing', 'Project Management']
+//     }
+// ])
 
-const search = ref('')
-const tags = ref([
-    { name: 'Experience Design' },
-    { name: 'Development' },
-    { name: 'Marketing' },
-    { name: 'Project Management' }
-])
-const activeTags = ref(new Set<string>())
+// const search = ref('')
+// const tags = ref([
+//     { name: 'Experience Design' },
+//     { name: 'Development' },
+//     { name: 'Marketing' },
+//     { name: 'Project Management' }
+// ])
+// const activeTags = ref(new Set<string>())
 
-function toggleTag(t: string) {
-    activeTags.value.has(t) ? activeTags.value.delete(t) : activeTags.value.add(t)
-}
+// function toggleTag(t: string) {
+//     activeTags.value.has(t) ? activeTags.value.delete(t) : activeTags.value.add(t)
+// }
 
-const filteredTemplates = computed(() =>
-    templates.value.filter(t =>
-        (!search.value || t.title.toLowerCase().includes(search.value.toLowerCase())) &&
-        (activeTags.value.size === 0 || t.tags.some(tag => activeTags.value.has(tag)))
-    )
-)
+// const filteredTemplates = computed(() =>
+//     templates.value.filter(t =>
+//         (!search.value || t.title.toLowerCase().includes(search.value.toLowerCase())) &&
+//         (activeTags.value.size === 0 || t.tags.some(tag => activeTags.value.has(tag)))
+//     )
+// )
 
-const chosenTemplate = ref<Template | null>(null)
-function chooseTemplate(tpl: Template) { chosenTemplate.value = tpl }
-function submitTemplate() {
-    if (!chosenTemplate.value) return
-    createSheet({
-        icon: null,
-        variables: {
-            'sheet-title': chosenTemplate.value.title,
-            'sheet-description': chosenTemplate.value.subtitle
-        },
-        is_ai_generated: false,
-        workspace_id: workspaceId.value,
-        workspace_module_id: moduleId.value,
-    })
-}
+// const chosenTemplate = ref<Template | null>(null)
+// function chooseTemplate(tpl: Template) { chosenTemplate.value = tpl }
+// function submitTemplate() {
+//     if (!chosenTemplate.value) return
+//     createSheet({
+//         icon: null,
+//         variables: {
+//             'sheet-title': chosenTemplate.value.title,
+//             'sheet-description': chosenTemplate.value.subtitle
+//         },
+//         is_ai_generated: false,
+//         workspace_id: workspaceId.value,
+//         workspace_module_id: moduleId.value,
+//     })
+// }
 </script>
 
 <style scoped>

@@ -1,7 +1,5 @@
 <template>
     <div @click="() => {
-        console.log('>>> clicking >>> ');
-
         emit('select')
     }" class="product-ticket relative bg-bg-card rounded-lg p-4 shadow-sm cursor-grab border-t-4
              hover:shadow-md transition-all duration-200 active:cursor-grabbing" :class="priorityBorderClass"
@@ -21,6 +19,7 @@
             </div>
 
             <div
+                v-if="canDeleteCard"
                 class="product-menu-icon transition-all w-6 py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
                 <DropMenu @click.stop="" :items="getMenuItems()">
                     <template #trigger>
@@ -38,9 +37,9 @@
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
         </p>
 
-        <div class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
+        <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
-                <div @click.stop>
+                <div v-if="canAssignCard" @click.stop>
                     <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
                         :seat="ticket?.seat" />
                 </div>
@@ -57,7 +56,7 @@
                     <i class="fa-regular fa-message text-[10px]"></i>
                     <span>{{ ticket?.comments_count }}</span>
                 </div>
-                <div class="flex items-center gap-1 text-xs text-text-secondary">
+                <div v-if="ticket?.attachments" class="flex items-center gap-1 text-xs text-text-secondary">
                     <i class="fa-regular fa-file text-[10px]"></i>
                     <span>{{ ticket?.attachments.length }}</span>
                 </div>
@@ -85,6 +84,10 @@ import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdo
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
 import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
+
+import { usePermissions } from '../../../composables/usePermissions'
+const { canDeleteCard,  canAssignCard } = usePermissions()
+
 const { workspaceId, moduleId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 
@@ -107,7 +110,8 @@ export interface Ticket {
 
 const props = defineProps<{
     ticket: any
-    selectedVar: any
+    selectedVar?: any
+    footer?:boolean 
 }>()
 
 const priorityBorderMap: Record<Priority, string> = {
@@ -156,13 +160,21 @@ const { mutate: deleteCard, isPending: deletingTicket } = useDeleteTicket(props.
 //     })
 // }
 
-function getMenuItems() {
-    return [{
-        label: 'Delete', danger: true, action: () => {
-            showDelete.value = true
+function getMenuItems(): { label: string; danger: boolean; action: () => void }[] {
+  return [
+    canDeleteCard.value
+      ? {
+          label: "Delete",
+          danger: true,
+          action: () => {
+            showDelete.value = true;
+          },
         }
-    },
-    ]
+      : null,
+  ].filter(
+    (item): item is { label: string; danger: boolean; action: () => void } =>
+      item !== null
+  );
 }
 const handleDeleteTicket = () => {
     deleteCard({})
@@ -189,8 +201,8 @@ const setDueDate = (date: string | null) => {
     })
 }
 
-const { data: variables } = useVariables(workspaceId.value, moduleId.value)
-const selectedVarSlug = computed(() => variables.value.filter((e: any) => e._id == props.selectedVar))
+const { data: variables } = useVariables(workspaceId.value, moduleId.value, '')
+const selectedVarSlug = computed(() => (variables?.value ?? []).filter((e: any) => e._id == props.selectedVar))
 
 const emit = defineEmits(['select'])
 </script>
