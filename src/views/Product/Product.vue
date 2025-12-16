@@ -1044,11 +1044,9 @@ const setStartDate = (card_id: any, e: any) => {
 function setLane(id: any, v: any) {
   updateOptimisticCard(id, (card) => {
       const newLane = laneOptions.value.find((l: any) => l._id === v);
-      console.log(newLane, "its new")
        if (newLane) { 
             card.lane = newLane; 
        }
-       console.log(card.lane, "after")
   });
   // Trigger Vue to detect the nested change
   triggerRef(Lists);

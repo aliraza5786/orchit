@@ -119,7 +119,7 @@ const inputRef = ref<HTMLInputElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const dropdownStyles = ref({ top: "0px", left: "0px", width: "100%" });
-
+const didSelectOption = ref(false);
 // Positioning logic similar to TableSelect
 const positionDropdown = () => {
   if (!inputRef.value || !dropdownRef.value) return;
@@ -143,7 +143,12 @@ const positionDropdown = () => {
   };
 };
 
-
+watch(
+  () => props.modelValue,
+  (val) => {
+    internalValue.value = val;
+  }
+);
 
 // Helper to get display string from an option
 const getOptionLabel = (opt: Option | string) => {
@@ -154,24 +159,17 @@ const getOptionLabel = (opt: Option | string) => {
 
 // Computed display value for the read-only view
 const displayValue = computed(() => {
-  if (!props.modelValue) return "";
+  if (!internalValue.value) return "";
   const match = props.options.find((opt) => {
-    if (typeof opt === "string") return opt === props.modelValue;
-    if (typeof props.modelValue !== "object") {
-      return opt._id == props.modelValue || opt.value == props.modelValue;
+    if (typeof opt === "string") return opt === internalValue.value;
+    if (typeof internalValue.value !== "object") {
+      return opt._id == internalValue.value || opt.value == internalValue.value;
     }
-    return opt._id == props.modelValue?._id || opt.value == props.modelValue?.value;
-  }); 
+    return opt._id == internalValue.value?._id || opt.value == internalValue.value?.value;
+  });
   return match ? getOptionLabel(match) : "";
 });
 
-
-
-
-
-//  watchEffect(()=>{
-//     alert();
-//  })
 
 const normalizedOptions = computed<Option[]>(() =>
   (props.options ?? []).map((opt) =>
@@ -191,6 +189,8 @@ watch(
   },
   { immediate: true }
 );
+const internalValue = ref(props.modelValue);
+
 
 // Filter options based on search term
 const filteredOptions = computed<Option[]>(() => {
@@ -237,18 +237,13 @@ const selectOption = (option: Option | string) => {
   if (typeof option === "string") value = option;
   else value = option._id ?? option.value ?? option.title;
 
+  internalValue.value = value;  // update local reactive value immediately
   emit("update:modelValue", value);
-  emit("change", value); 
-
-  // set searchTerm to display the selected value
-  const match = normalizedOptions.value.find(
-    (opt) => opt._id == value || opt.value == value
-  ); 
-  searchTerm.value = match ? getOptionLabel(match) : "";
-  // displayValue.value = match ? getOptionLabel(match) : "";
+  emit("change", value);
 
   cancelEditing();
 };
+
 
 const handleEnter = () => {
   if (filteredOptions.value.length > 0) {
@@ -270,14 +265,18 @@ const handleEnter = () => {
 };
 
 const handleBlur = () => {
-  // Give time for mousedown on option to fire
   setTimeout(() => {
-    // Only close if we didn't just click an option (which is handled by mousedown.prevent)
+    if (didSelectOption.value) {
+      didSelectOption.value = false;
+      return;
+    }
+
     if (isEditing.value) {
       handleEnter();
     }
   }, 150);
 };
+
 
 // Close on click outside
 const handleClickOutside = (event: MouseEvent) => {
