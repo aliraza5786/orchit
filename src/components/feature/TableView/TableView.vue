@@ -1,5 +1,6 @@
 <template>
-  <div class="kanban-table space-y-4 px-4 h-[85vh] mt-4 overflow-y-auto">
+  <div class="px-4">
+    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
              bg-bg-body/20 text-sm
@@ -63,7 +64,7 @@
               <div class="w-4 h-4 bg-bg-surface rounded"></div>
             </td>
 
-            <td v-for="(col, i) in columns" :key="col.key" class=" border-r border-border"
+            <td v-for="(col, i) in columns" :key="col.key" class=" border-r border-border h-8"
               :style="{ width: columnWidths[col.key] + 'px' }"
               :colspan="i === visibleColumns.length - 1 ? 2 : 1"
               >
@@ -77,7 +78,7 @@
           <tr v-if="hoverIndex === index && !hasActiveEmptyRow" class="relative bg-bg-surface/20 transition-all cursor-pointer 
                   border border-accent" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
-              <span class="absolute left-[-6px] top-[-6px] bg-bg-surface border border-border 
+              <span class="absolute left-[-6px] top-[-14px] bg-bg-surface border border-border 
                        w-6 h-6 text-sm rounded-md flex justify-center items-center 
                        shadow-sm hover:bg-bg-surface/70">+</span>
             </td>
@@ -89,16 +90,14 @@
             class="border-b border-border hover:bg-bg-surface/40 transition-colors">
             <td></td>
 
-            <td v-for="(col,i) in visibleColumns" :key="col?.key" class=" border-r border-border overflow-visible relative"
+            <td v-for="(col,i) in visibleColumns" :key="col?.key" class=" border-r border-border overflow-visible relative h-8"
               :style="{ width: columnWidths[col.key] + 'px' }"
               :colspan="i === visibleColumns.length - 1 ? 2 : 1"
               >
 
               <!-- Editable input -->
               <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
-                @blur="finishEdit(ticket)" class="w-full p-1 border border-border/60 rounded-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-300
-                       bg-bg-surface"
+                @blur="finishEdit(ticket)" class=" min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body  text-[12px] h-8"
                 :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
 
               <!-- Display value -->
@@ -117,21 +116,17 @@
 
         <!-- ADD NEW ROW FOOTER -->
         <tr v-if="!hasActiveEmptyRow && canCreate" @click="insertEmptyRow(tickets?.length)" class="sticky bottom-0 bg-bg-surface border-t border-border cursor-pointer
-                 transition hover:bg-bg-surface/70" @mouseenter="hoverIndex = tickets?.length"
+                 transition hover:bg-bg-body" @mouseenter="hoverIndex = tickets?.length"
           @mouseleave="hoverIndex = null">
-          <!-- <td class="p-2">
-            <span class="inline-flex w-5 h-5 border border-border rounded-full 
+          <td :colspan="footerColspan" class=" text-text-secondary h-8 px-3">
+            <span class="inline-flex w-5 h-5 border border-border-input rounded-full 
                      justify-center items-center text-secondary
-                     hover:bg-bg-surface/50 transition">+</span>
-          </td> -->
-          <td :colspan="columns.length" class=" text-text-secondary">
-            <span class="inline-flex w-5 h-5 border border-border rounded-full 
-                     justify-center items-center text-secondary
-                     hover:bg-bg-surface/50 transition">+</span> Add New Row
+                     hover:bg-bg-surface/50 transition pb-0.5">+</span> Add New Row
           </td>
         </tr>
       </tbody>
     </table>
+  </div>
   </div>
 </template>
 
@@ -297,5 +292,9 @@ const toggleColumn = (key: string) => {
     visibleColumnKeys.value.splice(index, 1)
   }
 }
+
+const footerColspan = computed(() => {
+  return 1 + visibleColumns.value.length + 1
+})
 
 </script>

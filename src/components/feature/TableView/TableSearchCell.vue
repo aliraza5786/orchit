@@ -11,6 +11,9 @@
         <span
           v-if="displayValue"
           class="truncate font-normal text-[12px] text-text-primary"
+          :style="columnName?.toLowerCase() === 'priority' 
+            ? { backgroundColor: displayBackgroundColor, color:'white', padding:'2px 8px', borderRadius:'10px', fontSize:'10px' } 
+            : {}"
           >{{ displayValue }}</span
         >
         <span
@@ -23,7 +26,7 @@
     </div>
 
     <!-- Edit Mode -->
-    <div v-else class="relative w-full">
+    <div v-else class="relative w-full h-full">
       <input
         ref="inputRef"
         v-model="searchTerm"
@@ -31,7 +34,7 @@
         @keydown.enter="handleEnter"
         @keydown.esc="cancelEditing"
         @input="isOpen = true"
-        class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body z-50 text-[12px]"
+        class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[150px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body z-50 text-[12px] h-8"
         :placeholder="placeholder"
       />
 
@@ -50,10 +53,10 @@
                 v-for="option in filteredOptions"
                 :key="option._id ?? option.value"
                 @mousedown.prevent="selectOption(option)"
-                class="px-3 py-1.5 capitalize font-medium cursor-pointer hover:bg-bg-dropdown-menu-hover text-[12px] text-text-primary flex items-center gap-2"
+                class="px-3 py-1.5 capitalize font-medium cursor-pointer hover:bg-bg-dropdown-menu-hover text-[12px] text-text-primary flex items-center gap-2"                
               >
                 <slot name="option" :option="option">
-                  {{ getOptionLabel(option) }}
+                 <span  :style="columnName?.toLowerCase() === 'priority' ? { backgroundColor: getPriorityColor(getOptionLabel(option)), color:'white', padding:'2px 8px', borderRadius:'10px' } : {}">{{ getOptionLabel(option) }}</span>
                 </slot>
               </div>
             </template>
@@ -99,11 +102,13 @@ const props = withDefaults(
     disabled?: boolean;
     displayField?: string; // Field to use for display if modelValue is an ID
     emptyText?: string;
+    columnName?: string;
   }>(),
   {
     options: () => [],
     placeholder: "Type to search...",
     disabled: false,
+    columnName: "",
   }
 );
 
@@ -111,6 +116,24 @@ const emit = defineEmits<{
   (e: "update:modelValue", value: any): void;
   (e: "change", value: any): void;
 }>();
+
+
+// colors for priority column
+const PRIORITY_COLORS: Record<string, string> = {
+  High: "#F87171",   // Red
+  Medium: "#FBBF24", // Yellow
+  Low: "#34D399",    // Green
+};
+
+const displayBackgroundColor = computed(() => {
+  if (props.columnName.toLowerCase() !== "priority") return "transparent";
+  const value = internalValue.value;
+  return PRIORITY_COLORS[value] ?? "#E5E7EB"; // fallback gray
+});
+const getPriorityColor = (value: string | number) => {
+  if (props.columnName.toLowerCase() !== "priority") return "transparent";
+  return PRIORITY_COLORS[value] ?? "#E5E7EB"; // fallback gray
+};
 
 const isEditing = ref(false);
 const isOpen = ref(false);
