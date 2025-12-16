@@ -81,7 +81,6 @@ import {
   watch,
   onMounted,
   onBeforeUnmount,
-  watchEffect,
 } from "vue";
 
 interface Option {
@@ -270,7 +269,7 @@ const handleEnter = () => {
   cancelEditing();
 };
 
-const handleBlur = (e: FocusEvent) => {
+const handleBlur = () => {
   // Give time for mousedown on option to fire
   setTimeout(() => {
     // Only close if we didn't just click an option (which is handled by mousedown.prevent)
