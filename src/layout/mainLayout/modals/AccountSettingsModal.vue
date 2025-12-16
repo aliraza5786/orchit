@@ -1,7 +1,6 @@
 <template>
   <BaseModal
     v-model="isOpen"
-    @update:modelValue="() => router.push('/')"
     size="lg"
     :modalClass="'!max-w-[900px]'"
   >
@@ -447,6 +446,7 @@ watch(
   }
 );
 const profileData = computed(() => profile.value?.data || null);
+console.log("profile data", profileData.value);
 
 const form = ref({
   fullName: "",
@@ -549,16 +549,16 @@ function saveChanges() {
 }
 
 function cancelChanges() {
-  if (profileData.value) {
-    form.value.fullName = profileData.value.u_full_name || "";
-    form.value.jobTitle = profileData.value.u_job_title || "";
-    form.value.department = profileData.value.u_department || "";
-    form.value.location = profileData.value.u_location || "";
-  }
-  avatarPreview.value = "";
-  uploadedAvatarUrl.value = "";
+  // if (profileData.value) {
+  //   form.value.fullName = profileData.value.u_full_name || "";
+  //   form.value.jobTitle = profileData.value.u_job_title || "";
+  //   form.value.department = profileData.value.u_department || "";
+  //   form.value.location = profileData.value.u_location || "";
+  // }
+  // avatarPreview.value = "";
+  // uploadedAvatarUrl.value = "";
   isOpen.value = false;
-  router.push("/");
+  // router.push("/");
 }
 
 // function getStatusBadge(status: string) {

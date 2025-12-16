@@ -6,7 +6,17 @@ import FeaturesSec from './components/FeaturesSec.vue';
 import GetStartedStepsSec from './components/GetStartedStepsSec.vue';
 import HeroBanner from './components/HeroBanner.vue';
 import SmarterProjectSec from './components/SmarterProjectSec.vue'; 
-
+import { useAuthStore } from '../stores/auth'
+import { useRouter } from 'vue-router';
+import { onMounted } from 'vue';
+const router = useRouter()
+const authStore = useAuthStore()
+ const isLoggedIn=() =>{
+  if(authStore.isAuthenticated){
+    router.push('/dashboard')
+  }
+ }
+onMounted(isLoggedIn);
 </script>
 
 <template>

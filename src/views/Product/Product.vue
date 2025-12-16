@@ -326,6 +326,7 @@ import {
   watch,
   watchEffect,
   nextTick,
+  triggerRef
 } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
 import Dropdown from "../../components/ui/Dropdown.vue";
@@ -354,17 +355,15 @@ import KanbanTicket from "../../components/feature/kanban/KanbanTicket.vue";
 import Fuse from "fuse.js";
 import { debounce } from "lodash";
 import TableView from "../../components/feature/TableView/TableView.vue";
-// import { getStatusStyle } from '../../utilities/stausStyle';
-import BaseSelectField from "../../components/ui/BaseSelectField.vue";
 import { getInitials } from "../../utilities";
 import { avatarColor } from "../../utilities/avatarColor";
-import AssigmentDropdown from "./components/AssigmentDropdown.vue";
 import DatePicker from "./components/DatePicker.vue";
 import MindElixir from "mind-elixir";
 import { toast } from "vue-sonner";
 import { usePermissions } from "../../composables/usePermissions";
 import { request, toApiMessage } from "../../libs/api";
-
+import TableSearchCell from "../../components/feature/TableView/TableSearchCell.vue";
+import TableAssigneeCell from "../../components/feature/TableView/TableAssigneeCell.vue";
 const {
   canEditSheet,
   canDeleteSheet,
@@ -783,33 +782,33 @@ const laneOptions = computed<any[]>(() =>
 
 const columns = computed(() => {
   return [
-    {
-      key: "card-title",
-      label: "Title",
-      render: ({ row, value }: any) =>
-        h("div", [
-          h(
-            "a",
-            {
-              onClick: () => {
-                selectedCard.value = row;
-              },
-              class:
-                "text-sm underline text-blue-500 w-full overflow-ellipsis cursor-pointer",
-            },
-            row["card-code"]
-          ),
-          h("input", {
+     {
+    key: "card-title",
+    label: "Title",
+    render: ({ row, value }: any) =>
+      h("div", { class: "flex items-center gap-1 w-full" }, [
+        h(
+          "a",
+          {
+            onClick: () => (selectedCard.value = row),
+            class:
+              "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
+          },
+          row["card-code"]
+        ),
+        h("div", { class: "flex-1 min-w-0" }, [
+           h("input", {
             onFocusout: (e: any) => {
               handleChangeTicket(row?._id, "card-title", e?.target?.value);
             },
             class:
-              "text-sm w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md",
+              "text-[12px] w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md",
             defaultValue: value,
             disabled: !canEditCard.value,
           }),
         ]),
-    },
+         ]),
+       },
 
     {
       key: "end-date",
@@ -817,34 +816,35 @@ const columns = computed(() => {
       render: ({ row, value }: any) => {
         const date = ref<any>(value);
         return h(DatePicker, {
-          class: " capitalize flex items-center gap-2 ",
-          placeholder: "Set start date",
+          class: " capitalize flex items-center gap-2 text-[12px]",
+          placeholder: "Set start date", 
           modelValue: date.value,
           disabled: !canEditCard.value,
           "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e),
+           emptyText: "Date"
         });
       },
     },
     {
       key: "lane",
       label: "Lane",
-      render: ({ row, value }: any) =>
-        h(BaseSelectField, {
-          class: "capitalize flex items-center gap-2 ",
-          size: "sm",
-          options: laneOptions.value ?? [],
-          placeholder: "Select lane",
-          allowCustom: false,
-          canEditCard: !canEditCard.value,
-          modelValue: value?._id,
-          "onUpdate:modelValue": (e: any) => setLane(row?._id, e),
+      render: ({ row }: any) =>
+        h(TableSearchCell, {
+            options: laneOptions.value ?? [],
+            placeholder: "Select lane",
+            modelValue: row.lane?._id || null, // Pass ID
+            disabled: !canEditCard.value,
+             // Lane options are objects { _id, title }, passing them directly works with our component logic
+            'onUpdate:modelValue': (e: any) => setLane(row?._id, e),
+            displayField: 'title', // Helpful if we need explicit field, but component tries to auto-detect
+            emptyText: "Lane"
         }),
     },
     {
       key: "created_by",
       label: "Owner",
       render: ({ value }: any) =>
-        h("div", { class: "capitalize flex items-center gap-2 " }, [
+        h("div", { class: "capitalize flex items-center gap-2  px-3" }, [
           h("div", { class: ` rounded-full  ` }, [
             value?.u_profile_image
               ? h("img", {
@@ -855,7 +855,7 @@ const columns = computed(() => {
                   "div",
                   {
                     class:
-                      "w-6 h-6 rounded-full flex justify-center items-center ",
+                      "w-5 h-5 rounded-full flex justify-center items-center text-[11px] ",
                     style: `background:${
                       value?.u_full_name
                         ? avatarColor({
@@ -868,20 +868,25 @@ const columns = computed(() => {
                   getInitials(value?.u_full_name)
                 ),
           ]),
-          h("span", value ? value?.u_full_name : ""),
+          h("span",
+          {
+            class: "text-[12px]", // your class here
+          },  
+          value ? value?.u_full_name : ""),
         ]),
     },
     {
       key: "seat",
       label: "Assignee",
       render: ({ row, value }: any) =>
-        h(AssigmentDropdown, {
+        h(TableAssigneeCell, {
           class: "capitalize flex items-center gap-2 ",
           onAssign: (user: any) => assignHandle(row?._id, user),
           assigneeId: value,
           seat: value,
           name: true,
           disabled: !canAssignCard.value,
+          emptyText: "Assignee"
         }),
     },
 
@@ -891,16 +896,23 @@ const columns = computed(() => {
         key: e?.slug,
         label: e?.slug,
         render: ({ row, value }: any) => {
-          const type = ref(value);
+          // Dynamic variables are in an array: [{ slug: 'priority', value: 'High' }]
+          let cellValue = value;
+          if (Array.isArray(row?.variables)) {
+             const found = row.variables.find((v: any) => v.slug === e.slug);
+             if (found) cellValue = found.value;
+          } else {
+             // Fallback for object map or top-level
+             cellValue = row?.variables?.[e.slug] ?? row?.[e.slug] ?? value;
+          }
+          
           return h("div", { class: "capitalize flex items-center gap-2" }, [
-            h(BaseSelectField, {
-              class: "w-full border-none",
+            h(TableSearchCell, {
               options: getOptions(e.data ?? []),
-              size: "sm",
-              modelValue: type?.value,
-              defaultValue: type?.value,
-              canEditCard: !canEditCard.value,
-              onUpdate: (val: any) => {
+              modelValue: cellValue,
+              disabled: !canEditCard.value,
+              emptyText: e.slug, // Add placeholder
+              'onUpdate:modelValue': (val: any) => {
                 handleChangeTicket(row?._id, e.slug, val);
               },
             }),
@@ -911,7 +923,9 @@ const columns = computed(() => {
   ];
 });
 const assignHandle = (cardId: any, user: any) => {
-
+updateOptimisticCard(cardId, (card) => {
+      card.seat = user;
+  });
   moveCard.mutate({ card_id: cardId, seat_id: user?._id });
 };
 
@@ -937,14 +951,65 @@ const moveCard = useMoveCard({
     // queryClient.invalidateQueries({ queryKey: ['roles'] })
   },
 });
-function handleChangeTicket(id: any, key: any, value: any) {
-  moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } });
-}
+const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
+  // Fallback to local mutation as setQueriesData might miss the exact key or not trigger the view update
+  if (!Lists.value) return;
+  
+  const listIndex = Lists.value.findIndex((l: any) =>
+    l.cards.some((c: any) => c._id === cardId)
+  );
+
+  if (listIndex !== -1) {
+    const cardIndex = Lists.value[listIndex].cards.findIndex(
+      (c: any) => c._id === cardId
+    );
+    if (cardIndex !== -1) {
+       // Create a shallow copy of the card to trigger reactivity (immutable update)
+       const newCard = { ...Lists.value[listIndex].cards[cardIndex] };
+       
+       // Run the updater on the copy
+       updater(newCard);
+       
+       // Replace the card in the list
+       Lists.value[listIndex].cards[cardIndex] = newCard;
+       
+       // trigger Vue to detect changes
+       triggerRef(Lists);
+    }
+  }
+};
 const { mutate: addTicket } = useAddTicket({
   onSuccess: () => {
     // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
   },
 });
+function handleChangeTicket(id: any, key: any, value: any) {
+  updateOptimisticCard(id, (card) => {
+      // Always update top-level property if it matches certain keys like 'card-title'
+      if (key === 'card-title') {
+          card[key] = value;
+      }
+
+      // Check if variables is an array (per user data)
+      if (Array.isArray(card.variables)) {
+          const variable = card.variables.find((v: any) => v.slug === key);
+          if (variable) {
+              variable.value = value;
+          } else {
+              // Add new variable if not found (assuming Type Select/Text defaults)
+              card.variables.push({ slug: key, value: value, type: 'Select' });
+          }
+      } else if (card.variables && typeof card.variables === 'object') {
+          // Fallback for object structure if mixed
+          card.variables[key] = value;
+      } else {
+          // Fallback for top-level props
+          card[key] = value;
+      }
+  });
+
+  moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } });
+}
 function handleCreateTicket(title: any) {
   if (title["card-title"]) {
     const payload = {
@@ -977,6 +1042,17 @@ const setStartDate = (card_id: any, e: any) => {
   moveCard.mutate({ card_id: card_id, variables: { "start-date": e } });
 };
 function setLane(id: any, v: any) {
+  updateOptimisticCard(id, (card) => {
+      const newLane = laneOptions.value.find((l: any) => l._id === v);
+      console.log(newLane, "its new")
+       if (newLane) { 
+            card.lane = newLane; 
+       }
+       console.log(card.lane, "after")
+  });
+  // Trigger Vue to detect the nested change
+  triggerRef(Lists);
+
   moveCard.mutate({ card_id: id, workspace_lane_id: v });
 }
 const { mutate: toggleVisibility } = useVarVisibilty();

@@ -305,7 +305,7 @@ function openAccountSettings() {
 
 /* --- Sliding underline indicator logic --- */
 const links = [
-  { label: 'Workspaces', to: '/', exact: true },
+  { label: 'Workspaces', to: '/dashboard', exact: true },
   { label: 'My Tasks', to: '/dashboard/task' },
   { label: 'Users', to: '/dashboard/users' },
 ]
