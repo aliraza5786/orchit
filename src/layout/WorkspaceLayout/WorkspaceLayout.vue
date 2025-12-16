@@ -71,21 +71,23 @@ const filters = ref({
 
 // sidebar toggle concept
 const sidebarExpanded = ref(true);
-const isSmallScreen = ref(window.innerWidth < 640); // sm breakpoint
+const isSmallScreen = ref(false); // sm breakpoint
 const handleResize = () => {
   isSmallScreen.value = window.innerWidth < 640;
 };
 // Update sidebar automatically if screen is small
-watch(isSmallScreen, (val) => {
-  if (val) {
-    sidebarExpanded.value = false;
-  } else {
-    sidebarExpanded.value = true; // or keep previous state if you want
-  }
-});
+watch(
+  isSmallScreen,
+  (val) => {
+    if (val) {
+      sidebarExpanded.value = false;
+    }
+  },
+  { immediate: true }
+);
 onMounted(() => {
-  window.addEventListener('resize', handleResize);
-  handleResize(); // initial check
+   handleResize(); // initial check
+   window.addEventListener('resize', handleResize);
 });
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);

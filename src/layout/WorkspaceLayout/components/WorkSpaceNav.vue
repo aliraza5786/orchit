@@ -1,17 +1,17 @@
 <template>
   <nav
-    class="flex items-center justify-between min-h-16 w-full overflow-x-auto"
+    class="flex items-center justify-between min-h-16 w-full gap-4"
   >
     <!-- Left side: Logo + lanes -->
     <div
-      :class="`text-2xl font-bold flex items-center min-w-[320px] gap-4 sm:gap-8 ${
+      :class="`text-2xl font-bold flex items-center min-w-0 gap-4 ${
         workspaceStore.background.startsWith('url')
           ? 'text-text-secondary'
           : 'text-text-primary'
       }`"
     >
       <!-- Logo + Title (now a dropdown trigger) -->
-      <div class="relative flex items-center ps-2">
+      <div class="relative flex items-center ps-3.5 sm:ps-2">
         <div :class="expanded ? 'w-[235px]' : 'w-auto'">
           <button
             ref="logoBtnRef"
@@ -45,7 +45,7 @@
                   <img
                     :src="localWorkspace.logo ?? dp"
                     alt="Workspace menu"
-                    class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover"
+                    class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover shrink-0"
                   />
                   <h3
                     v-if="expanded"
@@ -57,7 +57,7 @@
               </div>
 
             <svg
-              class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1"
+              class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1 shrink-0"
               :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -72,7 +72,7 @@
           </button>
         </div>
         <div
-          class="flex items-center justify-center transition-all duration-200 w-[40px] h-[50px]"
+          class="hidden sm:flex items-center justify-center transition-all duration-200 w-[40px] h-[50px]"
         >
           <!-- Icon (toggle sidebar) -->
           <i
@@ -145,7 +145,7 @@
     </div>
 
     <!-- Right side -->
-    <div class="flex gap-2">
+    <div class="flex sm:gap-2 min-w-max items-center">
       <button class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-1 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20" @click="workspaceStore.toggleChatBotPanel()" v-tooltip="'Ask any question'">
         <i class="fa-solid fa-sparkles"></i>
         Ask Ai
@@ -168,7 +168,7 @@
     >
       <!-- Home -->
       <button
-        class="w-full px-3 py-2 cursor-pointer text-left text-sm hover:bg-bg-card/70 rounded-t-xl flex items-center gap-2"
+        class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center h-8 gap-2 px-3 py-1 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20 text-nowrap"
         role="menuitem"
         @click="goHome"
         ref="firstItemRef"
