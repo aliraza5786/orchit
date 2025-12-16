@@ -24,19 +24,38 @@
             @keydown.enter.prevent="toggleLogoMenu"
             @keydown.space.prevent="toggleLogoMenu"
           >
-            <div class="flex items-center">
-              <img
-                :src="getWorkspace?.logo ?? dp"
-                alt="Workspace menu"
-                class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover"
-              />
-              <h3
-                v-if="expanded"
-                class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
-              >
-                {{ getWorkspace?.variables?.title }}
-              </h3>
-            </div>
+           <div class="flex items-center min-h-[25px]">
+                <!-- Loader -->
+                <div
+                  v-if="isWorkspaceLoading"
+                  class="flex items-center gap-2"
+                >
+                 <div class="w-[20px] h-[20px] rounded-full border-2 border-t-transparent animate-spin"
+                style="border-color: #AFF4EF #AFF4EF transparent #29BF7F;"
+              ></div>
+
+                  <div
+                    v-if="expanded"
+                    class="h-4 w-32 bg-border rounded animate-pulse color-[#AFF4EF] hidden sm:block"
+                  ></div>
+                </div>
+
+                <!-- Workspace content -->
+                <div v-else class="flex items-center">
+                  <img
+                    :src="localWorkspace.logo ?? dp"
+                    alt="Workspace menu"
+                    class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover"
+                  />
+                  <h3
+                    v-if="expanded"
+                    class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
+                  >
+                    {{ localWorkspace.variables.title }}
+                  </h3>
+                </div>
+              </div>
+
             <svg
               class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1"
               :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'"
@@ -200,54 +219,67 @@
 import LaneDropdown from "./LaneDropdown.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import dp from "../../../assets/global/dummy.jpeg";
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import { useRouter } from "vue-router";
-import {
-  useSingleWorkspace,
-  useWorkspaces,
-} from "../../../queries/useWorkspace";
+import { useWorkspaces } from "../../../queries/useWorkspace"; // keep workspaces listing
 import { useWorkspaceId } from "../../../composables/useQueryParams";
-import { useQueryClient } from "@tanstack/vue-query";
 import { usePermissions } from "../../../composables/usePermissions"; 
+import { request } from "../../../libs/api";
 const { canCreateLane } = usePermissions();
+
 const router = useRouter();
 const workspaceStore = useWorkspaceStore();
-const { data: workspaces } = useWorkspaces(1, 30);
+const page = ref(1);
+const limit = ref(30);
+
+const { data: workspaces } = useWorkspaces(page, limit);
 const laneId = ref("");
 const { workspaceId } = useWorkspaceId();
-const {
-  data: getWorkspace,
-  refetch,
-  isFetched,
-} = useSingleWorkspace(useWorkspaceId().workspaceId.value);
+const isWorkspaceLoading = computed(() => {
+  return (
+    !localWorkspace.value ||
+    !localWorkspace.value.logo ||
+    !localWorkspace.value.variables?.title
+  );
+});
+// Local reactive workspace
+const localWorkspace = ref<any>(null);
 
-const localWorkspace = ref(getWorkspace.value);
-const saveToLocalStorage = () =>{
-  if(getWorkspace.value){
-    const currentName = getWorkspace.value.variables
-    localStorage.setItem('currentName', currentName.title)
-  }else{
-    return null;
+const fetchWorkspace = async (id: string | number) => {
+  try {
+    const data = await request({
+      url: `/workspace/${id}`,
+      method: "GET",
+      params: { is_archive: false },
+    });
+
+    // Update localWorkspace and localStorage
+    localWorkspace.value = data;
+    if (data?.variables?.title) {
+      localStorage.setItem("currentName", data.variables.title);
+    }
+  } catch (error) {
+    console.error("Error fetching workspace:", error);
   }
+};
+
+// Initialize current workspace
+if (workspaceId.value) {
+  fetchWorkspace(workspaceId.value);
 }
-saveToLocalStorage();
+
+// Duplicate lane handler
 const duplicateHandler = (data: any) => {
+  if (!localWorkspace.value) return;
   localWorkspace.value = {
-    ...localWorkspace,
-    lanes: [...localWorkspace.value?.lanes, data],
+    ...localWorkspace.value,
+    lanes: [...localWorkspace.value.lanes, data],
   };
 };
-watch(
-  () => isFetched,
-  () => {
-    localWorkspace.value = getWorkspace.value;
-  }
-);
-// toggle side bar
+
+// Toggle sidebar
 const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
-const handleSidebarToggle = () => {
-  emit("toggle-sidebar");
-};
+const handleSidebarToggle = () => emit("toggle-sidebar");
 
 // === Logo dropdown state & refs ===
 const logoMenuOpen = ref(false);
@@ -257,16 +289,12 @@ const firstItemRef = ref<HTMLButtonElement | null>(null);
 
 const toggleLogoMenu = async () => {
   logoMenuOpen.value = !logoMenuOpen.value;
-  if (logoMenuOpen.value) {
-    await nextTick();
-    // Focus first actionable item for a11y
-    firstItemRef.value?.focus();
-  }
+  if (logoMenuOpen.value) await nextTick();
+  firstItemRef.value?.focus();
 };
 
 const closeLogoMenu = () => {
   logoMenuOpen.value = false;
-  // Return focus to the trigger
   logoBtnRef.value?.focus();
 };
 
@@ -292,7 +320,7 @@ const onDocClick = (e: MouseEvent) => {
   }
 };
 
-// Close on window blur (optional nice touch)
+// Close on window blur
 const onWindowBlur = () => {
   if (logoMenuOpen.value) closeLogoMenu();
 };
@@ -306,39 +334,33 @@ onBeforeUnmount(() => {
   window.removeEventListener("blur", onWindowBlur);
 });
 
-// Actions
+// Navigation actions
 const goHome = () => {
   closeLogoMenu();
-  router.push({ path: "/" });
+  router.push({ path: "/dashboard" });
 };
-const queryClient = useQueryClient();
+
+// Switch workspace
 const switchTo = async (ws: any) => {
   router.push(
-    `/workspace/peak/${ws._id}/${
-      ws.LatestTask?.job_id ? ws.LatestTask?.job_id : ""
-    }`
+    `/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ?? ""}`
   );
-  queryClient.invalidateQueries({ queryKey: ["workspaces", "byId"] });
-  refetch();
-  // Call your store action to switch workspaces
+  await fetchWorkspace(ws._id);
+
   closeLogoMenu();
 };
 
-const handleClick = () => {
-  workspaceStore.toggleSettingPanel();
-};
-const createLaneHandler = () => {
-  workspaceStore.toggleCreateLaneModalWithAI();
-};
-
+const handleClick = () => workspaceStore.toggleSettingPanel();
+const createLaneHandler = () => workspaceStore.toggleCreateLaneModalWithAI();
 const openUpdateModal = (id: any) => {
   laneId.value = id;
   workspaceStore.toggleUpdateLaneModal();
 };
 
 defineExpose({ laneId });
-defineProps<{ getWorkspace: any; expanded?: Boolean }>();
+defineProps<{ expanded?: Boolean }>();
 </script>
+
 
 <style scoped>
 /* Prevent accidental text selection while navigating the menu quickly */

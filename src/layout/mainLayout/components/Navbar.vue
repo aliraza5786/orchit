@@ -60,7 +60,7 @@
               alt="profile_img">
           </button>
 
-          <button v-else class="h-9 w-9 overflow-hidden rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
+          <button v-else class="h-9 w-9 overflow-hidden cursor-pointer rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
                      hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
             aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
             :aria-controls="menuOpen ? 'user-menu' : undefined" @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
@@ -106,7 +106,7 @@
                 </li>
 
                 <!-- Theme submenu -->
-                <li class="relative" @mouseenter="openTheme()" @mouseleave="closeTheme()">
+                <li class="relative cursor-pointer" @mouseenter="openTheme()" @mouseleave="closeTheme()">
                   <button ref="themeTriggerRef"
                     class="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
                     role="menuitem" aria-haspopup="menu" :aria-expanded="themeOpen ? 'true' : 'false'"
@@ -118,7 +118,7 @@
                     <i class="fa-solid fa-chevron-right"></i>
                   </button>
 
-                  <Transition enter-active-class="transition duration-150 ease-out"
+                  <Transition enter-active-class="transition duration-150 ease-out cursor-pointer"
                     enter-from-class="opacity-0 translate-x-1 scale-95"
                     enter-to-class="opacity-100 translate-x-0 scale-100"
                     leave-active-class="transition duration-120 ease-in"
@@ -127,15 +127,15 @@
                     <div v-if="themeOpen" ref="themeMenuRef"
                       class="absolute top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
                       role="menu" :class="themeFlipLeft ? 'right-full mr-2' : 'left-full ml-2'">
-                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('system')" type="button">
                         <i class="fa-solid fa-desktop"></i> System
                       </button>
-                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('light')" type="button">
                         <i class="fa-regular fa-sun-cloud"></i> Light
                       </button>
-                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('dark')" type="button">
                         <i class="fa-regular fa-clouds-moon"></i> Dark
                       </button>
@@ -145,7 +145,7 @@
 
 
                 <li>
-                  <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                  <button class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
                     role="menuitem" type="button" @click="handleLogout">
                     <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
                     <span>Log out</span>
@@ -174,10 +174,11 @@ import { useWorkspaceStore } from '../../../stores/workspace'
 import AccountSettingsModal from '../modals/AccountSettingsModal.vue'
 import LimitExceededModal from '../modals/LimitExceededModal.vue'
 import NotificationBell from './NotificationBell.vue'
+import { useAuthStore } from '../../../stores/auth'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
 const { theme, setTheme } = useTheme()
-
+const authStore = useAuthStore()
 /* Account Settings Modal */
 const showAccountSettings = ref(false)
 function handleUgrade() {
@@ -214,7 +215,6 @@ const menuOpen = ref(false)
 const themeOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 const themeTriggerRef = ref<HTMLElement | null>(null)
-const themeMenuRef = ref<HTMLElement | null>(null)
 const themeFlipLeft = ref(false)
 
 function toggleMenu() {
@@ -283,7 +283,7 @@ async function handleLogout() {
     workspaceStore.setWorkspace(null)
 
     localStorage.clear()
-
+    authStore.logout()
     await queryClient.cancelQueries({ queryKey: ['me'] })
     await queryClient.cancelQueries({ queryKey: ['profile'] })
     await queryClient.cancelQueries({ queryKey: ['workspaces'] })

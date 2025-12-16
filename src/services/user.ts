@@ -1,16 +1,31 @@
 import api from "../libs/api";
 import { useQuery } from '@tanstack/vue-query'
-
-
+import { useAuthStore } from '../stores/auth'
+import { watch } from 'vue'
 export const getProfile = () => api.get('/profile').then(r => r.data)
 
 
 export function useProfile() {
-  return useQuery({
+  const auth = useAuthStore()
+
+  const query = useQuery({
     queryKey: ['me'],
     queryFn: getProfile,
-    staleTime: 5 * 60 * 1000, // 5 min: adjust as needed
+    enabled: auth.isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   })
+
+  watch(
+    () => query.error.value,
+    (err) => {
+      if (err) {
+        auth.logout()
+      }
+    }
+  )
+
+  return query
 }
 
 export function useCompanyId() {

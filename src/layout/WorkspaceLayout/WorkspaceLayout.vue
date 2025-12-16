@@ -49,8 +49,17 @@ import { useRoute } from 'vue-router';
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
  const workspaceId = computed<string>(() => toParamString(route?.params?.id));
-const { data: getWorkspace, isPending, isLoading ,isFetching } = useSingleWorkspace(workspaceId.value)
-console.log(getWorkspace.value, "workspace data");
+  
+const { data: getWorkspace, isPending, isLoading ,isFetching, refetch } = useSingleWorkspace(workspaceId.value)
+watch(
+  workspaceId,
+  async (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      await refetch();
+    }
+  },
+  { immediate: true } 
+);
 const workspaceNavRef = ref<any>(null);
 const isDrawerOpen = ref(true)
 

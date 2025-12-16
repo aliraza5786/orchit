@@ -15,6 +15,9 @@ node_modules
 .env.production
 .env.test
 
+# Build output
+dist/
+build/
 
 *.local
 

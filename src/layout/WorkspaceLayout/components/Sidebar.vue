@@ -121,8 +121,7 @@ import { usePermissions } from "../../../composables/usePermissions";
 // import WorkSpaceDropdown  from "./workSpaceDropdown.vue";
 
 const {
-  workspaceId,
-  // jobId
+  workspaceId
 } = useRouteIds();
 
 const { canCreateModule, canAccessModule } = usePermissions();
@@ -134,7 +133,6 @@ const props = defineProps<{
 
 const filteredModules = computed(() => {
   if (!props.workspace?.modules) return [];
-  console.log(props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all')), "these are all modules")
   return props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
 });
 
