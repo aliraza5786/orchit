@@ -11,7 +11,7 @@
       @click="toggle"
       :disabled="disabled"
     >
-      <span class="text-[14px] truncate" v-if="selectedDate">{{ formattedLabel }}</span>
+      <span class=" truncate" :class="tableInputClass? 'text-[12px]':'text-[14px]'" v-if="selectedDate"><i v-if="tableInputClass" class="fa-regular fa-calendar me-1"></i> {{ formattedLabel }}</span>
       <template v-else>
          <!-- Hover State -->
          <span v-if="emptyText" class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 text-xs text-text-secondary truncate">
@@ -106,6 +106,7 @@ const props = withDefaults(defineProps<{
   emitAs?: 'ymd' | 'iso' | 'date'
   placeholder: string
   emptyText?: string
+  tableInputClass?: Boolean 
 }>(), {
   disabled: false,
   clearable: true,

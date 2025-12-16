@@ -802,7 +802,7 @@ const columns = computed(() => {
               handleChangeTicket(row?._id, "card-title", e?.target?.value);
             },
             class:
-              "text-[12px] w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md",
+              "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8",
             defaultValue: value,
             disabled: !canEditCard.value,
           }),
@@ -818,6 +818,7 @@ const columns = computed(() => {
         return h(DatePicker, {
           class: " capitalize flex items-center gap-2 text-[12px]",
           placeholder: "Set start date", 
+          tableInputClass: true,
           modelValue: date.value,
           disabled: !canEditCard.value,
           "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e),
@@ -915,6 +916,7 @@ const columns = computed(() => {
               'onUpdate:modelValue': (val: any) => {
                 handleChangeTicket(row?._id, e.slug, val);
               },
+              columnName: e.slug,
             }),
           ]);
         },
