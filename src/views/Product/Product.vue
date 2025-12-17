@@ -6,7 +6,6 @@
       class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1"
     >
       <Dropdown
-        v-if="view !== 'mindmap'"
         @edit-option="openEditSprintModal"
         v-model="selected_sheet_id"
         :canEdit="canEditSheet"
@@ -25,9 +24,6 @@
           </div>
         </template>
       </Dropdown>
-      <div v-if="view === 'mindmap'">
-        <h3 class="font-bold text-xl">Mind Map</h3>
-      </div>
       <div class="flex gap-3 items-center">
         <Dropdown
           v-if="view == 'kanban' || 'mindmap'"
@@ -199,7 +195,7 @@
     </template>
     <!-- MindMap View -->
     <template v-if="view === 'mindmap'">
-      <div ref="mindMapRef" class="w-full h-[90vh] rounded-md relative"></div>
+      <div ref="mindMapRef" class="w-full h-[100%] overflow-y-hidden rounded-md relative"></div>
       <!-- Popup container -->
       <div
         v-if="activeAddList"
@@ -340,7 +336,6 @@ import {
   useMoveCard,
   useSheetList,
   useSheets,
-  useAllSheetsList,
   useUpdateWorkspaceSheet,
   useVarVisibilty,
   useVariables,
@@ -420,7 +415,7 @@ const deleteTicket = async () => {
     removeCardFromState(selectedDeleteId.value);
 
     // REFRESH all sheets data after delete
-    await refetchAllSheets();
+    await refetchSheets();
 
     // Close modal and reset state
     showTicketDelete.value = false;
@@ -458,7 +453,7 @@ const handleEditTicket = async (card: any, newStatus: string) => {
     card["card-status"] = newStatus;
 
     toast.success("Ticket status updated successfully");
-    await refetchAllSheets();
+    await refetchSheets();
   } catch (err) {
     toast.error(toApiMessage(err));
   } finally {
@@ -483,7 +478,7 @@ interface Sheet {
 }
 
 const removeCardFromState = (cardId: string) => {
-  allSheetsData.value?.sheets?.forEach((sheet: Sheet) => {
+  Lists.value?.sheets?.forEach((sheet: Sheet) => {
     sheet.sheet_lists?.forEach((list: SheetList) => {
       list.cards = list.cards.filter((card: Card) => card._id !== cardId);
     });
@@ -568,15 +563,12 @@ const { data: Lists, isPending } = useSheetList(
   computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
   selected_view_by // ref
 );
-const { data: allSheetsData, refetch: refetchAllSheets } = useAllSheetsList(
-  moduleId,
-  selected_view_by,
-  computed(() => [...workspaceStore.selectedLaneIds])
-);
 
 const selectCardHandler = (card: any) => {
   selectedCard.value = card;
 };
+(window as any).selectCardHandler = selectCardHandler;
+
 const isCreateSheetModal = ref(false);
 const createSheet = () => {
   selectedSheettoAction.value = {};
@@ -599,7 +591,7 @@ function onReorder(a: any) {
       },
       {
         onSuccess: () => {
-          refetchAllSheets();
+          refetchSheets();
         },
       }
     );
@@ -617,7 +609,7 @@ function onReorder(a: any) {
       },
       {
         onSuccess: () => {
-          refetchAllSheets();
+          refetchSheets();
         },
       }
     );
@@ -802,7 +794,7 @@ const columns = computed(() => {
               handleChangeTicket(row?._id, "card-title", e?.target?.value);
             },
             class:
-              "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8",
+              "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
             defaultValue: value,
             disabled: !canEditCard.value,
           }),
@@ -835,9 +827,8 @@ const columns = computed(() => {
             placeholder: "Select lane",
             modelValue: row.lane?._id || null, // Pass ID
             disabled: !canEditCard.value,
-             // Lane options are objects { _id, title }, passing them directly works with our component logic
             'onUpdate:modelValue': (e: any) => setLane(row?._id, e),
-            displayField: 'title', // Helpful if we need explicit field, but component tries to auto-detect
+            displayField: 'title',
             emptyText: "Lane"
         }),
     },
@@ -1066,17 +1057,17 @@ const toggleVisibilityHandler = (key: any, visible: any) => {
     },
   });
 };
-
+const sheetDescription = ref<string>("");
 // mindmap
 function buildMindMapDataAllSheets(sheetsData: any[]) {
-  const root = {
-    id: "root",
-    topic: localStorage.getItem("currentName") || "Root Node",
-    isRoot: true,
-    children: [] as any[],
-  };
-
-  if (!Array.isArray(sheetsData)) return root;
+  if (!Array.isArray(sheetsData)) {
+    return {
+      id: "root",
+      topic: localStorage.getItem("currentName") || "Root Node",
+      isRoot: true,
+      children: [],
+    };
+  }
 
   const STATUS_COLORS: Record<string, string> = {
     "In Progress": "#FFB979",
@@ -1084,213 +1075,203 @@ function buildMindMapDataAllSheets(sheetsData: any[]) {
     Done: "#9AFFC6",
   };
 
+  const root = {
+    id: "root",
+    topic: localStorage.getItem("currentName") || "Root Node",
+    isRoot: true,
+    children: [] as any[],
+  };
+
+const variableMap: Record<string, any> = {};
+   
   sheetsData.forEach((sheet, sheetIdx) => {
-    const variables = sheet.variables || {};
-    const variableTitle =
-      variables["sheet-title"] || `Variable ${sheetIdx + 1}`;
-
-    const variableNode = {
-      id: `variable-${sheetIdx}`,
-      topic: variableTitle,
-      children: [] as any[],
-    };
-
-    const sheetLists = Array.isArray(sheet.sheet_lists)
-      ? sheet.sheet_lists
-      : [];
-
-    // Types
-    interface Seat {
-      status?: string;
-    }
-
-    interface Card {
-      seat?: Seat;
-      ["card-title"]?: string;
-      ["card-status"]?: string;
-      ["card-code"]?: string;
-    }
-
-    interface SheetList {
-      title?: string;
-      cards: Card[];
-    }
-
-    // MAIN LOOP
-    sheetLists.forEach((sheetList: SheetList, listIdx: number) => {
-      const sheetListNode = {
-        id: `sheetlist-${sheetIdx}-${listIdx}`,
-        topic: sheetList.title || `Untitled Sheet List ${listIdx + 1}`,
+    const sheetTitle: string = sheet.variables?.["sheet-title"] || "Untitled";
+    const description: string = sheet.variables?.["sheet-description"] || "Untitled";
+    sheetDescription.value = description;
+    if (!variableMap[sheetTitle]) {
+      variableMap[sheetTitle] = {
+        id: `variable-${sheet._id || sheetIdx}`,
+        topic: sheetTitle,
         children: [] as any[],
       };
+      root.children.push(variableMap[sheetTitle]);
+    }
 
-      const cards: Card[] = Array.isArray(sheetList.cards)
-        ? sheetList.cards
-        : [];
+    const variableNode = variableMap[sheetTitle];
 
-      cards.forEach((card: Card, cardIdx: number) => {
-        const seat: Seat | undefined = card.seat;
+    // Sheet list node
+    const sheetListNode = {
+      id: `sheetlist-${sheetIdx}`,
+      topic: sheet.title || `Untitled Sheet List ${sheetIdx + 1}`,
+      children: [] as any[],
+    };
+    
+    const listIdx = variableNode.children.length;
 
-        const getInitials = (name: string | null | undefined): string => {
-          if (!name) return "UN";
-          return name
-            .split(" ")
-            .map((w) => w[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
-        };
+    const cards: any[] = Array.isArray(sheet.cards) ? sheet.cards : [];
 
-        const initials: string = getInitials(seat?.status);
-        const assigned: boolean = seat?.status === "assigned";
-        const statusTitle: string = card["card-status"] || "To Do";
-        const statusBg: string = STATUS_COLORS[statusTitle] || "#D3D3D3";
+    cards.forEach((card, cardIdx) => {
+      const seat = card.seat;
+      const getInitials = (name: string | null | undefined) => {
+        if (!name) return "UN";
+        return name
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
+      };
+      const allSheetTitles: string[] = sheetsData.map(sheet => sheet.title || "Untitled");
+      const initials = getInitials(seat?.status);
+      const assigned = seat?.status === "assigned";
+      const statusTitle: string = sheet.title || "Untitled";
+      const statusBg: string = STATUS_COLORS[statusTitle] || "#D3D3D3";
+      const truncatedTitle: string = (card["card-title"] || "Untitled").slice(0, 25);
 
-        const allSheetTitles: string[] = sheetLists.map(
-          (sl: SheetList) => sl.title || "Untitled"
-        );
-
-        const truncatedTitle: string = (card["card-title"] || "Untitled").slice(
-          0,
-          25
-        );
-
-        const cardHtml: string = `
-      <div class="card-content" style=" 
-        width: 350px;
-        height: 110px;
-        background: #AFF4EF;
-        padding: 5px;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        font-family: DM Sans, sans-serif;
-        margin: 0;
-        pointer-events:auto;
-      ">
-        <div style="display:flex; justify-content:space-between;">
-          <div style="
-            width:auto;
-            height:40px;
-            display:flex;
-            color:#2B2C30;
-            align-items:center;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            white-space:nowrap;
-            font-weight:500;
-            font-size:14px;
-            padding-left:10px;
-          ">
-            ${truncatedTitle}...
-          </div>
-
-          <select class="status-select" style="
-            background:${statusBg};      
+      const cardHtml = `
+          <div class="card-content" style="
+            width: 350px;
+            height: 110px;
+            background: #AFF4EF;
+            padding: 5px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            font-family: DM Sans, sans-serif;
+            margin: 0;
             pointer-events:auto;
-            color:#2B2C30;
-            border:none;
-            border-radius:20px;
-            font-size:11px;
-            font-weight:500;
-            height:30px;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            padding:5px 12px;
-            margin-top:7px;
-            cursor:pointer;
-          " onchange="handleStatusChange(event, ${sheetIdx}, ${listIdx}, ${cardIdx})">
-            ${allSheetTitles
-              .map(
-                (title) =>
-                  `<option value="${title}" ${
-                    title === statusTitle ? "selected" : ""
-                  } style="pointer-events:auto;">${title}</option>`
-              )
-              .join("")}
-          </select>
+          ">
+            <div style="display:flex; justify-content:space-between;">
+              <div style="
+                width:auto;
+                height:40px;
+                display:flex;
+                color:#2B2C30;
+                align-items:center;
+                overflow:hidden;
+                text-overflow:ellipsis;
+                white-space:nowrap;
+                font-weight:500;
+                font-size:14px;
+                padding-left:10px;
+              ">
+                ${truncatedTitle}...
+              </div>
 
-          <div 
-  style="position:relative; margin-right:10px; margin-top:-35px; height:20px; width:20px; pointer-events:auto;"
->
-  <svg 
-    width="20" height="20" viewBox="0 0 20 20" fill="none" 
-    class="menu-wrapper" 
-    style="cursor:pointer; pointer-events:auto;"
-    onclick="event.stopPropagation(); event.stopImmediatePropagation(); toggleMenu(this);"
-    onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
-    onpointerdown="event.stopPropagation(); event.stopImmediatePropagation();" 
-    data-cardid="card-${sheetIdx}-${listIdx}-${cardIdx}"
-  >
-    <circle cx="5.23717" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-    <circle cx="10.0008" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-    <circle cx="14.7626" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-  </svg>
+              <select class="status-select" style="
+                background:${statusBg};
+                pointer-events:auto;
+                color:#2B2C30;
+                border:none;
+                border-radius:20px;
+                font-size:11px;
+                font-weight:500;
+                height:30px;
+                display:flex;
+                justify-content:center;
+                align-items:center;
+                padding:5px 12px;
+                margin-top:7px;
+                cursor:pointer;
+              " onclick="event.stopPropagation(); event.stopImmediatePropagation();"
+                  onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
+                  onchange="handleStatusChange(event, ${sheetIdx}, ${listIdx}, ${cardIdx})" >
+                ${allSheetTitles
+                  .map(
+                    (status) =>
+                      `<option value="${status}" ${
+                        status === statusTitle ? "selected" : ""
+                      } style="pointer-events:auto;">${status}</option>`
+                  )
+                  .join("")}
+              </select>
 
-  <ul class="menu-dropdown" 
-    style="display:none; pointer-events:auto; position:absolute; top:70px; right:0; background:white; border-radius:6px; list-style:none; padding-top: -30px;width:100px; height: 80px; font-size:13px; z-index:9999; overflow: hidden;"
-    onclick="event.stopPropagation(); event.stopImmediatePropagation();"
-    onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
-  >
-    <li style="margin-top:-25px; padding-left: 5px; padding-right: 5px; cursor:pointer; color: #2B2C30;"  
-      onclick="handleEdit(event)"
-    >Edit Ticket</li>
+              <div style="position:relative; margin-right:10px; margin-top:-35px; height:20px; width:20px; pointer-events:auto;">
+                <svg 
+                  width="20" height="20" viewBox="0 0 20 20" fill="none" 
+                  class="menu-wrapper" 
+                  style="cursor:pointer; pointer-events:auto;"
+                  onclick="event.stopPropagation(); event.stopImmediatePropagation(); toggleMenu(this);"
+                  onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
+                  onpointerdown="event.stopPropagation(); event.stopImmediatePropagation();" 
+                  data-cardid="card-${sheetIdx}-${listIdx}-${cardIdx}"
+                >
+                  <circle cx="5.23717" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+                  <circle cx="10.0008" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+                  <circle cx="14.7626" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
+                </svg>
 
-    <li style="margin-top:-45px; padding-left: 5px; padding-right: 5px; cursor:pointer; color: #2B2C30;" 
-      onclick="handleDelete(event)"
-    >Delete Ticket</li>
-  </ul>
-</div>
+                <ul class="menu-dropdown" style="
+                  display:none; 
+                  pointer-events:auto; 
+                  position:absolute; 
+                  top:70px; 
+                  right:0; 
+                  background:white; 
+                  border-radius:6px; 
+                  list-style:none; 
+                  padding-top: -10px;
+                  width:100px; 
+                  height: 70px; 
+                  gap: 20px;
+                  font-size:13px; 
+                  z-index:9999; 
+                  overflow: hidden;"
+                  onclick="event.stopPropagation(); event.stopImmediatePropagation();"
+                  onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
+                >
+                  <li style="margin-top:-30px; padding-left:5px; padding-right:5px; cursor:pointer; color:#2B2C30; border-bottom: 1px solid #333;" onclick="handleEdit(event)">Edit Ticket</li>
+                  <li style="margin-top:-35px; padding-left:5px; padding-right:5px; cursor:pointer; color:#2B2C30;" onclick="handleDelete(event)">Delete Ticket</li>
+                </ul>
+              </div>
+            </div>
 
-        </div>
+            <div style="display:flex; justify-content:space-between; margin-top:20px; width:320px; height:100px; overflow:hidden;">
+              <div style="height:30px; margin-left: 10px; width:100px; font-size:12px; display:flex; justify-content: center; overflow:hidden;">
+                <div style="margin-top:-27px !important;">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="20" height="20" rx="3.33333" fill="#29BF7F"/>
+                    <path d="M6.43164 14.3018L9.29004 12.167L9.29102 12.166C9.47176 12.0328 9.69053 11.9609 9.91504 11.9609C10.0834 11.9609 10.2482 12.0017 10.3965 12.0781L10.5391 12.166L10.54 12.167L13.373 14.291V5.91699H6.43164V14.3018ZM14.4316 14.3789C14.4277 14.5672 14.3725 14.7506 14.2725 14.9102C14.1723 15.0699 14.0303 15.1996 13.8623 15.2852C13.6944 15.3706 13.5064 15.4094 13.3184 15.3965C13.1304 15.3835 12.9495 15.3196 12.7949 15.2119L12.79 15.208L9.91504 13.0518L7.01465 15.209C6.83427 15.3432 6.61546 15.4161 6.39062 15.417H6.38965C6.2298 15.4164 6.07171 15.38 5.92773 15.3105V15.3096C5.75087 15.2261 5.60123 15.0946 5.49609 14.9297C5.3907 14.7642 5.33364 14.5721 5.33301 14.376V5.87402C5.3338 5.7361 5.36234 5.59971 5.41602 5.47266C5.46971 5.3456 5.54812 5.23049 5.64648 5.13379C5.74485 5.0371 5.86131 4.96069 5.98926 4.90918C6.1165 4.85797 6.2525 4.83272 6.38965 4.83398V4.83301H13.3906C13.6661 4.83457 13.9302 4.94494 14.125 5.13965C14.3198 5.33446 14.4301 5.59852 14.4316 5.87402V14.3789Z" fill="white" stroke="white" stroke-width="0.333333"/>
+                  </svg>
+                </div>
+                <div style="color:#2B2C30B2; margin-top: -35px; margin-left: -35px; height: 30px; font-size:14px; border: 2px solid red;">
+                  <p>${card["card-code"] }</p>
+                </div>
+              </div>
 
-        <div style="display:flex; justify-content:space-between; margin-top:20px; width:320px; height:100px; overflow:hidden; margin-left:10px;">
-          <div style="height:30px; width:100px; font-size:12px; display:flex;">
-            <span style="margin-top:-25px !important;">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="20" height="20" rx="3.33333" fill="#29BF7F"/> <path d="M6.43164 14.3018L9.29004 12.167L9.29102 12.166C9.47176 12.0328 9.69053 11.9609 9.91504 11.9609C10.0834 11.9609 10.2482 12.0017 10.3965 12.0781L10.5391 12.166L10.54 12.167L13.373 14.291V5.91699H6.43164V14.3018ZM14.4316 14.3789C14.4277 14.5672 14.3725 14.7506 14.2725 14.9102C14.1723 15.0699 14.0303 15.1996 13.8623 15.2852C13.6944 15.3706 13.5064 15.4094 13.3184 15.3965C13.1304 15.3835 12.9495 15.3196 12.7949 15.2119L12.79 15.208L9.91504 13.0518L7.01465 15.209C6.83427 15.3432 6.61546 15.4161 6.39062 15.417H6.38965C6.2298 15.4164 6.07171 15.38 5.92773 15.3105V15.3096C5.75087 15.2261 5.60123 15.0946 5.49609 14.9297C5.3907 14.7642 5.33364 14.5721 5.33301 14.376V5.87402C5.3338 5.7361 5.36234 5.59971 5.41602 5.47266C5.46971 5.3456 5.54812 5.23049 5.64648 5.13379C5.74485 5.0371 5.86131 4.96069 5.98926 4.90918C6.1165 4.85797 6.2525 4.83272 6.38965 4.83398V4.83301H13.3906C13.6661 4.83457 13.9302 4.94494 14.125 5.13965C14.3198 5.33446 14.4301 5.59852 14.4316 5.87402V14.3789Z" fill="white" stroke="white" stroke-width="0.333333"/> </svg>
-            </span>
-            <span style="color:#2B2C30B2; margin-top:-30px !important; font-size: 14px; display:flex; margin-left:-3px;">
-              ${card["card-code"] || "N/A"}
-            </span>
+              <div style="
+                height:26px;
+                width:26px;
+                padding:5px;
+                color:white;
+                border:1px solid white;
+                display:flex;
+                justify-content:center;
+                border-radius:50%;
+                align-items:center;
+                margin-top:5px;
+                pointer-events:none;
+                background:${assigned ? "#4ADE80" : "#9CA3AF"};
+              " onclick="event.stopPropagation();">
+                <span style="font-size:13px;">${initials}</span>
+              </div>
+            </div>
           </div>
+                `;
 
-          <div style="
-            height:26px;
-            width:26px;
-            padding:5px;
-            color:white;
-            border:1px solid white;
-            display:flex;
-            justify-content:center;
-            border-radius:50%;
-            align-items:center;
-            margin-top: 5px;
-            pointer-events:none;
-            background:${assigned ? "#4ADE80" : "#9CA3AF"};
-          " onclick="event.stopPropagation();">
-            <span style="font-size: 13px;">${initials}</span>
-          </div>
-        </div>
-      </div>
-    `;
+      const isLastCard = cardIdx === cards.length - 1;
 
-        const isLastCard: boolean = cardIdx === cards.length - 1;
-
-        sheetListNode.children.push({
-          id: `card-${sheetIdx}-${listIdx}-${cardIdx}`,
-          dangerouslySetInnerHTML: `<div disabled id="card-inner-${sheetIdx}-${listIdx}-${cardIdx}" style="pointer-events:auto; height: 110px; width: 0px;">${cardHtml}</div>`,
-          expanded: false,
-          isLastCard,
-          selectable: false,
-        });
+      sheetListNode.children.push({
+        id: `card-${sheetIdx}-${cardIdx}`,
+        dangerouslySetInnerHTML: `<div disabled id="card-inner-${sheetIdx}-${cardIdx}" style="pointer-events:auto; height: 110px; width: 0px;">${cardHtml}</div>`,
+        expanded: false,
+        isLastCard,
+        selectable: false,
       });
-
-      variableNode.children.push(sheetListNode);
     });
 
-    root.children.push(variableNode);
+    variableNode.children.push(sheetListNode);
   });
 
   return root;
@@ -1319,11 +1300,11 @@ watchEffect(() => {
   if (
     view.value === "mindmap" &&
     mindMapRef.value &&
-    allSheetsData.value?.sheets
+    Lists.value
   ) {
     nextTick(() => {
-      const rootNode = buildMindMapDataAllSheets(allSheetsData.value.sheets);
-
+      const rootNode = buildMindMapDataAllSheets(Lists.value);
+       
       if (mindMapInstance.value) {
         mindMapInstance.value.destroy?.();
         mindMapInstance.value = null;
@@ -1402,7 +1383,7 @@ watchEffect(() => {
 
                 if (node.id?.startsWith("sheetlist")) {
                   const [_, sheetIdx] = node.id.split("-").map(Number);
-                  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
+                  const sheet = Lists.value?.sheets?.[sheetIdx];
                   const variableNode = sheet?.variables;
 
                   localColumnData.value = {
@@ -1465,6 +1446,82 @@ watchEffect(() => {
           });
         }, 10);
       });
+      // Make sure this runs after MindElixir instance is initialized
+nextTick(() => {
+  const tooltipId = "sheet-description-tooltip";
+  let tooltip = document.getElementById(tooltipId) as HTMLDivElement;
+
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = tooltipId;
+    tooltip.style.position = "absolute";
+    tooltip.style.background = "#fff";
+    tooltip.style.color = "#2B2C30";
+    tooltip.style.padding = "8px 12px";
+    tooltip.style.border = "1px solid #ccc";
+    tooltip.style.borderRadius = "6px";
+    tooltip.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+    tooltip.style.fontSize = "12px";
+    tooltip.style.display = "none";
+    tooltip.style.zIndex = "9999";
+    document.body.appendChild(tooltip);
+  }
+
+  const mindMapEl = mindMapRef.value as HTMLElement;
+  if (!mindMapEl) return;
+
+  mindMapEl.addEventListener("mouseover", (e) => {
+    const node = mindMapInstance.value?.currentNode?.nodeObj;
+    if (!node || !node.id?.startsWith("variable")) return;
+
+    tooltip.innerText = sheetDescription.value || "No description available";
+    tooltip.style.left = `${e.pageX + 10}px`;
+    tooltip.style.top = `${e.pageY + 10}px`;
+    tooltip.style.display = "block";
+  });
+
+  mindMapEl.addEventListener("mouseout", () => {
+    tooltip.style.display = "none";
+  });
+});
+
+nextTick(() => {
+  const tooltipId = "list-description-tooltip";
+  let tooltip = document.getElementById(tooltipId) as HTMLDivElement;
+
+  if (!tooltip) {
+    tooltip = document.createElement("div");
+    tooltip.id = tooltipId;
+    tooltip.style.position = "absolute";
+    tooltip.style.background = "#fff";
+    tooltip.style.color = "#2B2C30";
+    tooltip.style.padding = "8px 12px";
+    tooltip.style.border = "1px solid #ccc";
+    tooltip.style.borderRadius = "6px";
+    tooltip.style.boxShadow = "0 2px 8px rgba(0,0,0,0.15)";
+    tooltip.style.fontSize = "12px";
+    tooltip.style.display = "none";
+    tooltip.style.zIndex = "9999";
+    document.body.appendChild(tooltip);
+  }
+
+  const mindMapEl = mindMapRef.value as HTMLElement;
+  if (!mindMapEl) return;
+
+  mindMapEl.addEventListener("mouseover", (e) => {
+    const node = mindMapInstance.value?.currentNode?.nodeObj;
+    if (!node || !node.id?.startsWith("sheetlist")) return;
+
+    tooltip.innerText = "These are the lists, each list have their own tickets";
+    tooltip.style.left = `${e.pageX + 10}px`;
+    tooltip.style.top = `${e.pageY + 10}px`;
+    tooltip.style.display = "block";
+  });
+
+  mindMapEl.addEventListener("mouseout", () => {
+    tooltip.style.display = "none";
+  });
+});
     });
   }
 });
@@ -1485,47 +1542,55 @@ window.toggleMenu = function (el: HTMLElement) {
   document.addEventListener("click", handleClickOutside);
 };
 
-
 window.handleEdit = function (e: Event) {
   e.stopPropagation();
   e.stopImmediatePropagation();
 
   const target = e.target as HTMLElement;
-  const wrapper = target.closest(".menu-wrapper") as HTMLElement | null;
+  const menu = target.closest(".menu-dropdown") as HTMLElement | null;
+  if (!menu) return;
+  const container = menu.parentElement;
+  const wrapper = container?.querySelector(".menu-wrapper") as HTMLElement | null;
   if (!wrapper) return;
 
   const cardId = wrapper.getAttribute("data-cardid");
   if (!cardId) return;
 
-  const [_, sheetIdx, listIdx, cardIdx] = cardId.split("-").map(Number);
-  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
-  const sheetList = sheet?.sheet_lists?.[listIdx];
-  const card = sheetList?.cards?.[cardIdx];
+  const [, sheetIdx, , cardIdx] = cardId.split("-").map(Number);
+
+  const sheet = Lists.value?.[sheetIdx];
+  if (!sheet || !Array.isArray(sheet.cards)) return;
+
+  const card = sheet.cards[cardIdx];
   if (!card) return;
-
-  selectCardHandler(card);
-
+(window as any).selectCardHandler(card);
+ 
   document.querySelectorAll(".menu-dropdown").forEach((m) => {
     (m as HTMLElement).style.display = "none";
   });
 };
 
+
 window.handleDelete = function (e: Event) {
   e.stopPropagation();
   e.stopImmediatePropagation();
 
-  const target = e.target as HTMLElement;
-  const wrapper = target.closest(".menu-wrapper") as HTMLElement | null;
+   const target = e.target as HTMLElement;
+  const menu = target.closest(".menu-dropdown") as HTMLElement | null;
+  if (!menu) return;
+  const container = menu.parentElement;
+  const wrapper = container?.querySelector(".menu-wrapper") as HTMLElement | null;
   if (!wrapper) return;
 
   const cardId = wrapper.getAttribute("data-cardid");
   if (!cardId) return;
 
-  const [_, sheetIdx, listIdx, cardIdx] = cardId.split("-").map(Number);
+  const [, sheetIdx, , cardIdx] = cardId.split("-").map(Number);
 
-  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
-  const sheetList = sheet?.sheet_lists?.[listIdx];
-  const card = sheetList?.cards?.[cardIdx];
+  const sheet = Lists.value?.[sheetIdx];
+  if (!sheet || !Array.isArray(sheet.cards)) return;
+
+  const card = sheet.cards[cardIdx];
   if (!card) return;
 
   ticketToDelete.value = card;
@@ -1537,21 +1602,26 @@ window.handleDelete = function (e: Event) {
   });
 };
 
+
+
 window.handleStatusChange = function (
   e: Event,
   sheetIdx: number,
-  listIdx: number,
+  _listIdx: number, // intentionally unused
   cardIdx: number
 ) {
-  const card =
-    allSheetsData.value?.sheets?.[sheetIdx]?.sheet_lists?.[listIdx]?.cards?.[
-      cardIdx
-    ];
+
+  const sheet = Lists.value?.[sheetIdx];
+  if (!sheet || !Array.isArray(sheet.cards)) return;
+
+  const card = sheet.cards[cardIdx];
   if (!card) return;
 
   const newStatus = (e.target as HTMLSelectElement).value;
+
   handleEditTicket(card, newStatus);
 };
+
 </script>
 <style scoped>
 @import "https://cdn.jsdelivr.net/npm/mind-elixir/dist/style.css";
@@ -1578,9 +1648,7 @@ window.handleStatusChange = function (
   /* Firefox */
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
 }
-::v-deep(.mind-elixir-toolbar.lt) {
-  display: none !important;
-}
+
 /* Hide default context menu items in MindElixir */
 ::v-deep(.mind-elixir .context-menu #cm-down) {
   display: none !important;
@@ -1608,9 +1676,5 @@ window.handleStatusChange = function (
 }
 ::v-deep(.mind-elixir .context-menu #cm-down) {
   display: none !important;
-}
-::v-deep(.mind-elixir .map-container .selected) {
-  box-shadow: none;
-  outline: none;
 }
 </style>
