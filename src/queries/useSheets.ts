@@ -217,68 +217,6 @@ export function useSheetList(
     ...options,
   });
 }
-//all sheets for mindmap
-export function useAllSheetsList(
-  module_id: MaybeRef<string | null | undefined>,
-  view_by: MaybeRef<string | null | undefined>,
-  laneIds: MaybeRef<string[] | string | null | undefined>,
-  options: Omit<
-    UseQueryOptions<any, any, any, any>,
-    "queryKey" | "queryFn"
-  > = {}
-) {
-  // normalize laneIds
-  const laneIdsParam = computed<string | undefined>(() => {
-    const v = unref(laneIds);
-    if (v == null) return undefined;
-    if (Array.isArray(v)) {
-      const s = Array.from(
-        new Set(v.map((x) => String(x).trim()).filter(Boolean))
-      ).join(",");
-      return s || undefined;
-    }
-    const one = String(v).trim();
-    return one || undefined;
-  });
-
-  // query key (no sheet_id)
-  const queryKey = computed(() => [
-    "sheet-list-all",
-    unref(module_id),
-    unref(view_by),
-    unref(laneIdsParam),
-  ]);
-
-  // enabled condition
-  const enabled = computed(() =>
-    Boolean(unref(module_id) && unref(view_by))
-  );
-
-  return useQuery({
-    retry: 0,
-    queryKey,
-    enabled,
-    placeholderData: (prev) => prev,
-    queryFn: async () => {
-      const params: any = {
-        module_id: unref(module_id)!,
-        variable_id: unref(view_by)!,
-      };
-
-      if (unref(laneIdsParam)) {
-        params.lane_ids = unref(laneIdsParam)!;
-      }
-
-      // Fetch ALL SHEETS (no sheet_id)
-      return request({
-        url: "/workspace/cards/grouped",
-        method: "GET",
-        params,
-      });
-    },
-    ...options,
-  });
-}
 
 export const useVariables = (
   workspace_id: any,

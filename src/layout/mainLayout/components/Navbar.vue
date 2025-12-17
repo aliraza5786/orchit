@@ -128,15 +128,15 @@
                       class="absolute top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
                       role="menu" :class="themeFlipLeft ? 'right-full mr-2' : 'left-full ml-2'">
                       <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('system')" type="button">
+                        @click="setTheme('system'); closeMenu()" type="button">
                         <i class="fa-solid fa-desktop"></i> System
                       </button>
                       <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('light')" type="button">
+                        @click="setTheme('light'); closeMenu()" type="button">
                         <i class="fa-regular fa-sun-cloud"></i> Light
                       </button>
                       <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('dark')" type="button">
+                        @click="setTheme('dark'); closeMenu()" type="button">
                         <i class="fa-regular fa-clouds-moon"></i> Dark
                       </button>
                     </div>
