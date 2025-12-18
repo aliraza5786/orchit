@@ -39,7 +39,7 @@
     <main class="mx-auto w-full px-4 pb-16">
       <section class="pt-4">
         <div class="mb-4 flex items-center justify-between">
-          <h2 class="text-lg font-semibold">Currentl Using</h2>
+          <h2 class="text-lg font-semibold">Current Using</h2>
         </div>
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <div v-if="isPending" v-for="i in ['3', '2', '2']" :key="i"
