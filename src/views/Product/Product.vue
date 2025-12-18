@@ -939,9 +939,9 @@ const getOptions = (options: any) => {
 };
 const moveCard = useMoveCard({
   onSuccess: () => {
-    // queryClient.invalidateQueries({ queryKey: ['get-sheets'] })
-    // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-    // queryClient.invalidateQueries({ queryKey: ['roles'] })
+    queryClient.invalidateQueries({ queryKey: ['get-sheets'] })
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    queryClient.invalidateQueries({ queryKey: ['roles'] })
   },
 });
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
