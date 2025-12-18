@@ -168,7 +168,7 @@
     >
       <!-- Home -->
       <button
-        class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center h-8 gap-2 px-3 py-1 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20 text-nowrap"
+        class="w-full px-3 py-2 cursor-pointer text-left text-sm hover:bg-bg-card/70 rounded-t-xl flex items-center gap-2"
         role="menuitem"
         @click="goHome"
         ref="firstItemRef"
