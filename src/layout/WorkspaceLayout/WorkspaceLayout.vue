@@ -49,7 +49,6 @@ import { useRoute } from 'vue-router';
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
  const workspaceId = computed<string>(() => toParamString(route?.params?.id));
-console.log("workspace id", workspaceId.value);
 
 const { data: getWorkspace, isPending, isLoading ,isFetching, refetch } = useSingleWorkspace(workspaceId.value)
 watch(
