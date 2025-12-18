@@ -1,17 +1,17 @@
 <template>
   <nav
-    class="flex items-center justify-between min-h-16 w-full overflow-x-auto"
+    class="flex items-center justify-between min-h-16 w-full gap-4"
   >
     <!-- Left side: Logo + lanes -->
     <div
-      :class="`text-2xl font-bold flex items-center min-w-[320px] gap-4 sm:gap-8 ${
+      :class="`text-2xl font-bold flex items-center min-w-0 gap-4 ${
         workspaceStore.background.startsWith('url')
           ? 'text-text-secondary'
           : 'text-text-primary'
       }`"
     >
       <!-- Logo + Title (now a dropdown trigger) -->
-      <div class="relative flex items-center ps-2">
+      <div class="relative flex items-center ps-3.5 sm:ps-2">
         <div :class="expanded ? 'w-[235px]' : 'w-auto'">
           <button
             ref="logoBtnRef"
@@ -24,21 +24,40 @@
             @keydown.enter.prevent="toggleLogoMenu"
             @keydown.space.prevent="toggleLogoMenu"
           >
-            <div class="flex items-center">
-              <img
-                :src="getWorkspace?.logo ?? dp"
-                alt="Workspace menu"
-                class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover"
-              />
-              <h3
-                v-if="expanded"
-                class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
-              >
-                {{ getWorkspace?.variables?.title }}
-              </h3>
-            </div>
+           <div class="flex items-center min-h-[25px]">
+                <!-- Loader -->
+                <div
+                  v-if="isWorkspaceLoading"
+                  class="flex items-center gap-2"
+                >
+                 <div class="w-[20px] h-[20px] rounded-full border-2 border-t-transparent animate-spin"
+                style="border-color: #AFF4EF #AFF4EF transparent #29BF7F;"
+              ></div>
+
+                  <div
+                    v-if="expanded"
+                    class="h-4 w-32 bg-border rounded animate-pulse color-[#AFF4EF] hidden sm:block"
+                  ></div>
+                </div>
+
+                <!-- Workspace content -->
+                <div v-else class="flex items-center">
+                  <img
+                    :src="localWorkspace.logo ?? dp"
+                    alt="Workspace menu"
+                    class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover shrink-0"
+                  />
+                  <h3
+                    v-if="expanded"
+                    class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
+                  >
+                    {{ localWorkspace.variables.title }}
+                  </h3>
+                </div>
+              </div>
+
             <svg
-              class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1"
+              class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1 shrink-0"
               :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'"
               viewBox="0 0 20 20"
               fill="currentColor"
@@ -53,7 +72,7 @@
           </button>
         </div>
         <div
-          class="flex items-center justify-center transition-all duration-200 w-[40px] h-[50px]"
+          class="hidden sm:flex items-center justify-center transition-all duration-200 w-[40px] h-[50px]"
         >
           <!-- Icon (toggle sidebar) -->
           <i
@@ -126,8 +145,8 @@
     </div>
 
     <!-- Right side -->
-    <div class="flex gap-2">
-      <button class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-1 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20" @click="workspaceStore.toggleChatBotPanel()" v-tooltip="'Ask any question'">
+    <div class="flex sm:gap-2 min-w-max items-center">
+      <button class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-2 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20" @click="workspaceStore.toggleChatBotPanel()" v-tooltip="'Ask any question'">
         <i class="fa-solid fa-sparkles"></i>
         Ask Ai
       </button>
@@ -200,46 +219,66 @@
 import LaneDropdown from "./LaneDropdown.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import dp from "../../../assets/global/dummy.jpeg";
-import { ref, onMounted, onBeforeUnmount, nextTick, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import { useRouter } from "vue-router";
-import {
-  useSingleWorkspace,
-  useWorkspaces,
-} from "../../../queries/useWorkspace";
+import { useWorkspaces } from "../../../queries/useWorkspace"; // keep workspaces listing
 import { useWorkspaceId } from "../../../composables/useQueryParams";
-import { useQueryClient } from "@tanstack/vue-query";
 import { usePermissions } from "../../../composables/usePermissions"; 
+import { request } from "../../../libs/api";
 const { canCreateLane } = usePermissions();
+
 const router = useRouter();
 const workspaceStore = useWorkspaceStore();
-const { data: workspaces } = useWorkspaces(1, 30);
+const page = ref(1);
+const limit = ref(30);
+
+const { data: workspaces } = useWorkspaces(page, limit);
 const laneId = ref("");
 const { workspaceId } = useWorkspaceId();
-const {
-  data: getWorkspace,
-  refetch,
-  isFetched,
-} = useSingleWorkspace(useWorkspaceId().workspaceId.value);
+const isWorkspaceLoading = computed(() => {
+  return (
+    !localWorkspace.value ||
+    !localWorkspace.value.logo ||
+    !localWorkspace.value.variables?.title
+  );
+});
+// Local reactive workspace
+const localWorkspace = ref<any>(null);
+const fetchWorkspace = async (id: string | number) => {
+  try {
+    const data = await request({
+      url: `/workspace/${id}`,
+      method: "GET",
+      params: { is_archive: false },
+    });
 
-const localWorkspace = ref(getWorkspace.value);
+    // Update localWorkspace and localStorage
+    localWorkspace.value = data;
+    if (data?.variables?.title) {
+      localStorage.setItem("currentName", data.variables.title);
+    }
+  } catch (error) {
+    console.error("Error fetching workspace:", error);
+  }
+};
 
+// Initialize current workspace
+if (workspaceId.value) {
+  fetchWorkspace(workspaceId.value);
+}
+
+// Duplicate lane handler
 const duplicateHandler = (data: any) => {
+  if (!localWorkspace.value) return;
   localWorkspace.value = {
-    ...localWorkspace,
-    lanes: [...localWorkspace.value?.lanes, data],
+    ...localWorkspace.value,
+    lanes: [...localWorkspace.value.lanes, data],
   };
 };
-watch(
-  () => isFetched,
-  () => {
-    localWorkspace.value = getWorkspace.value;
-  }
-);
-// toggle side bar
+
+// Toggle sidebar
 const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
-const handleSidebarToggle = () => {
-  emit("toggle-sidebar");
-};
+const handleSidebarToggle = () => emit("toggle-sidebar");
 
 // === Logo dropdown state & refs ===
 const logoMenuOpen = ref(false);
@@ -249,16 +288,12 @@ const firstItemRef = ref<HTMLButtonElement | null>(null);
 
 const toggleLogoMenu = async () => {
   logoMenuOpen.value = !logoMenuOpen.value;
-  if (logoMenuOpen.value) {
-    await nextTick();
-    // Focus first actionable item for a11y
-    firstItemRef.value?.focus();
-  }
+  if (logoMenuOpen.value) await nextTick();
+  firstItemRef.value?.focus();
 };
 
 const closeLogoMenu = () => {
   logoMenuOpen.value = false;
-  // Return focus to the trigger
   logoBtnRef.value?.focus();
 };
 
@@ -284,7 +319,7 @@ const onDocClick = (e: MouseEvent) => {
   }
 };
 
-// Close on window blur (optional nice touch)
+// Close on window blur
 const onWindowBlur = () => {
   if (logoMenuOpen.value) closeLogoMenu();
 };
@@ -298,39 +333,33 @@ onBeforeUnmount(() => {
   window.removeEventListener("blur", onWindowBlur);
 });
 
-// Actions
+// Navigation actions
 const goHome = () => {
   closeLogoMenu();
-  router.push({ path: "/" });
+  router.push({ path: "/dashboard" });
 };
-const queryClient = useQueryClient();
+
+// Switch workspace
 const switchTo = async (ws: any) => {
   router.push(
-    `/workspace/peak/${ws._id}/${
-      ws.LatestTask?.job_id ? ws.LatestTask?.job_id : ""
-    }`
+    `/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ?? ""}`
   );
-  queryClient.invalidateQueries({ queryKey: ["workspaces", "byId"] });
-  refetch();
-  // Call your store action to switch workspaces
+  await fetchWorkspace(ws._id);
+
   closeLogoMenu();
 };
 
-const handleClick = () => {
-  workspaceStore.toggleSettingPanel();
-};
-const createLaneHandler = () => {
-  workspaceStore.toggleCreateLaneModalWithAI();
-};
-
+const handleClick = () => workspaceStore.toggleSettingPanel();
+const createLaneHandler = () => workspaceStore.toggleCreateLaneModalWithAI();
 const openUpdateModal = (id: any) => {
   laneId.value = id;
   workspaceStore.toggleUpdateLaneModal();
 };
 
 defineExpose({ laneId });
-defineProps<{ getWorkspace: any; expanded?: Boolean }>();
+defineProps<{ expanded?: Boolean }>();
 </script>
+
 
 <style scoped>
 /* Prevent accidental text selection while navigating the menu quickly */

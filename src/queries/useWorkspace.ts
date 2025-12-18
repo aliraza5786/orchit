@@ -94,23 +94,23 @@ export const useWorkspacesPrompt = () =>
     method: "GET",
   });
 
-export const useWorkspaces = (page: any, limit: any) => {
-  return useQuery(
-    {
-      queryKey: [ 'workspaces', page,limit],
-      queryFn: () =>
-        request({
-          url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}`,
-          method: "GET",
-        }),
-    }
-    
-    // {
-    //   // retry: false,
-    //   staleTime: 5 * 60 * 1000,
-    //   gcTime: 10 * 60 * 1000,
-    // }
-  );
+export const useWorkspaces = (page: Ref<number>, limit: Ref<number>) => {
+  return useQuery({
+    queryKey: computed(() => [
+      "workspaces",
+      unref(page),
+      unref(limit),
+    ]),
+    queryFn: () =>
+      request({
+        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}`,
+        method: "GET",
+      }),
+
+    staleTime: 0,
+    refetchOnMount: "always",
+    placeholderData: (previousData) => previousData,
+  });
 };
 
 export const useWorkspacesTitles = () =>
@@ -133,6 +133,7 @@ export const useSingleWorkspace = (id: string | number) => {
     {
       staleTime: 3 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: true,
     }
   );
 };

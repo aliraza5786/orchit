@@ -4,10 +4,11 @@ import {
   createWebHistory,
   type RouteRecordRaw,
 } from "vue-router";
-import { isAuthenticated } from "../stores/auth";
+import { useAuthStore } from "../stores/auth";
 import Task from "../views/Workspaces/Task.vue";
 import Users from "../views/Workspaces/Users.vue";
-
+import api from "../libs/api";
+import type { AxiosError, AxiosResponse } from "axios";
 // Lazy imports = separate chunks
 const Login = () => import("../views/Auth/Login.vue");
 const Register = () => import("../views/Auth/Register.vue");
@@ -241,29 +242,38 @@ const router = createRouter({ history: createWebHistory(), routes,
   },
   
  });
-
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
+    if (error.response?.status === 401) {
+      const auth = useAuthStore();
+      auth.logout();
+      router.replace({ name: "Login" });
+    }
+    return Promise.reject(error);
+  }
+);
 // Guard: check any matched record (works with nested routes)
-router.beforeEach((to, _from, next) => {
-  const authRequired = to.matched.some((r) => r.meta.requiresAuth);
-  const isLoggedIn = isAuthenticated();
+router.beforeEach(async (to, _from, next) => {
+  const auth = useAuthStore();
 
-  if (authRequired && !isLoggedIn) return next("/login");
-  if (
-    !authRequired &&
-    isLoggedIn &&
-    to.name != "workspaceInvite" &&
-    to.name != "create-workspace" &&
-    to.name != "spaceInvite" &&
-    to.name != "create-profile"
-  )
-    return next("/dashboard");
-  if (
-    !authRequired &&
-    isLoggedIn &&
-    (to.path === "/" || to.name === "landing-home-2")
-  )
-    return next("/dashboard");
-  return next();
+  if (!auth.initialized) {
+    await auth.bootstrap();
+  }
+
+  const requiresAuth = to.matched.some(
+    (record) => record.meta.requiresAuth === true
+  );
+
+  if (requiresAuth && !auth.isAuthenticated) {
+    return next({ name: "Login" });
+  }
+
+  if (!requiresAuth && auth.isAuthenticated && to.name === "Login") {
+    return next({ name: "Home" });
+  }
+
+  next();
 });
 
 export default router;

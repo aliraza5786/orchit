@@ -49,8 +49,18 @@ import { useRoute } from 'vue-router';
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
  const workspaceId = computed<string>(() => toParamString(route?.params?.id));
-const { data: getWorkspace, isPending, isLoading ,isFetching } = useSingleWorkspace(workspaceId.value)
-console.log(getWorkspace.value, "workspace data");
+console.log("workspace id", workspaceId.value);
+
+const { data: getWorkspace, isPending, isLoading ,isFetching, refetch } = useSingleWorkspace(workspaceId.value)
+watch(
+  workspaceId,
+  async (newId, oldId) => {
+    if (newId && newId !== oldId) {
+      await refetch();
+    }
+  },
+  { immediate: true } 
+);
 const workspaceNavRef = ref<any>(null);
 const isDrawerOpen = ref(true)
 
@@ -62,21 +72,23 @@ const filters = ref({
 
 // sidebar toggle concept
 const sidebarExpanded = ref(true);
-const isSmallScreen = ref(window.innerWidth < 640); // sm breakpoint
+const isSmallScreen = ref(false); // sm breakpoint
 const handleResize = () => {
   isSmallScreen.value = window.innerWidth < 640;
 };
 // Update sidebar automatically if screen is small
-watch(isSmallScreen, (val) => {
-  if (val) {
-    sidebarExpanded.value = false;
-  } else {
-    sidebarExpanded.value = true; // or keep previous state if you want
-  }
-});
+watch(
+  isSmallScreen,
+  (val) => {
+    if (val) {
+      sidebarExpanded.value = false;
+    }
+  },
+  { immediate: true }
+);
 onMounted(() => {
-  window.addEventListener('resize', handleResize);
-  handleResize(); // initial check
+   handleResize(); // initial check
+   window.addEventListener('resize', handleResize);
 });
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);

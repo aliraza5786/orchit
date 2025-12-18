@@ -185,21 +185,29 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
     ...options,
   });
 };
-export const useDashboardActivities = (workspace_id: Ref<string> | string, options = {}) => {
+export const useDashboardActivities = (
+  workspace_id: Ref<string> | string,
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["dashboard-activities", workspace_id],
+    queryKey: ['dashboard-activities', unref(workspace_id)],
     queryFn: ({ signal }) =>
       request<any>({
         url: `workspace/${unref(workspace_id)}/activities`,
-        method: "GET",
+        method: 'GET',
         signal,
       }),
-    staleTime: 5 * 60 * 1000,
+
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+
     gcTime: 10 * 60 * 1000,
     enabled: !!unref(workspace_id),
     ...options,
   });
 };
+
 export const ReOrderList = (options = {}) =>
   useApiMutation<any, any>(
     {

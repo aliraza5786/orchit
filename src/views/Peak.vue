@@ -258,8 +258,8 @@ const eventSource = ref<EventSource | null>(null)
 let isStopped = false
 
 const SERVER_BASE_URL =
-  import.meta.env.VITE_SERVER_BASE_URL || 'https://backend.streamed.space/api/v1/'
-
+  import.meta.env.VITE_SERVER_BASE_URL || 'https://backend.orchit.ai/api/v1/'
+// 'https://backend.streamed.space/api/v1/'
 const connect = () => {
   if (isStopped) return
   if (eventSource.value) return // prevent duplicate connections
