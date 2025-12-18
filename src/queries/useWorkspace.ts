@@ -133,6 +133,7 @@ export const useSingleWorkspace = (id: string | number) => {
     {
       staleTime: 3 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: true,
     }
   );
 };

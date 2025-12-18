@@ -136,7 +136,8 @@ const props = defineProps<{
 
 const filteredModules = computed(() => {
   if (!props.workspace?.modules) return [];
-  return props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
+  return props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all') &&
+    m.workspace_id === workspaceId.value);
 });
 
 const modules = ref([]);
@@ -147,8 +148,6 @@ watch(props, () => {
   modules.value = props.workspace.modules;
 });
 
-
- 
 </script>
 
 <style scoped>

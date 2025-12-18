@@ -146,7 +146,7 @@
 
     <!-- Right side -->
     <div class="flex sm:gap-2 min-w-max items-center">
-      <button class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-1 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20" @click="workspaceStore.toggleChatBotPanel()" v-tooltip="'Ask any question'">
+      <button class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-2 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20" @click="workspaceStore.toggleChatBotPanel()" v-tooltip="'Ask any question'">
         <i class="fa-solid fa-sparkles"></i>
         Ask Ai
       </button>
@@ -244,7 +244,6 @@ const isWorkspaceLoading = computed(() => {
 });
 // Local reactive workspace
 const localWorkspace = ref<any>(null);
-
 const fetchWorkspace = async (id: string | number) => {
   try {
     const data = await request({
