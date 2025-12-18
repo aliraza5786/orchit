@@ -179,7 +179,7 @@ watch(
 
     // 2) After nodes & handles are ready, update edges
     onNodesInitialized(async () => {
-      incomingNodes.forEach((n) => updateNodeInternals(n.id))
+      incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
       setEdges(incomingEdges)
       fitView({ padding: 0.2 })
       await nextTick()
