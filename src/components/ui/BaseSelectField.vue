@@ -79,16 +79,27 @@
             : 'bg-bg-input text-text-primary border-border'
         "
       >
-        <div
-          v-for="(option, index) in options"
-          :key="option._id ?? index"
-          @click="selectOption(option)"
-          class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
-          :class="[{ 'bg-bg-dropdown': option._id === selected?._id }, option.customClass]"
-        >
-          <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
-          <span>{{ option.title }}</span>
+        <div v-if="loading" class="flex justify-center items-center py-4">
+           <svg class="animate-spin h-5 w-5 text-text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+           </svg>
         </div>
+        <div v-else-if="!options || options.length === 0" class="px-4 py-2 text-sm text-text-secondary text-center">
+            No options found
+        </div>
+        <template v-else>
+          <div
+            v-for="(option, index) in options"
+            :key="option._id ?? index"
+            @click="selectOption(option)"
+            class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
+            :class="[{ 'bg-bg-dropdown': option._id === selected?._id }, option.customClass]"
+          >
+            <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
+            <span>{{ option.title }}</span>
+          </div>
+        </template>
       </div>
     </Teleport>
 
@@ -109,7 +120,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue"; 
 
 interface Option {
   title: string;
@@ -131,13 +142,15 @@ const props = withDefaults(
     size?: "sm" | "md" | "lg";
     tooltip?: string;
     theme?: "light" | "dark";
-    canEditCard?: boolean
+    canEditCard?: boolean;
+    loading?: boolean;
   }>(),
   {
     size: "md",
     theme: "light",
     placeholder: "Select an option...",
     error: false,
+    loading: false
   }
 );
 

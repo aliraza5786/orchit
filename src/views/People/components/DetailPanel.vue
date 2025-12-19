@@ -127,8 +127,8 @@
             placeholder="Select Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
-            :canEditCard="!canEditUser"
-            :key="workspaceRoles?.length"
+            :canEditCard="!canEditUser" 
+            :loading="isLoadingWorkspaceRoles || !newCompanyId"
           />
 
            <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
@@ -410,7 +410,7 @@ const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
 const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
-const { data: workspaceRoles } = useWorkspaceRoles( {
+const { data: workspaceRoles, isLoading: isLoadingWorkspaceRoles } = useWorkspaceRoles( {
     company_id: newCompanyId,
     workspace_id:  workspaceId
   }, {  
