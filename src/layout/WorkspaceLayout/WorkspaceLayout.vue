@@ -11,7 +11,7 @@
     <WorkSpaceNav :getWorkspace="getWorkspace" ref="workspaceNavRef" @toggle-sidebar="toggleSidebar" :expanded="sidebarExpanded" />
     <div class="flex flex-grow items-start h-full max-w-full overflow-x-hidden "
       style="max-height:calc(100dvh - 55px);">
-        <Sidebar :workspace="getWorkspace" :isLoading="isPending || isLoading"
+        <Sidebar :workspace="localWorkspace" :isLoading="isPending || isLoading"
        :expanded="sidebarExpanded" />
        <div class="dashboard_content h-full w-full z-[1]  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
         :style="dashboardContentStyle"
@@ -44,22 +44,38 @@ import CreateLaneWithAI from './modals/CreateLaneWithAI.vue';
 import UpdateLaneModal from './modals/UpdateLaneModal.vue';
 import { useSingleWorkspace } from '../../queries/useWorkspace';
 import Loader from '../../components/ui/Loader.vue';
-import { toParamString, } from '../../composables/useQueryParams';
+import { request } from "../../libs/api";
 import { useRoute } from 'vue-router';
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
- const workspaceId = computed<string>(() => toParamString(route?.params?.id));
+const workspaceId = computed(() => {
+  const id = route.params.id;
+  return typeof id === 'string' || typeof id === 'number' ? id : undefined;
+});
 
-const { data: getWorkspace, isPending, isLoading ,isFetching, refetch } = useSingleWorkspace(workspaceId.value)
+const { data: getWorkspace, isPending, isLoading ,isFetching } = useSingleWorkspace(workspaceId)
+const localWorkspace = ref<any>(null);
+const fetchWorkspace = async (id: string | number) => {
+  try {
+    const data = await request({
+      url: `/workspace/${id}`,
+      method: "GET",
+      params: { is_archive: false },
+    });
+    localWorkspace.value = data;
+  } catch (error) {
+    console.error("Error fetching workspace:", error);
+  }
+};
 watch(
   workspaceId,
-  async (newId, oldId) => {
-    if (newId && newId !== oldId) {
-      await refetch();
-    }
+  (newId, oldId) => {
+    if (!newId || newId === oldId) return;
+    fetchWorkspace(newId);
   },
-  { immediate: true } 
+  { immediate: true }
 );
+
 const workspaceNavRef = ref<any>(null);
 const isDrawerOpen = ref(true)
 
