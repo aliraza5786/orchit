@@ -16,7 +16,7 @@ const slug = computed(() => route.params.id as string);
 // Fetch main blog by slug
 const { data: blog, isLoading: loadingBlog, refetch: refetchBlog } = useBlogBySlug(slug, {
   enabled: computed(() => !!slug.value),
-});
+}); 
 
 // Blog ID 
 const blogId = computed(() => blog.value?._id);
@@ -34,14 +34,7 @@ watch(slug, () => {
   if (slug.value) {
     refetchBlog();
   }
-});
-
-// for Debugging purpose
-watchEffect(() => {
-  console.log("Slug:", slug.value);
-  console.log("Blog ID:", blogId.value);
-  console.log("Related blogs:", relatedBlogs.value);
-});
+}); 
 
 </script>
 
@@ -143,7 +136,7 @@ watchEffect(() => {
   margin: 15px 0px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 40px;
+  line-height: 40px !important;
 }
 
 .blog_content h3 {
@@ -151,7 +144,7 @@ watchEffect(() => {
   margin: 15px 0px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 40px;
+  line-height: 40px !important; 
 }
 
 .blog_content h4 {
@@ -159,7 +152,7 @@ watchEffect(() => {
   margin: 10px 0px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 28px;
+  line-height: 28px !important;
 }
 
 .blog_content p {
@@ -182,6 +175,20 @@ watchEffect(() => {
   color: var(--accent);
   text-decoration: underline;
 }
+ul{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: inside !important;
+}
+li{
+  font-size: 16px;
+  line-height: 24px; 
+  font-weight: 400;
+  font-family: manrope;
+  color: var(--color-text-secondary);
+}
+
 
 .animate-fadeIn {
   animation: fadeIn 0.5s ease-in-out;

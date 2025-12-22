@@ -4,13 +4,14 @@
       <div class="mx-auto  px-4 py-6">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 class="text-2xl font-semibold tracking-tight">Apps</h1>
-          <div class="flex gap-2 items-center">
-
+          <div class="overflow-x-auto">
+              <div class="flex gap-2 items-center">
             <SearchBar @onChange="(e) => {
               searchQuery = e
             }" placeholder="Search in Orchit AI space">
             </SearchBar>
             <Button size="sm" @click="openNewModuleModalHandler()"> Add New </Button>
+             </div>
           </div>
         </div>
         <div class="mt-5 flex flex-wrap gap-2">

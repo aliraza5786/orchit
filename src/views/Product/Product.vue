@@ -2,8 +2,9 @@
   <div
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible"
   >
-    <div
-      class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1"
+    <div class="overflow-x-auto shrink-0 ">
+       <div
+      class="header  px-4 py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
     >
       <Dropdown
         @edit-option="openEditSprintModal"
@@ -13,6 +14,7 @@
         @delete-option="handleDeleteSheetModal"
         :options="transformedData"
         variant="secondary"
+        customClasses="fixed w-auto"
       >
         <template #more>
           <div
@@ -32,6 +34,7 @@
           v-model="selected_view_by"
           :options="variables"
           variant="secondary"
+           customClasses="fixed w-auto"
         >
           <template #more>
             <div
@@ -99,6 +102,7 @@
           </button>
         </div>
       </div>
+    </div>
     </div>
     <template v-if="view == 'kanban'">
       <KanbanSkeleton v-show="isPending || isSheetPending" />

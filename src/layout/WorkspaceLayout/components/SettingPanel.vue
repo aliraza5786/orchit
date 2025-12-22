@@ -2,7 +2,7 @@
   <div :class="[
     'max-w-[358px] flex-grow rounded-[6px] overflow-y-auto overflow-x-hidden relative transition-all',
     'text-text-primary bg-bg-card',
-    workspaceStore.showSettingPanel ? 'translate-x-0 min-w-[350px] w-full h-full' : 'translate-x-100 !max-w-0 h-0'
+    workspaceStore.showSettingPanel ? 'translate-x-0 min-w-full sm:min-w-[380px] w-full h-full' : 'translate-x-100 !max-w-0 h-0'
   ]">
     <!-- Header -->
     <div class="flex justify-between items-center border-b border-border px-5 py-4.5 sticky top-0 bg-bg-card z-10">

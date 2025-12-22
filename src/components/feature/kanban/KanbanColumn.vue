@@ -69,7 +69,15 @@ type Id = string | number
 export interface Ticket { _id: Id;[k: string]: any }
 export interface Column { _id: Id; title: string; cards: Ticket[]; transitions: any ,showADDNEW?:any}
 
-const props = defineProps<{ column: Column, variable_id: string, sheet_id: string, canDragList: boolean, plusIcon: boolean }>()
+const props = defineProps<{ 
+  column: Column, 
+  variable_id: string, 
+  sheet_id: string, 
+  canDragList: boolean, 
+  plusIcon: boolean,
+  index?: number,
+  totalColumns?: number
+}>()
 const emit = defineEmits<{
   (e: 'update:column', payload: { title: string, oldTitle: string }): void
   (e: 'delete:column', payload: { columnId: Id; title: string }): void
@@ -82,6 +90,7 @@ const emit = defineEmits<{
     newIndex: number | null
   }): void
   (e: 'select:ticket', payload: Ticket): void
+  (e: 'move:column', payload: { direction: 'left' | 'right', column: Column }): void
 }>()
 const workspaceStore = useWorkspaceStore()
 const onStart = () => {
@@ -155,17 +164,38 @@ function onTicketsChange(evt: any) {
     toColumnId: props.column._id,
     oldIndex: moved.oldIndex ?? null,
     newIndex: moved.newIndex ?? null,
-
   })
 }
 function getMenuItems() {
   // Only return Delete if user has delete permission
   if (!canDeleteVariable) return [];
-  return [{
+  const items = []
+  
+  if (props.index !== undefined && props.index > 0) {
+    items.push({
+      label: 'Move column left side',
+      action: () => {
+        emit('move:column', { direction: 'left', column: props.column })
+      }
+    })
+  }
+
+  if (props.index !== undefined && props.totalColumns !== undefined && props.index < props.totalColumns - 1) {
+    items.push({
+      label: 'Move column right side',
+      action: () => {
+        emit('move:column', { direction: 'right', column: props.column })
+      }
+    })
+  }
+
+  items.push({
     label: 'Delete', danger: true, action: () => {
       handleDeleteColumn();
     }
-  }]
+  })
+  
+  return items
 }
 function showActions() {
   const title = props?.column?.title.trim().toLowerCase();

@@ -16,7 +16,7 @@
       <!-- Text -->
     <div class="flex items-center ">
 
-      <span v-if="$slots.default " class="mx-1">
+      <span v-if="$slots.default " class="mx-1 text-nowrap">
         <slot />
       </span>
   

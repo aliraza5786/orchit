@@ -3,14 +3,25 @@
     <!-- Columns (horizontal) -->
     <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
-      :force-fallback="true" class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd" @start="onStart">
+      :force-fallback="true" 
+      :disabled="isMobile"
+      class="flex gap-3"
+      :class="{
+        'overflow-x-auto snap-x snap-mandatory w-full hide-scrollbar pb-4': isMobile,
+        'min-w-max': !isMobile
+      }"
+      direction="horizontal" @end="onColumnsEnd" @start="onStart">
       <!-- Each column -->
-      <template #item="{ element: column }">
-        <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface h-full " >
-          <KanbanColumn :plusIcon="plusIcon  && canCreateCard" :canDragList="canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
+      <template #item="{ element: column, index }">
+        <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface h-full " 
+          :class="{ 'snap-center': isMobile }"
+        >
+          <KanbanColumn :plusIcon="plusIcon  && canCreateCard" :canDragList="!isMobile && canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
             :variable_id="variable_id" @update:column="(e) => emit('update:column', e)"
+            :index="index" :totalColumns="localBoard.columns.length"
             @select:ticket="(v: Ticket) => emit('select:ticket', v)"
-            @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd">
+            @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd"
+            @move:column="handleMoveColumn">
             <template #emptyState="{ column }">
               <slot name="emptyState" :column="column"></slot>
             </template>
@@ -33,6 +44,7 @@
 import { ref, watch, watchEffect } from 'vue'
 import Draggable from 'vuedraggable'
 import KanbanColumn from './KanbanColumn.vue'
+import { useMediaQuery } from '@vueuse/core'
 
 import { usePermissions } from '../../../composables/usePermissions';
 const { canCreateCard, canEditCard } = usePermissions();
@@ -40,8 +52,10 @@ const { canCreateCard, canEditCard } = usePermissions();
 export interface Ticket { _id: string | number;[k: string]: any }
 export interface Column { _id: string | number; title: string; cards: Ticket[]; transitions: any }
 export interface Board { columns: Column[] }
-const canDragList = ref(canEditCard.value);
-console.log(canEditCard.value, "canEditCard.value") // only allow drag if user can edit card
+
+const isMobile = useMediaQuery('(max-width: 650px)')
+
+const canDragList = ref(canEditCard.value); 
 watchEffect(() => {
   canDragList.value = canEditCard.value;
 });
@@ -121,6 +135,38 @@ function pushUpdate(type: 'column' | 'ticket', meta?: any) {
   props.onBoardUpdate?.(board)
 }
 
+function handleMoveColumn({ direction, column }: { direction: 'left' | 'right', column: Column }) {
+  const columns = [...localBoard.value.columns] // Create a copy
+  const idx = columns.findIndex(c => c.title.toLowerCase() === column.title.toLowerCase())
+ 
+  if (idx === -1) return
+
+  let newIndex = idx
+  if (direction === 'left' && idx > 0) {
+    newIndex = idx - 1
+  } else if (direction === 'right' && idx < columns.length - 1) {
+    newIndex = idx + 1
+  }
+
+  if (newIndex !== idx) {
+    // Swap using splice for clarity and safety with copies
+    const [movedColumn] = columns.splice(idx, 1)
+    columns.splice(newIndex, 0, movedColumn)
+    
+    // Assign back to trigger reactivity
+    localBoard.value.columns = columns
+    
+    // Trigger update
+    const moved = columns[newIndex]
+    const id = moved?.title ? moved?.title : ""
+    const _id = moved?._id 
+
+    if (id != null) {
+      pushUpdate('column', { id, oldIndex: idx, newIndex, _id })
+    }
+  }
+}
+
 /** Helpers */
 function cloneBoard(b: Column[]): Board {
   return {
@@ -132,8 +178,6 @@ function cloneBoard(b: Column[]): Board {
     }))
   }
 }
-
-
 </script>
 
 <style scoped>
@@ -149,5 +193,14 @@ function cloneBoard(b: Column[]): Board {
 
 .kanban-dragging {
   cursor: grabbing !important;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>
