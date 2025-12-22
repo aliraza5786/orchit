@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watchEffect, watch } from "vue";
+import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useBlogBySlug, useRelatedBlogs } from "../../queries/useBlogs.ts";
 import { useTheme } from "../../composables/useTheme";
