@@ -11,8 +11,8 @@
         ? 'text-text-primary bg-bg-card'
         : ' text-text-secondary',
       expanded
-        ? 'w-[48px] h-[48px] sm:w-full sm:h-[38px] justify-start gap-2.5'
-        : 'flex-col w-[48px] h-[48px] justify-center gap-1.5 ',
+        ? 'w-[36px] h-[36px] sm:w-full sm:h-[38px] justify-start gap-2.5'
+        : 'flex-col w-[36px] h-[36px] justify-center gap-1.5 ',
     ]"
   >
     <!-- Drag Icon -->

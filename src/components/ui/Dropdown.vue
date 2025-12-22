@@ -3,7 +3,7 @@
     <button
       @click="toggle"
       type="button"
-      class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-md font-medium cursor-pointer transition bg-bg-surface"
+      class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-[6px] font-medium cursor-pointer transition bg-bg-surface"
       :class="[
         buttonSizeClass,
         variant === 'secondary' ? '!bg-bg-body border-0' : 'border-border',
@@ -60,8 +60,8 @@
     >
       <div
         v-if="open"
-        class="absolute max-h-[500px] overflow-visible z-12 mt-1 w-full min-w-fit rounded-md border border-border shadow-lg bg-bg-dropdown"
-        :class="menuBorderClass"
+        class=" max-h-[500px] overflow-visible z-12 mt-1  min-w-fit rounded-[6px] border border-border shadow-lg bg-bg-dropdown"
+         :class="[menuBorderClass, props.customClasses? props.customClasses :'absolute w-full' ]"
         @click.stop
       >
         <ul :class="['py-1 z-[2]', listTextSizeClass]">
@@ -186,7 +186,8 @@ const props = withDefaults(
     size?: "sm" | "md";
     actions?: boolean;
     canEdit?: boolean;
-    canDelete?: boolean
+    canDelete?: boolean;
+    customClasses?: string 
   }>(),
   {
     options: () => [],
@@ -195,7 +196,8 @@ const props = withDefaults(
     size: "md",
     actions: true,
     canEdit: true,
-    canDelete: true
+    canDelete: true,
+    customClasses: ""
   }
 );
 

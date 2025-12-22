@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isFetching || isPending" class="flex max-w-[380px] min-w-[380px] justify-center min-h-[400px] items-center h-full w-full">
+  <div v-if="isFetching || isPending" class="flex max-w-[380px] min-w-full sm:min-w-[380px] justify-center min-h-[400px] items-center h-full w-full">
 
     <div role="status" aria-label="Loading"
       class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
@@ -7,14 +7,14 @@
   <!-- Slide-in panel -->
    
   <Transition v-else name="panel" appear>
-    <div v-show="showPanel" class="flex flex-col max-w-[380px] min-w-[380px] h-full
+    <div v-show="showPanel" class="flex flex-col min-w-full max-w-[380px] sm:min-w-[380px] h-full
      overflow-y-auto
              bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
              rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)]
              border border-orchit-white/5 overflow-hidden" role="complementary" aria-label="Details panel">
       <!-- Header -->
       <div
-        class="sticky top-0 z-10 border-b  border-border px-6 py-[9px] flex items-center justify-between bg-bg-card">
+        class="sticky top-0 z-10 border-b  border-border px-4 sm:px-6 py-[9px] flex items-center justify-between bg-bg-card">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
         <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
           @click="() => emit('close')" aria-label="Close details">
@@ -23,7 +23,7 @@
       </div>
 
       <!-- Body -->
-      <div class="py-5 px-6 flex flex-col gap-5 flex-grow">
+      <div class="py-5  px-4 sm:px-6 flex flex-col gap-5 flex-grow">
         <!-- card type -->
         <template
         v-for="(item, index) in cardDetails?.variables"

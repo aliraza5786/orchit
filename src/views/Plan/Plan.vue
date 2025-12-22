@@ -2,6 +2,7 @@
   <div
     class="flex-auto flex-grow h-full min-h-0 bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
+   <div class="overflow-x-auto shrink-0">
     <div
       class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1 box-border"
     >
@@ -11,6 +12,7 @@
         variant="secondary"
         @edit-option="openEditSprintModal"
         @delete-option="handleDeleteSprint"
+        customClasses="fixed w-auto"
       >
         <template #more>
           <div
@@ -94,6 +96,8 @@
         </button>
       </div>
     </div>
+
+   </div>
     <template v-if="sprintDetailData?.status == 'active'">
       <ActiveSprint :sptint_id="selectedSprintId" :searchQuery="searchQuery" />
     </template>
