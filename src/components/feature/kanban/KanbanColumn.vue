@@ -1,5 +1,5 @@
 <template>
-  <div class="flex bg-bg-body flex-col min-h-[565px] h-full w-80 rounded-lg transition-all duration-200"
+  <div class="flex bg-bg-body flex-col min-h-[565px] h-full w-full rounded-lg transition-all duration-200"
     :class="columnBgClass">
     <!-- Column header -->
     <div class="flex items-center justify-between w-full p-4 border-b border-border cursor-grab">

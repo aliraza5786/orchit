@@ -323,8 +323,8 @@ const filteredBoard = computed(() => {
   height: 3px;
 }
 
-  .custom_scroll_bar::-webkit-scrollbar-thumb {
-  background-color: #888;
+.custom_scroll_bar::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.4);
   border-radius: 10px;
 }
 
@@ -339,6 +339,6 @@ const filteredBoard = computed(() => {
 /* Firefox support */
   .custom_scroll_bar {
   scrollbar-width: thin;
-  scrollbar-color: #888 transparent;
+   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
 }
 </style>
