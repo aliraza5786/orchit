@@ -7,14 +7,17 @@
       :disabled="isMobile"
       class="flex gap-3"
       :class="{
-        'overflow-x-auto snap-x snap-mandatory w-full hide-scrollbar pb-4': isMobile,
+        'overflow-x-auto snap-x snap-mandatory w-full pb-4 mobile-scroll-visible': isMobile,
         'min-w-max': !isMobile
       }"
       direction="horizontal" @end="onColumnsEnd" @start="onStart">
       <!-- Each column -->
       <template #item="{ element: column, index }">
-        <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface h-full " 
-          :class="{ 'snap-center': isMobile }"
+        <div class="rounded-lg bg-bg-surface h-full " 
+          :class="{ 
+            'snap-center min-w-[270px] max-w-[270px]': isMobile,
+            'min-w-[320px] max-w-[320px]': !isMobile 
+          }"
         >
           <KanbanColumn :plusIcon="plusIcon  && canCreateCard" :canDragList="!isMobile && canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
             :variable_id="variable_id" @update:column="(e) => emit('update:column', e)"
@@ -180,6 +183,7 @@ function cloneBoard(b: Column[]): Board {
 }
 </script>
 
+
 <style scoped>
 /* Drag classes from vuedraggable / SortableJS */
 .kanban-ghost {
@@ -202,5 +206,34 @@ function cloneBoard(b: Column[]): Board {
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+</style>
+
+<style>
+/* Global override for mobile scrollbar visibility in Kanban */
+.mobile-scroll-visible::-webkit-scrollbar {
+  display: block !important;
+  height: 8px !important; /* Visible height */
+}
+
+.mobile-scroll-visible::-webkit-scrollbar-track {
+  background: var(--bg-body) !important;
+  border-radius: 4px;
+}
+
+.mobile-scroll-visible::-webkit-scrollbar-thumb {
+  background-color: var(--border) !important;
+  border-radius: 4px;
+  border: 2px solid var(--bg-body) !important; /* Creates padding effect */
+}
+
+.mobile-scroll-visible::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-secondary) !important;
+}
+
+/* Ensure firefox supports it too if possible, though 'scrollbar-width: auto' usually handles it */
+.mobile-scroll-visible {
+  scrollbar-width: auto !important;
+  scrollbar-color: var(--border) var(--bg-body) !important;
 }
 </style>

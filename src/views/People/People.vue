@@ -41,7 +41,7 @@
             />
           <p class="text-xs mt-1.5">You can add details while editing</p>
           <div class="flex items-center mt-3 gap-3">
-            <Button :disabled="!canInviteUser" :class="canInviteUser? 'cursor-pointer':'cursor-not-allowed'" @click="emitAddColumn" type="submit"  variant="primary"
+            <Button :disabled="!canCreateVariable" :class="canCreateVariable? 'cursor-pointer':'cursor-not-allowed'" @click="emitAddColumn" type="submit"  variant="primary"
               class="px-3 py-1 bg-accent  text-white rounded">
               {{ addingList ? 'Adding...' : 'Add Team' }}
             </Button>
@@ -323,8 +323,8 @@ const filteredBoard = computed(() => {
   height: 3px;
 }
 
-  .custom_scroll_bar::-webkit-scrollbar-thumb {
-  background-color: #888;
+.custom_scroll_bar::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.4);
   border-radius: 10px;
 }
 
@@ -339,6 +339,6 @@ const filteredBoard = computed(() => {
 /* Firefox support */
   .custom_scroll_bar {
   scrollbar-width: thin;
-  scrollbar-color: #888 transparent;
+   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
 }
 </style>

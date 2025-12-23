@@ -11,8 +11,8 @@
         ? 'text-text-primary bg-bg-card'
         : ' text-text-secondary',
       expanded
-        ? 'w-[36px] h-[36px] sm:w-full sm:h-[38px] justify-start gap-2.5'
-        : 'flex-col w-[36px] h-[36px] justify-center gap-1.5 ',
+        ? 'w-[48px] h-[48px] sm:w-full sm:h-[38px] justify-start gap-2.5'
+        : 'flex-col w-[48px] h-[48px] justify-center gap-1.5 ',
     ]"
   >
     <!-- Drag Icon -->
@@ -36,8 +36,7 @@
     </i>
     <!-- <FontAwesomeIcon  :icon="[icon.prefix, icon.iconName]"/> -->
     <!-- <FontAwesomeIcon :icon="faGrid2" />      Label -->
-    <span
-      v-if="expanded"
+    <span 
       class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
       :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
     >
