@@ -22,7 +22,7 @@
       </div>
       <i class="cursor-pointer fa-solid fa-plus" v-if="plusIcon" @click="emit('onPlus', column)" />
 
-      <DropMenu v-if="showActions() && canDeleteVariable " :items="getMenuItems()">
+      <DropMenu v-if="showActions() && (canEditVariable || canDeleteVariable)" :items="getMenuItems()">
         <template #trigger>
           <i class="fa-solid fa-ellipsis cursor-pointer"></i>
         </template>
@@ -107,7 +107,7 @@ const titleInputRef = ref<HTMLInputElement | null>(null)
 watch(() => props.column.title, (v) => { localTitle.value = v })
 
 function beginEdit() {
-  if(canEditVariable.value) return
+  if(!canEditVariable.value) return
   const isEditable = showActions();
   if (!isEditable) return;
 
@@ -166,51 +166,63 @@ function onTicketsChange(evt: any) {
     newIndex: moved.newIndex ?? null,
   })
 }
-function getMenuItems() {
-  // Only return Delete if user has delete permission
-  if (!canDeleteVariable) return [];
-  const items = []
-  
-  if (props.index !== undefined && props.index > 0) {
-    items.push({
-      label: 'Move column left side',
-      action: () => {
-        emit('move:column', { direction: 'left', column: props.column })
-      }
-    })
-  }
+ function getMenuItems() {
+  // If the user has no permission to edit or delete, return empty
+  if (!canEditVariable.value && !canDeleteVariable.value) return [];
 
-  if (props.index !== undefined && props.totalColumns !== undefined && props.index < props.totalColumns - 1) {
-    items.push({
-      label: 'Move column right side',
-      action: () => {
-        emit('move:column', { direction: 'right', column: props.column })
-      }
-    })
-  }
+  const items: any[] = [];
 
-  items.push({
-    label: 'Delete', danger: true, action: () => {
-      handleDeleteColumn();
+  // Move left/right only if user can edit
+  if (canEditVariable.value) {
+    if (props.index !== undefined && props.index > 0) {
+      items.push({
+        label: 'Move column left side',
+        action: () => {
+          emit('move:column', { direction: 'left', column: props.column });
+        },
+      });
     }
-  })
-  
-  return items
+
+    if (
+      props.index !== undefined &&
+      props.totalColumns !== undefined &&
+      props.index < props.totalColumns - 1
+    ) {
+      items.push({
+        label: 'Move column right side',
+        action: () => {
+          emit('move:column', { direction: 'right', column: props.column });
+        },
+      });
+    }
+  }
+
+  // Delete only if user can delete
+  if (canDeleteVariable.value) {
+    items.push({
+      label: 'Delete',
+      danger: true,
+      action: () => handleDeleteColumn(),
+    });
+  }
+
+  return items;
 }
+
 function showActions() {
   const title = props?.column?.title.trim().toLowerCase();
   if (title)
     switch (title) {
       case 'admin':
       return false
-      case 'administrator':
-        return false
-      case 'to do':
-        return false
-      case 'done':
-        return false
-      case 'in progress':
-        return false
+      // case 'administrator':
+      //   return false
+      // case 'to do':
+      //   return false
+      // case 'done':
+      //   return false
+      // case 'in progress':
+      //   return false
       default:
         return true;
     }

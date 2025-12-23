@@ -116,8 +116,8 @@ function toggleSidebar() {
 const dashboardContentStyle = computed(() => ({
   maxWidth: sidebarExpanded.value
     ? 'calc(100vw - 250px)'
-    : 'calc(100vw - 55px)',
-  maxHeight: 'calc(100dvh - 60px)'
+    : 'calc(100vw - 70px)',
+  maxHeight: 'calc(100dvh - 65px)'
 }));
 </script>
 

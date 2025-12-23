@@ -41,7 +41,7 @@
             />
           <p class="text-xs mt-1.5">You can add details while editing</p>
           <div class="flex items-center mt-3 gap-3">
-            <Button :disabled="!canInviteUser" :class="canInviteUser? 'cursor-pointer':'cursor-not-allowed'" @click="emitAddColumn" type="submit"  variant="primary"
+            <Button :disabled="!canCreateVariable" :class="canCreateVariable? 'cursor-pointer':'cursor-not-allowed'" @click="emitAddColumn" type="submit"  variant="primary"
               class="px-3 py-1 bg-accent  text-white rounded">
               {{ addingList ? 'Adding...' : 'Add Team' }}
             </Button>
