@@ -131,6 +131,13 @@ watch(slug, () => {
 </template>
 
 <style>
+  .blog_content h1 {
+  font-size: 36px !important;
+  margin: 15px 0px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 40px !important;
+}
 .blog_content h2 {
   font-size: 36px;
   margin: 15px 0px;
@@ -174,14 +181,14 @@ watch(slug, () => {
 .blog_content a {
   color: var(--accent);
   text-decoration: underline;
-}
-ul{
+} 
+ .blog_content ul{
   display: flex;
   flex-direction: column;
   gap: 10px;
   list-style: inside !important;
 }
-li{
+.blog_content li{
   font-size: 16px;
   line-height: 24px; 
   font-weight: 400;
@@ -195,7 +202,7 @@ li{
 }
 
 @media(max-width:1024px) {
-  .blog_content h2 {
+  .blog_content h2,  .blog_content h1 {
     font-size: 24px;
     line-height: 32px;
   }

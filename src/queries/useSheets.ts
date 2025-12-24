@@ -3,6 +3,7 @@ import { useQuery, type UseQueryOptions } from "@tanstack/vue-query";
 import { useApiMutation } from "../libs/vq";
 import { request } from "../libs/api";
 
+
 /** -----------------------------
  * Stable query keys
  * ----------------------------- */
@@ -237,17 +238,25 @@ export const useVariables = (
         signal,
       });
 
-      // 2. Fetch common card types (for "Process" nested dropdown)
+      // 2. Fetch card types
       const typesReq = request<any>({
-        url: "/common/cardtypes",
+        url: `workspace/catalog/variable/values`,
         method: "GET",
+        params: {
+          workspace_id: unref(workspace_id),
+          module_id: unref(module_id),
+          variable_slug: "card-type",
+        },
         signal,
       });
 
       // 3. Wait for both
-      const [variables, cardTypes] = await Promise.all([varsReq, typesReq]);
+      const [variables, typesData] = await Promise.all([varsReq, typesReq]);
 
-      // 4. Merge
+      // 4. Map cardTypes from the response
+      const processTypes = typesData?.values ?? [];
+
+      // 5. Merge
       if (Array.isArray(variables)) {
         return variables.map((v: any) => {
           if (
@@ -256,11 +265,13 @@ export const useVariables = (
           ) {
             return {
               ...v,
-              nested: Array.isArray(cardTypes) ? cardTypes.map((ct: any) => ({
-                _id: ct._id || ct.title,
-                title: ct.title,
-                ...ct // keep other props if needed
-              })) : [],
+              nested: Array.isArray(processTypes)
+                ? processTypes.map((ct: any) => ({
+                    _id: ct._id || ct.value,
+                    title: ct.value,
+                    ...ct, 
+                  }))
+                : [],
             };
           }
           return v;
