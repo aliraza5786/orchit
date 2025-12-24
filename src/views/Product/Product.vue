@@ -15,7 +15,6 @@
         :options="transformedData"
         variant="secondary"
         customClasses="fixed w-auto"
-        @nested-select="handleProcessNestedSelection"
       >
         <template #more>
           <div
@@ -36,6 +35,7 @@
           :options="variables"
           variant="secondary"
            customClasses="fixed w-auto"
+           @nested-select="handleProcessNestedSelection"
         >
           <template #more>
             <div
@@ -556,7 +556,7 @@ const selectedCard = ref<any>();
   // function for nested process selection
 const selectedProcessMeta = ref<any>(null);
 const handleProcessNestedSelection = (val: any) => {  
-  selectedProcessMeta.value = val;
+  selectedProcessMeta.value = val; 
 };
 const selectedMindNode = ref<any>(null);
 const showFormatSidebar = ref(false);
