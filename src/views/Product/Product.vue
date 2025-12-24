@@ -487,6 +487,7 @@ import {
   h,
   ref,
   watch,
+  toRaw,
   watchEffect,
   nextTick,
   triggerRef
@@ -1196,6 +1197,18 @@ const toggleVisibilityHandler = (key: any, visible: any) => {
     },
   });
 };
+function resolveStyle<T>(
+  uiValue: T | undefined,
+  originalValue: T | undefined,
+  defaultValue: T
+): T {
+  return uiValue !== undefined
+    ? uiValue
+    : originalValue !== undefined
+    ? originalValue
+    : defaultValue;
+}
+
 function onStyleChange(prop: string, event: Event) {
   const target = event.target as HTMLInputElement;
   const value = target.type === "number" ? Number(target.value) : target.value;
@@ -1247,6 +1260,113 @@ function onStyleChange(prop: string, event: Event) {
 
   const nodeElement = document.getElementById(node.id);
   if (nodeElement) applyNodeStyle(node, nodeElement);
+}
+const DEFAULT_BACKEND_STYLE = {
+  bg_color: "#ffffff",
+  color: "#000000",
+  font_size: 14,
+  font_weight: "normal",
+  font_style: "normal",
+  font_family: "Inter",
+  border_color: "#cccccc",
+  border_width: 0,
+  border_radius: 0,
+  padding: 0,
+};
+function saveNodeStyle() {
+  const node = selectedMindNode.value.nodeObj;
+  if (!node) return;
+
+  const plainNode = toRaw(node);
+
+  if (!plainNode._originalStyle) {
+    plainNode._originalStyle = {};
+  }
+
+  const style = plainNode.style || {};
+  const original = plainNode._originalStyle;
+
+  const mergedStylePayload = {
+    bg_color: resolveStyle(
+      style.background,
+      original.bg_color,
+      DEFAULT_BACKEND_STYLE.bg_color
+    ),
+
+    color: resolveStyle(
+      style.color,
+      original.color,
+      DEFAULT_BACKEND_STYLE.color
+    ),
+
+    font_size: resolveStyle(
+      style.fontSize ? parseInt(style.fontSize) : undefined,
+      original.font_size,
+      DEFAULT_BACKEND_STYLE.font_size
+    ),
+
+    font_weight: resolveStyle(
+      style.fontWeight,
+      original.font_weight,
+      DEFAULT_BACKEND_STYLE.font_weight
+    ),
+
+    font_style: resolveStyle(
+      style.fontStyle,
+      original.font_style,
+      DEFAULT_BACKEND_STYLE.font_style
+    ),
+
+    font_family: resolveStyle(
+      style.fontFamily,
+      original.font_family,
+      DEFAULT_BACKEND_STYLE.font_family
+    ),
+
+    border_color: resolveStyle(
+      style.borderColor,
+      original.border_color,
+      DEFAULT_BACKEND_STYLE.border_color
+    ),
+
+    border_width: resolveStyle(
+      style.borderWidth ? parseInt(style.borderWidth) : undefined,
+      original.border_width,
+      DEFAULT_BACKEND_STYLE.border_width
+    ),
+
+    border_radius: resolveStyle(
+      style.borderRadius ? parseInt(style.borderRadius) : undefined,
+      original.border_radius,
+      DEFAULT_BACKEND_STYLE.border_radius
+    ),
+    padding: resolveStyle(
+      style.padding ? parseInt(style.padding) : undefined,
+      original.padding,
+      DEFAULT_BACKEND_STYLE.padding
+    ),
+  };
+  plainNode._originalStyle = { ...mergedStylePayload };
+
+  const payload =
+    plainNode.unique_name === "sheet"
+      ? {
+          sheet_id: plainNode.id,
+          workspace_id: workspaceId.value,
+          workspace_module_id: moduleId.value,
+          style: mergedStylePayload,
+        }
+      : {
+          card_id: plainNode.id,
+          seat_id: plainNode.seat_id,
+          style: mergedStylePayload,
+        };
+
+  plainNode.unique_name === "sheet"
+    ? updateSheet(payload)
+    : moveCard.mutate(payload);
+
+  showFormatSidebar.value = false;
 }
 
 interface MindNodeStyle {
