@@ -158,6 +158,7 @@ export function useSheetList(
   sheet_id: MaybeRef<string | null | undefined>,
   laneIds: MaybeRef<string[] | string | null | undefined>,
   view_by: MaybeRef<string | null | undefined>,
+  extraParams?: MaybeRef<Record<string, any> | undefined>,
   options: Omit<
     UseQueryOptions<any, any, any, any>,
     "queryKey" | "queryFn"
@@ -180,12 +181,11 @@ export function useSheetList(
   // reactive query key
   const queryKey = computed(() => [
     "sheet-list",
-
-    module_id,
+    unref(module_id),
     unref(sheet_id),
     unref(laneIdsParam),
     unref(view_by),
-    ,
+    unref(extraParams),
   ]);
 
   // reactive enabled
@@ -205,6 +205,7 @@ export function useSheetList(
         sheet_id: unref(sheet_id)!,
         variable_id: unref(view_by)!,
         ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam)! } : {}),
+        ...(unref(extraParams) || {}),
       };
 
       // request() should return plain JSON (not AxiosResponse)
@@ -226,14 +227,47 @@ export const useVariables = (
 ) => {
   return useQuery({
     queryKey: ["all-module-variables", sheetId],
-    queryFn: ({ signal }) =>
-      request<any>({
+    queryFn: async ({ signal }) => {
+      // 1. Fetch variables
+      const varsReq = request<any>({
         url: `/workspace/catalog/${workspace_id}/card-variables/${
           unref(module_id) ?? module_id
         }?sheet_id=${unref(sheetId)}`,
         method: "GET",
         signal,
-      }),
+      });
+
+      // 2. Fetch common card types (for "Process" nested dropdown)
+      const typesReq = request<any>({
+        url: "/common/cardtypes",
+        method: "GET",
+        signal,
+      });
+
+      // 3. Wait for both
+      const [variables, cardTypes] = await Promise.all([varsReq, typesReq]);
+
+      // 4. Merge
+      if (Array.isArray(variables)) {
+        return variables.map((v: any) => {
+          if (
+            v.title?.toLowerCase() === "process" ||
+            v.slug?.toLowerCase() === "process"
+          ) {
+            return {
+              ...v,
+              nested: Array.isArray(cardTypes) ? cardTypes.map((ct: any) => ({
+                _id: ct._id || ct.title,
+                title: ct.title,
+                ...ct // keep other props if needed
+              })) : [],
+            };
+          }
+          return v;
+        });
+      }
+      return variables;
+    },
     ...options,
   });
 };

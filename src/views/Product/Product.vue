@@ -15,6 +15,7 @@
         :options="transformedData"
         variant="secondary"
         customClasses="fixed w-auto"
+        @nested-select="handleProcessNestedSelection"
       >
         <template #more>
           <div
@@ -108,7 +109,7 @@
       <KanbanSkeleton v-show="isPending || isSheetPending" />
       <div
         v-show="!isPending && !isSheetPending"
-        class="flex overflow-x-auto gap-3 p-4 scrollbar-visible"
+        class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
       >
         <KanbanBoard
           @onPlus="plusHandler"
@@ -551,6 +552,12 @@ const { workspaceId, moduleId } = useRouteIds();
 const queryClient = useQueryClient();
 const createTeamModal = ref(false);
 const selectedCard = ref<any>();
+
+  // function for nested process selection
+const selectedProcessMeta = ref<any>(null);
+const handleProcessNestedSelection = (val: any) => {  
+  selectedProcessMeta.value = val;
+};
 const selectedMindNode = ref<any>(null);
 const showFormatSidebar = ref(false);
 declare global {
@@ -672,14 +679,44 @@ const { mutate: addList, isPending: addingList } = useAddList({
     showDelete.value = false;
   },
 });
+// reactively checking selected view by value
+const selectedViewByVariable = computed(() => {
+  return variables.value?.find(
+    (v: any) => v._id === selected_view_by.value
+  );
+});
+//add column
 const handleAddColumn = (v: any) => {
-  addList({
+  const payload: any = {
     workspace_id: workspaceId.value,
     module_id: moduleId.value,
     variable_id: selected_view_by.value,
     value: v,
-  });
+    ...listProcessPayload.value,
+  }; 
+
+  // if (
+  //   selectedViewByVariable.value?.title === "Process" &&
+  //   selectedProcessMeta.value
+  // ) {
+  //   payload.type_value = selectedProcessMeta.value?.title;
+  // }
+
+  addList(payload);
 };
+
+const listProcessPayload = computed(() => {
+  if (
+    selectedViewByVariable.value?.title === "Process" &&
+    selectedProcessMeta.value
+  ) {
+    return {
+      type_value: selectedProcessMeta.value.title, // optional
+    };
+  }
+
+  return {};
+});
 
 // Fetch sheets using `useSheets`
 
@@ -701,7 +738,8 @@ const { data: Lists, isPending, refetch: refetchSheetLists } = useSheetList(
   moduleId,
   selected_sheet_id, // ref
   computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
-  selected_view_by // ref
+  selected_view_by, // ref
+  listProcessPayload
 );
 
 const selectCardHandler = (card: any) => {
@@ -732,6 +770,7 @@ function onReorder(a: any) {
       {
         onSuccess: () => {
           refetchSheets();
+          refetchSheetLists();
         },
       }
     );
@@ -750,6 +789,7 @@ function onReorder(a: any) {
       {
         onSuccess: () => {
           refetchSheets();
+          refetchSheetLists();
         },
       }
     );
