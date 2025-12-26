@@ -112,10 +112,11 @@ import BaseEmailChip from '../../components/ui/BaseEmailChip.vue'
 import { useCreateCompany, useInviteCompany } from '../../services/auth'
 import { useRolesList } from '../../queries/useCommon'
 import { useWorkspaceStore } from '../../stores/workspace'
+import { useAuthStore } from '../../stores/auth'
 defineOptions({ name: 'OnboardingFlow' })
 const workspaceStore = useWorkspaceStore()
 const errors = ref<{ team?: string; role?: string; companySize?: string; emailList?: string }>({})
-
+const authStore = useAuthStore()
 function validateCompanyStep() {
   const next: { team?: string; role?: string; companySize?: string } = {}
   if (!team.value.trim()) next.team = 'Please enter your company name.'
@@ -135,11 +136,15 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
 const { mutate: invitePeople, isPending: invitingPeople } = useInviteCompany({
   onSuccess: () => {
     if (workspaceStore.pricing) {
+      authStore.bootstrap();
       router.push(`/dashboard?stripePayment=${true}`)
     } else if (workspaceStore.workspace) {
+       authStore.bootstrap();
       router.push('/create-workspace')
-    } else
+    } else {
+      authStore.bootstrap();
       router.push('/finish-profile');
+    }
   }
 });
 

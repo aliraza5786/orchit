@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watchEffect, watch } from "vue";
+import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useBlogBySlug, useRelatedBlogs } from "../../queries/useBlogs.ts";
 import { useTheme } from "../../composables/useTheme";
@@ -16,7 +16,7 @@ const slug = computed(() => route.params.id as string);
 // Fetch main blog by slug
 const { data: blog, isLoading: loadingBlog, refetch: refetchBlog } = useBlogBySlug(slug, {
   enabled: computed(() => !!slug.value),
-});
+}); 
 
 // Blog ID 
 const blogId = computed(() => blog.value?._id);
@@ -34,14 +34,7 @@ watch(slug, () => {
   if (slug.value) {
     refetchBlog();
   }
-});
-
-// for Debugging purpose
-watchEffect(() => {
-  console.log("Slug:", slug.value);
-  console.log("Blog ID:", blogId.value);
-  console.log("Related blogs:", relatedBlogs.value);
-});
+}); 
 
 </script>
 
@@ -138,12 +131,19 @@ watchEffect(() => {
 </template>
 
 <style>
+  .blog_content h1 {
+  font-size: 36px !important;
+  margin: 15px 0px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 40px !important;
+}
 .blog_content h2 {
   font-size: 36px;
   margin: 15px 0px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 40px;
+  line-height: 40px !important;
 }
 
 .blog_content h3 {
@@ -151,7 +151,7 @@ watchEffect(() => {
   margin: 15px 0px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 40px;
+  line-height: 40px !important; 
 }
 
 .blog_content h4 {
@@ -159,7 +159,7 @@ watchEffect(() => {
   margin: 10px 0px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 28px;
+  line-height: 28px !important;
 }
 
 .blog_content p {
@@ -181,14 +181,28 @@ watchEffect(() => {
 .blog_content a {
   color: var(--accent);
   text-decoration: underline;
+} 
+ .blog_content ul{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  list-style: inside !important;
 }
+.blog_content li{
+  font-size: 16px;
+  line-height: 24px; 
+  font-weight: 400;
+  font-family: manrope;
+  color: var(--color-text-secondary);
+}
+
 
 .animate-fadeIn {
   animation: fadeIn 0.5s ease-in-out;
 }
 
 @media(max-width:1024px) {
-  .blog_content h2 {
+  .blog_content h2,  .blog_content h1 {
     font-size: 24px;
     line-height: 32px;
   }

@@ -2,7 +2,7 @@
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
       showPanel
-        ? '!translate-x-0 w-full h-full min-w-[350px] overflow-y-auto'
+        ? '!translate-x-0 w-full h-full min-w-full sm:min-w-[380px] overflow-y-auto'
         : '!translate-x-100 w-0 h-0'
     } transition-all`"
   >
@@ -127,8 +127,8 @@
             placeholder="Select Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
-            :canEditCard="!canEditUser"
-            :key="workspaceRoles?.length"
+            :canEditCard="!canEditUser" 
+            :loading="isLoadingWorkspaceRoles || !newCompanyId"
           />
 
            <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
@@ -410,7 +410,7 @@ const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
 const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
-const { data: workspaceRoles } = useWorkspaceRoles( {
+const { data: workspaceRoles, isLoading: isLoadingWorkspaceRoles } = useWorkspaceRoles( {
     company_id: newCompanyId,
     workspace_id:  workspaceId
   }, {  

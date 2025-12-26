@@ -3,7 +3,7 @@
     <button
       @click="toggle"
       type="button"
-      class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-md font-medium cursor-pointer transition bg-bg-surface"
+      class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-[6px] font-medium cursor-pointer transition bg-bg-surface"
       :class="[
         buttonSizeClass,
         variant === 'secondary' ? '!bg-bg-body border-0' : 'border-border',
@@ -60,8 +60,8 @@
     >
       <div
         v-if="open"
-        class="absolute max-h-[500px] overflow-visible z-12 mt-1 w-full min-w-fit rounded-md border border-border shadow-lg bg-bg-dropdown"
-        :class="menuBorderClass"
+        class=" max-h-[500px] overflow-visible z-12 mt-1  min-w-fit rounded-[6px] border border-border shadow-lg bg-bg-dropdown"
+         :class="[menuBorderClass, props.customClasses? props.customClasses :'absolute w-full' ]"
         @click.stop
       >
         <ul :class="['py-1 z-[2]', listTextSizeClass]">
@@ -70,7 +70,9 @@
             :key="option._id"
             class="group cursor-pointer flex items-stretch text-nowrap hover:bg-bg-dropdown-menu-hover"
             :class="itemPaddingClass"
-            @click="select(option)"
+            @click="handleOptionClick(option)"
+            @mouseenter="hoveredOptionId = option._id"
+            @mouseleave="hoveredOptionId = null"
           >
             <!-- Left: icon/prefix -->
             <div class="flex items-center gap-2 min-w-0 flex-1">
@@ -110,8 +112,30 @@
               ></i>
             </div>
 
-            <!-- Right: row actions -->
-            <div v-if="actions && canEdit && canDelete" class="pl-2 flex items-center relative">
+            <!-- Right: row actions or nested indicator -->
+            <div v-if="option.nested?.length" class="pl-2 flex items-center relative ml-auto">
+               <span class="text-text-secondary">...</span>
+               <!-- Nested Dropdown -->
+               <div
+                  v-if="hoveredOptionId === option._id  || openNestedId === option._id"
+                  class="absolute left-[30px] top-[-5px] ml-1 z-[30] min-w-48 bg-bg-dropdown border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+                   @click.stop
+               >
+                 <ul class="py-1 text-sm">
+                   <li
+                     v-for="subOption in option.nested"
+                     :key="subOption._id"
+                     class="px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
+                     @click="emitNestedSelect(subOption, option)"
+                   >
+                     {{ subOption.title }}
+                   </li>
+                 </ul>
+               </div>
+            </div>
+
+            <!-- Existing actions logic (only if NOT nested, to avoid conflict or visual clutter, though user didn't say remove actions) -->
+            <div v-else-if="actions && canEdit && canDelete" class="pl-2 flex items-center relative">
               <!-- Kebab: visible on hover/focus OR when toggled -->
               <button
                 class="opacity-0 cursor-pointer group-hover:opacity-100 focus:opacity-100 transition rounded-md px-1.5 py-1 text-text-secondary hover:bg-bg-dropdown-menu-hover"
@@ -173,7 +197,8 @@ interface Option {
   icon?: IconData;
   description?: string;
   status?: string;
-
+  slug?: string;
+  nested?: Option[];
 }
 
 const props = withDefaults(
@@ -186,7 +211,8 @@ const props = withDefaults(
     size?: "sm" | "md";
     actions?: boolean;
     canEdit?: boolean;
-    canDelete?: boolean
+    canDelete?: boolean;
+    customClasses?: string 
   }>(),
   {
     options: () => [],
@@ -195,7 +221,8 @@ const props = withDefaults(
     size: "md",
     actions: true,
     canEdit: true,
-    canDelete: true
+    canDelete: true,
+    customClasses: ""
   }
 );
 
@@ -203,6 +230,7 @@ const emit = defineEmits([
   "update:modelValue",
   "edit-option",
   "delete-option",
+  "nested-select"
 ] as const);
 
 const open = ref(false);
@@ -225,10 +253,30 @@ function toggle() {
 function select(option: Option) {
   selected.value = option._id;
   open.value = false;
+  openNestedId.value = null; // Close nested
+}
+
+/* ------- Nested & Actions state ------- */
+const hoveredOptionId = ref<string | null>(null);
+const openNestedId = ref<string | null>(null); // For click-to-toggle nested
+const actionOpenId = ref<string | null>(null);
+
+function handleOptionClick(option: Option) {
+    if (option.nested?.length) {
+        // Toggle nested visibility on click
+        openNestedId.value = openNestedId.value === option._id ? null : option._id;
+    } else {
+        select(option);
+    }
+}
+
+function emitNestedSelect(subOption: Option, parentOption: Option) {
+    emit("nested-select", subOption);
+    select(parentOption);
 }
 
 /* ------- Actions state ------- */
-const actionOpenId = ref<string | null>(null);
+// actionOpenId defined above
 const confirmDeleteId = ref<string | null>(null);
 
 function toggleRowActions(id: string) {

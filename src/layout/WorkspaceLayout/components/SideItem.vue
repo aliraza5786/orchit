@@ -29,15 +29,14 @@
     <i
       v-else
       :class="[
-        icon?.prefix,
-        icon?.iconName,
+         ...iconClasses,
         expanded ? 'text-[16px]' : 'text-[14px]',
       ]"
     >
     </i>
     <!-- <FontAwesomeIcon  :icon="[icon.prefix, icon.iconName]"/> -->
     <!-- <FontAwesomeIcon :icon="faGrid2" />      Label -->
-    <span
+    <span 
       class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
       :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
     >
@@ -70,8 +69,8 @@ let stopped = false;
 /** --- SSE URL --- **/
 const SERVER_BASE_URL =
   import.meta.env.VITE_SERVER_BASE_URL ||
-  // "https://backend.streamed.space/api/v1/";
-  "https://backend.orchit.ai/api/v1/"
+  "https://backend.streamed.space/api/v1/";
+  // "https://backend.orchit.ai/api/v1/"
 
 /**
  * Open SSE stream for job progress
@@ -170,6 +169,34 @@ function clickHandler() {
   if (progress.value == "processing" && props.status == "running") return;
   router.push(props.to);
 }
+
+
+// sidebar item icon normalizer
+const iconClasses = computed(() => { 
+  
+  const placeholder = { prefix: 'fas', iconName: 'fa-layer-group' };
+
+  // Choose icon:
+  // 1. props.icon (direct)
+  // 2. props.icon.variables['module-icon'] if exists
+  // 3. placeholder
+  let icon = placeholder;
+
+  if (props.icon?.iconName) {
+    icon = props.icon;
+  } else if (props.icon?.variables?.['module-icon']?.iconName) {
+    icon = props.icon.variables['module-icon'];
+  }
+
+  const prefix = icon.prefix || 'fas';
+  const name = icon.iconName;
+
+  const normalizedName = name.startsWith('fa-') ? name : `fa-${name}`;
+
+  return [prefix, normalizedName];
+});
+
+
 </script>
 
 <style scoped>

@@ -2,98 +2,6 @@
   <div
     class="flex-auto flex-grow h-full min-h-0 bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
-    <div
-      class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1 box-border"
-    >
-      <Dropdown
-        v-model="selectedSprintId"
-        :options="sprintsList?.sprints"
-        variant="secondary"
-        @edit-option="openEditSprintModal"
-        @delete-option="handleDeleteSprint"
-      >
-        <template #more>
-          <div
-            @click="openSprintModal()"
-            class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
-          >
-            <i class="fa-solid fa-plus"></i> Add new
-          </div>
-        </template>
-      </Dropdown>
-      <div class="flex gap-3 items-center">
-        <SearchBar
-          placeholder="Search in sprint"
-          @onChange="
-            (e) => {
-              searchQuery = e;
-            }
-          "
-        >
-        
-        </SearchBar>
-        <Button
-          v-if="sprintDetailData?.status == 'active'"
-          size="sm"
-          @click="handleCompleteSprint"
-          :variant="theme === 'dark' ? 'primary' : 'primary'"
-          class="border-border-input border"
-          >{{ isCompletingSprint ? "Ending..." : "End" }}</Button
-        >
-        <Button
-          v-else
-          size="sm"
-          :variant="theme === 'dark' ? 'primary' : 'primary'"
-          class="border-border-input border"
-          @click="openStartSprintModal"
-          :disabled="!firstSprint || firstSprint.tickets.length == 0"
-          >Start Sprint</Button
-        >
-
-        <div class="relative inline-block"  ref="elipseWrapper">
-          <!-- wrapper that listens for outside click -->
-          <div>
-            <!-- Toggle Button -->
-            <button
-              @click.stop="openElipseDrop = !openElipseDrop"
-              class="flex items-center  cursor-pointer justify-center border border-border-input rounded-[8px] w-[36px] h-[36px] text-primary hover:bg-bg-body"
-            >
-              <i
-                class="fa-solid fa-ellipsis-vertical text-md"
-              ></i>
-            </button>
-
-            <!-- Dropdown -->
-            <transition name="fade">
-              <ul
-                v-if="openElipseDrop"
-                class="absolute right-0 mt-2 w-44 border border-border-input rounded-[8px] bg-bg-dropdown shadow-xl py-3 z-50"
-                @click.stop
-              >
-                <li
-                  class="px-4 py-2 text-[14px] font-manrope font-medium text-text-secondary hover:bg-bg-body cursor-pointer"
-                  @click="openEditSprintModal(selectedSprint)"
-                >
-                  Edit Sprint
-                </li>
-
-                <li
-                  class="px-4 py-2 text-[14px] font-manrope font-medium text-red-600 hover:bg-bg-body cursor-pointer"
-                  @click="handleDeleteSprint(selectedSprint)"
-                >
-                  Delete Sprint
-                </li>
-              </ul>
-            </transition>
-          </div>
-        </div>
-        <button
-          class="flex items-center font-normal justify-center border border-border-input rounded-[8px] w-[36px] h-[36px] text-primary hover:bg-bg-body"
-        >
-          <i class="fa-sharp fa-thin fa-arrows-up-down-left-right"></i>
-        </button>
-      </div>
-    </div>
     <template v-if="sprintDetailData?.status == 'active'">
       <ActiveSprint :sptint_id="selectedSprintId" :searchQuery="searchQuery" />
     </template>
@@ -101,7 +9,6 @@
           <KanbanSkeleton/>
     </template>
     <div v-else class="p-4 w-full min-w-0 box-border h-full min-h-0">
-      <!-- Header -->
       <div
         class="flex gap-2 h-full max-h-screen min-h-0 box-border overflow-x-auto group"
         ref="containerRef"
@@ -157,17 +64,26 @@
             @open-create-ticket="openCreateBacklogTicket"
           />
         </section>
-        <!-- Resize Handle (appears on hover) -->
         <div
           class="h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
           @mousedown="startResize"
         ></div>
         <section
-          class="space-y-6 p-4 rounded-md relative group ovrflow-hidden flex-1 h-full min-h-0 box-border min-w-[400px]"
-          :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
+          class="space-y-4 rounded-md relative group pt-2 ovrflow-hidden flex-1 h-full min-h-0 box-border min-w-[400px] border border-gray-200"
         >
-          <div class="flex items-center justify-between">
-            <h2 class="text-sm font-semibold flex gap-2 items-center mt-1">
+        <div class="flex justify-between px-2">
+          <div class="flex items-center justify-start gap-3 bg-white">
+            <Dropdown
+        v-model="selectedSprintId"
+        :options="sprintsList?.sprints"
+        variant="secondary"
+        @edit-option="openEditSprintModal"
+        @delete-option="handleDeleteSprint"
+        class="border border-gray-300 rounded-lg"
+      >
+      </Dropdown>
+
+       <h2 class="text-sm font-semibold flex gap-2 items-center mt-1">
               <input
                 type="checkbox"
                 class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
@@ -176,7 +92,83 @@
               Sprint ({{ firstSprint?.tickets?.length }}
               {{ firstSprint?.tickets?.length > 1 ? "Tasks" : "Task" }})
             </h2>
+          <div
+            @click="openSprintModal()"
+            class="capitalize border-t mt-1 border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
+          >
+            <i class="fa-solid fa-plus"></i>
           </div>
+          </div>
+          <div class="flex gap-3 items-center">
+        <SearchBar
+          placeholder="Search in sprint"
+          @onChange="
+            (e) => {
+              searchQuery = e;
+            }
+          "
+        >
+        
+        </SearchBar>
+        <Button
+          v-if="sprintDetailData?.status == 'active'"
+          size="sm"
+          @click="handleCompleteSprint"
+          :variant="theme === 'dark' ? 'primary' : 'primary'"
+          class="border-border-input border"
+          >{{ isCompletingSprint ? "Ending..." : "End" }}</Button
+        >
+        <Button
+          v-else
+          size="sm"
+          :variant="theme === 'dark' ? 'primary' : 'primary'"
+          class="border-border-input border"
+          @click="openStartSprintModal"
+          :disabled="!firstSprint || firstSprint.tickets.length == 0"
+          >Start Sprint</Button
+        >
+
+        <div class="relative inline-block"  ref="elipseWrapper">
+          <div>
+            <button
+              @click.stop="openElipseDrop = !openElipseDrop"
+              class="flex items-center  cursor-pointer justify-center border border-border-input rounded-[8px] w-[36px] h-[36px] text-primary hover:bg-bg-body"
+            >
+              <i
+                class="fa-solid fa-ellipsis-vertical text-md"
+              ></i>
+            </button>
+            <transition name="fade">
+              <ul
+                v-if="openElipseDrop"
+                class="absolute right-0 mt-2 w-44 border border-border-input rounded-[8px] bg-bg-dropdown shadow-xl py-3 z-50"
+                @click.stop
+              >
+                <li
+                  class="px-4 py-2 text-[14px] font-manrope font-medium text-text-secondary hover:bg-bg-body cursor-pointer"
+                  @click="openEditSprintModal(selectedSprint)"
+                >
+                  Edit Sprint
+                </li>
+
+                <li
+                  class="px-4 py-2 text-[14px] font-manrope font-medium text-red-600 hover:bg-bg-body cursor-pointer"
+                  @click="handleDeleteSprint(selectedSprint)"
+                >
+                  Delete Sprint
+                </li>
+              </ul>
+            </transition>
+          </div>
+        </div>
+        <button
+          class="flex items-center font-normal justify-center border border-border-input rounded-[8px] w-[36px] h-[36px] text-primary hover:bg-bg-body"
+        >
+          <i class="fa-sharp fa-thin fa-arrows-up-down-left-right"></i>
+        </button>
+      </div>
+        </div>
+          
           <div
             v-if="isSprintPending"
             class="w-full h-full min-h-[250px] flex justify-center items-center"

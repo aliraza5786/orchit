@@ -32,6 +32,7 @@
         :options="workspaceTeamRoleOptions"
         placeholder="Choose team role"
         :model-value="form.role_id"
+        :loading="isLoadingTeamRoles"
         @update:modelValue="(val) => (form.role_id = val)"
       />
 
@@ -48,6 +49,7 @@
         :disabled="!form.workspace_id"
         :message="roleError"
         :error="!!roleError"
+        :loading="isLoadingWorkspaceRoles || !newCompanyId"
       />
       
 
@@ -197,7 +199,7 @@ const workspaceIdRef = computed(() => form.workspace_id ?? undefined) as Ref<
 >;
 
 // workspace team roles
-const { data: workspaceTeamRoles } = useWorkspaceTeamRoles(workspaceIdRef, {
+const { data: workspaceTeamRoles, isLoading: isLoadingTeamRoles } = useWorkspaceTeamRoles(workspaceIdRef, {
   enabled: computed(() => !!form.workspace_id),
 });
 const workspaceTeamRoleOptions = computed(() => {
@@ -216,7 +218,7 @@ const { data: workspaceData } = useSingleWorkspaceCompany(workspaceIdRef, {
 });
 
 const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
-const { data: workspaceRoles, refetch: refetchWorkspaceRoles } = useWorkspaceRoles(
+const { data: workspaceRoles, refetch: refetchWorkspaceRoles, isLoading: isLoadingWorkspaceRoles } = useWorkspaceRoles(
   {
     company_id: newCompanyId,
     workspace_id: workspaceIdRef
