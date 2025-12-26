@@ -120,7 +120,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue"; 
+import { ref, watch, onMounted, onBeforeUnmount } from "vue"; 
+import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
 
 interface Option {
   title: string;
@@ -163,8 +164,11 @@ const isOpen = ref(false);
 const wrapperRef = ref<HTMLElement | null>(null);
 const triggerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
-const dropdownStyles = ref({ top: "0px", left: "0px", width: "100%" });
+const dropdownStyles = ref({ top: "-9999px", left: "-9999px", width: "100%", position: 'fixed' });
 const selected = ref<Option | null>(null);
+
+// Floating UI cleanup function
+let cleanupFloating: (() => void) | null = null;
 
 /** Handle click outside **/
 function handleClickOutside(event: MouseEvent) {
@@ -173,8 +177,7 @@ function handleClickOutside(event: MouseEvent) {
     !wrapperRef.value?.contains(target) &&
     !dropdownRef.value?.contains(target)
   ) {
-    isOpen.value = false;
-    removeOutsideListener();
+    closeDropdown();
   }
 }
 
@@ -188,64 +191,62 @@ function removeOutsideListener() {
 
 onBeforeUnmount(() => {
   removeOutsideListener();
+  if (cleanupFloating) cleanupFloating();
 });
 
-// function toggleDropdown() {
-//   isOpen.value = !isOpen.value
-//   if (isOpen.value) {
-//     nextTick(() => {
-//       if (triggerRef.value) {
-//         const rect = triggerRef.value.getBoundingClientRect()
-//         dropdownStyles.value = {
-//           top: `${rect.bottom + window.scrollY}px`,
-//           left: `${rect.left + window.scrollX}px`,
-//           width: `${rect.width}px`,
-//         }
-//       }
-//       addOutsideListener()
-//     })
-//   } else {
-//     removeOutsideListener()
-//   }
-// }
+function closeDropdown() {
+  isOpen.value = false;
+  removeOutsideListener();
+  if (cleanupFloating) {
+    cleanupFloating();
+    cleanupFloating = null;
+  }
+}
+
+function updatePosition() {
+  if (!triggerRef.value || !dropdownRef.value) return;
+
+  computePosition(triggerRef.value, dropdownRef.value, {
+    placement: 'bottom-start',
+    strategy: 'fixed', // Fixed because we are teleporting to body
+    middleware: [
+      offset(({ placement }) => placement.startsWith('top') ? 17 : 5),
+      flip(),
+      shift({ padding: 5 })
+    ],
+  }).then(({ x, y, strategy }) => {
+    // Also sync width
+    const width = triggerRef.value?.getBoundingClientRect().width;
+    dropdownStyles.value = {
+      top: `${y}px`,
+      left: `${x}px`,
+      width: `${width}px`,
+      position: strategy,
+    } as any;
+  });
+}
 
 function toggleDropdown() {
    if (props.canEditCard) return;
-  isOpen.value = !isOpen.value;
-
+  
   if (isOpen.value) {
-    nextTick(() => {
-      if (triggerRef.value && dropdownRef.value) {
-        const rect = triggerRef.value.getBoundingClientRect();
-        const dropdownHeight = dropdownRef.value.offsetHeight;
-        const viewportHeight = window.innerHeight;
-
-        const spaceBelow = viewportHeight - rect.bottom;
-        const spaceAbove = rect.top;
-
-        const OFFSET = 17; // Only upper gap
-
-        let top;
-
-        // If not enough space below → open upward
-        if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-          top = rect.top + window.scrollY - dropdownHeight - OFFSET;
-        } else {
-          // Default: open downward with no extra spacing
-          top = rect.bottom + window.scrollY;
-        }
-
-        dropdownStyles.value = {
-          top: `${top}px`,
-          left: `${rect.left + window.scrollX}px`,
-          width: `${rect.width}px`,
-        };
-      }
-
-      addOutsideListener();
-    });
+    closeDropdown();
   } else {
-    removeOutsideListener();
+    isOpen.value = true;
+    
+    // Start floating-ui autoUpdate
+    // We use a small timeout or nextTick to ensure the dropdown element is rendered
+    // before we try to position it.
+    setTimeout(() => {
+        if (triggerRef.value && dropdownRef.value) {
+            cleanupFloating = autoUpdate(
+                triggerRef.value, 
+                dropdownRef.value, 
+                updatePosition
+            );
+            addOutsideListener();
+        }
+    }, 0);
   }
 }
 
@@ -253,16 +254,14 @@ function selectOption(option: Option) {
   if (option.isAction) {
     emit("update:modelValue", option._id);
     emit("update", option._id);
-    isOpen.value = false;
-    removeOutsideListener();
+    closeDropdown();
     return;
   }
  
   selected.value = option;
   emit("update:modelValue", option._id);
   emit("update", option._id);
-  isOpen.value = false;
-  removeOutsideListener();
+  closeDropdown();
 }
 
 /** Sync logic **/

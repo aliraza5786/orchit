@@ -125,8 +125,8 @@
                     leave-from-class="opacity-100 translate-x-0 scale-100"
                     leave-to-class="opacity-0 translate-x-1 scale-95">
                     <div v-if="themeOpen" ref="themeMenuRef"
-                      class="absolute top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
-                      role="menu" :class="themeFlipLeft ? 'right-full mr-2' : 'left-full ml-2'">
+                      class="absolute top-[37px] sm:top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
+                      role="menu" :class="themeFlipLeft ? 'right-[-17px] sm:right-full mr-2' : 'left-full ml-2'">
                       <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
                         @click="setTheme('system'); closeMenu()" type="button">
                         <i class="fa-solid fa-desktop"></i> System
