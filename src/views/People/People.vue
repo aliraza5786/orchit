@@ -1,7 +1,8 @@
 <template>
   <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border  overflow-x-auto flex-col flex  ">
-    <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
-      <Dropdown :actions="false" prefix="View By" v-model="selected_view_id" :options="viewData" variant="secondary">
+   <div class="overflow-x-auto shrink-0 border-b border-border">
+        <div class="header px-4 py-3 flex items-center justify-between gap-2">
+      <Dropdown :actions="false" prefix="View By" v-model="selected_view_id" :options="viewData" variant="secondary" customClasses="fixed w-[135px]">
       </Dropdown>
       <div class="flex gap-3 items-center ">
         <SearchBar class="max-w-[250px]" @onChange="(e:any) => {
@@ -10,6 +11,7 @@
                 </SearchBar>
       </div>
     </div>
+   </div>
     <KanbanSkeleton v-show="isListPending" />
     <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar h-full">
       <KanbanBoard :plusIcon="false" v-if="filteredBoard?.length > 0" @onPlus="(e) => handlePLus(e)"
