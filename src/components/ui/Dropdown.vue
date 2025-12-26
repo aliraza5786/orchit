@@ -191,6 +191,7 @@
 import { ref, computed, watch, onBeforeUnmount, nextTick } from "vue";
 import { onClickOutside } from "@vueuse/core";
 import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
+import type { CSSProperties } from 'vue';
 
 interface IconData {
   prefix: string;
@@ -243,7 +244,7 @@ const open = ref(false);
 const wrapperRef = ref<HTMLElement | null>(null);
 const triggerRef = ref<HTMLElement | null>(null);
 const menuRef = ref<HTMLElement | null>(null);
-const dropdownStyles = ref({
+const dropdownStyles = ref<CSSProperties>({
    position: 'fixed',
    top: '-9999px',
    left: '-9999px',
@@ -299,6 +300,7 @@ function updatePosition() {
     ],
   }).then(({ x, y }) => {
     dropdownStyles.value = {
+      position: 'fixed',
       left: `${x}px`,
       top: `${y}px`,
     };

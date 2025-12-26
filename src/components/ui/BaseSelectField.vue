@@ -160,11 +160,13 @@ const emit = defineEmits<{
   (e: "update", v: string | number | null): void;
 }>();
 
+import type { CSSProperties } from 'vue';
+
 const isOpen = ref(false);
 const wrapperRef = ref<HTMLElement | null>(null);
 const triggerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
-const dropdownStyles = ref({ top: "-9999px", left: "-9999px", width: "100%", position: 'fixed' });
+const dropdownStyles = ref<CSSProperties>({ top: "-9999px", left: "-9999px", width: "100%", position: 'fixed' });
 const selected = ref<Option | null>(null);
 
 // Floating UI cleanup function
@@ -221,8 +223,8 @@ function updatePosition() {
       top: `${y}px`,
       left: `${x}px`,
       width: `${width}px`,
-      position: strategy,
-    } as any;
+      position: strategy as 'fixed' | 'absolute', // Cast to valid CSS position
+    };
   });
 }
 
