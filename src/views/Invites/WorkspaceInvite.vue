@@ -182,9 +182,7 @@ const isEmailMatch = computed(() => {
   return currentUserEmail.value === inviteEmail.value
 })
 
-const isWrongEmail = computed(() => {
-  return isLoggedIn.value && !isEmailMatch.value
-})
+ 
 
 /** ---- actions ---- */
 async function accept() {
@@ -228,11 +226,7 @@ function goHome() {
 function goToLogin() {
     router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
 }
-
-function goToRegister() {
-    router.push({ name: 'Register', query: { redirect: router.currentRoute.value.fullPath } })
-}
-
+ 
 function logoutAndSwitch() {
     auth.logout()
     router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
