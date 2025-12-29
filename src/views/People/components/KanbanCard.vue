@@ -68,7 +68,6 @@ import { useCompanyId } from '../../../services/user'
 import AssignmentModal from '../modals/AssignmentModal.vue'
 import { getInitials } from '../../../utilities'
 import { avatarColor } from '../../../utilities/avatarColor'
-
 import { usePermissions } from '../../../composables/usePermissions'
 const {   canInviteUser,  canEditUser, canDeleteUser} = usePermissions()
 const showAddMembers = ref(false);
@@ -169,7 +168,7 @@ function getMenuItems() {
       : null,
 
     // Delete Seat
-    canDeleteUser.value
+    canDeleteUser.value && props.ticket?.role_title?.toLowerCase() !== 'admin'
       ? {
           label: 'Delete Seat',
           danger: true,
@@ -196,7 +195,7 @@ const { mutate: deleleSeat, isPending: deletingTicket } = useDeleteSeat({
     }
 })
 
-const handleDeleteTicket = () => {
+const handleDeleteTicket = () => { 
     deleleSeat({ id: props.ticket._id })
 }
 

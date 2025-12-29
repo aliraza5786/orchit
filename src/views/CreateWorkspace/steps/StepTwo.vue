@@ -1,15 +1,15 @@
 <template>
   <div class="w-full">
-    <h2 class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0 ">
+    <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0 ">
       {{ ai ? ' Choose Your Lanes' : 'Create Your Lanes' }}
     </h2>
-    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">
+    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0">
       {{ ai ? ' Select the components you want to include in your project' : ' Create the components you want to include in your project'}}
 
     </p>
   </div>
 
-  <div class="flex flex-col items-start gap-4 w-full pb-[80px]">
+  <div class="flex flex-col items-start gap-4 w-full pb-[60px]">
     <!-- Display Lanes (adapted to workspace.lanes structure) -->
     <label v-for="lane in form.lanes" :key="lane.variables.id" :for="`lane-${lane.variables.id}`"
       class="rounded-lg relative flex justify-between gap-4 lg:gap-5 items-center w-full p-4 cursor-pointer transition-all bg-bg-surface border border-border">

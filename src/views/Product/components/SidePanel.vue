@@ -54,7 +54,7 @@
               @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEdit" class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10
                      focus:outline-none focus:ring-2 focus:ring-accent/40 transition" type="text"
               aria-label="Edit title" />
-            <h1 v-else key="title-view" :class="canEditCard? 'cursor-text':'cursor-not-allowed'" class="text-2xl font-semibold tracking-tight rounded-lg px-2 py-1
+            <h1 v-else key="title-view" :class="canEditCard? 'cursor-text':'cursor-not-allowed'" class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-lg px-2 py-1
                      hover:bg-orchit-white/5 transition" @click="editTitle" aria-label="Card title" :title="!canEditCard ? 'You do not have permission to edit this card' : ''" >
               {{ localTitle || 'Untitled' }}
             </h1>
@@ -102,7 +102,7 @@
 
             <!-- Fields grid -->
             <div
-              class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 gap-4">
               <div class="space-y-2">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
                 <BaseSelectField :canEditCard="!canEditCard" size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
