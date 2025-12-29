@@ -7,19 +7,24 @@
   <!-- Slide-in panel -->
    
   <Transition v-else name="panel" appear>
-    <div v-show="showPanel" class="flex flex-col min-w-full max-w-[380px] sm:min-w-[380px] h-full
-     overflow-y-auto
-             bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
-             rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)]
-             border border-orchit-white/5 overflow-hidden" role="complementary" aria-label="Details panel">
+    <div v-show="showPanel" :class="[
+      'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
+      isExpanded ? 'min-w-full max-w-full' : 'min-w-full max-w-[380px] sm:min-w-[380px]'
+    ]" role="complementary" aria-label="Details panel">
       <!-- Header -->
       <div
         class="sticky top-0 z-10 border-b  border-border px-4 sm:px-6 py-[9px] flex items-center justify-between bg-bg-card">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
-        <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
-          @click="() => emit('close')" aria-label="Close details">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+            @click="isExpanded = !isExpanded" :aria-label="isExpanded ? 'Collapse details' : 'Expand details'">
+            <i :class="['fa-solid', isExpanded ? 'fa-compress' : 'fa-expand', 'text-lg']"></i>
+          </button>
+          <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+            @click="() => emit('close')" aria-label="Close details">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Body -->
@@ -301,6 +306,7 @@ import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
 import SwitchTab from '../../../components/ui/SwitchTab.vue'
+const isExpanded = ref(false)
 
 import { usePermissions } from '../../../composables/usePermissions';
 import { toast } from 'vue-sonner'

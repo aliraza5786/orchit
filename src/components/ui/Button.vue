@@ -54,13 +54,13 @@ const variantClass = computed(() => {
       primary: 'bg-accent text-white hover:bg-accent-hover',
       secondary: '!bg-transparent text-card  border-card border',
       danger: 'bg-red-500 text-white hover:bg-red-600',
-      ghost: 'bg-transparent text-text-primary hover:bg-gray-100'
+      ghost: 'bg-transparent text-text-primary hover:bg-gray-100 hover:text-black'
     },
     outlined: {
       primary: 'bg-transparent text-text-primary border border-black hover:bg-black hover:text-white',
       secondary: 'bg-transparent text-[#FFFFFFCC] border border-border FFFFFF4D] ',
       danger: 'bg-transparent text-red-500 border border-red-500 hover:bg-red-500 hover:text-white',
-      ghost: 'bg-transparent text-text-secondary -700 border border-gray-300 hover:bg-gray-100'
+      ghost: 'bg-transparent text-text-secondary  border border-gray-300 hover:bg-gray-100'
     }
   }
 

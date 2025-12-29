@@ -181,7 +181,7 @@ watch(
     onNodesInitialized(async () => {
       incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
       setEdges(incomingEdges)
-      fitView({ padding: 0.2 })
+      fitView({ padding: 0.8 })
       await nextTick()
     })
   },
@@ -291,7 +291,7 @@ function handleConfirmEdit(id: string, nodeData: any) {
     updateNode(id, n => ({
       ...n, data: {
         ...n.data, label: nodeData.name, status: nodeData.category,
-      }, style: { border: '2px solid #64748b', borderRadius: '10px', background: nodeData.status_color }
+      }, style: { border: '2px solid #64748b', borderRadius: '8px', background: nodeData.status_color }
     }))
   }
   nextTick();
@@ -302,12 +302,12 @@ async function handleAddNode(e: any) {
   const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
   const id = makeId();
   const pos = project({ x: e.position_x, y: e.position_y }) // place near bottom-left; project to account for zoom/pan
-  addNodes({
-    id,
-    position: pos,
-    data: { label: e.name, status: e.status_name },
-    style: { border: '2px solid #64748b', borderRadius: '10px', background: e.status_color },
-  })
+    addNodes({
+      id,
+      position: pos,
+      data: { label: e.name, status: e.status_name },
+      style: { border: '2px solid #64748b', borderRadius: '8px', background: e.status_color },
+    })
 
 }
 
@@ -516,7 +516,7 @@ function handleZoomEvent(e: Event) {
   
   if (detail.action === 'in') zoomIn()
   if (detail.action === 'out') zoomOut()
-  if (detail.action === 'reset') fitView({ padding: 0.2 })
+  if (detail.action === 'reset') fitView({ padding: 0.8 })
 }
 
 </script>
@@ -548,15 +548,15 @@ function handleZoomEvent(e: Event) {
 
       <!-- Custom node content with connection handles and a status picker -->
       <template #node-default="{ id, data }">
-        <div class="relative min-w-25  rounded-md ">
-          <div class="flex justify-between items-center ">
-            <span>
+        <div class="relative min-w-[90px] px-2 py-1 rounded-md text-sm">
+          <div class="flex justify-between items-center gap-2">
+            <span class="truncate">
               {{ data.label }}
             </span>
-            <div class="flex items-center">
-               <i class="fa-solid fa-edit cursor-pointer" @click.stop="handleEditNode(id, data)"></i>
+            <div class="flex items-center gap-1.5">
+               <i class="fa-solid fa-edit cursor-pointer text-xs opacity-70 hover:opacity-100" @click.stop="handleEditNode(id, data)"></i>
                <i
-             class="fa-solid fa-trash cursor-pointer text-red-500 ml-2"
+             class="fa-solid fa-trash cursor-pointer text-red-500/80 hover:text-red-500 text-xs"
              @click.stop="confirmDeleteNode(id)"
             ></i>
             </div>
