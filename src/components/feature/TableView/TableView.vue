@@ -225,8 +225,7 @@ const columnWidths = reactive<Record<string, any>>({})
 // Initialize widths on mount
 watch(() => props.columns, cols => {
   cols.forEach((col, indx) => {
-    if (indx == 0) columnWidths[col.key] = 250 // start with null, i.e., auto
-    else if(indx ==3) columnWidths[col.key] = 100 
+    if (indx == 0) columnWidths[col.key] = 250 // start with null, i.e., auto 
     else if (!columnWidths[col.key]) columnWidths[col.key] = 150 // default width
   })
 }, { immediate: true })

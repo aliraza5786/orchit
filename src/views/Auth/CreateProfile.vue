@@ -134,15 +134,15 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   }
 });
 const { mutate: invitePeople, isPending: invitingPeople } = useInviteCompany({
-  onSuccess: () => {
+  onSuccess: async () => {
     if (workspaceStore.pricing) {
-      authStore.bootstrap();
+      await authStore.bootstrap();
       router.push(`/dashboard?stripePayment=${true}`)
     } else if (workspaceStore.workspace) {
-       authStore.bootstrap();
+       await authStore.bootstrap();
       router.push('/create-workspace')
     } else {
-      authStore.bootstrap();
+      await authStore.bootstrap();
       router.push('/finish-profile');
     }
   }

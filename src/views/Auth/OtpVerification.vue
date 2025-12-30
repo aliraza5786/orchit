@@ -71,9 +71,11 @@
   import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
   import Button from '../../components/ui/Button.vue'
   import { verifyOtp, resendOtp } from '../../services/auth'
+  import { useAuthStore } from '../../stores/auth'
   import type { ComponentPublicInstance } from 'vue'
 
   defineOptions({ name: 'OtpVerify' })
+  const authStore = useAuthStore()
   // ---- Constants (non-reactive) ----
   const DIGITS = 5
   const INITIAL_COOLDOWN = 45 // seconds
@@ -122,6 +124,7 @@ function focusIdx(i: number) {
       const fullCode = code.value.join('')
       const data = await verifyAsync({ u_email: email.value, otp: fullCode })
       localStorage.setItem('token', data?.data?.token)
+      await authStore.bootstrap()
       router.push('/create-profile')
     } catch (err: any) {
       otpError.value = err?.response?.data?.message || 'Invalid code, please try again.'

@@ -162,11 +162,11 @@
             <div class="flex-1">
               <div class="h-6 bg-bg-body rounded overflow-hidden relative group cursor-help"
                 :title="`${member.totalTasks} task${member.totalTasks !== 1 ? 's' : ''} • ${member.totalHours}h`">
-                <div class="h-full bg-border-subtle transition-all duration-300"
+                <div class="h-full bg-accent transition-all duration-300"
                   :style="{ width: member.workload + '%' }">
                 </div>
-                <span v-if="member.workload > 10"
-                  class="absolute inset-0 flex items-center justify-start px-2 text-xs text-text-primary font-medium">
+                <span v-if="member.workload > 0"
+                  class="absolute inset-0 flex items-center justify-start px-2 text-[11px] text-white font-medium">
                   {{ member.workload }}%
                 </span>
               </div>
@@ -195,7 +195,7 @@
 
             <div class="flex-1 min-w-0">
               <div class="text-sm text-text-primary">
-                <span class="font-medium text-accent/90">{{ activity.user.name }}</span>
+                <span class="font-medium text-accent/90 pe-1">{{ activity.user.name }} </span>
                 <span class="text-text-secondary"> {{ activity.message }} </span>
                 <a href="#" class="text-accent/90 hover:underline">{{ activity.item }}</a>
                 <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
