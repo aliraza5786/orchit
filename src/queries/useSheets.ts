@@ -284,21 +284,21 @@ export const useVariables = (
 };
 export const useLanes = (
   workspace_id: any,
-
   options = {}
 ) => {
-  console.log(unref(workspace_id), "workspace_id");
-
   return useQuery({
-    queryKey: ["all-module-lanes", unref(workspace_id)],
-    queryFn: async ({ signal }) =>
-      request<any>({
-        url: `/workspace/lane-by-workspace/${await unref(workspace_id)}`,
+    queryKey: computed(() => ["all-module-lanes", unref(workspace_id)]),
+    queryFn: async ({ signal }) => {
+      const wid = unref(workspace_id);
+      if (!wid) return [];
+      return request<any>({
+        url: `/workspace/lane-by-workspace/${wid}`,
         method: "GET",
         signal,
-      }),
+      });
+    },
+    enabled: computed(() => !!unref(workspace_id)),
     ...options,
-    // enabled:   unref(/) ?? workspace_id ? true :false
   });
 };
 

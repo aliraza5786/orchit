@@ -63,8 +63,8 @@
                 class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
-                  <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
-                    :model-value="lane" @update:modelValue="setLane" :disabled="!canEditCard" />
+                   <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
+                     :model-value="lane" @update:modelValue="setLane" :disabled="!canEditCard" :loading="isLanesLoading" />
                 </div>
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
@@ -341,9 +341,11 @@ const dateISO = computed({
   get: () => local.posted_on ? new Date(local.posted_on).toISOString().slice(0, 10) : '',
   set: (v: string) => { local.posted_on = new Date(v + 'T00:00:00').toISOString() }
 })
-const { data: lanes } = useLanes(cardDetails?.value?.workspace_id)
-const lane = ref('');
-watch(() => details.value?.['workspace_lane_id'], (v) => { lane.value = v || '' }, { immediate: true })
+const { data: lanes, isPending: isLanesLoading } = useLanes(computed(() => cardDetails.value?.workspace_id))
+const lane = ref('')
+watch(() => cardDetails.value?.workspace_lane_id, (v) => {
+  if (v) lane.value = v
+}, { immediate: true })
 
 const laneOptions = computed<any[]>(() =>
   (lanes?.value ?? []).map((el: any) => ({ _id: el._id, title: el?.variables?.['lane-title'] ?? String(el._id) }))

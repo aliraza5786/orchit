@@ -34,10 +34,10 @@
         error
           ? 'border-red-500 focus-within:ring-red-500'
           : 'focus-within:ring-black',
-        canEditCard ? ' cursor-not-allowed' : 'cursor-pointer'  
+        disabled ? ' cursor-not-allowed' : 'cursor-pointer'  
       ]"
       @click="toggleDropdown"
-      :disabled="canEditCard"
+      :disabled="disabled"
     >
       <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
@@ -71,7 +71,7 @@
       <div
         v-if="isOpen"
         ref="dropdownRef"
-        class="absolute z-50 mt-2 rounded-md max-h-64 overflow-auto shadow border w-full"
+        class="absolute z-[9999] mt-2 rounded-md max-h-64 overflow-auto shadow border w-full"
         :style="dropdownStyles"
         :class="
           theme === 'dark'
@@ -143,7 +143,7 @@ const props = withDefaults(
     size?: "sm" | "md" | "lg";
     tooltip?: string;
     theme?: "light" | "dark";
-    canEditCard?: boolean;
+    disabled?: boolean;
     loading?: boolean;
   }>(),
   {
@@ -229,7 +229,7 @@ function updatePosition() {
 }
 
 function toggleDropdown() {
-   if (props.canEditCard) return;
+   if (props.disabled) return;
   
   if (isOpen.value) {
     closeDropdown();
@@ -286,24 +286,16 @@ function initSelection() {
 
 onMounted(() => initSelection());
 
-watch(
-  () => props.modelValue,
-  (val) => {
-    if (val === null || val === undefined) selected.value = null;
-    else {
-      const hit = props.options.find((o: any) => o._id === val);
-      selected.value = hit ?? null;
+watch([() => props.modelValue, () => props.options], ([newVal, newOpts]) => {
+    if (newVal === null || newVal === undefined) {
+        selected.value = null;
+        return;
     }
-  }
-);
-
-watch(
-  () => props.options,
-  () => {
-    const byModel = props.options.find((o: any) => o._id === props.modelValue);
-    if (byModel) selected.value = byModel;
-    else initSelection();
-  },
-  { deep: true }
-);
+    const found = (newOpts || []).find((opt: Option) => String(opt._id) === String(newVal));
+    if (found) {
+        selected.value = found;
+    } else {
+        selected.value = null;
+    }
+}, { immediate: true, deep: true });
 </script>

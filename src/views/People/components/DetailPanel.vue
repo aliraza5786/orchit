@@ -108,7 +108,7 @@
               :defaultValue="getDefaultValue(item?._id)"
               :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
               :cardId="details?._id"
-              :canEditCard="!canEditUser"
+              :disabled="!canEditUser"
               @update:modelValue="(val: any) => handleSelect(val, item._id)"
             />
           </div>
@@ -126,7 +126,7 @@
             placeholder="Select Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
-            :canEditCard="!canEditUser" 
+            :disabled="!canEditUser" 
             :loading="isLoadingWorkspaceRoles || !newCompanyId"
           />
 
