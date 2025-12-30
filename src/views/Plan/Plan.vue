@@ -69,10 +69,10 @@
           @mousedown="startResize"
         ></div>
         <section
-          class="space-y-4 rounded-md relative group pt-2 ovrflow-hidden flex-1 h-full min-h-0 box-border min-w-[400px] border border-gray-200"
+          class="space-y-4 rounded-md relative group pt-2 ovrflow-hidden flex-1 h-full min-h-0 box-border min-w-[400px] border border-border bg-bg-surface"
         >
         <div class="flex justify-between px-2">
-          <div class="flex items-center justify-start gap-3 bg-white">
+          <div class="flex items-center justify-start gap-3 bg-transparent">
             <Dropdown
         v-model="selectedSprintId"
         :options="sprintsList?.sprints"
