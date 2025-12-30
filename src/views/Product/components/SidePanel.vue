@@ -42,7 +42,7 @@
             {{ item.title }}
           </div>
           <BaseSelectField
-            :canEditCard="!canEditCard"
+            :disabled="!canEditCard"
             size="sm"
             :options="item?.data.map((e:any) => ({ _id: e, title: e }))"
             placeholder="Select option"
@@ -110,12 +110,12 @@
               class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 gap-4">
               <div class="space-y-2">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
-                <BaseSelectField :canEditCard="!canEditCard" size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
+                <BaseSelectField :disabled="!canEditCard" size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
                   :model-value="lane" @update:modelValue="setLane" />
               </div>
               <div class="space-y-2 ">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
-                <AssigmentDropdown  @assign="(user) => assignHandle(user)" :assigneeId="curentAssigne"
+                <AssigmentDropdown :disabled="!canAssignCard" @assign="(user) => assignHandle(user)" :assigneeId="curentAssigne"
                   :seat="cardDetails.seat" />
               </div>
               <template v-if="!pin">
@@ -160,7 +160,7 @@
                 :key="item.slug || `var-${index}`">
                 <div v-if="item.type === 'Select' && item.slug !== 'card-type'" class="space-y-2 sm:col-span-1">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">{{ item.title }}</div>
-                  <BaseSelectField :canEditCard="!canEditCard" size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
+                  <BaseSelectField :disabled="!canEditCard" size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
                     placeholder="Select option" :allowCustom="false" :model-value="localVarValues[item.slug]"
                     @update:modelValue="(val: any) => handleSelect(val, item.slug)" />
                 </div>
@@ -239,12 +239,12 @@
             <div class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden">
               <textarea :disabled="!canCreateComment || !canEditComment" v-model="newComment" rows="3" :class="(canCreateComment || canEditComment) ? 'cursor-text': 'cursor-not-allowed'" class="w-full p-3 bg-transparent outline-none text-sm"
                 placeholder="Write a comment" />
-              <div class="grid grid-cols-3 items-center w-full justify-between p-2 border-t border-orchit-white/10">
+              <div class="flex items-center w-full justify-between p-2 border-t border-orchit-white/10">
                 <input type="file" multiple @change="handleFileChange" class=" max-w-full text-ellipsis text-xs text-text-secondary
                          file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md
                          file:border file:border-orchit-white/10 file:bg-orchit-white/10
                          hover:file:bg-orchit-white/15 file:text-text-primary transition inline w-fit" />
-                <Button variant="primary" class="" size="sm" @click="postComment"
+                <Button variant="primary" class="min-w-[70px]" size="sm" @click="postComment"
                   :disabled="!newComment.trim() && !commentAttachments.length || !canCreateComment">
                   {{ isPostingComment ? 'Posting…' : 'Post' }}
                 </Button>
@@ -310,7 +310,7 @@ const isExpanded = ref(false)
 
 import { usePermissions } from '../../../composables/usePermissions';
 import { toast } from 'vue-sonner'
- const {canCreateComment, canEditComment,canViewComment, canDeleteComment, canEditCard, canViewAttachment, } = usePermissions();
+ const {canCreateComment, canEditComment,canViewComment, canDeleteComment, canEditCard, canViewAttachment, canAssignCard} = usePermissions();
 
 const { workspaceId } = useRouteIds()
 
