@@ -1,1 +1,0 @@
-import{d as a,l as o,o as n,h as s,t}from"./index-BONhYWQW.js";const r={class:"flex gap-2"},l={class:"text-text-primary w-[120px] shrink-0"},p={class:"font-medium text-text-secondary"},d=a({__name:"InfoRow",props:{label:{},value:{}},setup(c){return(e,_)=>(n(),o("div",r,[s("span",l,t(e.label)+":",1),s("span",p,t(e.value),1)]))}});export{d as _};
