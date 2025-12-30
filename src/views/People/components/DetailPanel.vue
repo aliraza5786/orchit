@@ -60,13 +60,12 @@
         </h1>
         <ProgressBar
           class="mt-2"
-          :progress="props?.details?.assigned_cards_count"
+          :progress="progressPercentage"
           fillColor="bg-accent "
           :indeterminate="true"
         />
         <span class="text-sm text-text-secondary mt-2"
-          >Completed 10 tasks out of
-          {{ props?.details?.assigned_cards_count }}</span
+          > Completed {{ completedTasks }} tasks out of {{ totalTasks }}</span
         >
       </div>
       <!-- Title -->
@@ -556,6 +555,20 @@ function handlePermissionUpdate() {
 // Add Role Modal
 const showAddRoleModal = ref(false);
 const AddCustomRoleModal = defineAsyncComponent(() => import('../modals/AddCustomRoleModal.vue'));
+
+
+const completedTasks = computed(() => {
+  return props.details?.assigned_cards_status_counts?.['Done'] ?? 0;
+});
+
+const totalTasks = computed(() => {
+  return props.details?.assigned_cards_count ?? 0;
+});
+
+const progressPercentage = computed(() => {
+  if (!totalTasks.value) return 0;
+  return Math.round((completedTasks.value / totalTasks.value) * 100);
+});
 
 </script>
 

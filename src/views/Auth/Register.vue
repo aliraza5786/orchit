@@ -75,9 +75,16 @@ const emailError = computed(() => {
 const passwordError = computed(() => {
   if (!touched.password.value) return '';
   if (!password.value) return 'Password is required';
-  if (password.value.length < 6) return 'Password must be at least 6 characters';
+
+  // Regex for strong password
+  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}$/;
+  if (!strongPasswordRegex.test(password.value)) {
+    return 'Password must be at least 8 characters and include uppercase, lowercase, and a special character';
+  }
+
   return '';
 });
+
 
 const isFormValid = computed(() =>
   !nameError.value && !emailError.value && !passwordError.value

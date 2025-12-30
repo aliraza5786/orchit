@@ -25,8 +25,8 @@
              </div>
         </div>
         <div>
-           <h3 class="truncate text-sm font-medium text-text-primary">{{ project.owner?.name }}</h3> 
-            <p class="truncate text-xs text-text-secondary">Workspace Owner</p>
+           <h3 class="truncate text-sm font-medium text-text-primary w-30 text-end">{{ project.owner?.name }}</h3> 
+            <p class="truncate text-xs text-text-secondary text-end">Workspace Owner</p>
 
         </div>
       </div>

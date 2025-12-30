@@ -29,8 +29,7 @@
       <div class="flex gap-3 items-center">
         <Dropdown
           v-if="view == 'kanban' || 'mindmap'"
-          :actions="false"
-          prefix="View by"
+          :actions="false" 
           v-model="selected_view_by"
           :options="variables"
           variant="secondary"
@@ -1016,7 +1015,7 @@ const columns = computed(() => {
       key: "created_by",
       label: "Owner",
       render: ({ value }: any) =>
-        h("div", { class: "capitalize flex items-center gap-2  px-3" }, [
+        h("div", { class: "capitalize flex items-center gap-2 px-3 w-full truncate" }, [
           h("div", { class: ` rounded-full  ` }, [
             value?.u_profile_image
               ? h("img", {
@@ -1042,7 +1041,7 @@ const columns = computed(() => {
           ]),
           h("span",
           {
-            class: "text-[12px]", // your class here
+            class: "text-[12px] truncate", // your class here
           },  
           value ? value?.u_full_name : ""),
         ]),
