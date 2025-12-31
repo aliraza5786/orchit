@@ -89,6 +89,7 @@ const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/
 const KanbanCard = defineAsyncComponent(() => import('./components/KanbanCard.vue'));
 
 import { usePermissions } from '../../composables/usePermissions'
+import { toast } from 'vue-sonner';
 const {  canCreateVariable,  canInviteUser} = usePermissions()
 
 const viewData = [
@@ -143,11 +144,12 @@ function setActiveAddList() {
   activeAddList.value = !activeAddList.value;
 }
 
-function emitAddColumn() {
-  console.log('>>> clicking on adding pepople ');
-
+function emitAddColumn() { 
   const t = newColumn.value.trim();
-  // if (!t) return;
+  if (!t) {
+    toast.error('Column name is required.')
+    return
+  }
   handleAddColumn(t);
 }
 
