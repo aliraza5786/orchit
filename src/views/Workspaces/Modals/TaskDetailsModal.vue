@@ -77,7 +77,7 @@
                     <div class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10">
                       <i class="fa-regular fa-calendar"></i>
                       <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate"
-                        emit-as="ymd" @update:modelValue="setStartDate" />
+                        emit-as="ymd" @update:modelValue="setStartDate" :min-date="today" />
                     </div>
                   </div>
                   <div class="space-y-2">
@@ -86,7 +86,7 @@
                       :class="endDateError ? 'border-red-500' : 'border-orchit-white/10'">
                       <i class="fa-regular fa-calendar"></i>
                       <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
-                        @update:modelValue="setEndDate" />
+                        @update:modelValue="setEndDate" :min-date="form.startDate || today" />
                     </div>
                     <p v-if="endDateError" class="text-xs text-red-400 mt-1">{{ endDateError }}</p>
                   </div>
@@ -370,6 +370,7 @@ const endDateError = computed(() =>
     : ''
 )
 
+const today = new Date().toISOString().split('T')[0]
 const setStartDate = (e: any) => {
   if (!canEditCard.value) return
   if (details.value._id) {

@@ -62,8 +62,19 @@
           v-once
         >
           By signing in, you agree to the
-          <span class="text-text-primary font-bold">Privacy Policy</span> and
-          <span class="text-text-primary font-bold">Terms of Service</span>.
+          <router-link
+           to="/privacy-policy"
+           class="text-text-primary font-bold hover:underline"
+          >
+           Privacy Policy
+          </router-link>
+                   and
+          <router-link
+          to="/terms-of-services"
+          class="text-text-primary font-bold hover:underline"
+          >
+          Terms of Service
+         </router-link>
         </p>
 
         <p

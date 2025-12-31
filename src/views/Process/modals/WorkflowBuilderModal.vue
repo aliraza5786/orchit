@@ -1,17 +1,18 @@
 <template>
   <transition name="fade">
-    <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+    <div v-if="isOpen" class="fixed inset-0 z-50 bottom-[60px] flex items-center justify-center bg-black/80 backdrop-blur-sm"
       @keydown.esc="close">
       <div class="relative flex h-full w-full flex-col bg-bg-body" role="dialog" aria-modal="true" tabindex="0">
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-border px-6 py-4">
+         <div class="border-b border-border px-[20px] sm:px-6 py-4 overflow-x-auto">
+         <div class="flex items-center justify-between max-w-content gap-3">
           <div class="flex items-center gap-4">
-            <h2 class="flex items-center gap-2 text-xl font-semibold text-text-primary">
+            <h2 class="flex items-center gap-2 text-lg sm:text-xl font-semibold text-text-primary text-nowrap">
               <i class="fa-solid fa-diagram-project text-accent" aria-hidden="true" />
               Workflow for {{ processTitle }}
             </h2>
 
-            <label class="flex cursor-pointer items-center gap-2 text-sm text-text-secondary">
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-text-secondary text-nowrap">
               <input type="checkbox" v-model="showTransitionLabels" class="rounded" />
               <span>Show transition labels</span>
             </label>
@@ -31,6 +32,8 @@
             </button>
           </div>
         </div>
+         </div>
+        
 
         <!-- Canvas -->
         <div class="relative flex-1 overflow-hidden">
@@ -46,8 +49,8 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex items-center justify-between border-t border-border bg-bg-surface px-6 py-3">
-          <div class="flex items-center gap-4 text-sm text-text-secondary">
+        <div class="flex items-center justify-end sm:justify-between border-t border-border bg-bg-surface  sm:px-6 py-3">
+          <div class="hidden sm:flex items-center gap-4 text-sm text-text-secondary">
             <span class="flex items-center gap-2">
               <i class="fa-solid fa-hand-pointer" aria-hidden="true" /> Click and drag to pan
             </span>
