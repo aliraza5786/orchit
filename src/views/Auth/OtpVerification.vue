@@ -24,7 +24,7 @@
                 enterkeyhint="done"
                 class="w-full aspect-square text-5xl p-1 md:p-2 font-bold text-center border rounded-lg focus:outline-none"
                 :class="[
-                  'border-border',
+                  'border-accent',
                   otpError ? 'border-red-500' : '',
                   isVerifying ? 'opacity-60 pointer-events-none' : ''
                 ]"

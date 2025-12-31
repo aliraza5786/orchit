@@ -9,7 +9,7 @@
     </div>
 
     <!-- Body -->
-    <div class="px-6 grid grid-cols-2 gap-4">
+    <div class="px-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
       <BaseTextField
   v-model="form.title"
   label="Ticket Title"
@@ -46,7 +46,7 @@
         <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
           :class="startDateError ? 'border-red-500' : ''">
           <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
-            @update:modelValue="setStartDate" />
+            @update:modelValue="setStartDate" :min-date="today" />
         </div>
         <p v-if="startDateError" class="text-xs text-red-500">{{ startDateError }}</p>
       </div>
@@ -57,7 +57,7 @@
         <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
           :class="endDateError ? 'border-red-500' : ''">
           <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
-            @update:modelValue="setEndDate" />
+            @update:modelValue="setEndDate" :min-date="form.startDate || today" />
         </div>
         <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
       </div>
@@ -270,6 +270,7 @@ const laneError = computed(() => {
 // const descriptionError = computed(() => 
 //   touched.description && !form.description.trim() ? 'Description is required' : ''
 // )
+const today = new Date().toISOString().split('T')[0]
 function create() {
   // mark all as touched
   touched.title = true

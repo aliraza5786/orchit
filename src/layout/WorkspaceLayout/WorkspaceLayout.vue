@@ -13,7 +13,7 @@
       style="max-height:calc(100dvh - 55px);">
         <Sidebar :workspace="localWorkspace" :isLoading="isPending || isLoading"
        :expanded="sidebarExpanded" />
-       <div class="dashboard_content h-full w-full z-3 relative  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
+       <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
         :style="dashboardContentStyle"
         >
         <router-view />

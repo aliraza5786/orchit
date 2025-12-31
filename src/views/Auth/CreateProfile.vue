@@ -13,7 +13,7 @@
 
         <div class="how_help_steps grid sm:grid-cols-3 gap-4" v-show="activeStep === 1">
           <label v-for="option in options" :key="option._id"
-            class="border rounded-xl py-4 px-2.5 cursor-pointer transition-all aspect-square"
+            class="border rounded-xl py-4 px-2.5 cursor-pointer transition-all sm:aspect-square"
             :class="optionClass(option._id)" v-memo="[selected, option._id]">
             <input type="radio" class="hidden" v-model="selected" :value="option._id" />
             <div class="flex flex-col items-center">
@@ -42,8 +42,6 @@
 
           <BaseSelectField v-model="companySize" label="What’s your company size?" :options="companySizeOptions"
             placeholder="Select Company size" size="lg" :error="!!errors.companySize" :message="errors.companySize" />
-
-
         </div>
 
         <!-- Step 3 -->

@@ -3,7 +3,7 @@
     <!-- Trigger -->
     <button
       type="button"
-      class="inline-flex text-xs w-full items-center transition h-[32px] px-2 rounded-sm"
+      class="inline-flex h-full text-xs w-full items-center transition  px-2 rounded-sm"
       :class="[
         disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-bg-surface-hover',
         theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'
