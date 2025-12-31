@@ -3,7 +3,7 @@
       :type="type"
       :disabled="disabled || loading"
       :class="[
-        'relative cursor-pointer disabled:cursor-not-allowed  inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition',
+        'relative cursor-pointer disabled:cursor-not-allowed  inline-flex items-center justify-center font-medium py-1.5  text-sm rounded-md focus:outline-none transition',
         sizeClass,
         variantClass,
         block ? 'w-full' : '',
@@ -73,9 +73,9 @@ const sizeClass = computed(() => {
         case 'sm':
             return 'text-xs px-3 py-1.5 h-[34px]'
         case 'lg':
-            return 'text-base px-5 h-12'
-        case 'base': return 'text-sm px-4 h-sp10'
-        case 'md': return 'text-sm px-4 h-[38px]'
+            return 'text-base px-3 sm:px-4 h-12'
+        case 'base': return 'text-sm  px-3 sm:px-4 h-sp10'
+        case 'md': return 'text-sm px-2 sm:px-4 h-[38px]'
         default:
             return 'text-sm px-4 h-[38px]'
     }

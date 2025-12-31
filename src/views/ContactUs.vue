@@ -75,7 +75,7 @@
                             <label for="name"
                                 class="block text-[14px] font-manrope leading-[20px] font-medium text-text-secondary mb-1">Full
                                 name</label>
-                            <input id="name" v-model.trim="form.fullName" type="text"
+                            <input id="name" @input="errors.fullName = ''" v-model.trim="form.fullName" type="text"
                                 class="w-full px-4 py-2.5 rounded-md bg-bg-body border transition font-manrope  text-[14px] leading-[20px] font-normal text-text-primary focus:outline-none focus:ring-0 focus:border-none"
                                 :class="[errors.fullName ? 'border-red-500' : 'border-border-input', theme === 'dark' ? '' : 'border-0']" />
                             <p v-if="errors.fullName" class="text-red-400 font-manrope text-[12px] mt-1">{{
@@ -87,7 +87,7 @@
                             <label for="email"
                                 class="block text-[14px] font-manrope leading-[20px] font-medium text-text-secondary mb-1">Work
                                 email</label>
-                            <input id="email" v-model.trim="form.email" type="email"
+                            <input id="email" @input="errors.email = ''" v-model.trim="form.email" type="email"
                                 class="w-full px-4 py-2.5 rounded-md bg-bg-body border transition font-manrope  text-[14px] leading-[20px] font-normal text-text-primary focus:outline-none focus:ring-0 focus:border-none"
                                 :class="[errors.email ? 'border-red-500' : 'border-border-input', theme === 'dark' ? '' : 'border-0']" />
                             <p v-if="errors.email" class="text-red-400 font-manrope text-[12px] mt-1">{{ errors.email }}
@@ -101,6 +101,7 @@
                                 size</label>
                             <div class="relative">
                                 <select id="companySize" v-model="form.companySize"
+                                     @change="errors.companySize = ''"
                                     class="w-full appearance-none px-4 py-2.5 rounded-md bg-bg-body border transition font-manrope  text-[14px] leading-[20px] font-normal text-text-primary focus:outline-none focus:ring-0 focus:border-none"
                                     :class="[errors.companySize ? 'border-red-500' : 'border-border-input', theme === 'dark' ? '' : 'border-0']">
                                     <option disabled value="">Select company size</option>
@@ -124,6 +125,7 @@
                                 us about your
                                 requirements</label>
                             <textarea id="message" v-model.trim="form.message" rows="4"
+                                @input="errors.message = ''"
                                 placeholder="I'm interested in learning more about..."
                                 class="w-full px-4 py-2.5 rounded-md bg-bg-body border transition font-manrope  text-[14px] leading-[20px] font-normal text-text-primary focus:outline-none focus:ring-0 focus:border-none"
                                 :class="[errors.message ? 'border-red-500' : 'border-border-input', theme === 'dark' ? '' : 'border-0']"></textarea>

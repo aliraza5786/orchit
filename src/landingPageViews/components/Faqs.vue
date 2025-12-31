@@ -38,7 +38,7 @@
                 </div>
             </div>
             <p class="font-manrope text-[16px] font-medium text-center">More questions? <RouterLink
-                    class="text-sky font-bold" to="#">Contact Us </RouterLink>
+                    class="text-sky font-bold" to="/contact-us">Contact Us </RouterLink>
             </p>
 
         </div>

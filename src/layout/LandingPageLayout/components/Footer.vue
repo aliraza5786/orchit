@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { RouterLink } from "vue-router";
 import { useTheme } from "../../../composables/useTheme";
-import lightLogo from '@assets/LandingPageImages/footer/lightLogo.webp';
+import lightLogo from '@assets/global/light-logo.png';
 import darkLogo from '@assets/global/dark-logo.png';
 import borderGif from '@assets/LandingPageImages/footer/footer-top.gif';
 

@@ -32,7 +32,7 @@
       </div>
 
       <!-- Start date -->
-      <div class="flex gap-1 flex-col">
+      <div class="flex gap-1 flex-col col-span-2 sm:col-span-1">
         <label class="text-sm font-medium">Start date</label>
         <div
           class="border relative flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
@@ -51,7 +51,7 @@
       </div>
 
       <!-- End date -->
-      <div class="flex gap-1 flex-col">
+      <div class="flex gap-1 flex-col col-span-2 sm:col-span-1">
         <label class="text-sm font-medium">End date</label>
         <div
           class="border relative flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
