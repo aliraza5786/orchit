@@ -2,7 +2,7 @@
   <div
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible"
   >
-   <div class="overflow-x-auto shrink-0 ">
+    <div class="overflow-x-auto shrink-0 ">
        <div
       class="header  px-4 py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
     >
@@ -199,309 +199,171 @@
     </template>
     <!-- MindMap View -->
     <template v-if="view === 'mindmap'">
-      <div class="relative w-full h-full flex overflow-hidden">
+      <div class="relative w-full h-[100%] flex">
         <!-- Mind Map Canvas -->
         <div
-        ref="mindMapRef"
-        class="flex-1 h-full overflow-hidden rounded-md relative"
-      ></div>
-
+          ref="mindMapRef"
+          class="flex-1 h-[100%] overflow-y-hidden rounded-md relative"
+        ></div>
         <!-- Formatting Sidebar -->
-        <div
-        v-if="showFormatSidebar"
-        class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-white overflow-hidden flex flex-col"
-      >
-  <!-- Header -->
-  <div class="flex items-center justify-between pb-3 mb-4 border-b">
-    <h3 class="text-sm font-semibold text-gray-800">Format Node</h3>
-    <!-- <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
-      <i class="fa-solid fa-times"></i>
-    </button> -->
-  </div>
+        <div v-if="showFormatSidebar" class="format-sidebar py-4">
+          <div class="format-header">
+            <h3 class="format-title">Format Node</h3>
+            <button @click="showFormatSidebar = false" class="close-btn">
+              <i class="fa-solid fa-times"></i>
+            </button>
+          </div>
 
-  <div class="format-content space-y-6">
+          <div class="format-content">
+            <!-- Background -->
 
-    <!-- ================= COLORS ================= -->
-    <div>
-      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
-        Colors
-      </h4>
+            <div class="format-group">
+              <label>Background Color</label>
+              <input
+                type="color"
+                :value="selectedMindNode?.style?.background"
+                @input="onStyleChange('bg_color', $event)"
+              />
+            </div>
 
-      <!-- Background -->
-      <div class="format-group relative mb-3">
-        <label class="block text-xs text-gray-600 mb-1">Background</label>
+            <!-- Text Color -->
+            <div class="format-group">
+              <label>Text Color</label>
+              <input
+                type="color"
+                :value="selectedMindNode?.style?.color"
+                @input="onStyleChange('color', $event)"
+              />
+            </div>
 
-        <div
-          class="flex items-center gap-2 cursor-pointer"
-          @click="showBgPicker = !showBgPicker"
-        >
-          <div
-            class="w-full h-7 rounded border"
-            :style="{ background: activeFormatStyle.background }"
-          ></div>
-          <span class="text-xs text-gray-500">
-            {{ activeFormatStyle.background }}
-          </span>
-        </div>
+            <!-- Font Size -->
+            <div class="format-group">
+              <label>Font Size</label>
+              <input
+                type="number"
+                min="8"
+                max="60"
+                :value="selectedMindNode?.style?.fontSize"
+                @input="onStyleChange('font_size', $event)"
+              />
+            </div>
 
-        <!-- Picker -->
-        <div
-          v-if="showBgPicker"
-          class="absolute z-50 mt-2 p-3 bg-white rounded-lg shadow-lg border w-[240px]"
-        >
-          <div class="grid grid-cols-10 gap-1 mb-3">
+            <!-- Font Weight -->
+            <div class="format-group">
+              <label>Font Weight</label>
+              <select
+                :value="selectedMindNode?.style?.fontWeight"
+                @change="onStyleChange('font_weight', $event)"
+              >
+                <option value="lighter">Light</option>
+                <option value="normal">Normal</option>
+                <option value="bold">Bold</option>
+                <option value="bolder">Extra Bold</option>
+              </select>
+            </div>
+
+            <!-- Font Style -->
+            <div class="format-group">
+              <label>Font Style</label>
+              <select
+                :value="selectedMindNode?.style?.fontStyle"
+                @change="onStyleChange('font_style', $event)"
+              >
+                <option value="normal">Normal</option>
+                <option value="italic">Italic</option>
+                <option value="oblique">Oblique</option>
+              </select>
+            </div>
+
+            <!-- Font Family -->
+            <div class="format-group">
+              <label>Font Family</label>
+              <select
+                :value="selectedMindNode?.style?.fontFamily"
+                @change="onStyleChange('font_family', $event)"
+              >
+                <!-- System -->
+                <option value="Inter">Inter (Default)</option>
+                <option value="Arial">Arial</option>
+                <option value="Helvetica">Helvetica</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Tahoma">Tahoma</option>
+
+                <!-- Serif -->
+                <option value="Georgia">Georgia</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Garamond">Garamond</option>
+
+                <!-- Monospace -->
+                <option value="Courier New">Courier New</option>
+                <option value="Consolas">Consolas</option>
+                <option value="Monaco">Monaco</option>
+
+                <!-- Modern -->
+                <option value="Roboto">Roboto</option>
+                <option value="Open Sans">Open Sans</option>
+                <option value="Poppins">Poppins</option>
+                <option value="Montserrat">Montserrat</option>
+              </select>
+            </div>
+
+            <!-- Border Color -->
+            <div class="format-group">
+              <label>Border Color</label>
+              <input
+                type="color"
+                :value="selectedMindNode?.style?.borderColor"
+                @input="onStyleChange('border_color', $event)"
+              />
+            </div>
+
+            <!-- Border Width -->
+            <div class="format-group">
+              <label>Border Width</label>
+              {{ selectedMindNode?.style?.borderWidth }}
+              <input
+                type="number"
+                min="0"
+                max="10"
+                :value="selectedMindNode?.style?.borderWidth"
+                @input="onStyleChange('border_width', $event)"
+              />
+            </div>
+
+            <!-- Border Radius -->
+            <div class="format-group">
+              <label>Border Radius</label>
+              <input
+                type="number"
+                min="0"
+                max="50"
+                :value="selectedMindNode?.style?.borderRadius"
+                @input="onStyleChange('border-radius', $event)"
+              />
+            </div>
+            <!-- Padding -->
+            <div class="format-group">
+              <label>Padding</label>
+              <input
+                type="text"
+                :value="selectedMindNode?.style?.padding"
+                @input="onStyleChange('padding', $event)"
+              />
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="format-footer overflow-hidden mx-auto">
             <button
-              v-for="color in presetColors"
-              :key="color"
-              class="w-5 h-5 rounded border"
-              :style="{ background: color }"
-              @click="
-                onStyleChange('bg_color', { target: { value: color } } as any);
-                showBgPicker = false;
-              "
-            ></button>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <input
-              type="color"
-              :value="activeFormatStyle.background"
-              class="w-8 h-8 cursor-pointer"
-              @input="onStyleChange('bg_color', $event)"
-            />
-            <input
-              type="text"
-              class="flex-1 text-xs border rounded px-2 py-1"
-              :value="activeFormatStyle.background"
-              readonly
-            />
+              class="bg-gradient-to-tr from-accent to-accent-hover mx-3 cursor-pointer overflow-hidden text-white flex items-center gap-2 text-center px-8 py-2 rounded-[6px] text-normal font-medium transition-all hover:shadow-lg hover:shadow-accent/20"
+              @click="saveNodeStyle"
+            >
+              Update
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Text Color -->
-      <!-- Text Color -->
-<div class="format-group relative mb-3">
-  <label class="block text-xs text-gray-600 mb-1">Text</label>
-
-  <!-- Trigger -->
-  <div
-    class="flex items-center gap-2 cursor-pointer"
-    @click="showTextColorPicker = !showTextColorPicker"
-  >
-    <div
-      class="w-full h-7 rounded border"
-      :style="{ background: activeFormatStyle.color }"
-    ></div>
-    <span class="text-xs text-gray-500">
-      {{ activeFormatStyle.color }}
-    </span>
-  </div>
-
-  <!-- Picker -->
-  <div
-    v-if="showTextColorPicker"
-    class="absolute z-50 mt-2 p-3 bg-white rounded-lg shadow-lg border w-[240px]"
-  >
-    <!-- Color Grid -->
-    <div class="grid grid-cols-10 gap-1 mb-3">
-      <button
-        v-for="color in presetColors"
-        :key="color"
-        class="w-5 h-5 rounded border"
-        :style="{ background: color }"
-        @click="
-          onStyleChange('color', { target: { value: color } } as any);
-          showTextColorPicker = false;
-        "
-      ></button>
-    </div>
-
-    <!-- Native Picker + Hex -->
-    <div class="flex items-center gap-2">
-      <input
-        type="color"
-        :value="activeFormatStyle.color"
-        class="w-8 h-8 cursor-pointer"
-        @input="onStyleChange('color', $event)"
-      />
-      <input
-        type="text"
-        class="flex-1 text-xs border rounded px-2 py-1"
-        :value="activeFormatStyle.color"
-        readonly
-      />
-    </div>
-  </div>
-</div>
-
-    </div>
-    <!-- ================= TYPOGRAPHY ================= -->
-    <div>
-      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
-        Typography
-      </h4>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Size</label>
-          <input
-            type="number"
-            min="8"
-            max="60"
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="parseInt(activeFormatStyle.fontSize || '')"
-            @input="onStyleChange('font_size', $event)"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Weight</label>
-          <select
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="activeFormatStyle.fontWeight"
-            @change="onStyleChange('font_weight', $event)"
-          >
-            <option value="lighter">Light</option>
-            <option value="normal">Normal</option>
-            <option value="bold">Bold</option>
-            <option value="bolder">Extra Bold</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="mt-3">
-        <label class="block text-xs text-gray-600 mb-1">Style</label>
-        <select
-          class="w-full h-8 border rounded px-2 text-sm"
-          :value="activeFormatStyle.fontStyle"
-          @change="onStyleChange('font_style', $event)"
-        >
-          <option value="normal">Normal</option>
-          <option value="italic">Italic</option>
-          <option value="oblique">Oblique</option>
-        </select>
-      </div>
-
-      <div class="mt-3">
-        <label class="block text-xs text-gray-600 mb-1">Font Family</label>
-        <select
-          class="w-full h-8 border rounded px-2 text-sm"
-          :value="activeFormatStyle.fontFamily"
-          @change="onStyleChange('font_family', $event)"
-        >
-          <option value="Inter">Inter</option>
-          <option value="Arial">Arial</option>
-          <option value="Georgia">Georgia</option>
-          <option value="Roboto">Roboto</option>
-          <option value="Poppins">Poppins</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- ================= BORDER & SPACING ================= -->
-    <div>
-      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
-        Border & Spacing
-      </h4>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Border</label>
-          <input
-            type="color"
-            class="w-full h-10 rounded -mt-1"
-            :value="activeFormatStyle.borderColor"
-            @input="onStyleChange('border_color', $event)"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Width</label>
-          <input
-            type="number"
-            min="0"
-            max="10"
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="parseInt(activeFormatStyle.borderWidth || '')"
-            @input="onStyleChange('border_width', $event)"
-          />
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mt-3">
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Radius</label>
-          <input
-            type="number"
-            min="0"
-            max="50"
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="parseInt(activeFormatStyle.borderRadius || '')"
-            @input="onStyleChange('border_radius', $event)"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Padding</label>
-          <input
-            type="number"
-            min="0"
-            max="40"
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="parseInt(activeFormatStyle.padding || '')"
-            @input="onStyleChange('padding', $event)"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div class="mt-6 pt-4 border-t">
-    <button
-      class="w-full cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60"
-      :disabled="isSavingNodeStyle"
-      @click="saveNodeStyle"
-    >
-      <span
-        v-if="isSavingNodeStyle"
-        class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-      ></span>
-      <span>{{ isSavingNodeStyle ? "Updating..." : "Update" }}</span>
-    </button>
-  </div>
-</div>
-
-      </div>
-
-      <!-- hyperlink pop up -->
-       <div v-if="showHyperlinkModal" class="fixed inset-0 bg-black/30 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-xl w-80">
-      <h3 class="text-lg font-semibold mb-4">Insert Web Link</h3>
-      <input
-        v-model="hyperlink"
-        type="text"
-        placeholder="Enter or paste a URL"
-        class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <div class="flex justify-end gap-2 mt-4">
-        <button
-          @click="cancel"
-          class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
-        >
-          Cancel
-        </button>
-        <button
-          :disabled="!hyperlink"
-          @click="confirm"
-          :class="['px-4 py-2 rounded-md text-white', hyperlink ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-300 cursor-not-allowed']"
-        >
-          Insert
-        </button>
-      </div>
-    </div>
-  </div>
       <!-- EXISTING POPUP (UNCHANGED) -->
       <div
         v-if="activeAddList"
@@ -689,31 +551,14 @@ const { workspaceId, moduleId } = useRouteIds();
 const queryClient = useQueryClient();
 const createTeamModal = ref(false);
 const selectedCard = ref<any>();
-const selectedMindNode = ref<any>(null);
-const showFormatSidebar = ref(true);
-const showHyperlinkModal = ref(false);
-const hyperlink = ref("");
-const resolveCallback = ref<((link: string) => void) | null>(null);
-function openHyperlinkModal(callback: (link: string) => void) {
-  hyperlink.value = "";
-  showHyperlinkModal.value = true;
-  resolveCallback.value = callback;
-}
 
-function confirm() {
-  if (resolveCallback.value) {
-    resolveCallback.value(hyperlink.value);
-  }
-  showHyperlinkModal.value = false;
-}
-
-function cancel() {
-  showHyperlinkModal.value = false;
-}
+  // function for nested process selection
 const selectedProcessMeta = ref<any>(null);
 const handleProcessNestedSelection = (val: any) => {  
   selectedProcessMeta.value = val; 
 };
+const selectedMindNode = ref<any>(null);
+const showFormatSidebar = ref(false);
 declare global {
   interface Window {
     toggleMenu: (el: HTMLElement) => void;
@@ -727,26 +572,6 @@ declare global {
     ) => void;
   }
 }
-const showBgPicker = ref(false);
-
-const presetColors = [
-  "#FFFFFF", "#F2F2F2", "#D9D9D9", "#BFBFBF", "#A6A6A6",
-  "#808080", "#404040", "#000000",
-  "#FFE066", "#FF9AA2", "#8EE4AF", "#00EAD3", "#90DBF4",
-  "#4D96FF", "#6C63FF", "#C77DFF", "#F7A1C4",
-  "#FFC300", "#FF5733", "#2ECC71", "#00B894", "#17A2B8",
-  "#0984E3", "#3F51B5", "#9C27B0", "#E84393",
-  "#FF8C00", "#E74C3C", "#1E8449", "#006D6F", "#004C6D",
-  "#0057A8", "#1A237E", "#4A148C", "#7D3C98"
-];
-const showTextColorPicker = ref(false);
-watch(showBgPicker, v => {
-  if (v) showTextColorPicker.value = false;
-});
-
-watch(showTextColorPicker, v => {
-  if (v) showBgPicker.value = false;
-});
 
 // delete ticket
 const deleteTicket = async () => {
@@ -853,14 +678,44 @@ const { mutate: addList, isPending: addingList } = useAddList({
     showDelete.value = false;
   },
 });
+// reactively checking selected view by value
+const selectedViewByVariable = computed(() => {
+  return variables.value?.find(
+    (v: any) => v._id === selected_view_by.value
+  );
+});
+//add column
 const handleAddColumn = (v: any) => {
-  addList({
+  const payload: any = {
     workspace_id: workspaceId.value,
     module_id: moduleId.value,
     variable_id: selected_view_by.value,
     value: v,
-  });
+    ...listProcessPayload.value,
+  }; 
+
+  // if (
+  //   selectedViewByVariable.value?.title === "Process" &&
+  //   selectedProcessMeta.value
+  // ) {
+  //   payload.type_value = selectedProcessMeta.value?.title;
+  // }
+
+  addList(payload);
 };
+
+const listProcessPayload = computed(() => {
+  if (
+    selectedViewByVariable.value?.title === "Process" &&
+    selectedProcessMeta.value
+  ) {
+    return {
+      type_value: selectedProcessMeta.value.title, // optional
+    };
+  }
+
+  return {};
+});
 
 // Fetch sheets using `useSheets`
 
@@ -882,15 +737,14 @@ const { data: Lists, isPending, refetch: refetchSheetLists } = useSheetList(
   moduleId,
   selected_sheet_id, // ref
   computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
-  selected_view_by // ref
+  selected_view_by, // ref
+  listProcessPayload
 );
 
 const selectCardHandler = (card: any) => {
-  if (!card._id) card._id = card.id;
   selectedCard.value = card;
 };
 (window as any).selectCardHandler = selectCardHandler;
-
 
 const isCreateSheetModal = ref(false);
 const createSheet = () => {
@@ -915,6 +769,7 @@ function onReorder(a: any) {
       {
         onSuccess: () => {
           refetchSheets();
+          refetchSheetLists();
         },
       }
     );
@@ -933,6 +788,7 @@ function onReorder(a: any) {
       {
         onSuccess: () => {
           refetchSheets();
+          refetchSheetLists();
         },
       }
     );
@@ -1159,7 +1015,7 @@ const columns = computed(() => {
       key: "created_by",
       label: "Owner",
       render: ({ value }: any) =>
-        h("div", { class: "capitalize flex items-center gap-2  px-3" }, [
+        h("div", { class: "capitalize flex items-center gap-2 px-3 w-full truncate" }, [
           h("div", { class: ` rounded-full  ` }, [
             value?.u_profile_image
               ? h("img", {
@@ -1185,7 +1041,7 @@ const columns = computed(() => {
           ]),
           h("span",
           {
-            class: "text-[12px]", // your class here
+            class: "text-[12px] truncate", // your class here
           },  
           value ? value?.u_full_name : ""),
         ]),
@@ -1380,18 +1236,6 @@ const toggleVisibilityHandler = (key: any, visible: any) => {
     },
   });
 };
-
-const activeFormatStyle = computed(() => {
-  // If a node is selected → use its style
-  if (selectedMindNode.value?.nodeObj?.style) {
-    return selectedMindNode.value.nodeObj.style;
-  }
-
-  // Otherwise → default backend style mapped to MindElixir format
-  return mapBackendStyleToMindElixir(DEFAULT_BACKEND_STYLE);
-});
-
-
 function resolveStyle<T>(
   uiValue: T | undefined,
   originalValue: T | undefined,
@@ -1405,42 +1249,49 @@ function resolveStyle<T>(
 }
 
 function onStyleChange(prop: string, event: Event) {
-  if (!selectedMindNode.value?.nodeObj) return; // exit early if no node
+  const target = event.target as HTMLInputElement;
+  const value = target.type === "number" ? Number(target.value) : target.value;
 
   const node = selectedMindNode.value.nodeObj;
   if (!node.style) node.style = {};
-
-  const target = event.target as HTMLInputElement;
-  const value = target.type === "number" ? Number(target.value) : target.value;
 
   switch (prop) {
     case "bg_color":
       node.style.background = value;
       break;
+
     case "color":
       node.style.color = value;
       break;
+
     case "font_size":
       node.style.fontSize = `${value}px`;
       break;
+
     case "font_weight":
       node.style.fontWeight = value;
       break;
+
     case "font_style":
       node.style.fontStyle = value;
       break;
+
     case "font_family":
       node.style.fontFamily = value;
       break;
+
     case "border_color":
       node.style.borderColor = value;
       break;
+
     case "border_width":
       node.style.borderWidth = `${value}px`;
       break;
+
     case "border_radius":
       node.style.borderRadius = `${value}px`;
       break;
+
     case "padding":
       node.style.padding = `${value}px`;
       break;
@@ -1449,7 +1300,6 @@ function onStyleChange(prop: string, event: Event) {
   const nodeElement = document.getElementById(node.id);
   if (nodeElement) applyNodeStyle(node, nodeElement);
 }
-
 const DEFAULT_BACKEND_STYLE = {
   bg_color: "#ffffff",
   color: "#000000",
@@ -1462,103 +1312,101 @@ const DEFAULT_BACKEND_STYLE = {
   border_radius: 0,
   padding: 0,
 };
-const isSavingNodeStyle = ref(false);
+function saveNodeStyle() {
+  const node = selectedMindNode.value.nodeObj;
+  if (!node) return;
 
-async function saveNodeStyle() {
-  const node = selectedMindNode.value?.nodeObj;
-  if (!node || isSavingNodeStyle.value) return;
+  const plainNode = toRaw(node);
 
-  isSavingNodeStyle.value = true;
-
-  try {
-    const plainNode = toRaw(node);
-
-    if (!plainNode._originalStyle) {
-      plainNode._originalStyle = {};
-    }
-
-    const style = plainNode.style || {};
-    const original = plainNode._originalStyle;
-
-    const mergedStylePayload = {
-      bg_color: resolveStyle(
-        style.background,
-        original.bg_color,
-        DEFAULT_BACKEND_STYLE.bg_color
-      ),
-      color: resolveStyle(
-        style.color,
-        original.color,
-        DEFAULT_BACKEND_STYLE.color
-      ),
-      font_size: resolveStyle(
-        style.fontSize ? parseInt(style.fontSize) : undefined,
-        original.font_size,
-        DEFAULT_BACKEND_STYLE.font_size
-      ),
-      font_weight: resolveStyle(
-        style.fontWeight,
-        original.font_weight,
-        DEFAULT_BACKEND_STYLE.font_weight
-      ),
-      font_style: resolveStyle(
-        style.fontStyle,
-        original.font_style,
-        DEFAULT_BACKEND_STYLE.font_style
-      ),
-      font_family: resolveStyle(
-        style.fontFamily,
-        original.font_family,
-        DEFAULT_BACKEND_STYLE.font_family
-      ),
-      border_color: resolveStyle(
-        style.borderColor,
-        original.border_color,
-        DEFAULT_BACKEND_STYLE.border_color
-      ),
-      border_width: resolveStyle(
-        style.borderWidth ? parseInt(style.borderWidth) : undefined,
-        original.border_width,
-        DEFAULT_BACKEND_STYLE.border_width
-      ),
-      border_radius: resolveStyle(
-        style.borderRadius ? parseInt(style.borderRadius) : undefined,
-        original.border_radius,
-        DEFAULT_BACKEND_STYLE.border_radius
-      ),
-      padding: resolveStyle(
-        style.padding ? parseInt(style.padding) : undefined,
-        original.padding,
-        DEFAULT_BACKEND_STYLE.padding
-      ),
-
-      hyperLink: hyperlink.value || plainNode.hyperLink || ""
-    };
-
-    plainNode._originalStyle = { ...mergedStylePayload };
-
-    const payload =
-      plainNode.unique_name === "sheet"
-        ? {
-            sheet_id: plainNode.id,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-            style: mergedStylePayload,
-          }
-        : {
-            card_id: plainNode.id,
-            seat_id: plainNode.seat_id,
-            style: mergedStylePayload,
-          };
-
-    plainNode.unique_name === "sheet"
-      ? await updateSheet(payload)
-      : await moveCard.mutateAsync(payload);
-  } finally {
-    isSavingNodeStyle.value = false;
+  if (!plainNode._originalStyle) {
+    plainNode._originalStyle = {};
   }
-}
 
+  const style = plainNode.style || {};
+  const original = plainNode._originalStyle;
+
+  const mergedStylePayload = {
+    bg_color: resolveStyle(
+      style.background,
+      original.bg_color,
+      DEFAULT_BACKEND_STYLE.bg_color
+    ),
+
+    color: resolveStyle(
+      style.color,
+      original.color,
+      DEFAULT_BACKEND_STYLE.color
+    ),
+
+    font_size: resolveStyle(
+      style.fontSize ? parseInt(style.fontSize) : undefined,
+      original.font_size,
+      DEFAULT_BACKEND_STYLE.font_size
+    ),
+
+    font_weight: resolveStyle(
+      style.fontWeight,
+      original.font_weight,
+      DEFAULT_BACKEND_STYLE.font_weight
+    ),
+
+    font_style: resolveStyle(
+      style.fontStyle,
+      original.font_style,
+      DEFAULT_BACKEND_STYLE.font_style
+    ),
+
+    font_family: resolveStyle(
+      style.fontFamily,
+      original.font_family,
+      DEFAULT_BACKEND_STYLE.font_family
+    ),
+
+    border_color: resolveStyle(
+      style.borderColor,
+      original.border_color,
+      DEFAULT_BACKEND_STYLE.border_color
+    ),
+
+    border_width: resolveStyle(
+      style.borderWidth ? parseInt(style.borderWidth) : undefined,
+      original.border_width,
+      DEFAULT_BACKEND_STYLE.border_width
+    ),
+
+    border_radius: resolveStyle(
+      style.borderRadius ? parseInt(style.borderRadius) : undefined,
+      original.border_radius,
+      DEFAULT_BACKEND_STYLE.border_radius
+    ),
+    padding: resolveStyle(
+      style.padding ? parseInt(style.padding) : undefined,
+      original.padding,
+      DEFAULT_BACKEND_STYLE.padding
+    ),
+  };
+  plainNode._originalStyle = { ...mergedStylePayload };
+
+  const payload =
+    plainNode.unique_name === "sheet"
+      ? {
+          sheet_id: plainNode.id,
+          workspace_id: workspaceId.value,
+          workspace_module_id: moduleId.value,
+          style: mergedStylePayload,
+        }
+      : {
+          card_id: plainNode.id,
+          seat_id: plainNode.seat_id,
+          style: mergedStylePayload,
+        };
+
+  plainNode.unique_name === "sheet"
+    ? updateSheet(payload)
+    : moveCard.mutate(payload);
+
+  showFormatSidebar.value = false;
+}
 
 interface MindNodeStyle {
   backgroundColor?: string;
@@ -1571,7 +1419,6 @@ interface MindNodeStyle {
   borderWidth?: string;
   borderRadius?: string;
   padding?: string;
-  hyperLink?:string;
 }
 
 interface MindNode {
@@ -1585,10 +1432,8 @@ interface MindNode {
   isRoot?: boolean;
   unique_name?: string;
   variables?: any;
-  hyperLink?: string
 }
 const cardData = ref([] as any);
-
 // mindmap
 function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
   const root: MindNode = {
@@ -1607,7 +1452,7 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
 
   sheetsData.forEach((sheet) => {
     const title = sheet.variables?.["sheet-title"] || "Untitled";
-    const link = sheet.style?.hyperLink || "";
+
     if (!variables[title]) {
       variables[title] = {
         id: sheet._id,
@@ -1617,7 +1462,6 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
         style: sheet?.style,
         _originalStyle: sheet?.style || {},
         unique_name: "sheet",
-        hyperLink: link || ""
       };
       root.children.push(variables[title]);
     }
@@ -1629,12 +1473,9 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
       style: mapBackendStyleToMindElixir(sheet?.style),
       _originalStyle: sheet.style || {},
       unique_name: "List",
-      hyperLink: link || "",
     };
 
     (sheet.cards || []).forEach((card: any, cardIdx: number) => {
-      const link = card.style?.hyperLink || "";
-      
       const cardNode: MindNode = {
         id: card._id || `card-${cardIdx}`,
         seat_id: card.seat_id,
@@ -1643,7 +1484,6 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
         _originalStyle: card.style || {},
         children: [],
         unique_name: "card",
-        hyperLink: link || "",
       };
       listNode.children.push(cardNode);
       cardData.value = cardNode;
@@ -1682,25 +1522,13 @@ watchEffect(() => {
         Update: true,
         extend: [
           {
-          name: "Update Node",
-          onclick: () => {
-            if (showFormatSidebar.value) {
-              showFormatSidebar.value = false;
-            }
-
-            const node = selectedMindNode.value?.nodeObj;
-            if (!node) return;
-
-            selectCardHandler(node);
-          },
-        },
-          {
-            name: "Add Hyperlink",
+            name: "Update Node",
             onclick: () => {
-            openHyperlinkModal(async () => {
-              await saveNodeStyle();
-            });
-          },
+              if (showFormatSidebar.value === true) {
+                showFormatSidebar.value = false;
+              }
+              selectCardHandler(cardData.value);
+            },
           },
         ],
       },
@@ -1713,6 +1541,7 @@ watchEffect(() => {
     instance.bus.addListener("selectNode", (nodeObj: any) => {
       if (!nodeObj) return;
       selectedMindNode.value = { nodeObj };
+
       showFormatSidebar.value = true;
     });
 
@@ -1722,7 +1551,7 @@ watchEffect(() => {
       applyNodeStyle(event.nodeObj, event.element as HTMLElement);
     });
 
-
+    // Listen for **after sibling insert** (Enter key)
  // Track nodes already added to backend
 const addedNodeIds = new Set<string>();
 
@@ -1858,7 +1687,6 @@ function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
 }
 
 function mapBackendStyleToMindElixir(style: any = {}) {
-  
   return {
     background: style.bg_color,
     color: style.color,
@@ -1872,7 +1700,6 @@ function mapBackendStyleToMindElixir(style: any = {}) {
     borderRadius:
       style.border_radius != null ? `${style.border_radius}px` : undefined,
     padding: style.padding != null ? `${style.padding}px` : undefined,
-    hyperLink: style.hyperLink || undefined,
   };
 }
 
