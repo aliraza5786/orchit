@@ -22,6 +22,15 @@
         :message="nameError"
         @blur="touched.name = true"
       />
+      <BaseSelectField
+      class="rounded-1 mt-3"
+      v-model="form.sprintType"
+      label="Sprint Type"
+      :options="sprintTypes"
+      :error="!!nameError"
+      :message="nameError"
+      @blur="touched.name = true"
+    />
 
       <!-- spacer to keep grid balanced -->
       <!-- Description -->
@@ -57,6 +66,7 @@ import BaseTextField from "../../../components/ui/BaseTextField.vue";
 import Button from "../../../components/ui/Button.vue";
 import type { Sprint } from "../composables/useBacklogStore";
 import BaseTextAreaField from "../../../components/ui/BaseTextAreaField.vue";
+import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 
 /** Emits */
 const emit = defineEmits<{
@@ -84,6 +94,7 @@ const isOpen = computed({
 /** Local form */
 const form = reactive<any>({
   name: "",
+  sprintType: "",
   description: ''
 });
 
@@ -109,6 +120,7 @@ function save() {
   if (!isValid.value) return;
   emit("save", {
     name: String(form.name || "").trim(),
+    value: String(form.sprintType || "").trim(),
     description: String(form.description || '').trim()
   });
 }
@@ -126,10 +138,18 @@ watch(
       return;
     }
     form.name = s.name ?? s?.title ?? "";
+    form.sprintType = s.sprintType ?? s?.sprintType ?? "";
     form.description = s.description ?? ''
 
     resetTouched();
   },
   { immediate: true }
 );
+// sprint types options
+const sprintTypes = [
+  { title: "Milestone", _id: "milestone", dot: "#2e9bda" },
+  { title: "Sprint", _id: "sprint", dot: "#7d68c8" },
+  { title: "Huddle", _id: "huddle", dot: "#eea832" },
+];
+
 </script>

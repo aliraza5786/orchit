@@ -92,7 +92,7 @@ import { useProductVarsData } from '../../../queries/useProductCard'
 import { useCreateProcess } from '../../../queries/useProcess'
 import { useRouteIds } from '../../../composables/useQueryParams'
 
-const props = defineProps<{
+ defineProps<{
   modelValue: boolean
 }>()
 

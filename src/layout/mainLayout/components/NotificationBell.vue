@@ -72,8 +72,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useNotificationsQuery } from "../../../queries/useNotifications";
 import { useTheme } from "../../../composables/useTheme";
-import router from "../../../router";
-import userSocket from "../../../libs/socket";
+import router from "../../../router"; 
 import { toast } from "vue-sonner";
 const { theme } = useTheme();
 
