@@ -1,17 +1,47 @@
 <template>
   <div :key="isStartOver"
     class="px-2 pt-[100px] md:pt-[110px] lg:pt-[120px] pb-[40px] md:pb-[50px] lg:pb-[90px] w-full justify-start items-center flex flex-col relative">
-    <div class="flex justify-between items-center fixed top-0 z-1 w-full flex-row px-5 bg-bg-surface border-b border-border h-[60px] lg:h-[70px]"
+    <div class="flex justify-between items-center fixed top-0 z-[1] w-full flex-row px-5 bg-bg-surface border-b border-border h-[60px] lg:h-[70px]"
       v-show="isStepperVisible">
-      <div class="flex max-md:flex-wrap max-md:gap-2 text-sm max-md:text-[9px] py-5 justify-start gap-4"
+      <div class="flex items-center py-5 justify-start gap-2 md:gap-4 overflow-x-auto no-scrollbar max-w-[calc(100%-40px)]"
         v-memo="[currentStep]">
-        <div v-for="(step, index) in STEPS" :key="index" class="flex gap-4">
-          <span :class="index <= currentStep ? 'text-text-primary' : 'text-text-secondary'">{{ step }}</span>
-          <img v-if="index < STEPS.length - 1" src="../../assets/icons/arrow.svg"
-            class="transition-opacity duration-200 max-md:w-2 w-3" alt="arrow icon" />
+        <div v-for="(step, index) in STEPS" :key="index" class="flex items-center group">
+          <div class="flex items-center gap-2">
+            <!-- Step Circle Indicator -->
+            <div 
+              class="w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-semibold transition-all duration-300 border-2"
+              :class="[
+                index < currentStep 
+                  ? 'bg-accent border-accent text-accent-text' 
+                  : index === currentStep 
+                    ? 'bg-bg-body border-accent text-accent shadow-[0_0_10px_rgba(125,104,200,0.3)]' 
+                    : 'bg-bg-body border-border text-text-secondary'
+              ]"
+            >
+              <i v-if="index < currentStep" class="fa-solid fa-check"></i>
+              <span v-else>{{ index + 1 }}</span>
+            </div>
+            
+            <!-- Step Label -->
+            <span 
+              class="whitespace-nowrap transition-colors duration-300 font-medium text-[10px] md:text-sm"
+              :class="index <= currentStep ? 'text-text-primary' : 'text-text-secondary'"
+            >
+              {{ step }}
+            </span>
+          </div>
+
+          <!-- Connecting Line -->
+          <div 
+            v-if="index < STEPS.length - 1" 
+            class="mx-2 md:mx-4 h-[2px] w-4 md:w-8 transition-colors duration-300"
+            :class="index < currentStep ? 'bg-accent' : 'bg-text-secondary'"
+          ></div>
         </div>
       </div>
-      <i class="cursor-pointer fa-regular fa-close" @click="handleClose" aria-label="Close"></i>
+      <div class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-bg-body transition-colors duration-200 cursor-pointer" @click="handleClose" aria-label="Close">
+        <i class="fa-regular fa-close text-lg"></i>
+      </div>
     </div>
     <div
       class="z-0 overflow-y-auto px-3 h-auto flex-grow relative flex flex-col gap-10 max-w-[800px] mx-auto w-full items-center">

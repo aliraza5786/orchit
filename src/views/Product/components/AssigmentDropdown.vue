@@ -35,7 +35,7 @@
             class="w-full rounded-md border border-border h-[30px] bg-bg-input px-3 outline-none text-xs" />
         </div>
 
-        <ul class="max-h-80 overflow-auto py-1">
+        <ul class="max-h-60 overflow-auto py-1">
           <li v-for="u in filteredUsers" :key="u._id" @click.stop="assign(u._id)"
             class="flex items-center justify-between px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer">
             <div class="flex items-center gap-3 min-w-0">

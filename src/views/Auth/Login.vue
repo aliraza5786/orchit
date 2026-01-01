@@ -144,7 +144,7 @@ const { mutateAsync, isPending } = useMutation({ mutationFn: login });
 // --- Derived UI state ---
 const submitDisabled = computed(() => isPending.value);
 const submitLabel = computed(() =>
-  isPending.value ? "Signing In..." : "Continue"
+  isPending.value ? "Signing In..." : "Sign in"
 );
 
 function onFieldInput() {

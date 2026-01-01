@@ -35,7 +35,7 @@
 
       <!-- Chevron -->
       <svg
-        :class="[chevronSizeClass, 'text-text-secondary']"
+        :class="[chevronSizeClass, 'text-text-secondary mt-1']"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
