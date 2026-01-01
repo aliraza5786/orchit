@@ -1,6 +1,6 @@
 <template>
   <div class=" flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border  overflow-x-auto flex-col flex  ">
-    <header class="sticky top-0 w-full z-10  backdrop-blur">
+    <header class="sticky top-0 w-full z-10 bg-bg-card">
       <div class="mx-auto  px-4 py-6">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 class="text-2xl font-semibold tracking-tight">Apps</h1>

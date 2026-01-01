@@ -1,11 +1,11 @@
 <template>
   <div class="relative" ref="dropdownRef">
     <!--  Bell Icon -->
-    <button @click="toggleDropdown" class="relative flex items-center justify-center mt-2  rounded-full cursor-pointer">
+    <button @click="toggleDropdown" class="relative flex items-center justify-center sm:mt-2  rounded-full cursor-pointer">
       <i class="fa-solid fa-bell text-primary text-[20px] font-bold"></i>
 
       <span v-if="count > 0"
-        class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold rounded-full px-[5px] py-[1px]">
+        class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-semibold rounded-full px-[5px] py-[1px]">
         {{ count }}
       </span>
     </button>
@@ -100,18 +100,26 @@ onBeforeUnmount(() => {
 });
 
 // notifications logic
-const { notificationsQuery,  markReadMutation, markAllReadMutation } =
+const { notificationsQuery, unreadCountQuery, markReadMutation, markAllReadMutation } =
   useNotificationsQuery();
 
 const notifications = computed(() => notificationsQuery.data?.value || []);
-// const unreadCount = computed(() => unreadCountQuery.data?.value || 0);
+const count = computed(() => unreadCountQuery.data?.value || 0);
+
+// Watch for unread count changes and show toast
+import { watch } from "vue";
+watch(count, (newVal, oldVal) => {
+  if (newVal > oldVal) {
+    toast.info('New notification received');
+  }
+});
 
 // Utility helpers
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
-  return parts.length === 1
-    ? parts[0].slice(0, 2).toUpperCase()
-    : (parts[0][0] + parts[1][0]).toUpperCase();
+  if (parts.length === 0) return "UN";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 const colors = ["bg-blue-500", "bg-green-500", "bg-red-500", "bg-yellow-500", "bg-purple-500", "bg-pink-500", "bg-indigo-500"];
@@ -156,21 +164,13 @@ function openNotification(notification: any) {
     markReadMutation.mutate([notification.id]);
   }
   console.log("Open notification:", notification);
-  router.push(notification.url)
+  if (notification.url) {
+    router.push(notification.url)
+  }
 }
 
 const markAllRead = () => markAllReadMutation.mutate();
-userSocket.initializeSocket();
-const count = ref(0)
-userSocket.on("unread_count_update", (data:any) => {
-  console.log("New unread_count_update:", data);
-  count.value= data?.count
-  toast.info('new notification is received')
-});
-userSocket.on("new_notification", (data:any) => {
-  console.log("New new_notification:", data);
-  // count.value= data?.count
-});
+
 </script>
 
 <style scoped>

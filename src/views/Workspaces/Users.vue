@@ -13,7 +13,7 @@
 
             <div v-if="data && data?.users?.length == 0"
                 class="flex py-10 justify-center items-center text-sm text-text-secondary">No Workspace</div>
-            <Table @row-click="handleClick" :columns="columns" :rows="data?.data?.users || []" :loading="isPending"
+            <Table @row-click="handleClick" :columns="columns" :rows="data?.data?.users || []" :loading="isLoading"
                 :skeletonRows="6">
                 <!-- Custom slot for status -->
                 <template #status="{ row }">
@@ -52,7 +52,7 @@ import Collaborators from "../../components/ui/Collaborators.vue";
 import { getStatusStyle } from "../../utilities/stausStyle";
 const InviteUsers = defineAsyncComponent(() => import("./Modals/InviteUsers.vue"));
 const { data: companyId } = useCompanyId();
-const { data, isPending } = useUsers(companyId)
+const { data, isLoading } = useUsers(companyId)
 
 const columns = [
     {
