@@ -124,6 +124,10 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  sprintType: {
+    type: String,
+    default: "",
+  },
   checkedAll:{
     type:Boolean,
     default:false
@@ -132,12 +136,11 @@ const props = defineProps({
 
 const { workspaceId } = useWorkspaceId();
 const { data: backlogResp, isPending: isBacklogListPending } =
-useBacklogList(workspaceId);
+useBacklogList(workspaceId, props.sprintType);
 
 const normalizedBacklog = ref<Ticket[]>([]);
 const dropOverBacklog = ref(false);
 const draggedTicketIds = ref<string[]>([]);
-// const searchQuery = ref("");
 const selectedBacklogIds = ref<string[]>([]);
 
 // Normalize incoming backlog data
@@ -188,8 +191,8 @@ watch(normalizedBacklog, (tickets) => {
 //         : ticket.assignee?.u_full_name?.toLowerCase().includes(q))
 //   );
 // });
+
 const filteredBacklog = computed(() => {
-  console.log(props.searchQuery, "this is query");
   if (!props.searchQuery) return normalizedBacklog.value;
 
   const q = props.searchQuery.toLowerCase();
