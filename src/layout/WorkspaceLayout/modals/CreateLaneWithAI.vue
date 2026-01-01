@@ -150,21 +150,8 @@ const createManualHandler = async () => {
     workspaceStore.toggleCreateLaneModalWithAI();
     await nextTick() // ✅ Wait for both to update
     workspaceStore.toggleCreateLaneModal();
-     // ✅ RESET STATE
-    description.value = '';
-    isRecording.value = false;
-     audioURL.value = null;
+
 }
-watch(
-  () => workspaceStore.showCreateLaneModalWithAI,
-  (isOpen) => {
-    if (isOpen) {
-      description.value = '';
-      isRecording.value = false;
-      audioURL.value = null;
-    }
-  }
-);
 
 </script>
 

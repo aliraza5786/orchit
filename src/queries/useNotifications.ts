@@ -130,14 +130,13 @@ export const useNotificationsQuery = (options = {}) => {
         queryClient.setQueryData(["notifications", "list"], (oldData: any = []) => {
           return [notification, ...oldData];
         });
-        queryClient.invalidateQueries({ queryKey: ["notifications", "unreadCount"] });
+        queryClient.invalidateQueries({ queryKey: ["unreadCount"] });
       });
 
       //  When unread count changes
-      socket.on("unread_count_update", (data) => {
-        console.log("📩 Unread count updated:", data);
-        const newCount = typeof data === 'object' && data !== null ? data.count : data;
-        queryClient.setQueryData(["notifications", "unreadCount"], newCount);
+      socket.on("unread_count_update", (count) => {
+        console.log("📩 Unread count updated:", count);
+        queryClient.setQueryData(["notifications", "unreadCount"], count);
       });
 
       listenersRegistered = true;

@@ -35,9 +35,34 @@ const suggestionList = computed(() => {
 });
 
 const projectInputRef = ref<{ setValue: (val: string) => void } | null>(null);
+const isLoading = ref(false);
+const responseMessage = ref<string | null>(null);
 
 function handleExampleClick(example: string) {
     projectInputRef.value?.setValue(example);
+}
+
+async function handleSubmit(value: string) {
+    if (!value.trim()) return;
+    isLoading.value = true;
+    responseMessage.value = null;
+    try {
+        // Example: Replace this URL with your real endpoint
+        const res = await fetch("https://api.example.com/generate-plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: value }),
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch plan");
+        const data = await res.json();
+        responseMessage.value = data.message || "Plan generated successfully!";
+    } catch (err) {
+        console.error(err);
+        responseMessage.value = "Something went wrong. Please try again.";
+    } finally {
+        isLoading.value = false;
+    }
 }
 </script>
 
@@ -59,7 +84,12 @@ function handleExampleClick(example: string) {
 
                 <!-- Input Section -->
                 <div class="relative">
-                    <HeroBannerInput ref="projectInputRef" :theme="theme" />
+                    <HeroBannerInput ref="projectInputRef" :theme="theme" @submit="handleSubmit" :loading="isLoading" />
+                    <!-- API Response -->
+                    <p v-if="responseMessage"
+                        class="text-center w-full bottom-[10px] absolute text-[13px] font-medium  text-red-600">
+                        {{ responseMessage }}
+                    </p>
                 </div>
             </div>
         </div>
