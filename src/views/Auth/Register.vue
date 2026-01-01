@@ -14,7 +14,7 @@
           <BaseTextField v-model="password" label="Password" placeholder="Password" size="lg" type="password"
             :error="!!passwordError" :message="passwordError" @blur="touched.password.value = true" />
           <Button :disabled="isPending" size="lg" :block="true" type="submit">
-            {{ isPending ? 'Creating Account...' : 'Sign up' }}
+            {{ isPending ? 'Creating Account...' : 'Continue' }}
           </Button>
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}

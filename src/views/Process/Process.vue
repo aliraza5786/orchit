@@ -1,5 +1,5 @@
 <template>
-  <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex items-start">
+  <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex">
     <!-- <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
       <Dropdown v-model="selectedSheetId" :options="transformedSheets" variant="secondary">
         <template #more>
@@ -24,12 +24,6 @@
       <ProcessKanbanCard @click="handleClickTicket(item)" v-for="(item, index) in localList[0]?.cards" :key="index"
         :ticket="item" :index="index" />
     </div>
-    <button 
-      class="max-w-82 ms-4 text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg cursor-pointer"
-      @click="isAddProcessModal = true"
-    >
-      + Add New Process
-    </button>
     <!-- </template> -->
     <!-- <template #column-footer="{ column }: any">
           <div v-if="!column.showADDNEW" @click="toggleAddNewProcess(column)"
@@ -76,12 +70,10 @@
   <WorkflowBuilderModal  v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
 
   <CreateProcessSheetModal v-model="isCreateSheetModal" @created="handleSheetCreated" />
-  
-  <AddProcessModal v-model="isAddProcessModal" @created="handleProcessCreated" />
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, watchEffect } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
 import {
@@ -97,9 +89,6 @@ import Button from '../../components/ui/Button.vue';
 import WorkflowBuilderModal from './modals/WorkflowBuilderModal.vue';
 
 import CreateProcessSheetModal from './modals/CreateProcessSheetModal.vue';
-import AddProcessModal from './modals/AddProcessModal.vue';
-
-const isAddProcessModal = ref(false);
 const showDelete = ref(false);
 const localColumn = ref();
 const { workspaceId } = useRouteIds();
@@ -126,9 +115,6 @@ const { mutate: addList, isPending: addingList } = useCreateProcessColumn({
 
 const localList = ref<any>([]);
 const { data: Lists, } = useProcessColumns(workspaceId.value, selectedSheetId);
-watchEffect(()=>{
-  console.log(Lists.value, "this is the list ")
-})
 watch(Lists, (newVal) => {
   if (newVal) {
     localList.value = newVal.map((col: any) => ({
@@ -204,10 +190,5 @@ const closeWorkflowBuilder = () => {
 const handleSheetCreated = () => {
   isCreateSheetModal.value = false;
   queryClient.invalidateQueries({ queryKey: ['process-sheets'] });
-};
-
-const handleProcessCreated = () => {
-  isAddProcessModal.value = false;
-  queryClient.invalidateQueries({ queryKey: ['process-columns'] });
 };
 </script>

@@ -33,11 +33,7 @@ export function useCompanyId() {
     queryKey: ['me'],
     queryFn: getProfile,
     staleTime: 5 * 60 * 1000,
-    select: (p) => {
-      const companies = p.data?.companies
-      if (Array.isArray(companies)) return companies[0] || null
-      return companies || null
-    },
+    select: (p) => p.data.companies, // only expose what you need
   })
 }
 export function useUserId() {

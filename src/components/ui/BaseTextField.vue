@@ -70,7 +70,7 @@
             <path d="M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"/>
           </svg>
           <!-- Eye-off icon -->
-         <svg
+          <svg
             v-else
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -78,13 +78,12 @@
             fill="none"
             stroke="currentColor"
             stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
             aria-hidden="true"
           >
-            <path d="M3 3l18 18" />
-            <path d="M2.25 12s3.75-6.75 9.75-6.75S21.75 12 21.75 12 18 18.75 12 18.75 2.25 12 2.25 12Z" />
-            <circle cx="12" cy="12" r="3" />
+            <path d="M3 3l18 18"/>
+            <path d="M6.11 6.11C3.9 7.54 2.25 10 2.25 12c0 0 3.75 6.75 9.75 6.75 2.02 0 3.85-.5 5.39-1.33"/>
+            <path d="M12.42 7.42A3.5 3.5 0 0 1 16.5 11.5"/>
+            <path d="M10.58 10.58a3.5 3.5 0 0 0 4.84 4.84"/>
           </svg>
         </button>
       </div>
