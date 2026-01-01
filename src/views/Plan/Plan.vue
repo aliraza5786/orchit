@@ -72,17 +72,17 @@
           @mousedown="startResize"
         ></div>
         <section
-          class="space-y-4 rounded-md relative group pt-2 ovrflow-hidden flex-1 h-full min-h-0 box-border min-w-[400px] border border-gray-200 overflow-x-hidden"
+          class="space-y-4 rounded-md relative group pt-2 ovrflow-hidden flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input bg-bg-surface overflow-x-hidden"
         >
           <div class="flex justify-between px-3">
             <!-- Left Section: Sprint Tabs -->
-            <div class="flex items-center gap-2 bg-white min-w-0 pe-2">
+            <div class="flex items-center gap-2 bg-transparent min-w-0 pe-2">
               <!-- Sprint Dropdown -->
             <div ref="elipseWrapperSprint" class="relative inline-block">
   <!-- Trigger Button -->
   <button
     @click.stop="openElipseDropDown = !openElipseDropDown"
-    class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-white rounded-lg hover:bg-gray-50"
+    class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium bg-transparent rounded-lg"
     :style="{ border: '1px solid ' + selectedType.dot }"
   >
     <span
@@ -98,13 +98,13 @@
   <ul
     v-if="openElipseDropDown"
     @click.stop
-    class="absolute left-0 mt-2 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-50"
+    class="absolute left-0 mt-2 w-44 bg-bg-dropdown border border-border rounded-xl shadow-lg z-50"
   >
     <li
       v-for="item in sprintTypes"
       :key="item.value"
       @click="selectType(item)"
-      class="flex items-center gap-3 px-4 py-2 text-sm cursor-pointer hover:bg-gray-50"
+      class="flex items-center gap-3 px-4 py-2 text-sm cursor-pointer"
     >
       <span
         class="w-2 h-2 rounded-full"
@@ -208,7 +208,7 @@
               <!-- Add Sprint Button (Outside Dropdown) -->
               <button
                 @click="openSprintModal()"
-                class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors shrink-0"
+                class="w-8 h-8 flex items-center justify-center rounded-full bg-accent border text-white transition-colors shrink-0"
               >
                 <i class="fa-solid fa-plus text-sm"></i>
               </button>
