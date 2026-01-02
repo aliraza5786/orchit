@@ -136,53 +136,54 @@ const queryClient = useQueryClient()
 // }
 
 function getMenuItems() {
-  return [
-    // Assign User
-    canInviteUser.value
-      ? {
-          label: 'Assign User',
-          danger: true,
-          action: () => {
-            showAddMembers.value = true
-          },
-          icon: {
-            prefix: 'fa-regular',
-            iconName: 'fa-user-plus'
-          }
-        }
-      : null,
+  const isAdmin = props.ticket?.role_title?.toLowerCase() === 'admin'
+  const hasUser = Boolean(props.ticket?.name)
 
-    // Unassign User (based on ticket.name)
-    props.ticket.name && canEditUser.value
-      ? {
-          label: 'UnAssign User',
-          danger: true,
-          action: () => {
-            unassignHandler()
-          },
-          icon: {
-            prefix: 'fa-regular',
-            iconName: 'fa-user-minus'
-          }
-        }
-      : null,
+  const items = []
 
-    // Delete Seat
-    canDeleteUser.value && props.ticket?.role_title?.toLowerCase() !== 'admin'
-      ? {
-          label: 'Delete Seat',
-          danger: true,
-          action: () => {
-            showDelete.value = true
-          },
-          icon: {
-            prefix: 'fa-regular',
-            iconName: 'fa-trash'
-          }
-        }
-      : null
-  ].filter(Boolean) as { label: string; icon?: any; action?: () => void }[]
+  if (canInviteUser.value && !isAdmin) {
+    items.push({
+      label: 'Assign User',
+      danger: true,
+      action: () => {
+        showAddMembers.value = true
+      },
+      icon: {
+        prefix: 'fa-regular',
+        iconName: 'fa-user-plus'
+      }
+    })
+  }
+
+  if (hasUser && canEditUser.value && !isAdmin) {
+    items.push({
+      label: 'UnAssign User',
+      danger: true,
+      action: unassignHandler,
+      icon: {
+        prefix: 'fa-regular',
+        iconName: 'fa-user-minus'
+      }
+    })
+  }
+
+  if (canDeleteUser.value && !isAdmin) {
+    items.push({
+      label: 'Delete Seat',
+      danger: true,
+      action: () => {
+        showDelete.value = true
+      },
+      icon: {
+        prefix: 'fa-regular',
+        iconName: 'fa-trash'
+      }
+    })
+  }
+
+  return items as { label: string; icon?: any; action?: () => void }[]
 }
+
 
 
 const assignHandle = () => {

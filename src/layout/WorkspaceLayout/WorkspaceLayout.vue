@@ -1,5 +1,5 @@
 <template>
-  <Loader v-if="isPending || isFetching" />
+  <Loader v-if="isLoading" />
   <div v-else
     :class="`h-[100dvh] bg-blend-multiply  text-text-primary  overflow-x-hidden flex flex-col bg-cover bg-no-repeat`"
     :style="{
@@ -11,7 +11,7 @@
     <WorkSpaceNav :getWorkspace="getWorkspace" ref="workspaceNavRef" @toggle-sidebar="toggleSidebar" :expanded="sidebarExpanded" />
     <div class="flex flex-grow items-start h-full max-w-full overflow-x-hidden "
       style="max-height:calc(100dvh - 55px);">
-        <Sidebar :workspace="localWorkspace" :isLoading="isPending || isLoading"
+        <Sidebar v-if="localWorkspace" :workspace="localWorkspace" :isLoading="isPending || isLoading"
        :expanded="sidebarExpanded" />
        <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
         :style="dashboardContentStyle"
@@ -43,35 +43,23 @@ import CreateLaneModal from './modals/CreateLaneModal.vue';
 import CreateLaneWithAI from './modals/CreateLaneWithAI.vue';
 import UpdateLaneModal from './modals/UpdateLaneModal.vue';
 import { useSingleWorkspace } from '../../queries/useWorkspace';
-import Loader from '../../components/ui/Loader.vue';
-import { request } from "../../libs/api";
-import { useRoute } from 'vue-router';
+import Loader from '../../components/ui/Loader.vue'; 
+import { useRouteIds } from '../../composables/useQueryParams'; 
 const workspaceStore = useWorkspaceStore();
-const route = useRoute();
-const workspaceId = computed(() => {
-  const id = route.params.id;
-  return typeof id === 'string' || typeof id === 'number' ? id : undefined;
-});
+const { workspaceId } = useRouteIds(); // Use the shared composable
 
-const { data: getWorkspace, isPending, isLoading ,isFetching } = useSingleWorkspace(workspaceId)
-const localWorkspace = ref<any>(null);
-const fetchWorkspace = async (id: string | number) => {
-  try {
-    const data = await request({
-      url: `/workspace/${id}`,
-      method: "GET",
-      params: { is_archive: false },
-    });
-    localWorkspace.value = data;
-  } catch (error) {
-    console.error("Error fetching workspace:", error);
-  }
-};
+// Pass the ref directly. useSingleWorkspace handles unref internally if designed correctly,
+// or we can pass a computed if needed. Inspecting useSingleWorkspace, it accepts MaybeRef.
+const { data: getWorkspace, isPending, isLoading } = useSingleWorkspace(workspaceId);
+const localWorkspace = ref<any>(null); 
+
 watch(
-  workspaceId,
-  (newId, oldId) => {
-    if (!newId || newId === oldId) return;
-    fetchWorkspace(newId);
+  getWorkspace,
+  (newWorkspace) => {
+    if (!newWorkspace) return;
+
+    // shallow clone so local edits don’t mutate query cache
+    localWorkspace.value = { ...newWorkspace };
   },
   { immediate: true }
 );
