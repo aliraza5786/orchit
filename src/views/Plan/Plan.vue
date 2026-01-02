@@ -29,7 +29,10 @@
               Tickets ({{ backlogResp?.cards?.length }}
               {{ backlogResp?.cards?.length > 1 ? "Tasks" : "Task" }})
             </h2>
-            <div class="flex items-center gap-2 relative" ref="filterDropdownRef">
+            <div
+              class="flex items-center gap-2 relative"
+              ref="filterDropdownRef"
+            >
               <!-- Add Card Button -->
               <button
                 v-if="canCreateCard"
@@ -39,103 +42,106 @@
                 <i class="text-text-primary fa-regular fa-plus"></i>
               </button>
             </div>
-
           </div>
           <!-- filters -->
-         <div>
-  <!-- Milestone: Horizontal Tabs -->
-  <div
-    v-if="sprintType === 'milestone'"
-    class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1"
-  >
-    <!-- Default "All" Tab -->
-    <button
-      @click="selectMilestoneTab('all')"
-      class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap"
-      :class="selectedMilestoneTab === 'all'
-        ? 'bg-accent text-white border-none'
-        : 'bg-transparent text-accent border border-accent'"
-    >
-      All Modules
-    </button>
+          <div>
+            <!-- Milestone: Horizontal Tabs -->
+            <div
+              v-if="sprintType === 'milestone'"
+              class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1"
+            >
+              <!-- Default "All" Tab -->
+              <button
+                @click="selectMilestoneTab('all')"
+                class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap"
+                :class="
+                  selectedMilestoneTab === 'all'
+                    ? 'bg-accent text-white border-none'
+                    : 'bg-transparent text-accent border border-accent'
+                "
+              >
+                All Modules
+              </button>
 
-    <!-- Dynamic Module Tabs -->
-    <button
-      v-for="option in visibleModules"
-      :key="option._id"
-      @click="selectMilestoneTab(option._id)"
-      class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
-      :class="selectedMilestoneTab === option._id
-        ? 'bg-accent text-white border-none'
-        : 'bg-transparent text-accent border border-accent'"
-    >
-      {{ option.variables['module-title'] }}
-    </button>
-  </div>
+              <!-- Dynamic Module Tabs -->
+              <button
+                v-for="option in visibleModules"
+                :key="option._id"
+                @click="selectMilestoneTab(option._id)"
+                class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
+                :class="
+                  selectedMilestoneTab === option._id
+                    ? 'bg-accent text-white border-none'
+                    : 'bg-transparent text-accent border border-accent'
+                "
+              >
+                {{ option.variables["module-title"] }}
+              </button>
+            </div>
 
-  <!-- Huddle: Dropdown -->
-  <div
-  v-else-if="sprintType === 'huddle' || sprintType === 'sprint'"
-  class="relative flex items-center gap-3"
->
-  <!-- FILTER DROPDOWN (NO OVERFLOW PARENT) -->
-  <div class="relative flex-shrink-0">
-    <button
-      class="h-8 min-w-[160px] flex items-center justify-between px-2 rounded-md border text-sm border-border hover:bg-bg-body"
-      @click="isHuddleDropdownOpen = !isHuddleDropdownOpen"
-    >
-      <span class="flex items-center gap-2 truncate">
-        <img :src="filter" alt="filter" class="w-4 h-4" />
-        <span class="truncate">
-          {{ selectedHuddleModuleLabel || 'All Milestones' }}
-        </span>
-      </span>
-      <i class="fas fa-chevron-down text-xs ml-2"></i>
-    </button>
+            <!-- Huddle: Dropdown -->
+            <div
+              v-else-if="sprintType === 'huddle' || sprintType === 'sprint'"
+              class="relative flex items-center gap-3"
+            >
+              <!-- FILTER DROPDOWN (NO OVERFLOW PARENT) -->
+              <div class="relative flex-shrink-0">
+                <button
+                  class="h-8 min-w-[160px] flex items-center justify-between px-2 rounded-md border text-sm border-border hover:bg-bg-body"
+                  @click="isHuddleDropdownOpen = !isHuddleDropdownOpen"
+                >
+                  <span class="flex items-center gap-2 truncate">
+                    <img :src="filter" alt="filter" class="w-4 h-4" />
+                    <span class="truncate">
+                      {{ selectedHuddleModuleLabel || "All Milestones" }}
+                    </span>
+                  </span>
+                  <i class="fas fa-chevron-down text-xs ml-2"></i>
+                </button>
 
-    <!-- DROPDOWN -->
-    <div
-      v-if="isHuddleDropdownOpen"
-      class="absolute left-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
-    >
-      <ul class="flex flex-col">
-        <li
-          class="px-3 py-2 cursor-pointer hover:bg-gray-100"
-          @click="selectHuddleModule('all')"
-        >
-          All Milestones
-        </li>
+                <!-- DROPDOWN -->
+                <div
+                  v-if="isHuddleDropdownOpen"
+                  class="absolute left-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+                >
+                  <ul class="flex flex-col">
+                    <li
+                      class="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                      @click="selectHuddleModule('all')"
+                    >
+                      All Milestones
+                    </li>
 
-        <li
-          v-for="option in visibleModules"
-          :key="option._id"
-          class="px-3 py-2 cursor-pointer hover:bg-gray-100"
-          @click="selectHuddleModule(option._id)"
-        >
-          {{ option.variables['module-title'] }}
-        </li>
-      </ul>
-    </div>
-  </div>
+                    <li
+                      v-for="option in visibleModules"
+                      :key="option._id"
+                      class="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                      @click="selectHuddleModule(option._id)"
+                    >
+                      {{ option.variables["module-title"] }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
 
-  <!-- SPRINT TABS (SCROLL ONLY HERE) -->
-  <div class="flex gap-2 overflow-x-auto no-scrollbar flex-1">
-    <button
-      v-for="option in sprintsList?.sprints"
-      :key="option._id"
-      @click="selectMilestoneTab(option._id)"
-      class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
-      :class="
-        selectedMilestoneTab === option._id
-          ? 'bg-accent text-white'
-          : 'bg-transparent text-accent border border-accent'
-      "
-    >
-      {{ option.title }}
-    </button>
-  </div>
-</div>
-</div>
+              <!-- SPRINT TABS (SCROLL ONLY HERE) -->
+              <div class="flex gap-2 overflow-x-auto no-scrollbar flex-1">
+                <button
+                  v-for="option in sprintsList?.sprints"
+                  :key="option._id"
+                  @click="selectMilestoneTab(option._id)"
+                  class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
+                  :class="
+                    selectedMilestoneTab === option._id
+                      ? 'bg-accent text-white'
+                      : 'bg-transparent text-accent border border-accent'
+                  "
+                >
+                  {{ option.title }}
+                </button>
+              </div>
+            </div>
+          </div>
           <div
             v-if="isBacklogPenidng"
             class="w-full h-full min-h-[250px] flex justify-center items-center"
@@ -196,7 +202,10 @@
                     <li
                       v-for="item in sprintTypes"
                       :key="item.value"
-                      @click="selectType(item), openElipseDropDown = !openElipseDropDown"
+                      @click="
+                        selectType(item),
+                          (openElipseDropDown = !openElipseDropDown)
+                      "
                       class="flex items-center gap-3 px-4 py-2 text-sm cursor-pointer"
                     >
                       <span
@@ -254,11 +263,11 @@
                         <div class="relative flex-1">
                           <template v-if="editingSprintId !== sprint._id">
                             <button
-                                class="text-left truncate w-full"
-                                @click="selectSprint(sprint)"
-                              >
-                                {{ sprint.title }}
-                              </button>
+                              class="text-left truncate w-full"
+                              @click="selectSprint(sprint)"
+                            >
+                              {{ sprint.title }}
+                            </button>
                           </template>
 
                           <template v-else>
@@ -278,11 +287,11 @@
                         <!-- Delete Button -->
                         <div class="relative ml-2 flex gap-2">
                           <button
-                                class="ml-2 text-xs text-gray-400 hover:text-accent"
-                                @click.stop="enableEdit(sprint)"
-                              >
-                                <i class="fas fa-pen"></i>
-                              </button>
+                            class="ml-2 text-xs text-gray-400 hover:text-accent"
+                            @click.stop="enableEdit(sprint)"
+                          >
+                            <i class="fas fa-pen"></i>
+                          </button>
                           <button
                             v-if="
                               sprintsList?.sprints.length > 1 &&
@@ -528,7 +537,7 @@ import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
 import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
-import { useSingleWorkspaceCompany } from '../../queries/useWorkspace'
+import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 const { theme } = useTheme();
 const showTaskModal = ref(false);
 const searchQuery = ref("");
@@ -580,10 +589,11 @@ const { data: backlogResp, refetch: refetchBackLogList } = useBacklogList(
   {}
 );
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId);
-const visibleModules = computed(() =>
-  workspaceData.value?.modules.filter(
-    (m: any) => m?.variables?.['module-title'] !== 'Pin'
-  ) || []
+const visibleModules = computed(
+  () =>
+    workspaceData.value?.modules.filter(
+      (m: any) => m?.variables?.["module-title"] !== "Pin"
+    ) || []
 );
 watch(
   () => sprintType.value,
@@ -743,7 +753,6 @@ function selectSprint(sprint: any) {
   selectedSprintId.value = sprint._id;
   isSprintDropdownOpen.value = false;
 }
-
 
 function mapStatus(s: string): "Todo" | "In Progress" | "Done" {
   const normalized = s.toLowerCase();
@@ -998,7 +1007,7 @@ const closeSearchModal = () => {
 };
 
 // filters
-const selectedHuddleModule = ref('all');
+const selectedHuddleModule = ref("all");
 const isHuddleDropdownOpen = ref(false);
 function selectHuddleModule(id: string) {
   selectedHuddleModule.value = id;
@@ -1008,10 +1017,16 @@ function selectHuddleModule(id: string) {
 
 // Computed label for huddle button
 const selectedHuddleModuleLabel = computed(() => {
-  if (selectedHuddleModule.value === 'all') return 'All Milestones';
-  const module = workspaceData.value.modules.find(m => m._id === selectedHuddleModule.value);
-  return module?.variables['module-title'] || 'Select Module';
+  if (selectedHuddleModule.value === "all") return "All Milestones";
+
+  const module = workspaceData.value?.modules?.find(
+    (m: { _id: string; variables: Record<string, any> }) =>
+      m._id === selectedHuddleModule.value
+  );
+
+  return module?.variables?.["module-title"] || "Select Module";
 });
+
 // Selected tab (default to "All")
 const selectedMilestoneTab = ref("all");
 
