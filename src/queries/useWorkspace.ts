@@ -126,28 +126,20 @@ type WorkspaceId = string | number | undefined;
 type MaybeRef<T> = T | Ref<T>;
 
 export const useSingleWorkspace = (id: MaybeRef<WorkspaceId>) => {
-  const resolvedId = unref(id);
-
-  if (
-    resolvedId !== undefined &&
-    typeof resolvedId !== 'string' &&
-    typeof resolvedId !== 'number'
-  ) {
-    throw new Error('useSingleWorkspace: invalid id');
-  }
+  const resolvedId = computed(() => unref(id));
 
   return useApiQuery(
     {
-      key: resolvedId ? keys.singleWorkspace(resolvedId) : [],
-      url: resolvedId ? `/workspace/${resolvedId}` : '',
+      key: computed(() => resolvedId.value ? keys.singleWorkspace(resolvedId.value) : []),
+      url: computed(() => resolvedId.value ? `/workspace/${resolvedId.value}` : ''),
       method: 'GET',
       params: { is_archive: false },
-      enabled: Boolean(resolvedId),
+      enabled: computed(() => Boolean(resolvedId.value)),
     },
     {
       staleTime: 3 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
-      refetchOnWindowFocus: true,
+      refetchOnMount: true,
     }
   );
 };

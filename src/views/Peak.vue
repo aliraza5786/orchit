@@ -162,11 +162,11 @@
             <div class="flex-1">
               <div class="h-6 bg-bg-body rounded overflow-hidden relative group cursor-help"
                 :title="`${member.totalTasks} task${member.totalTasks !== 1 ? 's' : ''} • ${member.totalHours}h`">
-                <div class="h-full bg-accent transition-all duration-300"
+                <div class="h-full !bg-accent-hover/40 transition-all duration-300"
                   :style="{ width: member.workload + '%' }">
                 </div>
                 <span v-if="member.workload > 0"
-                  class="absolute inset-0 flex items-center justify-start px-2 text-[11px] text-white font-medium">
+                  class="absolute inset-0 flex items-center justify-start px-2 text-[11px] text-black font-medium">
                   {{ member.workload }}%
                 </span>
               </div>

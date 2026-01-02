@@ -35,6 +35,9 @@
 </div>
 
 
+    
+
+
       <!-- Dynamic Select Variables -->
       <BaseSelectField size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable"
         :key="getVarKey(item)" v-model="form.variables[item.slug]" :options="mapOptions(item.data)" :label="item.title"
@@ -60,6 +63,23 @@
             @update:modelValue="setEndDate" :min-date="form.startDate || today" />
         </div>
         <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
+      </div>
+        <!-- Assignee -->
+      <div class="flex flex-col gap-1">
+        <label class="text-sm">Assignee</label>
+        <div class="mt-2">
+           <AssigmentDropdown 
+             :name="true" 
+             :workspaceId="workspaceId" 
+             @assign="setAssignee" 
+             @unassign="setAssignee(null)"
+             :assigneeId="form.assignee" 
+             :seat="null" 
+             :disabled="false" 
+             :skipPermissionCheck="true"
+             class="w-full"
+           />
+        </div>
       </div>
     </div>
 
@@ -93,6 +113,7 @@ import { useAddTicket, useLanes, useVariables } from '../../../queries/useSheets
 import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import DatePicker from '../components/DatePicker.vue'
+import AssigmentDropdown from '../components/AssigmentDropdown.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { usePermissions } from '../../../composables/usePermissions'
 const { canCreateCard } = usePermissions()
@@ -167,6 +188,7 @@ type Form = {
   startDate: string | null
   endDate: string | null
   lane_id: SelectValue
+  assignee: any
   variables: Record<string, SelectValue>
 }
 const form = reactive<Form>({
@@ -175,6 +197,7 @@ const form = reactive<Form>({
   startDate: null,
   endDate: null,
   lane_id: null,
+  assignee: null,
   variables: {}
 })
 
@@ -226,6 +249,10 @@ function setLane(v: SelectValue) {
   touched.lane = true
 }
 
+function setAssignee(user: any) {
+  form.assignee = user
+}
+
 /** Actions */
 function cancel() {
   isOpen.value = false
@@ -237,6 +264,7 @@ function reset() {
   form.startDate = null
   form.endDate = null
   form.lane_id = null
+  form.assignee = null
   form.variables = {}
   touched.title = false
   touched.description = false
@@ -298,6 +326,7 @@ function create() {
       ['start-date']: form.startDate,
       ['end-date']: form.endDate,
     },
+    seat_id: form.assignee?._id ?? null,
     createdAt: new Date().toISOString()
   }
 

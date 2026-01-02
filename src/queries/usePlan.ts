@@ -2,20 +2,33 @@ import { useQuery } from "@tanstack/vue-query";
 import { request } from "../libs/api";
 // import { unref } from "vue";
 import { useApiMutation } from "../libs/vq";
-import { unref } from "vue";
+import { unref, computed } from "vue";
+import type { Ref } from "vue";
 
-export const useSprintList = (workspace_id: any, options = {}) => {
+export const useSprintList = (
+  workspace_id: Ref<string> | string,
+  sprintType: Ref<string> | string,
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["sprint-list"],
+    queryKey: computed(() => [
+      "sprint-list",
+      unref(workspace_id),
+      unref(sprintType)
+    ]),
     queryFn: ({ signal }) =>
       request<any>({
-        url: `sprints/${workspace_id}`,
+        url: `sprints/${unref(workspace_id)}`,
         method: "GET",
         signal,
+        params: {
+          sprintType: unref(sprintType),
+        },
       }),
     ...options,
   });
 };
+
 export const useSprintCard = (id: any, options = {}) => {
   return useQuery({
     queryKey: ["sprint-cards", id],
@@ -70,15 +83,25 @@ export const useSprintDetail = (id: any, options = {}) => {
     ...options,
   });
 };
-export const useBacklogList = (id: any, options = {}) => {
+export const useBacklogList = (
+  id: Ref<string> | string,
+  sprintType: Ref<string> | string,
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["backlog-list", id],
+    queryKey: ["backlog-list", id, unref(sprintType)],
+
     queryFn: ({ signal }) =>
       request<any>({
-        url: `sprints/workspace/${unref(id)}/cards?include_sprint_cards=false`,
+        url: `sprints/workspace/${unref(id)}/cards`,
         method: "GET",
         signal,
+        params: {
+          include_sprint_cards: false, // static param
+          sprintType: unref(sprintType), // dynamic param
+        },
       }),
+
     ...options,
   });
 };

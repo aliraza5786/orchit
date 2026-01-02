@@ -4,13 +4,24 @@
     class="sticky top-0 z-10 w-full border-b border-border bg-bg-body/80 backdrop-blur supports-[backdrop-filter]:bg-bg-body/60"
     role="navigation" aria-label="Primary">
     <div class="mx-auto flex max-w-[1400px] items-center justify-between px-6 max-md:p-4 ">
-      <!-- Brand -->
-      <RouterLink to="/" class="flex items-center gap-2">
-        <img v-if="theme === 'light'" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-30"
-          loading="eager" decoding="async" />
-        <img v-else src="../../../assets/global/dark-logo.png" alt="Orchit AI logo" class="w-30" loading="eager"
-          decoding="async" />
-      </RouterLink>
+      <div class="flex items-center gap-2">
+        <!-- Mobile Toggle -->
+        <button 
+          @click="isSidebarOpen = !isSidebarOpen"
+          class="md:hidden grid h-9 w-9 place-items-center rounded-lg text-text-primary hover:bg-bg-dropdown-menu-hover transition-colors"
+          aria-label="Toggle Menu"
+        >
+          <i class="fa-solid" :class="isSidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
+        </button>
+
+        <!-- Brand -->
+        <RouterLink to="/" class="flex items-center gap-2">
+          <img v-if="theme === 'light'" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30"
+            loading="eager" decoding="async" />
+          <img v-else src="../../../assets/global/dark-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30" loading="eager"
+            decoding="async" />
+        </RouterLink>
+      </div>
 
       <!-- Primary nav -->
       <ul class="relative hidden items-stretch py-4 gap-9 text-sm font-medium text-text-primary md:flex"
@@ -60,7 +71,7 @@
               alt="profile_img">
           </button>
 
-          <button v-else class="h-9 w-9 overflow-hidden cursor-pointer rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
+          <button v-else class="h-7 sm:h-9 w-7 sm:w-9 overflow-hidden cursor-pointer rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
                      hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
             aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
             :aria-controls="menuOpen ? 'user-menu' : undefined" @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
@@ -161,6 +172,43 @@
   </nav>
   <AccountSettingsModal v-model="showAccountSettings" />
   <LimitExceededModal @upgrade="handleUgrade" />
+
+  <!-- Mobile Sidebar -->
+  <Teleport to="body">
+    <Transition
+      enter-active-class="transition duration-400 ease-out"
+      enter-from-class="-translate-x-full"
+      enter-to-class="translate-x-0"
+      leave-active-class="transition duration-300 ease-in"
+      leave-from-class="translate-x-0"
+      leave-to-class="-translate-x-full"
+    >
+      <div v-if="isSidebarOpen" class="fixed top-[70px] left-0 right-0 bottom-0 z-[100] bg-bg-body md:hidden overflow-y-auto">
+        <nav class="py-8 px-4">
+          <ul class="flex flex-col space-y-6">
+            <RouterLink 
+              v-for="link in links" 
+              :key="link.to" 
+              :to="link.to" 
+              custom
+              v-slot="{ navigate, isActive, isExactActive }"
+            >
+              <li 
+                @click="() => { navigate(); isSidebarOpen = false }"
+                class="flex items-center gap-4 text-text-primary font-manrope font-semibold leading-[30px] text-[18px] hover:text-primary transition-colors cursor-pointer"
+                :class="{ 'text-accent font-bold': isActive || (link.exact && isExactActive) }"
+              >
+                <i v-if="link.label === 'Workspaces'" class="fa-solid fa-border-all w-6 text-xl"></i>
+                <i v-else-if="link.label === 'My Tasks'" class="fa-solid fa-list-check w-6 text-xl"></i>
+                <i v-else-if="link.label === 'Users'" class="fa-solid fa-users w-6 text-xl"></i>
+                {{ link.label }}
+              </li>
+            </RouterLink>
+          </ul>
+        </nav>
+      </div>
+    </Transition>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -216,6 +264,7 @@ const themeOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 const themeTriggerRef = ref<HTMLElement | null>(null)
 const themeFlipLeft = ref(false)
+const isSidebarOpen = ref(false)
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value

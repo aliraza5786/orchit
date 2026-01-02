@@ -10,7 +10,7 @@
       class="h-full box-border"
     >
       <!-- Tickets List -->
-      <div v-if="filteredTickets.length > 0" class=" overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
+      <div v-if="filteredTickets.length > 0 && sprint" class=" overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
         <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1"
         >
           <div
@@ -24,7 +24,7 @@
                 : 'border border-border-input',
               theme === 'dark' ? 'bg-bg-body hover:bg-bg-surface': 'bg-bg-charcoal hover:bg-bg-body'  
             ]" 
-            @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"
+           @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"
             @dragend="onDragEnd($event)"
             @click="$emit('open-ticket', ticket)"
           >
@@ -101,8 +101,8 @@ import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
 const { theme } = useTheme();
- 
-const props = defineProps<{ sprint: Sprint; sprintId: any; searchQuery?: string,   checkedSprintAll:Boolean }>();
+
+const props = defineProps<{ sprint: Sprint | null; sprintId: any; searchQuery?: string; checkedSprintAll: boolean }>();
 
 const emit = defineEmits([
   "edit-sprint",
@@ -117,7 +117,7 @@ const emit = defineEmits([
 const sprintTickets = ref<Ticket[]>([]);
 const selectedIds = ref<string[]>([]);
 watch(
-  () => props.sprint.tickets,
+  () => props.sprint && props.sprint.tickets,
   (tickets) => {
     sprintTickets.value = [...(tickets || [])];
     const validIds = new Set(sprintTickets.value.map((t) => t.id));

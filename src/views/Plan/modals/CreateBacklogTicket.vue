@@ -21,6 +21,8 @@
                     :allowCustom="false" :model-value="form.lane_id" @update:modelValue="setLane" />
             </div>
 
+           
+
             <!-- Dynamic Select Variables -->
             <BaseSelectField size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable"
                 :key="getVarKey(item)" v-model="form.variables[item.slug]" :options="mapOptions(item.data)"
@@ -46,6 +48,15 @@
                         @update:modelValue="setEndDate" :min-date="form.startDate || today" />
                 </div>
                 <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
+            </div>
+             <!-- Assignee -->
+            <div class="flex flex-col">
+                <label class="text-sm mb-1">Assignee</label>
+                <div class="mt-2">
+                    <AssigmentDropdown :name="true" :workspaceId="workspaceId" @assign="setAssignee"
+                        @unassign="setAssignee(null)" :assigneeId="form.assignee" :seat="null" :disabled="false"
+                        :skipPermissionCheck="true" class="w-full" />
+                </div>
             </div>
         </div>
 
@@ -75,6 +86,7 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import DatePicker from '../../Product/components/DatePicker.vue'
+import AssigmentDropdown from '../../Product/components/AssigmentDropdown.vue'
 
 /** Emits */
 const emit = defineEmits<{
@@ -146,6 +158,7 @@ type Form = {
     startDate: string | null
     endDate: string | null
     lane_id: SelectValue
+    assignee: any
     variables: Record<string, SelectValue>
 }
 const form = reactive<Form>({
@@ -154,6 +167,7 @@ const form = reactive<Form>({
     startDate: null,
     endDate: null,
     lane_id: null,
+    assignee: null,
     variables: {}
 })
 
@@ -223,6 +237,10 @@ function setLane(v: SelectValue) {
     touched.lane = true
 }
 
+function setAssignee(user: any) {
+    form.assignee = user
+}
+
 /** Actions */
 function cancel() {
     isOpen.value = false
@@ -234,6 +252,7 @@ function reset() {
     form.startDate = null
     form.endDate = null
     form.lane_id = null
+    form.assignee = null
     form.variables = {}
     touched.title = false
     touched.description = false
@@ -257,6 +276,7 @@ function create() {
         sheet_id: props.sheet_id,
         workspace_lane_id: form.lane_id, // ✅ included and required
         variables: { ...form.variables, [`${selectedVar.value?.slug}`]: props.listId, ['card-title']: form.title.trim(), ['card-description']: form.description.trim(), ['start-date']: form.startDate, ['end-date']: form.endDate, },
+        seat_id: form.assignee?._id ?? null,
         createdAt: new Date().toISOString()
     }
     addTicket(payload)
