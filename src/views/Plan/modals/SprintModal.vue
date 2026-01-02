@@ -99,10 +99,11 @@ const form = reactive<any>({
 });
 
 /** Touched + validation */
-const touched = reactive({ name: false });
+const touched = reactive({ name: false, sprintType: false, description:false });
 
 const nameError = computed(() =>
-  touched.name && !String(form.name || "").trim() ? "Name is required" : ""
+  touched.name && !String(form.name || "").trim() ? "Name is required" : "",
+  
 );
 
 const isValid = computed(
@@ -125,9 +126,12 @@ function save() {
   });
 }
 
+
 /** Utils */
 function resetTouched() {
   touched.name = false;
+  touched.sprintType=false;
+  touched.description=false;
 }
 /** Hydrate form when sprint changes or when opened */
 watch(

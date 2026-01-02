@@ -181,6 +181,7 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
       }),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnMount: "always",
     enabled: !!unref(workspace_id),
     ...options,
   });
