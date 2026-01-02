@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isFetching || isPending" class="flex max-w-[380px] min-w-[380px] justify-center min-h-[400px] items-center h-full w-full">
+  <div v-if="isFetching || isPending" class="flex max-w-[380px] min-w-full sm:min-w-[380px] justify-center min-h-[400px] items-center h-full w-full">
 
     <div role="status" aria-label="Loading"
       class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
@@ -7,23 +7,28 @@
   <!-- Slide-in panel -->
    
   <Transition v-else name="panel" appear>
-    <div v-show="showPanel" class="flex flex-col max-w-[380px] min-w-[380px] h-full
-     overflow-y-auto
-             bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur
-             rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)]
-             border border-orchit-white/5 overflow-hidden" role="complementary" aria-label="Details panel">
+    <div v-show="showPanel" :class="[
+      'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
+      isExpanded ? 'min-w-full max-w-full' : 'min-w-full max-w-[380px] sm:min-w-[380px]'
+    ]" role="complementary" aria-label="Details panel">
       <!-- Header -->
       <div
-        class="sticky top-0 z-10 border-b  border-border px-6 py-[9px] flex items-center justify-between bg-bg-card">
+        class="sticky top-0 z-10 border-b  border-border px-4 sm:px-6 py-[9px] flex items-center justify-between bg-bg-card">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
-        <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
-          @click="() => emit('close')" aria-label="Close details">
-          <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
+        <div class="flex items-center gap-2">
+          <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+            @click="isExpanded = !isExpanded" :aria-label="isExpanded ? 'Collapse details' : 'Expand details'">
+            <i :class="['fa-solid', isExpanded ? 'fa-compress' : 'fa-expand', 'text-lg']"></i>
+          </button>
+          <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+            @click="() => emit('close')" aria-label="Close details">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
       </div>
 
       <!-- Body -->
-      <div class="py-5 px-6 flex flex-col gap-5 flex-grow">
+      <div class="py-5  px-4 sm:px-6 flex flex-col gap-5 flex-grow">
         <!-- card type -->
         <template
         v-for="(item, index) in cardDetails?.variables"
@@ -37,7 +42,7 @@
             {{ item.title }}
           </div>
           <BaseSelectField
-            :canEditCard="!canEditCard"
+            :disabled="!canEditCard"
             size="sm"
             :options="item?.data.map((e:any) => ({ _id: e, title: e }))"
             placeholder="Select option"
@@ -54,7 +59,7 @@
               @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEdit" class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10
                      focus:outline-none focus:ring-2 focus:ring-accent/40 transition" type="text"
               aria-label="Edit title" />
-            <h1 v-else key="title-view" :class="canEditCard? 'cursor-text':'cursor-not-allowed'" class="text-2xl font-semibold tracking-tight rounded-lg px-2 py-1
+            <h1 v-else key="title-view" :class="canEditCard? 'cursor-text':'cursor-not-allowed'" class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-lg px-2 py-1
                      hover:bg-orchit-white/5 transition" @click="editTitle" aria-label="Card title" :title="!canEditCard ? 'You do not have permission to edit this card' : ''" >
               {{ localTitle || 'Untitled' }}
             </h1>
@@ -102,15 +107,15 @@
 
             <!-- Fields grid -->
             <div
-              class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 gap-4">
               <div class="space-y-2">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
-                <BaseSelectField :canEditCard="!canEditCard" size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
+                <BaseSelectField :disabled="!canEditCard" size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
                   :model-value="lane" @update:modelValue="setLane" />
               </div>
               <div class="space-y-2 ">
                 <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
-                <AssigmentDropdown  @assign="(user) => assignHandle(user)" :assigneeId="curentAssigne"
+                <AssigmentDropdown :disabled="!canAssignCard" @assign="(user) => assignHandle(user)" :assigneeId="curentAssigne"
                   :seat="cardDetails.seat" />
               </div>
               <template v-if="!pin">
@@ -155,7 +160,7 @@
                 :key="item.slug || `var-${index}`">
                 <div v-if="item.type === 'Select' && item.slug !== 'card-type'" class="space-y-2 sm:col-span-1">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">{{ item.title }}</div>
-                  <BaseSelectField :canEditCard="!canEditCard" size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
+                  <BaseSelectField :disabled="!canEditCard" size="sm" :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
                     placeholder="Select option" :allowCustom="false" :model-value="localVarValues[item.slug]"
                     @update:modelValue="(val: any) => handleSelect(val, item.slug)" />
                 </div>
@@ -234,12 +239,12 @@
             <div class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden">
               <textarea :disabled="!canCreateComment || !canEditComment" v-model="newComment" rows="3" :class="(canCreateComment || canEditComment) ? 'cursor-text': 'cursor-not-allowed'" class="w-full p-3 bg-transparent outline-none text-sm"
                 placeholder="Write a comment" />
-              <div class="grid grid-cols-3 items-center w-full justify-between p-2 border-t border-orchit-white/10">
+              <div class="flex items-center w-full justify-between p-2 border-t border-orchit-white/10">
                 <input type="file" multiple @change="handleFileChange" class=" max-w-full text-ellipsis text-xs text-text-secondary
                          file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md
                          file:border file:border-orchit-white/10 file:bg-orchit-white/10
                          hover:file:bg-orchit-white/15 file:text-text-primary transition inline w-fit" />
-                <Button variant="primary" class="" size="sm" @click="postComment"
+                <Button variant="primary" class="min-w-[70px]" size="sm" @click="postComment"
                   :disabled="!newComment.trim() && !commentAttachments.length || !canCreateComment">
                   {{ isPostingComment ? 'Posting…' : 'Post' }}
                 </Button>
@@ -301,10 +306,11 @@ import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
 import SwitchTab from '../../../components/ui/SwitchTab.vue'
+const isExpanded = ref(false)
 
 import { usePermissions } from '../../../composables/usePermissions';
 import { toast } from 'vue-sonner'
- const {canCreateComment, canEditComment,canViewComment, canDeleteComment, canEditCard, canViewAttachment, } = usePermissions();
+ const {canCreateComment, canEditComment,canViewComment, canDeleteComment, canEditCard, canViewAttachment, canAssignCard} = usePermissions();
 
 const { workspaceId } = useRouteIds()
 

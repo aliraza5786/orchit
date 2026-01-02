@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/vue-query";
 import { request } from "../libs/api";
 import { useApiMutation } from "../libs/vq";
-import { unref, type Ref } from "vue"; 
+import { unref, type Ref, computed } from "vue"; 
 // import type { DashboardTeamsData } from "../types";
 
 export const usePeopleList = (workspace_id: any, viewID: any, options = {}) => {
@@ -185,21 +185,37 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
     ...options,
   });
 };
-export const useDashboardActivities = (workspace_id: Ref<string> | string, options = {}) => {
+ export const useDashboardActivities = (
+  workspace_id: Ref<string> | string,
+  options = {}
+) => {
+  const workspaceIdRef = computed(() => unref(workspace_id))
+
   return useQuery({
-    queryKey: ["dashboard-activities", workspace_id],
+    queryKey: computed(() => [
+      'dashboard-activities',
+      workspaceIdRef.value,
+    ]),
+
     queryFn: ({ signal }) =>
       request<any>({
-        url: `workspace/${unref(workspace_id)}/activities`,
-        method: "GET",
+        url: `workspace/${workspaceIdRef.value}/activities`,
+        method: 'GET',
         signal,
       }),
-    staleTime: 5 * 60 * 1000,
+
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+
     gcTime: 10 * 60 * 1000,
-    enabled: !!unref(workspace_id),
+
+    enabled: computed(() => !!workspaceIdRef.value),
+
     ...options,
-  });
-};
+  })
+}
+
 export const ReOrderList = (options = {}) =>
   useApiMutation<any, any>(
     {

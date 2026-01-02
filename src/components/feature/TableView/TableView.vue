@@ -1,12 +1,13 @@
 <template>
-  <div class="kanban-table space-y-4 px-4 h-[85vh] overflow-y-auto">
+  <div class="px-4">
+    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ">
 
-    <table class="w-full table-fixed border-collapse rounded-md shadow-sm 
+    <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
              bg-bg-body/20 text-sm
-             border border-border/60">
+             border border-border/60 ">
 
       <!-- HEADER -->
-      <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-10">
+      <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-10 ">
         <tr class="text-text-secondary">
           <th class="w-2 p-0"></th>
           <th v-for="col in visibleColumns" :key="col?.key" class="relative font-bold p-2 uppercase text-left text-[11px] tracking-wide
@@ -30,14 +31,17 @@
 
               <!-- Column Toggle Menu -->
               <div v-if="showColumnMenu"
-                class="column-menu absolute w-[200px] right-0 mt-2 bg-bg-surface border border-border rounded shadow p-2 z-50">
-                <div v-for="col in props.columns" :key="'toggle-' + col.key" class="flex items-center space-x-2">
-                  <span @click="toggleColumn(col.key)" class="cursor-pointer text-lg">
-                    <i :class="visibleColumnKeys.includes(col.key) ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'"></i>
-                  </span>
+                class="column-menu absolute w-[200px] -right-1 bg-bg-dropdown border border-border rounded shadow z-50">
+                <div v-for="col in props.columns" :key="'toggle-' + col.key" class="flex items-center space-x-2 px-3 py-1.5 capitalize font-medium cursor-pointer hover:bg-bg-dropdown-menu-hover text-[12px] text-text-primary gap-2">
+                 <input
+                  type="checkbox"
+                 :checked="visibleColumnKeys.includes(col.key)"
+                 @change="toggleColumn(col.key)"
+                 class="h-4 w-4 mt-0.5 rounded border-border accent-accent cursor-pointer flex-shrink-0"
+               />
                   <span>{{ col.label }}</span>
                 </div>
-                <div v-if="canCreateVariable" @click="emit('addVar')" class=" sticky bottom-0 bg-bg-dropdown shadow-md shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
+                <div v-if="canCreateVariable" @click="emit('addVar')" class=" sticky bottom-0 bg-bg-dropdown shadow-md mt-2 shadow-border  capitalize border-t  border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover  cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap ">
                   <i class="fa-solid fa-plus"></i> Add new
                 </div>
               </div>
@@ -56,12 +60,14 @@
         <!-- SKELETON LOADING -->
         <template v-if="isPending">
           <tr v-for="n in 5" :key="'sk-' + n" class="border-b border-border animate-pulse">
-            <td class="p-3">
+            <td>
               <div class="w-4 h-4 bg-bg-surface rounded"></div>
             </td>
 
-            <td v-for="col in columns" :key="col.key" class="p-3 border-r border-border"
-              :style="{ width: columnWidths[col.key] + 'px' }">
+            <td v-for="(col, i) in columns" :key="col.key" class=" border-r border-border h-8"
+              :style="{ width: columnWidths[col.key] + 'px' }"
+              :colspan="i === visibleColumns.length - 1 ? 2 : 1"
+              >
               <div class="w-full h-4 bg-bg-surface rounded"></div>
             </td>
           </tr>
@@ -72,7 +78,7 @@
           <tr v-if="hoverIndex === index && !hasActiveEmptyRow" class="relative bg-bg-surface/20 transition-all cursor-pointer 
                   border border-accent" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
-              <span class="absolute left-[-6px] top-[-6px] bg-bg-surface border border-border 
+              <span class="absolute left-[-6px] top-[-14px] bg-bg-surface border border-border 
                        w-6 h-6 text-sm rounded-md flex justify-center items-center 
                        shadow-sm hover:bg-bg-surface/70">+</span>
             </td>
@@ -81,17 +87,17 @@
 
           <!-- ACTUAL ROW -->
           <tr @mouseenter="hoverIndex = index"
-            class="border-b border-border !bg-bg-surface/20 hover:bg-bg-surface/40 transition-colors">
-            <td class="p-2"></td>
+            class="border-b border-border hover:bg-bg-surface/40 transition-colors">
+            <td></td>
 
-            <td v-for="col in visibleColumns" :key="col?.key" class="p-2 border-r border-border truncate"
-              :style="{ width: columnWidths[col.key] + 'px' }">
+            <td v-for="(col,i) in visibleColumns" :key="col?.key" class=" border-r border-border overflow-visible relative h-8"
+              :style="{ width: columnWidths[col.key] + 'px' }"
+              :colspan="i === visibleColumns.length - 1 ? 2 : 1"
+              >
 
               <!-- Editable input -->
               <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
-                @blur="finishEdit(ticket)" class="w-full p-1 border border-border/60 rounded-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-300
-                       bg-bg-surface"
+                @blur="finishEdit(ticket)" class=" min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body  text-[12px] h-8"
                 :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
 
               <!-- Display value -->
@@ -110,21 +116,17 @@
 
         <!-- ADD NEW ROW FOOTER -->
         <tr v-if="!hasActiveEmptyRow && canCreate" @click="insertEmptyRow(tickets?.length)" class="sticky bottom-0 bg-bg-surface border-t border-border cursor-pointer
-                 transition hover:bg-bg-surface/70" @mouseenter="hoverIndex = tickets?.length"
+                 transition hover:bg-bg-body" @mouseenter="hoverIndex = tickets?.length"
           @mouseleave="hoverIndex = null">
-          <!-- <td class="p-2">
-            <span class="inline-flex w-5 h-5 border border-border rounded-full 
+          <td :colspan="footerColspan" class=" text-text-secondary h-8 px-3">
+            <span class="inline-flex w-5 h-5 border border-border-input rounded-full 
                      justify-center items-center text-secondary
-                     hover:bg-bg-surface/50 transition">+</span>
-          </td> -->
-          <td :colspan="columns.length" class="p-2 text-text-secondary">
-            <span class="inline-flex w-5 h-5 border border-border rounded-full 
-                     justify-center items-center text-secondary
-                     hover:bg-bg-surface/50 transition">+</span> Add New Row
+                     hover:bg-bg-surface/50 transition pb-0.5">+</span> Add New Row
           </td>
         </tr>
       </tbody>
     </table>
+  </div>
   </div>
 </template>
 
@@ -223,7 +225,7 @@ const columnWidths = reactive<Record<string, any>>({})
 // Initialize widths on mount
 watch(() => props.columns, cols => {
   cols.forEach((col, indx) => {
-    if (indx == 0) columnWidths[col.key] = null // start with null, i.e., auto
+    if (indx == 0) columnWidths[col.key] = 250 // start with null, i.e., auto 
     else if (!columnWidths[col.key]) columnWidths[col.key] = 150 // default width
   })
 }, { immediate: true })
@@ -289,5 +291,9 @@ const toggleColumn = (key: string) => {
     visibleColumnKeys.value.splice(index, 1)
   }
 }
+
+const footerColspan = computed(() => {
+  return 1 + visibleColumns.value.length + 1
+})
 
 </script>

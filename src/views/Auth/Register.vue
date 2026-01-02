@@ -14,7 +14,7 @@
           <BaseTextField v-model="password" label="Password" placeholder="Password" size="lg" type="password"
             :error="!!passwordError" :message="passwordError" @blur="touched.password.value = true" />
           <Button :disabled="isPending" size="lg" :block="true" type="submit">
-            {{ isPending ? 'Creating Account...' : 'Continue' }}
+            {{ isPending ? 'Creating Account...' : 'Sign up' }}
           </Button>
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
@@ -75,9 +75,16 @@ const emailError = computed(() => {
 const passwordError = computed(() => {
   if (!touched.password.value) return '';
   if (!password.value) return 'Password is required';
-  if (password.value.length < 6) return 'Password must be at least 6 characters';
+
+  // Regex for strong password
+  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}$/;
+  if (!strongPasswordRegex.test(password.value)) {
+    return 'Password must be at least 8 characters and include uppercase, lowercase, and a special character';
+  }
+
   return '';
 });
+
 
 const isFormValid = computed(() =>
   !nameError.value && !emailError.value && !passwordError.value

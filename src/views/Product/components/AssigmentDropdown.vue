@@ -1,8 +1,7 @@
 <template>
-  <div class="relative min-w-8" ref="wrapperRef" @click.stop @keydown.esc="close">
+  <div class="relative" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
-    <template v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id" :class="canAssignCard?'cursor-pointer':'cursor-not-allowed'" :disabled="!canAssignCard" >
-      <div class="flex gap-2 items-center">
+    <div v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id" class="flex gap-2 items-center" :class="(disabled || !canAssignCard) ? 'cursor-not-allowed' : 'cursor-pointer'">
       <img v-if="assignedUser?.avatar?.src || assignedUser?.user?.avatar || assignedUser?.u_profile_image"
         :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar"
         class="w-6 h-6 object-cover rounded-full" alt="" @click="toggle" />
@@ -13,12 +12,11 @@
         {{ getInitials(assignedUser?.u_full_name ?? assignedUser?.name) }}
       </abbr>
       <abbr :title="assignedUser?.title" v-else @click="toggle"
-        class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center ">
+        class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center shadow-sm">
         <i class="fa-regular fa-user text-xs"></i>
       </abbr>
       <span v-if="name" class="text-sm text-text-primary ">{{(assignedUser?.name || assignedUser?.title || assignedUser?.u_full_name) ??'unAssigned'}}</span>
     </div>
-    </template>
 
     <button v-else type="button"
       class="inline-flex items-center gap-2 rounded-full border border-border px-1 py-1 text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition"
@@ -31,17 +29,13 @@
     <!-- Popover teleported to body to avoid clipping -->
     <teleport to="body">
       <div v-if="open" ref="menuRef" class="z-[9999] w-60 rounded-md border border-border bg-bg-dropdown shadow-xl"
-        :style="{
-          position: 'fixed',
-          top: coords.top + 'px',
-          left: coords.left + 'px'
-        }" @click.stop>
+        :style="menuStyle" @click.stop>
         <div class="p-3">
           <input ref="searchRef" v-model="query" type="text" placeholder="Add people by name or email"
             class="w-full rounded-md border border-border h-[30px] bg-bg-input px-3 outline-none text-xs" />
         </div>
 
-        <ul class="max-h-80 overflow-auto py-1">
+        <ul class="max-h-60 overflow-auto py-1">
           <li v-for="u in filteredUsers" :key="u._id" @click.stop="assign(u._id)"
             class="flex items-center justify-between px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer">
             <div class="flex items-center gap-3 min-w-0">
@@ -93,9 +87,12 @@ const emit = defineEmits<{
 
 /** Data **/
 const { workspaceId } = useRouteIds()
-const { data: roles } = useWorkspacesRoles(props?.workspaceId ??workspaceId.value )
+const { data: roles } = useWorkspacesRoles(computed(() => props?.workspaceId ?? workspaceId.value))
 
 const assignedUser = ref<any>(props.assigneeId ?? props.seat)
+watch(() => [props.assigneeId, props.seat], () => {
+  assignedUser.value = props.assigneeId ?? props.seat
+}, { deep: true })
 const open = ref(false)
 const query = ref('')
 const searchRef = ref<HTMLInputElement | null>(null)
@@ -103,7 +100,14 @@ const searchRef = ref<HTMLInputElement | null>(null)
 /** Teleport + positioning **/
 const wrapperRef = ref<HTMLElement | null>(null)
 const menuRef = ref<HTMLElement | null>(null)
-const coords = ref({ top: 0, left: 0 })
+const coords = ref<{ top?: number; bottom?: number; left: number }>({ top: 0, left: 0 })
+
+const menuStyle = computed(() => {
+  const style: any = { position: 'fixed', left: coords.value.left + 'px' }
+  if (coords.value.top !== undefined) style.top = coords.value.top + 'px'
+  if (coords.value.bottom !== undefined) style.bottom = coords.value.bottom + 'px'
+  return style
+})
 
 /** Sizing + padding defaults (used before menu is measured) **/
 const GAP = 8
@@ -132,9 +136,9 @@ import { usePermissions } from '../../../composables/usePermissions';
 const { canAssignCard} = usePermissions();
 /** Open/close **/
 function toggle() {
-if (!canAssignCard.value) return;
-   open.value = !open.value }
-function close() { open.value = false }
+  if (props.disabled || !canAssignCard.value) return;
+  open.value = !open.value
+}function close() { open.value = false }
 function onDocClick() { if (open.value) close() }
 
 /** Smart placement (escapes scroll containers and avoids clipping) **/
@@ -149,31 +153,25 @@ function positionMenu() {
   const mw = menuRef.value?.offsetWidth || ASSUMED_W
   const mh = menuRef.value?.offsetHeight || ASSUMED_H
 
-  // Horizontal flip (prefer side with more space)
-  const spaceRight = vw - rect.right
-  const spaceLeft = rect.left
-  const preferLeft = spaceRight < mw && spaceLeft > spaceRight
-
-  // Align menu's right edge to trigger's right (end-aligned)
-  let left = preferLeft
-    ? rect.left - mw                 // open to the left
-    : rect.right - mw                // open to the right but end-aligned
-
-  // Clamp into viewport with a gap
-  left = Math.min(Math.max(left, GAP), vw - mw - GAP)
+  // Horizontal placement (default to start-aligned)
+  let left = rect.left
+  if (left + mw > vw - GAP) {
+    // Clips right, try aligning right edges
+    left = rect.right - mw
+  }
+  // Clamp into viewport
+  left = Math.max(GAP, Math.min(left, vw - mw - GAP))
 
   // Vertical placement (flip above if not enough space below)
   const spaceBelow = vh - rect.bottom
   const spaceAbove = rect.top
   const placeAbove = spaceBelow < mh + GAP && spaceAbove > spaceBelow
 
-  let top = placeAbove
-    ? rect.top - mh - GAP
-    : rect.bottom + GAP
-
-  top = Math.min(Math.max(top, GAP), vh - mh - GAP)
-
-  coords.value = { top, left }
+  if (placeAbove) {
+    coords.value = { bottom: vh - rect.top + GAP, left }
+  } else {
+    coords.value = { top: rect.bottom + GAP, left }
+  }
 }
 
 /** Keep position in sync with layout changes **/
@@ -184,12 +182,12 @@ function onWindowChange() {
 onMounted(() => {
   document.addEventListener('click', onDocClick)
   window.addEventListener('resize', onWindowChange, { passive: true })
-  window.addEventListener('scroll', onWindowChange, { passive: true })
+  document.addEventListener('scroll', onWindowChange, { capture: true, passive: true })
 })
 onBeforeUnmount(() => {
   document.removeEventListener('click', onDocClick)
   window.removeEventListener('resize', onWindowChange)
-  window.removeEventListener('scroll', onWindowChange)
+  document.removeEventListener('scroll', onWindowChange, { capture: true })
 })
 
 watch(open, async (v) => {

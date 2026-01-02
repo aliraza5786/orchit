@@ -124,6 +124,10 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  sprintType: {
+    type: String,
+    default: "",
+  },
   checkedAll:{
     type:Boolean,
     default:false
@@ -132,7 +136,7 @@ const props = defineProps({
 
 const { workspaceId } = useWorkspaceId();
 const { data: backlogResp, isPending: isBacklogListPending } =
-useBacklogList(workspaceId);
+useBacklogList(workspaceId, props.sprintType);
 
 const normalizedBacklog = ref<Ticket[]>([]);
 const dropOverBacklog = ref(false);

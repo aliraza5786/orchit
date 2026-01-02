@@ -2,7 +2,7 @@
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
       showPanel
-        ? '!translate-x-0 w-full h-full min-w-[350px] overflow-y-auto'
+        ? '!translate-x-0 w-full h-full min-w-full sm:min-w-[380px] overflow-y-auto'
         : '!translate-x-100 w-0 h-0'
     } transition-all`"
   >
@@ -60,13 +60,12 @@
         </h1>
         <ProgressBar
           class="mt-2"
-          :progress="props?.details?.assigned_cards_count"
+          :progress="progressPercentage"
           fillColor="bg-accent "
           :indeterminate="true"
         />
         <span class="text-sm text-text-secondary mt-2"
-          >Completed 10 tasks out of
-          {{ props?.details?.assigned_cards_count }}</span
+          > Completed {{ completedTasks }} tasks out of {{ totalTasks }}</span
         >
       </div>
       <!-- Title -->
@@ -109,7 +108,7 @@
               :defaultValue="getDefaultValue(item?._id)"
               :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
               :cardId="details?._id"
-              :canEditCard="!canEditUser"
+              :disabled="!canEditUser"
               @update:modelValue="(val: any) => handleSelect(val, item._id)"
             />
           </div>
@@ -127,8 +126,8 @@
             placeholder="Select Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
-            :canEditCard="!canEditUser"
-            :key="workspaceRoles?.length"
+            :disabled="!canEditUser" 
+            :loading="isLoadingWorkspaceRoles || !newCompanyId"
           />
 
            <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
@@ -410,7 +409,7 @@ const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
 const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
-const { data: workspaceRoles } = useWorkspaceRoles( {
+const { data: workspaceRoles, isLoading: isLoadingWorkspaceRoles } = useWorkspaceRoles( {
     company_id: newCompanyId,
     workspace_id:  workspaceId
   }, {  
@@ -556,6 +555,20 @@ function handlePermissionUpdate() {
 // Add Role Modal
 const showAddRoleModal = ref(false);
 const AddCustomRoleModal = defineAsyncComponent(() => import('../modals/AddCustomRoleModal.vue'));
+
+
+const completedTasks = computed(() => {
+  return props.details?.assigned_cards_status_counts?.['Done'] ?? 0;
+});
+
+const totalTasks = computed(() => {
+  return props.details?.assigned_cards_count ?? 0;
+});
+
+const progressPercentage = computed(() => {
+  if (!totalTasks.value) return 0;
+  return Math.round((completedTasks.value / totalTasks.value) * 100);
+});
 
 </script>
 

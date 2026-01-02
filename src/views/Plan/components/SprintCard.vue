@@ -1,5 +1,5 @@
 <template>
-  <div class=" h-full min-h-0 "> 
+  <div class=" h-full min-h-0 px-2" :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"> 
     <!-- Sprint Table -->
     <div
       :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''"

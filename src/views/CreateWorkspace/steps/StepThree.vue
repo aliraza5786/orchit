@@ -1,13 +1,13 @@
 <template>
   <div class="w-full">
-    <h2 class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0">Team Resources</h2>
-    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">
+    <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0">Team Resources</h2>
+    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0 ">
       {{ ai ? ' AI-recommended team composition for your project' : 'Team composition for your project' }}
     </p>
   </div>
 
   <!-- Roles Grid -->
-  <div class="space-y-3 w-full pb-[80px]">
+  <div class="space-y-3 w-full pb-[60px]">
     <div v-for="role in workspace.roles" :key="role.id" class="bg-bg-surface rounded-xl p-6">
       <div class="flex items-center justify-between mb-2">
         <div class="flex gap-4 items-start text-2xl justify-between w-full">

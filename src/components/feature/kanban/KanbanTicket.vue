@@ -34,7 +34,7 @@
         </h3>
 
         <p v-html="ticket['card-description']" v-once
-            class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
+            class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2 max-h-20">
         </p>
 
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">

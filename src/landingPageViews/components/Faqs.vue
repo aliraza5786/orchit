@@ -38,7 +38,7 @@
                 </div>
             </div>
             <p class="font-manrope text-[16px] font-medium text-center">More questions? <RouterLink
-                    class="text-sky font-bold" to="#">Contact Us </RouterLink>
+                    class="text-sky font-bold" to="/contact-us">Contact Us </RouterLink>
             </p>
 
         </div>
@@ -52,12 +52,32 @@ import { useTheme } from "../../composables/useTheme";
 const { theme } = useTheme(); // light / dark / system
 
 const faqs = [
-    { question: 'Why do I need Orchit AI?', answer: 'Orchit AI is an AI-powered workspace that helps you plan, manage, and orchestrate projects—whether it’s for your team, your business, or your personal productivity.' },
-    { question: 'How does Orchit AI protect my data?', answer: 'Orchit AI uses advanced encryption...' },
-    { question: 'Does Orchit AI work in the background?', answer: 'Yes, Orchit AI can run background tasks...' },
-    { question: 'Can I use Orchit AI on the go?', answer: 'Absolutely. Orchit AI works across devices.' },
-    { question: 'Can I use Orchit AI with multiple tools?', answer: 'Yes, Orchit AI integrates with Slack, GitHub...' }
+    { 
+        question: 'What is Orchit.ai?', 
+        answer: 'Orchit.ai is an AI-powered work and project management platform designed to help teams and individuals plan, organize, and manage tasks more efficiently using artificial intelligence.' 
+    },
+    { 
+        question: 'How does Orchit.ai help with project management?', 
+        answer: 'Orchit.ai uses AI to assist with task planning, prioritization, scheduling, and workflow organization, reducing manual effort and improving productivity.' 
+    },
+    { 
+        question: 'Who can use Orchit.ai?', 
+        answer: 'Orchit.ai is suitable for business teams, project managers, startups, organizations, and individuals who want a smarter way to manage work and collaborate.' 
+    },
+    { 
+        question: 'What makes Orchit.ai different from traditional project tools?', 
+        answer: 'Unlike traditional tools, Orchit.ai provides AI-driven suggestions, automation, and insights to help users make better decisions and manage work more effectively.' 
+    },
+    { 
+        question: 'Can Orchit.ai be used for team collaboration?', 
+        answer: 'Yes — Orchit.ai supports team collaboration, allowing members to organize tasks, track progress, and work together within a shared AI-assisted workspace.' 
+    },
+    { 
+        question: 'What are the main benefits of using Orchit.ai?', 
+        answer: 'The main benefits include better organization, improved productivity, smarter planning, reduced manual work, and enhanced visibility into tasks and projects.' 
+    }
 ]
+
 
 const openIndex = ref<number | null>(0);
 if (theme.value === 'dark') {

@@ -120,22 +120,39 @@ export const useWorkspacesTitles = () =>
     method: "GET",
   });
 
-export const useSingleWorkspace = (id: string | number) => {
+
+
+type WorkspaceId = string | number | undefined;
+type MaybeRef<T> = T | Ref<T>;
+
+export const useSingleWorkspace = (id: MaybeRef<WorkspaceId>) => {
+  const resolvedId = unref(id);
+
+  if (
+    resolvedId !== undefined &&
+    typeof resolvedId !== 'string' &&
+    typeof resolvedId !== 'number'
+  ) {
+    throw new Error('useSingleWorkspace: invalid id');
+  }
+
   return useApiQuery(
     {
-      key: keys.singleWorkspace(id),
-      url: `/workspace/${unref(id)}`,
-      // url: `/workspace/${id}`,
-      method: "GET",
+      key: resolvedId ? keys.singleWorkspace(resolvedId) : [],
+      url: resolvedId ? `/workspace/${resolvedId}` : '',
+      method: 'GET',
       params: { is_archive: false },
-      enabled: !!id,
+      enabled: Boolean(resolvedId),
     },
     {
       staleTime: 3 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: true,
     }
   );
 };
+
+
 
 export const useWorkspacesModules = () =>
   useApiQuery({

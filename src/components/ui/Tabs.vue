@@ -1,32 +1,50 @@
 <template>
-    <div class="w-full relative h-full">
-        <!-- Tab Headers -->
-        <div ref="tabList"
-            class="flex sticky top-[-25px] gap-6 border-b border-border bg-bg-body z-10 text-sm font-medium  ">
-            <button v-for="(tab, index) in tabs" :key="tab" @click="selectTab(index)" ref="tabRefs"
-                class="py-4 px-6 relative cursor-pointer"
-                :class="selected === index ? 'text-text-primary' : 'text-text-secondary -500'">
-                {{ tab }}
-            </button>
+  <div class="w-full h-full flex flex-col">
+    <!-- Tab Headers -->
+    <div
+      ref="tabList"
+      class="flex sticky top-[-24px] gap-4 border-b border-border bg-bg-body z-10 text-sm font-medium overflow-x-auto"
+    >
+      <button
+        v-for="(tab, index) in tabs"
+        :key="tab"
+        ref="tabRefs"
+        @click="selectTab(index)"
+        class="py-3 px-4 whitespace-nowrap shrink-0"
+        :class="selected === index ? 'text-text-primary' : 'text-text-secondary'"
+      >
+        {{ tab }}
+      </button>
 
-            <!-- Dynamic Active Border -->
-            <div class="absolute bottom-0 h-0.5 bg-black transition-all duration-300 ease-in-out"
-                :style="indicatorStyle" />
-        </div>
-
-        <!-- Tab Content -->
-        <div class="mt-4 overflow-hidden relative h-[90%]">
-            <div class=" flex transition-transform duration-300 ease-in-out" :style="{
-                width: tabs.length * 100 + '%',
-                transform: `translateX(-${selected * (100 / tabs.length)}%)`
-            }">
-                <div v-for="(tab) in tabs" :key="tab" class="px-2 max-w-[850px] w-full shrink-0 flex-grow h-[500px]">
-                    <slot :name="tab"></slot>
-                </div>
-            </div>
-        </div>
+      <!-- Active Indicator -->
+      <div
+        class="absolute bottom-0 h-0.5 bg-black transition-all duration-300"
+        :style="indicatorStyle"
+      />
     </div>
+
+    <!-- Tab Content -->
+    <div class="relative flex-1 overflow-hidden">
+      <div
+        class="flex transition-transform duration-300 ease-in-out"
+        :style="{
+          width: `${tabs.length * 100}%`,
+          transform: `translateX(-${selected * (100 / tabs.length)}%)`
+        }"
+      >
+        <div
+          v-for="tab in tabs"
+          :key="tab"
+          class="shrink-0 px-2 overflow-y-auto h-[520px]"
+          :style="{ width: `${100 / tabs.length}%` }"
+        >
+          <slot :name="tab" />
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
+
 
 
 <script setup lang="ts">

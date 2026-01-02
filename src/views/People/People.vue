@@ -1,7 +1,8 @@
 <template>
   <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border  overflow-x-auto flex-col flex  ">
-    <div class="header px-4 py-3 border-b  border-border flex items-center justify-between gap-1">
-      <Dropdown :actions="false" prefix="View By" v-model="selected_view_id" :options="viewData" variant="secondary">
+   <div class="overflow-x-auto shrink-0 border-b border-border">
+        <div class="header px-4 py-3 flex items-center justify-between gap-2">
+      <Dropdown :actions="false" prefix="View By" v-model="selected_view_id" :options="viewData" variant="secondary" customClasses="fixed w-[135px]">
       </Dropdown>
       <div class="flex gap-3 items-center ">
         <SearchBar class="max-w-[250px]" @onChange="(e:any) => {
@@ -10,6 +11,7 @@
                 </SearchBar>
       </div>
     </div>
+   </div>
     <KanbanSkeleton v-show="isListPending" />
     <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar h-full">
       <KanbanBoard :plusIcon="false" v-if="filteredBoard?.length > 0" @onPlus="(e) => handlePLus(e)"
@@ -41,7 +43,7 @@
             />
           <p class="text-xs mt-1.5">You can add details while editing</p>
           <div class="flex items-center mt-3 gap-3">
-            <Button :disabled="!canInviteUser" :class="canInviteUser? 'cursor-pointer':'cursor-not-allowed'" @click="emitAddColumn" type="submit"  variant="primary"
+            <Button :disabled="!canCreateVariable" :class="canCreateVariable? 'cursor-pointer':'cursor-not-allowed'" @click="emitAddColumn" type="submit"  variant="primary"
               class="px-3 py-1 bg-accent  text-white rounded">
               {{ addingList ? 'Adding...' : 'Add Team' }}
             </Button>
@@ -87,6 +89,7 @@ const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/
 const KanbanCard = defineAsyncComponent(() => import('./components/KanbanCard.vue'));
 
 import { usePermissions } from '../../composables/usePermissions'
+import { toast } from 'vue-sonner';
 const {  canCreateVariable,  canInviteUser} = usePermissions()
 
 const viewData = [
@@ -141,11 +144,12 @@ function setActiveAddList() {
   activeAddList.value = !activeAddList.value;
 }
 
-function emitAddColumn() {
-  console.log('>>> clicking on adding pepople ');
-
+function emitAddColumn() { 
   const t = newColumn.value.trim();
-  // if (!t) return;
+  if (!t) {
+    toast.error('Column name is required.')
+    return
+  }
   handleAddColumn(t);
 }
 
@@ -323,8 +327,8 @@ const filteredBoard = computed(() => {
   height: 3px;
 }
 
-  .custom_scroll_bar::-webkit-scrollbar-thumb {
-  background-color: #888;
+.custom_scroll_bar::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.4);
   border-radius: 10px;
 }
 
@@ -339,6 +343,6 @@ const filteredBoard = computed(() => {
 /* Firefox support */
   .custom_scroll_bar {
   scrollbar-width: thin;
-  scrollbar-color: #888 transparent;
+   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
 }
 </style>

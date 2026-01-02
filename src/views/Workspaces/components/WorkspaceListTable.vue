@@ -60,7 +60,7 @@ const renderPeople = ({ row, value }: any) =>
     h('div', { class: 'flex items-center -space-x-3' }, [
         h(Collaborators, { avatars: value || [], image: true, maxVisible: 3 }),
         h('button', {
-            class: 'flex justify-center items-center rounded-full border border-border text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition  h-8 w-8 cursor-pointer',
+            class:row.has_permission_to_manage_user? 'flex justify-center items-center rounded-full border border-border text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition  h-8 w-8 cursor-pointer': 'hidden',
             onClick: (e: Event) => {
                 e.stopPropagation()
                 openInviteModal(row._id)

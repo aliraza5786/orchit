@@ -3,7 +3,7 @@
   <div class="group relative rounded-2xl border border-border bg-bg-body p-4 shadow-sm transition-shadow hover:shadow">
     <div class="flex items-start gap-3">
       <div :class="['flex h-10 w-10 shrink-0 bg-accent/30 backdrop-blur-lg items-center justify-center rounded-xl text-text-primary', app.color]">
-        <i class="text-base font-semibold " :class="`fa-solid ${app?.icon?.iconName}`"></i>
+        <i class="text-base font-semibold " :class="`fa-solid fa-${app?.icon?.iconName}`"></i>
       </div>
       <div class="min-w-0 flex-1">
         <div class="flex items-center justify-between gap-2">

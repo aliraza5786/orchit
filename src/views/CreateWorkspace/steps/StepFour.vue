@@ -1,12 +1,12 @@
 <template>
   <Loader v-if="(createWorkspacePending || isPending || isLoader)"></Loader>
-  <div v-else class="w-full flex flex-col mb-[80px]">
+  <div v-else class="w-full flex flex-col mb-[60px]">
     <!-- Header -->
     <div class="text-left w-full mb-6 ">
-      <h2 class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0">
+      <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0">
         Project Summary
       </h2>
-      <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">
+      <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0 md:mb-4">
         Review your project details before creation
       </p>
     </div>
@@ -51,7 +51,7 @@
     </div>
 
     <!-- Selected Lanes -->
-    <div v-if="project?.lanes?.length > 0" class="mb-6 h-full flex-grow flec flex-col">
+    <div v-if="project?.lanes?.length > 0" class=" h-full flex-grow flec flex-col">
       <h3 class="text-lg font-semibold text-text-primary mb-4">
         Selected Project Lanes
       </h3>

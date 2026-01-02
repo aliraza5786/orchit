@@ -11,9 +11,9 @@
     <WorkSpaceNav :getWorkspace="getWorkspace" ref="workspaceNavRef" @toggle-sidebar="toggleSidebar" :expanded="sidebarExpanded" />
     <div class="flex flex-grow items-start h-full max-w-full overflow-x-hidden "
       style="max-height:calc(100dvh - 55px);">
-        <Sidebar :workspace="getWorkspace" :isLoading="isPending || isLoading"
+        <Sidebar :workspace="localWorkspace" :isLoading="isPending || isLoading"
        :expanded="sidebarExpanded" />
-       <div class="dashboard_content h-full w-full z-[1]  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
+       <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
         :style="dashboardContentStyle"
         >
         <router-view />
@@ -44,22 +44,38 @@ import CreateLaneWithAI from './modals/CreateLaneWithAI.vue';
 import UpdateLaneModal from './modals/UpdateLaneModal.vue';
 import { useSingleWorkspace } from '../../queries/useWorkspace';
 import Loader from '../../components/ui/Loader.vue';
-import { toParamString, } from '../../composables/useQueryParams';
+import { request } from "../../libs/api";
 import { useRoute } from 'vue-router';
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
- const workspaceId = computed<string>(() => toParamString(route?.params?.id));
-  
-const { data: getWorkspace, isPending, isLoading ,isFetching, refetch } = useSingleWorkspace(workspaceId.value)
+const workspaceId = computed(() => {
+  const id = route.params.id;
+  return typeof id === 'string' || typeof id === 'number' ? id : undefined;
+});
+
+const { data: getWorkspace, isPending, isLoading ,isFetching } = useSingleWorkspace(workspaceId)
+const localWorkspace = ref<any>(null);
+const fetchWorkspace = async (id: string | number) => {
+  try {
+    const data = await request({
+      url: `/workspace/${id}`,
+      method: "GET",
+      params: { is_archive: false },
+    });
+    localWorkspace.value = data;
+  } catch (error) {
+    console.error("Error fetching workspace:", error);
+  }
+};
 watch(
   workspaceId,
-  async (newId, oldId) => {
-    if (newId && newId !== oldId) {
-      await refetch();
-    }
+  (newId, oldId) => {
+    if (!newId || newId === oldId) return;
+    fetchWorkspace(newId);
   },
-  { immediate: true } 
+  { immediate: true }
 );
+
 const workspaceNavRef = ref<any>(null);
 const isDrawerOpen = ref(true)
 
@@ -71,21 +87,23 @@ const filters = ref({
 
 // sidebar toggle concept
 const sidebarExpanded = ref(true);
-const isSmallScreen = ref(window.innerWidth < 640); // sm breakpoint
+const isSmallScreen = ref(false); // sm breakpoint
 const handleResize = () => {
   isSmallScreen.value = window.innerWidth < 640;
 };
 // Update sidebar automatically if screen is small
-watch(isSmallScreen, (val) => {
-  if (val) {
-    sidebarExpanded.value = false;
-  } else {
-    sidebarExpanded.value = true; // or keep previous state if you want
-  }
-});
+watch(
+  isSmallScreen,
+  (val) => {
+    if (val) {
+      sidebarExpanded.value = false;
+    }
+  },
+  { immediate: true }
+);
 onMounted(() => {
-  window.addEventListener('resize', handleResize);
-  handleResize(); // initial check
+   handleResize(); // initial check
+   window.addEventListener('resize', handleResize);
 });
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
@@ -98,8 +116,8 @@ function toggleSidebar() {
 const dashboardContentStyle = computed(() => ({
   maxWidth: sidebarExpanded.value
     ? 'calc(100vw - 250px)'
-    : 'calc(100vw - 70px)',
-  maxHeight: 'calc(100dvh - 65px)'
+    : 'calc(100vw - 56px)',
+  maxHeight: 'calc(100dvh - 60px)'
 }));
 </script>
 

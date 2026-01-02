@@ -62,8 +62,19 @@
           v-once
         >
           By signing in, you agree to the
-          <span class="text-text-primary font-bold">Privacy Policy</span> and
-          <span class="text-text-primary font-bold">Terms of Service</span>.
+          <router-link
+           to="/privacy-policy"
+           class="text-text-primary font-bold hover:underline"
+          >
+           Privacy Policy
+          </router-link>
+                   and
+          <router-link
+          to="/terms-of-services"
+          class="text-text-primary font-bold hover:underline"
+          >
+          Terms of Service
+         </router-link>
         </p>
 
         <p
@@ -133,7 +144,7 @@ const { mutateAsync, isPending } = useMutation({ mutationFn: login });
 // --- Derived UI state ---
 const submitDisabled = computed(() => isPending.value);
 const submitLabel = computed(() =>
-  isPending.value ? "Signing In..." : "Continue"
+  isPending.value ? "Signing In..." : "Sign in"
 );
 
 function onFieldInput() {
@@ -156,6 +167,24 @@ async function handleLogin() {
     });
     localStorage.setItem("token", data?.data?.token);
     await authStore.bootstrap();
+
+    const intentStr = localStorage.getItem('post_auth_intent');
+    if (intentStr) {
+      try {
+        const intent = JSON.parse(intentStr);
+        localStorage.removeItem('post_auth_intent');
+        
+        if (intent.aiResponse) {
+          workspaceStore.setWorkspace(intent.aiResponse);
+        }
+        
+        router.push(intent.path || "/dashboard");
+        return;
+      } catch (e) {
+        console.error("Failed to parse post_auth_intent", e);
+        localStorage.removeItem('post_auth_intent');
+      }
+    }
     
     if (workspaceStore.pricing) {
       router.push(`/dashboard?stripePayment=true`);

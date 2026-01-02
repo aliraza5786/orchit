@@ -4,7 +4,7 @@
     size="lg"
     :modalClass="'!max-w-[900px]'"
   >
-    <div class="px-6">
+    <div class="px-3 sm:px-6 ">
       <h2 class="text-2xl font-semibold text-text-primary mb-6">
         Account Settings
       </h2>
@@ -243,11 +243,11 @@
               </div>
 
               <div
-                class="bg-bg-body gap-6 items-center flex rounded-xl p-6 border border-border"
+                class="bg-bg-body gap-6 sm:items-center flex flex-col sm:flex-row rounded-xl p-6 border border-border"
                 v-if="currentPackage?.nextPackages"
                 v-for="nextPackage in currentPackage?.nextPackages"
               >
-                <div class="border-r border-border pr-6 min-w-80">
+                <div class="sm:border-r border-border sm:pr-6 ">
                   <h1 class="mb-2 uppercase">
                     Upgrade to {{ nextPackage?.name }}
                   </h1>
@@ -276,7 +276,7 @@
                   </div>
                   <!-- <form action="/create-checkout-session" method="POST"> -->
                   <Button
-                    class="mt-3 block w-full uppercase"
+                    class="mt-3 block w-full shrink-0 uppercase"
                     @click="pay(nextPackage)"
                   >
                     {{ isUpgrading ? "Upgrading..." : "UPGRADE" }}</Button

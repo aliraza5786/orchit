@@ -34,10 +34,10 @@
         error
           ? 'border-red-500 focus-within:ring-red-500'
           : 'focus-within:ring-black',
-        canEditCard ? ' cursor-not-allowed' : 'cursor-pointer'  
+        disabled ? ' cursor-not-allowed' : 'cursor-pointer'  
       ]"
       @click="toggleDropdown"
-      :disabled="canEditCard"
+      :disabled="disabled"
     >
       <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
@@ -71,7 +71,7 @@
       <div
         v-if="isOpen"
         ref="dropdownRef"
-        class="absolute z-50 mt-2 rounded-md max-h-64 overflow-auto shadow border w-full"
+        class="absolute z-[9999] mt-2 rounded-md max-h-64 overflow-auto shadow border w-full"
         :style="dropdownStyles"
         :class="
           theme === 'dark'
@@ -79,16 +79,27 @@
             : 'bg-bg-input text-text-primary border-border'
         "
       >
-        <div
-          v-for="(option, index) in options"
-          :key="option._id ?? index"
-          @click="selectOption(option)"
-          class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
-          :class="[{ 'bg-bg-dropdown': option._id === selected?._id }, option.customClass]"
-        >
-          <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
-          <span>{{ option.title }}</span>
+        <div v-if="loading" class="flex justify-center items-center py-4">
+           <svg class="animate-spin h-5 w-5 text-text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+           </svg>
         </div>
+        <div v-else-if="!options || options.length === 0" class="px-4 py-2 text-sm text-text-secondary text-center">
+            No options found
+        </div>
+        <template v-else>
+          <div
+            v-for="(option, index) in options"
+            :key="option._id ?? index"
+            @click="selectOption(option)"
+            class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
+            :class="[{ 'bg-bg-dropdown': option._id === selected?._id }, option.customClass]"
+          >
+            <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
+            <span>{{ option.title }}</span>
+          </div>
+        </template>
       </div>
     </Teleport>
 
@@ -109,7 +120,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue"; 
+import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
 
 interface Option {
   title: string;
@@ -131,13 +143,15 @@ const props = withDefaults(
     size?: "sm" | "md" | "lg";
     tooltip?: string;
     theme?: "light" | "dark";
-    canEditCard?: boolean
+    disabled?: boolean;
+    loading?: boolean;
   }>(),
   {
     size: "md",
     theme: "light",
     placeholder: "Select an option...",
     error: false,
+    loading: false
   }
 );
 
@@ -146,12 +160,17 @@ const emit = defineEmits<{
   (e: "update", v: string | number | null): void;
 }>();
 
+import type { CSSProperties } from 'vue';
+
 const isOpen = ref(false);
 const wrapperRef = ref<HTMLElement | null>(null);
 const triggerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
-const dropdownStyles = ref({ top: "0px", left: "0px", width: "100%" });
+const dropdownStyles = ref<CSSProperties>({ top: "-9999px", left: "-9999px", width: "100%", position: 'fixed' });
 const selected = ref<Option | null>(null);
+
+// Floating UI cleanup function
+let cleanupFloating: (() => void) | null = null;
 
 /** Handle click outside **/
 function handleClickOutside(event: MouseEvent) {
@@ -160,8 +179,7 @@ function handleClickOutside(event: MouseEvent) {
     !wrapperRef.value?.contains(target) &&
     !dropdownRef.value?.contains(target)
   ) {
-    isOpen.value = false;
-    removeOutsideListener();
+    closeDropdown();
   }
 }
 
@@ -175,64 +193,62 @@ function removeOutsideListener() {
 
 onBeforeUnmount(() => {
   removeOutsideListener();
+  if (cleanupFloating) cleanupFloating();
 });
 
-// function toggleDropdown() {
-//   isOpen.value = !isOpen.value
-//   if (isOpen.value) {
-//     nextTick(() => {
-//       if (triggerRef.value) {
-//         const rect = triggerRef.value.getBoundingClientRect()
-//         dropdownStyles.value = {
-//           top: `${rect.bottom + window.scrollY}px`,
-//           left: `${rect.left + window.scrollX}px`,
-//           width: `${rect.width}px`,
-//         }
-//       }
-//       addOutsideListener()
-//     })
-//   } else {
-//     removeOutsideListener()
-//   }
-// }
+function closeDropdown() {
+  isOpen.value = false;
+  removeOutsideListener();
+  if (cleanupFloating) {
+    cleanupFloating();
+    cleanupFloating = null;
+  }
+}
+
+function updatePosition() {
+  if (!triggerRef.value || !dropdownRef.value) return;
+
+  computePosition(triggerRef.value, dropdownRef.value, {
+    placement: 'bottom-start',
+    strategy: 'fixed', // Fixed because we are teleporting to body
+    middleware: [
+      offset(({ placement }) => placement.startsWith('top') ? 17 : 5),
+      flip(),
+      shift({ padding: 5 })
+    ],
+  }).then(({ x, y, strategy }) => {
+    // Also sync width
+    const width = triggerRef.value?.getBoundingClientRect().width;
+    dropdownStyles.value = {
+      top: `${y}px`,
+      left: `${x}px`,
+      width: `${width}px`,
+      position: strategy as 'fixed' | 'absolute', // Cast to valid CSS position
+    };
+  });
+}
 
 function toggleDropdown() {
-   if (props.canEditCard) return;
-  isOpen.value = !isOpen.value;
-
+   if (props.disabled) return;
+  
   if (isOpen.value) {
-    nextTick(() => {
-      if (triggerRef.value && dropdownRef.value) {
-        const rect = triggerRef.value.getBoundingClientRect();
-        const dropdownHeight = dropdownRef.value.offsetHeight;
-        const viewportHeight = window.innerHeight;
-
-        const spaceBelow = viewportHeight - rect.bottom;
-        const spaceAbove = rect.top;
-
-        const OFFSET = 17; // Only upper gap
-
-        let top;
-
-        // If not enough space below → open upward
-        if (spaceBelow < dropdownHeight && spaceAbove > dropdownHeight) {
-          top = rect.top + window.scrollY - dropdownHeight - OFFSET;
-        } else {
-          // Default: open downward with no extra spacing
-          top = rect.bottom + window.scrollY;
-        }
-
-        dropdownStyles.value = {
-          top: `${top}px`,
-          left: `${rect.left + window.scrollX}px`,
-          width: `${rect.width}px`,
-        };
-      }
-
-      addOutsideListener();
-    });
+    closeDropdown();
   } else {
-    removeOutsideListener();
+    isOpen.value = true;
+    
+    // Start floating-ui autoUpdate
+    // We use a small timeout or nextTick to ensure the dropdown element is rendered
+    // before we try to position it.
+    setTimeout(() => {
+        if (triggerRef.value && dropdownRef.value) {
+            cleanupFloating = autoUpdate(
+                triggerRef.value, 
+                dropdownRef.value, 
+                updatePosition
+            );
+            addOutsideListener();
+        }
+    }, 0);
   }
 }
 
@@ -240,16 +256,14 @@ function selectOption(option: Option) {
   if (option.isAction) {
     emit("update:modelValue", option._id);
     emit("update", option._id);
-    isOpen.value = false;
-    removeOutsideListener();
+    closeDropdown();
     return;
   }
  
   selected.value = option;
   emit("update:modelValue", option._id);
   emit("update", option._id);
-  isOpen.value = false;
-  removeOutsideListener();
+  closeDropdown();
 }
 
 /** Sync logic **/
@@ -272,24 +286,16 @@ function initSelection() {
 
 onMounted(() => initSelection());
 
-watch(
-  () => props.modelValue,
-  (val) => {
-    if (val === null || val === undefined) selected.value = null;
-    else {
-      const hit = props.options.find((o: any) => o._id === val);
-      selected.value = hit ?? null;
+watch([() => props.modelValue, () => props.options], ([newVal, newOpts]) => {
+    if (newVal === null || newVal === undefined) {
+        selected.value = null;
+        return;
     }
-  }
-);
-
-watch(
-  () => props.options,
-  () => {
-    const byModel = props.options.find((o: any) => o._id === props.modelValue);
-    if (byModel) selected.value = byModel;
-    else initSelection();
-  },
-  { deep: true }
-);
+    const found = (newOpts || []).find((opt: Option) => String(opt._id) === String(newVal));
+    if (found) {
+        selected.value = found;
+    } else {
+        selected.value = null;
+    }
+}, { immediate: true, deep: true });
 </script>

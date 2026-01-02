@@ -2,11 +2,11 @@
   <div
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible"
   >
-    <div
-      class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1"
+   <div class="overflow-x-auto shrink-0 ">
+       <div
+      class="header  px-4 py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
     >
       <Dropdown
-        v-if="view !== 'mindmap'"
         @edit-option="openEditSprintModal"
         v-model="selected_sheet_id"
         :canEdit="canEditSheet"
@@ -14,6 +14,7 @@
         @delete-option="handleDeleteSheetModal"
         :options="transformedData"
         variant="secondary"
+        customClasses="fixed w-auto"
       >
         <template #more>
           <div
@@ -25,17 +26,15 @@
           </div>
         </template>
       </Dropdown>
-      <div v-if="view === 'mindmap'">
-        <h3 class="font-bold text-xl">Mind Map</h3>
-      </div>
       <div class="flex gap-3 items-center">
         <Dropdown
           v-if="view == 'kanban' || 'mindmap'"
-          :actions="false"
-          prefix="View by"
+          :actions="false" 
           v-model="selected_view_by"
           :options="variables"
           variant="secondary"
+           customClasses="fixed w-auto"
+           @nested-select="handleProcessNestedSelection"
         >
           <template #more>
             <div
@@ -104,11 +103,12 @@
         </div>
       </div>
     </div>
+    </div>
     <template v-if="view == 'kanban'">
       <KanbanSkeleton v-show="isPending || isSheetPending" />
       <div
         v-show="!isPending && !isSheetPending"
-        class="flex overflow-x-auto gap-3 p-4 scrollbar-visible"
+        class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
       >
         <KanbanBoard
           @onPlus="plusHandler"
@@ -199,8 +199,310 @@
     </template>
     <!-- MindMap View -->
     <template v-if="view === 'mindmap'">
-      <div ref="mindMapRef" class="w-full h-[90vh] rounded-md relative"></div>
-      <!-- Popup container -->
+      <div class="relative w-full h-full flex overflow-hidden">
+        <!-- Mind Map Canvas -->
+        <div
+        ref="mindMapRef"
+        class="flex-1 h-full overflow-hidden rounded-md relative"
+      ></div>
+
+        <!-- Formatting Sidebar -->
+        <div
+        v-if="showFormatSidebar"
+        class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-white overflow-hidden flex flex-col"
+      >
+  <!-- Header -->
+  <div class="flex items-center justify-between pb-3 mb-4 border-b">
+    <h3 class="text-sm font-semibold text-gray-800">Format Node</h3>
+    <!-- <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
+      <i class="fa-solid fa-times"></i>
+    </button> -->
+  </div>
+
+  <div class="format-content space-y-6">
+
+    <!-- ================= COLORS ================= -->
+    <div>
+      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
+        Colors
+      </h4>
+
+      <!-- Background -->
+      <div class="format-group relative mb-3">
+        <label class="block text-xs text-gray-600 mb-1">Background</label>
+
+        <div
+          class="flex items-center gap-2 cursor-pointer"
+          @click="showBgPicker = !showBgPicker"
+        >
+          <div
+            class="w-full h-7 rounded border"
+            :style="{ background: activeFormatStyle.background }"
+          ></div>
+          <span class="text-xs text-gray-500">
+            {{ activeFormatStyle.background }}
+          </span>
+        </div>
+
+        <!-- Picker -->
+        <div
+          v-if="showBgPicker"
+          class="absolute z-50 mt-2 p-3 bg-white rounded-lg shadow-lg border w-[240px]"
+        >
+          <div class="grid grid-cols-10 gap-1 mb-3">
+            <button
+              v-for="color in presetColors"
+              :key="color"
+              class="w-5 h-5 rounded border"
+              :style="{ background: color }"
+              @click="
+                onStyleChange('bg_color', { target: { value: color } } as any);
+                showBgPicker = false;
+              "
+            ></button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <input
+              type="color"
+              :value="activeFormatStyle.background"
+              class="w-8 h-8 cursor-pointer"
+              @input="onStyleChange('bg_color', $event)"
+            />
+            <input
+              type="text"
+              class="flex-1 text-xs border rounded px-2 py-1"
+              :value="activeFormatStyle.background"
+              readonly
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Color -->
+      <!-- Text Color -->
+<div class="format-group relative mb-3">
+  <label class="block text-xs text-gray-600 mb-1">Text</label>
+
+  <!-- Trigger -->
+  <div
+    class="flex items-center gap-2 cursor-pointer"
+    @click="showTextColorPicker = !showTextColorPicker"
+  >
+    <div
+      class="w-full h-7 rounded border"
+      :style="{ background: activeFormatStyle.color }"
+    ></div>
+    <span class="text-xs text-gray-500">
+      {{ activeFormatStyle.color }}
+    </span>
+  </div>
+
+  <!-- Picker -->
+  <div
+    v-if="showTextColorPicker"
+    class="absolute z-50 mt-2 p-3 bg-white rounded-lg shadow-lg border w-[240px]"
+  >
+    <!-- Color Grid -->
+    <div class="grid grid-cols-10 gap-1 mb-3">
+      <button
+        v-for="color in presetColors"
+        :key="color"
+        class="w-5 h-5 rounded border"
+        :style="{ background: color }"
+        @click="
+          onStyleChange('color', { target: { value: color } } as any);
+          showTextColorPicker = false;
+        "
+      ></button>
+    </div>
+
+    <!-- Native Picker + Hex -->
+    <div class="flex items-center gap-2">
+      <input
+        type="color"
+        :value="activeFormatStyle.color"
+        class="w-8 h-8 cursor-pointer"
+        @input="onStyleChange('color', $event)"
+      />
+      <input
+        type="text"
+        class="flex-1 text-xs border rounded px-2 py-1"
+        :value="activeFormatStyle.color"
+        readonly
+      />
+    </div>
+  </div>
+</div>
+
+    </div>
+    <!-- ================= TYPOGRAPHY ================= -->
+    <div>
+      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
+        Typography
+      </h4>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Size</label>
+          <input
+            type="number"
+            min="8"
+            max="60"
+            class="w-full h-8 border rounded px-2 text-sm"
+            :value="parseInt(activeFormatStyle.fontSize || '')"
+            @input="onStyleChange('font_size', $event)"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Weight</label>
+          <select
+            class="w-full h-8 border rounded px-2 text-sm"
+            :value="activeFormatStyle.fontWeight"
+            @change="onStyleChange('font_weight', $event)"
+          >
+            <option value="lighter">Light</option>
+            <option value="normal">Normal</option>
+            <option value="bold">Bold</option>
+            <option value="bolder">Extra Bold</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <label class="block text-xs text-gray-600 mb-1">Style</label>
+        <select
+          class="w-full h-8 border rounded px-2 text-sm"
+          :value="activeFormatStyle.fontStyle"
+          @change="onStyleChange('font_style', $event)"
+        >
+          <option value="normal">Normal</option>
+          <option value="italic">Italic</option>
+          <option value="oblique">Oblique</option>
+        </select>
+      </div>
+
+      <div class="mt-3">
+        <label class="block text-xs text-gray-600 mb-1">Font Family</label>
+        <select
+          class="w-full h-8 border rounded px-2 text-sm"
+          :value="activeFormatStyle.fontFamily"
+          @change="onStyleChange('font_family', $event)"
+        >
+          <option value="Inter">Inter</option>
+          <option value="Arial">Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Roboto">Roboto</option>
+          <option value="Poppins">Poppins</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ================= BORDER & SPACING ================= -->
+    <div>
+      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
+        Border & Spacing
+      </h4>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Border</label>
+          <input
+            type="color"
+            class="w-full h-10 rounded -mt-1"
+            :value="activeFormatStyle.borderColor"
+            @input="onStyleChange('border_color', $event)"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Width</label>
+          <input
+            type="number"
+            min="0"
+            max="10"
+            class="w-full h-8 border rounded px-2 text-sm"
+            :value="parseInt(activeFormatStyle.borderWidth || '')"
+            @input="onStyleChange('border_width', $event)"
+          />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mt-3">
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Radius</label>
+          <input
+            type="number"
+            min="0"
+            max="50"
+            class="w-full h-8 border rounded px-2 text-sm"
+            :value="parseInt(activeFormatStyle.borderRadius || '')"
+            @input="onStyleChange('border_radius', $event)"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Padding</label>
+          <input
+            type="number"
+            min="0"
+            max="40"
+            class="w-full h-8 border rounded px-2 text-sm"
+            :value="parseInt(activeFormatStyle.padding || '')"
+            @input="onStyleChange('padding', $event)"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="mt-6 pt-4 border-t">
+    <button
+      class="w-full cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60"
+      :disabled="isSavingNodeStyle"
+      @click="saveNodeStyle"
+    >
+      <span
+        v-if="isSavingNodeStyle"
+        class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+      ></span>
+      <span>{{ isSavingNodeStyle ? "Updating..." : "Update" }}</span>
+    </button>
+  </div>
+</div>
+
+      </div>
+
+      <!-- hyperlink pop up -->
+       <div v-if="showHyperlinkModal" class="fixed inset-0 bg-black/30 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-xl w-80">
+      <h3 class="text-lg font-semibold mb-4">Insert Web Link</h3>
+      <input
+        v-model="hyperlink"
+        type="text"
+        placeholder="Enter or paste a URL"
+        class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <div class="flex justify-end gap-2 mt-4">
+        <button
+          @click="cancel"
+          class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+        >
+          Cancel
+        </button>
+        <button
+          :disabled="!hyperlink"
+          @click="confirm"
+          :class="['px-4 py-2 rounded-md text-white', hyperlink ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-300 cursor-not-allowed']"
+        >
+          Insert
+        </button>
+      </div>
+    </div>
+  </div>
+      <!-- EXISTING POPUP (UNCHANGED) -->
       <div
         v-if="activeAddList"
         class="absolute top-40 left-70 bg-bg-body rounded-lg p-4 shadow-lg z-100 min-w-[328px] border"
@@ -319,11 +621,11 @@
 <script setup lang="ts">
 import {
   computed,
-  onMounted,
   defineAsyncComponent,
   h,
   ref,
   watch,
+  toRaw,
   watchEffect,
   nextTick,
   triggerRef
@@ -340,10 +642,10 @@ import {
   useMoveCard,
   useSheetList,
   useSheets,
-  useAllSheetsList,
   useUpdateWorkspaceSheet,
   useVarVisibilty,
   useVariables,
+  useCreateWorkspaceSheet
 } from "../../queries/useSheets";
 import { useRoute } from "vue-router";
 import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
@@ -377,8 +679,6 @@ const showDeleteModal = ref(false);
 const ticketToDelete = ref<any>(null);
 const showTicketDelete = ref(false);
 const selectedDeleteId = ref<string | null>(null);
-const cardToEdit = ref<any>(null);
-const isEditingTicket = ref(false);
 const isDeletingTicket = ref(false);
 const view = ref("kanban");
 const mindMapRef = ref<HTMLElement | null>(null);
@@ -389,6 +689,31 @@ const { workspaceId, moduleId } = useRouteIds();
 const queryClient = useQueryClient();
 const createTeamModal = ref(false);
 const selectedCard = ref<any>();
+const selectedMindNode = ref<any>(null);
+const showFormatSidebar = ref(true);
+const showHyperlinkModal = ref(false);
+const hyperlink = ref("");
+const resolveCallback = ref<((link: string) => void) | null>(null);
+function openHyperlinkModal(callback: (link: string) => void) {
+  hyperlink.value = "";
+  showHyperlinkModal.value = true;
+  resolveCallback.value = callback;
+}
+
+function confirm() {
+  if (resolveCallback.value) {
+    resolveCallback.value(hyperlink.value);
+  }
+  showHyperlinkModal.value = false;
+}
+
+function cancel() {
+  showHyperlinkModal.value = false;
+}
+const selectedProcessMeta = ref<any>(null);
+const handleProcessNestedSelection = (val: any) => {  
+  selectedProcessMeta.value = val; 
+};
 declare global {
   interface Window {
     toggleMenu: (el: HTMLElement) => void;
@@ -402,6 +727,26 @@ declare global {
     ) => void;
   }
 }
+const showBgPicker = ref(false);
+
+const presetColors = [
+  "#FFFFFF", "#F2F2F2", "#D9D9D9", "#BFBFBF", "#A6A6A6",
+  "#808080", "#404040", "#000000",
+  "#FFE066", "#FF9AA2", "#8EE4AF", "#00EAD3", "#90DBF4",
+  "#4D96FF", "#6C63FF", "#C77DFF", "#F7A1C4",
+  "#FFC300", "#FF5733", "#2ECC71", "#00B894", "#17A2B8",
+  "#0984E3", "#3F51B5", "#9C27B0", "#E84393",
+  "#FF8C00", "#E74C3C", "#1E8449", "#006D6F", "#004C6D",
+  "#0057A8", "#1A237E", "#4A148C", "#7D3C98"
+];
+const showTextColorPicker = ref(false);
+watch(showBgPicker, v => {
+  if (v) showTextColorPicker.value = false;
+});
+
+watch(showTextColorPicker, v => {
+  if (v) showBgPicker.value = false;
+});
 
 // delete ticket
 const deleteTicket = async () => {
@@ -420,7 +765,7 @@ const deleteTicket = async () => {
     removeCardFromState(selectedDeleteId.value);
 
     // REFRESH all sheets data after delete
-    await refetchAllSheets();
+    await refetchSheets();
 
     // Close modal and reset state
     showTicketDelete.value = false;
@@ -436,35 +781,6 @@ const deleteTicket = async () => {
 
 const handleDeleteTicket = async () => {
   await deleteTicket();
-};
-// Update status
-const handleEditTicket = async (card: any, newStatus: string) => {
-  if (!card?._id) return;
-
-  cardToEdit.value = card;
-  isEditingTicket.value = true;
-
-  try {
-    await request({
-      url: "/workspace/cards/update",
-      method: "PATCH",
-      data: {
-        card_id: card._id,
-        variables: { "card-status": newStatus },
-      },
-    });
-
-    // Update local state for immediate UI feedback
-    card["card-status"] = newStatus;
-
-    toast.success("Ticket status updated successfully");
-    await refetchAllSheets();
-  } catch (err) {
-    toast.error(toApiMessage(err));
-  } finally {
-    isEditingTicket.value = false;
-    cardToEdit.value = null;
-  }
 };
 
 interface Card {
@@ -483,7 +799,7 @@ interface Sheet {
 }
 
 const removeCardFromState = (cardId: string) => {
-  allSheetsData.value?.sheets?.forEach((sheet: Sheet) => {
+  Lists.value?.sheets?.forEach((sheet: Sheet) => {
     sheet.sheet_lists?.forEach((list: SheetList) => {
       list.cards = list.cards.filter((card: Card) => card._id !== cardId);
     });
@@ -562,21 +878,20 @@ watch(viewBy, () => {
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending } = useSheetList(
+const { data: Lists, isPending, refetch: refetchSheetLists } = useSheetList(
   moduleId,
   selected_sheet_id, // ref
   computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
   selected_view_by // ref
 );
-const { data: allSheetsData, refetch: refetchAllSheets } = useAllSheetsList(
-  moduleId,
-  selected_view_by,
-  computed(() => [...workspaceStore.selectedLaneIds])
-);
 
 const selectCardHandler = (card: any) => {
+  if (!card._id) card._id = card.id;
   selectedCard.value = card;
 };
+(window as any).selectCardHandler = selectCardHandler;
+
+
 const isCreateSheetModal = ref(false);
 const createSheet = () => {
   selectedSheettoAction.value = {};
@@ -599,7 +914,7 @@ function onReorder(a: any) {
       },
       {
         onSuccess: () => {
-          refetchAllSheets();
+          refetchSheets();
         },
       }
     );
@@ -617,7 +932,7 @@ function onReorder(a: any) {
       },
       {
         onSuccess: () => {
-          refetchAllSheets();
+          refetchSheets();
         },
       }
     );
@@ -802,7 +1117,7 @@ const columns = computed(() => {
               handleChangeTicket(row?._id, "card-title", e?.target?.value);
             },
             class:
-              "text-[12px] w-full overflow-ellipsis cursor-pointer text-text-primary capitalize outline-none border-none focus:border active:bg-bg-surface focus:bg-bg-card backdrop-blur focus:border-accent p-1 rounded-md",
+              "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
             defaultValue: value,
             disabled: !canEditCard.value,
           }),
@@ -818,6 +1133,7 @@ const columns = computed(() => {
         return h(DatePicker, {
           class: " capitalize flex items-center gap-2 text-[12px]",
           placeholder: "Set start date", 
+          tableInputClass: true,
           modelValue: date.value,
           disabled: !canEditCard.value,
           "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e),
@@ -834,9 +1150,8 @@ const columns = computed(() => {
             placeholder: "Select lane",
             modelValue: row.lane?._id || null, // Pass ID
             disabled: !canEditCard.value,
-             // Lane options are objects { _id, title }, passing them directly works with our component logic
             'onUpdate:modelValue': (e: any) => setLane(row?._id, e),
-            displayField: 'title', // Helpful if we need explicit field, but component tries to auto-detect
+            displayField: 'title',
             emptyText: "Lane"
         }),
     },
@@ -915,6 +1230,7 @@ const columns = computed(() => {
               'onUpdate:modelValue': (val: any) => {
                 handleChangeTicket(row?._id, e.slug, val);
               },
+              columnName: e.slug,
             }),
           ]);
         },
@@ -946,9 +1262,9 @@ const getOptions = (options: any) => {
 };
 const moveCard = useMoveCard({
   onSuccess: () => {
-    // queryClient.invalidateQueries({ queryKey: ['get-sheets'] })
-    // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-    // queryClient.invalidateQueries({ queryKey: ['roles'] })
+    queryClient.invalidateQueries({ queryKey: ['get-sheets'] })
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    queryClient.invalidateQueries({ queryKey: ['roles'] })
   },
 });
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
@@ -1044,11 +1360,9 @@ const setStartDate = (card_id: any, e: any) => {
 function setLane(id: any, v: any) {
   updateOptimisticCard(id, (card) => {
       const newLane = laneOptions.value.find((l: any) => l._id === v);
-      console.log(newLane, "its new")
        if (newLane) { 
             card.lane = newLane; 
        }
-       console.log(card.lane, "after")
   });
   // Trigger Vue to detect the nested change
   triggerRef(Lists);
@@ -1067,494 +1381,659 @@ const toggleVisibilityHandler = (key: any, visible: any) => {
   });
 };
 
+const activeFormatStyle = computed(() => {
+  // If a node is selected → use its style
+  if (selectedMindNode.value?.nodeObj?.style) {
+    return selectedMindNode.value.nodeObj.style;
+  }
+
+  // Otherwise → default backend style mapped to MindElixir format
+  return mapBackendStyleToMindElixir(DEFAULT_BACKEND_STYLE);
+});
+
+
+function resolveStyle<T>(
+  uiValue: T | undefined,
+  originalValue: T | undefined,
+  defaultValue: T
+): T {
+  return uiValue !== undefined
+    ? uiValue
+    : originalValue !== undefined
+    ? originalValue
+    : defaultValue;
+}
+
+function onStyleChange(prop: string, event: Event) {
+  if (!selectedMindNode.value?.nodeObj) return; // exit early if no node
+
+  const node = selectedMindNode.value.nodeObj;
+  if (!node.style) node.style = {};
+
+  const target = event.target as HTMLInputElement;
+  const value = target.type === "number" ? Number(target.value) : target.value;
+
+  switch (prop) {
+    case "bg_color":
+      node.style.background = value;
+      break;
+    case "color":
+      node.style.color = value;
+      break;
+    case "font_size":
+      node.style.fontSize = `${value}px`;
+      break;
+    case "font_weight":
+      node.style.fontWeight = value;
+      break;
+    case "font_style":
+      node.style.fontStyle = value;
+      break;
+    case "font_family":
+      node.style.fontFamily = value;
+      break;
+    case "border_color":
+      node.style.borderColor = value;
+      break;
+    case "border_width":
+      node.style.borderWidth = `${value}px`;
+      break;
+    case "border_radius":
+      node.style.borderRadius = `${value}px`;
+      break;
+    case "padding":
+      node.style.padding = `${value}px`;
+      break;
+  }
+
+  const nodeElement = document.getElementById(node.id);
+  if (nodeElement) applyNodeStyle(node, nodeElement);
+}
+
+const DEFAULT_BACKEND_STYLE = {
+  bg_color: "#ffffff",
+  color: "#000000",
+  font_size: 14,
+  font_weight: "normal",
+  font_style: "normal",
+  font_family: "Inter",
+  border_color: "#cccccc",
+  border_width: 0,
+  border_radius: 0,
+  padding: 0,
+};
+const isSavingNodeStyle = ref(false);
+
+async function saveNodeStyle() {
+  const node = selectedMindNode.value?.nodeObj;
+  if (!node || isSavingNodeStyle.value) return;
+
+  isSavingNodeStyle.value = true;
+
+  try {
+    const plainNode = toRaw(node);
+
+    if (!plainNode._originalStyle) {
+      plainNode._originalStyle = {};
+    }
+
+    const style = plainNode.style || {};
+    const original = plainNode._originalStyle;
+
+    const mergedStylePayload = {
+      bg_color: resolveStyle(
+        style.background,
+        original.bg_color,
+        DEFAULT_BACKEND_STYLE.bg_color
+      ),
+      color: resolveStyle(
+        style.color,
+        original.color,
+        DEFAULT_BACKEND_STYLE.color
+      ),
+      font_size: resolveStyle(
+        style.fontSize ? parseInt(style.fontSize) : undefined,
+        original.font_size,
+        DEFAULT_BACKEND_STYLE.font_size
+      ),
+      font_weight: resolveStyle(
+        style.fontWeight,
+        original.font_weight,
+        DEFAULT_BACKEND_STYLE.font_weight
+      ),
+      font_style: resolveStyle(
+        style.fontStyle,
+        original.font_style,
+        DEFAULT_BACKEND_STYLE.font_style
+      ),
+      font_family: resolveStyle(
+        style.fontFamily,
+        original.font_family,
+        DEFAULT_BACKEND_STYLE.font_family
+      ),
+      border_color: resolveStyle(
+        style.borderColor,
+        original.border_color,
+        DEFAULT_BACKEND_STYLE.border_color
+      ),
+      border_width: resolveStyle(
+        style.borderWidth ? parseInt(style.borderWidth) : undefined,
+        original.border_width,
+        DEFAULT_BACKEND_STYLE.border_width
+      ),
+      border_radius: resolveStyle(
+        style.borderRadius ? parseInt(style.borderRadius) : undefined,
+        original.border_radius,
+        DEFAULT_BACKEND_STYLE.border_radius
+      ),
+      padding: resolveStyle(
+        style.padding ? parseInt(style.padding) : undefined,
+        original.padding,
+        DEFAULT_BACKEND_STYLE.padding
+      ),
+
+      hyperLink: hyperlink.value || plainNode.hyperLink || ""
+    };
+
+    plainNode._originalStyle = { ...mergedStylePayload };
+
+    const payload =
+      plainNode.unique_name === "sheet"
+        ? {
+            sheet_id: plainNode.id,
+            workspace_id: workspaceId.value,
+            workspace_module_id: moduleId.value,
+            style: mergedStylePayload,
+          }
+        : {
+            card_id: plainNode.id,
+            seat_id: plainNode.seat_id,
+            style: mergedStylePayload,
+          };
+
+    plainNode.unique_name === "sheet"
+      ? await updateSheet(payload)
+      : await moveCard.mutateAsync(payload);
+  } finally {
+    isSavingNodeStyle.value = false;
+  }
+}
+
+
+interface MindNodeStyle {
+  backgroundColor?: string;
+  textColor?: string;
+  fontSize?: string;
+  fontWeight?: string;
+  fontStyle?: string;
+  fontFamily?: string;
+  borderColor?: string;
+  borderWidth?: string;
+  borderRadius?: string;
+  padding?: string;
+  hyperLink?:string;
+}
+
+interface MindNode {
+  id: string;
+  seat_id?: string;
+  topic: string;
+  style: MindNodeStyle;
+  _originalStyle: MindNodeStyle;
+  children: MindNode[];
+  parent?: MindNode;
+  isRoot?: boolean;
+  unique_name?: string;
+  variables?: any;
+  hyperLink?: string
+}
+const cardData = ref([] as any);
+
 // mindmap
-function buildMindMapDataAllSheets(sheetsData: any[]) {
-  const root = {
+function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
+  const root: MindNode = {
     id: "root",
-    topic: localStorage.getItem("currentName") || "Root Node",
+    topic: localStorage.getItem("currentName") ?? "",
     isRoot: true,
-    children: [] as any[],
+    children: [],
+    style: {},
+    _originalStyle: {},
+    unique_name: "root",
   };
 
   if (!Array.isArray(sheetsData)) return root;
 
-  const STATUS_COLORS: Record<string, string> = {
-    "In Progress": "#FFB979",
-    "To Do": "#A9EAFF",
-    Done: "#9AFFC6",
-  };
+  const variables: Record<string, MindNode> = {};
 
-  sheetsData.forEach((sheet, sheetIdx) => {
-    const variables = sheet.variables || {};
-    const variableTitle =
-      variables["sheet-title"] || `Variable ${sheetIdx + 1}`;
+  sheetsData.forEach((sheet) => {
+    const title = sheet.variables?.["sheet-title"] || "Untitled";
+    const link = sheet.style?.hyperLink || "";
+    if (!variables[title]) {
+      variables[title] = {
+        id: sheet._id,
+        topic: title,
+        variables: sheet?.variables,
+        children: [],
+        style: sheet?.style,
+        _originalStyle: sheet?.style || {},
+        unique_name: "sheet",
+        hyperLink: link || ""
+      };
+      root.children.push(variables[title]);
+    }
 
-    const variableNode = {
-      id: `variable-${sheetIdx}`,
-      topic: variableTitle,
-      children: [] as any[],
+    const listNode: MindNode = {
+      id: sheet?._id,
+      topic: sheet.title,
+      children: [],
+      style: mapBackendStyleToMindElixir(sheet?.style),
+      _originalStyle: sheet.style || {},
+      unique_name: "List",
+      hyperLink: link || "",
     };
 
-    const sheetLists = Array.isArray(sheet.sheet_lists)
-      ? sheet.sheet_lists
-      : [];
-
-    // Types
-    interface Seat {
-      status?: string;
-    }
-
-    interface Card {
-      seat?: Seat;
-      ["card-title"]?: string;
-      ["card-status"]?: string;
-      ["card-code"]?: string;
-    }
-
-    interface SheetList {
-      title?: string;
-      cards: Card[];
-    }
-
-    // MAIN LOOP
-    sheetLists.forEach((sheetList: SheetList, listIdx: number) => {
-      const sheetListNode = {
-        id: `sheetlist-${sheetIdx}-${listIdx}`,
-        topic: sheetList.title || `Untitled Sheet List ${listIdx + 1}`,
-        children: [] as any[],
+    (sheet.cards || []).forEach((card: any, cardIdx: number) => {
+      const link = card.style?.hyperLink || "";
+      
+      const cardNode: MindNode = {
+        id: card._id || `card-${cardIdx}`,
+        seat_id: card.seat_id,
+        topic: card["card-title"],
+        style: mapBackendStyleToMindElixir(card.style),
+        _originalStyle: card.style || {},
+        children: [],
+        unique_name: "card",
+        hyperLink: link || "",
       };
-
-      const cards: Card[] = Array.isArray(sheetList.cards)
-        ? sheetList.cards
-        : [];
-
-      cards.forEach((card: Card, cardIdx: number) => {
-        const seat: Seat | undefined = card.seat;
-
-        const getInitials = (name: string | null | undefined): string => {
-          if (!name) return "UN";
-          return name
-            .split(" ")
-            .map((w) => w[0])
-            .join("")
-            .toUpperCase()
-            .slice(0, 2);
-        };
-
-        const initials: string = getInitials(seat?.status);
-        const assigned: boolean = seat?.status === "assigned";
-        const statusTitle: string = card["card-status"] || "To Do";
-        const statusBg: string = STATUS_COLORS[statusTitle] || "#D3D3D3";
-
-        const allSheetTitles: string[] = sheetLists.map(
-          (sl: SheetList) => sl.title || "Untitled"
-        );
-
-        const truncatedTitle: string = (card["card-title"] || "Untitled").slice(
-          0,
-          25
-        );
-
-        const cardHtml: string = `
-      <div class="card-content" style=" 
-        width: 350px;
-        height: 110px;
-        background: #AFF4EF;
-        padding: 5px;
-        border-radius: 8px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        font-family: DM Sans, sans-serif;
-        margin: 0;
-        pointer-events:auto;
-      ">
-        <div style="display:flex; justify-content:space-between;">
-          <div style="
-            width:auto;
-            height:40px;
-            display:flex;
-            color:#2B2C30;
-            align-items:center;
-            overflow:hidden;
-            text-overflow:ellipsis;
-            white-space:nowrap;
-            font-weight:500;
-            font-size:14px;
-            padding-left:10px;
-          ">
-            ${truncatedTitle}...
-          </div>
-
-          <select class="status-select" style="
-            background:${statusBg};      
-            pointer-events:auto;
-            color:#2B2C30;
-            border:none;
-            border-radius:20px;
-            font-size:11px;
-            font-weight:500;
-            height:30px;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            padding:5px 12px;
-            margin-top:7px;
-            cursor:pointer;
-          " onchange="handleStatusChange(event, ${sheetIdx}, ${listIdx}, ${cardIdx})">
-            ${allSheetTitles
-              .map(
-                (title) =>
-                  `<option value="${title}" ${
-                    title === statusTitle ? "selected" : ""
-                  } style="pointer-events:auto;">${title}</option>`
-              )
-              .join("")}
-          </select>
-
-          <div 
-  style="position:relative; margin-right:10px; margin-top:-35px; height:20px; width:20px; pointer-events:auto;"
->
-  <svg 
-    width="20" height="20" viewBox="0 0 20 20" fill="none" 
-    class="menu-wrapper" 
-    style="cursor:pointer; pointer-events:auto;"
-    onclick="event.stopPropagation(); event.stopImmediatePropagation(); toggleMenu(this);"
-    onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
-    onpointerdown="event.stopPropagation(); event.stopImmediatePropagation();" 
-    data-cardid="card-${sheetIdx}-${listIdx}-${cardIdx}"
-  >
-    <circle cx="5.23717" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-    <circle cx="10.0008" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-    <circle cx="14.7626" cy="9.99986" r="1.42857" fill="#2B2C30" fill-opacity="0.8"></circle>
-  </svg>
-
-  <ul class="menu-dropdown" 
-    style="display:none; pointer-events:auto; position:absolute; top:70px; right:0; background:white; border-radius:6px; list-style:none; padding-top: -30px;width:100px; height: 80px; font-size:13px; z-index:9999; overflow: hidden;"
-    onclick="event.stopPropagation(); event.stopImmediatePropagation();"
-    onmousedown="event.stopPropagation(); event.stopImmediatePropagation();"
-  >
-    <li style="margin-top:-25px; padding-left: 5px; padding-right: 5px; cursor:pointer; color: #2B2C30;"  
-      onclick="handleEdit(event)"
-    >Edit Ticket</li>
-
-    <li style="margin-top:-45px; padding-left: 5px; padding-right: 5px; cursor:pointer; color: #2B2C30;" 
-      onclick="handleDelete(event)"
-    >Delete Ticket</li>
-  </ul>
-</div>
-
-        </div>
-
-        <div style="display:flex; justify-content:space-between; margin-top:20px; width:320px; height:100px; overflow:hidden; margin-left:10px;">
-          <div style="height:30px; width:100px; font-size:12px; display:flex;">
-            <span style="margin-top:-25px !important;">
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="20" height="20" rx="3.33333" fill="#29BF7F"/> <path d="M6.43164 14.3018L9.29004 12.167L9.29102 12.166C9.47176 12.0328 9.69053 11.9609 9.91504 11.9609C10.0834 11.9609 10.2482 12.0017 10.3965 12.0781L10.5391 12.166L10.54 12.167L13.373 14.291V5.91699H6.43164V14.3018ZM14.4316 14.3789C14.4277 14.5672 14.3725 14.7506 14.2725 14.9102C14.1723 15.0699 14.0303 15.1996 13.8623 15.2852C13.6944 15.3706 13.5064 15.4094 13.3184 15.3965C13.1304 15.3835 12.9495 15.3196 12.7949 15.2119L12.79 15.208L9.91504 13.0518L7.01465 15.209C6.83427 15.3432 6.61546 15.4161 6.39062 15.417H6.38965C6.2298 15.4164 6.07171 15.38 5.92773 15.3105V15.3096C5.75087 15.2261 5.60123 15.0946 5.49609 14.9297C5.3907 14.7642 5.33364 14.5721 5.33301 14.376V5.87402C5.3338 5.7361 5.36234 5.59971 5.41602 5.47266C5.46971 5.3456 5.54812 5.23049 5.64648 5.13379C5.74485 5.0371 5.86131 4.96069 5.98926 4.90918C6.1165 4.85797 6.2525 4.83272 6.38965 4.83398V4.83301H13.3906C13.6661 4.83457 13.9302 4.94494 14.125 5.13965C14.3198 5.33446 14.4301 5.59852 14.4316 5.87402V14.3789Z" fill="white" stroke="white" stroke-width="0.333333"/> </svg>
-            </span>
-            <span style="color:#2B2C30B2; margin-top:-30px !important; font-size: 14px; display:flex; margin-left:-3px;">
-              ${card["card-code"] || "N/A"}
-            </span>
-          </div>
-
-          <div style="
-            height:26px;
-            width:26px;
-            padding:5px;
-            color:white;
-            border:1px solid white;
-            display:flex;
-            justify-content:center;
-            border-radius:50%;
-            align-items:center;
-            margin-top: 5px;
-            pointer-events:none;
-            background:${assigned ? "#4ADE80" : "#9CA3AF"};
-          " onclick="event.stopPropagation();">
-            <span style="font-size: 13px;">${initials}</span>
-          </div>
-        </div>
-      </div>
-    `;
-
-        const isLastCard: boolean = cardIdx === cards.length - 1;
-
-        sheetListNode.children.push({
-          id: `card-${sheetIdx}-${listIdx}-${cardIdx}`,
-          dangerouslySetInnerHTML: `<div disabled id="card-inner-${sheetIdx}-${listIdx}-${cardIdx}" style="pointer-events:auto; height: 110px; width: 0px;">${cardHtml}</div>`,
-          expanded: false,
-          isLastCard,
-          selectable: false,
-        });
-      });
-
-      variableNode.children.push(sheetListNode);
+      listNode.children.push(cardNode);
+      cardData.value = cardNode;
     });
 
-    root.children.push(variableNode);
+    variables[title].children.push(listNode);
   });
 
   return root;
 }
-
-const onWheelZoom = (e: WheelEvent) => {
-  if (!e.shiftKey) return; // use Shift instead of Ctrl
-  e.preventDefault();
-  e.stopPropagation();
-
-  const zoomIn = e.deltaY < 0;
-  if (zoomIn) mindMapInstance.value?.execCommand?.("zoomIn");
-  else mindMapInstance.value?.execCommand?.("zoomOut");
-};
-
-onMounted(() => {
-  nextTick(() => {
-    const container = mindMapRef.value;
-    if (!container) return;
-    container.addEventListener("wheel", onWheelZoom, { passive: false });
-  });
+const { mutateAsync: createNewSheet } = useCreateWorkspaceSheet({
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['sheets'] });
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
+    close();
+  },
 });
-
 
 watchEffect(() => {
-  if (
-    view.value === "mindmap" &&
-    mindMapRef.value &&
-    allSheetsData.value?.sheets
-  ) {
-    nextTick(() => {
-      const rootNode = buildMindMapDataAllSheets(allSheetsData.value.sheets);
+  if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value) return;
 
-      if (mindMapInstance.value) {
-        mindMapInstance.value.destroy?.();
-        mindMapInstance.value = null;
-      }
+  nextTick(() => {
+    const rootNode = buildMindMapDataAllSheets(Lists.value);
 
-      const hideMenu = () => {
-        const menu = document.querySelector(
-          ".mind-elixir .context-menu"
-        ) as HTMLElement | null;
-        if (!menu) return;
+    if (mindMapInstance.value) {
+      mindMapInstance.value.destroy?.();
+      mindMapInstance.value = null;
+    }
 
-        menu.style.display = "";
-        menu.style.visibility = "";
-        menu.style.opacity = "";
-        menu.style.pointerEvents = "";
-
-        menu.classList.remove("show", "visible", "open");
-
-        menu.hidden = true;
-
-        requestAnimationFrame(() => {
-          if (menu) menu.hidden = true;
-        });
-      };
-
-      const instance = new MindElixir({
-        el: mindMapRef.value as HTMLElement,
-        direction: MindElixir.RIGHT,
-        draggable: true,
-        contextMenu: true,
-
-        contextMenuOption: {
-          link: false,
-          focus: true,
-          addChild: false,
-          addParent: false,
-          summary: false,
-
-          extend: [
-            {
-              id: "cm-addVariable",
-              name: "Add Variable",
-              onclick: () => {
-                const node = mindMapInstance.value?.currentNode?.nodeObj;
-                if (!node) return;
-
-                if (node.isRoot) {
-                  createSheet();
-                } else {
-                  toast.error("Add Variable is only allowed on the root node.");
-                }
-                hideMenu();
-              },
-            },
-            {
-              id: "cm-addList",
-              name: "Add List",
-              onclick: () => {
-                const node = mindMapInstance.value?.currentNode?.nodeObj;
-                if (!node) return;
-
-                if (node.id?.startsWith("variable")) {
-                  setActiveAddList();
-                } else {
-                  toast.error("Add List is only allowed on variable nodes.");
-                }
-                hideMenu();
-              },
-            },
-            {
-              id: "cm-deleteList",
-              name: "Delete List",
-              onclick: () => {
-                const node = mindMapInstance.value?.currentNode?.nodeObj;
-                if (!node) return;
-
-                if (node.id?.startsWith("sheetlist")) {
-                  const [_, sheetIdx] = node.id.split("-").map(Number);
-                  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
-                  const variableNode = sheet?.variables;
-
-                  localColumnData.value = {
-                    ...variableNode,
-                    title: node.topic,
-                  };
-
-                  showDelete.value = true;
-                } else {
-                  toast.error("Delete List is only allowed on variable nodes.");
-                }
-
-                hideMenu();
-              },
-            },
-            {
-              id: "cm-addTask",
-              name: "Add Task",
-              onclick: () => {
-                const node = mindMapInstance.value?.currentNode?.nodeObj;
-                if (!node) return;
-
-                if (node.id?.startsWith("sheetlist")) {
-                  createTeamModal.value = true;
-                } else {
-                  toast.error("Add Task is only allowed on sheet list nodes.");
-                }
-                hideMenu();
-              },
-            },
-          ],
-        },
-      });
-
-      mindMapInstance.value = instance;
-      instance.init({ nodeData: rootNode });
-      mindMapRef.value?.addEventListener("contextmenu", () => {
-        setTimeout(() => {
-          const node = mindMapInstance.value?.currentNode?.nodeObj;
-          if (!node) return;
-
-          // Get all menu items as HTMLElements
-          const menuItems = Array.from(
-            document.querySelectorAll(".mind-elixir .context-menu li")
-          ) as HTMLElement[];
-
-          menuItems.forEach((li) => {
-            const id = li.id;
-
-            if (node.isRoot) {
-              li.style.display = id === "Add Variable" ? "" : "none";
-            } else if (node.id?.startsWith("variable")) {
-              li.style.display = id === "Add List" ? "" : "none";
-            } else if (node.id?.startsWith("sheetlist")) {
-              li.style.display =
-                id === "Add Task" || id === "Delete List" ? "" : "none";
-            } else if (node.id?.startsWith("card")) {
-              li.style.display = "none";
+    const instance = new MindElixir({
+      el: mindMapRef.value as HTMLElement,
+      theme: undefined,
+      draggable: true,
+      contextMenu: true,
+      contextMenuOption: {
+        Update: true,
+        extend: [
+          {
+          name: "Update Node",
+          onclick: () => {
+            if (showFormatSidebar.value) {
+              showFormatSidebar.value = false;
             }
-          });
-        }, 10);
-      });
+
+            const node = selectedMindNode.value?.nodeObj;
+            if (!node) return;
+
+            selectCardHandler(node);
+          },
+        },
+          {
+            name: "Add Hyperlink",
+            onclick: () => {
+            openHyperlinkModal(async () => {
+              await saveNodeStyle();
+            });
+          },
+          },
+        ],
+      },
     });
+
+    mindMapInstance.value = instance;
+    instance.init({ nodeData: rootNode });
+
+    // Select node
+    instance.bus.addListener("selectNode", (nodeObj: any) => {
+      if (!nodeObj) return;
+      selectedMindNode.value = { nodeObj };
+      showFormatSidebar.value = true;
+    });
+
+    // Render node styles
+    instance.bus.addListener("renderNode" as any, (event: any) => {
+      if (!event?.nodeObj || !event?.element) return;
+      applyNodeStyle(event.nodeObj, event.element as HTMLElement);
+    });
+
+
+ // Track nodes already added to backend
+const addedNodeIds = new Set<string>();
+
+instance.bus.addListener("operation", async (data: any) => {
+  if (!data || (data.name !== "insertSibling" && data.name !== "addChild")) return;
+
+  const newNode = data.obj;
+  if (!newNode || !newNode.id) return;
+
+  // Prevent duplicate processing
+  if (addedNodeIds.has(newNode.id)) return;
+  addedNodeIds.add(newNode.id);
+
+  // Determine parent node
+  let parentNode;
+  if (data.name === "addChild") {
+    parentNode = instance.currentNode?.nodeObj;
+  } else {
+    // insertSibling: parent of current node
+    parentNode = instance.currentNode?.nodeObj?.parent;
+  }
+
+  if (!parentNode || !("unique_name" in parentNode)) return;
+
+  // Only allow cards under List
+  if (parentNode.unique_name !== "List") return;
+
+  try {
+    const payload = createDefaultCardPayload(
+      {
+        topic: newNode.topic ?? "New Card",
+        id: newNode.id,
+      },
+      parentNode
+    );
+
+    await addTicket(payload);
+    await refetchSheetLists();
+  } catch (err) {
+    console.error("Error creating card or refetching sheets:", err);
   }
 });
-window.toggleMenu = function (el: HTMLElement) {
-  const menu = el.nextElementSibling as HTMLElement;
-  if (!menu) return;
-
-  const isOpen = menu.style.display === "block";
-  menu.style.display = isOpen ? "none" : "block";
-  const handleClickOutside = (event: MouseEvent) => {
-    if (!(event.target as HTMLElement).closest(".menu-wrapper")) {
-      document.querySelectorAll(".menu-dropdown").forEach((m) => {
-        (m as HTMLElement).style.display = "none";
-      });
-      document.removeEventListener("click", handleClickOutside);
-    }
-  };
-  document.addEventListener("click", handleClickOutside);
-};
 
 
-window.handleEdit = function (e: Event) {
-  e.stopPropagation();
-  e.stopImmediatePropagation();
+// Keep track of nodes already handled to prevent duplicate sheets
+const createdSheetNodeIds = new Set<string>();
 
-  const target = e.target as HTMLElement;
-  const wrapper = target.closest(".menu-wrapper") as HTMLElement | null;
-  if (!wrapper) return;
+instance.bus.addListener("operation", async (data: any) => {
+  if (!data) return;
 
-  const cardId = wrapper.getAttribute("data-cardid");
-  if (!cardId) return;
+  const newNode = data.obj;
+  if (!newNode?.id) return;
 
-  const [_, sheetIdx, listIdx, cardIdx] = cardId.split("-").map(Number);
-  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
-  const sheetList = sheet?.sheet_lists?.[listIdx];
-  const card = sheetList?.cards?.[cardIdx];
-  if (!card) return;
+  // Resolve parent node
+  const parentNode = newNode.parent ?? instance.currentNode?.nodeObj?.parent;
+  if (!parentNode || !("unique_name" in parentNode)) return;
 
-  selectCardHandler(card);
-
-  document.querySelectorAll(".menu-dropdown").forEach((m) => {
-    (m as HTMLElement).style.display = "none";
-  });
-};
-
-window.handleDelete = function (e: Event) {
-  e.stopPropagation();
-  e.stopImmediatePropagation();
-
-  const target = e.target as HTMLElement;
-  const wrapper = target.closest(".menu-wrapper") as HTMLElement | null;
-  if (!wrapper) return;
-
-  const cardId = wrapper.getAttribute("data-cardid");
-  if (!cardId) return;
-
-  const [_, sheetIdx, listIdx, cardIdx] = cardId.split("-").map(Number);
-
-  const sheet = allSheetsData.value?.sheets?.[sheetIdx];
-  const sheetList = sheet?.sheet_lists?.[listIdx];
-  const card = sheetList?.cards?.[cardIdx];
-  if (!card) return;
-
-  ticketToDelete.value = card;
-  selectedDeleteId.value = card._id;
-  showTicketDelete.value = true;
-
-  document.querySelectorAll(".menu-dropdown").forEach((m) => {
-    (m as HTMLElement).style.display = "none";
-  });
-};
-
-window.handleStatusChange = function (
-  e: Event,
-  sheetIdx: number,
-  listIdx: number,
-  cardIdx: number
+  // -------------------- ROOT → CREATE SHEET --------------------
+ if (
+  data.name === "addChild" &&
+  parentNode.unique_name === "root" &&
+  !createdSheetNodeIds.has(newNode.id)
 ) {
-  const card =
-    allSheetsData.value?.sheets?.[sheetIdx]?.sheet_lists?.[listIdx]?.cards?.[
-      cardIdx
-    ];
-  if (!card) return;
+  createdSheetNodeIds.add(newNode.id);
 
-  const newStatus = (e.target as HTMLSelectElement).value;
-  handleEditTicket(card, newStatus);
-};
+  try {
+    await createNewSheet({
+  variables: {
+    "sheet-title": newNode.topic ?? "New Sheet",
+    "sheet-description": "This is custom description",
+  },
+  is_ai_generated: false,
+  workspace_id: workspaceId.value,
+  workspace_module_id: moduleId.value,
+});
+
+  } catch (err) {
+    console.error("Error creating workspace sheet:", err);
+  }
+
+  return;
+}
+
+
+  // -------------------- LIST → CREATE CARD --------------------
+  if (parentNode.unique_name !== "List") return;
+
+  try {
+    const payload = createDefaultCardPayload(
+      {
+        topic: newNode.topic ?? "New Card",
+        id: newNode.id,
+      },
+      parentNode
+    );
+
+    await addTicket(payload);
+    await refetchSheetLists();
+  } catch (err) {
+    console.error("Error creating card or refetching sheets:", err);
+  }
+});
+
+
+  });
+});
+
+// ----------------------
+function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
+  if (!nodeObj || !element || !nodeObj.style) return;
+
+  const topic = element.querySelector(".topic") as HTMLElement | null;
+
+  const nodeWrapper =
+    (element.querySelector(".node") as HTMLElement | null) ?? element;
+
+  const style = nodeObj.style;
+
+  if (style.background) nodeWrapper.style.background = style.background;
+  if (style.color && topic) topic.style.color = style.color;
+
+  if (topic) {
+    if (style.fontSize) topic.style.fontSize = style.fontSize;
+    if (style.fontFamily) topic.style.fontFamily = style.fontFamily;
+    if (style.fontWeight) topic.style.fontWeight = style.fontWeight;
+    if (style.fontStyle) topic.style.fontStyle = style.fontStyle;
+  }
+
+  if (style.borderColor) nodeWrapper.style.borderColor = style.borderColor;
+  if (style.borderWidth) nodeWrapper.style.borderWidth = style.borderWidth;
+  if (style.borderRadius) nodeWrapper.style.borderRadius = style.borderRadius;
+  if (style.padding) nodeWrapper.style.padding = style.padding;
+}
+
+function mapBackendStyleToMindElixir(style: any = {}) {
+  
+  return {
+    background: style.bg_color,
+    color: style.color,
+    fontSize: style.font_size != null ? `${style.font_size}px` : undefined,
+    fontWeight: style.font_weight,
+    fontStyle: style.font_style,
+    fontFamily: style.font_family,
+    borderColor: style.border_color,
+    borderWidth:
+      style.border_width != null ? `${style.border_width}px` : undefined,
+    borderRadius:
+      style.border_radius != null ? `${style.border_radius}px` : undefined,
+    padding: style.padding != null ? `${style.padding}px` : undefined,
+    hyperLink: style.hyperLink || undefined,
+  };
+}
+
+function createDefaultCardPayload(nodeObj: any, sheet: any) {
+
+  const now = new Date();
+  const startDate = now.toISOString().split("T")[0];
+  const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+
+  return {
+    sheet_list_id: sheet?.topic || "In Progress",
+    workspace_id: workspaceId.value,
+    sheet_id: selected_sheet_id.value,
+    workspace_lane_id: nodeObj?.workspace_lane_id || null,
+    variables: {
+      "card-status": sheet?.topic || "In Progress",
+      "card-type": null,
+      priority: null,
+      process: null,
+      "card-title": nodeObj.topic || "New Card",
+      "card-description": "",
+      "start-date": startDate,
+      "end-date": endDate,
+    },
+    createdAt: new Date().toISOString(),
+  };
+}
+
 </script>
 <style scoped>
 @import "https://cdn.jsdelivr.net/npm/mind-elixir/dist/style.css";
+.format-sidebar {
+  width: 350px;
+  background: white;
+  border-left: 1px solid #e0e0e0;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.format-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.format-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.close-btn:hover {
+  border: 1px solid gray;
+  border-radius: 5px;
+}
+
+.format-content {
+  padding: 16px;
+}
+
+.format-group {
+  margin-bottom: 20px;
+}
+
+.format-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.color-input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.number-input,
+.select-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.number-input:focus,
+.select-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.format-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.format-group {
+  margin-bottom: 1.25rem;
+}
+
+.format-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+}
+
+.format-group input,
+.format-group select {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--bg-surface, #252525);
+  border: 1px solid var(--border, #333);
+  border-radius: 4px;
+  color: var(--text-primary, #fff);
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.format-group input:focus,
+.format-group select:focus {
+  outline: none;
+  border-color: var(--accent, #4a9eff);
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.2);
+}
+
+.color-input {
+  height: 40px;
+  cursor: pointer;
+}
+
+.number-input::-webkit-outer-spin-button,
+.number-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.select-input {
+  cursor: pointer;
+}
+
 /* Force visible scrollbars only where applied */
 .scrollbar-visible::-webkit-scrollbar {
   display: block !important;
@@ -1577,40 +2056,5 @@ window.handleStatusChange = function (
   scrollbar-width: thin !important;
   /* Firefox */
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
-}
-::v-deep(.mind-elixir-toolbar.lt) {
-  display: none !important;
-}
-/* Hide default context menu items in MindElixir */
-::v-deep(.mind-elixir .context-menu #cm-down) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .context-menu #cm-add_child) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .context-menu #cm-fucus) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .context-menu #cm-fucus) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .context-menu #cm-unfucus) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .context-menu #cm-add_parent) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .context-menu #cm-add_sibling) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .context-menu #cm-up) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .context-menu #cm-down) {
-  display: none !important;
-}
-::v-deep(.mind-elixir .map-container .selected) {
-  box-shadow: none;
-  outline: none;
 }
 </style>

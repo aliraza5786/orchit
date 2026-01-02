@@ -3,6 +3,7 @@ import { useQuery, type UseQueryOptions } from "@tanstack/vue-query";
 import { useApiMutation } from "../libs/vq";
 import { request } from "../libs/api";
 
+
 /** -----------------------------
  * Stable query keys
  * ----------------------------- */
@@ -158,6 +159,7 @@ export function useSheetList(
   sheet_id: MaybeRef<string | null | undefined>,
   laneIds: MaybeRef<string[] | string | null | undefined>,
   view_by: MaybeRef<string | null | undefined>,
+  extraParams?: MaybeRef<Record<string, any> | undefined>,
   options: Omit<
     UseQueryOptions<any, any, any, any>,
     "queryKey" | "queryFn"
@@ -180,12 +182,11 @@ export function useSheetList(
   // reactive query key
   const queryKey = computed(() => [
     "sheet-list",
-
-    module_id,
+    unref(module_id),
     unref(sheet_id),
     unref(laneIdsParam),
     unref(view_by),
-    ,
+    unref(extraParams),
   ]);
 
   // reactive enabled
@@ -205,71 +206,10 @@ export function useSheetList(
         sheet_id: unref(sheet_id)!,
         variable_id: unref(view_by)!,
         ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam)! } : {}),
+        ...(unref(extraParams) || {}),
       };
 
       // request() should return plain JSON (not AxiosResponse)
-      return request({
-        url: "/workspace/cards/grouped",
-        method: "GET",
-        params,
-      });
-    },
-    ...options,
-  });
-}
-//all sheets for mindmap
-export function useAllSheetsList(
-  module_id: MaybeRef<string | null | undefined>,
-  view_by: MaybeRef<string | null | undefined>,
-  laneIds: MaybeRef<string[] | string | null | undefined>,
-  options: Omit<
-    UseQueryOptions<any, any, any, any>,
-    "queryKey" | "queryFn"
-  > = {}
-) {
-  // normalize laneIds
-  const laneIdsParam = computed<string | undefined>(() => {
-    const v = unref(laneIds);
-    if (v == null) return undefined;
-    if (Array.isArray(v)) {
-      const s = Array.from(
-        new Set(v.map((x) => String(x).trim()).filter(Boolean))
-      ).join(",");
-      return s || undefined;
-    }
-    const one = String(v).trim();
-    return one || undefined;
-  });
-
-  // query key (no sheet_id)
-  const queryKey = computed(() => [
-    "sheet-list-all",
-    unref(module_id),
-    unref(view_by),
-    unref(laneIdsParam),
-  ]);
-
-  // enabled condition
-  const enabled = computed(() =>
-    Boolean(unref(module_id) && unref(view_by))
-  );
-
-  return useQuery({
-    retry: 0,
-    queryKey,
-    enabled,
-    placeholderData: (prev) => prev,
-    queryFn: async () => {
-      const params: any = {
-        module_id: unref(module_id)!,
-        variable_id: unref(view_by)!,
-      };
-
-      if (unref(laneIdsParam)) {
-        params.lane_ids = unref(laneIdsParam)!;
-      }
-
-      // Fetch ALL SHEETS (no sheet_id)
       return request({
         url: "/workspace/cards/grouped",
         method: "GET",
@@ -288,34 +228,77 @@ export const useVariables = (
 ) => {
   return useQuery({
     queryKey: ["all-module-variables", sheetId],
-    queryFn: ({ signal }) =>
-      request<any>({
+    queryFn: async ({ signal }) => {
+      // 1. Fetch variables
+      const varsReq = request<any>({
         url: `/workspace/catalog/${workspace_id}/card-variables/${
           unref(module_id) ?? module_id
         }?sheet_id=${unref(sheetId)}`,
         method: "GET",
         signal,
-      }),
+      });
+
+      // 2. Fetch card types
+      const typesReq = request<any>({
+        url: `workspace/catalog/variable/values`,
+        method: "GET",
+        params: {
+          workspace_id: unref(workspace_id),
+          module_id: unref(module_id),
+          variable_slug: "card-type",
+        },
+        signal,
+      });
+
+      // 3. Wait for both
+      const [variables, typesData] = await Promise.all([varsReq, typesReq]);
+
+      // 4. Map cardTypes from the response
+      const processTypes = typesData?.values ?? [];
+
+      // 5. Merge
+      if (Array.isArray(variables)) {
+        return variables.map((v: any) => {
+          if (
+            v.title?.toLowerCase() === "process" ||
+            v.slug?.toLowerCase() === "process"
+          ) {
+            return {
+              ...v,
+              nested: Array.isArray(processTypes)
+                ? processTypes.map((ct: any) => ({
+                    _id: ct._id || ct.value,
+                    title: ct.value,
+                    ...ct, 
+                  }))
+                : [],
+            };
+          }
+          return v;
+        });
+      }
+      return variables;
+    },
     ...options,
   });
 };
 export const useLanes = (
   workspace_id: any,
-
   options = {}
 ) => {
-  console.log(unref(workspace_id), "workspace_id");
-
   return useQuery({
-    queryKey: ["all-module-lanes", unref(workspace_id)],
-    queryFn: async ({ signal }) =>
-      request<any>({
-        url: `/workspace/lane-by-workspace/${await unref(workspace_id)}`,
+    queryKey: computed(() => ["all-module-lanes", unref(workspace_id)]),
+    queryFn: async ({ signal }) => {
+      const wid = unref(workspace_id);
+      if (!wid) return [];
+      return request<any>({
+        url: `/workspace/lane-by-workspace/${wid}`,
         method: "GET",
         signal,
-      }),
+      });
+    },
+    enabled: computed(() => !!unref(workspace_id)),
     ...options,
-    // enabled:   unref(/) ?? workspace_id ? true :false
   });
 };
 
