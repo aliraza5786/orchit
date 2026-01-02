@@ -199,7 +199,7 @@
     </template>
     <!-- MindMap View -->
     <template v-if="view === 'mindmap'">
-      <div class="relative w-full h-full flex overflow-hidden">
+      <div class="relative w-full h-full flex overflow-hidden ">
         <!-- Mind Map Canvas -->
         <div
         ref="mindMapRef"
@@ -209,11 +209,11 @@
         <!-- Formatting Sidebar -->
         <div
         v-if="showFormatSidebar"
-        class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-white overflow-hidden flex flex-col"
+        class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-hidden flex flex-col"
       >
   <!-- Header -->
   <div class="flex items-center justify-between pb-3 mb-4 border-b">
-    <h3 class="text-sm font-semibold text-gray-800">Format Node</h3>
+    <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
     <!-- <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
       <i class="fa-solid fa-times"></i>
     </button> -->
@@ -223,13 +223,13 @@
 
     <!-- ================= COLORS ================= -->
     <div>
-      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
+      <h4 class="text-xs font-semibold text-secondary uppercase mb-3">
         Colors
       </h4>
 
       <!-- Background -->
       <div class="format-group relative mb-3">
-        <label class="block text-xs text-gray-600 mb-1">Background</label>
+        <label class="block text-xs text-secondary mb-1">Background</label>
 
         <div
           class="flex items-center gap-2 cursor-pointer"
@@ -239,7 +239,7 @@
             class="w-full h-7 rounded border"
             :style="{ background: activeFormatStyle.background }"
           ></div>
-          <span class="text-xs text-gray-500">
+          <span class="text-xs text-secondary">
             {{ activeFormatStyle.background }}
           </span>
         </div>
@@ -247,7 +247,7 @@
         <!-- Picker -->
         <div
           v-if="showBgPicker"
-          class="absolute z-50 mt-2 p-3 bg-white rounded-lg shadow-lg border w-[240px]"
+          class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
         >
           <div class="grid grid-cols-10 gap-1 mb-3">
             <button
@@ -282,7 +282,7 @@
       <!-- Text Color -->
       <!-- Text Color -->
 <div class="format-group relative mb-3">
-  <label class="block text-xs text-gray-600 mb-1">Text</label>
+  <label class="block text-xs text-secondary mb-1">Text</label>
 
   <!-- Trigger -->
   <div
@@ -293,7 +293,7 @@
       class="w-full h-7 rounded border"
       :style="{ background: activeFormatStyle.color }"
     ></div>
-    <span class="text-xs text-gray-500">
+    <span class="text-xs text-secondary">
       {{ activeFormatStyle.color }}
     </span>
   </div>
@@ -301,7 +301,7 @@
   <!-- Picker -->
   <div
     v-if="showTextColorPicker"
-    class="absolute z-50 mt-2 p-3 bg-white rounded-lg shadow-lg border w-[240px]"
+    class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
   >
     <!-- Color Grid -->
     <div class="grid grid-cols-10 gap-1 mb-3">
@@ -336,27 +336,11 @@
 </div>
 
     </div>
-    <!-- ================= TYPOGRAPHY ================= -->
     <div>
-      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
-        Typography
-      </h4>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Size</label>
-          <input
-            type="number"
-            min="8"
-            max="60"
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="parseInt(activeFormatStyle.fontSize || '')"
-            @input="onStyleChange('font_size', $event)"
-          />
-        </div>
+      <div class="grid grid-cols-1 gap-3">
 
         <div>
-          <label class="block text-xs text-gray-600 mb-1">Weight</label>
+          <label class="block text-xs text-secondary mb-1">Weight</label>
           <select
             class="w-full h-8 border rounded px-2 text-sm"
             :value="activeFormatStyle.fontWeight"
@@ -369,96 +353,11 @@
           </select>
         </div>
       </div>
-
-      <div class="mt-3">
-        <label class="block text-xs text-gray-600 mb-1">Style</label>
-        <select
-          class="w-full h-8 border rounded px-2 text-sm"
-          :value="activeFormatStyle.fontStyle"
-          @change="onStyleChange('font_style', $event)"
-        >
-          <option value="normal">Normal</option>
-          <option value="italic">Italic</option>
-          <option value="oblique">Oblique</option>
-        </select>
-      </div>
-
-      <div class="mt-3">
-        <label class="block text-xs text-gray-600 mb-1">Font Family</label>
-        <select
-          class="w-full h-8 border rounded px-2 text-sm"
-          :value="activeFormatStyle.fontFamily"
-          @change="onStyleChange('font_family', $event)"
-        >
-          <option value="Inter">Inter</option>
-          <option value="Arial">Arial</option>
-          <option value="Georgia">Georgia</option>
-          <option value="Roboto">Roboto</option>
-          <option value="Poppins">Poppins</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- ================= BORDER & SPACING ================= -->
-    <div>
-      <h4 class="text-xs font-semibold text-gray-500 uppercase mb-3">
-        Border & Spacing
-      </h4>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Border</label>
-          <input
-            type="color"
-            class="w-full h-10 rounded -mt-1"
-            :value="activeFormatStyle.borderColor"
-            @input="onStyleChange('border_color', $event)"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Width</label>
-          <input
-            type="number"
-            min="0"
-            max="10"
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="parseInt(activeFormatStyle.borderWidth || '')"
-            @input="onStyleChange('border_width', $event)"
-          />
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 gap-3 mt-3">
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Radius</label>
-          <input
-            type="number"
-            min="0"
-            max="50"
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="parseInt(activeFormatStyle.borderRadius || '')"
-            @input="onStyleChange('border_radius', $event)"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Padding</label>
-          <input
-            type="number"
-            min="0"
-            max="40"
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="parseInt(activeFormatStyle.padding || '')"
-            @input="onStyleChange('padding', $event)"
-          />
-        </div>
-      </div>
     </div>
   </div>
 
   <!-- Footer -->
-  <div class="mt-6 pt-4 border-t">
+  <div class="mt-6 pt-4">
     <button
       class="w-full cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60"
       :disabled="isSavingNodeStyle"
@@ -1908,7 +1807,6 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
 @import "https://cdn.jsdelivr.net/npm/mind-elixir/dist/style.css";
 .format-sidebar {
   width: 350px;
-  background: white;
   border-left: 1px solid #e0e0e0;
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
   display: flex;
