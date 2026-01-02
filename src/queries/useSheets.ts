@@ -216,6 +216,7 @@ export function useSheetList(
         params,
       });
     },
+    refetchOnMount: 'always',
     ...options,
   });
 }
