@@ -8,38 +8,38 @@
       :class="{ 'opacity-50 cursor-not-allowed': disabled }"
     >
       <template
-        v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id"
+        v-if="displayUser?.user?.avatar || displayUser?._id || seat?._id"
       >
         <div class="flex gap-2 items-center truncate">
           <img
             v-if="
-              assignedUser?.avatar?.src ||
-              assignedUser?.user?.avatar ||
-              assignedUser?.u_profile_image
+              displayUser?.avatar?.src ||
+              displayUser?.user?.avatar ||
+              displayUser?.u_profile_image
             "
             :src="
-              assignedUser?.avatar?.src ??
-              assignedUser?.u_profile_image ??
-              assignedUser?.user?.avatar
+              displayUser?.avatar?.src ??
+              displayUser?.u_profile_image ??
+              displayUser?.user?.avatar
             "
             class="w-5 h-5 object-cover rounded-full flex-shrink-0"
             alt=""
           />
 
           <div
-            v-else-if="assignedUser?.u_full_name || assignedUser?.name"
+            v-else-if="displayUser?.u_full_name || displayUser?.name"
             class="w-5 h-5 aspect-square rounded-full text-[11px] bg-bg-surface  text-text-primary flex items-center justify-center flex-shrink-0"
             :style="{
               backgroundColor:
-                assignedUser?.u_full_name ?? assignedUser?.title
+                displayUser?.u_full_name ?? displayUser?.title
                   ? avatarColor({
-                      name: assignedUser?.u_full_name ?? assignedUser?.title,
-                      _id: assignedUser?._id,
+                      name: displayUser?.u_full_name ?? displayUser?.title,
+                      _id: displayUser?._id,
                     })
                   : '',
             }"
           >
-            {{ getInitials(assignedUser?.u_full_name ?? assignedUser?.name) }}
+            {{ getInitials(displayUser?.u_full_name ?? displayUser?.name) }}
           </div>
 
           <div
@@ -50,9 +50,9 @@
           </div>
 
           <span class="text-[11px] text-text-primary truncate">{{
-            (assignedUser?.name ||
-              assignedUser?.title ||
-              assignedUser?.u_full_name) ??
+            (displayUser?.name ||
+              displayUser?.title ||
+              displayUser?.u_full_name) ??
             "Unassigned"
           }}</span>
         </div>
@@ -79,7 +79,7 @@
         @keydown.esc="cancelEditing"
         @input="isOpen = true"
         class="absolute left-0 top-1/2 h-8 -translate-y-1/2 min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body z-50 text-[12px]"
-        placeholder="Search people..."
+        placeholder="Add people by name or email"
       />
 
       <!-- Dropdown -->
@@ -91,15 +91,16 @@
           :style="dropdownStyles"
           @mousedown.prevent
         >
-          <div class="max-h-60 overflow-y-auto">
+          <ul class="max-h-60 overflow-y-auto py-1">
             <!-- USERS FOUND -->
             <template v-if="filteredUsers.length > 0">
-              <div
+              <li
                 v-for="u in filteredUsers"
-                :key="u._id"
-                @mousedown.prevent="assign(u._id)"
-                class="px-3 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover text-[12px] text-text-primary flex items-center gap-3"
+                :key="u._id ?? 'unassign'"
+                @mousedown.prevent="onRowClick(u)"
+                class="px-3 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover text-[12px] text-text-primary flex items-center justify-between group"
               >
+               <div class="flex items-center gap-3 min-w-0">
                 <!-- Avatar -->
                 <img
                   v-if="u?.user?.avatar"
@@ -110,7 +111,7 @@
 
                 <!-- Initials -->
                 <div
-                  v-else-if="u.name"
+                  v-else-if="u.name && u._id"
                   class="w-6 h-6 border border-border rounded-full text-xs font-semibold flex items-center justify-center flex-shrink-0"
                   :style="{
                     backgroundColor: u?.email
@@ -142,7 +143,24 @@
                     {{ u.role_title }}
                   </div>
                 </div>
-              </div>
+               </div>
+
+                <!-- Action Text -->
+                <div class="text-xs font-medium text-text-secondary whitespace-nowrap ml-2">
+                    <!-- Selected user: Hover to Unassign -->
+                    <span v-if="u._id && displayUser?._id === u._id" class="text-[10px] px-2 py-1 border rounded-full border-red-500 transition group-hover:bg-red-500 group-hover:text-white">
+                        Unassign
+                    </span>
+                    <!-- Explicit unassign row -->
+                    <span v-else-if="u._id == null" class="text-red-500">
+                        <!-- Unassign Label if needed, or matched by u.name -->
+                    </span>
+                    <!-- Other users: Assign -->
+                    <span v-else class="text-[10px] px-2 py-1 border rounded-full border-accent group-hover:bg-accent transition group-hover:text-white">
+                        Assign to
+                    </span>
+                </div>
+              </li>
             </template>
 
             <!-- NO MATCH FOUND -->
@@ -153,7 +171,7 @@
                 No match found
               </div>
             </template>
-          </div>
+          </ul>
         </div>
       </Teleport>
     </div>
@@ -193,10 +211,14 @@ const emit = defineEmits<{
 const { canAssignCard } = usePermissions();
 const { workspaceId } = useRouteIds();
 const { data: roles } = useWorkspacesRoles(
-  props?.workspaceId ?? workspaceId.value
+  computed(() => props?.workspaceId ?? workspaceId.value)
 );
 
 const assignedUser = ref<any>(props.assigneeId ?? props.seat);
+watch(() => [props.assigneeId, props.seat], () => {
+  assignedUser.value = props.assigneeId ?? props.seat
+}, { deep: true })
+
 const isEditing = ref(false);
 const isOpen = ref(false);
 const query = ref("");
@@ -205,8 +227,52 @@ const containerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const dropdownStyles = ref({ top: "0px", left: "0px", width: "100%" });
 
+const displayUser = computed(() => {
+  const current = assignedUser.value
+  if (!current) return null
+  
+  const currentId = current._id || current.id || current
+
+  // Robust search: Check membership ID, direct ID, and nested user ID
+  const found = (roles.value || []).find((u: any) => {
+    const uId = u._id || u.id
+    const uUserId = u.user?._id || u.user?.id
+    return (uId == currentId) || (uUserId == currentId)
+  })
+  
+  return found || current
+})
+
 const membersData = computed(() => {
-  return [{ _id: null, name: "Unassign", email: "" }, ...(roles.value || [])];
+  const current = displayUser.value 
+  const list = roles.value || []
+
+  if (current && (current._id || current.id)) {
+    const currentId = current._id || current.id
+    const currentUserInList = current
+    
+    const others = list.filter((u: any) => {
+       const uId = u._id || u.id
+       const uUserId = u.user?._id || u.user?.id
+       const cUserId = current.user?._id || current.user?.id
+       
+       return !(
+         (uId == currentId) || 
+         (uUserId && uUserId == (cUserId || currentId))
+       )
+    })
+    
+    return [
+      currentUserInList,
+      { _id: null, name: 'Unassign', email: '' },
+      ...others
+    ]
+  }
+
+  return [
+    { _id: null, name: 'Unassign', email: '' },
+    ...list
+  ]
 });
 
 const filteredUsers = computed(() => {
@@ -247,17 +313,16 @@ const startEditing = async () => {
   isEditing.value = true;
   isOpen.value = true;
   
-
   // Pre-fill query with current name to avoid "removed" effect
   const currentName =
-    assignedUser.value?.name ||
-    assignedUser.value?.title ||
-    assignedUser.value?.u_full_name;
+    displayUser.value?.name ||
+    displayUser.value?.title ||
+    displayUser.value?.u_full_name;
   query.value = currentName || "";
 
   await nextTick();
   inputRef.value?.focus();
-  inputRef.value?.select(); // Select all text so user can easily overwrite if they want
+  inputRef.value?.select(); 
   positionDropdown();
 
   window.addEventListener("scroll", positionDropdown, true);
@@ -272,25 +337,46 @@ const cancelEditing = () => {
   window.removeEventListener("resize", positionDropdown);
 };
 
-const assign = (userId: string) => {
-  const user = membersData.value.find((u: any) => u._id === userId);
+function assign(userId: any) {
+  const user = membersData.value.find((u: any) => u._id == userId);
 
   if (user) {
     assignedUser.value = user;
     emit("assign", user);
     emit("update:modelValue", userId);
-  } else if (userId == null) {
-    assignedUser.value = null;
-    emit("unassign");
-    emit("update:modelValue", null);
   }
   cancelEditing();
 };
 
+function onUnassign() {
+  assignedUser.value = null
+  emit('unassign')
+  emit('assign', { _id: null })
+  emit('update:modelValue', null)
+  cancelEditing()
+}
+
+function onRowClick(u: any) {
+  // Explicit unassign row
+  if (u._id == null) {
+    onUnassign()
+    return
+  }
+
+  // Clicking assigned user → unassign
+  if (displayUser.value && u._id === displayUser.value._id) {
+    onUnassign()
+    return
+  }
+
+  // Assign new user
+  assign(u._id)
+}
+
 const handleEnter = () => {
-  // If one match or first match? logic similar to search cell
+  // If one match or first match logic
   if (filteredUsers.value.length > 0) {
-    assign(filteredUsers.value[0]._id);
+    onRowClick(filteredUsers.value[0]);
   } else {
     cancelEditing();
   }
@@ -328,12 +414,4 @@ onBeforeUnmount(() => {
   window.removeEventListener("scroll", positionDropdown, true);
   window.removeEventListener("resize", positionDropdown);
 });
-
-// Update local state if props change
-watch(
-  () => props.seat,
-  (val) => {
-    assignedUser.value = val;
-  }
-);
 </script>

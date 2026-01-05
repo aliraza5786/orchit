@@ -158,9 +158,12 @@
             <h3 class="text-sm font-medium text-text-secondary mb-2">Color</h3>
             <div class="grid grid-cols-5 gap-2">
               <button v-for="(color, index) in colors" :key="index" type="button"
-                class="w-13 h-13 rounded-full cursor-pointer border-2"
+                class="w-13 h-13 rounded-full cursor-pointer border-2 flex items-center justify-center"
                 :class="selectedColor === color.value ? 'border-text-primary' : 'border-transparent'"
-                :style="{ backgroundColor: color.color }" @click="selectColor(color.value)" aria-label="Select color" />
+                :style="{ backgroundColor: color.color }" @click="selectColor(color.value)" aria-label="Select color">
+                <i v-if="selectedColor === color.value" class="fa-solid fa-check text-xl"
+                  :class="index === 0 ? 'text-black' : 'text-white'"></i>
+              </button>
             </div>
           </div>
 
@@ -289,21 +292,49 @@ const { mutate: invitePeople } = useInvitePeople()
 
 /* ----- UI State ----- */
 const switchState = ref<'details' | 'active-logs'>('details')
-const selectedColor = ref<string>('#ffffff')
-const selectedTheme = ref<string>('')
-const themes = [theme1, theme2, theme3, theme4, theme5, theme6, theme7, theme6]
-const colors = [
+const lightColors = [
   { color: '#EDEEF0', value: '#EDEEF0' },
   { color: '#3CBAFB', value: '#D4F0FF80' },
   { color: '#266FD4', value: '#B0BFD3' },
   { color: '#EEA832', value: '#EEA8321A' },
   { color: '#E82368', value: '#D7B0BE' },
-  { color: '#2B2C30', value: '#B1B2B2' },
+  { color: '#202123ff', value: '#B1B2B2' },
   { color: '#4026D4', value: '#B6B0D3' },
   { color: '#0DDAB1', value: '#ABD4CC' },
   { color: '#1EA0DC', value: '#AFC9D5' },
   { color: '#2587BC', value: '#B0C4CE' }
 ]
+
+const darkColors = [
+  { color: '#c1c1c9ff', value: '#1b1b1b' }, 
+  { color: '#3CBAFB', value: '#D4F0FF80' },
+  { color: '#266FD4', value: '#B0BFD3' },
+  { color: '#EEA832', value: '#EEA8321A' },
+  { color: '#E82368', value: '#D7B0BE' },
+  { color: '#202123ff', value: '#B1B2B2' },
+  { color: '#4026D4', value: '#B6B0D3' },
+  { color: '#0DDAB1', value: '#ABD4CC' },
+  { color: '#1EA0DC', value: '#AFC9D5' },
+  { color: '#2587BC', value: '#B0C4CE' }
+]
+ 
+
+const colors = computed(() => theme.value === 'dark' ? darkColors : lightColors)
+
+const selectedColor = ref<string>(props.workspace?.variables.color || colors.value[0].value)
+const selectedTheme = ref<string>('')
+const themes = [theme1, theme2, theme3, theme4, theme5, theme6, theme7, theme6]
+
+// Apply default selection
+if (props.workspace?.variables.color) {
+  selectColor(props.workspace.variables.color)
+} else {
+  selectColor(colors.value[0].value)
+}
+
+watch(theme, () => {
+   selectColor(colors.value[0].value)
+})
 
 /* ----- Safer accessors ----- */
 const people = computed(() => props.workspace?.people ?? [])
@@ -553,11 +584,23 @@ function selectColor(value: string) {
   selectedColor.value = value;
   const color30 = hexToRgba(value, 0.3); // 30% opacity
   workspaceStore.setBackground(color30);
+  updateWS({
+    workspace_id: workspaceId.value,
+    variables: {
+      color: value
+    }
+  })
 }
 
 function selectTheme(th: string) {
   selectedTheme.value = th
   workspaceStore.setBackground(`url(${th})`)
+    updateWS({
+    workspace_id: workspaceId.value,
+    variables: {
+      theme: th
+    }
+  })
 }
 // function setMenu(kind: 'classic' | 'modern') {
 //   workspaceStore.setMenuType(kind)
