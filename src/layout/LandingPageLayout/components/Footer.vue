@@ -21,7 +21,9 @@ const sections: FooterSection[] = [
         title: "Resource",
         links: [
             { name: "Knowledge Center", url: "/knowledge-center" },
-            { name: "Blog", url: "/blogs" },],
+            { name: "Blog", url: "/blogs" },
+            { name: "Release note", url: "/release-note" },
+        ],
     },
     {
         title: "Company",
@@ -46,6 +48,7 @@ const moblinks: MobFooterMenu[] = [
     },
     { name: "Knowledge Center", url: "/knowledge-center" },
     { name: "Blog", url: "/blogs" },
+    { name: "Release note", url: "/release-note" },
     {
         name: 'Pricing',
         url: '/pricing'

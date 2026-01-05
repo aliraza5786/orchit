@@ -9,6 +9,7 @@ import Task from "../views/Workspaces/Task.vue";
 import Users from "../views/Workspaces/Users.vue";
 import api from "../libs/api";
 import type { AxiosError, AxiosResponse } from "axios";
+import ReleaseNote from "../views/ReleaseNote.vue";
 // Lazy imports = separate chunks
 const Login = () => import("../views/Auth/Login.vue");
 const Register = () => import("../views/Auth/Register.vue");
@@ -89,6 +90,12 @@ const routes: RouteRecordRaw[] = [
         path: "/contact-us",
         name: "contact-us",
         component: ContactUs,
+        meta: { requiresAuth: false },
+      },
+        {
+        path: "/release-note",
+        name: "release-note",
+        component: ReleaseNote,
         meta: { requiresAuth: false },
       },
       {
