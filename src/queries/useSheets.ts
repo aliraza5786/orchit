@@ -228,24 +228,25 @@ export const useVariables = (
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["all-module-variables", sheetId],
+    queryKey: ["all-module-variables", sheetId, unref(module_id)],
+    enabled: Boolean(unref(module_id)),
     queryFn: async ({ signal }) => {
+      const resolvedModuleId = unref(module_id);
+
       // 1. Fetch variables
       const varsReq = request<any>({
-        url: `/workspace/catalog/${workspace_id}/card-variables/${
-          unref(module_id) ?? module_id
-        }?sheet_id=${unref(sheetId)}`,
+        url: `/workspace/catalog/${unref(workspace_id)}/card-variables/${resolvedModuleId}?sheet_id=${unref(sheetId)}`,
         method: "GET",
         signal,
       });
 
       // 2. Fetch card types
       const typesReq = request<any>({
-        url: `workspace/catalog/variable/values`,
+        url: `/workspace/catalog/variable/values`,
         method: "GET",
         params: {
           workspace_id: unref(workspace_id),
-          module_id: unref(module_id),
+          module_id: resolvedModuleId,
           variable_slug: "card-type",
         },
         signal,
@@ -254,10 +255,9 @@ export const useVariables = (
       // 3. Wait for both
       const [variables, typesData] = await Promise.all([varsReq, typesReq]);
 
-      // 4. Map cardTypes from the response
       const processTypes = typesData?.values ?? [];
 
-      // 5. Merge
+      // 4. Merge
       if (Array.isArray(variables)) {
         return variables.map((v: any) => {
           if (
@@ -266,18 +266,17 @@ export const useVariables = (
           ) {
             return {
               ...v,
-              nested: Array.isArray(processTypes)
-                ? processTypes.map((ct: any) => ({
-                    _id: ct._id || ct.value,
-                    title: ct.value,
-                    ...ct, 
-                  }))
-                : [],
+              nested: processTypes.map((ct: any) => ({
+                _id: ct._id ?? ct.value,
+                title: ct.value,
+                ...ct,
+              })),
             };
           }
           return v;
         });
       }
+
       return variables;
     },
     ...options,

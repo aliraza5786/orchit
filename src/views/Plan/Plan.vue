@@ -2,11 +2,11 @@
   <div
     class="flex-auto flex-grow h-full min-h-0 bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
-    <template v-if="sprintDetailData?.status == 'active'">
-      <ActiveSprint :sptint_id="selectedSprintId" :searchQuery="searchQuery" />
+    <template v-if="showActiveSprint">
+      <ActiveSprint :sptint_id="selectedSprintId" :searchQuery="searchQuery" @go-back="showActiveSprint = false" />
     </template>
-
-    <template v-else-if="isStartingSprint">
+<div v-if="!showActiveSprint">
+    <template v-if="isStartingSprint">
       <KanbanSkeleton />
     </template>
     <div v-else class="p-4 w-full min-w-0 box-border h-full min-h-0">
@@ -341,8 +341,9 @@
 
               <div class="gap-2 hidden lg:flex">
                 <!-- End Sprint Button -->
-                <Button
-                  v-if="sprintDetailData?.status === 'active'"
+                <div v-if="sprintDetailData?.status === 'active'" class="flex gap-2">
+                  <Button
+                 
                   size="sm"
                   @click="handleCompleteSprint"
                   :variant="theme === 'dark' ? 'primary' : 'primary'"
@@ -350,7 +351,8 @@
                 >
                   {{ isCompletingSprint ? "Ending..." : "End" }}
                 </Button>
-
+                    <button class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-1 px-2 py-1 rounded-md text-sm font-medium" @click="handlePreviewClick"><i class="fa-regular fa-eye text-sm"></i> Preview</button>
+                </div>
                 <!-- Start Sprint Button -->
                 <Button
                   v-else
@@ -370,8 +372,10 @@
                 v-if="firstSprint && firstSprint.tickets.length"
               >
                 <!-- End Sprint Icon -->
-                <button
-                  v-if="sprintDetailData?.status === 'active'"
+                 {{ sprintDetailData?.status }}
+                <div v-if="sprintDetailData?.status === 'active'" class="border border-red-600">
+                  <button
+                  
                   @click="handleCompleteSprint"
                   class="w-8 h-8 flex items-center justify-center rounded-full bg-accent border"
                   :title="isCompletingSprint ? 'Ending...' : 'End Sprint'"
@@ -379,6 +383,7 @@
                   <i class="fa-solid fa-flag-checkered text-gray-700"></i>
                 </button>
 
+                </div>
                 <!-- Start Sprint Icon -->
                 <button
                   v-else
@@ -389,6 +394,7 @@
                 >
                   <i class="fa-solid fa-play"></i>
                 </button>
+                
               </div>
             </div>
 
@@ -502,6 +508,7 @@
 
   <CreateBacklogTicketWithModuleSelection v-model="isCreateTicketModalOpen" />
   <!-- <CreateSheetModal v-model="sprintModalOpen" size="md"  /> -->
+</div>
 </template>
 
 <script setup lang="ts">
@@ -545,7 +552,7 @@ const checkedAll = ref(false);
 const checkedSprintAll = ref(false);
 import { usePermissions } from "../../composables/usePermissions";
 const { canCreateCard } = usePermissions();
-// sprint dropdown
+const showActiveSprint = ref(false);
 const elipseWrapperSprint = ref<HTMLElement | null>(null);
 const open = ref(false);
 const openElipseDropDown = ref(false);
@@ -570,6 +577,9 @@ onClickOutside(elipseWrapper, () => {
 
 const closeModal = () => {
   showTaskModal.value = false;
+};
+const handlePreviewClick = () => {
+  showActiveSprint.value = true;
 };
 // import CreateSheetModal from '../Product/modals/CreateSheetModal.vue'
 const { workspaceId } = useWorkspaceId();
