@@ -1,0 +1,1 @@
+import{d as a,j as o,o as n,f as s,t}from"./index-DM4dv9p1.js";const r={class:"flex gap-2"},p={class:"text-text-primary w-[120px] shrink-0"},c={class:"font-medium text-text-secondary"},d=a({__name:"InfoRow",props:{label:{},value:{}},setup(l){return(e,_)=>(n(),o("div",r,[s("span",p,t(e.label)+":",1),s("span",c,t(e.value),1)]))}});export{d as _};

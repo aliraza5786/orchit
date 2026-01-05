@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watchEffect, onUnmounted, nextTick, watch } from "vue";
+import { computed, ref, onUnmounted, nextTick, watch } from "vue";
 // @ts-ignore
-import { useAllBlogs } from "../queries/useBlogs.ts";
-import { useTheme } from "../composables/useTheme";
+import { useAllBlogs } from "../queries/useBlogs.ts"; 
 
-const { theme } = useTheme();
+ 
 
 // Fetch blogs for 'release-notes' category
 const { data: blogs, isLoading } = useAllBlogs();
