@@ -256,11 +256,7 @@ const eventSource = ref<EventSource | null>(null)
 
 /** Ensure no reconnect or re-init after unmount */
 let isStopped = false
-
-const SERVER_BASE_URL =
-  import.meta.env.VITE_SERVER_BASE_URL || 
-  // 'https://backend.orchit.ai/api/v1/'
-'https://backend.streamed.space/api/v1/'
+const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const connect = () => {
   if (isStopped) return
   if (eventSource.value) return // prevent duplicate connections

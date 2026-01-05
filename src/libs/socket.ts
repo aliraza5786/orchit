@@ -1,9 +1,11 @@
 // socket.ts
 import { io } from "socket.io-client";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
 const token = localStorage.getItem("token");
 
-export const socket = io('https://backend.streamed.space/api/v1/', {
+export const socket = io(API_BASE_URL, {
   transports: ["websocket"],
   withCredentials: true,
   auth: {
