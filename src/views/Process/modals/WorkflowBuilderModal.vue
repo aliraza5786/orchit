@@ -1,6 +1,6 @@
 <template>
   <transition name="fade">
-    <div v-if="isOpen" class="fixed inset-0 z-50 bottom-[60px] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+    <div v-if="isOpen" class="fixed inset-0 z-50 bottom-[60px] sm:bottom-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
       @keydown.esc="close">
       <div class="relative flex h-full w-full flex-col bg-bg-body" role="dialog" aria-modal="true" tabindex="0">
         <!-- Header -->
