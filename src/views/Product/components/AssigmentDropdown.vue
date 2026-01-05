@@ -1,21 +1,22 @@
 <template>
   <div class="relative" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
-    <div v-if="assignedUser?.user?.avatar || assignedUser?._id || seat?._id" class="flex gap-2 items-center" :class="(disabled || !canAssignCard) ? 'cursor-not-allowed' : 'cursor-pointer'">
-      <img v-if="assignedUser?.avatar?.src || assignedUser?.user?.avatar || assignedUser?.u_profile_image"
-        :src="assignedUser?.avatar?.src ?? assignedUser?.u_profile_image ?? assignedUser?.user?.avatar"
+    <!-- Trigger -->
+    <div v-if="displayUser?.user?.avatar || displayUser?._id || seat?._id" class="flex gap-2 items-center" :class="(disabled || !canAssignCard) ? 'cursor-not-allowed' : 'cursor-pointer'">
+      <img v-if="displayUser?.avatar?.src || displayUser?.user?.avatar || displayUser?.u_profile_image"
+        :src="displayUser?.avatar?.src ?? displayUser?.u_profile_image ?? displayUser?.user?.avatar"
         class="w-6 h-6 object-cover rounded-full" alt="" @click="toggle" />
-      <abbr :title="assignedUser?.u_full_name" v-else-if="assignedUser?.u_full_name || assignedUser?.name"
+      <abbr :title="displayUser?.u_full_name" v-else-if="displayUser?.u_full_name || displayUser?.name"
         @click="toggle"
         class="w-6 aspect-square rounded-full text-[10px]  bg-bg-surface font-semibold text-text-primary flex items-center justify-center"
-        :style="{ backgroundColor: assignedUser?.u_full_name ?? assignedUser?.title ? avatarColor({ name: assignedUser?.u_full_name ?? assignedUser?.title, _id: assignedUser?._id }) : '' }">
-        {{ getInitials(assignedUser?.u_full_name ?? assignedUser?.name) }}
+        :style="{ backgroundColor: displayUser?.u_full_name ?? displayUser?.title ? avatarColor({ name: displayUser?.u_full_name ?? displayUser?.title, _id: displayUser?._id }) : '' }">
+        {{ getInitials(displayUser?.u_full_name ?? displayUser?.name) }}
       </abbr>
-      <abbr :title="assignedUser?.title" v-else @click="toggle"
+      <abbr :title="displayUser?.title" v-else @click="toggle"
         class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center shadow-sm">
         <i class="fa-regular fa-user text-xs"></i>
       </abbr>
-      <span v-if="name" class="text-sm text-text-primary ">{{(assignedUser?.name || assignedUser?.title || assignedUser?.u_full_name) ??'unAssigned'}}</span>
+      <span v-if="name" class="text-sm text-text-primary ">{{(displayUser?.name || displayUser?.title || displayUser?.u_full_name) ??'unAssigned'}}</span>
     </div>
 
     <button v-else type="button"
@@ -36,11 +37,11 @@
         </div>
 
         <ul class="max-h-60 overflow-auto py-1">
-          <li v-for="u in filteredUsers" :key="u._id" @click.stop="assign(u._id)"
-            class="flex items-center justify-between px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer">
+          <li v-for="u in filteredUsers" :key="u._id ?? 'unassign'"  @click.stop="onRowClick(u)"
+            class="flex items-center justify-between px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer group">
             <div class="flex items-center gap-3 min-w-0">
               <img v-if="u?.user?.avatar" :src="u?.user?.avatar" class="w-6 h-6 rounded-full object-cover" alt="" />
-              <div v-else-if="u.name"
+              <div v-else-if="u.name && u._id"
                 class="w-6 min-w-6 aspect-square border-border border rounded-full text-xs font-semibold text-text-primary flex items-center justify-center"
                 :style="{ backgroundColor: u?.email ? avatarColor({ name: u.name, email: u.email, _id: u?._id }) : '' }">
                 {{ getInitials(u.name) }}
@@ -54,6 +55,22 @@
                 <div class="text-[10px] text-text-secondary truncate">{{ u?.role_title }}</div>
               </div>
             </div>
+            
+            <!-- Action Text -->
+             <div class="text-xs font-medium text-text-secondary whitespace-nowrap ml-2">
+                 <!-- Selected user -->
+                <span v-if="u._id && displayUser?._id === u._id" class="text-[10px] px-2 py-1 border rounded-full border-red-500 transition group-hover:bg-red-500 group-hover:text-white">
+                 Unassign
+                </span>
+                 <!-- Explicit unassign row -->
+                <span v-else-if="u._id == null" class="text-red-500">
+                <!-- Unassign -->
+               </span>
+                <!-- Other users -->
+               <span v-else class="text-[10px]  px-2 py-1 border rounded-full border-accent group-hover:bg-accent transition group-hover:text-white">
+                Assign to
+               </span>
+             </div>
           </li>
 
           <li v-if="!filteredUsers.length" class="px-4 pb-2 text-sm text-text-secondary">No matches</li>
@@ -93,6 +110,24 @@ const assignedUser = ref<any>(props.assigneeId ?? props.seat)
 watch(() => [props.assigneeId, props.seat], () => {
   assignedUser.value = props.assigneeId ?? props.seat
 }, { deep: true })
+
+const displayUser = computed(() => {
+  const current = assignedUser.value
+  if (!current) return null
+  
+  const currentId = current._id || current.id || current
+
+  // Robust search: Check membership ID, direct ID, and nested user ID
+  // This handles cases where assignedUser is a User ID but roles are Members memberships
+  const found = (roles.value || []).find((u: any) => {
+    const uId = u._id || u.id
+    const uUserId = u.user?._id || u.user?.id
+    return (uId == currentId) || (uUserId == currentId)
+  })
+  
+  return found || current
+})
+
 const open = ref(false)
 const query = ref('')
 const searchRef = ref<HTMLInputElement | null>(null)
@@ -116,9 +151,42 @@ const ASSUMED_H = 320 // reasonable default for max list
 
 /** Derived members list (includes "Unassign") **/
 const membersData = computed(() => {
+  const current = displayUser.value // Use displayUser for consistent sorting logic
+  const list = roles.value || []
+
+  if (current && (current._id || current.id)) {
+    const currentId = current._id || current.id
+
+    // Find current user in list (already done by displayUser but need consistent object reference if possible)
+    // We already have displayUser which IS the list object if found.
+    const currentUserInList = current
+    
+    // Filter out: check against found user's IDs
+    // The found user (displayUser) might be a membership.
+    // We should filter items that are "the same person"
+    const others = list.filter((u: any) => {
+       const uId = u._id || u.id
+       const uUserId = u.user?._id || u.user?.id
+       const cUserId = current.user?._id || current.user?.id
+       
+       // Match if membership ID matches OR nested user ID matches
+       return !(
+         (uId == currentId) || 
+         (uUserId && uUserId == (cUserId || currentId))
+       )
+    })
+    
+    return [
+      currentUserInList,
+      { _id: null, name: 'Unassign', email: '' },
+      ...others
+    ]
+  }
+
+  // No user assigned
   return [
     { _id: null, name: 'Unassign', email: '' },
-    ...(roles.value || [])
+    ...list
   ]
 })
 
@@ -201,22 +269,47 @@ watch(open, async (v) => {
 })
 
 /** Actions **/
-function assign(userId: string) {
-  const user = membersData.value.find((u: any) => u._id === userId)
+ 
 
+function assign(userId: any) {
+  const user = membersData.value.find((u: any) => u._id == userId)
 
   if (user) {
     assignedUser.value = user
     emit('assign', user)
     emit('update:modelValue', userId)
-  } else if (userId == null) {
-    // Unassign path if you emit null
-    assignedUser.value = null
-    emit('unassign')
-    emit('update:modelValue', null)
   }
   close()
 }
 
+function onRowClick(u: any) {
+  // Explicit unassign row
+  if (u._id == null) {
+    onUnassign()
+    return
+  }
+
+  // Clicking assigned user → unassign
+  if (displayUser.value && u._id === displayUser.value._id) {
+    onUnassign()
+    return
+  }
+
+  // Assign new user
+  assign(u._id)
+}
+
+function onUnassign() {
+  assignedUser.value = null
+  emit('unassign')
+  // Emit assign with { _id: null } so parents listening only to @assign (like KanbanTicket)
+  // receive a payload where user?._id evaluates to null, triggering backend unarchive/unassign.
+  emit('assign', { _id: null })
+  emit('update:modelValue', null)
+  close()
+}
+
+
 
 </script>
+```
