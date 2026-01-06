@@ -1,39 +1,37 @@
 <script setup lang="ts">
 import { computed, ref, onUnmounted, nextTick, watch } from "vue";
-// @ts-ignore
-import { useAllBlogs } from "../queries/useBlogs.ts"; 
+import { useReleaseNotes } from "../queries/useReleaseNotes"; 
 
- 
+// Fetch release notes
+const { data: releaseNotes, isLoading } = useReleaseNotes();
 
-// Fetch blogs for 'release-notes' category
-const { data: blogs, isLoading } = useAllBlogs();
+const activeNoteId = ref<string | null>(null);
 
-// Filter out any potential null/undefined blogs or blogs without IDs
-const validBlogs = computed(() => {
-  if (!blogs.value) return [];
-  console.log(blogs);
-
-  return Array.isArray(blogs.value)
-    ? blogs.value.filter((b: any) => {
-        // Basic validity check
-        if (!b || !b._id) return false;
-
-        // Category filter
-        // Check both name and slug for robustness
-        const categoryName = b.category_id?.title?.toLowerCase();
-        const categorySlug = b.category_id?.slug?.toLowerCase();
-
-        return (
-          categoryName === "release notes" ||
-          categoryName === "release note" ||
-          categorySlug === "release-notes" ||
-          categorySlug === "release-note"
-        );
-      })
+// Validate data
+const validNotes = computed(() => {
+  if (!releaseNotes.value) return [];
+  return Array.isArray(releaseNotes.value)
+    ? releaseNotes.value.filter((n: any) => n && n._id)
     : [];
-}); 
+});
 
-const activeBlogId = ref<string | null>(null);
+// Group notes by major version
+const groupedNotes = computed(() => {
+  const groups: Record<string, any[]> = {};
+  
+  validNotes.value.forEach((note: any) => {
+    const version = note.major_version || 'undefined';
+    if (!groups[version]) {
+      groups[version] = [];
+    }
+    groups[version].push(note);
+  });
+  
+  // Sort keys if needed (e.g. desc version)
+  // return Object.keys(groups).sort().reverse().reduce... 
+  // For now returning generic object, vue v-for iterates keys
+  return groups;
+});
 
 // Intersection Observer for Scrollspy
 let observer: IntersectionObserver | null = null;
@@ -44,38 +42,33 @@ const setupObserver = () => {
 
   observer = new IntersectionObserver(
     (entries) => {
-      // If we are essentially scrolling via click, likely we don't want to switch active state erroneously,
-      // but typically it settles on the target anyway.
       if (isManualScrolling.value) return;
 
-      // Find the element that is most visible or intersecting
       const visibleEntry = entries.find((entry) => entry.isIntersecting);
       if (visibleEntry) {
-        activeBlogId.value = visibleEntry.target.id;
+        activeNoteId.value = visibleEntry.target.id;
       }
     },
     {
       root: null,
-      // Trigger when the element crosses the middle of the screen or is near top
       rootMargin: "-20% 0px -60% 0px",
       threshold: 0,
     }
   );
 
-  validBlogs.value.forEach((blog) => {
-    const el = document.getElementById(blog._id);
+  validNotes.value.forEach((note) => {
+    const el = document.getElementById(note._id);
     if (el) observer?.observe(el);
   });
 };
 
 watch(
-  validBlogs,
+  validNotes,
   () => {
     nextTick(() => {
       setupObserver();
-      // Set initial active blog
-      if (validBlogs.value.length > 0 && !activeBlogId.value) {
-        activeBlogId.value = validBlogs.value[0]._id;
+      if (validNotes.value.length > 0 && !activeNoteId.value) {
+        activeNoteId.value = validNotes.value[0]._id;
       }
     });
   },
@@ -86,13 +79,12 @@ onUnmounted(() => {
   if (observer) observer.disconnect();
 });
 
-const scrollToBlog = (id: string) => {
-  activeBlogId.value = id;
+const scrollToNote = (id: string) => {
+  activeNoteId.value = id;
   const element = document.getElementById(id);
   if (element) {
     isManualScrolling.value = true;
     element.scrollIntoView({ behavior: "smooth", block: "start" });
-    // Re-enable observer after scroll animation (approximate time)
     setTimeout(() => {
       isManualScrolling.value = false;
     }, 1000);
@@ -103,40 +95,62 @@ const scrollToBlog = (id: string) => {
 <template>
   <div class="py-[40px] lg:py-[80px] px-[15px] w-full float-end">
     <div class="custom_container">
-      <div
-        class=" flex flex-col md:flex-row gap-5"
-      >
+      <div class="release-notes-container flex flex-col md:flex-row gap-8">
         <!-- Sidebar (Left) -->
-        <aside class="sm:w-[180px] shrink-0 ">
+        <aside class="sm:w-[180px] shrink-0">
           <div class="sticky top-5">
-             <h2 class="text-3xl block mb-5 sm:hidden font-bold text-text-primary">Release notes for Current Channel</h2>
+            <h2
+              class="text-3xl block mb-5 sm:hidden font-bold text-text-primary"
+            >
+              Release notes for Current Channel
+            </h2>
+            <p class="block sm:hidden mb-4">
+              These release notes outline new features, improvements, and
+              non-security updates delivered as part of recent platform updates.
+              Features may be introduced progressively to ensure system
+              stability and optimal performance.
+            </p>
             <span class="text-xl font-bold mb-6 text-text-primary block">
               In this article
             </span>
-            <nav class="flex flex-col gap-2 border-l-2 border-border-input">
-              <button
-                v-for="blog in validBlogs"
-                :key="blog._id"
-                @click="scrollToBlog(blog._id)"
-                class="text-left px-4 py-2 text-sm font-medium transition-colors border-l-2 -ml-[2px]"
-                :class="[
-                  activeBlogId === blog._id
-                    ? 'border-accent text-accent'
-                    : 'border-transparent text-text-secondary hover:text-text-primary hover:border-text-secondary',
-                ]"
-              >
-                {{ blog.title }}
-              </button>
+            <nav class="flex flex-col gap-6 pl-2">
+              <!-- Group by Major Version -->
+              <div v-for="(notes, version) in groupedNotes" :key="version">
+                <!-- Version Header -->
+                <h5 
+                  class="font-bold text-base mb-2 transition-colors"
+                  :class="notes.some((n: any) => n._id === activeNoteId) ? 'text-accent' : 'text-text-primary'"
+                >
+                  {{ version !== 'undefined' ? `Version${version}` : 'Other' }}
+                </h5>
+                
+                <!-- Notes in this version -->
+                <div class="flex flex-col gap-1 border-l-2 border-border-input pl-4 ml-1">
+                  <button
+                    v-for="note in notes"
+                    :key="note._id"
+                    @click="scrollToNote(note._id)"
+                    class="text-left cursor-pointer py-1 text-sm font-medium transition-colors border-l-2 -ml-[18px] pl-4"
+                    :class="[
+                      activeNoteId === note._id
+                        ? 'border-accent text-accent'
+                        : 'border-transparent text-text-secondary hover:text-text-primary hover:border-text-secondary',
+                    ]"
+                  >
+                   {{ note.release_note_version || note.title }}
+                  </button>
+                </div>
+              </div>
 
               <div
                 v-if="isLoading"
-                class="px-4 py-2 text-text-secondary text-sm"
+                class="text-text-secondary text-sm"
               >
                 Loading...
               </div>
               <div
-                v-if="!isLoading && validBlogs.length === 0"
-                class="px-4 py-2 text-text-secondary text-sm"
+                v-if="!isLoading && validNotes.length === 0"
+                class="text-text-secondary text-sm"
               >
                 No release notes found.
               </div>
@@ -145,9 +159,8 @@ const scrollToBlog = (id: string) => {
         </aside>
 
         <!-- Main Content (Right) -->
-        <main class="flex-1 min-w-0">
+        <main class="min-w-0 flex-1">
           <div v-if="isLoading" class="space-y-8">
-            <!-- Skeleton Loading -->
             <div v-for="i in 3" :key="i" class="animate-pulse">
               <div
                 class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"
@@ -155,17 +168,11 @@ const scrollToBlog = (id: string) => {
               <div
                 class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"
               ></div>
-              <div
-                class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full mb-2"
-              ></div>
-              <div
-                class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3 mb-8"
-              ></div>
             </div>
           </div>
 
           <div
-            v-else-if="!isLoading && validBlogs.length === 0"
+            v-else-if="!isLoading && validNotes.length === 0"
             class="flex flex-col items-center justify-center py-20"
           >
             <p class="text-lg text-text-secondary">
@@ -174,49 +181,51 @@ const scrollToBlog = (id: string) => {
           </div>
 
           <div v-else class="space-y-16">
-            <article
-              v-for="blog in validBlogs"
-              :key="blog._id"
-              :id="blog._id"
-              class="scroll-mt-24 border-b border-border-input pb-12 last:pb-0 last:border-0"
+            <h2
+              class="text-3xl hidden sm:block mb-5 font-bold text-text-primary"
             >
-              <!-- Blog Header -->
+              Release notes for Current Channel
+            </h2>
+            <p class="hidden sm:block mb-4">
+              These release notes outline new features, improvements, and
+              non-security updates delivered as part of recent platform updates.
+              Features may be introduced progressively to ensure system
+              stability and optimal performance.
+            </p>
+            <article
+              v-for="note in validNotes"
+              :key="note._id"
+              :id="note._id"
+              class="scroll-mt-24 border-b border-border-input pb-12 last:border-0"
+            >
               <header class="mb-6">
                 <div
                   class="flex items-center gap-3 text-sm text-text-secondary mb-3"
                 >
-                  <span>
+                  <span v-if="note.created_at">
                     {{
-                      new Date(blog.published_at).toLocaleDateString("en-US", {
+                      new Date(note.created_at).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
                       })
                     }}
                   </span>
-                  <span v-if="blog.author?.name">• {{ blog.author.name }}</span>
+                  <!-- <span
+                    v-if="note.major_version"
+                    class="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs font-semibold"
+                  >
+                    v{{ note.major_version }}
+                  </span> -->
                 </div>
                 <h1 class="text-3xl md:text-4xl font-bold text-text-primary">
-                  {{ blog.title }}
+                  {{ note.title }}
                 </h1>
               </header>
 
-              <!-- Featured Image -->
               <div
-                v-if="blog.featured_image"
-                class="mb-8 rounded-xl overflow-hidden shadow-sm"
-              >
-                <img
-                  :src="blog.featured_image"
-                  :alt="blog.featured_image_alt || blog.title"
-                  class="w-full h-auto object-cover max-h-[500px]"
-                />
-              </div>
-
-              <!-- Content -->
-              <div
-                class="blog-content prose dark:prose-invert text-text-secondary"
-                v-html="blog.content"
+                class="release_note_content prose dark:prose-invert max-w-none text-text-secondary"
+                v-html="note.description"
               ></div>
             </article>
           </div>
@@ -228,34 +237,77 @@ const scrollToBlog = (id: string) => {
 
 <style scoped>
 /* Scoped styles for the blog content if needed, but using shared prose classes is better */
-.blog-content :deep(h1) {
-  font-size: 1.875rem;
-  line-height: 2.25rem;
+.release_note_content :deep(h1) {
+  font-size: 36px !important;
+  margin: 15px 0px;
   font-weight: 700;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
   color: var(--text-primary);
+  line-height: 40px !important;
 }
-.blog-content :deep(h2) {
-  font-size: 1.5rem;
-  line-height: 2rem;
+.release_note_content :deep(h2) {
+  font-size: 36px;
+  margin: 15px 0px;
   font-weight: 700;
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
   color: var(--text-primary);
+  line-height: 40px !important;
 }
-.blog-content :deep(p) {
-  margin-bottom: 1rem;
-  line-height: 1.75;
+.release_note_content :deep(h3) {
+  font-size: 32px;
+  margin: 15px 0px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 40px !important;
 }
-.blog-content :deep(img) {
-  border-radius: 0.5rem;
-  margin: 1.5rem 0;
+.release_note_content :deep(h4) {
+  font-size: 20px;
+  margin: 10px 0px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 28px !important;
 }
-.blog-content :deep(ul),
-.blog-content :deep(ol) {
-  margin-left: 1.5rem; /* space for bullets */
-  margin-bottom: 1rem;
-  list-style-type: disc;
+.release_note_content :deep(p) {
+ font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 10px;
+  font-weight: 400;
+  font-family: manrope;
+  color: var(--color-text-secondary);
+}
+ 
+.release_note_content :deep(ul),
+.release_note_content :deep(ol) {
+   font-size: 16px;
+  line-height: 24px; 
+  font-weight: 400;
+  font-family: manrope;
+  color: var(--color-text-secondary);
+}
+
+@media(max-width:1024px) {
+  .release_note_content :deep(h1),  .release_note_content :deep(h2) {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+ .release_note_content :deep(h3){
+    font-size: 22px;
+    line-height: 28px;
+    margin: 10px 0px;
+  }
+
+ .release_note_content :deep(h4) {
+    font-size: 18px;
+    line-height: 26px;
+  }
+}
+
+@media(max-width:768px) {
+ .release_note_content :deep(p) {
+    font-size: 14px;
+    line-height: 20px;
+    margin-bottom: 10px;
+    color: var(--color-text-secondary);
+  }
+
 }
 </style>
