@@ -41,17 +41,26 @@ export const useSprintCard = (id: any, options = {}) => {
     ...options,
   });
 };
-export const useSprintKanban = (sprint_id: any, options = {}) => {
+export const useSprintKanban = (
+  sprint_id: any,
+  sheet_id: any, // <-- new parameter
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["sprint-kanban", sprint_id],
+    queryKey: ["sprint-kanban", sprint_id, sheet_id],
+
     queryFn: ({ signal }) =>
       request<any>({
-        url: `workspace/cards/sprintgrouped?sprint_id=${unref(
-          sprint_id
-        )}&variable_id=68b6c96e0a95eef7d14e6981`,
+        url: `workspace/cards/sprintgrouped`,
         method: "GET",
         signal,
+        params: {
+          sprint_id: unref(sprint_id),
+          variable_id: "68b6c96e0a95eef7d14e6981", 
+          sheet_id: unref(sheet_id), 
+        },
       }),
+
     ...options,
   });
 };
@@ -84,21 +93,23 @@ export const useSprintDetail = (id: any, options = {}) => {
   });
 };
 export const useBacklogList = (
-  id: Ref<string> | string,
+  workspaceId: Ref<string> | string,
   sprintType: Ref<string> | string,
+  moduleId: Ref<string | number | null> | string | number | null = null,
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["backlog-list", id, unref(sprintType)],
+    queryKey: ["backlog-list", workspaceId, unref(sprintType), unref(moduleId)],
 
     queryFn: ({ signal }) =>
       request<any>({
-        url: `sprints/workspace/${unref(id)}/cards`,
+        url: `sprints/workspace/${unref(workspaceId)}/cards`,
         method: "GET",
         signal,
         params: {
           include_sprint_cards: false, // static param
-          sprintType: unref(sprintType), // dynamic param
+          sprintType: unref(sprintType),
+          module_id: unref(moduleId), // new dynamic param
         },
       }),
 

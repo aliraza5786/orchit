@@ -195,6 +195,7 @@ function setEndDate(v: string | null) {
 
 function cancel() {
   isOpen.value = false;
+  form.duration = null;
   emit("close");
 }
 

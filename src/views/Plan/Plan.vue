@@ -54,11 +54,9 @@
               <button
                 @click="selectMilestoneTab('all')"
                 class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap"
-                :class="
-                  selectedMilestoneTab === 'all'
-                    ? 'bg-accent text-white border-none'
-                    : 'bg-transparent text-accent border border-accent'
-                "
+                :class="selectedFilter === 'all'
+                ? 'bg-accent text-white border-none'
+                : 'bg-transparent text-accent border border-accent'"
               >
                 All Modules
               </button>
@@ -69,11 +67,9 @@
                 :key="option._id"
                 @click="selectMilestoneTab(option._id)"
                 class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
-                :class="
-                  selectedMilestoneTab === option._id
-                    ? 'bg-accent text-white border-none'
-                    : 'bg-transparent text-accent border border-accent'
-                "
+                :class="selectedFilter === option._id
+                ? 'bg-accent text-white border-none'
+                : 'bg-transparent text-accent border border-accent'"
               >
                 {{ option.variables["module-title"] }}
               </button>
@@ -129,13 +125,11 @@
                 <button
                   v-for="option in sprintsList?.sprints"
                   :key="option._id"
-                  @click="selectMilestoneTab(option._id)"
+                  @click="selectSprintTab(option._id)"
                   class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
-                  :class="
-                    selectedMilestoneTab === option._id
-                      ? 'bg-accent text-white'
-                      : 'bg-transparent text-accent border border-accent'
-                  "
+                  :class="selectedFilter === option._id
+                  ? 'bg-accent text-white border-none'
+                  : 'bg-transparent text-accent border border-accent'"
                 >
                   {{ option.title }}
                 </button>
@@ -158,6 +152,7 @@
             :checkedAll="checkedAll"
             :sprint-type="sprintType"
             :searchQuery="searchQuery"
+            :module-id="selectedFilter"
             @move-selected-to-sprint="moveSelectedToSprint"
             @delete-selected-backlog="deleteSelected('backlog')"
             @open-ticket="openTicket"
@@ -169,11 +164,14 @@
           class="h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
           @mousedown="startResize"
         ></div>
-        <section
+        <section 
           class="space-y-4 rounded-md relative group pt-2 ovrflow-hidden flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input overflow-x-hidden"
           :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
         >
-          <div class="flex justify-between px-3">
+          <div
+            class="flex justify-between px-3"
+          >
+
             <!-- Left Section: Sprint Tabs -->
             <div class="flex items-center gap-2 bg-transparent min-w-0 pe-2">
               <!-- Sprint Dropdown -->
@@ -311,13 +309,12 @@
                 <!-- Add Sprint Button (Outside Dropdown) -->
                 <button
                   @click="openSprintModal()"
-                  class="w-7 h-7 flex items-center justify-center rounded-full bg-accent border text-white transition-colors shrink-0"
+                  class="w-7 h-7 flex items-center -lg:ms-0 -ms-1 justify-center rounded-full bg-accent border text-white transition-colors shrink-0"
                 >
                   <i class="fa-solid fa-plus text-xs"></i>
                 </button>
               </div>
             </div>
-
             <!-- Right Section: Actions -->
             <div class="flex gap-3 items-center">
               <!-- Regular SearchBar (hidden on small screens) -->
@@ -330,10 +327,10 @@
 
               <!-- Search Icon for small screens -->
               <button
-                class="sm:hidden flex items-center justify-center w-7 h-7 ms-10 rounded-full bg-accent border"
+                class="sm:hidden flex items-center justify-center w-7 h-7 rounded-full bg-accent border"
                 @click="openSearchModal"
               >
-                <i class="fa-solid fa-magnifying-glass text-white"></i>
+                <i class="fa-solid fa-magnifying-glass text-white text-xs"></i>
               </button>
 
               <!-- End / Start Sprint Buttons -->
@@ -373,11 +370,11 @@
               >
                 <!-- End Sprint Icon -->
                  {{ sprintDetailData?.status }}
-                <div v-if="sprintDetailData?.status === 'active'" class="border border-red-600">
+                <div v-if="sprintDetailData?.status === 'active'">
                   <button
                   
                   @click="handleCompleteSprint"
-                  class="w-8 h-8 flex items-center justify-center rounded-full bg-accent border"
+                  class="w-7 h-7 flex items-center justify-center rounded-full bg-accent border"
                   :title="isCompletingSprint ? 'Ending...' : 'End Sprint'"
                 >
                   <i class="fa-solid fa-flag-checkered text-gray-700"></i>
@@ -557,6 +554,7 @@ const elipseWrapperSprint = ref<HTMLElement | null>(null);
 const open = ref(false);
 const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
+const selectedFilter = ref<string | number | null>(null);
 const sprintTypes = [
   { label: "Milestone", value: "milestone", dot: "#2e9bda" },
   { label: "Sprint", value: "sprint", dot: "#7d68c8" },
@@ -581,6 +579,7 @@ const closeModal = () => {
 const handlePreviewClick = () => {
   showActiveSprint.value = true;
 };
+
 // import CreateSheetModal from '../Product/modals/CreateSheetModal.vue'
 const { workspaceId } = useWorkspaceId();
 const isCreateTicketModalOpen = ref(false);
@@ -593,11 +592,24 @@ const {
   saveSprintMeta,
   toggleStartSprint,
 } = useBacklogStore();
+function selectMilestoneTab(tabId: string) {
+  selectedFilter.value = tabId; 
+}
+function selectHuddleModule(moduleId: string) {
+  selectedFilter.value = moduleId;
+}
+function selectSprintTab(sprintId: string | number) {
+  selectedFilter.value = sprintId;
+}
+
 const { data: backlogResp, refetch: refetchBackLogList } = useBacklogList(
   workspaceId,
   sprintType,
-  {}
+   selectedFilter
 );
+watch(selectedFilter, () => {
+  refetchBackLogList();
+});
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId);
 const visibleModules = computed(
   () =>
@@ -1019,12 +1031,6 @@ const closeSearchModal = () => {
 // filters
 const selectedHuddleModule = ref("all");
 const isHuddleDropdownOpen = ref(false);
-function selectHuddleModule(id: string) {
-  selectedHuddleModule.value = id;
-  isHuddleDropdownOpen.value = false;
-  console.log("Selected Huddle Module:", id);
-}
-
 // Computed label for huddle button
 const selectedHuddleModuleLabel = computed(() => {
   if (selectedHuddleModule.value === "all") return "All Milestones";
@@ -1037,13 +1043,7 @@ const selectedHuddleModuleLabel = computed(() => {
   return module?.variables?.["module-title"] || "Select Module";
 });
 
-// Selected tab (default to "All")
-const selectedMilestoneTab = ref("all");
 
-// Function to select tab
-function selectMilestoneTab(value: string) {
-  selectedMilestoneTab.value = value;
-}
 </script>
 
 <style scoped>

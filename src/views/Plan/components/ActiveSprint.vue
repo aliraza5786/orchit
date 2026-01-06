@@ -6,7 +6,7 @@
       class="header px-4 py-3 flex items-center justify-between gap-1 w-[100%]"
     >
    <div class="flex gap-4">
-    <button class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-1 px-2 py-1 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60" @click="$emit('go-back')"><i class="fa-solid fa-chevron-left text-xs" ></i> Go Back</button>
+    <Button class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-1 px-2 rounded-md text-xs font-medium" @click="$emit('go-back')"><i class="fa-solid fa-chevron-left text-xs" ></i> Go Back</Button>
         <Dropdown
         v-model="selected_module_id"
         :options="moduleOptions"
@@ -551,10 +551,11 @@ watch(
   (opts) => {
     if (!opts.length) return;
 
-    // Find module with title "Tasks"
-    const defaultModule = opts.find((m:any) => m.title === "Tasks") || opts[0];
-
-    selected_module_id.value = defaultModule._id;
+    // Only set default if user hasn't selected anything yet
+    if (!selected_module_id.value) {
+      const defaultModule = opts.find((m:any) => m.title === "Tasks") || opts[0];
+      selected_module_id.value = defaultModule._id;
+    }
   },
   { immediate: true }
 );
@@ -564,14 +565,9 @@ const { data: sheets, refetch: refetchSheets } = useSheets({
   workspace_id: workspaceId.value,
   workspace_module_id: computed(() => selected_module_id.value)
 })
-
-// Refetch sheets when module changes
 watch(selected_module_id, (newModuleId) => {
-  if (newModuleId) {
-    refetchSheets()
-  }
+  if (newModuleId) refetchSheets()
 })
-
 
 const sheetId = computed(() => sheets.value ? sheets.value[0]?._id : '')
 const selected_sheet_id = ref<any>(sheetId);
@@ -581,8 +577,8 @@ const workspaceStore = useWorkspaceStore();
 const selected_sprint_id = computed(() => props.sptint_id)
 // usage
 const { data: Lists, isPending, } = useSprintKanban(
-    selected_sprint_id,                      // ref
-    // ref
+    selected_sprint_id,
+    selected_sheet_id  
 )
 
 const createTeamModal = ref(false);
@@ -721,18 +717,51 @@ watch(searchQuery, debounce((val: string) => { debouncedQuery.value = val }, 200
 const fuse = computed(() => {
   const allCards = Lists.value.flatMap((col: any) =>
     col.cards.map((card: any) => ({ ...card, columnId: col.title }))
-  )
-  return new Fuse(allCards, { keys: ['card-title', 'card-description', 'card-key'], threshold: 0.3 })
-})
-const filteredBoard = computed(() => {
-  if (!searchQuery.value) return Lists.value
-  const results = fuse.value.search(searchQuery.value).map(r => r.item)
-  return Lists.value.map((col: any) => ({
-    ...col,
-    cards: results.filter((c: any) => c.columnId === col.title)
-  }))
-})
+  );
+  return new Fuse(allCards, {
+    keys: ["card-title", "card-description"],
+    threshold: 0.3,
+  });
+});
 
+const filteredBoard = computed(() => {
+  if (view.value === "kanban") {
+    // Kanban filtering by columns
+    if (!searchQuery.value) return Lists.value;
+
+    const results = fuse.value
+      .search(searchQuery.value)
+      .map((r: any) => r.item);
+    return Lists.value.map((col: any) => ({
+      ...col,
+      cards: results.filter((c: any) => c.columnId === col.title),
+    }));
+  } else {
+    // Table filtering by flat tickets
+    const query = searchQuery.value?.trim();
+    if (!query) {
+      let array: any = [];
+      (Lists.value ?? []).forEach((col: any) => {
+        array = [...array, ...col?.cards];
+      });
+      return array;
+    }
+
+    const fuseTable = new Fuse(normalizedTableData.value, {
+      keys: ["card-title", "card-description"],
+      threshold: 0.3,
+    });
+    return fuseTable.search(query).map((r) => r.item);
+  }
+});
+
+const normalizedTableData = computed(() => {
+  let array: any = [];
+  (Lists.value ?? []).forEach((col: any) => {
+    array = [...array, ...col?.cards];
+  });
+  return array;
+});
 //srint views
 const showDeleteModal = ref(false);
 function openEditSprintModal(opt: any) {
