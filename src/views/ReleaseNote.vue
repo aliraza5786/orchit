@@ -93,7 +93,7 @@ const scrollToNote = (id: string) => {
 </script>
 
 <template>
-  <div class="py-[40px] lg:py-[80px] px-[15px] w-full float-end">
+  <div class="py-[40px] lg:py-[80px] px-[15px] w-full float-end release_note_content">
     <div class="custom_container">
       <div class="release-notes-container flex flex-col md:flex-row gap-8">
         <!-- Sidebar (Left) -->
@@ -218,9 +218,9 @@ const scrollToNote = (id: string) => {
                     v{{ note.major_version }}
                   </span> -->
                 </div>
-                <h1 class="text-3xl md:text-4xl font-bold text-text-primary">
+                <h3 >
                   {{ note.title }}
-                </h1>
+                </h3>
               </header>
 
               <div
