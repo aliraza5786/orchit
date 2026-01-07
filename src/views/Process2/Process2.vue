@@ -52,7 +52,7 @@
 
    <AddTransitionModal v-model="isAddTransitionModal" :group="selectedGroupForAdd" @created="handleTransitionCreated" />
 
-   <WorkflowBuilderModal v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
+   <ProcessWorkflowBuilderModal v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
 </template>
 
 <script setup lang="ts">
@@ -73,7 +73,7 @@ import ProcessKanbanCard from './components/ProcessKanbanCard.vue';
 import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue';
 import { useQueryClient } from '@tanstack/vue-query';
 import Button from '../../components/ui/Button.vue';
-import WorkflowBuilderModal from '../Process/modals/WorkflowBuilderModal.vue';
+import ProcessWorkflowBuilderModal from './modals/ProcessWorkflowBuilderModal.vue';
 import AddTransitionModal from './modals/AddTransitionModal.vue';
 
 const { workspaceId } = useRouteIds();
@@ -184,9 +184,11 @@ const handleReorder = (event: any) => {
         reorderGroups({ workspace_id: workspaceId.value, groups });
     } else if (event.type === 'ticket') {
         const meta = event.meta;
-        
+        console.log(localList.value, "...")
+        console.log("hites", meta)
         if (meta.fromColumnId === meta.toColumnId) {
              const group = localList.value.find((g: any) => g._id === meta.toColumnId);
+             
              if(group) {
                  const transitions = group.cards.map((t: any, index: number) => ({
                      transition_id: t._id,

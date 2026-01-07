@@ -135,8 +135,8 @@ export const useReorderProcessGroups = (options = {}) =>
 type CreateTransitionPayload = {
    workspace_id: string;
    group_id: string;
-   from_status: string;
-   to_status: string;
+   from_status?: string;
+   to_status?: string;
    title?: string;
    description?: string;
    transition_type?: string;
@@ -186,7 +186,7 @@ export const useUpdateTransition = (options = {}) =>
       mutationFn: (vars: UpdateTransitionPayload) =>
         request({
           url: `workspace/${vars.workspace_id}/process-transitions/${vars.transition_id}`,
-          method: "PUT",
+          method: "POST",
           data: vars.payload,
         }),
       ...(options as any),
@@ -237,3 +237,42 @@ export const useReorderTransitions = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+export const useProcessTransition = (workspace_id: any, transition_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["process-transition", workspace_id, transition_id],
+    queryFn: ({ signal }) => {
+      const wsId = unref(workspace_id);
+      const trId = unref(transition_id);
+      if (!wsId || !trId) return Promise.resolve(null);
+      return request<any>({
+        url: `workspace/${wsId}/process-transitions/${trId}`,
+        method: "GET",
+        signal,
+      });
+    },
+    enabled: !!unref(workspace_id) && !!unref(transition_id),
+    ...options,
+  });
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                Card Types                                  */
+/* -------------------------------------------------------------------------- */
+
+export const useFilteredCardTypes = (workspace_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["filtered-card-types", workspace_id],
+    queryFn: ({ signal }) => {
+      const wsId = unref(workspace_id);
+      if (!wsId) return Promise.resolve(null);
+      return request<any>({
+        url: `common/cardtypes-filtered?workspace_id=${wsId}&default=true`,
+        method: "GET",
+        signal,
+      });
+    },
+    enabled: !!unref(workspace_id),
+    ...options,
+  });
+};

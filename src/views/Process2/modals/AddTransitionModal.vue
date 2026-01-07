@@ -1,21 +1,17 @@
 <template>
-  <BaseModal :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)" size="lg">
+  <BaseModal :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)" size="md">
     <div class="p-6">
       <h2 class="text-xl font-semibold text-text-primary mb-6">Add Process Card</h2>
       
       <div class="space-y-4">
         <BaseTextField label="Title" v-model="form.title" placeholder="e.g. Start Task" :autofocus="true" />
-        <BaseTextAreaField label="Description" v-model="form.description" placeholder="Optional description" />
-        
-        <div class="grid grid-cols-2 gap-4">
-           <BaseTextField label="From Status" v-model="form.from_status" placeholder="e.g. To Do" />
-           <BaseTextField label="To Status" v-model="form.to_status" placeholder="e.g. In Progress" />
-        </div>
-
         <div class="space-y-2">
            <label class="block text-sm font-medium text-text-primary">Variable Type</label>
-           <Dropdown v-model="form.variable_type" :options="variableTypeOptions" placeholder="Select Type" class="w-full" />
+           <BaseSelectField v-model="form.variable_type" :options="variableTypeOptions" placeholder="Select Type" class="w-full" />
         </div>
+        <BaseTextAreaField label="Description" v-model="form.description" placeholder="Optional description" />
+         
+        
 
         <div class="flex justify-end gap-3 mt-6">
              <Button variant="secondary" @click="$emit('update:modelValue', false)">Cancel</Button>
@@ -27,13 +23,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect, watch } from 'vue';
 import BaseModal from '../../../components/ui/BaseModal.vue';
 import BaseTextField from '../../../components/ui/BaseTextField.vue';
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue';
 import Button from '../../../components/ui/Button.vue';
-import Dropdown from '../../../components/ui/Dropdown.vue';
-import { useCreateTransition } from '../../../queries/useProcess2';
+import BaseSelectField from '../../../components/ui/BaseSelectField.vue';
+import { useCreateTransition, useFilteredCardTypes } from '../../../queries/useProcess2';
 import { useRouteIds } from '../../../composables/useQueryParams';
 
 const props = defineProps<{
@@ -47,52 +43,72 @@ const { workspaceId } = useRouteIds();
 
 const form = ref({
     title: '',
-    description: '',
-    from_status: '',
-    to_status: '',
-    variable_type: 'email',
+    description: '', 
+    variable_type: '',
     transition_type: 'forward'
 });
+
+
+
+watchEffect(()=>{
+  console.log(form.value.variable_type)
+})
 
 interface Option {
   title: string;
   _id: string;
 }
 
-const variableTypeOptions: Option[] = [
-  { title: 'Email', _id: 'email' },
-  { title: 'Survey', _id: 'survey' },
-  { title: 'Webhook', _id: 'webhook' },
-  { title: 'Notification', _id: 'notification' },
-  { title: 'Custom', _id: 'custom' },
-];
+// Fetch variable types from API
+const { data: cardTypesData } = useFilteredCardTypes(workspaceId);
+
+const variableTypeOptions = computed<Option[]>(() => {
+  if (!cardTypesData.value) return [];
+  
+  // Assuming the API returns an array directly or inside a 'data' property
+  const types = Array.isArray(cardTypesData.value) ? cardTypesData.value : (cardTypesData.value?.data || []);
+  
+  return types.map((t: any) => ({
+    title: t.title || t.name, // Adjust based on actual API response
+    _id: t._id || t.id
+  }));
+});
+
+import { toast } from 'vue-sonner';
 
 const { mutate, isPending } = useCreateTransition({
     onSuccess: () => {
+        toast.success("Process created successfully");
         emit('created');
         emit('update:modelValue', false);
         // Reset form
         form.value = {
             title: '',
-            description: '',
-            from_status: '',
-            to_status: '',
-            variable_type: 'email',
+            description: '', 
+            variable_type: '',
             transition_type: 'forward'
         };
+    },
+    onError: (error: any) => {
+        toast.error(error?.message || "Failed to create process");
     }
 });
 
 const create = () => {
-    if (!form.value.title || !form.value.from_status || !form.value.to_status) {
+    if (!form.value.title || !form.value.variable_type) {
         // Simple validation
         return; 
     }
+
+    // Lookup the title from the selected ID to send as payload
+    const selectedOption = variableTypeOptions.value.find(o => o._id === form.value.variable_type);
+    const variableTypePayload = selectedOption ? selectedOption.title : form.value.variable_type;
     
     mutate({
         workspace_id: workspaceId.value,
         group_id: props.group._id,
         ...form.value,
+        variable_type: variableTypePayload, // Override with title
         sort_id: props.group.cards ? props.group.cards.length : 0
     });
 };

@@ -30,6 +30,7 @@
              @delete:column="(e: any) => emit('delete:column', e)" 
              :column="column" 
              @reorder="onTicketEnd"
+             @drag:start="onColumnDragStart"
              @move:column="handleMoveColumn">
             <template #emptyState="{ column }">
               <slot name="emptyState" :column="column"></slot>
@@ -62,11 +63,16 @@ export interface Board { columns: Column[] }
 const isMobile = useMediaQuery('(max-width: 650px)')
 
 const canDragList = ref(true); 
+const dragSourceId = ref<string | number | null>(null);
 
 const onStart = () => {
  // console.log(">>> strating");
   canDragList.value = false
 };
+
+const onColumnDragStart = (columnId: string | number) => {
+  dragSourceId.value = columnId;
+}
 
 
 const props = withDefaults(defineProps<{
@@ -114,10 +120,20 @@ function onColumnsEnd(e: any) {
 }
 
 function onTicketEnd(e: any) {
-  // console.log(e);
+  // Note: e is { moved: ..., fromColumnId: ..., toColumnId: ... }
+  // If fromColumnId is missing (cross-column move), use the tracked dragSourceId
+  if (!e.fromColumnId && dragSourceId.value) {
+    e.fromColumnId = dragSourceId.value;
+  }
+  
   // Re-emit ticket reorder with meta
   pushUpdate('ticket', e)
+  
+  // Reset after a short delay or immediately? 
+  // Safety: reset after processing
+  // dragSourceId.value = null; 
 }
+
 
 
 /** Broadcast updates: emit + optional callback prop */

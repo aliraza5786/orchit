@@ -65,11 +65,12 @@ const emit = defineEmits<{
   (e: 'reorder', payload: any): void
   (e: 'select:ticket', payload: Ticket): void
   (e: 'move:column', payload: { direction: 'left' | 'right', column: Column }): void
+  (e: 'drag:start', payload: Id): void
 }>()
 
 const workspaceStore = useWorkspaceStore()
 const onStart = () => {
-  // workspaceStore.setTransition({ ...props?.column?.transitions, currentColumn: props.column?.title })
+  emit('drag:start', props.column._id)
 }
 const onEnd = () => {
   // workspaceStore.setTransition({})
@@ -117,12 +118,13 @@ function onTicketsChange(evt: any) {
   const moved = evt.moved ?? evt.added
   if (!moved) return
   
-  // Robustly get fromColumnId using dataset, preserving fallback just in case
-  const fromColumnId = evt.from?.dataset?.columnId ?? props.listOwnerId ?? props.column?._id;
+  // We cannot reliably get fromColumnId here for 'added' events because the payload strictly contains data, not DOM elements.
+  // We will rely on the parent (Board) to track 'activeDragSource' via @start events.
+  const fromColumnId = evt.from?.dataset?.columnId ?? null;
 
   emit('reorder', {
     moved: moved.element,
-    fromColumnId: fromColumnId,
+    fromColumnId: fromColumnId, // Might be null, parent handles it
     toColumnId: props.column._id,
     oldIndex: moved.oldIndex ?? null,
     newIndex: moved.newIndex ?? null,
