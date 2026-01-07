@@ -7,7 +7,7 @@
       @dragenter="onDragEnterSprint"
       @dragleave="onDragLeaveSprint"
       @drop="onDropSprint"
-      class="h-full box-border"
+      class="h-full box-border mt-3"
     >
       <!-- Tickets List -->
       <div v-if="filteredTickets.length > 0 && sprint" class=" overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
