@@ -39,11 +39,11 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, watch } from 'vue'
+import {  ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import DropMenu from '../../../components/ui/DropMenu.vue'
 
-import { useWorkspaceStore } from '../../../stores/workspace'
+// import { useWorkspaceStore } from '../../../stores/workspace'
 
 type Id = string | number
 export interface Ticket { _id: Id;[k: string]: any }
@@ -68,7 +68,7 @@ const emit = defineEmits<{
   (e: 'drag:start', payload: Id): void
 }>()
 
-const workspaceStore = useWorkspaceStore()
+// const workspaceStore = useWorkspaceStore()
 const onStart = () => {
   emit('drag:start', props.column._id)
 }
@@ -76,37 +76,36 @@ const onEnd = () => {
   // workspaceStore.setTransition({})
 }
 /** Inline title editing state */
-const isEditingTitle = ref(false)
+// const isEditingTitle = ref(false)
 const localTitle = ref(props.column.title)
-const titleInputRef = ref<HTMLInputElement | null>(null)
 
 watch(() => props.column.title, (v) => { localTitle.value = v })
 
-function beginEdit() {
-  isEditingTitle.value = true
-  nextTick(() => {
-    if (titleInputRef.value) {
-      titleInputRef.value.focus()
-      titleInputRef.value.select()
-    }
-  })
-}
+// function beginEdit() {
+//   isEditingTitle.value = true
+//   nextTick(() => {
+//     if (titleInputRef.value) {
+//       titleInputRef.value.focus()
+//       titleInputRef.value.select()
+//     }
+//   })
+// }
 
-function commitTitle() {
-  const newTitle = (localTitle.value ?? '').trim() || 'Untitled'
-  if (newTitle !== props.column.title) {
-    emit('update:column', { ...props.column, title: newTitle, oldTitle: props.column.title })
-  } else {
-    localTitle.value = props.column.title
-  }
+// function commitTitle() {
+//   const newTitle = (localTitle.value ?? '').trim() || 'Untitled'
+//   if (newTitle !== props.column.title) {
+//     emit('update:column', { ...props.column, title: newTitle, oldTitle: props.column.title })
+//   } else {
+//     localTitle.value = props.column.title
+//   }
 
-  isEditingTitle.value = false
-}
+//   isEditingTitle.value = false
+// }
 
-function cancelTitle() {
-  localTitle.value = props.column.title
-  isEditingTitle.value = false
-}
+// function cancelTitle() {
+//   localTitle.value = props.column.title
+//   isEditingTitle.value = false
+// }
 
 /** Tickets local mirror */
 const localTickets = ref<Ticket[]>([...(props.column.transitions ?? [])])

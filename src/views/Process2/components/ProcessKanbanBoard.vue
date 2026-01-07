@@ -51,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, watchEffect } from 'vue'
+import { ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import ProcessKanbanColumn from './ProcessKanbanColumn.vue'
 import { useMediaQuery } from '@vueuse/core'

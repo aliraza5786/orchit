@@ -19,7 +19,7 @@ import { useWorkspaceId } from '../../../composables/useQueryParams'
 import { watch } from 'vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
-import Loader from '../../../components/ui/Loader.vue'
+// import Loader from '../../../components/ui/Loader.vue'
 import type { EdgeUpdateEvent } from '@vue-flow/core'
 
 // --- Modal state for editing an existing transition (edge) ---

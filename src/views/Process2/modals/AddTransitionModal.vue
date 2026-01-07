@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect, watch } from 'vue';
+import { ref, computed, watchEffect } from 'vue';
 import BaseModal from '../../../components/ui/BaseModal.vue';
 import BaseTextField from '../../../components/ui/BaseTextField.vue';
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue';

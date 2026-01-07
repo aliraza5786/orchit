@@ -99,7 +99,7 @@ watch(() => transitionData.value, (data) => {
     if (data && isOpen.value) {
         // Assume raw_object or similar holds the workflow structure
         // If raw_object is empty, we might initialize with defaults or empty
-        const flow = data.raw_object || { nodes: [], edges: [] };
+        // const flow = data.raw_object || { nodes: [], edges: [] };
         // WorkflowCanvas expects 'raw_transitions' structure usually, 
         // but let's see how WorkflowCanvas consumes it. 
         // Actually WorkflowCanvas fetches its own data internally via useProcessWorkflow usually.
