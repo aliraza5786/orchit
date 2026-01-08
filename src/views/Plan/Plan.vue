@@ -174,11 +174,13 @@
             class="h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
             @mousedown="startResize"
           ></div>
-           <section 
-          class="rounded-md relative group pt-2 flex flex-col flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input overflow-x-hidden"
-          :class="theme === 'dark' ? 'bg-bg-card' : 'bg-bg-card'"
-        >
-            <div class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input">
+          <section
+            class="rounded-md relative group pt-2 flex flex-col flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input overflow-x-hidden"
+            :class="theme === 'dark' ? 'bg-bg-card' : 'bg-bg-card'"
+          >
+            <div
+              class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
+            >
               <!-- Left Section: Sprint Tabs -->
               <div class="flex items-center gap-2 bg-bg-card min-w-0">
                 <!-- Sprint Dropdown -->
@@ -186,7 +188,7 @@
                   <!-- Trigger Button -->
                   <button
                     @click.stop="openElipseDropDown = !openElipseDropDown"
-                    class="flex items-center gap-2 lg:px-3 sm:px:2 py-1.5 text-sm font-medium bg-transparent rounded-lg"
+                    class="flex items-center gap-2 lg:px-3 px-2 py-1.5 text-sm font-medium bg-transparent rounded-lg"
                     :style="{ border: '1px solid ' + selectedType.dot }"
                   >
                     <span
@@ -326,7 +328,6 @@
               </div>
               <!-- Right Section: Actions -->
               <div class="ms-2 flex gap-2 items-center">
-
                 <div class="flex">
                   <button
                     class="flex items-center justify-center w-7 h-7 rounded-full bg-accent"
@@ -375,7 +376,11 @@
                     :variant="theme === 'dark' ? 'primary' : 'primary'"
                     class="border-border-input border"
                     @click="openStartSprintModal"
-                    :disabled="!firstSprint || firstSprint.tickets.length === 0 || sprintDetailData.status==='completed'"
+                    :disabled="
+                      !firstSprint ||
+                      firstSprint.tickets.length === 0 ||
+                      sprintDetailData.status === 'completed'
+                    "
                   >
                     Start Sprint
                   </Button>
@@ -440,42 +445,40 @@
 
               <!-- Search Modal -->
               <transition name="fade">
-  <div
-    v-if="showSearchModal"
-    class="fixed inset-0 z-50 flex items-center justify-center w-full"
-  >
-    <!-- Backdrop -->
-    <div
-      class="absolute inset-0 bg-black/10 backdrop-blur-sm"
-      @click="closeSearchModal"
-    ></div>
+                <div
+                  v-if="showSearchModal"
+                  class="fixed inset-0 z-50 flex items-center justify-center w-full"
+                >
+                  <!-- Backdrop -->
+                  <div
+                    class="absolute inset-0 bg-black/10 backdrop-blur-sm"
+                    @click="closeSearchModal"
+                  ></div>
 
-    <!-- Modal -->
-    <div
-      class="relative bg-white rounded-lg p-4 mx-3 w-full
-             max-w-md lg:max-w-2xl xl:max-w-3xl"
-    >
-      <div class="flex items-center gap-2">
-        <SearchBar
-          placeholder="Search in sprint"
-          v-model="searchQuery"
-          class="flex-1"
-        />
+                  <!-- Modal -->
+                  <div
+                    class="relative bg-white rounded-lg p-4 mx-3 w-full max-w-md lg:max-w-2xl xl:max-w-3xl"
+                  >
+                    <div class="flex items-center gap-2">
+                      <SearchBar
+                        placeholder="Search in sprint"
+                        v-model="searchQuery"
+                        class="flex-1"
+                      />
 
-        <button
-          @click="closeSearchModal"
-          class="p-2 rounded hover:bg-gray-100 text-accent"
-        >
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-    </div>
-  </div>
-</transition>
-
+                      <button
+                        @click="closeSearchModal"
+                        class="p-2 rounded hover:bg-gray-100 text-accent"
+                      >
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </transition>
             </div>
             <div
-              v-if="isSprintPending"
+              v-if="isLoadingSprint"
               class="w-full h-full min-h-[250px] flex justify-center items-center"
             >
               <div
@@ -484,13 +487,15 @@
                 class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
               ></div>
             </div>
-            <div v-else class="flex-1 min-h-0">
+            <div class="flex-1 min-h-0">
               <SprintCard
                 :searchQuery="searchQuery"
                 :sprintId="selectedSprintId"
                 v-if="
-                  (firstSprint && sprintDetailData.status === 'planning') ||
-                  sprintDetailData.status === 'active'
+                  (firstSprint &&
+                    sprintDetailData &&
+                    sprintDetailData?.status === 'planning') ||
+                  sprintDetailData?.status === 'active'
                 "
                 :checkedSprintAll="checkedSprintAll"
                 :sprint="firstSprint"
@@ -502,20 +507,20 @@
                 @refresh="handleRefresh"
               />
               <div
-                v-if="sprintDetailData.status === 'completed'"
+                v-if="sprintDetailData?.status === 'completed'"
                 class="bg-bg-card w-full p-6 flex flex-col items-center justify-center text-center gap-4 h-[100%] mt-3"
               >
                 <div
                   class="w-20 h-20 flex justify-center items-center text-white rounded-full text-3xl"
                 >
-                 <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 117.72 117.72"
-                aria-hidden="true"
-              >
-                <path
-                  fill="#42ba96"
-                  d="M58.86,0c9.13,0,17.77,2.08,25.49,5.79c-3.16,2.5-6.09,4.9-8.82,7.21c-5.2-1.89-10.81-2.92-16.66-2.92
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 117.72 117.72"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill="#42ba96"
+                      d="M58.86,0c9.13,0,17.77,2.08,25.49,5.79c-3.16,2.5-6.09,4.9-8.82,7.21c-5.2-1.89-10.81-2.92-16.66-2.92
                   c-13.47,0-25.67,5.46-34.49,14.29c-8.83,8.83-14.29,21.02-14.29,34.49c0,13.47,5.46,25.66,14.29,34.49
                   c8.83,8.83,21.02,14.29,34.49,14.29s25.67-5.46,34.49-14.29c8.83-8.83,14.29-21.02,14.29-34.49
                   c0-3.2-0.31-6.34-0.9-9.37c2.53-3.3,5.12-6.59,7.77-9.85c2.08,6.02,3.21,12.49,3.21,19.22
@@ -525,8 +530,8 @@
                   c5.15-8.29,10.64-15.9,16.44-22.9c6.35-7.67,13.09-14.63,20.17-20.98l1.4-0.54H114l-3.16,3.51
                   C101.13,30,92.32,41.15,84.36,52.65C76.4,64.16,69.28,76.04,62.95,88.27l-1.97,3.8l-1.81-3.87
                   c-3.34-7.17-7.34-13.75-12.11-19.63c-4.77-5.88-10.32-11.1-16.79-15.54L31.44,49.19z"
-                />
-              </svg>
+                    />
+                  </svg>
                 </div>
                 <h4 class="text-lg font-semibold text-accent">
                   Sprint Completed
@@ -535,6 +540,42 @@
                   This sprint has been successfully completed. To continue
                   planning work, create a new sprint by clicking the plus button
                   and start organizing upcoming tasks.
+                </p>
+              </div>
+              <div
+                v-if="!sprintDetailData?.length"
+                class="w-full h-full min-h-[250px] flex flex-col items-center justify-center text-center gap-4 p-6"
+              >
+                <!-- Icon -->
+                <div
+                  class="w-20 h-20 flex items-center justify-center rounded-full bg-muted/10 text-accent"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-20 h-20"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="#ff3333"
+                    stroke-width="1.5"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+
+                <!-- Heading -->
+                <h4 class="text-xl font-semibold text-accent">
+                  No sprints available
+                </h4>
+
+                <!-- Description -->
+                <p class="text-sm text-muted max-w-md">
+                  You don’t have any sprints yet. Create a new sprint to start
+                  planning and organizing your work. Click the
+                  <strong>plus (+)</strong> button to get started.
                 </p>
               </div>
             </div>
@@ -642,10 +683,6 @@ const sprintTypes = [
 ];
 
 const selectedType = ref(sprintTypes[0]);
-// const selectedCardId = ref('');
-// const rowClickHandler= (rowId:any)=>{
-//   selectedCardId.value=rowId;
-// }
 import { onClickOutside } from "@vueuse/core";
 const elipseWrapper = ref<HTMLElement | null>(null);
 const openElipseDrop = ref(false);
@@ -726,7 +763,6 @@ const { mutate: updateSprint2, isPending: isUpdatingSprint2 } = useUpdateSprint(
   {
     onSuccess: (data: any) => {
       saveSprintMeta({ name: data.title });
-      console.log(data, "this is testing data");
       startSprint({
         id: selectedSprintId.value,
         payload: {
@@ -748,8 +784,6 @@ const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint({
   },
 });
 const startSprintHandler = (e: any) => {
-  console.log("helo", selectedSprint.value, e);
-
   updateSprint2({
     id: selectedSprintId.value,
     payload: {
@@ -762,10 +796,11 @@ const startSprintHandler = (e: any) => {
   });
 };
 
-const { data: sprintsList, refetch: refetchSprints } = useSprintList(
-  workspaceId.value,
-  sprintType
-);
+const {
+  data: sprintsList,
+  refetch: refetchSprints,
+  isLoading: isLoadingSprint,
+} = useSprintList(workspaceId.value, sprintType);
 watch(
   () => sprintType.value,
   (newVal, oldVal) => {
@@ -805,11 +840,8 @@ const startsprintModalOpen = ref(false);
 const openStartSprintModal = () => {
   startsprintModalOpen.value = true;
 };
-const {
-  data: sprintData,
-  isPending: isSprintPending,
-  refetch: refetchSprintData,
-} = useSprintCard(selectedSprintId);
+const { data: sprintData, refetch: refetchSprintData } =
+  useSprintCard(selectedSprintId);
 
 watch(
   () => selectedSprintId.value,
@@ -881,8 +913,7 @@ const { mutate: removeCardFromSprint } = useRemoveCardFromSprint({
     handleRefresh();
   },
   onError: (error: any) => {
-    toast.error("Failed to remove card from sprint");
-    console.error("Failed to remove card from sprint:", error);
+    toast.error("Failed to remove card from sprint", error);
   },
 });
 
