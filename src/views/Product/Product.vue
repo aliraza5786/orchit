@@ -100,6 +100,18 @@
           >
             <i class="fa-solid fa-chart-diagram"></i>
           </button>
+          <button
+            @click="view = 'calendar'"
+            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+            :class="
+              view === 'calendar'
+                ? 'text-accent bg-accent-text'
+                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+            "
+            title="Calendar view"
+          >
+            <i class="fa-regular fa-calendar"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -430,6 +442,12 @@
         </div>
       </div>
     </template>
+    <template v-if="view === 'calendar'">
+     <CalendarView
+       :data="filteredBoard"
+       @select:ticket="selectCardHandler"
+      />
+    </template>
   </div>
   <ConfirmDeleteModal
     @click.stop=""
@@ -565,6 +583,7 @@ import { usePermissions } from "../../composables/usePermissions";
 import { request, toApiMessage } from "../../libs/api";
 import TableSearchCell from "../../components/feature/TableView/TableSearchCell.vue";
 import TableAssigneeCell from "../../components/feature/TableView/TableAssigneeCell.vue";
+import CalendarView from "../../components/feature/CalendarView.vue";
 const {
   canEditSheet,
   canDeleteSheet,
