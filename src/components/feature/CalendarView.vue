@@ -1,5 +1,5 @@
 <template>
-  <div class="calendar-wrapper m-4">
+  <div class="calendar-wrapper m-4 max-h-[calc(100vh-100px)] overflow-y-auto">
     <FullCalendar :options="calendarOptions" @select-card="" />
   </div>
 </template>
