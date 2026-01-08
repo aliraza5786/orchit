@@ -10,7 +10,7 @@
       class="h-full box-border mt-3"
     >
       <!-- Tickets List -->
-      <div v-if="filteredTickets.length > 0 && sprint" class=" overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
+      <div v-if="filteredTickets.length > 0 && sprint" class=" overflow-y-auto h-[calc(100%-50px)] tickets-scroll pt-4">
         <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1"
         >
           <div
@@ -102,7 +102,7 @@ import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
 const { theme } = useTheme();
 
-const props = defineProps<{ sprint: Sprint | null; sprintId: any; searchQuery?: string; checkedSprintAll: boolean }>();
+const props = defineProps<{ sprint: Sprint | null; sprintId: any; searchQuery?: string; checkedSprintAll: boolean, searchedData?: SearchCard[]; }>();
 
 const emit = defineEmits([
   "edit-sprint",
@@ -125,20 +125,17 @@ watch(
   },
   { immediate: true, deep: true }
 );
-
-// Search 
-// const filteredTickets = computed(() => {
-//   if (!searchQuery.value) return sprintTickets.value;
-//   const q = searchQuery.value.toLowerCase();
-//   return sprintTickets.value.filter(
-//     (ticket) =>
-//       ticket.key.toLowerCase().includes(q) ||
-//       ticket.summary.toLowerCase().includes(q) ||
-//       (ticket.assignee?.u_full_name ?? "").toLowerCase().includes(q)
-//   );
-// });
-
+type SearchCard = {
+  card_id: string;
+  [key: string]: any; 
+};
 const filteredTickets = computed(() => {
+  if (props.searchedData?.length) {
+    return sprintTickets.value.filter(ticket =>
+      props.searchedData!.some((s: SearchCard) => s.card_id === ticket.id)
+    );
+  }
+
   const query = props.searchQuery?.toLowerCase() || "";
   if (!query) return sprintTickets.value;
 
@@ -151,7 +148,6 @@ const filteredTickets = computed(() => {
     );
   });
 });
-
 
 // Drag & Drop
 const dropOverSprint = ref(false);

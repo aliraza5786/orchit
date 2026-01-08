@@ -14,12 +14,8 @@ import { registerLicense } from '@syncfusion/ej2-base';
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1JGaF5cXGpCfExwWmFZfVhgdl9HZ1ZSQGYuP1ZhSXxVdkRjXn9ccXNRR2FaVEN9XEA=');
 const app = createApp(App)
-
 import vTooltip from './directives/vTooltip'
 app.directive('tooltip', vTooltip)
-
-
-
 app.component('Toaster', Toaster)
 app.use(GanttPlugin)
 app.use(createPinia())
