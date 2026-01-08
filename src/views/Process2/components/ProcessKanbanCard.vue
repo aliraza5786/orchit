@@ -44,7 +44,7 @@ const props = defineProps<{
   index: any
 }>()
 
-const emit = defineEmits(['click'])
+const emit = defineEmits(['click', 'open-builder'])
 
 const showDelete = ref(false)
 const queryClient = useQueryClient()
@@ -55,7 +55,7 @@ function getMenuItems() {
     {
       label: 'Open Workflow Builder',
       action: () => {
-        emit('click')
+        emit('open-builder')
       },
       icon: {
         prefix: 'fa-regular',

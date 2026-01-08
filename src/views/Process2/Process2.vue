@@ -1,12 +1,12 @@
 <template>
-  <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-hidden flex flex-col">
+  <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-hidden flex flex-col">
     <!-- Board Area -->
     <div class="flex-1 w-full p-4 overflow-x-auto flex items-start gap-4">
       
       <!-- Skeleton Loader -->
       <KanbanSkeleton v-if="isPending" />
 
-      <!-- Kanban Board (Columns) -->
+      <!-- Kanban Board (Columns) --> 
       <ProcessKanbanBoard 
         v-else-if="localList?.length > 0" 
         @delete:column="(e: any) => handleDeleteColumn(e)"
@@ -19,6 +19,7 @@
         <template #ticket="{ ticket, index }">
           <ProcessKanbanCard 
             @click="handleClickTicket(ticket)" 
+            @open-builder="handleOpenBuilder(ticket)"
             :ticket="ticket" 
             :index="index" />
         </template>
@@ -28,14 +29,14 @@
       <div class="min-w-[300px] max-w-[300px] shrink-0">
         <div v-if="!activeAddList" 
           @click="activeAddList = true"
-          class="h-[50px] w-full border border-border bg-bg-surface/50 hover:bg-bg-surface rounded-lg flex items-center justify-center gap-2 cursor-pointer text-text-secondary hover:text-text-primary transition-colors">
+          class="max-w-82 ms-4 text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg cursor-pointer">
           <i class="fa-solid fa-plus"></i>
           <span class="font-medium">Add Process Group</span>
         </div>
 
         <div v-else class="bg-bg-body rounded-lg p-3 border border-border shadow-sm">
           <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Group details..." 
-            class="mb-2"
+            class="mb-3"
             @keyup.enter="emitAddColumn" />
           <div class="flex items-center gap-2">
             <Button @click="emitAddColumn" variant="primary" size="sm" :loading="addingList">
@@ -56,6 +57,13 @@
    <AddTransitionModal v-model="isAddTransitionModal" :group="selectedGroupForAdd" @created="handleTransitionCreated" />
 
    <ProcessWorkflowBuilderModal v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
+
+   <ProcessSidePanel 
+        v-if="selectedSidePanelCard" 
+        :showPanel="showSidePanel" 
+        :details="selectedSidePanelCard" 
+        @close="closeSidePanel" 
+    />
 </template>
 
 <script setup lang="ts">
@@ -217,24 +225,47 @@ const handleReorder = (event: any) => {
     }
 }
 
+ 
 /* -------------------------------------------------------------------------- */
 /*                               Ticket Handling                              */
 /* -------------------------------------------------------------------------- */
 const selectedProcess = ref<any>(null);
 const showWorkflowBuilder = ref(false);
+const showSidePanel = ref(false);
+const selectedSidePanelCard = ref<any>(null);
+const singleClickTimer = ref<any>(null);
+
+const handleOpenBuilder = (ticket: any) => {
+    selectedProcess.value = ticket;
+    showWorkflowBuilder.value = true;
+    showSidePanel.value = false;
+};
 
 const handleClickTicket = (ticket: any) => {
-  requestAnimationFrame(() => {
-    selectedProcess.value = ticket;
-    console.log(selectedProcess.value, "this is the selected process");
-    showWorkflowBuilder.value = true;
-  });
+  if (singleClickTimer.value) {
+    clearTimeout(singleClickTimer.value);
+    singleClickTimer.value = null;
+    // Double click: Workflow Builder
+    handleOpenBuilder(ticket);
+  } else {
+    singleClickTimer.value = setTimeout(() => {
+      singleClickTimer.value = null;
+      // Single click: Side Panel
+      selectedSidePanelCard.value = ticket;
+      showSidePanel.value = true;
+    }, 250);
+  }
 };
 
 const closeWorkflowBuilder = () => {
   showWorkflowBuilder.value = false;
   selectedProcess.value = null;
 };
+
+const closeSidePanel = () => {
+    showSidePanel.value = false;
+    selectedSidePanelCard.value = null;
+}
 
 /* -------------------------------------------------------------------------- */
 /*                               Add Transition                               */
@@ -251,5 +282,7 @@ const handleTransitionCreated = () => {
     isAddTransitionModal.value = false;
     queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
 }
+
+import ProcessSidePanel from './components/ProcessSidePanel.vue';
 
 </script>

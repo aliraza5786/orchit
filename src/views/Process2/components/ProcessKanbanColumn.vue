@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import {  ref, watch } from 'vue'
+import {  ref, watch, nextTick } from 'vue'
 import Draggable from 'vuedraggable'
 import DropMenu from '../../../components/ui/DropMenu.vue'
 
@@ -87,36 +87,38 @@ const onEnd = () => {
   // workspaceStore.setTransition({})
 }
 /** Inline title editing state */
-// const isEditingTitle = ref(false)
+const isEditingTitle = ref(false)
 const localTitle = ref(props.column.title)
 
 watch(() => props.column.title, (v) => { localTitle.value = v })
 
-// function beginEdit() {
-//   isEditingTitle.value = true
-//   nextTick(() => {
-//     if (titleInputRef.value) {
-//       titleInputRef.value.focus()
-//       titleInputRef.value.select()
-//     }
-//   })
-// }
+const titleInputRef = ref<HTMLInputElement | null>(null)
 
-// function commitTitle() {
-//   const newTitle = (localTitle.value ?? '').trim() || 'Untitled'
-//   if (newTitle !== props.column.title) {
-//     emit('update:column', { ...props.column, title: newTitle, oldTitle: props.column.title })
-//   } else {
-//     localTitle.value = props.column.title
-//   }
+function beginEdit() {
+  isEditingTitle.value = true
+  nextTick(() => {
+    if (titleInputRef.value) {
+      titleInputRef.value.focus()
+      titleInputRef.value.select()
+    }
+  })
+}
 
-//   isEditingTitle.value = false
-// }
+function commitTitle() {
+  const newTitle = (localTitle.value ?? '').trim() || 'Untitled'
+  if (newTitle !== props.column.title) {
+    emit('update:column', { ...props.column, title: newTitle, oldTitle: props.column.title })
+  } else {
+    localTitle.value = props.column.title
+  }
 
-// function cancelTitle() {
-//   localTitle.value = props.column.title
-//   isEditingTitle.value = false
-// }
+  isEditingTitle.value = false
+}
+
+function cancelTitle() {
+  localTitle.value = props.column.title
+  isEditingTitle.value = false
+}
 
 /** Tickets local mirror */
 const localTickets = ref<Ticket[]>([...(props.column.transitions ?? [])])
