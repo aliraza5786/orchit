@@ -146,7 +146,7 @@
         </div>
       </div>
     </div>
-    <div class="">
+    <div class="overflow-x-auto">
       <div
         v-if="view == 'kanban'"
         class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex scrollbar-visible"

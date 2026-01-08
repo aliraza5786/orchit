@@ -229,7 +229,7 @@ const routes: RouteRecordRaw[] = [
       { path: "process/:id", name: "process", component: Process },
       { path: "more/:id", name: "more", component: More },
       { path: "more/detail/:id/:module_id", name: "moreDetail", component: ModuleDetail },
-      { path: "process2/:id", name: "process2", component: Process2 },
+      { path: "custom-process/:id", name: "process2", component: Process2 },
       { path: ":id/:module_id", name: "product", component: Product },
     ],
   },

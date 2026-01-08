@@ -208,15 +208,15 @@ function handleUpdateWorkflow() {
   // })
 }
 
-function handleZoomIn() {
-  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'in' } }))
-}
-function handleZoomOut() {
-  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'out' } }))
-}
-function handleZoomReset() {
-  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'reset' } }))
-}
+// function handleZoomIn() {
+//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'in' } }))
+// }
+// function handleZoomOut() {
+//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'out' } }))
+// }
+// function handleZoomReset() {
+//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'reset' } }))
+// }
 
 function handleStatusAdded(e: any) {
 

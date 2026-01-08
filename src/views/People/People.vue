@@ -314,7 +314,7 @@ const filteredBoard = computed(() => {
   return localList.value.map((col:any) => ({
     ...col,
     cards: results.filter((c:any) => c.columnId === col.title)
-  }))
+  })).filter((col: any) => col.cards.length > 0)
 })
 
 </script>
