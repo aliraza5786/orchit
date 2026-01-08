@@ -24,6 +24,8 @@
       <ProcessKanbanCard @click="handleClickTicket(item)" v-for="(item, index) in localList[0]?.cards" :key="index"
         :ticket="item" :index="index" />
     </div>
+    
+
     <button 
       class="max-w-82 ms-4 text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg cursor-pointer"
       @click="isAddProcessModal = true"

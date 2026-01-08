@@ -57,7 +57,7 @@ watch(() => props.workflowData, async (data) => {
         onNodesInitialized(async () => {
              incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
              setEdges(incomingEdges)
-             fitView({ padding: 0.8 })
+             fitView({ padding: 0.5, maxZoom: 1 })
         })
     }
 }, { immediate: true })
@@ -442,23 +442,35 @@ function handleZoomEvent(e: Event) {
   :nodes-draggable="true"
   :nodes-connectable="true"
   :elements-selectable="true"
+  :min-zoom="0.01"
+  :max-zoom="100"
   fit-view-on-init
   @connect="onConnect"
   @edge-click="onEdgeClick"
   @edge-update="onEdgeUpdate"
   :edge-updater-radius="20" 
 >
-
-
-
       <Background />
       <!-- <MiniMap /> -->
-      <Controls />
+      <Controls :show-zoom="false" :show-fit-view="false" :show-interactive="false" position="top-right" />
+
+      <!-- Custom Zoom Controls -->
+      <div class="absolute bottom-20 right-2 flex flex-col gap-2 z-10 bg-accent p-1 rounded-lg shadow-md border border-accent">
+         <button @click="zoomIn()" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Zoom In">
+            <i class="fa-solid fa-plus"></i>
+         </button>
+         <button @click="zoomOut()" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Zoom Out">
+            <i class="fa-solid fa-minus"></i>
+         </button>
+         <button @click="fitView({ padding: 0.2 })" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Fit View">
+            <i class="fa-solid fa-compress"></i>
+         </button>
+      </div>
 
       <!-- Custom node content with connection handles and a status picker -->
       <template #node-default="{ id, data }">
-        <div class="relative min-w-[90px] px-2 py-1 rounded-md text-sm">
-          <div class="flex justify-between items-center gap-2">
+        <div class="relative min-w-[60px] px-1.5 py-0.5 rounded-md text-xs">
+          <div class="flex justify-between items-center gap-1.5">
             <span class="truncate">
               {{ data.label }}
             </span>
