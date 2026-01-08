@@ -124,7 +124,7 @@
           >
             <i class="fa-solid fa-chart-gantt"></i>
           </button>
-          <button
+          <!-- <button
             @click="view = 'timeline'"
             class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
             :class="
@@ -135,7 +135,7 @@
             title="Timeline view"
           >
             <i class="fa-solid fa-timeline"></i>
-          </button>
+          </button> -->
         </div>
       </div>
     </div>
