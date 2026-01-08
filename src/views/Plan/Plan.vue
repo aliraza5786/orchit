@@ -109,7 +109,7 @@
                   <!-- DROPDOWN -->
                   <div
                     v-if="isHuddleDropdownOpen"
-                    class="absolute left-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-[9999]"
+                    class="absolute left-0 top-full mt-1 w-44 bg-bg-card border border-gray-200 rounded-lg shadow-lg z-[9999]"
                   >
                     <ul class="flex flex-col">
                       <li
@@ -287,7 +287,7 @@
                               <input
                                 ref="editingInputRef"
                                 v-model="editingSprintTitle"
-                                class="w-full px-1 py-1 text-sm rounded outline-none bg-white border border-[#7d68c8]"
+                                class="w-full px-1 py-1 text-sm rounded outline-none bg-bg-card border border-[#7d68c8]"
                                 placeholder="Enter new name"
                                 @click.stop
                                 @blur="saveInlineSprintTitle(sprint)"
@@ -307,11 +307,11 @@
                             </button>
                             <button
                               v-if="
-                                sprintsList?.sprints.length > 1 &&
+                                sprintsList?.sprints.length &&
                                 editingSprintId !== sprint._id
                               "
                               @click.stop="handleDeleteSprint(sprint)"
-                              class="w-4 h-4 rounded-full flex items-center justify-center text-gray-400 hover:text-red-500"
+                              class="w-4 h-4 rounded-full flex items-center justify-center text-red-500"
                             >
                               <i class="fas fa-times text-xs"></i>
                             </button>
