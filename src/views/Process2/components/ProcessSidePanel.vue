@@ -38,11 +38,11 @@
               class="w-full text-2xl font-semibold rounded-[6px] px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition" 
               type="text" />
           </div>
-          <h1 v-else 
-            class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-[6px] px-2 py-2 bg-orchit-white/5 transition cursor-text"
+          <h2 v-else 
+            class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-[6px] px-2 py-2 hover:bg-bg-dropdown transition cursor-text hover:border border-border"
             @click="editTitle">
             {{ localTitle || 'Untitled' }}
-          </h1>
+          </h2>
         </div>
          <!-- Card Type -->
         <div class="space-y-2">
@@ -72,11 +72,11 @@
 
         <!-- Workflow Stats -->
         <div class="grid grid-cols-2 gap-4 mt-2">
-          <div class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-4 flex flex-col items-center justify-center">
+          <div class="rounded-[6px] bg-orchit-white/5 border border-orchit-white/10 p-4 flex flex-col items-center justify-center">
              <span class="text-2xl font-bold text-accent">{{ totalStatus }}</span>
              <span class="text-xs uppercase tracking-wider text-text-secondary mt-1">Total Status</span>
           </div>
-          <div class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-4 flex flex-col items-center justify-center">
+          <div class="rounded-[6px] bg-orchit-white/5 border border-orchit-white/10 p-4 flex flex-col items-center justify-center">
              <span class="text-2xl font-bold text-accent">{{ totalTransitions }}</span>
              <span class="text-xs uppercase tracking-wider text-text-secondary mt-1">Total Transitions</span>
           </div>
@@ -119,8 +119,7 @@ const cardTypeOptions = computed(() => {
   const opts = (cardTypes.value || []).map((t: any) => ({ 
     _id: t.slug || t.title || t._id, 
     title: t.title 
-  }));
-  console.log('Constructed Card Type Options:', opts);
+  })); 
   return opts;
 })
 
@@ -131,15 +130,13 @@ const localDesc = ref('')
 const localType = ref('')
 
 watch(() => processDetails.value, (val) => {
-  if (val) {
-    console.log('Server update:', val.variable_type, 'Current local:', localType.value);
+  if (val) { 
     localTitle.value = val.title || ''
     localDesc.value = val.description || ''
     localType.value = val.variable_type || '' 
   }
 }, { immediate: true })
-
-watch(cardTypes, (v) => console.log('Card Types loaded:', v));
+ 
 
 // --- Stats ---
 const totalStatus = computed(() => {
@@ -223,8 +220,7 @@ onMounted(() => document.addEventListener('mousedown', onDocMouseDown))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMouseDown))
 
 // --- Logic: Card Type ---
-function handleTypeChange(val: any) {
-  console.log('User changed type to:', val);
+function handleTypeChange(val: any) { 
   localType.value = val
   updateTransition({
       workspace_id: workspaceId.value,

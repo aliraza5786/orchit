@@ -36,7 +36,7 @@
         </div>
 
         <div v-else class="bg-bg-body rounded-lg p-3 border border-border shadow-sm">
-          <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Group details..." 
+          <BaseTextField size="md" :autofocus="true" v-model="newColumn" placeholder="Group Name..." 
             class="mb-3"
             @keyup.enter="emitAddColumn" />
           <div class="flex items-center gap-2">
