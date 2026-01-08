@@ -1,14 +1,14 @@
 <template>
   <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-hidden flex flex-col">
+
+     <!-- Skeleton Loader -->
+    <KanbanSkeleton v-if="isPending" />
     <!-- Board Area -->
-    <div class="flex-1 w-full p-4 overflow-x-auto flex items-start gap-4">
-      
-      <!-- Skeleton Loader -->
-      <KanbanSkeleton v-if="isPending" />
+    <div  v-if="!isPending" class="flex-1 w-full p-4 overflow-x-auto flex items-start gap-4">
 
       <!-- Kanban Board (Columns) --> 
       <ProcessKanbanBoard 
-        v-else-if="localList?.length > 0" 
+        v-if="localList?.length > 0" 
         @delete:column="(e: any) => handleDeleteColumn(e)"
         @update:column="(e) => handleUpdateColumn(e)" 
         @onPlus="openAddTransition" 
