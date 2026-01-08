@@ -176,11 +176,11 @@
           ></div>
            <section 
           class="rounded-md relative group pt-2 flex flex-col flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input overflow-x-hidden"
-          :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
+          :class="theme === 'dark' ? 'bg-bg-card' : 'bg-bg-card'"
         >
-            <div class="flex justify-between gap-4 px-3">
+            <div class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input">
               <!-- Left Section: Sprint Tabs -->
-              <div class="flex items-center gap-2 bg-transparent min-w-0">
+              <div class="flex items-center gap-2 bg-bg-card min-w-0">
                 <!-- Sprint Dropdown -->
                 <div ref="elipseWrapperSprint" class="relative inline-block">
                   <!-- Trigger Button -->
@@ -260,12 +260,12 @@
                       <!-- Dropdown -->
                       <div
                         v-if="isSprintDropdownOpen"
-                        class="absolute left-0 mt-2 w-60 bg-white border border-gray-200 rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto overflow-x-hidden"
+                        class="absolute left-0 mt-2 w-60 bg-bg-card border-accent-hover rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto overflow-x-hidden"
                       >
                         <div
                           v-for="sprint in sprintsList?.sprints"
                           :key="sprint._id"
-                          class="relative px-4 py-2 flex items-center justify-between text-sm cursor-pointer transition-colors hover:bg-gray-100"
+                          class="relative px-4 py-2 flex items-center justify-between text-sm cursor-pointer transition-color"
                         >
                           <!-- Title / Edit -->
                           <div class="relative flex-1">
