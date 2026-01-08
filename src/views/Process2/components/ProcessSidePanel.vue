@@ -28,43 +28,44 @@
       <!-- Body -->
       <div v-else class="py-5 px-4 sm:px-6 flex flex-col gap-5 flex-grow">
         
-        <!-- Card Type -->
-        <div class="space-y-2">
-          <div class="text-xs uppercase tracking-wider text-text-secondary">Card Type</div>
-          <BaseSelectField 
-            :options="cardTypeOptions" 
-            placeholder="Select Type" 
-            :model-value="localType"
-            @update:modelValue="handleTypeChange" 
-            size="sm"
-          />
-        </div>
+       
 
         <!-- Title -->
         <div class="capitalize">
           <div v-if="editingTitle" class="relative">
              <input ref="titleInput" v-model="localTitle" 
               @blur="saveTitle" @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle"
-              class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition" 
+              class="w-full text-2xl font-semibold rounded-[6px] px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition" 
               type="text" />
           </div>
           <h1 v-else 
-            class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-lg px-2 py-1 hover:bg-orchit-white/5 transition cursor-text"
+            class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-[6px] px-2 py-2 bg-orchit-white/5 transition cursor-text"
             @click="editTitle">
             {{ localTitle || 'Untitled' }}
           </h1>
+        </div>
+         <!-- Card Type -->
+        <div class="space-y-2">
+          <div class="mb-2 text-base font-semibold tracking-wide px-1">Variable Type</div>
+          <BaseSelectField 
+            :options="cardTypeOptions" 
+            placeholder="Select Type" 
+            :model-value="localType"
+            @update:modelValue="handleTypeChange" 
+            size="md"
+          />
         </div>
 
         <!-- Description -->
         <div>
           <h3 class="mb-2 text-base font-semibold tracking-wide px-1">Description</h3>
           <div v-if="!editingDesc" 
-            class="text-[15px] leading-6 text-text-secondary whitespace-pre-wrap rounded-xl px-4 py-3 border border-orchit-white/10 bg-orchit-white/5 hover:border-orchit-white/20 transition cursor-text"
+            class="text-[15px] leading-6 text-text-secondary whitespace-pre-wrap rounded-[6px] px-4 py-3 border border-orchit-white/10 bg-orchit-white/5 hover:border-orchit-white/20 transition cursor-text"
             @click="startEditDesc">
             <div v-if="localDesc" v-html="localDesc"></div>
             <span v-else class="opacity-60">Click to add a description…</span>
           </div>
-          <div v-else ref="descEditorWrap" class="rounded-xl overflow-hidden border border-orchit-white/10 shadow-sm">
+          <div v-else ref="descEditorWrap" class="rounded-[6px] overflow-hidden border border-orchit-white/10 shadow-sm">
              <BaseTextAreaField v-model="localDesc" @focusOut="finishDescEdit" />
           </div>
         </div>
@@ -88,9 +89,8 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
-import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
-import { useProcessTransition, useUpdateTransition, useFilteredCardTypes } from '../../../queries/useProcess2'
+import BaseSelectField from '../../../components/ui/BaseSelectField.vue' 
+import {useProcessGroupsWithTransitions, useProcessTransition, useUpdateTransition, useFilteredCardTypes } from '../../../queries/useProcess2'
 import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 
@@ -110,8 +110,19 @@ const { data: processDetails, isLoading, refetch } = useProcessTransition(worksp
   enabled: computed(() => !!processId.value && props.showPanel)
 })
 
+const {  refetch:refetchAllTransitions } = useProcessGroupsWithTransitions(workspaceId,{
+  enabled: computed(() => !!processId.value && props.showPanel)
+})
+
 const { data: cardTypes } = useFilteredCardTypes(workspaceId)
-const cardTypeOptions = computed(() => (cardTypes.value || []).map((t: any) => ({ _id: t.slug, title: t.title })))
+const cardTypeOptions = computed(() => {
+  const opts = (cardTypes.value || []).map((t: any) => ({ 
+    _id: t.slug || t.title || t._id, 
+    title: t.title 
+  }));
+  console.log('Constructed Card Type Options:', opts);
+  return opts;
+})
 
 
 // --- Local State Sync ---
@@ -121,12 +132,14 @@ const localType = ref('')
 
 watch(() => processDetails.value, (val) => {
   if (val) {
+    console.log('Server update:', val.variable_type, 'Current local:', localType.value);
     localTitle.value = val.title || ''
     localDesc.value = val.description || ''
-    // Assuming transition_type or variable_type maps to card type slug
-    localType.value = val.transition_type || val.variable_type || '' 
+    localType.value = val.variable_type || '' 
   }
 }, { immediate: true })
+
+watch(cardTypes, (v) => console.log('Card Types loaded:', v));
 
 // --- Stats ---
 const totalStatus = computed(() => {
@@ -148,7 +161,10 @@ const totalTransitions = computed(() => {
 
 // --- Mutations ---
 const { mutate: updateTransition } = useUpdateTransition({
-  onSuccess: () => refetch()
+  onSuccess: () => {
+     refetch();
+     refetchAllTransitions();
+  }
 })
 
 // --- Logic: Title ---
@@ -208,11 +224,12 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMouseDown))
 
 // --- Logic: Card Type ---
 function handleTypeChange(val: any) {
+  console.log('User changed type to:', val);
   localType.value = val
   updateTransition({
       workspace_id: workspaceId.value,
       transition_id: props.details._id,
-      payload: { transition_type: val } 
+      payload: { variable_type: val } 
   })
 }
 

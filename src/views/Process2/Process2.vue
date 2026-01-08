@@ -19,6 +19,7 @@
         <template #ticket="{ ticket, index }">
           <ProcessKanbanCard 
             @click="handleClickTicket(ticket)" 
+            @dblclick="handleDblClick(ticket)"
             @open-builder="handleOpenBuilder(ticket)"
             :ticket="ticket" 
             :index="index" />
@@ -241,20 +242,23 @@ const handleOpenBuilder = (ticket: any) => {
     showSidePanel.value = false;
 };
 
-const handleClickTicket = (ticket: any) => {
+const handleDblClick = (ticket: any) => {
   if (singleClickTimer.value) {
     clearTimeout(singleClickTimer.value);
     singleClickTimer.value = null;
-    // Double click: Workflow Builder
-    handleOpenBuilder(ticket);
-  } else {
-    singleClickTimer.value = setTimeout(() => {
-      singleClickTimer.value = null;
-      // Single click: Side Panel
-      selectedSidePanelCard.value = ticket;
-      showSidePanel.value = true;
-    }, 250);
   }
+  handleOpenBuilder(ticket);
+}
+
+const handleClickTicket = (ticket: any) => {
+  if (singleClickTimer.value) clearTimeout(singleClickTimer.value);
+  
+  singleClickTimer.value = setTimeout(() => {
+    singleClickTimer.value = null;
+    // Single click: Side Panel
+    selectedSidePanelCard.value = ticket;
+    showSidePanel.value = true;
+  }, 300); // 300ms delay to wait for potential double click
 };
 
 const closeWorkflowBuilder = () => {

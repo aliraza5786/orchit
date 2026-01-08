@@ -1,5 +1,5 @@
 <template>
-  <div @click="$emit('click')" class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer
+  <div @click="$emit('click')" @dblclick="$emit('dblclick')" class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer
            hover:shadow-md transition-all duration-200 border border-border hover:border-accent">
     <div class="flex justify-between gap-2 items-start">
       <div class="flex items-start gap-3 flex-1">
@@ -44,7 +44,7 @@ const props = defineProps<{
   index: any
 }>()
 
-const emit = defineEmits(['click', 'open-builder'])
+const emit = defineEmits(['click', 'open-builder', 'dblclick'])
 
 const showDelete = ref(false)
 const queryClient = useQueryClient()
