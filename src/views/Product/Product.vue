@@ -124,6 +124,18 @@
           >
             <i class="fa-solid fa-chart-gantt"></i>
           </button>
+          <button
+            @click="view = 'timeline'"
+            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+            :class="
+              view === 'timeline'
+                ? 'text-accent bg-accent-text'
+                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+            "
+            title="Timeline view"
+          >
+            <i class="fa-solid fa-timeline"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -466,6 +478,12 @@
        @select:ticket="selectCardHandler"
       />
     </template>
+    <template v-if="view === 'timeline'">
+     <TimelineView
+       :data="filteredBoard"
+       @select:ticket="selectCardHandler"
+      />
+    </template>
   </div>
   <ConfirmDeleteModal
     @click.stop=""
@@ -603,6 +621,7 @@ import TableSearchCell from "../../components/feature/TableView/TableSearchCell.
 import TableAssigneeCell from "../../components/feature/TableView/TableAssigneeCell.vue";
 import CalendarView from "../../components/feature/CalendarView.vue";
 import GanttChartView from "../../components/feature/GanttChartView.vue";
+import TimelineView from "../../components/feature/TimelineView.vue"
 const {
   canEditSheet,
   canDeleteSheet,

@@ -10,10 +10,13 @@
       />
     </template>
     <div v-if="!showActiveSprint">
-      <template v-if="isStartingSprint">
+      <!-- <template v-if="isStartingSprint">
         <KanbanSkeleton />
-      </template>
-      <div v-else class="p-4 w-full min-w-0 box-border h-full min-h-0">
+      </template> -->
+      <div
+        v-if="!isStartingSprint"
+        class="p-4 w-full min-w-0 box-border h-full min-h-0"
+      >
         <div
           class="flex gap-2 h-full max-h-screen min-h-0 box-border overflow-x-auto group"
           ref="containerRef"
@@ -457,21 +460,81 @@
 
                   <!-- Modal -->
                   <div
-                    class="relative bg-white rounded-lg p-4 mx-3 w-full max-w-md lg:max-w-2xl xl:max-w-3xl"
+                    class="relative bg-bg-card rounded-lg p-4 mx-3 w-full max-w-md lg:max-w-2xl xl:max-w-3xl"
                   >
-                    <div class="flex items-center gap-2">
-                      <SearchBar
-                        placeholder="Search in sprint"
-                        v-model="searchQuery"
-                        class="flex-1"
-                      />
+                    <!-- Instruction Text -->
+                    <div class="flex justify-end">
+                        <button
+                          @click="closeSearchModal"
+                          class="px-2 py-1 rounded bg-bg-input border border-border-input text-accent"
+                        >
+                          <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
 
-                      <button
-                        @click="closeSearchModal"
-                        class="p-2 rounded hover:bg-gray-100 text-accent"
+                    <!-- Search Bar + Close -->
+                    <div class="flex flex-col gap-2 mt-4">
+                        <p class="text-sm text-muted mb-2">
+                      Search for sprints by name, status, or priority. Start
+                      typing to filter results.
+                    </p>
+                    
+                      <div class="flex gap-2 w-full">
+                        <SearchBar
+                          placeholder="Search in sprint"
+                          @onChange="handleSearchChange"
+                          @keyup.enter="handleSearchEnter"
+                          class="flex-1"
+                        />
+
+                      </div>
+
+                      <!-- Dropdown Results -->
+                      <div
+                        v-if="filteredSprints.length && searchTerm"
+                        class="mt-1 w-full bg-bg-card rounded-md max-h-64 overflow-y-auto"
                       >
-                        <i class="fa-solid fa-xmark"></i>
-                      </button>
+                        <ul>
+                          <li
+                            v-for="sprint in filteredSprints"
+                            :key="sprint._id"
+                           @click="handleSearchSelect(sprint)"
+                            class="px-4 py-2 cursor-pointer hover:bg-bg-hover text-text-primary border-b border-border-input"
+                          >
+                            <div class="flex items-center justify-between">
+                              <div>
+                                <span class="font-medium">{{
+                                  sprint.card?.variables?.["card-title"]
+                                }}</span>
+                                <span class="text-muted text-xs ml-2">
+                                  ({{ sprint.card?.variables?.["card-code"] }})
+                                </span>
+                              </div>
+                              <div class="flex gap-2 text-xs">
+                                <span
+                                  class="px-3 py-1 rounded text-md"
+                                  :class="getPriorityClass(sprint.priority)"
+                                >
+                                  {{ sprint.priority }}
+                                </span>
+                                <span
+                                  class="text-muted border border-border-input rounded-md px-3 py-1"
+                                >
+                                  {{ sprint.card?.variables?.["card-status"] }}
+                                </span>
+                              </div>
+                            </div>
+                          </li>
+                        </ul>
+                      </div>
+
+                      <!-- No Results Message -->
+                      <div
+                        v-else-if="searchTerm && !filteredSprints.length"
+                        class="absolute top-full left-0 mt-1 w-full bg-bg-card border border-border-input rounded-md shadow-md p-4 z-50 text-center text-muted"
+                      >
+                        No sprints found matching "{{ searchTerm }}"
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -489,23 +552,25 @@
             </div>
             <div class="flex-1 min-h-0">
               <SprintCard
-                :searchQuery="searchQuery"
-                :sprintId="selectedSprintId"
-                v-if="
-                  (firstSprint &&
-                    sprintDetailData &&
-                    sprintDetailData?.status === 'planning') ||
-                  sprintDetailData?.status === 'active'
-                "
-                :checkedSprintAll="checkedSprintAll"
-                :sprint="firstSprint"
-                @open-ticket="openTicket"
-                @edit-sprint="openEditSprint"
-                @toggle-start="toggleStartSprint"
-                @move-selected-to-backlog="moveSelectedToBacklog"
-                @delete-selected-sprint="(id) => deleteSelected('sprint', id)"
-                @refresh="handleRefresh"
-              />
+              :searchQuery="searchQuery"
+              :sprintId="selectedSprintId"
+              :searchedData="selectedSearchCard ? [selectedSearchCard] : []"
+              v-if="
+                (firstSprint &&
+                  sprintDetailData &&
+                  sprintDetailData?.status === 'planning') ||
+                sprintDetailData?.status === 'active'
+              "
+              :checkedSprintAll="checkedSprintAll"
+              :sprint="firstSprint"
+              @open-ticket="openTicket"
+              @edit-sprint="openEditSprint"
+              @toggle-start="toggleStartSprint"
+              @move-selected-to-backlog="moveSelectedToBacklog"
+              @delete-selected-sprint="(id) => deleteSelected('sprint', id)"
+              @refresh="handleRefresh"
+            />
+
               <div
                 v-if="sprintDetailData?.status === 'completed'"
                 class="bg-bg-card w-full p-6 flex flex-col items-center justify-center text-center gap-4 h-[100%] mt-3"
@@ -662,7 +727,7 @@ import CreateBacklogTicketWithModuleSelection from "./modals/CreateBacklogTicket
 import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
-import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
+// import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 const { theme } = useTheme();
 const showTaskModal = ref(false);
@@ -850,6 +915,64 @@ watch(
     refetchSprintDetail();
   }
 );
+console.log("sprint data", sprintData.value);
+const searchTerm = ref("");
+const selectedSearchCard = ref<any | null>(null);
+const filteredSprints = computed(() => {
+  if (!searchTerm.value || !sprintData.value?.backlog_items) return [];
+
+  const query = searchTerm.value.toLowerCase().trim();
+
+  return sprintData.value.backlog_items.filter((item: any) => {
+    // Card title
+    const title = item.card?.variables?.["card-title"]?.toLowerCase() || "";
+    // Card code
+    const code = item.card?.variables?.["card-code"]?.toLowerCase() || "";
+    // Card status
+    const status = item.card?.variables?.["card-status"]?.toLowerCase() || "";
+    // Priority
+    const priority = item.priority?.toLowerCase() || "";
+    // IDs
+    const itemId = String(item._id || "").toLowerCase();
+    const cardId = String(item.card_id || "").toLowerCase();
+
+    return (
+      title.includes(query) ||
+      code.includes(query) ||
+      status.includes(query) ||
+      priority.includes(query) ||
+      itemId.includes(query) ||
+      cardId.includes(query)
+    );
+  });
+});
+
+// Methods
+function handleSearchChange(value: any) {
+  searchTerm.value = value;
+}
+
+function handleSearchEnter() {
+  if (filteredSprints.value.length === 1) {
+    selectSprint(filteredSprints.value[0]);
+  }
+}
+type Priority = "high" | "medium" | "low";
+const priorityClasses: Record<Priority, string> = {
+  high: "bg-red-500/20 text-red-500",
+  medium: "bg-yellow-500/20 text-yellow-500",
+  low: "bg-green-500/20 text-green-500",
+};
+
+function getPriorityClass(priority?: string): string {
+  const key = priority?.toLowerCase() as Priority;
+
+  return priorityClasses[key] ?? "bg-gray-500/20 text-gray-500";
+}
+function handleSearchSelect(card: any) {
+  selectedSearchCard.value = card;
+  showSearchModal.value = false;
+}
 
 // Convert API sprint to store Sprint format with cards
 const firstSprint = computed(() => {
@@ -1141,6 +1264,7 @@ const openSearchModal = () => {
 
 const closeSearchModal = () => {
   showSearchModal.value = false;
+  searchTerm.value = "";
 };
 
 // filters
