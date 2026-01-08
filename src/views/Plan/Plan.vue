@@ -538,8 +538,9 @@
                 </h4>
                 <p class="text-sm text-muted max-w-md">
                   This sprint has been successfully completed. To continue
-                  planning work, create a new sprint by clicking the plus button
-                  and start organizing upcoming tasks.
+                  planning work, create a new sprint by clicking the
+                  <strong>plus (+)</strong> button and start organizing upcoming
+                  tasks.
                 </p>
               </div>
               <div
