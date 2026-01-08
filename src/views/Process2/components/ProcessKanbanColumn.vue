@@ -4,7 +4,18 @@
     <!-- Column header -->
     <div class="flex items-center justify-between w-full p-4 border-b border-border cursor-grab">
       <div class="flex items-center gap-2 flex-auto max-w-4/5">
-        <span class="font-semibold text-foreground">{{ column.title }}</span>
+        
+        <!-- Title: display vs edit -->
+        <button v-if="!isEditingTitle"
+          class="font-semibold overflow-ellipsis line-clamp-1 text-nowrap  text-foreground px-1 py-0.5 rounded hover:bg-bg-card focus:outline-none focus:ring-1 focus:ring-border cursor-text"
+          @click="beginEdit" @keydown.enter.prevent="beginEdit" title="Click to rename">
+          {{ localTitle }}
+        </button>
+
+        <input v-else autofocus ref="titleInputRef" v-model="localTitle"
+          class="font-semibold inline text-foreground px-1 py-0.5 rounded bg-transparent border border-border focus:outline-none focus:ring-1 focus:ring-border"
+          @keydown.enter.prevent="commitTitle" @keydown.esc.prevent="cancelTitle" @blur="commitTitle" @mousedown.stop />
+
         <span class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 min-w-6 rounded-full">
           {{ column.transitions ? column.transitions.length : 0 }}
         </span>

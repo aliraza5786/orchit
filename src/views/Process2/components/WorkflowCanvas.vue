@@ -426,7 +426,7 @@ function handleZoomEvent(e: Event) {
   
   if (detail.action === 'in') zoomIn()
   if (detail.action === 'out') zoomOut()
-  if (detail.action === 'reset') fitView({ padding: 0.8 })
+  if (detail.action === 'reset') fitView({ padding: 0.12 })
 }
 
 </script>

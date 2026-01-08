@@ -416,6 +416,7 @@ const { data: workspaceRoles, isLoading: isLoadingWorkspaceRoles } = useWorkspac
  enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
 });
 const selectedRole = ref(props.details?.workspace_access_role_id ?? "");
+
 // Mutation
 const { mutate: assignRole } = useAssignRole({
   onSuccess: () => {

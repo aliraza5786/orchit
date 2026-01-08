@@ -3,9 +3,12 @@
     <!-- Board Area -->
     <div class="flex-1 w-full p-4 overflow-x-auto flex items-start gap-4">
       
+      <!-- Skeleton Loader -->
+      <KanbanSkeleton v-if="isPending" />
+
       <!-- Kanban Board (Columns) -->
       <ProcessKanbanBoard 
-        v-show="localList?.length > 0" 
+        v-else-if="localList?.length > 0" 
         @delete:column="(e: any) => handleDeleteColumn(e)"
         @update:column="(e) => handleUpdateColumn(e)" 
         @onPlus="openAddTransition" 
@@ -58,6 +61,7 @@
 <script setup lang="ts">
 import { ref, watch, watchEffect } from 'vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
+import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
 import {
   useProcessGroupsWithTransitions,
@@ -77,7 +81,7 @@ import ProcessWorkflowBuilderModal from './modals/ProcessWorkflowBuilderModal.vu
 import AddTransitionModal from './modals/AddTransitionModal.vue';
 
 const { workspaceId } = useRouteIds();
-const { data: processGroups } = useProcessGroupsWithTransitions(workspaceId.value);
+const { data: processGroups, isPending } = useProcessGroupsWithTransitions(workspaceId.value);
 
 watchEffect(()=>{
   console.log(processGroups.value, "this ....")
