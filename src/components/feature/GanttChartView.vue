@@ -1,18 +1,21 @@
 <template>
-  <ejs-gantt 
-    ref="ganttRef"
-    :dataSource="ganttItems"
-    :treeColumnIndex="1"
-    :taskFields="taskFields"
-    @rowSelected="onRowSelected"
-  >
-    <e-columns>
-      <e-column field="TaskID" headerText="Task ID" textAlign="Right" width="70"></e-column>
-      <e-column field="TaskName" headerText="Task Name" textAlign="Left" width="200"></e-column>
-      <e-column field="StartDate" headerText="Start Date" textAlign="Right" format="yMd" width="90"></e-column>
-      <e-column field="Duration" headerText="Duration" textAlign="Right" width="80"></e-column>
-    </e-columns>
-  </ejs-gantt>
+  <div class="max-h-[calc(100vh-100px)]">
+    <ejs-gantt 
+      ref="ganttRef"
+      :dataSource="ganttItems"
+      :treeColumnIndex="1"
+      :taskFields="taskFields"
+      :height="'100%'"
+      @rowSelected="onRowSelected"
+    >
+      <e-columns>
+        <e-column field="TaskID" headerText="Task ID" textAlign="Right" width="70"></e-column>
+        <e-column field="TaskName" headerText="Task Name" textAlign="Left" width="200"></e-column>
+        <e-column field="StartDate" headerText="Start Date" textAlign="Right" format="yMd" width="90"></e-column>
+        <e-column field="Duration" headerText="Duration" textAlign="Right" width="80"></e-column>
+      </e-columns>
+    </ejs-gantt>
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -1078,26 +1078,8 @@ function openCreateBacklogTicket() {
 function openTicket(t: Ticket) {
   editingTicket.value = t;
   showTaskModal.value = true;
-  // createTarget.value = 'backlog' // not used on edit path
   ticketModalOpen.value = true;
 }
-// function handleSaveTicket(partial: Partial<Ticket>) {
-//   if (editingTicket.value) {
-//     Object.assign(editingTicket.value, partial)
-//   } else {
-//     createTicket(createTarget, {
-//       summary: partial.summary!,
-//       type: partial.type as Ticket['type'],
-//       status: (partial.status as Ticket['status']) || 'Todo',
-//       assignee: (partial.assignee?.trim() || 'Unassigned'),
-//       storyPoints: Number(partial.storyPoints) || 0,
-//       priority: partial.priority as Ticket['priority'],
-//       description: partial.description || ''
-//     })
-//   }
-// }
-
-// Sprint modal state (edit only)
 const sprintModalOpen = ref(false);
 function openEditSprint() {
   sprintModalOpen.value = true;

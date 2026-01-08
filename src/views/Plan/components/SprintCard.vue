@@ -44,7 +44,7 @@
             >
               <span class="truncate">{{ ticket.summary }}</span>
             </div>
-
+     
             <!-- Assignee -->
             <div class="flex-shrink-0">
               <span

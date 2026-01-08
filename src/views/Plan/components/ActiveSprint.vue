@@ -1,6 +1,6 @@
 <template>
   <div
-  class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full border border-border flex flex-col overflow-x-auto overflow-y-hidden scrollbar-visible pb-4"
+  class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full border border-border flex flex-col overflow-x-auto overflow-y-auto scrollbar-visible pb-4"
 >
     <div
       class="header px-4 py-3 flex items-center justify-between gap-1 w-[100%]"
@@ -119,6 +119,30 @@
           >
             <i class="fa-solid fa-chart-diagram"></i>
           </button>
+          <button
+            @click="view = 'calendar'"
+            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+            :class="
+              view === 'calendar'
+                ? 'text-accent bg-accent-text'
+                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+            "
+            title="Calendar view"
+          >
+            <i class="fa-regular fa-calendar"></i>
+          </button>
+          <button
+            @click="view = 'gantt'"
+            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+            :class="
+              view === 'gantt'
+                ? 'text-accent bg-accent-text'
+                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+            "
+            title="Gantt Chart view"
+          >
+            <i class="fa-solid fa-chart-gantt"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -206,7 +230,7 @@
           @create="handleCreateTicket"
         />
       </template>
-      <template v-if="view === 'mindmap'">
+      <template v-if="view === 'mindmap'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
         <div class="relative w-full h-full flex overflow-hidden">
           <!-- Mind Map Canvas -->
           <div
@@ -453,6 +477,20 @@
           </div>
         </div>
       </template>
+       <template v-if="view === 'calendar'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
+          <CalendarView
+            :data="filteredBoard"
+            @select:ticket="selectCardHandler"
+            class="min-h-[600px]"
+          />
+        </template>
+        <template v-if="view === 'gantt'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
+     <GanttChartView
+       :data="filteredBoard"
+       @select:ticket="selectCardHandler"
+      />
+    </template>
+
       <ConfirmDeleteModal
         @click.stop=""
         v-model="showDelete"
@@ -557,6 +595,8 @@ import TableSearchCell from "../../../components/feature/TableView/TableSearchCe
 import { avatarColor } from "../../../utilities/avatarColor";
 import TableAssigneeCell from "../../../components/feature/TableView/TableAssigneeCell.vue";
 import { getInitials } from "../../../utilities";
+import CalendarView from "../../../components/feature/CalendarView.vue";
+import GanttChartView from "../../../components/feature/GanttChartView.vue";
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);

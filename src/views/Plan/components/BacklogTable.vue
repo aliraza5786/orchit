@@ -31,7 +31,7 @@
         <p class="text-sm text-text-primary/90 mb-4">
           Plan and start a sprint to see issues here.
         </p>
-        <button :disabled="!canCreateCard" @click="$emit('open-create-ticket')" class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition text-xs px-3 py-1.5 h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"
+        <button :disabled="!canCreateCard" @click="$emit('open-create-ticket')" class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"
           :class="canCreateCard ? 'cursor-pointer':'cursor-not-allowed'"
         > 
           Create  Ticket
@@ -180,20 +180,6 @@ watch(normalizedBacklog, (tickets) => {
     validIds.has(id)
   );
 });
-
-// Filter tickets based on search query
-// const filteredBacklog = computed(() => {
-//   if (!searchQuery.value) return normalizedBacklog.value;
-//   const q = searchQuery.value.toLowerCase();
-//   return normalizedBacklog.value.filter(
-//     (ticket) =>
-//       ticket.key.toLowerCase().includes(q) ||
-//       ticket.summary.toLowerCase().includes(q) ||
-//       (typeof ticket.assignee === "string"
-//         ? ticket.assignee.toLowerCase().includes(q)
-//         : ticket.assignee?.u_full_name?.toLowerCase().includes(q))
-//   );
-// });
 const filteredBacklog = computed(() => {
   console.log(props.searchQuery, "this is query");
   if (!props.searchQuery) return normalizedBacklog.value;
