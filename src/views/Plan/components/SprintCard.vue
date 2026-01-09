@@ -1,5 +1,8 @@
 <template>
-  <div class=" h-full min-h-0 px-2" :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"> 
+  <div
+    class="h-full min-h-0 px-2"
+    :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
+  >
     <!-- Sprint Table -->
     <div
       :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''"
@@ -7,35 +10,39 @@
       @dragenter="onDragEnterSprint"
       @dragleave="onDragLeaveSprint"
       @drop="onDropSprint"
-      class="h-full box-border"
+      class="h-full box-border mt-3"
     >
       <!-- Tickets List -->
-      <div v-if="filteredTickets.length > 0 && sprint" class=" overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
-        <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1"
-        >
+      <div
+        v-if="filteredTickets.length > 0 && sprint"
+        class="overflow-y-auto h-[calc(100%-50px)] tickets-scroll pt-4"
+      >
+        <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1">
           <div
             v-for="ticket in filteredTickets"
             :key="ticket.id"
             draggable="true"
             :class="[
-            'flex items-center  gap-3 p-[8px] cursor-pointer transition-colors rounded-[8px]',
+              'flex items-center  gap-3 p-[8px] cursor-pointer transition-colors rounded-[8px]',
               selectedIds.includes(ticket.id)
                 ? 'border-2 border-[#5a2d7f]'
                 : 'border border-border-input',
-              theme === 'dark' ? 'bg-bg-body hover:bg-bg-surface': 'bg-bg-charcoal hover:bg-bg-body'  
-            ]" 
-           @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"
+              theme === 'dark'
+                ? 'bg-bg-body hover:bg-bg-surface'
+                : 'bg-bg-charcoal hover:bg-bg-body',
+            ]"
+            @dragstart="onDragStart($event, ticket, 'sprint', sprint.id)"
             @dragend="onDragEnd($event)"
             @click="$emit('open-ticket', ticket)"
           >
             <!-- Checkbox -->
             <input
               type="checkbox"
-              class="custom-checkbox  border border-border-input flex-shrink-0"
+              class="custom-checkbox border border-border-input flex-shrink-0"
               :checked="selectedIds.includes(ticket.id)"
               @click.stop
               @change="handleCheckboxChange(ticket.id, $event)"
-              :class="theme==='dark'? 'bg-bg-charcoal':'bg-bg-body '"
+              :class="theme === 'dark' ? 'bg-bg-charcoal' : 'bg-bg-body '"
             />
 
             <!-- Summary -->
@@ -80,13 +87,13 @@
           alt="backlog-plan"
         />
         <h6 class="text-sm text-text-primary font-semibold mb-1 text-center">
-          Plan your sprint
+          Plan your {{ label }}
         </h6>
         <p class="text-sm text-text-primary/90 mb-3 max-w-120 text-center">
           Drag work items from the
           <span class="font-bold">Backlog</span> section or create new ones to
-          plan the work for this sprint. Select
-          <span class="font-bold">Start sprint</span> when you're ready.
+          plan the work for this {{ label }}. Select
+          <span class="font-bold">Start {{ label }}</span> when you're ready.
         </p>
       </div>
     </div>
@@ -102,7 +109,14 @@ import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
 const { theme } = useTheme();
 
-const props = defineProps<{ sprint: Sprint | null; sprintId: any; searchQuery?: string; checkedSprintAll: boolean }>();
+const props = defineProps<{
+  sprint: Sprint | null;
+  sprintId: any;
+  searchQuery?: string;
+  checkedSprintAll: boolean;
+  searchedData?: SearchCard[];
+  label?: string;
+}>();
 
 const emit = defineEmits([
   "edit-sprint",
@@ -125,20 +139,17 @@ watch(
   },
   { immediate: true, deep: true }
 );
-
-// Search 
-// const filteredTickets = computed(() => {
-//   if (!searchQuery.value) return sprintTickets.value;
-//   const q = searchQuery.value.toLowerCase();
-//   return sprintTickets.value.filter(
-//     (ticket) =>
-//       ticket.key.toLowerCase().includes(q) ||
-//       ticket.summary.toLowerCase().includes(q) ||
-//       (ticket.assignee?.u_full_name ?? "").toLowerCase().includes(q)
-//   );
-// });
-
+type SearchCard = {
+  card_id: string;
+  [key: string]: any;
+};
 const filteredTickets = computed(() => {
+  if (props.searchedData?.length) {
+    return sprintTickets.value.filter((ticket) =>
+      props.searchedData!.some((s: SearchCard) => s.card_id === ticket.id)
+    );
+  }
+
   const query = props.searchQuery?.toLowerCase() || "";
   if (!query) return sprintTickets.value;
 
@@ -151,7 +162,6 @@ const filteredTickets = computed(() => {
     );
   });
 });
-
 
 // Drag & Drop
 const dropOverSprint = ref(false);
@@ -269,15 +279,14 @@ function handleCheckboxChange(id: string, event: Event) {
   toggleRowSelection(id, checked);
 }
 
-
 watch(
   () => props.checkedSprintAll,
   (newVal) => {
     if (newVal) {
-     selectedIds.value = filteredTickets.value.map(t => t.id) // select all
-     console.log(filteredTickets.value)
+      selectedIds.value = filteredTickets.value.map((t) => t.id); // select all
+      console.log(filteredTickets.value);
     } else {
-     selectedIds.value = []  
+      selectedIds.value = [];
     }
   }
 );
@@ -312,7 +321,7 @@ watch(
 }
 
 .tickets-scroll::-webkit-scrollbar {
-  width: 8px;             /* width of the vertical scrollbar */
+  width: 8px; /* width of the vertical scrollbar */
 }
 
 .tickets-scroll::-webkit-scrollbar-track {
@@ -335,5 +344,4 @@ watch(
   scrollbar-width: thin;
   scrollbar-color: #5a2d7f var(--bg-lavender);
 }
-
 </style>

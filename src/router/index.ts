@@ -32,7 +32,8 @@ const WorkspaceLayout = () =>
   import("../layout/WorkspaceLayout/WorkspaceLayout.vue");
 const Peak = () => import("../views/Peak.vue");
 const People = () => import("../views/People/People.vue");
-const Process = () => import("../views/Process/Process.vue");
+// const Process = () => import("../views/Process/Process.vue");
+const Process2 = () => import("../views/Process2/Process2.vue");
 const More = () => import("../views/More/More.vue");
 const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
@@ -225,9 +226,10 @@ const routes: RouteRecordRaw[] = [
       { path: "people/:id", name: "people", component: People },
       { path: "pin/:id/:module_id", name: "pin", component: Pin },
       { path: "plan/:id", name: "plan", component: Plan },
-      { path: "process/:id", name: "process", component: Process },
+      { path: "process/:id", name: "process", component: Process2 },
       { path: "more/:id", name: "more", component: More },
       { path: "more/detail/:id/:module_id", name: "moreDetail", component: ModuleDetail },
+      // { path: "custom-process/:id", name: "process2", component: Process2 },
       { path: ":id/:module_id", name: "product", component: Product },
     ],
   },

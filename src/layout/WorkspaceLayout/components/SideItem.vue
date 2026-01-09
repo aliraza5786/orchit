@@ -1,5 +1,7 @@
 <template>
   <div
+    @mouseenter="showTooltip = true"
+    @mouseleave="showTooltip = false"
     @click="clickHandler"
     class="group cursor-pointer flex items-center px-2 py-3.5 rounded-lg text-xs text-text-secondary transition-all relative hover:bg-bg-card hover:text-text-primary select-none"
     :class="[
@@ -14,36 +16,38 @@
         ? 'w-[48px] h-[48px] sm:w-full sm:h-[38px] justify-start gap-2.5'
         : 'flex-col w-[36px] h-[36px] justify-center gap-1.5 ',
     ]"
+    ref="itemRef"
   >
-    <!-- Drag Icon -->
-    <!-- <img
-      src="../../../assets/icons/Layer.svg"
-      class="absolute top-1 left-1 opacity-0 group-hover:opacity-100 w-2 drag-handle cursor-grab"
-      alt=""
-    /> -->
+    <!-- Icon -->
     <i
       v-if="progress == 'processing' && status == 'running'"
       class="fa-regular opacity-50 text-left fa-arrows-spin animate-spin duration-250"
     ></i>
-    <!-- Icon -->
+
     <i
       v-else
-      :class="[
-         ...iconClasses,
-        expanded ? 'text-[16px]' : 'text-[14px]',
-      ]"
-    >
-    </i>
-    <!-- <FontAwesomeIcon  :icon="[icon.prefix, icon.iconName]"/> -->
-    <!-- <FontAwesomeIcon :icon="faGrid2" />      Label -->
-    <span 
-       v-if="expanded"
+      :class="[...iconClasses, expanded ? 'text-[16px]' : 'text-[14px]']"
+    ></i>
+
+    <!-- Label -->
+    <span
+      v-if="expanded"
       class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
       :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
     >
       {{ label }}
     </span>
   </div>
+
+  <!-- Tooltip rendered in body via Teleport -->
+  <Teleport to="body" v-if="!expanded && showTooltip">
+    <div
+      class="bg-bg-card text-text-primary text-xs font-medium px-3 py-2 border border-border-input rounded-md shadow-md whitespace-nowrap z-[9999] pointer-events-none fixed transition-all"
+      :style="tooltipStyles"
+    >
+      {{ label }}
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -61,13 +65,24 @@ const props = defineProps<{
   status?: string;
   expanded?: boolean;
 }>();
+const showTooltip = ref(false);
+const itemRef = ref<HTMLElement | null>(null);
+const tooltipStyles = computed(() => {
+  if (!itemRef.value) return {};
 
+  const rect = itemRef.value.getBoundingClientRect();
+  return {
+    top: `${rect.top + rect.height / 2}px`,
+    left: `${rect.right + 8}px`,
+    transform: "translateY(-50%)",
+  };
+});
 /** --- STATE --- **/
 const progress = ref<any>(""); // store only progress as required
 const eventSource = ref<EventSource | null>(null);
 let stopped = false;
 /** --- SSE URL --- **/
-const SERVER_BASE_URL =import.meta.env.VITE_API_BASE_URL;
+const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 /**
  * Open SSE stream for job progress
@@ -167,11 +182,9 @@ function clickHandler() {
   router.push(props.to);
 }
 
-
 // sidebar item icon normalizer
-const iconClasses = computed(() => { 
-  
-  const placeholder = { prefix: 'fas', iconName: 'fa-layer-group' };
+const iconClasses = computed(() => {
+  const placeholder = { prefix: "fas", iconName: "fa-layer-group" };
 
   // Choose icon:
   // 1. props.icon (direct)
@@ -181,19 +194,17 @@ const iconClasses = computed(() => {
 
   if (props.icon?.iconName) {
     icon = props.icon;
-  } else if (props.icon?.variables?.['module-icon']?.iconName) {
-    icon = props.icon.variables['module-icon'];
+  } else if (props.icon?.variables?.["module-icon"]?.iconName) {
+    icon = props.icon.variables["module-icon"];
   }
 
-  const prefix = icon.prefix || 'fas';
+  const prefix = icon.prefix || "fas";
   const name = icon.iconName;
 
-  const normalizedName = name.startsWith('fa-') ? name : `fa-${name}`;
+  const normalizedName = name.startsWith("fa-") ? name : `fa-${name}`;
 
   return [prefix, normalizedName];
 });
-
-
 </script>
 
 <style scoped>

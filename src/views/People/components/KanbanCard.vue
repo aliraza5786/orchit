@@ -3,8 +3,8 @@
              hover:shadow-md transition-all duration-200 active:cursor-grabbing"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
 
-        <div class="flex justify-between gap-2 items-start w-full">
-            <div class="flex items-center gap-2 w-[90%] ">
+        <div class="flex justify-between gap-2 items-start w-full relative">
+            <div class="flex items-center gap-2 w-[70%] ">
                 <img v-if="ticket?.avatar" :src="ticket?.avatar" class="min-w-10 w-10 h-10 rounded-full object-cover"
                     alt="avartar">
                 <div v-else
@@ -13,13 +13,21 @@
                     {{ getInitials(ticket?.name) }} <i v-if="!ticket?.name" class="fa-solid fa-user text-white"></i>
                 </div>
                 <div class=" max-w-[70%]">
-                    <h3 class="text-sm font-medium mb-1 text-card-foreground leading-tight w-full">
+                    <h3 class="text-sm font-medium mb-1 text-card-foreground leading-tight overflow-hidden overflow-ellipsis text-nowrap">
                         {{ ticket?.name ?? ticket['title'] ?? `Team Member ` }}
                     </h3>
                     <!-- <p class="text-text-secondary text-sm"> {{ ticket['email'] ?? 'example@gmail.com' }}</p> -->
                     <p class="text-text-secondary text-xs overflow-hidden overflow-ellipsis"> {{ ticket?.email }}</p>
                 </div>
 
+            </div>
+            <div class="group-hover:hidden text-[11px]" :class="{
+                        'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-amber-600/10 text-amber-600': ticket.status === 'pending',
+                        'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-red-600/10 text-red-600 ': ticket.status === 'rejected',
+                        'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-green-600/10 text-green-600  ': ticket.status === 'accepted',
+                        'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-gray-600/20 text-gray-400  ': ticket.status === 'unassigned'
+                    }">
+                  {{ ticket.status }}
             </div>
             <div v-if="getMenuItems().length > 0" class="group-hover:flex justify-center items-center hidden w-6 h-6 bg-bg-surface/40 rounded-md ">
 

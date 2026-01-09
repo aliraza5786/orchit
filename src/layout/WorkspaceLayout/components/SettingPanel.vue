@@ -43,6 +43,7 @@
               v-tooltip="'Click to rename'">
               {{ editableTitle }}
             </h3>
+            
           </template>
           <template v-else>
             <div class="flex items-center gap-2">
@@ -51,6 +52,9 @@
                 @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle" @blur="saveTitle" />
             </div>
           </template>
+          <p class="text-xs text-text-secondary mt-0.5" v-if="workspace?.created_at">
+              Created at {{ formatDateTime(workspace.created_at) }}
+            </p>
         </div>
       </div>
 
@@ -64,15 +68,22 @@
         <h3 class="text-sm font-medium text-text-secondary mb-2">Theme Mode</h3>
         <div class="space-y-2 flex gap-4  ">
           <label
+            :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/40': theme == 'system' }"
+            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-22  bg-bg-card items-center gap-2 text-sm"
+            @click="setTheme('system')">
+            <input class="hidden" type="radio" value="system" v-model="theme" />
+            <i class="text-2xl fa-solid fa-desktop"></i>
+          </label>
+          <label
             :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/40': theme == 'light' }"
-            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-30  bg-bg-card items-center gap-2 text-sm"
+            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-22  bg-bg-card items-center gap-2 text-sm"
             @click="setTheme('light')">
             <input class="hidden" type="radio" value="light" v-model="theme" />
             <i class="text-2xl fa-regular fa-sun"></i>
           </label>
           <label
             :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/10': theme == 'dark' }"
-            class="flex flex-auto rounded-lg justify-center cursor-pointer border-border border h-30 items-center gap-2 text-sm"
+            class="flex flex-auto rounded-lg justify-center cursor-pointer border-border border h-22 items-center gap-2 text-sm"
             @click="setTheme('dark')">
             <input class="hidden" type="radio" value="dark" v-model="theme" />
             <i class="text-2xl fa-regular fa-moon"></i>
@@ -181,17 +192,33 @@
           </div>
 
 
-          <div>
+          <div v-if="workspace.usage_stats?.storage">
             <h3 class="text-sm font-medium text-text-secondary mb-2">Usage</h3>
             <div class="bg-bg-body rounded-xl p-4 space-y-3">
-              <div class="flex items-center gap-2 text-text-primary text-base font-medium">
-                <i class="fa-regular fa-cloud"></i>
-                <span>Storage (80% full)</span>
+              <div class="flex items-center justify-between text-text-primary text-base font-medium">
+                <div class="flex items-center gap-2">
+                  <i class="fa-regular fa-cloud"></i>
+                  <span>Storage</span>
+                </div>
+                 <span v-if="workspace.usage_stats.storage.total_allowed_mb !== 'unlimited'" class="text-sm">
+                   {{ Math.round(storagePercentage) }}% full
+                 </span>
               </div>
+              
               <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
-                <div class="h-full bg-accent rounded-full" style="width: 80%"></div>
+                <div class="h-full bg-accent rounded-full transition-all duration-300" 
+                     :style="{ width: `${storagePercentage}%` }">
+                </div>
               </div>
-              <div class="text-sm text-text-secondary">11.98 GB of 15 GB used</div>
+
+              <div class="text-sm text-text-secondary">
+                 <template v-if="workspace.usage_stats.storage.total_allowed_mb === 'unlimited'">
+                     {{ workspace.usage_stats.storage.used_mb?.toFixed(2) }} MB used (Unlimited)
+                 </template>
+                 <template v-else>
+                    {{ workspace.usage_stats.storage.used_mb?.toFixed(2) }} MB of {{ workspace.usage_stats.storage.total_allowed_mb }} MB used
+                 </template>
+              </div>
             </div>
           </div>
 
@@ -257,6 +284,7 @@ import ActivityTimeline from './ActivityTimeline.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 // import Dropdown from '../../../components/ui/Dropdown.vue'
 import { getInitials } from '../../../utilities'
+import { formatDateTime } from '../../../utilities/FormatDate'
 import { useDeleteInvitedPeople, useDeleteWorkspace, useInvitePeople, useUpdateWorkspaceDetail, useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { usePermissions } from '../../../composables/usePermissions'
 const { canInviteUser, canEditUser } = usePermissions()
@@ -274,7 +302,7 @@ import { useRouter } from 'vue-router'
 const queryClient = useQueryClient()
 const router = useRouter()
 const { workspaceId } = useRouteIds();
-const { theme, setTheme } = useTheme()
+const { theme, setTheme, isDark } = useTheme()
 const props = defineProps<{ workspace: any }>()
 const { mutate: updateWS } = useUpdateWorkspaceDetail({
   onSuccess: () => {
@@ -319,7 +347,7 @@ const darkColors = [
 ]
  
 
-const colors = computed(() => theme.value === 'dark' ? darkColors : lightColors)
+const colors = computed(() => isDark.value ? darkColors : lightColors)
 
 const selectedColor = ref<string>(props.workspace?.variables.color || colors.value[0].value)
 const selectedTheme = ref<string>('')
@@ -332,7 +360,7 @@ if (props.workspace?.variables.color) {
   selectColor(colors.value[0].value)
 }
 
-watch(theme, () => {
+watch(isDark, () => {
    selectColor(colors.value[0].value)
 })
 
@@ -633,6 +661,16 @@ const { mutate: deleteWorkspace } = useDeleteWorkspace({
 function openDeleteModal() {
   showDeleteModal.value = true
 }
+
+const storagePercentage = computed(() => {
+  const s = props.workspace?.usage_stats?.storage
+  if (!s) return 0
+  if (s.total_allowed_mb === 'unlimited') return 0
+  const total = Number(s.total_allowed_mb)
+  if (!total || isNaN(total)) return 0
+  const used = Number(s.used_mb) || 0
+  return Math.min((used / total) * 100, 100)
+})
 
 function handleDeleteWorkspace() {
   isDeletingWorkspace.value = true

@@ -1,5 +1,7 @@
 <template>
-  <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex items-start">
+  <div
+    class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex items-start"
+  >
     <!-- <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
       <Dropdown v-model="selectedSheetId" :options="transformedSheets" variant="secondary">
         <template #more>
@@ -21,15 +23,47 @@
         :board="localList" @onBoardUpdate="handleBoardUpdate" variable_id="" sheet_id="">
         <template #ticket="{ ticket, index }"> -->
     <div class="max-w-82 p-4 bg-bg-body rounded-md m-4">
-      <ProcessKanbanCard @click="handleClickTicket(item)" v-for="(item, index) in localList[0]?.cards" :key="index"
-        :ticket="item" :index="index" />
+      <ProcessKanbanCard
+        @click="handleClickTicket(item)"
+        v-for="(item, index) in localList[0]?.cards"
+        :key="index"
+        :ticket="item"
+        :index="index"
+      />
     </div>
-    <button 
+    <div class="max-w-82 p-4 bg-bg-body rounded-md mx-4">
+      <div
+        @click="router.push(`/`)"
+        class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-border hover:border-accent"
+      >
+        <div class="flex justify-between gap-2 items-start">
+          <div class="flex items-start gap-3 flex-1">
+            <div
+              class="w-10 h-10 bg-accent/20 flex justify-center items-center rounded-lg"
+            >
+              <i class="fa-solid fa-diagram-project text-accent"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3
+                class="text-sm font-semibold text-text-primary leading-tight mb-1"
+              >
+                Custom Process
+              </h3>
+              <p class="text-xs text-text-secondary line-clamp-2">
+               Make custom workflow for handling tasks  based on card type.
+              </p>
+            </div>
+          </div> 
+        </div>
+      </div>
+    </div>
+
+    <!-- <button
       class="max-w-82 ms-4 text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg cursor-pointer"
       @click="isAddProcessModal = true"
     >
       + Add New Process
-    </button>
+    </button> -->
     <!-- </template> -->
     <!-- <template #column-footer="{ column }: any">
           <div v-if="!column.showADDNEW" @click="toggleAddNewProcess(column)"
@@ -48,15 +82,25 @@
     <!-- </KanbanBoard> -->
     <div class="min-w-[328px]" @click.stop>
       <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
-        <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New Column"
-          @keyup.enter="emitAddColumn" />
+        <BaseTextField
+          :autofocus="true"
+          v-model="newColumn"
+          placeholder="Add New Column"
+          @keyup.enter="emitAddColumn"
+        />
         <p class="text-xs mt-1.5">You can add details while editing</p>
         <div class="flex items-center mt-3 gap-3">
-          <Button @click="emitAddColumn" variant="primary"
-            class="px-3 py-1 bg-accent cursor-pointer text-white rounded">
-            {{ addingList ? 'Adding...' : 'Add Column' }}
+          <Button
+            @click="emitAddColumn"
+            variant="primary"
+            class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+          >
+            {{ addingList ? "Adding..." : "Add Column" }}
           </Button>
-          <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList"></i>
+          <i
+            class="fa-solid fa-close cursor-pointer"
+            @click="setActiveAddList"
+          ></i>
         </div>
       </div>
       <!-- <button v-else
@@ -68,46 +112,70 @@
     <!-- </div> -->
   </div>
 
-  <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Column" itemLabel="column"
-    :itemName="localColumn?.title" :requireMatchText="localColumn?.title" confirmText="Delete column"
-    cancelText="Cancel" size="md" :loading="isDeletingList" @confirm="handleDeleteColumn"
-    @cancel="() => { showDelete = false }" />
+  <ConfirmDeleteModal
+    @click.stop=""
+    v-model="showDelete"
+    title="Delete Column"
+    itemLabel="column"
+    :itemName="localColumn?.title"
+    :requireMatchText="localColumn?.title"
+    confirmText="Delete column"
+    cancelText="Cancel"
+    size="md"
+    :loading="isDeletingList"
+    @confirm="handleDeleteColumn"
+    @cancel="
+      () => {
+        showDelete = false;
+      }
+    "
+  />
 
-  <WorkflowBuilderModal  v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
+  <WorkflowBuilderModal
+    v-model="showWorkflowBuilder"
+    :process="selectedProcess"
+    @close="closeWorkflowBuilder"
+  />
 
-  <CreateProcessSheetModal v-model="isCreateSheetModal" @created="handleSheetCreated" />
-  
-  <AddProcessModal v-model="isAddProcessModal" @created="handleProcessCreated" />
+  <CreateProcessSheetModal
+    v-model="isCreateSheetModal"
+    @created="handleSheetCreated"
+  />
+
+  <AddProcessModal
+    v-model="isAddProcessModal"
+    @created="handleProcessCreated"
+  />
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, watchEffect } from 'vue';
-import BaseTextField from '../../components/ui/BaseTextField.vue';
-import { useRouteIds } from '../../composables/useQueryParams';
+import { ref, watch, onMounted, watchEffect } from "vue";
+import { useRouter } from "vue-router";
+import BaseTextField from "../../components/ui/BaseTextField.vue";
+import { useRouteIds } from "../../composables/useQueryParams";
 import {
   useProcessColumns,
   useCreateProcessColumn,
   useDeleteProcessColumn,
-  useProcessSheets
-} from '../../queries/useProcess';
-import ProcessKanbanCard from './components/ProcessKanbanCard.vue';
-import ConfirmDeleteModal from '../Product/modals/ConfirmDeleteModal.vue';
-import { useQueryClient } from '@tanstack/vue-query';
-import Button from '../../components/ui/Button.vue';
-import WorkflowBuilderModal from './modals/WorkflowBuilderModal.vue';
+  useProcessSheets,
+} from "../../queries/useProcess";
+import ProcessKanbanCard from "./components/ProcessKanbanCard.vue";
+import ConfirmDeleteModal from "../Product/modals/ConfirmDeleteModal.vue";
+import { useQueryClient } from "@tanstack/vue-query";
+import Button from "../../components/ui/Button.vue";
+import WorkflowBuilderModal from "./modals/WorkflowBuilderModal.vue";
 
-import CreateProcessSheetModal from './modals/CreateProcessSheetModal.vue';
-import AddProcessModal from './modals/AddProcessModal.vue';
+import CreateProcessSheetModal from "./modals/CreateProcessSheetModal.vue";
+import AddProcessModal from "./modals/AddProcessModal.vue";
 
 const isAddProcessModal = ref(false);
+const router = useRouter();
 const showDelete = ref(false);
 const localColumn = ref();
 const { workspaceId } = useRouteIds();
 
 const { data: processSheets } = useProcessSheets(workspaceId.value);
-const selectedSheetId = ref<string>('sheet-1');
-
-
+const selectedSheetId = ref<string>("sheet-1");
 
 watch(processSheets, (newSheets) => {
   if (newSheets && newSheets.length > 0 && !selectedSheetId.value) {
@@ -119,22 +187,22 @@ const isCreateSheetModal = ref(false);
 const { mutate: addList, isPending: addingList } = useCreateProcessColumn({
   onSuccess: (data: any) => {
     localList.value = [...(localList.value || []), { ...data, cards: [] }];
-    newColumn.value = '';
+    newColumn.value = "";
     activeAddList.value = false;
   },
 });
 
 const localList = ref<any>([]);
-const { data: Lists, } = useProcessColumns(workspaceId.value, selectedSheetId);
-watchEffect(()=>{
-  console.log(Lists.value, "this is the list ")
-})
+const { data: Lists } = useProcessColumns(workspaceId.value, selectedSheetId);
+watchEffect(() => {
+  console.log(Lists.value, "this is the list ");
+});
 watch(Lists, (newVal) => {
   if (newVal) {
     localList.value = newVal.map((col: any) => ({
       ...col,
       _id: col.id,
-      cards: col.processes || []
+      cards: col.processes || [],
     }));
   }
 });
@@ -143,7 +211,7 @@ onMounted(() => {
     localList.value = Lists.value.map((col: any) => ({
       ...col,
       _id: col.id,
-      cards: col.processes || []
+      cards: col.processes || [],
     }));
   }
 });
@@ -151,9 +219,8 @@ onMounted(() => {
 const selectedProcess = ref<any>(null);
 const showWorkflowBuilder = ref(false);
 
-
 const activeAddList = ref(false);
-const newColumn = ref('');
+const newColumn = ref("");
 
 function setActiveAddList() {
   activeAddList.value = !activeAddList.value;
@@ -170,26 +237,24 @@ const handleAddColumn = (name: any) => {
     workspace_id: workspaceId.value,
     sheet_id: selectedSheetId.value,
     title: name,
-    order: localList.value.length
-  }
-  addList({ payload })
-}
+    order: localList.value.length,
+  };
+  addList({ payload });
+};
 
 const queryClient = useQueryClient();
 
-const { mutate: deleteList, isPending: isDeletingList } = useDeleteProcessColumn({
-  onSuccess: () => {
-    showDelete.value = false;
-    queryClient.invalidateQueries({ queryKey: ['process-columns'] });
-  },
-});
+const { mutate: deleteList, isPending: isDeletingList } =
+  useDeleteProcessColumn({
+    onSuccess: () => {
+      showDelete.value = false;
+      queryClient.invalidateQueries({ queryKey: ["process-columns"] });
+    },
+  });
 
 const handleDeleteColumn = () => {
   deleteList({ id: localColumn.value?.columnId });
 };
-
-
-
 
 const handleClickTicket = (ticket: any) => {
   selectedProcess.value = ticket;
@@ -203,11 +268,11 @@ const closeWorkflowBuilder = () => {
 
 const handleSheetCreated = () => {
   isCreateSheetModal.value = false;
-  queryClient.invalidateQueries({ queryKey: ['process-sheets'] });
+  queryClient.invalidateQueries({ queryKey: ["process-sheets"] });
 };
 
 const handleProcessCreated = () => {
   isAddProcessModal.value = false;
-  queryClient.invalidateQueries({ queryKey: ['process-columns'] });
+  queryClient.invalidateQueries({ queryKey: ["process-columns"] });
 };
 </script>

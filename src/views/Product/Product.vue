@@ -2,107 +2,151 @@
   <div
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible"
   >
-   <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
-       <div
-      class="header  px-4 py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
-    >
-      <Dropdown
-        @edit-option="openEditSprintModal"
-        v-model="selected_sheet_id"
-        :canEdit="canEditSheet"
-        :canDelete="canDeleteSheet"
-        @delete-option="handleDeleteSheetModal"
-        :options="transformedData"
-        variant="secondary"
-        customClasses="fixed w-auto"
+    <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
+      <div
+        class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
       >
-        <template #more>
-          <div
-            v-if="canCreateSheet"
-            @click="createSheet()"
-            class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
-          >
-            <i class="fa-solid fa-plus"></i> Add new
-          </div>
-        </template>
-      </Dropdown>
-      <div class="flex gap-3 items-center">
         <Dropdown
-          v-if="view == 'kanban' || 'mindmap'"
-          :actions="false" 
-          v-model="selected_view_by"
-          :options="variables"
+          @edit-option="openEditSprintModal"
+          v-model="selected_sheet_id"
+          :canEdit="canEditSheet"
+          :canDelete="canDeleteSheet"
+          @delete-option="handleDeleteSheetModal"
+          :options="transformedData"
           variant="secondary"
-           customClasses="fixed w-auto"
-           @nested-select="handleProcessNestedSelection"
+          customClasses="fixed w-auto"
         >
           <template #more>
             <div
-              v-if="canCreateVariable"
-              @click="
-                () => {
-                  isCreateVar = true;
-                }
-              "
-              class="sticky bottom-0 bg-bg-dropdown shadow-md shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
+              v-if="canCreateSheet"
+              @click="createSheet()"
+              class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
             >
               <i class="fa-solid fa-plus"></i> Add new
             </div>
           </template>
         </Dropdown>
-        <Searchbar
-          @onChange="
-            (e) => {
-              searchQuery = e;
-            }
-          "
-          placeholder="Search in Orchit AI space"
-        >
-        </Searchbar>
 
-        <div
-          class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
-        >
-          <button
-            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-            :class="
-              view === 'kanban'
-                ? 'text-accent bg-accent-text'
-                : ' hover:bg-border/50 backdrop-blur-2xl  transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-            "
-            title="List view"
-            @click="view = 'kanban'"
+        <div class="flex gap-3 items-center">
+          <Dropdown
+            v-if="view == 'kanban' || 'mindmap'"
+            :actions="false"
+            v-model="selected_view_by"
+            :options="variables"
+            variant="secondary"
+            customClasses="fixed w-auto"
+            @nested-select="handleProcessNestedSelection"
           >
-            <i class="fa-solid fa-chart-kanban"></i>
+            <template #more>
+              <div
+                v-if="canCreateVariable"
+                @click="
+                  () => {
+                    isCreateVar = true;
+                  }
+                "
+                class="sticky bottom-0 bg-bg-dropdown shadow-md shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
+              >
+                <i class="fa-solid fa-plus"></i> Add new
+              </div>
+            </template>
+          </Dropdown>
+          <Searchbar
+            @onChange="
+              (e) => {
+                searchQuery = e;
+              }
+            "
+            placeholder="Search in Orchit AI space"
+          >
+          </Searchbar>
+          <button
+            class="cursor-pointer w-8 h-8 rounded-full bg-bg-surface"
+            v-if="view === 'mindmap'"
+            title="Show formatting sidebar"
+            @click="showFormatSidebar = !showFormatSidebar"
+          >
+            <i class="fa-solid fa-sidebar"></i>
           </button>
+          <div
+            class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+          >
+            <button
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="
+                view === 'kanban'
+                  ? 'text-accent bg-accent-text'
+                  : ' hover:bg-border/50 backdrop-blur-2xl  transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
+              title="List view"
+              @click="view = 'kanban'"
+            >
+              <i class="fa-solid fa-chart-kanban"></i>
+            </button>
 
-          <button
-            @click="view = 'table'"
-            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-            :class="
-              view === 'table'
-                ? 'text-accent bg-accent-text'
-                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-            "
-            title="Gallery view"
-          >
-            <i class="fa-solid fa-align-left"></i>
-          </button>
-          <button
-            @click="view = 'mindmap'"
-            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-            :class="
-              view === 'mindmap'
-                ? 'text-accent bg-accent-text'
-                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-            "
-            title="MindMap view"
-          >
-            <i class="fa-solid fa-chart-diagram"></i>
-          </button>
+            <button
+              @click="view = 'table'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="
+                view === 'table'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
+              title="Gallery view"
+            >
+              <i class="fa-solid fa-align-left"></i>
+            </button>
+            <button
+              @click="view = 'mindmap'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="
+                view === 'mindmap'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
+              title="MindMap view"
+            >
+              <i class="fa-solid fa-chart-diagram"></i>
+            </button>
+            <button
+              @click="view = 'calendar'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="
+                view === 'calendar'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
+              title="Calendar view"
+            >
+              <i class="fa-regular fa-calendar"></i>
+            </button>
+            <button
+              @click="view = 'gantt'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="
+                view === 'gantt'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
+              title="Gantt Chart view"
+            >
+              <i class="fa-solid fa-chart-gantt"></i>
+            </button>
+            <button
+              @click="view = 'timeline'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="
+                view === 'timeline'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
+              title="Timeline view"
+            >
+              <i class="fa-solid fa-timeline"></i>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
     </div>
     <template v-if="view == 'kanban'">
       <KanbanSkeleton v-show="isPending || isSheetPending" />
@@ -199,208 +243,220 @@
     </template>
     <!-- MindMap View -->
     <template v-if="view === 'mindmap'">
-      <div class="relative w-full h-full flex overflow-hidden ">
+      <div class="relative w-full h-full flex overflow-hidden">
         <!-- Mind Map Canvas -->
         <div
-        ref="mindMapRef"
-        class="flex-1 h-full overflow-hidden rounded-md relative"
-      ></div>
+          ref="mindMapRef"
+          class="flex-1 h-full overflow-hidden rounded-md relative"
+        ></div>
 
         <!-- Formatting Sidebar -->
         <div
-        v-if="showFormatSidebar"
-        class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-hidden flex flex-col"
-      >
-  <!-- Header -->
-  <div class="flex items-center justify-between pb-3 mb-4 border-b">
-    <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
-    <!-- <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
+          v-if="showFormatSidebar"
+          class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-x-hidden overflow-y-auto flex flex-col"
+        >
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 mb-4 border-b">
+            <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
+            <!-- <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
       <i class="fa-solid fa-times"></i>
     </button> -->
-  </div>
+          </div>
 
-  <div class="format-content space-y-6">
+          <div class="format-content space-y-6">
+            <!-- ================= COLORS ================= -->
+            <div>
+              <h4 class="text-xs font-semibold text-secondary uppercase mb-3">
+                Colors
+              </h4>
 
-    <!-- ================= COLORS ================= -->
-    <div>
-      <h4 class="text-xs font-semibold text-secondary uppercase mb-3">
-        Colors
-      </h4>
+              <!-- Background -->
+              <div class="format-group relative mb-3">
+                <label class="block text-xs text-secondary mb-1"
+                  >Background</label
+                >
 
-      <!-- Background -->
-      <div class="format-group relative mb-3">
-        <label class="block text-xs text-secondary mb-1">Background</label>
+                <div
+                  class="flex items-center gap-2 cursor-pointer"
+                  @click="showBgPicker = !showBgPicker"
+                >
+                  <div
+                    class="w-full h-7 rounded border"
+                    :style="{ background: activeFormatStyle.background }"
+                  ></div>
+                  <span class="text-xs text-secondary">
+                    {{ activeFormatStyle.background }}
+                  </span>
+                </div>
 
-        <div
-          class="flex items-center gap-2 cursor-pointer"
-          @click="showBgPicker = !showBgPicker"
-        >
-          <div
-            class="w-full h-7 rounded border"
-            :style="{ background: activeFormatStyle.background }"
-          ></div>
-          <span class="text-xs text-secondary">
-            {{ activeFormatStyle.background }}
-          </span>
-        </div>
+                <!-- Picker -->
+                <div
+                  v-if="showBgPicker"
+                  class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
+                >
+                  <div class="grid grid-cols-10 gap-1 mb-3">
+                    <button
+                      v-for="color in presetColors"
+                      :key="color"
+                      class="w-5 h-5 rounded border"
+                      :style="{ background: color }"
+                      @click="
+                        onStyleChange('bg_color', {
+                          target: { value: color },
+                        } as any);
+                        showBgPicker = false;
+                      "
+                    ></button>
+                  </div>
 
-        <!-- Picker -->
-        <div
-          v-if="showBgPicker"
-          class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
-        >
-          <div class="grid grid-cols-10 gap-1 mb-3">
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="color"
+                      :value="activeFormatStyle.background"
+                      class="w-8 h-8 cursor-pointer"
+                      @input="onStyleChange('bg_color', $event)"
+                    />
+                    <input
+                      type="text"
+                      class="flex-1 text-xs border rounded px-2 py-1"
+                      :value="activeFormatStyle.background"
+                      readonly
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Text Color -->
+              <!-- Text Color -->
+              <div class="format-group relative mb-3">
+                <label class="block text-xs text-secondary mb-1">Text</label>
+
+                <!-- Trigger -->
+                <div
+                  class="flex items-center gap-2 cursor-pointer"
+                  @click="showTextColorPicker = !showTextColorPicker"
+                >
+                  <div
+                    class="w-full h-7 rounded border"
+                    :style="{ background: activeFormatStyle.color }"
+                  ></div>
+                  <span class="text-xs text-secondary">
+                    {{ activeFormatStyle.color }}
+                  </span>
+                </div>
+
+                <!-- Picker -->
+                <div
+                  v-if="showTextColorPicker"
+                  class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
+                >
+                  <!-- Color Grid -->
+                  <div class="grid grid-cols-10 gap-1 mb-3">
+                    <button
+                      v-for="color in presetColors"
+                      :key="color"
+                      class="w-5 h-5 rounded border"
+                      :style="{ background: color }"
+                      @click="
+                        onStyleChange('color', {
+                          target: { value: color },
+                        } as any);
+                        showTextColorPicker = false;
+                      "
+                    ></button>
+                  </div>
+
+                  <!-- Native Picker + Hex -->
+                  <div class="flex items-center gap-2">
+                    <input
+                      type="color"
+                      :value="activeFormatStyle.color"
+                      class="w-8 h-8 cursor-pointer"
+                      @input="onStyleChange('color', $event)"
+                    />
+                    <input
+                      type="text"
+                      class="flex-1 text-xs border rounded px-2 py-1"
+                      :value="activeFormatStyle.color"
+                      readonly
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="grid grid-cols-1 gap-3">
+                <div>
+                  <label class="block text-xs text-secondary mb-1"
+                    >Weight</label
+                  >
+                  <select
+                    class="w-full h-8 border rounded px-2 text-sm"
+                    :value="activeFormatStyle.fontWeight"
+                    @change="onStyleChange('font_weight', $event)"
+                  >
+                    <option value="lighter">Light</option>
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="bolder">Extra Bold</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="mt-6 pt-4">
             <button
-              v-for="color in presetColors"
-              :key="color"
-              class="w-5 h-5 rounded border"
-              :style="{ background: color }"
-              @click="
-                onStyleChange('bg_color', { target: { value: color } } as any);
-                showBgPicker = false;
-              "
-            ></button>
-          </div>
-
-          <div class="flex items-center gap-2">
-            <input
-              type="color"
-              :value="activeFormatStyle.background"
-              class="w-8 h-8 cursor-pointer"
-              @input="onStyleChange('bg_color', $event)"
-            />
-            <input
-              type="text"
-              class="flex-1 text-xs border rounded px-2 py-1"
-              :value="activeFormatStyle.background"
-              readonly
-            />
+              class="w-full cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60"
+              :disabled="isSavingNodeStyle"
+              @click="saveNodeStyle"
+            >
+              <span
+                v-if="isSavingNodeStyle"
+                class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+              ></span>
+              <span>{{ isSavingNodeStyle ? "Updating..." : "Update" }}</span>
+            </button>
           </div>
         </div>
-      </div>
-
-      <!-- Text Color -->
-      <!-- Text Color -->
-<div class="format-group relative mb-3">
-  <label class="block text-xs text-secondary mb-1">Text</label>
-
-  <!-- Trigger -->
-  <div
-    class="flex items-center gap-2 cursor-pointer"
-    @click="showTextColorPicker = !showTextColorPicker"
-  >
-    <div
-      class="w-full h-7 rounded border"
-      :style="{ background: activeFormatStyle.color }"
-    ></div>
-    <span class="text-xs text-secondary">
-      {{ activeFormatStyle.color }}
-    </span>
-  </div>
-
-  <!-- Picker -->
-  <div
-    v-if="showTextColorPicker"
-    class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
-  >
-    <!-- Color Grid -->
-    <div class="grid grid-cols-10 gap-1 mb-3">
-      <button
-        v-for="color in presetColors"
-        :key="color"
-        class="w-5 h-5 rounded border"
-        :style="{ background: color }"
-        @click="
-          onStyleChange('color', { target: { value: color } } as any);
-          showTextColorPicker = false;
-        "
-      ></button>
-    </div>
-
-    <!-- Native Picker + Hex -->
-    <div class="flex items-center gap-2">
-      <input
-        type="color"
-        :value="activeFormatStyle.color"
-        class="w-8 h-8 cursor-pointer"
-        @input="onStyleChange('color', $event)"
-      />
-      <input
-        type="text"
-        class="flex-1 text-xs border rounded px-2 py-1"
-        :value="activeFormatStyle.color"
-        readonly
-      />
-    </div>
-  </div>
-</div>
-
-    </div>
-    <div>
-      <div class="grid grid-cols-1 gap-3">
-
-        <div>
-          <label class="block text-xs text-secondary mb-1">Weight</label>
-          <select
-            class="w-full h-8 border rounded px-2 text-sm"
-            :value="activeFormatStyle.fontWeight"
-            @change="onStyleChange('font_weight', $event)"
-          >
-            <option value="lighter">Light</option>
-            <option value="normal">Normal</option>
-            <option value="bold">Bold</option>
-            <option value="bolder">Extra Bold</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div class="mt-6 pt-4">
-    <button
-      class="w-full cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60"
-      :disabled="isSavingNodeStyle"
-      @click="saveNodeStyle"
-    >
-      <span
-        v-if="isSavingNodeStyle"
-        class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-      ></span>
-      <span>{{ isSavingNodeStyle ? "Updating..." : "Update" }}</span>
-    </button>
-  </div>
-</div>
-
       </div>
 
       <!-- hyperlink pop up -->
-       <div v-if="showHyperlinkModal" class="fixed inset-0 bg-black/30 flex items-center justify-center">
-    <div class="bg-white p-6 rounded-xl w-80">
-      <h3 class="text-lg font-semibold mb-4">Insert Web Link</h3>
-      <input
-        v-model="hyperlink"
-        type="text"
-        placeholder="Enter or paste a URL"
-        class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-      <div class="flex justify-end gap-2 mt-4">
-        <button
-          @click="cancel"
-          class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
-        >
-          Cancel
-        </button>
-        <button
-          :disabled="!hyperlink"
-          @click="confirm"
-          :class="['px-4 py-2 rounded-md text-white', hyperlink ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-300 cursor-not-allowed']"
-        >
-          Insert
-        </button>
+      <div
+        v-if="showHyperlinkModal"
+        class="fixed inset-0 bg-black/30 flex items-center justify-center"
+      >
+        <div class="bg-white p-6 rounded-xl w-80">
+          <h3 class="text-lg font-semibold mb-4">Insert Web Link</h3>
+          <input
+            v-model="hyperlink"
+            type="text"
+            placeholder="Enter or paste a URL"
+            class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div class="flex justify-end gap-2 mt-4">
+            <button
+              @click="cancel"
+              class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              :disabled="!hyperlink"
+              @click="confirm"
+              :class="[
+                'px-4 py-2 rounded-md text-white',
+                hyperlink
+                  ? 'bg-blue-500 hover:bg-blue-600'
+                  : 'bg-blue-300 cursor-not-allowed',
+              ]"
+            >
+              Insert
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
       <!-- EXISTING POPUP (UNCHANGED) -->
       <div
         v-if="activeAddList"
@@ -429,6 +485,18 @@
           ></i>
         </div>
       </div>
+    </template>
+    <template v-if="view === 'calendar'">
+      <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template>
+    <template v-if="view === 'gantt'">
+      <GanttChartView
+        :data="filteredBoard"
+        @select:ticket="selectCardHandler"
+      />
+    </template>
+    <template v-if="view === 'timeline'">
+      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
     </template>
   </div>
   <ConfirmDeleteModal
@@ -527,7 +595,7 @@ import {
   toRaw,
   watchEffect,
   nextTick,
-  triggerRef
+  triggerRef,
 } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
 import Dropdown from "../../components/ui/Dropdown.vue";
@@ -544,7 +612,7 @@ import {
   useUpdateWorkspaceSheet,
   useVarVisibilty,
   useVariables,
-  useCreateWorkspaceSheet
+  useCreateWorkspaceSheet,
 } from "../../queries/useSheets";
 import { useRoute } from "vue-router";
 import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
@@ -565,6 +633,9 @@ import { usePermissions } from "../../composables/usePermissions";
 import { request, toApiMessage } from "../../libs/api";
 import TableSearchCell from "../../components/feature/TableView/TableSearchCell.vue";
 import TableAssigneeCell from "../../components/feature/TableView/TableAssigneeCell.vue";
+import CalendarView from "../../components/feature/CalendarView.vue";
+import GanttChartView from "../../components/feature/GanttChartView.vue";
+import TimelineView from "../../components/feature/TimelineView.vue";
 const {
   canEditSheet,
   canDeleteSheet,
@@ -610,8 +681,8 @@ function cancel() {
   showHyperlinkModal.value = false;
 }
 const selectedProcessMeta = ref<any>(null);
-const handleProcessNestedSelection = (val: any) => {  
-  selectedProcessMeta.value = val; 
+const handleProcessNestedSelection = (val: any) => {
+  selectedProcessMeta.value = val;
 };
 declare global {
   interface Window {
@@ -629,27 +700,53 @@ declare global {
 const showBgPicker = ref(false);
 
 const presetColors = [
-  "#FFFFFF", "#F2F2F2", "#D9D9D9", "#BFBFBF", "#A6A6A6",
-  "#808080", "#404040", "#000000",
-  "#FFE066", "#FF9AA2", "#8EE4AF", "#00EAD3", "#90DBF4",
-  "#4D96FF", "#6C63FF", "#C77DFF", "#F7A1C4",
-  "#FFC300", "#FF5733", "#2ECC71", "#00B894", "#17A2B8",
-  "#0984E3", "#3F51B5", "#9C27B0", "#E84393",
-  "#FF8C00", "#E74C3C", "#1E8449", "#006D6F", "#004C6D",
-  "#0057A8", "#1A237E", "#4A148C", "#7D3C98"
+  "#FFFFFF",
+  "#F2F2F2",
+  "#D9D9D9",
+  "#BFBFBF",
+  "#A6A6A6",
+  "#808080",
+  "#404040",
+  "#000000",
+  "#FFE066",
+  "#FF9AA2",
+  "#8EE4AF",
+  "#00EAD3",
+  "#90DBF4",
+  "#4D96FF",
+  "#6C63FF",
+  "#C77DFF",
+  "#F7A1C4",
+  "#FFC300",
+  "#FF5733",
+  "#2ECC71",
+  "#00B894",
+  "#17A2B8",
+  "#0984E3",
+  "#3F51B5",
+  "#9C27B0",
+  "#E84393",
+  "#FF8C00",
+  "#E74C3C",
+  "#1E8449",
+  "#006D6F",
+  "#004C6D",
+  "#0057A8",
+  "#1A237E",
+  "#4A148C",
+  "#7D3C98",
 ];
 const showTextColorPicker = ref(false);
-watch(showBgPicker, v => {
+watch(showBgPicker, (v) => {
   if (v) showTextColorPicker.value = false;
 });
 
-watch(showTextColorPicker, v => {
+watch(showTextColorPicker, (v) => {
   if (v) showBgPicker.value = false;
 });
 
 // delete ticket
 const deleteTicket = async () => {
-
   if (!selectedDeleteId.value) return;
 
   try {
@@ -777,7 +874,11 @@ watch(viewBy, () => {
 const workspaceStore = useWorkspaceStore();
 
 // usage
-const { data: Lists, isPending, refetch: refetchSheetLists } = useSheetList(
+const {
+  data: Lists,
+  isPending,
+  refetch: refetchSheetLists,
+} = useSheetList(
   moduleId,
   selected_sheet_id, // ref
   computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
@@ -789,7 +890,6 @@ const selectCardHandler = (card: any) => {
   selectedCard.value = card;
 };
 (window as any).selectCardHandler = selectCardHandler;
-
 
 const isCreateSheetModal = ref(false);
 const createSheet = () => {
@@ -996,33 +1096,33 @@ const laneOptions = computed<any[]>(() =>
 
 const columns = computed(() => {
   return [
-     {
-    key: "card-title",
-    label: "Title",
-    render: ({ row, value }: any) =>
-      h("div", { class: "flex items-center gap-1 w-full" }, [
-        h(
-          "a",
-          {
-            onClick: () => (selectedCard.value = row),
-            class:
-              "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
-          },
-          row["card-code"]
-        ),
-        h("div", { class: "flex-1 min-w-0" }, [
-           h("input", {
-            onFocusout: (e: any) => {
-              handleChangeTicket(row?._id, "card-title", e?.target?.value);
+    {
+      key: "card-title",
+      label: "Title",
+      render: ({ row, value }: any) =>
+        h("div", { class: "flex items-center gap-1 w-full" }, [
+          h(
+            "a",
+            {
+              onClick: () => (selectedCard.value = row),
+              class:
+                "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
             },
-            class:
-              "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
-            defaultValue: value,
-            disabled: !canEditCard.value,
-          }),
+            row["card-code"]
+          ),
+          h("div", { class: "flex-1 min-w-0" }, [
+            h("input", {
+              onFocusout: (e: any) => {
+                handleChangeTicket(row?._id, "card-title", e?.target?.value);
+              },
+              class:
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
+              defaultValue: value,
+              disabled: !canEditCard.value,
+            }),
+          ]),
         ]),
-         ]),
-       },
+    },
 
     {
       key: "end-date",
@@ -1031,12 +1131,12 @@ const columns = computed(() => {
         const date = ref<any>(value);
         return h(DatePicker, {
           class: " capitalize flex items-center gap-2 text-[12px]",
-          placeholder: "Set start date", 
+          placeholder: "Set start date",
           tableInputClass: true,
           modelValue: date.value,
           disabled: !canEditCard.value,
           "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e),
-           emptyText: "Date"
+          emptyText: "Date",
         });
       },
     },
@@ -1045,13 +1145,13 @@ const columns = computed(() => {
       label: "Lane",
       render: ({ row }: any) =>
         h(TableSearchCell, {
-            options: laneOptions.value ?? [],
-            placeholder: "Select lane",
-            modelValue: row.lane?._id || null, // Pass ID
-            disabled: !canEditCard.value,
-            'onUpdate:modelValue': (e: any) => setLane(row?._id, e),
-            displayField: 'title',
-            emptyText: "Lane"
+          options: laneOptions.value ?? [],
+          placeholder: "Select lane",
+          modelValue: row.lane?._id || null, // Pass ID
+          disabled: !canEditCard.value,
+          "onUpdate:modelValue": (e: any) => setLane(row?._id, e),
+          displayField: "title",
+          emptyText: "Lane",
         }),
     },
     {
@@ -1082,11 +1182,13 @@ const columns = computed(() => {
                   getInitials(value?.u_full_name)
                 ),
           ]),
-          h("span",
-          {
-            class: "text-[12px]", // your class here
-          },  
-          value ? value?.u_full_name : ""),
+          h(
+            "span",
+            {
+              class: "text-[12px]", // your class here
+            },
+            value ? value?.u_full_name : ""
+          ),
         ]),
     },
     {
@@ -1100,7 +1202,7 @@ const columns = computed(() => {
           seat: value,
           name: true,
           disabled: !canAssignCard.value,
-          emptyText: "Assignee"
+          emptyText: "Assignee",
         }),
     },
 
@@ -1113,20 +1215,20 @@ const columns = computed(() => {
           // Dynamic variables are in an array: [{ slug: 'priority', value: 'High' }]
           let cellValue = value;
           if (Array.isArray(row?.variables)) {
-             const found = row.variables.find((v: any) => v.slug === e.slug);
-             if (found) cellValue = found.value;
+            const found = row.variables.find((v: any) => v.slug === e.slug);
+            if (found) cellValue = found.value;
           } else {
-             // Fallback for object map or top-level
-             cellValue = row?.variables?.[e.slug] ?? row?.[e.slug] ?? value;
+            // Fallback for object map or top-level
+            cellValue = row?.variables?.[e.slug] ?? row?.[e.slug] ?? value;
           }
-          
+
           return h("div", { class: "capitalize flex items-center gap-2" }, [
             h(TableSearchCell, {
               options: getOptions(e.data ?? []),
               modelValue: cellValue,
               disabled: !canEditCard.value,
               emptyText: e.slug, // Add placeholder
-              'onUpdate:modelValue': (val: any) => {
+              "onUpdate:modelValue": (val: any) => {
                 handleChangeTicket(row?._id, e.slug, val);
               },
               columnName: e.slug,
@@ -1138,8 +1240,8 @@ const columns = computed(() => {
   ];
 });
 const assignHandle = (cardId: any, user: any) => {
-updateOptimisticCard(cardId, (card) => {
-      card.seat = user;
+  updateOptimisticCard(cardId, (card) => {
+    card.seat = user;
   });
   moveCard.mutate({ card_id: cardId, seat_id: user?._id });
 };
@@ -1153,7 +1255,6 @@ const normalizedTableData = computed(() => {
 });
 
 const getOptions = (options: any) => {
-
   return options.map((el: any) => ({
     _id: el.value ?? el,
     title: el.value ?? el,
@@ -1161,15 +1262,15 @@ const getOptions = (options: any) => {
 };
 const moveCard = useMoveCard({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['get-sheets'] })
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-    queryClient.invalidateQueries({ queryKey: ['roles'] })
+    queryClient.invalidateQueries({ queryKey: ["get-sheets"] });
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["roles"] });
   },
 });
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
   // Fallback to local mutation as setQueriesData might miss the exact key or not trigger the view update
   if (!Lists.value) return;
-  
+
   const listIndex = Lists.value.findIndex((l: any) =>
     l.cards.some((c: any) => c._id === cardId)
   );
@@ -1179,17 +1280,17 @@ const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
       (c: any) => c._id === cardId
     );
     if (cardIndex !== -1) {
-       // Create a shallow copy of the card to trigger reactivity (immutable update)
-       const newCard = { ...Lists.value[listIndex].cards[cardIndex] };
-       
-       // Run the updater on the copy
-       updater(newCard);
-       
-       // Replace the card in the list
-       Lists.value[listIndex].cards[cardIndex] = newCard;
-       
-       // trigger Vue to detect changes
-       triggerRef(Lists);
+      // Create a shallow copy of the card to trigger reactivity (immutable update)
+      const newCard = { ...Lists.value[listIndex].cards[cardIndex] };
+
+      // Run the updater on the copy
+      updater(newCard);
+
+      // Replace the card in the list
+      Lists.value[listIndex].cards[cardIndex] = newCard;
+
+      // trigger Vue to detect changes
+      triggerRef(Lists);
     }
   }
 };
@@ -1200,27 +1301,27 @@ const { mutate: addTicket } = useAddTicket({
 });
 function handleChangeTicket(id: any, key: any, value: any) {
   updateOptimisticCard(id, (card) => {
-      // Always update top-level property if it matches certain keys like 'card-title'
-      if (key === 'card-title') {
-          card[key] = value;
-      }
+    // Always update top-level property if it matches certain keys like 'card-title'
+    if (key === "card-title") {
+      card[key] = value;
+    }
 
-      // Check if variables is an array (per user data)
-      if (Array.isArray(card.variables)) {
-          const variable = card.variables.find((v: any) => v.slug === key);
-          if (variable) {
-              variable.value = value;
-          } else {
-              // Add new variable if not found (assuming Type Select/Text defaults)
-              card.variables.push({ slug: key, value: value, type: 'Select' });
-          }
-      } else if (card.variables && typeof card.variables === 'object') {
-          // Fallback for object structure if mixed
-          card.variables[key] = value;
+    // Check if variables is an array (per user data)
+    if (Array.isArray(card.variables)) {
+      const variable = card.variables.find((v: any) => v.slug === key);
+      if (variable) {
+        variable.value = value;
       } else {
-          // Fallback for top-level props
-          card[key] = value;
+        // Add new variable if not found (assuming Type Select/Text defaults)
+        card.variables.push({ slug: key, value: value, type: "Select" });
       }
+    } else if (card.variables && typeof card.variables === "object") {
+      // Fallback for object structure if mixed
+      card.variables[key] = value;
+    } else {
+      // Fallback for top-level props
+      card[key] = value;
+    }
   });
 
   moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } });
@@ -1258,10 +1359,10 @@ const setStartDate = (card_id: any, e: any) => {
 };
 function setLane(id: any, v: any) {
   updateOptimisticCard(id, (card) => {
-      const newLane = laneOptions.value.find((l: any) => l._id === v);
-       if (newLane) { 
-            card.lane = newLane; 
-       }
+    const newLane = laneOptions.value.find((l: any) => l._id === v);
+    if (newLane) {
+      card.lane = newLane;
+    }
   });
   // Trigger Vue to detect the nested change
   triggerRef(Lists);
@@ -1289,7 +1390,6 @@ const activeFormatStyle = computed(() => {
   // Otherwise → default backend style mapped to MindElixir format
   return mapBackendStyleToMindElixir(DEFAULT_BACKEND_STYLE);
 });
-
 
 function resolveStyle<T>(
   uiValue: T | undefined,
@@ -1431,7 +1531,7 @@ async function saveNodeStyle() {
         DEFAULT_BACKEND_STYLE.padding
       ),
 
-      hyperLink: hyperlink.value || plainNode.hyperLink || ""
+      hyperLink: hyperlink.value || plainNode.hyperLink || "",
     };
 
     plainNode._originalStyle = { ...mergedStylePayload };
@@ -1458,7 +1558,6 @@ async function saveNodeStyle() {
   }
 }
 
-
 interface MindNodeStyle {
   backgroundColor?: string;
   textColor?: string;
@@ -1470,7 +1569,7 @@ interface MindNodeStyle {
   borderWidth?: string;
   borderRadius?: string;
   padding?: string;
-  hyperLink?:string;
+  hyperLink?: string;
 }
 
 interface MindNode {
@@ -1484,7 +1583,7 @@ interface MindNode {
   isRoot?: boolean;
   unique_name?: string;
   variables?: any;
-  hyperLink?: string
+  hyperLink?: string;
 }
 const cardData = ref([] as any);
 
@@ -1516,7 +1615,7 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
         style: sheet?.style,
         _originalStyle: sheet?.style || {},
         unique_name: "sheet",
-        hyperLink: link || ""
+        hyperLink: link || "",
       };
       root.children.push(variables[title]);
     }
@@ -1533,7 +1632,7 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
 
     (sheet.cards || []).forEach((card: any, cardIdx: number) => {
       const link = card.style?.hyperLink || "";
-      
+
       const cardNode: MindNode = {
         id: card._id || `card-${cardIdx}`,
         seat_id: card.seat_id,
@@ -1555,8 +1654,8 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
 }
 const { mutateAsync: createNewSheet } = useCreateWorkspaceSheet({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['sheets'] });
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
+    queryClient.invalidateQueries({ queryKey: ["sheets"] });
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
     close();
   },
 });
@@ -1581,25 +1680,25 @@ watchEffect(() => {
         Update: true,
         extend: [
           {
-          name: "Update Node",
-          onclick: () => {
-            if (showFormatSidebar.value) {
-              showFormatSidebar.value = false;
-            }
+            name: "Update Node",
+            onclick: () => {
+              if (showFormatSidebar.value) {
+                showFormatSidebar.value = false;
+              }
 
-            const node = selectedMindNode.value?.nodeObj;
-            if (!node) return;
+              const node = selectedMindNode.value?.nodeObj;
+              if (!node) return;
 
-            selectCardHandler(node);
+              selectCardHandler(node);
+            },
           },
-        },
           {
             name: "Add Hyperlink",
             onclick: () => {
-            openHyperlinkModal(async () => {
-              await saveNodeStyle();
-            });
-          },
+              openHyperlinkModal(async () => {
+                await saveNodeStyle();
+              });
+            },
           },
         ],
       },
@@ -1621,111 +1720,107 @@ watchEffect(() => {
       applyNodeStyle(event.nodeObj, event.element as HTMLElement);
     });
 
+    // Track nodes already added to backend
+    const addedNodeIds = new Set<string>();
 
- // Track nodes already added to backend
-const addedNodeIds = new Set<string>();
+    instance.bus.addListener("operation", async (data: any) => {
+      if (!data || (data.name !== "insertSibling" && data.name !== "addChild"))
+        return;
 
-instance.bus.addListener("operation", async (data: any) => {
-  if (!data || (data.name !== "insertSibling" && data.name !== "addChild")) return;
+      const newNode = data.obj;
+      if (!newNode || !newNode.id) return;
 
-  const newNode = data.obj;
-  if (!newNode || !newNode.id) return;
+      // Prevent duplicate processing
+      if (addedNodeIds.has(newNode.id)) return;
+      addedNodeIds.add(newNode.id);
 
-  // Prevent duplicate processing
-  if (addedNodeIds.has(newNode.id)) return;
-  addedNodeIds.add(newNode.id);
+      // Determine parent node
+      let parentNode;
+      if (data.name === "addChild") {
+        parentNode = instance.currentNode?.nodeObj;
+      } else {
+        // insertSibling: parent of current node
+        parentNode = instance.currentNode?.nodeObj?.parent;
+      }
 
-  // Determine parent node
-  let parentNode;
-  if (data.name === "addChild") {
-    parentNode = instance.currentNode?.nodeObj;
-  } else {
-    // insertSibling: parent of current node
-    parentNode = instance.currentNode?.nodeObj?.parent;
-  }
+      if (!parentNode || !("unique_name" in parentNode)) return;
 
-  if (!parentNode || !("unique_name" in parentNode)) return;
+      // Only allow cards under List
+      if (parentNode.unique_name !== "List") return;
 
-  // Only allow cards under List
-  if (parentNode.unique_name !== "List") return;
+      try {
+        const payload = createDefaultCardPayload(
+          {
+            topic: newNode.topic ?? "New Card",
+            id: newNode.id,
+          },
+          parentNode
+        );
 
-  try {
-    const payload = createDefaultCardPayload(
-      {
-        topic: newNode.topic ?? "New Card",
-        id: newNode.id,
-      },
-      parentNode
-    );
+        await addTicket(payload);
+        await refetchSheetLists();
+      } catch (err) {
+        console.error("Error creating card or refetching sheets:", err);
+      }
+    });
 
-    await addTicket(payload);
-    await refetchSheetLists();
-  } catch (err) {
-    console.error("Error creating card or refetching sheets:", err);
-  }
-});
+    // Keep track of nodes already handled to prevent duplicate sheets
+    const createdSheetNodeIds = new Set<string>();
 
+    instance.bus.addListener("operation", async (data: any) => {
+      if (!data) return;
 
-// Keep track of nodes already handled to prevent duplicate sheets
-const createdSheetNodeIds = new Set<string>();
+      const newNode = data.obj;
+      if (!newNode?.id) return;
 
-instance.bus.addListener("operation", async (data: any) => {
-  if (!data) return;
+      // Resolve parent node
+      const parentNode =
+        newNode.parent ?? instance.currentNode?.nodeObj?.parent;
+      if (!parentNode || !("unique_name" in parentNode)) return;
 
-  const newNode = data.obj;
-  if (!newNode?.id) return;
+      // -------------------- ROOT → CREATE SHEET --------------------
+      if (
+        data.name === "addChild" &&
+        parentNode.unique_name === "root" &&
+        !createdSheetNodeIds.has(newNode.id)
+      ) {
+        createdSheetNodeIds.add(newNode.id);
 
-  // Resolve parent node
-  const parentNode = newNode.parent ?? instance.currentNode?.nodeObj?.parent;
-  if (!parentNode || !("unique_name" in parentNode)) return;
+        try {
+          await createNewSheet({
+            variables: {
+              "sheet-title": newNode.topic ?? "New Sheet",
+              "sheet-description": "This is custom description",
+            },
+            is_ai_generated: false,
+            workspace_id: workspaceId.value,
+            workspace_module_id: moduleId.value,
+          });
+        } catch (err) {
+          console.error("Error creating workspace sheet:", err);
+        }
 
-  // -------------------- ROOT → CREATE SHEET --------------------
- if (
-  data.name === "addChild" &&
-  parentNode.unique_name === "root" &&
-  !createdSheetNodeIds.has(newNode.id)
-) {
-  createdSheetNodeIds.add(newNode.id);
+        return;
+      }
 
-  try {
-    await createNewSheet({
-  variables: {
-    "sheet-title": newNode.topic ?? "New Sheet",
-    "sheet-description": "This is custom description",
-  },
-  is_ai_generated: false,
-  workspace_id: workspaceId.value,
-  workspace_module_id: moduleId.value,
-});
+      // -------------------- LIST → CREATE CARD --------------------
+      if (parentNode.unique_name !== "List") return;
 
-  } catch (err) {
-    console.error("Error creating workspace sheet:", err);
-  }
+      try {
+        const payload = createDefaultCardPayload(
+          {
+            topic: newNode.topic ?? "New Card",
+            id: newNode.id,
+          },
+          parentNode
+        );
 
-  return;
-}
-
-
-  // -------------------- LIST → CREATE CARD --------------------
-  if (parentNode.unique_name !== "List") return;
-
-  try {
-    const payload = createDefaultCardPayload(
-      {
-        topic: newNode.topic ?? "New Card",
-        id: newNode.id,
-      },
-      parentNode
-    );
-
-    await addTicket(payload);
-    await refetchSheetLists();
-  } catch (err) {
-    console.error("Error creating card or refetching sheets:", err);
-  }
-});
-
-
+        await addTicket(payload);
+        await refetchSheetLists();
+      } catch (err) {
+        console.error("Error creating card or refetching sheets:", err);
+      }
+    });
   });
 });
 
@@ -1757,7 +1852,6 @@ function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
 }
 
 function mapBackendStyleToMindElixir(style: any = {}) {
-  
   return {
     background: style.bg_color,
     color: style.color,
@@ -1776,7 +1870,6 @@ function mapBackendStyleToMindElixir(style: any = {}) {
 }
 
 function createDefaultCardPayload(nodeObj: any, sheet: any) {
-
   const now = new Date();
   const startDate = now.toISOString().split("T")[0];
   const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
@@ -1801,7 +1894,6 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
     createdAt: new Date().toISOString(),
   };
 }
-
 </script>
 <style scoped>
 @import "https://cdn.jsdelivr.net/npm/mind-elixir/dist/style.css";

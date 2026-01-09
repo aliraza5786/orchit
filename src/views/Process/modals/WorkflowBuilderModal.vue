@@ -49,7 +49,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="flex items-center justify-end sm:justify-between border-t border-border bg-bg-surface  sm:px-6 py-3">
+        <!-- <div class="flex items-center justify-end sm:justify-between border-t border-border bg-bg-surface  sm:px-6 py-3">
           <div class="hidden sm:flex items-center gap-4 text-sm text-text-secondary">
             <span class="flex items-center gap-2">
               <i class="fa-solid fa-hand-pointer" aria-hidden="true" /> Click and drag to pan
@@ -73,7 +73,7 @@
               <span class="sr-only">Zoom in</span>
             </Button>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </transition>
@@ -208,15 +208,15 @@ function handleUpdateWorkflow() {
   // })
 }
 
-function handleZoomIn() {
-  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'in' } }))
-}
-function handleZoomOut() {
-  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'out' } }))
-}
-function handleZoomReset() {
-  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'reset' } }))
-}
+// function handleZoomIn() {
+//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'in' } }))
+// }
+// function handleZoomOut() {
+//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'out' } }))
+// }
+// function handleZoomReset() {
+//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'reset' } }))
+// }
 
 function handleStatusAdded(e: any) {
 

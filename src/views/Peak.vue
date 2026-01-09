@@ -5,7 +5,7 @@
       <div class="flex items-center justify-between">
         <div class="flex flex-col w-full">
           <h3 class="text-2xl text-text-primary font-semibold">Project Overview</h3>
-          <p class="text-sm text-text-secondary mt-2">Last update on Sep 12, 2024 - 09.45 AM</p>
+          <p class="text-sm text-text-secondary mt-2">Last update on {{ formatDateTime(lastUpdateDate) }}</p>
 
           <!-- Cards Row -->
           <div class="flex gap-2.5 overflow-x-auto w-full py-8 custom_scroll_bar">
@@ -224,7 +224,19 @@ import { getInitials, generateAvatarColor } from '../utilities'
 import { avatarColor } from '../utilities/avatarColor'
 import type { TeamWorkloadMember } from '../types'
 import { useTheme } from "../composables/useTheme"; 
+import { formatDateTime } from "../utilities/FormatDate";
+import { useWorkspaceStore } from "../stores/workspace";
+
 const { theme } = useTheme();
+const workspaceStore = useWorkspaceStore();
+
+const lastUpdateDate = computed(() => {
+  const activities = dashboardActiviesData.value?.activities
+  if (activities?.length) {
+    return activities[0].created_at || workspaceStore.workspace?.updated_at
+  }
+  return workspaceStore.workspace?.updated_at
+})
 
 /** Types */
 interface LaneProgressRow {
