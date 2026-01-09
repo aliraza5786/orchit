@@ -29,7 +29,9 @@ export const useSprintList = (
   });
 };
 
-export const useSprintCard = (id: any, options = {}) => {
+export const useSprintCard = (id: any, options: any = {}) => {
+  const enabled = computed(() => !!unref(id));
+
   return useQuery({
     queryKey: ["sprint-cards", id],
     queryFn: ({ signal }) =>
@@ -38,7 +40,8 @@ export const useSprintCard = (id: any, options = {}) => {
         method: "GET",
         signal,
       }),
-    ...options,
+    enabled,
+    ...options, 
   });
 };
 export const useSprintKanban = (
@@ -81,6 +84,7 @@ export const useCompleteSprint = (sprint_id: any, options = {}) =>
     } as any
   );
 export const useSprintDetail = (id: any, options = {}) => {
+  const enabled = computed(() => !!unref(id));
   return useQuery({
     queryKey: ["sprint-detail", id],
     queryFn: ({ signal }) =>
@@ -89,6 +93,7 @@ export const useSprintDetail = (id: any, options = {}) => {
         method: "GET",
         signal,
       }),
+       enabled,
     ...options,
   });
 };

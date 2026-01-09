@@ -2,54 +2,55 @@
   <BaseModal v-model="isOpen" modalClass="!py-0" size="md">
     <!-- Header -->
     <div
-      class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border  bg-bg-input pb-4"
+      class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-input pb-4"
     >
-      <h2 class="text-xl font-semibold">Add New Sprint</h2>
+      <h2 class="text-xl font-semibold">Add New {{ lable }}</h2>
       <!-- <p class="text-sm text-text-secondary mt-1">
         Add sprint name and then click <span class="font-medium">Save</span>.
       </p> -->
     </div>
 
     <!-- Body -->
-    <div class="px-6 gap-4  bg-bg-input pt-5 pb-8">
+     
+    <div class="px-6 gap-4 bg-bg-input pt-5 pb-8">
       <!-- Name (required) -->
       <BaseTextField
         class="rounded-1"
         v-model="form.name"
         label="Name"
-        placeholder="Sprint 1"
+        :placeholder="lable"
         :error="!!nameError"
         :message="nameError"
         @blur="touched.name = true"
       />
       <BaseSelectField
-      class="rounded-1 mt-3"
-      v-model="form.sprintType"
-      label="Sprint Type"
-      :options="sprintTypes"
-      :error="!!nameError"
-      :message="nameError"
-      @blur="touched.name = true"
-    />
+        class="rounded-1 mt-3"
+        v-model="form.sprintType"
+        :label="formattedLabel"
+        :options="sprintTypes"
+        :error="!!nameError"
+        :message="nameError"
+        @blur="touched.name = true"
+      />
 
       <!-- spacer to keep grid balanced -->
       <!-- Description -->
-       <div class="mt-3">
-  <BaseTextAreaField
-        v-model="form.description"
-        label="Description"
-        placeholder="Sprint description..."
-        type="textarea"
-        :rows="4" 
-      />
-       </div>
-    
+      <div class="mt-3">
+        <BaseTextAreaField
+          v-model="form.description"
+          label="Description"
+          :placeholder="`${formattedLabel} description...`"
+          type="textarea"
+          :rows="4"
+        />
+      </div>
+
       <div></div>
     </div>
 
     <!-- Footer -->
     <div
-      class="flex justify-end gap-2 p-6 sticky bottom-0  bg-bg-input border-t border-border"
+      class="flex justify-end gap-2 p-6 sticky bottom-0 bg-bg-input border-t border-border"
     >
       <Button variant="secondary" @click="cancel">Cancel</Button>
       <Button variant="primary" :disabled="!isValid" @click="save">{{
@@ -71,7 +72,7 @@ import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 /** Emits */
 const emit = defineEmits<{
   (e: "update:modelValue", v: boolean): void;
-  (e: "save", v:any): void;
+  (e: "save", v: any): void;
   (e: "close"): void;
 }>();
 
@@ -79,12 +80,16 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     modelValue: boolean;
+    lable: string;
     sprint: Sprint;
     creatingSprint: boolean;
   }>(),
   { modelValue: false }
 );
-
+const formattedLabel = computed(() => {
+  if (!props.lable) return "";
+  return props.lable.charAt(0).toUpperCase() + props.lable.slice(1);
+});
 /** v-model proxy for BaseModal */
 const isOpen = computed({
   get: () => props.modelValue,
@@ -95,15 +100,18 @@ const isOpen = computed({
 const form = reactive<any>({
   name: "",
   sprintType: "",
-  description: ''
+  description: "",
 });
 
 /** Touched + validation */
-const touched = reactive({ name: false, sprintType: false, description:false });
+const touched = reactive({
+  name: false,
+  sprintType: false,
+  description: false,
+});
 
 const nameError = computed(() =>
-  touched.name && !String(form.name || "").trim() ? "Name is required" : "",
-  
+  touched.name && !String(form.name || "").trim() ? "Name is required" : ""
 );
 
 const isValid = computed(
@@ -122,29 +130,27 @@ function save() {
   emit("save", {
     name: String(form.name || "").trim(),
     value: String(form.sprintType || "").trim(),
-    description: String(form.description || '').trim()
+    description: String(form.description || "").trim(),
   });
 }
-
 
 /** Utils */
 function resetTouched() {
   touched.name = false;
-  touched.sprintType=false;
-  touched.description=false;
+  touched.sprintType = false;
+  touched.description = false;
 }
 /** Hydrate form when sprint changes or when opened */
 watch(
   () => props.sprint,
-  (s:any) => {
+  (s: any) => {
     if (!s) {
       form.name = "";
       return;
     }
     form.name = s.name ?? s?.title ?? "";
-    form.sprintType = s.sprintType ?? s?.sprintType ?? "";
-    form.description = s.description ?? ''
-
+    form.sprintType = "";
+    form.description = "";
     resetTouched();
   },
   { immediate: true }
@@ -155,5 +161,4 @@ const sprintTypes = [
   { title: "Sprint", _id: "sprint", dot: "#7d68c8" },
   { title: "Huddle", _id: "huddle", dot: "#eea832" },
 ];
-
 </script>
