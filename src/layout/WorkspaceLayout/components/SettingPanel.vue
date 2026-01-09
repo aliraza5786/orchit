@@ -284,7 +284,7 @@ import ActivityTimeline from './ActivityTimeline.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 // import Dropdown from '../../../components/ui/Dropdown.vue'
 import { getInitials } from '../../../utilities'
-import { formatDate, formatDateTime } from '../../../utilities/FormatDate'
+import { formatDateTime } from '../../../utilities/FormatDate'
 import { useDeleteInvitedPeople, useDeleteWorkspace, useInvitePeople, useUpdateWorkspaceDetail, useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { usePermissions } from '../../../composables/usePermissions'
 const { canInviteUser, canEditUser } = usePermissions()
