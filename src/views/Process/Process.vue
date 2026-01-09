@@ -33,7 +33,7 @@
     </div>
     <div class="max-w-82 p-4 bg-bg-body rounded-md mx-4">
       <div
-        @click="router.push(`/workspace/custom-process/${workspaceId}`)"
+        @click="router.push(`/`)"
         class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-border hover:border-accent"
       >
         <div class="flex justify-between gap-2 items-start">

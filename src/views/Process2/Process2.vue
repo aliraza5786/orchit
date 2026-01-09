@@ -7,6 +7,46 @@
     <div  v-if="!isPending" class="flex-1 w-full p-4 overflow-x-auto flex items-start gap-4">
 
       <!-- Kanban Board (Columns) --> 
+      <!-- General Process Static Column -->
+      <div v-if="!isPending" class="rounded-lg bg-bg-body h-full min-w-[320px] max-w-[320px] flex flex-col border-border/50 border">
+         <!-- Header -->
+         <div class="flex items-center justify-between w-full p-4 border-b border-border">
+            <div class="flex items-center gap-2 flex-auto max-w-4/5">
+              <span class="font-semibold overflow-ellipsis line-clamp-1 text-nowrap text-foreground px-1 py-0.5">
+                General Process
+              </span>
+              <span class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 min-w-6 rounded-full">
+                1
+              </span>
+            </div>
+         </div>
+
+         <!-- Static Card Area -->
+         <div class="flex-1 p-4 space-y-3 overflow-y-auto">
+             <div 
+               @click="handleGeneralOpenBuilder()"
+               class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200 border border-border hover:border-accent"
+             >
+               <div class="flex justify-between gap-2 items-start">
+                 <div class="flex items-start gap-3 flex-1">
+                   <div class="w-10 h-10 bg-accent/20 flex justify-center items-center rounded-lg">
+                     <i class="fa-solid fa-diagram-project text-accent"></i>
+                   </div>
+                   <div class="flex-1 min-w-0">
+                     <h3 class="text-sm font-semibold text-text-primary leading-tight mb-1">
+                       General Process
+                     </h3>
+                     <p class="text-xs text-text-secondary line-clamp-2">
+                       This is a general process card.
+                     </p>
+                   </div>
+                 </div>
+               </div>
+             </div>
+         </div>
+      </div>
+
+      <!-- Kanban Board (Columns) --> 
       <ProcessKanbanBoard 
         v-if="localList?.length > 0" 
         @delete:column="(e: any) => handleDeleteColumn(e)"
@@ -58,6 +98,8 @@
    <AddTransitionModal v-model="isAddTransitionModal" :group="selectedGroupForAdd" @created="handleTransitionCreated" />
 
    <ProcessWorkflowBuilderModal v-model="showWorkflowBuilder" :process="selectedProcess" @close="closeWorkflowBuilder" />
+
+   <WorkflowBuilderModal v-model="showGeneralWorkflowBuilder" :process="{ title: 'General Process', _id: 'static-general-process' }" @close="showGeneralWorkflowBuilder = false" />
 
    <ProcessSidePanel 
         v-if="selectedSidePanelCard" 
@@ -287,6 +329,13 @@ const handleTransitionCreated = () => {
     queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
 }
 
+function handleGeneralOpenBuilder() {
+    showGeneralWorkflowBuilder.value = true;
+}
+
+const showGeneralWorkflowBuilder = ref(false);
+
 import ProcessSidePanel from './components/ProcessSidePanel.vue';
+import WorkflowBuilderModal from '../Process/modals/WorkflowBuilderModal.vue';
 
 </script>
