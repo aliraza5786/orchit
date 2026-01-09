@@ -64,15 +64,22 @@
         <h3 class="text-sm font-medium text-text-secondary mb-2">Theme Mode</h3>
         <div class="space-y-2 flex gap-4  ">
           <label
+            :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/40': theme == 'system' }"
+            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-22  bg-bg-card items-center gap-2 text-sm"
+            @click="setTheme('system')">
+            <input class="hidden" type="radio" value="system" v-model="theme" />
+            <i class="text-2xl fa-solid fa-desktop"></i>
+          </label>
+          <label
             :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/40': theme == 'light' }"
-            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-30  bg-bg-card items-center gap-2 text-sm"
+            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-22  bg-bg-card items-center gap-2 text-sm"
             @click="setTheme('light')">
             <input class="hidden" type="radio" value="light" v-model="theme" />
             <i class="text-2xl fa-regular fa-sun"></i>
           </label>
           <label
             :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/10': theme == 'dark' }"
-            class="flex flex-auto rounded-lg justify-center cursor-pointer border-border border h-30 items-center gap-2 text-sm"
+            class="flex flex-auto rounded-lg justify-center cursor-pointer border-border border h-22 items-center gap-2 text-sm"
             @click="setTheme('dark')">
             <input class="hidden" type="radio" value="dark" v-model="theme" />
             <i class="text-2xl fa-regular fa-moon"></i>

@@ -76,36 +76,19 @@ function applyTheme() {
 }
 
 function setTheme(next: ThemeMode) {
-
-  if (next=='system'){
-
-    const currentAttr = document.documentElement.getAttribute("data-theme");
-      if (currentAttr === "dark" || currentAttr === "light") {
-        // If data-theme is explicitly set, use that instead of localStorage
-        theme.value = currentAttr as ThemeMode;
-        console.log('>>theme', currentAttr);
-        
-      } else {
-        // otherwise fallback to localStorage or system
-        theme.value =
-          (localStorage.getItem(STORAGE_KEY) as ThemeMode) || theme.value;
-      }
-
-      // 2) Apply theme
-      applyTheme();
-
-      // 3) Setup system preference listeners
-      mql = window.matchMedia("(prefers-color-scheme: dark)");
-      systemPrefersDark.value = mql.matches;
-      mql.addEventListener("change", onSystemChange);
-
-      // 4) Sync across tabs
-      window.addEventListener("storage", onStorage);
-      return;
+  if (next === 'system') {
+    theme.value = 'system';
+    localStorage.removeItem(STORAGE_KEY); // or localStorage.setItem(STORAGE_KEY, 'system');
+    
+    // Update system preference immediate
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    systemPrefersDark.value = mql.matches;
+    applyTheme();
+    return;
   }
+
   theme.value = next;
   localStorage.setItem(STORAGE_KEY, next);
-
 
   applyTheme();
 }
