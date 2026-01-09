@@ -11,6 +11,8 @@ import '@/assets/fontawesome/css/regular.min.css';
 import { queryClient } from './libs/queryClient'
 import { GanttPlugin } from '@syncfusion/ej2-vue-gantt';
 import { registerLicense } from '@syncfusion/ej2-base';
+import '@syncfusion/ej2-base/styles/material.css';
+import '@syncfusion/ej2-vue-schedule/styles/material.css';
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1JGaF5cXGpCfExwWmFZfVhgdl9HZ1ZSQGYuP1ZhSXxVdkRjXn9ccXNRR2FaVEN9XEA=');
 const app = createApp(App)
