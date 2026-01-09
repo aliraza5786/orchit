@@ -56,6 +56,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, provide } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import Button from '../../../components/ui/Button.vue'
 import WorkflowCanvas from '../components/WorkflowCanvas.vue'
 import AddStatusModal from './AddStatusModal.vue'
@@ -145,9 +146,11 @@ watch(() => transitionData.value, (data) => {
 // I need to modify `WorkflowCanvas` to support "Input Data" mode vs "Fetch from Workspace" mode.
 
 /* Saving */
+const queryClient = useQueryClient()
 const { mutate: updateTransition, isPending: isSaving } = useUpdateTransition({
     onSuccess: () => {
         refetch()
+        queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] })
     }
 })
 

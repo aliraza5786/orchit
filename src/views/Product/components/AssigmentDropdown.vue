@@ -178,7 +178,7 @@ const membersData = computed(() => {
     
     return [
       currentUserInList,
-      { _id: null, name: 'Unassign', email: '' },
+      // { _id: null, name: 'Unassign', email: '' },
       ...others
     ]
   }

@@ -143,6 +143,7 @@ const totalStatus = computed(() => {
   const raw = processDetails.value?.raw_object
   // raw_object might be { nodes: [], edges: [] } or just the array of nodes if format differs.
   // WorkflowCanvas usually uses vue-flow format: nodes[] and edges[] are separate or in one elements array.
+  if (raw?.flow_diagram?.nodes && Array.isArray(raw.flow_diagram.nodes)) return raw.flow_diagram.nodes.length
   if (raw?.nodes && Array.isArray(raw.nodes)) return raw.nodes.length
   if (raw?.elements && Array.isArray(raw.elements)) return raw.elements.filter((e: any) => !e.source).length
   return 0
@@ -150,6 +151,7 @@ const totalStatus = computed(() => {
 
 const totalTransitions = computed(() => {
    const raw = processDetails.value?.raw_object
+   if (raw?.flow_diagram?.edges && Array.isArray(raw.flow_diagram.edges)) return raw.flow_diagram.edges.length
    if (raw?.edges && Array.isArray(raw.edges)) return raw.edges.length
    if (raw?.elements && Array.isArray(raw.elements)) return raw.elements.filter((e: any) => e.source && e.target).length
    return 0

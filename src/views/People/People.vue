@@ -106,7 +106,7 @@ const viewData = [
   },
 ]
 
-const selected_view_id = ref('role');
+const selected_view_id = ref('team');
 const showDelete = ref(false);
 const localColumn = ref();
 const { workspaceId} = useRouteIds();
