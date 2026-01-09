@@ -233,11 +233,10 @@ const workspaceStore = useWorkspaceStore();
 const lastUpdateDate = computed(() => {
   const activities = dashboardActiviesData.value?.activities
   if (activities?.length) {
-    return activities[0].created_at || workspaceStore.workspace?.updated_at
+    return activities[0].created_at || workspaceStore.workspace?.created_at
   }
-  return workspaceStore.workspace?.updated_at
+  return workspaceStore.workspace?.created_at
 })
-
 /** Types */
 interface LaneProgressRow {
   lane_title: string
