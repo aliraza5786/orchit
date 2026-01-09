@@ -1,29 +1,29 @@
 <template>
   <div
-  class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full border border-border flex flex-col overflow-x-auto overflow-y-auto scrollbar-visible pb-4"
->
+    class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full border border-border flex flex-col overflow-x-auto overflow-y-auto scrollbar-visible pb-4"
+  >
     <div
       class="header px-4 py-3 flex items-center justify-between gap-1 w-[100%]"
     >
       <div class="flex gap-4">
         <Button
-          class="lg:flex hidden cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center gap-1 px-2 rounded-md text-xs font-medium"
+          class="lg:flex hidden cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium"
           @click="$emit('go-back')"
           ><i class="fa-solid fa-chevron-left text-xs"></i> Go Back</Button
         >
         <Button
-          class="flex sm:hidden cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center px-2 rounded-md text-xs font-medium"
+          class="flex sm:hidden cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center px-2 py-2 rounded-md text-xs font-medium"
           @click="$emit('go-back')"
           ><i class="fa-solid fa-chevron-left text-xs"></i
         ></Button>
-        <Dropdown
+        <!-- <Dropdown
           v-model="selected_module_id"
           :options="moduleOptions"
           variant="secondary"
           customClasses="fixed w-auto"
         >
-        </Dropdown>
-        <Dropdown
+        </Dropdown> -->
+        <!-- <Dropdown
           v-if="selected_module_id"
           @edit-option="openEditSprintModal"
           v-model="selected_sheet_id"
@@ -43,11 +43,11 @@
               <i class="fa-solid fa-plus"></i> Add new
             </div>
           </template>
-        </Dropdown>
+        </Dropdown> -->
       </div>
 
       <div class="flex gap-3 items-center">
-        <Dropdown
+        <!-- <Dropdown
           v-if="selected_module_id"
           :actions="false"
           v-model="selected_view_by"
@@ -68,8 +68,8 @@
               <i class="fa-solid fa-plus"></i> Add new
             </div>
           </template>
-        </Dropdown>
-        <Searchbar
+        </Dropdown> -->
+        <!-- <Searchbar
           @onChange="
             (e:any) => {
               searchQuery = e;
@@ -77,8 +77,15 @@
           "
           placeholder="Search in Orchit AI space"
         >
-        </Searchbar>
-
+        </Searchbar> -->
+        <button
+          class="cursor-pointer w-8 h-8 rounded-full bg-bg-surface"
+          v-if="view === 'mindmap'"
+          title="Show formatting sidebar"
+          @click="showFormatSidebar = !showFormatSidebar"
+        >
+          <i class="fa-solid fa-sidebar"></i>
+        </button>
         <div
           class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
         >
@@ -143,6 +150,18 @@
           >
             <i class="fa-solid fa-chart-gantt"></i>
           </button>
+          <button
+            @click="view = 'timeline'"
+            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+            :class="
+              view === 'timeline'
+                ? 'text-accent bg-accent-text'
+                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+            "
+            title="Timeline view"
+          >
+            <i class="fa-solid fa-timeline"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -152,7 +171,10 @@
         class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex scrollbar-visible"
       >
         <KanbanSkeleton v-show="isPending" />
-        <div v-show="!isPending" class="flex overflow-x-auto gap-3 p-4 scrollbar-visible">
+        <div
+          v-show="!isPending"
+          class="flex overflow-x-auto gap-3 p-4 scrollbar-visible"
+        >
           <KanbanBoard
             @onPlus="plusHandler"
             @delete:column="(e: any) => deleteHandler(e)"
@@ -230,7 +252,10 @@
           @create="handleCreateTicket"
         />
       </template>
-      <template v-if="view === 'mindmap'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
+      <template
+        v-if="view === 'mindmap'"
+        class="max-h-[calc(100vh-100px)] overflow-y-auto"
+      >
         <div class="relative w-full h-full flex overflow-hidden">
           <!-- Mind Map Canvas -->
           <div
@@ -477,20 +502,34 @@
           </div>
         </div>
       </template>
-       <template v-if="view === 'calendar'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
-          <CalendarView
-            :data="filteredBoard"
-            @select:ticket="selectCardHandler"
-            class="min-h-[600px]"
-          />
-        </template>
-        <template v-if="view === 'gantt'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
-     <GanttChartView
-       :data="filteredBoard"
-       @select:ticket="selectCardHandler"
-      />
-    </template>
-
+      <template
+        v-if="view === 'calendar'"
+        class="max-h-[calc(100vh-100px)] overflow-y-auto"
+      >
+        <CalendarView
+          :data="filteredBoard"
+          @select:ticket="selectCardHandler"
+          class="min-h-[600px]"
+        />
+      </template>
+      <template
+        v-if="view === 'gantt'"
+        class="max-h-[calc(100vh-100px)] overflow-y-auto"
+      >
+        <GanttChartView
+          :data="filteredBoard"
+          @select:ticket="selectCardHandler"
+        />
+      </template>
+      <template
+        v-if="view === 'timeline'"
+        class="max-h-[calc(100vh-100px)] overflow-y-auto"
+      >
+        <TimelineView
+          :data="filteredBoard"
+          @select:ticket="selectCardHandler"
+        />
+      </template>
       <ConfirmDeleteModal
         @click.stop=""
         v-model="showDelete"
@@ -547,7 +586,7 @@ import {
 } from "vue";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useWorkspaceStore } from "../../../stores/workspace";
-import Dropdown from "../../../components/ui/Dropdown.vue";
+// import Dropdown from "../../../components/ui/Dropdown.vue";
 import TableView from "../../../components/feature/TableView/TableView.vue";
 import {
   ReOrderCard,
@@ -597,6 +636,7 @@ import TableAssigneeCell from "../../../components/feature/TableView/TableAssign
 import { getInitials } from "../../../utilities";
 import CalendarView from "../../../components/feature/CalendarView.vue";
 import GanttChartView from "../../../components/feature/GanttChartView.vue";
+import TimelineView from "../../../components/feature/TimelineView.vue";
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
@@ -640,10 +680,10 @@ const selected_module_id = ref<string>("");
 const isCreateVar = ref(false);
 const showFormatSidebar = ref(true);
 const {
-  canEditSheet,
-  canDeleteSheet,
+  // canEditSheet,
+  // canDeleteSheet,
   canCreateVariable,
-  canCreateSheet,
+  // canCreateSheet,
   canCreateCard,
   canEditCard,
   canAssignCard,
@@ -714,7 +754,6 @@ const { data: Lists, isPending } = useSprintKanban(
   selected_sprint_id,
   selected_sheet_id
 );
-
 const createTeamModal = ref(false);
 const selectedCard = ref<any>();
 const selectCardHandler = (card: any) => {
@@ -852,7 +891,7 @@ watch(
   }, 200)
 );
 const fuse = computed(() => {
-  const allCards = Lists.value.flatMap((col: any) =>
+  const allCards = Lists.value?.flatMap((col: any) =>
     col.cards.map((card: any) => ({ ...card, columnId: col.title }))
   );
   return new Fuse(allCards, {
@@ -878,7 +917,7 @@ const filteredBoard = computed(() => {
     const query = searchQuery.value?.trim();
     if (!query) {
       let array: any = [];
-      (Lists.value ?? []).forEach((col: any) => {
+      (Lists.value ?? [])?.forEach((col: any) => {
         array = [...array, ...col?.cards];
       });
       return array;
@@ -901,21 +940,21 @@ const normalizedTableData = computed(() => {
 });
 //srint views
 const showDeleteModal = ref(false);
-function openEditSprintModal(opt: any) {
-  isCreateSheetModal.value = true;
-  selectedSheettoAction.value = opt;
-}
-const selectedSheettoAction = ref<any>();
-function handleDeleteSheetModal(opt: any) {
-  showDeleteModal.value = true;
-  selectedSheettoAction.value = opt;
-}
+// function openEditSprintModal(opt: any) {
+//   isCreateSheetModal.value = true;
+//   selectedSheettoAction.value = opt;
+// }
+// const selectedSheettoAction = ref<any>();
+// function handleDeleteSheetModal(opt: any) {
+//   showDeleteModal.value = true;
+//   selectedSheettoAction.value = opt;
+// }
 
-const isCreateSheetModal = ref(false);
-const createSheet = () => {
-  selectedSheettoAction.value = {};
-  isCreateSheetModal.value = !isCreateSheetModal.value;
-};
+// const isCreateSheetModal = ref(false);
+// const createSheet = () => {
+//   selectedSheettoAction.value = {};
+//   isCreateSheetModal.value = !isCreateSheetModal.value;
+// };
 
 const { data: variables, isPending: isVariablesPending } = useVariables(
   workspaceId.value,

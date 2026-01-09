@@ -2,6 +2,7 @@
   <div
     class="flex-auto flex-grow h-full min-h-0 bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
+    <!-- sprintDetailData?.status === 'active' -->
     <template v-if="showActiveSprint">
       <ActiveSprint
         :sptint_id="selectedSprintId"
@@ -10,9 +11,9 @@
       />
     </template>
     <div v-if="!showActiveSprint">
-      <!-- <template v-if="isStartingSprint">
+      <template v-if="isStartingSprint">
         <KanbanSkeleton />
-      </template> -->
+      </template>
       <div
         v-if="!isStartingSprint"
         class="p-4 w-full min-w-0 box-border h-full min-h-0"
@@ -43,7 +44,7 @@
                 <!-- Add Card Button -->
                 <button
                   v-if="canCreateCard"
-                  class="w-7 h-7 rounded cursor-pointer text-sm hover:bg-bg-body flex items-center justify-center"
+                  class="w-8 h-8 rounded cursor-pointer text-sm hover:bg-bg-body flex items-center justify-center"
                   @click="openCreateBacklogTicket"
                 >
                   <i class="text-text-primary fa-regular fa-plus"></i>
@@ -59,10 +60,10 @@
               >
                 <!-- Default "All" Tab -->
                 <button
-                  @click="selectMilestoneTab('all')"
+                  @click="selectMilestoneTab('')"
                   class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap"
                   :class="
-                    selectedFilter === 'all'
+                    selectedFilter === ''
                       ? 'bg-accent text-white border-none'
                       : 'bg-transparent text-accent border border-accent'
                   "
@@ -114,7 +115,7 @@
                     <ul class="flex flex-col">
                       <li
                         class="px-3 py-2 cursor-pointer hover:bg-gray-100"
-                        @click="selectHuddleModule('all')"
+                        @click="selectMilestoneTab('')"
                       >
                         All Milestones
                       </li>
@@ -159,7 +160,6 @@
                 class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
               ></div>
             </div>
-
             <BacklogTable
               v-else
               :checkedAll="checkedAll"
@@ -324,26 +324,42 @@
                 <!-- Add Sprint Button (Outside Dropdown) -->
                 <button
                   @click="openSprintModal()"
-                  class="w-7 h-7 lg:flex sm:hidden items-center justify-center rounded-full bg-accent border text-white transition-colors shrink-0"
+                  :class="[
+                    'w-8 h-8 lg:flex sm:hidden items-center justify-center rounded-full border text-white transition-colors shrink-0',
+                  ]"
+                  :style="{
+                    backgroundColor: selectedSprintId
+                      ? selectedType.dot
+                      : '#7d68c8',
+                  }"
                 >
-                  <i class="fa-solid fa-plus text-xs"></i>
+                  <i class="fa-solid fa-plus"></i>
                 </button>
               </div>
               <!-- Right Section: Actions -->
               <div class="ms-2 flex gap-2 items-center">
                 <div class="flex">
                   <button
-                    class="flex items-center justify-center w-7 h-7 rounded-full bg-accent"
+                    class="flex items-center justify-center w-8 h-8 rounded-full bg-accent"
+                    v-if="sprintDetailData?.cards?.length"
                     @click="openSearchModal"
+                    :style="
+                      selectedSprintId
+                        ? { backgroundColor: selectedType.dot }
+                        : {}
+                    "
                   >
-                    <i
-                      class="fa-solid fa-magnifying-glass text-white text-xs"
-                    ></i>
+                    <i class="fa-solid fa-magnifying-glass text-white"></i>
                   </button>
                   <button
-                    class="flex lg:hidden cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center rounded-full ms-2 w-7 h-7 text-sm font-medium"
+                    class="flex lg:hidden cursor-pointer text-white items-center justify-center rounded-full ms-2 w-7 h-7 text-sm font-medium"
                     @click="handlePreviewClick"
                     v-if="sprintDetailData?.status === 'active'"
+                    :style="
+                      selectedSprintId
+                        ? { backgroundColor: selectedType.dot }
+                        : {}
+                    "
                   >
                     <i class="fa-regular fa-eye text-sm"></i>
                   </button>
@@ -362,12 +378,22 @@
                       @click="handleCompleteSprint"
                       :variant="theme === 'dark' ? 'primary' : 'primary'"
                       class="border-border-input border"
+                      :style="
+                        selectedSprintId
+                          ? { backgroundColor: selectedType.dot }
+                          : {}
+                      "
                     >
                       {{ isCompletingSprint ? "Ending..." : "End" }}
                     </Button>
                     <button
-                      class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-1 px-2 py-1 rounded-md text-sm font-medium"
+                      class="cursor-pointer text-white flex items-center justify-center gap-1 px-2 py-1 rounded-md text-sm font-medium"
                       @click="handlePreviewClick"
+                      :style="
+                        selectedSprintId
+                          ? { backgroundColor: selectedType.dot }
+                          : {}
+                      "
                     >
                       <i class="fa-regular fa-eye text-sm"></i> Preview
                     </button>
@@ -384,8 +410,13 @@
                       firstSprint.tickets.length === 0 ||
                       sprintDetailData.status === 'completed'
                     "
+                    :style="
+                      selectedSprintId
+                        ? { backgroundColor: selectedType.dot }
+                        : {}
+                    "
                   >
-                    Start Sprint
+                    Start {{ selectedType.label }}
                   </Button>
                 </div>
                 <!-- Small Screen Icon Buttons -->
@@ -408,6 +439,11 @@
                       @click="handleCompleteSprint"
                       class="w-7 h-7 flex items-center justify-center rounded-full bg-accent"
                       :title="isCompletingSprint ? 'Ending...' : 'End Sprint'"
+                      :style="
+                        selectedSprintId
+                          ? { backgroundColor: selectedType.dot }
+                          : {}
+                      "
                     >
                       <i class="fa-solid fa-flag-checkered text-white"></i>
                     </button>
@@ -416,9 +452,18 @@
                   <button
                     v-else
                     @click="openStartSprintModal"
-                    :disabled="!firstSprint || firstSprint.tickets.length === 0"
+                    :disabled="
+                      !firstSprint ||
+                      firstSprint.tickets.length === 0 ||
+                      sprintDetailData.status === 'completed'
+                    "
                     class="w-7 h-7 flex items-center justify-center rounded-full text-white bg-accent disabled:opacity-50 disabled:cursor-not-allowed lg:hidden"
                     title="Start Sprint"
+                    :style="
+                      selectedSprintId
+                        ? { backgroundColor: selectedType.dot }
+                        : {}
+                    "
                   >
                     <i class="fa-solid fa-play text-sm"></i>
                   </button>
@@ -464,29 +509,28 @@
                   >
                     <!-- Instruction Text -->
                     <div class="flex justify-end">
-                        <button
-                          @click="closeSearchModal"
-                          class="px-2 py-1 rounded bg-bg-input border border-border-input text-accent"
-                        >
-                          <i class="fa-solid fa-xmark"></i>
-                        </button>
+                      <button
+                        @click="closeSearchModal"
+                        class="px-2 py-1 rounded bg-bg-input border border-border-input text-accent"
+                      >
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
                     </div>
 
                     <!-- Search Bar + Close -->
                     <div class="flex flex-col gap-2 mt-4">
-                        <p class="text-sm text-muted mb-2">
-                      Search for sprints by name, status, or priority. Start
-                      typing to filter results.
-                    </p>
-                    
+                      <p class="text-sm text-muted mb-2">
+                        Search for {{ sprintType }} by name, status, or
+                        priority. Start typing to filter results.
+                      </p>
+
                       <div class="flex gap-2 w-full">
                         <SearchBar
-                          placeholder="Search in sprint"
+                          :placeholder="`Search in ${sprintType}`"
                           @onChange="handleSearchChange"
                           @keyup.enter="handleSearchEnter"
                           class="flex-1"
                         />
-
                       </div>
 
                       <!-- Dropdown Results -->
@@ -498,7 +542,7 @@
                           <li
                             v-for="sprint in filteredSprints"
                             :key="sprint._id"
-                           @click="handleSearchSelect(sprint)"
+                            @click="handleSearchSelect(sprint)"
                             class="px-4 py-2 cursor-pointer hover:bg-bg-hover text-text-primary border-b border-border-input"
                           >
                             <div class="flex items-center justify-between">
@@ -533,7 +577,7 @@
                         v-else-if="searchTerm && !filteredSprints.length"
                         class="absolute top-full left-0 mt-1 w-full bg-bg-card border border-border-input rounded-md shadow-md p-4 z-50 text-center text-muted"
                       >
-                        No sprints found matching "{{ searchTerm }}"
+                        No {{ sprintType }} found matching "{{ searchTerm }}"
                       </div>
                     </div>
                   </div>
@@ -552,24 +596,25 @@
             </div>
             <div class="flex-1 min-h-0">
               <SprintCard
-              :searchQuery="searchQuery"
-              :sprintId="selectedSprintId"
-              :searchedData="selectedSearchCard ? [selectedSearchCard] : []"
-              v-if="
-                (firstSprint &&
-                  sprintDetailData &&
-                  sprintDetailData?.status === 'planning') ||
-                sprintDetailData?.status === 'active'
-              "
-              :checkedSprintAll="checkedSprintAll"
-              :sprint="firstSprint"
-              @open-ticket="openTicket"
-              @edit-sprint="openEditSprint"
-              @toggle-start="toggleStartSprint"
-              @move-selected-to-backlog="moveSelectedToBacklog"
-              @delete-selected-sprint="(id) => deleteSelected('sprint', id)"
-              @refresh="handleRefresh"
-            />
+                :searchQuery="searchQuery"
+                :sprintId="selectedSprintId"
+                :searchedData="selectedSearchCard ? [selectedSearchCard] : []"
+                :label="sprintType"
+                v-if="
+                  (firstSprint &&
+                    sprintDetailData &&
+                    sprintDetailData?.status === 'planning') ||
+                  sprintDetailData?.status === 'active'
+                "
+                :checkedSprintAll="checkedSprintAll"
+                :sprint="firstSprint"
+                @open-ticket="openTicket"
+                @edit-sprint="openEditSprint"
+                @toggle-start="toggleStartSprint"
+                @move-selected-to-backlog="moveSelectedToBacklog"
+                @delete-selected-sprint="(id) => deleteSelected('sprint', id)"
+                @refresh="handleRefresh"
+              />
 
               <div
                 v-if="sprintDetailData?.status === 'completed'"
@@ -599,17 +644,20 @@
                   </svg>
                 </div>
                 <h4 class="text-lg font-semibold text-accent">
-                  Sprint Completed
+                  {{ formattedLabel }} Completed
                 </h4>
                 <p class="text-sm text-muted max-w-md">
-                  This sprint has been successfully completed. To continue
-                  planning work, create a new sprint by clicking the
-                  <strong>plus (+)</strong> button and start organizing upcoming
-                  tasks.
+                  This {{ sprintType }} has been successfully completed. To
+                  continue planning work, create a new {{ sprintType }} by
+                  clicking the <strong>plus (+)</strong> button and start
+                  organizing upcoming tasks.
                 </p>
               </div>
               <div
-                v-if="!sprintDetailData?.length"
+                v-if="
+                  sprintDetailData?.length < 1 ||
+                  sprintsList?.sprints.length < 1
+                "
                 class="w-full h-full min-h-[250px] flex flex-col items-center justify-center text-center gap-4 p-6"
               >
                 <!-- Icon -->
@@ -634,14 +682,14 @@
 
                 <!-- Heading -->
                 <h4 class="text-xl font-semibold text-accent">
-                  No sprints available
+                  No {{ sprintType }}s available
                 </h4>
 
                 <!-- Description -->
                 <p class="text-sm text-muted max-w-md">
-                  You don’t have any sprints yet. Create a new sprint to start
-                  planning and organizing your work. Click the
-                  <strong>plus (+)</strong> button to get started.
+                  You don’t have any {{ sprintType }}s yet. Create a new
+                  {{ sprintType }} to start planning and organizing your work.
+                  Click the <strong>plus (+)</strong> button to get started.
                 </p>
               </div>
             </div>
@@ -675,6 +723,7 @@
       v-model="sprintModalOpen"
       @save="saveSprintHandler"
       :sprint="selectedSprint"
+      :lable="sprintType"
       :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint"
     />
     <StartSprintModal
@@ -727,7 +776,7 @@ import CreateBacklogTicketWithModuleSelection from "./modals/CreateBacklogTicket
 import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
-// import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
+import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 const { theme } = useTheme();
 const showTaskModal = ref(false);
@@ -741,13 +790,16 @@ const elipseWrapperSprint = ref<HTMLElement | null>(null);
 const open = ref(false);
 const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
-const selectedFilter = ref<string | number | null>(null);
+const selectedFilter = ref<string | "">("");
 const sprintTypes = [
   { label: "Milestone", value: "milestone", dot: "#2e9bda" },
   { label: "Sprint", value: "sprint", dot: "#7d68c8" },
   { label: "Huddle", value: "huddle", dot: "#eea832" },
 ];
-
+const formattedLabel = computed(() => {
+  if (!sprintType.value) return "";
+  return sprintType.value.charAt(0).toUpperCase() + sprintType.value.slice(1);
+});
 const selectedType = ref(sprintTypes[0]);
 import { onClickOutside } from "@vueuse/core";
 const elipseWrapper = ref<HTMLElement | null>(null);
@@ -767,7 +819,6 @@ const showTooltip = ref(false);
 const toggleTooltip = (): void => {
   showTooltip.value = !showTooltip.value;
 };
-// import CreateSheetModal from '../Product/modals/CreateSheetModal.vue'
 const { workspaceId } = useWorkspaceId();
 const isCreateTicketModalOpen = ref(false);
 const {
@@ -781,12 +832,15 @@ const {
 } = useBacklogStore();
 function selectMilestoneTab(tabId: string) {
   selectedFilter.value = tabId;
+  isHuddleDropdownOpen.value = false;
 }
 function selectHuddleModule(moduleId: string) {
   selectedFilter.value = moduleId;
+  isHuddleDropdownOpen.value = false;
 }
-function selectSprintTab(sprintId: string | number) {
+function selectSprintTab(sprintId: string) {
   selectedFilter.value = sprintId;
+  isHuddleDropdownOpen.value = false;
 }
 
 const { data: backlogResp, refetch: refetchBackLogList } = useBacklogList(
@@ -895,44 +949,58 @@ watch(
   }
 );
 
-// const openSprintMadal = () => {
-//   sprintModalOpen.value = true
-// }
-
 const { data: sprintDetailData, refetch: refetchSprintDetail } =
-  useSprintDetail(selectedSprintId);
+  useSprintDetail(selectedSprintId, {
+    enabled: computed(() => !!selectedSprintId.value),
+  });
 
 const startsprintModalOpen = ref(false);
 const openStartSprintModal = () => {
+  localStorage.setItem("asFirstTime", JSON.stringify(true));
   startsprintModalOpen.value = true;
 };
+const isFirstTime = () => {
+  return JSON.parse(localStorage.getItem("asFirstTime") || "false");
+};
+const checkAutoOpenActiveSprint = () => {
+  if (sprintDetailData.value?.status === "active" && isFirstTime()) {
+    showActiveSprint.value = true;
+    localStorage.setItem("asFirstTime", JSON.stringify(false));
+  }
+};
+onMounted(() => {
+  checkAutoOpenActiveSprint();
+});
+
+watch(
+  () => sprintDetailData.value?.status,
+  () => {
+    checkAutoOpenActiveSprint();
+  }
+);
 const { data: sprintData, refetch: refetchSprintData } =
   useSprintCard(selectedSprintId);
 
 watch(
   () => selectedSprintId.value,
   () => {
-    refetchSprintDetail();
+    if (selectedSprintId.value) {
+      refetchSprintDetail();
+    }
   }
 );
-console.log("sprint data", sprintData.value);
+
 const searchTerm = ref("");
 const selectedSearchCard = ref<any | null>(null);
 const filteredSprints = computed(() => {
-  if (!searchTerm.value || !sprintData.value?.backlog_items) return [];
-
+  const data = sprintData.value as { backlog_items?: any[] } | undefined;
+  if (!searchTerm.value || !data?.backlog_items) return [];
   const query = searchTerm.value.toLowerCase().trim();
-
-  return sprintData.value.backlog_items.filter((item: any) => {
-    // Card title
+  return data.backlog_items.filter((item: any) => {
     const title = item.card?.variables?.["card-title"]?.toLowerCase() || "";
-    // Card code
     const code = item.card?.variables?.["card-code"]?.toLowerCase() || "";
-    // Card status
     const status = item.card?.variables?.["card-status"]?.toLowerCase() || "";
-    // Priority
     const priority = item.priority?.toLowerCase() || "";
-    // IDs
     const itemId = String(item._id || "").toLowerCase();
     const cardId = String(item.card_id || "").toLowerCase();
 
@@ -976,11 +1044,12 @@ function handleSearchSelect(card: any) {
 
 // Convert API sprint to store Sprint format with cards
 const firstSprint = computed(() => {
-  const apiSprint = sprintData?.value?.backlog_items;
+  const apiSprint = (sprintData.value as { backlog_items?: any[] } | undefined)
+    ?.backlog_items;
   if (!apiSprint) return null;
 
   // Map sprint cards from API
-  const sprintCards = (sprintData?.value?.backlog_items || []).map((c: any) => {
+  const sprintCards = (apiSprint || []).map((c: any) => {
     const v = c?.card?.variables || {};
     const id = c?.card?._id || c.card_id;
 
@@ -999,9 +1068,9 @@ const firstSprint = computed(() => {
   });
 
   return {
-    id: apiSprint._id,
-    name: apiSprint.title || "Sprint 1",
-    title: apiSprint.title,
+    id: (sprintData.value as any)?._id, // fallback for TS
+    name: (sprintData.value as any)?.title || "Sprint 1",
+    title: (sprintData.value as any)?.title,
     goal: "",
     start: "",
     end: "",
@@ -1011,6 +1080,8 @@ const firstSprint = computed(() => {
 });
 
 function selectSprint(sprint: any) {
+  console.log("selected sprint id", sprint);
+
   selectedSprintId.value = sprint._id;
   isSprintDropdownOpen.value = false;
 }
@@ -1223,6 +1294,8 @@ onClickOutside(elipseWrapperSprint, () => {
   openElipseDropDown.value = false;
 });
 const selectType = (item: (typeof sprintTypes)[number]) => {
+  console.log("selected type", item);
+
   selectedType.value = item;
   open.value = false;
 };

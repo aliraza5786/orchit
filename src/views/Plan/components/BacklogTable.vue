@@ -31,70 +31,87 @@
         <p class="text-sm text-text-primary/90 mb-4">
           Plan and start a sprint to see issues here.
         </p>
-        <button :disabled="!canCreateCard" @click="$emit('open-create-ticket')" class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"
-          :class="canCreateCard ? 'cursor-pointer':'cursor-not-allowed'"
-        > 
-          Create  Ticket
+        <button
+          :disabled="!canCreateCard"
+          @click="$emit('open-create-ticket')"
+          class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"
+          :class="canCreateCard ? 'cursor-pointer' : 'cursor-not-allowed'"
+        >
+          Create Ticket
         </button>
       </div>
 
       <!-- Tickets List -->
       <div v-else class="overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
         <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1">
+          <!-- Loader -->
           <div
-            v-for="ticket in filteredBacklog"
-            :key="ticket.id"
-            draggable="true"
-            :class="[
-              'flex items-center  gap-3 p-[8px] cursor-pointer transition-colors rounded-[8px]',
-              selectedBacklogIds.includes(ticket.id)
-                ? 'border-2 border-[#5a2d7f]'
-                : 'border border-border-input',
-              theme === 'dark'
-                ? 'bg-bg-body hover:bg-bg-surface'
-                : 'bg-bg-charcoal hover:bg-bg-body',
-            ]"
-            @dragstart="onDragStart($event, ticket, 'backlog')"
-            @dragend="onDragEnd($event)"
-            @click="$emit('open-ticket', ticket)"
+            v-if="isBacklogListPending"
+            class="flex items-center justify-center py-10"
           >
-            <!-- Checkbox -->
-            <input
-              type="checkbox"
-              class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
-              :checked="selectedBacklogIds.includes(ticket.id)"
-              @click.stop
-              @change="handleCheckboxChange(ticket.id, $event)"
-            />
-
-            <!-- Summary -->
-            <div
-              class="flex items-center text-[14px] font-sans font-medium capitalize text-text-secondary flex-1 min-w-0"
-            >
-              <span class="truncate">{{ ticket.summary }}</span>
-            </div>
-
-            <!-- Assignee -->
-            <div class="flex-shrink-0">
-              <span
-                v-if="ticket?.assignee === 'Unassigned'"
-                class="flex justify-center text-gray-500 items-center text-[11px] aspect-square w-[24px] h-[24px] bg-bg-body rounded-full border-border-input border-2"
-                >UA</span
-              >
-              <div
-                v-else-if="ticket?.assignee?.u_profile_image"
-                class="w-6 h-6 rounded-full"
-              >
-                <img :src="ticket.assignee.u_profile_image" alt="" />
-              </div>
-              <span
-                v-else
-                class="text-[11px] aspect-square w-24px flex justify-center items-center h-[24px] bg-accent/30 text-accent border-accent border rounded-full"
-              >
-                {{ getInitials(ticket?.assignee?.u_full_name) }}
-              </span>
-            </div>
+            <Loader />
           </div>
+
+          <!-- Backlog List -->
+          <template v-else>
+            <div
+              v-for="ticket in filteredBacklog"
+              :key="ticket.id"
+              draggable="true"
+              :class="[
+                'flex items-center gap-3 p-[8px] cursor-pointer transition-colors rounded-[8px]',
+                selectedBacklogIds.includes(ticket.id)
+                  ? 'border-2 border-[#5a2d7f]'
+                  : 'border border-border-input',
+                theme === 'dark'
+                  ? 'bg-bg-body hover:bg-bg-surface'
+                  : 'bg-bg-charcoal hover:bg-bg-body',
+              ]"
+              @dragstart="onDragStart($event, ticket, 'backlog')"
+              @dragend="onDragEnd($event)"
+              @click="$emit('open-ticket', ticket)"
+            >
+              <!-- Checkbox -->
+              <input
+                type="checkbox"
+                class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
+                :checked="selectedBacklogIds.includes(ticket.id)"
+                @click.stop
+                @change="handleCheckboxChange(ticket.id, $event)"
+              />
+
+              <!-- Summary -->
+              <div
+                class="flex items-center text-[14px] font-sans font-medium capitalize text-text-secondary flex-1 min-w-0"
+              >
+                <span class="truncate">{{ ticket.summary }}</span>
+              </div>
+
+              <!-- Assignee -->
+              <div class="flex-shrink-0">
+                <span
+                  v-if="ticket?.assignee === 'Unassigned'"
+                  class="flex justify-center text-gray-500 items-center text-[11px] aspect-square w-[24px] h-[24px] bg-bg-body rounded-full border-border-input border-2"
+                >
+                  UA
+                </span>
+
+                <div
+                  v-else-if="ticket?.assignee?.u_profile_image"
+                  class="w-6 h-6 rounded-full"
+                >
+                  <img :src="ticket.assignee.u_profile_image" alt="" />
+                </div>
+
+                <span
+                  v-else
+                  class="text-[11px] aspect-square w-[24px] h-[24px] flex justify-center items-center bg-accent/30 text-accent border-accent border rounded-full"
+                >
+                  {{ getInitials(ticket?.assignee?.u_full_name) }}
+                </span>
+              </div>
+            </div>
+          </template>
         </div>
       </div>
     </div>
@@ -108,10 +125,11 @@ import { useBacklogList } from "../../../queries/usePlan";
 import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
+import Loader from "../../../components/ui/Loader.vue";
 const { theme } = useTheme();
 
-import { usePermissions } from '../../../composables/usePermissions'
-const { canCreateCard } = usePermissions()
+import { usePermissions } from "../../../composables/usePermissions";
+const { canCreateCard } = usePermissions();
 
 const emit = defineEmits([
   "ticket-dragged-to-sprint",
@@ -128,17 +146,24 @@ const props = defineProps({
     type: String,
     default: "",
   },
-  checkedAll:{
-    type:Boolean,
-    default:false
+  checkedAll: {
+    type: Boolean,
+    default: false,
   },
-  moduleId: [String, Number, null],
+  moduleId: {
+    type: String,
+    default: "",
+  },
 });
 
 const { workspaceId } = useWorkspaceId();
 const module_id = ref<string | number | null>(props.moduleId ?? null);
-const { data: backlogResp, isPending: isBacklogListPending } =
-useBacklogList(workspaceId, props.sprintType, module_id);
+
+const { data: backlogResp, isPending: isBacklogListPending } = useBacklogList(
+  workspaceId,
+  props.sprintType,
+  module_id
+);
 
 const normalizedBacklog = ref<Ticket[]>([]);
 const dropOverBacklog = ref(false);
@@ -292,15 +317,14 @@ function handleCheckboxChange(id: string, event: Event) {
   toggleRowSelection(id, checked);
 }
 
-
 watch(
   () => props.checkedAll,
   (newVal) => {
     if (newVal) {
-     selectedBacklogIds.value = normalizedBacklog.value.map(t => t.id) // select all
-     console.log(selectedBacklogIds.value)
+      selectedBacklogIds.value = normalizedBacklog.value.map((t) => t.id); // select all
+      console.log(selectedBacklogIds.value);
     } else {
-     selectedBacklogIds.value = [] // deselect all
+      selectedBacklogIds.value = []; // deselect all
     }
   }
 );
