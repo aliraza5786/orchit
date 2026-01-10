@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { useTheme } from "../../../composables/useTheme";
-const { theme, isDark } = useTheme(); // light / dark / system
+const { isDark } = useTheme(); // light / dark / system
 const popular = [
   { title: "Start guide", text: "A 10-minute tour of Space — create your workspace, invite teammates, and publish your first doc.", icon: "fa-light fa-book-open" },
   { title: "Import your work", text: "Bring notes, issues, and docs from other tools into Space in a few clicks.", icon: "fa-light fa-arrow-down-to-bracket" },

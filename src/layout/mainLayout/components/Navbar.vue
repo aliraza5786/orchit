@@ -225,7 +225,7 @@ import NotificationBell from './NotificationBell.vue'
 import { useAuthStore } from '../../../stores/auth'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
-const { theme, setTheme, isDark } = useTheme()
+const { setTheme, isDark } = useTheme()
 const authStore = useAuthStore()
 /* Account Settings Modal */
 const showAccountSettings = ref(false)

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useTheme } from "../../../composables/useTheme";
-const { theme, isDark } = useTheme(); // light / dark / system
+const { isDark } = useTheme(); // light / dark / system
 
 interface Blog {
   id: number | string

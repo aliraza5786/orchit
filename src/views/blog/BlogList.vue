@@ -6,7 +6,7 @@ import BlogCardSkeleton from './skelton/BlogCardSkeleton.vue';
 import CategoryTabsSkeleton from './skelton/CategoryTabsSkeleton.vue';
 import { usePublishedBlogs } from '../../queries/useBlogs.ts';
 
-const { theme, isDark } = useTheme();
+const { isDark } = useTheme();
 
 // Active tab
 const activeTab = ref('all')

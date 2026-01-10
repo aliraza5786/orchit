@@ -163,7 +163,7 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useTheme } from "../composables/useTheme";
-const { theme, isDark } = useTheme(); // light / dark / system
+const { isDark } = useTheme(); // light / dark / system
 
 interface ContactForm {
     fullName: string

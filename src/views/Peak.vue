@@ -227,7 +227,7 @@ import { useTheme } from "../composables/useTheme";
 import { formatDateTime } from "../utilities/FormatDate";
 import { useWorkspaceStore } from "../stores/workspace";
 
-const { theme, isDark } = useTheme();
+const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 
 const lastUpdateDate = computed(() => {

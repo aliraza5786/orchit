@@ -107,7 +107,7 @@ import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
-const { theme, isDark } = useTheme();
+const { isDark } = useTheme();
 
 const props = defineProps<{
   sprint: Sprint | null;

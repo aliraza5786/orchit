@@ -108,7 +108,7 @@ import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
 import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
  
 
-const { theme, isDark } = useTheme();
+const {isDark } = useTheme();
 const route = useRoute();
 const router = useRouter();
 const navItems = [

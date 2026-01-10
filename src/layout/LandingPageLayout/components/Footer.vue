@@ -8,7 +8,7 @@ import borderGif from '@assets/LandingPageImages/footer/footer-top.gif';
 
 
 
-const { theme, isDark } = useTheme(); // light / dark / system
+const { isDark } = useTheme(); // light / dark / system
 
 // web menu 
 interface FooterSection {

@@ -148,7 +148,7 @@ import { ref, watchEffect, computed, nextTick } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 // import StartGuide from './components/StartGuide.vue'
 import { useTheme } from "../../composables/useTheme";
-const { theme, isDark } = useTheme();
+const { isDark } = useTheme();
 import { useActiveKnowledgeCategories } from "../../queries/useKnowledge";
 import KnowledgeSidebarSkeleton from "./skelton/KnowledgeSidebarSkeleton.vue"
 import KnowledgeArticle from './components/KnowledgeArticle.vue';

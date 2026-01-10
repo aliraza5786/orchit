@@ -74,7 +74,7 @@ import { useNotificationsQuery } from "../../../queries/useNotifications";
 import { useTheme } from "../../../composables/useTheme";
 import router from "../../../router"; 
 import { toast } from "vue-sonner";
-const { theme, isDark } = useTheme();
+const { isDark } = useTheme();
 
 const isOpen = ref(false);
 const toggleDropdown = () => (isOpen.value = !isOpen.value);

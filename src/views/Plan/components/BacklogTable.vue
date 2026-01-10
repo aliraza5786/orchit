@@ -126,7 +126,7 @@ import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
 import Loader from "../../../components/ui/Loader.vue";
-const { theme, isDark } = useTheme();
+const { isDark } = useTheme();
 
 import { usePermissions } from "../../../composables/usePermissions";
 const { canCreateCard } = usePermissions();

@@ -6,7 +6,7 @@ import { useTheme } from "../../composables/useTheme";
 import BlogSkeleton from "./skelton/BlogSkeleton.vue";
 import RelatedBlogSkeleton from "./skelton/RelatedBlogSkeleton.vue";
 
-const { theme, isDark } = useTheme();
+const { isDark } = useTheme();
 const route = useRoute();
 const router = useRouter();
 
