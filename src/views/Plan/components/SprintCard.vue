@@ -1,7 +1,7 @@
 <template>
   <div
     class="h-full min-h-0 px-2"
-    :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
+    :class="isDark ? 'bg-bg-surface' : 'bg-bg-surface/30'"
   >
     <!-- Sprint Table -->
     <div
@@ -27,7 +27,7 @@
               selectedIds.includes(ticket.id)
                 ? 'border-2 border-[#5a2d7f]'
                 : 'border border-border-input',
-              theme === 'dark'
+              isDark
                 ? 'bg-bg-body hover:bg-bg-surface'
                 : 'bg-bg-charcoal hover:bg-bg-body',
             ]"
@@ -42,7 +42,7 @@
               :checked="selectedIds.includes(ticket.id)"
               @click.stop
               @change="handleCheckboxChange(ticket.id, $event)"
-              :class="theme === 'dark' ? 'bg-bg-charcoal' : 'bg-bg-body '"
+              :class="isDark ? 'bg-bg-charcoal' : 'bg-bg-body '"
             />
 
             <!-- Summary -->
@@ -107,7 +107,7 @@ import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
-const { theme } = useTheme();
+const { isDark } = useTheme();
 
 const props = defineProps<{
   sprint: Sprint | null;

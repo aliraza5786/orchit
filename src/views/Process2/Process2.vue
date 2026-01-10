@@ -8,7 +8,7 @@
 
       <!-- Kanban Board (Columns) --> 
       <!-- General Process Static Column -->
-      <div v-if="!isPending" class="rounded-lg bg-bg-body h-full min-w-[320px] max-w-[320px] flex flex-col border-border/50 border">
+      <div v-if="!isPending" class="rounded-lg bg-bg-body h-full min-w-[270px] sm:min-w-[320px] max-w-[270px] sm:max-w-[320px] flex flex-col border-border/50 border">
          <!-- Header -->
          <div class="flex items-center justify-between w-full p-4 border-b border-border">
             <div class="flex items-center gap-2 flex-auto max-w-4/5">
@@ -67,10 +67,10 @@
       </ProcessKanbanBoard>
 
       <!-- Inline Add Column Button/Form -->
-      <div class="min-w-[300px] max-w-[300px] shrink-0">
+      <div class="min-w-[270px] sm:min-w-[300px] max-w-[270px] sm:max-w-[300px] shrink-0">
         <div v-if="!activeAddList" 
           @click="activeAddList = true"
-          class="max-w-82 ms-4 text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg cursor-pointer">
+          class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg cursor-pointer">
           <i class="fa-solid fa-plus"></i>
           <span class="font-medium">Add Process Group</span>
         </div>

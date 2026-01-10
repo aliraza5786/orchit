@@ -171,7 +171,7 @@
               <button v-for="(color, index) in colors" :key="index" type="button"
                 class="w-13 h-13 rounded-full cursor-pointer border-2 flex items-center justify-center"
                 :class="selectedColor === color.value ? 'border-text-primary' : 'border-transparent'"
-                :style="{ backgroundColor: color.color }" @click="selectColor(color.value)" aria-label="Select color">
+                :style="{ backgroundColor: color.color }" @click="handleColorClick(color.value)" aria-label="Select color">
                 <i v-if="selectedColor === color.value" class="fa-solid fa-check text-xl"
                   :class="index === 0 ? 'text-black' : 'text-white'"></i>
               </button>
@@ -354,14 +354,40 @@ const selectedTheme = ref<string>('')
 const themes = [theme1, theme2, theme3, theme4, theme5, theme6, theme7, theme6]
 
 // Apply default selection
-if (props.workspace?.variables.color) {
-  selectColor(props.workspace.variables.color)
-} else {
-  selectColor(colors.value[0].value)
+const defaultLight = lightColors[0].value
+const defaultDark = darkColors[0].value
+
+// Helper to apply color locally without API call
+function setLocalColor(value: string) {
+  // Handle cross-theme defaults
+  let finalValue = value
+  if (isDark.value && value === defaultLight) finalValue = defaultDark
+  if (!isDark.value && value === defaultDark) finalValue = defaultLight
+  
+  // If still not in list (and not matching cross-defaults), validation could be added here
+  // But usually custom colors shouldn't happen unless valid.
+  
+  selectedColor.value = finalValue
+  const color30 = hexToRgba(finalValue, 0.3)
+  workspaceStore.setBackground(color30)
 }
 
+// Watch for workspace data changes (initial load or switch)
+watch(() => props.workspace?.variables?.color, (newVal) => {
+  // If prop provided, use it. Else use current theme default.
+  if (newVal) {
+    setLocalColor(newVal)
+  } else {
+    // No color in workspace? Use default for current theme.
+    setLocalColor(colors.value[0].value)
+  }
+}, { immediate: true })
+
+// Watch for theme changes
 watch(isDark, () => {
-   selectColor(colors.value[0].value)
+  // Re-run local set to resolve defaults if needed (e.g. switch #EDEEF0 <-> #1b1b1b)
+  // We pass current selectedColor.value to be re-evaluated against new theme.
+  setLocalColor(selectedColor.value)
 })
 
 /* ----- Safer accessors ----- */
@@ -608,14 +634,13 @@ function hexToRgba(hex: string, alpha = 0.3) {
 }
 
 /* ----- Simple helpers for palette / theme / menu ----- */
-function selectColor(value: string) {
-  selectedColor.value = value;
-  const color30 = hexToRgba(value, 0.3); // 30% opacity
-  workspaceStore.setBackground(color30);
+/* ----- Simple helpers for palette / theme / menu ----- */
+function handleColorClick(value: string) {
+  setLocalColor(value) // update UI immediately
   updateWS({
     workspace_id: workspaceId.value,
     variables: {
-      color: value
+      color: selectedColor.value // Use the resolved value
     }
   })
 }

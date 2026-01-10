@@ -1,10 +1,10 @@
 <template>
 
-    <div :class="theme === 'dark' ? 'text-white' : 'text-text-primary'">
+    <div :class="isDarkTheme ? 'text-white' : 'text-text-primary'">
         <!-- Label + Tooltip -->
         <label v-if="label" :class="[
             'text-base font-medium mb-1 flex items-center',
-            theme === 'dark' ? 'text-white' : 'text-text-primary'
+            isDarkTheme ? 'text-white' : 'text-text-primary'
         ]">
             {{ label }}
             <span v-if="tooltip" class="inline-block text-text-secondary -400 ml-1 cursor-help" v-tooltip="tooltip">
@@ -18,7 +18,7 @@
                 'flex items-center border h-32 rounded-xl border-dashed border-border  px-3 py-3 w-full text-sm focus-within:ring-2',
 
                 error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-black',
-                theme === 'dark' ? 'bg-bg-input border-border ' : 'bg-bg-input border-border '
+                isDarkTheme ? 'bg-bg-input border-border ' : 'bg-bg-input border-border '
             ]">
 
                 <!-- Prefix slot -->
@@ -56,7 +56,7 @@
 
         <!-- Help/Error Text -->
         <p v-if="message" class="mt-2 text-xs flex items-center gap-1"
-            :class="error ? 'text-red-500' : theme === 'dark' ? 'text-text-secondary ' : 'text-text-secondary '">
+            :class="error ? 'text-red-500' : isDarkTheme ? 'text-text-secondary ' : 'text-text-secondary '">
             <slot v-if="$slots.msgIcon" name="msgIcon" /> {{ message }}
         </p>
     </div>
@@ -66,6 +66,9 @@
 import { onBeforeMount, watch } from 'vue';
 import { ref } from 'vue';
 import { computed } from 'vue';
+import { useTheme } from '../../composables/useTheme';
+
+const { isDark } = useTheme();
 
 const props = withDefaults(
     defineProps<{
@@ -77,13 +80,13 @@ const props = withDefaults(
         placeholder?: string;
         accept?: string; // File type(s) allowed
         size?: 'md' | 'lg';
-        theme?: 'dark' | 'light';
+        theme?: string;
 
     }>(),
     {
         size: 'md',
         accept: '*/*',
-        theme: 'light',
+        theme: 'system',
         error: false,
         modelValue: null
     }
@@ -103,6 +106,10 @@ const handleFileChange = (event: Event) => {
         emit('update:modelValue', selectedFile);
     }
 };
+
+const isDarkTheme = computed(() => {
+  return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
+});
 
 const imageUrl = computed(() => {
   const f = file.value

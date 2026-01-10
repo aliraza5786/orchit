@@ -33,7 +33,7 @@
           <div v-for="notification in group" :key="notification.id" @click="openNotification(notification)"
             class="flex gap-3 px-4 py-3 border-b border-border-input last:border-b-0  cursor-pointer transition-colors"
             :class="{
-              'bg-bg-body ': !notification.read && theme === 'light',
+              'bg-bg-body ': !notification.read && !isDark,
               'hover:bg-bg-body': true
             }">
             <div class="flex-shrink-0">
@@ -74,7 +74,7 @@ import { useNotificationsQuery } from "../../../queries/useNotifications";
 import { useTheme } from "../../../composables/useTheme";
 import router from "../../../router"; 
 import { toast } from "vue-sonner";
-const { theme } = useTheme();
+const { isDark } = useTheme();
 
 const isOpen = ref(false);
 const toggleDropdown = () => (isOpen.value = !isOpen.value);

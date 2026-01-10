@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="theme === 'dark' ? 'text-white ' : 'text-text-primary'"
+    :class="isDarkTheme ? 'text-white ' : 'text-text-primary'"
     ref="wrapperRef"
   >
     <!-- Label + Tooltip -->
@@ -8,7 +8,7 @@
       v-if="label" 
       :class="[
         ' font-medium mb-1 flex items-center',
-        theme === 'dark' ? 'text-white' : 'text-text-primary',
+        isDarkTheme ? 'text-white' : 'text-text-primary',
         size == 'md' ? 'text-sm' : size == 'sm' ? 'text-xs' : 'text-base',
       ]"
     >
@@ -28,7 +28,7 @@
       class="relative px-3 py-2 rounded-md w-full border text-sm  flex justify-between items-center"
       :class="[
         size === 'md' ? 'h-10' : size === 'sm' ? 'h-8 !rounded-md' : 'h-12',
-        theme === 'dark'
+        isDarkTheme
           ? 'bg-bg-input border-border '
           : 'bg-bg-input border-border ',
         error
@@ -74,7 +74,7 @@
         class="absolute z-[9999] mt-2 rounded-md max-h-64 overflow-auto shadow border w-full"
         :style="dropdownStyles"
         :class="
-          theme === 'dark'
+          isDarkTheme
             ? 'bg-bg-input text-text-primary border-border'
             : 'bg-bg-input text-text-primary border-border'
         "
@@ -110,7 +110,7 @@
       :class="
         error
           ? 'text-red-500'
-          : theme === 'dark'
+          : isDarkTheme
           ? 'text-text-secondary -400'
           : 'text-text-secondary -500'
       "
@@ -120,8 +120,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from "vue"; 
+import { ref, watch, onMounted, onBeforeUnmount, computed } from "vue"; 
+import { useTheme } from '../../composables/useTheme';
 import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
+
+const { isDark } = useTheme();
 
 interface Option {
   title: string;
@@ -142,13 +145,13 @@ const props = withDefaults(
     error?: boolean;
     size?: "sm" | "md" | "lg";
     tooltip?: string;
-    theme?: "light" | "dark";
+    theme?: string;
     disabled?: boolean;
     loading?: boolean;
   }>(),
   {
     size: "md",
-    theme: "light",
+    theme: 'system',
     placeholder: "Select an option...",
     error: false,
     loading: false
@@ -168,6 +171,10 @@ const triggerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const dropdownStyles = ref<CSSProperties>({ top: "-9999px", left: "-9999px", width: "100%", position: 'fixed' });
 const selected = ref<Option | null>(null);
+
+const isDarkTheme = computed(() => {
+  return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
+});
 
 // Floating UI cleanup function
 let cleanupFloating: (() => void) | null = null;

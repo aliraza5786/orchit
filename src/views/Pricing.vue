@@ -4,7 +4,7 @@ import { useTheme } from "../composables/useTheme";
 import { useWorkspaceStore } from "../stores/workspace";
 import { usePackages } from "../queries/usePricing";
 
-const { theme } = useTheme(); // light / dark / system
+const { isDark } = useTheme(); // light / dark / system
 const isYearly = ref(false);
 const workspaceStore = useWorkspaceStore();
 
@@ -115,7 +115,7 @@ const pricingPlans = computed(() => {
           :key="plan.name"
           class="relative group rounded-2xl border p-[28px] flex flex-col justify-between transition-all duration-300 hover:scale-[1.01]"
           :class="
-            theme === 'light' ? 'border-[#a495e9b5]' : 'border-border-input'
+            !isDark ? 'border-[#a495e9b5]' : 'border-border-input'
           "
         >
           <!-- Gradient border -->
@@ -183,7 +183,7 @@ const pricingPlans = computed(() => {
                 @click="handleClick"
                 class="w-full py-[14px] cursor-pointer rounded-[12px] font-manrope font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
                 :class="[
-                  theme === 'dark'
+                  isDark
                     ? plan.highlighted
                       ? 'bg-white text-black hover:bg-gray-200'
                       : 'bg-bg-charcoal text-white hover:bg-white hover:text-black'
@@ -226,7 +226,7 @@ const pricingPlans = computed(() => {
                     feature.available
                       ? 'text-text-primary'
                       : 'text-text-secondary',
-                    theme === 'dark' ? 'text-black' : '',
+                    isDark ? 'text-black' : '',
                   ]"
                 >
                   {{ feature.text }}

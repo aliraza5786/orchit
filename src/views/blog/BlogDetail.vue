@@ -6,7 +6,7 @@ import { useTheme } from "../../composables/useTheme";
 import BlogSkeleton from "./skelton/BlogSkeleton.vue";
 import RelatedBlogSkeleton from "./skelton/RelatedBlogSkeleton.vue";
 
-const { theme } = useTheme();
+const { isDark } = useTheme();
 const route = useRoute();
 const router = useRouter();
 
@@ -103,7 +103,7 @@ watch(slug, () => {
           <div v-else-if="relatedBlogs?.length" class="grid sm:grid-cols-2 gap-8">
             <div v-for="r in relatedBlogs" :key="r._id" @click="router.push(`/blog/${r.slug}`)"
               class="cursor-pointer rounded-2xl bg-bg-lavender overflow-hidden border transition-all hover:shadow-xl group"
-               :class="theme === 'dark' ? 'border border-border-input' : 'border border-[#a495e9b5]'">
+               :class="isDark ? 'border border-border-input' : 'border border-[#a495e9b5]'">
               <div class="overflow-hidden">
                 <img v-if="r.featured_image" :src="r.featured_image" :alt="r.featured_image_alt || r.title"
                   class="w-full aspect-[3/2] h-full object-cover transition-transform duration-300 group-hover:scale-105" />

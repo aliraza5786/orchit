@@ -63,7 +63,7 @@
                 selectedBacklogIds.includes(ticket.id)
                   ? 'border-2 border-[#5a2d7f]'
                   : 'border border-border-input',
-                theme === 'dark'
+                isDark
                   ? 'bg-bg-body hover:bg-bg-surface'
                   : 'bg-bg-charcoal hover:bg-bg-body',
               ]"
@@ -126,7 +126,7 @@ import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
 import Loader from "../../../components/ui/Loader.vue";
-const { theme } = useTheme();
+const { isDark } = useTheme();
 
 import { usePermissions } from "../../../composables/usePermissions";
 const { canCreateCard } = usePermissions();

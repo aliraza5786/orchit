@@ -37,7 +37,7 @@
         </template>
       </KanbanBoard>
       <!-- Add Column -->
-      <div class="min-w-[328px]" @click.stop>
+      <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
         <form @submit.prevent="" v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
           <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
             />

@@ -16,11 +16,11 @@
 
         <!-- Brand -->
         <RouterLink to="/" class="flex items-center gap-2">
-          <img v-if="theme === 'light'" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30"
+          <img v-if="!isDark" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30"
             loading="eager" decoding="async" />
           <img v-else src="../../../assets/global/dark-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30" loading="eager"
             decoding="async" />
-        </RouterLink>
+        </RouterLink> 
       </div>
 
       <!-- Primary nav -->
@@ -225,7 +225,7 @@ import NotificationBell from './NotificationBell.vue'
 import { useAuthStore } from '../../../stores/auth'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
-const { theme, setTheme } = useTheme()
+const { setTheme, isDark } = useTheme()
 const authStore = useAuthStore()
 /* Account Settings Modal */
 const showAccountSettings = ref(false)

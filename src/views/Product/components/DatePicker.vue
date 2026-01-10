@@ -6,7 +6,7 @@
       class="inline-flex h-full text-xs w-full items-center transition  px-2 rounded-sm"
       :class="[
         disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-bg-surface-hover',
-        theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'
+        isDarkTheme ? 'text-text-secondary' : 'text-text-primary'
       ]"
       @click="toggle"
       :disabled="disabled"
@@ -35,7 +35,7 @@
             left: coords.left + 'px',
             width: POPOVER_W + 'px',
           }"
-          :class="theme === 'dark'
+          :class="isDarkTheme
             ? 'bg-bg-dropdown border-border text-text-primary'
             : 'bg-bg-dropdown border-border text-text-primary'"
           @keydown.esc.prevent.stop="close"
@@ -77,13 +77,13 @@
             <button
               v-if="clearable && selectedDate"
               class="text-xs px-2 py-1 rounded border hover:bg-bg-dropdown-hover"
-              :class="theme === 'dark' ? 'border-border' : 'border-border'"
+              :class="isDarkTheme ? 'border-border' : 'border-border'"
               @click="clear"
             >Clear</button>
             <div class="flex-1"></div>
             <button
               class="text-xs px-3 py-1 rounded border hover:bg-bg-dropdown-menu-hover"
-              :class="theme === 'dark' ? 'border-border' : 'border-border'"
+              :class="isDarkTheme ? 'border-border' : 'border-border'"
               @click="close"
             >Done</button>
           </div>
@@ -95,6 +95,9 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, onBeforeUnmount, nextTick, onMounted } from 'vue'
+import { useTheme } from '../../../composables/useTheme';
+
+const { isDark } = useTheme();
 
 const props = withDefaults(defineProps<{
   modelValue: string | number | Date | null
@@ -102,7 +105,7 @@ const props = withDefaults(defineProps<{
   clearable?: boolean
   minDate?: string | number | Date | null
   maxDate?: string | number | Date | null
-  theme?: 'light' | 'dark'
+  theme?: string
   emitAs?: 'ymd' | 'iso' | 'date'
   placeholder: string
   emptyText?: string
@@ -110,7 +113,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   disabled: false,
   clearable: true,
-  theme: 'light',
+  theme: 'system',
   emitAs: 'ymd',
 })
 
@@ -121,6 +124,10 @@ const root = ref<HTMLElement | null>(null)
 const popover = ref<HTMLElement | null>(null)
 const open = ref(false)
 const coords = ref({ top: 0, left: 0 })
+
+const isDarkTheme = computed(() => {
+  return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
+});
 
 /** Sizing / constants **/
 const GAP = 8
