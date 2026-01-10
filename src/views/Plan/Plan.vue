@@ -778,7 +778,7 @@ import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
 import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
-const { theme, isDark } = useTheme();
+const { isDark } = useTheme();
 const showTaskModal = ref(false);
 const searchQuery = ref("");
 const checkedAll = ref(false);

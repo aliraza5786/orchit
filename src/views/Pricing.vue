@@ -4,7 +4,7 @@ import { useTheme } from "../composables/useTheme";
 import { useWorkspaceStore } from "../stores/workspace";
 import { usePackages } from "../queries/usePricing";
 
-const { theme, isDark } = useTheme(); // light / dark / system
+const { isDark } = useTheme(); // light / dark / system
 const isYearly = ref(false);
 const workspaceStore = useWorkspaceStore();
 
