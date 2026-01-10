@@ -9,13 +9,13 @@
       <!-- Scrollable Sidebar -->
       <div
         class="h-screen  flex flex-col md:border-r justify-between bg-bg-body z-50 overflow-y-auto bg-bg-primary custom-scrollbar transition-all"
-        :class="theme === 'dark' ? 'dark_scroll border-border-input' : 'light_scroll'">
+        :class="isDark ? 'dark_scroll border-border-input' : 'light_scroll'">
         <div>
           <!-- Header -->
           <div class="flex items-center justify-between px-4 py-4 border-b border-border-input md:border-0">
             <div
               class="text-[14px] font-manrope leading-[24px] font-semibold text-text-secondary flex gap-4  w-full items-center">
-              <RouterLink to="/"><img :src="theme === 'dark' ? darkLogo : lightLogo" alt="logo" fetchpriority="high"
+              <RouterLink to="/"><img :src="isDark ? darkLogo : lightLogo" alt="logo" fetchpriority="high"
                   width="100px"></RouterLink>
               <!-- <span class="border-l-2 border-border-input ps-4 pb-2 "> <i
                   class="fa-regular fa-house text-text-primary"></i>
@@ -32,7 +32,7 @@
               <i class="fa-light fa-magnifying-glass absolute top-[11px] left-[10px] text-text-secondary"></i>
               <input type="text" placeholder="Search..." @click="openSearch"
                 class="w-full font-manrope text-sm pl-[35px] pr-3 py-2  rounded-lg bg-bg-lavender focus:outline-none focus:ring-1 focus:ring-bg-lavender"
-                :class="theme === 'dark' ? 'border border-border-input' : 'border border-black'" />
+                :class="isDark ? 'border border-border-input' : 'border border-black'" />
             </div>
           </div>
 
@@ -48,17 +48,17 @@
           <nav v-else class="px-2 py-6 space-y-2 w-64 md:w-[100%]">
             <div v-for="(section, sIndex) in sections" :key="sIndex" class="space-y-1 mb-[24px]">
               <h3 class="text-[14px] font-semibold uppercase font-manrope px-2 mb-1 flex justify-between items-center"
-                :class="theme === 'dark' ? 'text-text-secondary' : 'text-black'">
+                :class="isDark ? 'text-text-secondary' : 'text-black'">
                 {{ section.title }}
                 <i class="fa-solid fa-chevron-right text-[8px]"
-                  :class="theme === 'dark' ? 'text-text-secondary' : 'text-black'"></i>
+                  :class="isDark ? 'text-text-secondary' : 'text-black'"></i>
               </h3>
               <div v-for="(item, iIndex) in section.items" :key="iIndex" @click="selectTab(item)"
                 class="cursor-pointer ml-2 border-l px-3 py-2 mb-0  font-bold text-[14px] font-manrope transition-colors"
                 :class="{
                   'text-[#9356c5] ': activeTab.slug === item.slug,
-                  'text-text-secondary': activeTab.slug !== item.slug && theme === 'dark',
-                  'text-black hover:text-black': activeTab.slug !== item.slug && theme !== 'dark',
+                  'text-text-secondary': activeTab.slug !== item.slug && isDark,
+                  'text-black hover:text-black': activeTab.slug !== item.slug && !isDark,
 
                 }">
                 {{ item.label }}
@@ -73,11 +73,11 @@
 
     <!-- ======== Main Content ======== -->
     <main class="flex-1 mx-auto h-screen bg-bg-body overflow-y-auto bg-bg-primary custom-scrollbar transition-all"
-      :class="theme === 'dark' ? 'dark_scroll' : 'light_scroll'">
+      :class="isDark ? 'dark_scroll' : 'light_scroll'">
 
       <!-- Mobile Header -->
       <header class="md:hidden flex items-center justify-between p-4  bg-bg-body sticky top-0 z-40"
-        :class="theme === 'dark' ? 'border-b border-border-input' : 'border-b border-black'">
+        :class="isDark ? 'border-b border-border-input' : 'border-b border-black'">
         <div class="flex items-center gap-3">
           <button @click="sidebarOpen = true" class="text-primary hover:text-white">
             <i class="fa-solid fa-bars font-bold text-[18px]"></i>
@@ -89,7 +89,7 @@
             Docs
           </div>
         </div>
-        <RouterLink to="/"><img class="me-25" :src="theme === 'dark' ? darkLogo : lightLogo" alt="logo" fetchpriority="high"
+        <RouterLink to="/"><img class="me-25" :src="isDark ? darkLogo : lightLogo" alt="logo" fetchpriority="high"
             width="100px" ></RouterLink>
 
         <button @click="openSearch"><i
@@ -125,7 +125,7 @@
     <!--  search Fullscreen Overlay -->
     <transition name="fade">
       <div v-if="isOpen" class="fixed inset-0 z-50 flex items-start pt-15 justify-center   "
-        :class="theme === 'dark' ? ' bg-black/0 backdrop-blur-[4px]' : ' bg-[#dfe2e6]/1 backdrop-blur-[6px] '"
+        :class="isDark ? ' bg-black/0 backdrop-blur-[4px]' : ' bg-[#dfe2e6]/1 backdrop-blur-[6px] '"
         @click.self="closeSearch">
         <transition name="slide-down">
           <div class="w-full max-w-3xl px-6">
@@ -134,7 +134,7 @@
                 class="fa-light fa-magnifying-glass absolute top-[14px] lg:top-[17px] left-[10px] text-text-secondary"></i>
               <input ref="inputRef" type="text" v-model="query" placeholder="Search..." @click="openSearch"
                 class="w-full font-manrope text-sm h-[44px] lg:h-[50px] pl-[35px] pr-3 py-2  rounded-lg bg-bg-lavender focus:outline-none focus:ring-1 focus:ring-bg-lavender"
-                :class="theme === 'dark' ? 'border border-border-input' : 'border border-black'" />
+                :class="isDark ? 'border border-border-input' : 'border border-black'" />
             </div>
           </div>
         </transition>
@@ -148,7 +148,7 @@ import { ref, watchEffect, computed, nextTick } from 'vue'
 import { useRoute, useRouter, RouterLink } from 'vue-router'
 // import StartGuide from './components/StartGuide.vue'
 import { useTheme } from "../../composables/useTheme";
-const { theme } = useTheme();
+const { theme, isDark } = useTheme();
 import { useActiveKnowledgeCategories } from "../../queries/useKnowledge";
 import KnowledgeSidebarSkeleton from "./skelton/KnowledgeSidebarSkeleton.vue"
 import KnowledgeArticle from './components/KnowledgeArticle.vue';

@@ -21,11 +21,11 @@
                 </div>
 
             </div>
-            <div class="group-hover:hidden text-[11px]" :class="{
+            <div class="group-hover:hidden text-[8px] sm:text-[11px]" :class="{
                         'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-amber-600/10 text-amber-600': ticket.status === 'pending',
                         'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-red-600/10 text-red-600 ': ticket.status === 'rejected',
                         'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-green-600/10 text-green-600  ': ticket.status === 'accepted',
-                        'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-gray-600/20 text-gray-400  ': ticket.status === 'unassigned'
+                        'capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1 bg-bg-body text-gray-400  ': ticket.status === 'unassigned'
                     }">
                   {{ ticket.status }}
             </div>

@@ -16,7 +16,7 @@
         type="text"
         placeholder="Search guides, shortcuts, and troubleshooting"
         class="w-full pl-11 pr-4 py-3 rounded-[10px] bg-bg-lavender font-manrope text-[14px] leading-[20px] font-normal text-text-primary focus:outline-none focus:ring-1 focus:ring-bg-lavender "
-         :class="theme === 'dark' ? 'border border-border-input' : 'border border-black'"
+         :class="isDark ? 'border border-border-input' : 'border border-black'"
       />
     </div>
 
@@ -29,11 +29,11 @@
           :key="i"
           class="bg-bg-lavender rounded-xl p-4 hover:border-bg-lavender 
                  transition-all cursor-pointer"
-                  :class="theme === 'dark' ? 'border border-border-input' : 'border border-[#a495e9b5]'"  
+                  :class="isDark ? 'border border-border-input' : 'border border-[#a495e9b5]'"  
         >
           <div class="flex flex-col items-start gap-3 mb-2">
             <i class="text-lg"
-             :class="[theme === 'dark' ? 'text-text-secondary' : 'text-black', item.icon ]"
+             :class="[isDark ? 'text-text-secondary' : 'text-black', item.icon ]"
             ></i>
             <h3 class="font-medium text-[16px] lg:text-[18px] leading-[28px] font-manrope text-text-primary">{{ item.title }}</h3>
           </div>
@@ -53,7 +53,7 @@
           :key="i"
           class="bg-bg-lavender rounded-xl p-4 hover:border-bg-lavender 
                  transition-all cursor-pointer"
-           :class="theme === 'dark' ? 'border border-border-input' : 'border border-[#a495e9b5]'"       
+           :class="isDark ? 'border border-border-input' : 'border border-[#a495e9b5]'"       
         >
           <div class="flex flex-col items-start gap-3 mb-2">
             <i :class="item.icon" class="text-text-secondary text-lg"></i>
@@ -70,7 +70,7 @@
 
 <script setup lang="ts">
 import { useTheme } from "../../../composables/useTheme";
-const { theme } = useTheme(); // light / dark / system
+const { theme, isDark } = useTheme(); // light / dark / system
 const popular = [
   { title: "Start guide", text: "A 10-minute tour of Space — create your workspace, invite teammates, and publish your first doc.", icon: "fa-light fa-book-open" },
   { title: "Import your work", text: "Bring notes, issues, and docs from other tools into Space in a few clicks.", icon: "fa-light fa-arrow-down-to-bracket" },

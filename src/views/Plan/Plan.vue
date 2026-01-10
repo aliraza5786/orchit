@@ -24,7 +24,7 @@
         >
           <section
             class="space-y-4 p-4 rounded-md relative group box-border h-full min-h-0 min-w-[400px]"
-            :class="theme === 'dark' ? 'bg-bg-surface' : 'bg-bg-surface/30'"
+            :class="isDark ? 'bg-bg-surface' : 'bg-bg-surface/30'"
             :style="{ width: leftWidth + 'px' }"
           >
             <div class="flex items-center justify-between">
@@ -179,7 +179,7 @@
           ></div>
           <section
             class="rounded-md relative group pt-2 flex flex-col flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input overflow-x-hidden"
-            :class="theme === 'dark' ? 'bg-bg-card' : 'bg-bg-card'"
+            :class="isDark ? 'bg-bg-card' : 'bg-bg-card'"
           >
             <div
               class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
@@ -376,7 +376,7 @@
                     <Button
                       size="sm"
                       @click="handleCompleteSprint"
-                      :variant="theme === 'dark' ? 'primary' : 'primary'"
+                      :variant="isDark ? 'primary' : 'primary'"
                       class="border-border-input border"
                       :style="
                         selectedSprintId
@@ -402,7 +402,7 @@
                   <Button
                     v-else
                     size="sm"
-                    :variant="theme === 'dark' ? 'primary' : 'primary'"
+                    :variant="isDark ? 'primary' : 'primary'"
                     class="border-border-input border"
                     @click="openStartSprintModal"
                     :disabled="
@@ -778,7 +778,7 @@ import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
 import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
-const { theme } = useTheme();
+const { theme, isDark } = useTheme();
 const showTaskModal = ref(false);
 const searchQuery = ref("");
 const checkedAll = ref(false);

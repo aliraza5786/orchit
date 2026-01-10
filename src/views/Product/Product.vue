@@ -192,7 +192,7 @@
             />
           </template>
         </KanbanBoard>
-        <div class="min-w-[328px]" @click.stop>
+        <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
           <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
             <BaseTextField
               :autofocus="true"

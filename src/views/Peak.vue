@@ -163,11 +163,11 @@
               <div class="h-6 bg-bg-body rounded overflow-hidden relative group cursor-help"
                 :title="`${member.totalTasks} task${member.totalTasks !== 1 ? 's' : ''} • ${member.totalHours}h`">
                 <div class="h-full  transition-all duration-300"
-                :class="theme === 'dark' ? 'bg-accent':'!bg-accent-hover/40'"
+                :class="isDark ? 'bg-accent':'!bg-accent-hover/40'"
                   :style="{ width: member.workload + '%' }">
                 </div>
                 <span v-if="member.workload > 0"
-                  class="absolute inset-0 flex items-center justify-start px-2 text-[11px] font-medium" :class="theme === 'dark' ? 'text-white':'text-black'">
+                  class="absolute inset-0 flex items-center justify-start px-2 text-[11px] font-medium" :class="isDark ? 'text-white':'text-black'">
                   {{ member.workload }}%
                 </span>
               </div>
@@ -227,7 +227,7 @@ import { useTheme } from "../composables/useTheme";
 import { formatDateTime } from "../utilities/FormatDate";
 import { useWorkspaceStore } from "../stores/workspace";
 
-const { theme } = useTheme();
+const { theme, isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 
 const lastUpdateDate = computed(() => {
