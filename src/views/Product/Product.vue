@@ -60,14 +60,6 @@
             placeholder="Search in Orchit AI space"
           >
           </Searchbar>
-          <button
-            class="cursor-pointer w-8 h-8 rounded-full bg-bg-surface"
-            v-if="view === 'mindmap'"
-            title="Show formatting sidebar"
-            @click="showFormatSidebar = !showFormatSidebar"
-          >
-            <i class="fa-solid fa-sidebar"></i>
-          </button>
           <div
             class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
           >
@@ -258,9 +250,9 @@
           <!-- Header -->
           <div class="flex items-center justify-between pb-3 mb-4 border-b">
             <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
-            <!-- <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
+            <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
       <i class="fa-solid fa-times"></i>
-    </button> -->
+    </button>
           </div>
 
           <div class="format-content space-y-6">
@@ -1671,11 +1663,24 @@ watchEffect(() => {
       mindMapInstance.value = null;
     }
 
+    // Track temporary nodes (created but not yet edited/saved)
+    const temporaryNodeIds = new Set<string>();
+    
+    // Track nodes already saved to backend
+    const savedNodeIds = new Set<string>();
+    
+    // Keep track of sheet nodes
+    const createdSheetNodeIds = new Set<string>();
+
     const instance = new MindElixir({
       el: mindMapRef.value as HTMLElement,
       theme: undefined,
       draggable: true,
       contextMenu: true,
+      toolBar: true,
+      keypress: true,
+      locale: 'en',
+      overflowHidden: false,
       contextMenuOption: {
         Update: true,
         extend: [
@@ -1706,6 +1711,11 @@ watchEffect(() => {
 
     mindMapInstance.value = instance;
     instance.init({ nodeData: rootNode });
+    
+    // Center only once after DOM is fully ready
+    setTimeout(() => {
+      instance.toCenter();
+    }, 100);
 
     // Select node
     instance.bus.addListener("selectNode", (nodeObj: any) => {
@@ -1719,110 +1729,134 @@ watchEffect(() => {
       if (!event?.nodeObj || !event?.element) return;
       applyNodeStyle(event.nodeObj, event.element as HTMLElement);
     });
-
-    // Track nodes already added to backend
-    const addedNodeIds = new Set<string>();
-
-    instance.bus.addListener("operation", async (data: any) => {
-      if (!data || (data.name !== "insertSibling" && data.name !== "addChild"))
-        return;
-
-      const newNode = data.obj;
-      if (!newNode || !newNode.id) return;
-
-      // Prevent duplicate processing
-      if (addedNodeIds.has(newNode.id)) return;
-      addedNodeIds.add(newNode.id);
-
-      // Determine parent node
-      let parentNode;
-      if (data.name === "addChild") {
-        parentNode = instance.currentNode?.nodeObj;
-      } else {
-        // insertSibling: parent of current node
-        parentNode = instance.currentNode?.nodeObj?.parent;
-      }
-
-      if (!parentNode || !("unique_name" in parentNode)) return;
-
-      // Only allow cards under List
-      if (parentNode.unique_name !== "List") return;
-
-      try {
-        const payload = createDefaultCardPayload(
-          {
-            topic: newNode.topic ?? "New Card",
-            id: newNode.id,
-          },
-          parentNode
-        );
-
-        await addTicket(payload);
-        await refetchSheetLists();
-      } catch (err) {
-        console.error("Error creating card or refetching sheets:", err);
-      }
-    });
-
-    // Keep track of nodes already handled to prevent duplicate sheets
-    const createdSheetNodeIds = new Set<string>();
-
     instance.bus.addListener("operation", async (data: any) => {
       if (!data) return;
-
-      const newNode = data.obj;
-      if (!newNode?.id) return;
-
-      // Resolve parent node
-      const parentNode =
-        newNode.parent ?? instance.currentNode?.nodeObj?.parent;
-      if (!parentNode || !("unique_name" in parentNode)) return;
-
-      // -------------------- ROOT → CREATE SHEET --------------------
-      if (
-        data.name === "addChild" &&
-        parentNode.unique_name === "root" &&
-        !createdSheetNodeIds.has(newNode.id)
-      ) {
-        createdSheetNodeIds.add(newNode.id);
-
-        try {
-          await createNewSheet({
-            variables: {
-              "sheet-title": newNode.topic ?? "New Sheet",
-              "sheet-description": "This is custom description",
-            },
-            is_ai_generated: false,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-          });
-        } catch (err) {
-          console.error("Error creating workspace sheet:", err);
+      if (data.name === "addChild" || data.name === "insertSibling") {
+        const newNode = data.obj;
+        if (!newNode || !newNode.id) {
+          return;
         }
-
+        temporaryNodeIds.add(newNode.id);
         return;
       }
+      if (data.name === "beginEdit") {
+        const editingNode = data.obj;
+        console.log("editing node", editingNode);
+        
+        return;
+      }
+      if (data.name === "finishEdit") {
+        const editedNode = data.obj;
+        
+        if (!editedNode || !editedNode.id) {
+          return;
+        }
+        const isTemporaryNode = temporaryNodeIds.has(editedNode.id);
+        const isAlreadySaved = savedNodeIds.has(editedNode.id);
+        if (!isTemporaryNode && !isAlreadySaved) {
+          return;
+        }
+        if (isAlreadySaved) {
+          return;
+        }
+        if (isTemporaryNode) {
+          temporaryNodeIds.delete(editedNode.id);
+          savedNodeIds.add(editedNode.id);
+          const parentNode = editedNode.parent;
+          if (!parentNode || !("unique_name" in parentNode)) {
+            savedNodeIds.delete(editedNode.id); 
+            return;
+          }
+          if (
+            parentNode.unique_name === "root" &&
+            !createdSheetNodeIds.has(editedNode.id)
+          ) {
+            createdSheetNodeIds.add(editedNode.id);
 
-      // -------------------- LIST → CREATE CARD --------------------
-      if (parentNode.unique_name !== "List") return;
+            try {
+              await createNewSheet({
+                variables: {
+                  "sheet-title": editedNode.topic ?? "New Sheet",
+                  "sheet-description": "This is custom description",
+                },
+                is_ai_generated: false,
+                workspace_id: workspaceId.value,
+                workspace_module_id: moduleId.value,
+              });
+            } catch (err) {
+              console.error("Error creating workspace sheet:", err);
+              savedNodeIds.delete(editedNode.id);
+              createdSheetNodeIds.delete(editedNode.id);
+            }
 
-      try {
-        const payload = createDefaultCardPayload(
-          {
-            topic: newNode.topic ?? "New Card",
-            id: newNode.id,
-          },
-          parentNode
-        );
+            return;
+          }
+          if (parentNode.unique_name === "List") {
+            try {
+              const payload = createDefaultCardPayload(
+                {
+                  topic: editedNode.topic ?? "New Card",
+                  id: editedNode.id,
+                },
+                parentNode
+              );
+              if (payload.variables) {
+                payload.variables["card-description"] = "This is a default description";
+              }
+              await addTicket(payload);
+              await refetchSheetLists();
+            } catch (err) {
+              console.error("Error creating card:", err);
+              savedNodeIds.delete(editedNode.id);
+            }
 
-        await addTicket(payload);
-        await refetchSheetLists();
-      } catch (err) {
-        console.error("Error creating card or refetching sheets:", err);
+            return;
+          }
+          if (parentNode.unique_name === "sheet") {
+            try {
+              console.log("Creating new list under sheet...");
+              console.log("List creation logic would go here");
+            } catch (err) {
+              console.error("Error creating list:", err);
+              savedNodeIds.delete(editedNode.id);
+            }
+
+            return;
+          }
+        }
       }
     });
   });
 });
+function injectToolbarButton() {
+  const toolbar = document.querySelector(
+    ".mind-elixir-toolbar.rb"
+  ) as HTMLElement;
+
+  if (!toolbar) {
+    requestAnimationFrame(injectToolbarButton);
+    return;
+  }
+
+  // prevent duplicate button
+  if (toolbar.querySelector(".open-sidebar-btn")) return;
+
+  const btn = document.createElement("button");
+  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
+  btn.title = "Open Formatting Sidebar";
+
+  btn.innerHTML = `<i class="fa-solid fa-sidebar"></i> `;
+
+  btn.addEventListener("click", () => {
+    showFormatSidebar.value = !showFormatSidebar.value;
+  });
+
+  toolbar.appendChild(btn);
+}
+
+// call AFTER init
+injectToolbarButton();
+
 
 // ----------------------
 function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
@@ -2046,5 +2080,20 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
   scrollbar-width: thin !important;
   /* Firefox */
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+.me-toolbar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.me-toolbar-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 </style>

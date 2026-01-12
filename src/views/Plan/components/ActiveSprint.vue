@@ -16,6 +16,7 @@
           @click="$emit('go-back')"
           ><i class="fa-solid fa-chevron-left text-xs"></i
         ></Button>
+        <!-- {{ sheetId }} -->
         <!-- <Dropdown
           v-model="selected_module_id"
           :options="moduleOptions"
@@ -44,6 +45,11 @@
             </div>
           </template>
         </Dropdown> -->
+        <div
+    class="px-4 py-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
+  >
+    {{ activeSprint }}
+  </div>
       </div>
 
       <div class="flex gap-3 items-center">
@@ -78,14 +84,6 @@
           placeholder="Search in Orchit AI space"
         >
         </Searchbar> -->
-        <button
-          class="cursor-pointer w-8 h-8 rounded-full bg-bg-surface"
-          v-if="view === 'mindmap'"
-          title="Show formatting sidebar"
-          @click="showFormatSidebar = !showFormatSidebar"
-        >
-          <i class="fa-solid fa-sidebar"></i>
-        </button>
         <div
           class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
         >
@@ -613,7 +611,7 @@ import { debounce } from "lodash";
 // import SearchBar from '../../../components/ui/SearchBar.vue';
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 
-const props = defineProps<{ sptint_id: any; searchQuery: string }>();
+const props = defineProps<{ sptint_id: any; searchQuery: string, activeSprint: string }>();
 const CreateTaskModal = defineAsyncComponent(
   () => import("../../Product/modals/CreateTaskModal.vue")
 );
@@ -752,7 +750,6 @@ const selected_sprint_id = computed(() => props.sptint_id);
 // usage
 const { data: Lists, isPending } = useSprintKanban(
   selected_sprint_id,
-  selected_sheet_id
 );
 const createTeamModal = ref(false);
 const selectedCard = ref<any>();
@@ -1616,6 +1613,10 @@ watchEffect(() => {
 
     mindMapInstance.value = instance;
     instance.init({ nodeData: rootNode });
+   nextTick(() => {
+    instance.toCenter();  
+    instance.scale(1);    
+    });
 
     // Select node
     instance.bus.addListener("selectNode", (nodeObj: any) => {
@@ -1733,6 +1734,35 @@ watchEffect(() => {
     });
   });
 });
+function injectToolbarButton() {
+  const toolbar = document.querySelector(
+    ".mind-elixir-toolbar.rb"
+  ) as HTMLElement;
+
+  if (!toolbar) {
+    requestAnimationFrame(injectToolbarButton);
+    return;
+  }
+
+  // prevent duplicate button
+  if (toolbar.querySelector(".open-sidebar-btn")) return;
+
+  const btn = document.createElement("button");
+  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
+  btn.title = "Open Formatting Sidebar";
+
+  btn.innerHTML = `<i class="fa-solid fa-sidebar"></i> `;
+
+  btn.addEventListener("click", () => {
+    showFormatSidebar.value = !showFormatSidebar.value;
+  });
+
+  toolbar.appendChild(btn);
+}
+
+// call AFTER init
+injectToolbarButton();
+
 
 // ----------------------
 function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
@@ -1833,4 +1863,20 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
   scrollbar-width: thin;
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent;
 }
+.me-toolbar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.me-toolbar-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
 </style>

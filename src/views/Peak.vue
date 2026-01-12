@@ -197,7 +197,7 @@
             <div class="flex-1 min-w-0">
               <div class="text-sm text-text-primary">
                 <span class="font-medium text-accent/90 pe-1">{{ activity.user.name }} </span>
-                <span class="text-text-secondary"> {{ activity.message }} </span>
+                <span  class="text-text-secondary" v-html="activity.message"></span>
                 <a href="#" class="text-accent/90 hover:underline">{{ activity.item }}</a>
                 <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
                   :class="getStatusClass(activity.status)">
@@ -215,11 +215,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch , watchEffect} from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { toParamString } from '../composables/useQueryParams'
 import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople'
+import { useSingleWorkspace } from '../queries/useWorkspace'
 import { getInitials, generateAvatarColor } from '../utilities'
 import { avatarColor } from '../utilities/avatarColor'
 import type { TeamWorkloadMember } from '../types'
@@ -230,12 +232,34 @@ import { useWorkspaceStore } from "../stores/workspace";
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 
+const route = useRoute()
+const workspaceId = computed<string>(() => toParamString(route?.params?.id))
+const jobId = computed<string>(() => toParamString(route?.params?.job_id))
+
+/** Queries for team + activities */
+const {
+  data: dashboardTeamsData,
+  isPending: isLoadingTeams,
+  error: teamsError,
+  refetch: refetchTeams
+} = useDashboardTeams(workspaceId)
+const { data: dashboardActiviesData } = useDashboardActivities(workspaceId)
+const { data: workspaceData } = useSingleWorkspace(workspaceId)
+
 const lastUpdateDate = computed(() => {
   const activities = dashboardActiviesData.value?.activities
+  const workspaceCreatedAt = workspaceStore.workspace?.created_at || workspaceData.value?.created_at
+  
   if (activities?.length) {
-    return activities[0].created_at || workspaceStore.workspace?.created_at
+    return activities[0].created_at || workspaceCreatedAt
   }
-  return workspaceStore.workspace?.created_at
+  return workspaceCreatedAt
+})
+
+watchEffect(() => {
+  console.log('lastUpdateDate:', lastUpdateDate.value);
+  console.log('workspaceStore.workspace:', workspaceStore.workspace);
+  console.log('workspaceData:', workspaceData.value);
 })
 /** Types */
 interface LaneProgressRow {
@@ -353,15 +377,13 @@ const lanes2 = computed<LaneProgressRow[]>(
   () => taskProgress.value?.progress_details?.lanes_progress ?? []
 )
 
+
+
 const avatars = [
   'https://randomuser.me/api/portraits/women/1.jpg',
   'https://randomuser.me/api/portraits/men/2.jpg',
   'https://randomuser.me/api/portraits/men/3.jpg'
 ]
-
-const route = useRoute()
-const workspaceId = computed<string>(() => toParamString(route?.params?.id))
-const jobId = computed<string>(() => toParamString(route?.params?.job_id))
 
 
 
@@ -371,13 +393,6 @@ const onLaneClick = (lane: LaneProgressRow) => {
 }
 
 /** Queries for team + activities */
-const {
-  data: dashboardTeamsData,
-  isPending: isLoadingTeams,
-  error: teamsError,
-  refetch: refetchTeams
-} = useDashboardTeams(workspaceId)
-const { data: dashboardActiviesData } = useDashboardActivities(workspaceId)
 
 const teamWorkload = computed(() => {
   if (!dashboardTeamsData.value?.team_workload) {
@@ -437,6 +452,13 @@ const getCardProgress = (total: number, status_dis: any) => {
   const done = status_dis['Done'] ?? 0
   return (done / total) * 100
 }
+
+const queryClient = useQueryClient()
+watch(cardProgress, (val) => {
+  if (val) {
+    queryClient.invalidateQueries({ queryKey: ["dashboard-teams", workspaceId.value] })
+  }
+})
 
 watch([workspaceId, jobId], () => {
   disconnect()

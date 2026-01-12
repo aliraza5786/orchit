@@ -1,7 +1,6 @@
 <template>
   <div
     class="h-full min-h-0 px-2"
-    :class="isDark ? 'bg-bg-surface' : 'bg-bg-surface/30'"
   >
     <!-- Sprint Table -->
     <div

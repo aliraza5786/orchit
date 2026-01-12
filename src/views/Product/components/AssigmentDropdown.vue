@@ -1,7 +1,6 @@
 <template>
   <div class="relative" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
-    <!-- Trigger -->
     <div v-if="displayUser?.user?.avatar || displayUser?._id || seat?._id" class="flex gap-2 items-center" :class="(disabled || !canAssignCard) ? 'cursor-not-allowed' : 'cursor-pointer'">
       <img v-if="displayUser?.avatar?.src || displayUser?.user?.avatar || displayUser?.u_profile_image"
         :src="displayUser?.avatar?.src ?? displayUser?.u_profile_image ?? displayUser?.user?.avatar"
@@ -16,7 +15,10 @@
         class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center shadow-sm">
         <i class="fa-regular fa-user text-xs"></i>
       </abbr>
-      <span v-if="name" class="text-sm text-text-primary ">{{(displayUser?.name || displayUser?.title || displayUser?.u_full_name) ??'unAssigned'}}</span>
+      <span v-if="name" class="text-sm text-text-primary ">
+          <span v-if="isRolesLoading && !displayUser?.name && !displayUser?.u_full_name">Loading...</span>
+          <span v-else>{{(displayUser?.name || displayUser?.title || displayUser?.u_full_name) ??'unAssigned'}}</span>
+      </span>
     </div>
 
     <button v-else type="button"
@@ -104,8 +106,8 @@ const emit = defineEmits<{
 
 /** Data **/
 const { workspaceId } = useRouteIds()
-const { data: roles } = useWorkspacesRoles(computed(() => props?.workspaceId ?? workspaceId.value))
-
+const { data: roles, isPending: isRolesLoading } = useWorkspacesRoles(computed(() => props?.workspaceId ?? workspaceId.value))
+ 
 const assignedUser = ref<any>(props.assigneeId ?? props.seat)
 watch(() => [props.assigneeId, props.seat], () => {
   assignedUser.value = props.assigneeId ?? props.seat

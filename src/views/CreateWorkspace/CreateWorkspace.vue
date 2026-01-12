@@ -1,6 +1,6 @@
 <template>
   <div :key="isStartOver"
-    class="px-2 pt-[100px] md:pt-[110px] lg:pt-[120px] pb-[40px] md:pb-[50px] lg:pb-[90px] w-full justify-start items-center flex flex-col relative">
+    class="px-2 pt-[100px] md:pt-[110px] lg:pt-[120px] pb-[40px] md:pb-[50px] lg:pb-[70px] w-full justify-start items-center flex flex-col relative">
     <div class="flex justify-between items-center fixed top-0 z-[1] w-full flex-row px-5 bg-bg-surface border-b border-border h-[60px] lg:h-[70px]"
       v-show="isStepperVisible">
       <div class="flex items-center py-5 justify-start gap-2 md:gap-4 overflow-x-auto no-scrollbar max-w-[calc(100%-40px)]"

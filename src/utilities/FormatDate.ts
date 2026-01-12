@@ -17,7 +17,10 @@ export function extractYear(dateString: string) {
 }
 
 export function formatDateTime(timestamp: string): string {
+  if (!timestamp) return '—';
+  
   const date = new Date(timestamp);
+  if (isNaN(date.getTime())) return '—';
 
   const datePart = date.toLocaleDateString("en-US", {
     month: "short",
@@ -32,9 +35,6 @@ export function formatDateTime(timestamp: string): string {
   hours = hours ? hours : 12; // the hour '0' should be '12'
   
   const strMinutes = minutes < 10 ? "0" + minutes : minutes;
-  
-  // Format: Sep 12, 2024 - 09.45 AM
-  // Note: toLocaleDateString might return "Sep 12, 2024" or "Sep 12, 2024" depending on locale implementation detail, usually "Sep 12, 2024"
   
   return `${datePart} - ${hours.toString().padStart(2, '0')}:${strMinutes} ${ampm}`;
 }

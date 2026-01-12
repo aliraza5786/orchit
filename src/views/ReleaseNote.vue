@@ -100,7 +100,7 @@ const scrollToNote = (id: string) => {
         <aside class="sm:w-[180px] shrink-0">
           <div class="sticky top-5">
             <h2
-              class="text-3xl block mb-5 sm:hidden font-bold text-text-primary"
+              class="text-3xl mt-0 block mb-5 sm:hidden font-bold text-text-primary"
             >
               Release notes for Current Channel
             </h2>
@@ -265,7 +265,7 @@ const scrollToNote = (id: string) => {
   color: var(--text-primary);
   line-height: 28px !important;
 }
-.release_note_content :deep(p) {
+.release_note_content :deep(p)  {
  font-size: 16px;
   line-height: 24px;
   margin-bottom: 10px;
@@ -273,40 +273,55 @@ const scrollToNote = (id: string) => {
   font-family: manrope;
   color: var(--color-text-secondary);
 }
- 
-.release_note_content :deep(ul),
-.release_note_content :deep(ol) {
-   font-size: 16px;
+.release_note_content :deep(li)  {
+ font-size: 16px;
   line-height: 24px; 
   font-weight: 400;
   font-family: manrope;
   color: var(--color-text-secondary);
 }
 
+ 
+.release_note_content :deep(ul),
+.release_note_content :deep(ol) {
+  font-size: 16px;
+  line-height: 24px; 
+  font-weight: 400;
+  font-family: manrope;
+  color: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  list-style: inside !important;
+}
+
 @media(max-width:1024px) {
   .release_note_content :deep(h1),  .release_note_content :deep(h2) {
     font-size: 24px;
-    line-height: 32px;
+    line-height: 32px !important;
   }
 
  .release_note_content :deep(h3){
     font-size: 22px;
-    line-height: 28px;
+    line-height: 28px !important;
     margin: 10px 0px;
   }
 
  .release_note_content :deep(h4) {
     font-size: 18px;
-    line-height: 26px;
+    line-height: 26px !important;
   }
 }
 
 @media(max-width:768px) {
  .release_note_content :deep(p) {
-    font-size: 14px;
-    line-height: 20px;
-    margin-bottom: 10px;
-    color: var(--color-text-secondary);
+    font-size: 14px !important;
+    line-height: 22px !important;
+    margin-bottom: 10px; 
+  }
+  .release_note_content :deep(li){
+     font-size: 14px !important;
+    line-height: 22px !important;
   }
 
 }

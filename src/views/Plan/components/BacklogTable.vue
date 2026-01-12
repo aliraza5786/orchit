@@ -1,5 +1,5 @@
 <template>
-  <section class="h-full min-h-0">
+  <section class="h-full min-h-0 mt-2 overflow-y-hidden">
     <!-- Search Input -->
     <!-- <div class="mb-2">
       <SearchBar type="text"  @onChange="(e) => searchQuery = e" placeholder="Search tickets..."
