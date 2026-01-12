@@ -12,8 +12,8 @@
       </div>
     </div>
    </div>
-    <KanbanSkeleton v-show="isListPending" />
-    <div v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar h-full">
+   <KanbanSkeleton v-if="isListPending || isListFetching" />
+    <div v-else v-show="currentView == 'kanban' && !isListPending" class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar h-full">
       <KanbanBoard :plusIcon="false" v-if="filteredBoard?.length > 0" @onPlus="(e) => handlePLus(e)"
         @delete:column="(e: any) => handleDelete(e)" @update:column="(e) => handleUpdateColumn(e)" @reorder="onReorder"
         @addColumn="handleAddColumn" @select:ticket="selectCardHandler" :board="filteredBoard"
@@ -120,14 +120,26 @@ const { mutate: addList, isPending: addingList } = useCreateTeam({
   },
 });
 
-const { data: Lists, isPending: isListPending } = usePeopleList(workspaceId.value, selected_view_id);
+const { data: Lists, isPending: isListPending,isFetching: isListFetching, refetch:refetchList } = usePeopleList(workspaceId.value, selected_view_id);
 watch(Lists, (newVal) => {
+  refetchList();
   // deep-ish clone so we don't mutate vue-query cache objects
   localList.value = newVal ? JSON.parse(JSON.stringify(newVal)) : []
 })
 onMounted(() => {
+  refetchList();
   localList.value = Lists.value ? JSON.parse(JSON.stringify(Lists.value)) : []
 })
+watch(isListFetching, (fetching) => {
+  if (fetching) {
+    localList.value = [];
+  } else {
+    localList.value = Lists.value
+      ? JSON.parse(JSON.stringify(Lists.value))
+      : [];
+  }
+});
+
 const currentView = ref<'kanban' | 'list'>('kanban');
 const selectedCard = ref<any>();
 const selectCardHandler = (card: any) => {

@@ -4,7 +4,7 @@
     <div
       class="sticky top-0 z-10 flex justify-between items-center py-6 px-6 border-b border-border bg-bg-input"
     >
-      <h2 class="text-xl font-semibold">Start Sprint</h2>
+      <h2 class="text-xl font-semibold">Start {{ sprintType}}</h2>
       <span @click="cancel" class="text-sm text-text-secondary cursor-pointer">
         <i class="fa-solid fa-xmark text-text-primary text-[19px]"></i>
       </span>
@@ -16,8 +16,8 @@
       <div class="flex flex-col col-span-2">
         <BaseTextField
           v-model="form.sprint_name"
-          label="Sprint Name"
-          placeholder="Enter sprint name"
+          :label="`${formattedSprintType} Name`"
+          :placeholder="`Enter ${sprintType} name`"
           size="md"
           class="rounded-1"
         />
@@ -129,6 +129,7 @@ const props = withDefaults(
     modelValue: boolean;
     sprint: Sprint;
     creatingSprint: boolean;
+    sprintType:string
   }>(),
   { modelValue: false }
 );
@@ -157,6 +158,10 @@ const form = reactive<any>({
 });
 
 
+const formattedSprintType = computed(() => {
+  if (!props.sprintType) return "";
+  return props.sprintType.charAt(0).toUpperCase() + props.sprintType.slice(1);
+});
 
 
 /** Touched + validation */
@@ -202,7 +207,9 @@ function cancel() {
 function save() {
   touched.start = true;
   touched.end = true;
+
   if (!isValid.value) return;
+
   emit("save", {
     title: form.sprint_name || "new sprint",
     duration: String(durationDays.value) || null,
@@ -210,9 +217,8 @@ function save() {
     end: form.end || "",
     goal: form.goal ?? "",
   });
-  isOpen.value = false;
-  emit("close");
 }
+
 
 /** Utils */
 function resetTouched() {

@@ -60,14 +60,6 @@
             placeholder="Search in Orchit AI space"
           >
           </Searchbar>
-          <button
-            class="cursor-pointer w-8 h-8 rounded-full bg-bg-surface"
-            v-if="view === 'mindmap'"
-            title="Show formatting sidebar"
-            @click="showFormatSidebar = !showFormatSidebar"
-          >
-            <i class="fa-solid fa-sidebar"></i>
-          </button>
           <div
             class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
           >
@@ -258,9 +250,9 @@
           <!-- Header -->
           <div class="flex items-center justify-between pb-3 mb-4 border-b">
             <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
-            <!-- <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
+            <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
       <i class="fa-solid fa-times"></i>
-    </button> -->
+    </button>
           </div>
 
           <div class="format-content space-y-6">
@@ -1671,11 +1663,24 @@ watchEffect(() => {
       mindMapInstance.value = null;
     }
 
+    // Track temporary nodes (created but not yet edited/saved)
+    const temporaryNodeIds = new Set<string>();
+    
+    // Track nodes already saved to backend
+    const savedNodeIds = new Set<string>();
+    
+    // Keep track of sheet nodes
+    const createdSheetNodeIds = new Set<string>();
+
     const instance = new MindElixir({
       el: mindMapRef.value as HTMLElement,
       theme: undefined,
       draggable: true,
       contextMenu: true,
+      toolBar: true,
+      keypress: true,
+      locale: 'en',
+      overflowHidden: false,
       contextMenuOption: {
         Update: true,
         extend: [
@@ -1706,6 +1711,11 @@ watchEffect(() => {
 
     mindMapInstance.value = instance;
     instance.init({ nodeData: rootNode });
+    
+    // Center only once after DOM is fully ready
+    setTimeout(() => {
+      instance.toCenter();
+    }, 100);
 
     // Select node
     instance.bus.addListener("selectNode", (nodeObj: any) => {
@@ -1720,109 +1730,196 @@ watchEffect(() => {
       applyNodeStyle(event.nodeObj, event.element as HTMLElement);
     });
 
-    // Track nodes already added to backend
-    const addedNodeIds = new Set<string>();
-
-    instance.bus.addListener("operation", async (data: any) => {
-      if (!data || (data.name !== "insertSibling" && data.name !== "addChild"))
-        return;
-
-      const newNode = data.obj;
-      if (!newNode || !newNode.id) return;
-
-      // Prevent duplicate processing
-      if (addedNodeIds.has(newNode.id)) return;
-      addedNodeIds.add(newNode.id);
-
-      // Determine parent node
-      let parentNode;
-      if (data.name === "addChild") {
-        parentNode = instance.currentNode?.nodeObj;
-      } else {
-        // insertSibling: parent of current node
-        parentNode = instance.currentNode?.nodeObj?.parent;
-      }
-
-      if (!parentNode || !("unique_name" in parentNode)) return;
-
-      // Only allow cards under List
-      if (parentNode.unique_name !== "List") return;
-
-      try {
-        const payload = createDefaultCardPayload(
-          {
-            topic: newNode.topic ?? "New Card",
-            id: newNode.id,
-          },
-          parentNode
-        );
-
-        await addTicket(payload);
-        await refetchSheetLists();
-      } catch (err) {
-        console.error("Error creating card or refetching sheets:", err);
-      }
-    });
-
-    // Keep track of nodes already handled to prevent duplicate sheets
-    const createdSheetNodeIds = new Set<string>();
-
+    // Single operation listener to handle all operations
     instance.bus.addListener("operation", async (data: any) => {
       if (!data) return;
 
-      const newNode = data.obj;
-      if (!newNode?.id) return;
+      console.log("🔔 Operation:", data.name, data.obj);
 
-      // Resolve parent node
-      const parentNode =
-        newNode.parent ?? instance.currentNode?.nodeObj?.parent;
-      if (!parentNode || !("unique_name" in parentNode)) return;
-
-      // -------------------- ROOT → CREATE SHEET --------------------
-      if (
-        data.name === "addChild" &&
-        parentNode.unique_name === "root" &&
-        !createdSheetNodeIds.has(newNode.id)
-      ) {
-        createdSheetNodeIds.add(newNode.id);
-
-        try {
-          await createNewSheet({
-            variables: {
-              "sheet-title": newNode.topic ?? "New Sheet",
-              "sheet-description": "This is custom description",
-            },
-            is_ai_generated: false,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-          });
-        } catch (err) {
-          console.error("Error creating workspace sheet:", err);
+      // ==================== STEP 1: NODE CREATION ====================
+      // When user creates a node (Tab/Enter), mark it as temporary
+      if (data.name === "addChild" || data.name === "insertSibling") {
+        const newNode = data.obj;
+        if (!newNode || !newNode.id) {
+          console.log("⚠️ No valid node in creation event");
+          return;
         }
 
+        // Mark this node as temporary (waiting for user to edit and confirm)
+        temporaryNodeIds.add(newNode.id);
+        console.log(`📝 Node created (temporary): ${newNode.id} - "${newNode.topic}"`);
+        
+        // Don't call addTicket here - wait for finishEdit
         return;
       }
 
-      // -------------------- LIST → CREATE CARD --------------------
-      if (parentNode.unique_name !== "List") return;
+      // ==================== STEP 2: BEGIN EDIT ====================
+      // User starts editing - no action needed, just log
+      if (data.name === "beginEdit") {
+        const editingNode = data.obj;
+        console.log(`✏️ User started editing: ${editingNode?.id} - "${editingNode?.topic}"`);
+        return;
+      }
 
-      try {
-        const payload = createDefaultCardPayload(
-          {
-            topic: newNode.topic ?? "New Card",
-            id: newNode.id,
-          },
-          parentNode
-        );
+      // ==================== STEP 3: FINISH EDIT (SAVE TO BACKEND) ====================
+      // User finished editing (pressed Enter) - NOW we save to backend
+      if (data.name === "finishEdit") {
+        const editedNode = data.obj;
+        
+        if (!editedNode || !editedNode.id) {
+          console.log("⚠️ No valid node in finishEdit");
+          return;
+        }
 
-        await addTicket(payload);
-        await refetchSheetLists();
-      } catch (err) {
-        console.error("Error creating card or refetching sheets:", err);
+        console.log(`✅ finishEdit triggered: ${editedNode.id} - "${editedNode.topic}"`);
+
+        // Check if this is a temporary node (newly created)
+        const isTemporaryNode = temporaryNodeIds.has(editedNode.id);
+        const isAlreadySaved = savedNodeIds.has(editedNode.id);
+
+        console.log(`   Temporary: ${isTemporaryNode}, Already saved: ${isAlreadySaved}`);
+
+        // If it's not a new node and not saved before, it's an edit of existing node
+        if (!isTemporaryNode && !isAlreadySaved) {
+          console.log("📝 This is an edit of an existing node from backend");
+          // You can handle updates to existing nodes here if needed
+          return;
+        }
+
+        // If already saved, skip
+        if (isAlreadySaved) {
+          console.log("⏭️ Node already saved, skipping");
+          return;
+        }
+
+        // This is a new temporary node that needs to be saved
+        if (isTemporaryNode) {
+          // Remove from temporary and mark as saved
+          temporaryNodeIds.delete(editedNode.id);
+          savedNodeIds.add(editedNode.id);
+
+          // Get parent node
+          const parentNode = editedNode.parent;
+          if (!parentNode || !("unique_name" in parentNode)) {
+            console.log("⚠️ No valid parent found");
+            savedNodeIds.delete(editedNode.id); // Remove from saved on error
+            return;
+          }
+
+          console.log(`💾 Saving new node to backend...`);
+          console.log(`   Parent type: ${parentNode.unique_name}`);
+
+          // -------------------- ROOT → CREATE SHEET --------------------
+          if (
+            parentNode.unique_name === "root" &&
+            !createdSheetNodeIds.has(editedNode.id)
+          ) {
+            createdSheetNodeIds.add(editedNode.id);
+
+            try {
+              console.log("📋 Creating new sheet...");
+              await createNewSheet({
+                variables: {
+                  "sheet-title": editedNode.topic ?? "New Sheet",
+                  "sheet-description": "This is custom description",
+                },
+                is_ai_generated: false,
+                workspace_id: workspaceId.value,
+                workspace_module_id: moduleId.value,
+              });
+              console.log("✅ Sheet created successfully!");
+            } catch (err) {
+              console.error("❌ Error creating workspace sheet:", err);
+              // Remove from saved sets on error so user can retry
+              savedNodeIds.delete(editedNode.id);
+              createdSheetNodeIds.delete(editedNode.id);
+            }
+
+            return;
+          }
+
+          // -------------------- LIST → CREATE CARD --------------------
+          if (parentNode.unique_name === "List") {
+            try {
+              console.log("🎫 Creating new card...");
+              const payload = createDefaultCardPayload(
+                {
+                  topic: editedNode.topic ?? "New Card",
+                  id: editedNode.id,
+                },
+                parentNode
+              );
+
+              // Add dummy description to variables
+              if (payload.variables) {
+                payload.variables["card-description"] = "This is a default description";
+              }
+
+              await addTicket(payload);
+              await refetchSheetLists();
+              console.log("✅ Card created successfully!");
+            } catch (err) {
+              console.error("❌ Error creating card:", err);
+              // Remove from saved set on error so user can retry
+              savedNodeIds.delete(editedNode.id);
+            }
+
+            return;
+          }
+
+          // -------------------- SHEET → CREATE LIST --------------------
+          if (parentNode.unique_name === "sheet") {
+            try {
+              console.log("📝 Creating new list under sheet...");
+              // Add your list creation logic here
+              // await createList({ 
+              //   title: editedNode.topic ?? "New List",
+              //   sheet_id: parentNode.id 
+              // });
+              console.log("✅ List creation logic would go here");
+            } catch (err) {
+              console.error("❌ Error creating list:", err);
+              savedNodeIds.delete(editedNode.id);
+            }
+
+            return;
+          }
+
+          console.log(`⚠️ Parent type "${parentNode.unique_name}" not handled`);
+        }
       }
     });
   });
 });
+function injectToolbarButton() {
+  const toolbar = document.querySelector(
+    ".mind-elixir-toolbar.rb"
+  ) as HTMLElement;
+
+  if (!toolbar) {
+    requestAnimationFrame(injectToolbarButton);
+    return;
+  }
+
+  // prevent duplicate button
+  if (toolbar.querySelector(".open-sidebar-btn")) return;
+
+  const btn = document.createElement("button");
+  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
+  btn.title = "Open Formatting Sidebar";
+
+  btn.innerHTML = `<i class="fa-solid fa-sidebar"></i> `;
+
+  btn.addEventListener("click", () => {
+    showFormatSidebar.value = !showFormatSidebar.value;
+  });
+
+  toolbar.appendChild(btn);
+}
+
+// call AFTER init
+injectToolbarButton();
+
 
 // ----------------------
 function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
@@ -2046,5 +2143,20 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
   scrollbar-width: thin !important;
   /* Firefox */
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+.me-toolbar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.me-toolbar-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 </style>

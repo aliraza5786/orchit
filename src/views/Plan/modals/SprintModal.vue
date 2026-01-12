@@ -5,13 +5,7 @@
       class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-input pb-4"
     >
       <h2 class="text-xl font-semibold">Add New {{ lable }}</h2>
-      <!-- <p class="text-sm text-text-secondary mt-1">
-        Add sprint name and then click <span class="font-medium">Save</span>.
-      </p> -->
     </div>
-
-    <!-- Body -->
-     
     <div class="px-6 gap-4 bg-bg-input pt-5 pb-8">
       <!-- Name (required) -->
       <BaseTextField
@@ -19,15 +13,6 @@
         v-model="form.name"
         label="Name"
         :placeholder="lable"
-        :error="!!nameError"
-        :message="nameError"
-        @blur="touched.name = true"
-      />
-      <BaseSelectField
-        class="rounded-1 mt-3"
-        v-model="form.sprintType"
-        :label="formattedLabel"
-        :options="sprintTypes"
         :error="!!nameError"
         :message="nameError"
         @blur="touched.name = true"
@@ -67,7 +52,7 @@ import BaseTextField from "../../../components/ui/BaseTextField.vue";
 import Button from "../../../components/ui/Button.vue";
 import type { Sprint } from "../composables/useBacklogStore";
 import BaseTextAreaField from "../../../components/ui/BaseTextAreaField.vue";
-import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
+// import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 
 /** Emits */
 const emit = defineEmits<{
@@ -83,6 +68,7 @@ const props = withDefaults(
     lable: string;
     sprint: Sprint;
     creatingSprint: boolean;
+    sprints:any
   }>(),
   { modelValue: false }
 );
@@ -129,7 +115,7 @@ function save() {
   if (!isValid.value) return;
   emit("save", {
     name: String(form.name || "").trim(),
-    value: String(form.sprintType || "").trim(),
+    value: String(props.lable || "").trim(),
     description: String(form.description || "").trim(),
   });
 }
@@ -140,25 +126,57 @@ function resetTouched() {
   touched.sprintType = false;
   touched.description = false;
 }
-/** Hydrate form when sprint changes or when opened */
 watch(
   () => props.sprint,
   (s: any) => {
     if (!s) {
       form.name = "";
+      form.sprintType = null;
       return;
     }
-    form.name = s.name ?? s?.title ?? "";
-    form.sprintType = "";
+    form.name = "";
     form.description = "";
+    form.sprintType = s.sprintType ?? null; // must be _id
     resetTouched();
   },
   { immediate: true }
 );
+
 // sprint types options
 const sprintTypes = [
   { title: "Milestone", _id: "milestone", dot: "#2e9bda" },
   { title: "Sprint", _id: "sprint", dot: "#7d68c8" },
   { title: "Huddle", _id: "huddle", dot: "#eea832" },
 ];
+
+const sprintTypeOptions = computed(() => sprintTypes.map((t) => ({ ...t })));
+// Watch label changes and auto-select
+watch(
+  () => props.lable,
+  (val) => {
+    const match = sprintTypeOptions.value.find((o) => o.title === val);
+    form.sprintType = match?._id ?? "";
+  },
+  { immediate: true }
+);
+// pre fill title
+function autoFillFormName() {
+  const sprints = props.sprints || [];
+  const baseTitle = props.lable || "Sprint";
+  const capitalizedTitle = baseTitle.charAt(0).toUpperCase() + baseTitle.slice(1);
+  form.name = `${capitalizedTitle} ${sprints.length + 1}`;
+}
+
+
+// Watch sprints and auto-fill form.name if empty
+watch(
+  () => props.sprints,
+  () => {
+    if (!form.name || form.name.trim() === "") {
+      autoFillFormName();
+    }
+  },
+  { immediate: true, deep: true }
+);
+
 </script>
