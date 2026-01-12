@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, watchEffect, computed, defineAsyncComponent } from 'vue';
+import { ref, watch, watchEffect, computed } from 'vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
@@ -146,7 +146,6 @@ import AddTransitionModal from './modals/AddTransitionModal.vue';
 import ProcessSidePanel from './components/ProcessSidePanel.vue';
 import WorkflowBuilderModal from '../Process/modals/WorkflowBuilderModal.vue';
 import SearchBar from '../../components/ui/SearchBar.vue';
-import Fuse from 'fuse.js';
 import { debounce } from 'lodash';
 
 const { workspaceId } = useRouteIds();

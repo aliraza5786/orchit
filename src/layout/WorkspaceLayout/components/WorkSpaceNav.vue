@@ -275,7 +275,7 @@ const duplicateHandler = (data: any) => {
 };
 
 // Toggle sidebar
-const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
+// const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
 // const handleSidebarToggle = () => emit("toggle-sidebar");
 
 // === Logo dropdown state & refs ===
