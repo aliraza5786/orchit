@@ -549,7 +549,7 @@ function handleZoomEvent(e: Event) {
       <Controls :show-zoom="false" :show-fit-view="false" :show-interactive="false" position="top-right" />
 
       <!-- Custom Zoom Controls -->
-      <div class="absolute bottom-20 right-2 flex flex-col gap-2 z-10 bg-accent p-1 rounded-lg shadow-md border border-accent">
+      <div class="absolute bottom-35 sm:bottom-20 right-2 flex flex-col gap-2 z-10 bg-accent p-1 rounded-lg shadow-md border border-accent">
          <button @click="zoomIn()" class="w-8 h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Zoom In">
             <i class="fa-solid fa-plus"></i>
          </button>

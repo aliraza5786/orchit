@@ -1,10 +1,22 @@
 <template>
   <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-hidden flex flex-col">
-
+     <!-- Header (Added) -->
+         <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card border-b border-border">
+             <div class="flex items-center justify-between gap-4 py-3 px-4">
+                 <h2 class="text-lg font-semibold text-foreground text-nowrap">All Processes</h2>
+                  <div class="w-[250px]">
+                  <SearchBar 
+                    placeholder="Search processes..." 
+                    @onChange="(val: any) => searchQuery = val"
+                   />
+                  </div>
+            </div>
+        </div> 
      <!-- Skeleton Loader -->
     <KanbanSkeleton v-if="isPending" />
-    <!-- Board Area -->
-    <div  v-if="!isPending" class="flex-1 w-full p-4 overflow-x-auto flex items-start gap-4">
+     <!-- Board Area -->
+    <div  v-if="!isPending" class="flex-1 w-full p-4 overflow-hidden flex flex-col">      
+       <div class="flex-1 overflow-x-auto flex items-start gap-4">
 
       <!-- Kanban Board (Columns) --> 
       <!-- General Process Static Column -->
@@ -48,12 +60,12 @@
 
       <!-- Kanban Board (Columns) --> 
       <ProcessKanbanBoard 
-        v-if="localList?.length > 0" 
+        v-if="filteredList?.length > 0" 
         @delete:column="(e: any) => handleDeleteColumn(e)"
         @update:column="(e) => handleUpdateColumn(e)" 
         @onPlus="openAddTransition" 
         @select:ticket="handleClickTicket"
-        :board="localList"
+        :board="filteredList"
         @reorder="handleReorder">
         
         <template #ticket="{ ticket, index }">
@@ -87,6 +99,7 @@
           </div>
         </div>
       </div>
+      </div>
     </div>
   </div>
 
@@ -110,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, watchEffect } from 'vue';
+import { ref, watch, watchEffect, computed, defineAsyncComponent } from 'vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
@@ -130,6 +143,11 @@ import { useQueryClient } from '@tanstack/vue-query';
 import Button from '../../components/ui/Button.vue';
 import ProcessWorkflowBuilderModal from './modals/ProcessWorkflowBuilderModal.vue';
 import AddTransitionModal from './modals/AddTransitionModal.vue';
+import ProcessSidePanel from './components/ProcessSidePanel.vue';
+import WorkflowBuilderModal from '../Process/modals/WorkflowBuilderModal.vue';
+import SearchBar from '../../components/ui/SearchBar.vue';
+import Fuse from 'fuse.js';
+import { debounce } from 'lodash';
 
 const { workspaceId } = useRouteIds();
 const { data: processGroups, isPending } = useProcessGroupsWithTransitions(workspaceId.value);
@@ -151,6 +169,37 @@ watch(processGroups, (newVal) => {
   }
 }, { immediate: true });
 
+/* -------------------------------------------------------------------------- */
+/*                                Search Logic                                */
+/* -------------------------------------------------------------------------- */
+const searchQuery = ref('')
+const debouncedQuery = ref('')
+
+watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
+
+const filteredList = computed(() => {
+  const query = debouncedQuery.value.toLowerCase().trim();
+  if (!query) return localList.value
+
+  // Logic: 
+  // 1. Filter ALL cards in every column based on the query.
+  // 2. Only return columns that have at least one matching card.
+  // 3. Do NOT include columns just because the column title matches.
+  
+  return localList.value.map((col: any) => {
+    const matchingCards = (col.cards || []).filter((card: any) => {
+      const titleMatch = card.title?.toLowerCase().includes(query);
+      const nameMatch = card.name?.toLowerCase().includes(query);
+      return titleMatch || nameMatch;
+    });
+
+    return {
+      ...col,
+      cards: matchingCards,
+      transitions: matchingCards // Sync transitions as KanbanBoard uses this property
+    }
+  }).filter((col: any) => col.cards.length > 0);
+})
 
 
 /* -------------------------------------------------------------------------- */
@@ -334,8 +383,4 @@ function handleGeneralOpenBuilder() {
 }
 
 const showGeneralWorkflowBuilder = ref(false);
-
-import ProcessSidePanel from './components/ProcessSidePanel.vue';
-import WorkflowBuilderModal from '../Process/modals/WorkflowBuilderModal.vue';
-
 </script>
