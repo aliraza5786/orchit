@@ -67,15 +67,14 @@
             </svg>
           </button>
         </div>
-        <div
+        <!-- <div
           class="hidden sm:flex items-center justify-center transition-all duration-200 w-[40px] h-[50px]"
         >
-          <!-- Icon (toggle sidebar) -->
-          <i
+            <i
             class="fa-solid fa-sidebar ms-3 text-[16px] hover:text-[18px] cursor-w-resize text-text-secondary shrink-0"
             @click="handleSidebarToggle"
           ></i>
-        </div>
+        </div> -->
       </div>
 
       <!-- Navigation Links -->
@@ -277,7 +276,7 @@ const duplicateHandler = (data: any) => {
 
 // Toggle sidebar
 const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
-const handleSidebarToggle = () => emit("toggle-sidebar");
+// const handleSidebarToggle = () => emit("toggle-sidebar");
 
 // === Logo dropdown state & refs ===
 const logoMenuOpen = ref(false);
