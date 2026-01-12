@@ -6,7 +6,7 @@
       :class="{ 'w-full sm:w-[250px]': expanded, 'w-full sm:w-14': !expanded }"
     >
       <!-- Mobile Toggle -->
-      <div class=" py-1.5 px-2 bg-bg-card mb-2 w-[35px] rounded-lg">
+      <div class="hidden sm:block py-1.5 px-2 bg-bg-card mb-2 w-[35px] rounded-lg">
         <button 
           @click="emit('toggle-sidebar')"
           class="text-text-secondary hover:text-text-primary cursor-pointer"
