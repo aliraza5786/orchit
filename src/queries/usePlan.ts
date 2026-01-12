@@ -46,11 +46,10 @@ export const useSprintCard = (id: any, options: any = {}) => {
 };
 export const useSprintKanban = (
   sprint_id: any,
-  sheet_id: any, // <-- new parameter
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["sprint-kanban", sprint_id, sheet_id],
+    queryKey: ["sprint-kanban", sprint_id],
 
     queryFn: ({ signal }) =>
       request<any>({
@@ -60,7 +59,7 @@ export const useSprintKanban = (
         params: {
           sprint_id: unref(sprint_id),
           variable_id: "68b6c96e0a95eef7d14e6981", 
-          sheet_id: unref(sheet_id), 
+          // sheet_id: unref(sheet_id), 
         },
       }),
 

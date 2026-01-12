@@ -7,27 +7,29 @@
       <ActiveSprint
         :sptint_id="selectedSprintId"
         :searchQuery="searchQuery"
+        :active-sprint="sprintType"
         @go-back="showActiveSprint = false"
       />
     </template>
-    <div v-if="!showActiveSprint">
+    <div v-if="!showActiveSprint" class="flex flex-col flex-1 min-h-0">
       <template v-if="isStartingSprint">
         <KanbanSkeleton />
       </template>
       <div
         v-if="!isStartingSprint"
-        class="p-4 w-full min-w-0 box-border h-full min-h-0"
+        class="p-4 w-full min-w-0 flex flex-col flex-1 min-h-0"
       >
+
         <div
-          class="flex gap-2 h-full max-h-screen min-h-0 box-border overflow-x-auto group"
           ref="containerRef"
+          class="flex gap-2 flex-1 min-h-0 box-border overflow-y-auto overflow-x-auto group"
         >
+
           <section
-            class="space-y-4 p-4 rounded-md relative group box-border h-full min-h-0 min-w-[400px]"
-            :class="isDark ? 'bg-bg-surface' : 'bg-bg-surface/30'"
+            class="px-4 rounded-md relative group box-border h-full min-w-[400px] border border-border"
             :style="{ width: leftWidth + 'px' }"
           >
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between mt-2">
               <h2 class="text-sm font-semibold flex gap-2 items-center">
                 <input
                   type="checkbox"
@@ -52,7 +54,7 @@
               </div>
             </div>
             <!-- filters -->
-            <div>
+            <div class="mt-3">
               <!-- Milestone: Horizontal Tabs -->
               <div
                 v-if="sprintType === 'milestone'"
@@ -114,7 +116,7 @@
                   >
                     <ul class="flex flex-col">
                       <li
-                        class="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                        class="px-3 py-2 cursor-pointer hover:bg-gray-50 hover:text-gray-600"
                         @click="selectMilestoneTab('')"
                       >
                         All Milestones
@@ -123,7 +125,7 @@
                       <li
                         v-for="option in visibleModules"
                         :key="option._id"
-                        class="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                        class="px-3 py-2 cursor-pointer hover:bg-gray-50 hover:text-gray-600"
                         @click="selectHuddleModule(option._id)"
                       >
                         {{ option.variables["module-title"] }}
@@ -135,7 +137,7 @@
                 <!-- SPRINT TABS (SCROLL ONLY HERE) -->
                 <div class="flex gap-2 overflow-x-auto no-scrollbar flex-1">
                   <button
-                    v-for="option in sprintsList?.sprints"
+                    v-for="option in sprintOptions"
                     :key="option._id"
                     @click="selectSprintTab(option._id)"
                     class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
@@ -179,7 +181,6 @@
           ></div>
           <section
             class="rounded-md relative group pt-2 flex flex-col flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input overflow-x-hidden"
-            :class="isDark ? 'bg-bg-card' : 'bg-bg-card'"
           >
             <div
               class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
@@ -323,24 +324,22 @@
                 </div>
                 <!-- Add Sprint Button (Outside Dropdown) -->
                 <button
-                  @click="openSprintModal()"
+                  @click="openSprintModal(sprintsList?.sprints)"
                   :class="[
                     'w-8 h-8 lg:flex sm:hidden items-center justify-center rounded-full border text-white transition-colors shrink-0',
                   ]"
                   :style="{
-                    backgroundColor: selectedSprintId
-                      ? selectedType.dot
-                      : '#7d68c8',
+                    backgroundColor: selectedType.dot
                   }"
                 >
                   <i class="fa-solid fa-plus"></i>
                 </button>
               </div>
               <!-- Right Section: Actions -->
-              <div class="ms-2 flex gap-2 items-center">
-                <div class="flex">
+              <div class="flex justify-end items-center">
+                <div class="flex gap-2">
                   <button
-                    class="flex items-center justify-center w-8 h-8 rounded-full bg-accent"
+                    class="flex items-center justify-center w-8 h-8 me-2 rounded-full bg-accent"
                     v-if="sprintDetailData?.cards?.length"
                     @click="openSearchModal"
                     :style="
@@ -354,7 +353,7 @@
                   <button
                     class="flex lg:hidden cursor-pointer text-white items-center justify-center rounded-full ms-2 w-7 h-7 text-sm font-medium"
                     @click="handlePreviewClick"
-                    v-if="sprintDetailData?.status === 'active'"
+                    v-if="sprintDetailData?.status === 'active' && sprintDetailData.cards.length"
                     :style="
                       selectedSprintId
                         ? { backgroundColor: selectedType.dot }
@@ -369,6 +368,7 @@
 
                 <div class="gap-2 hidden lg:flex">
                   <!-- End Sprint Button -->
+                   <!-- {{ sprintDetailData }} -->
                   <div
                     v-if="sprintDetailData?.status === 'active'"
                     class="flex gap-2"
@@ -387,7 +387,7 @@
                       {{ isCompletingSprint ? "Ending..." : "End" }}
                     </Button>
                     <button
-                      class="cursor-pointer text-white flex items-center justify-center gap-1 px-2 py-1 rounded-md text-sm font-medium"
+                      class="cursor-pointer text-white flex items-center justify-end gap-1 px-2 py-1 rounded-md text-sm font-medium"
                       @click="handlePreviewClick"
                       :style="
                         selectedSprintId
@@ -410,10 +410,7 @@
                       firstSprint.tickets.length === 0 ||
                       sprintDetailData.status === 'completed'
                     "
-                    :style="
-                      selectedSprintId
-                        ? { backgroundColor: selectedType.dot }
-                        : {}
+                    :style=" { backgroundColor: selectedType.dot }
                     "
                   >
                     Start {{ selectedType.label }}
@@ -594,7 +591,7 @@
                 class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
               ></div>
             </div>
-            <div class="flex-1 min-h-0">
+            <div class="flex-1 min-h-0 h-full">
               <SprintCard
                 :searchQuery="searchQuery"
                 :sprintId="selectedSprintId"
@@ -699,25 +696,22 @@
     </div>
     <!-- Modals -->
     <ConfirmDeleteModal
-      @click.stop=""
+      @click.stop
       v-model="showSprintDelete"
-      title="Delete Sprint"
-      itemLabel="Sprint"
+      :title="`Delete ${sprintType}`"
+      :itemLabel="sprintType"
       :itemName="selectedSprint?.title"
       :requireMatchText="selectedSprint?.title"
-      confirmText="Delete Sprint"
+      :confirmText="`Delete ${sprintType}`"
       cancelText="Cancel"
       size="md"
       :loading="isDeleting"
       @confirm="handleDeleteTicket"
-      @cancel="
-        () => {
-          selectedSprint = null;
-          showSprintDelete = false;
-        }
-      "
-    >
-    </ConfirmDeleteModal>
+      @cancel="() => {
+        selectedSprint = null;
+        showSprintDelete = false;
+      }"
+    />
     <!-- <TicketModal v-model="ticketModalOpen" :editing="!!editingTicket" :ticket="editingTicket" @save="handleSaveTicket" /> -->
     <SprintModal
       v-model="sprintModalOpen"
@@ -725,12 +719,14 @@
       :sprint="selectedSprint"
       :lable="sprintType"
       :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint"
+      :sprints="sprintsDataFromPlus"
     />
     <StartSprintModal
       :sprint="selectedSprint"
       v-model="startsprintModalOpen"
       @save="startSprintHandler"
       :creatingSprint="isStartingSprint || isUpdatingSprint2"
+      :sprintType="sprintType"
     />
 
     <TaskDetailsModal
@@ -903,24 +899,35 @@ const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint({
     refetchSprintDetail();
   },
 });
-const startSprintHandler = (e: any) => {
-  updateSprint2({
-    id: selectedSprintId.value,
-    payload: {
-      title: e.title,
-      duration: e.duration,
-      start_date: e.start,
-      end_date: e.end,
-      goal: e.goal,
-    },
-  });
+const startSprintHandler = async (e: any) => {
+  isUpdatingSprint2.value = true;
+  try {
+    await updateSprint2({
+      id: selectedSprintId.value,
+      payload: {
+        title: e.title,
+        duration: e.duration,
+        start_date: e.start,
+        end_date: e.end,
+        goal: e.goal,
+      },
+    });
+  } finally {
+    isUpdatingSprint2.value = false;
+    startsprintModalOpen.value = false; 
+  }
 };
+
 
 const {
   data: sprintsList,
   refetch: refetchSprints,
   isLoading: isLoadingSprint,
 } = useSprintList(workspaceId.value, sprintType);
+console.log("sprint lists", sprintsList.value);
+const sprintOptions = computed(() => {
+  return sprintsList.value?.sprints ?? [];
+});
 watch(
   () => sprintType.value,
   (newVal, oldVal) => {
@@ -1212,9 +1219,11 @@ function saveSprintHandler(e: any) {
     });
   }
 }
-function openSprintModal() {
+const sprintsDataFromPlus = ref([] as any)
+function openSprintModal(sprintsData: any) {
   selectedSprint.value = null;
   sprintModalOpen.value = true;
+  sprintsDataFromPlus.value = sprintsData;
 }
 
 function handleDeleteSprint(e: any) {
@@ -1276,6 +1285,7 @@ const editingSprintId = ref(null);
 function enableEdit(sprint: any) {
   editingSprintId.value = sprint._id;
   sprint.tempTitle = sprint.title;
+  editingSprintTitle.value = sprint.title;
 }
 
 function cancelEdit() {
