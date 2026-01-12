@@ -1729,87 +1729,44 @@ watchEffect(() => {
       if (!event?.nodeObj || !event?.element) return;
       applyNodeStyle(event.nodeObj, event.element as HTMLElement);
     });
-
-    // Single operation listener to handle all operations
     instance.bus.addListener("operation", async (data: any) => {
       if (!data) return;
-
-      console.log("🔔 Operation:", data.name, data.obj);
-
-      // ==================== STEP 1: NODE CREATION ====================
-      // When user creates a node (Tab/Enter), mark it as temporary
       if (data.name === "addChild" || data.name === "insertSibling") {
         const newNode = data.obj;
         if (!newNode || !newNode.id) {
-          console.log("⚠️ No valid node in creation event");
           return;
         }
-
-        // Mark this node as temporary (waiting for user to edit and confirm)
         temporaryNodeIds.add(newNode.id);
-        console.log(`📝 Node created (temporary): ${newNode.id} - "${newNode.topic}"`);
-        
-        // Don't call addTicket here - wait for finishEdit
         return;
       }
-
-      // ==================== STEP 2: BEGIN EDIT ====================
-      // User starts editing - no action needed, just log
       if (data.name === "beginEdit") {
         const editingNode = data.obj;
-        console.log(`✏️ User started editing: ${editingNode?.id} - "${editingNode?.topic}"`);
+        console.log("editing node", editingNode);
+        
         return;
       }
-
-      // ==================== STEP 3: FINISH EDIT (SAVE TO BACKEND) ====================
-      // User finished editing (pressed Enter) - NOW we save to backend
       if (data.name === "finishEdit") {
         const editedNode = data.obj;
         
         if (!editedNode || !editedNode.id) {
-          console.log("⚠️ No valid node in finishEdit");
           return;
         }
-
-        console.log(`✅ finishEdit triggered: ${editedNode.id} - "${editedNode.topic}"`);
-
-        // Check if this is a temporary node (newly created)
         const isTemporaryNode = temporaryNodeIds.has(editedNode.id);
         const isAlreadySaved = savedNodeIds.has(editedNode.id);
-
-        console.log(`   Temporary: ${isTemporaryNode}, Already saved: ${isAlreadySaved}`);
-
-        // If it's not a new node and not saved before, it's an edit of existing node
         if (!isTemporaryNode && !isAlreadySaved) {
-          console.log("📝 This is an edit of an existing node from backend");
-          // You can handle updates to existing nodes here if needed
           return;
         }
-
-        // If already saved, skip
         if (isAlreadySaved) {
-          console.log("⏭️ Node already saved, skipping");
           return;
         }
-
-        // This is a new temporary node that needs to be saved
         if (isTemporaryNode) {
-          // Remove from temporary and mark as saved
           temporaryNodeIds.delete(editedNode.id);
           savedNodeIds.add(editedNode.id);
-
-          // Get parent node
           const parentNode = editedNode.parent;
           if (!parentNode || !("unique_name" in parentNode)) {
-            console.log("⚠️ No valid parent found");
-            savedNodeIds.delete(editedNode.id); // Remove from saved on error
+            savedNodeIds.delete(editedNode.id); 
             return;
           }
-
-          console.log(`💾 Saving new node to backend...`);
-          console.log(`   Parent type: ${parentNode.unique_name}`);
-
-          // -------------------- ROOT → CREATE SHEET --------------------
           if (
             parentNode.unique_name === "root" &&
             !createdSheetNodeIds.has(editedNode.id)
@@ -1817,7 +1774,6 @@ watchEffect(() => {
             createdSheetNodeIds.add(editedNode.id);
 
             try {
-              console.log("📋 Creating new sheet...");
               await createNewSheet({
                 variables: {
                   "sheet-title": editedNode.topic ?? "New Sheet",
@@ -1827,21 +1783,16 @@ watchEffect(() => {
                 workspace_id: workspaceId.value,
                 workspace_module_id: moduleId.value,
               });
-              console.log("✅ Sheet created successfully!");
             } catch (err) {
-              console.error("❌ Error creating workspace sheet:", err);
-              // Remove from saved sets on error so user can retry
+              console.error("Error creating workspace sheet:", err);
               savedNodeIds.delete(editedNode.id);
               createdSheetNodeIds.delete(editedNode.id);
             }
 
             return;
           }
-
-          // -------------------- LIST → CREATE CARD --------------------
           if (parentNode.unique_name === "List") {
             try {
-              console.log("🎫 Creating new card...");
               const payload = createDefaultCardPayload(
                 {
                   topic: editedNode.topic ?? "New Card",
@@ -1849,43 +1800,29 @@ watchEffect(() => {
                 },
                 parentNode
               );
-
-              // Add dummy description to variables
               if (payload.variables) {
                 payload.variables["card-description"] = "This is a default description";
               }
-
               await addTicket(payload);
               await refetchSheetLists();
-              console.log("✅ Card created successfully!");
             } catch (err) {
-              console.error("❌ Error creating card:", err);
-              // Remove from saved set on error so user can retry
+              console.error("Error creating card:", err);
               savedNodeIds.delete(editedNode.id);
             }
 
             return;
           }
-
-          // -------------------- SHEET → CREATE LIST --------------------
           if (parentNode.unique_name === "sheet") {
             try {
-              console.log("📝 Creating new list under sheet...");
-              // Add your list creation logic here
-              // await createList({ 
-              //   title: editedNode.topic ?? "New List",
-              //   sheet_id: parentNode.id 
-              // });
-              console.log("✅ List creation logic would go here");
+              console.log("Creating new list under sheet...");
+              console.log("List creation logic would go here");
             } catch (err) {
-              console.error("❌ Error creating list:", err);
+              console.error("Error creating list:", err);
               savedNodeIds.delete(editedNode.id);
             }
 
             return;
           }
-
-          console.log(`⚠️ Parent type "${parentNode.unique_name}" not handled`);
         }
       }
     });
