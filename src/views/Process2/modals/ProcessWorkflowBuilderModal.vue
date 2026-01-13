@@ -67,7 +67,7 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 /* Props & emits */
 const props = defineProps<{
   modelValue: boolean
-  process: { _id?: string; id?: string; title?: string } | null
+  process: { _id?: string; id?: string; title?: string ; type_value?: string} | null
 }>()
 
 const emit = defineEmits<{
@@ -84,6 +84,7 @@ const editingStatus = ref<any>(null)
 const isOpen = computed(() => props.modelValue)
 const processId = computed(() => props.process?._id ?? props.process?.id ?? '')
 const processTitle = computed(() => props.process?.title ?? 'Process Workflow')
+const processTypeValue =  computed(() => props.process?.type_value ?? '')
 const { workspaceId } = useRouteIds()
 
 /* Data fetching */
@@ -165,7 +166,10 @@ function handleSave(payload: any) {
         workspace_id: workspaceId.value,
         transition_id: processId.value,
         payload: {
-            raw_object: payload // Save the whole flow
+            raw_object: payload,
+            variable_type: "card-type",
+            type_value: processTypeValue.value,
+             // Save the whole flow
         }
     })
 }

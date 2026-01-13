@@ -6,8 +6,8 @@
       <div class="space-y-4">
         <BaseTextField label="Title" v-model="form.title" placeholder="e.g. Start Task" :autofocus="true" />
         <div class="space-y-2">
-           <label class="block text-sm font-medium text-text-primary">Variable Type</label>
-           <BaseSelectField v-model="form.variable_type" :options="variableTypeOptions" placeholder="Select Type" class="w-full" />
+           <label class="block text-sm font-medium text-text-primary">Card Type</label>
+           <BaseSelectField v-model="form.type_value" :options="variableTypeOptions" placeholder="Select Type" class="w-full" />
         </div>
         <BaseTextAreaField label="Description" v-model="form.description" placeholder="Optional description" />
          
@@ -44,14 +44,14 @@ const { workspaceId } = useRouteIds();
 const form = ref({
     title: '',
     description: '', 
-    variable_type: '',
+    type_value: '',
     transition_type: 'forward'
 });
 
 
 
 watchEffect(()=>{
-  console.log(form.value.variable_type)
+  console.log(form.value.type_value)
 })
 
 interface Option {
@@ -85,7 +85,7 @@ const { mutate, isPending } = useCreateTransition({
         form.value = {
             title: '',
             description: '', 
-            variable_type: '',
+            type_value: '',
             transition_type: 'forward'
         };
     },
@@ -95,20 +95,20 @@ const { mutate, isPending } = useCreateTransition({
 });
 
 const create = () => {
-    if (!form.value.title || !form.value.variable_type) {
+    if (!form.value.title || !form.value.type_value) {
         // Simple validation
         return; 
     }
 
     // Lookup the title from the selected ID to send as payload
-    const selectedOption = variableTypeOptions.value.find(o => o._id === form.value.variable_type);
-    const variableTypePayload = selectedOption ? selectedOption.title : form.value.variable_type;
+    const selectedOption = variableTypeOptions.value.find(o => o._id === form.value.type_value);
+    const variableTypePayload = selectedOption ? selectedOption.title : form.value.type_value;
     
     mutate({
         workspace_id: workspaceId.value,
         group_id: props.group._id,
         ...form.value,
-        variable_type: variableTypePayload, // Override with title
+        type_value: variableTypePayload, // Override with title
         sort_id: props.group.cards ? props.group.cards.length : 0
     });
 };

@@ -674,8 +674,16 @@ function cancel() {
 }
 const selectedProcessMeta = ref<any>(null);
 const handleProcessNestedSelection = (val: any) => {
-  selectedProcessMeta.value = val;
+  selectedProcessMeta.value = val; 
 };
+
+// reactively checking selected view by value
+const selectedViewByVariable = computed(() => {
+  return variables.value?.find(
+    (v: any) => v._id === selected_view_by.value
+  );
+});
+
 declare global {
   interface Window {
     toggleMenu: (el: HTMLElement) => void;
@@ -832,6 +840,7 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
   selected_sheet_id
 );
 
+
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
@@ -841,13 +850,30 @@ const { mutate: addList, isPending: addingList } = useAddList({
     showDelete.value = false;
   },
 });
+
+const listProcessPayload = computed(() => {
+  if (
+    selectedViewByVariable.value?.title === "Process" &&
+    selectedProcessMeta.value
+  ) {
+    return {
+      variable_slug: "card-type",
+      type_value: selectedProcessMeta.value.title, // optional
+    };
+  }
+
+  return {};
+});
+
 const handleAddColumn = (v: any) => {
-  addList({
+   const payload: any = {
     workspace_id: workspaceId.value,
     module_id: moduleId.value,
     variable_id: selected_view_by.value,
-    value: v,
-  });
+    value: v, 
+    ...listProcessPayload.value,
+  }; 
+  addList(payload);
 };
 
 // Fetch sheets using `useSheets`
@@ -874,7 +900,8 @@ const {
   moduleId,
   selected_sheet_id, // ref
   computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
-  selected_view_by // ref
+  selected_view_by, // ref
+  listProcessPayload
 );
 
 const selectCardHandler = (card: any) => {
@@ -906,6 +933,7 @@ function onReorder(a: any) {
       {
         onSuccess: () => {
           refetchSheets();
+          refetchSheetLists();
         },
       }
     );
@@ -924,6 +952,7 @@ function onReorder(a: any) {
       {
         onSuccess: () => {
           refetchSheets();
+          refetchSheetLists();
         },
       }
     );
