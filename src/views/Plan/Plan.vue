@@ -22,13 +22,15 @@
 
         <div
           ref="containerRef"
-          class="flex gap-2 flex-1 min-h-0 box-border overflow-y-auto overflow-x-auto group"
+          class="flex gap-2 flex-1 min-h-0 overflow-x-auto group"
         >
 
+
           <section
-            class="px-4 rounded-md relative group box-border h-full min-w-[400px] border border-border"
+            class="px-4 rounded-md relative flex flex-col min-h-0 border border-border"
             :style="{ width: leftWidth + 'px' }"
           >
+
             <div class="flex items-center justify-between mt-2">
               <h2 class="text-sm font-semibold flex gap-2 items-center">
                 <input
@@ -162,8 +164,8 @@
                 class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
               ></div>
             </div>
-            <BacklogTable
-              v-else
+            <div class="flex-1 min-h-0 overflow-y-auto" v-else>
+              <BacklogTable
               :checkedAll="checkedAll"
               :sprint-type="sprintType"
               :searchQuery="searchQuery"
@@ -174,14 +176,17 @@
               @ticket-moved-to-backlog="handleTicketMovedToBacklog"
               @open-create-ticket="openCreateBacklogTicket"
             />
+            </div>
           </section>
           <div
             class="h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
             @mousedown="startResize"
           ></div>
           <section
-            class="rounded-md relative group pt-2 flex flex-col flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input overflow-x-hidden"
-          >
+         class="rounded-md relative pt-2
+         flex flex-col flex-1 min-h-0
+         border border-border-input
+         overflow-hidden">
             <div
               class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
             >
@@ -591,7 +596,7 @@
                 class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
               ></div>
             </div>
-            <div class="flex-1 min-h-0 h-full">
+            <div class="flex-1 min-h-0 overflow-y-auto">
               <SprintCard
                 :searchQuery="searchQuery"
                 :sprintId="selectedSprintId"

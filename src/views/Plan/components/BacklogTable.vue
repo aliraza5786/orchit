@@ -42,7 +42,7 @@
       </div>
 
       <!-- Tickets List -->
-      <div v-else class="overflow-y-auto h-[calc(100%-50px)] tickets-scroll">
+      <div v-else class="overflow-y-auto h-[calc(100%-50px)]">
         <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1">
           <!-- Loader -->
           <div
