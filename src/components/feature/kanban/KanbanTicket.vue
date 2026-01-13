@@ -58,7 +58,7 @@
                 </div>
                 <div v-if="ticket?.attachments" class="flex items-center gap-1 text-xs text-text-secondary">
                     <i class="fa-regular fa-file text-[10px]"></i>
-                    <span>{{ ticket?.attachments.length }}</span>
+                    <span>{{ ticket?.attachments?.length }}</span>
                 </div>
             </div>
         </div>
