@@ -652,7 +652,7 @@ const queryClient = useQueryClient();
 const createTeamModal = ref(false);
 const selectedCard = ref<any>();
 const selectedMindNode = ref<any>(null);
-const showFormatSidebar = ref(true);
+const showFormatSidebar = ref(false);
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
@@ -1317,7 +1317,7 @@ const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
 };
 const { mutate: addTicket } = useAddTicket({
   onSuccess: () => {
-    // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
   },
 });
 function handleChangeTicket(id: any, key: any, value: any) {
@@ -1833,7 +1833,7 @@ watchEffect(() => {
                 payload.variables["card-description"] = "This is a default description";
               }
               await addTicket(payload);
-              await refetchSheetLists();
+              //await refetchSheetLists();
             } catch (err) {
               console.error("Error creating card:", err);
               savedNodeIds.delete(editedNode.id);
@@ -2124,5 +2124,23 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
 
 .me-toolbar-btn:hover {
   background: rgba(0, 0, 0, 0.08);
+}
+:deep(.mind-elixir-toolbar.rb) {
+  top: 20px;
+  bottom: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* normalize toolbar buttons */
+:deep(.mind-elixir-toolbar.rb > *) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
 }
 </style>
