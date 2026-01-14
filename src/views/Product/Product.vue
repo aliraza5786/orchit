@@ -1704,6 +1704,49 @@ const handleReorderCard = async (payload: {
   }
 };
 
+// Define the toolbar functions outside watchEffect
+function injectToolbarButton() {
+  const toolbar = mindMapRef.value?.querySelector(".mind-elixir-toolbar.rb") as HTMLElement;
+  if (!toolbar) return;
+
+  // Prevent duplicate button
+  if (toolbar.querySelector(".open-sidebar-btn")) return;
+
+  const btn = document.createElement("button");
+  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
+  btn.title = "Open Formatting Sidebar";
+  btn.innerHTML = `<i class="fa-solid fa-sidebar"></i>`;
+  btn.addEventListener("click", () => {
+    showFormatSidebar.value = !showFormatSidebar.value;
+  });
+
+  toolbar.appendChild(btn);
+}
+
+// Store observer reference to clean up later
+let toolbarObserver: MutationObserver | null = null;
+
+function setupToolbarObserver() {
+  // Clean up existing observer if any
+  if (toolbarObserver) {
+    toolbarObserver.disconnect();
+    toolbarObserver = null;
+  }
+
+  const toolbarContainer = mindMapRef.value?.querySelector(".mind-elixir-toolbar.rb")?.parentElement;
+  if (!toolbarContainer) return;
+
+  // Use MutationObserver to track changes in the toolbar
+  toolbarObserver = new MutationObserver(() => {
+    injectToolbarButton();
+  });
+
+  toolbarObserver.observe(toolbarContainer, { childList: true, subtree: true });
+
+  // Inject immediately first time
+  injectToolbarButton();
+}
+
 watchEffect(() => {
   if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value) return;
 
@@ -1764,6 +1807,11 @@ watchEffect(() => {
     setTimeout(() => {
       instance.toCenter();
     }, 100);
+
+    // Setup toolbar button after instance is initialized
+    nextTick(() => {
+      setupToolbarObserver();
+    });
 
     // Selected node
     instance.bus.addListener("selectNode", (nodeObj: any) => {
@@ -1957,34 +2005,6 @@ watch(
   },
   { immediate: true }
 );
-function injectToolbarButton() {
-  const toolbar = document.querySelector(
-    ".mind-elixir-toolbar.rb"
-  ) as HTMLElement;
-
-  if (!toolbar) {
-    requestAnimationFrame(injectToolbarButton);
-    return;
-  }
-
-  // prevent duplicate button
-  if (toolbar.querySelector(".open-sidebar-btn")) return;
-
-  const btn = document.createElement("button");
-  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
-  btn.title = "Open Formatting Sidebar";
-
-  btn.innerHTML = `<i class="fa-solid fa-sidebar"></i> `;
-
-  btn.addEventListener("click", () => {
-    showFormatSidebar.value = !showFormatSidebar.value;
-  });
-
-  toolbar.appendChild(btn);
-}
-
-// call AFTER init
-injectToolbarButton();
 
 // ----------------------
 function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
@@ -2224,6 +2244,7 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
 .me-toolbar-btn:hover {
   background: rgba(0, 0, 0, 0.08);
 }
+/* Toolbar container */
 :deep(.mind-elixir-toolbar.rb) {
   bottom: 20px;
   left: 20px;
@@ -2233,16 +2254,30 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
   width: 15rem;
 }
 
-/* normalize toolbar buttons */
+/* Normalize toolbar buttons */
 :deep(.mind-elixir-toolbar.rb > *) {
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
   width: 40px;
+  padding: 5px;
   cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
 }
+
 :deep(.mind-elixir-toolbar.lt > *) {
   cursor: pointer;
+}
+:deep(.mind-elixir-toolbar.rb > *:hover) {
+  color: #7D68C8;
+  border: 1px solid #d9d9d9;
+  padding: 5px;
+  border-radius: 5px;
+}
+:deep(.mind-elixir-toolbar.lt > *:hover) {
+  color: #7D68C8;
+  border: 1px solid #d9d9d9;
+  padding: 5px;
+  border-radius: 5px;
 }
 </style>
