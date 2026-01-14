@@ -98,12 +98,14 @@ export const useAddTicket = (options = {}) =>
 export const useDeleteTicket = (id: string, options = {}) =>
   useApiMutation<{ data: unknown }, any>(
     {
-      key: ["delete-ticket"],
+      key: ["delete-ticket", id],
       url: `workspace/card/${id}`,
       method: "DELETE",
     },
     options as any
   );
+
+
 type UpdateTicketVars = { id: any; payload: any };
 
 export const useUpdateTicket = (options = {}) =>
