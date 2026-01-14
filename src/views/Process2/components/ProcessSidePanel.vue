@@ -216,6 +216,7 @@ const totalStatus = computed(() => {
   if (raw?.elements && Array.isArray(raw.elements)) return raw.elements.filter((e: any) => !e.source).length
   return 0
 })
+console.log(totalStatus.value);
 
 const totalTransitions = computed(() => {
    const raw = processDetails.value?.raw_object
