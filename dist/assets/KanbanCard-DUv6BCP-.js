@@ -1,0 +1,1 @@
+import{_ as o}from"./KanbanCard.vue_vue_type_script_setup_true_lang-Ccj8rATn.js";import"./index-CM-ocGw6.js";import"./DropMenu.vue_vue_type_script_setup_true_lang-BM4o7lkn.js";import"./ConfirmDeleteModal.vue_vue_type_script_setup_true_lang-ByXfLnka.js";import"./usePeople-Bgh-5Gwc.js";export{o as default};
