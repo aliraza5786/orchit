@@ -22,6 +22,9 @@ import Button from '../../../components/ui/Button.vue'
 // import Loader from '../../../components/ui/Loader.vue'
 import type { EdgeUpdateEvent } from '@vue-flow/core'
 
+import { useTheme } from "../../../composables/useTheme";
+const { isDark } = useTheme();
+
 // --- Modal state for editing an existing transition (edge) ---
 const showEditEdgeModal = ref(false)
 const editEdgeName = ref('')
@@ -513,15 +516,15 @@ function handleZoomEvent(e: Event) {
       <!-- <MiniMap /> -->
       <Controls :show-zoom="false" :show-fit-view="false" :show-interactive="false" position="top-right" />
 
-      <!-- Custom Zoom Controls -->
-      <div class="absolute bottom-35 sm:bottom-20 right-2 flex flex-col gap-2 z-10 bg-accent p-1 rounded-lg shadow-md border border-accent">
-         <button @click="zoomIn()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Zoom In">
+       <!-- Custom Zoom Controls -->
+      <div :class="isDark? 'bg-[#2d3748]':'bg-[#fff]'" class="absolute top-4 left-2 flex flex-col gap-2 z-10 p-1 rounded-[4px] shadow-md">
+         <button :class="isDark? 'text-[white]': 'text-[#444446]'" @click="zoomIn()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center rounded cursor-pointer" title="Zoom In">
             <i class="fa-solid fa-plus"></i>
          </button>
-         <button @click="zoomOut()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Zoom Out">
+         <button  :class="isDark? 'text-[white]': 'text-[#444446]'" @click="zoomOut()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center  rounded  cursor-pointer" title="Zoom Out">
             <i class="fa-solid fa-minus"></i>
          </button>
-         <button @click="fitView({ padding: 0.2 })" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Fit View">
+         <button  :class="isDark? 'text-[white]': 'text-[#444446]'" @click="fitView({ padding: 0.2 })" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center rounded cursor-pointer" title="Fit View">
             <i class="fa-solid fa-compress"></i>
          </button>
       </div>
