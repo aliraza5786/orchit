@@ -30,7 +30,7 @@
             </div>
             <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
                 <i class="fa-regular fa-file"></i>
-                {{ ticket?.attachments.length }}
+                {{ ticket?.attachments?.length }}
             </div>
 
         </div>

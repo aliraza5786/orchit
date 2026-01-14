@@ -19,14 +19,12 @@
         v-if="!isStartingSprint"
         class="p-4 w-full min-w-0 flex flex-col flex-1 min-h-0"
       >
-
         <div
           ref="containerRef"
-          class="flex gap-2 flex-1 min-h-0 box-border overflow-y-auto overflow-x-auto group"
+          class="flex gap-2 flex-1 min-h-0 overflow-x-auto group"
         >
-
           <section
-            class="px-4 rounded-md relative group box-border h-full min-w-[400px] border border-border"
+            class="px-4 rounded-md relative flex flex-col min-h-0 border border-border"
             :style="{ width: leftWidth + 'px' }"
           >
             <div class="flex items-center justify-between mt-2">
@@ -162,25 +160,26 @@
                 class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
               ></div>
             </div>
-            <BacklogTable
-              v-else
-              :checkedAll="checkedAll"
-              :sprint-type="sprintType"
-              :searchQuery="searchQuery"
-              :module-id="selectedFilter"
-              @move-selected-to-sprint="moveSelectedToSprint"
-              @delete-selected-backlog="deleteSelected('backlog')"
-              @open-ticket="openTicket"
-              @ticket-moved-to-backlog="handleTicketMovedToBacklog"
-              @open-create-ticket="openCreateBacklogTicket"
-            />
+            <div class="flex-1 min-h-0 overflow-y-auto" v-else>
+              <BacklogTable
+                :checkedAll="checkedAll"
+                :sprint-type="sprintType"
+                :searchQuery="searchQuery"
+                :module-id="selectedFilter"
+                @move-selected-to-sprint="moveSelectedToSprint"
+                @delete-selected-backlog="deleteSelected('backlog')"
+                @open-ticket="openTicket"
+                @ticket-moved-to-backlog="handleTicketMovedToBacklog"
+                @open-create-ticket="openCreateBacklogTicket"
+              />
+            </div>
           </section>
           <div
             class="h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
             @mousedown="startResize"
           ></div>
           <section
-            class="rounded-md relative group pt-2 flex flex-col flex-1 h-full min-h-0 box-border min-w-[400px] border border-border-input overflow-x-hidden"
+            class="rounded-md relative pt-2 flex flex-col flex-1 min-h-0 border border-border-input overflow-hidden"
           >
             <div
               class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
@@ -329,7 +328,7 @@
                     'w-8 h-8 lg:flex sm:hidden items-center justify-center rounded-full border text-white transition-colors shrink-0',
                   ]"
                   :style="{
-                    backgroundColor: selectedType.dot
+                    backgroundColor: selectedType.dot,
                   }"
                 >
                   <i class="fa-solid fa-plus"></i>
@@ -353,7 +352,10 @@
                   <button
                     class="flex lg:hidden cursor-pointer text-white items-center justify-center rounded-full ms-2 w-7 h-7 text-sm font-medium"
                     @click="handlePreviewClick"
-                    v-if="sprintDetailData?.status === 'active' && sprintDetailData.cards.length"
+                    v-if="
+                      sprintDetailData?.status === 'active' &&
+                      sprintDetailData.cards.length
+                    "
                     :style="
                       selectedSprintId
                         ? { backgroundColor: selectedType.dot }
@@ -368,7 +370,7 @@
 
                 <div class="gap-2 hidden lg:flex">
                   <!-- End Sprint Button -->
-                   <!-- {{ sprintDetailData }} -->
+                  <!-- {{ sprintDetailData }} -->
                   <div
                     v-if="sprintDetailData?.status === 'active'"
                     class="flex gap-2"
@@ -410,8 +412,7 @@
                       firstSprint.tickets.length === 0 ||
                       sprintDetailData.status === 'completed'
                     "
-                    :style=" { backgroundColor: selectedType.dot }
-                    "
+                    :style="{ backgroundColor: selectedType.dot }"
                   >
                     Start {{ selectedType.label }}
                   </Button>
@@ -591,7 +592,7 @@
                 class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
               ></div>
             </div>
-            <div class="flex-1 min-h-0 h-full">
+            <div class="flex-1 min-h-0 overflow-y-auto">
               <SprintCard
                 :searchQuery="searchQuery"
                 :sprintId="selectedSprintId"
@@ -707,10 +708,12 @@
       size="md"
       :loading="isDeleting"
       @confirm="handleDeleteTicket"
-      @cancel="() => {
-        selectedSprint = null;
-        showSprintDelete = false;
-      }"
+      @cancel="
+        () => {
+          selectedSprint = null;
+          showSprintDelete = false;
+        }
+      "
     />
     <!-- <TicketModal v-model="ticketModalOpen" :editing="!!editingTicket" :ticket="editingTicket" @save="handleSaveTicket" /> -->
     <SprintModal
@@ -914,10 +917,9 @@ const startSprintHandler = async (e: any) => {
     });
   } finally {
     isUpdatingSprint2.value = false;
-    startsprintModalOpen.value = false; 
+    startsprintModalOpen.value = false;
   }
 };
-
 
 const {
   data: sprintsList,
@@ -1219,7 +1221,7 @@ function saveSprintHandler(e: any) {
     });
   }
 }
-const sprintsDataFromPlus = ref([] as any)
+const sprintsDataFromPlus = ref([] as any);
 function openSprintModal(sprintsData: any) {
   selectedSprint.value = null;
   sprintModalOpen.value = true;

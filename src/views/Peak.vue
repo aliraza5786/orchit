@@ -16,7 +16,8 @@
 
             <!-- Cards with transitions -->
             <TransitionGroup name="list" tag="div" class="flex gap-2.5" v-else>
-              <button v-if="cardProgress" v-for="lane in lanes" :key="lane?.lane_title"
+              <template v-if="cardProgress">
+              <button v-for="lane in lanes" :key="lane?.lane_title"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']"
@@ -25,9 +26,10 @@
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
                   date="May 28"
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
-
               </button>
-              <button v-else v-for="lane in lanes2" :key="`2-${lane?.lane_title}`"
+              </template>
+              <template v-else>
+              <button v-for="lane in lanes2" :key="`2-${lane?.lane_title}`"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
                 <ProjectCard :ai="true" :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title"
@@ -38,6 +40,7 @@
                   class="transition-transform duration-200 ease-out group-hover:shadow-lg  border border-transparent hover:border-border-subtle rounded-xl cursor-pointer" />
 
               </button>
+              </template> 
             </TransitionGroup>
           </div>
         </div>

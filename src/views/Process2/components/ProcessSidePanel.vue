@@ -46,7 +46,7 @@
         </div>
          <!-- Card Type -->
         <div class="space-y-2">
-          <div class="mb-2 text-base font-semibold tracking-wide px-1">Variable Type</div>
+          <div class="mb-2 text-base font-semibold tracking-wide px-1">Card Type</div>
           <BaseSelectField 
             :options="cardTypeOptions" 
             placeholder="Select Type" 
@@ -133,7 +133,7 @@ watch(() => processDetails.value, (val) => {
   if (val) { 
     localTitle.value = val.title || ''
     localDesc.value = val.description || ''
-    localType.value = val.variable_type || '' 
+    localType.value = val.type_value || '' 
   }
 }, { immediate: true })
  
@@ -227,7 +227,7 @@ function handleTypeChange(val: any) {
   updateTransition({
       workspace_id: workspaceId.value,
       transition_id: props.details._id,
-      payload: { variable_type: val } 
+      payload: { type_value: val } 
   })
 }
 

@@ -145,6 +145,7 @@ type CreateTransitionPayload = {
    flow_metadata?: object;
    raw_object?: object;
    conditions?: object;
+   type_value? : string
 };
 
 export const useCreateTransition = (options = {}) =>
