@@ -250,9 +250,12 @@
           <!-- Header -->
           <div class="flex items-center justify-between pb-3 mb-4 border-b">
             <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
-            <button @click="showFormatSidebar = false" class="text-gray-400 hover:text-gray-700">
-      <i class="fa-solid fa-times"></i>
-    </button>
+            <button
+              @click="showFormatSidebar = false"
+              class="text-gray-400 hover:text-gray-700"
+            >
+              <i class="fa-solid fa-times"></i>
+            </button>
           </div>
 
           <div class="format-content space-y-6">
@@ -592,6 +595,7 @@ import {
 import { useWorkspaceStore } from "../../stores/workspace";
 import Dropdown from "../../components/ui/Dropdown.vue";
 import Searchbar from "../../components/ui/SearchBar.vue";
+import { useTheme } from "../../composables/useTheme";
 import {
   ReOrderCard,
   ReOrderList,
@@ -674,14 +678,12 @@ function cancel() {
 }
 const selectedProcessMeta = ref<any>(null);
 const handleProcessNestedSelection = (val: any) => {
-  selectedProcessMeta.value = val; 
+  selectedProcessMeta.value = val;
 };
 
 // reactively checking selected view by value
 const selectedViewByVariable = computed(() => {
-  return variables.value?.find(
-    (v: any) => v._id === selected_view_by.value
-  );
+  return variables.value?.find((v: any) => v._id === selected_view_by.value);
 });
 
 declare global {
@@ -834,7 +836,6 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
   selected_sheet_id
 );
 
-
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
@@ -860,13 +861,13 @@ const listProcessPayload = computed(() => {
 });
 
 const handleAddColumn = (v: any) => {
-   const payload: any = {
+  const payload: any = {
     workspace_id: workspaceId.value,
     module_id: moduleId.value,
     variable_id: selected_view_by.value,
-    value: v, 
+    value: v,
     ...listProcessPayload.value,
-  }; 
+  };
   addList(payload);
 };
 
@@ -1311,7 +1312,7 @@ const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
 };
 const { mutate: addTicket } = useAddTicket({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
   },
 });
 
@@ -1602,7 +1603,7 @@ interface MindNode {
   hyperLink?: string;
 }
 const cardData = ref([] as any);
-
+const { isDark } = useTheme();
 // mindmap
 function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
   const root: MindNode = {
@@ -1635,7 +1636,7 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
       };
       root.children.push(variables[title]);
     }
-    
+
     const listNode: MindNode = {
       id: sheet?._id,
       topic: sheet.title,
@@ -1691,11 +1692,11 @@ const handleReorderCard = async (payload: {
       method: "PATCH",
       data: payload,
     });
-    
+
     // Refetch data after successful reorder
     refetchSheets();
     refetchSheetLists();
-    
+
     console.log("Card reordered successfully");
   } catch (error) {
     console.error("Failed to reorder card:", error);
@@ -1725,7 +1726,7 @@ watchEffect(() => {
 
     const instance = new MindElixir({
       el: mindMapRef.value as HTMLElement,
-      theme: undefined,
+      theme: isDark.value ? MindElixir.DARK_THEME : MindElixir.THEME,
       draggable: true,
       contextMenu: true,
       toolBar: true,
@@ -1798,7 +1799,7 @@ watchEffect(() => {
       ) {
         const draggedNode = data.obj;
         const targetNode = data.target;
-        
+
         if (!draggedNode || draggedNode.unique_name !== "card") return;
         if (!targetNode) return;
 
@@ -1944,7 +1945,18 @@ watchEffect(() => {
     });
   });
 });
+watch(
+  isDark,
+  () => {
+    if (!mindMapInstance.value) return;
 
+    // Switch MindElixir theme
+    mindMapInstance.value.changeTheme(
+      isDark.value ? MindElixir.DARK_THEME : MindElixir.THEME
+    );
+  },
+  { immediate: true }
+);
 function injectToolbarButton() {
   const toolbar = document.querySelector(
     ".mind-elixir-toolbar.rb"
@@ -1973,7 +1985,6 @@ function injectToolbarButton() {
 
 // call AFTER init
 injectToolbarButton();
-
 
 // ----------------------
 function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
@@ -2034,8 +2045,8 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
     workspace_lane_id: nodeObj?.workspace_lane_id || null,
     variables: {
       "card-status": sheet?.topic || "In Progress",
-      "card-type": null,
-      priority: null,
+      "card-type": "General",
+      priority: "medium",
       process: null,
       "card-title": nodeObj.topic || "New Card",
       "card-description": "",
@@ -2214,12 +2225,12 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
   background: rgba(0, 0, 0, 0.08);
 }
 :deep(.mind-elixir-toolbar.rb) {
-  top: 20px;
-  bottom: auto;
+  bottom: 20px;
+  left: 20px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
+  width: 15rem;
 }
 
 /* normalize toolbar buttons */
@@ -2227,8 +2238,11 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
   line-height: 1;
+  width: 40px;
+  cursor: pointer;
+}
+:deep(.mind-elixir-toolbar.lt > *) {
+  cursor: pointer;
 }
 </style>
