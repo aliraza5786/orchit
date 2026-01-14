@@ -166,9 +166,13 @@ function handleSave(payload: any) {
         workspace_id: workspaceId.value,
         transition_id: processId.value,
         payload: {
-            raw_object: payload,
+            raw_object: {
+               workspace_id: payload.workspace_id,
+               flow_diagram: payload.flow_diagram
+            },
             variable_type: "card-type",
             type_value: processTypeValue.value,
+            flow_metadatas: payload.flow_metadata
              // Save the whole flow
         }
     })

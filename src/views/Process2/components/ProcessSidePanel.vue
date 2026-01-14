@@ -32,6 +32,7 @@
 
         <!-- Title -->
         <div class="capitalize">
+          <div class="mb-2 text-base font-semibold tracking-wide px-1">Process Title</div>
           <div v-if="editingTitle" class="relative">
              <input ref="titleInput" v-model="localTitle" 
               @blur="saveTitle" @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle"
@@ -39,7 +40,7 @@
               type="text" />
           </div>
           <h2 v-else 
-            class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-[6px] px-2 py-2 hover:bg-bg-dropdown transition cursor-text hover:border border-border"
+            class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-[6px] px-2 py-2 hover:bg-bg-dropdown transition cursor-text border border-transparent hover:border-border"
             @click="editTitle">
             {{ localTitle || 'Untitled' }}
           </h2>
@@ -54,6 +55,15 @@
             @update:modelValue="handleTypeChange" 
             size="md"
           />
+        </div>
+
+        <!-- Workflow Preview -->
+        <div v-if="processDetails?.raw_object?.flow_diagram" class="space-y-2">
+            <div class="mb-2 text-base font-semibold tracking-wide px-1">Workflow Preview</div>
+            <ProcessWorkflowPreview 
+                :workflow-data="processDetails.raw_object.flow_diagram" 
+                @open-builder="emit('open-builder')"
+            />
         </div>
 
         <!-- Description -->
@@ -71,14 +81,71 @@
         </div>
 
         <!-- Workflow Stats -->
-        <div class="grid grid-cols-2 gap-4 mt-2">
-          <div class="rounded-[6px] bg-orchit-white/5 border border-orchit-white/10 p-4 flex flex-col items-center justify-center">
-             <span class="text-2xl font-bold text-accent">{{ totalStatus }}</span>
-             <span class="text-xs uppercase tracking-wider text-text-secondary mt-1">Total Status</span>
+        <div class="space-y-4 mt-2">
+          <!-- Metadata Grid -->
+          <div class="grid grid-cols-2 gap-3">
+             <div class="rounded-[8px] bg-orchit-white/5 border border-orchit-white/10 p-3 flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-wider text-text-secondary font-semibold">Group</span>
+                <span class="text-sm font-medium truncate">{{ processDetails?.group_id?.title || 'General' }}</span>
+             </div>
+             <div class="rounded-[8px] bg-orchit-white/5 border border-orchit-white/10 p-3 flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-wider text-text-secondary font-semibold">Type</span>
+                <span class="text-sm font-medium truncate">{{ processDetails?.type_value || 'N/A' }}</span>
+             </div>
+             <div class="rounded-[8px] bg-orchit-white/5 border border-orchit-white/10 p-3 flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-wider text-text-secondary font-semibold">Status</span>
+                <div class="flex items-center gap-2">
+                    <div :class="['w-2 h-2 rounded-full', processDetails?.is_active ? 'bg-green-500' : 'bg-red-500']"></div>
+                    <span class="text-sm font-medium">{{ processDetails?.is_active ? 'Active' : 'Inactive' }}</span>
+                </div>
+             </div>
+             <div class="rounded-[8px] bg-orchit-white/5 border border-orchit-white/10 p-3 flex flex-col gap-1">
+                <span class="text-[10px] uppercase tracking-wider text-text-secondary font-semibold">Total Transitions</span>
+                <span class="text-sm font-medium">{{ totalTransitions }}</span>
+             </div>
           </div>
-          <div class="rounded-[6px] bg-orchit-white/5 border border-orchit-white/10 p-4 flex flex-col items-center justify-center">
-             <span class="text-2xl font-bold text-accent">{{ totalTransitions }}</span>
-             <span class="text-xs uppercase tracking-wider text-text-secondary mt-1">Total Transitions</span>
+
+          <!-- Status Analysis -->
+          <div v-if="processDetails?.flow_metadatas?.length" class="space-y-3">
+             <h3 class="text-base font-semibold tracking-wide px-1">Status Breakdown</h3>
+             <div class="space-y-2">
+                <div v-for="status in processDetails.flow_metadatas" :key="status._id" 
+                    class="group/item flex flex-col gap-2 p-3 rounded-[8px] bg-orchit-white/5 border border-orchit-white/10 hover:border-orchit-white/20 transition-all cursor-default"
+                >
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-semibold">{{ status.status }}</span>
+                            <span v-if="status.is_start" class="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold uppercase tracking-tighter">Start</span>
+                            <span v-if="status.is_end" class="text-[9px] px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-bold uppercase tracking-tighter">End</span>
+                        </div>
+                        <span class="text-[10px] text-text-secondary">Position {{ status.position }}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-2 mt-1">
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase text-text-secondary/70">Forward</span>
+                            <span class="text-xs font-semibold">{{ status.forward_moves?.length || 0 }}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase text-text-secondary/70">Backward</span>
+                            <span class="text-xs font-semibold">{{ status.backward_moves?.length || 0 }}</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] uppercase text-text-secondary/70">Total Moves</span>
+                            <span class="text-xs font-semibold">{{ status.total_moves || 0 }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Jump-to statuses (tags) -->
+                    <div v-if="status.forward_moves?.length" class="flex flex-wrap gap-1 mt-1">
+                        <span v-for="move in status.forward_moves" :key="move" 
+                            class="text-[9px] px-1.5 py-0.5 rounded bg-orchit-white/5 border border-orchit-white/10 text-text-secondary"
+                        >
+                            → {{ move }}
+                        </span>
+                    </div>
+                </div>
+             </div>
           </div>
         </div>
 
@@ -93,13 +160,14 @@ import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import {useProcessGroupsWithTransitions, useProcessTransition, useUpdateTransition, useFilteredCardTypes } from '../../../queries/useProcess2'
 import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
+import ProcessWorkflowPreview from './ProcessWorkflowPreview.vue'
 
 const props = defineProps<{
   showPanel: boolean
   details: { _id: string; title: string; description?: string; [key: string]: any }
 }>()
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'open-builder'])
 
 const isExpanded = ref(false)
 const { workspaceId } = useRouteIds()
@@ -148,6 +216,7 @@ const totalStatus = computed(() => {
   if (raw?.elements && Array.isArray(raw.elements)) return raw.elements.filter((e: any) => !e.source).length
   return 0
 })
+console.log(totalStatus.value);
 
 const totalTransitions = computed(() => {
    const raw = processDetails.value?.raw_object

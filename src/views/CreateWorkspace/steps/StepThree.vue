@@ -107,7 +107,7 @@
       <BaseTextAreaField label="Description" class="mt-4" v-model="form.description" placeholder="Enter Description"
         size="lg" />
       <div class="flex gap-2 mt-6 justify-end">
-        <Button size="md" variant="primary" @click="addNewRole">
+        <Button :disabled="isAddTeamDisabled" size="md" variant="primary" @click="addNewRole">
           Add Team
         </Button>
         <Button size="md" variant="secondary" @click="addTeam = false">Cancel</Button>
@@ -117,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, reactive, ref, computed } from 'vue'
 import Button from '../../../components/ui/Button.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
@@ -207,7 +207,12 @@ function cancelChips(role: Role) {
   role.capacityWarning = role.people.length >= role.max_num_people
 }
 
+const isAddTeamDisabled = computed(() => {
+  return !form.value.name.trim() || !form.value.description.trim()
+})
+
 function addNewRole() {
+   if (!form.value.name.trim() || !form.value.description.trim()) return
   const newRole = {
     id: `role-${Date.now()}`,
     title: form.value.name,

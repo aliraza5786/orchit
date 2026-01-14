@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, onMounted, onUnmounted } from 'vue'
+import { nextTick, ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import {
   VueFlow,
   Handle,
@@ -16,11 +16,14 @@ import { Controls } from '@vue-flow/controls'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
-import { watch } from 'vue'
+
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
 // import Loader from '../../../components/ui/Loader.vue'
 import type { EdgeUpdateEvent } from '@vue-flow/core'
+
+import { useTheme } from "../../../composables/useTheme";
+const { isDark } = useTheme();
 
 // --- Modal state for editing an existing transition (edge) ---
 const showEditEdgeModal = ref(false)
@@ -29,6 +32,45 @@ const selectedEdgeId = ref<string | null>(null)
 
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
+
+/**
+ *  
+ * Tracks the flow diagram and generates status objects for Kanban statuses.
+ */
+const statusObjects = computed(() => {
+  const filtered = nodes.value.filter(node => node.data?.label)
+  return filtered.map((node, index) => {
+    const outgoingEdges = edges.value.filter(e => e.source === node.id)
+    const incomingEdges = edges.value.filter(e => e.target === node.id)
+
+    const forwardMoves = [...new Set(outgoingEdges.map(e => {
+      const targetNode = nodes.value.find(n => n.id === e.target)
+      return targetNode?.data?.label
+    }).filter(Boolean))]
+
+    const backwardMoves = [...new Set(incomingEdges.map(e => {
+      const sourceNode = nodes.value.find(n => n.id === e.source)
+      return sourceNode?.data?.label
+    }).filter(Boolean))]
+
+    return {
+      _id: node.id,
+      status: node.data.label,
+      sort_order: index + 1,
+      position: index + 1,
+      forward_moves: forwardMoves,
+      backward_moves: backwardMoves,
+      total_moves: forwardMoves.length + backwardMoves.length,
+      is_start: index === 0,
+      is_end: index === filtered.length - 1
+    }
+  })
+})
+
+// Output the full array of status objects whenever it changes
+watch(statusObjects, (newValue) => {
+  console.log('Workflow Status Objects Change:', JSON.stringify(newValue, null, 2))
+}, { deep: true })
 
 const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 // ---- API hooks ----
@@ -302,6 +344,7 @@ function serializeWorkflowPayload() {
       nodes: currentNodes.map(mapVFNodeToApi),
       edges: currentEdges.map(mapVFEdgeToApi),
     },
+    flow_metadata:statusObjects.value
   }
 }
 
@@ -350,6 +393,25 @@ function deleteSelectedEdge() {
   showEditEdgeModal.value = false
   selectedEdgeId.value = null
   editEdgeName.value = ''
+}
+
+// reverse selection transition
+function reverseSelectedEdge() {
+  if (!selectedEdgeId.value) return
+
+  setEdges(eds =>
+    eds.map(e =>
+      e.id === selectedEdgeId.value
+        ? {
+            ...e,
+            source: e.target,
+            target: e.source,
+            sourceHandle: null,
+            targetHandle: null,
+          }
+        : e
+    )
+  )
 }
 
 // delete status node
@@ -454,15 +516,15 @@ function handleZoomEvent(e: Event) {
       <!-- <MiniMap /> -->
       <Controls :show-zoom="false" :show-fit-view="false" :show-interactive="false" position="top-right" />
 
-      <!-- Custom Zoom Controls -->
-      <div class="absolute bottom-35 sm:bottom-20 right-2 flex flex-col gap-2 z-10 bg-accent p-1 rounded-lg shadow-md border border-accent">
-         <button @click="zoomIn()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Zoom In">
+       <!-- Custom Zoom Controls -->
+      <div :class="isDark? 'bg-[#2d3748]':'bg-[#fff]'" class="absolute top-4 left-2 flex flex-col gap-2 z-10 p-1 rounded-[4px] shadow-md">
+         <button :class="isDark? 'text-[white]': 'text-[#444446]'" @click="zoomIn()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center rounded cursor-pointer" title="Zoom In">
             <i class="fa-solid fa-plus"></i>
          </button>
-         <button @click="zoomOut()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Zoom Out">
+         <button  :class="isDark? 'text-[white]': 'text-[#444446]'" @click="zoomOut()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center  rounded  cursor-pointer" title="Zoom Out">
             <i class="fa-solid fa-minus"></i>
          </button>
-         <button @click="fitView({ padding: 0.2 })" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center hover:bg-gray-100 rounded text-white hover:text-gray-500 cursor-pointer" title="Fit View">
+         <button  :class="isDark? 'text-[white]': 'text-[#444446]'" @click="fitView({ padding: 0.2 })" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center rounded cursor-pointer" title="Fit View">
             <i class="fa-solid fa-compress"></i>
          </button>
       </div>
@@ -528,6 +590,13 @@ function handleZoomEvent(e: Event) {
         @click="deleteSelectedEdge"
       >
         Delete
+      </Button>
+      <Button
+        size="sm"
+        variant="secondary"
+        @click="reverseSelectedEdge"
+      >
+        Reverse
       </Button>
     </div>
   </div>
