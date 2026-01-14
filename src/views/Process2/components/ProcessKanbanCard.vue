@@ -1,25 +1,34 @@
 <template>
   <div @click="$emit('click')" @dblclick="$emit('dblclick')" class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer
-           hover:shadow-md transition-all duration-200 border border-border hover:border-accent">
+           hover:shadow-md transition-all duration-200 group ">
     <div class="flex justify-between gap-2 items-start">
       <div class="flex items-start gap-3 flex-1">
-        <div class="w-10 h-10 bg-accent/20 flex justify-center items-center rounded-lg">
+        <!-- <div class="w-10 h-10 bg-accent/20 flex justify-center items-center rounded-lg">
           <i class="fa-solid fa-diagram-project text-accent"></i>
-        </div>
+        </div> -->
         <div class="flex-1 min-w-0">
-          <h3 class="text-sm font-semibold text-text-primary leading-tight mb-1">
+            <span v-if="ticket['type_value']"
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium captalize mb-3 inline-flex">
+                    {{ ticket['type_value'] }}
+            </span>
+          <h3 class="text-sm font-medium text-card-foreground mb-2 capitalize">
             {{ ticket?.title ?? `Process ${index + 1}` }}
           </h3>
-          <p v-if="ticket?.description" class="text-xs text-text-secondary line-clamp-2">
+          <p v-if="ticket?.description" class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2 max-h-20">
             {{ ticket.description }}
           </p>
         </div>
       </div>
-      <DropMenu @click.stop="" :items="getMenuItems()">
-        <template #trigger>
-          <i class="cursor-pointer fa-solid fa-ellipsis text-text-secondary hover:text-text-primary"></i>
-        </template>
-      </DropMenu>
+      <template class="hidden group-hover:block ">
+            <DropMenu @click.stop="" :items="getMenuItems()">
+           <template #trigger>
+                 <div class="w-6 py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
+                   <i class="cursor-pointer text-sm fa-solid fa-ellipsis"></i>
+                 </div>
+              </template>
+            </DropMenu>
+      </template>
+     
     </div>
   </div>
 

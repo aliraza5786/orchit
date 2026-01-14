@@ -9,7 +9,7 @@
             <div class="flex gap-2 flex-wrap items-center">
 
                 <span v-if="ticket['card-type'] && selectedVarSlug[0]?.slug != 'card-type'"
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium uppercase">
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium captalize">
                     {{ ticket['card-type'] }}
                 </span>
                 <span v-if="ticket['card-status'] && selectedVarSlug[0]?.slug != 'card-status'"
