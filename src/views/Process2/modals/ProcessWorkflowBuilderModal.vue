@@ -15,7 +15,7 @@
 
             <div class="flex items-center gap-3">
               <Button variant="secondary" size="sm" @click="handleAddStatus">
-                <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Status
+                <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
               </Button>
 
               <Button variant="primary" size="sm" :disabled="isSaving" @click="handleUpdateWorkflow">

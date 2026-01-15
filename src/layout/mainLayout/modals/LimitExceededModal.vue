@@ -141,9 +141,11 @@
   /** Keep your existing upgrade flow intact */
   const { data: currentPackage, refetch: reftechCurrentPackage } = useCurrentPackage()
   const sessionId = route.query.session_id as string | undefined
+  const packageId = route.query.packageId as string | undefined
+
   
   const { mutate: confirm } = confirmPayment(
-    { sessionId: sessionId, interval: 'month' },
+    { sessionId: sessionId, interval: 'month', packageId:packageId },
     {
       onSuccess: () => {
         reftechCurrentPackage()

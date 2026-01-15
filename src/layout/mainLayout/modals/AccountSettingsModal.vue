@@ -380,12 +380,15 @@ const {
   refetch: reftechCurrentPackage,
   isPending,
 } = useCurrentPackage();
-const sessionId = route.query.session_id;
-// const { data: roles } = useRolesPermisions();
+const sessionId = route.query.session_id as string;
+const packageId = route.query.packageId as string;
+const interval = (route.query.interval as string) || "month";
+
 const { mutate: confirm, isPending: isConfirming } = confirmPayment(
   {
     sessionId: sessionId,
-    interval: "month",
+    interval: interval,
+    packageId: packageId
   },
   {
     onSuccess: () => {
@@ -394,24 +397,27 @@ const { mutate: confirm, isPending: isConfirming } = confirmPayment(
     },
   }
 );
-onMounted(async () => {
-  const sessionId = route.query.session_id;
-  console.log(route.query.session_id, sessionId);
-  if (sessionId) {
-    confirm({ packageId: await currentPackage?.value.nextPackage?.id });
+const hasConfirmed = ref(false)
+
+onMounted(() => {
+  if (route.query.stripePayment && sessionId && !hasConfirmed.value) {
+    hasConfirmed.value = true
+    confirm({})
   }
-});
+})
+
 const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
   onSuccess: async (data: any) => {
     window.open(data?.checkoutUrl);
   },
 });
 const upgradingPackageId = ref<string | null>(null);
-function pay(p: any) {
+function pay(p: any) { 
+  if (!p?.id) return
   upgradingPackageId.value = p?.id;
   upgradePackage({
     packageId: p?.id,
-    interval: "month",
+    interval: p?.pricing?.month?.interval || "month",
   });
 }
 const props = defineProps<{
@@ -438,13 +444,6 @@ watch(
   () => currentPackage.value,
   () => {
     workspaceStore.setLimit(currentPackage.value);
-    if (route.query.stripePayment) {
-      confirm({
-        sessionId: currentPackage.value?.sessionId,
-        packageId: currentPackage?.value.nextPackage?.id,
-        interval: "month",
-      });
-    }
   }
 );
 const profileData = computed(() => profile.value?.data || null);

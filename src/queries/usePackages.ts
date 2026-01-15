@@ -46,6 +46,9 @@ export const confirmPayment = (payload: any, options = {}) => {
     } as any
   );
 };
+
+
+
 export const useRolesPermisions = (options = {}) => {
   return useQuery({
     queryKey: ["role-&-permission"],
@@ -71,20 +74,7 @@ export const useRoles = (id:any,options = {}) => {
     ...options,
   });
 };
-// export const usePermissionRoles = (id:any,options = {}) => {
-//   return useQuery({
-//     queryKey: ["roles"],
-//     queryFn: ({ signal }) =>
-//       request<any>({
-//         url: `/roles/workspace-access-roles/without-permission?company_id=${unref(id)?._id}`,
-//         method: "GET",
-//         signal,
-//       }),
-//     ...options,
-//   });
-// };
-
-
+  
 export const useUpdatePermissions = (options = {}) => {
   return useApiMutation<any, any>(
     {
