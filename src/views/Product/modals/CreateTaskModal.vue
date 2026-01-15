@@ -39,7 +39,7 @@
 
 
       <!-- Dynamic Select Variables -->
-      <BaseSelectField size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable"
+      <BaseSelectField  size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable && item?.title !=='Process'"
         :key="getVarKey(item)" v-model="form.variables[item.slug]" :options="mapOptions(item.data)" :label="item.title"
         placeholder="Select value" :allowCustom="true" />
 

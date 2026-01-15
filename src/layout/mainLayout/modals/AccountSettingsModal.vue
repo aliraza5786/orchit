@@ -276,10 +276,10 @@
                   </div>
                   <!-- <form action="/create-checkout-session" method="POST"> -->
                   <Button
-                    class="mt-3 block w-full shrink-0 uppercase"
+                    class="mt-3 block w-full shrink-0 capitalize"
                     @click="pay(nextPackage)"
                   >
-                    {{ isUpgrading ? "Upgrading..." : "UPGRADE" }}</Button
+                    {{ isUpgrading && upgradingPackageId === nextPackage.id ? "Upgrading..." : "Upgrade" }}</Button
                   >
                   <!-- </form> -->
                 </div>
@@ -406,7 +406,9 @@ const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
     window.open(data?.checkoutUrl);
   },
 });
+const upgradingPackageId = ref<string | null>(null);
 function pay(p: any) {
+  upgradingPackageId.value = p?.id;
   upgradePackage({
     packageId: p?.id,
     interval: "month",
