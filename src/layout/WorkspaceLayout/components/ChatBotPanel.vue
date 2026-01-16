@@ -145,7 +145,6 @@
     v-model="showAIPreview"
     @accept="showAIPreview = false"
     @decline="showAIPreview = false"
-    :data="Lists"
     :title="contextTitle"
   />
 </template>
@@ -155,10 +154,10 @@ import { ref, computed, watch, onBeforeUnmount, nextTick, onMounted } from "vue"
 import { useRoute } from "vue-router";
 import { io, Socket } from "socket.io-client";
 import { useWorkspaceStore } from "../../../stores/workspace";
-import { usePeopleList } from "../../../queries/usePeople";
+// import { usePeopleList } from "../../../queries/usePeople";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { useAgentStore } from "../../../stores/agentStore";
-
+import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
 const showAIPreview = ref(false);
@@ -169,11 +168,11 @@ const isSocketConnected = ref(false);
 const socketURL = import.meta.env.VITE_SOCKET_IO_URL || "https://backend.streamed.space";
 const isAiThinkingBubbleVisible = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
-const selected_view_id = ref("team");
-const { data: Lists, refetch: refetchList } = usePeopleList(workspaceId.value, selected_view_id);
+// const selected_view_id = ref("team");
+// const { data: Lists, refetch: refetchList } = usePeopleList(workspaceId.value, selected_view_id);
 const agentStore = useAgentStore();
 
-watch(Lists, () => refetchList());
+// watch(Lists, () => refetchList());
 
 const contextTitle = computed(() => {
   const routeName = (route.name as string)?.toLowerCase() || "workspace";
@@ -184,11 +183,7 @@ const contextTitle = computed(() => {
   if (routeName.includes("more")) return "More";
   if (routeName.includes("pin")) return "Pin";
 
-  const modId = route.params.module_id || route.params.job_id;
-  if (modId && Lists?.value?.workspace?.lanes) {
-    const lane = Lists.value.workspace.lanes.find((l: any) => l._id === modId);
-    if (lane?.variables?.["lane-title"]) return lane.variables["lane-title"];
-  }
+  // const modId = route.params.module_id || route.params.job_id;
   return "Workspace";
 });
 

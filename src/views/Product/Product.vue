@@ -581,21 +581,20 @@
   <div></div>
 </template>
 <script setup lang="ts">
-import {
-  computed,
-  defineAsyncComponent,
-  h,
-  ref,
-  watch,
-  toRaw,
-  watchEffect,
-  nextTick,
-  triggerRef,
-} from "vue";
+import { defineAsyncComponent, ref, computed, watch, toRaw, watchEffect, nextTick, triggerRef, h } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
-import Dropdown from "../../components/ui/Dropdown.vue";
-import Searchbar from "../../components/ui/SearchBar.vue";
 import { useTheme } from "../../composables/useTheme";
+import { useRoute } from "vue-router";
+import { useQueryClient } from "@tanstack/vue-query";
+import { useRouteIds } from "../../composables/useQueryParams";
+import Fuse from "fuse.js";
+import { debounce } from "lodash";
+import { getInitials } from "../../utilities";
+import { avatarColor } from "../../utilities/avatarColor";
+import MindElixir from "mind-elixir";
+import { toast } from "vue-sonner";
+import { usePermissions } from "../../composables/usePermissions";
+import { request, toApiMessage } from "../../libs/api";
 import {
   ReOrderCard,
   ReOrderList,
@@ -610,28 +609,21 @@ import {
   useVariables,
   useCreateWorkspaceSheet,
 } from "../../queries/useSheets";
-import { useRoute } from "vue-router";
-import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
-import BaseTextField from "../../components/ui/BaseTextField.vue";
-import { useQueryClient } from "@tanstack/vue-query";
-import { useRouteIds } from "../../composables/useQueryParams";
-import Button from "../../components/ui/Button.vue";
-import KanbanTicket from "../../components/feature/kanban/KanbanTicket.vue";
-import Fuse from "fuse.js";
-import { debounce } from "lodash";
-import TableView from "../../components/feature/TableView/TableView.vue";
-import { getInitials } from "../../utilities";
-import { avatarColor } from "../../utilities/avatarColor";
-import DatePicker from "./components/DatePicker.vue";
-import MindElixir from "mind-elixir";
-import { toast } from "vue-sonner";
-import { usePermissions } from "../../composables/usePermissions";
-import { request, toApiMessage } from "../../libs/api";
-import TableSearchCell from "../../components/feature/TableView/TableSearchCell.vue";
-import TableAssigneeCell from "../../components/feature/TableView/TableAssigneeCell.vue";
-import CalendarView from "../../components/feature/CalendarView.vue";
-import GanttChartView from "../../components/feature/GanttChartView.vue";
-import TimelineView from "../../components/feature/TimelineView.vue";
+
+// Lazy-loaded components
+const Dropdown = defineAsyncComponent(() => import("../../components/ui/Dropdown.vue"));
+const Searchbar = defineAsyncComponent(() => import("../../components/ui/SearchBar.vue"));
+const KanbanSkeleton = defineAsyncComponent(() => import("../../components/skeletons/KanbanSkeleton.vue"));
+const BaseTextField = defineAsyncComponent(() => import("../../components/ui/BaseTextField.vue"));
+const Button = defineAsyncComponent(() => import("../../components/ui/Button.vue"));
+const KanbanTicket = defineAsyncComponent(() => import("../../components/feature/kanban/KanbanTicket.vue"));
+const TableView = defineAsyncComponent(() => import("../../components/feature/TableView/TableView.vue"));
+const DatePicker = defineAsyncComponent(() => import("./components/DatePicker.vue"));
+const TableSearchCell = defineAsyncComponent(() => import("../../components/feature/TableView/TableSearchCell.vue"));
+const TableAssigneeCell = defineAsyncComponent(() => import("../../components/feature/TableView/TableAssigneeCell.vue"));
+const CalendarView = defineAsyncComponent(() => import("../../components/feature/CalendarView.vue"));
+const GanttChartView = defineAsyncComponent(() => import("../../components/feature/GanttChartView.vue"));
+const TimelineView = defineAsyncComponent(() => import("../../components/feature/TimelineView.vue"));
 const {
   canEditSheet,
   canDeleteSheet,
@@ -816,7 +808,6 @@ const SidePanel = defineAsyncComponent(
 const KanbanBoard = defineAsyncComponent(
   () => import("../../components/feature/kanban/KanbanBoard.vue")
 );
-
 const {
   data,
   refetch: refetchSheets,
@@ -831,8 +822,8 @@ const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(sheetId.value);
 
 const { data: variables, isPending: isVariablesPending } = useVariables(
-  workspaceId.value,
-  moduleId.value,
+  workspaceId,
+  moduleId,
   selected_sheet_id
 );
 
@@ -2270,14 +2261,12 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
 }
 :deep(.mind-elixir-toolbar.rb > *:hover) {
   color: #7D68C8;
-  border: 1px solid #d9d9d9;
-  padding: 5px;
+  border: 1px solid #7D68C8;
   border-radius: 5px;
 }
 :deep(.mind-elixir-toolbar.lt > *:hover) {
   color: #7D68C8;
-  border: 1px solid #d9d9d9;
-  padding: 5px;
+  border: 1px solid #7D68C8;
   border-radius: 5px;
 }
 </style>

@@ -1,17 +1,25 @@
 <template>
-  <div v-if="isFetching || isPending" class="flex max-w-[380px] min-w-full sm:min-w-[380px] justify-center min-h-[400px] items-center h-full w-full">
 
-    <div role="status" aria-label="Loading"
-      class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
-  </div>
   <!-- Slide-in panel -->
    
-  <Transition v-else name="panel" appear>
+  <Transition name="panel" appear>
     <div v-show="showPanel" :class="[
       'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
       isExpanded ? 'min-w-full max-w-full' : 'min-w-full max-w-[380px] sm:min-w-[380px]'
     ]" role="complementary" aria-label="Details panel">
-      <!-- Header -->
+  <div v-if="isPending && !cardDetails" class="flex flex-col gap-5 p-6 animate-pulse">
+    <div class="h-8 bg-orchit-white/10 rounded-xl w-3/4"></div>
+    <div class="space-y-2">
+      <div class="h-4 bg-orchit-white/10 rounded w-full"></div>
+      <div class="h-4 bg-orchit-white/10 rounded w-5/6"></div>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div class="h-20 bg-orchit-white/10 rounded-xl"></div>
+      <div class="h-20 bg-orchit-white/10 rounded-xl"></div>
+    </div>
+  </div>
+      <div v-else>
+        <!-- Header -->
       <div
         class="sticky top-0 z-10 border-b  border-border px-4 sm:px-6 py-[9px] flex items-center justify-between bg-bg-card">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
@@ -287,25 +295,34 @@
           </section>
         </Transition>
       </div>
+      </div>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
+import { computed, reactive, ref, watch, nextTick, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useLanes, useMoveCard } from '../../../queries/useSheets'
-// import TypeChanger from './TypeChanger.vue'
-import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
-import DatePicker from './DatePicker.vue'
-import AssigmentDropdown from './AssigmentDropdown.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRouteIds } from '../../../composables/useQueryParams'
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
-import Button from '../../../components/ui/Button.vue'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
-import SwitchTab from '../../../components/ui/SwitchTab.vue'
+
+// Lazy-loaded components
+const BaseRichTextEditor = defineAsyncComponent({
+  loader: () => import('../../../components/ui/BaseRichTextEditor.vue'),
+  loadingComponent: {
+    template: '<div class="h-20 w-full animate-pulse bg-neutral-700/30 rounded-lg"></div>'
+  },
+  delay: 200
+})
+const BaseSelectField = defineAsyncComponent(() => import('../../../components/ui/BaseSelectField.vue'))
+const DatePicker = defineAsyncComponent(() => import('./DatePicker.vue'))
+const AssigmentDropdown = defineAsyncComponent(() => import('./AssigmentDropdown.vue'))
+const Button = defineAsyncComponent(() => import('../../../components/ui/Button.vue'))
+const SwitchTab = defineAsyncComponent(() => import('../../../components/ui/SwitchTab.vue'))
+
 const isExpanded = ref(false)
 
 import { usePermissions } from '../../../composables/usePermissions';
@@ -313,7 +330,7 @@ import { toast } from 'vue-sonner'
  const {canCreateComment, canEditComment,canViewComment, canDeleteComment, canEditCard, canViewAttachment, canAssignCard} = usePermissions();
 
 const { workspaceId } = useRouteIds()
-
+const queryClient = useQueryClient()
 const props = defineProps({
   pin: { type: Boolean, default: false },
   showPanel: { type: Boolean, default: true },
@@ -321,7 +338,12 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'update:details', 'comment:post', 'priority:change'])
 const propsID = ref(props.details._id);
-const { data: cardDetails, isPending, isFetching } = useProductCard(propsID); 
+const { data: cardDetails, isPending, isFetching } = useProductCard(propsID, {
+  initialData: () => queryClient.getQueryData(['product-card', propsID.value]),
+  staleTime: 5 * 60 * 1000, 
+  gcTime: 10 * 60 * 1000,
+  refetchOnWindowFocus: false,
+})
  
 watch(props, () => {
   propsID.value = props.details._id
@@ -551,16 +573,68 @@ const attachments = computed(() => {
   }))
 }
 )
-
-/* -------------------- Mutations / cache -------------------- */
-const queryClient = useQueryClient()
+type RollbackContext = {
+  previousSheets?: any
+  previousList?: any
+}
 const moveCard = useMoveCard({
-  onSuccess: () => {
+  // Optimistic update
+  onMutate: async (variables: { card_id: string; variables: Record<string, any> }) => {
+    const { card_id, variables: vars } = variables  // destructure safely
+
+    // Cancel any outgoing queries for sheets to avoid overwriting optimistic update
+    await queryClient.cancelQueries({ queryKey: ['get-sheets'] })
+    await queryClient.cancelQueries({ queryKey: ['sheet-list'] })
+    
+    // Snapshot previous data for rollback
+    const previousSheets = queryClient.getQueryData(['get-sheets'])
+    const previousList = queryClient.getQueryData(['sheet-list'])
+
+    // Update cache immediately (optimistic)
+    queryClient.setQueryData(['get-sheets'], (old: any) => {
+      return old?.map((sheet: any) => {
+        if (sheet._id === card_id) {
+          return {
+            ...sheet,
+            variables: { ...sheet.variables, ...vars }
+          }
+        }
+        return sheet
+      })
+    })
+
+    queryClient.setQueryData(['sheet-list'], (old: any) => {
+      return old?.map((list: any) => {
+        return {
+          ...list,
+          cards: list.cards?.map((c: any) =>
+            c._id === card_id ? { ...c, variables: { ...c.variables, ...vars } } : c
+          )
+        }
+      })
+    })
+
+    // Return rollback function
+    return { previousSheets, previousList }
+  },
+
+ onError: (
+    context: RollbackContext | undefined
+  ) => {
+    // rollback cache if mutation fails
+    if (context?.previousSheets) queryClient.setQueryData(['get-sheets'], context.previousSheets)
+    if (context?.previousList) queryClient.setQueryData(['sheet-list'], context.previousList)
+  },
+
+  onSettled: () => {
+    // re-fetch to ensure consistency
     queryClient.invalidateQueries({ queryKey: ['get-sheets'] })
     queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
     queryClient.invalidateQueries({ queryKey: ['roles'] })
   }
 })
+
+
 
 /* -------------------- Comment attachments -------------------- */
 const commentAttachments = ref<File[]>([])

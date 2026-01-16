@@ -6,16 +6,26 @@
       class="header px-4 py-3 flex items-center justify-between gap-1 w-[100%]"
     >
       <div class="flex gap-4">
-        <Button
-          class="lg:flex hidden cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center gap-1 px-2 py-1.5 rounded-md text-xs font-medium"
-          @click="$emit('go-back')"
-          ><i class="fa-solid fa-chevron-left text-xs"></i> Go Back</Button
-        >
-        <Button
-          class="flex sm:hidden cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center px-2 py-2 rounded-md text-xs font-medium"
-          @click="$emit('go-back')"
-          ><i class="fa-solid fa-chevron-left text-xs"></i
-        ></Button>
+       <div class="hidden sm:flex">
+  <Button
+    class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center gap-1 px-2 py-1 rounded-md text-xs font-medium"
+    @click="$emit('go-back')"
+  >
+    <i class="fa-solid fa-chevron-left text-xs"></i>
+    Go Back
+  </Button>
+</div>
+
+<div class="flex sm:hidden">
+  <Button
+    class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center px-2 py-1 rounded-md text-xs font-medium"
+    @click="$emit('go-back')"
+  >
+    <i class="fa-solid fa-chevron-left text-xs"></i>
+  </Button>
+</div>
+
+
         <!-- {{ sheetId }} -->
         <!-- <Dropdown
           v-model="selected_module_id"
@@ -46,7 +56,7 @@
           </template>
         </Dropdown> -->
         <div
-    class="px-4 py-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
+    class="px-4 py-1 h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
   >
     {{ activeSprint }}
   </div>
@@ -582,10 +592,12 @@ import {
   watchEffect,
   nextTick,
 } from "vue";
+import { toast } from "vue-sonner";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useWorkspaceStore } from "../../../stores/workspace";
 // import Dropdown from "../../../components/ui/Dropdown.vue";
 import TableView from "../../../components/feature/TableView/TableView.vue";
+import { request,toApiMessage } from "../../../libs/api";
 import {
   ReOrderCard,
   ReOrderList,
@@ -600,7 +612,7 @@ import {
 import { useRoute } from "vue-router";
 import MindElixir from "mind-elixir";
 import KanbanSkeleton from "../../../components/skeletons/KanbanSkeleton.vue";
-// import BaseTextField from '../../../components/ui/BaseTextField.vue';
+import { useTheme } from "../../../composables/useTheme";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../../composables/useQueryParams";
 // import Button from '../../../components/ui/Button.vue';
@@ -627,20 +639,24 @@ const KanbanBoard = defineAsyncComponent(
   () => import("../../../components/feature/kanban/KanbanBoard.vue")
 );
 import { useVarVisibilty, useAddTicket } from "../../../queries/useSheets";
-import DatePicker from "../../Product/components/DatePicker.vue";
-import TableSearchCell from "../../../components/feature/TableView/TableSearchCell.vue";
-import { avatarColor } from "../../../utilities/avatarColor";
-import TableAssigneeCell from "../../../components/feature/TableView/TableAssigneeCell.vue";
 import { getInitials } from "../../../utilities";
-import CalendarView from "../../../components/feature/CalendarView.vue";
-import GanttChartView from "../../../components/feature/GanttChartView.vue";
-import TimelineView from "../../../components/feature/TimelineView.vue";
+import { avatarColor } from "../../../utilities/avatarColor";
+const DatePicker = defineAsyncComponent(() => import("../../Product/components/DatePicker.vue"));
+const TableSearchCell = defineAsyncComponent(() => import("../../../components/feature/TableView/TableSearchCell.vue"));
+const TableAssigneeCell = defineAsyncComponent(() => import("../../../components/feature/TableView/TableAssigneeCell.vue"));
+const CalendarView = defineAsyncComponent(() => import("../../../components/feature/CalendarView.vue"));
+const GanttChartView = defineAsyncComponent(() => import("../../../components/feature/GanttChartView.vue"));
+const TimelineView = defineAsyncComponent(() => import("../../../components/feature/TimelineView.vue"));
+const Button = defineAsyncComponent(() => import("../../../components/ui/Button.vue"));
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
 const mindMapRef = ref<HTMLElement | null>(null);
 const mindMapInstance = ref<any>(null);
 const selectedSheetTitle = ref<string>("");
+const { isDark } = useTheme();
+const selectedDeleteId = ref<string | null>(null);
+const isDeletingTicket = ref(false);
 function openHyperlinkModal(callback: (link: string) => void) {
   hyperlink.value = "";
   showHyperlinkModal.value = true;
@@ -676,7 +692,7 @@ const view = ref("kanban");
 const { workspaceId, moduleId } = useRouteIds();
 const selected_module_id = ref<string>("");
 const isCreateVar = ref(false);
-const showFormatSidebar = ref(true);
+const showFormatSidebar = ref(false);
 const {
   // canEditSheet,
   // canDeleteSheet,
@@ -748,7 +764,7 @@ const selected_view_by = ref(viewBy);
 const workspaceStore = useWorkspaceStore();
 const selected_sprint_id = computed(() => props.sptint_id);
 // usage
-const { data: Lists, isPending } = useSprintKanban(
+const { data: Lists, isPending, refetch: refetchSheetLists, } = useSprintKanban(
   selected_sprint_id,
 );
 const createTeamModal = ref(false);
@@ -954,7 +970,7 @@ const showDeleteModal = ref(false);
 // };
 
 const { data: variables, isPending: isVariablesPending } = useVariables(
-  workspaceId.value,
+  workspaceId,
   selected_module_id,
   selected_sheet_id
 );
@@ -1566,6 +1582,118 @@ const { mutateAsync: createNewSheet } = useCreateWorkspaceSheet({
     close();
   },
 });
+interface Card {
+  _id: string;
+  // other fields
+}
+
+interface SheetList {
+  cards: Card[];
+  // other fields
+}
+
+interface Sheet {
+  sheet_lists: SheetList[];
+  // other fields
+}
+const removeCardFromState = (cardId: string) => {
+  Lists.value?.sheets?.forEach((sheet: Sheet) => {
+    sheet.sheet_lists?.forEach((list: SheetList) => {
+      list.cards = list.cards.filter((card: Card) => card._id !== cardId);
+    });
+  });
+};
+const showTicketDelete = ref(false);
+const ticketToDelete = ref<any>(null);
+const deleteTicket = async () => {
+  if (!selectedDeleteId.value) return;
+
+  try {
+    isDeletingTicket.value = true;
+
+    await request({
+      url: `workspace/card/${selectedDeleteId.value}`,
+      method: "DELETE",
+    });
+    removeCardFromState(selectedDeleteId.value);
+    showTicketDelete.value = false;
+    ticketToDelete.value = null;
+    toast.success("Ticket deleted successfully");
+    await refetchSheets();
+    await refetchSheetLists();
+  } catch (err) {
+    toast.error(toApiMessage(err));
+  } finally {
+    isDeletingTicket.value = false;
+  }
+};
+const handleReorderCard = async (payload: {
+  workspace_id: string;
+  card_id: string;
+  group_value: string;
+  group_variable_id: string;
+  new_index: number;
+  sheet_id: string;
+}) => {
+  try {
+    await request({
+      url: `workspace/cards/group-card-order`,
+      method: "PATCH",
+      data: payload,
+    });
+
+    // Refetch data after successful reorder
+    refetchSheets();
+    refetchSheetLists();
+
+    console.log("Card reordered successfully");
+  } catch (error) {
+    console.error("Failed to reorder card:", error);
+    // Optionally show error toast/notification to user
+  }
+};
+// Define the toolbar functions outside watchEffect
+function injectToolbarButton() {
+  const toolbar = mindMapRef.value?.querySelector(".mind-elixir-toolbar.rb") as HTMLElement;
+  if (!toolbar) return;
+
+  // Prevent duplicate button
+  if (toolbar.querySelector(".open-sidebar-btn")) return;
+
+  const btn = document.createElement("button");
+  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
+  btn.title = "Open Formatting Sidebar";
+  btn.innerHTML = `<i class="fa-solid fa-sidebar"></i>`;
+  btn.addEventListener("click", () => {
+    showFormatSidebar.value = !showFormatSidebar.value;
+  });
+
+  toolbar.appendChild(btn);
+}
+
+// Store observer reference to clean up later
+let toolbarObserver: MutationObserver | null = null;
+
+function setupToolbarObserver() {
+  // Clean up existing observer if any
+  if (toolbarObserver) {
+    toolbarObserver.disconnect();
+    toolbarObserver = null;
+  }
+
+  const toolbarContainer = mindMapRef.value?.querySelector(".mind-elixir-toolbar.rb")?.parentElement;
+  if (!toolbarContainer) return;
+
+  // Use MutationObserver to track changes in the toolbar
+  toolbarObserver = new MutationObserver(() => {
+    injectToolbarButton();
+  });
+
+  toolbarObserver.observe(toolbarContainer, { childList: true, subtree: true });
+
+  // Inject immediately first time
+  injectToolbarButton();
+}
 
 watchEffect(() => {
   if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value) return;
@@ -1578,24 +1706,33 @@ watchEffect(() => {
       mindMapInstance.value = null;
     }
 
+    // Track temporary nodes (created but not yet edited/saved)
+    const temporaryNodeIds = new Set<string>();
+
+    // Track nodes already saved to backend
+    const savedNodeIds = new Set<string>();
+
+    // Keep track of sheet nodes
+    const createdSheetNodeIds = new Set<string>();
+
     const instance = new MindElixir({
       el: mindMapRef.value as HTMLElement,
-      theme: undefined,
+      theme: isDark.value ? MindElixir.DARK_THEME : MindElixir.THEME,
       draggable: true,
       contextMenu: true,
+      toolBar: true,
+      keypress: true,
+      locale: "en",
+      overflowHidden: false,
       contextMenuOption: {
         Update: true,
         extend: [
           {
             name: "Update Node",
             onclick: () => {
-              if (showFormatSidebar.value) {
-                showFormatSidebar.value = false;
-              }
-
+              if (showFormatSidebar.value) showFormatSidebar.value = false;
               const node = selectedMindNode.value?.nodeObj;
               if (!node) return;
-
               selectCardHandler(node);
             },
           },
@@ -1613,16 +1750,21 @@ watchEffect(() => {
 
     mindMapInstance.value = instance;
     instance.init({ nodeData: rootNode });
-   nextTick(() => {
-    instance.toCenter();  
-    instance.scale(1);    
+
+    // Center only once after DOM is fully ready
+    setTimeout(() => {
+      instance.toCenter();
+    }, 100);
+
+    // Setup toolbar button after instance is initialized
+    nextTick(() => {
+      setupToolbarObserver();
     });
 
-    // Select node
+    // Selected node
     instance.bus.addListener("selectNode", (nodeObj: any) => {
       if (!nodeObj) return;
       selectedMindNode.value = { nodeObj };
-      showFormatSidebar.value = true;
     });
 
     // Render node styles
@@ -1631,138 +1773,186 @@ watchEffect(() => {
       applyNodeStyle(event.nodeObj, event.element as HTMLElement);
     });
 
-    // Track nodes already added to backend
-    const addedNodeIds = new Set<string>();
-
-    instance.bus.addListener("operation", async (data: any) => {
-      if (!data || (data.name !== "insertSibling" && data.name !== "addChild"))
-        return;
-
-      const newNode = data.obj;
-      if (!newNode || !newNode.id) return;
-
-      // Prevent duplicate processing
-      if (addedNodeIds.has(newNode.id)) return;
-      addedNodeIds.add(newNode.id);
-
-      // Determine parent node
-      let parentNode;
-      if (data.name === "addChild") {
-        parentNode = instance.currentNode?.nodeObj;
-      } else {
-        // insertSibling: parent of current node
-        parentNode = instance.currentNode?.nodeObj?.parent;
+    // Helper: get parent sheet of a node
+    const getSheetParent = (node: any): any => {
+      let current = node;
+      while (current) {
+        if (current.unique_name === "sheet") return current;
+        current = current.parent;
       }
+      return null;
+    };
 
-      if (!parentNode || !("unique_name" in parentNode)) return;
-
-      // Only allow cards under List
-      if (parentNode.unique_name !== "List") return;
-
-      try {
-        const payload = createDefaultCardPayload(
-          {
-            topic: newNode.topic ?? "New Card",
-            id: newNode.id,
-          },
-          parentNode
-        );
-
-        await addTicket(payload);
-        // await refetchSheetLists();
-      } catch (err) {
-        console.error("Error creating card or refetching sheets:", err);
-      }
-    });
-
-    // Keep track of nodes already handled to prevent duplicate sheets
-    const createdSheetNodeIds = new Set<string>();
-
+    // Node operations
     instance.bus.addListener("operation", async (data: any) => {
       if (!data) return;
 
-      const newNode = data.obj;
-      if (!newNode?.id) return;
-
-      // Resolve parent node
-      const parentNode =
-        newNode.parent ?? instance.currentNode?.nodeObj?.parent;
-      if (!parentNode || !("unique_name" in parentNode)) return;
-
-      // -------------------- ROOT → CREATE SHEET --------------------
+      // Drag & drop / reorder cards
       if (
-        data.name === "addChild" &&
-        parentNode.unique_name === "root" &&
-        !createdSheetNodeIds.has(newNode.id)
+        data.name === "moveNode" ||
+        data.name === "moveNodeBefore" ||
+        data.name === "moveNodeAfter"
       ) {
-        createdSheetNodeIds.add(newNode.id);
+        const draggedNode = data.obj;
+        const targetNode = data.target;
 
-        try {
-          await createNewSheet({
-            variables: {
-              "sheet-title": newNode.topic ?? "New Sheet",
-              "sheet-description": "This is custom description",
-            },
-            is_ai_generated: false,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-          });
-        } catch (err) {
-          console.error("Error creating workspace sheet:", err);
-        }
+        if (!draggedNode || draggedNode.unique_name !== "card") return;
+        if (!targetNode) return;
+
+        // Determine source List
+        const sourceList = draggedNode._originalParent || draggedNode.parent;
+        if (!sourceList || sourceList.unique_name !== "List") return;
+
+        // Determine target List
+        const targetList =
+          targetNode.unique_name === "List" ? targetNode : targetNode.parent;
+        if (!targetList || targetList.unique_name !== "List") return;
+
+        // Determine target Sheet
+        const targetSheet = getSheetParent(targetList);
+        if (!targetSheet) return;
+
+        // Compute new index inside target List
+        const newIndex = targetList.children.findIndex(
+          (c: any) => c.id === draggedNode.id
+        );
+        if (newIndex === -1) return;
+
+        // Important: Store the original parent before the move
+        draggedNode._originalParent = targetList;
+
+        // Call the reorder function
+        await handleReorderCard({
+          workspace_id: workspaceId.value,
+          card_id: draggedNode.id,
+          group_value: targetList.topic,
+          group_variable_id: selected_view_by.value,
+          new_index: newIndex,
+          sheet_id: targetSheet.id,
+        });
 
         return;
       }
 
-      // -------------------- LIST → CREATE CARD --------------------
-      if (parentNode.unique_name !== "List") return;
+      // Remove node (cards only)
+      if (data.name === "removeNode") {
+        const removedNode = data.obj;
+        if (!removedNode || !removedNode.id) return;
+        if (removedNode.unique_name !== "card") return;
 
-      try {
-        const payload = createDefaultCardPayload(
-          {
-            topic: newNode.topic ?? "New Card",
-            id: newNode.id,
-          },
-          parentNode
-        );
+        selectedDeleteId.value = removedNode.id;
+        await deleteTicket();
+        return;
+      }
 
-        await addTicket(payload);
-        // await refetchSheetLists();
-      } catch (err) {
-        console.error("Error creating card or refetching sheets:", err);
+      // Add child or sibling nodes
+      if (data.name === "addChild" || data.name === "insertSibling") {
+        const newNode = data.obj;
+        if (!newNode || !newNode.id) return;
+        temporaryNodeIds.add(newNode.id);
+        return;
+      }
+
+      // Begin edit
+      if (data.name === "beginEdit") {
+        const editingNode = data.obj;
+        console.log("editing node", editingNode);
+        return;
+      }
+
+      // Finish edit
+      if (data.name === "finishEdit") {
+        const editedNode = data.obj;
+        if (!editedNode || !editedNode.id) return;
+
+        const isTemporaryNode = temporaryNodeIds.has(editedNode.id);
+        const isAlreadySaved = savedNodeIds.has(editedNode.id);
+        if (!isTemporaryNode && !isAlreadySaved) return;
+        if (isAlreadySaved) return;
+
+        if (isTemporaryNode) {
+          temporaryNodeIds.delete(editedNode.id);
+          savedNodeIds.add(editedNode.id);
+
+          const parentNode = editedNode.parent;
+          if (!parentNode || !("unique_name" in parentNode)) {
+            savedNodeIds.delete(editedNode.id);
+            return;
+          }
+
+          // Create Sheet
+          if (
+            parentNode.unique_name === "root" &&
+            !createdSheetNodeIds.has(editedNode.id)
+          ) {
+            createdSheetNodeIds.add(editedNode.id);
+            try {
+              await createNewSheet({
+                variables: {
+                  "sheet-title": editedNode.topic ?? "New Sheet",
+                  "sheet-description": "This is custom description",
+                },
+                is_ai_generated: false,
+                workspace_id: workspaceId.value,
+                workspace_module_id: moduleId.value,
+              });
+            } catch (err) {
+              console.error("Error creating workspace sheet:", err);
+              savedNodeIds.delete(editedNode.id);
+              createdSheetNodeIds.delete(editedNode.id);
+            }
+            return;
+          }
+
+          // Create Card
+          if (parentNode.unique_name === "List") {
+            try {
+              const payload = createDefaultCardPayload(
+                {
+                  topic: editedNode.topic ?? "New Card",
+                  id: editedNode.id,
+                },
+                parentNode
+              );
+              if (payload.variables) {
+                payload.variables["card-description"] =
+                  "This is a default description";
+              }
+              await addTicket(payload);
+            } catch (err) {
+              console.error("Error creating card:", err);
+              savedNodeIds.delete(editedNode.id);
+            }
+            return;
+          }
+
+          // Create List (placeholder)
+          if (parentNode.unique_name === "sheet") {
+            try {
+              console.log("Creating new list under sheet...");
+            } catch (err) {
+              console.error("Error creating list:", err);
+              savedNodeIds.delete(editedNode.id);
+            }
+            return;
+          }
+        }
       }
     });
   });
 });
-function injectToolbarButton() {
-  const toolbar = document.querySelector(
-    ".mind-elixir-toolbar.rb"
-  ) as HTMLElement;
+watch(
+  isDark,
+  () => {
+    if (!mindMapInstance.value) return;
 
-  if (!toolbar) {
-    requestAnimationFrame(injectToolbarButton);
-    return;
-  }
-
-  // prevent duplicate button
-  if (toolbar.querySelector(".open-sidebar-btn")) return;
-
-  const btn = document.createElement("button");
-  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
-  btn.title = "Open Formatting Sidebar";
-
-  btn.innerHTML = `<i class="fa-solid fa-sidebar"></i> `;
-
-  btn.addEventListener("click", () => {
-    showFormatSidebar.value = !showFormatSidebar.value;
-  });
-
-  toolbar.appendChild(btn);
-}
-
-// call AFTER init
-injectToolbarButton();
-
+    // Switch MindElixir theme
+    mindMapInstance.value.changeTheme(
+      isDark.value ? MindElixir.DARK_THEME : MindElixir.THEME
+    );
+  },
+  { immediate: true }
+);
 
 // ----------------------
 function applyNodeStyle(nodeObj: any, element?: HTMLElement) {
@@ -1878,5 +2068,37 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
 .me-toolbar-btn:hover {
   background: rgba(0, 0, 0, 0.08);
 }
+:deep(.mind-elixir-toolbar.rb) {
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 15rem;
+}
 
+/* Normalize toolbar buttons */
+:deep(.mind-elixir-toolbar.rb > *) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  padding: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+:deep(.mind-elixir-toolbar.lt > *) {
+  cursor: pointer;
+}
+:deep(.mind-elixir-toolbar.rb > *:hover) {
+  color: #7D68C8;
+  border: 1px solid #7D68C8;
+  border-radius: 5px;
+}
+:deep(.mind-elixir-toolbar.lt > *:hover) {
+  color: #7D68C8;
+  border: 1px solid #7D68C8;
+  border-radius: 5px;
+}
 </style>

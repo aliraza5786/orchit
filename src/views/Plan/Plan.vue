@@ -926,7 +926,6 @@ const {
   refetch: refetchSprints,
   isLoading: isLoadingSprint,
 } = useSprintList(workspaceId.value, sprintType);
-console.log("sprint lists", sprintsList.value);
 const sprintOptions = computed(() => {
   return sprintsList.value?.sprints ?? [];
 });

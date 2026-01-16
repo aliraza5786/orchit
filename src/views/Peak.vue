@@ -218,7 +218,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch , watchEffect} from 'vue'
+import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import ProjectCard from '../components/feature/ProjectCard.vue'
@@ -259,11 +259,6 @@ const lastUpdateDate = computed(() => {
   return workspaceCreatedAt
 })
 
-watchEffect(() => {
-  console.log('lastUpdateDate:', lastUpdateDate.value);
-  console.log('workspaceStore.workspace:', workspaceStore.workspace);
-  console.log('workspaceData:', workspaceData.value);
-})
 /** Types */
 interface LaneProgressRow {
   lane_title: string
@@ -339,7 +334,6 @@ const connect = () => {
   }
 
   eventSource.value.addEventListener('progress', (event: MessageEvent) => {
-    console.log('>> trki g');
     
       try { taskProgress.value = JSON.parse(event.data) } catch { }
     })
