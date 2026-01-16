@@ -43,7 +43,6 @@
 import { computed, ref, watch } from "vue";
 import { GanttComponent } from "@syncfusion/ej2-vue-gantt";
 import { useTheme } from "../../composables/useTheme";
-
 interface Card {
   _id: string;
   "card-title": string;
