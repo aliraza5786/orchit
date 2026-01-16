@@ -22,9 +22,19 @@
 
         <div>
           <label class="text-sm font-medium text-text-primary mb-1.5 block">Status Color</label>
-          <div class="flex items-center gap-3">
-            <input type="color" v-model="statusColor" @input="updateColorInput"
-              class="h-10 w-20 rounded border border-border cursor-pointer">
+          <div class="flex items-center gap-2 p-1">
+              <div
+            class="relative h-10 w-10 rounded-md cursor-pointer overflow-hidden"
+            :style="{ backgroundColor: statusColor }"
+          >
+            <input
+              type="color"
+              v-model="statusColor"
+              @input="updateColorInput"
+            class="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </div>
+
             <BaseTextField v-model="statusColor" placeholder="#3b82f6" class="flex-1" />
           </div>
         </div>

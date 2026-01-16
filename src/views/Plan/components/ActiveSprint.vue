@@ -24,37 +24,6 @@
     <i class="fa-solid fa-chevron-left text-xs"></i>
   </Button>
 </div>
-
-
-        <!-- {{ sheetId }} -->
-        <!-- <Dropdown
-          v-model="selected_module_id"
-          :options="moduleOptions"
-          variant="secondary"
-          customClasses="fixed w-auto"
-        >
-        </Dropdown> -->
-        <!-- <Dropdown
-          v-if="selected_module_id"
-          @edit-option="openEditSprintModal"
-          v-model="selected_sheet_id"
-          :canEdit="canEditSheet"
-          :canDelete="canDeleteSheet"
-          @delete-option="handleDeleteSheetModal"
-          :options="transformedData"
-          variant="secondary"
-          customClasses="fixed w-auto"
-        >
-          <template #more>
-            <div
-              v-if="canCreateSheet"
-              @click="createSheet()"
-              class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
-            >
-              <i class="fa-solid fa-plus"></i> Add new
-            </div>
-          </template>
-        </Dropdown> -->
         <div
     class="px-4 py-1 h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
   >
@@ -63,37 +32,6 @@
       </div>
 
       <div class="flex gap-3 items-center">
-        <!-- <Dropdown
-          v-if="selected_module_id"
-          :actions="false"
-          v-model="selected_view_by"
-          :options="variables"
-          variant="secondary"
-          customClasses="fixed w-auto"
-        >
-          <template #more>
-            <div
-              v-if="canCreateVariable"
-              @click="
-                () => {
-                  isCreateVar = true;
-                }
-              "
-              class="sticky bottom-0 bg-bg-dropdown shadow-md shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
-            >
-              <i class="fa-solid fa-plus"></i> Add new
-            </div>
-          </template>
-        </Dropdown> -->
-        <!-- <Searchbar
-          @onChange="
-            (e:any) => {
-              searchQuery = e;
-            }
-          "
-          placeholder="Search in Orchit AI space"
-        >
-        </Searchbar> -->
         <div
           class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
         >
@@ -222,25 +160,6 @@
               />
             </template>
           </KanbanBoard>
-          <!-- <div class="min-w-[328px] " @click.stop>
-                <div v-if="activeAddList" class="bg-bg-body  rounded-lg p-4">
-                    <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
-                        @keyup.enter="emitAddColumn" />
-                    <p class="text-xs mt-1.5">You can add details while editing</p>
-                    <div class="flex items-center mt-3 gap-3">
-                        <Button @click="emitAddColumn" varaint="primary"
-                            class="px-3 py-1 bg-accent cursor-pointer text-white rounded">{{ addingList ?
-                                'Adding...' :
-                                'Add list' }}</Button>
-                        <i class="fa-solid fa-close" @click="setActiveAddList"></i>
-                    </div>
-                </div>
-                <button v-else
-                    class="text-sm text-text-primary   py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-                    @click.stop="setActiveAddList">
-                    + Add List
-                </button>
-            </div> -->
         </div>
       </div>
 
@@ -273,177 +192,123 @@
 
           <!-- Formatting Sidebar -->
           <div
-            v-if="showFormatSidebar"
-            class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-hidden flex flex-col"
-          >
-            <!-- Header -->
-            <div class="flex items-center justify-between pb-3 mb-4 border-b">
-              <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
-              <button
-                @click="showFormatSidebar = false"
-                class="text-gray-400 hover:text-gray-700"
-              >
-                <i class="fa-solid fa-times"></i>
-              </button>
+          v-if="showFormatSidebar"
+          class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-x-hidden overflow-y-auto flex flex-col"
+        >
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 mb-4 border-b">
+            <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
+            <button
+              @click="showFormatSidebar = false"
+              class="text-gray-400 hover:text-gray-700"
+            >
+              <i class="fa-solid fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Content -->
+          <div class="format-content space-y-6">
+            <!-- ================= COLORS ================= -->
+            <div>
+              <h4 class="text-xs font-semibold text-secondary uppercase mb-3">
+                Colors
+              </h4>
+
+              <!-- ================= BACKGROUND COLOR ================= -->
+              <div class="format-group mb-3">
+                <label class="block text-xs text-secondary mb-1"
+                  >Background</label
+                >
+                <div class="flex items-center gap-2">
+                  <!-- Color Preview -->
+                  <div
+                    class="h-10 w-10 rounded-md border cursor-pointer relative"
+                    :style="{ backgroundColor: activeFormatStyle.background }"
+                  >
+                    <input
+                      type="color"
+                      :value="activeFormatStyle.background"
+                      class="absolute inset-0 opacity-0 cursor-pointer"
+                      @input="onStyleChange('bg_color', $event)"
+                      style="pointer-events: all"
+                    />
+                  </div>
+
+                  <!-- Hex Code Input -->
+                  <BaseTextField
+                    :modelValue="activeFormatStyle.background"
+                    placeholder="#3b82f6"
+                    class="flex-1"
+                    readonly
+                  />
+                </div>
+              </div>
+
+              <!-- ================= TEXT COLOR ================= -->
+              <div class="format-group mb-3">
+                <label class="block text-xs text-secondary mb-1">Text</label>
+                <div class="flex items-center gap-2">
+                  <!-- Color Preview -->
+                  <div
+                    class="h-10 w-10 rounded-md border cursor-pointer relative"
+                    :style="{ backgroundColor: activeFormatStyle.color }"
+                  >
+                    <input
+                      type="color"
+                      :value="activeFormatStyle.color"
+                      class="absolute inset-0 opacity-0 cursor-pointer"
+                      @input="onStyleChange('color', $event)"
+                      style="pointer-events: all"
+                    />
+                  </div>
+                  <!-- Hex Code Input -->
+                  <BaseTextField
+                    :modelValue="activeFormatStyle.color"
+                    placeholder="#3b82f6"
+                    class="flex-1"
+                    readonly
+                  />
+                </div>
+              </div>
             </div>
 
-            <div class="format-content space-y-6">
-              <!-- ================= COLORS ================= -->
-              <div>
-                <h4 class="text-xs font-semibold text-secondary uppercase mb-3">
-                  Colors
-                </h4>
-
-                <!-- Background -->
-                <div class="format-group relative mb-3">
+            <!-- ================= FONT WEIGHT ================= -->
+            <div>
+              <div class="grid grid-cols-1 gap-3">
+                <div>
                   <label class="block text-xs text-secondary mb-1"
-                    >Background</label
+                    >Weight</label
                   >
-
-                  <div
-                    class="flex items-center gap-2 cursor-pointer"
-                    @click="showBgPicker = !showBgPicker"
+                  <select
+                    class="w-full h-8 border rounded px-2 text-sm"
+                    :value="activeFormatStyle.fontWeight"
+                    @change="onStyleChange('font_weight', $event)"
                   >
-                    <div
-                      class="w-full h-7 rounded border"
-                      :style="{ background: activeFormatStyle.background }"
-                    ></div>
-                    <span class="text-xs text-secondary">
-                      {{ activeFormatStyle.background }}
-                    </span>
-                  </div>
-
-                  <!-- Picker -->
-                  <div
-                    v-if="showBgPicker"
-                    class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
-                  >
-                    <div class="grid grid-cols-10 gap-1 mb-3">
-                      <button
-                        v-for="color in presetColors"
-                        :key="color"
-                        class="w-5 h-5 rounded border"
-                        :style="{ background: color }"
-                        @click="
-                          onStyleChange('bg_color', {
-                            target: { value: color },
-                          } as any);
-                          showBgPicker = false;
-                        "
-                      ></button>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                      <input
-                        type="color"
-                        :value="activeFormatStyle.background"
-                        class="w-8 h-8 cursor-pointer"
-                        @input="onStyleChange('bg_color', $event)"
-                      />
-                      <input
-                        type="text"
-                        class="flex-1 text-xs border rounded px-2 py-1"
-                        :value="activeFormatStyle.background"
-                        readonly
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Text Color -->
-                <!-- Text Color -->
-                <div class="format-group relative mb-3">
-                  <label class="block text-xs text-secondary mb-1">Text</label>
-
-                  <!-- Trigger -->
-                  <div
-                    class="flex items-center gap-2 cursor-pointer"
-                    @click="showTextColorPicker = !showTextColorPicker"
-                  >
-                    <div
-                      class="w-full h-7 rounded border"
-                      :style="{ background: activeFormatStyle.color }"
-                    ></div>
-                    <span class="text-xs text-secondary">
-                      {{ activeFormatStyle.color }}
-                    </span>
-                  </div>
-
-                  <!-- Picker -->
-                  <div
-                    v-if="showTextColorPicker"
-                    class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
-                  >
-                    <!-- Color Grid -->
-                    <div class="grid grid-cols-10 gap-1 mb-3">
-                      <button
-                        v-for="color in presetColors"
-                        :key="color"
-                        class="w-5 h-5 rounded border"
-                        :style="{ background: color }"
-                        @click="
-                          onStyleChange('color', {
-                            target: { value: color },
-                          } as any);
-                          showTextColorPicker = false;
-                        "
-                      ></button>
-                    </div>
-
-                    <!-- Native Picker + Hex -->
-                    <div class="flex items-center gap-2">
-                      <input
-                        type="color"
-                        :value="activeFormatStyle.color"
-                        class="w-8 h-8 cursor-pointer"
-                        @input="onStyleChange('color', $event)"
-                      />
-                      <input
-                        type="text"
-                        class="flex-1 text-xs border rounded px-2 py-1"
-                        :value="activeFormatStyle.color"
-                        readonly
-                      />
-                    </div>
-                  </div>
+                    <option value="lighter">Light</option>
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="bolder">Extra Bold</option>
+                  </select>
                 </div>
               </div>
-              <div>
-                <div class="grid grid-cols-1 gap-3">
-                  <div>
-                    <label class="block text-xs text-secondary mb-1"
-                      >Weight</label
-                    >
-                    <select
-                      class="w-full h-8 border rounded px-2 text-sm"
-                      :value="activeFormatStyle.fontWeight"
-                      @change="onStyleChange('font_weight', $event)"
-                    >
-                      <option value="lighter">Light</option>
-                      <option value="normal">Normal</option>
-                      <option value="bold">Bold</option>
-                      <option value="bolder">Extra Bold</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="mt-6 pt-4">
-              <button
-                class="w-full cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60"
-                :disabled="isSavingNodeStyle"
-                @click="saveNodeStyle"
-              >
-                <span
-                  v-if="isSavingNodeStyle"
-                  class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-                ></span>
-                <span>{{ isSavingNodeStyle ? "Updating..." : "Update" }}</span>
-              </button>
             </div>
           </div>
+
+          <!-- Footer -->
+          <div class="mt-6 pt-4">
+            <button
+              class="w-full cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60"
+              :disabled="isSavingNodeStyle"
+              @click="saveNodeStyle"
+            >
+              <span
+                v-if="isSavingNodeStyle"
+                class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+              ></span>
+              <span>{{ isSavingNodeStyle ? "Updating..." : "Update" }}</span>
+            </button>
+          </div>
+        </div>
         </div>
 
         <!-- hyperlink pop up -->
@@ -595,7 +460,6 @@ import {
 import { toast } from "vue-sonner";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useWorkspaceStore } from "../../../stores/workspace";
-// import Dropdown from "../../../components/ui/Dropdown.vue";
 import TableView from "../../../components/feature/TableView/TableView.vue";
 import { request,toApiMessage } from "../../../libs/api";
 import {
@@ -627,8 +491,6 @@ const props = defineProps<{ sptint_id: any; searchQuery: string, activeSprint: s
 const CreateTaskModal = defineAsyncComponent(
   () => import("../../Product/modals/CreateTaskModal.vue")
 );
-// const CreateSheetModal = defineAsyncComponent(() => import('../../Product/modals/CreateSheetModal.vue'))
-// const CreateVariableModal = defineAsyncComponent(() => import('../../Product/modals/CreateVariableModal.vue'))
 const ConfirmDeleteModal = defineAsyncComponent(
   () => import("../../Product/modals/ConfirmDeleteModal.vue")
 );
@@ -648,6 +510,7 @@ const CalendarView = defineAsyncComponent(() => import("../../../components/feat
 const GanttChartView = defineAsyncComponent(() => import("../../../components/feature/GanttChartView.vue"));
 const TimelineView = defineAsyncComponent(() => import("../../../components/feature/TimelineView.vue"));
 const Button = defineAsyncComponent(() => import("../../../components/ui/Button.vue"));
+const BaseTextField = defineAsyncComponent(() => import("../../../components/ui/BaseTextField.vue"));
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
@@ -1258,44 +1121,6 @@ const setStartDate = (card_id: any, e: any) => {
 const selectedMindNode = ref<any>(null);
 //mindmap view
 const showBgPicker = ref(false);
-
-const presetColors = [
-  "#FFFFFF",
-  "#F2F2F2",
-  "#D9D9D9",
-  "#BFBFBF",
-  "#A6A6A6",
-  "#808080",
-  "#404040",
-  "#000000",
-  "#FFE066",
-  "#FF9AA2",
-  "#8EE4AF",
-  "#00EAD3",
-  "#90DBF4",
-  "#4D96FF",
-  "#6C63FF",
-  "#C77DFF",
-  "#F7A1C4",
-  "#FFC300",
-  "#FF5733",
-  "#2ECC71",
-  "#00B894",
-  "#17A2B8",
-  "#0984E3",
-  "#3F51B5",
-  "#9C27B0",
-  "#E84393",
-  "#FF8C00",
-  "#E74C3C",
-  "#1E8449",
-  "#006D6F",
-  "#004C6D",
-  "#0057A8",
-  "#1A237E",
-  "#4A148C",
-  "#7D3C98",
-];
 const showTextColorPicker = ref(false);
 watch(showBgPicker, (v) => {
   if (v) showTextColorPicker.value = false;
@@ -1641,15 +1466,10 @@ const handleReorderCard = async (payload: {
       method: "PATCH",
       data: payload,
     });
-
-    // Refetch data after successful reorder
     refetchSheets();
     refetchSheetLists();
-
-    console.log("Card reordered successfully");
   } catch (error) {
     console.error("Failed to reorder card:", error);
-    // Optionally show error toast/notification to user
   }
 };
 // Define the toolbar functions outside watchEffect
@@ -1853,13 +1673,6 @@ watchEffect(() => {
         return;
       }
 
-      // Begin edit
-      if (data.name === "beginEdit") {
-        const editingNode = data.obj;
-        console.log("editing node", editingNode);
-        return;
-      }
-
       // Finish edit
       if (data.name === "finishEdit") {
         const editedNode = data.obj;
@@ -1897,7 +1710,6 @@ watchEffect(() => {
                 workspace_module_id: moduleId.value,
               });
             } catch (err) {
-              console.error("Error creating workspace sheet:", err);
               savedNodeIds.delete(editedNode.id);
               createdSheetNodeIds.delete(editedNode.id);
             }
@@ -1920,7 +1732,6 @@ watchEffect(() => {
               }
               await addTicket(payload);
             } catch (err) {
-              console.error("Error creating card:", err);
               savedNodeIds.delete(editedNode.id);
             }
             return;
@@ -1931,7 +1742,6 @@ watchEffect(() => {
             try {
               console.log("Creating new list under sheet...");
             } catch (err) {
-              console.error("Error creating list:", err);
               savedNodeIds.delete(editedNode.id);
             }
             return;
