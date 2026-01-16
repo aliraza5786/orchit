@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="bg-bg-body ps-3 pe-1 md:bg-transparent h-full flex flex-col gap-1 transition-all duration-300 md:duration-200 py-3 fixed md:static top-[60px] left-0 z-20 overflow-y-auto border-r border-border md:border-none "
+    class="bg-bg-body ps-3 pe-1 md:bg-transparent h-full flex flex-col gap-1 transition-all duration-300 md:duration-200 py-3 fixed md:static top-[60px] left-0 z-20 overflow-y-auto"
     :class="[
       mobileOpen ? 'w-full translate-x-0' : 'md:w-[250px] -translate-x-full md:translate-x-0'
     ]"

@@ -174,6 +174,7 @@ import {
   useCurrentPackage,
   useUpgradePackage,
 } from "../../../queries/usePackages";
+import { useQueryClient } from "@tanstack/vue-query";
 import { extractYear, formatDate } from "../../../utilities/FormatDate";
 import { useRoute, useRouter } from "vue-router";
 import { useWorkspaceStore } from "../../../stores/workspace";
@@ -251,6 +252,8 @@ const sessionId = route.query.session_id as string;
 const packageId = route.query.packageId as string;
 const interval = (route.query.interval as string) || "month";
 
+const queryClient = useQueryClient();
+
 const { mutate: confirm, isPending: isConfirming } = confirmPayment(
   {
     sessionId: sessionId,
@@ -258,10 +261,16 @@ const { mutate: confirm, isPending: isConfirming } = confirmPayment(
     packageId: packageId
   },
   {
-    onSuccess: () => {
+    onSuccess: async () => {
       reftechCurrentPackage();
+      await queryClient.invalidateQueries({ queryKey: ["current-package"] });
+      // Also invalidate profile or workspace if they contain subscription info
+      await queryClient.invalidateQueries({ queryKey: ["workspaces"] });
+       
       toast.success("Subscription upgraded successfully!");
-      router.push("/settings?tab=billing");
+      //  router.push("/settings?tab=billing");
+      // Clean URL without reloading
+      router.replace({ query: { ...route.query, stripePayment: undefined, session_id: undefined, packageId: undefined } });
     },
   }
 );
