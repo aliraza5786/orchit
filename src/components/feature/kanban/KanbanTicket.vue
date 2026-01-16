@@ -6,11 +6,11 @@
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
 
         <div class="flex justify-between gap-2 items-start mb-3">
-            <div class="flex gap-2 flex-wrap items-center">
-
-                <span v-if="ticket['card-type'] && selectedVarSlug[0]?.slug != 'card-type'"
+            <div class="flex gap-2 flex-wrap items-center"> 
+                <span v-if="ticket['card-type'] || ticket['card-type']=== null && selectedVarSlug[0]?.slug != 'card-type'"
                     class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium captalize">
-                    {{ ticket['card-type'] }}
+                    {{ ticket['card-type'] && ticket['card-type'] !== '' ? ticket['card-type'] : 'General' }}
+
                 </span>
                 <span v-if="ticket['card-status'] && selectedVarSlug[0]?.slug != 'card-status'"
                     class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium">
@@ -112,7 +112,7 @@ const props = defineProps<{
     ticket: any
     selectedVar?: any
     footer?:boolean 
-}>()
+}>() 
 
 const priorityBorderMap: Record<Priority, string> = {
     critical: 'border-l-priority-critical',
@@ -201,8 +201,9 @@ const setDueDate = (date: string | null) => {
     })
 }
 
-const { data: variables } = useVariables(workspaceId.value, moduleId.value, '')
+const { data: variables } = useVariables(workspaceId, moduleId, ref(""))
 const selectedVarSlug = computed(() => (variables?.value ?? []).filter((e: any) => e._id == props.selectedVar))
+ 
 
 const emit = defineEmits(['select'])
 </script>

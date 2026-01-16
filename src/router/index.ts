@@ -51,6 +51,7 @@ const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 // const KnowledgeCenter = () => import("../layout/KnowledgeCenterLayout/KnowledgeCenter.vue");
 const KnowledgeCenterView = () =>
   import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
+const SettingsView = () => import("../views/Settings/SettingsView.vue");
 
 const routes: RouteRecordRaw[] = [
   {
@@ -232,6 +233,13 @@ const routes: RouteRecordRaw[] = [
       // { path: "custom-process/:id", name: "process2", component: Process2 },
       { path: ":id/:module_id", name: "product", component: Product },
     ],
+  },
+
+  {
+    path: "/settings",
+    name: "settings",
+    component: SettingsView,
+    meta: { requiresAuth: true },
   },
 
   { path: "/:pathMatch(.*)*", name: "NotFound", component: NotFound },

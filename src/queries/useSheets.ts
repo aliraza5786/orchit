@@ -218,65 +218,62 @@ export function useSheetList(
         params,
       });
     },
-    refetchOnMount: 'always',
+    refetchOnMount:false,
     ...options,
   });
 }
 
 export const useVariables = (
-  workspace_id: any,
-  module_id: any,
-  sheetId: any,
+  workspace_id: Ref<string>,
+  module_id: Ref<string>,
+  sheetId: Ref<string>,
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["all-module-variables", sheetId, unref(module_id)],
-    enabled: Boolean(unref(module_id)),
+    queryKey: [
+      "all-module-variables",
+      unref(workspace_id),
+      unref(module_id),
+      unref(sheetId),
+    ],
+    enabled: computed(() => Boolean(unref(module_id))),
+    staleTime: 5 * 60 * 1000,
     queryFn: async ({ signal }) => {
       const resolvedModuleId = unref(module_id);
 
-      // 1. Fetch variables
-      const varsReq = request<any>({
-        url: `/workspace/catalog/${unref(workspace_id)}/card-variables/${resolvedModuleId}?sheet_id=${unref(sheetId)}`,
-        method: "GET",
-        signal,
-      });
-
-      // 2. Fetch card types
-      const typesReq = request<any>({
-        url: `/workspace/catalog/variable/values`,
-        method: "GET",
-        params: {
-          workspace_id: unref(workspace_id),
-          module_id: resolvedModuleId,
-          variable_slug: "card-type",
-        },
-        signal,
-      });
-
-      // 3. Wait for both
-      const [variables, typesData] = await Promise.all([varsReq, typesReq]);
+      const [variables, typesData] = await Promise.all([
+        request({
+          url: `/workspace/catalog/${unref(workspace_id)}/card-variables/${resolvedModuleId}?sheet_id=${unref(sheetId)}`,
+          method: "GET",
+          signal,
+        }),
+        request({
+          url: `/workspace/catalog/variable/values`,
+          method: "GET",
+          params: {
+            workspace_id: unref(workspace_id),
+            module_id: resolvedModuleId,
+            variable_slug: "card-type",
+          },
+          signal,
+        }),
+      ]);
 
       const processTypes = typesData?.values ?? [];
 
-      // 4. Merge
       if (Array.isArray(variables)) {
-        return variables.map((v: any) => {
-          if (
-            v.title?.toLowerCase() === "process" ||
-            v.slug?.toLowerCase() === "process"
-          ) {
-            return {
-              ...v,
-              nested: processTypes.map((ct: any) => ({
-                _id: ct._id ?? ct.value,
-                title: ct.value,
-                ...ct,
-              })),
-            };
-          }
-          return v;
-        });
+        return variables.map((v) =>
+          v.slug?.toLowerCase() === "process"
+            ? {
+                ...v,
+                nested: processTypes.map((ct:any) => ({
+                  _id: ct._id ?? ct.value,
+                  title: ct.value,
+                  ...ct,
+                })),
+              }
+            : v
+        );
       }
 
       return variables;
@@ -284,6 +281,7 @@ export const useVariables = (
     ...options,
   });
 };
+
 export const useLanes = (
   workspace_id: any,
   options = {}

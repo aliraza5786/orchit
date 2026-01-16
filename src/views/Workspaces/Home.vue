@@ -9,7 +9,8 @@
 
         <div class="flex items-center gap-3">
           <div to="/create-workspace" @click="() => {
-            if (workspaceStore.limits.features[1]?.usage.current >= workspaceStore.limits.features[1]?.limits.limit) {
+            const wsFeature = workspaceStore.getFeature('no-of-workspaces')
+            if (wsFeature && wsFeature.usage.current >= wsFeature.limits.limit) {
               workspaceStore.setLimitExccedModal(true)
             }else{
               router.push('/create-workspace')
@@ -50,7 +51,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import Button from '../../components/ui/Button.vue'
 import ProjectGallery from '../../components/ui/ProjectGallery.vue'
 import WorkspaceListTable from './components/WorkspaceListTable.vue'
@@ -59,6 +60,9 @@ import { useWorkspaceStore } from '../../stores/workspace'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
+watchEffect(()=>{
+  console.log( workspaceStore.limits, "limit  ")
+})
 // 🔑 pagination + sort state
 const page = ref(1)
 const pageSize = ref(10)

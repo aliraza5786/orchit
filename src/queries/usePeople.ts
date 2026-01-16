@@ -4,20 +4,31 @@ import { useApiMutation } from "../libs/vq";
 import { unref, type Ref, computed } from "vue"; 
 // import type { DashboardTeamsData } from "../types";
 
-export const usePeopleList = (workspace_id: any, viewID: any, options = {}) => {
+export const usePeopleList = (
+  workspace_id: Ref<string>,
+  viewID: Ref<string>,
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["people-lists", viewID],
+    queryKey: [
+      "people-lists",
+      unref(workspace_id),
+      unref(viewID),
+    ],
+    staleTime: 5 * 60 * 1000,
     queryFn: ({ signal }) =>
-      request<any>({
-        url: `workspace/teams/${workspace_id}/people-grouped?groupBy=${unref(
-          viewID
-        )}`,
+      request({
+        url: `workspace/teams/${unref(workspace_id)}/people-grouped`,
         method: "GET",
+        params: {
+          groupBy: unref(viewID),
+        },
         signal,
       }),
     ...options,
   });
 };
+
 // create team
 type createTeam = { payload: any };
 export const useCreateTeam = (options = {}) =>

@@ -3,58 +3,125 @@ import { ref, computed } from "vue";
 import { useTheme } from "../composables/useTheme";
 import { useWorkspaceStore } from "../stores/workspace";
 import { usePackages } from "../queries/usePricing";
+import PricingSkeleton from "../components/skeletons/PricingSkeleton.vue";
+import { useAuthStore } from "../stores/auth";
+import { useRouter } from "vue-router";
+import { useUpgradePackage } from "../queries/usePackages";
 
 const { isDark } = useTheme(); // light / dark / system
 const isYearly = ref(false);
 const workspaceStore = useWorkspaceStore();
 
-function handleClick() {
-  workspaceStore.setPricing(true);
+const authStore = useAuthStore();
+const router = useRouter();
+
+const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
+  onSuccess: async (data: any) => {
+    window.open(data?.checkoutUrl);
+  },
+});
+
+const upgradingPackageId = ref<string | null>(null);
+
+function handleClick(plan: any) {
+  if (authStore.isAuthenticated) {
+    upgradingPackageId.value = plan.packageId;
+    upgradePackage({
+      packageId: plan.packageId,
+      interval: isYearly.value ? "year" : "month",
+    });
+  } else {
+    workspaceStore.setPricing(true);
+    localStorage.setItem(
+      "post_auth_upgrade",
+      JSON.stringify({
+        packageId: plan.packageId,
+        interval: isYearly.value ? "year" : "month",
+      })
+    );
+    router.push("/register");
+  }
 }
 
 // ----------------- Format Feature Limits -----------------
-const formatLimits = (limits: any) => {
+const formatLimits = (limits: any, isYearly: boolean) => {
+  const m = isYearly ? 12 : 1;
+  const suffix = isYearly ? "/year" : "/month";
+
   if (!limits || Object.keys(limits).length === 0) return "Included";
-  if (limits.storageGB) return `Storage: ${limits.storageGB} GB`;
-  if (limits.maxWorkspaces) return `Workspaces: ${limits.maxWorkspaces}`;
-  if (limits.maxTeamMembers) return `Team Members: ${limits.maxTeamMembers}`;
-  if (limits.maxProjects) return `Projects: ${limits.maxProjects}`;
+  if (limits.storageGB) return `Storage: ${limits.storageGB * m} GB`;
+  if (limits.maxWorkspaces) return `Workspaces: ${limits.maxWorkspaces * m}`;
+  if (limits.maxTeamMembers) return `Team Members: ${limits.maxTeamMembers * m}`;
+  if (limits.maxProjects) return `Projects: ${limits.maxProjects * m}`;
   if (limits.requestsPerMonth)
-    return `Requests: ${limits.requestsPerMonth.toLocaleString()}/month`;
+    return `Requests: ${(limits.requestsPerMonth * m).toLocaleString()}${suffix}`;
   return "Included";
 };
 
 // ----------------- Format API Response -----------------
-const formatPackages = (packages: any[]) => {
-  return packages.map((pkg) => ({
-    name: pkg.name,
-    description: pkg.description || "",
-    priceMonthly:
-      pkg.activePrice?.interval === "month" ? pkg.activePrice.amount : 0,
-    priceYearly:
-      pkg.activePrice?.interval === "year"
+const formatPackages = (packages: any[], isYearly: boolean) => {
+  const priceTo99 = (price: number) => {
+    if (price === 0) return 0;
+    return Math.floor(price - 0.001) + 0.99;
+  };
+
+  const staticFeatures = [
+    { text: "unlimited shared spaces (owned by others)", available: true },
+    { text: "Sheet creation with AI", available: true },
+    { text: "Ticket creation with AI", available: true },
+    { text: "Module Creation with AI", available: true },
+    { text: "Unlimited AI agents", available: true },
+    { text: "Mind map view", available: true },
+    { text: "Calendar view", available: true },
+    { text: "List view", available: true },
+    { text: "timeline view", available: true },
+    { text: "Kanban View", available: true },
+    { text: "Gantt Chart View", available: true },
+  ];
+
+  return packages.map((pkg) => {
+    const rawMonthlyPrice =
+      pkg.activePrice?.interval === "month"
         ? pkg.activePrice.amount
-        : pkg.activePrice?.amount * 12 || 0,
-    button: pkg.activePrice ? "Subscribe" : "Try for Free",
-    highlighted:
-      pkg.packageType === "starter" || pkg.packageType === "professional", // example logic
-    features: pkg.features.map((f: any) => ({
-      text:
-        f.name +
-        (formatLimits(f.limits) !== "Included"
-          ? ` (${formatLimits(f.limits)})`
-          : ""),
-      available: f.enabled,
-    })),
-  }));
+        : pkg.activePrice?.amount / 12 || 0;
+    
+    const monthlyPrice = priceTo99(rawMonthlyPrice);
+    const standardYearlyPrice = rawMonthlyPrice * 12;
+    const priceYearly = priceTo99(
+      pkg.name === "Pro" ? standardYearlyPrice * 0.8 : standardYearlyPrice
+    );
+
+    return {
+      name: pkg.name,
+      packageId: pkg._id || pkg.id,
+      description: pkg.description || "",
+      priceMonthly: monthlyPrice,
+      priceYearly: priceYearly,
+      button: pkg.activePrice ? "Subscribe" : "Try for Free",
+      highlighted:
+        pkg.name === "Pro" ||
+        pkg.packageType === "starter" ||
+        pkg.packageType === "professional",
+      features: [
+        ...pkg.features.map((f: any) => ({
+          text:
+            f.name +
+            (formatLimits(f.limits, isYearly) !== "Included"
+              ? ` (${formatLimits(f.limits, isYearly)})`
+              : ""),
+          available: f.enabled,
+        })),
+        ...staticFeatures,
+      ],
+    };
+  });
 };
 
 // ----------------- Vue Query -----------------
 const { data, isLoading } = usePackages();
 const pricingPlans = computed(() => {
-  console.log("API data:", data.value); // Check what's coming from the API
   if (!data.value) return [];
-  return formatPackages(data.value);
+  return formatPackages(data.value, isYearly.value);
 });
 </script>
 
@@ -107,7 +174,9 @@ const pricingPlans = computed(() => {
       </div>
 
       <!-- Cards -->
-      <div v-if="isLoading">Loading plans...</div>
+      <div v-if="isLoading">
+        <PricingSkeleton />
+      </div>
       <div v-else-if="pricingPlans.length === 0">No plans available</div>
       <div v-else class="grid md:grid-cols-3 gap-[25px] md:gap-[15px] xl:gap-[44px]">
         <div
@@ -120,19 +189,28 @@ const pricingPlans = computed(() => {
         >
           <!-- Gradient border -->
           <div
-            class="absolute inset-0 rounded-2xl p-[1px] bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 transition-opacity duration-300"
+            class="absolute inset-0 rounded-2xl p-[1px] bg-accent/20 transition-opacity duration-300  border  border-accent"
             :class="{
               'opacity-100': plan.highlighted,
-              'opacity-0 group-hover:opacity-100 ': !plan.highlighted,
+              'opacity-0 group-hover:opacity-100': !plan.highlighted,
             }"
           >
-            <div class="w-full h-full rounded-2xl bg-bg-body"></div>
+            <div
+              class="w-full h-full rounded-2xl"
+              :class="[
+                plan.name === 'Pro'
+                  ? isDark
+                    ? 'bg-white/5'
+                    : ''
+                  : 'bg-bg-body',
+              ]"
+            ></div>
           </div>
 
           <!-- Content -->
           <div class="relative z-10">
             <h3
-              class="text-[14px] font-manrope text-text-primary text-center leading-[21px] font-normal mb-[7px]"
+              class="text-[24px] font-bold font-manrope text-text-primary text-center leading-[30px] mb-[7px]"
             >
               {{ plan.name }}
             </h3>
@@ -178,23 +256,22 @@ const pricingPlans = computed(() => {
             </div>
 
             <!-- Button -->
-            <router-link to="/register">
-              <button
-                @click="handleClick"
-                class="w-full py-[14px] cursor-pointer rounded-[12px] font-manrope font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
-                :class="[
-                  isDark
-                    ? plan.highlighted
-                      ? 'bg-white text-black hover:bg-gray-200'
-                      : 'bg-bg-charcoal text-white hover:bg-white hover:text-black'
-                    : plan.highlighted
-                    ? 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white'
-                    : 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white',
-                ]"
-              >
-                {{ plan.button }}
-              </button>
-            </router-link>
+            <button
+              @click="handleClick(plan)"
+              :disabled="isUpgrading && upgradingPackageId === plan.packageId"
+              class="w-full py-[14px] cursor-pointer rounded-[12px] font-manrope font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
+              :class="[
+                isDark
+                  ? plan.highlighted
+                    ? 'bg-white text-black hover:bg-gray-200'
+                    : 'bg-bg-charcoal text-white hover:bg-white hover:text-black'
+                  : plan.highlighted
+                  ? 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white'
+                  : 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white',
+              ]"
+            >
+              {{ isUpgrading && upgradingPackageId === plan.packageId ? "Upgrading..." : plan.button }}
+            </button>
           </div>
 
           <!-- Features -->

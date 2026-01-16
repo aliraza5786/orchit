@@ -13,6 +13,12 @@
       <h5 class="text-[16px] font-medium flex items-center gap-2">
         <i class="fa-solid fa-sparkles text-accent"></i>
         Ask Ai
+        <div class="flex items-center gap-2">
+          <span
+            class="w-2 h-2 rounded-full"
+            :class="isSocketConnected ? 'bg-green-500' : 'bg-red-500'"
+          ></span>
+        </div>
       </h5>
       <i
         class="cursor-pointer text-text-primary fa-solid fa-close transition-colors"
@@ -21,73 +27,75 @@
     </div>
 
     <!-- Chat Area -->
-    <div class="flex-1 overflow-y-auto p-4 space-y-4">
-      <!-- Chat History Loader -->
-      <div v-if="isHistoryLoading" class="flex items-center justify-center h-full">
-        <div class="flex flex-col items-center gap-3">
-          <div class="w-10 h-10 border-4 border-accent/30 border-t-accent rounded-full animate-spin"></div>
-          <p class="text-sm text-text-secondary">Loading chat history...</p>
-        </div>
-      </div>
-
-      <!-- Chat Messages -->
-      <template v-else>
-       <div
-  v-for="(msg, idx) in chatHistory"
-  :key="idx"
-  class="flex gap-2 relative"
-  :class="msg.sender === 'me' ? 'flex-row-reverse' : ''"
->
-  <!-- Avatar -->
-  <div
-    class="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
-    :class="msg.sender === 'me' ? 'bg-bg-surface' : 'bg-accent/10'"
-  >
-    <i v-if="msg.sender === 'ai'" class="fa-solid fa-robot text-accent text-sm"></i>
-    <div v-else class="text-xs font-semibold">ME</div>
-  </div>
-
-  <!-- Message bubble -->
-  <div
-    class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border relative"
-    :class="msg.sender === 'me'
-      ? 'bg-accent/10 border-accent/20 rounded-tr-none'
-      : 'bg-bg-body border-border rounded-tl-none'"
-  >
-    <p>{{ msg.text }}</p>
-
-    <!-- Timestamp and status -->
-    <div class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5">
-      <span>{{ formatTimestamp(msg.timestamp) }}</span>
-      <span v-if="msg.sender === 'me'">
-        <i
-          v-if="msg.status === 'completed'"
-          class="fa-solid fa-check-double text-green-500"
-        ></i>
-        <i
-          v-else
-          class="fa-solid fa-check text-text-secondary"
-        ></i>
-      </span>
-    </div>
-  </div>
-</div>
-
-
-        <!-- Sending Loader -->
-        <div v-if="isSending" class="flex gap-3 animate-pulse">
-          <div class="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-            <i class="fa-solid fa-robot text-accent text-sm"></i>
+    <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+      <template v-if="orderedMessages.length">
+        <div
+          v-for="msg in orderedMessages"
+          :key="msg._id"
+          class="flex gap-2 relative animate-fade-in"
+          :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
+        >
+          <!-- Avatar -->
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+            :class="msg.type === 'user' ? 'bg-bg-surface' : 'bg-accent/10'"
+          >
+            <i
+              v-if="msg.type === 'assistant' && msg.metadata?.status === 'thinking'"
+              class="fa-solid fa-robot text-accent text-sm"
+            ></i>
+            <div v-else-if="msg.type === 'user'" class="text-xs font-semibold text-accent">ME</div>
           </div>
-          <div class="bg-bg-body p-3 rounded-lg rounded-tl-none max-w-[85%] text-sm leading-relaxed border border-border">
-            <p>AI is typing...</p>
+
+          <!-- Message bubble -->
+          <div
+            class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border relative"
+            :class="msg.type === 'user'
+              ? 'bg-accent/10 border-accent/20 rounded-tr-none'
+              : 'bg-bg-body border-border rounded-tl-none'"
+          >
+            <!-- AI Thinking Bubble -->
+            <template v-if="msg.type === 'assistant' && msg.metadata?.status === 'thinking'">
+              <div class="flex items-center gap-1">
+                <div class="typing-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span class="text-xs text-text-secondary ml-2">AI is thinking...</span>
+              </div>
+            </template>
+
+            <!-- Normal message -->
+            <template v-else>
+              <p class="whitespace-pre-wrap">{{ msg.content }}</p>
+              <div class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5">
+                <span>{{ formatTimestamp(msg.timestamp) }}</span>
+                <span v-if="msg.type === 'user'">
+                  <i
+                    v-if="msg.metadata?.status === 'completed'"
+                    class="fa-solid fa-check-double text-green-500"
+                  ></i>
+                  <i
+                    v-else
+                    class="fa-solid fa-check text-text-secondary"
+                  ></i>
+                </span>
+              </div>
+            </template>
           </div>
         </div>
       </template>
+
+      <!-- Empty state -->
+      <div v-else class="flex flex-col items-center justify-center h-full text-text-secondary">
+        <i class="fa-solid fa-comments text-4xl mb-2 opacity-50"></i>
+        <p class="text-sm">No messages yet. Start a conversation!</p>
+      </div>
     </div>
+
     <!-- Input Area -->
     <div class="p-4 border-t border-border bg-bg-card">
-      <!-- Context and Preview Button -->
       <div v-if="contextTitle" class="mb-2 flex justify-between items-center gap-1.5">
         <nav class="flex items-center text-xs text-text-secondary gap-2">
           <div class="flex items-center gap-1 font-medium text-text-primary">
@@ -100,7 +108,7 @@
         </nav>
         <button
           @click="showAIPreview = !showAIPreview"
-          class="py-1 px-2 text-white bg-accent rounded-lg"
+          class="py-1 px-2 text-white bg-accent rounded-lg hover:bg-accent-hover transition-colors"
         >
           <i class="fa-regular fa-eye text-sm"></i> Preview
         </button>
@@ -112,13 +120,18 @@
           placeholder="Ask anything..."
           rows="1"
           class="w-full pl-4 pr-10 py-3 rounded-xl border border-border bg-bg-body focus:outline-none focus:border-accent resize-none text-sm transition-colors"
-          @keydown.enter.prevent="sendMessage"
+          @keydown.enter.prevent="sendMessage()"
+          :disabled="agentStore.isSending"
         ></textarea>
         <button
-          @click="sendMessage"
-          class="absolute right-2 bottom-2 p-1.5 text-accent hover:text-accent-hover transition-colors rounded-lg hover:bg-accent/5"
+          @click="sendMessage()"
+          :disabled="!userMessage.trim() || agentStore.isSending"
+          class="absolute right-2 bottom-2 p-1.5 text-accent hover:text-accent-hover transition-colors rounded-lg hover:bg-accent/5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <i class="fa-solid fa-paper-plane"></i>
+          <i 
+            class="fa-solid"
+            :class="agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'"
+          ></i>
         </button>
       </div>
 
@@ -128,85 +141,41 @@
     </div>
   </div>
 
-  <!-- Preview Modal -->
   <ChatBotPreviewModal
     v-model="showAIPreview"
     @accept="showAIPreview = false"
     @decline="showAIPreview = false"
-    :data="Lists"
     :title="contextTitle"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onBeforeUnmount, nextTick, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import { io, Socket } from "socket.io-client";
 import { useWorkspaceStore } from "../../../stores/workspace";
-import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
-import { usePeopleList } from "../../../queries/usePeople";
+// import { usePeopleList } from "../../../queries/usePeople";
 import { useRouteIds } from "../../../composables/useQueryParams";
-import { useAgentChatMessage, useChatHistory } from "../../../queries/useAgent";
-
-// --- TYPES ---
-interface ChatMessage {
-  _id: string;
-  type: "user" | "assistant";
-  content: string;
-  timestamp: string;
-  metadata?: {
-    intent?: string;
-    status?: string;
-  };
-}
-
-interface ChatSession {
-  _id: string;
-  session_id: string;
-  context: {
-    module_id: string | null;
-    sheet_id: string | null;
-    lane_id: string | null;
-    card_id: string | null;
-  };
-  messages: ChatMessage[];
-  created_at: string;
-}
-
-interface ChatHistoryResponse {
-  data?: {
-    data?:{
-      data?: {
-      chats?: ChatSession[];
-      pagination?: {
-        total: number;
-        limit: number;
-        skip: number;
-      };
-    };
-    }
-    
-  };
-}
-
-
-// --- STATE ---
+import { useAgentStore } from "../../../stores/agentStore";
+import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
 const showAIPreview = ref(false);
 const userMessage = ref("");
-const chatHistory = ref<{ sender: "me" | "ai"; text: string, timestamp: string, status: string }[]>([]);
-const isSending = ref(false);
-
-// --- ROUTE & PEOPLE LIST ---
+const chatContainer = ref<HTMLElement | null>(null);
+const socket = ref<Socket | null>(null);
+const isSocketConnected = ref(false);
+const socketURL = import.meta.env.VITE_SOCKET_IO_URL || "https://backend.streamed.space";
+const isAiThinkingBubbleVisible = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
-const selected_view_id = ref("team");
-const { data: Lists, refetch: refetchList } = usePeopleList(workspaceId.value, selected_view_id);
-watch(Lists, () => refetchList());
+// const selected_view_id = ref("team");
+// const { data: Lists, refetch: refetchList } = usePeopleList(workspaceId.value, selected_view_id);
+const agentStore = useAgentStore();
 
-// --- CONTEXT TITLE ---
+// watch(Lists, () => refetchList());
+
 const contextTitle = computed(() => {
   const routeName = (route.name as string)?.toLowerCase() || "workspace";
-
   if (routeName.includes("peak")) return "Peak";
   if (routeName.includes("plan")) return "Plan";
   if (routeName.includes("process")) return "Process";
@@ -214,71 +183,96 @@ const contextTitle = computed(() => {
   if (routeName.includes("more")) return "More";
   if (routeName.includes("pin")) return "Pin";
 
-  const moduleId = route.params.module_id || route.params.job_id;
-  if (moduleId && Lists?.value?.workspace?.lanes) {
-    const lane = Lists.value.workspace.lanes.find((l: any) => l._id === moduleId);
-    if (lane?.variables?.["lane-title"]) return lane.variables["lane-title"];
-  }
-
+  // const modId = route.params.module_id || route.params.job_id;
   return "Workspace";
 });
 
-// --- HANDLERS ---
+const refreshKey = ref(0);
+
+const orderedMessages = computed(() => {
+  refreshKey.value; // force recompute
+  if (!Array.isArray(agentStore.chatHistory)) return [];
+  const messages = agentStore.chatHistory.flatMap(s => s.messages || [])
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  if (isAiThinkingBubbleVisible.value) {
+    messages.push({ _id: 'ai-thinking-' + Date.now(), type: 'assistant', content: '', metadata: { status: 'thinking' }, timestamp: new Date().toISOString() });
+  }
+
+  return messages;
+});
+
 function closeHandler() {
   workspaceStore.toggleChatBotPanel();
 }
 
-// --- AGENT CHAT MUTATION ---
-const { mutateAsync: sendToAI } = useAgentChatMessage();
-function formatTimestamp(ts?: string) {
-  if (!ts) return "";
-  const date = new Date(ts);
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  return `${hours}:${minutes}`;
+function scrollToBottom() {
+  nextTick(() => {
+    if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+  });
 }
 
-// --- CHAT HISTORY QUERY ---
-const { refetch: fetchHistory, isFetching: isHistoryLoading, refetch: refetchHistory } = useChatHistory(workspaceId.value);
-// const { refetch: fetchEntities } = useCreatedEntities(workspaceId.value);
- const fetchChatsHistory = async() =>{
-  try {
-      const res = await fetchHistory() as ChatHistoryResponse;
-      const chats = res?.data?.data?.data?.chats ?? [];
-      const messages: { sender: "me" | "ai"; text: string, timestamp: string, status: string }[] = [];
-      
-      chats.forEach((chat: ChatSession) => {
-        if (chat.messages && Array.isArray(chat.messages)) {
-          chat.messages.forEach((msg: ChatMessage) => {
-            messages.push({
-              sender: msg.type === "user" ? "me" : "ai",
-              text: msg.content,
-              timestamp: msg.timestamp,
-              status: msg.metadata?.status ?? "pending" 
-            });
-          });
-        }
-      });
+/* ================= SOCKET INIT ================= */
+function initSocket() {
+  const token = localStorage.getItem("token");
+  if (!token || socket.value?.connected) return;
 
-      // Reverse the order so latest messages appear last
-      chatHistory.value = messages.reverse();
-    } catch (err) {
-      console.error("Failed to fetch chat history:", err);
-    }
- }
-fetchChatsHistory();
-// --- SEND MESSAGE ---
+  socket.value = io(socketURL, { auth: { token }, transports: ["websocket", "polling"] });
+
+  socket.value?.on("connect", () => {
+  isSocketConnected.value = true;
+
+  if (workspaceId.value) {
+    socket.value?.emit("join-workspace", workspaceId.value);
+  }
+});
+
+
+  socket.value.on("disconnect", () => {
+    isSocketConnected.value = false;
+  });
+socket.value.on("realtime-update", async (data: any) => {
+  console.log("📨 Realtime update received:", data);
+
+  if (data.type === "agent-response") {
+    console.log("🤖 Agent response received, fetching chat history...");
+    
+    // Keep the thinking bubble visible until history is fetched
+    isAiThinkingBubbleVisible.value = true;
+
+    await agentStore.fetchChatHistory(workspaceId.value, true);
+
+    // Hide bubble once history is updated
+    isAiThinkingBubbleVisible.value = false;
+
+    // Scroll to bottom
+    nextTick(() => {
+      if (chatContainer.value) {
+        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+      }
+    });
+  }
+});
+
+socket.value.onAny((event, data) => {
+  console.log("📡 SOCKET EVENT:", event, data);
+});
+
+}
+/* ================= SEND MESSAGE ================= */
 async function sendMessage() {
   const message = userMessage.value.trim();
-  if (!message || !workspaceId.value) return;
+  if (!message || !workspaceId.value || agentStore.isSending) return;
 
-  // Push user message locally
-  // chatHistory.value.push({ sender: "me", text: message, timestamp:timestamp, status:status });
   userMessage.value = "";
-  isSending.value = true;
+  isAiThinkingBubbleVisible.value = true;
+  agentStore.isSending = true;
+  agentStore.isAiTyping = true;
+
+  scrollToBottom();
 
   try {
-    const response = await sendToAI({
+    await agentStore.sendMessage({
       workspace_id: workspaceId.value,
       message,
       module_id: moduleId.value as string,
@@ -288,31 +282,86 @@ async function sendMessage() {
       session_id: route.params.session_id as string,
     });
 
-    const aiText = response.data?.message || "Sorry, I didn't understand that.";
-    const aiStatus = response.data?.status || "Processing";
-    chatHistory.value.push({ sender: "ai", text: aiText, timestamp: "", status:aiStatus });
-    if(response.data){
-     await refetchHistory();
-    }
+    // User message immediately visible
+    await agentStore.fetchChatHistory(workspaceId.value);
+    scrollToBottom();
+
+    // Keep bubble visible until socket emits new update
   } catch (err) {
-    // chatHistory.value.push({ sender: "ai", text: "Error: Failed to send message." });
     console.error(err);
+    isAiThinkingBubbleVisible.value = false;
+    agentStore.isAiTyping = false;
   } finally {
-    isSending.value = false;
+    agentStore.isSending = false;
   }
 }
+
+watch(workspaceId, (newId, oldId) => {
+  if (!newId) return;
+  if (!socket.value) initSocket();
+  else if (socket.value.connected) {
+    if (oldId && oldId !== newId) socket.value.emit("leave-workspace", oldId);
+    socket.value.emit("join-workspace", newId);
+  }
+}, { immediate: true });
+
+watch(() => workspaceStore.showChatBotPanel, (isOpen) => {
+  if (!workspaceId.value || !socket.value) return;
+  if (isOpen) socket.value.emit("join-workspace", workspaceId.value);
+  else socket.value.emit("leave-workspace", workspaceId.value);
+});
+
+const formatTimestamp = (ts?: string) => {
+  if (!ts) return "";
+  const date = new Date(ts);
+  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+};
+
+onMounted(() => initSocket());
+// const pollInterval = ref<number | null>(null);
+
+// onMounted(() => {
+//   pollInterval.value = window.setInterval(async () => {
+//     if (workspaceId.value) {
+//       console.log("🔄 Polling chat history...");
+//       await agentStore.fetchChatHistory(workspaceId.value, true);
+//     }
+//   }, 2000); // 2000ms = 2s
+// });
+
+// onBeforeUnmount(() => {
+//   if (pollInterval.value) {
+//     clearInterval(pollInterval.value);
+//     pollInterval.value = null;
+//   }
+// });
+onBeforeUnmount(() => {
+  if (workspaceId.value && socket.value) socket.value.emit("leave-workspace", workspaceId.value);
+  socket.value?.removeAllListeners();
+  socket.value?.disconnect();
+});
 </script>
 
 <style scoped>
-/* Custom scrollbar for chat area */
-::-webkit-scrollbar {
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.typing-dots span {
   width: 6px;
+  height: 6px;
+  background-color: #7D68C8;
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: typing-bounce 1.4s infinite ease-in-out;
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
 }
-::-webkit-scrollbar-thumb {
-  background-color: var(--border-color, #e5e7eb);
-  border-radius: 20px;
-}
+@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fade-in { animation: fade-in 0.3s ease-out; }
 </style>

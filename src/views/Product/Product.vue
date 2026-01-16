@@ -258,6 +258,7 @@
             </button>
           </div>
 
+          <!-- Content -->
           <div class="format-content space-y-6">
             <!-- ================= COLORS ================= -->
             <div>
@@ -265,120 +266,65 @@
                 Colors
               </h4>
 
-              <!-- Background -->
-              <div class="format-group relative mb-3">
+              <!-- ================= BACKGROUND COLOR ================= -->
+              <div class="format-group mb-3">
                 <label class="block text-xs text-secondary mb-1"
                   >Background</label
                 >
-
-                <div
-                  class="flex items-center gap-2 cursor-pointer"
-                  @click="showBgPicker = !showBgPicker"
-                >
+                <div class="flex items-center gap-2">
+                  <!-- Color Preview -->
                   <div
-                    class="w-full h-7 rounded border"
-                    :style="{ background: activeFormatStyle.background }"
-                  ></div>
-                  <span class="text-xs text-secondary">
-                    {{ activeFormatStyle.background }}
-                  </span>
-                </div>
-
-                <!-- Picker -->
-                <div
-                  v-if="showBgPicker"
-                  class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
-                >
-                  <div class="grid grid-cols-10 gap-1 mb-3">
-                    <button
-                      v-for="color in presetColors"
-                      :key="color"
-                      class="w-5 h-5 rounded border"
-                      :style="{ background: color }"
-                      @click="
-                        onStyleChange('bg_color', {
-                          target: { value: color },
-                        } as any);
-                        showBgPicker = false;
-                      "
-                    ></button>
-                  </div>
-
-                  <div class="flex items-center gap-2">
+                    class="h-10 w-10 rounded-md border cursor-pointer relative"
+                    :style="{ backgroundColor: activeFormatStyle.background }"
+                  >
                     <input
                       type="color"
                       :value="activeFormatStyle.background"
-                      class="w-8 h-8 cursor-pointer"
+                      class="absolute inset-0 opacity-0 cursor-pointer"
                       @input="onStyleChange('bg_color', $event)"
-                    />
-                    <input
-                      type="text"
-                      class="flex-1 text-xs border rounded px-2 py-1"
-                      :value="activeFormatStyle.background"
-                      readonly
+                      style="pointer-events: all"
                     />
                   </div>
+
+                  <!-- Hex Code Input -->
+                  <BaseTextField
+                    :modelValue="activeFormatStyle.background"
+                    placeholder="#3b82f6"
+                    class="flex-1"
+                    readonly
+                  />
                 </div>
               </div>
 
-              <!-- Text Color -->
-              <!-- Text Color -->
-              <div class="format-group relative mb-3">
+              <!-- ================= TEXT COLOR ================= -->
+              <div class="format-group mb-3">
                 <label class="block text-xs text-secondary mb-1">Text</label>
-
-                <!-- Trigger -->
-                <div
-                  class="flex items-center gap-2 cursor-pointer"
-                  @click="showTextColorPicker = !showTextColorPicker"
-                >
+                <div class="flex items-center gap-2">
+                  <!-- Color Preview -->
                   <div
-                    class="w-full h-7 rounded border"
-                    :style="{ background: activeFormatStyle.color }"
-                  ></div>
-                  <span class="text-xs text-secondary">
-                    {{ activeFormatStyle.color }}
-                  </span>
-                </div>
-
-                <!-- Picker -->
-                <div
-                  v-if="showTextColorPicker"
-                  class="absolute z-50 mt-2 p-3 bg-bg-card rounded-lg shadow-lg border w-[240px]"
-                >
-                  <!-- Color Grid -->
-                  <div class="grid grid-cols-10 gap-1 mb-3">
-                    <button
-                      v-for="color in presetColors"
-                      :key="color"
-                      class="w-5 h-5 rounded border"
-                      :style="{ background: color }"
-                      @click="
-                        onStyleChange('color', {
-                          target: { value: color },
-                        } as any);
-                        showTextColorPicker = false;
-                      "
-                    ></button>
-                  </div>
-
-                  <!-- Native Picker + Hex -->
-                  <div class="flex items-center gap-2">
+                    class="h-10 w-10 rounded-md border cursor-pointer relative"
+                    :style="{ backgroundColor: activeFormatStyle.color }"
+                  >
                     <input
                       type="color"
                       :value="activeFormatStyle.color"
-                      class="w-8 h-8 cursor-pointer"
+                      class="absolute inset-0 opacity-0 cursor-pointer"
                       @input="onStyleChange('color', $event)"
-                    />
-                    <input
-                      type="text"
-                      class="flex-1 text-xs border rounded px-2 py-1"
-                      :value="activeFormatStyle.color"
-                      readonly
+                      style="pointer-events: all"
                     />
                   </div>
+                  <!-- Hex Code Input -->
+                  <BaseTextField
+                    :modelValue="activeFormatStyle.color"
+                    placeholder="#3b82f6"
+                    class="flex-1"
+                    readonly
+                  />
                 </div>
               </div>
             </div>
+
+            <!-- ================= FONT WEIGHT ================= -->
             <div>
               <div class="grid grid-cols-1 gap-3">
                 <div>
@@ -582,20 +528,29 @@
 </template>
 <script setup lang="ts">
 import {
-  computed,
   defineAsyncComponent,
-  h,
   ref,
+  computed,
   watch,
   toRaw,
   watchEffect,
   nextTick,
   triggerRef,
+  h,
 } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
-import Dropdown from "../../components/ui/Dropdown.vue";
-import Searchbar from "../../components/ui/SearchBar.vue";
 import { useTheme } from "../../composables/useTheme";
+import { useRoute } from "vue-router";
+import { useQueryClient } from "@tanstack/vue-query";
+import { useRouteIds } from "../../composables/useQueryParams";
+import Fuse from "fuse.js";
+import { debounce } from "lodash";
+import { getInitials } from "../../utilities";
+import { avatarColor } from "../../utilities/avatarColor";
+import MindElixir from "mind-elixir";
+import { toast } from "vue-sonner";
+import { usePermissions } from "../../composables/usePermissions";
+import { request, toApiMessage } from "../../libs/api";
 import {
   ReOrderCard,
   ReOrderList,
@@ -610,28 +565,47 @@ import {
   useVariables,
   useCreateWorkspaceSheet,
 } from "../../queries/useSheets";
-import { useRoute } from "vue-router";
-import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
-import BaseTextField from "../../components/ui/BaseTextField.vue";
-import { useQueryClient } from "@tanstack/vue-query";
-import { useRouteIds } from "../../composables/useQueryParams";
-import Button from "../../components/ui/Button.vue";
-import KanbanTicket from "../../components/feature/kanban/KanbanTicket.vue";
-import Fuse from "fuse.js";
-import { debounce } from "lodash";
-import TableView from "../../components/feature/TableView/TableView.vue";
-import { getInitials } from "../../utilities";
-import { avatarColor } from "../../utilities/avatarColor";
-import DatePicker from "./components/DatePicker.vue";
-import MindElixir from "mind-elixir";
-import { toast } from "vue-sonner";
-import { usePermissions } from "../../composables/usePermissions";
-import { request, toApiMessage } from "../../libs/api";
-import TableSearchCell from "../../components/feature/TableView/TableSearchCell.vue";
-import TableAssigneeCell from "../../components/feature/TableView/TableAssigneeCell.vue";
-import CalendarView from "../../components/feature/CalendarView.vue";
-import GanttChartView from "../../components/feature/GanttChartView.vue";
-import TimelineView from "../../components/feature/TimelineView.vue";
+
+// Lazy-loaded components
+const Dropdown = defineAsyncComponent(
+  () => import("../../components/ui/Dropdown.vue")
+);
+const Searchbar = defineAsyncComponent(
+  () => import("../../components/ui/SearchBar.vue")
+);
+const KanbanSkeleton = defineAsyncComponent(
+  () => import("../../components/skeletons/KanbanSkeleton.vue")
+);
+const BaseTextField = defineAsyncComponent(
+  () => import("../../components/ui/BaseTextField.vue")
+);
+const Button = defineAsyncComponent(
+  () => import("../../components/ui/Button.vue")
+);
+const KanbanTicket = defineAsyncComponent(
+  () => import("../../components/feature/kanban/KanbanTicket.vue")
+);
+const TableView = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableView.vue")
+);
+const DatePicker = defineAsyncComponent(
+  () => import("./components/DatePicker.vue")
+);
+const TableSearchCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableSearchCell.vue")
+);
+const TableAssigneeCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableAssigneeCell.vue")
+);
+const CalendarView = defineAsyncComponent(
+  () => import("../../components/feature/CalendarView.vue")
+);
+const GanttChartView = defineAsyncComponent(
+  () => import("../../components/feature/GanttChartView.vue")
+);
+const TimelineView = defineAsyncComponent(
+  () => import("../../components/feature/TimelineView.vue")
+);
 const {
   canEditSheet,
   canDeleteSheet,
@@ -701,43 +675,6 @@ declare global {
 }
 const showBgPicker = ref(false);
 
-const presetColors = [
-  "#FFFFFF",
-  "#F2F2F2",
-  "#D9D9D9",
-  "#BFBFBF",
-  "#A6A6A6",
-  "#808080",
-  "#404040",
-  "#000000",
-  "#FFE066",
-  "#FF9AA2",
-  "#8EE4AF",
-  "#00EAD3",
-  "#90DBF4",
-  "#4D96FF",
-  "#6C63FF",
-  "#C77DFF",
-  "#F7A1C4",
-  "#FFC300",
-  "#FF5733",
-  "#2ECC71",
-  "#00B894",
-  "#17A2B8",
-  "#0984E3",
-  "#3F51B5",
-  "#9C27B0",
-  "#E84393",
-  "#FF8C00",
-  "#E74C3C",
-  "#1E8449",
-  "#006D6F",
-  "#004C6D",
-  "#0057A8",
-  "#1A237E",
-  "#4A148C",
-  "#7D3C98",
-];
 const showTextColorPicker = ref(false);
 watch(showBgPicker, (v) => {
   if (v) showTextColorPicker.value = false;
@@ -816,7 +753,6 @@ const SidePanel = defineAsyncComponent(
 const KanbanBoard = defineAsyncComponent(
   () => import("../../components/feature/kanban/KanbanBoard.vue")
 );
-
 const {
   data,
   refetch: refetchSheets,
@@ -831,8 +767,8 @@ const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(sheetId.value);
 
 const { data: variables, isPending: isVariablesPending } = useVariables(
-  workspaceId.value,
-  moduleId.value,
+  workspaceId,
+  moduleId,
   selected_sheet_id
 );
 
@@ -1706,7 +1642,9 @@ const handleReorderCard = async (payload: {
 
 // Define the toolbar functions outside watchEffect
 function injectToolbarButton() {
-  const toolbar = mindMapRef.value?.querySelector(".mind-elixir-toolbar.rb") as HTMLElement;
+  const toolbar = mindMapRef.value?.querySelector(
+    ".mind-elixir-toolbar.rb"
+  ) as HTMLElement;
   if (!toolbar) return;
 
   // Prevent duplicate button
@@ -1733,7 +1671,9 @@ function setupToolbarObserver() {
     toolbarObserver = null;
   }
 
-  const toolbarContainer = mindMapRef.value?.querySelector(".mind-elixir-toolbar.rb")?.parentElement;
+  const toolbarContainer = mindMapRef.value?.querySelector(
+    ".mind-elixir-toolbar.rb"
+  )?.parentElement;
   if (!toolbarContainer) return;
 
   // Use MutationObserver to track changes in the toolbar
@@ -2269,15 +2209,13 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
   cursor: pointer;
 }
 :deep(.mind-elixir-toolbar.rb > *:hover) {
-  color: #7D68C8;
-  border: 1px solid #d9d9d9;
-  padding: 5px;
+  color: #7d68c8;
+  border: 1px solid #7d68c8;
   border-radius: 5px;
 }
 :deep(.mind-elixir-toolbar.lt > *:hover) {
-  color: #7D68C8;
-  border: 1px solid #d9d9d9;
-  padding: 5px;
+  color: #7d68c8;
+  border: 1px solid #7d68c8;
   border-radius: 5px;
 }
 </style>

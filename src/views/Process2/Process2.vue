@@ -90,10 +90,9 @@
 
         <div v-else class="bg-bg-body rounded-lg p-3 border border-border shadow-sm">
           <BaseTextField size="md" :autofocus="true" v-model="newColumn" placeholder="Group Name..." 
-            class="mb-3"
             @keyup.enter="emitAddColumn" />
           <div class="flex items-center gap-2">
-            <Button @click="emitAddColumn" variant="primary" size="sm" :loading="addingList">
+            <Button @click="emitAddColumn" variant="primary" size="sm" :loading="addingList" class="mt-4">
               Add Group
             </Button>
             <i class="fa-solid fa-close cursor-pointer text-text-secondary hover:text-text-primary px-2" @click="activeAddList = false"></i>

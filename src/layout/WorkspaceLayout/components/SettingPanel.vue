@@ -508,6 +508,22 @@ function extractNameFromEmail(email: string) {
 function sendInvites() {
   if (!canInvite.value) return
   if (!canInviteUser.value) return
+
+  // Check limits
+  const tmFeature = workspaceStore.getFeature('team_members')
+  if (tmFeature) {
+    // Current usage + new invites
+    const current = tmFeature.usage.current
+    const limit = tmFeature.limits.limit
+    const newCount = inviteEmails.value.length
+    
+    // If limit is not unlimited (usually -1 or very high number if unlimited, assuming standard finite limit logic here)
+    if (limit > 0 && (current + newCount > limit)) {
+      workspaceStore.setLimitExccedModal(true)
+      return
+    }
+  }
+
   invitePeople(
     {
       workspace_id: props.workspace._id,

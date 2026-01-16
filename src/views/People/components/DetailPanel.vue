@@ -1,7 +1,7 @@
 <template>
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
-      showPanel
+      props.showPanel
         ? '!translate-x-0 w-full h-full min-w-full sm:min-w-[380px] overflow-y-auto'
         : '!translate-x-100 w-0 h-0'
     } transition-all`"
@@ -25,8 +25,8 @@
     <div class="py-4 px-5">
       <div class="bg-bg-surface/50 p-2 rounded-lg flex gap-2 items-center">
         <img
-          v-if="details?.avatar"
-          :src="details?.avatar"
+          v-if="cardDetails?.avatar"
+          :src="cardDetails?.avatar"
           class="w-10 h-10 rounded-full"
           alt="avartar"
         />
@@ -35,20 +35,20 @@
           v-else
           class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full"
           :style="{
-            backgroundColor: details?.name
-              ? avatarColor({ email: details?.email })
+            backgroundColor: cardDetails?.name
+              ? avatarColor({ email: cardDetails?.email })
               : '',
           }"
         >
-          {{ getInitials(details?.name) }}
-          <i v-if="!details?.name" class="fa-solid fa-user text-white"></i>
+          {{ getInitials(cardDetails?.name) }}
+          <i v-if="!cardDetails?.name" class="fa-solid fa-user text-white"></i>
         </div>
         <div>
           <h1 class="text-base font-medium text-text-primary cursor-pointer">
-            {{ details.name ?? details.title }}
+            {{ cardDetails?.name ?? cardDetails?.title }}
           </h1>
           <p class="text-sm font-medium text-text-secondary cursor-pointer">
-            {{ details.email }}
+            {{ cardDetails?.email }}
           </p>
         </div>
       </div>
@@ -98,7 +98,7 @@
             :key="index"
             class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4"
           >
-            {{ item.title }}
+            {{ item?.title }}
             <BaseSelectField
               size="sm"
               :model-value="localVarValues[item._id]"
@@ -107,7 +107,7 @@
               @click.stop
               :defaultValue="getDefaultValue(item?._id)"
               :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
-              :cardId="details?._id"
+              :cardId="cardDetails?._id"
               :disabled="!canEditUser"
               @update:modelValue="(val: any) => handleSelect(val, item._id)"
             />
@@ -194,12 +194,12 @@
       <section v-if="activeTab == 'tasks'" class="mt-3">
         <span class="text-base text-text-primary">Worked On</span>
         <ul
-          v-if="details?.assigned_cards?.length > 0"
+          v-if="cardDetails?.assigned_cards?.length > 0"
           class="border border-border space-y-1 p-2.5 mt-1 rounded-lg"
         >
           <li
             class="p-2"
-            v-for="(item, index) in details?.assigned_cards"
+            v-for="(item, index) in cardDetails?.assigned_cards"
             :key="index"
           >
             <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
@@ -212,12 +212,12 @@
       <section v-if="activeTab == 'history'" class="mt-3">
         <span class="text-base text-text-primary">history</span>
         <ul
-          v-if="details?.assignment_history?.length > 0"
+          v-if="cardDetails?.assignment_history?.length > 0"
           class="border border-border space-y-1 p-2.5 mt-1 rounded-lg"
         >
           <li
             class="p-2"
-            v-for="(item, index) in details?.assignment_history"
+            v-for="(item, index) in cardDetails?.assignment_history"
             :key="index"
           >
             <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
@@ -258,12 +258,13 @@ import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
 import { useUpdatePermissions } from "../../../queries/usePackages"; // Import permissions update hook
 import { toast } from "vue-sonner";
 import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
-
+import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { usePermissions } from "../../../composables/usePermissions";
 const { canEditUser, isAdmin } = usePermissions();
-
+const sidePanelStore = useSidePanelStore();
 const localVarValues = reactive<any>({});
 const activeTab = ref<"details" | "tasks" | "history">("details");
+const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
 const tabOptions = [
   { label: "Details", value: "details" },
   { label: "Tasks", value: "tasks" },
@@ -277,34 +278,34 @@ const { mutate: UpdateVar } = useUpdateVar({
 });
 const props = defineProps({
   showPanel: { type: Boolean, default: true },
-  details: { type: Object as () => any, default: () => ({}) },
 });
+
 const editingTitle = ref(false);
-const localTitle = ref(props.details["card-title"] ?? "");
-const lane = ref(props.details["workspace_lane_id"] ?? "");
+const localTitle = ref(cardDetails.value?.title ?? "");
+const lane = ref(cardDetails.value?._id ?? "");
 
 // Watch for prop updates if details change
 watch(
-  () => props.details["card-title"],
+  () => cardDetails.value?.title,
   (val) => {
     localTitle.value = val;
-    lane.value = props.details["workspace_lane_id"];
+    lane.value = cardDetails.value?._id;
   }
 );
 
-const description = ref(props.details["card-description"]);
+const description = ref(cardDetails.value?.description ?? "");
 watch(
-  () => props.details,
+  () => cardDetails.value,
   () => {
-    description.value = props.details["card-description"];
+    description.value = cardDetails.value.description ?? "";
   }
 );
 
 watch(
-  () => props.details,
+  () => cardDetails.value,
   () => {
-    if (props.details?.variable_values) {
-      props.details.variable_values.forEach((v: any) => {
+    if (cardDetails.value?.variable_values) {
+      cardDetails.value.variable_values.forEach((v: any) => {
         localVarValues[v.module_variable_id] = v.value;
       });
     }
@@ -330,12 +331,12 @@ function editTitle() {
 
 function saveTitle() {
   if (!localTitle.value.trim()) {
-    localTitle.value = props.details["card-title"] ?? "";
+    localTitle.value = cardDetails.value?.title ?? "";
   }
 
   // Update the backend
   moveCard.mutate({
-    card_id: props.details._id,
+    card_id: cardDetails.value._id,
     variables: {
       "card-title": localTitle.value.trim(),
     },
@@ -345,16 +346,16 @@ function saveTitle() {
 }
 
 function cancelEdit() {
-  localTitle.value = props.details["card-title"] ?? "";
+  localTitle.value = cardDetails.value?.title ?? "";
   editingTitle.value = false;
 }
 
 const form = ref<any>({
-  startDate: props.details["start-date"],
-  endDate: props.details["end-date"],
+  startDate: "",
+  endDate: "",
 });
 
-const startDate = computed(() => props.details["start-date"]);
+const startDate = computed(() => cardDetails.value || null);
 watch(startDate, (newVal) => {
   form.value = {
     ...form.value,
@@ -380,7 +381,7 @@ const handleSelect = (val: any, slug: any) => {
   localVarValues[slug] = val;
 
   UpdateVar({
-    id: props.details._id,
+    id: cardDetails.value._id,
     payload: {
       variable_values: [
         {
@@ -394,17 +395,16 @@ const handleSelect = (val: any, slug: any) => {
 };
 
 function getDefaultValue(id: any) {
-  if (props?.details?.variable_values) {
-    const sbn = props?.details?.variable_values.filter(
+  if (cardDetails.value?.variable_values) {
+    const sbn = cardDetails.value?.variable_values.filter(
       (e: any) => e.module_variable_id == id
     );
-    console.log(sbn[0]?.value, ">>>");
     return sbn[0]?.value;
   }
 }
 
 // workspace roles 
-const workspaceId = computed(() => props.details?.workspace_id); 
+const workspaceId = computed(() => cardDetails.value?.workspace_id); 
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
@@ -415,7 +415,7 @@ const { data: workspaceRoles, isLoading: isLoadingWorkspaceRoles } = useWorkspac
   }, {  
  enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
 });
-const selectedRole = ref(props.details?.workspace_access_role_id ?? "");
+const selectedRole = ref(cardDetails.value?.workspace_access_role_id ?? "");
 
 // Mutation
 const { mutate: assignRole } = useAssignRole({
@@ -446,21 +446,21 @@ watch(selectedRole, (newRole) => {
   if (newRole === 'ADD_NEW_ROLE') return;
   
   assignRole({
-    id: props.details?._id!,
+    id: cardDetails.value?._id!,
     workspace_access_role_id: newRole,
   });
 });
 
 watch(
-  () => props.details?.workspace_access_role_id,
+  () => cardDetails.value?.workspace_access_role_id,
   (newRoleId) => {
     selectedRole.value = newRoleId ?? "";
   }
 );
 watch(
-  () => props.details?._id,
+  () => cardDetails.value?._id,
   () => {
-    selectedRole.value = props.details?.workspace_access_role_id ?? "";
+    selectedRole.value = cardDetails.value?.workspace_access_role_id ?? "";
   },
   { immediate: true }
 );
@@ -486,7 +486,7 @@ function handleRoleChange(newRole: any) {
   selectedRole.value = newRole;
 
   assignRole({
-    id: props.details?._id!,
+    id: cardDetails.value?._id!,
     workspace_access_role_id: newRole,
   });
 }
@@ -559,11 +559,11 @@ const AddCustomRoleModal = defineAsyncComponent(() => import('../modals/AddCusto
 
 
 const completedTasks = computed(() => {
-  return props.details?.assigned_cards_status_counts?.['Done'] ?? 0;
+  return cardDetails.value?.assigned_cards_status_counts?.['Done'] ?? 0;
 });
 
 const totalTasks = computed(() => {
-  return props.details?.assigned_cards_count ?? 0;
+  return cardDetails.value?.assigned_cards_count ?? 0;
 });
 
 const progressPercentage = computed(() => {

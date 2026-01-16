@@ -110,7 +110,7 @@
                 <li>
                   <button
                     class=" cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                    role="menuitem" type="button" @click="openAccountSettings">
+                    role="menuitem" type="button"  @click="openAccountSettings">
                     <i class="fa-regular fa-gear"></i>
                     <span>Account settings</span>
                   </button>
@@ -170,7 +170,6 @@
     </div>
 
   </nav>
-  <AccountSettingsModal v-model="showAccountSettings" />
   <LimitExceededModal @upgrade="handleUgrade" />
 
   <!-- Mobile Sidebar -->
@@ -219,25 +218,18 @@ import { getProfile } from '../../../services/user'
 import { useTheme } from '../../../composables/useTheme'
 import Loader from '../../../components/ui/Loader.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
-import AccountSettingsModal from '../modals/AccountSettingsModal.vue'
-import LimitExceededModal from '../modals/LimitExceededModal.vue'
 import NotificationBell from './NotificationBell.vue'
+import LimitExceededModal from '../modals/LimitExceededModal.vue'
 import { useAuthStore } from '../../../stores/auth'
+import { useCurrentPackage } from '../../../queries/usePackages'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
 const { setTheme, isDark } = useTheme()
 const authStore = useAuthStore()
 /* Account Settings Modal */
-const showAccountSettings = ref(false)
 function handleUgrade() {
-  router.push(`/dashboard?stripePayment=${true}`)
-  nextTick()
-  setTimeout(()=>{
-    showAccountSettings.value = true;
-    workspaceStore.setLimitExccedModal(false)
-
-  }, 100)
-  
+  router.push(`/settings?tab=billing&stripePayment=${true}`)
+  workspaceStore.setLimitExccedModal(false)
 }
 /* Router */
 const router = useRouter()
@@ -250,6 +242,14 @@ const { data: profile, isPending } = useQuery({
 })
 
 const profileData = computed(() => profile.value?.data ?? null)
+
+/* Limits Sync */
+const { data: currentPackage } = useCurrentPackage()
+watch(() => currentPackage.value, (pkg) => {
+  if (pkg) {
+    workspaceStore.setLimit(pkg)
+  }
+}, { immediate: true })
 
 const initials = computed(() => {
   const name = profileData.value?.u_full_name?.trim() || ''
@@ -313,7 +313,7 @@ function onClickOutside(e: MouseEvent) {
 const route = useRoute()
 onMounted(() => {
   if (route.query.stripePayment) {
-    showAccountSettings.value = true
+    router.push({ path: "/settings", query: { ...route.query, tab: "billing" } })
   }
   document.addEventListener('click', onClickOutside)
   window.addEventListener('resize', onResize)
@@ -333,13 +333,21 @@ async function handleLogout() {
 
     localStorage.clear()
     authStore.logout()
-    await queryClient.cancelQueries({ queryKey: ['me'] })
-    await queryClient.cancelQueries({ queryKey: ['profile'] })
-    await queryClient.cancelQueries({ queryKey: ['workspaces'] })
+
+    // await queryClient.cancelQueries({ queryKey: ['me'] })
+    // await queryClient.cancelQueries({ queryKey: ['profile'] })
+    // await queryClient.cancelQueries({ queryKey: ['workspaces'] })
     // 3) remove the profile query from cache (RAM)
-    queryClient.removeQueries({ queryKey: ['profile'] })
-    queryClient.removeQueries({ queryKey: ['workspaces'] })
-    queryClient.removeQueries({ queryKey: ['me'] })
+    // queryClient.removeQueries({ queryKey: ['profile'] })
+    // queryClient.removeQueries({ queryKey: ['workspaces'] })
+    // queryClient.removeQueries({ queryKey: ['me'] })
+
+    // Cancel active queries
+    await queryClient.cancelQueries()
+    
+    // Clear the entire query cache to ensure no stale data persists for the next user
+    queryClient.clear()
+
     router.push('/login')
 
   } catch (e) {
@@ -349,7 +357,7 @@ async function handleLogout() {
 
 function openAccountSettings() {
   closeMenu()
-  showAccountSettings.value = true
+  router.push('/settings')
 }
 
 /* --- Sliding underline indicator logic --- */

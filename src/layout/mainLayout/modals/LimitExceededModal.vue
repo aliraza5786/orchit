@@ -118,14 +118,17 @@
   import { useWorkspaceStore } from '../../../stores/workspace'
   import { confirmPayment, useCurrentPackage } from '../../../queries/usePackages'
   
-  const workspaceStore = useWorkspaceStore()
+  const workspaceStore = useWorkspaceStore();
+
+  
   const route = useRoute()
   const router = useRouter()
   
   /** Usage numbers for the ring/bar.
    *  If you already have these in a store, replace with your own sources. */
-  const used = computed(() => workspaceStore?.limits?.features[1]?.usage.current ?? 0)
-  const limit = computed(() => workspaceStore?.limits?.features[1]?.usage.limit ?? 0)
+  const wsFeature = computed(() => workspaceStore.getFeature('no-of-workspaces'))
+  const used = computed(() => wsFeature.value?.usage.current ?? 0)
+  const limit = computed(() => wsFeature.value?.limits.limit ?? 0)
   const remaining = computed(() => Math.max(0, (limit.value || 0) - (used.value || 0)))
   const percent = computed(() => {
     if (!limit.value) return 0
@@ -141,9 +144,11 @@
   /** Keep your existing upgrade flow intact */
   const { data: currentPackage, refetch: reftechCurrentPackage } = useCurrentPackage()
   const sessionId = route.query.session_id as string | undefined
+  const packageId = route.query.packageId as string | undefined
+
   
   const { mutate: confirm } = confirmPayment(
-    { sessionId: sessionId, interval: 'month' },
+    { sessionId: sessionId, interval: 'month', packageId:packageId },
     {
       onSuccess: () => {
         reftechCurrentPackage()
