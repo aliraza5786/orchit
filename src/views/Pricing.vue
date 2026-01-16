@@ -4,13 +4,43 @@ import { useTheme } from "../composables/useTheme";
 import { useWorkspaceStore } from "../stores/workspace";
 import { usePackages } from "../queries/usePricing";
 import PricingSkeleton from "../components/skeletons/PricingSkeleton.vue";
+import { useAuthStore } from "../stores/auth";
+import { useRouter } from "vue-router";
+import { useUpgradePackage } from "../queries/usePackages";
 
 const { isDark } = useTheme(); // light / dark / system
 const isYearly = ref(false);
 const workspaceStore = useWorkspaceStore();
 
-function handleClick() {
-  workspaceStore.setPricing(true);
+const authStore = useAuthStore();
+const router = useRouter();
+
+const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
+  onSuccess: async (data: any) => {
+    window.open(data?.checkoutUrl);
+  },
+});
+
+const upgradingPackageId = ref<string | null>(null);
+
+function handleClick(plan: any) {
+  if (authStore.isAuthenticated) {
+    upgradingPackageId.value = plan.packageId;
+    upgradePackage({
+      packageId: plan.packageId,
+      interval: isYearly.value ? "year" : "month",
+    });
+  } else {
+    workspaceStore.setPricing(true);
+    localStorage.setItem(
+      "post_auth_upgrade",
+      JSON.stringify({
+        packageId: plan.packageId,
+        interval: isYearly.value ? "year" : "month",
+      })
+    );
+    router.push("/register");
+  }
 }
 
 // ----------------- Format Feature Limits -----------------
@@ -63,6 +93,7 @@ const formatPackages = (packages: any[], isYearly: boolean) => {
 
     return {
       name: pkg.name,
+      packageId: pkg._id || pkg.id,
       description: pkg.description || "",
       priceMonthly: monthlyPrice,
       priceYearly: priceYearly,
@@ -225,23 +256,22 @@ const pricingPlans = computed(() => {
             </div>
 
             <!-- Button -->
-            <router-link to="/register">
-              <button
-                @click="handleClick"
-                class="w-full py-[14px] cursor-pointer rounded-[12px] font-manrope font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
-                :class="[
-                  isDark
-                    ? plan.highlighted
-                      ? 'bg-white text-black hover:bg-gray-200'
-                      : 'bg-bg-charcoal text-white hover:bg-white hover:text-black'
-                    : plan.highlighted
-                    ? 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white'
-                    : 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white',
-                ]"
-              >
-                {{ plan.button }}
-              </button>
-            </router-link>
+            <button
+              @click="handleClick(plan)"
+              :disabled="isUpgrading && upgradingPackageId === plan.packageId"
+              class="w-full py-[14px] cursor-pointer rounded-[12px] font-manrope font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
+              :class="[
+                isDark
+                  ? plan.highlighted
+                    ? 'bg-white text-black hover:bg-gray-200'
+                    : 'bg-bg-charcoal text-white hover:bg-white hover:text-black'
+                  : plan.highlighted
+                  ? 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white'
+                  : 'bg-gradinet  text-white hover:bg-gradinet  hover:text-white',
+              ]"
+            >
+              {{ isUpgrading && upgradingPackageId === plan.packageId ? "Upgrading..." : plan.button }}
+            </button>
           </div>
 
           <!-- Features -->

@@ -393,6 +393,7 @@ const { mutate: confirm, isPending: isConfirming } = confirmPayment(
   {
     onSuccess: () => {
       reftechCurrentPackage();
+      toast.success("Subscription upgraded successfully!");
       router.push("/");
     },
   }
@@ -400,11 +401,29 @@ const { mutate: confirm, isPending: isConfirming } = confirmPayment(
 const hasConfirmed = ref(false)
 
 onMounted(() => {
-  if (route.query.stripePayment && sessionId && !hasConfirmed.value) {
-    hasConfirmed.value = true
-    confirm({})
+  // Check for stored upgrade intent from Pricing page
+  const intentStr = localStorage.getItem("post_auth_upgrade");
+  if (intentStr && route.query.stripePayment) {
+    try {
+      const intent = JSON.parse(intentStr);
+      localStorage.removeItem("post_auth_upgrade");
+      
+      // Trigger upgrade immediately
+      upgradingPackageId.value = intent.packageId;
+      upgradePackage({
+        packageId: intent.packageId,
+        interval: intent.interval || "month",
+      });
+    } catch (e) {
+      console.error("Failed to parse post_auth_upgrade", e);
+    }
   }
-})
+
+  if (route.query.stripePayment && sessionId && !hasConfirmed.value) {
+    hasConfirmed.value = true;
+    confirm({});
+  }
+});
 
 const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
   onSuccess: async (data: any) => {
@@ -413,10 +432,11 @@ const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
 });
 const upgradingPackageId = ref<string | null>(null);
 function pay(p: any) { 
-  if (!p?.id) return
-  upgradingPackageId.value = p?.id;
+  const id = p?._id || p?.id
+  if (!id) return
+  upgradingPackageId.value = id;
   upgradePackage({
-    packageId: p?.id,
+    packageId: id,
     interval: p?.pricing?.month?.interval || "month",
   });
 }
