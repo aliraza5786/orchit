@@ -56,7 +56,7 @@
                  {{ profileData.companies?.role?.title || 'Member' }}
                </span>
                <span v-if="profileData.companies?.title" class="px-3 py-1 bg-text-secondary/10 text-text-secondary text-xs font-bold rounded-full border border-border">
-                 {{ profileData.companies.title }}
+                <i class="fa-solid fa-building text-accent"></i> {{ profileData.companies.title }}
                </span>
             </div>
           </div>
@@ -75,7 +75,7 @@
               label="Full Name"
               placeholder="Enter your full name"
               v-model="form.fullName"
-              class="focus-within:ring-2 focus-within:ring-accent/20"
+              class=""
             />
             <BaseTextField
               label="Email Address"
