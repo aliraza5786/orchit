@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, watch } from 'vue'
+import { reactive, computed, watch, ref} from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
@@ -122,7 +122,7 @@ type Variable = {
     data: string[]
     slug: string
 }
-const { data: variables } = useVariables(workspaceId.value, moduleId.value, props.sheet_id)
+const { data: variables } = useVariables(workspaceId, moduleId, ref(props.sheet_id ?? ''))
 
 /** Modal open proxy */
 const isOpen = computed({

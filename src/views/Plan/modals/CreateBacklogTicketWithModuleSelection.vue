@@ -201,13 +201,9 @@ const sheets = computed(() => sheetsData.value || [])
 
 const { data: lanes } = useLanes(workspaceId.value)
 
-const { data: variables } = useVariables(
-  workspaceId.value,
-  selectedModuleId,
-  {
-    enabled: computed(() => !!selectedModuleId.value)
-  }
-)
+const moduleIdForQuery = computed(() => selectedModuleId.value ?? '')
+
+const { data: variables } = useVariables(workspaceId, moduleIdForQuery, ref(''))
 
 const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
   onSuccess: () => {

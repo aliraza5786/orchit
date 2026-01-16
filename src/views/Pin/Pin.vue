@@ -148,7 +148,7 @@ const { data, refetch: refetchSheets } = useSheets(
 );
 
 const selected_sheet_id = ref<any>(data.value?.[0]?._id ?? null);
-const { data: variables } = useVariables(workspaceId.value, moduleId.value, selected_sheet_id);
+const { data: variables } = useVariables(workspaceId, moduleId, selected_sheet_id);
 const viewBy = computed(() => variables.value?.[0]?._id ?? '');
 const selected_view_by = ref(viewBy.value);
 watch(viewBy, (val) => (selected_view_by.value = val));
