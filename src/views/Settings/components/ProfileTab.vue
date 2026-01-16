@@ -3,11 +3,11 @@
     <div class="space-y-8">
       <!-- Profile Header Section -->
       <div class="bg-bg-body/50 p-6 rounded-2xl border border-border/50 shadow-sm transition-all hover:shadow-md">
-        <div class="flex flex-col sm:flex-row items-center gap-8">
+        <div class="flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 lg:gap-8">
           <!-- Avatar Section -->
           <div class="relative group">
             <div
-              class="w-32 h-32 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-bg-card shadow-xl overflow-hidden relative"
+              class=" w-15 h-15 lg:w-32 lg:h-32 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-lg lg:text-3xl font-bold border-2 lg:border-4 border-bg-card shadow-sm overflow-hidden relative"
             >
               <img
                 v-if="avatarPreview || profileData.u_profile_image"
@@ -25,7 +25,7 @@
             
             <button
               type="button"
-              class="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-accent text-white shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-10"
+              class="absolute bottom-2 -right-2 w-6 lg:w-10 h-6 lg:h-10 rounded-full bg-accent text-white shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all  z-10"
               :disabled="isUploadingAvatar || isUploading"
               @click="triggerAvatarPicker"
               title="Change profile picture"
@@ -43,12 +43,12 @@
           </div>
 
           <!-- Basic Info -->
-          <div class="flex-1 text-center sm:text-left">
-            <h3 class="text-2xl font-bold text-text-primary tracking-tight">
+          <div class="flex-1 text-center md:text-left">
+            <h3 class="text-lg lg:text-2xl font-bold text-text-primary tracking-tight">
               {{ form.fullName || 'New User' }}
             </h3>
-            <p class="text-text-secondary font-medium flex items-center justify-center sm:justify-start gap-2 mt-1">
-              <i class="fa-regular fa-envelope text-accent/70"></i>
+            <p class="text-text-secondary font-medium text-[14px] flex items-center justify-center sm:justify-start gap-2 mt-1">
+              <i class="fa-regular fa-envelope text-accent/70 mt-1"></i>
               {{ form.email }}
             </p>
             <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-2">
@@ -64,8 +64,8 @@
       </div>
 
       <!-- Form Section -->
-      <div class="grid grid-cols-1 gap-8">
-        <section class="bg-bg-body/30 p-8 rounded-2xl border border-border/40">
+      <div class="grid grid-cols-1 gap-8 relative">
+        <section class="bg-bg-body/30 p-4 sm:p-8 rounded-2xl border border-border/40">
           <h4 class="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
             <i class="fa-solid fa-user-gear text-accent"></i>
             Personal Information
@@ -84,10 +84,35 @@
               class="opacity-70 cursor-not-allowed bg-bg-card/50"
             />
           </div>
+    
         </section>
+          <!-- Action Footer -->
+      <Transition
+        enter-active-class="transition duration-300 ease-out"
+        enter-from-class="transform translate-y-4 opacity-0"
+        enter-to-class="transform translate-y-0 opacity-100"
+        leave-active-class="transition duration-200 ease-in"
+        leave-from-class="transform translate-y-0 opacity-100"
+        leave-to-class="transform translate-y-4 opacity-0"
+      >
+        <div v-if="hasChanges">
+          <Button
+            variant="primary"
+            class="!py-3 !px-8 shadow-2xl backdrop-blur-md bg-accent/90 hover:bg-accent ring-4 ring-bg-body/50"
+            @click="saveChanges"
+            :disabled="isSaving"
+          >
+            <div class="flex items-center gap-2">
+              <i v-if="isSaving" class="fa-solid fa-spinner fa-spin"></i>
+              <i v-else class="fa-solid fa-floppy-disk"></i>
+              <span class="font-bold tracking-wide">{{ isSaving ? "Saving changes..." : "Save Changes" }}</span>
+            </div>
+          </Button>
+        </div>
+      </Transition>
 
         <!-- Organization Section -->
-        <section v-if="profileData.companies" class="bg-bg-body/30 p-8 rounded-2xl border border-border/40">
+        <section v-if="profileData.companies" class="bg-bg-body/30 p-4 sm:p-8 rounded-2xl border border-border/40">
           <h4 class="text-lg font-bold text-text-primary mb-6 flex items-center gap-2">
             <i class="fa-solid fa-building text-accent"></i>
             Organization Details
@@ -109,30 +134,7 @@
         </section>
       </div>
 
-      <!-- Action Footer -->
-      <Transition
-        enter-active-class="transition duration-300 ease-out"
-        enter-from-class="transform translate-y-4 opacity-0"
-        enter-to-class="transform translate-y-0 opacity-100"
-        leave-active-class="transition duration-200 ease-in"
-        leave-from-class="transform translate-y-0 opacity-100"
-        leave-to-class="transform translate-y-4 opacity-0"
-      >
-        <div v-if="hasChanges" class="fixed bottom-8 right-8 z-50">
-          <Button
-            variant="primary"
-            class="!py-3 !px-8 shadow-2xl backdrop-blur-md bg-accent/90 hover:bg-accent ring-4 ring-bg-body/50"
-            @click="saveChanges"
-            :disabled="isSaving"
-          >
-            <div class="flex items-center gap-2">
-              <i v-if="isSaving" class="fa-solid fa-spinner fa-spin"></i>
-              <i v-else class="fa-solid fa-floppy-disk"></i>
-              <span class="font-bold tracking-wide">{{ isSaving ? "Saving changes..." : "Save Changes" }}</span>
-            </div>
-          </Button>
-        </div>
-      </Transition>
+     
     </div>
   </div>
 
