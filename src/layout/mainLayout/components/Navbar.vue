@@ -221,6 +221,7 @@ import { useWorkspaceStore } from '../../../stores/workspace'
 import NotificationBell from './NotificationBell.vue'
 import LimitExceededModal from '../modals/LimitExceededModal.vue'
 import { useAuthStore } from '../../../stores/auth'
+import { useCurrentPackage } from '../../../queries/usePackages'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
 const { setTheme, isDark } = useTheme()
@@ -241,6 +242,14 @@ const { data: profile, isPending } = useQuery({
 })
 
 const profileData = computed(() => profile.value?.data ?? null)
+
+/* Limits Sync */
+const { data: currentPackage } = useCurrentPackage()
+watch(() => currentPackage.value, (pkg) => {
+  if (pkg) {
+    workspaceStore.setLimit(pkg)
+  }
+}, { immediate: true })
 
 const initials = computed(() => {
   const name = profileData.value?.u_full_name?.trim() || ''

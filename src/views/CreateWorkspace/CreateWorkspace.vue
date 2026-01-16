@@ -144,6 +144,17 @@ const continueLabel = computed(() => (currentStep.value === 1 && stepOnePending.
 function handleClose() {
   router.push('/')
 }
+
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  const wsFeature = workspaceStore.getFeature('no-of-workspaces')
+  if (wsFeature && wsFeature.usage.current >= wsFeature.limits.limit) {
+    workspaceStore.setLimitExccedModal(true)
+    handleClose()
+  }
+})
+
 function onManualStart(e: any) {
   isStartOver.value++;
   if (e == 'mannual')

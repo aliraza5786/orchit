@@ -126,8 +126,9 @@
   
   /** Usage numbers for the ring/bar.
    *  If you already have these in a store, replace with your own sources. */
-  const used = computed(() => workspaceStore?.limits?.features[1]?.usage.current ?? 0)
-  const limit = computed(() => workspaceStore?.limits?.features[1]?.usage.limit ?? 0)
+  const wsFeature = computed(() => workspaceStore.getFeature('no-of-workspaces'))
+  const used = computed(() => wsFeature.value?.usage.current ?? 0)
+  const limit = computed(() => wsFeature.value?.limits.limit ?? 0)
   const remaining = computed(() => Math.max(0, (limit.value || 0) - (used.value || 0)))
   const percent = computed(() => {
     if (!limit.value) return 0

@@ -114,5 +114,8 @@ export const useWorkspaceStore = defineStore("workspace", {
     isLaneSelected(id: string): boolean {
       return this.selectedLaneIds.includes(id);
     },
+    getFeature(key: string) {
+      return this.limits?.features?.find((f: any) => f.key === key);
+    }
   },
 });
