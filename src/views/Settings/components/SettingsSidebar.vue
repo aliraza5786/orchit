@@ -62,6 +62,6 @@ function selectTab(tab: string) {
 }
 
 function goBack() {
-  router.back();
+  router.push('/dashboard');
 }
 </script>

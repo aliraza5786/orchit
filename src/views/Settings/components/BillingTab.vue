@@ -22,10 +22,10 @@
               {{ currentPackage?.package?.name }}
             </p>
             <p class="text-sm text-text-secondary">
-              {{ currentPackage?.package?.name === 'Free' ? 'Forever Free' : (selectedInterval === 'month' ? 'Monthly' : 'Yearly') }}
+              {{ currentPackage?.package?.name === 'Free' ? 'Forever Free' : (currentPackage?.interval === 'year' ? 'Yearly' : 'Monthly') }}
             </p>
           </div>
-          <div class="text-right">
+          <div class="text-right" v-if="currentPackage?.package?.name !== 'Free'">
             <p class="text-2xl font-bold text-text-primary">
               {{
                 currentPackage?.package?.currencySymbol +
@@ -34,11 +34,7 @@
             </p>
             <p class="text-xs text-text-secondary">
               per
-              {{
-                selectedInterval === "month"
-                  ? "month"
-                  : "year"
-              }}
+              {{ currentPackage?.interval || 'month' }}
             </p>
           </div>
         </div>
@@ -84,26 +80,30 @@
         </div>
       </div>
 
-      <!-- Interval Toggle -->
-      <div class="flex flex-col items-center gap-4">
-        <div class="inline-flex p-1 bg-bg-body border border-border rounded-xl">
-          <button
-            v-for="option in intervalOptions"
-            :key="option.value"
-            @click="selectedInterval = option.value"
-            class="px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-            :class="selectedInterval === option.value
-              ? 'bg-accent text-white shadow-md'
-              : 'text-text-secondary hover:text-text-primary'"
-          >
-            {{ option.label }}
-          </button>
-        </div>
-      </div>
-
       <!-- Available Plans Section -->
-      <div v-if="currentPackage?.nextPackages?.length" class="space-y-6">
-        <h3 class="text-xl font-bold text-text-primary text-center">Available Upgrades</h3>
+      <div v-if="currentPackage?.nextPackages?.length" class="space-y-6 pt-6 border-t border-border">
+        <div class="text-center space-y-4">
+          <h3 class="text-2xl font-bold text-text-primary">Upgrade Your Plan</h3>
+          <p class="text-text-secondary max-w-md mx-auto">Choose the plan that best fits your team's needs. Save 20% by switching to yearly billing.</p>
+          
+          <!-- Interval Toggle moved here -->
+          <div class="flex flex-col items-center gap-4 mt-6">
+            <div class="inline-flex p-1 bg-bg-body border border-border rounded-xl">
+              <button
+                v-for="option in intervalOptions"
+                :key="option.value"
+                @click="selectedInterval = option.value"
+                class="px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                :class="selectedInterval === option.value
+                  ? 'bg-accent text-white shadow-md'
+                  : 'text-text-secondary hover:text-text-primary'"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div
             v-for="nextPackage in currentPackage?.nextPackages"
@@ -166,7 +166,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import Button from "../../../components/ui/Button.vue";
 import { toast } from "vue-sonner";
 import {
@@ -188,13 +188,23 @@ const {
   isPending,
 } = useCurrentPackage();
 
+watch(
+  () => currentPackage.value,
+  (pkg) => {
+    if (pkg) {
+      workspaceStore.setLimit(pkg);
+    }
+  },
+  { immediate: true }
+);
+
 const selectedInterval = ref('month');
 const intervalOptions = [
   { label: 'Monthly', value: 'month' },
   { label: 'Yearly (20% Off)', value: 'year' }
 ];
 
-const formatFeature = (feature) => {
+const formatFeature = (feature: any) => {
   const limits = feature.limits;
   if (!limits) return feature.description || feature.name;
 
@@ -214,7 +224,7 @@ const formatFeature = (feature) => {
   return feature.description || feature.name;
 };
 
-const getPriceInfo = (pkg, interval) => {
+const getPriceInfo = (pkg: any, interval: any) => {
   const monthPrice = pkg?.pricing?.month?.amount || 0;
   const currency = pkg?.pricing?.month?.currencySymbol || "$";
   
@@ -232,7 +242,8 @@ const getPriceInfo = (pkg, interval) => {
   return {
     amount: monthPrice,
     currencySymbol: currency,
-    interval: 'month'
+    interval: 'month',
+    originalAmount: monthPrice
   };
 };
 
@@ -257,6 +268,24 @@ const { mutate: confirm, isPending: isConfirming } = confirmPayment(
 const hasConfirmed = ref(false)
 
 onMounted(() => {
+  // Check for stored upgrade intent from Pricing page
+  const intentStr = localStorage.getItem("post_auth_upgrade");
+  if (intentStr && route.query.stripePayment) {
+    try {
+      const intent = JSON.parse(intentStr);
+      localStorage.removeItem("post_auth_upgrade");
+      
+      // Trigger upgrade immediately
+      upgradingPackageId.value = intent.packageId;
+      upgradePackage({
+        packageId: intent.packageId,
+        interval: intent.interval || "month",
+      });
+    } catch (e) {
+      console.error("Failed to parse post_auth_upgrade", e);
+    }
+  }
+
   if (route.query.stripePayment && sessionId && !hasConfirmed.value) {
     hasConfirmed.value = true;
     confirm({});

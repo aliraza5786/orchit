@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import Button from '../../components/ui/Button.vue'
 import ProjectGallery from '../../components/ui/ProjectGallery.vue'
 import WorkspaceListTable from './components/WorkspaceListTable.vue'
@@ -59,6 +59,9 @@ import { useWorkspaceStore } from '../../stores/workspace'
 import { useRouter } from 'vue-router'
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
+watchEffect(()=>{
+  console.log( workspaceStore.limits, "limit  ")
+})
 // 🔑 pagination + sort state
 const page = ref(1)
 const pageSize = ref(10)

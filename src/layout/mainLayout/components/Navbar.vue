@@ -110,7 +110,7 @@
                 <li>
                   <button
                     class=" cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                    role="menuitem" type="button" @click="openAccountSettings">
+                    role="menuitem" type="button"  @click="openAccountSettings">
                     <i class="fa-regular fa-gear"></i>
                     <span>Account settings</span>
                   </button>
@@ -170,7 +170,6 @@
     </div>
 
   </nav>
-  <AccountSettingsModal v-model="showAccountSettings" />
   <LimitExceededModal @upgrade="handleUgrade" />
 
   <!-- Mobile Sidebar -->
@@ -219,25 +218,17 @@ import { getProfile } from '../../../services/user'
 import { useTheme } from '../../../composables/useTheme'
 import Loader from '../../../components/ui/Loader.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
-import AccountSettingsModal from '../modals/AccountSettingsModal.vue'
-import LimitExceededModal from '../modals/LimitExceededModal.vue'
 import NotificationBell from './NotificationBell.vue'
+import LimitExceededModal from '../modals/LimitExceededModal.vue'
 import { useAuthStore } from '../../../stores/auth'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
 const { setTheme, isDark } = useTheme()
 const authStore = useAuthStore()
 /* Account Settings Modal */
-const showAccountSettings = ref(false)
 function handleUgrade() {
-  router.push(`/dashboard?stripePayment=${true}`)
-  nextTick()
-  setTimeout(()=>{
-    showAccountSettings.value = true;
-    workspaceStore.setLimitExccedModal(false)
-
-  }, 100)
-  
+  router.push(`/settings?tab=billing&stripePayment=${true}`)
+  workspaceStore.setLimitExccedModal(false)
 }
 /* Router */
 const router = useRouter()
@@ -313,7 +304,7 @@ function onClickOutside(e: MouseEvent) {
 const route = useRoute()
 onMounted(() => {
   if (route.query.stripePayment) {
-    showAccountSettings.value = true
+    router.push({ path: "/settings", query: { ...route.query, tab: "billing" } })
   }
   document.addEventListener('click', onClickOutside)
   window.addEventListener('resize', onResize)
@@ -349,7 +340,7 @@ async function handleLogout() {
 
 function openAccountSettings() {
   closeMenu()
-  showAccountSettings.value = true
+  router.push('/settings')
 }
 
 /* --- Sliding underline indicator logic --- */

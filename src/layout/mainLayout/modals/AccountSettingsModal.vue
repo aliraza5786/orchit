@@ -408,7 +408,7 @@ const intervalOptions = [
   { label: 'Yearly (20% Off)', value: 'year' }
 ];
 
-const formatFeature = (feature) => {
+const formatFeature = (feature: any) => {
   const limits = feature.limits;
   if (!limits) return feature.description || feature.name;
 
@@ -428,7 +428,7 @@ const formatFeature = (feature) => {
   return feature.description || feature.name;
 };
 
-const getPriceInfo = (pkg, interval) => {
+const getPriceInfo = (pkg: any, interval: any) => {
   const monthPrice = pkg?.pricing?.month?.amount || 0;
   const currency = pkg?.pricing?.month?.currencySymbol || "$";
   
@@ -446,7 +446,8 @@ const getPriceInfo = (pkg, interval) => {
   return {
     amount: monthPrice,
     currencySymbol: currency,
-    interval: 'month'
+    interval: 'month',
+    originalAmount: monthPrice
   };
 };
 

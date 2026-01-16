@@ -118,7 +118,9 @@
   import { useWorkspaceStore } from '../../../stores/workspace'
   import { confirmPayment, useCurrentPackage } from '../../../queries/usePackages'
   
-  const workspaceStore = useWorkspaceStore()
+  const workspaceStore = useWorkspaceStore();
+
+  
   const route = useRoute()
   const router = useRouter()
   
