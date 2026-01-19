@@ -24,8 +24,8 @@
   </div>
 </template>
 
-<script setup>
-import { provide, computed, ref, watch } from "vue";
+<script setup lang="ts">
+import { provide, computed, watch, onMounted } from "vue";
 import {
   ScheduleComponent as EjsSchedule,
   ResourcesDirective as EResources,
@@ -37,20 +37,50 @@ import {
   Agenda,
 } from "@syncfusion/ej2-vue-schedule";
 import { useTheme } from "../../composables/useTheme";
+
+// Types
+interface Seat {
+  _id: string;
+  title?: string;
+  name?: string;
+}
+
+interface Card {
+  _id: string;
+  "card-title"?: string;
+  "start-date"?: string;
+  "end-date"?: string;
+  seat?: Seat;
+  "card-description"?: string;
+  "card-status"?: string;
+  "card-type"?: string;
+}
+
+interface Owner {
+  Id: string;
+  OwnerText: string;
+  OwnerColor: string;
+}
+
+interface Event {
+  Id: string;
+  Subject: string;
+  StartTime: Date;
+  EndTime: Date;
+  OwnerId: string;
+  Description: string;
+  Status: string;
+  Type: string;
+}
+
 provide("schedule", [Day, Week, WorkWeek, Month, Agenda]);
+const props = defineProps<{
+  data?: Card[];
+}>();
 const { isDark } = useTheme();
 const views = ["Day", "Week", "WorkWeek", "Month", "Agenda"];
-
-// Props
-const props = defineProps({
-  data: {
-    type: Array,
-    default: () => [],
-  },
-});
 const selectedDate = new Date();
-
-const generateColor = (id) => {
+const generateColor = (id: string): string => {
   const colors = [
     "#ffaa00",
     "#f8a398",
@@ -69,23 +99,19 @@ const generateColor = (id) => {
   }
   return colors[Math.abs(hash) % colors.length];
 };
-
-// Map unique owners for resources
-const ownerDataSource = computed(() => {
+const ownerDataSource = computed<Owner[]>(() => {
   if (!props.data || props.data.length === 0) {
     return [
       { Id: "unassigned", OwnerText: "Unassigned", OwnerColor: "#9e9e9e" },
     ];
   }
 
-  const seatsMap = new Map();
+  const seatsMap = new Map<string, Owner>();
   seatsMap.set("unassigned", {
     Id: "unassigned",
     OwnerText: "Unassigned",
     OwnerColor: "#9e9e9e",
   });
-
-  // Extract unique seats from cards
   props.data.forEach((card) => {
     if (card.seat && card.seat._id) {
       if (!seatsMap.has(card.seat._id)) {
@@ -105,13 +131,15 @@ const eventSettings = computed(() => {
   if (!props.data || props.data.length === 0) {
     return { dataSource: [] };
   }
-  const events = props.data
+
+  const events: Event[] = props.data
     .filter((card) => {
       return card["start-date"] && card["end-date"];
     })
     .map((card) => {
-      const startDate = new Date(card["start-date"]);
-      const endDate = new Date(card["end-date"]);
+      const startDate = new Date(card["start-date"]!);
+      const endDate = new Date(card["end-date"]!);
+
       if (endDate.getHours() === 0 && endDate.getMinutes() === 0) {
         endDate.setHours(23, 59, 59);
       }
@@ -133,33 +161,40 @@ const eventSettings = computed(() => {
 
   return { dataSource: events };
 });
-const scheduleObj = ref(null);
+onMounted(() => {
+  let themeLink = document.getElementById(
+    "syncfusion-theme",
+  ) as HTMLLinkElement | null;
+  if (!themeLink) {
+    themeLink = document.createElement("link");
+    themeLink.id = "syncfusion-theme";
+    themeLink.rel = "stylesheet";
+    themeLink.href = "https://cdn.syncfusion.com/ej2/material3.css";
+    document.head.appendChild(themeLink);
+  }
+  if (isDark.value) {
+    document.body.classList.add("e-dark-mode");
+  } else {
+    document.body.classList.remove("e-dark-mode");
+  }
+});
+
 watch(
   isDark,
-  () => {
-    const ejGantt = scheduleObj.value?.ej2Instances;
-    if (ejGantt) {
-      ejGantt.theme = isDark.value ? "Material3Dark" : "Material3";
-      ejGantt.refresh();
+  (newValue) => {
+    if (newValue) {
+      document.body.classList.add("e-dark-mode");
+    } else {
+      document.body.classList.remove("e-dark-mode");
     }
   },
-  { immediate: true }
-);
-watch(
-  isDark,
-  () => {
-    const lightTheme = document.getElementById("light-theme");
-    const darkTheme = document.getElementById("dark-theme");
-
-    if (lightTheme && darkTheme) {
-      lightTheme.disabled = isDark.value;
-      darkTheme.disabled = !isDark.value;
-    }
-
-    // refresh Gantt so it repaints
-    const ejGantt = scheduleObj.value?.ej2Instances;
-    if (ejGantt) ejGantt.refresh();
-  },
-  { immediate: true }
+  { immediate: false },
 );
 </script>
+
+<style scoped>
+.schedule-container {
+  width: 100%;
+  height: 100%;
+}
+</style>

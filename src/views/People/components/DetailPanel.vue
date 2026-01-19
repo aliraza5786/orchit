@@ -1,7 +1,7 @@
 <template>
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
-      props.showPanel
+      showPanel
         ? '!translate-x-0 w-full h-full min-w-full sm:min-w-[380px] overflow-y-auto'
         : '!translate-x-100 w-0 h-0'
     } transition-all`"
@@ -12,13 +12,9 @@
     >
       <h5 class="text-[16px] font-medium">Profile</h5>
       <i
-        class="cursor-pointer text-text-primary fa-solid fa-close"
-        @click="
-          () => {
-            $emit('close');
-          }
-        "
-      ></i>
+  class="cursor-pointer text-text-primary fa-solid fa-close"
+  @click="$emit('close')"
+/>
     </div>
 
     <!-- Body -->
@@ -277,7 +273,7 @@ const { mutate: UpdateVar } = useUpdateVar({
   },
 });
 const props = defineProps({
-  showPanel: { type: Boolean, default: true },
+  showPanel: { type: Boolean, required: true },
 });
 
 const editingTitle = ref(false);
@@ -294,10 +290,12 @@ watch(
 );
 
 const description = ref(cardDetails.value?.description ?? "");
+console.log("card details data", cardDetails.value);
+
 watch(
   () => cardDetails.value,
   () => {
-    description.value = cardDetails.value.description ?? "";
+    description.value = cardDetails.value?.description ?? "";
   }
 );
 

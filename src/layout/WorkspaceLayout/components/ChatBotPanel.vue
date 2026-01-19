@@ -335,6 +335,8 @@ onMounted(() => initSocket());
 //     pollInterval.value = null;
 //   }
 // });
+
+agentStore.fetchChatHistory(workspaceId.value, true);
 onBeforeUnmount(() => {
   if (workspaceId.value && socket.value) socket.value.emit("leave-workspace", workspaceId.value);
   socket.value?.removeAllListeners();

@@ -15,9 +15,11 @@
       <template v-if="isStartingSprint">
         <KanbanSkeleton />
       </template>
-      <div
+      <div class="overflow-x-auto w-full">
+  <div class="min-w-[1200px]">
+  <div
         v-if="!isStartingSprint"
-        class="p-4 w-full min-w-0 flex flex-col flex-1 min-h-0"
+        class="p-4 w-full min-w-0 flex flex-col flex-1 min-h-0 overflow-x-auto"
       >
         <div
           ref="containerRef"
@@ -350,7 +352,7 @@
                     <i class="fa-solid fa-magnifying-glass text-white"></i>
                   </button>
                   <button
-                    class="flex lg:hidden cursor-pointer text-white items-center justify-center rounded-full ms-2 w-7 h-7 text-sm font-medium"
+                    class="flex lg:hidden cursor-pointer text-white items-center justify-center rounded-full ms-2 w-7 h-7 text-sm font-medium mt-0.5"
                     @click="handlePreviewClick"
                     v-if="
                       sprintDetailData?.status === 'active' &&
@@ -431,7 +433,7 @@
 
                   <div
                     v-if="sprintDetailData?.status === 'active'"
-                    class="flex lg:hidden"
+                    class="flex lg:hidden ms-2"
                   >
                     <button
                       @click="handleCompleteSprint"
@@ -468,7 +470,7 @@
                 </div>
                 <div
                   v-if="sprintDetailData?.status === 'active'"
-                  class="relative inline-flex"
+                  class="relative inline-flex ms-2"
                   @mouseenter="showTooltip = true"
                   @mouseleave="showTooltip = false"
                   @click="toggleTooltip"
@@ -694,6 +696,10 @@
           </section>
         </div>
       </div>
+  </div>
+</div>
+
+      
     </div>
     <!-- Modals -->
     <ConfirmDeleteModal
