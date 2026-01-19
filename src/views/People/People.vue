@@ -25,10 +25,10 @@
         </div>
       </div>
     </div>
-    <KanbanSkeleton v-if="isListPending || isListFetching" />
+    <KanbanSkeleton v-if="isLoading" />
     <div
       v-else
-      v-show="currentView == 'kanban' && !isListPending"
+      v-show="currentView == 'kanban' && !isLoading"
       class="flex p-4 overflow-x-auto gap-3 custom_scroll_bar h-full"
     >
       <KanbanBoard
@@ -146,13 +146,9 @@
   />
 
   <DetailPanel
-    @close="
-      () => {
-        selectCardHandler({});
-      }
-    "
-    :showPanel="selectedCard?.title ? true : false"
-  />
+  @close="selectCardHandler(null)"
+  :showPanel="showPanel"
+/>
 </template>
 
 <script setup lang="ts">
@@ -164,7 +160,7 @@ import {
   useCreateTeam,
   useCreateTeamMember,
   useDeleteTeam,
-  usePeopleList,
+  // usePeopleList,
 } from "../../queries/usePeople";
 import { useUpdateInvitedWorkspace } from "../../queries/useWorkspace";
 import Fuse from "fuse.js";
@@ -213,8 +209,10 @@ const KanbanCard = defineAsyncComponent(
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
+import { usePeopleStore } from "../../stores/peopleStore";
 const { canCreateVariable, canInviteUser } = usePermissions();
 const sidePanelStore = useSidePanelStore();
+const peopleStore = usePeopleStore()
 const viewData = [
   {
     title: "Role",
@@ -235,6 +233,12 @@ const showDelete = ref(false);
 const localColumn = ref();
 const { workspaceId } = useRouteIds();
 const localList = ref<any>([]);
+const showPanel = ref(false);
+const isLoading = peopleStore.isFetchingPeople;
+const peopleList = computed(() =>{
+  return peopleStore.peopleData;
+});
+console.log(peopleList.value);
 
 const { mutate: addList, isPending: addingList } = useCreateTeam({
   onSuccess: (data: any) => {
@@ -244,36 +248,37 @@ const { mutate: addList, isPending: addingList } = useCreateTeam({
   },
 });
 
-const {
-  data: Lists,
-  isPending: isListPending,
-  isFetching: isListFetching,
-  refetch: refetchList,
-} = usePeopleList(workspaceId, selected_view_id);
-watch(Lists, (newVal) => {
-  refetchList();
-  // deep-ish clone so we don't mutate vue-query cache objects
-  localList.value = newVal ? JSON.parse(JSON.stringify(newVal)) : [];
-});
-onMounted(() => {
-  refetchList();
-  localList.value = Lists.value ? JSON.parse(JSON.stringify(Lists.value)) : [];
-});
-watch(isListFetching, (fetching) => {
-  if (fetching) {
-    localList.value = [];
-  } else {
-    localList.value = Lists.value
-      ? JSON.parse(JSON.stringify(Lists.value))
-      : [];
+const controller = new AbortController();
+const fetchPeople = async()=>{
+  peopleStore.fetchPeopleList(workspaceId.value, selected_view_id.value, controller.signal)
+}
+watch(
+  () => selected_view_id.value,
+  (newVal, oldVal) => {
+    console.log("new and old values", newVal, oldVal);
+    
+    if (newVal !== oldVal) {
+      fetchPeople();
+    }
   }
+);
+onMounted(() => {
+  fetchPeople();
+  localList.value = peopleList.value ? JSON.parse(JSON.stringify(peopleList.value)) : [];
 });
 
 const currentView = ref<"kanban" | "list">("kanban");
 const selectedCard = ref<any>();
 const selectCardHandler = (card: any) => {
   sidePanelStore.selectCard(card);
+  showPanel.value=false;
 };
+watch(
+  () => sidePanelStore.selectedCard,
+  (val) => {
+    console.log('selectedCard changed:', val);
+  }
+);
 
 const handleBoardUpdate = (_: any) => {};
 const activeAddList = ref(false);
@@ -398,6 +403,7 @@ const addSeatToColumn = (column: any) => {
 const handleClickTicket = (ticket: any) => {
   selectedCard.value = ticket;
   sidePanelStore.selectCard(ticket);
+  showPanel.value=true;
 };
 
 const reorderList = ReOrderList();
@@ -446,7 +452,7 @@ const fuse = computed(() => {
 });
 
 const filteredBoard = computed(() => {
-  if (!searchQuery.value) return localList.value;
+  if (!searchQuery.value) return peopleList.value;
   const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
   return localList.value
     .map((col: any) => ({
