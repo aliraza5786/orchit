@@ -14,7 +14,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-              <Button variant="secondary" size="sm" @click="handleAddStatus">
+              <Button :disabled="!canCreateCard" variant="secondary" size="sm" @click="handleAddStatus">
                 <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
               </Button>
 
@@ -63,6 +63,16 @@ import AddStatusModal from './AddStatusModal.vue'
 import { useProcessTransition, useUpdateTransition } from '../../../queries/useProcess2'
 import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
 import { useRouteIds } from '../../../composables/useQueryParams'
+import { usePermissions } from "../../../composables/usePermissions";
+const {
+  canEditSheet,
+  canDeleteSheet,
+  canCreateVariable,
+  canCreateSheet,
+  canCreateCard,
+  canEditCard,
+  canAssignCard,
+} = usePermissions();
 
 /* Props & emits */
 const props = defineProps<{

@@ -298,7 +298,7 @@ const pricingPlans = computed(() => {
                   >✕</span
                 >
                 <span
-                  class="text-[14px] font-manrope text-left leading-[21px] font-normal"
+                  class="text-[14px] font-manrope text-left leading-[21px] font-normal capitalize"
                   :class="[
                     feature.available
                       ? 'text-text-primary'

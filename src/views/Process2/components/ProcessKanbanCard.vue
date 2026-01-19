@@ -58,9 +58,11 @@ const emit = defineEmits(['click', 'open-builder', 'dblclick'])
 const showDelete = ref(false)
 const queryClient = useQueryClient()
 const { workspaceId } = useRouteIds();
+import { usePermissions } from '../../../composables/usePermissions';
+const { canDeleteCard, canEditCard } = usePermissions();
 
 function getMenuItems() {
-  return [
+  const items:any = [
     {
       label: 'Open Workflow Builder',
       action: () => {
@@ -70,17 +72,21 @@ function getMenuItems() {
         prefix: 'fa-regular',
         iconName: 'fa-diagram-project'
       }
-    },
-    {
+    }
+  ]
+
+  if(canDeleteCard.value){
+     items.push({
       label: 'Delete Process', danger: true, action: () => {
         showDelete.value = true
       },
-      icon: {
+       icon: {
         prefix: 'fa-regular',
         iconName: 'fa-trash'
       }
-    },
-  ]
+    })
+  }
+  return items
 }
 
 const { mutate: deleteProcess, isPending: deletingProcess } = useDeleteTransition({
