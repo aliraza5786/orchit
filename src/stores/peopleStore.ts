@@ -30,7 +30,6 @@ export const usePeopleStore = defineStore("people", {
 
         if (res.status === 200) {
           this.peopleData = res?.data?.data;
-          console.log("people data", this.peopleData);
         this.isFetchingPeople = false;
         } else {
           console.error(res?.data?.message || "Failed to fetch people list");

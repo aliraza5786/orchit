@@ -240,11 +240,16 @@ import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
-import ProgressBar from "../../../components/ui/ProgressBar.vue";
 import { usePeopleVar, useUpdateVar } from "../../../queries/usePeople";
-// import TypeChanger from '../../Product/components/TypeChanger.vue'
-import SwitchTab from "../../../components/ui/SwitchTab.vue";
-import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
+const ProgressBar = defineAsyncComponent(() =>
+  import("../../../components/ui/ProgressBar.vue")
+);
+const SwitchTab = defineAsyncComponent(() =>
+  import("../../../components/ui/SwitchTab.vue")
+);
+const BaseSelectField = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseSelectField.vue")
+);
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor"; 
 import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'

@@ -72,17 +72,25 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import DropMenu from '../../../components/ui/DropMenu.vue'
+import { defineAsyncComponent } from "vue";
+const DropMenu = defineAsyncComponent(() =>
+  import("../../../components/ui/DropMenu.vue")
+);
+const AssignmentModal = defineAsyncComponent(() =>
+  import("../modals/AssignmentModal.vue")
+);
+const ConfirmDeleteModal = defineAsyncComponent(() =>
+  import("../../Product/modals/ConfirmDeleteModal.vue")
+);
 import { useAssignTeam, useDeleteSeat, usePeople, useUnAssignTeam } from '../../../queries/usePeople'
-import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 import { useCompanyId } from '../../../services/user'
-import AssignmentModal from '../modals/AssignmentModal.vue'
 import { getInitials } from '../../../utilities'
 import { avatarColor } from '../../../utilities/avatarColor'
 import { usePermissions } from '../../../composables/usePermissions'
 const {   canInviteUser,  canEditUser, canDeleteUser} = usePermissions()
 const showAddMembers = ref(false);
+const emit = defineEmits()
 type Priority = any
 export interface Ticket {
     _id: string | number
@@ -111,42 +119,6 @@ const { data: people } = usePeople(workspaceId.value, companyId);
 const members = ref([]);
 const showDelete = ref(false)
 const queryClient = useQueryClient()
-
-// function getMenuItems() {
-//     return [
-//         {
-//             label: 'Assign User', danger: true,
-//             action: () => {
-//                 showAddMembers.value = true
-//             },
-//             icon: {
-//                 prefix: 'fa-regular',
-//                 iconName: 'fa-user-plus'
-//             }
-//         },
-//         ...(props.ticket.name ? [{
-//             label: 'UnAssign User', danger: true,
-//             action: () => {
-//                 unassignHandler()
-//             },
-//             icon: {
-//                 prefix: 'fa-regular',
-//                 iconName: 'fa-user-minus'
-//             }
-//         }] : []),
-//         {
-//             label: 'Delete Seat', danger: true, action: () => {
-//                 showDelete.value = true
-//             },
-//             icon: {
-//                 prefix: 'fa-regular',
-//                 iconName: 'fa-trash'
-//             }
-
-//         },
-//     ]
-// }
-
 function getMenuItems() {
   const isAdmin = props.ticket?.role_title?.toLowerCase() === 'admin'
   const hasUser = Boolean(props.ticket?.name)
@@ -210,12 +182,14 @@ const { mutate: deleleSeat, isPending: deletingTicket } = useDeleteSeat({
 
 const handleDeleteTicket = () => { 
     deleleSeat({ id: props.ticket._id })
+    emit("deleted");
 }
 
 const { mutate: invitePeople, isPending: inviting } = useAssignTeam({
     onSuccess: () => {
         showAddMembers.value = false;
         queryClient.invalidateQueries({ queryKey: ['people-lists'] })
+        emit("assigned")
     }
 })
 function extractNameFromEmail(email: string) {
@@ -230,6 +204,7 @@ const { mutate: unassign } = useUnAssignTeam(
 
             showAddMembers.value = false;
             queryClient.invalidateQueries({ queryKey: ['people-lists'] })
+            emit("unAssigned")
         }
     }
 );
@@ -243,6 +218,8 @@ function sendInvites(inviteEmails: any) {
             }
         }
     )
+    
+    
 }
 function unassignHandler() {
     unassign(

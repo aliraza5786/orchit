@@ -46,7 +46,7 @@
         sheet_id="selected_sheet_id"
       >
         <template #ticket="{ ticket }">
-          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
+          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" @deleted="fetchPeople()", @assigned="fetchPeople" @unAssigned="fetchPeople" />
         </template>
         <template #column-footer="{ column }: any">
           <div
@@ -234,11 +234,12 @@ const localColumn = ref();
 const { workspaceId } = useRouteIds();
 const localList = ref<any>([]);
 const showPanel = ref(false);
-const isLoading = peopleStore.isFetchingPeople;
+const isLoading = computed(() =>{
+  return peopleStore.isFetchingPeople;
+})
 const peopleList = computed(() =>{
   return peopleStore.peopleData;
 });
-console.log(peopleList.value);
 
 const { mutate: addList, isPending: addingList } = useCreateTeam({
   onSuccess: (data: any) => {
@@ -254,9 +255,7 @@ const fetchPeople = async()=>{
 }
 watch(
   () => selected_view_id.value,
-  (newVal, oldVal) => {
-    console.log("new and old values", newVal, oldVal);
-    
+  (newVal, oldVal) => {    
     if (newVal !== oldVal) {
       fetchPeople();
     }
@@ -273,13 +272,6 @@ const selectCardHandler = (card: any) => {
   sidePanelStore.selectCard(card);
   showPanel.value=false;
 };
-watch(
-  () => sidePanelStore.selectedCard,
-  (val) => {
-    console.log('selectedCard changed:', val);
-  }
-);
-
 const handleBoardUpdate = (_: any) => {};
 const activeAddList = ref(false);
 const newColumn = ref("");

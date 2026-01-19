@@ -70,7 +70,7 @@
                   ? 'text-accent bg-accent-text'
                   : ' hover:bg-border/50 backdrop-blur-2xl  transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
               "
-              title="List view"
+              title="Kanban view"
               @click="view = 'kanban'"
             >
               <i class="fa-solid fa-chart-kanban"></i>
@@ -84,7 +84,7 @@
                   ? 'text-accent bg-accent-text'
                   : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
               "
-              title="Gallery view"
+              title="List view"
             >
               <i class="fa-solid fa-align-left"></i>
             </button>
@@ -565,6 +565,7 @@ import {
   useVariables,
   useCreateWorkspaceSheet,
 } from "../../queries/useSheets";
+import { useSidePanelStore } from "../../stores/sidePanelStore";
 
 // Lazy-loaded components
 const Dropdown = defineAsyncComponent(
@@ -634,6 +635,7 @@ const showFormatSidebar = ref(false);
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
+const sidePanelStore = useSidePanelStore()
 function openHyperlinkModal(callback: (link: string) => void) {
   hyperlink.value = "";
   showHyperlinkModal.value = true;
@@ -838,6 +840,7 @@ const {
 const selectCardHandler = (card: any) => {
   if (!card._id) card._id = card.id;
   selectedCard.value = card;
+  sidePanelStore.selectTaskCard(card);
 };
 (window as any).selectCardHandler = selectCardHandler;
 

@@ -1,10 +1,15 @@
 import { defineStore } from "pinia";
+import { nextTick } from "vue";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 export const useSidePanelStore = defineStore("sidePanel", {
   state: () => ({
     selectedCard: null as any | null,
+    lists: [] as any[],
     isFetching: false as boolean,
-     selectedCardPeople: null as any | null,
+    selectedCardPeople: null as any | null,
+    cards: {} as Record<string, any>,
+    selectedCardTitle:"",
+    selectedCardId: "",
   }),
 
   getters: {
@@ -40,10 +45,34 @@ export const useSidePanelStore = defineStore("sidePanel", {
     this.isFetching = false;
   }
 },
+    selectTaskCard(card:any){
+      this.selectedCard= card;
+      nextTick(() => {
+    this.selectedCard = card
+  })
+    },
    selectCard(card:any) {
-      this.selectedCardPeople = card;;
+      this.selectedCardPeople = card;
     },
     clearCard() {
       this.selectedCardPeople= null;
     },
+     updateCardTitleOptimistic(newTitle: string) {
+      if (!this.selectedCard) return
+      this.selectedCard['card-title'] = newTitle
+    },
+
+    rollbackCardTitle(previousTitle: string) {
+      if (!this.selectedCard) return
+      this.selectedCard['card-title'] = previousTitle
+    },
+     clearTaskCard() {
+      this.selectedCardPeople= null;
+    },
+    saveTitle(title: string){
+      this.selectedCardTitle = title;
+    },
+    saveLocalId(id:string){
+      this.selectedCardId = id;
+    }
 }});

@@ -34,7 +34,6 @@
           </button>
         </div>
       </div>
-
       <!-- Body -->
       <div class="py-5  px-4 sm:px-6 flex flex-col gap-5 flex-grow">
         <!-- card type -->
@@ -63,12 +62,12 @@
         <!-- Title row -->
         <div class="capitalize">
           <Transition name="fade-scale" mode="out-in">
-            <input :disabled="!canEditCard" :title="!canEditCard ? 'You do not have permission to edit this card' : ''" v-if="editingTitle" key="title-edit" ref="titleInput" v-model="localTitle" @blur="saveTitle"
+            <input :disabled="!canEditCard" :title="!canEditCard ? 'You do not have permission to edit this card' : ''" v-if="editingTitle" key="title-edit" ref="titleInput" v-model="localTitle"
               @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEdit" class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10
                      focus:outline-none focus:ring-2 focus:ring-accent/40 transition" type="text"
               aria-label="Edit title" />
             <h1 v-else key="title-view" :class="canEditCard? 'cursor-text':'cursor-not-allowed'" class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-lg px-2 py-1
-                     hover:bg-orchit-white/5 transition" @click="editTitle" aria-label="Card title" :title="!canEditCard ? 'You do not have permission to edit this card' : ''" >
+                     hover:bg-orchit-white/5 transition" @click="editTitle()" aria-label="Card title" :title="!canEditCard ? 'You do not have permission to edit this card' : ''" >
               {{ localTitle || 'Untitled' }}
             </h1>
           </Transition>
@@ -308,7 +307,8 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
 import { useUserId } from '../../../services/user'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
-
+import { useSidePanelStore } from '../../../stores/sidePanelStore';
+const sidePanelStore = useSidePanelStore();
 // Lazy-loaded components
 const BaseRichTextEditor = defineAsyncComponent({
   loader: () => import('../../../components/ui/BaseRichTextEditor.vue'),
@@ -360,29 +360,61 @@ const tabOptions = [
 /* -------------------- Title -------------------- */
 const editingTitle = ref(false)
 const localTitle = ref(cardDetails.value ? cardDetails.value['card-title'] : '')
+console.log("card details", cardDetails.value);
 
+// const localId = ref(cardDetails.value?.id)
 const titleInput = ref<HTMLInputElement | null>(null)
-function editTitle() { 
-  if(!canEditCard.value) return;
+function editTitle() {
+  if (!canEditCard.value) return
+
+  sidePanelStore.saveTitle(localTitle.value)
+   sidePanelStore.saveLocalId(cardDetails.value?._id)
   editingTitle.value = true
-  nextTick(() => { titleInput.value?.focus(); titleInput.value?.select() })
+  nextTick(() => titleInput.value?.focus())
 }
 
- function saveTitle() {
-  if (!localTitle.value.trim()) localTitle.value = props.details['card-title'] ?? ''
-  
-  if (canEditCard.value) {
-    moveCard.mutate({
-      card_id: props.details._id,
-      variables: { 'card-title': localTitle.value.trim() }
-    })
-  } else {
-    // Reset the value to the original title
-    localTitle.value = cardDetails.value?.['card-title'] ?? ''
-    toast.error('You do not have permission to do that');
-    console.log("you  dont have access to do that");
-    
+watch(
+  () => sidePanelStore.selectedCardTitle,
+  (newTitle) => {
+    if (!editingTitle.value && newTitle !== undefined) {
+      localTitle.value = newTitle
+    }
+  },
+  { immediate: true }
+)
+
+function saveTitle() {
+  const newTitle = localTitle.value.trim()
+
+  if (!newTitle) {
+    localTitle.value = sidePanelStore.selectedCardTitle
+    editingTitle.value = false
+    return
   }
+
+  if (!canEditCard.value) {
+    localTitle.value = sidePanelStore.selectedCardTitle
+    toast.error('No permission')
+    editingTitle.value = false
+    return
+  }
+
+  const previousTitle = sidePanelStore.selectedCardTitle
+
+  sidePanelStore.updateCardTitleOptimistic(newTitle)
+
+  moveCard.mutate(
+    {
+      card_id: sidePanelStore.selectedCardId,
+      variables: { 'card-title': newTitle }
+    },
+    {
+      onError: () => {
+        sidePanelStore.rollbackCardTitle(previousTitle)
+        toast.error('Failed to update title')
+      }
+    }
+  )
 
   editingTitle.value = false
 }
