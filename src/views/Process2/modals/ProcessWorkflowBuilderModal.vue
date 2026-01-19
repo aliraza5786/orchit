@@ -18,7 +18,7 @@
                 <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
               </Button>
 
-              <Button variant="primary" size="sm" :disabled="isSaving" @click="handleUpdateWorkflow">
+              <Button variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="handleUpdateWorkflow">
                 {{ updateButtonLabel }}
               </Button>
 
@@ -39,6 +39,8 @@
           </div>
           <WorkflowCanvas v-else ref="Canvas" 
             :process-id="processId"
+            :can-edit="canEditCard"
+            :can-delete="canDeleteCard"
             :workflow-data="transitionData?.raw_object || {}"
             :show-transition-labels="true" 
             @save="handleSave"
@@ -64,14 +66,10 @@ import { useProcessTransition, useUpdateTransition } from '../../../queries/useP
 import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
 import { useRouteIds } from '../../../composables/useQueryParams'
 import { usePermissions } from "../../../composables/usePermissions";
-const {
-  canEditSheet,
-  canDeleteSheet,
-  canCreateVariable,
-  canCreateSheet,
+const { 
   canCreateCard,
   canEditCard,
-  canAssignCard,
+  canDeleteCard 
 } = usePermissions();
 
 /* Props & emits */

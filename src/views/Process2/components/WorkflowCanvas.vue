@@ -75,11 +75,14 @@ watch(statusObjects, (newValue) => {
 const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     processId?:any,
     showTransitionLabels?:boolean,
-    workflowData?: any 
-}>()
+    workflowData?: any,
+    canEdit?: boolean,
+    canDelete?: boolean,
+
+}>(), { canEdit: true })
 
 // ---- Helpers to normalize API -> VueFlow ----
 
@@ -169,6 +172,7 @@ function mapApiEdge(e: any): VFEdge {
 
 // ---- onConnect: ask for transition name first ----
 function onConnect(conn: Connection) {
+  if(!props.canEdit) return;
   pendingConnection.value = conn
   transitionName.value = ''
   showTransitionModal.value = true
@@ -501,15 +505,15 @@ function handleZoomEvent(e: Event) {
   v-model:nodes="nodes"
   v-model:edges="edges"
   :default-edge-options="defaultEdgeOptions"
-  :nodes-draggable="true"
-  :nodes-connectable="true"
-  :elements-selectable="true"
+  :nodes-draggable="canEdit"
+  :nodes-connectable="canEdit"
+  :elements-selectable="canEdit"
   :min-zoom="0.01"
   :max-zoom="100"
   fit-view-on-init
   @connect="onConnect"
-  @edge-click="onEdgeClick"
-  @edge-update="onEdgeUpdate"
+  @edge-click="(e) => (canEdit ? onEdgeClick(e) : null)"
+  @edge-update="(e) => (canEdit ? onEdgeUpdate(e) : null)"
   :edge-updater-radius="20" 
 >
       <Background />
@@ -537,9 +541,10 @@ function handleZoomEvent(e: Event) {
               {{ data.label }}
             </span>
             <div class="flex items-center gap-1.5">
-               <i class="fa-solid fa-edit cursor-pointer text-xs opacity-70 hover:opacity-100" @click.stop="handleEditNode(id, data)"></i>
-               <i
-             class="fa-solid fa-trash cursor-pointer text-red-500/80 hover:text-red-500 text-xs"
+               <i :class="canEdit? 'cursor-pointer':'cursor-not-allowed'"   class="fa-solid fa-edit text-xs opacity-70 hover:opacity-100" @click.stop="handleEditNode(id, data)"></i>
+               <i 
+             class="fa-solid fa-trash text-red-500/80 hover:text-red-500 text-xs"
+             :class="canDelete? 'cursor-pointer': 'cursor-not-allowed'"
              @click.stop="confirmDeleteNode(id)"
             ></i>
             </div>
