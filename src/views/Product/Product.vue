@@ -230,6 +230,12 @@
         :rows="filteredBoard"
         :canCreate="canCreateCard"
         :canCreateVariable="canCreateVariable"
+        :canDelete="canDeleteCard"
+        @delete="(t) => {
+           ticketToDelete = t;
+           selectedDeleteId = t._id;
+           showTicketDelete = true;
+        }"
         @create="handleCreateTicket"
       />
     </template>
@@ -614,6 +620,7 @@ const {
   canCreateSheet,
   canCreateCard,
   canEditCard,
+  canDeleteCard,
   canAssignCard,
 } = usePermissions();
 const showDeleteModal = ref(false);

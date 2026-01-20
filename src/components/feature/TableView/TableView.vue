@@ -1,6 +1,6 @@
 <template>
   <div class="px-4">
-    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ">
+    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ps-6 ">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
              bg-bg-body/20 text-sm
@@ -9,7 +9,7 @@
       <!-- HEADER -->
       <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-10 ">
         <tr class="text-text-secondary">
-          <th class="w-2 p-0"></th>
+          <th class="w-8 p-0 sticky left-0 z-20 bg-bg-surface"></th>
           <th v-for="col in visibleColumns" :key="col?.key" class="relative font-bold p-2 uppercase text-left text-[11px] tracking-wide
              border-r border-border/40 select-none whitespace-nowrap min-w-[200px]"
              :style="{ width: columnWidths[col.key] ? columnWidths[col.key] + 'px' : '100%' }"
@@ -32,7 +32,7 @@
               <!-- Column Toggle Menu -->
               <div v-if="showColumnMenu"
                 class="column-menu absolute w-[200px] -right-1 bg-bg-dropdown border border-border rounded shadow z-50">
-                <div v-for="col in props.columns" :key="'toggle-' + col.key" class="flex items-center space-x-2 px-3 py-1.5 capitalize font-medium cursor-pointer hover:bg-bg-dropdown-menu-hover text-[12px] text-text-primary gap-2">
+                <div v-for="col in props.columns.filter(c => c.label.toLowerCase() !== 'process')" :key="'toggle-' + col.key" class="flex items-center space-x-2 px-3 py-1.5 capitalize font-medium cursor-pointer hover:bg-bg-dropdown-menu-hover text-[12px] text-text-primary gap-2">
                  <input
                   type="checkbox"
                  :checked="visibleColumnKeys.includes(col.key)"
@@ -78,9 +78,9 @@
           <tr v-if="hoverIndex === index && !hasActiveEmptyRow" class="relative bg-bg-surface/20 transition-all cursor-pointer 
                   border border-accent" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
-              <span class="absolute left-[-6px] top-[-14px] bg-bg-surface border border-border 
+              <span class="absolute left-[-20px] top-[-14px] bg-bg-surface border border-border 
                        w-6 h-6 text-sm rounded-md flex justify-center items-center 
-                       shadow-sm hover:bg-bg-surface/70">+</span>
+                       shadow-sm hover:bg-bg-surface pb-[0.5px]">+</span>
             </td>
             <td class="!p-0" :colspan="columns?.length"></td>
           </tr>
@@ -88,13 +88,30 @@
           <!-- ACTUAL ROW -->
           <tr @mouseenter="hoverIndex = index"
             class="border-b border-border hover:bg-bg-surface/40 transition-colors">
-            <td></td>
+            <td class="w-8  group text-center align-middle border-r border-border/40 relative">
+                 <div class="flex justify-center items-center h-full w-full relative">
+                     <div class="h-6 w-5 flex items-center justify-center rounded hover:bg-bg-dropdown-menu-hover cursor-pointer text-text-secondary row-action-btn"
+                          @click.stop="toggleRowMenu(ticket._id || ticket.id)">
+                         <i class="fa-solid fa-ellipsis-vertical text-xs"></i>
+                     </div>
+                     
+                     <!-- Custom Dropdown -->
+                     <div v-if="activeMenuId === (ticket._id || ticket.id)" 
+                          class="absolute left-6 top-6 bg-bg-dropdown border border-border rounded shadow-md z-50 min-w-[120px] text-left overflow-hidden row-action-menu">
+                        <div v-if="canDelete" 
+                             @click.stop="() => { emit('delete', ticket); activeMenuId = null; }"
+                             class="px-3 py-2 text-xs text-red-500 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-2">
+                             <i class="fa-solid fa-trash"></i> Delete
+                        </div>
+                     </div>
+                 </div>
+            </td>
 
-            <td v-for="(col,i) in visibleColumns" :key="col?.key" class=" border-r border-border overflow-visible relative h-8"
+            <td v-for="(col,i) in visibleColumns" :key="col?.key" class="ps-2 border-r border-border overflow-visible relative h-8"
               :style="{ width: columnWidths[col.key] + 'px' }"
               :colspan="i === visibleColumns.length - 1 ? 2 : 1"
               >
-
+              
               <!-- Editable input -->
               <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
                 @blur="finishEdit(ticket)" class=" min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body  text-[12px] h-8"
@@ -131,7 +148,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, nextTick, computed, watch, h } from 'vue'
+import { reactive, ref, nextTick, computed, watch, h, onMounted, onUnmounted } from 'vue'
 
 interface Column {
   key: string
@@ -147,9 +164,11 @@ const props = withDefaults(defineProps<{
   isPending: boolean
   canCreate?: boolean
   canCreateVariable?: boolean
+  canDelete?: boolean
 }>(), {
   canCreate: true,
-  canCreateVariable: true
+  canCreateVariable: true,
+  canDelete: false
 })
 
 const emit = defineEmits<{
@@ -157,7 +176,7 @@ const emit = defineEmits<{
   (e: 'create', val: any): void
   (e: 'toggleVisibility', val: any, v:any): void
   (e: 'addVar'): void
-
+  (e: 'delete', val: any): void
 }>()
 
 const tickets = reactive<Row[]>(props.rows || [])
@@ -255,30 +274,46 @@ const stopResize = () => {
   document.removeEventListener("mousemove", onResize)
   document.removeEventListener("mouseup", stopResize)
 }
-// Close menu on click outside (optional)
-document.addEventListener('click', (e) => {
-  if (!(e.target as HTMLElement).closest('.column-menu')) {
-    showColumnMenu.value = false
-  }
-})
+
 
 const visibleColumnKeys = ref<string[]>(
   props.columns.filter(c => c.visible ?? true).map(c => c.key)
 )
 
 const visibleColumns = computed(() =>
-  props.columns.filter(c => visibleColumnKeys.value.includes(c.key))
+  props.columns.filter(c => visibleColumnKeys.value.includes(c.key) &&  c.label.toLowerCase() !== 'process')
 )
 
 
 // Show/hide menu
 const showColumnMenu = ref(false)
 
+const activeMenuId = ref<string | number | null>(null)
+
+const toggleRowMenu = (id: string | number) => {
+  if (activeMenuId.value === id) {
+    activeMenuId.value = null
+  } else {
+    activeMenuId.value = id
+  }
+}
+
 // Close menu on click outside
-document.addEventListener('click', (e) => {
+const closeMenus = (e: Event) => {
   if (!(e.target as HTMLElement).closest('.column-menu')) {
     showColumnMenu.value = false
   }
+  
+  // Close row action menu if clicked outside
+  if (!(e.target as HTMLElement).closest('.row-action-btn') && !(e.target as HTMLElement).closest('.row-action-menu')) {
+    activeMenuId.value = null
+  }
+}
+
+document.addEventListener('click', closeMenus)
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeMenus)
 })
 
 const toggleColumn = (key: string) => {

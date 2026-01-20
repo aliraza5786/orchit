@@ -169,9 +169,14 @@ onMounted(() => {
     themeLink = document.createElement("link");
     themeLink.id = "syncfusion-theme";
     themeLink.rel = "stylesheet";
-    themeLink.href = "https://cdn.syncfusion.com/ej2/material3.css";
     document.head.appendChild(themeLink);
   }
+
+  // Set initial theme
+  themeLink.href = isDark.value
+    ? "https://cdn.syncfusion.com/ej2/material3-dark.css"
+    : "https://cdn.syncfusion.com/ej2/material3.css";
+
   if (isDark.value) {
     document.body.classList.add("e-dark-mode");
   } else {
@@ -182,6 +187,15 @@ onMounted(() => {
 watch(
   isDark,
   (newValue) => {
+    const themeLink = document.getElementById(
+      "syncfusion-theme",
+    ) as HTMLLinkElement | null;
+    if (themeLink) {
+      themeLink.href = newValue
+        ? "https://cdn.syncfusion.com/ej2/material3-dark.css"
+        : "https://cdn.syncfusion.com/ej2/material3.css";
+    }
+
     if (newValue) {
       document.body.classList.add("e-dark-mode");
     } else {
@@ -196,5 +210,64 @@ watch(
 .schedule-container {
   width: 100%;
   height: 100%;
+}
+
+:deep(.e-schedule) {
+  background-color: var(--bg-body) !important;
+}
+:deep(.e-schedule-toolbar-container){
+  border-bottom: 1px solid var(--color-border) !important;
+}
+:deep(.e-schedule .e-schedule-toolbar),
+:deep(.e-schedule .e-schedule-toolbar .e-toolbar-items),
+:deep(.e-schedule .e-schedule-toolbar .e-toolbar-item) {
+  background: var(--bg-body) !important;
+  background-color: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+}
+
+:deep(.e-schedule .e-schedule-toolbar .e-tbar-btn) {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+:deep(.e-schedule .e-schedule-toolbar .e-icons),
+:deep(.e-schedule .e-schedule-toolbar .e-tbar-btn-text) {
+  color: var(--text-primary) !important;
+}
+:deep(.e-schedule .e-vertical-view .e-date-header-wrap table tbody td) {
+  background-color: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+}
+:deep(.e-schedule .e-vertical-view .e-left-indent-wrap table tbody td) {
+  background-color: var(--bg-body) !important;
+}
+:deep(.e-schedule .e-vertical-view .e-time-cells-wrap table td) {
+  background-color: var(--bg-body) !important;
+   color: var(--text-primary) !important;
+}
+:deep(.e-schedule .e-vertical-view .e-work-cells) {
+  background-color: var(--bg-body) !important;
+}
+
+:deep(.e-schedule .e-month-view .e-date-header-wrap table tbody td) {
+   background-color: var(--bg-body) !important;
+   color: var(--text-primary) !important;
+}
+
+:deep(.e-schedule .e-month-view .e-work-cells) {
+  background-color: var(--bg-body) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border) !important;
+}
+
+:deep(.e-schedule .e-work-cells),
+:deep(.e-schedule .e-header-cells),
+:deep(.e-schedule .e-resource-cells),
+:deep(.e-schedule .e-date-header-wrap table tbody td),
+:deep(.e-schedule .e-content-wrap table tbody td),
+:deep(.e-schedule .e-time-cells-wrap table td),
+:deep(.e-schedule .e-left-indent-wrap table tbody td) {
+  border-color: var(--border) !important;
 }
 </style>
