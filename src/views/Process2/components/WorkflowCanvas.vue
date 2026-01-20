@@ -345,7 +345,7 @@ function serializeWorkflowPayload() {
   return {
     workspace_id: workspaceId.value,
     flow_diagram: {
-      nodes: currentNodes.map(mapVFNodeToApi),
+      nodes: currentNodes.filter((n) => n.type !== 'custom-add-icon').map(mapVFNodeToApi),
       edges: currentEdges.map(mapVFEdgeToApi),
     },
     flow_metadata:statusObjects.value
@@ -495,6 +495,67 @@ function handleZoomEvent(e: Event) {
   if (detail.action === 'reset') fitView({ padding: 0.12 })
 }
 
+// Ensure the "Add" button node is always after the last node
+watch(
+  [nodes, () => props.canEdit],
+  ([newNodes, canEdit]) => {
+    // If editing is disabled, ensure the add button is removed
+    if (!canEdit) {
+       const btn = newNodes.find(n => n.id === 'add-button-node')
+       if (btn) removeEdges(btn.id) // wait, removeNodes
+       setNodes(newNodes.filter(n => n.id !== 'add-button-node'))
+       return;
+    }
+
+    // Filter out the add button itself to find the real last node
+    const realNodes = newNodes.filter((n) => n.type !== 'custom-add-icon');
+    
+    // Default position if no nodes exist
+    let targetX = 50;
+    let targetY = 150;
+
+    if (realNodes.length > 0) {
+        // Find the right-most node (max X)
+        const lastNode = realNodes.reduce((prev, current) => {
+          const prevX = prev.position.x;
+          const currX = current.position.x;
+          return currX > prevX ? current : prev;
+        }, realNodes[0]);
+
+        const PADDING_X = 200; 
+        targetX = lastNode.position.x + PADDING_X;
+        targetY = lastNode.position.y; // Keep same Y level
+    }
+
+    const addButtonNodeId = 'add-button-node';
+    const existingNode = newNodes.find((n) => n.id === addButtonNodeId);
+
+    if (existingNode) {
+      if (
+        Math.abs(existingNode.position.x - targetX) > 5 ||
+        Math.abs(existingNode.position.y - targetY) > 5
+      ) {
+         updateNode(addButtonNodeId, { position: { x: targetX, y: targetY } })
+      }
+    } else {
+      addNodes({
+        id: addButtonNodeId,
+        type: 'custom-add-icon',
+        position: { x: targetX, y: targetY },
+        data: {},
+        draggable: false, 
+        selectable: false,
+      })
+    }
+  },
+  { deep: true, immediate: true }
+);
+
+function triggerAddStatus() {
+  console.log('>>> Add Status Clicked');
+  emit('add:status');
+}
+
 </script>
 
 <template>
@@ -557,6 +618,20 @@ function handleZoomEvent(e: Event) {
           <Handle id="out-bottom" type="source" :position="Position.Bottom" />
           <Handle id="in-left" type="target" :position="Position.Left" />
 
+
+
+        </div>
+      </template>
+
+      <!-- Custom Add Icon Node -->
+      <template #node-custom-add-icon>
+        <div 
+          class="w-10 h-10 rounded-full bg-accent hover:bg-accent-hover text-white flex items-center justify-center cursor-pointer shadow-md transition-transform hover:scale-110 nopan nodrag nowheel"
+          @click.stop="triggerAddStatus"
+          title="Add Status"
+          style="pointer-events: all !important; z-index: 1000 !important; cursor: pointer !important;"
+        >
+          <i class="fa-solid fa-plus font-bold text-lg"></i>
         </div>
       </template>
     </VueFlow>
@@ -578,7 +653,17 @@ function handleZoomEvent(e: Event) {
   <!-- Edit Transition Modal -->
 <div v-if="showEditEdgeModal" class="modal-backdrop" @click.self="cancelEditEdge">
   <div class="modal border border-border !bg-bg-body text-text-primary">
-    <h3>Edit transition</h3>
+    <div class="relative flex justify-between items-start">
+      <h3>Edit transition</h3>
+       <!-- Close Button -->
+          <button
+            class=" cursor-pointe text-text-secondary hover:text-text-primary text-xl "
+             @click="cancelEditEdge"
+          >
+          <img src="../../../assets/icons/cross.svg"
+          alt="">
+          </button>
+    </div>
     <BaseTextField
       v-model="editEdgeName"
       placeholder="Transition name"
@@ -587,8 +672,7 @@ function handleZoomEvent(e: Event) {
     />
     <div class="modal-actions mt-4">
       <Button size="sm" @click="confirmEditEdge">Save</Button>
-      <Button variant="secondary" size="sm" @click="cancelEditEdge">Cancel</Button>
-       <!-- 🔴 DELETE BUTTON -->
+       <!-- DELETE BUTTON -->
       <Button
         size="sm"
         variant="danger"

@@ -93,7 +93,7 @@
 
       <!-- ===== DETAILS ===== -->
       <div v-if="switchState === 'details'" class="space-y-6 w-full">
-        <hr class="mt-6 border-t border-border" />
+         
 
         <!-- ===== SHARE / INVITE ===== -->
         <!-- <div>

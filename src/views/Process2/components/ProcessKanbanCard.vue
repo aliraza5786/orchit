@@ -2,7 +2,7 @@
   <div @click="$emit('click')" @dblclick="$emit('dblclick')" class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer
            hover:shadow-md transition-all duration-200 group ">
     <div class="flex justify-between gap-2 items-start">
-      <div class="flex items-start gap-3 flex-1">
+      <div class="flex items-start gap-3" style="width: 90%;">
         <!-- <div class="w-10 h-10 bg-accent/20 flex justify-center items-center rounded-lg">
           <i class="fa-solid fa-diagram-project text-accent"></i>
         </div> -->

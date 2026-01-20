@@ -1062,7 +1062,7 @@ const columns = computed(() => {
       key: "card-title",
       label: "Title",
       render: ({ row, value }: any) =>
-        h("div", { class: "flex items-center gap-1 w-full" }, [
+        h("div", { class: "flex items-center gap-1 w-full ps-2" }, [
           h(
             "a",
             {

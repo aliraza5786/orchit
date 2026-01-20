@@ -178,7 +178,7 @@ function handleSave(payload: any) {
                workspace_id: payload.workspace_id,
                flow_diagram: payload.flow_diagram
             },
-            variable_type: "card-type",
+            variable_type: props.process?.title?.toLocaleLowerCase().includes('general') ? 'card-status' : 'card-type',
             type_value: processTypeValue.value,
             flow_metadatas: payload.flow_metadata
              // Save the whole flow

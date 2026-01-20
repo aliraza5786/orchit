@@ -107,7 +107,7 @@
                  </div>
             </td>
 
-            <td v-for="(col,i) in visibleColumns" :key="col?.key" class="ps-2 border-r border-border overflow-visible relative h-8"
+            <td v-for="(col,i) in visibleColumns" :key="col?.key" class=" border-r border-border overflow-visible relative h-8"
               :style="{ width: columnWidths[col.key] + 'px' }"
               :colspan="i === visibleColumns.length - 1 ? 2 : 1"
               >
