@@ -1,7 +1,4 @@
-<template>
-
-  <!-- Slide-in panel -->
-   
+<template> 
   <Transition name="panel" appear>
     <div v-show="showPanel" :class="[
       'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
@@ -371,7 +368,6 @@ const tabOptions = [
 /* -------------------- Title -------------------- */
 const editingTitle = ref(false)
 const localTitle = ref(cardDetails.value ? cardDetails.value['card-title'] : '')
-console.log("card details", cardDetails.value);
 
 // const localId = ref(cardDetails.value?.id)
 const titleInput = ref<HTMLInputElement | null>(null)
@@ -396,43 +392,33 @@ watch(
 )
 
 function saveTitle() {
-  const newTitle = localTitle.value.trim()
-
-  if (!newTitle) {
-    localTitle.value = sidePanelStore.selectedCardTitle
-    editingTitle.value = false
-    return
+  const newTitle = localTitle.value.trim();
+  if (!newTitle || newTitle === sidePanelStore.selectedCardTitle) {
+    editingTitle.value = false;
+    return;
   }
 
-  if (!canEditCard.value) {
-    localTitle.value = sidePanelStore.selectedCardTitle
-    toast.error('No permission')
-    editingTitle.value = false
-    return
-  }
+  moveCard.mutate({
+    card_id: sidePanelStore.selectedCardId,
+    variables: { 'card-title': newTitle }
+  });
 
-  const previousTitle = sidePanelStore.selectedCardTitle
-
-  sidePanelStore.updateCardTitleOptimistic(newTitle)
-
-  moveCard.mutate(
-    {
-      card_id: sidePanelStore.selectedCardId,
-      variables: { 'card-title': newTitle }
-    },
-    {
-      onError: () => {
-        sidePanelStore.rollbackCardTitle(previousTitle)
-        toast.error('Failed to update title')
-      }
-    }
-  )
-
-  editingTitle.value = false
+  editingTitle.value = false;
 }
-/* -------------------- Description -------------------- */
 const description = ref(cardDetails?.value ? cardDetails?.value['card-description'] : '')
-
+// Inside SidePanel.vue
+watch(
+  () => sidePanelStore.selectedCard?.['card-description'],
+  (newDesc) => {
+    if (newDesc && sidePanelStore.selectedCard?._id === sidePanelStore.selectedCardId) {
+      // Update the selectedCard ref
+      sidePanelStore.selectedCard['card-description'] = newDesc;
+      
+      // Force reactivity by creating a new object
+      sidePanelStore.selectedCard = { ...sidePanelStore.selectedCard };
+    }
+  }
+);
 const editingDesc = ref(false)
 const descEditorWrap = ref<HTMLElement | null>(null)
 
@@ -454,14 +440,43 @@ async function startEditDesc() {
   focusProseMirror(descEditorWrap.value || undefined)
 }
 function finishDescEdit(attachmentsFromEditor?: any[]) {
-  console.log(attachmentsFromEditor, '???');
-
+  const newDescription = description.value?.trim();
+  const prevDescription = cardDetails.value?.['card-description'] ?? '';
+  
+  if (!newDescription || newDescription === prevDescription) {
+    editingDesc.value = false;
+    return;
+  }
+  
+  // Update local state immediately
+  if (cardDetails.value) {
+    cardDetails.value['card-description'] = newDescription;
+  }
+  
+  // CRITICAL: Update the store's selectedCard
+  if (sidePanelStore.selectedCard && sidePanelStore.selectedCard._id === props.details._id) {
+    // Update the store object directly
+    sidePanelStore.selectedCard['card-description'] = newDescription;
+    // Also update in variables array if it exists
+    if (Array.isArray(sidePanelStore.selectedCard.variables)) {
+      const descIndex = sidePanelStore.selectedCard.variables.findIndex(
+        (v: any) => v.slug === 'card-description'
+      );
+      if (descIndex !== -1) {
+        sidePanelStore.selectedCard.variables[descIndex].value = newDescription;
+      }
+    }
+  }
+  
   moveCard.mutate({
     card_id: props.details._id,
     attachments: attachmentsFromEditor ?? [],
-    variables: { 'card-description': description.value }
-  })
-  editingDesc.value = false
+    variables: {
+      'card-description': newDescription
+    }
+  });
+
+  editingDesc.value = false;
 }
 function onDocMouseDown(e: MouseEvent) {
   if (!editingDesc.value) return
@@ -471,20 +486,10 @@ function onDocMouseDown(e: MouseEvent) {
 }
 onMounted(() => document.addEventListener('mousedown', onDocMouseDown))
 onBeforeUnmount(() => document.removeEventListener('mousedown', onDocMouseDown))
-
-/* -------------------- Meta & Fields -------------------- */
-// const local = reactive({
-//   posted_on: props.details?.posted_on ?? props.details?.created_at ?? new Date().toISOString(),
-// })
 const local = reactive({
-  // prefer server values; otherwise keep empty so UI shows placeholder
   posted_on: props.details?.posted_on ?? props.details?.created_at ?? '',
 })
 
-// const dateISO = computed({
-//   get: () => new Date(local.posted_on).toISOString().slice(0, 10),
-//   set: (v: string) => { local.posted_on = new Date(v + 'T00:00:00').toISOString() }
-// })
 const dateISO = computed({
   get: () => local.posted_on ? new Date(local.posted_on).toISOString().slice(0, 10) : '',
   set: (v: string) => { local.posted_on = v ? new Date(v + 'T00:00:00').toISOString() : '' }
@@ -504,43 +509,48 @@ const laneOptions = computed<any[]>(() =>
   (lanes?.value ?? []).map((el: any) => ({ _id: el._id, title: el?.variables?.['lane-title'] ?? String(el._id) }))
 )
 function setLane(v: any) {
-  lane.value = v
-  moveCard.mutate({ card_id: props.details._id, 'workspace_lane_id': v })
+  lane.value = v; // Update local ref
+  moveCard.mutate({ 
+    card_id: props.details._id, 
+    workspace_lane_id: v 
+  });
 }
-
-// const form = ref<any>({ startDate: cardDetails.value ? cardDetails.value['start-date'] : "", endDate: cardDetails.value ? cardDetails.value['end-date'] : '' })
-// const startDate = computed(() => props.details['start-date'])
-// const endDate = computed(() => props.details['end-date'])
-// watch(startDate, (v) => { form.value = { ...form.value, startDate: v } })
-// watch(endDate, (v) => { form.value = { ...form.value, endDate: v } })
 const form = ref<{ startDate: string | null; endDate: string | null }>({ startDate: null, endDate: null })
-
-// keep form in sync with server cardDetails once loaded
 watch(() => cardDetails.value, (v) => {
   form.value.startDate = v?.['start-date'] ?? null
   form.value.endDate   = v?.['end-date'] ?? null
 }, { immediate: true, deep: true })
-
 
 const endDateError = computed(() =>
   (form?.value.startDate && form.value.endDate && form.value.endDate < form.value.startDate)
     ? 'End date cannot be before start date'
     : ''
 )
- const setStartDate = (e: any) => {
-  form.value.startDate = e ?? null
-  moveCard.mutate({ card_id: props.details._id, variables: { 'start-date': e } })
-}
-const setEndDate = (e: any) => {
-  form.value.endDate = e ?? null
-  moveCard.mutate({ card_id: props.details._id, variables: { 'end-date': e } })
+const setStartDate = (e: any) => {
+  form.value.startDate = e ?? null;
+  moveCard.mutate({ 
+    card_id: props.details._id, 
+    variables: { 'start-date': e } 
+  });
 }
 
+const setEndDate = (e: any) => {
+  form.value.endDate = e ?? null;
+  moveCard.mutate({ 
+    card_id: props.details._id, 
+    variables: { 'end-date': e } 
+  });
+}
 const curentAssigne = computed(() => cardDetails?.value.assigned_to)
 const assignHandle = (user: any) => {
-  moveCard.mutate({ card_id: props.details._id, seat_id: user?._id })
+  // We trigger the mutation and include the full user object for optimistic UI
+  moveCard.mutate({ 
+    card_id: props.details._id, 
+    seat_id: user?._id,
+    // Add this temporary field so onMutate knows what user object to put in the cache
+    optimisticUser: user 
+  });
 }
-
 /* -------------------- Comments -------------------- */
 const commentId = computed(() => props.details?._id)
 const { data: commentsData } = useComments(commentId)
@@ -548,12 +558,59 @@ const comments = ref<any>(commentsData.value?.comments)
 watch(() => commentsData.value, () => { comments.value = commentsData.value?.comments })
 
 const { mutate: createComment, isPending: isPostingComment } = useCreateComment({
-  onSuccess: (data: any) => {
-    newComment.value = ''
-    commentAttachments.value = []
-    comments.value = [...comments.value, data]
+  onMutate: async (newCommentPayload: any) => {
+    const cardId = props.details._id;
+    
+    // 1. Cancel related queries
+    await queryClient.cancelQueries({ queryKey: ['product-comments', cardId] });
+    await queryClient.cancelQueries({ queryKey: ['sheet-list'] });
+
+    const previousComments = queryClient.getQueryData(['product-comments', cardId]);
+    const previousLists = queryClient.getQueryData(['sheet-list']);
+
+    // 2. Create the Optimistic Comment
+    const optimisticComment = {
+      _id: Date.now().toString(),
+      comment_text: newCommentPayload.payload.comment_text,
+      commented_by: { u_full_name: "You", _id: currentUserId.value },
+      attachments: newCommentPayload.payload.attachments || [],
+      created_at: new Date().toISOString(),
+    };
+
+    // 3. Update SidePanel Comments List Cache
+    queryClient.setQueryData(['product-comments', cardId], (old: any) => {
+      return {
+        ...old,
+        comments: [...(old?.comments || []), optimisticComment]
+      };
+    });
+
+    // 4. Update Parent Kanban Badge (comment_count)
+    queryClient.setQueriesData({ queryKey: ['sheet-list'] }, (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.map((col: any) => ({
+        ...col,
+        cards: col.cards?.map((c: any) => 
+          c._id === cardId 
+            ? { ...c, comment_count: (c.comment_count || 0) + 1 } 
+            : c
+        )
+      }));
+    });
+
+    return { previousComments, previousLists };
+  },
+  onError: (err:any, variables:any, context: any) => {
+    if (context?.previousComments) queryClient.setQueryData(['product-comments', props.details._id], context.previousComments);
+    if (context?.previousLists) queryClient.setQueriesData({ queryKey: ['sheet-list'] }, context.previousLists);
+    console.log(err, variables);
+    
+  },
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ['product-comments', props.details._id] });
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
   }
-})
+});
 const newComment = ref('')
 const initials = (n?: string) => (n ?? '').split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
 const formatDateTime = (iso?: string) => iso ? new Date(iso).toLocaleString() : ''
@@ -615,69 +672,66 @@ const attachments = computed(() => {
   }))
 }
 )
-type RollbackContext = {
-  previousSheets?: any
-  previousList?: any
-}
 const moveCard = useMoveCard({
-  // Optimistic update
-  onMutate: async (variables: { card_id: string; variables: Record<string, any> }) => {
-    const { card_id, variables: vars } = variables  // destructure safely
+  onMutate: async (newPayload: any) => {
+    const { card_id, variables: updatedVariables } = newPayload;
 
-    // Cancel any outgoing queries for sheets to avoid overwriting optimistic update
-    await queryClient.cancelQueries({ queryKey: ['get-sheets'] })
-    await queryClient.cancelQueries({ queryKey: ['sheet-list'] })
-    
-    // Snapshot previous data for rollback
-    const previousSheets = queryClient.getQueryData(['get-sheets'])
-    const previousList = queryClient.getQueryData(['sheet-list'])
+    await queryClient.cancelQueries({ queryKey: ['product-card', card_id] });
+    await queryClient.cancelQueries({ queryKey: ['sheet-list'] });
 
-    // Update cache immediately (optimistic)
-    queryClient.setQueryData(['get-sheets'], (old: any) => {
-      return old?.map((sheet: any) => {
-        if (sheet._id === card_id) {
-          return {
-            ...sheet,
-            variables: { ...sheet.variables, ...vars }
+    const previousCard = queryClient.getQueryData(['product-card', card_id]);
+    const previousLists = queryClient.getQueryData(['sheet-list']);
+
+    const updateCardLogic = (oldCard: any) => {
+      if (!oldCard || oldCard._id !== card_id) return oldCard;
+      
+      const updatedCard = { 
+        ...oldCard,
+        variables: Array.isArray(oldCard.variables) ? [...oldCard.variables] : []
+      };
+
+      if (updatedVariables) {
+        // Update FLAT properties
+        Object.assign(updatedCard, updatedVariables);
+
+        // Update variables array
+        Object.entries(updatedVariables).forEach(([key, value]) => {
+          const varIndex = updatedCard.variables.findIndex((v: any) => v.slug === key);
+          if (varIndex !== -1) {
+            updatedCard.variables[varIndex] = { ...updatedCard.variables[varIndex], value };
+          } else {
+            updatedCard.variables.push({ slug: key, value, type: "Text" });
           }
-        }
-        return sheet
-      })
-    })
+        });
+      }
 
-    queryClient.setQueryData(['sheet-list'], (old: any) => {
-      return old?.map((list: any) => {
-        return {
-          ...list,
-          cards: list.cards?.map((c: any) =>
-            c._id === card_id ? { ...c, variables: { ...c.variables, ...vars } } : c
-          )
-        }
-      })
-    })
+      if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+      if (newPayload.optimisticUser) {
+        updatedCard.seat = newPayload.optimisticUser;
+        updatedCard.assigned_to = newPayload.optimisticUser;
+      }
 
-    // Return rollback function
-    return { previousSheets, previousList }
+      return updatedCard;
+    };
+
+    // Update SidePanel Single Card Cache
+    queryClient.setQueryData(['product-card', card_id], updateCardLogic);
+
+    // Update Parent Board Cache (THIS IS WHAT UPDATES THE PARENT'S LISTS)
+    queryClient.setQueriesData({ queryKey: ['sheet-list'] }, (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.map((column: any) => ({
+        ...column,
+        cards: column.cards?.map((card: any) => 
+          card._id === card_id ? updateCardLogic(card) : card
+        )
+      }));
+    });
+
+    return { previousCard, previousLists };
   },
-
- onError: (
-    context: RollbackContext | undefined
-  ) => {
-    // rollback cache if mutation fails
-    if (context?.previousSheets) queryClient.setQueryData(['get-sheets'], context.previousSheets)
-    if (context?.previousList) queryClient.setQueryData(['sheet-list'], context.previousList)
-  },
-
-  onSettled: () => {
-    // re-fetch to ensure consistency
-    queryClient.invalidateQueries({ queryKey: ['get-sheets'] })
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-    queryClient.invalidateQueries({ queryKey: ['roles'] })
-  }
-})
-
-
-
+  // ... rest of the code
+});
 /* -------------------- Comment attachments -------------------- */
 const commentAttachments = ref<File[]>([])
 const { mutate: uploadFile } = usePrivateUploadFile({

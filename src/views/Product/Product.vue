@@ -613,6 +613,24 @@ const GanttChartView = defineAsyncComponent(
 const TimelineView = defineAsyncComponent(
   () => import("../../components/feature/TimelineView.vue")
 );
+const CreateTaskModal = defineAsyncComponent(
+  () => import("./modals/CreateTaskModal.vue")
+);
+const CreateSheetModal = defineAsyncComponent(
+  () => import("./modals/CreateSheetModal.vue")
+);
+const CreateVariableModal = defineAsyncComponent(
+  () => import("./modals/CreateVariableModal.vue")
+);
+const ConfirmDeleteModal = defineAsyncComponent(
+  () => import("./modals/ConfirmDeleteModal.vue")
+);
+const SidePanel = defineAsyncComponent(
+  () => import("./components/SidePanel.vue")
+);
+const KanbanBoard = defineAsyncComponent(
+  () => import("../../components/feature/kanban/KanbanBoard.vue")
+);
 const {
   canEditSheet,
   canDeleteSheet,
@@ -743,25 +761,6 @@ const removeCardFromState = (cardId: string) => {
     });
   });
 };
-
-const CreateTaskModal = defineAsyncComponent(
-  () => import("./modals/CreateTaskModal.vue")
-);
-const CreateSheetModal = defineAsyncComponent(
-  () => import("./modals/CreateSheetModal.vue")
-);
-const CreateVariableModal = defineAsyncComponent(
-  () => import("./modals/CreateVariableModal.vue")
-);
-const ConfirmDeleteModal = defineAsyncComponent(
-  () => import("./modals/ConfirmDeleteModal.vue")
-);
-const SidePanel = defineAsyncComponent(
-  () => import("./components/SidePanel.vue")
-);
-const KanbanBoard = defineAsyncComponent(
-  () => import("../../components/feature/kanban/KanbanBoard.vue")
-);
 const {
   data,
   refetch: refetchSheets,
@@ -1017,7 +1016,8 @@ const filteredBoard = computed(() => {
   if (view.value === "kanban") {
     // Kanban filtering by columns
     if (!searchQuery.value) return Lists.value;
-
+    console.log("fuse data", fuse.value);
+    
     const results = fuse.value
       .search(searchQuery.value)
       .map((r: any) => r.item);
@@ -1222,37 +1222,135 @@ const getOptions = (options: any) => {
     title: el.value ?? el,
   }));
 };
+const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
+  if (!Lists.value) return false;
+  
+  let found = false;
+  
+  Lists.value.forEach((column: any) => {
+    if (column.cards) {
+      column.cards.forEach((card: any) => {
+        if (card._id === cardId) {
+          found = true;
+          
+          // Update flat properties
+          Object.keys(updates).forEach(key => {
+            card[key] = updates[key];
+          });
+          
+          // Update variables array
+          if (Array.isArray(card.variables)) {
+            Object.entries(updates).forEach(([key, value]) => {
+              const varIndex = card.variables.findIndex((v: any) => v.slug === key);
+              if (varIndex !== -1) {
+                card.variables[varIndex].value = value;
+              } else {
+                card.variables.push({ slug: key, value, type: "Text" });
+              }
+            });
+          }
+        }
+      });
+    }
+  });
+  
+  return found;
+};
 const moveCard = useMoveCard({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["get-sheets"] });
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    queryClient.invalidateQueries({ queryKey: ["roles"] });
+  onMutate: async (newPayload: any) => {
+    const { card_id, variables: updatedVariables } = newPayload;
+
+    await queryClient.cancelQueries({ queryKey: ['product-card', card_id] });
+    await queryClient.cancelQueries({ queryKey: ['sheet-list'] });
+
+    const previousCard = queryClient.getQueryData(['product-card', card_id]);
+    const previousLists = queryClient.getQueryData(['sheet-list']);
+
+    const updateCardLogic = (oldCard: any) => {
+      if (!oldCard) return oldCard;
+      
+      const updatedCard = { 
+        ...oldCard,
+        variables: Array.isArray(oldCard.variables) ? [...oldCard.variables] : []
+      };
+
+      if (updatedVariables) {
+        Object.assign(updatedCard, updatedVariables);
+        
+        Object.entries(updatedVariables).forEach(([key, value]) => {
+          const varIndex = updatedCard.variables.findIndex((v: any) => v.slug === key);
+          if (varIndex !== -1) {
+            updatedCard.variables[varIndex] = { ...updatedCard.variables[varIndex], value };
+          } else {
+            updatedCard.variables.push({ slug: key, value, type: "Text" });
+          }
+        });
+      }
+
+      if (newPayload.optimisticUser) updatedCard.seat = newPayload.optimisticUser;
+      if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+
+      return updatedCard;
+    };
+
+    // CRITICAL FIX: Update the card in the local Lists structure
+    if (updatedVariables && Lists.value) {
+      updateCardInLists(card_id, updatedVariables);
+    }
+
+    // CRITICAL FIX: Update the selectedCard ref if it matches the updated card
+    if (selectedCard.value && selectedCard.value._id === card_id) {
+      selectedCard.value = updateCardLogic(selectedCard.value);
+    }
+
+    // Sync SidePanel Cache
+    queryClient.setQueryData(['product-card', card_id], updateCardLogic);
+
+    // Sync Parent (Lists/Board) Cache
+    queryClient.setQueriesData({ queryKey: ['sheet-list'] }, (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.map((column: any) => ({
+        ...column,
+        cards: column.cards?.map((card: any) => 
+          card._id === card_id ? updateCardLogic(card) : card
+        )
+      }));
+    });
+
+    return { previousCard, previousLists };
+  },
+  onError: (err:any, variables:any, context:any) => {
+    if (context?.previousCard) queryClient.setQueryData(['product-card', variables.card_id], context.previousCard);
+    if (context?.previousLists) queryClient.setQueryData(['sheet-list'], context.previousLists);
+    
+    // Also revert selectedCard if it was updated
+    if (selectedCard.value && selectedCard.value._id === variables.card_id && context?.previousCard) {
+      selectedCard.value = context.previousCard;
+    }
+    console.log(err);
+    
   },
 });
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
-  // Fallback to local mutation as setQueriesData might miss the exact key or not trigger the view update
   if (!Lists.value) return;
 
-  const listIndex = Lists.value.findIndex((l: any) =>
-    l.cards.some((c: any) => c._id === cardId)
-  );
-
-  if (listIndex !== -1) {
-    const cardIndex = Lists.value[listIndex].cards.findIndex(
-      (c: any) => c._id === cardId
-    );
+  // Lists.value is an array of columns (from your data structure)
+  for (const column of Lists.value) {
+    if (!column.cards) continue;
+    
+    const cardIndex = column.cards.findIndex((c: any) => c._id === cardId);
+    
     if (cardIndex !== -1) {
-      // Create a shallow copy of the card to trigger reactivity (immutable update)
-      const newCard = { ...Lists.value[listIndex].cards[cardIndex] };
+      // Get the current card
+      const card = column.cards[cardIndex];
+      
+      // Apply the updates directly to the card object
+      // (Vue 3's reactive proxy will track these changes)
+      updater(card);
 
-      // Run the updater on the copy
-      updater(newCard);
-
-      // Replace the card in the list
-      Lists.value[listIndex].cards[cardIndex] = newCard;
-
-      // trigger Vue to detect changes
+      // Force a manual trigger for the Lists ref to notify Kanban/Table components
       triggerRef(Lists);
+      break; 
     }
   }
 };
@@ -1261,33 +1359,37 @@ const { mutate: addTicket } = useAddTicket({
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
   },
 });
-
 function handleChangeTicket(id: any, key: any, value: any) {
+  const cleanValue = typeof value === "string" ? value.trim() : value;
+
   updateOptimisticCard(id, (card) => {
-    // Always update top-level property if it matches certain keys like 'card-title'
-    if (key === "card-title") {
-      card[key] = value;
+    // 1. UPDATE FLAT PROPERTY (The most important part for your Lists API structure)
+    // This ensures card['card-description'] or card['card-status'] is updated directly
+    card[key] = cleanValue;
+
+    // 2. UPDATE NESTED VARIABLES ARRAY (For secondary sync)
+    if (Array.isArray(card.variables)) {
+      const varIndex = card.variables.findIndex((v: any) => v.slug === key);
+      if (varIndex !== -1) {
+        card.variables[varIndex].value = cleanValue;
+      } else {
+        // Only push if it's a known custom variable or if you want total redundancy
+        card.variables.push({ slug: key, value: cleanValue, type: "Text" });
+      }
     }
 
-    // Check if variables is an array (per user data)
-    if (Array.isArray(card.variables)) {
-      const variable = card.variables.find((v: any) => v.slug === key);
-      if (variable) {
-        variable.value = value;
-      } else {
-        // Add new variable if not found (assuming Type Select/Text defaults)
-        card.variables.push({ slug: key, value: value, type: "Select" });
-      }
-    } else if (card.variables && typeof card.variables === "object") {
-      // Fallback for object structure if mixed
-      card.variables[key] = value;
-    } else {
-      // Fallback for top-level props
-      card[key] = value;
+    // 3. SYNC SIDEPANEL REFERENCE
+    // If the card being edited is the one open in the side panel, 
+    // update that reference too so the UI doesn't "jump" or revert.
+    if (selectedCard.value?._id === id) {
+      selectedCard.value[key] = cleanValue; 
+      // We don't necessarily need to call sidePanelStore.selectTaskCard again
+      // as long as we mutate the existing reactive object.
     }
   });
 
-  moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } });
+  // 4. TRIGGER API MUTATION
+  moveCard.mutate({ card_id: id, variables: { [key]: cleanValue } });
 }
 function handleCreateTicket(title: any) {
   if (title["card-title"]) {
