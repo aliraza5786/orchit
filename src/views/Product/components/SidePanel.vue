@@ -348,6 +348,17 @@ const { data: cardDetails, isPending, isFetching } = useProductCard(propsID, {
 watch(props, () => {
   propsID.value = props.details._id
 })
+watch(
+  () => cardDetails.value,
+  (card) => {
+    if (!card) return
+
+    sidePanelStore.selectedCard = card
+    sidePanelStore.selectedCardTitle = card['card-title']
+    sidePanelStore.selectedCardId = card._id
+  },
+  { immediate: true }
+)
 /* -------------------- Tabs -------------------- */
 const activeTab = ref<'details' | 'comments' | 'attachment' | 'history'>('details')
 const tabOptions = [
@@ -369,6 +380,7 @@ function editTitle() {
 
   sidePanelStore.saveTitle(localTitle.value)
    sidePanelStore.saveLocalId(cardDetails.value?._id)
+   sidePanelStore.saveCardDetails(cardDetails.value);
   editingTitle.value = true
   nextTick(() => titleInput.value?.focus())
 }
@@ -418,8 +430,6 @@ function saveTitle() {
 
   editingTitle.value = false
 }
-
-
 /* -------------------- Description -------------------- */
 const description = ref(cardDetails?.value ? cardDetails?.value['card-description'] : '')
 

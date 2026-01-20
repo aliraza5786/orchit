@@ -63,7 +63,19 @@
         :expanded="expanded"
       />
     </div>
-
+    <div class="text-center flex-col flex gap-1 min-w-max">
+      <SideItem
+        label="Plan"
+        :to="`/workspace/plan/${workspaceId}`"
+        key="plan"
+        id="plan"
+        :icon="{
+          prefix: 'fa-regular',
+          iconName: 'fa-brain',
+        }"
+        :expanded="expanded"
+      />
+    </div>
     <div class="flex flex-col gap-1 max-sm:flex-row pin_task min-w-max">
       <SideItem
         v-for="(item, index) in filteredModules"
@@ -78,19 +90,6 @@
             : 'workspace'
         }/${workspaceId}/${item._id}`"
         :icon="item?.variables['module-icon']"
-        :expanded="expanded"
-      />
-    </div>
-    <div class="text-center flex-col flex gap-1 min-w-max">
-      <SideItem
-        label="Plan"
-        :to="`/workspace/plan/${workspaceId}`"
-        key="plan"
-        id="plan"
-        :icon="{
-          prefix: 'fa-regular',
-          iconName: 'fa-brain',
-        }"
         :expanded="expanded"
       />
     </div>
