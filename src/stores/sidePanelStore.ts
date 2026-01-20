@@ -58,12 +58,13 @@ export const useSidePanelStore = defineStore("sidePanel", {
     clearCard() {
       this.selectedCardPeople= null;
     },
-     updateCardTitleOptimistic(newTitle: string) {
-  if (!this.selectedCard) return
-
-  this.selectedCard['card-title'] = newTitle
-  this.selectedCardTitle = newTitle
-  },
+     // sidePanelStore.ts
+updateCardTitleOptimistic(newTitle: string) {
+  if (this.selectedCard) {
+    this.selectedCard['card-title'] = newTitle; // For the list views
+    this.selectedCardTitle = newTitle;          // For the SidePanel header
+  }
+},
 
   rollbackCardTitle(previousTitle: string) {
     if (!this.selectedCard) return

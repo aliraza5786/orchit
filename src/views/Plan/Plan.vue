@@ -16,7 +16,7 @@
         <KanbanSkeleton />
       </template>
       <div class="overflow-x-auto w-full">
-  <div class="min-w-[1200px]">
+  <div class="min-w-[1200px] h-full">
   <div
         v-if="!isStartingSprint"
         class="p-4 w-full min-w-0 flex flex-col flex-1 min-h-0 overflow-x-auto"
@@ -177,7 +177,7 @@
             </div>
           </section>
           <div
-            class="h-full w-[3px] relative z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
+            class="h-full w-[3px] relative border z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
             @mousedown="startResize"
           ></div>
           <section
