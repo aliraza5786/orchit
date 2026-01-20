@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto flex-grow h-full min-h-0 bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
+    class="flex-auto flex-grow h-full min-h-0 rounded-[6px] overflow-x-auto flex-col flex"
   >
     <!-- sprintDetailData?.status === 'active' -->
     <template v-if="showActiveSprint">
@@ -26,7 +26,7 @@
           class="flex gap-2 flex-1 min-h-0 overflow-x-auto group"
         >
           <section
-            class="px-4 rounded-md relative flex flex-col min-h-0 border border-border"
+            class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card"
             :style="{ width: leftWidth + 'px' }"
           >
             <div class="flex items-center justify-between mt-2">
@@ -181,13 +181,13 @@
             @mousedown="startResize"
           ></div>
           <section
-            class="rounded-md relative pt-2 flex flex-col flex-1 min-h-0 border border-border-input overflow-hidden"
+            class="rounded-md relative pt-2 flex flex-col flex-1 min-h-0 bg-bg-card overflow-hidden"
           >
             <div
               class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
             >
               <!-- Left Section: Sprint Tabs -->
-              <div class="flex items-center gap-2 bg-bg-card min-w-0">
+              <div class="flex items-center gap-2 min-w-0 py-1">
                 <!-- Sprint Dropdown -->
                 <div ref="elipseWrapperSprint" class="relative inline-block">
                   <!-- Trigger Button -->
@@ -797,9 +797,9 @@ const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
 const selectedFilter = ref<string | "">("");
 const sprintTypes = [
-  { label: "Milestone", value: "milestone", dot: "#2e9bda" },
+  { label: "Milestone", value: "milestone", dot: "#7d68c8" },
   { label: "Sprint", value: "sprint", dot: "#7d68c8" },
-  { label: "Huddle", value: "huddle", dot: "#eea832" },
+  { label: "Huddle", value: "huddle", dot: "#7d68c8" },
 ];
 const formattedLabel = computed(() => {
   if (!sprintType.value) return "";

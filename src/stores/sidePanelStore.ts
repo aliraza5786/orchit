@@ -10,6 +10,7 @@ export const useSidePanelStore = defineStore("sidePanel", {
     cards: {} as Record<string, any>,
     selectedCardTitle:"",
     selectedCardId: "",
+    cardDetails:[] as any[],
   }),
 
   getters: {
@@ -58,14 +59,18 @@ export const useSidePanelStore = defineStore("sidePanel", {
       this.selectedCardPeople= null;
     },
      updateCardTitleOptimistic(newTitle: string) {
-      if (!this.selectedCard) return
-      this.selectedCard['card-title'] = newTitle
-    },
+  if (!this.selectedCard) return
 
-    rollbackCardTitle(previousTitle: string) {
-      if (!this.selectedCard) return
-      this.selectedCard['card-title'] = previousTitle
-    },
+  this.selectedCard['card-title'] = newTitle
+  this.selectedCardTitle = newTitle
+  },
+
+  rollbackCardTitle(previousTitle: string) {
+    if (!this.selectedCard) return
+
+    this.selectedCard['card-title'] = previousTitle
+    this.selectedCardTitle = previousTitle
+  },
      clearTaskCard() {
       this.selectedCardPeople= null;
     },
@@ -74,5 +79,9 @@ export const useSidePanelStore = defineStore("sidePanel", {
     },
     saveLocalId(id:string){
       this.selectedCardId = id;
+    },
+    saveCardDetails(card:any){
+      
+      this.cardDetails=card;
     }
 }});
