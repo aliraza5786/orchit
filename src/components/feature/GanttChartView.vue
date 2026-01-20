@@ -6,6 +6,7 @@
       :treeColumnIndex="1"
       :taskFields="taskFields"
       :height="'100%'"
+      :labelSettings="labelSettings"
       @rowSelected="onRowSelected"
     >
       <e-columns>
@@ -54,6 +55,9 @@ interface Card {
 
 const props = defineProps<{ data: Card[] }>();
 const { isDark } = useTheme();
+const labelSettings = {
+  taskLabel: "TaskName", 
+};
 const ganttRef = ref<InstanceType<typeof GanttComponent> | null>(null);
 const lightColors = [
   "#DBEAFE",
@@ -80,21 +84,24 @@ const ganttItems = computed(() =>
     const end = card["end-date"] ? new Date(card["end-date"]) : start;
     const duration =
       Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
-    const color = lightColors[index % lightColors.length];
 
     return {
-      TaskID: card._id,
+      TaskID: card["card-code"],
       TaskName: card["card-title"],
       StartDate: start,
       EndDate: end,
       Duration: duration,
       Progress: 0,
-      barColor: color,
-      foreground: "#374151",
+
+      // 🔥 taskbar styles
+      barColor: lightColors[index % lightColors.length],
+      taskLabelColor: isDark.value ? "#FFFFFF" : "#1F2937",
+
       extendedProps: { card },
     };
   })
 );
+
 const emit = defineEmits<{
   (e: "select:ticket", card: Card): void;
 }>();
