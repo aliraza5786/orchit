@@ -75,6 +75,10 @@ updateCardTitleOptimistic(newTitle: string) {
      clearTaskCard() {
       this.selectedCardPeople= null;
     },
+    clearSelectedCard() {
+      this.selectedCard = null;
+      this.selectedCardId = "";
+    },
     saveTitle(title: string){
       this.selectedCardTitle = title;
     },
