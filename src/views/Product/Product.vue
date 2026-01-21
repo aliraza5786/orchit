@@ -481,6 +481,7 @@
         selectCardHandler({ variables: {} });
       }
     "
+    @closeSidePanel="closeSidePanel"
     :showPanel="selectedCard?._id ? true : false"
   />
   <CreateSheetModal
@@ -829,17 +830,15 @@ watch(viewBy, () => {
   selected_view_by.value = viewBy.value;
 });
 const workspaceStore = useWorkspaceStore();
-
-// usage
 const {
   data: Lists,
   isPending,
   refetch: refetchSheetLists,
 } = useSheetList(
   moduleId,
-  selected_sheet_id, // ref
-  computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
-  selected_view_by, // ref
+  selected_sheet_id,
+  computed(() => [...workspaceStore.selectedLaneIds]), 
+  selected_view_by, 
   listProcessPayload
 );
 
@@ -849,6 +848,10 @@ const selectCardHandler = (card: any) => {
   sidePanelStore.selectTaskCard(card);
 };
 (window as any).selectCardHandler = selectCardHandler;
+const closeSidePanel = () => {
+  selectedCard.value = null;  
+  sidePanelStore.clearSelectedCard(); 
+};
 
 const isCreateSheetModal = ref(false);
 const createSheet = () => {
@@ -1000,18 +1003,27 @@ watch(
     debouncedQuery.value = val;
   }, 200)
 );
-// computed filtered board
-
 const fuse = computed(() => {
-  const allCards = Lists.value.flatMap((col: any) =>
-    col.cards.map((card: any) => ({ ...card, columnId: col.title }))
+  const lists = Lists.value || [];
+  const allCards = lists.flatMap((col: any) =>
+    (col.cards || []).map((card: any) => {
+      const descVar = Array.isArray(card.variables)
+        ? card.variables.find((v: any) => v.slug === "card-description")
+        : null;
+
+      return {
+        ...card,
+        columnId: col.title,
+        "card-description": card["card-description"] || descVar?.value || "",
+      };
+    })
   );
+
   return new Fuse(allCards, {
     keys: ["card-title", "card-description"],
     threshold: 0.3,
   });
 });
-
 const filteredBoard = computed(() => {
   if (view.value === "kanban") {
     // Kanban filtering by columns
@@ -1224,38 +1236,46 @@ const getOptions = (options: any) => {
 };
 const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
   if (!Lists.value) return false;
-  
+
   let found = false;
-  
-  Lists.value.forEach((column: any) => {
-    if (column.cards) {
-      column.cards.forEach((card: any) => {
-        if (card._id === cardId) {
-          found = true;
-          
-          // Update flat properties
-          Object.keys(updates).forEach(key => {
-            card[key] = updates[key];
-          });
-          
-          // Update variables array
-          if (Array.isArray(card.variables)) {
-            Object.entries(updates).forEach(([key, value]) => {
-              const varIndex = card.variables.findIndex((v: any) => v.slug === key);
-              if (varIndex !== -1) {
-                card.variables[varIndex].value = value;
-              } else {
-                card.variables.push({ slug: key, value, type: "Text" });
-              }
-            });
+
+  const newLists = Lists.value.map((column: any) => {
+    const newCards = (column.cards || []).map((card: any) => {
+      if (card._id !== cardId) return card;
+
+      found = true;
+
+      const updatedCard = { ...card, ...updates };
+
+      if (Array.isArray(card.variables)) {
+        const newVariables = [...card.variables];
+
+        Object.entries(updates).forEach(([key, value]) => {
+          const idx = newVariables.findIndex((v: any) => v.slug === key);
+          if (idx !== -1) {
+            newVariables[idx] = { ...newVariables[idx], value };
+          } else {
+            newVariables.push({ slug: key, value, type: "Text" });
           }
-        }
-      });
-    }
+        });
+
+        updatedCard.variables = newVariables;
+      } else {
+        updatedCard.variables = { ...(card.variables || {}), ...updates };
+      }
+
+      return updatedCard;
+    });
+
+    return { ...column, cards: newCards };
   });
-  
+
+  Lists.value = newLists;
+
   return found;
 };
+
+
 const moveCard = useMoveCard({
   onMutate: async (newPayload: any) => {
     const { card_id, variables: updatedVariables } = newPayload;
@@ -1267,31 +1287,38 @@ const moveCard = useMoveCard({
     const previousLists = queryClient.getQueryData(['sheet-list']);
 
     const updateCardLogic = (oldCard: any) => {
-      if (!oldCard) return oldCard;
-      
-      const updatedCard = { 
-        ...oldCard,
-        variables: Array.isArray(oldCard.variables) ? [...oldCard.variables] : []
-      };
+  if (!oldCard) return oldCard;
 
-      if (updatedVariables) {
-        Object.assign(updatedCard, updatedVariables);
-        
-        Object.entries(updatedVariables).forEach(([key, value]) => {
-          const varIndex = updatedCard.variables.findIndex((v: any) => v.slug === key);
-          if (varIndex !== -1) {
-            updatedCard.variables[varIndex] = { ...updatedCard.variables[varIndex], value };
-          } else {
-            updatedCard.variables.push({ slug: key, value, type: "Text" });
-          }
-        });
-      }
+  const updatedCard = {
+    ...oldCard,
+    variables: Array.isArray(oldCard.variables) ? [...oldCard.variables] : { ...(oldCard.variables || {}) }
+  };
 
-      if (newPayload.optimisticUser) updatedCard.seat = newPayload.optimisticUser;
-      if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+  if (updatedVariables) {
+    // 1) Update top-level fields
+    Object.assign(updatedCard, updatedVariables);
 
-      return updatedCard;
-    };
+    // 2) Update variables ARRAY or OBJECT
+    if (Array.isArray(updatedCard.variables)) {
+      Object.entries(updatedVariables).forEach(([key, value]) => {
+        const idx = updatedCard.variables.findIndex((v: any) => v.slug === key);
+        if (idx !== -1) {
+          updatedCard.variables[idx] = { ...updatedCard.variables[idx], value };
+        } else {
+          updatedCard.variables.push({ slug: key, value, type: "Text" });
+        }
+      });
+    } else {
+      Object.assign(updatedCard.variables, updatedVariables);
+    }
+  }
+
+  if (newPayload.optimisticUser) updatedCard.seat = newPayload.optimisticUser;
+  if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+
+  return updatedCard;
+};
+
 
     // CRITICAL FIX: Update the card in the local Lists structure
     if (updatedVariables && Lists.value) {
@@ -1305,7 +1332,7 @@ const moveCard = useMoveCard({
 
     // Sync SidePanel Cache
     queryClient.setQueryData(['product-card', card_id], updateCardLogic);
-
+      
     // Sync Parent (Lists/Board) Cache
     queryClient.setQueriesData({ queryKey: ['sheet-list'] }, (old: any) => {
       if (!Array.isArray(old)) return old;
@@ -1316,7 +1343,7 @@ const moveCard = useMoveCard({
         )
       }));
     });
-
+    triggerRef(Lists);
     return { previousCard, previousLists };
   },
   onError: (err:any, variables:any, context:any) => {

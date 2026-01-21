@@ -4,7 +4,6 @@
     }" class="product-ticket relative bg-bg-card rounded-lg p-4 shadow-sm cursor-grab border-t-4
              hover:shadow-md transition-all duration-200 active:cursor-grabbing" :class="priorityBorderClass"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
-
         <div class="flex justify-between gap-2 items-start mb-3">
             <div class="flex gap-2 flex-wrap items-center"> 
                 <span v-if="ticket['card-type'] || ticket['card-type']=== null && selectedVarSlug[0]?.slug != 'card-type'"
@@ -33,7 +32,7 @@
             {{ ticket['card-title'] }}
         </h3>
 
-        <p v-html="ticket['card-description']" v-once
+        <p v-html="ticket['card-description']"
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2 max-h-20">
         </p>
 
