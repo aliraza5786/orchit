@@ -145,7 +145,7 @@ const passwordHasError = computed(() => !!passwordError.value);
 const isFormValid = computed(() => !emailError.value && !passwordError.value);
 const router = useRouter();
 const { mutateAsync, isPending } = useMutation({ mutationFn: login });
-const { mutateAsync: googleLoginMutate, isPending: isGoogleLoginPending } = useMutation({ mutationFn: socialLogin });
+const { mutateAsync: googleLoginMutate,  } = useMutation({ mutationFn: socialLogin });
 
 // --- Derived UI state ---
 const submitDisabled = computed(() => isPending.value);
