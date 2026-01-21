@@ -1,12 +1,5 @@
 <template>
-  <section class="h-full min-h-0 mt-2 overflow-y-hidden">
-    <!-- Search Input -->
-    <!-- <div class="mb-2">
-      <SearchBar type="text"  @onChange="(e) => searchQuery = e" placeholder="Search tickets..."
-        class="w-[250px]" />
-    </div> -->
-
-    <!-- Table -->
+  <section class="h-full min-h-0 mt-2">
     <div
       class="rounded-lg flex flex-col h-full"
       :class="dropOverBacklog ? 'ring-2 ring-blue-400' : ''"
@@ -42,7 +35,7 @@
       </div>
 
       <!-- Tickets List -->
-      <div v-else class="overflow-y-auto h-[calc(100%-50px)]">
+      <div v-else class="overflow-y-auto h-[calc(100%-50px)] tickets-scroll mt-2">
         <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1">
           <!-- Loader -->
           <div
@@ -206,7 +199,6 @@ watch(normalizedBacklog, (tickets) => {
   );
 });
 const filteredBacklog = computed(() => {
-  console.log(props.searchQuery, "this is query");
   if (!props.searchQuery) return normalizedBacklog.value;
 
   const q = props.searchQuery.toLowerCase();

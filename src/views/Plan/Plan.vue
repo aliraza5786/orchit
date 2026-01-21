@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto flex-grow h-full min-h-0 rounded-[6px] overflow-x-auto flex-col flex"
+    class="flex-auto min-h-0 rounded-[6px] overflow-x-auto flex-col flex"
   >
     <!-- sprintDetailData?.status === 'active' -->
     <template v-if="showActiveSprint">
@@ -15,11 +15,12 @@
       <template v-if="isStartingSprint">
         <KanbanSkeleton />
       </template>
-      <div class="overflow-x-auto w-full">
-  <div class="min-w-[1200px] h-full">
+      <div class="h-screen w-full flex flex-col overflow-y-hidden">
+  <div class="overflow-x-auto w-full flex-1">
+    <div class="min-w-[1200px] h-full flex flex-col">
   <div
         v-if="!isStartingSprint"
-        class="p-4 w-full min-w-0 flex flex-col flex-1 min-h-0 overflow-x-auto"
+        class="p-4 w-full min-w-0 flex flex-col min-h-0 overflow-x-auto"
       >
         <div
           ref="containerRef"
@@ -176,12 +177,37 @@
               />
             </div>
           </section>
-          <div
-            class="h-full w-[3px] relative border z-10 opacity-0 group-hover:opacity-100 bg-red hover:bg-accent cursor-col-resize transition"
+          <div class="relative z-10 group">
+          <svg
             @mousedown="startResize"
-          ></div>
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            class="w-4 cursor-col-resize opacity-0 group-hover:opacity-100 transition"
+            role="img"
+            aria-label="Resize"
+          >
+            <path
+              fill="currentColor"
+              d="M10 3h4v2h-4V3zm0 4h4v2h-4V7zm0 4h4v2h-4v-2zm0 4h4v2h-4v-2zm0 4h4v2h-4v-2z"
+            />
+            <path
+              fill="currentColor"
+              d="M4 2h2v20H4V2zm14 0h2v20h-2V2z"
+              opacity="0.4"
+            />
+          </svg>
+
+          <div
+            class="absolute -top-7 left-1/2 -translate-x-1/2 rounded bg-black text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition"
+            role="tooltip"
+          >
+            Resize
+          </div>
+        </div>
+
+
           <section
-            class="rounded-md relative pt-2 flex flex-col flex-1 min-h-0 bg-bg-card overflow-hidden"
+            class="rounded-md relative pt-2 flex flex-col flex-1 bg-bg-card "
           >
             <div
               class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
@@ -403,8 +429,9 @@
                     </button>
                   </div>
                   <!-- Start Sprint Button -->
-                  <Button
-                    v-else
+                  <div  v-else>
+                    <Button
+                    v-if="sprintDetailData.status !=='completed'"
                     size="sm"
                     :variant="isDark ? 'primary' : 'primary'"
                     class="border-border-input border"
@@ -418,6 +445,7 @@
                   >
                     Start {{ selectedType.label }}
                   </Button>
+                  </div>
                 </div>
                 <!-- Small Screen Icon Buttons -->
 
@@ -585,27 +613,22 @@
               </transition>
             </div>
             <div
-              v-if="isLoadingSprint"
+              v-if="isLoadingSprint || isSprintsFetching"
               class="w-full h-full min-h-[250px] flex justify-center items-center"
             >
-              <div
-                role="status"
-                aria-label="Loading"
-                class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
-              ></div>
+              <div class="relative w-12 h-12">
+                <div class="absolute inset-0 rounded-full border-4 border-accent border-t-transparent animate-spin"></div>
+                <div class="absolute inset-2 rounded-full border-4 border-accent/50 border-t-transparent animate-spin animation-delay-150"></div>
+              </div>
             </div>
-            <div class="flex-1 min-h-0 overflow-y-auto">
+
+            <div class="flex-1 min-h-0 overflow-y-auto" v-else>
               <SprintCard
                 :searchQuery="searchQuery"
                 :sprintId="selectedSprintId"
                 :searchedData="selectedSearchCard ? [selectedSearchCard] : []"
                 :label="sprintType"
-                v-if="
-                  (firstSprint &&
-                    sprintDetailData &&
-                    sprintDetailData?.status === 'planning') ||
-                  sprintDetailData?.status === 'active'
-                "
+                v-if="firstSprint && ['planning', 'active'].includes(sprintDetailData?.status?.toLowerCase())"
                 :checkedSprintAll="checkedSprintAll"
                 :sprint="firstSprint"
                 @open-ticket="openTicket"
@@ -615,10 +638,9 @@
                 @delete-selected-sprint="(id) => deleteSelected('sprint', id)"
                 @refresh="handleRefresh"
               />
-
               <div
-                v-if="sprintDetailData?.status === 'completed'"
-                class="bg-bg-card w-full p-6 flex flex-col items-center justify-center text-center gap-4 h-[100%] mt-3"
+                v-if="sprintDetailData?.status?.toString().trim().toLowerCase() === 'completed'"
+                class="bg-bg-card w-full p-6 flex flex-col justify-center h-full items-center text-center gap-4"
               >
                 <div
                   class="w-20 h-20 flex justify-center items-center text-white rounded-full text-3xl"
@@ -699,7 +721,7 @@
   </div>
 </div>
 
-      
+      </div>
     </div>
     <!-- Modals -->
     <ConfirmDeleteModal
@@ -992,7 +1014,7 @@ watch(
     checkAutoOpenActiveSprint();
   }
 );
-const { data: sprintData, refetch: refetchSprintData } =
+const { data: sprintData, refetch: refetchSprintData, isFetching:isSprintsFetching } =
   useSprintCard(selectedSprintId);
 
 watch(

@@ -14,7 +14,7 @@
       <!-- Tickets List -->
       <div
         v-if="filteredTickets.length > 0 && sprint"
-        class="overflow-y-auto h-[calc(100%-50px)]"
+        class="overflow-y-auto h-[calc(100%-50px)] tickets-scroll"
       >
         <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1">
           <div

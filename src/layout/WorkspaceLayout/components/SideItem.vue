@@ -40,14 +40,15 @@
   </div>
 
   <!-- Tooltip rendered in body via Teleport -->
-  <Teleport to="body" v-if="!expanded && showTooltip">
-    <div
-      class="bg-bg-card text-text-primary text-xs font-medium px-3 py-2 border border-border-input rounded-md shadow-md whitespace-nowrap z-[9999] pointer-events-none fixed transition-all"
-      :style="tooltipStyles"
-    >
-      {{ label }}
-    </div>
-  </Teleport>
+ <Teleport to="body" v-if="!expanded && showTooltip">
+  <div
+    class="hidden sm:block bg-bg-card text-text-primary text-xs font-medium px-3 py-2 border border-border-input rounded-md shadow-md whitespace-nowrap z-[9999] pointer-events-none fixed transition-all"
+    :style="tooltipStyles"
+  >
+    {{ label }}
+  </div>
+</Teleport>
+
 </template>
 
 <script setup lang="ts">

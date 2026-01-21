@@ -134,7 +134,7 @@
               stroke-linecap="round"
             />
           </svg>
-          New lane
+          New Tab
         </li>
       </ul>
     </div>
