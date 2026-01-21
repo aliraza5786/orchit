@@ -117,15 +117,43 @@
                   {{ nextPackage.name }}
                 </span>
               </div>
-              <div class="flex items-baseline gap-1 mt-4">
-                <span class="text-4xl font-bold text-text-primary">
+              <div class="flex items-center gap-2 mt-4">
+                <!-- Final price -->
+                <span class="text-2xl font-bold text-text-primary">
                   {{ getPriceInfo(nextPackage, selectedInterval).currencySymbol }}{{ getPriceInfo(nextPackage, selectedInterval).amount }}
                 </span>
-                <span class="text-text-secondary">/ {{ selectedInterval === 'month' ? 'mo' : 'yr' }}</span>
+
+                <!-- Original price (only if discounted) -->
+                <span
+                  v-if="
+                    (selectedInterval === 'month'
+                      ? getPriceInfo(nextPackage, 'month').originalAmount
+                      : getPriceInfo(nextPackage, 'year').originalAmount) >
+                    getPriceInfo(nextPackage, selectedInterval).amount
+                  "
+                  class="text-text-primary/50 line-through text-lg"
+                >
+                  
+                  {{ getPriceInfo(nextPackage, selectedInterval).currencySymbol }}{{
+                    selectedInterval === 'month'
+                      ? getPriceInfo(nextPackage, 'month').originalAmount
+                      : getPriceInfo(nextPackage, 'year').originalAmount
+                  }}
+                </span>
+
+                <!-- Interval -->
+                <span class="text-text-secondary">
+                  / {{ selectedInterval === 'month' ? 'mo' : 'yr' }}
+                </span>
               </div>
+
               <p v-if="selectedInterval === 'year'" class="text-xs text-green-500 font-medium mt-1">
                 Save {{ getPriceInfo(nextPackage, 'year').currencySymbol }}{{ Number(getPriceInfo(nextPackage, 'year').originalAmount) - Number(getPriceInfo(nextPackage, 'year').amount) }} per year
               </p>
+              <p v-if="selectedInterval === 'month'" class="text-xs text-green-500 font-medium mt-1">
+                Save {{ getPriceInfo(nextPackage, 'month')?.trialInfo  }}
+              </p>
+
               <p class="text-sm text-text-secondary mt-4 line-clamp-2">
                 {{ nextPackage.description }}
               </p>
@@ -226,8 +254,15 @@ const formatFeature = (feature: any) => {
 };
 
 const getPriceInfo = (pkg: any, interval: any) => {
-  const monthPrice = pkg?.pricing?.month?.amount || 0;
-  const currency = pkg?.pricing?.month?.currencySymbol || "$";
+    const monthPrice = pkg?.pricing?.month?.amount || 0;
+    const trialInfo = pkg?.pricing?.month?.trialDays > 0 ? `${pkg?.pricing?.month?.trialDays} days free trial` : "";
+    const discountPercent =  pkg?.pricing?.month?.discount?.percentage || 0;
+   // Apply discount only if applicable
+    const discountedMonthlyPrice = discountPercent > 0
+    ? (monthPrice * (100 - discountPercent)) / 100
+    : monthPrice;
+   const currency = pkg?.pricing?.month?.currencySymbol || "$";
+
   
   if (interval === 'year') {
     const totalYear = monthPrice * 12;
@@ -236,20 +271,22 @@ const getPriceInfo = (pkg: any, interval: any) => {
       amount: toPsychPrice(discountedYear),
       currencySymbol: currency,
       interval: 'year',
-      originalAmount: toPsychPrice(totalYear)
+      originalAmount: toPsychPrice(totalYear),
     };
   }
   
   return {
-    amount: toPsychPrice(monthPrice),
+    amount: toPsychPrice(discountedMonthlyPrice),
     currencySymbol: currency,
     interval: 'month',
-    originalAmount: toPsychPrice(monthPrice)
+    originalAmount: toPsychPrice(monthPrice),
+    trialInfo: trialInfo
+
   };
 };
 
-const toPsychPrice = (price: number) => {
-  if (Number.isInteger(price)) {
+const toPsychPrice = (price: number) => { 
+  if (Number.isInteger(price) && price > 0) {
     return (price - 0.01).toFixed(2);
   }
   return price.toFixed(2);

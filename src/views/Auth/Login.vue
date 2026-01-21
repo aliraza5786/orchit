@@ -43,9 +43,19 @@
             {{ submitLabel }}
           </Button>
           
-          <div class="mt-4 w-full flex justify-center">
-            <GoogleLogin :callback="handleGoogleLogin" />
-          </div>
+          <Button
+            size="lg"
+            :block="true"
+            appearance="outlined"
+            variant="ghost"
+            type="button"
+            @click="loginWithGoogle"
+          >
+            <template #icon>
+              <img src="../../assets/LandingPageImages/header-icons/google.png" class="w-5 h-5 mr-4" />
+            </template>
+            Continue with google
+          </Button>
 
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
@@ -105,7 +115,8 @@ import AuthLayout from "../../layout/AuthLayout/AuthLayout.vue";
 import BaseTextField from "../../components/ui/BaseTextField.vue";
 import Button from "../../components/ui/Button.vue";
 import { login, socialLogin } from "../../services/auth";
-import { decodeCredential } from "vue3-google-login";
+import { decodeCredential, googleTokenLogin } from "vue3-google-login";
+import axios from "axios";
 import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
 const workspaceStore = useWorkspaceStore();
@@ -157,6 +168,29 @@ function onFieldInput() {
   if (errorMessage.value) errorMessage.value = "";
 }
 
+async function loginWithGoogle() {
+  try {
+    const response = await googleTokenLogin();
+    const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${response.access_token}` },
+    });
+    
+    const data = await googleLoginMutate({
+      u_email: userInfo.data.email,
+      u_social_id: userInfo.data.sub,
+      u_social_type: "google",
+      u_full_name: userInfo.data.name,
+    });
+    
+    handleLoginSuccess(data);
+  } catch (err: any) {
+    if (err?.message !== "Popup closed") {
+      errorMessage.value =
+        err?.response?.data?.message || "Google Login failed. Please try again.";
+    }
+  }
+}
+
 async function handleGoogleLogin(response: any) {
   try {
     const userData: any = decodeCredential(response.credential);
@@ -196,6 +230,11 @@ async function handleLoginSuccess(data: any) {
       }
     }
     
+    if (data?.data?.is_new_user) {
+      router.push("/create-profile");
+      return;
+    }
+
     if (workspaceStore.pricing) {
       router.push(`/dashboard?stripePayment=true`);
     } else {
