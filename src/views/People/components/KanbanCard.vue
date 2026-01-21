@@ -61,11 +61,13 @@
                 showDelete = false
             }">
         </ConfirmDeleteModal>
-
-
-        <AssignmentModal :isSubmitting="inviting" v-model="showAddMembers" :members="people?.people"
-            :directory="people?.people" @submit="({ invite }) => sendInvites(invite)" />
-
+        <AssignmentModal
+        :isSubmitting="inviting"
+        v-model="showAddMembers"
+        :members="people?.people"
+        :directory="people?.people"
+        @submit="handleSubmit"
+        />
     </div>
 </template>
 
@@ -168,7 +170,9 @@ function getMenuItems() {
   return items as { label: string; icon?: any; action?: () => void }[]
 }
 
-
+function handleSubmit(payload: { invite: any }) {
+  sendInvites(payload.invite);
+}
 
 const assignHandle = () => {
     // moveCard.mutate(payload)

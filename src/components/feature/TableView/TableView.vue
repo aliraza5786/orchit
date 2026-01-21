@@ -148,7 +148,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, nextTick, computed, watch, h, onMounted, onUnmounted } from 'vue'
+import { reactive, ref, nextTick, computed, watch, h, onUnmounted } from 'vue'
 
 interface Column {
   key: string
