@@ -23,5 +23,9 @@ app.use(GanttPlugin)
 app.use(createPinia())
 .use(VueQueryPlugin, { queryClient })
 app.use(router)
+import vue3GoogleLogin from 'vue3-google-login'
+app.use(vue3GoogleLogin, {
+  clientId: '1017134481099-r93ubp3j1nikkhhsqpbt8ahb8fbh3lj9.apps.googleusercontent.com'
+})
 
 app.mount("#app")

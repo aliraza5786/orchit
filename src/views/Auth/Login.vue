@@ -42,6 +42,10 @@
           >
             {{ submitLabel }}
           </Button>
+          
+          <div class="mt-4 w-full flex justify-center">
+            <GoogleLogin :callback="handleGoogleLogin" />
+          </div>
 
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
@@ -100,7 +104,8 @@ import { useMutation } from "@tanstack/vue-query";
 import AuthLayout from "../../layout/AuthLayout/AuthLayout.vue";
 import BaseTextField from "../../components/ui/BaseTextField.vue";
 import Button from "../../components/ui/Button.vue";
-import { login } from "../../services/auth";
+import { login, socialLogin } from "../../services/auth";
+import { decodeCredential } from "vue3-google-login";
 import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
 const workspaceStore = useWorkspaceStore();
@@ -140,6 +145,7 @@ const passwordHasError = computed(() => !!passwordError.value);
 const isFormValid = computed(() => !emailError.value && !passwordError.value);
 const router = useRouter();
 const { mutateAsync, isPending } = useMutation({ mutationFn: login });
+const { mutateAsync: googleLoginMutate, isPending: isGoogleLoginPending } = useMutation({ mutationFn: socialLogin });
 
 // --- Derived UI state ---
 const submitDisabled = computed(() => isPending.value);
@@ -150,21 +156,25 @@ const submitLabel = computed(() =>
 function onFieldInput() {
   if (errorMessage.value) errorMessage.value = "";
 }
-async function handleLogin() {
-  errorMessage.value = "";
-  touched.email = true;
-  touched.password = true;
 
-  if (!isFormValid.value) {
-    errorMessage.value = "Please fill all fields correctly.";
-    return;
-  }
-
+async function handleGoogleLogin(response: any) {
   try {
-    const data = await mutateAsync({
-      u_email: email.value,
-      u_password: password.value,
+    const userData: any = decodeCredential(response.credential);
+    const data = await googleLoginMutate({
+      u_email: userData.email,
+      u_social_id: userData.sub,
+      u_social_type: "google",
+      u_full_name: userData.name,
     });
+    
+    handleLoginSuccess(data);
+  } catch (err: any) {
+    errorMessage.value =
+      err?.response?.data?.message || "Google Login failed. Please try again.";
+  }
+}
+
+async function handleLoginSuccess(data: any) {
     localStorage.setItem("token", data?.data?.token);
     await authStore.bootstrap();
 
@@ -191,6 +201,24 @@ async function handleLogin() {
     } else {
       router.push("/dashboard");
     }
+}
+
+async function handleLogin() {
+  errorMessage.value = "";
+  touched.email = true;
+  touched.password = true;
+
+  if (!isFormValid.value) {
+    errorMessage.value = "Please fill all fields correctly.";
+    return;
+  }
+
+  try {
+    const data = await mutateAsync({
+      u_email: email.value,
+      u_password: password.value,
+    });
+    handleLoginSuccess(data);
   } catch (err: any) {
     errorMessage.value =
       err?.response?.data?.message || "Login failed. Please try again.";

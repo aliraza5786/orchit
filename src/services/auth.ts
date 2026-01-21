@@ -16,13 +16,13 @@ export const verifyOtp = (payload: { u_email: string; otp: string }) =>
 export const resendOtp = (payload: { u_email: string }) =>
   api.post("/auth/resend-otp", payload).then((res) => res.data);
 
-export const socailLogin = (payload: {
+export const socialLogin = (payload: {
   u_email: string;
   u_password?: string;
   u_social_id?: string;
   u_social_type?: string;
   u_full_name?: string;
-}) => api.post("/auth/login", payload).then((res) => res.data);
+}) => api.post("/auth/social-login", payload).then((res) => res.data);
 
 type createCompany = { payload: any };
 export const useCreateCompany = (options = {}) =>
