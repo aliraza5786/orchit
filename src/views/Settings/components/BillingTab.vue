@@ -124,7 +124,7 @@
                 <span class="text-text-secondary">/ {{ selectedInterval === 'month' ? 'mo' : 'yr' }}</span>
               </div>
               <p v-if="selectedInterval === 'year'" class="text-xs text-green-500 font-medium mt-1">
-                Save {{ getPriceInfo(nextPackage, 'year').currencySymbol }}{{ getPriceInfo(nextPackage, 'year').originalAmount - getPriceInfo(nextPackage, 'year').amount }} per year
+                Save {{ getPriceInfo(nextPackage, 'year').currencySymbol }}{{ Number(getPriceInfo(nextPackage, 'year').originalAmount) - Number(getPriceInfo(nextPackage, 'year').amount) }} per year
               </p>
               <p class="text-sm text-text-secondary mt-4 line-clamp-2">
                 {{ nextPackage.description }}
@@ -233,19 +233,26 @@ const getPriceInfo = (pkg: any, interval: any) => {
     const totalYear = monthPrice * 12;
     const discountedYear = Math.round(totalYear * 0.8); // 20% discount
     return {
-      amount: discountedYear,
+      amount: toPsychPrice(discountedYear),
       currencySymbol: currency,
       interval: 'year',
-      originalAmount: totalYear
+      originalAmount: toPsychPrice(totalYear)
     };
   }
   
   return {
-    amount: monthPrice,
+    amount: toPsychPrice(monthPrice),
     currencySymbol: currency,
     interval: 'month',
-    originalAmount: monthPrice
+    originalAmount: toPsychPrice(monthPrice)
   };
+};
+
+const toPsychPrice = (price: number) => {
+  if (Number.isInteger(price)) {
+    return (price - 0.01).toFixed(2);
+  }
+  return price.toFixed(2);
 };
 
 const sessionId = route.query.session_id as string;
@@ -303,7 +310,7 @@ onMounted(() => {
 
 const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
   onSuccess: async (data: any) => {
-    window.open(data?.checkoutUrl);
+    window.location.href = data?.checkoutUrl;
   },
 });
 const upgradingPackageId = ref<string | null>(null);

@@ -12,13 +12,9 @@
     >
       <h5 class="text-[16px] font-medium">Profile</h5>
       <i
-        class="cursor-pointer text-text-primary fa-solid fa-close"
-        @click="
-          () => {
-            $emit('close');
-          }
-        "
-      ></i>
+  class="cursor-pointer text-text-primary fa-solid fa-close"
+  @click="$emit('close')"
+/>
     </div>
 
     <!-- Body -->
@@ -244,11 +240,16 @@ import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
-import ProgressBar from "../../../components/ui/ProgressBar.vue";
 import { usePeopleVar, useUpdateVar } from "../../../queries/usePeople";
-// import TypeChanger from '../../Product/components/TypeChanger.vue'
-import SwitchTab from "../../../components/ui/SwitchTab.vue";
-import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
+const ProgressBar = defineAsyncComponent(() =>
+  import("../../../components/ui/ProgressBar.vue")
+);
+const SwitchTab = defineAsyncComponent(() =>
+  import("../../../components/ui/SwitchTab.vue")
+);
+const BaseSelectField = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseSelectField.vue")
+);
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor"; 
 import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
@@ -277,7 +278,7 @@ const { mutate: UpdateVar } = useUpdateVar({
   },
 });
 const props = defineProps({
-  showPanel: { type: Boolean, default: true },
+  showPanel: { type: Boolean, required: true },
 });
 
 const editingTitle = ref(false);
@@ -294,10 +295,12 @@ watch(
 );
 
 const description = ref(cardDetails.value?.description ?? "");
+console.log("card details data", cardDetails.value);
+
 watch(
   () => cardDetails.value,
   () => {
-    description.value = cardDetails.value.description ?? "";
+    description.value = cardDetails.value?.description ?? "";
   }
 );
 

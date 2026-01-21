@@ -19,11 +19,11 @@
           </div>
 
           <div class="flex items-center gap-3">
-            <Button variant="secondary" size="sm" @click="handleAddStatus">
+            <Button variant="secondary" :disabled="!canCreateCard" size="sm" @click="handleAddStatus">
               <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
             </Button>
 
-            <Button variant="primary" size="sm" :disabled="isSaving" @click="handleUpdateWorkflow">
+            <Button variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="handleUpdateWorkflow">
               {{ updateButtonLabel }}
             </Button>
 
@@ -43,7 +43,7 @@
               <p class="text-sm text-text-secondary">Loading workflow...</p>
             </div>
           </div>
-          <WorkflowCanvas v-else-if="processId" ref="Canvas" :process-id="processId"
+          <WorkflowCanvas v-else-if="processId" ref="Canvas" :can-delete="canDeleteCard" :process-id="processId" :can-edit="canEditCard"
             :show-transition-labels="showTransitionLabels" @update:workflow="handleWorkflowUpdate"
             @add:status="handleAddStatus" @add:transition="handleAddTransition" @edit:node="handleEditNode" />
         </div>
@@ -95,6 +95,9 @@ import AddTransitionModal from './AddTransitionModal.vue'
 import { useWorkflowData } from '../../../queries/useProcess'
 import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
 // import { toast } from 'vue-sonner'
+
+import { usePermissions } from "../../../composables/usePermissions";
+const { canEditCard, canCreateCard, canDeleteCard } = usePermissions();
 
 /* Props & emits */
 const props = defineProps<{

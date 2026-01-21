@@ -82,8 +82,10 @@
       <!-- Inline Add Column Button/Form -->
       <div class="min-w-[270px] sm:min-w-[300px] max-w-[270px] sm:max-w-[300px] shrink-0">
         <div v-if="!activeAddList" 
-          @click="activeAddList = true"
-          class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg cursor-pointer">
+          @click="canCreateVariable ? activeAddList = true : null"
+          class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+          :class="canCreateVariable ? 'cursor-pointer':'cursor-not-allowed'"
+          >
           <i class="fa-solid fa-plus"></i>
           <span class="font-medium">Add Process Group</span>
         </div>
@@ -124,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, watchEffect, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import { useRouteIds } from '../../composables/useQueryParams';
@@ -148,13 +150,13 @@ import ProcessSidePanel from './components/ProcessSidePanel.vue';
 import WorkflowBuilderModal from '../Process/modals/WorkflowBuilderModal.vue';
 import SearchBar from '../../components/ui/SearchBar.vue';
 import { debounce } from 'lodash';
-
+import { usePermissions } from "../../composables/usePermissions";
 const { workspaceId } = useRouteIds();
 const { data: processGroups, isPending } = useProcessGroupsWithTransitions(workspaceId.value);
 
-watchEffect(()=>{
-  console.log(processGroups.value, "this ....")
-})
+ const { 
+  canCreateVariable,  
+} = usePermissions();
 
 const localList = ref<any>([]);
 

@@ -14,11 +14,11 @@
             </div>
 
             <div class="flex items-center gap-3">
-              <Button variant="secondary" size="sm" @click="handleAddStatus">
+              <Button :disabled="!canCreateCard" variant="secondary" size="sm" @click="handleAddStatus">
                 <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
               </Button>
 
-              <Button variant="primary" size="sm" :disabled="isSaving" @click="handleUpdateWorkflow">
+              <Button variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="handleUpdateWorkflow">
                 {{ updateButtonLabel }}
               </Button>
 
@@ -39,6 +39,8 @@
           </div>
           <WorkflowCanvas v-else ref="Canvas" 
             :process-id="processId"
+            :can-edit="canEditCard"
+            :can-delete="canDeleteCard"
             :workflow-data="transitionData?.raw_object || {}"
             :show-transition-labels="true" 
             @save="handleSave"
@@ -63,6 +65,12 @@ import AddStatusModal from './AddStatusModal.vue'
 import { useProcessTransition, useUpdateTransition } from '../../../queries/useProcess2'
 import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
 import { useRouteIds } from '../../../composables/useQueryParams'
+import { usePermissions } from "../../../composables/usePermissions";
+const { 
+  canCreateCard,
+  canEditCard,
+  canDeleteCard 
+} = usePermissions();
 
 /* Props & emits */
 const props = defineProps<{
@@ -170,7 +178,7 @@ function handleSave(payload: any) {
                workspace_id: payload.workspace_id,
                flow_diagram: payload.flow_diagram
             },
-            variable_type: "card-type",
+            variable_type: props.process?.title?.toLocaleLowerCase().includes('general') ? 'card-status' : 'card-type',
             type_value: processTypeValue.value,
             flow_metadatas: payload.flow_metadata
              // Save the whole flow

@@ -20,7 +20,7 @@
           {{ column.transitions ? column.transitions.length : 0 }}
         </span>
       </div>
-      <i class="cursor-pointer fa-solid fa-plus" v-if="plusIcon" @click="emit('onPlus', column)" />
+      <i class="cursor-pointer fa-solid fa-plus" v-if="plusIcon && canCreateCard" @click="emit('onPlus', column)" />
 
       <DropMenu :items="getMenuItems()">
         <template #trigger>
@@ -30,7 +30,7 @@
     </div>
 
     <!-- Tickets list -->
-    <Draggable :disabled="!canDragList" v-model="localTickets" item-key="_id"
+    <Draggable :disabled="!canDragList || !canEditCard" v-model="localTickets" item-key="_id"
       :data-column-id="column._id"
       class="flex-1 p-4 space-y-3 overflow-y-auto" :group="{ name: 'tickets', pull: true, put: true }" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" @start="onStart" @end="onEnd"
@@ -53,6 +53,8 @@
 import {  ref, watch, nextTick } from 'vue'
 import Draggable from 'vuedraggable'
 import DropMenu from '../../../components/ui/DropMenu.vue'
+import { usePermissions } from '../../../composables/usePermissions';
+const {  canDeleteVariable, canEditVariable, canCreateCard, canEditCard } = usePermissions();
 
 // import { useWorkspaceStore } from '../../../stores/workspace'
 
@@ -95,6 +97,7 @@ watch(() => props.column.title, (v) => { localTitle.value = v })
 const titleInputRef = ref<HTMLInputElement | null>(null)
 
 function beginEdit() {
+  if(!canEditVariable.value) return
   isEditingTitle.value = true
   nextTick(() => {
     if (titleInputRef.value) {
@@ -145,11 +148,13 @@ function onTicketsChange(evt: any) {
 
 function getMenuItems() {
   const items: any[] = [];
+    if(canDeleteVariable.value){
     items.push({
       label: 'Delete',
       danger: true,
       action: () => handleDeleteColumn(),
     });
+    }
   return items;
 }
 

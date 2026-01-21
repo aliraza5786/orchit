@@ -2,7 +2,7 @@
   <div @click="$emit('click')" @dblclick="$emit('dblclick')" class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer
            hover:shadow-md transition-all duration-200 group ">
     <div class="flex justify-between gap-2 items-start">
-      <div class="flex items-start gap-3 flex-1">
+      <div class="flex items-start gap-3" style="width: 90%;">
         <!-- <div class="w-10 h-10 bg-accent/20 flex justify-center items-center rounded-lg">
           <i class="fa-solid fa-diagram-project text-accent"></i>
         </div> -->
@@ -58,9 +58,11 @@ const emit = defineEmits(['click', 'open-builder', 'dblclick'])
 const showDelete = ref(false)
 const queryClient = useQueryClient()
 const { workspaceId } = useRouteIds();
+import { usePermissions } from '../../../composables/usePermissions';
+const { canDeleteCard } = usePermissions();
 
 function getMenuItems() {
-  return [
+  const items:any = [
     {
       label: 'Open Workflow Builder',
       action: () => {
@@ -70,17 +72,21 @@ function getMenuItems() {
         prefix: 'fa-regular',
         iconName: 'fa-diagram-project'
       }
-    },
-    {
+    }
+  ]
+
+  if(canDeleteCard.value){
+     items.push({
       label: 'Delete Process', danger: true, action: () => {
         showDelete.value = true
       },
-      icon: {
+       icon: {
         prefix: 'fa-regular',
         iconName: 'fa-trash'
       }
-    },
-  ]
+    })
+  }
+  return items
 }
 
 const { mutate: deleteProcess, isPending: deletingProcess } = useDeleteTransition({

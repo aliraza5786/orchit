@@ -22,6 +22,21 @@
           <div v-else>
             <h1 class="text-3xl font-semibold tracking-tight mt-2 capitalize">{{ moduleDetail?.title }}</h1>
             <p class="text-sm text-text-secondary max-w-4xl mt-2">{{ moduleDetail?.description }}</p>
+         
+          <!-- Skeleton tags -->
+          <div v-if="isModulePending" class="mt-3 flex flex-wrap gap-2">
+            <div class="h-6 w-16 bg-bg-body rounded"></div>
+            <div class="h-6 w-12 bg-bg-body rounded"></div>
+            <div class="h-6 w-20 bg-bg-body rounded"></div>
+          </div>
+
+          <!-- Actual tags -->
+          <div v-else class="mt-3 flex flex-wrap gap-2">
+            <span v-for="t in moduleDetail?.tags" :key="t"
+              class="border border-border bg-bg-surface cursor-pointer rounded-md px-2 py-1 text-xs text-text-secondary hover:bg-accent/50 hover:text-white">
+              {{ t }}
+            </span>
+          </div>
             <p class="text-xs text-text-secondary mt-2">{{moduleDetail?.no_of_views ??0}} views · {{moduleDetail?.no_of_used??0}} using</p>
           </div>
         </div>
@@ -30,9 +45,26 @@
           <Button size="sm" :disabled="isModulePending || isusingPending" @click="useModuleHandler">{{ isusingPending
             ? 'Processing...' :'Use this Module'}}</Button>
           <button
-            class="border border-border rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">
-            <span>♡</span>
+            class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">
+            <span class="text-lg">♡</span>
           </button>
+          <div class="relative group" ref="shareContainer">
+            <button
+             @click="toggleShareIcons"
+             class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center cursor-pointer">
+             <span><i class="fa-solid fa-share text-sm"></i></span>
+            </button>
+            <div v-if="showIcons">
+              <div class="mt-3 flex gap-2 absolute right-0 bottom-12 px-3  py-2 border border-accent rounded-[6px]">
+              <button
+              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">⇪</button>
+              <button
+              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">⤫</button>
+              <button
+              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">Ｆ</button>
+             </div>
+            </div>  
+          </div>          
         </div>
       </div>
     </header>
@@ -58,37 +90,11 @@
         </div>
 
         <!-- Tags Right Sidebar -->
-        <aside class="w-full lg:w-64 min-w-[375px] border border-border bg-bg-card rounded-lg p-4 h-fit">
-          <h3 class="font-medium text-sm">Tags</h3>
-
-          <!-- Skeleton tags -->
-          <div v-if="isModulePending" class="mt-3 flex flex-wrap gap-2">
-            <div class="h-6 w-16 bg-bg-body rounded"></div>
-            <div class="h-6 w-12 bg-bg-body rounded"></div>
-            <div class="h-6 w-20 bg-bg-body rounded"></div>
-          </div>
-
-          <!-- Actual tags -->
-          <div v-else class="mt-3 flex flex-wrap gap-2">
-            <span v-for="t in moduleDetail?.tags" :key="t"
-              class="border border-border bg-bg-surface cursor-pointer rounded-md px-2 py-1 text-xs text-text-secondary hover:bg-accent/50 hover:text-white">
-              {{ t }}
-            </span>
-          </div>
-
+        <!-- <aside class="w-full lg:w-64 min-w-[375px] border border-border bg-bg-card rounded-lg p-4 h-fit">
           <h3 class="font-medium text-sm mt-6">Share</h3>
-          <div class="mt-3 flex gap-2">
-            <button
-              class="border border-border rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">⇪</button>
-            <button
-              class="border border-border rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">⤫</button>
-            <button
-              class="border border-border rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">Ｆ</button>
-          </div>
-
           <p class="text-xs text-text-secondary mt-6">Published 3 weeks ago</p>
           <button class="text-xs text-text-secondary underline mt-1">Report resource</button>
-        </aside>
+        </aside> -->
       </div>
 
       <!-- Comments -->
@@ -133,6 +139,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { onClickOutside } from '@vueuse/core'
 import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import Button from '../../components/ui/Button.vue';
 import Dropdown from '../../components/ui/Dropdown.vue';
@@ -142,6 +149,14 @@ import KanbanView from './components/KanbanView.vue';
 import { getInitials } from '../../utilities';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useRouter } from 'vue-router';
+
+const showIcons = ref(false);
+const shareContainer = ref(null)
+
+const toggleShareIcons = () =>{
+  showIcons.value = !showIcons.value
+}
+onClickOutside(shareContainer, () => showIcons.value = false)
 
 interface Comment {
   _id: string;

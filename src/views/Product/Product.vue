@@ -70,7 +70,7 @@
                   ? 'text-accent bg-accent-text'
                   : ' hover:bg-border/50 backdrop-blur-2xl  transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
               "
-              title="List view"
+              title="Kanban view"
               @click="view = 'kanban'"
             >
               <i class="fa-solid fa-chart-kanban"></i>
@@ -84,7 +84,7 @@
                   ? 'text-accent bg-accent-text'
                   : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
               "
-              title="Gallery view"
+              title="List view"
             >
               <i class="fa-solid fa-align-left"></i>
             </button>
@@ -230,6 +230,12 @@
         :rows="filteredBoard"
         :canCreate="canCreateCard"
         :canCreateVariable="canCreateVariable"
+        :canDelete="canDeleteCard"
+        @delete="(t) => {
+           ticketToDelete = t;
+           selectedDeleteId = t._id;
+           showTicketDelete = true;
+        }"
         @create="handleCreateTicket"
       />
     </template>
@@ -237,10 +243,11 @@
     <template v-if="view === 'mindmap'">
       <div class="relative w-full h-full flex overflow-hidden">
         <!-- Mind Map Canvas -->
-        <div
-          ref="mindMapRef"
-          class="flex-1 h-full overflow-hidden rounded-md relative"
-        ></div>
+       <div
+        ref="mindMapRef"
+        class="flex-1 h-full overflow-hidden rounded-md relative"
+        style="height: 600px; width: 100%;"
+      ></div>
 
         <!-- Formatting Sidebar -->
         <div
@@ -475,6 +482,7 @@
         selectCardHandler({ variables: {} });
       }
     "
+    @closeSidePanel="closeSidePanel"
     :showPanel="selectedCard?._id ? true : false"
   />
   <CreateSheetModal
@@ -565,6 +573,7 @@ import {
   useVariables,
   useCreateWorkspaceSheet,
 } from "../../queries/useSheets";
+import { useSidePanelStore } from "../../stores/sidePanelStore";
 
 // Lazy-loaded components
 const Dropdown = defineAsyncComponent(
@@ -606,6 +615,24 @@ const GanttChartView = defineAsyncComponent(
 const TimelineView = defineAsyncComponent(
   () => import("../../components/feature/TimelineView.vue")
 );
+const CreateTaskModal = defineAsyncComponent(
+  () => import("./modals/CreateTaskModal.vue")
+);
+const CreateSheetModal = defineAsyncComponent(
+  () => import("./modals/CreateSheetModal.vue")
+);
+const CreateVariableModal = defineAsyncComponent(
+  () => import("./modals/CreateVariableModal.vue")
+);
+const ConfirmDeleteModal = defineAsyncComponent(
+  () => import("./modals/ConfirmDeleteModal.vue")
+);
+const SidePanel = defineAsyncComponent(
+  () => import("./components/SidePanel.vue")
+);
+const KanbanBoard = defineAsyncComponent(
+  () => import("../../components/feature/kanban/KanbanBoard.vue")
+);
 const {
   canEditSheet,
   canDeleteSheet,
@@ -613,6 +640,7 @@ const {
   canCreateSheet,
   canCreateCard,
   canEditCard,
+  canDeleteCard,
   canAssignCard,
 } = usePermissions();
 const showDeleteModal = ref(false);
@@ -634,6 +662,7 @@ const showFormatSidebar = ref(false);
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
+const sidePanelStore = useSidePanelStore()
 function openHyperlinkModal(callback: (link: string) => void) {
   hyperlink.value = "";
   showHyperlinkModal.value = true;
@@ -734,25 +763,6 @@ const removeCardFromState = (cardId: string) => {
     });
   });
 };
-
-const CreateTaskModal = defineAsyncComponent(
-  () => import("./modals/CreateTaskModal.vue")
-);
-const CreateSheetModal = defineAsyncComponent(
-  () => import("./modals/CreateSheetModal.vue")
-);
-const CreateVariableModal = defineAsyncComponent(
-  () => import("./modals/CreateVariableModal.vue")
-);
-const ConfirmDeleteModal = defineAsyncComponent(
-  () => import("./modals/ConfirmDeleteModal.vue")
-);
-const SidePanel = defineAsyncComponent(
-  () => import("./components/SidePanel.vue")
-);
-const KanbanBoard = defineAsyncComponent(
-  () => import("../../components/feature/kanban/KanbanBoard.vue")
-);
 const {
   data,
   refetch: refetchSheets,
@@ -821,25 +831,28 @@ watch(viewBy, () => {
   selected_view_by.value = viewBy.value;
 });
 const workspaceStore = useWorkspaceStore();
-
-// usage
 const {
   data: Lists,
   isPending,
   refetch: refetchSheetLists,
 } = useSheetList(
   moduleId,
-  selected_sheet_id, // ref
-  computed(() => [...workspaceStore.selectedLaneIds]), // clone so identity changes on mutation
-  selected_view_by, // ref
+  selected_sheet_id,
+  computed(() => [...workspaceStore.selectedLaneIds]), 
+  selected_view_by, 
   listProcessPayload
 );
 
 const selectCardHandler = (card: any) => {
   if (!card._id) card._id = card.id;
   selectedCard.value = card;
+  sidePanelStore.selectTaskCard(card);
 };
 (window as any).selectCardHandler = selectCardHandler;
+const closeSidePanel = () => {
+  selectedCard.value = null;  
+  sidePanelStore.clearSelectedCard(); 
+};
 
 const isCreateSheetModal = ref(false);
 const createSheet = () => {
@@ -991,23 +1004,33 @@ watch(
     debouncedQuery.value = val;
   }, 200)
 );
-// computed filtered board
-
 const fuse = computed(() => {
-  const allCards = Lists.value.flatMap((col: any) =>
-    col.cards.map((card: any) => ({ ...card, columnId: col.title }))
+  const lists = Lists.value || [];
+  const allCards = lists.flatMap((col: any) =>
+    (col.cards || []).map((card: any) => {
+      const descVar = Array.isArray(card.variables)
+        ? card.variables.find((v: any) => v.slug === "card-description")
+        : null;
+
+      return {
+        ...card,
+        columnId: col.title,
+        "card-description": card["card-description"] || descVar?.value || "",
+      };
+    })
   );
+
   return new Fuse(allCards, {
     keys: ["card-title", "card-description"],
     threshold: 0.3,
   });
 });
-
 const filteredBoard = computed(() => {
   if (view.value === "kanban") {
     // Kanban filtering by columns
     if (!searchQuery.value) return Lists.value;
-
+    console.log("fuse data", fuse.value);
+    
     const results = fuse.value
       .search(searchQuery.value)
       .map((r: any) => r.item);
@@ -1052,7 +1075,7 @@ const columns = computed(() => {
       key: "card-title",
       label: "Title",
       render: ({ row, value }: any) =>
-        h("div", { class: "flex items-center gap-1 w-full" }, [
+        h("div", { class: "flex items-center gap-1 w-full ps-2" }, [
           h(
             "a",
             {
@@ -1212,37 +1235,150 @@ const getOptions = (options: any) => {
     title: el.value ?? el,
   }));
 };
+const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
+  if (!Lists.value) return false;
+
+  let found = false;
+
+  const newLists = Lists.value.map((column: any) => {
+    const newCards = (column.cards || []).map((card: any) => {
+      if (card._id !== cardId) return card;
+
+      found = true;
+
+      const updatedCard = { ...card, ...updates };
+
+      if (Array.isArray(card.variables)) {
+        const newVariables = [...card.variables];
+
+        Object.entries(updates).forEach(([key, value]) => {
+          const idx = newVariables.findIndex((v: any) => v.slug === key);
+          if (idx !== -1) {
+            newVariables[idx] = { ...newVariables[idx], value };
+          } else {
+            newVariables.push({ slug: key, value, type: "Text" });
+          }
+        });
+
+        updatedCard.variables = newVariables;
+      } else {
+        updatedCard.variables = { ...(card.variables || {}), ...updates };
+      }
+
+      return updatedCard;
+    });
+
+    return { ...column, cards: newCards };
+  });
+
+  Lists.value = newLists;
+
+  return found;
+};
+
+
 const moveCard = useMoveCard({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["get-sheets"] });
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    queryClient.invalidateQueries({ queryKey: ["roles"] });
+  onMutate: async (newPayload: any) => {
+    const { card_id, variables: updatedVariables } = newPayload;
+
+    await queryClient.cancelQueries({ queryKey: ['product-card', card_id] });
+    await queryClient.cancelQueries({ queryKey: ['sheet-list'] });
+
+    const previousCard = queryClient.getQueryData(['product-card', card_id]);
+    const previousLists = queryClient.getQueryData(['sheet-list']);
+
+    const updateCardLogic = (oldCard: any) => {
+  if (!oldCard) return oldCard;
+
+  const updatedCard = {
+    ...oldCard,
+    variables: Array.isArray(oldCard.variables) ? [...oldCard.variables] : { ...(oldCard.variables || {}) }
+  };
+
+  if (updatedVariables) {
+    // 1) Update top-level fields
+    Object.assign(updatedCard, updatedVariables);
+
+    // 2) Update variables ARRAY or OBJECT
+    if (Array.isArray(updatedCard.variables)) {
+      Object.entries(updatedVariables).forEach(([key, value]) => {
+        const idx = updatedCard.variables.findIndex((v: any) => v.slug === key);
+        if (idx !== -1) {
+          updatedCard.variables[idx] = { ...updatedCard.variables[idx], value };
+        } else {
+          updatedCard.variables.push({ slug: key, value, type: "Text" });
+        }
+      });
+    } else {
+      Object.assign(updatedCard.variables, updatedVariables);
+    }
+  }
+
+  if (newPayload.optimisticUser) updatedCard.seat = newPayload.optimisticUser;
+  if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+
+  return updatedCard;
+};
+
+
+    // CRITICAL FIX: Update the card in the local Lists structure
+    if (updatedVariables && Lists.value) {
+      updateCardInLists(card_id, updatedVariables);
+    }
+
+    // CRITICAL FIX: Update the selectedCard ref if it matches the updated card
+    if (selectedCard.value && selectedCard.value._id === card_id) {
+      selectedCard.value = updateCardLogic(selectedCard.value);
+    }
+
+    // Sync SidePanel Cache
+    queryClient.setQueryData(['product-card', card_id], updateCardLogic);
+      
+    // Sync Parent (Lists/Board) Cache
+    queryClient.setQueriesData({ queryKey: ['sheet-list'] }, (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.map((column: any) => ({
+        ...column,
+        cards: column.cards?.map((card: any) => 
+          card._id === card_id ? updateCardLogic(card) : card
+        )
+      }));
+    });
+    triggerRef(Lists);
+    return { previousCard, previousLists };
+  },
+  onError: (err:any, variables:any, context:any) => {
+    if (context?.previousCard) queryClient.setQueryData(['product-card', variables.card_id], context.previousCard);
+    if (context?.previousLists) queryClient.setQueryData(['sheet-list'], context.previousLists);
+    
+    // Also revert selectedCard if it was updated
+    if (selectedCard.value && selectedCard.value._id === variables.card_id && context?.previousCard) {
+      selectedCard.value = context.previousCard;
+    }
+    console.log(err);
+    
   },
 });
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
-  // Fallback to local mutation as setQueriesData might miss the exact key or not trigger the view update
   if (!Lists.value) return;
 
-  const listIndex = Lists.value.findIndex((l: any) =>
-    l.cards.some((c: any) => c._id === cardId)
-  );
-
-  if (listIndex !== -1) {
-    const cardIndex = Lists.value[listIndex].cards.findIndex(
-      (c: any) => c._id === cardId
-    );
+  // Lists.value is an array of columns (from your data structure)
+  for (const column of Lists.value) {
+    if (!column.cards) continue;
+    
+    const cardIndex = column.cards.findIndex((c: any) => c._id === cardId);
+    
     if (cardIndex !== -1) {
-      // Create a shallow copy of the card to trigger reactivity (immutable update)
-      const newCard = { ...Lists.value[listIndex].cards[cardIndex] };
+      // Get the current card
+      const card = column.cards[cardIndex];
+      
+      // Apply the updates directly to the card object
+      // (Vue 3's reactive proxy will track these changes)
+      updater(card);
 
-      // Run the updater on the copy
-      updater(newCard);
-
-      // Replace the card in the list
-      Lists.value[listIndex].cards[cardIndex] = newCard;
-
-      // trigger Vue to detect changes
+      // Force a manual trigger for the Lists ref to notify Kanban/Table components
       triggerRef(Lists);
+      break; 
     }
   }
 };
@@ -1251,33 +1387,37 @@ const { mutate: addTicket } = useAddTicket({
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
   },
 });
-
 function handleChangeTicket(id: any, key: any, value: any) {
+  const cleanValue = typeof value === "string" ? value.trim() : value;
+
   updateOptimisticCard(id, (card) => {
-    // Always update top-level property if it matches certain keys like 'card-title'
-    if (key === "card-title") {
-      card[key] = value;
+    // 1. UPDATE FLAT PROPERTY (The most important part for your Lists API structure)
+    // This ensures card['card-description'] or card['card-status'] is updated directly
+    card[key] = cleanValue;
+
+    // 2. UPDATE NESTED VARIABLES ARRAY (For secondary sync)
+    if (Array.isArray(card.variables)) {
+      const varIndex = card.variables.findIndex((v: any) => v.slug === key);
+      if (varIndex !== -1) {
+        card.variables[varIndex].value = cleanValue;
+      } else {
+        // Only push if it's a known custom variable or if you want total redundancy
+        card.variables.push({ slug: key, value: cleanValue, type: "Text" });
+      }
     }
 
-    // Check if variables is an array (per user data)
-    if (Array.isArray(card.variables)) {
-      const variable = card.variables.find((v: any) => v.slug === key);
-      if (variable) {
-        variable.value = value;
-      } else {
-        // Add new variable if not found (assuming Type Select/Text defaults)
-        card.variables.push({ slug: key, value: value, type: "Select" });
-      }
-    } else if (card.variables && typeof card.variables === "object") {
-      // Fallback for object structure if mixed
-      card.variables[key] = value;
-    } else {
-      // Fallback for top-level props
-      card[key] = value;
+    // 3. SYNC SIDEPANEL REFERENCE
+    // If the card being edited is the one open in the side panel, 
+    // update that reference too so the UI doesn't "jump" or revert.
+    if (selectedCard.value?._id === id) {
+      selectedCard.value[key] = cleanValue; 
+      // We don't necessarily need to call sidePanelStore.selectTaskCard again
+      // as long as we mutate the existing reactive object.
     }
   });
 
-  moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } });
+  // 4. TRIGGER API MUTATION
+  moveCard.mutate({ card_id: id, variables: { [key]: cleanValue } });
 }
 function handleCreateTicket(title: any) {
   if (title["card-title"]) {
@@ -1742,17 +1882,16 @@ watchEffect(() => {
 
     mindMapInstance.value = instance;
     instance.init({ nodeData: rootNode });
-
-    // Center only once after DOM is fully ready
-    setTimeout(() => {
-      instance.toCenter();
-    }, 100);
+    nextTick(() => {
+      setTimeout(() => {
+        instance.toCenter();
+      }, 300); // Increase from 100ms to 300ms
+    });
 
     // Setup toolbar button after instance is initialized
     nextTick(() => {
       setupToolbarObserver();
     });
-
     // Selected node
     instance.bus.addListener("selectNode", (nodeObj: any) => {
       if (!nodeObj) return;
@@ -2018,7 +2157,11 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
 }
 </script>
 <style scoped>
-@import "https://cdn.jsdelivr.net/npm/mind-elixir/dist/style.css";
+#mindMapRef {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 .format-sidebar {
   width: 350px;
   border-left: 1px solid #e0e0e0;

@@ -4,7 +4,7 @@
     <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
       :force-fallback="true" 
-      :disabled="isMobile"
+      :disabled="isMobile || !canEditVariable"
       class="flex gap-3"
       :class="{
         'overflow-x-auto snap-x snap-mandatory w-full pb-4 mobile-scroll-visible': isMobile,
@@ -61,6 +61,10 @@ export interface Column { _id: string | number; title: string; transitions: Tick
 export interface Board { columns: Column[] }
 
 const isMobile = useMediaQuery('(max-width: 650px)')
+
+import { usePermissions } from '../../../composables/usePermissions';
+const { canEditVariable } = usePermissions();
+
 
 const canDragList = ref(true); 
 const dragSourceId = ref<string | number | null>(null);
