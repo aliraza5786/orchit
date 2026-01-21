@@ -1,15 +1,16 @@
 <template>
   <div class="calendar-wrapper m-4 max-h-[calc(100vh-100px)] overflow-y-auto">
-    <FullCalendar :options="calendarOptions" @select-card="" />
+    <FullCalendar ref="calendarRef" :options="calendarOptions" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, onMounted, onBeforeUnmount } from "vue";
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+
 interface Card {
   _id: string;
   "card-title": string;
@@ -23,9 +24,14 @@ interface Card {
 }
 
 const props = defineProps<{ data: Card[] }>();
+
 const emit = defineEmits<{
   (e: "select:ticket", card: Card): void;
 }>();
+
+const isMobile = ref(false);
+const calendarRef = ref<any>(null);
+
 const lightColors = [
   '#DBEAFE',
   '#DCFCE7',
@@ -34,13 +40,26 @@ const lightColors = [
   '#EDE9FE',
   '#ECFEFF', 
   '#FFE4E6',
-]
+];
+
+const checkMobile = () => {
+  isMobile.value = window.innerWidth <= 640;
+};
+
+onMounted(() => {
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", checkMobile);
+});
 
 const calendarEvents = computed(() =>
   props.data
     .filter(card => card['start-date'])
     .map((card, index) => {
-      const color = lightColors[index % lightColors.length]
+      const color = lightColors[index % lightColors.length];
 
       return {
         id: card._id,
@@ -51,9 +70,9 @@ const calendarEvents = computed(() =>
         borderColor: color,
         textColor: '#374151',
         extendedProps: { card },
-      }
+      };
     })
-)
+);
 
 const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
@@ -69,6 +88,15 @@ const calendarOptions = computed(() => ({
   eventClick(info: any) {
     emit("select:ticket", info.event.extendedProps.card);
   },
+  windowResize() {
+    // Just keep toolbar responsive by re-rendering
+    const calendarApi = calendarRef.value.getApi();
+    calendarApi.setOption("headerToolbar", {
+      left: "prev,next today",
+      center: "title",
+      right: "dayGridMonth,timeGridWeek,timeGridDay",
+    });
+  },
 }));
 </script>
 
@@ -82,6 +110,7 @@ const calendarOptions = computed(() => ({
   padding: 4px 12px;
   transition: all 0.2s;
 }
+
 ::v-deep .fc-toolbar-chunk .fc-button:hover,
 ::v-deep .fc-prev-button:hover,
 ::v-deep .fc-next-button:hover,
@@ -89,11 +118,13 @@ const calendarOptions = computed(() => ({
   background-color: #7D68C8;
   color: white;
 }
+
 ::v-deep .fc-toolbar-chunk .fc-button.fc-button-active {
   background-color: #7D68C8;
   color: white;
   border: none;
 }
+
 ::v-deep .fc-event {
   border-radius: 6px !important;
   padding: 4px 8px !important;
@@ -102,5 +133,23 @@ const calendarOptions = computed(() => ({
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
   border: none !important;
   cursor: pointer;
+}
+
+/* Responsive toolbar: wrap buttons on small devices */
+::v-deep .fc-toolbar {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  ::v-deep .fc-toolbar-chunk {
+    flex: 1 1 100%;
+    justify-content: center;
+    margin-bottom: 6px;
+  }
+
+  ::v-deep .fc-toolbar-chunk .fc-button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
 }
 </style>
