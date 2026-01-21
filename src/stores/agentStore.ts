@@ -97,38 +97,20 @@ export const useAgentStore = defineStore("agent", {
     async fetchChatHistory(workspace_id: string, forceRefresh = false) {
       if (!workspace_id) return;
       this.isLoadingHistory = true;
-      
       try {
-        // Add cache-busting parameter when force refresh is true
         const cacheBuster = forceRefresh ? `?_t=${Date.now()}` : '';
         const url = `${baseUrl}agent-chat/${workspace_id}/history${cacheBuster}`;
-        
-        console.log('📡 Fetching chat history from:', url, { forceRefresh });
-        
         const res = await api.request<{ data: { chats: ChatSession[], pagination: any } }>({
           url,
           method: "GET",
-          // Add cache control headers if your api lib supports it
           headers: forceRefresh ? {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
             'Expires': '0'
           } : undefined,
         });
-        
-        console.log('📥 Chat history response:', {
-          status: 'success',
-          chatCount: res.data.data?.chats?.length || 0,
-          totalMessages: res.data.data?.chats?.reduce((sum, chat) => sum + (chat.messages?.length || 0), 0) || 0
-        });
-        
-        // Update chat history - this should trigger reactivity
         const newChats = res.data.data?.chats ?? [];
-        
-        // Force a new array reference to ensure reactivity
         this.chatHistory = [...newChats];
-        
-        console.log('✅ Chat history updated in store:', this.chatHistory.length, 'sessions');
         
       } catch (err) {
         console.error("❌ Failed to fetch chat history:", err);

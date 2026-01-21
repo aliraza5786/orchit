@@ -17,7 +17,7 @@ const router = useRouter();
 
 const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
   onSuccess: async (data: any) => {
-    window.open(data?.checkoutUrl);
+   window.location.href = data?.checkoutUrl;
   },
 });
 
@@ -44,27 +44,19 @@ function handleClick(plan: any) {
 }
 
 // ----------------- Format Feature Limits -----------------
-const formatLimits = (limits: any, isYearly: boolean) => {
-  const m = isYearly ? 12 : 1;
-  const suffix = isYearly ? "/year" : "/month";
-
+const formatLimits = (limits: any) => {
   if (!limits || Object.keys(limits).length === 0) return "Included";
-  if (limits.storageGB) return `Storage: ${limits.storageGB * m} GB`;
-  if (limits.maxWorkspaces) return `Workspaces: ${limits.maxWorkspaces * m}`;
-  if (limits.maxTeamMembers) return `Team Members: ${limits.maxTeamMembers * m}`;
-  if (limits.maxProjects) return `Projects: ${limits.maxProjects * m}`;
+  if (limits.storageGB) return `Storage: ${limits.storageGB} GB`;
+  if (limits.maxWorkspaces) return `Workspaces: ${limits.maxWorkspaces}`;
+  if (limits.maxTeamMembers) return `Team Members: ${limits.maxTeamMembers}`;
+  if (limits.maxProjects) return `Projects: ${limits.maxProjects}`;
   if (limits.requestsPerMonth)
-    return `Requests: ${(limits.requestsPerMonth * m).toLocaleString()}${suffix}`;
+    return `Requests: ${limits.requestsPerMonth.toLocaleString()}/month`;
   return "Included";
 };
 
 // ----------------- Format API Response -----------------
-const formatPackages = (packages: any[], isYearly: boolean) => {
-  const priceTo99 = (price: number) => {
-    if (price === 0) return 0;
-    return Math.floor(price - 0.001) + 0.99;
-  };
-
+const formatPackages = (packages: any[]) => {
   const staticFeatures = [
     { text: "unlimited shared spaces (owned by others)", available: true },
     { text: "Sheet creation with AI", available: true },
@@ -80,34 +72,48 @@ const formatPackages = (packages: any[], isYearly: boolean) => {
   ];
 
   return packages.map((pkg) => {
+    // Helper for psychological pricing (30 → 29.99)
+      const formatPrice = (price: number): number => {
+          if (Number.isInteger(price) && price > 0) {
+           return parseFloat((price - 0.01).toFixed(2));
+          }
+        return parseFloat(price.toFixed(2));
+      };
+    const baseMonthlyPrice = (pkg.activePrice?.amount || 0);
+    const discountPercent = pkg.activePrice?.discountPercentage || 0;
+     
+     // Apply discount only if applicable
     const rawMonthlyPrice =
-      pkg.activePrice?.interval === "month"
-        ? pkg.activePrice.amount
-        : pkg.activePrice?.amount / 12 || 0;
+    discountPercent > 0
+    ? (baseMonthlyPrice * (100 - discountPercent)) / 100
+    : baseMonthlyPrice;
+    const monthlyPriceValue = formatPrice(rawMonthlyPrice);
+    const orginalMonthlyPrice = formatPrice(baseMonthlyPrice)
     
-    const monthlyPrice = priceTo99(rawMonthlyPrice);
-    const standardYearlyPrice = rawMonthlyPrice * 12;
-    const priceYearly = priceTo99(
-      pkg.name === "Pro" ? standardYearlyPrice * 0.8 : standardYearlyPrice
-    );
+    const trialDays = pkg.activePrice?.trialDays || 0;
+    const trialInfo = trialDays > 0 ? `${trialDays} days free trial` : "";
+    
+    // const monthsBilled = Math.max(0, 12 - 2); 
+    const priceYearly = formatPrice(baseMonthlyPrice * 12 * 0.8);
+    const originalYearlyPrice = formatPrice(baseMonthlyPrice * 12); 
 
     return {
       name: pkg.name,
       packageId: pkg._id || pkg.id,
       description: pkg.description || "",
-      priceMonthly: monthlyPrice,
+      priceMonthly: monthlyPriceValue,
       priceYearly: priceYearly,
-      button: pkg.activePrice ? "Subscribe" : "Try for Free",
-      highlighted:
-        pkg.name === "Pro" ||
-        pkg.packageType === "starter" ||
-        pkg.packageType === "professional",
+      orginalMonthlyPrice:orginalMonthlyPrice,
+      originalYearlyPrice:originalYearlyPrice,
+      trialInfo,
+      button: pkg.packageType === "free" ? "Try for Free" : "Subscribe",
+      highlighted: pkg.packageType === "professional",
       features: [
         ...pkg.features.map((f: any) => ({
           text:
             f.name +
-            (formatLimits(f.limits, isYearly) !== "Included"
-              ? ` (${formatLimits(f.limits, isYearly)})`
+            (formatLimits(f.limits) !== "Included"
+              ? ` (${formatLimits(f.limits)})`
               : ""),
           available: f.enabled,
         })),
@@ -121,7 +127,7 @@ const formatPackages = (packages: any[], isYearly: boolean) => {
 const { data, isLoading } = usePackages();
 const pricingPlans = computed(() => {
   if (!data.value) return [];
-  return formatPackages(data.value, isYearly.value);
+  return formatPackages(data.value);
 });
 </script>
 
@@ -157,7 +163,8 @@ const pricingPlans = computed(() => {
 
           <button
             @click="isYearly = !isYearly"
-            class="relative inline-flex h-7 w-12 items-center rounded-full bg-gray-700 p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+            class="relative inline-flex h-7 w-12 items-center rounded-full  p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+            :class="isYearly? 'bg-accent':'bg-gray-700'"
           >
             <span
               class="h-5 w-5 rounded-full bg-white transform transition-transform duration-250 ease-in-out"
@@ -221,37 +228,59 @@ const pricingPlans = computed(() => {
             </p>
             <!-- Price -->
             <div class="mb-[21px]">
-              <div class="relative flex items-center justify-center">
-                <div
-                  class="price-container tracking-normal inline-block text-[22px] leading-[21px] font-bold"
-                >
-                  <transition name="price-fade" mode="out-in">
-                    <span
-                      :key="(isYearly ? 'y' : 'm') + plan.name"
-                      class="block"
-                      style="font-variant-numeric: tabular-nums"
-                    >
-                      <span v-if="plan.priceMonthly === 0 && !isYearly"
-                        >$0</span
+              <div class="relative flex flex-col items-center justify-center">
+                <div class="flex items-center">
+                  <div
+                    class="price-container tracking-normal inline-block text-[22px] leading-[21px] font-bold"
+                  >
+                    <transition name="price-fade" mode="out-in">
+                      <span
+                        :key="(isYearly ? 'y' : 'm') + plan.name"
+                        class="flex gap-1"
+                        style="font-variant-numeric: tabular-nums"
                       >
-                      <span v-else-if="plan.priceMonthly === 0 && isYearly"
-                        >$0</span
-                      >
-                      <span v-else>
-                        ${{
-                          (isYearly
-                            ? plan.priceYearly
-                            : plan.priceMonthly
-                          ).toFixed(2)
-                        }}
+                         <div class="flex items-center gap-2">
+                           <!-- Final price -->
+                           <span class="text-text-primary text-xl font-bold">
+                             ${{ isYearly ? plan.priceYearly : plan.priceMonthly }}
+                           </span>
+                         
+                           <!-- Original price (strikethrough) -->
+                           <span
+                             v-if="
+                               (isYearly && plan.originalYearlyPrice > plan.priceYearly) ||
+                               (!isYearly && plan.orginalMonthlyPrice > plan.priceMonthly)
+                             "
+                             class="text-text-primary/50 line-through text-sm"
+                           >
+                             ${{ isYearly ? plan.originalYearlyPrice : plan.orginalMonthlyPrice }}
+                           </span>
+                         </div>                                 
                       </span>
-                    </span>
-                  </transition>
+                    </transition>
+                  </div>
+                  <span
+                    class="text-[14px] leading-[21px] text-text-secondary font-normal ml-2"
+                    >/ {{ isYearly ? "year" : "month" }}</span
+                  >
                 </div>
-                <span
-                  class="text-[14px] leading-[21px] text-text-secondary font-normal ml-2"
-                  >/ {{ isYearly ? "year" : "month" }}</span
-                >
+                <!-- Trial Info -->
+                <div v-if="plan.trialInfo && !isYearly" class="mt-1">
+                  <span class="text-[12px] text-green-500 font-medium bg-green-500/10 px-2 py-0.5 rounded-full">
+                    {{ plan.trialInfo }}
+                  </span> 
+                </div>
+                <!-- 20% off per year -->
+                <div v-if="isYearly && plan.originalYearlyPrice - plan.priceYearly > 0"  class="mt-1">
+                  <span class="text-[12px] text-green-500 font-medium bg-green-500/10 px-2 py-0.5 rounded-full">
+                    Save {{ plan.originalYearlyPrice - plan.priceYearly }}$ per year
+                  </span> 
+                </div>
+                <div v-if="plan.name.toLowerCase() === 'free' "  class="mt-1">
+                  <span class="text-[12px] text-green-500 font-medium bg-green-500/10 px-2 py-0.5 rounded-full">
+                    Enjoy free plan
+                  </span> 
+                </div>
               </div>
             </div>
 

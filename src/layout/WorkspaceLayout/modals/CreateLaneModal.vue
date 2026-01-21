@@ -3,7 +3,7 @@
     <!-- Header -->
     <div
       class="sticky flex-col top-0 flex justify-between bg-bg-body/90 z-1 items-start pt-6 px-6 border-b border-border  pb-4 mb-4">
-      <h2 class="text-xl font-semibold">Create a New Lane</h2>
+      <h2 class="text-xl font-semibold">Create a New Tab</h2>
     </div>
 
     <!-- Step 1: Basics -->
@@ -11,13 +11,13 @@
       <div class="space-y-2.5">
         <h3 class="text-2xl font-semibold text-text-primary ">Project Basics</h3>
         <p class="text-sm text-text-secondary  mt-1 ">
-          Let's start by setting up the foundational details of your project lane.
+          Let's start by setting up the foundational details of your project Tabs.
         </p>
       </div>
 
       <div class="space-y-2">
         <div class="flex gap-4">
-          <BaseTextField v-model="form.title" placeholder="Lane name " label="Lane Name" :error="!!titleError"
+          <BaseTextField v-model="form.title" placeholder="Tab name " label="Tab Name" :error="!!titleError"
             :message="titleError" @blur="touched.title = true" class="flex-auto" />
 
           <!-- Custom Color Picker -->
@@ -35,7 +35,7 @@
 
         </div>
 
-        <BaseTextAreaField v-model="form.description" label="Lane Description" placeholder="Describe your lane here.. "
+        <BaseTextAreaField v-model="form.description" label="Tab Description" placeholder="Describe your Tab here.. "
           :error="!!descriptionError" :message="descriptionError" @blur="touched.description = true" />
 
 
@@ -86,7 +86,7 @@ const touched = reactive({
 // Computed validations
 const titleError = computed(() => {
   if (!touched.title) return ''
-  if (!form.value.title.trim()) return 'Lane Name is required'
+  if (!form.value.title.trim()) return 'Tab Name is required'
   return ''
 })
 

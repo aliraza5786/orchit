@@ -112,9 +112,9 @@
             >
               <i class="fa-regular fa-calendar"></i>
             </button>
-            <button
+           <button
               @click="view = 'gantt'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm p-0"
               :class="
                 view === 'gantt'
                   ? 'text-accent bg-accent-text'
@@ -122,20 +122,45 @@
               "
               title="Gantt Chart view"
             >
-              <i class="fa-solid fa-chart-gantt"></i>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+              </svg>
             </button>
             <button
-              @click="view = 'timeline'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'timeline'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
-              title="Timeline view"
-            >
-              <i class="fa-solid fa-timeline"></i>
-            </button>
+                @click="view = 'timeline'"
+                class="aspect-square cursor-pointer rounded-sm p-0"
+                :class="
+                  view === 'timeline'
+                    ? 'text-accent bg-accent-text'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                "
+                title="Timeline view"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
+                    opacity="0"
+                  />
+                  <path
+                    d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+
           </div>
         </div>
       </div>
@@ -483,6 +508,7 @@
       }
     "
     @closeSidePanel="closeSidePanel"
+    @comment:post="incrementCommentCount"
     :showPanel="selectedCard?._id ? true : false"
   />
   <CreateSheetModal
@@ -1359,6 +1385,21 @@ const moveCard = useMoveCard({
     
   },
 });
+function incrementCommentCount({ cardId }: { cardId: string }) {
+  queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+    if (!Array.isArray(old)) return old;
+
+    return old.map((column: any) => ({
+      ...column,
+      cards: column.cards.map((card: any) =>
+        card._id === cardId
+          ? { ...card, comment_count: (card.comment_count || 0) + 1 }
+          : card,
+      ),
+    }));
+  });
+}
+
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
   if (!Lists.value) return;
 

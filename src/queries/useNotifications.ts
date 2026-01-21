@@ -23,28 +23,7 @@ export interface Notification {
 // -----------------------------
 // DUMMY FALLBACK DATA
 // -----------------------------
-const dummyNotifications : Notification[] = [
-  {
-    id: "1",
-    title: "Welcome to Orchit AI",
-    body: "We’re glad you joined! Explore the platform to learn more.",
-    actor_name: "System",
-    action: "Welcome message",
-    url: "/dashboard",
-    created_at: new Date().toISOString(),
-    read: true,
-  },
-  {
-    id: "2",
-    title: "New task assigned",
-    body: "A new task has been assigned to you by Ali Zia.",
-    actor_name: "Ali Zia",
-    action: "Task assignment",
-    url: "/tasks/123",
-    created_at: new Date(Date.now() - 3600 * 1000).toISOString(),
-    read: false,
-  }, 
-];
+const dummyNotifications : Notification[] = [];
 
 // -----------------------------
 // API HANDLERS

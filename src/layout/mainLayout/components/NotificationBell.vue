@@ -155,6 +155,8 @@ const groupedNotifications = computed(() => {
   Object.keys(groups).forEach((k) => !groups[k].length && delete groups[k]);
   return groups;
 });
+console.log("notification data", groupedNotifications.value);
+
 
 // Logic
 function openNotification(notification: any) {

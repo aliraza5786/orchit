@@ -176,7 +176,7 @@ function onTicketsChange(evt: any) {
   if (canEditVariable.value) {
     if (props.index !== undefined && props.index > 0) {
       items.push({
-        label: 'Move column left side',
+        label: 'Move left side',
         action: () => {
           emit('move:column', { direction: 'left', column: props.column });
         },
@@ -189,7 +189,7 @@ function onTicketsChange(evt: any) {
       props.index < props.totalColumns - 1
     ) {
       items.push({
-        label: 'Move column right side',
+        label: 'Move right side',
         action: () => {
           emit('move:column', { direction: 'right', column: props.column });
         },
