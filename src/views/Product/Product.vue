@@ -243,10 +243,11 @@
     <template v-if="view === 'mindmap'">
       <div class="relative w-full h-full flex overflow-hidden">
         <!-- Mind Map Canvas -->
-        <div
-          ref="mindMapRef"
-          class="flex-1 h-full overflow-hidden rounded-md relative"
-        ></div>
+       <div
+        ref="mindMapRef"
+        class="flex-1 h-full overflow-hidden rounded-md relative"
+        style="height: 600px; width: 100%;"
+      ></div>
 
         <!-- Formatting Sidebar -->
         <div
@@ -1881,17 +1882,16 @@ watchEffect(() => {
 
     mindMapInstance.value = instance;
     instance.init({ nodeData: rootNode });
-
-    // Center only once after DOM is fully ready
-    setTimeout(() => {
-      instance.toCenter();
-    }, 100);
+    nextTick(() => {
+      setTimeout(() => {
+        instance.toCenter();
+      }, 300); // Increase from 100ms to 300ms
+    });
 
     // Setup toolbar button after instance is initialized
     nextTick(() => {
       setupToolbarObserver();
     });
-
     // Selected node
     instance.bus.addListener("selectNode", (nodeObj: any) => {
       if (!nodeObj) return;
@@ -2157,7 +2157,11 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
 }
 </script>
 <style scoped>
-@import "https://cdn.jsdelivr.net/npm/mind-elixir/dist/style.css";
+#mindMapRef {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 .format-sidebar {
   width: 350px;
   border-left: 1px solid #e0e0e0;
