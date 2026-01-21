@@ -229,8 +229,10 @@ async function handleLoginSuccess(data: any) {
         localStorage.removeItem('post_auth_intent');
       }
     }
+
+    console.log(data?.data?.isNewUser, "new user")
     
-    if (data?.data?.is_new_user) {
+    if (data?.data?.isNewUser) {
       router.push("/create-profile");
       return;
     }
