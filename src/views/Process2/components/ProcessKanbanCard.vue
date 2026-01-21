@@ -59,7 +59,7 @@ const showDelete = ref(false)
 const queryClient = useQueryClient()
 const { workspaceId } = useRouteIds();
 import { usePermissions } from '../../../composables/usePermissions';
-const { canDeleteCard, canEditCard } = usePermissions();
+const { canDeleteCard } = usePermissions();
 
 function getMenuItems() {
   const items:any = [
