@@ -27,7 +27,7 @@
     </div>
 
     <!-- Chat Area -->
-    <div ref="chatContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+    <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
       <template v-if="orderedMessages.length">
         <div
           v-for="msg in orderedMessages"
@@ -165,15 +165,10 @@ const userMessage = ref("");
 const chatContainer = ref<HTMLElement | null>(null);
 const socket = ref<Socket | null>(null);
 const isSocketConnected = ref(false);
-const socketURL = import.meta.env.VITE_SOCKET_IO_URL || "https://backend.streamed.space";
+const socketURL = import.meta.env.VITE_SOCKET_IO_URL;
 const isAiThinkingBubbleVisible = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
-// const selected_view_id = ref("team");
-// const { data: Lists, refetch: refetchList } = usePeopleList(workspaceId.value, selected_view_id);
 const agentStore = useAgentStore();
-
-// watch(Lists, () => refetchList());
-
 const contextTitle = computed(() => {
   const routeName = (route.name as string)?.toLowerCase() || "workspace";
   if (routeName.includes("peak")) return "Peak";
@@ -182,15 +177,13 @@ const contextTitle = computed(() => {
   if (routeName.includes("people")) return "People";
   if (routeName.includes("more")) return "More";
   if (routeName.includes("pin")) return "Pin";
-
-  // const modId = route.params.module_id || route.params.job_id;
   return "Workspace";
 });
 
 const refreshKey = ref(0);
 
 const orderedMessages = computed(() => {
-  refreshKey.value; // force recompute
+  refreshKey.value; 
   if (!Array.isArray(agentStore.chatHistory)) return [];
   const messages = agentStore.chatHistory.flatMap(s => s.messages || [])
     .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
@@ -205,14 +198,28 @@ const orderedMessages = computed(() => {
 function closeHandler() {
   workspaceStore.toggleChatBotPanel();
 }
+const messagesContainer = ref<HTMLElement | null>(null);
 
 function scrollToBottom() {
   nextTick(() => {
-    if (chatContainer.value) chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    requestAnimationFrame(() => {
+      const el = messagesContainer.value;
+      if (!el) return;
+
+      el.scrollTop = el.scrollHeight;
+    });
   });
 }
+onMounted(() => {
+  scrollToBottom();
+});
 
-/* ================= SOCKET INIT ================= */
+watch(
+  () => orderedMessages.value.length,
+  () => {
+    scrollToBottom();
+  }
+);
 function initSocket() {
   const token = localStorage.getItem("token");
   if (!token || socket.value?.connected) return;
@@ -318,25 +325,12 @@ const formatTimestamp = (ts?: string) => {
 };
 
 onMounted(() => initSocket());
-// const pollInterval = ref<number | null>(null);
+onMounted(() => {
+  if (workspaceId.value && workspaceStore.showChatBotPanel) {
+    agentStore.fetchChatHistory(workspaceId.value, true);
+  }
+});
 
-// onMounted(() => {
-//   pollInterval.value = window.setInterval(async () => {
-//     if (workspaceId.value) {
-//       console.log("🔄 Polling chat history...");
-//       await agentStore.fetchChatHistory(workspaceId.value, true);
-//     }
-//   }, 2000); // 2000ms = 2s
-// });
-
-// onBeforeUnmount(() => {
-//   if (pollInterval.value) {
-//     clearInterval(pollInterval.value);
-//     pollInterval.value = null;
-//   }
-// });
-
-agentStore.fetchChatHistory(workspaceId.value, true);
 onBeforeUnmount(() => {
   if (workspaceId.value && socket.value) socket.value.emit("leave-workspace", workspaceId.value);
   socket.value?.removeAllListeners();

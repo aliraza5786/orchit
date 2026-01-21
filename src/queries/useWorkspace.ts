@@ -131,23 +131,23 @@ export const useSingleWorkspace = (id: MaybeRef<WorkspaceId>) => {
   return useApiQuery(
     {
       key: computed(() =>
-        resolvedId.value ? keys.singleWorkspace(resolvedId.value) : []
-      ),
-      url: computed(() =>
-        resolvedId.value ? `/workspace/${resolvedId.value}` : ''
-      ),
+  resolvedId.value ? keys.singleWorkspace(resolvedId.value) : ["singleWorkspace"]
+),
+      url: computed(() => `/workspace/${resolvedId.value}`),
       method: 'GET',
       params: { is_archive: false },
-      enabled: computed(() => Boolean(resolvedId.value)),
+      enabled: computed(() => !!resolvedId.value),
     },
     {
-      staleTime: 3 * 60 * 1000, // fresh for 3 minutes
+      staleTime: 3 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
-      refetchOnMount: false, // only fetch if key changes
+      refetchOnMount: false,
       refetchOnWindowFocus: false,
+      retry: false,
     }
   );
 };
+
 
 export const useWorkspacesModules = () =>
   useApiQuery({

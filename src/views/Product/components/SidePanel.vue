@@ -905,17 +905,6 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
           comments: [...(old?.comments || []), optimisticComment],
         };
       });
-      queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-        if (!Array.isArray(old)) return old;
-        return old.map((col: any) => ({
-          ...col,
-          cards: col.cards?.map((c: any) =>
-            c._id === cardId
-              ? { ...c, comment_count: (c.comment_count || 0) + 1 }
-              : c,
-          ),
-        }));
-      });
 
       return { previousComments, previousLists };
     },
@@ -1071,8 +1060,6 @@ const moveCard = useMoveCard({
       } else {
         updatedCard.variables.push({ slug: key, value, type: "Text" });
       }
-
-      // 2️⃣ 🔥 ADD THIS: normalize description for parent
       if (key === "card-description") {
         // parent reads from flat object
         updatedCard["card-description"] = value;
@@ -1166,8 +1153,25 @@ function handleFileChange(event: any) {
 function postComment() {
   const comment_text = newComment.value.trim();
   if (!comment_text && !commentAttachments.value.length) return;
+
+  const cardId = props.details._id;
+  queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+    if (!Array.isArray(old)) return old;
+
+    return old.map((column: any) => ({
+      ...column,
+      cards: column.cards.map((card: any) =>
+        card._id === cardId
+          ? {
+              ...card,
+              comment_count: (card.comment_count || 0) + 1,
+            }
+          : card,
+      ),
+    }));
+  });
   createComment({
-    id: props.details._id,
+    id: cardId,
     payload: {
       comment_text,
       attachments: commentAttachments.value.map((file: any) => ({
@@ -1176,6 +1180,9 @@ function postComment() {
       })),
     },
   });
+
+  newComment.value = "";
+  commentAttachments.value = [];
 }
 
 const localVarValues = reactive<Record<string, any>>({});
