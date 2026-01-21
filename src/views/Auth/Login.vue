@@ -115,7 +115,7 @@ import AuthLayout from "../../layout/AuthLayout/AuthLayout.vue";
 import BaseTextField from "../../components/ui/BaseTextField.vue";
 import Button from "../../components/ui/Button.vue";
 import { login, socialLogin } from "../../services/auth";
-import { decodeCredential, googleTokenLogin } from "vue3-google-login";
+import { googleTokenLogin } from "vue3-google-login";
 import axios from "axios";
 import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
@@ -191,22 +191,22 @@ async function loginWithGoogle() {
   }
 }
 
-async function handleGoogleLogin(response: any) {
-  try {
-    const userData: any = decodeCredential(response.credential);
-    const data = await googleLoginMutate({
-      u_email: userData.email,
-      u_social_id: userData.sub,
-      u_social_type: "google",
-      u_full_name: userData.name,
-    });
+// async function handleGoogleLogin(response: any) {
+//   try {
+//     const userData: any = decodeCredential(response.credential);
+//     const data = await googleLoginMutate({
+//       u_email: userData.email,
+//       u_social_id: userData.sub,
+//       u_social_type: "google",
+//       u_full_name: userData.name,
+//     });
     
-    handleLoginSuccess(data);
-  } catch (err: any) {
-    errorMessage.value =
-      err?.response?.data?.message || "Google Login failed. Please try again.";
-  }
-}
+//     handleLoginSuccess(data);
+//   } catch (err: any) {
+//     errorMessage.value =
+//       err?.response?.data?.message || "Google Login failed. Please try again.";
+//   }
+// }
 
 async function handleLoginSuccess(data: any) {
     localStorage.setItem("token", data?.data?.token);
