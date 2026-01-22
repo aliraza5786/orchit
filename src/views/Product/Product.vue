@@ -1929,6 +1929,7 @@ watchEffect(() => {
           {
             name: "Update Node",
             onclick: () => {
+              if (!canEditCard && !canEditSheet) return;
               if (showFormatSidebar.value) showFormatSidebar.value = false;
               const node = selectedMindNode.value?.nodeObj;
               if (!node) return;
@@ -1938,6 +1939,7 @@ watchEffect(() => {
           {
             name: "Add Hyperlink",
             onclick: () => {
+              if (!canEditCard && !canEditSheet) return;
               openHyperlinkModal(async () => {
                 await saveNodeStyle();
               });
@@ -2034,22 +2036,33 @@ watchEffect(() => {
 
       // Remove node (cards only)
       if (data.name === "removeNode") {
-        const removedNode = data.obj;
-        if (!removedNode || !removedNode.id) return;
-        if (removedNode.unique_name !== "card") return;
+      const removedNode = data.obj;
+      if (!removedNode || !removedNode.id) return;
+      if (removedNode.unique_name !== "card") return;
 
-        selectedDeleteId.value = removedNode.id;
-        await deleteTicket();
-        return;
-      }
+      // Permission check
+      if (!canDeleteCard) return;
+
+      selectedDeleteId.value = removedNode.id;
+      await deleteTicket();
+      return;
+    }
+
 
       // Add child or sibling nodes
       if (data.name === "addChild" || data.name === "insertSibling") {
         const newNode = data.obj;
         if (!newNode || !newNode.id) return;
+
+        // Permissions check
+        if (newNode.unique_name === "sheet" && !canCreateSheet) return;
+        if (newNode.unique_name === "List" && !canCreateVariable) return;
+        if (newNode.unique_name === "card" && !canCreateCard) return;
+
         temporaryNodeIds.add(newNode.id);
         return;
       }
+
 
       // Begin edit
       if (data.name === "beginEdit") {
@@ -2083,6 +2096,10 @@ watchEffect(() => {
             parentNode.unique_name === "root" &&
             !createdSheetNodeIds.has(editedNode.id)
           ) {
+            if (!canCreateSheet) {
+              savedNodeIds.delete(editedNode.id);
+              return;
+            }
             createdSheetNodeIds.add(editedNode.id);
             try {
               await createNewSheet({
@@ -2104,6 +2121,10 @@ watchEffect(() => {
 
           // Create Card
           if (parentNode.unique_name === "List") {
+            if (!canCreateCard) {
+            savedNodeIds.delete(editedNode.id);
+            return;
+          }
             try {
               const payload = createDefaultCardPayload(
                 {
@@ -2126,6 +2147,7 @@ watchEffect(() => {
 
           // Create List (placeholder)
           if (parentNode.unique_name === "sheet") {
+            if (!canDeleteSheet) return;
             try {
               console.log("Creating new list under sheet...");
             } catch (err) {

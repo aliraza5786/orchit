@@ -149,17 +149,17 @@
           <div v-else v-for="member in teamWorkload" :key="member.id" class="flex items-center gap-3">
             <div class="flex items-center gap-2 w-32 flex-shrink-0">
               <div v-if="member.avatarUrl" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                <img :src="member.avatarUrl" :alt="member.name" class="w-full h-full object-cover" />
+                <img :src="member?.avatarUrl" :alt="member.name" class="w-full h-full object-cover" />
               </div>
               <div v-else-if="member.avatar"
                 class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
                 :style="{ backgroundColor: avatarColor({ name: member?.name }) }">
-                {{ getInitials(member.name) }}
+                {{ getInitials(member?.name) }}
               </div>
               <div v-else class="w-8 h-8 rounded-full bg-bg-body flex items-center justify-center flex-shrink-0">
                 <i class="pi pi-user text-text-secondary"></i>
               </div>
-              <span class="text-sm text-text-primary truncate" :title="member.name">{{ member.name }}</span>
+              <span class="text-sm text-text-primary truncate" :title="member?.name">{{ member?.name }}</span>
             </div>
 
             <div class="flex-1">
@@ -193,21 +193,21 @@
             class="flex gap-3 pb-4 border-b border-border last:border-0">
             <div
               class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-              :style="{ backgroundColor: avatarColor({ email: activity.user.email }) }">
-              {{ getInitials(activity.user.name) }}
+              :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }">
+              {{ getInitials(activity?.user?.name) }}
             </div>
 
             <div class="flex-1 min-w-0">
               <div class="text-sm text-text-primary">
-                <span class="font-medium text-accent/90 pe-1">{{ activity.user.name }} </span>
-                <span  class="text-text-secondary" v-html="activity.message"></span>
-                <a href="#" class="text-accent/90 hover:underline">{{ activity.item }}</a>
+                <span class="font-medium text-accent/90 pe-1">{{ activity?.user?.name }} </span>
+                <span  class="text-text-secondary" v-html="activity?.message"></span>
+                <a href="#" class="text-accent/90 hover:underline">{{ activity?.item }}</a>
                 <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
                   :class="getStatusClass(activity.status)">
-                  {{ activity.status }}
+                  {{ activity?.status }}
                 </span>
               </div>
-              <div class="text-xs text-text-secondary mt-1">{{ activity.time }}</div>
+              <div class="text-xs text-text-secondary mt-1">{{ activity?.time }}</div>
             </div>
           </div>
         </div>
