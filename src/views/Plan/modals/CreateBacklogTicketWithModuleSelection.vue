@@ -1,21 +1,37 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="lg">
+  <BaseModal v-model="isOpen" modalClass="!py-0" size="lg" >
     <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
+  <div class="w-full flex items-start justify-between">
+    <div>
       <h2 class="text-xl font-semibold">Create Backlog Ticket</h2>
       <p class="text-sm text-text-secondary mt-1">
         {{ stepDescription }}
       </p>
-      <div class="flex items-center gap-2 mt-4 w-full">
-        <div v-for="step in 3" :key="step" class="flex items-center flex-1">
-          <div class="flex items-center gap-2 flex-1">
-            <div class="h-1 flex-1 rounded-full transition-colors"
-              :class="currentStep >= step ? 'bg-primary' : 'bg-border'">
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
+    <!-- Close button -->
+    <button
+      class="ml-4 p-2 rounded-md hover:bg-border transition-colors cursor-pointer"
+      @click="cancel"
+      aria-label="Close"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10 3.636 5.05a1 1 0 011.414-1.414L10 8.586z" clip-rule="evenodd" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="flex items-center gap-2 mt-4 w-full">
+    <div v-for="step in 3" :key="step" class="flex items-center flex-1">
+      <div class="flex items-center gap-2 flex-1">
+        <div
+          class="h-1 flex-1 rounded-full transition-colors"
+          :class="currentStep >= step ? 'bg-primary' : 'bg-border'"
+        ></div>
+      </div>
+    </div>
+  </div>
+</div>
     <div class="px-6 min-h-[400px]">
       <div v-if="currentStep === 1">
         <h3 class="text-lg font-medium mb-4">Select Module</h3>
@@ -80,13 +96,21 @@
               :allowCustom="false" :model-value="form.lane_id" @update:modelValue="setLane" :error="!!laneError"
               :message="laneError" />
           </div>
-
-        
-
-          <BaseSelectField size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable"
-            :key="getVarKey(item)" v-model="form.variables[item.slug]" :options="mapOptions(item.data)"
-            :label="item.title" placeholder="Select value" :allowCustom="true" />
-
+          <BaseSelectField
+            size="md"
+            v-for="item in selectVariables"
+            v-show="item?._id != selectedVariable"
+            :key="getVarKey(item)"
+            v-model="form.variables[item.slug]"
+            :options="
+              item.data
+                .filter((e: string) => e !== 'process')
+                .map((e: string) => ({ _id: e, title: e }))
+            "
+            :label="item.title"
+            placeholder="Select value"
+            :allowCustom="true"
+          />
           <div class="flex gap-1 flex-col">
             <label class="text-sm">Start date</label>
             <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
@@ -129,7 +153,6 @@
         <div class="mt-4">
           <BaseRichTextEditor label="Description" placeholder="What needs to be done, acceptance criteria, links…"
             v-model="form.description" @blur="touched.description = true" />
-          <p v-if="descriptionError" class="text-xs text-red-500 mt-1 px-1">{{ descriptionError }}</p>
         </div>
       </div>
     </div>
@@ -181,17 +204,17 @@ const { workspaceId } = useRouteIds()
 const currentStep = ref(1)
 const selectedModuleId = ref<string | null>(null)
 const selectedSheetId = ref<string | null>(null)
-
+const moduleIdForQuery = ref<string>('')
 const { data: workspaceData, isLoading: loadingModules } = useSingleWorkspace(workspaceId.value)
 const modules = computed(() => workspaceData.value?.modules || [])
 
 const { data: sheetsData, isFetching: loadingSheets, refetch: refetchSheet } = useSheets(
   {
-    workspace_module_id: selectedModuleId,
+    workspace_module_id: moduleIdForQuery,
     workspace_id: workspaceId
   },
   {
-    enabled: computed(() => !!selectedModuleId.value)
+    enabled: computed(() => !!moduleIdForQuery)
   }
 )
 watch(() => selectedModuleId.value, () => {
@@ -201,14 +224,15 @@ const sheets = computed(() => sheetsData.value || [])
 
 const { data: lanes } = useLanes(workspaceId.value)
 
-const moduleIdForQuery = computed(() => selectedModuleId.value ?? '')
 
+watch(selectedModuleId, (id) => {
+  moduleIdForQuery.value = id ?? ''
+})
 const { data: variables } = useVariables(workspaceId, moduleIdForQuery, ref(''))
 
 const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
   onSuccess: () => {
     reset()
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] }) 
     queryClient.invalidateQueries({ queryKey: ['backlog-list'] }) 
     isOpen.value = false
   }
@@ -242,12 +266,10 @@ type Variable = {
 }
 
 const selectVariables = computed<Variable[]>(() =>
-  (variables?.value ?? []).filter((v: any) => v?.type?.title === 'Select')
+  (variables?.value ?? []).filter((v: any) => v?.type?.title === 'Select' && v?.slug !=='process')
 )
 
 type Option = { _id: string | number; title: string }
-const mapOptions = (arr: string[]): Option[] => arr.map(e => ({ _id: e, title: e }))
-
 type Lane = { _id: string | number; variables?: Record<string, any> }
 const laneOptions = computed<Option[]>(() =>
   (lanes?.value ?? []).map((el: Lane) => ({
@@ -305,8 +327,7 @@ const isValid = computed(() =>
   !titleError.value &&
   !startDateError.value &&
   !endDateError.value &&
-  !laneError.value &&
-  !descriptionError.value
+  !laneError.value 
 )
 
 function setStartDate(v: string | null) {
@@ -392,10 +413,6 @@ const laneError = computed(() => {
   if (!form.lane_id) return 'Lane is required'
   return ''
 })
-
-const descriptionError = computed(() =>
-  touched.description && !form.description.trim() ? 'Description is required' : ''
-)
 
 const today = new Date().toISOString().split('T')[0]
 function create() {
