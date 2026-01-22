@@ -69,12 +69,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useNotificationsQuery } from "../../../queries/useNotifications";
 import { useTheme } from "../../../composables/useTheme";
 import router from "../../../router";
-import { toast } from "vue-sonner";
-
 const { isDark } = useTheme();
 
 const isOpen = ref(false);
@@ -107,12 +105,6 @@ const {
 
 const notifications = computed(() => notificationsQuery.data?.value || []);
 const count = computed(() => unreadCountQuery.data?.value || 0);
-watch(count, (newVal, oldVal) => {
-  if (newVal > oldVal) {
-    toast.info("New notification received");
-  }
-});
-
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 0) return "UN";
@@ -195,12 +187,8 @@ const moduleId = notification?.module_id ?? notification?.data?.module_id;
   }
   router.push("/dashboard");
 }
-
-
 const markAllRead = () => markAllReadMutation.mutate();
 </script>
-
-
 <style scoped>
 ::-webkit-scrollbar {
   width: 6px;

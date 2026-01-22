@@ -82,6 +82,14 @@ const calendarOptions = computed(() => ({
     center: "title",
     right: "dayGridMonth,timeGridWeek,timeGridDay",
   },
+  views: {
+    timeGridWeek: {
+      allDaySlot: false
+    },
+    timeGridDay: {
+      allDaySlot: false
+    }
+  },
   events: calendarEvents.value,
   dayMaxEventRows: true,
   eventDisplay: "block",
@@ -123,6 +131,13 @@ const calendarOptions = computed(() => ({
   background-color: #7D68C8;
   color: white;
   border: none;
+}
+::v-deep .fc-timegrid-all-day {
+  border-bottom: none !important;
+}
+
+::v-deep .fc-timegrid-all-day-cushion {
+  display: none !important;
 }
 
 ::v-deep .fc-event {
