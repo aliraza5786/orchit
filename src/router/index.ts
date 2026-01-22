@@ -38,6 +38,7 @@ const LandingPageLayout = () =>
 import("../layout/LandingPageLayout/LandingPageLayout.vue");
 
 const LandingHome = () => import("../landingPageViews/LandingHome.vue");
+const NewHomepage = () => import("../views/NewHomepage.vue");
 const Pricing = () => import("../views/Pricing.vue");
 const TermsOfServices = () => import("../views/TermsOfServices.vue");
 const PrivactPolicy = () => import("../views/PrivacyPolicy.vue");
@@ -102,8 +103,15 @@ const routes: RouteRecordRaw[] = [
         component: BlogDetail,
         props: true,
         meta: { requiresAuth: false },
-      },   
+      },
     ],
+  },
+  // New Homepage (standalone without layout)
+  {
+    path: "/new-homepage",
+    name: "new-homepage",
+    component: NewHomepage,
+    meta: { requiresAuth: false },
   },
   // knowledge center 
   {
