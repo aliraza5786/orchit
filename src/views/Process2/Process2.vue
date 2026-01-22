@@ -380,9 +380,9 @@ const handleTransitionCreated = () => {
     queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
 }
 
-function handleGeneralOpenBuilder() {
-    showGeneralWorkflowBuilder.value = true;
-}
+// function handleGeneralOpenBuilder() {
+//     showGeneralWorkflowBuilder.value = true;
+// }
 
 const showGeneralWorkflowBuilder = ref(false);
 </script>
