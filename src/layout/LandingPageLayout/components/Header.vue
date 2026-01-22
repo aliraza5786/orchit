@@ -101,8 +101,8 @@
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { ref } from "vue";
 import { useTheme } from "../../../composables/useTheme";
-import lightLogo from '@assets/global/light-logo.png';
-import darkLogo from '@assets/global/dark-logo.png';
+import lightLogo from '@assets/global/light-logo.svg';
+import darkLogo from '@assets/global/dark-logo.svg';
 import googleLogo from '@assets/LandingPageImages/header-icons/google.png';
 import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
 import darkApple from '@assets/LandingPageImages/header-icons/apple.png';

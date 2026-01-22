@@ -52,8 +52,9 @@ async function handleSubmit(value: string) {
 
 <template>
     <section
-        class="float-left pt-[40px] lg:pt-[80px] xl:pt-[125px]  mb-10 md:mb-16 lg:mb-20 w-full transition-colors duration-500">
-        <div class="banner_main  px-[15px]">
+        class="hero-section float-left pt-[40px] lg:pt-[80px] xl:pt-[125px]  mb-10 md:mb-16 lg:mb-20 w-full transition-colors duration-500 relative overflow-hidden">
+        <div class="hero-glow-overlay"></div>
+        <div class="banner_main  px-[15px] relative z-10">
             <div class="custom_container">
                 <!-- Heading -->
                 <h2 :class="theme === 'dark' ? 'heading-ingradient' : ''"
@@ -79,7 +80,7 @@ async function handleSubmit(value: string) {
         </div>
 
         <!-- Example Buttons -->
-        <div class="relative overflow-hidden  mb-[40px] lg:mb-[72px]">
+        <div class="relative overflow-hidden  mb-[40px] lg:mb-[72px] z-10">
             <p
                 class="text-center text-[14px] font-medium text-primary leading-[20px] font-manrope mb-[25px] lg:mb-[31px]">
                 Or try
@@ -117,7 +118,7 @@ async function handleSubmit(value: string) {
         </div>
 
         <!-- mouse text + imge -->
-        <div class="mouse_box flex justify-center flex-col items-center ">
+        <div class="mouse_box flex justify-center flex-col items-center relative z-10">
             <img :src="mouse" alt="mouse icon" class="w-[24px] mb-[12px] lg:mb-[16px] ">
             <p class="font-manrope text-[14px] text-center"
                 :class="theme === 'dark' ? 'text-[#94A3B8]' : 'text-text-primary'">Work Without Limits</p>
@@ -127,6 +128,42 @@ async function handleSubmit(value: string) {
 </template>
 
 <style scoped>
+.hero-section {
+    background: linear-gradient(180deg, rgba(147, 86, 197, 0.03) 0%, rgba(147, 86, 197, 0.08) 50%, rgba(147, 86, 197, 0.12) 100%);
+}
+
+.hero-glow-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 600px;
+    background: radial-gradient(circle at center, rgba(147, 86, 197, 0.25) 0%, rgba(147, 86, 197, 0.15) 30%, rgba(147, 86, 197, 0.05) 60%, transparent 100%);
+    filter: blur(60px);
+    pointer-events: none;
+    animation: pulse-glow 4s ease-in-out infinite;
+    z-index: 1;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 0.6;
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-glow-overlay {
+        width: 500px;
+        height: 400px;
+    }
+}
+
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
 }

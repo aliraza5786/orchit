@@ -76,36 +76,39 @@ defineExpose({ setValue });
             v-model="inputValue"
             rows="4"
             :placeholder="currentPlaceholder"
-            class="w-full px-4 py-3 pr-24 bg-transparent text-[#e0e0e0] text-[14px] md:text-[15px] font-normal placeholder-[#777]
+            class="w-full pl-24 pr-28 py-3 bg-transparent text-[#e0e0e0] text-[14px] md:text-[15px] font-normal placeholder-[#777]
             focus:outline-none transition-all duration-300 resize-none placeholder-transition"
           ></textarea>
 
-          <!-- Buttons Inside Input - Bottom Right -->
-          <div class="absolute bottom-3 right-3 flex items-center gap-2">
-            <!-- Attach Button Icon -->
+          <!-- Buttons Inside Input - Bottom Left and Right -->
+          <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
+            <!-- Attach Button - Left Side -->
             <button
               type="button"
               @click="handleAttach"
-              class="flex items-center justify-center w-9 h-9 rounded-[8px] bg-transparent hover:bg-[#3d3d3d]
-              border border-[#404040] transition-all duration-200 text-[#e0e0e0] group"
+              class="flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[#9356c5] hover:bg-[#6e3b96]
+              transition-all duration-200 text-white group font-medium text-[14px] shadow-md hover:shadow-lg"
               title="Attach file"
             >
               <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
+              <span>Attach</span>
             </button>
 
-            <!-- Submit Button Icon -->
+            <!-- Submit Button - Right Side -->
             <button
               type="submit"
               :disabled="isPending || !inputValue.trim()"
-              class="flex items-center justify-center w-9 h-9 rounded-[8px]
-              bg-[#2563eb] hover:bg-[#1d4ed8] transition-all duration-200
+              class="flex items-center gap-2 px-4 py-2 rounded-[8px]
+              bg-[#9356c5] hover:bg-[#6e3b96] transition-all duration-200
               text-white disabled:opacity-40 disabled:cursor-not-allowed
-              disabled:hover:bg-[#2563eb] group shadow-lg hover:shadow-xl hover:scale-105"
+              disabled:hover:bg-[#9356c5] group shadow-md hover:shadow-lg hover:scale-105 font-medium text-[14px]"
               title="Submit"
             >
+              <span v-if="isPending">Planning...</span>
+              <span v-else>Plan now</span>
               <svg v-if="isPending" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
