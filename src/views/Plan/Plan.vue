@@ -155,7 +155,7 @@
             </div>
             <div
               v-if="isBacklogPenidng"
-              class="w-full h-full min-h-[250px] flex justify-center items-center"
+              class="w-full h-full flex justify-center items-center"
             >
               <div
                 role="status"
