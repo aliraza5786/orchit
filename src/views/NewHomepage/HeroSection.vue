@@ -93,13 +93,12 @@ defineExpose({ setValue })
     <!-- Hero Content -->
     <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
       <div class="max-w-4xl mx-auto text-center">
-        <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
-          <span class="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            What idea do you want to orchestrate?
-          </span>
+        <h1 class="text-5xl md:text-5xl font-bold mb-6 leading-tight">
+          What idea do you want to 
+          <span class="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">orchestrate?</span>
         </h1>
 
-        <p class="text-xl md:text-2xl text-[var(--muted)] mb-12 max-w-3xl mx-auto">
+        <p class="text-xl md:text-1xl text-[var(--muted)] mb-12 max-w-2xl mx-auto">
           Orchit helps you plan, structure, and execute your idea from start to finish. Your next idea — organized and powered by AI.
         </p>
 
