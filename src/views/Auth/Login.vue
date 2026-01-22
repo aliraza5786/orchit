@@ -42,7 +42,7 @@
           >
             {{ submitLabel }}
           </Button>
-          
+            <span class="block text-center text-[12px]">OR</span>
           <Button
             size="lg"
             :block="true"
