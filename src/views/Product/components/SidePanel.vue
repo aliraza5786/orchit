@@ -297,13 +297,14 @@
                     class="bg-bg-surface/40 w-full animate-pulse h-6 p-1"
                   ></div>
                 </template>
+                
                 <template
                   v-else-if="cardDetails?.variables"
                   v-for="(item, index) in cardDetails?.variables"
                   :key="item.slug || `var-${index}`"
                 >
                   <div
-                    v-if="item.type === 'Select' && item.slug !== 'card-type'"
+                    v-if="item.type === 'Select' && item.slug !== 'card-type' && item.slug !=='ok'"
                     class="space-y-2 sm:col-span-1"
                   >
                     <div
@@ -314,9 +315,9 @@
                     <BaseSelectField
                       :disabled="!canEditCard"
                       size="sm"
-                      :options="
-                        item?.data.map((e: any) => ({ _id: e, title: e }))
-                      "
+                      :options="item?.data
+                      .filter((e: any) => e !== 'ok')
+                      .map((e: any) => ({ _id: e, title: e }))"
                       placeholder="Select option"
                       :allowCustom="false"
                       :model-value="localVarValues[item.slug]"
@@ -653,6 +654,7 @@ const {
   gcTime: 10 * 60 * 1000,
   refetchOnWindowFocus: false,
 });
+console.log("card variables", cardDetails.value);
 
 watch(props, () => {
   propsID.value = props.details._id;
@@ -660,6 +662,7 @@ watch(props, () => {
 watch(
   () => cardDetails.value,
   (card) => {
+    console.log("card variables", cardDetails.value);
     if (!card) return;
 
     sidePanelStore.selectedCard = card;
@@ -667,6 +670,8 @@ watch(
     sidePanelStore.selectedCardId = card._id;
   },
   { immediate: true },
+  
+  
 );
 const activeTab = ref<"details" | "comments" | "attachment" | "history">(
   "details",
