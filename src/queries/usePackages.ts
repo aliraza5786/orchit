@@ -30,7 +30,6 @@ export const useUpgradePackage = (options = {}) =>
   );
 export const confirmPayment = (payload: any, options = {}) => {
   const route = useRoute();
-  console.log(payload, route.query.session_id, ">>>>");
   return useApiMutation<any, any>(
     {
       key: ["package-payment-confirm"],

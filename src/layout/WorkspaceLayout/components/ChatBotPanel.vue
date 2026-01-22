@@ -239,12 +239,7 @@ function initSocket() {
     isSocketConnected.value = false;
   });
 socket.value.on("realtime-update", async (data: any) => {
-  console.log("📨 Realtime update received:", data);
-
   if (data.type === "agent-response") {
-    console.log("🤖 Agent response received, fetching chat history...");
-    
-    // Keep the thinking bubble visible until history is fetched
     isAiThinkingBubbleVisible.value = true;
 
     await agentStore.fetchChatHistory(workspaceId.value, true);
@@ -259,10 +254,6 @@ socket.value.on("realtime-update", async (data: any) => {
       }
     });
   }
-});
-
-socket.value.onAny((event, data) => {
-  console.log("📡 SOCKET EVENT:", event, data);
 });
 
 }
