@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
+const activeView = ref<'templates' | 'marketplace'>('templates')
+
 const templates = [
   { icon: '🚀', name: 'Product Launch', description: 'Complete go-to-market strategy and execution plan' },
   { icon: '💼', name: 'Sales CRM', description: 'Lead tracking, pipeline management, and forecasting' },
@@ -28,57 +32,93 @@ const modules = [
   <section id="templates" class="py-20 px-4 sm:px-6 lg:px-8 bg-[var(--surface)]">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <div class="text-center mb-16">
+      <div class="text-center mb-12">
         <h2 class="text-4xl md:text-5xl font-bold mb-4">
           Start from proven playbooks and discover ready-made modules
         </h2>
-        <p class="text-xl text-[var(--muted)] max-w-3xl mx-auto">
+        <p class="text-xl text-[var(--muted)] max-w-3xl mx-auto mb-8">
           Browse a variety of templates and modules built for all types of businesses and needs. Ready to clone, customize, and start executing.
         </p>
+
+        <!-- Segmented Button Group -->
+        <div class="flex justify-center">
+          <div class="inline-flex bg-[var(--card)] border border-[var(--border)] rounded-xl p-1 shadow-sm">
+            <button
+              @click="activeView = 'templates'"
+              :class="[
+                'px-8 py-3 rounded-lg font-medium text-sm transition-all duration-300',
+                activeView === 'templates'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)]'
+              ]"
+            >
+              Templates
+            </button>
+            <button
+              @click="activeView = 'marketplace'"
+              :class="[
+                'px-8 py-3 rounded-lg font-medium text-sm transition-all duration-300',
+                activeView === 'marketplace'
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)]'
+              ]"
+            >
+              Marketplace
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Templates Grid -->
-      <div class="mb-16">
-        <h3 class="text-2xl font-semibold mb-8">Templates</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          <div
-            v-for="template in templates"
-            :key="template.name"
-            class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:border-purple-500 transition-all duration-300 hover:shadow-lg group cursor-pointer"
-          >
-            <div class="text-3xl mb-4">{{ template.icon }}</div>
-            <h4 class="font-semibold mb-2 group-hover:text-purple-600 transition-colors">{{ template.name }}</h4>
-            <p class="text-sm text-[var(--muted)] mb-4">{{ template.description }}</p>
-            <button class="text-sm text-purple-600 font-medium hover:text-purple-700 flex items-center gap-1">
-              Use Template
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Marketplace Modules -->
-      <div id="marketplace">
-        <h3 class="text-2xl font-semibold mb-8">Marketplace Modules</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div
-            v-for="module in modules"
-            :key="module.name"
-            class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 hover:border-purple-500 transition-all duration-300 hover:shadow-lg group cursor-pointer"
-          >
-            <div class="w-12 h-12 bg-purple-600/10 rounded-lg flex items-center justify-center text-2xl mb-4">
-              {{ module.icon }}
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 translate-y-4"
+        enter-to-class="opacity-100 translate-y-0"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0"
+        leave-to-class="opacity-0 translate-y-4"
+        mode="out-in"
+      >
+        <div v-if="activeView === 'templates'" key="templates">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div
+              v-for="template in templates"
+              :key="template.name"
+              class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:border-purple-500 transition-all duration-300 hover:shadow-lg group cursor-pointer"
+            >
+              <div class="text-3xl mb-4">{{ template.icon }}</div>
+              <h4 class="font-semibold mb-2 group-hover:text-purple-600 transition-colors">{{ template.name }}</h4>
+              <p class="text-sm text-[var(--muted)] mb-4">{{ template.description }}</p>
+              <button class="text-sm text-purple-600 font-medium hover:text-purple-700 flex items-center gap-1">
+                Use Template
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
-            <h4 class="font-semibold mb-2 text-lg group-hover:text-purple-600 transition-colors">{{ module.name }}</h4>
-            <p class="text-sm text-[var(--muted)] mb-6">{{ module.description }}</p>
-            <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm w-full">
-              Add to workspace
-            </button>
           </div>
         </div>
-      </div>
+
+        <!-- Marketplace Modules -->
+        <div v-else-if="activeView === 'marketplace'" key="marketplace" id="marketplace">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div
+              v-for="module in modules"
+              :key="module.name"
+              class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-8 hover:border-purple-500 transition-all duration-300 hover:shadow-lg group cursor-pointer"
+            >
+              <div class="w-12 h-12 bg-purple-600/10 rounded-lg flex items-center justify-center text-2xl mb-4">
+                {{ module.icon }}
+              </div>
+              <h4 class="font-semibold mb-2 text-lg group-hover:text-purple-600 transition-colors">{{ module.name }}</h4>
+              <p class="text-sm text-[var(--muted)] mb-6">{{ module.description }}</p>
+              <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm w-full">
+                Add to workspace
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
     </div>
   </section>
 </template>
