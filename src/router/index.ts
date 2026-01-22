@@ -52,6 +52,8 @@ const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 const KnowledgeCenterView = () =>
   import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
 const SettingsView = () => import("../views/Settings/SettingsView.vue");
+const OrchitLandingPage = () =>
+  import("../views/OrchitLanding/OrchitLandingPage.vue");
 
 const routes: RouteRecordRaw[] = [
   {
@@ -128,6 +130,12 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: false },
       },
     ],
+  },
+  {
+    path: "/orchit-landing",
+    name: "orchit-landing",
+    component: OrchitLandingPage,
+    meta: { requiresAuth: false },
   },
   {
     path: "/login",
