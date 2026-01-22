@@ -231,7 +231,17 @@ const routes: RouteRecordRaw[] = [
       { path: "more/:id", name: "more", component: More },
       { path: "more/detail/:id/:module_id", name: "moreDetail", component: ModuleDetail },
       // { path: "custom-process/:id", name: "process2", component: Process2 },
-      { path: ":id/:module_id", name: "product", component: Product },
+      {
+      path: ":id/:module_id",
+      component: Product,
+      children: [
+        {
+          path: "task/:card_id",
+          name: "productTask",
+          component: Product 
+        }
+      ]
+    }
     ],
   },
 

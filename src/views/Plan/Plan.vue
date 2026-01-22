@@ -431,7 +431,7 @@
                   <!-- Start Sprint Button -->
                   <div  v-else>
                     <Button
-                    v-if="sprintDetailData.status !=='completed'"
+                    v-if="sprintDetailData?.status !=='completed'"
                     size="sm"
                     :variant="isDark ? 'primary' : 'primary'"
                     class="border-border-input border"
@@ -439,7 +439,7 @@
                     :disabled="
                       !firstSprint ||
                       firstSprint.tickets.length === 0 ||
-                      sprintDetailData.status === 'completed'
+                      sprintDetailData?.status === 'completed'
                     "
                     :style="{ backgroundColor: selectedType.dot }"
                   >
@@ -483,7 +483,7 @@
                     :disabled="
                       !firstSprint ||
                       firstSprint.tickets.length === 0 ||
-                      sprintDetailData.status === 'completed'
+                      sprintDetailData?.status === 'completed'
                     "
                     class="w-7 h-7 flex items-center justify-center rounded-full text-white bg-accent disabled:opacity-50 disabled:cursor-not-allowed lg:hidden"
                     title="Start Sprint"

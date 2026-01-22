@@ -20,8 +20,8 @@
 
       <!-- Kanban Board (Columns) --> 
       <!-- General Process Static Column -->
-      <div v-if="!isPending" class="rounded-lg bg-bg-body h-full min-w-[270px] sm:min-w-[320px] max-w-[270px] sm:max-w-[320px] flex flex-col border-border/50 border">
-         <!-- Header -->
+      <!-- <div v-if="!isPending" class="rounded-lg bg-bg-body h-full min-w-[270px] sm:min-w-[320px] max-w-[270px] sm:max-w-[320px] flex flex-col border-border/50 border">
+          
          <div class="flex items-center justify-between w-full p-4 border-b border-border">
             <div class="flex items-center gap-2 flex-auto max-w-4/5">
               <span class="font-semibold overflow-ellipsis line-clamp-1 text-nowrap text-foreground px-1 py-0.5">
@@ -33,7 +33,7 @@
             </div>
          </div>
 
-         <!-- Static Card Area -->
+          
          <div class="flex-1 p-4 space-y-3 overflow-y-auto">
              <div 
                @click="handleGeneralOpenBuilder()"
@@ -57,7 +57,7 @@
                </div>
              </div>
          </div>
-      </div>
+      </div> -->
 
       <!-- Kanban Board (Columns) --> 
       <ProcessKanbanBoard 
@@ -380,9 +380,9 @@ const handleTransitionCreated = () => {
     queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
 }
 
-function handleGeneralOpenBuilder() {
-    showGeneralWorkflowBuilder.value = true;
-}
+// function handleGeneralOpenBuilder() {
+//     showGeneralWorkflowBuilder.value = true;
+// }
 
 const showGeneralWorkflowBuilder = ref(false);
 </script>

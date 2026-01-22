@@ -130,7 +130,7 @@ import { ref, watch, computed } from "vue";
 import SideItem from "./SideItem.vue";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { usePermissions } from "../../../composables/usePermissions";
-// import WorkSpaceDropdown  from "./workSpaceDropdown.vue";
+import SidebarSkeleton from "../../../components/skeletons/SidebarSkeleton.vue";
 
 const {
   workspaceId
