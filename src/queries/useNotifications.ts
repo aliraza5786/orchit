@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import api from "../libs/api";
 import { socket } from "../libs/socket";
-import { onMounted, onUnmounted } from "vue";
+import { onUnmounted } from "vue";
 
 
 // -----------------------------
@@ -81,11 +81,6 @@ export const markAllNotificationsRead = async () => {
   return data.data;
 };
 
-// -----------------------------
-// MAIN COMPOSABLE
-// -----------------------------
-let listenersRegistered = false;
-
 export const useNotificationsQuery = (options = {}) => {
   const queryClient = useQueryClient();
 
@@ -103,36 +98,9 @@ export const useNotificationsQuery = (options = {}) => {
     ...options,
   });
 
-  // -----------------------------
-  // SOCKET EVENT LISTENERS
-  // -----------------------------
-  onMounted(() => {
-    if (!listenersRegistered) {
-      //  When a new notification arrives
-      socket.on("new_notification", (notification) => {
-        console.log(" New notification received:", notification);
-        // Update cache immediately (optimistic UI)
-        queryClient.setQueryData(["notifications", "list"], (oldData: any = []) => {
-          return [notification, ...oldData];
-        });
-        queryClient.invalidateQueries({ queryKey: ["notifications", "unreadCount"] });
-      });
-
-      //  When unread count changes
-      socket.on("unread_count_update", (data) => {
-        console.log("📩 Unread count updated:", data);
-        const newCount = typeof data === 'object' && data !== null ? data.count : data;
-        queryClient.setQueryData(["notifications", "unreadCount"], newCount);
-      });
-
-      listenersRegistered = true;
-    }
-  });
-
   onUnmounted(() => {
     socket.off("new_notification");
     socket.off("unread_count_update");
-    listenersRegistered = false;
   });
 
   // -----------------------------
