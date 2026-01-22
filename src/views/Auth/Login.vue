@@ -42,7 +42,11 @@
           >
             {{ submitLabel }}
           </Button>
-            <span class="block text-center text-[12px]">OR</span>
+          <div class="flex items-center">
+            <div class="flex-grow border-t border-border"></div>
+            <span class="mx-3 text-[12px] text-primary">OR</span>
+            <div class="flex-grow border-t border-border"></div>
+          </div>
           <Button
             size="lg"
             :block="true"

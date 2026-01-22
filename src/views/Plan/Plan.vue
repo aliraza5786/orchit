@@ -15,19 +15,19 @@
       <template v-if="isStartingSprint">
         <KanbanSkeleton />
       </template>
-      <div class="h-screen w-full flex flex-col overflow-y-hidden">
+      <div class="h-screen w-full flex flex-col">
   <div class="overflow-x-auto w-full flex-1">
     <div class="min-w-[1200px] h-full flex flex-col">
   <div
         v-if="!isStartingSprint"
-        class="p-4 w-full min-w-0 flex flex-col min-h-0 overflow-x-auto"
+        class="p-4 w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
       >
         <div
           ref="containerRef"
-          class="flex gap-2 flex-1 min-h-0 overflow-x-auto group"
+          class="flex gap-2 min-h-0 overflow-x-auto group h-full"
         >
           <section
-            class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card"
+            class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full"
             :style="{ width: leftWidth + 'px' }"
           >
             <div class="flex items-center justify-between mt-2">
@@ -207,8 +207,8 @@
 
 
           <section
-            class="rounded-md relative pt-2 flex flex-col flex-1 bg-bg-card "
-          >
+  class="rounded-md relative pt-2 flex flex-col flex-1 bg-bg-card min-h-0"
+>
             <div
               class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
             >
@@ -570,7 +570,6 @@
                           <li
                             v-for="sprint in filteredSprints"
                             :key="sprint._id"
-                            @click="handleSearchSelect(sprint)"
                             class="px-4 py-2 cursor-pointer hover:bg-bg-hover text-text-primary border-b border-border-input"
                           >
                             <div class="flex items-center justify-between">
@@ -1073,10 +1072,10 @@ function getPriorityClass(priority?: string): string {
 
   return priorityClasses[key] ?? "bg-gray-500/20 text-gray-500";
 }
-function handleSearchSelect(card: any) {
-  selectedSearchCard.value = card;
-  showSearchModal.value = false;
-}
+// function handleSearchSelect(card: any) {
+//   selectedSearchCard.value = card;
+//   showSearchModal.value = false;
+// }
 
 // Convert API sprint to store Sprint format with cards
 const firstSprint = computed(() => {
