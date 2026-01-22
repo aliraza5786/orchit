@@ -69,17 +69,17 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useNotificationsQuery } from "../../../queries/useNotifications";
 import { useTheme } from "../../../composables/useTheme";
-import router from "../../../router"; 
+import router from "../../../router";
 import { toast } from "vue-sonner";
+
 const { isDark } = useTheme();
 
 const isOpen = ref(false);
 const toggleDropdown = () => (isOpen.value = !isOpen.value);
 
-// handle close dropdown when click outside
 const dropdownRef = ref<HTMLElement | null>(null);
 function handleClickOutside(event: MouseEvent) {
   if (
@@ -90,30 +90,29 @@ function handleClickOutside(event: MouseEvent) {
     isOpen.value = false;
   }
 }
+
 onMounted(() => {
   document.addEventListener("click", handleClickOutside);
 });
-
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
 });
 
-// notifications logic
-const { notificationsQuery, unreadCountQuery, markReadMutation, markAllReadMutation } =
-  useNotificationsQuery();
+const {
+  notificationsQuery,
+  unreadCountQuery,
+  markReadMutation,
+  markAllReadMutation,
+} = useNotificationsQuery();
 
 const notifications = computed(() => notificationsQuery.data?.value || []);
 const count = computed(() => unreadCountQuery.data?.value || 0);
-
-// Watch for unread count changes and show toast
-import { watch } from "vue";
 watch(count, (newVal, oldVal) => {
   if (newVal > oldVal) {
-    toast.info('New notification received');
+    toast.info("New notification received");
   }
 });
 
-// Utility helpers
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
   if (parts.length === 0) return "UN";
@@ -121,10 +120,19 @@ function initials(name: string) {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-const colors = ["bg-blue-500", "bg-green-500", "bg-red-500", "bg-yellow-500", "bg-purple-500", "bg-pink-500", "bg-indigo-500"];
+const colors = [
+  "bg-blue-500",
+  "bg-green-500",
+  "bg-red-500",
+  "bg-yellow-500",
+  "bg-purple-500",
+  "bg-pink-500",
+  "bg-indigo-500",
+];
 function avatarColorClass(name: string) {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < name.length; i++)
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
 }
 
@@ -142,11 +150,17 @@ function timeAgo(iso?: string) {
 const groupedNotifications = computed(() => {
   if (!notifications.value.length) return {};
   const now = new Date();
-  const groups: Record<string, any[]> = { Today: [], Yesterday: [], Older: [] };
+  const groups: Record<string, any[]> = {
+    Today: [],
+    Yesterday: [],
+    Older: [],
+  };
 
   notifications.value.forEach((n: any) => {
     const d = new Date(n.created_at || Date.now());
-    const diffDays = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+    const diffDays = Math.floor(
+      (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24)
+    );
     if (diffDays === 0) groups.Today.push(n);
     else if (diffDays === 1) groups.Yesterday.push(n);
     else groups.Older.push(n);
@@ -155,24 +169,37 @@ const groupedNotifications = computed(() => {
   Object.keys(groups).forEach((k) => !groups[k].length && delete groups[k]);
   return groups;
 });
-console.log("notification data", groupedNotifications.value);
 
-
-// Logic
 function openNotification(notification: any) {
   if (!notification.read) {
     notification.read = true;
     markReadMutation.mutate([notification.id]);
   }
-  console.log("Open notification:", notification);
-  if (notification.url) {
-    router.push(notification.url)
+  if (notification.action_url) {
+    router.push(notification.action_url);
+    return;
   }
+const ws = notification?.workspace_id ?? notification?.data?.workspace_id;
+const moduleId = notification?.module_id ?? notification?.data?.module_id;
+  
+  if (ws && moduleId) {
+    router.push({
+  name: "productTask",
+  params: {
+    id: ws,
+    module_id: moduleId,
+    card_id: notification?.metaData?.card_id || notification?.metaData?.task_id
+  }
+});
+    return;
+  }
+  router.push("/dashboard");
 }
 
-const markAllRead = () => markAllReadMutation.mutate();
 
+const markAllRead = () => markAllReadMutation.mutate();
 </script>
+
 
 <style scoped>
 ::-webkit-scrollbar {
