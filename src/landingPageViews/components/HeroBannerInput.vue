@@ -11,7 +11,6 @@ defineProps<{
 
 const workspaceStore = useWorkspaceStore();
 const inputValue = ref("");
-const showThemeDropdown = ref(false);
 
 function setValue(val: string) {
   inputValue.value = val;
@@ -38,118 +37,82 @@ function handleAttach() {
   toast.info("Attachment feature coming soon!");
 }
 
-function handleAudio() {
-  toast.info("Voice input coming soon!");
-}
-
 defineExpose({ setValue });
 </script>
 
 <template>
-  <form @submit.prevent="handleSubmit" class="w-full relative max-w-[700px] lg:max-w-[896px] mx-auto pb-[40px]">
-    <div class="loveable-prompt-box bg-[#2d2d2d] rounded-[16px] p-[8px] shadow-[0px_8px_32px_0px_rgba(0,0,0,0.4)] border border-[#404040]">
-      <div class="flex items-center gap-2">
-        <!-- Left Actions -->
-        <div class="flex items-center gap-2">
-          <!-- Plus Button -->
-          <button
-            type="button"
-            class="flex items-center justify-center w-[36px] h-[36px] rounded-lg bg-transparent hover:bg-[#3d3d3d] transition-colors duration-200 text-[#999]"
-            title="New conversation"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
+  <div class="w-full max-w-[700px] lg:max-w-[896px] mx-auto pb-[40px]">
+    <h3 class="text-[#e0e0e0] text-[16px] md:text-[18px] font-medium mb-[12px] text-left">
+      Ask Orchit to create a plan for…
+    </h3>
 
-          <!-- Attach Button -->
-          <button
-            type="button"
-            @click="handleAttach"
-            class="flex items-center gap-2 px-3 h-[36px] rounded-lg bg-transparent hover:bg-[#3d3d3d] transition-colors duration-200 text-[#e0e0e0] text-sm font-medium"
-            title="Attach file"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-            </svg>
-            <span class="hidden sm:inline">Attach</span>
-          </button>
+    <form @submit.prevent="handleSubmit" class="w-full">
+      <div class="orchit-prompt-box bg-[#2d2d2d] rounded-[16px] p-[12px] shadow-[0px_8px_32px_0px_rgba(0,0,0,0.4)] border border-[#404040]">
+        <div class="flex flex-col gap-3">
+          <!-- Input Field -->
+          <textarea
+            v-model="inputValue"
+            rows="4"
+            placeholder="Describe your project idea in detail..."
+            class="w-full px-4 py-3 bg-[#1a1a1a] text-[#e0e0e0] text-[14px] md:text-[15px] font-normal placeholder-[#777]
+            rounded-[12px] border border-[#404040] focus:outline-none focus:border-[#2563eb]
+            transition-colors duration-200 resize-none"
+          ></textarea>
 
-          <!-- Theme Dropdown -->
-          <div class="relative">
+          <!-- Buttons Row -->
+          <div class="flex items-center justify-between gap-3">
+            <!-- Attach Button -->
             <button
               type="button"
-              @click="showThemeDropdown = !showThemeDropdown"
-              class="flex items-center gap-2 px-3 h-[36px] rounded-lg bg-transparent hover:bg-[#3d3d3d] transition-colors duration-200 text-[#e0e0e0] text-sm font-medium"
-              title="Theme settings"
+              @click="handleAttach"
+              class="flex items-center gap-2 px-4 py-2.5 rounded-[10px] bg-transparent hover:bg-[#3d3d3d]
+              border border-[#404040] transition-colors duration-200 text-[#e0e0e0] text-[14px] font-medium"
+              title="Attach file"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
-              <span class="hidden sm:inline">Theme</span>
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
+              <span>Attach</span>
+            </button>
+
+            <!-- Orchestrate Button -->
+            <button
+              type="submit"
+              :disabled="isPending || !inputValue.trim()"
+              class="flex items-center justify-center gap-2 px-6 py-2.5 rounded-[10px]
+              bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors duration-200
+              text-white text-[14px] font-semibold disabled:opacity-60 disabled:cursor-not-allowed
+              disabled:hover:bg-[#2563eb] min-w-[140px]"
+              title="Start orchestrating"
+            >
+              <span v-if="isPending">
+                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              <span>{{ isPending ? "Orchestrating..." : "Orchestrate" }}</span>
             </button>
           </div>
         </div>
-
-        <!-- Center Input -->
-        <div class="flex-1 min-w-0">
-          <input
-            v-model="inputValue"
-            type="text"
-            placeholder="Ask Orchit to create a plan for…"
-            class="w-full px-3 py-2 bg-transparent text-[#e0e0e0] text-sm font-normal placeholder-[#777] focus:outline-none"
-          />
-        </div>
-
-        <!-- Right Actions -->
-        <div class="flex items-center gap-2">
-          <!-- Chat Button -->
-          <button
-            type="submit"
-            :disabled="isPending"
-            class="flex items-center gap-2 px-4 h-[36px] rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] transition-colors duration-200 text-white text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-            title="Start chat"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <span>{{ isPending ? "Generating..." : "Chat" }}</span>
-          </button>
-
-          <!-- Audio Button -->
-          <button
-            type="button"
-            @click="handleAudio"
-            class="flex items-center justify-center w-[36px] h-[36px] rounded-lg bg-transparent hover:bg-[#3d3d3d] transition-colors duration-200 text-[#e0e0e0]"
-            title="Voice input"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-            </svg>
-          </button>
-
-          <!-- Up Arrow Button -->
-          <button
-            type="submit"
-            :disabled="isPending || !inputValue.trim()"
-            class="flex items-center justify-center w-[36px] h-[36px] rounded-lg bg-[#3d3d3d] hover:bg-[#4d4d4d] transition-colors duration-200 text-[#e0e0e0] disabled:opacity-40 disabled:cursor-not-allowed"
-            title="Send message"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-            </svg>
-          </button>
-        </div>
       </div>
-    </div>
-  </form>
+    </form>
+  </div>
 </template>
 
 <style scoped>
-.loveable-prompt-box {
+.orchit-prompt-box {
   backdrop-filter: blur(10px);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 </style>
