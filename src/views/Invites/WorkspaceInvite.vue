@@ -220,7 +220,7 @@ async function decline() {
 
 /** ---- navigation helpers ---- */
 function goHome() {
-  router.push({ name: 'home' }).catch(() => { }) // adjust route name
+  router.push('/')
 }
 
 function goToLogin() {

@@ -248,6 +248,15 @@ const { mutate: addList, isPending: addingList } = useCreateTeam({
     activeAddList.value = false;
   },
 });
+watch(
+  () => peopleList.value,
+  (newVal) => {
+    if (newVal) {
+      localList.value = JSON.parse(JSON.stringify(newVal));
+    }
+  },
+  { immediate: true }
+);
 
 const controller = new AbortController();
 const fetchPeople = async()=>{
@@ -334,30 +343,74 @@ const handleDelete = (e: any) => {
   localColumn.value = e;
 };
 const { mutate: createTeam, isPending } = useCreateTeamMember({
-  onSuccess: (data: any) => {
-    newColumn.value = "";
-    activeAddList.value = false;
-    const idx = localList.value.findIndex(
-      (e: any) => e._id === localColumn.value._id
-    );
+  onMutate: async (variables: any) => {
+    await queryClient.cancelQueries({ queryKey: ["people-lists"] });
 
-    if (idx === -1) return;
+    const previous = queryClient.getQueryData(["people-lists"]);
+
+    const { id, payload } = variables ?? {};
+    if (!id || !payload) return { previous };
+
+    const idx = localList.value.findIndex((e: any) => e._id === id);
+    if (idx === -1) return { previous };
 
     const col = localList.value[idx];
+    const optimisticSeat = {
+      _id: `temp-${Date.now()}`,
+      name: payload.name,
+      email: payload.email,
+      role_id: payload.role_id,
+    };
 
-    const nextCards = [...(col.cards ?? []), data?.assigned_seat];
+    const nextCards = [...(col.cards ?? []), optimisticSeat];
     const nextCol = { ...col, cards: nextCards };
 
-    // replace column (new identity) and array (new identity)
     localList.value = [
       ...localList.value.slice(0, idx),
       nextCol,
       ...localList.value.slice(idx + 1),
     ];
-    queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+
+    queryClient.setQueryData(["people-lists"], localList.value);
+
+    return { previous };
+  },
+
+  onError: (_err:any, _variables:any, context: any) => {
+    if (context?.previous) {
+      localList.value = context.previous;
+      queryClient.setQueryData(["people-lists"], context.previous);
+    }
+    toast.error("Failed to add seat. Please try again.");
+  },
+
+  onSuccess: (data: any, variables: any) => {
+    const { id } = variables;
+    const idx = localList.value.findIndex((e: any) => e._id === id);
+    if (idx === -1) return;
+
+    const col = localList.value[idx];
+
+    const filteredCards = (col.cards ?? []).filter(
+      (c: any) => !String(c._id).startsWith("temp-")
+    );
+
+    const nextCards = [...filteredCards, data.assigned_seat];
+    const nextCol = { ...col, cards: nextCards };
+
+    localList.value = [
+      ...localList.value.slice(0, idx),
+      nextCol,
+      ...localList.value.slice(idx + 1),
+    ];
+
+    queryClient.setQueryData(["people-lists"], localList.value);
+
+    // Optional: keep workspace roles fresh
     queryClient.invalidateQueries({ queryKey: ["workspaceRoles"] });
   },
 });
+
 const handlePLus = (column: any) => {
   localColumn.value = column;
   const payload = {
@@ -444,7 +497,7 @@ const fuse = computed(() => {
 });
 
 const filteredBoard = computed(() => {
-  if (!searchQuery.value) return peopleList.value;
+  if (!searchQuery.value) return localList.value;
   const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
   return localList.value
     .map((col: any) => ({

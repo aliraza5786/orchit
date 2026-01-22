@@ -142,13 +142,6 @@
                         </button>
                     </form>
 
-                    <!-- Toast Notification -->
-                    <transition name="fade">
-                        <div v-if="toastMessage" :class="toastType === 'success' ? 'bg-green-600' : 'bg-red-600'"
-                            class="absolute bottom-4 right-4 px-4 py-2 rounded-md text-white text-sm shadow-lg">
-                            {{ toastMessage }}
-                        </div>
-                    </transition>
                     <p class="text-[12px] font-manrope leading-[16px] font-normal text-text-primary text-center">You can
                         also email us at  <a class="font-semibold" href="mailto:sales@company.com">sales@orchit.ai</a>
                     </p>
@@ -163,6 +156,8 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useTheme } from "../composables/useTheme";
+import { api, toApiMessage } from "../libs/api";
+import { toast } from 'vue-sonner';
 const { isDark } = useTheme(); // light / dark / system
 
 interface ContactForm {
@@ -186,8 +181,6 @@ const form = ref<ContactForm>({
 })
 const errors = ref<FormErrors>({})
 const loading = ref(false)
-const toastMessage = ref('')
-const toastType = ref<'success' | 'error'>('success')
 
 // Validation
 function validateForm(): boolean {
@@ -209,44 +202,19 @@ async function handleSubmit() {
     if (!validateForm()) return
 
     loading.value = true
-    toastMessage.value = ''
     try {
-        // Example API 
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form.value),
-        })
-
-        if (!response.ok) throw new Error('Failed to send message')
-
-        // Simulate a short delay
-        await new Promise((r) => setTimeout(r, 1000))
-
-        toastType.value = 'success'
-        toastMessage.value = '✅ Your message was sent successfully!'
+        await api.post('/common/contact-us', form.value)
+        toast.success('Your message sent successfully!')
         form.value = { fullName: '', email: '', companySize: '', message: '' }
     } catch (error) {
-        toastType.value = 'error'
-        toastMessage.value = '❌ Failed to send message. Try again later.'
+        toast.error(toApiMessage(error))
     } finally {
         loading.value = false
-        setTimeout(() => (toastMessage.value = ''), 4000)
     }
 }
 </script>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-    transition: opacity 0.4s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-    opacity: 0;
-}
-
 .bg-gradinet {
     background: linear-gradient(142.27deg, #4E3C9E 11.4%, #B5A1F7 84.44%);
 }

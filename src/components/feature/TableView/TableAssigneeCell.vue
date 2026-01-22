@@ -79,7 +79,7 @@
         @keydown.esc="cancelEditing"
         @input="isOpen = true"
         class="absolute left-0 top-1/2 h-8 -translate-y-1/2 min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body z-50 text-[12px]"
-        placeholder="Add people by name or email"
+        placeholder="Search people by name"
       />
 
       <!-- Dropdown -->

@@ -3,29 +3,29 @@
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full border border-border flex flex-col overflow-x-auto overflow-y-auto scrollbar-visible pb-4"
   >
     <div
-      class="header px-4 py-3 flex items-center justify-between gap-1 w-[100%]"
+      class="header lg:px-4 px-2 py-5 flex justify-between items-center gap-1 overflow-auto"
     >
-      <div class="flex gap-4">
+      <div class="flex lg:gap-4 gap-2 py-1">
        <div class="hidden sm:flex">
-  <Button
-    class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center gap-1 px-2 py-1 rounded-md text-xs font-medium"
+  <button
+    class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center gap-1 px-2 rounded-md text-xs font-medium"
     @click="$emit('go-back')"
   >
-    <i class="fa-solid fa-chevron-left text-xs"></i>
+    <i class="fa-solid fa-chevron-left"></i>
     Go Back
-  </Button>
+  </button>
 </div>
 
 <div class="flex sm:hidden">
-  <Button
-    class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center px-2 py-1 rounded-md text-xs font-medium"
+  <button
+    class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover px-2 text-white items-center justify-center py-1 rounded-md font-medium"
     @click="$emit('go-back')"
   >
-    <i class="fa-solid fa-chevron-left text-xs"></i>
-  </Button>
+    <i class="fa-solid fa-chevron-left"></i>
+  </button>
 </div>
         <div
-    class="px-4 py-1 h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
+    class="px-2 py-1 h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
   >
     {{ activeSprint }}
   </div>
@@ -85,29 +85,53 @@
             <i class="fa-regular fa-calendar"></i>
           </button>
           <button
-            @click="view = 'gantt'"
-            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-            :class="
-              view === 'gantt'
-                ? 'text-accent bg-accent-text'
-                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-            "
-            title="Gantt Chart view"
-          >
-            <i class="fa-solid fa-chart-gantt"></i>
-          </button>
-          <button
-            @click="view = 'timeline'"
-            class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-            :class="
-              view === 'timeline'
-                ? 'text-accent bg-accent-text'
-                : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-            "
-            title="Timeline view"
-          >
-            <i class="fa-solid fa-timeline"></i>
-          </button>
+              @click="view = 'gantt'"
+              class="aspect-square cursor-pointer rounded-sm p-0"
+              :class="
+                view === 'gantt'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
+              title="Gantt Chart view"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+              </svg>
+            </button>
+            <button
+                @click="view = 'timeline'"
+                class="aspect-square cursor-pointer rounded-sm p-0"
+                :class="
+                  view === 'timeline'
+                    ? 'text-accent bg-accent-text'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                "
+                title="Timeline view"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  class="h-6 w-6"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
+                    opacity="0"
+                  />
+                  <path
+                    d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
         </div>
       </div>
     </div>

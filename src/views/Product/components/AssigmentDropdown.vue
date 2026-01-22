@@ -34,7 +34,7 @@
       <div v-if="open" ref="menuRef" class="z-[9999] w-60 rounded-md border border-border bg-bg-dropdown shadow-xl"
         :style="menuStyle" @click.stop>
         <div class="p-3">
-          <input ref="searchRef" v-model="query" type="text" placeholder="Add people by name or email"
+          <input ref="searchRef" v-model="query" type="text" placeholder="Search people by name or email"
             class="w-full rounded-md border border-border h-[30px] bg-bg-input px-3 outline-none text-xs" />
         </div>
 
@@ -187,7 +187,7 @@ const membersData = computed(() => {
 
   // No user assigned
   return [
-    { _id: null, name: 'Unassign', email: '' },
+    // { _id: null, name: 'Unassign', email: '' },
     ...list
   ]
 })
