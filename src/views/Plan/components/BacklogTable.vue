@@ -93,7 +93,7 @@
                   v-else-if="ticket?.assignee?.u_profile_image"
                   class="w-6 h-6 rounded-full"
                 >
-                  <img :src="ticket.assignee.u_profile_image" alt="" />
+                  <img :src="ticket.assignee.u_profile_image" alt="" class="rounded-full"/>
                 </div>
 
                 <span
