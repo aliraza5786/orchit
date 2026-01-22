@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, defineExpose, defineProps, onMounted, onUnmounted } from "vue";
+import { ref, defineExpose, defineProps, onMounted, onUnmounted, nextTick } from "vue";
 import { useWorkspaceStore } from '../../stores/workspace';
 import { useRouter } from 'vue-router';
 import { useCreateWorkspaceWithAI } from '../../queries/useWorkspace';
@@ -11,6 +11,7 @@ defineProps<{
 
 const workspaceStore = useWorkspaceStore();
 const inputValue = ref("");
+const textareaRef = ref<HTMLTextAreaElement | null>(null);
 
 const placeholders = [
   "Ask Orchit to plan ecommerce solution...",
@@ -40,6 +41,21 @@ onUnmounted(() => {
 
 function setValue(val: string) {
   inputValue.value = val;
+  nextTick(() => {
+    adjustTextareaHeight();
+  });
+}
+
+function adjustTextareaHeight() {
+  if (textareaRef.value) {
+    textareaRef.value.style.height = 'auto';
+    const newHeight = Math.min(textareaRef.value.scrollHeight, 560);
+    textareaRef.value.style.height = `${newHeight}px`;
+  }
+}
+
+function handleInput() {
+  adjustTextareaHeight();
 }
 
 const router = useRouter()
@@ -73,11 +89,12 @@ defineExpose({ setValue });
         <!-- Input Field with buttons inside -->
         <div class="relative">
           <textarea
+            ref="textareaRef"
             v-model="inputValue"
-            rows="4"
+            @input="handleInput"
             :placeholder="currentPlaceholder"
             class="w-full pl-24 pr-28 py-3 bg-transparent text-[#e0e0e0] text-[14px] md:text-[15px] font-normal placeholder-[#777]
-            focus:outline-none transition-all duration-300 resize-none placeholder-transition"
+            focus:outline-none transition-all duration-300 resize-none placeholder-transition text-right min-h-[80px] max-h-[560px]"
           ></textarea>
 
           <!-- Buttons Inside Input - Bottom Left and Right -->
@@ -86,8 +103,8 @@ defineExpose({ setValue });
             <button
               type="button"
               @click="handleAttach"
-              class="flex items-center gap-2 px-4 py-2 rounded-[8px] bg-[#9356c5] hover:bg-[#6e3b96]
-              transition-all duration-200 text-white group font-medium text-[14px] shadow-md hover:shadow-lg"
+              class="flex items-center gap-2 px-4 py-2 rounded-[8px] bg-transparent hover:bg-white/10
+              transition-all duration-200 text-white/80 hover:text-white group font-medium text-[14px]"
               title="Attach file"
             >
               <svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
