@@ -16,6 +16,9 @@ export interface Notification {
   url: string;
   created_at: string;
   read: boolean;
+  workspace_id:string,
+  module_id:string,
+  metaData:any
 }
 
 
@@ -42,6 +45,9 @@ export const fetchNotifications = async () => {
       created_at: item.createdAt,
       url: item.action_url || "#",
       read: item.is_read || false,
+      workspace_id:item.workspace_id || null,
+      module_id: item.module_id || null,
+      metaData:item.metadata
     }));
 
     //  If API gives empty array, use dummy fallback

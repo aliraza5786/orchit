@@ -571,6 +571,7 @@ import {
   nextTick,
   triggerRef,
   h,
+  onMounted
 } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { useTheme } from "../../composables/useTheme";
@@ -868,6 +869,31 @@ const {
   selected_view_by, 
   listProcessPayload
 );
+onMounted(() => {
+  openPanelFromRoute();
+});
+
+watch(
+  () => route.params.card_id,
+  () => openPanelFromRoute()
+);
+
+async function openPanelFromRoute() {
+  const cardId = route.params.card_id as string;
+  if (!cardId) return;
+
+  // Save ID for later API usage (unchanged behavior)
+  sidePanelStore.saveLocalId(cardId);
+
+  // Create a minimal card object
+  const card = {
+    _id: cardId,
+    id: cardId
+  };
+
+  // Reuse existing logic
+  selectCardHandler(card);
+}
 
 const selectCardHandler = (card: any) => {
   if (!card._id) card._id = card.id;
