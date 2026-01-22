@@ -204,7 +204,7 @@ async function handleSubmit() {
     loading.value = true
     try {
         await api.post('/common/contact-us', form.value)
-        toast.success('Your message sent successfully!')
+        toast.success('Your message has been sent successfully!')
         form.value = { fullName: '', email: '', companySize: '', message: '' }
     } catch (error) {
         toast.error(toApiMessage(error))

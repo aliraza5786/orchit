@@ -304,7 +304,7 @@
                   :key="item.slug || `var-${index}`"
                 >
                   <div
-                    v-if="item.type === 'Select' && item.slug !== 'card-type' && item.slug !=='ok'"
+                    v-if="item.type === 'Select' && item.slug !== 'card-type' && item.slug !=='ok' && item.slug !=='process'"
                     class="space-y-2 sm:col-span-1"
                   >
                     <div
@@ -316,7 +316,7 @@
                       :disabled="!canEditCard"
                       size="sm"
                       :options="item?.data
-                      .filter((e: any) => e !== 'ok')
+                      .filter((e: any) => e !== 'ok' && e !== 'process')
                       .map((e: any) => ({ _id: e, title: e }))"
                       placeholder="Select option"
                       :allowCustom="false"
