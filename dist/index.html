@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon-BoBKKHkT.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google-site-verification" content="b3jzI-bI0oIHU7GXj97a7qWVHduscWjLWkC17urLtiM"/>
+  
+  <title>orchit ai</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Castoro:ital@0;1&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+  
+  <!-- Syncfusion themes -->
+  <link href="https://cdn.syncfusion.com/ej2/24.1.41/material3.css" rel="stylesheet" id="light-theme" />
+  <link href="https://cdn.syncfusion.com/ej2/24.1.41/material3-dark.css" rel="stylesheet" id="dark-theme" disabled />
+  <script type="module" crossorigin src="/assets/index-DFBiQQO5.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DqdXgc8e.css">
+</head>
+
+<body class="dark-mode">
+  <div id="app"></div>
+</body>
+<script>
+  function applySyncfusionTheme(isDark) {
+    const lightTheme = document.getElementById('light-theme');
+    const darkTheme = document.getElementById('dark-theme');
+
+    if (lightTheme && darkTheme) {
+      lightTheme.disabled = isDark;
+      darkTheme.disabled = !isDark;
+    }
+  }
+
+  function applyTheme() {
+    try {
+      const pref = localStorage.getItem('theme') || 'system';
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const isDark = pref === 'dark' || (pref === 'system' && systemDark);
+
+      document.documentElement.classList.toggle('dark', isDark);
+      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+
+      applySyncfusionTheme(isDark);
+    } catch (e) {}
+  }
+  window.applyTheme = applyTheme;
+
+  applyTheme();
+</script>
+
+<!-- Google and FontAwesome scripts remain the same -->
+<!-- Google and Apple scripts -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script
+  src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"
+  defer
+></script>
+ 
+</html>
