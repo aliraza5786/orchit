@@ -113,7 +113,5 @@ const scrollTo = (id: string) => {
     block: "start",
   });
 };
-function pushToContact(){
-    router.push('/contact-us');
-}
+
 </script>
