@@ -1,5 +1,5 @@
 <template>
-    <section class="w-full px-[15px] py-[40px] md:py-[60px] lg:py-[80px]" id="contactsales">
+    <section class="w-full px-[15px] py-[40px] md:py-[60px] lg:py-[80px]">
         <div class="max-w-[1050px] mx-auto">
             <div class="w-full grid md:grid-cols-[1fr_1.5fr] gap-[30px] lg:gap-[48px]">
                 <!-- Left Info Section -->
