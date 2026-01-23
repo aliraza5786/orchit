@@ -262,6 +262,7 @@
            showTicketDelete = true;
         }"
         @create="handleCreateTicket"
+        @update:rows="handleTableRowsUpdate"
       />
     </template>
     <!-- MindMap View -->
@@ -276,7 +277,7 @@
 
         <!-- Formatting Sidebar -->
         <div
-          v-if="showFormatSidebar"
+          v-if="showFormatSidebar && canAssignCard && canEditCard && canCreateCard"
           class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-x-hidden overflow-y-auto flex flex-col"
         >
           <!-- Header -->
@@ -397,7 +398,7 @@
 
       <!-- hyperlink pop up -->
       <div
-        v-if="showHyperlinkModal"
+        v-if="showHyperlinkModal && canAssignCard && canEditCard && canCreateCard"
         class="fixed inset-0 bg-black/30 flex items-center justify-center"
       >
         <div class="bg-white p-6 rounded-xl w-80">
@@ -706,6 +707,15 @@ function confirm() {
 function cancel() {
   showHyperlinkModal.value = false;
 }
+const localPendingTickets = ref<any[]>([]);
+const localTableOrder = ref<any[]>([]);
+
+const handleTableRowsUpdate = (newRows: any[]) => {
+  // Capture tickets that don't have a server-side _id
+  localPendingTickets.value = newRows.filter(r => !r._id);
+  // Store the full sequence of IDs (server _id or temp id)
+  localTableOrder.value = newRows.map(r => r._id || r.id);
+};
 const selectedProcessMeta = ref<any>(null);
 const handleProcessNestedSelection = (val: any) => {
   selectedProcessMeta.value = val;
@@ -1098,14 +1108,39 @@ const filteredBoard = computed(() => {
       (Lists.value ?? []).forEach((col: any) => {
         array = [...array, ...col?.cards];
       });
-      return array;
+
+      if (localTableOrder.value.length > 0) {
+        // Create a map of all available cards for fast lookup
+        const cardMap = new Map();
+        array.forEach((c: any) => cardMap.set(c._id, c));
+        localPendingTickets.value.forEach((c: any) => cardMap.set(c.id, c));
+
+        // Return cards in the order stored, but only if they still exist
+        const ordered = localTableOrder.value
+          .map(id => cardMap.get(id))
+          .filter(Boolean);
+        
+        // If some cards in the current 'array' or 'localPendingTickets' aren't in 'ordered' 
+        const returnedIds = new Set(ordered.map(c => c._id || c.id));
+        const extras = [
+           ...array.filter((c:any) => !returnedIds.has(c._id)),
+           ...localPendingTickets.value.filter(c => !returnedIds.has(c.id))
+        ];
+
+        return [...ordered, ...extras];
+      }
+
+      return [...array, ...localPendingTickets.value];
     }
 
     const fuseTable = new Fuse(normalizedTableData.value, {
       keys: ["card-title", "card-description"], // include keys you want searchable
       threshold: 0.3,
     });
-    return fuseTable.search(query).map((r) => r.item);
+    const results = fuseTable.search(query).map((r) => r.item);
+    
+    // Merge pending tickets into results if they match the query (or if query is simple)
+    return [...results, ...localPendingTickets.value];
   }
 });
 
@@ -1140,7 +1175,7 @@ const columns = computed(() => {
           h("div", { class: "flex-1 min-w-0" }, [
             h("input", {
               onFocusout: (e: any) => {
-                handleChangeTicket(row?._id, "card-title", e?.target?.value);
+                handleChangeTicket(row, "card-title", e?.target?.value);
               },
               class:
                 "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
@@ -1162,7 +1197,7 @@ const columns = computed(() => {
           tableInputClass: true,
           modelValue: date.value,
           disabled: !canEditCard.value,
-          "onUpdate:modelValue": (e: any) => setStartDate(row?._id, e),
+          "onUpdate:modelValue": (e: any) => setStartDate(row, e),
           emptyText: "Date",
         });
       },
@@ -1176,7 +1211,7 @@ const columns = computed(() => {
           placeholder: "Select lane",
           modelValue: row.lane?._id || null, // Pass ID
           disabled: !canEditCard.value,
-          "onUpdate:modelValue": (e: any) => setLane(row?._id, e),
+          "onUpdate:modelValue": (e: any) => setLane(row, e),
           displayField: "title",
           emptyText: "Lane",
         }),
@@ -1224,7 +1259,7 @@ const columns = computed(() => {
       render: ({ row, value }: any) =>
         h(TableAssigneeCell, {
           class: "capitalize flex items-center gap-2 ",
-          onAssign: (user: any) => assignHandle(row?._id, user),
+          onAssign: (user: any) => assignHandle(row, user),
           assigneeId: value,
           seat: value,
           name: true,
@@ -1256,7 +1291,7 @@ const columns = computed(() => {
               disabled: !canEditCard.value,
               emptyText: e.slug, // Add placeholder
               "onUpdate:modelValue": (val: any) => {
-                handleChangeTicket(row?._id, e.slug, val);
+                handleChangeTicket(row, e.slug, val);
               },
               columnName: e.slug,
             }),
@@ -1266,11 +1301,17 @@ const columns = computed(() => {
       })) ?? []),
   ];
 });
-const assignHandle = (cardId: any, user: any) => {
-  updateOptimisticCard(cardId, (card) => {
-    card.seat = user;
-  });
-  moveCard.mutate({ card_id: cardId, seat_id: user?._id });
+const assignHandle = (row: any, user: any) => {
+  const id = row?._id;
+  if (id) {
+    updateOptimisticCard(id, (card) => {
+      card.seat = user;
+    });
+    moveCard.mutate({ card_id: id, seat_id: user?._id });
+  } else {
+    row.seat = user;
+    checkAndCreateTicket(row);
+  }
 };
 
 const normalizedTableData = computed(() => {
@@ -1452,82 +1493,159 @@ const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
 const { mutate: addTicket } = useAddTicket({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    // Clear pending tickets once created
+    localPendingTickets.value = [];
+    localTableOrder.value = []; // Reset order to let server order take over
   },
 });
-function handleChangeTicket(id: any, key: any, value: any) {
-  const cleanValue = typeof value === "string" ? value.trim() : value;
+function checkAndCreateTicket(row: any) {
+  // Required fields check: Title, Lane, card-status, card-type
+  const title = row["card-title"];
+  const laneId = row.lane?._id || row.workspace_lane_id;
+  
+  // Find card-status and card-type in variables if they're not top-level
+  let status = row["card-status"];
+  let type = row["card-type"];
+  
+  if (Array.isArray(row.variables)) {
+    const sVar = row.variables.find((v: any) => v.slug === "card-status");
+    if (sVar) status = sVar.value;
+    const tVar = row.variables.find((v: any) => v.slug === "card-type");
+    if (tVar) type = tVar.value;
+  } else if (typeof row.variables === 'object' && row.variables !== null) {
+      status = row.variables["card-status"] || status;
+      type = row.variables["card-type"] || type;
+  }
 
-  updateOptimisticCard(id, (card) => {
-    // 1. UPDATE FLAT PROPERTY (The most important part for your Lists API structure)
-    // This ensures card['card-description'] or card['card-status'] is updated directly
-    card[key] = cleanValue;
+  if (title && status && type) {
+    const payloadVariables: Record<string, any> = {};
+    
+    // Initialize all variables with null
+    if (variables.value) {
+      variables.value.forEach((v: any) => {
+        payloadVariables[v.slug] = null;
+      });
+    }
 
-    // 2. UPDATE NESTED VARIABLES ARRAY (For secondary sync)
-    if (Array.isArray(card.variables)) {
-      const varIndex = card.variables.findIndex((v: any) => v.slug === key);
-      if (varIndex !== -1) {
-        card.variables[varIndex].value = cleanValue;
-      } else {
-        // Only push if it's a known custom variable or if you want total redundancy
-        card.variables.push({ slug: key, value: cleanValue, type: "Text" });
+    // Set core fields and any other fields present in row
+    payloadVariables["card-title"] = title.trim();
+    payloadVariables["card-status"] = status;
+    payloadVariables["card-type"] = type;
+
+    // Fill other variables from row if they exist
+    Object.keys(row).forEach(key => {
+      if (payloadVariables.hasOwnProperty(key)) {
+        payloadVariables[key] = row[key];
       }
+    });
+
+    // Also check row.variables array or object
+    if (Array.isArray(row.variables)) {
+      row.variables.forEach((v: any) => {
+        if (payloadVariables.hasOwnProperty(v.slug)) {
+          payloadVariables[v.slug] = v.value;
+        }
+      });
+    } else if (typeof row.variables === 'object' && row.variables !== null) {
+        Object.entries(row.variables).forEach(([k, v]) => {
+            if (payloadVariables.hasOwnProperty(k)) {
+                payloadVariables[k] = v;
+            }
+        });
     }
 
-    // 3. SYNC SIDEPANEL REFERENCE
-    // If the card being edited is the one open in the side panel, 
-    // update that reference too so the UI doesn't "jump" or revert.
-    if (selectedCard.value?._id === id) {
-      selectedCard.value[key] = cleanValue; 
-      // We don't necessarily need to call sidePanelStore.selectTaskCard again
-      // as long as we mutate the existing reactive object.
-    }
-  });
-
-  // 4. TRIGGER API MUTATION
-  moveCard.mutate({ card_id: id, variables: { [key]: cleanValue } });
-}
-function handleCreateTicket(title: any) {
-  if (title["card-title"]) {
     const payload = {
-      sheet_list_id: "To Do",
+      sheet_list_id: status, // Using status as the list target
       workspace_id: workspaceId.value,
       sheet_id: selected_sheet_id.value,
-      // workspace_lane_id: form.lane_id,
-      variables: {
-        ["card-title"]: title["card-title"].trim(),
-      },
+      workspace_lane_id: laneId,
+      seat_id: row.seat?._id || row.seat_id || null,
+      variables: payloadVariables,
+      "start-date": row["start-date"] || null,
+      "end-date": row["end-date"] || null,
       createdAt: new Date().toISOString(),
     };
 
     addTicket(payload);
   }
 }
-const setStartDate = (card_id: any, e: any) => {
-  // Optimistic Update
-  const listIndex = Lists.value.findIndex((l: any) =>
-    l.cards.some((c: any) => c._id === card_id)
-  );
-  if (listIndex !== -1) {
-    const cardIndex = Lists.value[listIndex].cards.findIndex(
-      (c: any) => c._id === card_id
-    );
-    if (cardIndex !== -1) {
-      Lists.value[listIndex].cards[cardIndex]["end-date"] = e;
+
+function handleChangeTicket(row: any, key: any, value: any) {
+  const id = row?._id;
+  const cleanValue = typeof value === "string" ? value.trim() : value;
+
+  if (id) {
+    updateOptimisticCard(id, (card) => {
+      card[key] = cleanValue;
+      if (Array.isArray(card.variables)) {
+        const varIndex = card.variables.findIndex((v: any) => v.slug === key);
+        if (varIndex !== -1) {
+          card.variables[varIndex].value = cleanValue;
+        } else {
+          card.variables.push({ slug: key, value: cleanValue, type: "Text" });
+        }
+      } else if (typeof card.variables === 'object' && card.variables !== null) {
+          card.variables[key] = cleanValue;
+      }
+      if (selectedCard.value?._id === id) {
+        selectedCard.value[key] = cleanValue; 
+      }
+    });
+    moveCard.mutate({ card_id: id, variables: { [key]: cleanValue } });
+  } else {
+    // New pending row
+    row[key] = cleanValue;
+    if (Array.isArray(row.variables)) {
+      const varIndex = row.variables.findIndex((v: any) => v.slug === key);
+      if (varIndex !== -1) {
+        row.variables[varIndex].value = cleanValue;
+      } else {
+        row.variables.push({ slug: key, value: cleanValue, type: "Text" });
+      }
+    } else {
+        if (!row.variables) row.variables = {};
+        row.variables[key] = cleanValue;
     }
+    checkAndCreateTicket(row);
   }
-  moveCard.mutate({ card_id: card_id, variables: { "start-date": e } });
+}
+
+function handleCreateTicket(row: any) {
+  checkAndCreateTicket(row);
+}
+const setStartDate = (row: any, e: any) => {
+  const card_id = row?._id;
+  if (card_id) {
+    updateOptimisticCard(card_id, (card) => {
+      card["end-date"] = e;
+    });
+    moveCard.mutate({ card_id: card_id, variables: { "start-date": e } });
+  } else {
+    row["end-date"] = e;
+    checkAndCreateTicket(row);
+  }
 };
-function setLane(id: any, v: any) {
-  updateOptimisticCard(id, (card) => {
+function setLane(row: any, v: any) {
+  const id = row?._id;
+  if (id) {
+    updateOptimisticCard(id, (card) => {
+      const newLane = laneOptions.value.find((l: any) => l._id === v);
+      if (newLane) {
+        card.lane = newLane;
+      }
+    });
+    // Trigger Vue to detect the nested change
+    triggerRef(Lists);
+
+    moveCard.mutate({ card_id: id, workspace_lane_id: v });
+  } else {
     const newLane = laneOptions.value.find((l: any) => l._id === v);
     if (newLane) {
-      card.lane = newLane;
+      row.lane = newLane;
+      row.workspace_lane_id = v;
     }
-  });
-  // Trigger Vue to detect the nested change
-  triggerRef(Lists);
-
-  moveCard.mutate({ card_id: id, workspace_lane_id: v });
+    checkAndCreateTicket(row);
+  }
 }
 const { mutate: toggleVisibility } = useVarVisibilty();
 const toggleVisibilityHandler = (key: any, visible: any) => {
@@ -1893,6 +2011,28 @@ function setupToolbarObserver() {
   // Inject immediately first time
   injectToolbarButton();
 }
+const contextMenuExtendOptions: any[] = [];
+
+if (canEditCard || canEditSheet) {
+  contextMenuExtendOptions.push({
+    name: "Update Node",
+    onclick: () => {
+      if (showFormatSidebar.value) showFormatSidebar.value = false;
+      const node = selectedMindNode.value?.nodeObj;
+      if (!node) return;
+      selectCardHandler(node);
+    },
+  });
+
+  contextMenuExtendOptions.push({
+    name: "Add Hyperlink",
+    onclick: () => {
+      openHyperlinkModal(async () => {
+        await saveNodeStyle();
+      });
+    },
+  });
+}
 
 watchEffect(() => {
   if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value) return;
@@ -1905,13 +2045,8 @@ watchEffect(() => {
       mindMapInstance.value = null;
     }
 
-    // Track temporary nodes (created but not yet edited/saved)
     const temporaryNodeIds = new Set<string>();
-
-    // Track nodes already saved to backend
     const savedNodeIds = new Set<string>();
-
-    // Keep track of sheet nodes
     const createdSheetNodeIds = new Set<string>();
 
     const instance = new MindElixir({
@@ -1924,56 +2059,34 @@ watchEffect(() => {
       locale: "en",
       overflowHidden: false,
       contextMenuOption: {
-        Update: true,
-        extend: [
-          {
-            name: "Update Node",
-            onclick: () => {
-              if (!canEditCard && !canEditSheet) return;
-              if (showFormatSidebar.value) showFormatSidebar.value = false;
-              const node = selectedMindNode.value?.nodeObj;
-              if (!node) return;
-              selectCardHandler(node);
-            },
-          },
-          {
-            name: "Add Hyperlink",
-            onclick: () => {
-              if (!canEditCard && !canEditSheet) return;
-              openHyperlinkModal(async () => {
-                await saveNodeStyle();
-              });
-            },
-          },
-        ],
+      Update: canEditCard && canEditSheet && canCreateCard,
+      extend: contextMenuExtendOptions,
       },
     });
 
     mindMapInstance.value = instance;
     instance.init({ nodeData: rootNode });
+
     nextTick(() => {
       setTimeout(() => {
         instance.toCenter();
-      }, 300); // Increase from 100ms to 300ms
+      }, 300);
     });
 
-    // Setup toolbar button after instance is initialized
     nextTick(() => {
       setupToolbarObserver();
     });
-    // Selected node
+
     instance.bus.addListener("selectNode", (nodeObj: any) => {
       if (!nodeObj) return;
       selectedMindNode.value = { nodeObj };
     });
 
-    // Render node styles
     instance.bus.addListener("renderNode" as any, (event: any) => {
       if (!event?.nodeObj || !event?.element) return;
       applyNodeStyle(event.nodeObj, event.element as HTMLElement);
     });
 
-    // Helper: get parent sheet of a node
     const getSheetParent = (node: any): any => {
       let current = node;
       while (current) {
@@ -1983,45 +2096,42 @@ watchEffect(() => {
       return null;
     };
 
-    // Node operations
     instance.bus.addListener("operation", async (data: any) => {
-      if (!data) return;
+      if (!data && canCreateCard && canEditCard && canCreateSheet) {
+        toast.error("You do not have permission to perform this action.");
+        return;
+      }
 
-      // Drag & drop / reorder cards
       if (
         data.name === "moveNode" ||
         data.name === "moveNodeBefore" ||
         data.name === "moveNodeAfter"
       ) {
+        if (!canEditCard) return;
+
         const draggedNode = data.obj;
         const targetNode = data.target;
 
         if (!draggedNode || draggedNode.unique_name !== "card") return;
         if (!targetNode) return;
 
-        // Determine source List
         const sourceList = draggedNode._originalParent || draggedNode.parent;
         if (!sourceList || sourceList.unique_name !== "List") return;
 
-        // Determine target List
         const targetList =
           targetNode.unique_name === "List" ? targetNode : targetNode.parent;
         if (!targetList || targetList.unique_name !== "List") return;
 
-        // Determine target Sheet
         const targetSheet = getSheetParent(targetList);
         if (!targetSheet) return;
 
-        // Compute new index inside target List
         const newIndex = targetList.children.findIndex(
           (c: any) => c.id === draggedNode.id
         );
         if (newIndex === -1) return;
 
-        // Important: Store the original parent before the move
         draggedNode._originalParent = targetList;
 
-        // Call the reorder function
         await handleReorderCard({
           workspace_id: workspaceId.value,
           card_id: draggedNode.id,
@@ -2034,27 +2144,21 @@ watchEffect(() => {
         return;
       }
 
-      // Remove node (cards only)
       if (data.name === "removeNode") {
-      const removedNode = data.obj;
-      if (!removedNode || !removedNode.id) return;
-      if (removedNode.unique_name !== "card") return;
+        const removedNode = data.obj;
+        if (!removedNode || !removedNode.id) return;
+        if (removedNode.unique_name !== "card") return;
+        if (!canDeleteCard) return;
 
-      // Permission check
-      if (!canDeleteCard) return;
+        selectedDeleteId.value = removedNode.id;
+        await deleteTicket();
+        return;
+      }
 
-      selectedDeleteId.value = removedNode.id;
-      await deleteTicket();
-      return;
-    }
-
-
-      // Add child or sibling nodes
       if (data.name === "addChild" || data.name === "insertSibling") {
         const newNode = data.obj;
         if (!newNode || !newNode.id) return;
 
-        // Permissions check
         if (newNode.unique_name === "sheet" && !canCreateSheet) return;
         if (newNode.unique_name === "List" && !canCreateVariable) return;
         if (newNode.unique_name === "card" && !canCreateCard) return;
@@ -2063,21 +2167,19 @@ watchEffect(() => {
         return;
       }
 
-
-      // Begin edit
       if (data.name === "beginEdit") {
         const editingNode = data.obj;
         console.log("editing node", editingNode);
         return;
       }
 
-      // Finish edit
       if (data.name === "finishEdit") {
         const editedNode = data.obj;
         if (!editedNode || !editedNode.id) return;
 
         const isTemporaryNode = temporaryNodeIds.has(editedNode.id);
         const isAlreadySaved = savedNodeIds.has(editedNode.id);
+
         if (!isTemporaryNode && !isAlreadySaved) return;
         if (isAlreadySaved) return;
 
@@ -2091,7 +2193,6 @@ watchEffect(() => {
             return;
           }
 
-          // Create Sheet
           if (
             parentNode.unique_name === "root" &&
             !createdSheetNodeIds.has(editedNode.id)
@@ -2100,6 +2201,7 @@ watchEffect(() => {
               savedNodeIds.delete(editedNode.id);
               return;
             }
+
             createdSheetNodeIds.add(editedNode.id);
             try {
               await createNewSheet({
@@ -2119,12 +2221,12 @@ watchEffect(() => {
             return;
           }
 
-          // Create Card
           if (parentNode.unique_name === "List") {
             if (!canCreateCard) {
-            savedNodeIds.delete(editedNode.id);
-            return;
-          }
+              savedNodeIds.delete(editedNode.id);
+              return;
+            }
+
             try {
               const payload = createDefaultCardPayload(
                 {
@@ -2133,10 +2235,12 @@ watchEffect(() => {
                 },
                 parentNode
               );
+
               if (payload.variables) {
                 payload.variables["card-description"] =
                   "This is a default description";
               }
+
               await addTicket(payload);
             } catch (err) {
               console.error("Error creating card:", err);
@@ -2145,9 +2249,8 @@ watchEffect(() => {
             return;
           }
 
-          // Create List (placeholder)
           if (parentNode.unique_name === "sheet") {
-            if (!canDeleteSheet) return;
+            if (!canCreateVariable) return;
             try {
               console.log("Creating new list under sheet...");
             } catch (err) {
@@ -2161,6 +2264,7 @@ watchEffect(() => {
     });
   });
 });
+
 watch(
   isDark,
   () => {
