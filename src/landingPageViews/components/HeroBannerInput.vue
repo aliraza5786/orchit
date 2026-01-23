@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
+import { ref,toRef, computed, onMounted, onUnmounted } from "vue";
 import { useWorkspaceStore } from '../../stores/workspace';
 import { useRouter } from 'vue-router';
 import { useCreateWorkspaceWithAI } from '../../queries/useWorkspace';
@@ -11,7 +11,7 @@ const props = defineProps<{
   theme?: any;
   placeholder?: string;
 }>();
-const theme = props.theme;
+const theme = toRef(props, "theme");
 const workspaceStore = useWorkspaceStore();
 const authStore = useAuthStore();
 const router = useRouter();
