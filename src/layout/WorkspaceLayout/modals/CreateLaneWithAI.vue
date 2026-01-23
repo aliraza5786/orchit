@@ -2,7 +2,7 @@
     <BaseModal v-model="workspaceStore.showCreateLaneModalWithAI" size="lg">
         <!-- Header -->
         <div class="flex justify-between items-start px-6 border-b border-border pb-6">
-            <h2 class="text-xl font-semibold">Create a New Lane</h2>
+            <h2 class="text-xl font-semibold">Create a New Tab</h2>
         </div>
 
         <!-- Main Content -->
@@ -15,7 +15,7 @@
                     <div
                         class="neon-flow-border bg-bg-input after:p-4  flex h-[200px] items-start gap-2.5 self-stretch shadow-[-1px_-1px_0_0_rgba(255,255,255,0.20)_inset,1px_1px_1px_0_rgba(255,255,255,0.60)_inset] backdrop-blur-[5px]  pl-[17px] pr-[48px] py-[30px] rounded-3xl max-sm:h-[120px] max-sm:px-5 max-sm:py-5">
                         <textarea autofocus :disabled="isPending" v-if="!isRecording && !audioURL" v-model="description"
-                            placeholder="Ask  Orchit AI to create a lane..."
+                            placeholder="Ask  Orchit AI to create a tab..."
                             class="w-full h-full  text-text-primary text-base font-normal leading-7 resize-none outline-none placeholder:opacity-70" />
 
                         <!-- AI Generation Button -->
@@ -112,6 +112,7 @@ const { data: suggestionData, isPending: isSuggestionPending } = useSuggestions(
 const { mutate: createLane, isPending: isCreatingLane } = useCreateWorkspaceLaneAi({
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+        queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId', workspaceId.value] }); // Ensure current workspace is refreshed
         workspaceStore.toggleCreateLaneModalWithAI();
     }
 })

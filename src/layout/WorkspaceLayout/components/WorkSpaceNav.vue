@@ -217,12 +217,11 @@
 import LaneDropdown from "./LaneDropdown.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import dp from "../../../assets/global/dummy.jpeg";
-import { ref, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
+import { ref, onMounted, onBeforeUnmount, nextTick, computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useWorkspaces } from "../../../queries/useWorkspace"; // keep workspaces listing
 import { useWorkspaceId } from "../../../composables/useQueryParams";
-import { usePermissions } from "../../../composables/usePermissions"; 
-import { request } from "../../../libs/api";
+import { usePermissions } from "../../../composables/usePermissions";  
 const { canCreateLane } = usePermissions();
 
 const router = useRouter();
@@ -242,28 +241,26 @@ const isWorkspaceLoading = computed(() => {
 });
 // Local reactive workspace
 const localWorkspace = ref<any>(null);
-const fetchWorkspace = async (id: string | number) => {
-  try {
-    const data = await request({
-      url: `/workspace/${id}`,
-      method: "GET",
-      params: { is_archive: false },
-    });
 
-    // Update localWorkspace and localStorage
-    localWorkspace.value = data;
-    if (data?.variables?.title) {
-      localStorage.setItem("currentName", data.variables.title);
+// Initialize props
+const props = defineProps<{ 
+  expanded?: Boolean;
+  getWorkspace?: any;
+}>();
+
+// Watch the getWorkspace prop to keep local state in sync
+watch(
+  () => props.getWorkspace,
+  (newWorkspace) => {
+    if (newWorkspace) {
+      localWorkspace.value = newWorkspace;
+      if (newWorkspace.variables?.title) {
+        localStorage.setItem("currentName", newWorkspace.variables.title);
+      }
     }
-  } catch (error) {
-    console.error("Error fetching workspace:", error);
-  }
-};
-
-// Initialize current workspace
-if (workspaceId.value) {
-  fetchWorkspace(workspaceId.value);
-}
+  },
+  { immediate: true }
+);
 
 // Duplicate lane handler
 const duplicateHandler = (data: any) => {
@@ -342,7 +339,7 @@ const switchTo = async (ws: any) => {
   router.push(
     `/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ?? ""}`
   );
-  await fetchWorkspace(ws._id);
+  // await fetchWorkspace(ws._id);
 
   closeLogoMenu();
 };
@@ -355,7 +352,6 @@ const openUpdateModal = (id: any) => {
 };
 
 defineExpose({ laneId });
-defineProps<{ expanded?: Boolean }>();
 </script>
 
 

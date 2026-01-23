@@ -151,7 +151,7 @@
                     <div class="text-sm font-medium">{{ c.created_by?.u_full_name }}</div>
                     <div class="text-xs text-text-secondary">{{ formatDateTime(c.created_at) }}</div>
                   </div>
-                  <div v-if="isMine(c)" class="flex items-center gap-2">
+                  <div class="flex items-center gap-2">
                     <button v-if="editingId !== c._id" class="text-xs text-accent hover:underline"
                       @click="beginEdit(c)">Edit</button>
                     <button class="text-xs text-red-400 hover:underline" @click="removeComment(c)">Delete</button>
@@ -249,7 +249,6 @@ import AssigmentDropdown from '../../../views/Product/components/AssigmentDropdo
 import { useQueryClient } from '@tanstack/vue-query'
 // import { useRouteIds } from '../../../composables/useQueryParams'
 import { useComments, useCreateComment, useUpdateComment, useDeleteComment, useProductCard } from '../../../queries/useProductCard'
-import { useUserId } from '../../../services/user'
 import Button from '../../../components/ui/Button.vue'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
 import SwitchTab from '../../../components/ui/SwitchTab.vue'
@@ -263,6 +262,7 @@ const props = defineProps({
   cardId: { type: String, default: '' },
   pin: { type: Boolean, default: false }
 })
+
 
 const emit = defineEmits(['update:modelValue', 'close'])
 const card_Id = ref(props.cardId);
@@ -408,10 +408,12 @@ moveCard.mutate({ card_id: details.value._id, seat_id: user?._id })
 
 const comments = ref<any>([])
 const commentId = computed(() => props.cardId)
-const { data: commentsData } = useComments(commentId, {
+const { data: commentsData, refetch: refetchComments } = useComments(commentId, {
   enabled: computed(() => !!props.cardId && props.modelValue)
 })
-watch(() => commentsData.value, (val) => { comments.value = val?.comments || [] })
+watch(() => commentsData.value, (val) => { 
+  comments.value = val?.comments || [] 
+}, { immediate: true })
 
 const { mutate: createComment, isPending: isPostingComment } = useCreateComment({
   onSuccess: (data: any) => {
@@ -431,9 +433,6 @@ const newComment = ref('')
 const initials = (n?: string) => (n ?? '').split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
 const formatDateTime = (iso?: string) => iso ? new Date(iso).toLocaleString() : ''
 
-const { data: currentUserId } = useUserId()
-const isMine = (c: any) => c?.created_by?._id === currentUserId.value
-
 const editingId = ref<string | null>(null)
 const editText = ref('')
 const { mutate: updateComment, isPending: isUpdatingComment } = useUpdateComment()
@@ -444,24 +443,41 @@ function cancelEdit() { editingId.value = null; editText.value = ''; editingTitl
 
 function saveEdit(c: any) {
   const text = editText.value.trim()
-  if (!text) return 
-  const idx = comments.value.findIndex((x: any) => x._id === c._id)
-  const prev = idx > -1 ? { ...comments.value[idx] } : null
-  if (idx > -1) comments.value[idx] = { ...comments.value[idx], comment_text: text }
+  if (!text) return
+
   updateComment(
     { id: c._id, payload: { comment_text: text } },
     {
-      onError: () => { if (idx > -1 && prev) comments.value[idx] = prev },
-      onSuccess: (server: any) => { if (idx > -1) comments.value[idx] = server ?? comments.value[idx]; cancelEdit() }
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['comments', commentId.value]
+        })
+        cancelEdit()
+        toast.success('Comment updated')
+      },
+      onError: () => {
+        toast.error('Failed to update comment')
+      }
     }
   )
 }
 
+
 function removeComment(c: any) {
-  const idx = comments.value.findIndex((x: any) => x._id === c._id)
-  const prev = idx > -1 ? comments.value[idx] : null
-  if (idx > -1) comments.value.splice(idx, 1)
-  deleteComment({ id: c._id }, { onError: () => { if (prev) comments.value.splice(idx, 0, prev) } })
+  deleteComment(
+    { id: c._id },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ['comments', commentId.value]
+        })
+        toast.success('Comment deleted')
+      },
+      onError: () => {
+        toast.error('Failed to delete comment')
+      }
+    }
+  )
 }
 
 const attachments = computed(() =>
@@ -562,6 +578,8 @@ watch(() => props.cardId, (newCardId) => {
   }
 })
 
+
+
 watch(() => props.modelValue, (val) => {
   if (val) {
     document.body.style.overflow = 'hidden'
@@ -580,6 +598,11 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleEscape)
   document.body.style.overflow = ''
+})
+watch(activeTab, (tab) => {
+  if (tab === 'comments' && props.modelValue) {
+    refetchComments()
+  }
 })
 </script>
 

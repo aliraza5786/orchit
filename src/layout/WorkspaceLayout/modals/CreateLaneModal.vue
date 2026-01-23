@@ -137,27 +137,14 @@ const form = ref(createEmptyForm())
 /* ----- Actions ----- */
 const { mutate: createLane, isPending } = useCreateWorkspaceLane({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['workspaces', 'lane'] })
+    queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId', workspaceId.value] }); // Ensure current workspace is refreshed
     workspaceStore.toggleCreateLaneModal()
     form.value = createEmptyForm()
     currentStep.value = 0;
-    fetchWorkspace();
   },
 })
-const fetchWorkspace = async () => {
-  try {
-    const data = await request({
-      url: `/workspace/${workspaceId.value}`,
-      method: "GET",
-      params: { is_archive: false },
-    });
-    if (data?.variables?.title) {
-      localStorage.setItem("currentName", data.variables.title);
-    }
-  } catch (error) {
-    console.error("Error fetching workspace:", error);
-  }
-};
+
 function next() {
 
   touched.title = true;
