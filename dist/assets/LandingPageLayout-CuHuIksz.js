@@ -1,1 +1,0 @@
-import e from"./homenew-C7HPfdfG.js";import{d as o,e as t,o as r}from"./index-CfmiV2pu.js";import"./dark-logo-Mcb_sJlF.js";import"./Pricing-BTwjGuoW.js";import"./usePackages-vyc3vfJy.js";const f=o({__name:"LandingPageLayout",setup(a){return(m,n)=>(r(),t(e))}});export{f as default};

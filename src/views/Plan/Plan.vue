@@ -20,7 +20,7 @@
     <div class="min-w-[1200px] h-full flex flex-col">
   <div
         v-if="!isStartingSprint"
-        class="p-4 w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
+        class="px-0.5 py-4 w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
       >
         <div
           ref="containerRef"
