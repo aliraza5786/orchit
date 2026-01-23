@@ -1,5 +1,4 @@
 <template>
-   
   <AuthLayout>
     <template #form>
       <div class="max-w-[500px] md:mx-auto w-full text-text-primary bg-bg-body">
@@ -61,7 +60,7 @@
             Continue with google
           </Button>
 
-          <Button
+          <!-- <Button
             size="lg"
             :block="true"
             appearance="outlined"
@@ -74,7 +73,7 @@
                 <img :src="isDark ? darkApple : lightApple" alt="Apple icon" class="w-[24px] mr-4" />
           </template>
             Continue with apple
-          </Button>
+          </Button> -->
 
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
@@ -140,12 +139,14 @@ import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
 const workspaceStore = useWorkspaceStore();
 defineOptions({ name: "LoginPage" });
-import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
-import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
-import { useTheme } from "../../composables/useTheme";
-const {isDark } = useTheme();
+// import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
+// import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
+// import { useTheme } from "../../composables/useTheme";
+// const {isDark } = useTheme();
 declare const AppleID: any;
-
+defineProps<{
+  isDark: boolean
+}>()
 // --- Constants (non-reactive) ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const authStore = useAuthStore()
@@ -215,40 +216,38 @@ async function loginWithGoogle() {
   }
 }
 
-async function loginWithApple() {
-  try {
-    AppleID.auth.init({
-      clientId: '100465282340299456069',
-      scope: 'name email',
-      redirectURI: window.location.origin + '/login',
-      usePopup: true
-    });
+// async function loginWithApple() {
+//   try {
+//     AppleID.auth.init({
+//       clientId: '100465282340299456069',
+//       scope: 'name email',
+//       redirectURI: window.location.origin + '/login',
+//       usePopup: true
+//     });
     
-    const response = await AppleID.auth.signIn();
-    
-    // Decode id_token to get email and sub if needed
-    const idToken = response.authorization.id_token;
-    const base64Url = idToken.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-    }).join(''));
-    const decodedToken = JSON.parse(jsonPayload);
+//     const response = await AppleID.auth.signIn();
+//     const idToken = response.authorization.id_token;
+//     const base64Url = idToken.split('.')[1];
+//     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+//     const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+//         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+//     }).join(''));
+//     const decodedToken = JSON.parse(jsonPayload);
 
-    const data = await googleLoginMutate({
-      u_email: decodedToken.email,
-      u_social_id: decodedToken.sub,
-      u_social_type: "apple",
-      u_full_name: response.user?.name ? `${response.user.name.firstName} ${response.user.name.lastName}` : (decodedToken.email?.split('@')[0] || ""),
-    });
+//     const data = await googleLoginMutate({
+//       u_email: decodedToken.email,
+//       u_social_id: decodedToken.sub,
+//       u_social_type: "apple",
+//       u_full_name: response.user?.name ? `${response.user.name.firstName} ${response.user.name.lastName}` : (decodedToken.email?.split('@')[0] || ""),
+//     });
     
-    handleLoginSuccess(data);
-  } catch (err: any) {
-    if (err?.error !== "popup_closed_by_user") {
-      errorMessage.value = err?.message || "Apple Login failed. Please try again.";
-    }
-  }
-}
+//     handleLoginSuccess(data);
+//   } catch (err: any) {
+//     if (err?.error !== "popup_closed_by_user") {
+//       errorMessage.value = err?.message || "Apple Login failed. Please try again.";
+//     }
+//   }
+// }
 
 // async function handleGoogleLogin(response: any) {
 //   try {

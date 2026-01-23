@@ -41,7 +41,7 @@ const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
 const LandingPageLayout = () =>
   import("../layout/LandingPageLayout/LandingPageLayout.vue");
 
-const LandingHome = () => import("../landingPageViews/LandingHome.vue");
+// const LandingHome = () => import("../landingPageViews/LandingHome.vue");
 const NewHomepage = () => import("../views/homenew.vue");
 const Pricing = () => import("../views/Pricing.vue");
 const TermsOfServices = () => import("../views/TermsOfServices.vue");
@@ -61,18 +61,18 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         path: "/",
-        name: "landing-home-2",
-        component: LandingHome,
+        name: "new-homepage",
+        component: NewHomepage,
         meta: { requiresAuth: false },
       },
-      {
-        path: "/home",
-        name: "landing-home",
-        component: LandingHome,
-        meta: { requiresAuth: false },
-      },
+      // {
+      //   path: "/home",
+      //   name: "landing-home",
+      //   component: LandingHome,
+      //   meta: { requiresAuth: false },
+      // },
             {
-        path: "/new-home",
+        path: "/home",
         name: "new-homepage",
         component: NewHomepage,
         meta: { requiresAuth: false },

@@ -1,18 +1,6 @@
 <template>
-    <Header v-if="!isNewHomepage" />
-    <router-view />
-    <Footer v-if="!isNewHomepage" />
-
+    <NewHomePage/>
 </template>
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
-import { computed } from 'vue';
-import Header from './components/Header.vue';
-import Footer from './components/Footer.vue';
-
-const route = useRoute();
-console.log("route name", route.name);
-
-const isNewHomepage = computed(() => route.name === 'new-homepage');
-
+import NewHomePage from "../../views/homenew.vue"
 </script>
