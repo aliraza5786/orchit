@@ -59,24 +59,16 @@ const routes: RouteRecordRaw[] = [
     path: "/",
     component: LandingPageLayout,
     children: [
-      {
-        path: "/",
-        name: "new-homepage",
-        component: NewHomepage,
-        meta: { requiresAuth: false },
-      },
-      // {
-      //   path: "/home",
-      //   name: "landing-home",
-      //   component: LandingHome,
-      //   meta: { requiresAuth: false },
-      // },
-            {
-        path: "/home",
-        name: "new-homepage",
-        component: NewHomepage,
-        meta: { requiresAuth: false },
-      },
+       {
+      path: "",
+      name: "new-homepage",
+      component: NewHomepage,
+    },
+    {
+      path: "contact-us",
+      name: "contact-us",
+      component: ContactUs,
+    },
       {
         path: "/pricing",
         name: "pricing",
@@ -87,12 +79,6 @@ const routes: RouteRecordRaw[] = [
         path: "/terms-of-services",
         name: "terms-of-services",
         component: TermsOfServices,
-        meta: { requiresAuth: false },
-      },
-      {
-        path: "/privacy-policy",
-        name: "privacy-policy",
-        component: PrivactPolicy,
         meta: { requiresAuth: false },
       },
       {

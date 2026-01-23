@@ -2,7 +2,7 @@
   <div
     class="min-h-screen bg-[var(--background)] text-[var(--text)] transition-colors duration-300"
   >
-  <Header :isDark="isDark" :toggleTheme="toggleTheme"  />
+  <!-- <Header :isDark="isDark" :toggleTheme="toggleTheme"  /> -->
     <!-- Hero Section - Fade in on load -->
     <div class="animate-on-load">
       <HeroSection ref="heroInputRef" :isDark="isDark" />
@@ -95,8 +95,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
-import Header from '../components/HomeNew/Header.vue'
+// import Header from '../components/HomeNew/Header.vue'
 import HeroSection from '../components/HomeNew/HeroSection.vue'
 import StatsSection from '../components/HomeNew/StatsSections.vue'
 // import SocialProof from '../components/HomeNew/SocialProof.vue'
@@ -110,9 +111,18 @@ import Testimonials from '../components/HomeNew/Testimonials.vue'
 import FaqSection from '../components/HomeNew/FaqSection.vue'
 import FinalCTA from '../components/HomeNew/FinalCTA.vue'
 import Pricing from './Pricing.vue'
+import { useAuthStore } from '../stores/auth';
+const authStore = useAuthStore();
 const { isDark, toggleTheme } = useTheme()
 const heroInputRef = ref<any>(null)
 const showScrollTop = ref(false)
+const router = useRouter()
+const isLoggedIn=() =>{
+  if(authStore.isAuthenticated){
+    router.push('/dashboard')
+  }
+ }
+onMounted(isLoggedIn);
 
 const setHeroPrompt = (text: string) => {
   heroInputRef.value?.setValue(text)
@@ -130,7 +140,7 @@ const scrollToTop = () => {
     behavior: 'smooth',
   })
 }
-
+onMounted(scrollToTop)
 // Intersection Observer for scroll animations
 const observeElements = () => {
   const elements = document.querySelectorAll('.scroll-animate:not(.animated)')

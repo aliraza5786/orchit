@@ -19,7 +19,7 @@
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a>
             <a href="#pricing" @click.prevent="scrollTo('pricing')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a>
             <a href="#faq" @click.prevent="scrollTo('faq')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a>
-            <a href="" @click.prevent="pushToContact" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Contact Sales</a>
+            <router-link to="/contact-us" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Contact Sales</router-link> 
           </nav>
 
           <!-- Right Actions -->
