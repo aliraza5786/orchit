@@ -84,7 +84,13 @@
           <a href="#marketplace" @click.prevent="scrollTo('marketplace')" class="text-[var(--text)]">Marketplace</a>
           <a href="#pricing" @click.prevent="scrollTo('pricing')" class="text-[var(--text)]">Pricing</a>
           <a href="#faq" @click.prevent="scrollTo('faq')" class="text-[var(--text)]">FAQ</a>
-
+          <router-link
+            to="/contact-us"
+            class="text-[var(--text)]"
+            @click="sidebarOpen = false"
+          >
+            Contact Sales
+          </router-link>
           <button  @click="goToRegister" class="mt-6 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
             Get started free
           </button>
@@ -94,9 +100,10 @@
 </template>
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 const sidebarOpen = ref(false);
 const router = useRouter();
+const route = useRoute()
 defineProps<{
   isDark: boolean
   toggleTheme: () => void
@@ -108,10 +115,20 @@ function goToRegister(){
     router.push('/register')
 }
 const scrollTo = (id: string) => {
-  document.getElementById(id)?.scrollIntoView({
+  if(route.path !=='/'){
+    router.push('/')
+    document.getElementById(id)?.scrollIntoView({
     behavior: "smooth",
     block: "start",
   });
+  sidebarOpen.value=false;
+  }else{
+    document.getElementById(id)?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+  sidebarOpen.value=false;
+  }
 };
 
 </script>

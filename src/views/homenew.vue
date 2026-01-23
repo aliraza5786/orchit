@@ -62,9 +62,9 @@
     </div>
 
     <!-- Final CTA - Scale in -->
-    <div class="scroll-animate" data-animation="scale-in">
+    <!-- <div class="scroll-animate" data-animation="scale-in">
       <FinalCTA :isDark="isDark" :toggleTheme="toggleTheme"/>
-    </div>
+    </div> -->
 
     <!-- Scroll to Top Button -->
     <transition name="scroll-button">
@@ -109,11 +109,11 @@ import HowItWorks from '../components/HomeNew/HowItWorks.vue'
 import Testimonials from '../components/HomeNew/Testimonials.vue'
 // import ContactUs from './ContactUs.vue'
 import FaqSection from '../components/HomeNew/FaqSection.vue'
-import FinalCTA from '../components/HomeNew/FinalCTA.vue'
+// import FinalCTA from '../components/HomeNew/FinalCTA.vue'
 import Pricing from './Pricing.vue'
 import { useAuthStore } from '../stores/auth';
 const authStore = useAuthStore();
-const { isDark, toggleTheme } = useTheme()
+const { isDark } = useTheme()
 const heroInputRef = ref<any>(null)
 const showScrollTop = ref(false)
 const router = useRouter()
