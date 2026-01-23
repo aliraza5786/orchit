@@ -1,6 +1,6 @@
 <template>
   <div class="px-4">
-    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ps-6 ">
+    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ps-6 mb-5 ">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
              bg-bg-body/20 text-sm
@@ -132,7 +132,7 @@
         </template>
 
         <!-- ADD NEW ROW FOOTER -->
-        <tr v-if="!hasActiveEmptyRow && canCreate" @click="insertEmptyRow(tickets?.length)" class="sticky bottom-0 bg-bg-surface border-t border-border cursor-pointer
+        <tr v-if="!hasActiveEmptyRow && canCreate" @click="insertEmptyRow(tickets?.length)" class=" bg-bg-surface border-t border-border cursor-pointer
                  transition hover:bg-bg-body" @mouseenter="hoverIndex = tickets?.length"
           @mouseleave="hoverIndex = null">
           <td :colspan="footerColspan" class=" text-text-secondary h-8 px-3">
