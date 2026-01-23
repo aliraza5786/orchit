@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-bg-body">
+  <div class="bg-bg-body h-screen overflow-hidden">
     <Header  v-if="showHeader" />
     <div class=" lg:shadow-xl rounded-lg flex flex-wrap w-full md:h-full p-4">
       <!-- Left Panel -->
@@ -8,8 +8,9 @@
       </div>
 
       <!-- Right Panel with video background -->
-      <div
-        class="hidden md:flex w-full lg:w-1/2 max-w-full lg:max-w-[663px] rounded-4xl relative min-h-screen lg:ml-auto overflow-hidden items-center justify-center bg-black ">
+      <div class="hidden md:flex w-full lg:w-1/2 max-w-full lg:max-w-[663px]
+         rounded-4xl relative h-full lg:ml-auto
+         overflow-hidden items-center justify-center bg-black">
         <!-- Video background -->
         <video autoplay muted loop playsinline class="absolute inset-0 w-full  h-full object-cover opacity-60 z-0">
           <source src="../../assets/videos/Glowing-particles-overlay.mp4" type="video/mp4" />
@@ -55,9 +56,10 @@ import Header from '../LandingPageLayout/components/Header.vue';
 import { useRoute } from 'vue-router'
 const route = useRoute()
 import { computed } from 'vue'
+console.log("route path", route.path);
 
 const showHeader = computed(() => {
-  return route.path === '/login' || route.path === '/register'
+  return route.path !== '/login' && route.path !== '/register'
 })
 // <script setup lang="ts">
 defineProps<{

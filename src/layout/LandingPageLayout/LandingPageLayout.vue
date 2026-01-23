@@ -1,11 +1,6 @@
 <template>
-    <Header />
-    <router-view />
-    <Footer/>
-
+    <NewHomePage/>
 </template>
 <script setup lang="ts">
-import Header from './components/Header.vue';
-import Footer from './components/Footer.vue';
-
+import NewHomePage from "../../views/homenew.vue"
 </script>

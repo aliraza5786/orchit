@@ -8,3 +8,8 @@ import 'vue-sonner/style.css'
   </div>
   <Toaster position="top-right" />
 </template>
+<style>
+  body{
+    font-family: 'Lato', sans-serif;
+  }
+</style>
