@@ -133,18 +133,18 @@ const pricingPlans = computed(() => {
 
 <template>
   <section
-    class="float-left w-full py-[40px] md:py-[70px] xl:py-[105px] px-[15px]"
+    class="w-full py-[40px] md:py-[70px] xl:py-[105px] px-[15px]"
   >
     <div class="custom_container">
       <!-- Heading -->
       <div class="mb-[32px] text-center">
         <small
-          class="text-sky text-center block leading-[24px] md:leading-[32px] text-[16px] md:text-[20px] lg:text-[24px] font-manrope font-bold lg:tracking-[-1px] mb-[10px] md:mb-[15px] xl:mb-[20px]"
+          class="text-sky text-center block leading-[24px] md:leading-[32px] text-[16px] md:text-[20px] lg:text-[24px] font-bold lg:tracking-[-1px] mb-[10px] md:mb-[15px] xl:mb-[20px]"
         >
           Pricing
         </small>
         <h2
-          class="font-manrope text-center text-primary font-bold text-[24px] md:text-[36px] lg:text-[40px] leading-[34px] md:leading-[44px] lg:leading-[56px] tracking-[-1px]"
+          class="text-center text-primary font-bold text-[24px] md:text-[36px] lg:text-[40px] leading-[34px] md:leading-[44px] lg:leading-[56px] tracking-[-1px]"
         >
           Simple, Transparent Pricing For Every Team.
         </h2>
@@ -156,14 +156,14 @@ const pricingPlans = computed(() => {
           class="toggle_btn flex items-center justify-center gap-[10px] lg:gap-[24px] w-[290px] lg:w-[349px] h-[55px] lg:h-[59px] rounded-[30px] border border-border-input"
         >
           <span
-            class="font-manrope text-[16px] lg:text-[18px] font-medium"
+            class="text-[16px] lg:text-[18px] font-medium"
             :class="{ 'text-text-secondary': isYearly }"
             >Pay Monthly</span
           >
 
           <button
             @click="isYearly = !isYearly"
-            class="relative inline-flex h-7 w-12 items-center rounded-full  p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+            class="relative inline-flex h-7 w-12 items-center rounded-full  p-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 px-1"
             :class="isYearly? 'bg-accent':'bg-gray-700'"
           >
             <span
@@ -173,7 +173,7 @@ const pricingPlans = computed(() => {
           </button>
 
           <span
-            class="font-manrope text-[16px] lg:text-[18px] font-medium"
+            class="text-[16px] lg:text-[18px] font-medium"
             :class="{ 'text-text-secondary': !isYearly }"
             >Pay Yearly</span
           >
@@ -217,12 +217,12 @@ const pricingPlans = computed(() => {
           <!-- Content -->
           <div class="relative z-10">
             <h3
-              class="text-[24px] font-bold font-manrope text-text-primary text-center leading-[30px] mb-[7px]"
+              class="text-[24px] font-bold text-text-primary text-center leading-[30px] mb-[7px]"
             >
               {{ plan.name }}
             </h3>
             <p
-              class="text-[14px] font-manrope text-text-secondary text-center leading-[21px] font-normal mb-[21px]"
+              class="text-[14px] text-text-secondary text-center leading-[21px] font-normal mb-[21px]"
             >
               {{ plan.description }}
             </p>
@@ -288,7 +288,7 @@ const pricingPlans = computed(() => {
             <button
               @click="handleClick(plan)"
               :disabled="isUpgrading && upgradingPackageId === plan.packageId"
-              class="w-full py-[14px] cursor-pointer rounded-[12px] font-manrope font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
+              class="w-full py-[14px] cursor-pointer rounded-[12px] font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
               :class="[
                 isDark
                   ? plan.highlighted
@@ -306,7 +306,7 @@ const pricingPlans = computed(() => {
           <!-- Features -->
           <div class="mt-8 text-left relative z-10">
             <p
-              class="text-[14px] font-manrope text-text-primary text-left leading-[21px] font-normal pb-[8px] border-b border-border mb-[14px]"
+              class="text-[14px] text-text-primary text-left leading-[21px] font-normal pb-[8px] border-b border-border mb-[14px]"
             >
               Features included:
             </p>
@@ -327,7 +327,7 @@ const pricingPlans = computed(() => {
                   >✕</span
                 >
                 <span
-                  class="text-[14px] font-manrope text-left leading-[21px] font-normal capitalize"
+                  class="text-[14px] text-left leading-[21px] font-normal capitalize"
                   :class="[
                     feature.available
                       ? 'text-text-primary'

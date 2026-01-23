@@ -1,5 +1,17 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+const router = useRouter();
 const currentYear = new Date().getFullYear()
+defineProps<{
+  isDark: boolean
+  toggleTheme: () => void
+}>()
+function goToContactUs(){
+    router.push('/contact-us')
+}
+function goToRegister(){
+    router.push('/contact-us')
+}
 </script>
 
 <template>
@@ -15,11 +27,11 @@ const currentYear = new Date().getFullYear()
         </p>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button class="px-8 py-4 bg-white text-purple-600 rounded-lg hover:bg-gray-100 transition-colors font-medium text-lg shadow-lg">
+          <button @click="goToRegister" class="px-8 py-4 bg-white text-purple-600 rounded-lg hover:bg-gray-100 transition-colors font-medium text-lg shadow-lg">
             Get started free
           </button>
-          <button class="px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 transition-colors font-medium text-lg">
-            Request a demo
+          <button @click="goToContactUs()" class="px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 transition-colors font-medium text-lg">
+            Contact Us
           </button>
         </div>
       </div>
@@ -31,7 +43,12 @@ const currentYear = new Date().getFullYear()
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <!-- Logo & Tagline -->
           <div class="col-span-1 md:col-span-1">
-            <div class="text-2xl font-bold text-[var(--text)] mb-3">Orchit.ai</div>
+            <RouterLink to="/" class="flex items-center gap-2">
+              <img v-if="!isDark" src="../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30"
+                loading="eager" decoding="async" />
+              <img v-else src="../../assets/global/dark-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30" loading="eager"
+                decoding="async" />
+            </RouterLink>
             <p class="text-sm text-[var(--muted)]">
               Orchestrate your ideas into action with AI-powered planning.
             </p>

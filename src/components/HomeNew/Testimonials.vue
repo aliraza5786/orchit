@@ -35,17 +35,17 @@ const testimonials = [
         <div
           v-for="testimonial in testimonials"
           :key="testimonial.author"
-          class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 hover:border-purple-500 transition-all duration-300 hover:shadow-lg"
+          class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 hover:border-accent-hover transition-all duration-300 hover:shadow-lg"
         >
           <!-- Quote Icon -->
-          <div class="text-4xl text-purple-600 mb-4">"</div>
+          <div class="text-4xl text-accent-hover mb-4">"</div>
 
           <!-- Quote -->
           <p class="text-[var(--text)] mb-6 leading-relaxed">{{ testimonial.quote }}</p>
 
           <!-- Author -->
           <div class="flex items-center gap-4">
-            <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-full flex items-center justify-center text-2xl">
+            <div class="w-12 h-12 bg-accent rounded-full flex items-center justify-center text-2xl">
               {{ testimonial.avatar }}
             </div>
             <div>

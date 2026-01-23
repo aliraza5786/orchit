@@ -34,31 +34,31 @@ const createModule = () => {
         <div
           v-for="chip in moduleChips"
           :key="chip"
-          class="px-6 py-3 bg-[var(--card)] border border-[var(--border)] rounded-full text-sm font-medium hover:border-purple-500 hover:bg-purple-600/5 transition-all cursor-pointer"
+          class="px-6 py-3 bg-[var(--card)] border border-[var(--border)] rounded-full text-sm font-medium hover:border-accent-hover transition-all cursor-pointer"
         >
           {{ chip }}
         </div>
         <div
-          class="px-6 py-3 bg-gradient-to-r from-purple-600/10 to-pink-600/10 border border-purple-500/50 rounded-full text-sm font-medium text-purple-600"
+          class="px-6 py-3 bg-accent border border-accent rounded-full text-sm font-medium text-white"
         >
           + More
         </div>
       </div>
 
       <!-- Micro Demo -->
-      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 max-w-2xl mx-auto">
+      <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl lg:p-8 p-4 max-w-2xl mx-auto">
         <label class="block text-sm font-medium mb-3">Create a custom module...</label>
         <div class="flex gap-3">
           <input
             v-model="customModuleName"
             type="text"
             placeholder="e.g., Customer Success, R&D, Partnerships"
-            class="flex-1 px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="flex-1 px-4 py-3 bg-[var(--surface)] border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-hover focus:border-transparent"
             @keyup.enter="createModule"
           />
           <button
             @click="createModule"
-            class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            class="lg:px-6 px-2 lg:py-3 py-1 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium"
           >
             Generate
           </button>
@@ -75,10 +75,10 @@ const createModule = () => {
         >
           <div
             v-if="showGeneratedModule"
-            class="mt-6 p-6 bg-gradient-to-r from-purple-600/10 to-pink-600/10 border border-purple-500/50 rounded-xl"
+            class="mt-6 p-6 bg-accent rounded-xl"
           >
             <div class="flex items-center gap-4">
-              <div class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white text-xl">
+              <div class="w-12 h-12 bg-accent rounded-lg flex items-center justify-center text-white text-xl">
                 ✨
               </div>
               <div>

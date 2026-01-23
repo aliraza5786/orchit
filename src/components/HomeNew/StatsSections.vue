@@ -1,10 +1,22 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+const router = useRouter()
 const stats = [
   { value: '32 months', label: 'Median time to fully launch a startup' },
   { value: '$40,000', label: 'Average startup expenditure in the first year' },
   { value: '42%', label: 'Failed startups cited "no market need"' },
   { value: '29%', label: 'Failed startups ran out of cash' }
 ]
+function goToRegister(){
+    router.push('/register')
+}
+const scrollToTemplates = () => {
+  const el = document.getElementById('templates')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
+
 </script>
 
 <template>
@@ -25,9 +37,9 @@ const stats = [
         <div
           v-for="stat in stats"
           :key="stat.value"
-          class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 text-center hover:border-purple-500 transition-all duration-300 hover:transform hover:scale-105"
+          class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 text-center hover:border-accent transition-all duration-300 hover:transform hover:scale-105"
         >
-          <div class="text-4xl md:text-5xl font-bold text-purple-600 mb-4">{{ stat.value }}</div>
+          <div class="text-4xl md:text-5xl font-bold text-accent mb-4">{{ stat.value }}</div>
           <p class="text-[var(--muted)]">{{ stat.label }}</p>
         </div>
       </div>
@@ -39,17 +51,20 @@ const stats = [
         </p>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button class="px-8 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-lg">
+          <button @click="goToRegister" class="px-8 py-4 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium text-lg">
             Orchestrate my idea (free)
           </button>
-          <button class="px-8 py-4 border-2 border-[var(--border)] rounded-lg hover:border-purple-500 transition-colors font-medium text-lg">
+          <button
+            @click="scrollToTemplates"
+            class="px-8 py-4 border-2 border-border-secondary rounded-lg hover:border-accent-hover transition-colors font-medium text-lg"
+            >
             See an example workspace
-          </button>
+            </button>
         </div>
       </div>
 
       <!-- Footnote -->
-      <p class="text-center text-xs text-[var(--muted)]">Sources available on request.</p>
+      <!-- <p class="text-center text-sm text-[var(--muted)]">Sources available on request.</p> -->
     </div>
   </section>
 </template>

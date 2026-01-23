@@ -18,7 +18,7 @@ const selectIdea = (prompt: string) => {
 </script>
 
 <template>
-  <section class="py-20 px-4 sm:px-6 lg:px-8 bg-[var(--surface)]">
+  <section class="py-10 px-4 sm:px-6 lg:px-8 bg-[var(--surface)]">
     <div class="max-w-7xl mx-auto">
       <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Get started with these ideas...</h2>
 

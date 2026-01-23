@@ -3,7 +3,7 @@
       :type="type"
       :disabled="disabled || loading"
       :class="[
-        'relative cursor-pointer disabled:cursor-not-allowed  inline-flex items-center justify-center font-medium py-1.5  text-sm rounded-md focus:outline-none transition',
+        'relative cursor-pointer disabled:cursor-not-allowed  inline-flex items-center justify-center font-medium py-1.5  text-sm rounded-xl focus:outline-none transition',
         sizeClass,
         variantClass,
         block ? 'w-full' : '',
@@ -35,7 +35,7 @@
 import { computed } from 'vue' // ✅ this is required
 
 const props = defineProps<{
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'gray'
   size?: 'sm' | 'md' | 'lg' | 'base'
   type?: 'button' | 'submit' | 'reset'
   block?: boolean
@@ -54,13 +54,15 @@ const variantClass = computed(() => {
       primary: 'bg-accent text-white hover:bg-accent-hover',
       secondary: '!bg-transparent text-card  border-card border',
       danger: 'bg-red-500 text-white hover:bg-red-600',
-      ghost: 'bg-transparent text-text-primary hover:bg-gray-100 hover:text-black'
+      ghost: 'bg-transparent text-text-primary hover:bg-gray-100 hover:text-black',
+      gray: '!bg-transparent text-card  border-input border',
     },
     outlined: {
       primary: 'bg-transparent text-text-primary border border-black hover:bg-black hover:text-white',
       secondary: 'bg-transparent text-[#FFFFFFCC] border border-border FFFFFF4D] ',
       danger: 'bg-transparent text-red-500 border border-red-500 hover:bg-red-500 hover:text-white',
-      ghost: 'bg-transparent text-text-secondary  border border-gray-300 hover:bg-gray-100'
+      ghost: 'bg-transparent text-text-secondary  border border-gray-300 hover:bg-gray-100',
+      gray: 'bg-transparent text-text-secondary border border-border d9d9d9] ',
     }
   }
 

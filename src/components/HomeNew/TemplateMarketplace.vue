@@ -48,7 +48,7 @@ const modules = [
               :class="[
                 'px-8 py-3 rounded-lg font-medium text-sm transition-all duration-300',
                 activeView === 'templates'
-                  ? 'bg-purple-600 text-white shadow-md'
+                  ? 'bg-accent text-white shadow-md'
                   : 'text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)]'
               ]"
             >
@@ -59,7 +59,7 @@ const modules = [
               :class="[
                 'px-8 py-3 rounded-lg font-medium text-sm transition-all duration-300',
                 activeView === 'marketplace'
-                  ? 'bg-purple-600 text-white shadow-md'
+                  ? 'bg-accent text-white shadow-md'
                   : 'text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)]'
               ]"
             >
@@ -87,9 +87,9 @@ const modules = [
               class="bg-[var(--card)] border border-[var(--border)] rounded-xl p-6 hover:border-purple-500 transition-all duration-300 hover:shadow-lg group cursor-pointer"
             >
               <div class="text-3xl mb-4">{{ template.icon }}</div>
-              <h4 class="font-semibold mb-2 group-hover:text-purple-600 transition-colors">{{ template.name }}</h4>
+              <h4 class="font-semibold mb-2 group-hover:text-accent transition-colors">{{ template.name }}</h4>
               <p class="text-sm text-[var(--muted)] mb-4">{{ template.description }}</p>
-              <button class="text-sm text-purple-600 font-medium hover:text-purple-700 flex items-center gap-1">
+              <button class="text-sm text-accent font-medium hover:text-accent-hover flex items-center gap-1">
                 Use Template
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -100,7 +100,7 @@ const modules = [
         </div>
 
         <!-- Marketplace Modules -->
-        <div v-else-if="activeView === 'marketplace'" key="marketplace" id="marketplace">
+        <div v-else-if="activeView === 'marketplace'" key="marketplace" id="templates">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div
               v-for="module in modules"
@@ -110,9 +110,9 @@ const modules = [
               <div class="w-12 h-12 bg-purple-600/10 rounded-lg flex items-center justify-center text-2xl mb-4">
                 {{ module.icon }}
               </div>
-              <h4 class="font-semibold mb-2 text-lg group-hover:text-purple-600 transition-colors">{{ module.name }}</h4>
+              <h4 class="font-semibold mb-2 text-lg group-hover:text-accent-hover transition-colors">{{ module.name }}</h4>
               <p class="text-sm text-[var(--muted)] mb-6">{{ module.description }}</p>
-              <button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm w-full">
+              <button class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium text-sm w-full">
                 Add to workspace
               </button>
             </div>

@@ -131,7 +131,7 @@ const joinWaitlist = () => {
       </div>
 
       <!-- Email Capture -->
-      <div class="max-w-md mx-auto bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 text-center">
+      <div class="max-w-md mx-auto bg-[var(--card)] border border-[var(--border)] rounded-2xl lg:p-8 lg:px-0 px-2 lg:py-0 py-4 text-center">
         <h3 class="text-xl font-semibold mb-3">Get notified when we launch</h3>
         <p class="text-[var(--muted)] mb-6">Be the first to know about early access pricing and special offers.</p>
 
@@ -145,7 +145,7 @@ const joinWaitlist = () => {
           />
           <button
             @click="joinWaitlist"
-            class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium whitespace-nowrap"
+            class="lg:px-6 px-2 lg:py-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium whitespace-nowrap"
           >
             Join Waitlist
           </button>

@@ -21,7 +21,7 @@ const tryPrompt = (prompt: string) => {  emit('try-prompt', prompt)}
         <div
           v-for="audience in audiences"
           :key="audience.title"
-          class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 hover:border-purple-500 transition-all duration-300 hover:shadow-lg"
+          class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 hover:border-accent-hover transition-all duration-300 hover:shadow-lg"
         >
           <!-- Icon -->
           <div
@@ -37,7 +37,7 @@ const tryPrompt = (prompt: string) => {  emit('try-prompt', prompt)}
           <!-- CTA -->
           <button
             @click="tryPrompt(audience.prompt)"
-            class="text-purple-600 hover:text-purple-700 font-medium flex items-center gap-2 group"
+            class="text-accent hover:text-accent-hover font-medium flex items-center gap-2 group"
           >
             Try prompt
             <svg
