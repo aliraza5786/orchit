@@ -276,7 +276,7 @@
 
         <!-- Formatting Sidebar -->
         <div
-          v-if="showFormatSidebar"
+          v-if="showFormatSidebar && canAssignCard && canEditCard && canCreateCard"
           class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-x-hidden overflow-y-auto flex flex-col"
         >
           <!-- Header -->
@@ -397,7 +397,7 @@
 
       <!-- hyperlink pop up -->
       <div
-        v-if="showHyperlinkModal"
+        v-if="showHyperlinkModal && canAssignCard && canEditCard && canCreateCard"
         class="fixed inset-0 bg-black/30 flex items-center justify-center"
       >
         <div class="bg-white p-6 rounded-xl w-80">
@@ -1893,6 +1893,28 @@ function setupToolbarObserver() {
   // Inject immediately first time
   injectToolbarButton();
 }
+const contextMenuExtendOptions: any[] = [];
+
+if (canEditCard || canEditSheet) {
+  contextMenuExtendOptions.push({
+    name: "Update Node",
+    onclick: () => {
+      if (showFormatSidebar.value) showFormatSidebar.value = false;
+      const node = selectedMindNode.value?.nodeObj;
+      if (!node) return;
+      selectCardHandler(node);
+    },
+  });
+
+  contextMenuExtendOptions.push({
+    name: "Add Hyperlink",
+    onclick: () => {
+      openHyperlinkModal(async () => {
+        await saveNodeStyle();
+      });
+    },
+  });
+}
 
 watchEffect(() => {
   if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value) return;
@@ -1905,13 +1927,8 @@ watchEffect(() => {
       mindMapInstance.value = null;
     }
 
-    // Track temporary nodes (created but not yet edited/saved)
     const temporaryNodeIds = new Set<string>();
-
-    // Track nodes already saved to backend
     const savedNodeIds = new Set<string>();
-
-    // Keep track of sheet nodes
     const createdSheetNodeIds = new Set<string>();
 
     const instance = new MindElixir({
@@ -1924,56 +1941,34 @@ watchEffect(() => {
       locale: "en",
       overflowHidden: false,
       contextMenuOption: {
-        Update: true,
-        extend: [
-          {
-            name: "Update Node",
-            onclick: () => {
-              if (!canEditCard && !canEditSheet) return;
-              if (showFormatSidebar.value) showFormatSidebar.value = false;
-              const node = selectedMindNode.value?.nodeObj;
-              if (!node) return;
-              selectCardHandler(node);
-            },
-          },
-          {
-            name: "Add Hyperlink",
-            onclick: () => {
-              if (!canEditCard && !canEditSheet) return;
-              openHyperlinkModal(async () => {
-                await saveNodeStyle();
-              });
-            },
-          },
-        ],
+      Update: canEditCard && canEditSheet && canCreateCard,
+      extend: contextMenuExtendOptions,
       },
     });
 
     mindMapInstance.value = instance;
     instance.init({ nodeData: rootNode });
+
     nextTick(() => {
       setTimeout(() => {
         instance.toCenter();
-      }, 300); // Increase from 100ms to 300ms
+      }, 300);
     });
 
-    // Setup toolbar button after instance is initialized
     nextTick(() => {
       setupToolbarObserver();
     });
-    // Selected node
+
     instance.bus.addListener("selectNode", (nodeObj: any) => {
       if (!nodeObj) return;
       selectedMindNode.value = { nodeObj };
     });
 
-    // Render node styles
     instance.bus.addListener("renderNode" as any, (event: any) => {
       if (!event?.nodeObj || !event?.element) return;
       applyNodeStyle(event.nodeObj, event.element as HTMLElement);
     });
 
-    // Helper: get parent sheet of a node
     const getSheetParent = (node: any): any => {
       let current = node;
       while (current) {
@@ -1983,45 +1978,42 @@ watchEffect(() => {
       return null;
     };
 
-    // Node operations
     instance.bus.addListener("operation", async (data: any) => {
-      if (!data) return;
+      if (!data && canCreateCard && canEditCard && canCreateSheet) {
+        toast.error("You do not have permission to perform this action.");
+        return;
+      }
 
-      // Drag & drop / reorder cards
       if (
         data.name === "moveNode" ||
         data.name === "moveNodeBefore" ||
         data.name === "moveNodeAfter"
       ) {
+        if (!canEditCard) return;
+
         const draggedNode = data.obj;
         const targetNode = data.target;
 
         if (!draggedNode || draggedNode.unique_name !== "card") return;
         if (!targetNode) return;
 
-        // Determine source List
         const sourceList = draggedNode._originalParent || draggedNode.parent;
         if (!sourceList || sourceList.unique_name !== "List") return;
 
-        // Determine target List
         const targetList =
           targetNode.unique_name === "List" ? targetNode : targetNode.parent;
         if (!targetList || targetList.unique_name !== "List") return;
 
-        // Determine target Sheet
         const targetSheet = getSheetParent(targetList);
         if (!targetSheet) return;
 
-        // Compute new index inside target List
         const newIndex = targetList.children.findIndex(
           (c: any) => c.id === draggedNode.id
         );
         if (newIndex === -1) return;
 
-        // Important: Store the original parent before the move
         draggedNode._originalParent = targetList;
 
-        // Call the reorder function
         await handleReorderCard({
           workspace_id: workspaceId.value,
           card_id: draggedNode.id,
@@ -2034,27 +2026,21 @@ watchEffect(() => {
         return;
       }
 
-      // Remove node (cards only)
       if (data.name === "removeNode") {
-      const removedNode = data.obj;
-      if (!removedNode || !removedNode.id) return;
-      if (removedNode.unique_name !== "card") return;
+        const removedNode = data.obj;
+        if (!removedNode || !removedNode.id) return;
+        if (removedNode.unique_name !== "card") return;
+        if (!canDeleteCard) return;
 
-      // Permission check
-      if (!canDeleteCard) return;
+        selectedDeleteId.value = removedNode.id;
+        await deleteTicket();
+        return;
+      }
 
-      selectedDeleteId.value = removedNode.id;
-      await deleteTicket();
-      return;
-    }
-
-
-      // Add child or sibling nodes
       if (data.name === "addChild" || data.name === "insertSibling") {
         const newNode = data.obj;
         if (!newNode || !newNode.id) return;
 
-        // Permissions check
         if (newNode.unique_name === "sheet" && !canCreateSheet) return;
         if (newNode.unique_name === "List" && !canCreateVariable) return;
         if (newNode.unique_name === "card" && !canCreateCard) return;
@@ -2063,21 +2049,19 @@ watchEffect(() => {
         return;
       }
 
-
-      // Begin edit
       if (data.name === "beginEdit") {
         const editingNode = data.obj;
         console.log("editing node", editingNode);
         return;
       }
 
-      // Finish edit
       if (data.name === "finishEdit") {
         const editedNode = data.obj;
         if (!editedNode || !editedNode.id) return;
 
         const isTemporaryNode = temporaryNodeIds.has(editedNode.id);
         const isAlreadySaved = savedNodeIds.has(editedNode.id);
+
         if (!isTemporaryNode && !isAlreadySaved) return;
         if (isAlreadySaved) return;
 
@@ -2091,7 +2075,6 @@ watchEffect(() => {
             return;
           }
 
-          // Create Sheet
           if (
             parentNode.unique_name === "root" &&
             !createdSheetNodeIds.has(editedNode.id)
@@ -2100,6 +2083,7 @@ watchEffect(() => {
               savedNodeIds.delete(editedNode.id);
               return;
             }
+
             createdSheetNodeIds.add(editedNode.id);
             try {
               await createNewSheet({
@@ -2119,12 +2103,12 @@ watchEffect(() => {
             return;
           }
 
-          // Create Card
           if (parentNode.unique_name === "List") {
             if (!canCreateCard) {
-            savedNodeIds.delete(editedNode.id);
-            return;
-          }
+              savedNodeIds.delete(editedNode.id);
+              return;
+            }
+
             try {
               const payload = createDefaultCardPayload(
                 {
@@ -2133,10 +2117,12 @@ watchEffect(() => {
                 },
                 parentNode
               );
+
               if (payload.variables) {
                 payload.variables["card-description"] =
                   "This is a default description";
               }
+
               await addTicket(payload);
             } catch (err) {
               console.error("Error creating card:", err);
@@ -2145,9 +2131,8 @@ watchEffect(() => {
             return;
           }
 
-          // Create List (placeholder)
           if (parentNode.unique_name === "sheet") {
-            if (!canDeleteSheet) return;
+            if (!canCreateVariable) return;
             try {
               console.log("Creating new list under sheet...");
             } catch (err) {
@@ -2161,6 +2146,7 @@ watchEffect(() => {
     });
   });
 });
+
 watch(
   isDark,
   () => {
