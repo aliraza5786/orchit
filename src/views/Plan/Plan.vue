@@ -15,7 +15,7 @@
       <template v-if="isStartingSprint">
         <KanbanSkeleton />
       </template>
-      <div class="h-screen w-full flex flex-col">
+      <div class="h-screen w-full flex flex-col -mt-3.5">
   <div class="overflow-x-auto w-full flex-1">
     <div class="min-w-[1200px] h-full flex flex-col">
   <div
