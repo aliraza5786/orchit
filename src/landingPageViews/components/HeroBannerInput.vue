@@ -11,7 +11,7 @@ const props = defineProps<{
   theme?: any;
   placeholder?: string;
 }>();
-
+const theme = props.theme;
 const workspaceStore = useWorkspaceStore();
 const authStore = useAuthStore();
 const router = useRouter();
