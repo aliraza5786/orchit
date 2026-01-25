@@ -14,7 +14,25 @@
           <BaseTextField v-model="password" label="Password" placeholder="Password" size="lg" type="password"
             :error="!!passwordError" :message="passwordError" @blur="touched.password.value = true" />
           <Button :disabled="isPending" size="lg" :block="true" type="submit">
-            {{ isPending ? 'Creating Account...' : 'Continue' }}
+            {{ isPending ? 'Creating Account...' : 'Sign up' }}
+          </Button>
+          <div class="flex items-center">
+            <div class="flex-grow border-t border-border"></div>
+            <span class="mx-3 text-[12px] text-primary">OR</span>
+            <div class="flex-grow border-t border-border"></div>
+          </div>
+          <Button
+            size="lg"
+            :block="true"
+            appearance="outlined"
+            variant="ghost"
+            type="button"
+            @click="loginWithGoogle"
+          >
+            <template #icon>
+              <img src="../../assets/LandingPageImages/header-icons/google.png" class="w-5 h-5 mr-4" />
+            </template>
+            Continue with google
           </Button>
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
@@ -41,7 +59,11 @@ import { useMutation } from '@tanstack/vue-query';
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue';
 import BaseTextField from '../../components/ui/BaseTextField.vue';
 import Button from '../../components/ui/Button.vue';
-import { register } from '../../services/auth';
+import { register, socialLogin } from '../../services/auth';
+import { googleTokenLogin } from "vue3-google-login";
+import axios from "axios";
+import { useAuthStore } from "../../stores/auth";
+import { useWorkspaceStore } from "../../stores/workspace";
 
 const router = useRouter();
 
@@ -56,6 +78,9 @@ const touched = {
   email: ref(false),
   password: ref(false),
 };
+
+const authStore = useAuthStore();
+const workspaceStore = useWorkspaceStore();
 
 // Validation
 const nameError = computed(() => {
@@ -75,9 +100,16 @@ const emailError = computed(() => {
 const passwordError = computed(() => {
   if (!touched.password.value) return '';
   if (!password.value) return 'Password is required';
-  if (password.value.length < 6) return 'Password must be at least 6 characters';
+
+  // Regex for strong password
+  const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\W_]).{8,}$/;
+  if (!strongPasswordRegex.test(password.value)) {
+    return 'Password must be at least 8 characters and include uppercase, lowercase, and a special character';
+  }
+
   return '';
 });
+
 
 const isFormValid = computed(() =>
   !nameError.value && !emailError.value && !passwordError.value
@@ -93,6 +125,65 @@ const { mutate, isPending } = useMutation({
     errorMessage.value = error?.response?.data?.message || 'Something went wrong';
   },
 });
+
+const { mutateAsync: googleLoginMutate } = useMutation({ mutationFn: socialLogin });
+
+async function loginWithGoogle() {
+  try {
+    const response = await googleTokenLogin();
+    const userInfo = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${response.access_token}` },
+    });
+
+    const data = await googleLoginMutate({
+      u_email: userInfo.data.email,
+      u_social_id: userInfo.data.sub,
+      u_social_type: "google",
+      u_full_name: userInfo.data.name,
+    });
+
+    handleLoginSuccess(data);
+  } catch (err: any) {
+    if (err?.message !== "Popup closed") {
+      errorMessage.value =
+        err?.response?.data?.message || "Google Login failed. Please try again.";
+    }
+  }
+}
+
+async function handleLoginSuccess(data: any) {
+    localStorage.setItem("token", data?.data?.token);
+    await authStore.bootstrap();
+
+    const intentStr = localStorage.getItem('post_auth_intent');
+    if (intentStr) {
+      try {
+        const intent = JSON.parse(intentStr);
+        localStorage.removeItem('post_auth_intent');
+        
+        if (intent.aiResponse) {
+          workspaceStore.setWorkspace(intent.aiResponse);
+        }
+        
+        router.push(intent.path || "/dashboard");
+        return;
+      } catch (e) {
+        console.error("Failed to parse post_auth_intent", e);
+        localStorage.removeItem('post_auth_intent');
+      }
+    }
+    
+    if (data?.data?.is_new_user) {
+      router.push("/create-profile");
+      return;
+    }
+
+    if (workspaceStore.pricing) {
+      router.push(`/dashboard?stripePayment=true`);
+    } else {
+      router.push("/dashboard");
+    }
+}
 
 function handleRegister() {
   errorMessage.value = '';

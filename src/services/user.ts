@@ -1,16 +1,31 @@
 import api from "../libs/api";
 import { useQuery } from '@tanstack/vue-query'
-
-
+import { useAuthStore } from '../stores/auth'
+import { watch } from 'vue'
 export const getProfile = () => api.get('/profile').then(r => r.data)
 
 
 export function useProfile() {
-  return useQuery({
+  const auth = useAuthStore()
+
+  const query = useQuery({
     queryKey: ['me'],
     queryFn: getProfile,
-    staleTime: 5 * 60 * 1000, // 5 min: adjust as needed
+    enabled: auth.isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   })
+
+  watch(
+    () => query.error.value,
+    (err) => {
+      if (err) {
+        auth.logout()
+      }
+    }
+  )
+
+  return query
 }
 
 export function useCompanyId() {
@@ -18,7 +33,11 @@ export function useCompanyId() {
     queryKey: ['me'],
     queryFn: getProfile,
     staleTime: 5 * 60 * 1000,
-    select: (p) => p.data.companies, // only expose what you need
+    select: (p) => {
+      const companies = p.data?.companies
+      if (Array.isArray(companies)) return companies[0] || null
+      return companies || null
+    },
   })
 }
 export function useUserId() {

@@ -6,7 +6,7 @@ import BlogCardSkeleton from './skelton/BlogCardSkeleton.vue';
 import CategoryTabsSkeleton from './skelton/CategoryTabsSkeleton.vue';
 import { usePublishedBlogs } from '../../queries/useBlogs.ts';
 
-const { theme } = useTheme();
+const { isDark } = useTheme();
 
 // Active tab
 const activeTab = ref('all')
@@ -80,7 +80,7 @@ const filteredBlogs = computed(() => {
       <button @click="activeTab = 'all'"
         class="px-[16px] py-[8px] rounded-full font-manrope text-[14px] font-medium transition border cursor-pointer"
         :class="[
-          theme === 'dark'
+          isDark
             ? activeTab === 'all'
               ? 'bg-white text-black border-white'
               : 'bg-bg-charcoal text-white border-bg-charcoal'
@@ -94,7 +94,7 @@ const filteredBlogs = computed(() => {
       <button v-for="cat in categories" :key="cat.slug" @click="activeTab = cat.slug"
         class="px-[16px] py-[8px] rounded-full font-manrope text-[14px] font-medium transition border cursor-pointer"
         :class="[
-          theme === 'dark'
+          isDark
             ? activeTab === cat.slug
               ? 'bg-white text-black border-white'
               : 'bg-bg-charcoal text-white border-bg-charcoal'

@@ -1,23 +1,34 @@
 import { useQuery } from "@tanstack/vue-query";
 import { request } from "../libs/api";
 import { useApiMutation } from "../libs/vq";
-import { unref, type Ref } from "vue";
+import { unref, type Ref, computed } from "vue"; 
 // import type { DashboardTeamsData } from "../types";
 
-export const usePeopleList = (workspace_id: any, viewID: any, options = {}) => {
+export const usePeopleList = (
+  workspace_id: Ref<string>,
+  viewID: Ref<string>,
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["people-lists", viewID],
+    queryKey: [
+      "people-lists",
+      unref(workspace_id),
+      unref(viewID),
+    ],
+    staleTime: 5 * 60 * 1000,
     queryFn: ({ signal }) =>
-      request<any>({
-        url: `workspace/teams/${workspace_id}/people-grouped?groupBy=${unref(
-          viewID
-        )}`,
+      request({
+        url: `workspace/teams/${unref(workspace_id)}/people-grouped`,
         method: "GET",
+        params: {
+          groupBy: unref(viewID),
+        },
         signal,
       }),
     ...options,
   });
 };
+
 // create team
 type createTeam = { payload: any };
 export const useCreateTeam = (options = {}) =>
@@ -181,22 +192,189 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
       }),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    refetchOnMount: "always",
     enabled: !!unref(workspace_id),
     ...options,
   });
 };
-export const useDashboardActivities = (workspace_id: Ref<string> | string, options = {}) => {
+ export const useDashboardActivities = (
+  workspace_id: Ref<string> | string,
+  options = {}
+) => {
+  const workspaceIdRef = computed(() => unref(workspace_id))
+
   return useQuery({
-    queryKey: ["dashboard-activities", workspace_id],
+    queryKey: computed(() => [
+      'dashboard-activities',
+      workspaceIdRef.value,
+    ]),
+
     queryFn: ({ signal }) =>
       request<any>({
-        url: `workspace/${unref(workspace_id)}/activities`,
+        url: `workspace/${workspaceIdRef.value}/activities`,
+        method: 'GET',
+        signal,
+      }),
+
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+
+    gcTime: 10 * 60 * 1000,
+
+    enabled: computed(() => !!workspaceIdRef.value),
+
+    ...options,
+  })
+}
+
+export const ReOrderList = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["reorder-list-people"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/workspace/${vars.id}/roles/sort-order`,
+          method: "PUT",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+export const ReOrderCard = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["reorder-card-people"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `workspace/roles/${vars.id}/team/sort-order`,
+          method: "PUT",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+
+
+// work space roles
+export const useWorkspaceRoles = (
+  params: { company_id: any; workspace_id?: any },
+  options = {}
+) => {
+  const { company_id, workspace_id } = params;
+
+  return useQuery({
+    queryKey: ["workspace-roles", company_id, workspace_id],
+    queryFn: ({ signal }) => {
+      let url = `roles/workspace-access-roles?company_id=${unref(company_id)}`;
+      
+      if (unref(workspace_id)) {
+        url += `&workspace_id=${unref(workspace_id)}`;
+      }
+
+      return request<any>({
+        url,
+        method: "GET",
+        signal,
+      });
+    },
+    enabled: !!unref(company_id),
+    ...options,
+  });
+};
+
+
+
+ interface AssignRolePayload {
+  id: string;
+  workspace_access_role_id: string;
+}
+
+export const useAssignRole = (options = {}) => {
+  return useApiMutation<any, AssignRolePayload>(
+    {
+      key: ["assign-role"],
+    } as any,
+    {
+      mutationFn: (vars: AssignRolePayload) =>
+        request({
+          url: `common/team/${vars.id}`,
+          method: "PUT",
+          data: { workspace_access_role_id: vars.workspace_access_role_id },
+        }),
+      ...(options as any),
+    } as any
+  );
+};
+
+// team role
+export const useWorkspaceTeamRoles = (workspace_id: any, options = {}) => {
+  return useQuery({
+    queryKey: ["team-roles", workspace_id],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/workspace-roles/${workspace_id.value}`,
         method: "GET",
         signal,
       }),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    enabled: !!unref(workspace_id),
+    enabled: !!workspace_id,
     ...options,
   });
 };
+
+
+
+// custom roles permissions
+export const useAllPermissions = (
+  params: { scope?: any; workspace_id?: any },
+  options = {}
+) => {
+  const { scope, workspace_id } = params;
+  return useQuery({
+    queryKey: ["all-permissions", scope?.value, workspace_id?.value],
+    queryFn: ({ signal }) => {
+      let url = `roles/permissions/grouped`;
+      const queryParams = new URLSearchParams();
+      
+      if (scope?.value) queryParams.append('scope', scope.value);
+      if (workspace_id?.value) queryParams.append('workspace_id', workspace_id.value);
+      
+      const queryString = queryParams.toString();
+      if (queryString) url += `?${queryString}`;
+
+      return request<any>({
+        url,
+        method: "GET",
+        signal,
+      });
+    },
+    ...options,
+  });
+};
+
+// create custom roles
+
+export const useCreateRole = (options = {}) =>
+  useApiMutation<any>(
+    {
+      key: ["create-role"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/roles/workspace-access-roles`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+
+ 

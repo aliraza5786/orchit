@@ -2,12 +2,12 @@
     <transition name="fade">
       <div
         v-if="modelValue"
-        class="fixed inset-0 z-50 bg-black/10 backdrop-blur-xs flex items-center justify-center"
+        class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center"
         @click="emit('update:modelValue', false)"
         @keydown.esc="emit('update:modelValue', false)"
       >
         <div
-          class="bg-bg-body w-full max-w-[860px] max-h-[80vh] border border-border/70 overflow-auto mx-4 rounded-xl shadow-lg shadow-accent/30 py-6 relative"
+          class="bg-bg-body w-full max-w-[860px] max-h-[80vh] overflow-auto mx-4 rounded-xl shadow-lg shadow-accent/30 py-6 relative"
           :class="[{'!max-w-[500px]': size=='md'},modalClass]"
           role="dialog"
           aria-modal="true"

@@ -29,7 +29,6 @@ const props = withDefaults(defineProps<{
   options: Opt[]
   size?: 'sm' | 'md' | 'lg'
   disabled?: boolean
-  beforeChange?: (val: string) => boolean | void
 }>(), {
   size: 'md',
   disabled: false
@@ -71,10 +70,6 @@ const indicatorStyle = computed(() => ({
 /* ---------- events ---------- */
 function choose(v: string) {
   if (props.disabled) return
-  // STOP SWITCHING IF beforeChange RETURNS FALSE
-  if (props.beforeChange && props.beforeChange(v) === false) {
-    return
-  }
   if (v !== props.modelValue) emit('update:modelValue', v)
 }
 function onKeydown(e: KeyboardEvent) {

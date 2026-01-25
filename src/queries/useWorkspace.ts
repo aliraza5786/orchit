@@ -94,23 +94,23 @@ export const useWorkspacesPrompt = () =>
     method: "GET",
   });
 
-export const useWorkspaces = (page: any, limit: any) => {
-  return useQuery(
-    {
-      queryKey: [ 'workspaces', page,limit],
-      queryFn: () =>
-        request({
-          url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}`,
-          method: "GET",
-        }),
-    }
-    
-    // {
-    //   // retry: false,
-    //   staleTime: 5 * 60 * 1000,
-    //   gcTime: 10 * 60 * 1000,
-    // }
-  );
+export const useWorkspaces = (page: Ref<number>, limit: Ref<number>) => {
+  return useQuery({
+    queryKey: computed(() => [
+      "workspaces",
+      unref(page),
+      unref(limit),
+    ]),
+    queryFn: () =>
+      request({
+        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}`,
+        method: "GET",
+      }),
+
+    staleTime: 0,
+    refetchOnMount: "always",
+    placeholderData: (previousData) => previousData,
+  });
 };
 
 export const useWorkspacesTitles = () =>
@@ -120,21 +120,34 @@ export const useWorkspacesTitles = () =>
     method: "GET",
   });
 
-export const useSingleWorkspace = (id: string | number) => {
+
+
+type WorkspaceId = string | number | undefined;
+type MaybeRef<T> = T | Ref<T>;
+
+export const useSingleWorkspace = (id: MaybeRef<WorkspaceId>) => {
+  const resolvedId = computed(() => unref(id));
+
   return useApiQuery(
     {
-      key: keys.singleWorkspace(id),
-      url: `/workspace/${id}`,
-      method: "GET",
+      key: computed(() =>
+  resolvedId.value ? keys.singleWorkspace(resolvedId.value) : ["singleWorkspace"]
+),
+      url: computed(() => `/workspace/${resolvedId.value}`),
+      method: 'GET',
       params: { is_archive: false },
-      enabled: !!id,
+      enabled: computed(() => !!resolvedId.value),
     },
     {
       staleTime: 3 * 60 * 1000,
       gcTime: 10 * 60 * 1000,
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      retry: false,
     }
   );
 };
+
 
 export const useWorkspacesModules = () =>
   useApiQuery({
@@ -355,3 +368,14 @@ export const useDeleteWorkspace = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+
+
+  export const useSingleWorkspaceCompany = (workspaceIdCompany: Ref<string | number>, options = {}) => {
+  return useQuery({
+    queryKey: ["workspaceCompany", workspaceIdCompany],
+    queryFn: ({ signal }) => request({ url: `/workspace/${unref(workspaceIdCompany)}`, method: "GET", signal }),
+    ...options,
+  });
+};
+
