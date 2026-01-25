@@ -1,118 +1,59 @@
 <template>
-  <BaseModal
-    v-model="isOpen"
-    size="lg"
-    :modalClass="'!max-w-[900px]'"
-  >
-    <div class="px-3 sm:px-6 ">
-      <h2 class="text-2xl font-semibold text-text-primary mb-6">
-        Account Settings
-      </h2>
+  <BaseModal v-model="isOpen" @update:modelValue="() => router.push('/')" size="lg" :modalClass="'!max-w-[900px]'">
+    <div class="px-6">
+      <h2 class="text-2xl font-semibold text-text-primary mb-6">Account Settings</h2>
 
-      <Tabs
-        :tabs="['Profile', 'Subscription']"
-        :defaultTab="route.query.stripePayment ? 1 : 0"
-      >
+      <Tabs :tabs="['Profile', 'Subscription']" :defaultTab="route.query.stripePayment ? 1 : 0">
         <template #Profile>
           <div class="py-4" v-if="profileData">
             <div class="space-y-6">
-              <div class="flex items-center gap-6 max-md:gap-2">
+              <div class="flex items-center gap-6">
                 <div class="relative group">
                   <div
-                    class="w-24 h-24 max-md:w-12 max-md:h-12 max-md:text-sm rounded-full bg-orange-500 flex items-center justify-center text-text-primary text-2xl font-bold border-4 border-border overflow-hidden"
-                  >
-                    <img
-                      v-if="avatarPreview || profileData.u_profile_image"
-                      :src="avatarPreview || profileData.u_profile_image"
-                      class="w-full h-full object-cover"
-                      alt="Profile"
-                    />
+                    class="w-24 h-24 rounded-full bg-orange-500 flex items-center justify-center text-text-primary text-2xl font-bold border-4 border-border overflow-hidden">
+                    <img v-if="avatarPreview || profileData.u_profile_image"
+                      :src="avatarPreview || profileData.u_profile_image" class="w-full h-full object-cover"
+                      alt="Profile" />
                     <span v-else>{{ initials }}</span>
                   </div>
-                  <button
-                    type="button"
-                    class="absolute inset-0 rounded-full bg-black/60 transition grid place-items-center text-white text-xs cursor-pointer"
-                    :class="
-                      isUploading
-                        ? 'opacity-100'
-                        : 'opacity-0 group-hover:opacity-100'
-                    "
-                    :disabled="isUploadingAvatar"
-                    @click="triggerAvatarPicker"
-                    aria-label="Change profile picture"
-                  >
-                    <div
-                      class="flex flex-col items-center justify-center gap-1"
-                    >
-                      <span
-                        v-if="isUploadingAvatar || isUploading"
-                        class="inline-block h-6 w-6 rounded-full border-2 border-white border-t-transparent animate-spin"
-                        aria-hidden="true"
-                      ></span>
+                  <button type="button"
+                    class="absolute inset-0 rounded-full bg-black/60  transition grid place-items-center text-white text-xs cursor-pointer"
+                    :class="isUploading ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
+                    :disabled="isUploadingAvatar" @click="triggerAvatarPicker" aria-label="Change profile picture">
+                    <div class="flex flex-col items-center justify-center gap-1">
+                      <span v-if="isUploadingAvatar || isUploading"
+                        class="inline-block h-6 w-6 rounded-full  border-2 border-white border-t-transparent animate-spin"
+                        aria-hidden="true"></span>
                       <i v-else class="fa-solid fa-camera text-xl"></i>
-                      <span
-                        v-if="!isUploadingAvatar && !isUploading"
-                        class="text-xs"
-                        >Change</span
-                      >
+                      <span v-if="!isUploadingAvatar && !isUploading" class="text-xs">Change</span>
                     </div>
                   </button>
-                  <input
-                    ref="avatarInputRef"
-                    type="file"
-                    accept="image/*"
-                    class="hidden"
-                    @change="onAvatarPicked"
-                  />
+                  <input ref="avatarInputRef" type="file" accept="image/*" class="hidden" @change="onAvatarPicked" />
                 </div>
 
                 <div class="flex-1">
-                  <h3
-                    class="text-xl max-md:text-sm font-semibold capitalize text-text-primary"
-                  >
+                  <h3 class="text-xl font-semibold capitalize text-text-primary">
                     {{ form.fullName }}
                   </h3>
-                  <p class="text-text-secondary max-md:text-xs">
-                    {{ form.email }}
-                  </p>
+                  <p class="text-text-secondary">{{ form.email }}</p>
                 </div>
               </div>
 
               <hr class="border-border" />
 
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <BaseTextField
-                  label="Full Name"
-                  placeholder="Enter your full name"
-                  v-model="form.fullName"
-                />
-                <BaseTextField
-                  label="Email Address"
-                  v-model="form.email"
-                  disabled
-                  class="cursor-not-allowed"
-                />
+                <BaseTextField label="Full Name" placeholder="Enter your full name" v-model="form.fullName" />
+                <BaseTextField label="Email Address" v-model="form.email" disabled class=" cursor-not-allowed" />
               </div>
 
               <hr class="border-border" />
 
               <div v-if="profileData.companies">
-                <h4 class="text-sm font-semibold text-text-secondary mb-3">
-                  Organization Details
-                </h4>
+                <h4 class="text-sm font-semibold text-text-secondary mb-3">Organization Details</h4>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <InfoRow
-                    label="Organization"
-                    :value="profileData.companies.title"
-                  />
-                  <InfoRow
-                    label="Company Size"
-                    :value="profileData.companies.company_size"
-                  />
-                  <InfoRow
-                    label="Job Title"
-                    :value="profileData.companies.role?.title"
-                  />
+                  <InfoRow label="Organization" :value="profileData.companies.title" />
+                  <InfoRow label="Company Size" :value="profileData.companies.company_size" />
+                  <InfoRow label="Job Title" :value="profileData.companies.role?.title" />
                 </div>
               </div>
 
@@ -129,24 +70,19 @@
                 </div>
               </div> -->
 
+
+
               <div class="flex justify-end gap-3 pt-4">
                 <Button variant="secondary" @click="cancelChanges">
                   Cancel
                 </Button>
-                <Button
-                  variant="primary"
-                  @click="saveChanges"
-                  :disabled="isSaving"
-                >
-                  {{ isSaving ? "Saving..." : "Save Changes" }}
+                <Button variant="primary" @click="saveChanges" :disabled="isSaving">
+                  {{ isSaving ? 'Saving...' : 'Save Changes' }}
                 </Button>
               </div>
             </div>
           </div>
-          <div
-            v-else-if="isLoading"
-            class="py-8 text-center text-text-secondary"
-          >
+          <div v-else-if="isLoading" class="py-8 text-center text-text-secondary">
             Loading profile...
           </div>
           <div v-else class="py-8 text-center text-red-500">
@@ -155,175 +91,99 @@
         </template>
 
         <template #Subscription>
-          <div
-            class="w-full flex justify-center items-center py-10"
-            v-if="isPending || isConfirming"
-          >
+          <div class="w-full h-full flex justify-center items-center" v-if="isPending || isConfirming">
             <!-- Centered spinner -->
 
-            <div
-              role="status"
-              aria-label="Loading"
-              class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
-            ></div>
+            <div role="status" aria-label="Loading"
+              class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
+
+
           </div>
-          <div v-else class="py-4 overflow-y-auto max-h-full">
-            <div class="space-y-8">
-              <!-- Current Plan Section -->
-              <div class="bg-bg-body rounded-2xl p-6 border border-border shadow-sm">
-                <h3 class="text-lg font-semibold text-text-primary mb-4">
-                  Current Plan
-                </h3>
+          <div v-else class="py-4">
+            <div class="space-y-6">
+              <div class="bg-bg-body  rounded-xl p-6 border border-border">
+                <h3 class="text-lg font-semibold text-text-primary mb-4">Current Plan</h3>
                 <div class="flex items-center justify-between mb-4">
                   <div>
-                    <p class="text-2xl font-bold text-text-primary">
-                      {{ currentPackage?.package?.name }}
-                    </p>
-                    <p class="text-sm text-text-secondary">
-                      {{ currentPlan.billingCycle }}
-                    </p>
+                    <p class="text-2xl font-bold text-text-primary">{{ currentPackage?.package?.name }}</p>
+                    <p class="text-sm text-text-secondary">{{ currentPlan.billingCycle }}</p>
                   </div>
                   <div class="text-right">
-                    <p class="text-2xl font-bold text-text-primary">
-                      {{
-                        currentPackage?.package?.currencySymbol +
-                        currentPackage?.package?.amount
-                      }}
-                    </p>
-                    <p class="text-xs text-text-secondary">
-                      per
-                      {{
-                        currentPlan?.billingCycle === "Monthly"
-                          ? "month"
-                          : "year"
-                      }}
-                    </p>
+                    <p class="text-2xl font-bold text-text-primary">{{ currentPackage?.package?.currencySymbol +
+                      currentPackage?.package?.amount }}</p>
+                    <p class="text-xs text-text-secondary">per {{ currentPlan?.billingCycle === 'Monthly' ? 'month' :
+                      'year' }}</p>
                   </div>
                 </div>
-                <p class="text-sm text-text-secondary mb-4">
-                  Next billing date:
-                  {{
-                    formatDate(currentPackage?.renewsAt) +
-                    `, ${extractYear(currentPackage?.renewsAt)}`
-                  }}
-                </p>
-                <h3 class="text-lg font-semibold text-text-primary mb-4">
-                  Usage & Limits
-                </h3>
+                <p class="text-sm text-text-secondary mb-4">Next billing date: {{ formatDate(currentPackage?.renewsAt) +
+                  `, ${extractYear(currentPackage?.renewsAt)}` }}</p>
+                <h3 class="text-lg font-semibold text-text-primary mb-4">Usage & Limits</h3>
 
                 <div class="space-y-4">
-                  <div
-                    v-for="(item, index) in currentPackage?.features"
-                    :key="index"
-                  >
+                  <div v-for="(item, index) in currentPackage?.features" :key="index">
                     <div class="flex items-center justify-between mb-2">
-                      <div class="flex flex-col">
-                        <span class="text-sm font-medium text-text-primary">{{
-                          item.name
-                        }}</span>
-                        <span class="text-xs font-medium text-text-secondary">{{
-                          item.description
-                        }}</span>
+                      <div class="flex flex-col ">
+
+                        <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
+                        <span class="text-xs font-medium text-text-secondary">{{ item.description }}</span>
                       </div>
-                      <span class="text-sm text-text-secondary"
-                        >{{ item?.usage.current }} {{ item?.usage.unit }} /
-                        {{ item.limits.limit }} {{ item?.limits?.unit }}</span
-                      >
+                      <span class="text-sm text-text-secondary">{{ item?.usage.current }} {{ item?.usage.unit }} / {{
+                        item.limits.limit }} {{ item?.limits?.unit }}</span>
                     </div>
-                    <div
-                      class="h-2 w-full bg-border/60 rounded-full overflow-hidden"
-                    >
-                      <div
-                        class="h-full bg-accent rounded-full transition-all"
-                        :style="{ width: item?.usage.percentage + '%' }"
-                      ></div>
+                    <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
+                      <div class="h-full bg-accent rounded-full transition-all"
+                        :style="{ width: item?.usage.percentage + '%' }"></div>
                     </div>
                     <!-- <p class="text-xs text-text-secondary mt-1">{{ item?.usage.limits?.storageGB }} {{item?.limits?.unit}} remaining</p> -->
                   </div>
+
+
                 </div>
               </div>
 
-              <!-- Interval Toggle -->
-              <div class="flex flex-col items-center gap-4">
-                <div class="inline-flex p-1 bg-bg-body border border-border rounded-xl">
-                  <button
-                    v-for="option in intervalOptions"
-                    :key="option.value"
-                    @click="selectedInterval = option.value"
-                    class="px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                    :class="selectedInterval === option.value
-                      ? 'bg-accent text-white shadow-md'
-                      : 'text-text-secondary hover:text-text-primary'"
-                  >
-                    {{ option.label }}
-                  </button>
-                </div>
-              </div>
 
-              <!-- Available Plans Section -->
-              <div v-if="currentPackage?.nextPackages?.length" class="space-y-6">
-                <h3 class="text-xl font-bold text-text-primary text-center">Available Upgrades</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div
-                    v-for="nextPackage in currentPackage?.nextPackages"
-                    :key="nextPackage.id"
-                    class="bg-bg-body rounded-2xl border border-border overflow-hidden flex flex-col transition-all duration-300 hover:border-accent hover:shadow-xl group"
-                  >
-                    <!-- Header -->
-                    <div class="p-6 border-b border-border bg-gradient-to-br from-bg-body to-bg-card">
-                      <div class="flex items-center justify-between mb-2">
-                        <span class="px-3 py-1 bg-accent/10 text-accent text-xs font-bold uppercase tracking-wider rounded-full">
-                          {{ nextPackage.name }}
-                        </span>
+              <div class="bg-bg-body gap-6 items-center flex  rounded-xl p-6 border border-border"
+                v-if="currentPackage?.nextPackage">
+                <div class=" border-r border-border pr-6 min-w-80">
+
+                  <h1 class="mb-2 uppercase">Upgrade to {{ currentPackage?.nextPackage?.name }}</h1>
+                  <div v-if="currentPackage?.nextPackage" class="bg-bg-body rounded-xl  transition-all hover:shadow-lg">
+                    <div class="text-left mb-4">
+                      <h3 class="text-xl font-bold text-text-primary mb-2">{{ currentPackage.nextPackage.name }}</h3>
+                      <div class="mb-2">
+                        <span class="text-3xl font-bold text-text-primary">{{
+                          currentPackage?.nextPackage?.pricing?.month?.amount +
+                          currentPackage?.nextPackage?.pricing?.month?.currencySymbol }} </span>
+                        <span class="text-sm text-text-secondary">/ {{
+                          currentPackage?.nextPackage?.pricing?.month?.interval
+                        }}</span>
                       </div>
-                      <div class="flex items-baseline gap-1 mt-4">
-                        <span class="text-4xl font-bold text-text-primary">
-                          {{ getPriceInfo(nextPackage, selectedInterval).currencySymbol }}{{ getPriceInfo(nextPackage, selectedInterval).amount }}
-                        </span>
-                        <span class="text-text-secondary">/ {{ selectedInterval === 'month' ? 'mo' : 'yr' }}</span>
-                      </div>
-                      <p v-if="selectedInterval === 'year'" class="text-xs text-green-500 font-medium mt-1">
-                        Save {{ getPriceInfo(nextPackage, 'year').currencySymbol }}{{ getPriceInfo(nextPackage, 'year').originalAmount - getPriceInfo(nextPackage, 'year').amount }} per year
-                      </p>
-                      <p class="text-sm text-text-secondary mt-4 line-clamp-2">
-                        {{ nextPackage.description }}
-                      </p>
-                    </div>
-
-                    <!-- Features -->
-                    <div class="p-6 flex-1 bg-bg-body/50">
-                      <p class="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4">What's included</p>
-                      <ul class="space-y-3">
-                        <li
-                          v-for="(feature, index) in nextPackage?.features"
-                          :key="index"
-                          class="flex items-start gap-3 text-sm text-text-primary"
-                        >
-                          <i class="fa-solid fa-circle-check text-accent mt-0.5 text-base"></i>
-                          <span class="font-medium">{{ formatFeature(feature) }}</span>
-                        </li>
-                      </ul>
-                    </div>
-
-                    <!-- Footer / Action -->
-                    <div class="p-6 bg-bg-body border-t border-border">
-                      <Button
-                        variant="primary"
-                        class="w-full !py-3 font-bold text-base"
-                        @click="pay(nextPackage)"
-                        :disabled="isUpgrading && upgradingPackageId === nextPackage.id"
-                      >
-                        <i v-if="isUpgrading && upgradingPackageId === nextPackage.id" class="fa-solid fa-spinner fa-spin mr-2"></i>
-                        {{ isUpgrading && upgradingPackageId === nextPackage.id ? "Upgrading..." : `Upgrade to ${nextPackage.name}` }}
-                      </Button>
+                      <p class="text-sm text-text-secondary">{{ currentPackage?.nextPackage?.description }}</p>
                     </div>
                   </div>
+                  <!-- <form action="/create-checkout-session" method="POST"> -->
+                  <Button class="mt-3 block w-full uppercase" @click="pay(currentPackage?.nextPackage)"> {{ isUpgrading
+                    ? 'Upgrading...' : 'UPGRADE' }}</Button>
+                  <!-- </form> -->
+                </div>
+                <div>
+
+                  <h3 class="text-lg font-semibold text-text-primary mb-3">Plan Features</h3>
+                  <ul class="space-y-2">
+                    <li v-for="(feature, index) in currentPackage?.nextPackage?.features" :key="index"
+                      class="flex items-center gap-2 text-sm text-text-secondary">
+                      <i class="fa-solid fa-check text-green-500"></i>
+                      <span>{{ feature?.description }}</span>
+                    </li>
+                  </ul>
+
                 </div>
               </div>
             </div>
           </div>
         </template>
-        <!--
+
+        <!-- 
         <template #Pricing>
           <div class="py-4">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -370,287 +230,183 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
-import BaseModal from "../../../components/ui/BaseModal.vue";
-import Tabs from "../../../components/ui/Tabs.vue";
-import BaseTextField from "../../../components/ui/BaseTextField.vue";
-import Button from "../../../components/ui/Button.vue";
-import InfoRow from "../../../components/ui/InfoRow.vue";
-import { useQuery, useMutation } from "@tanstack/vue-query";
-import {
-  getProfile,
-  updateProfile,
-} from "../../../services/user";
-import { usePrivateUploadFile } from "../../../queries/useCommon";
-import { toast } from "vue-sonner";
-import {
-  confirmPayment,
-  useCurrentPackage,
-  useUpgradePackage,
-} from "../../../queries/usePackages";
-import { extractYear, formatDate } from "../../../utilities/FormatDate";
-import { useRoute, useRouter } from "vue-router";
-import { useWorkspaceStore } from "../../../stores/workspace";
-const workspaceStore = useWorkspaceStore();
+import { ref, computed, watch, onMounted } from 'vue'
+import BaseModal from '../../../components/ui/BaseModal.vue'
+import Tabs from '../../../components/ui/Tabs.vue'
+import BaseTextField from '../../../components/ui/BaseTextField.vue'
+import Button from '../../../components/ui/Button.vue'
+import InfoRow from '../../../components/ui/InfoRow.vue'
+import { useQuery, useMutation } from '@tanstack/vue-query'
+import { getProfile, updateProfile } from '../../../services/user'
+import { usePrivateUploadFile } from '../../../queries/useCommon'
+import { toast } from 'vue-sonner'
+import { confirmPayment, useCurrentPackage, useUpgradePackage } from '../../../queries/usePackages'
+import { extractYear, formatDate } from '../../../utilities/FormatDate'
+import { useRoute, useRouter } from 'vue-router'
+import { useWorkspaceStore } from '../../../stores/workspace'
+const workspaceStore = useWorkspaceStore()
 const route = useRoute();
 const router = useRouter();
+const { data: currentPackage, refetch: reftechCurrentPackage, isPending } = useCurrentPackage();
+const sessionId = route.query.session_id;
 
-
-const {
-  data: currentPackage,
-  refetch: reftechCurrentPackage,
-  isPending,
-} = useCurrentPackage();
-
-const selectedInterval = ref('month');
-const intervalOptions = [
-  { label: 'Monthly', value: 'month' },
-  { label: 'Yearly (20% Off)', value: 'year' }
-];
-
-const formatFeature = (feature: any) => {
-  const limits = feature.limits;
-  if (!limits) return feature.description || feature.name;
-
-  if (feature.key === 'no-of-workspaces' && limits.maxWorkspaces) {
-    return `${limits.maxWorkspaces} Workspaces`;
+const { mutate: confirm, isPending: isConfirming } = confirmPayment({
+  sessionId: sessionId, interval: 'month'
+}, {
+  onSuccess: () => {
+    reftechCurrentPackage();
+    router.push('/')
   }
-  if (feature.key === 'storage' && limits.storageGB) {
-    return `${limits.storageGB} GB Storage`;
+})
+onMounted(async () => {
+  const sessionId = route.query.session_id;
+  console.log(route.query.session_id, sessionId);
+  if (sessionId) {
+    confirm({ packageId: await currentPackage?.value.nextPackage?.id, })
   }
-  if (feature.key === 'team_members' && limits.maxTeamMembers) {
-    return `${limits.maxTeamMembers} Team Members`;
-  }
-  if (feature.key === 'api_requests' && limits.requestsPerMonth) {
-    return `${limits.requestsPerMonth.toLocaleString()} Tokens`;
-  }
-
-  return feature.description || feature.name;
-};
-
-const getPriceInfo = (pkg: any, interval: any) => {
-  const monthPrice = pkg?.pricing?.month?.amount || 0;
-  const currency = pkg?.pricing?.month?.currencySymbol || "$";
-  
-  if (interval === 'year') {
-    const totalYear = monthPrice * 12;
-    const discountedYear = Math.round(totalYear * 0.8); // 20% discount
-    return {
-      amount: discountedYear,
-      currencySymbol: currency,
-      interval: 'year',
-      originalAmount: totalYear
-    };
-  }
-  
-  return {
-    amount: monthPrice,
-    currencySymbol: currency,
-    interval: 'month',
-    originalAmount: monthPrice
-  };
-};
-
-const sessionId = route.query.session_id as string;
-const packageId = route.query.packageId as string;
-const interval = (route.query.interval as string) || "month";
-
-const { mutate: confirm, isPending: isConfirming } = confirmPayment(
-  {
-    sessionId: sessionId,
-    interval: interval,
-    packageId: packageId
-  },
-  {
-    onSuccess: () => {
-      reftechCurrentPackage();
-      toast.success("Subscription upgraded successfully!");
-      router.push("/");
-    },
-  }
-);
-const hasConfirmed = ref(false)
-
-onMounted(() => {
-  // Check for stored upgrade intent from Pricing page
-  const intentStr = localStorage.getItem("post_auth_upgrade");
-  if (intentStr && route.query.stripePayment) {
-    try {
-      const intent = JSON.parse(intentStr);
-      localStorage.removeItem("post_auth_upgrade");
-      
-      // Trigger upgrade immediately
-      upgradingPackageId.value = intent.packageId;
-      upgradePackage({
-        packageId: intent.packageId,
-        interval: intent.interval || "month",
-      });
-    } catch (e) {
-      console.error("Failed to parse post_auth_upgrade", e);
-    }
-  }
-
-  if (route.query.stripePayment && sessionId && !hasConfirmed.value) {
-    hasConfirmed.value = true;
-    confirm({});
-  }
-});
-
+})
 const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
   onSuccess: async (data: any) => {
-    window.open(data?.checkoutUrl);
-  },
-});
-const upgradingPackageId = ref<string | null>(null);
-function pay(p: any) { 
-  const id = p?._id || p?.id
-  if (!id) return
-  upgradingPackageId.value = id;
+    window.open(data?.checkoutUrl)
+  }
+})
+function pay(p: any) {
   upgradePackage({
-    packageId: id,
-    interval: selectedInterval.value,
-  });
+    "packageId": p?.id,
+    "interval": "month",
+  })
 }
 const props = defineProps<{
-  modelValue: boolean;
-}>();
+  modelValue: boolean
+}>()
 
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(['update:modelValue'])
 
 const isOpen = computed({
   get: () => props.modelValue,
-  set: (value) => emit("update:modelValue", value),
-});
+  set: (value) => emit('update:modelValue', value)
+})
 
-const {
-  data: profile,
-  isLoading,
-  refetch,
-} = useQuery({
-  queryKey: ["profile"],
+const { data: profile, isLoading, refetch } = useQuery({
+  queryKey: ['profile'],
   queryFn: getProfile,
   enabled: computed(() => props.modelValue),
-});
-watch(
-  () => currentPackage.value,
-  () => {
-    workspaceStore.setLimit(currentPackage.value);
+
+})
+watch(() => currentPackage.value, () => {
+  workspaceStore.setLimit(currentPackage.value)
+  if (route.query.stripePayment) {
+    confirm({
+      sessionId: currentPackage.value?.sessionId, packageId: currentPackage?.value.nextPackage?.id, interval: 'month'
+    })
   }
-);
-const profileData = computed(() => profile.value?.data || null);
-console.log("profile data", profileData.value);
+})
+const profileData = computed(() => profile.value?.data || null)
 
 const form = ref({
-  fullName: "",
-  email: "",
-  jobTitle: "",
-  department: "",
-  location: "",
-});
+  fullName: '',
+  email: '',
+  jobTitle: '',
+  department: '',
+  location: ''
+})
 
-const avatarInputRef = ref<HTMLInputElement | null>(null);
-const avatarPreview = ref<string>("");
-const isUploadingAvatar = ref(false);
-const uploadedAvatarUrl = ref<string>("");
+const avatarInputRef = ref<HTMLInputElement | null>(null)
+const avatarPreview = ref<string>('')
+const isUploadingAvatar = ref(false)
+const uploadedAvatarUrl = ref<string>('')
 
 // const tickets = ref([
 //   { id: 1, title: 'Fix dashboard layout', project: 'Orchit AI Dashboard' },
 //   { id: 2, title: 'Update profile endpoint', project: 'API Integration' }
 // ])
 
-watch(
-  profileData,
-  (data) => {
-    if (!data) return;
-    form.value.fullName = data.u_full_name || "";
-    form.value.email = data.u_email || "";
-    form.value.jobTitle = data.u_job_title || "";
-    form.value.department = data.u_department || "";
-    form.value.location = data.u_location || "";
-  },
-  { immediate: true }
-);
+watch(profileData, (data) => {
+  if (!data) return
+  form.value.fullName = data.u_full_name || ''
+  form.value.email = data.u_email || ''
+  form.value.jobTitle = data.u_job_title || ''
+  form.value.department = data.u_department || ''
+  form.value.location = data.u_location || ''
+}, { immediate: true })
 
 const initials = computed(() =>
   form.value.fullName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
+    .split(' ')
+    .map(n => n[0])
+    .join('')
     .toUpperCase()
-);
+)
 
 function triggerAvatarPicker() {
-  avatarInputRef.value?.click();
+  avatarInputRef.value?.click()
 }
 
-const { mutate: uploadFileMutation, isPending: isUploading } =
-  usePrivateUploadFile({
-    onSuccess: (data: any) => {
-      const url = data?.data?.url;
-      if (!url) {
-        toast.error("Upload succeeded but no URL was returned.");
-        isUploadingAvatar.value = false;
-        return;
-      }
-      uploadedAvatarUrl.value = url;
-      isUploadingAvatar.value = false;
-      toast.success("Profile picture uploaded successfully");
-    },
-    onError: (err: any) => {
-      console.error("File upload failed", err);
-      toast.error("File upload failed. Please try again.");
-      isUploadingAvatar.value = false;
-      avatarPreview.value = "";
-    },
-  });
+const { mutate: uploadFileMutation, isPending: isUploading } = usePrivateUploadFile({
+  onSuccess: (data: any) => {
+    const url = data?.data?.url
+    if (!url) {
+      toast.error('Upload succeeded but no URL was returned.')
+      isUploadingAvatar.value = false
+      return
+    }
+    uploadedAvatarUrl.value = url
+    isUploadingAvatar.value = false
+    toast.success('Profile picture uploaded successfully')
+  },
+  onError: (err: any) => {
+    console.error('File upload failed', err)
+    toast.error('File upload failed. Please try again.')
+    isUploadingAvatar.value = false
+    avatarPreview.value = ''
+  }
+})
 
 async function onAvatarPicked(e: Event) {
-  const input = e.target as HTMLInputElement;
-  if (!input?.files?.length) return;
+  const input = e.target as HTMLInputElement
+  if (!input?.files?.length) return
 
-  const file = input.files[0];
-  avatarPreview.value = URL.createObjectURL(file);
-  isUploadingAvatar.value = true;
+  const file = input.files[0]
+  avatarPreview.value = URL.createObjectURL(file)
+  isUploadingAvatar.value = true
 
-  const formData = new FormData();
-  formData.append("file", file);
-  uploadFileMutation(formData);
+  const formData = new FormData()
+  formData.append('file', file)
+  uploadFileMutation(formData)
 }
 
 const { mutate: updateUser, isPending: isSaving } = useMutation({
   mutationFn: (payload: any) => updateProfile(payload),
   onSuccess: () => {
-    toast.success("Profile updated successfully");
-    refetch();
-    uploadedAvatarUrl.value = "";
-    avatarPreview.value = "";
+    toast.success('Profile updated successfully')
+    refetch()
+    uploadedAvatarUrl.value = ''
+    avatarPreview.value = ''
   },
   onError: () => {
-    toast.error("Failed to update profile.");
-  },
-});
+    toast.error('Failed to update profile.')
+  }
+})
 
 function saveChanges() {
   const payload = {
     u_full_name: form.value.fullName,
-    ...(uploadedAvatarUrl.value && {
-      u_profile_image: uploadedAvatarUrl.value,
-    }),
-  };
-  updateUser(payload);
+    ...(uploadedAvatarUrl.value && { u_profile_image: uploadedAvatarUrl.value })
+  }
+  updateUser(payload)
 }
 
 function cancelChanges() {
-  // if (profileData.value) {
-  //   form.value.fullName = profileData.value.u_full_name || "";
-  //   form.value.jobTitle = profileData.value.u_job_title || "";
-  //   form.value.department = profileData.value.u_department || "";
-  //   form.value.location = profileData.value.u_location || "";
-  // }
-  // avatarPreview.value = "";
-  // uploadedAvatarUrl.value = "";
-  isOpen.value = false;
-  // router.push("/");
+  if (profileData.value) {
+    form.value.fullName = profileData.value.u_full_name || ''
+    form.value.jobTitle = profileData.value.u_job_title || ''
+    form.value.department = profileData.value.u_department || ''
+    form.value.location = profileData.value.u_location || ''
+  }
+  avatarPreview.value = ''
+  uploadedAvatarUrl.value = ''
+  isOpen.value = false
+  router.push('/')
 }
 
 // function getStatusBadge(status: string) {
@@ -667,19 +423,19 @@ function cancelChanges() {
 // }
 
 const currentPlan = ref({
-  name: "Pro",
-  price: "$29",
-  billingCycle: "Monthly",
-  nextBillingDate: "January 15, 2026",
+  name: 'Pro',
+  price: '$29',
+  billingCycle: 'Monthly',
+  nextBillingDate: 'January 15, 2026',
   features: [
-    "Unlimited workspaces",
-    "100 GB storage",
-    "Up to 10 team members",
-    "Priority support",
-    "Advanced analytics",
-    "Custom integrations",
-  ],
-});
+    'Unlimited workspaces',
+    '100 GB storage',
+    'Up to 10 team members',
+    'Priority support',
+    'Advanced analytics',
+    'Custom integrations'
+  ]
+})
 
 // const usageData = ref({
 //   storage: {
