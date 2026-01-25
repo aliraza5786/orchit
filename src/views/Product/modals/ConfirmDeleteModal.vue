@@ -46,7 +46,7 @@
         <div class="mt-6 flex justify-end gap-2">
           <button
             type="button"
-            class="px-3 py-2 cursor-pointer text-sm rounded-md border border-ui bg-card text-body hover:bg-surface-2 disabled:opacity-50"
+            class="px-3 py-2 text-sm rounded-md border border-ui bg-card text-body hover:bg-surface-2 disabled:opacity-50"
             :disabled="loading"
             @click.stop="close"
           >
@@ -139,7 +139,6 @@ const canConfirm = computed(() => {
   })
   
   function close() {
-    typed.value= ''
     emit('cancel')
     open.value = false
   }
@@ -147,7 +146,6 @@ const canConfirm = computed(() => {
   function confirm() {
     if (!canConfirm.value || props.loading) return
     emit('confirm')
-        typed.value= ''
   }
   
   function tryConfirm() {

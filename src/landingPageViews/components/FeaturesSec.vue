@@ -23,7 +23,7 @@
                         class="project_box 
                      transition-all duration-300 hover:scale-[1.02] w-[100%] sm:w-[50%]  md:w-[33.333%] flex  px-[12px]">
                         <div class="card_inner_box rounded-[24px] lg:rounded-[40px] py-[28px]   px-[32px] md:p-[32px] lg:p-[40px] w-full"
-                            :class="isDark ? 'bg-bg-charcoal' : 'bg-[#F1EEFF]'">
+                            :class="theme === 'dark' ? 'bg-bg-charcoal' : 'bg-[#F1EEFF]'">
                             <figure class="mb-[20px] lg:mb-[30px] xl:mb-[40px]">
                                 <img :src="project.img" :alt="project.name + ' image'" width="100%" class="w-full"
                                     loading="lazy" />
@@ -55,7 +55,7 @@ import ligtAiproject from '@assets/LandingPageImages/whyusespace/lightAiproject.
 import lightCollboration from '@assets/LandingPageImages/whyusespace/lightCollaboration.webp';
 import lightProjectivity from '@assets/LandingPageImages/whyusespace/lightProductivity.webp';
 import { useTheme } from "../../composables/useTheme";
-const { isDark } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 interface Project {
     name: string;
@@ -67,17 +67,17 @@ const projects = computed<Project[]>(() => [
   {
     name: "Smarter projectivity",
     description: "Automatically organize tasks and workflows with AI to keep projects moving forward.",
-    img: isDark.value ? projectivity : lightProjectivity,
+    img: theme.value === "dark" ? projectivity : lightProjectivity,
   },
   {
     name: "AI Project Builder",
     description: "Instantly generate complete projects with AI, from setup to delivery in just a few clicks.",
-    img: isDark.value ? aiproject : ligtAiproject,
+    img: theme.value === "dark" ? aiproject : ligtAiproject,
   },
   {
     name: "Effortless Collaboration",
     description: "Connect people, files, and tools with AI that adapts to every interaction.",
-    img: isDark.value ? collboration : lightCollboration,
+    img: theme.value === "dark" ? collboration : lightCollboration,
   },
 ]);
 </script>
