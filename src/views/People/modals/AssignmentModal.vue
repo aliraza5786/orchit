@@ -9,7 +9,7 @@
             <!-- Custom input field for search and adding email -->
             <div class="relative mb-4">
                 <input v-model="query" type="text" placeholder="Search or add email"
-                    class="w-full h-11 rounded-[6px] border border-border bg-bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+                    class="w-full h-11 rounded-xl border border-border bg-bg-input px-3 text-sm outline-none focus:ring-2 focus:ring-primary/40"
                     @keydown.enter.prevent="addEmailFromSearch" />
             </div>
 

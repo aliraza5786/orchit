@@ -1,372 +1,288 @@
 <template>
     <BaseModal v-model="model" size="lg">
         <!-- Header -->
-        <div class="flex justify-between items-start px-6 border-b border-border pb-4">
-            <h2 class="text-xl font-semibold">
-                {{ sheet?._id ? 'Update Sheet' : 'Add a new Sheet' }}
-            </h2>
+        <div class="flex justify-between items-start  px-6 border-b border-border pb-4">
+            <h2 class="text-xl font-semibold">{{ sheet?._id ? 'Update sheet ' : 'Add a new Sheet' }}</h2>
+
         </div>
 
         <!-- Tabs -->
-        <!-- <div class="px-6 pt-4 border-b border-border flex gap-6 text-sm font-medium">
-            <button v-for="t in tabs" :key="t.value" @click="currentTab = t.value" class="pb-3 relative"
-                :class="currentTab === t.value ? 'text-text-primary' : 'text-text-secondary'">
-                {{ t.label }}
-
-                <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-accent"></div>
-            </button>
+        <!-- <div class="px-6">
+            <SwitchTab :options="tabs" v-model="currentTab" />
         </div> -->
 
         <!-- Body -->
-        <div class="px-6 py-6 space-y-6">
-
-            <!-- MANUAL TAB -->
+        <div class="px-6 py-4 space-y-6">
+            <!-- 1) MANUAL TAB -->
             <section v-if="currentTab === 'manual'" class="space-y-4">
+                <!-- Icon picker placeholder -->
                 <IconPicker v-model="form.icon" />
-
                 <BaseTextField v-model="form.title" label="Sheet name" size="lg" placeholder="Design Ideas"
                     :error="!!errors.title" :message="errors.title" />
 
-                <BaseTextField v-model="form.description" label="Description" size="lg" textarea
-                    placeholder="A short description" :error="!!errors.description" :message="errors.description" />
-
+                <BaseTextField v-model="form.description" label="Description" size="lg"
+                    placeholder="a small description" textarea :error="!!errors.description"
+                    :message="errors.description" />
                 <div class="flex justify-end gap-2 pt-2">
-                    <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
+                    <button class="px-4 py-2 rounded-md text-sm text-text-secondary  border"
                         @click="close">Cancel</button>
-                    <Button class="px-4" @click="submitManual">
-                        {{ creatingSheet || isUpdating ? 'Saving...' : 'Save' }}
-                    </Button>
+                    <!-- replace the commented button -->
+                    <Button class="px-4" @click="submitManual">{{ creatingSheet || isDeleting ? 'Saving...' : 'Save'
+                        }}</Button>
                 </div>
             </section>
 
-            <!-- AI TAB -->
-            <section v-else-if="currentTab === 'ai'" class="space-y-6">
-
-                <!-- AI Input -->
-                <div class="relative w-full">
-                    <div
-                        :class="`${isAiPending || isPending ? 'neon-flow-border' : ''} bg-bg-input flex h-[200px] p-4 rounded-2xl relative`">
-                        <textarea v-if="!isRecording && !audioURL" v-model="description"
-                            placeholder="Ask Orchit AI to create a sheet..."
-                            class="w-full h-full resize-none outline-none bg-transparent text-sm" />
-
-                        <!-- Record Button -->
-                        <transition v-if="!description" name="fade-slide" appear>
-                            <div class="absolute bottom-4 right-4">
-                                <AudioRecorder v-model="description" v-model:isRecording="isRecording"
-                                    v-model:hasAudio="audioURL" />
-                            </div>
-                        </transition>
-
-                        <!-- Generate Button -->
-                        <transition v-else name="rotate-fade" appear>
-                            <div @click="handleGenerateSheet()"
-                                class="absolute bottom-4 right-4 w-9 h-9 bg-accent rounded-md flex items-center justify-center cursor-pointer shadow">
-                                <i class="text-white fa-solid fa-arrow-right"></i>
-                            </div>
-                        </transition>
-                    </div>
+            <!-- 2) GENERATE WITH AI TAB -->
+            <section v-else-if="currentTab === 'ai'" class="space-y-4">
+                <textarea v-model="aiPrompt" rows="6"
+                    class="w-full rounded-lg p-3 text-sm min-h-[186px] outline-none border-border border bg-bg-input"
+                    placeholder="Generate a project management board for a software development team with tasks categorized as 'Backlog', 'In Progress', 'Review', and 'Done'."></textarea>
+                <div class="text-center text-xs text-text-secondary -500">Or try these examples:</div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button v-for="ex in examples" :key="ex"
+                        class="text-left border border-border hover:border-accent bg-bg-body text-text-primary rounded-xl p-3 text-sm hover:bg-gray-50 "
+                        @click="aiPrompt = ex">“{{ ex
+                        }}”</button>
                 </div>
-                <div class="flex w-full px-6 text-sm text-text-secondary  items-center gap-4 mt-6">
-                    <hr class=" flex-auto text-border">
-                    <span>OR</span>
-                    <hr class="flex-auto text-border">
+                <div class="flex justify-end gap-2 pt-2">
+                    <button class="px-4 py-2 rounded-md text-sm text-text-secondary  border"
+                        @click="close">Cancel</button>
+                    <Button class="px-4" @click="generateBoard">Add board</Button>
                 </div>
-                <div class="px-6 mt-5">
-                    <Button variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
-                        Create Manually
-                    </Button>
-                </div>
-                <!-- Suggestions -->
-                <!-- <p class="text-xs text-text-secondary text-center">Or try these examples:</p>
-  
-          <div class="flex gap-3 overflow-x-auto">
-            <div v-if="isSuggestionPending" class="animate-pulse flex gap-3 w-full">
-              <div v-for="n in 3" :key="n" class="h-20 w-48 bg-border/30 rounded-lg"></div>
-            </div>
-  
-            <div v-else class="flex gap-3">
-              <div
-                v-for="s in suggestionData"
-                :key="s.description"
-                @click="() => typeEffect(s.description)"
-                class="cursor-pointer border border-border/30 px-3 py-2 rounded-lg text-xs hover:border-accent transition"
-              >
-                {{ s.description }}
-              </div>
-            </div>
-          </div> -->
             </section>
 
-            <!-- TEMPLATES TAB -->
-            <!-- <section v-else class="space-y-4">
-                <input v-model="search" class="w-full border rounded-lg p-2 text-sm border-border"
-                    placeholder="Search" />
+            <!-- 3) TEMPLATES TAB -->
+            <section v-else class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <input v-model="search" class="flex-1 border rounded-lg p-2 text-sm border-border D6D7DA]"
+                        placeholder="Search" />
+                </div>
 
-                <div class="flex flex-wrap gap-2 text-xs">
-                    <button v-for="tag in tags" :key="tag.name" class="px-3.5 py-1.5 rounded-md"
-                        :class="activeTags.has(tag.name) ? 'bg-black text-white' : 'bg-bg-body text-text-secondary'"
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <button v-for="tag in tags" :key="tag.name" class="px-3.5 py-1.5 rounded-md flex  "
+                        :class="activeTags.has(tag.name) ? 'bg-black text-white ' : ' bg-bg-body cursor-pointer text-text-secondary -700'"
                         @click="toggleTag(tag.name)">
-                        {{ tag.name }}
+                        {{ tag.name }}<div v-if="tag.count"
+                            class="ml-1 opacity-70 bg-bg-surface rounded-full  text-text-primary p-0.5 aspect-square  w-4 h-4 text-[10px]">
+                            {{ tag.count }}</div>
                     </button>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <button v-for="tpl in filteredTemplates" :key="tpl.id"
-                        class="border border-border rounded-xl overflow-hidden text-left hover:shadow-sm"
+                        class="border border-border 2B2C3026] rounded-xl overflow-hidden text-left hover:shadow-sm"
                         @click="chooseTemplate(tpl)">
-                        <img :src="tpl.cover" class="w-full h-36 object-cover" />
+                        <img src="../../../assets/temp/a40c90e37b9e8e45317b9cba411ad897833a9d01.jpg"
+                            class="w-full h-36 object-cover" />
                         <div class="p-3 py-4">
-                            <div class="text-base font-medium">{{ tpl.title }}</div>
-                            <div class="text-sm opacity-75 mt-1 line-clamp-1">{{ tpl.subtitle }}</div>
+                            <div class="text-base font-medium text-text-primary">{{ tpl.title }}</div>
+                            <div class="text-sm text-[#2B2C30B2] mt-1 line-clamp-1">{{ tpl.subtitle }}</div>
                         </div>
                     </button>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
                     <Button variant="secondary" @click="close">Cancel</Button>
-                    <Button :disabled="!chosenTemplate" @click="submitTemplate">
-                        {{ creatingSheet ? 'Adding...' : 'Add board' }}
-                    </Button>
+                    <Button varaint="primary" class="px-4" :disabled="!chosenTemplate" @click="submitTemplate">{{
+                        creatingSheet ? 'Adding...' : 'Add board' }}</Button>
                 </div>
-            </section> -->
+            </section>
         </div>
     </BaseModal>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
-import IconPicker from '../components/IconPicker.vue'
-import AudioRecorder from '../../../views/CreateWorkspace/components/AudioRecorder.vue'
-
-// import { useRoute } from 'vue-router'
-import { useQueryClient } from '@tanstack/vue-query'
-import { useRouteIds } from '../../../composables/useQueryParams'
-// import { useOpenAIGeneration } from '../../../queries/useOpenAIGeneration'
-// import { extractJSONFromResponse } from '../../../utilities/extractJson'
-import { useCreateWorkspaceSheet, useCreateWorkspaceSheetAI, useUpdateWorkspaceSheet } from '../../../queries/useSheets'
 import Button from '../../../components/ui/Button.vue'
-// import { useSuggestions } from '../../../queries/useWorkspace'
-import { usePermissions } from '../../../composables/usePermissions'
-
-const props = defineProps<{ modelValue: boolean, sheet: any }>()
-const { canCreateSheet, canEditSheet } = usePermissions()
-
-const emit = defineEmits(['update:modelValue'])
-
+// import IconPicker from '../components/IconPicker.vue';
+import { useCreateWorkspaceSheet, useUpdateWorkspaceSheet } from '../../../queries/useSheets';
+import { useRoute } from 'vue-router';
+import { useQueryClient } from '@tanstack/vue-query';
+import { useOpenAIGeneration } from '../../../queries/useOpenAIGeneration';
+import { extractJSONFromResponse } from '../../../utilities/extractJson';
+import { useRouteIds } from '../../../composables/useQueryParams';
+import IconPicker from '../components/IconPicker.vue';
+const route = useRoute();
 const queryClient = useQueryClient()
 const { workspaceId, moduleId } = useRouteIds()
+type IconPrefix = 'fa';
+type IconRef = { prefix: IconPrefix; iconName: string }
 
-const form = ref({ title: props?.sheet?.title, description: props?.sheet?.description, icon: props?.sheet?.icon })
-const errors = ref<{ title?: string; description?: string }>({})
-watch(props, () => {
-    form.value = props.sheet
+const form = ref<{ title: string, description: string, icon: IconRef | null }>({
+    title: '', description: '', icon: null
 })
+
+// ⬅️ add simple error state
+const errors = ref<{ title?: string; description?: string }>({})
+
+// ⬅️ tiny validator
 function validateManual() {
-    const next: any = {}
-    if (!form.value.title.trim()) next.title = 'Please enter a sheet name.'
-    if (!form.value.description.trim()) next.description = 'Please enter a description.'
+    const next: { title?: string; description?: string } = {}
+    if (!form.value.title?.trim()) next.title = 'Please enter a sheet name.'
+    if (!form.value.description?.trim()) next.description = 'Please enter a description.'
     errors.value = next
     return Object.keys(next).length === 0
 }
 
+function submitManual() {
+    // ⬅️ block submit if invalid
+    if (!validateManual()) return
+    if ( props.sheet?._id)
+        updateSheet({
+            sheet_id: props.sheet?._id
+            , icon: form.value.icon,
+            variables: {
+                'sheet-title': form.value.title,
+                'sheet-description': form.value.description
+            },
+            is_ai_generated: false,
+            workspace_id: workspaceId.value,
+            workspace_module_id: moduleId.value,
+        }
+
+        )
+    else createSheet({
+        icon: form.value.icon,
+        variables: {
+            'sheet-title': form.value.title,
+            'sheet-description': form.value.description
+        },
+        is_ai_generated: false,
+        workspace_id: workspaceId.value,
+        workspace_module_id: moduleId.value,
+    })
+
+}
+
+// ⬅️ clear field-specific errors once user types
+watch(() => form.value.title, (v) => {
+    if (v?.trim() && errors.value.title) errors.value.title = undefined
+})
+watch(() => form.value.description, (v) => {
+    if (v?.trim() && errors.value.description) errors.value.description = undefined
+})
+
+function close() {
+    form.value = { title: "", description: "", icon: null }
+    errors.value = {} // ⬅️ reset errors on close
+    model.value = false
+}
 const { mutate: createSheet, isPending: creatingSheet } = useCreateWorkspaceSheet({
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['sheets'] })
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
         close()
     }
 })
-
-const { mutate: updateSheet, isPending: isUpdating } = useUpdateWorkspaceSheet({
+const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
     onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['sheets'] })
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
         close()
     }
 })
-
-function submitManual() {
-    if (!validateManual()) return
-
-    if (props.sheet?._id) {
-        if (!canEditSheet.value) return
-        updateSheet({
-            sheet_id: props.sheet._id,
-            icon: form.value.icon,
-            variables: {
-                'sheet-title': form.value.title,
-                'sheet-description': form.value.description
-            },
-            is_ai_generated: false,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-        })
-    } else {
-        if (!canCreateSheet.value) return
-        createSheet({
-            icon: form.value.icon,
-            variables: {
-                'sheet-title': form.value.title,
-                'sheet-description': form.value.description
-            },
-            is_ai_generated: false,
-            workspace_id: workspaceId.value,
-            workspace_module_id: moduleId.value,
-        })
+const props = defineProps<{ modelValue: boolean, sheet: any }>()
+watch(props, () => {
+    if (props.sheet) {
+        form.value = props.sheet
     }
-}
+})
+// change your emit typing
+const emit = defineEmits<{
+    (e: 'update:modelValue', v: boolean): void
+    (e: 'submit:manual', payload: {
+        title: string
+        description: string
+        icon?: string // keep as string
+    }): void
+    (e: 'submit:ai', payload: { prompt: string }): void
+    (e: 'submit:template', payload: { id: string }): void
+}>()
 
-function close() {
-    form.value = { title: '', description: '', icon: null }
-    errors.value = {}
-    model.value = false
-    currentTab.value='ai'
-}
 
 const model = computed({
     get: () => props.modelValue,
-    set: (v) => emit('update:modelValue', v)
+    set: (v: boolean) => emit('update:modelValue', v)
 })
 
-/* ----------------------------------
-   AI CREATION
-----------------------------------*/
 
-const isRecording = ref(false)
-const audioURL = ref<string | null>(null)
-const description = ref('')
-const isPending = ref(false)
 
-// const { data: suggestionData, isPending: isSuggestionPending } = useSuggestions('sheet')
+const tabs = [
+    { label: 'Manual', value: 'manual' },
+    { label: 'Generate with AI', value: 'ai' },
+    { label: 'Templates', value: 'templates' }
+]
 
-// function typeEffect(text: string) {
-//     description.value = ''
-//     text.split('').forEach((char, i) =>
-//         setTimeout(() => (description.value += char), i * 18)
-//     )
-// }
+type Tab = typeof tabs[number]['value']
+const currentTab = ref<Tab>('manual')
 
-const { mutate: generateAI, isPending: isAiPending } = useCreateWorkspaceSheetAI({
-    onSuccess: () => {
-        // const result: any = extractJSONFromResponse(data) ?? {}
-        // createSheet({
-        //     icon: result?.icon ?? '',
-        //     variables: {
-        //         'sheet-title': result?.title ?? '',
-        //         'sheet-description': result?.description ?? ''
-        //     },
-        //     is_ai_generated: true,
-        //     workspace_id: workspaceId.value,
-        //     workspace_module_id: moduleId.value,
-        // })
-        queryClient.invalidateQueries({ queryKey: ['sheets'] })
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-        close();
-        isPending.value = false
+// Manual
+
+// function openIconLibrary() { /* open your icon picker */ }
+// function submitManual() { emit('submit:manual', { ...form.value }) }
+
+// AI
+const aiPrompt = ref('')
+const examples = [
+    "Generate a task board for an Uber-like app with columns for development, testing, and deployment.",
+    "Create a product board for an e-commerce platform with vendor, inventory, and customer sections.",
+    "Design a project board for a Notion-like tool with team collaboration features."
+]
+// AI generation API
+const { mutate: generate } = useOpenAIGeneration({
+    onSuccess: (data: any) => {
+
+        const payload = extractJSONFromResponse(data)
+        createSheet(
+            {
+                sheets: [{
+                    ...payload,
+                    is_ai_generated: false,
+                }],
+                workspace_id: route.params.id,
+                workspace_module: "product",
+            }
+        )
+
     },
-    onError: () => { isPending.value = false }
-})
-
-function handleGenerateSheet() {
-    if (!description.value.trim()) return
-    if (!canCreateSheet.value) return
-    isPending.value = true
-    generateAI({
-        module_id: moduleId.value,
-        idea: description.value,
-        workspace_id: workspaceId.value
-    })
+    onError: (_: any) => {
+        console.error("Error generating AI data:", _);
+    },
+});
+function generateBoard() {
+    const prompt = 'i need response in below json format { title:string , description:string , icon:{prefix : string from fas || far || fab , iconName:string from fontawsome free regular icons}} '
+    generate(prompt)
 }
 
-/* ----------------------------------
-   TEMPLATES TAB
-----------------------------------*/
-// const tabs = [
-//     { label: 'Manual', value: 'manual' },
-//     { label: 'Generate with AI', value: 'ai' },
-// ]
+// Templates
+type Template = { id: string; title: string; subtitle: string; cover: string; tags: string[] }
+const templates = ref<Template[]>([
+    { id: 'concept', title: 'Product Concept', subtitle: 'Early‑stage product or feature ideas.', cover: '/covers/concept.jpg', tags: ['Experience Design', 'Development'] },
+    { id: 'inspo', title: 'Design Inspiration', subtitle: 'UI/UX samples and creative references.', cover: '/covers/inspo.jpg', tags: ['Experience Design'] },
+    { id: 'launch', title: 'Launch Prep', subtitle: 'Tasks and assets for go‑live.', cover: '/covers/launch.jpg', tags: ['Project Management', 'Marketing'] }
+])
 
-const currentTab = ref('ai')
+const search = ref('')
+const tags = ref<{ name: string; count?: number }[]>([
+    { name: 'Experience Design', count: 24 },
+    { name: 'Development', count: 6 },
+    { name: 'Marketing', count: 5 },
+    { name: 'Project Management', count: 6 }
+])
+const activeTags = ref(new Set<string>())
+function toggleTag(t: string) { activeTags.value.has(t) ? activeTags.value.delete(t) : activeTags.value.add(t) }
 
-// type Template = { id: string; title: string; subtitle: string; cover: string; tags: string[] }
+const filteredTemplates = computed(() =>
+    templates.value.filter(t =>
+        (!search.value || t.title.toLowerCase().includes(search.value.toLowerCase())) &&
+        (activeTags.value.size === 0 || t.tags.some(tag => activeTags.value.has(tag)))
+    )
+)
 
-// const templates = ref<Template[]>([
-//     {
-//         id: 'concept',
-//         title: 'Product Concept',
-//         subtitle: 'Early stage ideation board.',
-//         cover: 'https://placehold.co/600x300',
-//         tags: ['Experience Design', 'Development']
-//     },
-//     {
-//         id: 'launch',
-//         title: 'Launch Prep',
-//         subtitle: 'Prepare assets for product launch.',
-//         cover: 'https://placehold.co/600x300',
-//         tags: ['Marketing', 'Project Management']
-//     }
-// ])
-
-// const search = ref('')
-// const tags = ref([
-//     { name: 'Experience Design' },
-//     { name: 'Development' },
-//     { name: 'Marketing' },
-//     { name: 'Project Management' }
-// ])
-// const activeTags = ref(new Set<string>())
-
-// function toggleTag(t: string) {
-//     activeTags.value.has(t) ? activeTags.value.delete(t) : activeTags.value.add(t)
-// }
-
-// const filteredTemplates = computed(() =>
-//     templates.value.filter(t =>
-//         (!search.value || t.title.toLowerCase().includes(search.value.toLowerCase())) &&
-//         (activeTags.value.size === 0 || t.tags.some(tag => activeTags.value.has(tag)))
-//     )
-// )
-
-// const chosenTemplate = ref<Template | null>(null)
-// function chooseTemplate(tpl: Template) { chosenTemplate.value = tpl }
-// function submitTemplate() {
-//     if (!chosenTemplate.value) return
-//     createSheet({
-//         icon: null,
-//         variables: {
-//             'sheet-title': chosenTemplate.value.title,
-//             'sheet-description': chosenTemplate.value.subtitle
-//         },
-//         is_ai_generated: false,
-//         workspace_id: workspaceId.value,
-//         workspace_module_id: moduleId.value,
-//     })
-// }
+const chosenTemplate = ref<Template | null>(null)
+function chooseTemplate(tpl: Template) { chosenTemplate.value = tpl }
+function submitTemplate() { if (chosenTemplate.value) emit('submit:template', { id: chosenTemplate.value.id }) }
 </script>
 
 <style scoped>
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-    transition: opacity .4s, transform .4s;
-}
-
-.fade-slide-enter-from,
-.fade-slide-leave-to {
-    opacity: 0;
-    transform: translateY(10px);
-}
-
-.rotate-fade-enter-active,
-.rotate-fade-leave-active {
-    transition: opacity .4s, transform .4s;
-}
-
-.rotate-fade-enter-from,
-.rotate-fade-leave-to {
-    opacity: 0;
-    transform: rotate(180deg);
-}
+/* optional: focus states etc. */
 </style>

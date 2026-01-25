@@ -1,13 +1,13 @@
 <template>
   <div class="w-full">
-    <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0">Team Resources</h2>
-    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0 ">
+    <h2 class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0">Team Resources</h2>
+    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">
       {{ ai ? ' AI-recommended team composition for your project' : 'Team composition for your project' }}
     </p>
   </div>
 
   <!-- Roles Grid -->
-  <div class="space-y-3 w-full pb-[60px]">
+  <div class="space-y-3 w-full pb-[80px]">
     <div v-for="role in workspace.roles" :key="role.id" class="bg-bg-surface rounded-xl p-6">
       <div class="flex items-center justify-between mb-2">
         <div class="flex gap-4 items-start text-2xl justify-between w-full">
@@ -107,7 +107,7 @@
       <BaseTextAreaField label="Description" class="mt-4" v-model="form.description" placeholder="Enter Description"
         size="lg" />
       <div class="flex gap-2 mt-6 justify-end">
-        <Button :disabled="isAddTeamDisabled" size="md" variant="primary" @click="addNewRole">
+        <Button size="md" variant="primary" @click="addNewRole">
           Add Team
         </Button>
         <Button size="md" variant="secondary" @click="addTeam = false">Cancel</Button>
@@ -117,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref, computed } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import Button from '../../../components/ui/Button.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
@@ -207,12 +207,7 @@ function cancelChips(role: Role) {
   role.capacityWarning = role.people.length >= role.max_num_people
 }
 
-const isAddTeamDisabled = computed(() => {
-  return !form.value.name.trim() || !form.value.description.trim()
-})
-
 function addNewRole() {
-   if (!form.value.name.trim() || !form.value.description.trim()) return
   const newRole = {
     id: `role-${Date.now()}`,
     title: form.value.name,

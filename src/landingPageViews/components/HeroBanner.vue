@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import HeroBannerInput from "./HeroBannerInput.vue";
 import { useTheme } from "../../composables/useTheme";
 import mouse from "@assets/LandingPageImages/bnanerInputIcons/mouse.png"
-import { usePromptSuggestions } from "../../queries/usePropmpSuggestions";
+
 const { theme } = useTheme();
 
 const examples = [
@@ -18,38 +18,48 @@ const examples = [
     "📸 I want to become a professional photographer."
 ];
 
-// Call the query and auto-refetch on mount
-const {
-  data: promptSuggestions, 
- 
-} = usePromptSuggestions({
-  refetchOnMount: true, // automatically fetch when rendered
-});
-
-//  Computed list — use API data if available, else fallback to examples
-const suggestionList = computed(() => {
-  if (promptSuggestions?.value?.length) {
-    return promptSuggestions.value.map((item: any) => item.prompt);
-  }
-  return examples;
-});
-
 const projectInputRef = ref<{ setValue: (val: string) => void } | null>(null);
+const isLoading = ref(false);
+const responseMessage = ref<string | null>(null);
 
 function handleExampleClick(example: string) {
     projectInputRef.value?.setValue(example);
+}
+
+async function handleSubmit(value: string) {
+    if (!value.trim()) return;
+    isLoading.value = true;
+    responseMessage.value = null;
+    try {
+        // Example: Replace this URL with your real endpoint
+        const res = await fetch("https://api.example.com/generate-plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: value }),
+        });
+
+        if (!res.ok) throw new Error("Failed to fetch plan");
+        const data = await res.json();
+        responseMessage.value = data.message || "Plan generated successfully!";
+    } catch (err) {
+        console.error(err);
+        responseMessage.value = "Something went wrong. Please try again.";
+    } finally {
+        isLoading.value = false;
+    }
 }
 </script>
 
 <template>
     <section
-        class="float-left pt-[40px] lg:pt-[80px] xl:pt-[125px]  mb-10 md:mb-16 lg:mb-20 w-full transition-colors duration-500">
-        <div class="banner_main  px-[15px]">
+        class="hero-section float-left pt-[40px] lg:pt-[80px] xl:pt-[125px]  mb-10 md:mb-16 lg:mb-20 w-full transition-colors duration-500 relative overflow-hidden">
+        <div class="hero-glow-overlay"></div>
+        <div class="banner_main  px-[15px] relative z-10">
             <div class="custom_container">
                 <!-- Heading -->
                 <h2 :class="theme === 'dark' ? 'heading-ingradient' : ''"
                     class="text-[30px] sm:text-[40px] lg:text-[72px] leading-[100%] font-manrope font-bold text-primary mb-[10px] text-center">
-                    Welcome to Orchit AI
+                    Welcome to Streamed Space
                 </h2>
 
                 <p class="font-manrope text-[16px] md:text-[18px] lg:text-[24px] mb-[24px] text-center"
@@ -59,24 +69,29 @@ function handleExampleClick(example: string) {
 
                 <!-- Input Section -->
                 <div class="relative">
-                    <HeroBannerInput ref="projectInputRef" :theme="theme" />
+                    <HeroBannerInput ref="projectInputRef" :theme="theme" @submit="handleSubmit" :loading="isLoading" />
+                    <!-- API Response -->
+                    <p v-if="responseMessage"
+                        class="text-center w-full bottom-[10px] absolute text-[13px] font-medium  text-red-600">
+                        {{ responseMessage }}
+                    </p>
                 </div>
             </div>
         </div>
 
         <!-- Example Buttons -->
-        <div class="relative overflow-hidden  mb-[40px] lg:mb-[72px]">
+        <div class="relative overflow-hidden  mb-[40px] lg:mb-[72px] z-10">
             <p
                 class="text-center text-[14px] font-medium text-primary leading-[20px] font-manrope mb-[25px] lg:mb-[31px]">
                 Or try
                 these
                 examples:</p>
-            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+             <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
                 <div class="examples-container flex gap-[15px] lg:gap-[24px] px-4 mb-[15px] lg:mb-[24px]
                     snap-x snap-mandatory animate-marquee
                    hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
                     <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                        <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
+                        <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)"
                             class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
                     text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
                     transition-all duration-300 whitespace-nowrap "
@@ -90,7 +105,7 @@ function handleExampleClick(example: string) {
                 <div
                     class="examples-container pb-1 flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2 snap-x snap-mandatory hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
                     <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                        <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
+                        <button v-for="example in examples" :key="example + n" @click="handleExampleClick(example)"
                             class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
                     text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
                     transition-all duration-300 whitespace-nowrap "
@@ -103,7 +118,7 @@ function handleExampleClick(example: string) {
         </div>
 
         <!-- mouse text + imge -->
-        <div class="mouse_box flex justify-center flex-col items-center ">
+        <div class="mouse_box flex justify-center flex-col items-center relative z-10">
             <img :src="mouse" alt="mouse icon" class="w-[24px] mb-[12px] lg:mb-[16px] ">
             <p class="font-manrope text-[14px] text-center"
                 :class="theme === 'dark' ? 'text-[#94A3B8]' : 'text-text-primary'">Work Without Limits</p>
@@ -113,6 +128,42 @@ function handleExampleClick(example: string) {
 </template>
 
 <style scoped>
+.hero-section {
+    background: linear-gradient(180deg, rgba(147, 86, 197, 0.03) 0%, rgba(147, 86, 197, 0.08) 50%, rgba(147, 86, 197, 0.12) 100%);
+}
+
+.hero-glow-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 600px;
+    background: radial-gradient(circle at center, rgba(147, 86, 197, 0.25) 0%, rgba(147, 86, 197, 0.15) 30%, rgba(147, 86, 197, 0.05) 60%, transparent 100%);
+    filter: blur(60px);
+    pointer-events: none;
+    animation: pulse-glow 4s ease-in-out infinite;
+    z-index: 1;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        opacity: 0.6;
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.1);
+    }
+}
+
+@media (max-width: 768px) {
+    .hero-glow-overlay {
+        width: 500px;
+        height: 400px;
+    }
+}
+
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
 }
@@ -141,7 +192,7 @@ function handleExampleClick(example: string) {
 .animate-marquee {
     display: flex;
     width: max-content;
-    animation: marquee 400s linear infinite;
+    animation: marquee 200s linear infinite;
     will-change: transform;
 }
 
@@ -158,7 +209,7 @@ function handleExampleClick(example: string) {
 .animate-marquee2 {
     display: flex;
     width: max-content;
-    animation: marquee2 400s linear infinite;
+    animation: marquee2 200s linear infinite;
     will-change: transform;
 
 }

@@ -3,25 +3,14 @@
   <nav
     class="sticky top-0 z-10 w-full border-b border-border bg-bg-body/80 backdrop-blur supports-[backdrop-filter]:bg-bg-body/60"
     role="navigation" aria-label="Primary">
-    <div class="mx-auto flex max-w-[1400px] items-center justify-between px-6 max-md:p-4 ">
-      <div class="flex items-center gap-2">
-        <!-- Mobile Toggle -->
-        <button 
-          @click="isSidebarOpen = !isSidebarOpen"
-          class="md:hidden grid h-9 w-9 place-items-center rounded-lg text-text-primary hover:bg-bg-dropdown-menu-hover transition-colors"
-          aria-label="Toggle Menu"
-        >
-          <i class="fa-solid" :class="isSidebarOpen ? 'fa-xmark' : 'fa-bars'"></i>
-        </button>
-
-        <!-- Brand -->
-        <RouterLink to="/" class="flex items-center gap-2">
-          <img v-if="!isDark" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30"
-            loading="eager" decoding="async" />
-          <img v-else src="../../../assets/global/dark-logo.png" alt="Orchit AI logo" class="w-24 sm:w-30" loading="eager"
-            decoding="async" />
-        </RouterLink> 
-      </div>
+    <div class="mx-auto flex max-w-[1400px] items-center justify-between px-6 ">
+      <!-- Brand -->
+      <RouterLink to="/" class="flex items-center gap-2">
+        <img v-if="theme === 'light'" src="../../../assets/global/light-logo.png" alt="Orchit AI logo" class="w-30"
+          loading="eager" decoding="async" />
+        <img v-else src="../../../assets/global/dark-logo.png" alt="Orchit AI logo" class="w-30" loading="eager"
+          decoding="async" />
+      </RouterLink>
 
       <!-- Primary nav -->
       <ul class="relative hidden items-stretch py-4 gap-9 text-sm font-medium text-text-primary md:flex"
@@ -58,9 +47,6 @@
           <i class="fa-regular fa-circle-question"></i>
         </button> -->
 
-          <!-- notificaion icon -->
-           <NotificationBell/>
-
         <!-- Avatar + Menu -->
         <div class="relative" ref="menuRef">
           <button v-if="profileData?.u_profile_image" aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
@@ -71,15 +57,13 @@
               alt="profile_img">
           </button>
 
-          <button v-else class="h-7 sm:h-9 w-7 sm:w-9 overflow-hidden cursor-pointer rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
+          <button v-else class="h-9 w-9 overflow-hidden rounded-full bg-orange-500 text-sm font-bold text-text-primary ring-offset-2 transition
                      hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
             aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
             :aria-controls="menuOpen ? 'user-menu' : undefined" @click="toggleMenu" @keydown.enter.prevent="toggleMenu"
             @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu" type="button">
             {{ initials }}
           </button>
-
-        
 
           <!-- Dropdown -->
           <Transition enter-active-class="transition duration-150 ease-out"
@@ -110,14 +94,14 @@
                 <li>
                   <button
                     class=" cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                    role="menuitem" type="button"  @click="openAccountSettings">
+                    role="menuitem" type="button" @click="openAccountSettings">
                     <i class="fa-regular fa-gear"></i>
                     <span>Account settings</span>
                   </button>
                 </li>
 
                 <!-- Theme submenu -->
-                <li class="relative cursor-pointer" @mouseenter="openTheme()" @mouseleave="closeTheme()">
+                <li class="relative" @mouseenter="openTheme()" @mouseleave="closeTheme()">
                   <button ref="themeTriggerRef"
                     class="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
                     role="menuitem" aria-haspopup="menu" :aria-expanded="themeOpen ? 'true' : 'false'"
@@ -129,25 +113,25 @@
                     <i class="fa-solid fa-chevron-right"></i>
                   </button>
 
-                  <Transition enter-active-class="transition duration-150 ease-out cursor-pointer"
+                  <Transition enter-active-class="transition duration-150 ease-out"
                     enter-from-class="opacity-0 translate-x-1 scale-95"
                     enter-to-class="opacity-100 translate-x-0 scale-100"
                     leave-active-class="transition duration-120 ease-in"
                     leave-from-class="opacity-100 translate-x-0 scale-100"
                     leave-to-class="opacity-0 translate-x-1 scale-95">
                     <div v-if="themeOpen" ref="themeMenuRef"
-                      class="absolute top-[37px] sm:top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
-                      role="menu" :class="themeFlipLeft ? 'right-[-17px] sm:right-full mr-2' : 'left-full ml-2'">
-                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('system'); closeMenu()" type="button">
+                      class="absolute top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
+                      role="menu" :class="themeFlipLeft ? 'right-full mr-2' : 'left-full ml-2'">
+                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                        @click="setTheme('system')" type="button">
                         <i class="fa-solid fa-desktop"></i> System
                       </button>
-                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('light'); closeMenu()" type="button">
+                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                        @click="setTheme('light')" type="button">
                         <i class="fa-regular fa-sun-cloud"></i> Light
                       </button>
-                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('dark'); closeMenu()" type="button">
+                      <button class="block w-full rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                        @click="setTheme('dark')" type="button">
                         <i class="fa-regular fa-clouds-moon"></i> Dark
                       </button>
                     </div>
@@ -156,7 +140,7 @@
 
 
                 <li>
-                  <button class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                  <button class="flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
                     role="menuitem" type="button" @click="handleLogout">
                     <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
                     <span>Log out</span>
@@ -170,44 +154,8 @@
     </div>
 
   </nav>
+  <AccountSettingsModal v-model="showAccountSettings" />
   <LimitExceededModal @upgrade="handleUgrade" />
-
-  <!-- Mobile Sidebar -->
-  <Teleport to="body">
-    <Transition
-      enter-active-class="transition duration-400 ease-out"
-      enter-from-class="-translate-x-full"
-      enter-to-class="translate-x-0"
-      leave-active-class="transition duration-300 ease-in"
-      leave-from-class="translate-x-0"
-      leave-to-class="-translate-x-full"
-    >
-      <div v-if="isSidebarOpen" class="fixed top-[70px] left-0 right-0 bottom-0 z-[100] bg-bg-body md:hidden overflow-y-auto">
-        <nav class="py-8 px-4">
-          <ul class="flex flex-col space-y-6">
-            <RouterLink 
-              v-for="link in links" 
-              :key="link.to" 
-              :to="link.to" 
-              custom
-              v-slot="{ navigate, isActive, isExactActive }"
-            >
-              <li 
-                @click="() => { navigate(); isSidebarOpen = false }"
-                class="flex items-center gap-4 text-text-primary font-manrope font-semibold leading-[30px] text-[18px] hover:text-primary transition-colors cursor-pointer"
-                :class="{ 'text-accent font-bold': isActive || (link.exact && isExactActive) }"
-              >
-                <i v-if="link.label === 'Workspaces'" class="fa-solid fa-border-all w-6 text-xl"></i>
-                <i v-else-if="link.label === 'My Tasks'" class="fa-solid fa-list-check w-6 text-xl"></i>
-                <i v-else-if="link.label === 'Users'" class="fa-solid fa-users w-6 text-xl"></i>
-                {{ link.label }}
-              </li>
-            </RouterLink>
-          </ul>
-        </nav>
-      </div>
-    </Transition>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -218,18 +166,23 @@ import { getProfile } from '../../../services/user'
 import { useTheme } from '../../../composables/useTheme'
 import Loader from '../../../components/ui/Loader.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
-import NotificationBell from './NotificationBell.vue'
+import AccountSettingsModal from '../modals/AccountSettingsModal.vue'
 import LimitExceededModal from '../modals/LimitExceededModal.vue'
-import { useAuthStore } from '../../../stores/auth'
-import { useCurrentPackage } from '../../../queries/usePackages'
 const workspaceStore = useWorkspaceStore();
 /* Theme */
-const { setTheme, isDark } = useTheme()
-const authStore = useAuthStore()
+const { theme, setTheme } = useTheme()
+
 /* Account Settings Modal */
+const showAccountSettings = ref(false)
 function handleUgrade() {
-  router.push(`/settings?tab=billing&stripePayment=${true}`)
-  workspaceStore.setLimitExccedModal(false)
+  router.push(`/dashboard?stripePayment=${true}`)
+  nextTick()
+  setTimeout(()=>{
+    showAccountSettings.value = true;
+    workspaceStore.setLimitExccedModal(false)
+
+  }, 100)
+  
 }
 /* Router */
 const router = useRouter()
@@ -243,14 +196,6 @@ const { data: profile, isPending } = useQuery({
 
 const profileData = computed(() => profile.value?.data ?? null)
 
-/* Limits Sync */
-const { data: currentPackage } = useCurrentPackage()
-watch(() => currentPackage.value, (pkg) => {
-  if (pkg) {
-    workspaceStore.setLimit(pkg)
-  }
-}, { immediate: true })
-
 const initials = computed(() => {
   const name = profileData.value?.u_full_name?.trim() || ''
   if (!name) return 'U'
@@ -263,8 +208,8 @@ const menuOpen = ref(false)
 const themeOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 const themeTriggerRef = ref<HTMLElement | null>(null)
+const themeMenuRef = ref<HTMLElement | null>(null)
 const themeFlipLeft = ref(false)
-const isSidebarOpen = ref(false)
 
 function toggleMenu() {
   menuOpen.value = !menuOpen.value
@@ -313,7 +258,7 @@ function onClickOutside(e: MouseEvent) {
 const route = useRoute()
 onMounted(() => {
   if (route.query.stripePayment) {
-    router.push({ path: "/settings", query: { ...route.query, tab: "billing" } })
+    showAccountSettings.value = true
   }
   document.addEventListener('click', onClickOutside)
   window.addEventListener('resize', onResize)
@@ -332,22 +277,14 @@ async function handleLogout() {
     workspaceStore.setWorkspace(null)
 
     localStorage.clear()
-    authStore.logout()
 
-    // await queryClient.cancelQueries({ queryKey: ['me'] })
-    // await queryClient.cancelQueries({ queryKey: ['profile'] })
-    // await queryClient.cancelQueries({ queryKey: ['workspaces'] })
+    await queryClient.cancelQueries({ queryKey: ['me'] })
+    await queryClient.cancelQueries({ queryKey: ['profile'] })
+    await queryClient.cancelQueries({ queryKey: ['workspaces'] })
     // 3) remove the profile query from cache (RAM)
-    // queryClient.removeQueries({ queryKey: ['profile'] })
-    // queryClient.removeQueries({ queryKey: ['workspaces'] })
-    // queryClient.removeQueries({ queryKey: ['me'] })
-
-    // Cancel active queries
-    await queryClient.cancelQueries()
-    
-    // Clear the entire query cache to ensure no stale data persists for the next user
-    queryClient.clear()
-
+    queryClient.removeQueries({ queryKey: ['profile'] })
+    queryClient.removeQueries({ queryKey: ['workspaces'] })
+    queryClient.removeQueries({ queryKey: ['me'] })
     router.push('/login')
 
   } catch (e) {
@@ -357,13 +294,13 @@ async function handleLogout() {
 
 function openAccountSettings() {
   closeMenu()
-  router.push('/settings')
+  showAccountSettings.value = true
 }
 
 /* --- Sliding underline indicator logic --- */
 const links = [
-  { label: 'Workspaces', to: '/dashboard', exact: true },
-  { label: 'My Tasks', to: '/dashboard/task' },
+  { label: 'Workspaces', to: '/', exact: true },
+  { label: 'My Task', to: '/dashboard/task' },
   { label: 'Users', to: '/dashboard/users' },
 ]
 

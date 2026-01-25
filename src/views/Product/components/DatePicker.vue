@@ -1,25 +1,18 @@
 <template>
-    <div ref="root" class="relative inline-block text-left h-full w-full group">
+  <div ref="root" class="relative inline-block text-left">
     <!-- Trigger -->
     <button
       type="button"
-      class="inline-flex h-full text-xs w-full items-center transition  px-2 rounded-sm"
+      class="inline-flex text-xs w-full items-center transition"
       :class="[
-        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-bg-surface-hover',
-        isDarkTheme ? 'text-text-secondary' : 'text-text-primary'
+        disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+        theme === 'dark' ? 'text-text-secondary' : 'text-text-primary'
       ]"
       @click="toggle"
       :disabled="disabled"
     >
-      <span class=" truncate" :class="tableInputClass? 'text-[12px]':'text-[14px]'" v-if="selectedDate"><i v-if="tableInputClass" class="fa-regular fa-calendar me-1"></i> {{ formattedLabel }}</span>
-      <template v-else>
-         <!-- Hover State -->
-         <span v-if="emptyText" class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 text-xs text-text-secondary truncate">
-            <i class="fa-solid fa-plus text-[10px]"></i> Add {{ emptyText }}
-         </span>
-         <!-- Fallback Placeholder -->
-         <span v-else class="opacity-70 text-[14px] truncate">{{ placeholder }}</span> 
-      </template>
+      <span v-if="selectedDate">{{ formattedLabel }}</span>
+      <span v-else class="opacity-70">{{ placeholder }}</span>
     </button>
 
     <!-- Popover -->
@@ -28,14 +21,14 @@
         <div
           v-if="open"
           ref="popover"
-          class="z-[9999] rounded-md shadow-lg border p-3 select-none"
+          class="z-[9999] rounded-xl shadow-lg border p-3 select-none"
           :style="{
             position: 'fixed',
             top: coords.top + 'px',
             left: coords.left + 'px',
             width: POPOVER_W + 'px',
           }"
-          :class="isDarkTheme
+          :class="theme === 'dark'
             ? 'bg-bg-dropdown border-border text-text-primary'
             : 'bg-bg-dropdown border-border text-text-primary'"
           @keydown.esc.prevent.stop="close"
@@ -59,10 +52,10 @@
             <div v-for="(box, i) in boxes" :key="i">
               <button
                 v-if="box.date"
-                class="h-8 w-8 rounded-full text-sm flex items-center justify-center hover:bg-bg-dropdown-menu-hover hover:text-text-primary transition"
+                class="w-9 h-9 rounded-full text-sm flex items-center justify-center hover:bg-bg-dropdown-menu-hover transition"
                 :class="[
-                  isSameDay(box.date, today) ? 'border border-gray-400' : '',
-                  isSameDay(box.date, selectedDate) ? 'bg-accent text-white border border-accent hover:bg-accent' : '',
+                  isSameDay(box.date, today) ? 'ring-1 ring-gray-400' : '',
+                  isSameDay(box.date, selectedDate) ? 'bg-bg-card text-text-primary' : '',
                   box.disabled ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''
                 ]"
                 :disabled="box.disabled"
@@ -77,13 +70,13 @@
             <button
               v-if="clearable && selectedDate"
               class="text-xs px-2 py-1 rounded border hover:bg-bg-dropdown-hover"
-              :class="isDarkTheme ? 'border-border' : 'border-border'"
+              :class="theme === 'dark' ? 'border-border' : 'border-border'"
               @click="clear"
             >Clear</button>
             <div class="flex-1"></div>
             <button
               class="text-xs px-3 py-1 rounded border hover:bg-bg-dropdown-menu-hover"
-              :class="isDarkTheme ? 'border-border' : 'border-border'"
+              :class="theme === 'dark' ? 'border-border' : 'border-border'"
               @click="close"
             >Done</button>
           </div>
@@ -95,9 +88,6 @@
 
 <script setup lang="ts">
 import { ref, watch, computed, onBeforeUnmount, nextTick, onMounted } from 'vue'
-import { useTheme } from '../../../composables/useTheme';
-
-const { isDark } = useTheme();
 
 const props = withDefaults(defineProps<{
   modelValue: string | number | Date | null
@@ -105,15 +95,13 @@ const props = withDefaults(defineProps<{
   clearable?: boolean
   minDate?: string | number | Date | null
   maxDate?: string | number | Date | null
-  theme?: string
+  theme?: 'light' | 'dark'
   emitAs?: 'ymd' | 'iso' | 'date'
   placeholder: string
-  emptyText?: string
-  tableInputClass?: Boolean 
 }>(), {
   disabled: false,
   clearable: true,
-  theme: 'system',
+  theme: 'light',
   emitAs: 'ymd',
 })
 
@@ -124,10 +112,6 @@ const root = ref<HTMLElement | null>(null)
 const popover = ref<HTMLElement | null>(null)
 const open = ref(false)
 const coords = ref({ top: 0, left: 0 })
-
-const isDarkTheme = computed(() => {
-  return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
-});
 
 /** Sizing / constants **/
 const GAP = 8

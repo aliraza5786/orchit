@@ -3,28 +3,14 @@
     <!-- Columns (horizontal) -->
     <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
-      :force-fallback="true" 
-      :disabled="isMobile"
-      class="flex gap-3"
-      :class="{
-        'overflow-x-auto snap-x snap-mandatory w-full pb-4 mobile-scroll-visible': isMobile,
-        'min-w-max': !isMobile
-      }"
-      direction="horizontal" @end="onColumnsEnd" @start="onStart">
+      :force-fallback="true" class="flex gap-3 min-w-max" direction="horizontal" @end="onColumnsEnd" @start="onStart">
       <!-- Each column -->
-      <template #item="{ element: column, index }">
-        <div class="rounded-lg bg-bg-surface h-full " 
-          :class="{ 
-            'snap-center min-w-[270px] max-w-[270px]': isMobile,
-            'min-w-[320px] max-w-[320px]': !isMobile 
-          }"
-        >
-          <KanbanColumn :plusIcon="plusIcon  && canCreateCard" :canDragList="!isMobile && canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
+      <template #item="{ element: column }">
+        <div class="min-w-[320px] max-w-[320px] rounded-lg bg-bg-surface  " style="height: calc(100dvh - 190px);">
+          <KanbanColumn :plusIcon="plusIcon" :canDragList="canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
             :variable_id="variable_id" @update:column="(e) => emit('update:column', e)"
-            :index="index" :totalColumns="localBoard.columns.length"
             @select:ticket="(v: Ticket) => emit('select:ticket', v)"
-            @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd"
-            @move:column="handleMoveColumn">
+            @delete:column="(e: any) => emit('delete:column', e)" :column="column" @reorder="onTicketEnd">
             <template #emptyState="{ column }">
               <slot name="emptyState" :column="column"></slot>
             </template>
@@ -44,30 +30,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, watchEffect } from 'vue'
+import { ref, watch } from 'vue'
 import Draggable from 'vuedraggable'
 import KanbanColumn from './KanbanColumn.vue'
-import { useMediaQuery } from '@vueuse/core'
-
-import { usePermissions } from '../../../composables/usePermissions';
-const { canCreateCard, canEditCard } = usePermissions();
-
 export interface Ticket { _id: string | number;[k: string]: any }
 export interface Column { _id: string | number; title: string; cards: Ticket[]; transitions: any }
 export interface Board { columns: Column[] }
-
-const isMobile = useMediaQuery('(max-width: 650px)')
-
-const canDragList = ref(canEditCard.value); 
-watchEffect(() => {
-  canDragList.value = canEditCard.value;
-});
-
+const canDragList = ref(true);
 const onStart = () => {
   console.log(">>> strating");
+
   canDragList.value = false
 };
-
 
 const props = withDefaults(defineProps<{
   board: Column[]
@@ -114,10 +88,9 @@ function onColumnsEnd(e: any) {
   // Model should be updated now; grab the moved column
   const moved = localBoard.value.columns[newIndex]
   const id = moved?.title ? moved?.title : ""
-  const _id = moved?._id 
 
   if (id != null) {
-    pushUpdate('column', { id, oldIndex, newIndex ,_id})
+    pushUpdate('column', { id, oldIndex, newIndex })
   }
   canDragList.value = true;
 }
@@ -138,38 +111,6 @@ function pushUpdate(type: 'column' | 'ticket', meta?: any) {
   props.onBoardUpdate?.(board)
 }
 
-function handleMoveColumn({ direction, column }: { direction: 'left' | 'right', column: Column }) {
-  const columns = [...localBoard.value.columns] // Create a copy
-  const idx = columns.findIndex(c => c.title.toLowerCase() === column.title.toLowerCase())
- 
-  if (idx === -1) return
-
-  let newIndex = idx
-  if (direction === 'left' && idx > 0) {
-    newIndex = idx - 1
-  } else if (direction === 'right' && idx < columns.length - 1) {
-    newIndex = idx + 1
-  }
-
-  if (newIndex !== idx) {
-    // Swap using splice for clarity and safety with copies
-    const [movedColumn] = columns.splice(idx, 1)
-    columns.splice(newIndex, 0, movedColumn)
-    
-    // Assign back to trigger reactivity
-    localBoard.value.columns = columns
-    
-    // Trigger update
-    const moved = columns[newIndex]
-    const id = moved?.title ? moved?.title : ""
-    const _id = moved?._id 
-
-    if (id != null) {
-      pushUpdate('column', { id, oldIndex: idx, newIndex, _id })
-    }
-  }
-}
-
 /** Helpers */
 function cloneBoard(b: Column[]): Board {
   return {
@@ -181,8 +122,9 @@ function cloneBoard(b: Column[]): Board {
     }))
   }
 }
-</script>
 
+
+</script>
 
 <style scoped>
 /* Drag classes from vuedraggable / SortableJS */
@@ -197,43 +139,5 @@ function cloneBoard(b: Column[]): Board {
 
 .kanban-dragging {
   cursor: grabbing !important;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-</style>
-
-<style>
-/* Global override for mobile scrollbar visibility in Kanban */
-.mobile-scroll-visible::-webkit-scrollbar {
-  display: block !important;
-  height: 8px !important; /* Visible height */
-}
-
-.mobile-scroll-visible::-webkit-scrollbar-track {
-  background: var(--bg-body) !important;
-  border-radius: 4px;
-}
-
-.mobile-scroll-visible::-webkit-scrollbar-thumb {
-  background-color: var(--border) !important;
-  border-radius: 4px;
-  border: 2px solid var(--bg-body) !important; /* Creates padding effect */
-}
-
-.mobile-scroll-visible::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-secondary) !important;
-}
-
-/* Ensure firefox supports it too if possible, though 'scrollbar-width: auto' usually handles it */
-.mobile-scroll-visible {
-  scrollbar-width: auto !important;
-  scrollbar-color: var(--border) var(--bg-body) !important;
 }
 </style>

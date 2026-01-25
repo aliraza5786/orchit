@@ -9,7 +9,7 @@
         </div>
 
         <!-- Body -->
-        <div class="px-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="px-6 grid grid-cols-2 gap-4">
             <!-- Title -->
             <BaseTextField v-model="form.title" label="Ticket Title"
                 placeholder="e.g., Implement real-time notifications" :error="!!titleError" :message="titleError"
@@ -20,8 +20,6 @@
                 <BaseSelectField size="md" label="Lane" :options="laneOptions" placeholder="Select lane"
                     :allowCustom="false" :model-value="form.lane_id" @update:modelValue="setLane" />
             </div>
-
-           
 
             <!-- Dynamic Select Variables -->
             <BaseSelectField size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable"
@@ -34,7 +32,7 @@
                 <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
                     :class="startDateError ? 'border-red-500' : ''">
                     <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
-                        @update:modelValue="setStartDate" :min-date="today" />
+                        @update:modelValue="setStartDate" />
                 </div>
                 <p v-if="startDateError" class="text-xs text-red-500">{{ startDateError }}</p>
             </div>
@@ -45,18 +43,9 @@
                 <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
                     :class="endDateError ? 'border-red-500' : ''">
                     <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
-                        @update:modelValue="setEndDate" :min-date="form.startDate || today" />
+                        @update:modelValue="setEndDate" />
                 </div>
                 <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
-            </div>
-             <!-- Assignee -->
-            <div class="flex flex-col">
-                <label class="text-sm mb-1">Assignee</label>
-                <div class="mt-2">
-                    <AssigmentDropdown :name="true" :workspaceId="workspaceId" @assign="setAssignee"
-                        @unassign="setAssignee(null)" :assigneeId="form.assignee" :seat="null" :disabled="false"
-                        :skipPermissionCheck="true" class="w-full" />
-                </div>
             </div>
         </div>
 
@@ -76,7 +65,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, watch, ref} from 'vue'
+import { reactive, computed, watch } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
@@ -86,7 +75,6 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import DatePicker from '../../Product/components/DatePicker.vue'
-import AssigmentDropdown from '../../Product/components/AssigmentDropdown.vue'
 
 /** Emits */
 const emit = defineEmits<{
@@ -122,7 +110,7 @@ type Variable = {
     data: string[]
     slug: string
 }
-const { data: variables } = useVariables(workspaceId, moduleId, ref(props.sheet_id ?? ''))
+const { data: variables } = useVariables(workspaceId.value, moduleId.value)
 
 /** Modal open proxy */
 const isOpen = computed({
@@ -158,7 +146,6 @@ type Form = {
     startDate: string | null
     endDate: string | null
     lane_id: SelectValue
-    assignee: any
     variables: Record<string, SelectValue>
 }
 const form = reactive<Form>({
@@ -167,7 +154,6 @@ const form = reactive<Form>({
     startDate: null,
     endDate: null,
     lane_id: null,
-    assignee: null,
     variables: {}
 })
 
@@ -206,17 +192,18 @@ const endDateError = computed(() => {
     if (form.startDate && form.endDate && form.endDate < form.startDate) return 'End date cannot be before start date'
     return ''
 })
-// const laneError = computed(() => {
-//     if (!touched.lane) return ''
-//     if (form.lane_id === null || form.lane_id === undefined || form.lane_id === '') return 'Lane is required'
-//     return ''
-// })
+const laneError = computed(() => {
+    if (!touched.lane) return ''
+    if (form.lane_id === null || form.lane_id === undefined || form.lane_id === '') return 'Lane is required'
+    return ''
+})
 
 const isValid = computed(
     () =>
         !titleError.value &&
         !startDateError.value &&
         !endDateError.value &&
+        !laneError.value &&
         !!form.title.trim() &&
         (!props.pin ? !!form.startDate &&
             !!form.endDate : true)
@@ -237,10 +224,6 @@ function setLane(v: SelectValue) {
     touched.lane = true
 }
 
-function setAssignee(user: any) {
-    form.assignee = user
-}
-
 /** Actions */
 function cancel() {
     isOpen.value = false
@@ -252,7 +235,6 @@ function reset() {
     form.startDate = null
     form.endDate = null
     form.lane_id = null
-    form.assignee = null
     form.variables = {}
     touched.title = false
     touched.description = false
@@ -262,7 +244,6 @@ function reset() {
 }
 const selectedVar = computed(() => variables.value.find((e: any) => e?._id == props.selectedVariable))
 
-const today = new Date().toISOString().split('T')[0]
 function create() {
     touched.title = true
     if (!props.pin) {
@@ -276,7 +257,6 @@ function create() {
         sheet_id: props.sheet_id,
         workspace_lane_id: form.lane_id, // ✅ included and required
         variables: { ...form.variables, [`${selectedVar.value?.slug}`]: props.listId, ['card-title']: form.title.trim(), ['card-description']: form.description.trim(), ['start-date']: form.startDate, ['end-date']: form.endDate, },
-        seat_id: form.assignee?._id ?? null,
         createdAt: new Date().toISOString()
     }
     addTicket(payload)

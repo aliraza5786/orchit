@@ -1,10 +1,10 @@
 <template>
   <Loader v-if="(route.params.id && isPending)" />
   <div>
-    <h2 v-once class="text-2xl md:text-4xl font-semibold text-text-primary text-center m-0">
+    <h2 v-once class="text-2xl md:text-5xl font-semibold text-text-primary text-center m-0">
       Welcome to Orchit AI Space
     </h2>
-    <p v-once class="text-sm md:text-base text-text-secondary text-center mt-3 sm:mt-5 mb-0 ">
+    <p v-once class="text-sm md:text-base text-text-secondary text-center mt-3 sm:mt-5.5 mb-0 md:mb-6">
       Describe your project, and we'll build the plan instantly with AI magic.
     </p>
   </div>
@@ -12,9 +12,9 @@
   <div class="flex flex-col gap-6 w-full">
     <div class="relative min-h-[3.5rem] w-full max-w-[800px]">
       <div
-        :class="`${isPending ? 'neon-flow-border' : ''} flex h-[150px] items-start gap-2.5 self-stretch shadow-[-1px_-1px_0_0_rgba(255,255,255,0.20)_inset,1px_1px_1px_0_rgba(255,255,255,0.60)_inset] backdrop-blur-[5px] bg-bg-input pl-[17px] pr-[48px] py-[30px] rounded-xl max-sm:h-[120px] max-sm:px-5 max-sm:py-5`">
-        <textarea autofocus :disabled="isPending" v-if="!isRecording && !audioURL" v-model="description" 
-          placeholder="Ask Orchit AI to create a project..." style="height: 100% !important;"
+        :class="`${isPending ? 'neon-flow-border' : ''} flex h-[200px] items-start gap-2.5 self-stretch shadow-[-1px_-1px_0_0_rgba(255,255,255,0.20)_inset,1px_1px_1px_0_rgba(255,255,255,0.60)_inset] backdrop-blur-[5px] bg-bg-input pl-[17px] pr-[48px] py-[30px] rounded-3xl max-sm:h-[120px] max-sm:px-5 max-sm:py-5`">
+        <textarea autofocus :disabled="isPending" v-if="!isRecording && !audioURL" v-model="description"
+          placeholder="Ask Orchit AI to create a project..."
           class="w-full h-full bg-transparent text-text-primary text-base font-normal leading-7 resize-none outline-none placeholder:opacity-70" />
       </div>
 
@@ -51,7 +51,7 @@
 
       <div v-else class="suggestions flex overflow-auto gap-3 max-w-[800px] w-full">
         <div v-for="(suggestion, idx) in suggestions" :key="idx" @click="handleSuggestionClick(suggestion)"
-          class="flex min-w-[160px] h-[110px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:p-[15px] hover:bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
+          class="flex min-w-[160px] h-[136px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:p-[15px] hover:bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
           <span
             class="text-text-secondary line-clamp-3 text-base font-normal leading-5 hover:text-text-primary transition-colors max-md:static max-md:w-auto max-md:h-auto max-sm:text-sm max-sm:leading-[18px]">
             {{ suggestion.description }}

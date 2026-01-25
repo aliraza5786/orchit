@@ -3,37 +3,23 @@
              hover:shadow-md transition-all duration-200 active:cursor-grabbing"
         :style="{ borderColor: ticket?.lane?.variables['lane-color'] }">
 
-        <div class="flex justify-between gap-2 items-start w-full relative">     
-            <div class="flex items-start gap-2 w-[90%] ">
-                <img v-if="ticket?.avatar" :src="ticket?.avatar" class="min-w-10 w-10 h-10 rounded-full object-cover"
-                    alt="avartar">
-                <div v-else
-                    class="w-10 min-w-10 overflow-hidden overflow-ellipsis aspect-square bg-bg-surface flex justify-center items-center rounded-full "
-                    :style="{ backgroundColor: ticket?.name ? avatarColor({ email: ticket?.email, }) : '' }">
+        <div class="flex justify-between gap-2 items-start">
+            <div class="flex items-center gap-2  ">
+                <img v-if="ticket?.avatar" :src="ticket?.avatar" class="w-10 h-10 rounded-full object-cover" alt="avartar">
+                <div v-else class="w-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full "
+                    :style="{ backgroundColor: ticket?.name ? avatarColor({  email: ticket?.email, }) : '' }">
                     {{ getInitials(ticket?.name) }} <i v-if="!ticket?.name" class="fa-solid fa-user text-white"></i>
                 </div>
-                 <div class=" max-w-[90%]">
-                    
-                    <h3 class="text-sm font-medium mb-1 text-card-foreground leading-tight overflow-hidden overflow-ellipsis text-nowrap">
+                <div class="">
+                    <h3 class="text-sm font-medium mb-1 text-card-foreground leading-tight">
                         {{ ticket?.name ?? ticket['title'] ?? `Team Member ` }}
                     </h3>
                     <!-- <p class="text-text-secondary text-sm"> {{ ticket['email'] ?? 'example@gmail.com' }}</p> -->
-                    <p class="text-text-secondary text-xs overflow-hidden overflow-ellipsis"> {{ ticket?.email }}</p>
-                       <div class="text-[8px] sm:text-[11px] mt-2  font-medium capitalize flex items-center gap-2 rounded-md w-fit px-2 py-1" :class="{
-                        'bg-amber-600/10 text-amber-600': ticket.status === 'pending',
-                        'bg-red-600/10 text-red-600 ': ticket.status === 'rejected',
-                        'bg-green-600/10 text-green-600  ': ticket.status === 'accepted',
-                        'bg-bg-surface/60 text-text-secondary  ': ticket.status === 'unassigned'
-                    }">
-                    {{ ticket.status }}
-                     </div>
+                    <p class="text-text-secondary text-xs"> {{ ticket?.email }}</p>
                 </div>
 
             </div>
-           
-            
-           
-            <div v-if="getMenuItems().length > 0" class="group-hover:flex justify-center items-center hidden w-6 h-6 bg-bg-surface/40 rounded-md ">
+            <div class="group-hover:flex justify-center items-center hidden w-6 h-6 bg-bg-surface/40 rounded-md ">
 
                 <DropMenu @click.stop="" :items="getMenuItems()">
                     <template #trigger>
@@ -54,45 +40,32 @@
         </div>
         <!-- </div> -->
     </div>
-    <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.stop @pointerdown.stop>
-        <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Team seat" itemLabel="Seat"
-            :itemName="ticket.title" :requireMatchText="ticket.title" confirmText="Delete Seat" cancelText="Cancel"
-            size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {
-                showDelete = false
-            }">
-        </ConfirmDeleteModal>
-        <AssignmentModal
-        :isSubmitting="inviting"
-        v-model="showAddMembers"
-        :members="people?.people"
-        :directory="people?.people"
-        @submit="handleSubmit"
-        />
-    </div>
+    <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Team seat" itemLabel="Seat"
+        :itemName="ticket.title" :requireMatchText="ticket.title" confirmText="Delete Seat" cancelText="Cancel"
+        size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {
+            showDelete = false
+        }">
+    </ConfirmDeleteModal>
+
+
+    <AssignmentModal :isSubmitting="inviting" v-model="showAddMembers" :members="people?.people"
+        :directory="people?.people" @submit="({ invite }) => sendInvites(invite)" />
+
+
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { defineAsyncComponent } from "vue";
-const DropMenu = defineAsyncComponent(() =>
-  import("../../../components/ui/DropMenu.vue")
-);
-const AssignmentModal = defineAsyncComponent(() =>
-  import("../modals/AssignmentModal.vue")
-);
-const ConfirmDeleteModal = defineAsyncComponent(() =>
-  import("../../Product/modals/ConfirmDeleteModal.vue")
-);
+import DropMenu from '../../../components/ui/DropMenu.vue'
 import { useAssignTeam, useDeleteSeat, usePeople, useUnAssignTeam } from '../../../queries/usePeople'
+import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 import { useCompanyId } from '../../../services/user'
+import AssignmentModal from '../modals/AssignmentModal.vue'
 import { getInitials } from '../../../utilities'
 import { avatarColor } from '../../../utilities/avatarColor'
-import { usePermissions } from '../../../composables/usePermissions'
-const {   canInviteUser,  canEditUser, canDeleteUser} = usePermissions()
 const showAddMembers = ref(false);
-const emit = defineEmits()
 type Priority = any
 export interface Ticket {
     _id: string | number
@@ -121,57 +94,40 @@ const { data: people } = usePeople(workspaceId.value, companyId);
 const members = ref([]);
 const showDelete = ref(false)
 const queryClient = useQueryClient()
+
 function getMenuItems() {
-  const isAdmin = props.ticket?.role_title?.toLowerCase() === 'admin'
-  const hasUser = Boolean(props.ticket?.name)
+    return [
+        {
+            label: 'Assign User', danger: true,
+            action: () => {
+                showAddMembers.value = true
+            },
+            icon: {
+                prefix: 'fa-regular',
+                iconName: 'fa-user-plus'
+            }
+        },
+        ...(props.ticket.name ? [{
+            label: 'UnAssign User', danger: true,
+            action: () => {
+                unassignHandler()
+            },
+            icon: {
+                prefix: 'fa-regular',
+                iconName: 'fa-user-minus'
+            }
+        }] : []),
+        {
+            label: 'Delete Seat', danger: true, action: () => {
+                showDelete.value = true
+            },
+            icon: {
+                prefix: 'fa-regular',
+                iconName: 'fa-trash'
+            }
 
-  const items = []
-
-  if (canInviteUser.value && !isAdmin) {
-    items.push({
-      label: 'Assign User',
-      danger: true,
-      action: () => {
-        showAddMembers.value = true
-      },
-      icon: {
-        prefix: 'fa-regular',
-        iconName: 'fa-user-plus'
-      }
-    })
-  }
-
-  if (hasUser && canEditUser.value && !isAdmin) {
-    items.push({
-      label: 'UnAssign User',
-      danger: true,
-      action: unassignHandler,
-      icon: {
-        prefix: 'fa-regular',
-        iconName: 'fa-user-minus'
-      }
-    })
-  }
-
-  if (canDeleteUser.value && !isAdmin) {
-    items.push({
-      label: 'Delete Seat',
-      danger: true,
-      action: () => {
-        showDelete.value = true
-      },
-      icon: {
-        prefix: 'fa-regular',
-        iconName: 'fa-trash'
-      }
-    })
-  }
-
-  return items as { label: string; icon?: any; action?: () => void }[]
-}
-
-function handleSubmit(payload: { invite: any }) {
-  sendInvites(payload.invite);
+        },
+    ]
 }
 
 const assignHandle = () => {
@@ -179,21 +135,19 @@ const assignHandle = () => {
 }
 const { mutate: deleleSeat, isPending: deletingTicket } = useDeleteSeat({
     onSuccess: () => {
-
+        
         queryClient.invalidateQueries({ queryKey: ['people-lists'] })
     }
 })
 
-const handleDeleteTicket = () => { 
+const handleDeleteTicket = () => {
     deleleSeat({ id: props.ticket._id })
-    emit("deleted");
 }
 
 const { mutate: invitePeople, isPending: inviting } = useAssignTeam({
     onSuccess: () => {
         showAddMembers.value = false;
         queryClient.invalidateQueries({ queryKey: ['people-lists'] })
-        emit("assigned")
     }
 })
 function extractNameFromEmail(email: string) {
@@ -208,7 +162,6 @@ const { mutate: unassign } = useUnAssignTeam(
 
             showAddMembers.value = false;
             queryClient.invalidateQueries({ queryKey: ['people-lists'] })
-            emit("unAssigned")
         }
     }
 );
@@ -222,8 +175,6 @@ function sendInvites(inviteEmails: any) {
             }
         }
     )
-    
-    
 }
 function unassignHandler() {
     unassign(

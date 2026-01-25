@@ -1,11 +1,11 @@
 <template>
   <div class="w-full">
-    <h2 v-once class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0">Project Details</h2>
-    <p v-once class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5 mb-0">Let's refine your
+    <h2 v-once class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0">Project Details</h2>
+    <p v-once class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">Let's refine your
       project details</p>
   </div>
 
-  <div class="space-y-6 pb-[60px] w-full">
+  <div class="space-y-6 pb-[80px] w-full">
     <!-- File Upload with Memoization -->
     <FileUploader v-model="logo" label="Upload your project logo" tooltip="You can upload your logo image here"
       message="Supports .png, .jpg, .jpeg file formats" :error="logoError" placeholder="Choose a logo"

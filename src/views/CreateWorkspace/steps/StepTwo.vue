@@ -1,15 +1,15 @@
 <template>
   <div class="w-full">
-    <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0 ">
+    <h2 class="text-2xl md:text-5xl font-semibold text-text-primary text-left m-0 ">
       {{ ai ? ' Choose Your Lanes' : 'Create Your Lanes' }}
     </h2>
-    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0">
+    <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0 md:mb-6">
       {{ ai ? ' Select the components you want to include in your project' : ' Create the components you want to include in your project'}}
 
     </p>
   </div>
 
-  <div class="flex flex-col items-start gap-4 w-full pb-[60px]">
+  <div class="flex flex-col items-start gap-4 w-full pb-[80px]">
     <!-- Display Lanes (adapted to workspace.lanes structure) -->
     <label v-for="lane in form.lanes" :key="lane.variables.id" :for="`lane-${lane.variables.id}`"
       class="rounded-lg relative flex justify-between gap-4 lg:gap-5 items-center w-full p-4 cursor-pointer transition-all bg-bg-surface border border-border">
@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, watch } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
@@ -121,7 +121,7 @@ const newLane = ref<{
 
 }>({ id: '', 'lane-title': '', 'lane-description': '', 'lane-color': '#4169E1' });
 
-// const selectedPlatforms = ref<string[]>([]);
+const selectedPlatforms = ref<string[]>([]);
 const localIds = computed(() => {
   try {
     const raw = workspaceStore.workspace
@@ -169,43 +169,31 @@ function handleCancelLane() {
 }
 
 function handleAddLane() {
-  if (!validateLaneForm()) return
-
-  const newId = `lane${form.value.lanes.length + 1}`
-  selectedLanes.value.push(newId)
-  form.value.lanes.push({
-    variables: { ...newLane.value, id: newId }
-  })
-
-  showCustomForm.value = false
-  resetForm()
+  if (!titleError.value && !descriptionError.value) {
+    selectedLanes.value = [...selectedLanes.value, `lane${form.value.lanes.length + 1}`]
+    form.value.lanes.push({ variables: { ...newLane.value, id: `lane${form.value.lanes.length + 1}` } });
+    showCustomForm.value = false;
+    resetForm();
+  }
 }
 
 function handleUpdateLane() {
-  if (!validateLaneForm()) return
+  if (!titleError.value && !descriptionError.value) {
+    const index = form.value.lanes.findIndex(l => l.variables.id === newLane.value.id);
 
-  const index = form.value.lanes.findIndex(l => l.variables.id === newLane.value.id)
-  if (index !== -1) form.value.lanes[index] = { variables: { ...newLane.value } }
-
-  showCustomForm.value = false
-  editMode.value = false
+    if (index !== -1) form.value.lanes[index] = { variables: { ...newLane.value } };
+    showCustomForm.value = false;
+    editMode.value = false;
+  }
   resetForm()
 }
-
-
-
 function resetForm() {
-  newLane.value = {
-    id: '',
-    'lane-title': '',
-    'lane-description': '',
-    'lane-color': '#4169E1',
-  }
-  touched.title = false
-  touched.description = false
-  touched.color = false
-}
+  selectedPlatforms.value = [];
+  newLane.value = { id: '', 'lane-title': '', 'lane-description': '', 'lane-color': '#4169E1' }
+  touched.title = false;
+  touched.description = false;
 
+}
 /** Edit existing lane */
 function editLane(lane: UiLane) {
   newLane.value = { ...lane.variables }
@@ -225,28 +213,9 @@ function continueHandler(): void {
     emit('next');
   }
 }
-function validateLaneForm() {
-  touched.title = true
-  touched.description = true
-  touched.color = true
-
-  // Trigger computed error updates
-  const isValid = !titleError.value && !descriptionError.value && !colorError.value
-
-  return isValid
-}
 
 defineExpose({ continueHandler });
 const emit = defineEmits(['next']);
-watch(() => newLane.value['lane-title'], v => {
-  if (v?.trim() && touched.title) touched.title = false
-})
-watch(() => newLane.value['lane-description'], v => {
-  if (v?.trim() && touched.description) touched.description = false
-})
-watch(() => newLane.value['lane-color'], v => {
-  if (/^#([0-9A-Fa-f]{6})$/.test(v) && touched.color) touched.color = false
-})
 
 </script>
 
