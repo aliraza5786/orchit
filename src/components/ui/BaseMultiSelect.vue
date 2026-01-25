@@ -1,15 +1,15 @@
 <template>
-  <div :class="isDarkTheme ? 'text-white' : 'text-text-primary'" class="relative" ref="wrapperRef">
+  <div :class="theme === 'dark' ? 'text-white' : 'text-text-primary'" class="relative" ref="wrapperRef">
     <!-- Label + Tooltip -->
     <label
       v-if="label"
       :class="[
         'text-base font-medium mb-1 flex items-center',
-        isDarkTheme ? 'text-white' : 'text-text-primary'
+        theme === 'dark' ? 'text-white' : 'text-text-primary'
       ]"
     >
       {{ label }}
-      <span v-if="tooltip" class="inline-block text-text-secondary  ml-1 cursor-help" v-tooltip="tooltip">
+      <span v-if="tooltip" class="inline-block text-text-secondary  ml-1 cursor-help" :title="tooltip">
         <img src="../../assets/icons/info.svg" alt="info" />
       </span>
     </label>
@@ -20,7 +20,7 @@
       class="relative px-3 py-2 rounded-xl overflow-x-auto w-full border text-sm"
       :class="[
         size === 'md' ? 'h-10' : 'h-12',
-        isDarkTheme ? 'bg-bg-input border-border' : 'bg-bg-input border-border ',
+        theme === 'dark' ? 'bg-bg-input border-border' : 'bg-bg-input border-border ',
         error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-black'
       ]"
       @mousedown.self="openDropdown"   
@@ -45,7 +45,7 @@
           @focus="openDropdown"
           @input="onInput"
           @keydown.enter.prevent="handleEnter"
-          :class="isDarkTheme ? '!text-white placeholder-white/60' : 'text-text-primary placeholder-gray-400'"
+          :class="theme == 'dark' ? '!text-white placeholder-white/60' : 'text-text-primary placeholder-gray-400'"
         />
       </div>
     </div>
@@ -56,7 +56,7 @@
       ref="menuRef"
       class="absolute left-0 z-10 text-sm p-2 border rounded-md shadow max-h-40 overflow-auto w-full"
       :class="[
-        isDarkTheme ? 'bg-[#131318] text-white border-border' : 'bg-bg-dropdown text-text-primary border-border',
+        theme === 'dark' ? 'bg-[#131318] text-white border-border' : 'bg-bg-dropdown text-text-primary border-border',
         dropUp ? 'bottom-[76%] ' : 'top-full '
       ]"
     >
@@ -64,7 +64,7 @@
         v-for="item in filteredOptions"
         :key="item._id"
         class="px-3 py-2 rounded-lg cursor-pointer"
-        :class="isDarkTheme ? 'hover:bg-[#000000de]' : 'hover:bg-bg-dropdown-menu-hover'"
+        :class="theme === 'dark' ? 'hover:bg-[#000000de]' : 'hover:bg-bg-dropdown-menu-hover'"
         @mousedown.prevent
         @click.stop="select(item)"
       >
@@ -77,7 +77,7 @@
       v-show="open && filteredOptions.length === 0"
       class="absolute left-0 z-10 p-2 border rounded shadow w-full"
       :class="[
-        isDarkTheme ? 'bg-bg-dropdown text-text-primary border-border' : 'bg-bg-dropdown border-border',
+        theme === 'dark' ? 'bg-bg-dropdown text-text-primary border-border' : 'bg-bg-dropdown border-border',
         dropUp ? 'bottom-full mb-2' : 'top-full mt-2'
       ]"
     >
@@ -88,7 +88,7 @@
     <p
       v-if="message"
       class="mt-2 text-xs flex items-center gap-1"
-      :class="error ? 'text-red-500' : isDarkTheme ? 'text-text-secondary ' : 'text-text-secondary '"
+      :class="error ? 'text-red-500' : theme === 'dark' ? 'text-text-secondary ' : 'text-text-secondary '"
     >
       <slot v-if="$slots.msgIcon" name="msgIcon" /> {{ message }}
     </p>
@@ -97,9 +97,6 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
-import { useTheme } from '../../composables/useTheme';
-
-const { isDark } = useTheme();
 
 interface Option {
   title: string
@@ -116,12 +113,12 @@ const props = withDefaults(
     error?: boolean
     placeholder?: string
     size?: 'md' | 'lg'
-    theme?: string
+    theme?: 'light' | 'dark'
     allowCustom?: boolean
   }>(),
   {
     size: 'md',
-    theme: 'system',
+    theme: 'light',
     allowCustom: false,
     placeholder: 'Select...'
   }
@@ -140,10 +137,6 @@ const dropUp = ref(false)
 
 const MENU_MAX_PX = 160   // matches max-h-40 (10rem)
 const MARGIN_PX   = 8
-
-const isDarkTheme = computed(() => {
-  return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
-});
 
 const selectedOptions = computed(() => {
   return props.modelValue.map((value) => {

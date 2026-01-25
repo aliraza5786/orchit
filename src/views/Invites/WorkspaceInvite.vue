@@ -32,40 +32,22 @@
           <div class="mt-4 flex gap-2">
             <button class="px-4 py-2 rounded-md border text-sm border-border " @click="() => refetch()">Try
               again</button>
-            <Button  @click="goHome">Go to
-              home</Button>
+            <button class="px-4 py-2 rounded-md bg-black text-text-primary text-sm  " @click="goHome">Go to
+              home</button>
           </div>
         </div>
 
         <!-- Accepted -->
         <div v-else-if="accepted" class="p-6">
-          <div v-if="isEmailMatch">
-            <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800  emerald-200">
-              <div class="font-medium mb-1">You’re in! 🎉</div>
-              <p class="text-sm leading-relaxed">
-                You’ve joined <strong>{{ data?.workspace_title }}</strong>.
-              </p>
-            </div>
-            <div class="mt-4 flex gap-2">
-              <Button @click="goToWorkspace">Open
-                workspace</Button>
-            </div>
+          <div class="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-emerald-800  emerald-200">
+            <div class="font-medium mb-1">You’re in! 🎉</div>
+            <p class="text-sm leading-relaxed">
+              You’ve joined <strong>{{ data?.workspace_title }}</strong>.
+            </p>
           </div>
-          <div v-else>
-             <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-yellow-800">
-               <div class="font-medium mb-1">Invite Accepted</div>
-               <p class="text-sm leading-relaxed" v-if="isLoggedIn">
-                 This invite has been accepted for <strong>{{ inviteEmail }}</strong>.<br>
-                 You are currently logged in as <strong>{{ currentUserEmail }}</strong>.
-               </p>
-               <p class="text-sm leading-relaxed" v-else>
-                 This invite has been accepted. Please log in to access the workspace.
-               </p>
-             </div>
-             <div class="mt-4 flex gap-2">
-                <Button v-if="!isLoggedIn" @click="goToLogin">Log In</Button>
-                <Button v-else @click="logoutAndSwitch">Log Out & Switch Account</Button>
-             </div>
+          <div class="mt-4 flex gap-2">
+            <button class="px-4 py-2 rounded-md bg-black text-sm text-text-primary" @click="goToWorkspace">Open
+              workspace</button>
           </div>
         </div>
         <!-- Declined -->
@@ -76,8 +58,8 @@
             <p class="text-sm leading-relaxed">We’ve let the workspace know you won’t be joining.</p>
           </div>
           <div class="mt-4 flex gap-2">
-            <Button 
-              @click="goHome">Go to home</Button>
+            <button class="px-4 py-2 rounded-md bg-black text-white text-sm dark:bg-white text-primary"
+              @click="goHome">Go to home</button>
           </div>
         </div>
         <!-- Invite details -->
@@ -110,8 +92,9 @@
 
           <!-- Actions -->
           <div class="mt-6 flex flex-wrap gap-2">
-            <Button :disabled="data.is_expire || acting" @click="accept">
-              {{ acting && actionType === 'accepted' ? 'Joining…' : 'Accept invitation' }}
+            <Button 
+              :disabled="data.is_expire || acting" @click="accept">
+{{ acting && actionType === 'accepted' ? 'Joining…' : 'Accept invitation' }}
             </Button>
 
             <button class="px-4 py-2 rounded-md text-sm border dark:border-border 353D50]  hover:bg-gray-50 dark:hover:bg-[#1a1a1f]
@@ -138,19 +121,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInvitedWorkspace } from '../../queries/useWorkspace'
-import { useAuthStore } from '../../stores/auth'
 import api from '../../libs/api'
 import { useRouteIds } from '../../composables/useQueryParams'
 import Button from '../../components/ui/Button.vue'
 
 const router = useRouter()
-const auth = useAuthStore()
 const { token } = useRouteIds()
 const { data, refetch, isPending } = useInvitedWorkspace(token.value)
-
 type Invite = {
   id: string
   token: string
@@ -161,38 +141,24 @@ type Invite = {
   workspace?: { id: string | number; name: string }
   inviter?: { name?: string; email?: string }
 }
-
 const error = ref<string | null>(null)
 const acting = ref(false)
 const actionType = ref<'accepted' | 'decline' | null>(null)
 const invite = ref<Invite | null>(null)
 const accepted = ref(false)
 const declined = ref(false)
-
 function toTitle(s?: string) {
   if (!s) return ''
   return s.replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
-
-const isLoggedIn = computed(() => auth.isAuthenticated) 
-const currentUserEmail = computed(() => auth.user?.data?.u_email) 
-const inviteEmail = computed(() => data.value?.email) // Assuming data.email is the invitee email
-const isEmailMatch = computed(() => {
-  if (!isLoggedIn.value || !inviteEmail.value) return false
-  return currentUserEmail.value === inviteEmail.value
-})
-
- 
-
 /** ---- actions ---- */
 async function accept() {
   if (!data.value || data.value.status == 'expired') return
-  
   acting.value = true
   actionType.value = 'accepted'
   error.value = null
   try {
-    await api.post(`/common/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'accepted' })
+    await api.post(`/workspace/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'accepted' })
     accepted.value = true
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Could not accept the invitation.'
@@ -208,7 +174,7 @@ async function decline() {
   actionType.value = 'decline'
   error.value = null
   try {
-    await api.post(`/common/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'rejected' })
+    await api.post(`/workspace/invitation/accept/${encodeURIComponent(token.value)}`, { status: 'rejected' })
     declined.value = true
   } catch (e: any) {
     error.value = e?.response?.data?.message || 'Could not decline the invitation.'
@@ -220,40 +186,16 @@ async function decline() {
 
 /** ---- navigation helpers ---- */
 function goHome() {
-  router.push('/')
+  router.push({ name: 'home' }).catch(() => { }) // adjust route name
 }
-
-function goToLogin() {
-    router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
-}
- 
-function logoutAndSwitch() {
-    auth.logout()
-    router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
-}
-
 function goToWorkspace() {
-  if (data.value?.workspace?._id) {
-    if (!data.value?.job_id) {
-      localStorage.removeItem('jobId')
-      router.push(`/workspace/peak/${data.value?.workspace?._id}`)
-    }else{
-      router.push(`/workspace/peak/${data.value?.workspace?._id}/${data.value?.job_id}`)
-    }
+  if (data.value?.workspace_id) {
+    router.push({ name: 'workspace', params: { id: data.value.workspace_id } }).catch(() => { })
   } else {
     goHome()
   }
 }
 
-watch(() => data.value, () => {
-  if (data.value?.status == 'rejected') {
-    declined.value = true;
-    return
-  }
-  if (data.value?.status == 'accepted') {
-    accepted.value = true;
-    return
-  }
-})
+
 
 </script>
