@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useTheme } from "../../../composables/useTheme";
-const { isDark } = useTheme(); // light / dark / system
+const { theme } = useTheme(); // light / dark / system
 
 interface Blog {
   id: number | string
@@ -35,7 +35,7 @@ function goToDetail() {
   <div
     @click="goToDetail"
     class="bg-bg-lavender rounded-[12px] shadow-sm hover:shadow-lg cursor-pointer transition-all duration-300 group"
-    :class="isDark ? 'border border-border-input' : 'border border-[#a495e9b5]'"
+    :class="theme === 'dark' ? 'border border-border-input' : 'border border-[#a495e9b5]'"
   >
     <!-- Image -->
     <div class="h-[245px] overflow-hidden rounded-t-[12px]">

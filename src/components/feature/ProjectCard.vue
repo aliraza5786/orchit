@@ -3,7 +3,7 @@
 
   <!-- Header -->
   <div
-    class="relative p-3 rounded-lg min-w-[240px] sm:min-w-sm border border-border overflow-hidden flex flex-col justify-between bg-bg-card w-full">
+    class="relative p-3 rounded-lg min-w-sm border border-border overflow-hidden flex flex-col justify-between bg-bg-card w-full">
     <div class="flex justify-between items-start pb-2">
       <div>
         <h3 class="text-lg font-semibold text-text-primary text-left">
@@ -27,7 +27,7 @@
         <div> <span>{{ status == 'in_progress' ? 'Generating lane with AI...' : 'Progress' }}</span> <i
             v-if="status == 'in_progress'" class="fa-regular text-left fa-arrows-spin animate-spin duration-250"></i>
         </div>
-        <span v-if="ai">{{ Math.round(liveProgress) }}% 
+        <span v-if="ai">{{ Math.round(liveProgress) }}% <!-- 🎉 shows only at 100%, re-animates on each completion -->
           <span v-if="atHundred" :key="confettiIconKey" class="confetti-icon select-none" aria-label="Completed">
             🎉
           </span></span>
