@@ -1,12 +1,12 @@
 <template>
-  <div :class="isDarkTheme ? 'text-white' : 'text-text-primary'">
+  <div :class="theme === 'dark' ? 'text-white' : 'text-text-primary'">
     <!-- Label + Tooltip -->
     <label v-if="label" :class="[
       'text-base font-medium mb-1 flex items-center',
-      isDarkTheme ? 'text-white' : 'text-text-primary'
+      theme === 'dark' ? 'text-white' : 'text-text-primary'
     ]">
       {{ label }}
-      <span v-if="tooltip" class="inline-block text-text-secondary -400 ml-1 cursor-help" v-tooltip="tooltip">
+      <span v-if="tooltip" class="inline-block text-text-secondary -400 ml-1 cursor-help" :title="tooltip">
         <img src="../../assets/icons/info.svg" alt="info" />
       </span>
     </label>
@@ -14,10 +14,10 @@
     <!-- Input wrapper (same shell as BaseTextField) -->
     <div class="relative">
       <div :class="[
-        'flex items-center gap-2 border rounded-[6px] px-3 py-2 w-full text-sm focus-within:ring-2',
+        'flex items-center gap-2 border rounded-xl px-3 py-2 w-full text-sm focus-within:ring-2',
         size === 'md' ? 'min-h-10' : 'min-h-12',
         error ? 'border-red-500 focus-within:ring-red-500' : 'focus-within:ring-border',
-        isDarkTheme ? 'bg-[#131318] border-border ' : ' border-border bg-bg-input',
+        theme === 'dark' ? 'bg-[#131318] border-border ' : ' border-border bg-bg-input',
         disabled ? 'opacity-60 cursor-not-allowed' : ''
       ]" @click="focusInput">
         <!-- Prefix slot -->
@@ -26,16 +26,16 @@
         </span>
 
         <!-- Chips -->
-        <div class="flex flex-wrap gap-2 w-full items-center flex-1">
+        <div class="flex flex-wrap gap-2 items-center flex-1">
           <span
             v-for="(e, i) in internal"
             :key="e + i"
-            class="inline-flex items-center w-full gap-2 rounded-full px-2 py-1 text-xs
+            class="inline-flex items-center gap-2 rounded-full px-2 py-1 text-xs
                    bg-bg-body text-text-secondary"
           >
             <span v-if="showName" class="font-medium">{{ extractNameFromEmail(e) }}</span>
-            <span v-if="showName" class="opacity-70 w-[90%] overflow-ellipsis overflow-hidden">&lt;{{ e }}&gt;</span>
-            <span v-else class=" w-[90%] overflow-ellipsis overflow-hidden">{{ e }}</span>
+            <span v-if="showName" class="opacity-70">&lt;{{ e }}&gt;</span>
+            <span v-else>{{ e }}</span>
 
             <button
               type="button"
@@ -70,7 +70,7 @@
 
     <!-- Help/Error Text -->
     <p v-if="message" class="mt-2 text-xs flex items-center gap-1"
-       :class="error ? 'text-red-500' : isDarkTheme ? 'text-text-secondary ' : 'text-text-secondary '">
+       :class="error ? 'text-red-500' : theme === 'dark' ? 'text-text-secondary ' : 'text-text-secondary '">
       <slot v-if="$slots.msgIcon" name="msgIcon" /> {{ message }}
     </p>
   </div>
@@ -78,9 +78,6 @@
 
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
-import { useTheme } from '../../composables/useTheme';
-
-const { isDark } = useTheme();
 
 const props = withDefaults(defineProps<{
   modelValue: string[]
@@ -90,7 +87,7 @@ const props = withDefaults(defineProps<{
   error?: boolean
   placeholder?: string
   size?: 'sm' | 'md' | 'lg'
-  theme?: string
+  theme?: 'dark' | 'light'
   disabled?: boolean
   allowDuplicates?: boolean
   showName?: boolean
@@ -101,7 +98,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   modelValue: () => [],
   size: 'md',
-  theme: 'system',
+  theme: 'light',
   placeholder: 'Add people by email… (Enter, comma, space)',
   error: false,
   disabled: false,
@@ -130,12 +127,7 @@ watch(() => props.modelValue, (v) => {
   if (JSON.stringify(v) !== JSON.stringify(internal.value)) {
     internal.value = [...v]
   }
-  }
-)
-
-const isDarkTheme = computed(() => {
-  return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
-});
+})
 
 /** Max / limit helpers */
 const cap = computed(() => (props.maxEmails && props.maxEmails > 0) ? props.maxEmails : Infinity)

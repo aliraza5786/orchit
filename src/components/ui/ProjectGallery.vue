@@ -16,21 +16,13 @@
       </div>
 
       <!-- Meta -->
-      <div class="flex justify-between gap-2.5 border-t border-border bg-bg-card p-3.5 text-sm">
-        <div class="flex items-start gap-2.5">
-             <img :src="project.logo" class="h-6 w-6 rounded-md object-cover" alt="" loading="lazy" decoding="async" />
-             <div class="min-w-0">
-                <h3 class="truncate text-sm font-medium text-text-primary w-20">{{ displayTitle(project) }}</h3>
-                <p class="truncate text-xs text-text-secondary">{{ formatWhen(project.created_at) }}</p>
-             </div>
-        </div>
-        <div>
-           <h3 class="truncate text-sm font-medium text-text-primary w-30 text-end">{{ project.owner?.name }}</h3> 
-            <p class="truncate text-xs text-text-secondary text-end">Workspace Owner</p>
-
+      <div class="flex items-start gap-2.5 border-t border-border bg-bg-card p-3.5 text-sm">
+        <img :src="project.logo" class="h-6 w-6 rounded-md object-cover" alt="" loading="lazy" decoding="async" />
+        <div class="min-w-0">
+          <h3 class="truncate text-sm font-medium text-text-primary">{{ displayTitle(project) }}</h3>
+          <p class="truncate text-xs text-text-secondary">{{ formatWhen(project.lastUpdated) }}</p>
         </div>
       </div>
-
     </article>
   </section>
 
@@ -78,9 +70,8 @@ interface Project {
   variables?: { title?: string }
   title?: string
   logo: string
-  created_at?: string
+  lastUpdated?: string
   LatestTask?: { job_id?: string }
-  owner?: { name: string } 
 }
 
 const props = withDefaults(defineProps<{ projects: Project[]; loading?: boolean; skeletonCount?: number }>(), {
