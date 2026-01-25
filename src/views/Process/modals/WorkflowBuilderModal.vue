@@ -1,29 +1,28 @@
 <template>
   <transition name="fade">
-    <div v-if="isOpen" class="fixed inset-0 z-50 bottom-[60px] sm:bottom-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+    <div v-if="isOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
       @keydown.esc="close">
       <div class="relative flex h-full w-full flex-col bg-bg-body" role="dialog" aria-modal="true" tabindex="0">
         <!-- Header -->
-         <div class="border-b border-border px-[20px] sm:px-6 py-4 overflow-x-auto">
-         <div class="flex items-center justify-between max-w-content gap-3">
+        <div class="flex items-center justify-between border-b border-border px-6 py-4">
           <div class="flex items-center gap-4">
-            <h2 class="flex items-center gap-2 text-lg sm:text-xl font-semibold text-text-primary text-nowrap">
+            <h2 class="flex items-center gap-2 text-xl font-semibold text-text-primary">
               <i class="fa-solid fa-diagram-project text-accent" aria-hidden="true" />
               Workflow for {{ processTitle }}
             </h2>
 
-            <label class="flex cursor-pointer items-center gap-2 text-sm text-text-secondary text-nowrap">
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-text-secondary">
               <input type="checkbox" v-model="showTransitionLabels" class="rounded" />
               <span>Show transition labels</span>
             </label>
           </div>
 
           <div class="flex items-center gap-3">
-            <Button variant="secondary" :disabled="!canCreateCard" size="sm" @click="handleAddStatus">
-              <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
+            <Button variant="secondary" size="sm" @click="handleAddStatus">
+              <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Status
             </Button>
 
-            <Button variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="handleUpdateWorkflow">
+            <Button variant="primary" size="sm" :disabled="isSaving" @click="handleUpdateWorkflow">
               {{ updateButtonLabel }}
             </Button>
 
@@ -32,8 +31,6 @@
             </button>
           </div>
         </div>
-         </div>
-        
 
         <!-- Canvas -->
         <div class="relative flex-1 overflow-hidden">
@@ -43,14 +40,14 @@
               <p class="text-sm text-text-secondary">Loading workflow...</p>
             </div>
           </div>
-          <WorkflowCanvas v-else-if="processId" ref="Canvas" :can-delete="canDeleteCard" :process-id="processId" :can-edit="canEditCard"
+          <WorkflowCanvas v-else-if="processId" ref="Canvas" :process-id="processId"
             :show-transition-labels="showTransitionLabels" @update:workflow="handleWorkflowUpdate"
             @add:status="handleAddStatus" @add:transition="handleAddTransition" @edit:node="handleEditNode" />
         </div>
 
         <!-- Footer -->
-        <!-- <div class="flex items-center justify-end sm:justify-between border-t border-border bg-bg-surface  sm:px-6 py-3">
-          <div class="hidden sm:flex items-center gap-4 text-sm text-text-secondary">
+        <div class="flex items-center justify-between border-t border-border bg-bg-surface px-6 py-3">
+          <div class="flex items-center gap-4 text-sm text-text-secondary">
             <span class="flex items-center gap-2">
               <i class="fa-solid fa-hand-pointer" aria-hidden="true" /> Click and drag to pan
             </span>
@@ -73,7 +70,7 @@
               <span class="sr-only">Zoom in</span>
             </Button>
           </div>
-        </div> -->
+        </div>
       </div>
     </div>
   </transition>
@@ -95,9 +92,6 @@ import AddTransitionModal from './AddTransitionModal.vue'
 import { useWorkflowData } from '../../../queries/useProcess'
 import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
 // import { toast } from 'vue-sonner'
-
-import { usePermissions } from "../../../composables/usePermissions";
-const { canEditCard, canCreateCard, canDeleteCard } = usePermissions();
 
 /* Props & emits */
 const props = defineProps<{
@@ -164,7 +158,6 @@ function close() {
 }
 
 function handleAddStatus() {
-  editingStatus.value='';
   showAddStatusModal.value = true
 }
 
@@ -211,18 +204,17 @@ function handleUpdateWorkflow() {
   // })
 }
 
-// function handleZoomIn() {
-//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'in' } }))
-// }
-// function handleZoomOut() {
-//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'out' } }))
-// }
-// function handleZoomReset() {
-//   window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'reset' } }))
-// }
+function handleZoomIn() {
+  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'in' } }))
+}
+function handleZoomOut() {
+  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'out' } }))
+}
+function handleZoomReset() {
+  window.dispatchEvent(new CustomEvent('workflow:zoom', { detail: { action: 'reset' } }))
+}
 
 function handleStatusAdded(e: any) {
-
   showAddStatusModal.value = false
   Canvas.value?.handleAddNode?.(e)
   editingStatus.value = null

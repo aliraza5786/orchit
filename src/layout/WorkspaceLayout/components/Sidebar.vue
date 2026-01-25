@@ -1,101 +1,45 @@
 <template>
-  <SidebarSkeleton v-if="isLoading" />
-  <div class="sidebar_mobile bottom-0 start-0 fixed sm:static overflow-hidden z-2 sm:z-1 sm:h-full">
-    <aside
-      class="sm:overflow-y-auto whitespace-nowrap overflow-x-auto bg-transparent z-1 sm:min-w-[36px] sm:px-2 sm:max-h-full h-[60px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2.5 sm:pt-0 pb-2.5  transition-all duration-200"
-      :class="{ 'w-full sm:w-[250px]': expanded, 'w-full sm:w-14': !expanded }"
-    >
-      <!-- Mobile Toggle -->
-      <div class="hidden sm:block py-1.5 px-2 bg-bg-card mb-2 w-[35px] rounded-lg">
-        <button 
-          @click="emit('toggle-sidebar')"
-          class="text-text-secondary hover:text-text-primary cursor-pointer"
-          aria-label="Toggle Sidebar"
-        >
-          <i class="fa-solid fa-bars text-[14px]"></i>
-        </button>
-      </div> 
-      <!-- Workspace Logo Component -->
-    <!-- <div class="hidden sm:block">
-       <WorkSpaceDropdown :expanded="expanded" />
-    </div> -->
 
-    <div class="text-center min-w-max">
-      <SideItem
-        label="Peak"
-        :to="`/workspace/peak/${workspaceId}/${
-          workspace?.generation_task?.job_id
-            ? workspace?.generation_task?.job_id
-            : ''
-        }`"
-        key="peak"
-        id="peak"
-        :icon="{
-          prefix: 'fa-regular',
-          iconName: 'fa-home',
-        }"
-        :expanded="expanded"
-      />
-    </div>
-    <div class="text-center min-w-max">
-      <SideItem
-        label="People"
-        :to="`/workspace/people/${workspaceId}`"
-        key="people"
-        id="people"
-        :icon="{
-          prefix: 'fa-regular',
-          iconName: 'fa-users',
-        }"
-        :expanded="expanded"
-      />
-    </div>
-    <div class="text-center min-w-max">
-      <SideItem
-        label="Process"
-        :to="`/workspace/process/${workspaceId}`"
-        key="process"
-        id="process"
-        :icon="{
-          prefix: 'fa-regular',
-          iconName: 'fa-diagram-project',
-        }"
-        :expanded="expanded"
-      />
-    </div>
-    <div class="text-center flex-col flex gap-1 min-w-max">
-      <SideItem
-        label="Plan"
-        :to="`/workspace/plan/${workspaceId}`"
-        key="plan"
-        id="plan"
-        :icon="{
-          prefix: 'fa-regular',
-          iconName: 'fa-brain',
-        }"
-        :expanded="expanded"
-      />
-    </div>
-    <div class="flex flex-col gap-1 max-sm:flex-row pin_task min-w-max">
-      <SideItem
-        v-for="(item, index) in filteredModules"
-        :key="index"
-        :id="item._id"
-        :label="item.variables['module-title']"
-        :jobId="item?.generation_task?.job_id"
-        :status="item?.generation_task?.status"
-        :to="`/${
-          item?.variables['module-title'].toLowerCase() == 'pin'
-            ? 'workspace/pin'
-            : 'workspace'
-        }/${workspaceId}/${item._id}`"
-        :icon="item?.variables['module-icon']"
-        :expanded="expanded"
-      />
-    </div>
+    <SidebarSkeleton v-if="isLoading" />
+        <aside
+            class="w-full sm:w-fit  bg-bg-body z-1 min-w-[320px] sm:min-w-[36px] px-2 max-h-full h-[70px] sm:h-full flex flex-row  sm:flex-col items-center gap-1 pt-2.5 sm:pt-0 pb-2.5 bottom-0 fixed sm:static">
 
-    <!-- Draggable Navigation Items -->
-    <!-- <Draggable v-model="modules" item-key="label"
+            <div class="sm:mt-auto  text-center ">
+                <SideItem label="Peak" :to="`/workspace/peak/${workspaceId}/${jobId ? jobId : ''}`" key="peak" id="peak"
+                    :icon="{
+                        prefix: 'fa-regular',
+                        iconName: 'fa-home'
+                    }" />
+            </div>
+            <div class="sm:mt-auto  text-center ">
+                <SideItem label="People" :to="`/workspace/people/${workspaceId}`" key="people" id="people" :icon="{
+                    prefix: 'fa-regular',
+                    iconName: 'fa-users'
+                }" />
+            </div>
+            <div class="sm:mt-auto  text-center ">
+                <SideItem label="Process" :to="`/workspace/process/${workspaceId}`" key="process" id="process" :icon="{
+                    prefix: 'fa-regular',
+                    iconName: 'fa-diagram-project'
+                }" />
+            </div>
+
+        <div class="flex  flex-col gap-1  pin_task ">
+            <SideItem v-for="(item, index) in workspace.modules" :key="index" :id="item._id"
+                :label="item.variables['module-title']"
+                :to="`/${item?.variables['module-title'].toLowerCase() == 'pin' ? 'workspace/pin' : 'workspace'}/${workspaceId}/${item._id}`"
+                :icon="item?.variables['module-icon']" />
+        </div>
+        <div class="sm:mt-auto   text-center sm:flex-grow flex-col flex gap-1 ">
+            <SideItem label="Plan" :to="`/workspace/plan/${workspaceId}`" key="plan" id="plan" :icon="{
+                prefix: 'fa-regular',
+                iconName: 'fa-brain'
+            }" />
+        </div>
+
+
+            <!-- Draggable Navigation Items -->
+            <!-- <Draggable v-model="modules" item-key="label"
             class="flex-grow overflow-y-auto w-full space-y-1 transition-all text-center" handle=".drag-handle"
             animation="400" drag-class="drag" ghost-class="ghost">
             <template #item="{ element }">
@@ -107,84 +51,56 @@
             </template>
 </Draggable> -->
 
-    <!-- Static More Item -->
-    <div v-if="canCreateModule" class="text-center min-w-max">
-      <SideItem
-        id="more"
-        label="Add"
-        :to="`/workspace/more/${workspaceId}`"
-        :icon="{
-          prefix: 'fa-solid',
-          iconName: 'fa-plus',
-        }"
-        :expanded="expanded"
-      />
-    </div>
-  </aside>
-  </div>
-  
+            <!-- Static More Item -->
+            <div class="sm:mt-auto sm:pt-4 hidden sm:block text-center ">
+                <SideItem id="more" label="More" :to="`/workspace/more/${workspaceId}`" :icon="{
+                    prefix: 'fa-solid',
+                    iconName: 'fa-grid-2'
+                }" />
+
+            </div>
+        </aside>
+    
 </template>
 
+
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
-import SideItem from "./SideItem.vue";
-import { useRouteIds } from "../../../composables/useQueryParams";
-import { usePermissions } from "../../../composables/usePermissions";
-import SidebarSkeleton from "../../../components/skeletons/SidebarSkeleton.vue";
-
-const {
-  workspaceId
-} = useRouteIds();
-
-const { canCreateModule, canAccessModule } = usePermissions();
-const props = defineProps<{
-  workspace: { modules: any; generation_task: any };
-  isLoading: boolean;
-  expanded: boolean;
-}>(); 
-
-const filteredModules = computed(() => {
-  if (!props.workspace?.modules) return [];
-  return props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
-});
-
+import { ref, watch } from 'vue'
+import SideItem from './SideItem.vue';
+import { useRouteIds } from '../../../composables/useQueryParams';
+const { workspaceId, jobId } = useRouteIds()
+const props = defineProps<{ workspace: { modules: any }, isLoading: boolean }>()
 const modules = ref([]);
-const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
-
-watch(props, () => {
-  if (!props) {
-    return;
-  }
-  modules.value = props.workspace.modules;
-});
+watch(() => props.workspace, (newWorkspace) => {
+    if (!newWorkspace) {
+        return;
+    }
+    modules.value = newWorkspace.modules;
+}, { deep: true });
 
 </script>
 
 <style scoped>
-.drag > div {
-  transform: rotate(5deg);
+.drag>div {
+    transform: rotate(5deg);
 }
 
 .ghost {
-  background-color: rgba(211, 211, 211, 0.775);
-  border-radius: 6px;
+    background-color: rgba(211, 211, 211, 0.775);
+    border-radius: 6px;
 }
 
-.ghost > * {
-  visibility: hidden;
+.ghost>* {
+    visibility: hidden;
 }
 
-@media (max-width: 639px) {
-  aside {
-    gap: 8px;
-  }
-
-  .pin_task {
-    gap: 8px;
-  }
-  .sidebar_mobile{
-     width:100%;
-     padding:0   15px;
-  }
+@media(max-width:639px){
+    aside{
+        justify-content: center;
+        gap: 8px;
+    }
+    .pin_task{
+        gap: 8px;
+    }
 }
 </style>
