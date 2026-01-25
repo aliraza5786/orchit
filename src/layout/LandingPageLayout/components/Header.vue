@@ -1,11 +1,11 @@
-<template> 
+<template>
     <header class="w-full bg-body text-primary border-b"
-        :class="isDark ? 'border-gray-800' : 'border-gray-300'">
+        :class="theme === 'dark' ? 'border-gray-800' : 'border-gray-300'">
         <div class="mx-auto px-[15px] lg:px-10">
-            <nav class="flex items-center justify-between " :class="isDark ? 'py-[12px]' : 'py-[11px]'">
+            <nav class="flex items-center justify-between " :class="theme === 'dark' ? 'py-[12px]' : 'py-[11px]'">
                 <!-- Logo Section -->
                 <RouterLink to="/" class="transition-opacity duration-300 hover:opacity-80">
-                    <img :src="isDark
+                    <img :src="theme === 'dark'
                         ? darkLogo
                         : lightLogo
                         " alt="Logo" class="max-w-[110px] sm:max-w-[144px] object-contain" />
@@ -40,7 +40,7 @@
                             Get Started
                             <div class="flex items-center gap-[4px]">
                                 <img :src="googleLogo" alt="Google" class="w-[18px] md:w-[24px]" />
-                                <img :src="isDark
+                                <img :src="theme === 'dark'
                                     ? darkApple
                                     : lightApple
                                     " alt="Apple icon" class="w-[20px] md:w-[24px]" />
@@ -82,7 +82,7 @@
                                 Get Started
                                 <div class="flex items-center gap-[4px]">
                                     <img :src="googleLogo" alt="Google" class="w-[18px] md:w-[24px]" />
-                                    <img :src="isDark
+                                    <img :src="theme === 'dark'
                                         ? darkApple
                                         : lightApple
                                         " alt="Apple icon" class="w-[20px] md:w-[24px]" />
@@ -101,14 +101,13 @@
 import { useRoute, RouterLink, useRouter } from "vue-router";
 import { ref } from "vue";
 import { useTheme } from "../../../composables/useTheme";
-import lightLogo from '@assets/global/light-logo.png';
-import darkLogo from '@assets/global/dark-logo.png';
+import lightLogo from '@assets/global/light-logo.svg';
+import darkLogo from '@assets/global/dark-logo.svg';
 import googleLogo from '@assets/LandingPageImages/header-icons/google.png';
 import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
 import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
- 
 
-const {isDark } = useTheme();
+const { theme } = useTheme();
 const route = useRoute();
 const router = useRouter();
 const navItems = [

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, ref, onMounted, onUnmounted } from 'vue'
+import { nextTick, ref } from 'vue'
 import {
   VueFlow,
   Handle,
@@ -15,31 +15,23 @@ import { Controls } from '@vue-flow/controls'
 // import { MiniMap } from '@vue-flow/minimap'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
-import { useCreateTransition, useProcessStatus, useProcessWorkflow, useProcessSheets } from '../../../queries/useProcess'
+import { useCreateTransition, useProcessStatus, useProcessWorkflow } from '../../../queries/useProcess'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 import { watch } from 'vue'
 import BaseTextField from '../../ui/BaseTextField.vue'
 import Button from '../../ui/Button.vue'
 import Loader from '../../ui/Loader.vue'
-import type { EdgeUpdateEvent } from '@vue-flow/core'
-import { useTheme } from "../../../composables/useTheme";
-const { isDark } = useTheme();
-// --- Modal state for editing an existing transition (edge) ---
-const showEditEdgeModal = ref(false)
-const editEdgeName = ref('')
-const selectedEdgeId = ref<string | null>(null)
 
 const nodes = ref<VFNode[]>([])
 const edges = ref<VFEdge[]>([])
 
-const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
+const { setNodes, updateNode, addEdges, setEdges, onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges } = useVueFlow()
+
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
-const {refetch:refetchProcess} = useProcessSheets(workspaceId.value)
 
 const { data: statuses, isSuccess: isStatues } = useProcessStatus(workspaceId.value);
-const { data: processWorkflow, isSuccess: isProcess, isPending: isProcessPending, isFetching: isProcessFetching, refetch: refetchWorkflow } = useProcessWorkflow(workspaceId.value)
- 
+const { data: processWorkflow, isSuccess: isProcess, isPending: isProcessPending, isFetching: isProcessFetching } = useProcessWorkflow(workspaceId.value)
 
 // ---- Helpers to normalize API -> VueFlow ----
 function mapApiNode(n: any): VFNode {
@@ -53,16 +45,6 @@ function mapApiNode(n: any): VFNode {
   }
 }
 
-const props = withDefaults(
-  defineProps<{
-    canEdit: boolean
-    canDelete: boolean
-  }>(),
-  {
-    canEdit: true,    // default value
-    canDelete: false  // default value
-  }
-)
 // Replace your normalizeMarkerType with this:
 function normalizeMarkerType(t?: string): MarkerType {
   const key = (t ?? 'arrow').toLowerCase()
@@ -131,9 +113,7 @@ watch(
             color: '#1152de',
             width: 18,
             height: 18,
-          }, 
-           sourceHandle: 'out-right', // must match the node's handle id
-           targetHandle: 'in-left',   // must match the node's handle id
+          },
         })
       }
       if (!processWorkflow.value?.raw_transitions.nodes)
@@ -145,65 +125,39 @@ watch(
   { immediate: true }
 )
 // ---- WATCH: put API data into VueFlow ----
-// watch(
-//  isProcessFetching,
-//   async () => {
-//     const fd = processWorkflow.value?.raw_transitions
-//     if (!fd)
-//       return
-//     const incomingNodes = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
-//     let incomingEdges: any;
-//     if (Array.isArray(fd.edges)) {
-//       incomingEdges = fd.edges.map(mapApiEdge)
-//     }
-//     // 1) put nodes in first
-//     await nextTick()
-//     setNodes(incomingNodes)
-//     await nextTick()
-
-//     // 2) after nodes & handles are mounted/measured, then add edges
-//     onNodesInitialized(async () => {
-//       // (optional) make sure handle bounds are fresh
-//       incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
-//       setEdges(incomingEdges)
-//       fitView({ padding: 0.2 }) // nice-to-have
-//       await nextTick()
-
-//     })
-
-//     await nextTick()
-//   },
-//   { immediate: true }
-// )
-// ---- WATCH: update VueFlow whenever processWorkflow changes ----
 watch(
-  processWorkflow,
-  async (workflow) => {
-    if (!workflow?.raw_transitions) return
-
-    const fd = workflow.raw_transitions
+ isProcessFetching,
+  async () => {
+    const fd = processWorkflow.value?.raw_transitions
+    if (!fd)
+      return
     const incomingNodes = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
-    const incomingEdges = Array.isArray(fd.edges) ? fd.edges.map(mapApiEdge) : []
-
-    // 1) Update nodes first
+    let incomingEdges: any;
+    if (Array.isArray(fd.edges)) {
+      incomingEdges = fd.edges.map(mapApiEdge)
+    }
+    // 1) put nodes in first
     await nextTick()
     setNodes(incomingNodes)
+    await nextTick()
 
-    // 2) After nodes & handles are ready, update edges
+    // 2) after nodes & handles are mounted/measured, then add edges
     onNodesInitialized(async () => {
+      // (optional) make sure handle bounds are fresh
       incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
       setEdges(incomingEdges)
-      fitView({ padding: 0.5 })
+      fitView({ padding: 0.2 }) // nice-to-have
       await nextTick()
+
     })
+
+    await nextTick()
   },
   { immediate: true }
 )
 
-
 // ---- onConnect: ask for transition name first ----
 function onConnect(conn: Connection) {
-  if(!props.canEdit) return;
   pendingConnection.value = conn
   transitionName.value = ''
   showTransitionModal.value = true
@@ -224,8 +178,6 @@ function confirmTransition() {
     data: { name },
     style: { stroke: '#1152de', strokeWidth: 2 },
     markerEnd: { type: MarkerType.Arrow, color: '#1152de', width: 18, height: 18 },
-    sourceHandle: conn.sourceHandle,
-    targetHandle: conn.targetHandle, 
   }
 
   addEdges(payload)
@@ -248,16 +200,11 @@ function cancelTransition() {
 //   return () => `n-${i++}`
 // })()
 
-const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(workspaceId.value, {
-  onSuccess:()=>{
-    refetchWorkflow();
-    refetchProcess();
-  }
-})
+const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(workspaceId.value)
 
 const defaultEdgeOptions: Partial<VFEdge> = {
   // sharp/right-angle like Jira
-  type: 'default',
+  type: 'step',
   animated: false,
   style: { strokeWidth: 2 },
   markerEnd: {
@@ -267,8 +214,7 @@ const defaultEdgeOptions: Partial<VFEdge> = {
     height: 18,
   },
   labelBgPadding: [6, 2],
-  labelBgBorderRadius: 6, 
-   updatable: true,
+  labelBgBorderRadius: 6,
 }
 
 
@@ -304,7 +250,7 @@ function handleConfirmEdit(id: string, nodeData: any) {
     updateNode(id, n => ({
       ...n, data: {
         ...n.data, label: nodeData.name, status: nodeData.category,
-      }, style: { border: '2px solid #64748b', borderRadius: '8px', background: nodeData.status_color }
+      }, style: { border: '2px solid #64748b', borderRadius: '10px', background: nodeData.status_color }
     }))
   }
   nextTick();
@@ -315,12 +261,12 @@ async function handleAddNode(e: any) {
   const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
   const id = makeId();
   const pos = project({ x: e.position_x, y: e.position_y }) // place near bottom-left; project to account for zoom/pan
-    addNodes({
-      id,
-      position: pos,
-      data: { label: e.name, status: e.status_name },
-      style: { border: '2px solid #64748b', borderRadius: '8px', background: e.status_color },
-    })
+  addNodes({
+    id,
+    position: pos,
+    data: { label: e.name, status: e.status_name },
+    style: { border: '2px solid #64748b', borderRadius: '10px', background: e.status_color },
+  })
 
 }
 
@@ -414,181 +360,28 @@ window.addEventListener('beforeunload', () => {
   if (isSaving.value) return
   try { saveWorkflow() } catch { }
 })
-
-
-function openEditEdge(edge: VFEdge) {
-  console.log(edge, 'edge');
-  
-  selectedEdgeId.value = edge.id
-  // prefer existing label, fallback to data.name, else empty
-  editEdgeName.value = String(edge.label ?? edge.data?.name ?? '')
-  showEditEdgeModal.value = true
-}
-
-function confirmEditEdge() {
-  if (!selectedEdgeId.value) return
-  const name = editEdgeName.value.trim()
-
-  // Update the edge’s label (and mirror into data.name to keep your API shape consistent)
-  setEdges(eds =>
-    eds.map(e =>
-      e.id === selectedEdgeId.value
-        ? { ...e, label: name || e.label, data: { ...(e.data ?? {}), name: name || e.data?.name } }
-        : e
-    )
-  )
-
-  // reset modal
-  showEditEdgeModal.value = false
-  selectedEdgeId.value = null
-  editEdgeName.value = ''
-}
-// delete edge
-function deleteSelectedEdge() {
-  if (!selectedEdgeId.value) return
-
-  removeEdges([selectedEdgeId.value])
-
-  // close modal + reset state
-  showEditEdgeModal.value = false
-  selectedEdgeId.value = null
-  editEdgeName.value = ''
-}
-
-// delete status node
-function deleteStatus(nodeId: string) {
-  // Remove the node itself
-  setNodes(nodes => nodes.filter(n => n.id !== nodeId))
-
-  // Remove all edges connected to this node
-  setEdges(edges =>
-    edges.filter(
-      e => e.source !== nodeId && e.target !== nodeId
-    )
-  )
-   // clear selection if needed
-  selectedEdgeId.value = null
-}
-function confirmDeleteNode(nodeId: string) {
-  const ok = window.confirm(
-    'Are you sure you want to delete this status? All transitions will also be removed.'
-  )
-  if (!ok) return
-
-  deleteStatus(nodeId)
-}
-
-// change transition direction by dragging and dropping
-function onEdgeUpdate(event: EdgeUpdateEvent) {
-  const { edge, connection } = event
-  if (!edge || !connection) return
-
-  setEdges(edges =>
-    edges.map(e =>
-      e.id === edge.id
-        ? {
-            ...e,
-            source: connection.source!,
-            target: connection.target!,
-            sourceHandle: connection.sourceHandle,
-            targetHandle: connection.targetHandle,
-          }
-        : e
-    )
-  )
-}
-
-
-
-
-function cancelEditEdge() {
-  showEditEdgeModal.value = false
-  selectedEdgeId.value = null
-  editEdgeName.value = ''
-}
-function onEdgeClick({event, edge}:{event:any, edge:any}) {
-  console.log('>>> click',edge);
-  
-  openEditEdge(edge)
-  event.stopPropagation()
-}
-
-
-// zoom in zoom out
-onMounted(() => {
-  window.addEventListener('workflow:zoom', handleZoomEvent)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('workflow:zoom', handleZoomEvent)
-})
-
-function handleZoomEvent(e: Event) {
-  const detail = (e as CustomEvent).detail
-  if (!detail) return
-  
-  if (detail.action === 'in') zoomIn()
-  if (detail.action === 'out') zoomOut()
-  if (detail.action === 'reset') fitView({ padding: 0.2 })
-}
-
 </script>
 
 <template>
   <div class="workflow-wrap">
     <Loader v-if="isProcessPending || isProcessFetching" />
 
-    <VueFlow
-  v-else
-  v-model:nodes="nodes"
-  v-model:edges="edges"
-  :default-edge-options="defaultEdgeOptions"
-  :nodes-draggable="canEdit"
-  :nodes-connectable="canEdit"
-  :elements-selectable="canEdit"
-  :min-zoom="0.01"
-  :max-zoom="100"
-  fit-view-on-init
-  @connect="onConnect"
-  @edge-click="(e) => (canEdit ? onEdgeClick(e) : null)"
-  @edge-update="(e) => (canEdit ? onEdgeUpdate(e) : null)"
-  :edge-updater-radius="20" 
->
-
-
+    <VueFlow v-else v-model:nodes="nodes" v-model:edges="edges" :default-edge-options="defaultEdgeOptions"
+      :nodes-draggable="true" :nodes-connectable="true" :elements-selectable="true" fit-view-on-init
+      @connect="onConnect">
 
       <Background />
       <!-- <MiniMap /> -->
-      <Controls :show-zoom="false" :show-fit-view="false" :show-interactive="false" position="top-right" />
-
-      <!-- Custom Zoom Controls -->
-      <div :class="isDark? 'bg-[#2d3748]':'bg-[#fff]'" class="absolute top-4 left-2 flex flex-col gap-2 z-10 p-1 rounded-[4px] shadow-md">
-         <button :class="isDark? 'text-[white]': 'text-[#444446]'" @click="zoomIn()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center rounded cursor-pointer" title="Zoom In">
-            <i class="fa-solid fa-plus"></i>
-         </button>
-         <button  :class="isDark? 'text-[white]': 'text-[#444446]'" @click="zoomOut()" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center  rounded  cursor-pointer" title="Zoom Out">
-            <i class="fa-solid fa-minus"></i>
-         </button>
-         <button  :class="isDark? 'text-[white]': 'text-[#444446]'" @click="fitView({ padding: 0.2 })" class="w-6 sm:w-8 h-6 sm:h-8 flex items-center justify-center rounded cursor-pointer" title="Fit View">
-            <i class="fa-solid fa-compress"></i>
-         </button>
-      </div>
+      <Controls />
 
       <!-- Custom node content with connection handles and a status picker -->
       <template #node-default="{ id, data }">
-        <div class="relative min-w-[60px] px-1.5 py-0.5 rounded-md text-xs">
-          <div class="flex justify-between items-center gap-1.5">
-            <span class="truncate">
+        <div class="relative min-w-25  rounded-md ">
+          <div class="flex justify-between items-center ">
+            <span>
               {{ data.label }}
             </span>
-            <div class="flex items-center gap-1.5">
-               <i :class="canEdit? 'cursor-pointer':'cursor-not-allowed'"  class="fa-solid fa-edit text-xs opacity-70 hover:opacity-100" @click.stop="handleEditNode(id, data)"></i>
-               <i :class="canDelete? 'cursor-pointer': 'cursor-not-allowed'"
-             class="fa-solid fa-trash text-red-500/80 hover:text-red-500 text-xs"
-             @click.stop="confirmDeleteNode(id)"
-            ></i>
-            </div>
-           
+            <i class="fa-solid fa-edit cursor-pointer" @click.stop="handleEditNode(id, data)"></i>
           </div>
           <!-- connection points -->
           <!-- inside #node-default -->
@@ -614,32 +407,6 @@ function handleZoomEvent(e: Event) {
       </div>
     </div>
   </div>
-
-  <!-- Edit Transition Modal -->
-<div v-if="showEditEdgeModal" class="modal-backdrop" @click.self="cancelEditEdge">
-  <div class="modal border border-border !bg-bg-body text-text-primary">
-    <h3>Edit transition</h3>
-    <BaseTextField
-      v-model="editEdgeName"
-      placeholder="Transition name"
-      @keyup.enter="confirmEditEdge"
-      autofocus
-    />
-    <div class="modal-actions mt-4">
-      <Button size="sm" @click="confirmEditEdge">Save</Button>
-      <Button variant="secondary" size="sm" @click="cancelEditEdge">Cancel</Button>
-       <!-- 🔴 DELETE BUTTON -->
-      <Button
-        size="sm"
-        variant="danger"
-        @click="deleteSelectedEdge"
-      >
-        Delete
-      </Button>
-    </div>
-  </div>
-</div>
-
 </template>
 
 <style scoped>
