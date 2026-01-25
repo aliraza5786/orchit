@@ -1,37 +1,21 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="lg" >
+  <BaseModal v-model="isOpen" modalClass="!py-0" size="lg">
     <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
-  <div class="w-full flex items-start justify-between">
-    <div>
       <h2 class="text-xl font-semibold">Create Backlog Ticket</h2>
       <p class="text-sm text-text-secondary mt-1">
         {{ stepDescription }}
       </p>
-    </div>
-
-    <!-- Close button -->
-    <button
-      class="ml-4 p-2 rounded-md hover:bg-border transition-colors cursor-pointer"
-      @click="cancel"
-      aria-label="Close"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10 3.636 5.05a1 1 0 011.414-1.414L10 8.586z" clip-rule="evenodd" />
-      </svg>
-    </button>
-  </div>
-
-  <div class="flex items-center gap-2 mt-4 w-full">
-    <div v-for="step in 3" :key="step" class="flex items-center flex-1">
-      <div class="flex items-center gap-2 flex-1">
-        <div
-          class="h-1 flex-1 rounded-full transition-colors"
-          :class="currentStep >= step ? 'bg-primary' : 'bg-border'"
-        ></div>
+      <div class="flex items-center gap-2 mt-4 w-full">
+        <div v-for="step in 3" :key="step" class="flex items-center flex-1">
+          <div class="flex items-center gap-2 flex-1">
+            <div class="h-1 flex-1 rounded-full transition-colors"
+              :class="currentStep >= step ? 'bg-primary' : 'bg-border'">
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
+
     <div class="px-6 min-h-[400px]">
       <div v-if="currentStep === 1">
         <h3 class="text-lg font-medium mb-4">Select Module</h3>
@@ -87,7 +71,7 @@
 
       <div v-else-if="currentStep === 3">
         <h3 class="text-lg font-medium mb-4">Ticket Details</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <BaseTextField v-model="form.title" label="Ticket Title" placeholder="e.g., Implement real-time notifications"
             :error="!!titleError" :message="titleError" @blur="touched.title = true" />
 
@@ -96,27 +80,17 @@
               :allowCustom="false" :model-value="form.lane_id" @update:modelValue="setLane" :error="!!laneError"
               :message="laneError" />
           </div>
-          <BaseSelectField
-            size="md"
-            v-for="item in selectVariables"
-            v-show="item?._id != selectedVariable"
-            :key="getVarKey(item)"
-            v-model="form.variables[item.slug]"
-            :options="
-              item.data
-                .filter((e: string) => e !== 'process')
-                .map((e: string) => ({ _id: e, title: e }))
-            "
-            :label="item.title"
-            placeholder="Select value"
-            :allowCustom="true"
-          />
+
+          <BaseSelectField size="md" v-for="item in selectVariables" v-show="item?._id != selectedVariable"
+            :key="getVarKey(item)" v-model="form.variables[item.slug]" :options="mapOptions(item.data)"
+            :label="item.title" placeholder="Select value" :allowCustom="true" />
+
           <div class="flex gap-1 flex-col">
             <label class="text-sm">Start date</label>
             <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
               :class="startDateError ? 'border-red-500' : ''">
               <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
-                @update:modelValue="setStartDate" :min-date="today" />
+                @update:modelValue="setStartDate" />
             </div>
             <p v-if="startDateError" class="text-xs text-red-500">{{ startDateError }}</p>
           </div>
@@ -126,33 +100,16 @@
             <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
               :class="endDateError ? 'border-red-500' : ''">
               <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
-                @update:modelValue="setEndDate" :min-date="form.startDate || today" />
+                @update:modelValue="setEndDate" />
             </div>
             <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
-          </div>
-
-          <!-- Assignee -->
-             <div class="flex flex-col gap-1">
-             <label class="text-sm">Assignee</label>
-             <div class="mt-2">
-                <AssigmentDropdown 
-                  :name="true" 
-                  :workspaceId="workspaceId" 
-                  @assign="setAssignee" 
-                  @unassign="setAssignee(null)"
-                  :assigneeId="form.assignee" 
-                  :seat="null" 
-                  :disabled="false" 
-                  :skipPermissionCheck="true"
-                  class="w-full"
-                />
-             </div>
           </div>
         </div>
 
         <div class="mt-4">
           <BaseRichTextEditor label="Description" placeholder="What needs to be done, acceptance criteria, links…"
             v-model="form.description" @blur="touched.description = true" />
+          <p v-if="descriptionError" class="text-xs text-red-500 mt-1 px-1">{{ descriptionError }}</p>
         </div>
       </div>
     </div>
@@ -180,7 +137,6 @@ import { useAddTicket, useLanes, useVariables, useSheets } from '../../../querie
 import { useRouteIds } from '../../../composables/useQueryParams'
 import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import DatePicker from '../../Product/components/DatePicker.vue'
-import AssigmentDropdown from '../../Product/components/AssigmentDropdown.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useSingleWorkspace } from '../../../queries/useWorkspace'
 
@@ -204,17 +160,17 @@ const { workspaceId } = useRouteIds()
 const currentStep = ref(1)
 const selectedModuleId = ref<string | null>(null)
 const selectedSheetId = ref<string | null>(null)
-const moduleIdForQuery = ref<string>('')
+
 const { data: workspaceData, isLoading: loadingModules } = useSingleWorkspace(workspaceId.value)
 const modules = computed(() => workspaceData.value?.modules || [])
 
 const { data: sheetsData, isFetching: loadingSheets, refetch: refetchSheet } = useSheets(
   {
-    workspace_module_id: moduleIdForQuery,
+    workspace_module_id: selectedModuleId,
     workspace_id: workspaceId
   },
   {
-    enabled: computed(() => !!moduleIdForQuery)
+    enabled: computed(() => !!selectedModuleId.value)
   }
 )
 watch(() => selectedModuleId.value, () => {
@@ -224,16 +180,18 @@ const sheets = computed(() => sheetsData.value || [])
 
 const { data: lanes } = useLanes(workspaceId.value)
 
-
-watch(selectedModuleId, (id) => {
-  moduleIdForQuery.value = id ?? ''
-})
-const { data: variables } = useVariables(workspaceId, moduleIdForQuery, ref(''))
+const { data: variables } = useVariables(
+  workspaceId.value,
+  selectedModuleId,
+  {
+    enabled: computed(() => !!selectedModuleId.value)
+  }
+)
 
 const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
   onSuccess: () => {
     reset()
-    queryClient.invalidateQueries({ queryKey: ['backlog-list'] }) 
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
     isOpen.value = false
   }
 })
@@ -266,10 +224,12 @@ type Variable = {
 }
 
 const selectVariables = computed<Variable[]>(() =>
-  (variables?.value ?? []).filter((v: any) => v?.type?.title === 'Select' && v?.slug !=='process')
+  (variables?.value ?? []).filter((v: any) => v?.type?.title === 'Select')
 )
 
 type Option = { _id: string | number; title: string }
+const mapOptions = (arr: string[]): Option[] => arr.map(e => ({ _id: e, title: e }))
+
 type Lane = { _id: string | number; variables?: Record<string, any> }
 const laneOptions = computed<Option[]>(() =>
   (lanes?.value ?? []).map((el: Lane) => ({
@@ -287,7 +247,6 @@ type Form = {
   startDate: string | null
   endDate: string | null
   lane_id: SelectValue
-  assignee: any
   variables: Record<string, SelectValue>
 }
 const form = reactive<Form>({
@@ -296,7 +255,6 @@ const form = reactive<Form>({
   startDate: null,
   endDate: null,
   lane_id: null,
-  assignee: null,
   variables: {}
 })
 
@@ -327,7 +285,8 @@ const isValid = computed(() =>
   !titleError.value &&
   !startDateError.value &&
   !endDateError.value &&
-  !laneError.value 
+  !laneError.value &&
+  !descriptionError.value
 )
 
 function setStartDate(v: string | null) {
@@ -343,10 +302,6 @@ function setEndDate(v: string | null) {
 function setLane(v: SelectValue) {
   form.lane_id = v
   touched.lane = true
-}
-
-function setAssignee(user: any) {
-  form.assignee = user
 }
 
 function selectModule(module: any) {
@@ -379,7 +334,6 @@ function reset() {
   form.startDate = null
   form.endDate = null
   form.lane_id = null
-  form.assignee = null
   form.variables = {}
   touched.title = false
   touched.description = false
@@ -414,7 +368,10 @@ const laneError = computed(() => {
   return ''
 })
 
-const today = new Date().toISOString().split('T')[0]
+const descriptionError = computed(() =>
+  touched.description && !form.description.trim() ? 'Description is required' : ''
+)
+
 function create() {
   touched.title = true
   touched.lane = true
@@ -437,7 +394,6 @@ function create() {
       ['start-date']: form.startDate,
       ['end-date']: form.endDate,
     },
-    seat_id: form.assignee?._id ?? null,
     createdAt: new Date().toISOString()
   }
 
