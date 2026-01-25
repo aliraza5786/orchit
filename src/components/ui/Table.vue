@@ -1,7 +1,7 @@
 <template>
-  <div class="overflow-auto" role="region"
+  <div class="overflow-auto flex flex-col rounded-lg border border-border bg-bg-card/90 shadow" role="region"
     :aria-busy="loading ? 'true' : 'false'" aria-live="polite">
-    <table class="min-w-max text-left text-sm border-separate border-spacing-y-2 w-full" role="grid">
+    <table class="min-w-[700px] text-left text-sm" role="grid">
       <!-- Header -->
       <thead v-if="showHeader" class="sticky top-0 z-[1] bg-bg-surface font-semibold text-text-secondary/90">
         <tr role="row">

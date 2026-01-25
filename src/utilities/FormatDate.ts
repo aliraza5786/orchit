@@ -15,26 +15,3 @@ export function extractYear(dateString: string) {
   const date = new Date(dateString); // Create a Date object from the input string
   return date.getFullYear(); // Return the year
 }
-
-export function formatDateTime(timestamp: string): string {
-  if (!timestamp) return '—';
-  
-  const date = new Date(timestamp);
-  if (isNaN(date.getTime())) return '—';
-
-  const datePart = date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-
-  let hours = date.getHours();
-  const minutes = date.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12;
-  hours = hours ? hours : 12; // the hour '0' should be '12'
-  
-  const strMinutes = minutes < 10 ? "0" + minutes : minutes;
-  
-  return `${datePart} - ${hours.toString().padStart(2, '0')}:${strMinutes} ${ampm}`;
-}
