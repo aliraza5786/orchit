@@ -82,16 +82,21 @@
                     </button>
 
                     <!-- fan-out icons -->
-                    <!-- fan-out icons -->
-                    <div class="relative">
-                        <button v-for="(f, i) in filePreviewIcons" :key="f.key" class="fan-pill absolute z-10 w-8 h-8 rounded-full shadow ring-1 ring-black/10
+                 <!-- fan-out icons -->
+<div class="relative">
+  <button
+    v-for="(f, i) in filePreviewIcons"
+    :key="f.key"
+    class="fan-pill absolute z-10 w-8 h-8 rounded-full shadow ring-1 ring-black/10
            bg-white dark:bg-neutral-800 flex items-center justify-center overflow-hidden"
-                            :style="fanStyle(i, filePreviewIcons.length)" @click.stop="openAttachment(f.url)"
-                            :title="f.name">
-                            <img v-if="f.thumb" :src="f.thumb" class="w-5 h-5 object-cover rounded-sm" alt="" />
-                            <i v-else :class="f.icon" class="text-[14px]"></i>
-                        </button>
-                    </div>
+    :style="fanStyle(i, filePreviewIcons.length)"
+    @click.stop="openAttachment(f.url)"
+    :title="f.name"
+  >
+    <img v-if="f.thumb" :src="f.thumb" class="w-5 h-5 object-cover rounded-sm" alt="" />
+    <i v-else :class="f.icon" class="text-[14px]"></i>
+  </button>
+</div>
 
                 </div>
 
@@ -127,10 +132,7 @@ const emit = defineEmits(['update:modelValue', 'focusOut'])
 const imageInput = ref<HTMLInputElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const filePreviews = ref<{ name: string; url: string }[]>([])
-watch(() => filePreviews.value, () => {
-    console.log(filePreviews, '>>>> filePreviews <<<<<');
 
-})
 const editor = new Editor({
     content: props.modelValue,
     extensions: [
@@ -157,15 +159,11 @@ function setTextType() {
 
 const { mutate: uploadFile } = usePrivateUploadFile({
     onSuccess: (resp: any) => {
-        console.log(resp, '???');
-
-        const uploadedFileUrl = resp?.data?.url as string
+        const uploadedFileUrl = resp.data.url as string
         const fileName = resp.data.name as string
 
         if (/\.(png|jpe?g|gif|webp|svg)$/i.test(uploadedFileUrl)) {
             editor.chain().focus().insertContent(`<img src="${uploadedFileUrl}" alt="${fileName}" />`).run()
-            filePreviews.value = [...filePreviews.value, { name: fileName, url: uploadedFileUrl }]
-
         } else {
             filePreviews.value = [...filePreviews.value, { name: fileName, url: uploadedFileUrl }]
         }
@@ -175,41 +173,12 @@ const { mutate: uploadFile } = usePrivateUploadFile({
 function handleImageUpload(e: Event) {
     const files = (e.target as HTMLInputElement).files
     if (!files) return
-
-    // Gather all upload promises for images
-    const uploadPromises = Array.from(files).map((file) => {
+    Array.from(files).forEach(file => {
         const fd = new FormData()
         fd.append('file', file)
-        return uploadFile(fd)
+        uploadFile(fd)
     })
-
-    // Wait for all uploads to complete
-    Promise.all(uploadPromises)
-        .then((responses) => {
-            console.log(responses, '> response');
-
-            // For each uploaded image, insert it into the editor
-            responses.forEach((resp: any) => {
-                console.log(resp, '>>>> second ');
-
-                const uploadedFileUrl = resp?.data.url as string
-                const fileName = resp.data.name as string
-
-                // Move the cursor to the end of the editor
-                const { doc } = editor.state
-                const endPos = doc.content.size // Get the current end position of the content
-                editor.commands.setTextSelection(endPos) // Set cursor position to the end
-
-                // Insert image at the current cursor position (now at the end)
-                editor.commands.insertContent(`<img src="${uploadedFileUrl}" alt="${fileName}" />`)
-            })
-        })
-        .catch((error) => {
-            console.error('Error uploading images:', error)
-        })
 }
-
-
 function handleFileUpload(e: Event) {
     const files = (e.target as HTMLInputElement).files
     if (!files) return
@@ -252,18 +221,18 @@ function validateUrl(href: string) {
 const showLinkDialog = ref(false)
 const linkDraft = ref<{ href?: string; text?: string; newTab?: boolean }>({})
 function openLinkPanel() {
-    const attrs = editor.getAttributes('link') || {}
-    const { from, to } = editor.state.selection
-    const selectedText = editor.state.doc.textBetween(from, to) || ''
+  const attrs = editor.getAttributes('link') || {}
+  const { from, to } = editor.state.selection
+  const selectedText = editor.state.doc.textBetween(from, to) || ''
 
-    const newTab = attrs.target == null ? true : attrs.target === '_blank'
+  const newTab = attrs.target == null ? true : attrs.target === '_blank'
 
-    linkDraft.value = {
-        href: attrs.href || '',
-        text: selectedText || '',
-        newTab,
-    }
-    showLinkDialog.value = true
+  linkDraft.value = {
+    href: attrs.href || '',
+    text: selectedText || '',
+    newTab,
+  }
+  showLinkDialog.value = true
 }
 
 function insertLink({ href, text, newTab }: { href: string; text?: string; newTab: boolean }) {
@@ -323,37 +292,37 @@ function openAttachment(url: string) {
     window.open(url, '_blank');
 }
 function fanStyle(i: number, n: number) {
-    // How wide the arc should be (degrees). More items → a bit wider, but capped.
-    const minSpan = 50;   // tighter cluster for 2 items
-    const maxSpan = 100;  // don't go too wide
-    const span = Math.min(maxSpan, minSpan + (n - 1) * 12);
+  // How wide the arc should be (degrees). More items → a bit wider, but capped.
+  const minSpan = 50;   // tighter cluster for 2 items
+  const maxSpan = 100;  // don't go too wide
+  const span    = Math.min(maxSpan, minSpan + (n - 1) * 12);
 
-    // Keep them centered above the button
-    const center = -90;
-    const start = center - span / 2;
-    const end = center + span / 2;
+  // Keep them centered above the button
+  const center  = -90;
+  const start   = center - span / 2;
+  const end     = center + span / 2;
 
-    // Radius in px (slightly increases with count, but capped)
-    const baseR = 44;
-    const maxR = 60;
-    const r = Math.min(maxR, baseR + (n - 1) * 3);
+  // Radius in px (slightly increases with count, but capped)
+  const baseR   = 44;
+  const maxR    = 60;
+  const r       = Math.min(maxR, baseR + (n - 1) * 3);
 
-    // Compute position on arc
-    const angle = n <= 1 ? center : start + ((end - start) * (i / (n - 1)));
-    const rad = (angle * Math.PI) / 180;
-    const tx = Math.round(r * Math.cos(rad));
-    const ty = Math.round(r * Math.sin(rad)); // negative = up
+  // Compute position on arc
+  const angle   = n <= 1 ? center : start + ((end - start) * (i / (n - 1)));
+  const rad     = (angle * Math.PI) / 180;
+  const tx      = Math.round(r * Math.cos(rad));
+  const ty      = Math.round(r * Math.sin(rad)); // negative = up
 
-    // Optional: tiny stagger for a nicer feel
-    const delay = `${i * 25}ms`;
+  // Optional: tiny stagger for a nicer feel
+  const delay   = `${i * 25}ms`;
 
-    return {
-        transform: showFan.value
-            ? `translate(${tx}px, ${ty - 18}px) scale(1)`
-            : `translate(0px, 0px) scale(0.6)`,
-        opacity: showFan.value ? 1 : 0,
-        transitionDelay: showFan.value ? delay : '0ms',
-    } as const;
+  return {
+    transform: showFan.value
+      ? `translate(${tx}px, ${ty - 18}px) scale(1)`
+      : `translate(0px, 0px) scale(0.6)`,
+    opacity: showFan.value ? 1 : 0,
+    transitionDelay: showFan.value ? delay : '0ms',
+  } as const;
 }
 
 
@@ -398,12 +367,11 @@ function fanStyle(i: number, n: number) {
 .fan-move {
     transition: transform 220ms ease;
 }
-
 /* Smoothly animate to/from their arc positions */
 .fan-pill {
-    transition: transform 220ms cubic-bezier(.2, .7, .2, 1.05), opacity 160ms ease;
-    /* optional: subtle stacking so they don't visually merge */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1.05), opacity 160ms ease;
+  /* optional: subtle stacking so they don't visually merge */
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
 }
 
 /* (Your existing outline resets remain) */

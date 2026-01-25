@@ -38,7 +38,7 @@
                 </div>
             </div>
             <p class="font-manrope text-[16px] font-medium text-center">More questions? <RouterLink
-                    class="text-sky font-bold" to="/contact-us">Contact Us </RouterLink>
+                    class="text-sky font-bold" to="#">Contact Us </RouterLink>
             </p>
 
         </div>
@@ -52,32 +52,12 @@ import { useTheme } from "../../composables/useTheme";
 const { theme } = useTheme(); // light / dark / system
 
 const faqs = [
-    { 
-        question: 'What is Orchit.ai?', 
-        answer: 'Orchit.ai is an AI-powered work and project management platform designed to help teams and individuals plan, organize, and manage tasks more efficiently using artificial intelligence.' 
-    },
-    { 
-        question: 'How does Orchit.ai help with project management?', 
-        answer: 'Orchit.ai uses AI to assist with task planning, prioritization, scheduling, and workflow organization, reducing manual effort and improving productivity.' 
-    },
-    { 
-        question: 'Who can use Orchit.ai?', 
-        answer: 'Orchit.ai is suitable for business teams, project managers, startups, organizations, and individuals who want a smarter way to manage work and collaborate.' 
-    },
-    { 
-        question: 'What makes Orchit.ai different from traditional project tools?', 
-        answer: 'Unlike traditional tools, Orchit.ai provides AI-driven suggestions, automation, and insights to help users make better decisions and manage work more effectively.' 
-    },
-    { 
-        question: 'Can Orchit.ai be used for team collaboration?', 
-        answer: 'Yes — Orchit.ai supports team collaboration, allowing members to organize tasks, track progress, and work together within a shared AI-assisted workspace.' 
-    },
-    { 
-        question: 'What are the main benefits of using Orchit.ai?', 
-        answer: 'The main benefits include better organization, improved productivity, smarter planning, reduced manual work, and enhanced visibility into tasks and projects.' 
-    }
+    { question: 'Why do I need Space?', answer: 'Space is an AI-powered workspace that helps you plan, manage, and orchestrate projects—whether it’s for your team, your business, or your personal productivity.' },
+    { question: 'How does Space protect my data?', answer: 'Space uses advanced encryption...' },
+    { question: 'Does Space work in the background?', answer: 'Yes, Space can run background tasks...' },
+    { question: 'Can I use Space on the go?', answer: 'Absolutely. Space works across devices.' },
+    { question: 'Can I use Space with multiple tools?', answer: 'Yes, Space integrates with Slack, GitHub...' }
 ]
-
 
 const openIndex = ref<number | null>(0);
 if (theme.value === 'dark') {
