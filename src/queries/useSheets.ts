@@ -3,7 +3,6 @@ import { useQuery, type UseQueryOptions } from "@tanstack/vue-query";
 import { useApiMutation } from "../libs/vq";
 import { request } from "../libs/api";
 
-
 /** -----------------------------
  * Stable query keys
  * ----------------------------- */
@@ -33,26 +32,16 @@ export const useCreateWorkspaceSheet = (options = {}) =>
     options as any
   );
 
-export const useCreateWorkspaceSheetAI = (options = {}) =>
-  useApiMutation<{ data: unknown }, any>(
-    {
-      key: ["product-sheet-ai"],
-      url: "/workspace/generate-sheet-ai",
-      method: "POST",
-    },
-    options as any
-  );
-
-export const useUpdateWorkspaceSheet = (options = {}) =>
-  useApiMutation<{ data: unknown }, any>(
-    {
-      key: ["upadte-sheet"],
-      url: "/workspace/sheet/update",
-      method: "PATCH",
-    },
-    options as any
-  );
-
+  export const useUpdateWorkspaceSheet = (options = {}) =>
+    useApiMutation<{ data: unknown }, any>(
+      {
+        key: ["upadte-sheet"],
+        url: "/workspace/sheet/update",
+        method: "PATCH",
+      },
+      options as any
+    );
+  
 // PATCH /workspace/sheet-list/update
 export const useMoveList = (options = {}) =>
   useApiMutation<{ data: unknown }, { payload: any }>(
@@ -98,14 +87,12 @@ export const useAddTicket = (options = {}) =>
 export const useDeleteTicket = (id: string, options = {}) =>
   useApiMutation<{ data: unknown }, any>(
     {
-      key: ["delete-ticket", id],
+      key: ["delete-ticket"],
       url: `workspace/card/${id}`,
       method: "DELETE",
     },
     options as any
   );
-
-
 type UpdateTicketVars = { id: any; payload: any };
 
 export const useUpdateTicket = (options = {}) =>
@@ -137,7 +124,7 @@ export const useSheets = (
   const wId = computed(() => unref(queryParams.workspace_id));
 
   return useQuery({
-    queryKey: keys.sheets(queryParams.workspace_module_id, wId.value),
+    queryKey: keys.sheets(wmId.value, wId.value),
     enabled: computed(() => !!wmId.value),
     queryFn: ({ signal }) =>
       request<any>({
@@ -161,7 +148,6 @@ export function useSheetList(
   sheet_id: MaybeRef<string | null | undefined>,
   laneIds: MaybeRef<string[] | string | null | undefined>,
   view_by: MaybeRef<string | null | undefined>,
-  extraParams?: MaybeRef<Record<string, any> | undefined>,
   options: Omit<
     UseQueryOptions<any, any, any, any>,
     "queryKey" | "queryFn"
@@ -184,11 +170,12 @@ export function useSheetList(
   // reactive query key
   const queryKey = computed(() => [
     "sheet-list",
+
     unref(module_id),
     unref(sheet_id),
     unref(laneIdsParam),
     unref(view_by),
-    unref(extraParams),
+    ,
   ]);
 
   // reactive enabled
@@ -208,7 +195,6 @@ export function useSheetList(
         sheet_id: unref(sheet_id)!,
         variable_id: unref(view_by)!,
         ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam)! } : {}),
-        ...(unref(extraParams) || {}),
       };
 
       // request() should return plain JSON (not AxiosResponse)
@@ -218,86 +204,40 @@ export function useSheetList(
         params,
       });
     },
-    refetchOnMount:false,
     ...options,
   });
 }
 
 export const useVariables = (
-  workspace_id: Ref<string>,
-  module_id: Ref<string>,
-  sheetId: Ref<string>,
+  workspace_id: any,
+  module_id: any,
   options = {}
 ) => {
   return useQuery({
-    queryKey: [
-      "all-module-variables",
-      unref(workspace_id),
-      unref(module_id),
-      unref(sheetId),
-    ],
-    enabled: computed(() => Boolean(unref(module_id))),
-    staleTime: 5 * 60 * 1000,
-    queryFn: async ({ signal }) => {
-      const resolvedModuleId = unref(module_id);
-
-      const [variables, typesData] = await Promise.all([
-        request({
-          url: `/workspace/catalog/${unref(workspace_id)}/card-variables/${resolvedModuleId}?sheet_id=${unref(sheetId)}`,
-          method: "GET",
-          signal,
-        }),
-        request({
-          url: `/workspace/catalog/variable/values`,
-          method: "GET",
-          params: {
-            workspace_id: unref(workspace_id),
-            module_id: resolvedModuleId,
-            variable_slug: "card-type",
-          },
-          signal,
-        }),
-      ]);
-
-      const processTypes = typesData?.values ?? [];
-
-      if (Array.isArray(variables)) {
-        return variables.map((v) =>
-          v.slug?.toLowerCase() === "process"
-            ? {
-                ...v,
-                nested: processTypes.map((ct:any) => ({
-                  _id: ct._id ?? ct.value,
-                  title: ct.value,
-                  ...ct,
-                })),
-              }
-            : v
-        );
-      }
-
-      return variables;
-    },
+    
+    queryKey: ["all-module-variables"],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `/workspace/catalog/${workspace_id}/card-variables/${unref(module_id) ?? module_id}`,
+        method: "GET",
+        signal,
+      }),
     ...options,
   });
 };
-
 export const useLanes = (
   workspace_id: any,
+
   options = {}
 ) => {
   return useQuery({
-    queryKey: computed(() => ["all-module-lanes", unref(workspace_id)]),
-    queryFn: async ({ signal }) => {
-      const wid = unref(workspace_id);
-      if (!wid) return [];
-      return request<any>({
-        url: `/workspace/lane-by-workspace/${wid}`,
+    queryKey: ["all-module-lanes"],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `/workspace/lane-by-workspace/${workspace_id}`,
         method: "GET",
         signal,
-      });
-    },
-    enabled: computed(() => !!unref(workspace_id)),
+      }),
     ...options,
   });
 };
@@ -345,21 +285,6 @@ export const ReOrderCard = (options = {}) =>
         request({
           url: `workspace/cards/group-card-order`,
           method: "PATCH",
-          data: vars.payload,
-        }),
-      ...(options as any),
-    } as any
-  );
-export const useVarVisibilty = (options = {}) =>
-  useApiMutation<any, any>(
-    {
-      key: ["var-visibility"],
-    } as any,
-    {
-      mutationFn: (vars: any) =>
-        request({
-          url: `workspace/sheet-column-preferences`,
-          method: "POST",
           data: vars.payload,
         }),
       ...(options as any),

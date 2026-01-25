@@ -7,7 +7,6 @@ import {
   type UseMutationOptions,
 } from "@tanstack/vue-query";
 import { request, type DataExtractor, defaultExtractor } from "./api";
-import { type Ref, type ComputedRef, unref } from "vue";
 
 export function useApiQuery<TData = any, TVariables = undefined>(
   {
@@ -23,7 +22,7 @@ export function useApiQuery<TData = any, TVariables = undefined>(
     staleTime,
   }: {
     key: any;
-    url: string | Ref<string> | ComputedRef<string>;
+    url: string;
     method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     params?: any;
     variables?: TVariables; // rarely used; POST-as-query
@@ -44,7 +43,7 @@ export function useApiQuery<TData = any, TVariables = undefined>(
     enabled: enabled, // can be a ref/computed,
     queryFn: ({ signal }) =>
       request<TData>({
-        url: unref(url),
+        url,
         method,
         params,
         data: variables,

@@ -153,21 +153,3 @@ export const useBlogsByCategorySlug = (slug: string, options = {}) => {
   });
 };
 
-
-// ---------------------------
-//  Fetch ALl Blogs 
-// ---------------------------
-export const fetchAllBlogs  = async () => {
-  const { data } = await api.get(`/blogs`);
-  return data.data;  
-};
-
-export const useAllBlogs  = ( options = {}) => {
-  return useQuery({
-    queryKey: ["blogs"],
-    queryFn: () => fetchAllBlogs(), 
-    ...options,
-  });
-};
-
-

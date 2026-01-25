@@ -1,22 +1,17 @@
 <template>
-    <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex">
+    <div class="flex-auto flex-grow h-full bg-bg-card rounded-lg border border-border overflow-x-auto flex-col flex">
 
         <!-- Header -->
         <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
-            <Dropdown   v-model="selected_sheet_id" :options="transformedData"
-                variant="secondary" v-bind="dropdownListeners"  :canEdit="canEditSheet" :canDelete="canDeleteSheet" >
+            <Dropdown @edit-option="openEditSprintModal" v-model="selected_sheet_id" :options="transformedData"
+                variant="secondary" @delete-option="handleDeleteSheetModal">
                 <template #more>
-                    <div @click="toggleCreateSheet" v-if="canCreateSheet"
+                    <div @click="toggleCreateSheet"
                         class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap">
                         <i class="fa-solid fa-plus"></i> Add new
                     </div>
                 </template>
             </Dropdown>
-
-            <SearchBar class="max-w-[250px]" @onChange="(e) => {
-                    searchQuery = e
-                }" placeholder="Search in Orchit AI space">
-                </SearchBar>
         </div>
 
         <!-- Kanban Skeleton -->
@@ -26,7 +21,7 @@
         <div v-show="!isListPending" class="flex overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
                 @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
-                @onBoardUpdate="handleBoardUpdate" :board="filteredBoard" :variable_id="selected_view_by"
+                @onBoardUpdate="handleBoardUpdate" :board="localList" :variable_id="selected_view_by"
                 :sheet_id="selected_sheet_id">
                 <template #ticket="{ ticket }">
                     <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
@@ -39,7 +34,7 @@
                         <p class="text-sm text-text-secondary mb-2 text-center">
                             Create pins and add your ideas into the related pins.
                         </p>
-                        <Button :disabled="!canCreateVariable" size="sm" @click="plusHandler(column)">Create Pin</Button>
+                        <Button size="sm" @click="plusHandler(column)">Create Pin</Button>
                     </div>
                 </template>
             </KanbanBoard>
@@ -59,9 +54,8 @@
                     </div>
                 </div>
                 <button v-else
-                    class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-                    :class="!canCreateVariable ? 'cursor-not-allowed': 'cursor-pointer'"
-                    @click.stop="toggleAddList" :disabled="!canCreateVariable">
+                    class="text-sm text-text-primary py-2.5 cursor-pointer font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+                    @click.stop="toggleAddList">
                     + Add List
                 </button>
             </div>
@@ -75,7 +69,7 @@
         <CreateTaskModal size="md" :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
             :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" />
 
-
+   
 
         <CreateSheetModal :sheet="selectedSheettoAction" size="md" v-model="isCreateSheetModal" />
         <CreateVariableModal v-if="isCreateVar" v-model="isCreateVar" :sheetID="selected_sheet_id" />
@@ -84,8 +78,8 @@
             confirmText="Delete Sheet" cancelText="Cancel" size="md" :loading="isDeleting" @confirm="handleDeleteSheet"
             @cancel="() => { showDeleteModal = false }" />
     </div>
-    <SidePanel  v-if="selectedCard?._id" :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
-        @close="() => selectCardHandler({ variables: {} })" />
+    <SidePanel :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
+    @close="() => selectCardHandler({ variables: {} })" />
 </template>
 
 <script setup lang="ts">
@@ -113,15 +107,10 @@ import KanbanSkeleton from '../../components/skeletons/KanbanSkeleton.vue';
 import CreateTaskModal from '../Product/modals/CreateTaskModal.vue';
 import SidePanel from '../Product/components/SidePanel.vue';
 import CreateSheetModal from '../Product/modals/CreateSheetModal.vue';
-import Fuse from 'fuse.js';
-import { debounce } from 'lodash';
-import SearchBar from '../../components/ui/SearchBar.vue';
+
 const ConfirmDeleteModal = defineAsyncComponent(() => import('../Product/modals/ConfirmDeleteModal.vue'));
 const CreateVariableModal = defineAsyncComponent(() => import('../Product/modals/CreateVariableModal.vue'));
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
-
-import { usePermissions } from '../../composables/usePermissions'
-const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet } = usePermissions()
 
 // State
 const isCreateVar = ref(false);
@@ -141,6 +130,11 @@ const workspaceStore = useWorkspaceStore();
 const queryClient = useQueryClient();
 
 // Variables & Sheets
+const { data: variables } = useVariables(workspaceId.value, moduleId.value);
+const viewBy = computed(() => variables.value?.[0]?._id ?? '');
+const selected_view_by = ref(viewBy.value);
+watch(viewBy, (val) => (selected_view_by.value = val));
+
 // Sheets Data
 const { data, refetch: refetchSheets } = useSheets(
     { workspace_id: workspaceId, workspace_module_id: moduleId },
@@ -148,12 +142,6 @@ const { data, refetch: refetchSheets } = useSheets(
 );
 
 const selected_sheet_id = ref<any>(data.value?.[0]?._id ?? null);
-const { data: variables } = useVariables(workspaceId, moduleId, selected_sheet_id);
-const viewBy = computed(() => variables.value?.[0]?._id ?? '');
-const selected_view_by = ref(viewBy.value);
-watch(viewBy, (val) => (selected_view_by.value = val));
-
-
 watch(data, (sheets) => {
     if (sheets?.length) selected_sheet_id.value = sheets[0]._id;
 });
@@ -175,13 +163,9 @@ const { mutate: addList, isPending: addingList } = useAddList({
     onSuccess: (data: any, payload: any) => {
         if (payload.is_trash) {
             localList.value = localList.value.filter((e: any) => e.title !== payload.value);
-            showDelete.value = false
         } else {
-            localList.value= [...localList.value, { title: data?.value }];
+            localList.value.push({ title: data?.value });
         }
-        activeAddList.value = false;
-
-        newColumn.value = '';
         queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
         Object.assign({ newColumn: '', showDelete: false, activeAddList: false });
     }
@@ -195,14 +179,6 @@ function handleAddColumn(value: string) {
         value
     });
 }
-const dropdownListeners = computed(() => {
-  const listeners: Record<string, Function> = {}
-
-  if (canEditSheet.value) listeners['onEdit-option'] = openEditSprintModal
-  if (canDeleteSheet.value) listeners['onDelete-option'] = handleDeleteSheetModal
-
-  return listeners
-})
 
 function emitAddColumn() {
     const trimmed = newColumn.value.trim();
@@ -297,7 +273,6 @@ const transformedData = computed(() =>
         title: item.variables['sheet-title'],
         description: item.variables['sheet-description'],
         icon: item.icon
-
     }))
 );
 
@@ -305,15 +280,11 @@ const showDeleteModal = ref(false)
 const selectedSheettoAction = ref<any>()
 const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
     onSuccess: () => {
-        console.log('>>. clicong');
-        
-        showDeleteModal.value = false
         refetchSheets();
-        
+        showDeleteModal.value = false
     }
 })
 function handleDeleteSheetModal(opt: any) {
-    
     showDeleteModal.value = true
     selectedSheettoAction.value = opt;
 }
@@ -328,26 +299,4 @@ function openEditSprintModal(opt: any) {
     isCreateSheetModal.value = true;
     selectedSheettoAction.value = opt;
 }
-
-// reactive search query
-const searchQuery = ref('')
-const debouncedQuery = ref('')
-
-watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
-// computed filtered board
-
-const fuse = computed(() => {
-  const allCards = localList.value.flatMap((col:any) => col.cards.map((card:any) => ({ ...card, columnId: col.title })))
-  return new Fuse(allCards, { keys: ['card-title', 'card-description'], threshold: 0.3 })
-})
-
-const filteredBoard = computed(() => {
-  if (!searchQuery.value) return localList.value
-  const results = fuse.value.search(searchQuery.value).map((r :any)=> r.item)
-  return localList.value.map((col:any) => ({
-    ...col,
-    cards: results.filter((c:any) => c.columnId === col.title)
-  }))
-})
-
 </script>
