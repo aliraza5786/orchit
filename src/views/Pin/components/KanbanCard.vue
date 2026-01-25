@@ -30,7 +30,7 @@
             </div>
             <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
                 <i class="fa-regular fa-file"></i>
-                {{ ticket?.attachments?.length }}
+                {{ ticket?.attachments.length }}
             </div>
 
         </div>
@@ -66,9 +66,6 @@ import { useQueryClient } from '@tanstack/vue-query'
 import DropMenu from '../../../components/ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import DatePicker from '../../../views/Product/components/DatePicker.vue'
-
-import { usePermissions } from '../../../composables/usePermissions';
-const { canViewCard, canDeleteCard } = usePermissions();
 
 type Priority = any
 export interface Ticket {
@@ -140,28 +137,25 @@ const handleSelect = (val: any) => {
     })
 }
 
-function getMenuItems(): { label: string; icon?: any; action?: () => void }[] {
-  return [
-    canViewCard.value
-      ? {
-          label: 'View Card',
-          action: () => emit('click', props.ticket),
-          icon: { prefix: 'fa-regular', iconName: 'fa-eye' },
+function getMenuItems() {
+    return [{
+        label: 'View Card', danger: true, action: () => {
+            emit('click', props.ticket)
+        },
+        icon: {
+            prefix: 'fa-regular',
+            iconName: 'fa-eye'
         }
-      : null,
-    canDeleteCard.value
-      ? {
-          label: 'Delete',
-          danger: true,
-          action: () => {
+    }, {
+        label: 'Delete', danger: true, action: () => {
             showDelete.value = true
-          },
-          icon: { prefix: 'fa-regular', iconName: 'fa-trash' },
+        }, icon: {
+            prefix: 'fa-regular',
+            iconName: 'fa-trash'
         }
-      : null,
-  ].filter(Boolean) as { label: string; icon?: any; action?: () => void }[]
+    },
+    ]
 }
-
 const handleDeleteTicket = () => {
     deleteCard({})
 }
