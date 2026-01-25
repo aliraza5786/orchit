@@ -13,7 +13,7 @@
 
         <div class="how_help_steps grid sm:grid-cols-3 gap-4" v-show="activeStep === 1">
           <label v-for="option in options" :key="option._id"
-            class="border rounded-xl py-4 px-2.5 cursor-pointer transition-all sm:aspect-square"
+            class="border rounded-xl py-4 px-2.5 cursor-pointer transition-all aspect-square"
             :class="optionClass(option._id)" v-memo="[selected, option._id]">
             <input type="radio" class="hidden" v-model="selected" :value="option._id" />
             <div class="flex flex-col items-center">
@@ -42,6 +42,8 @@
 
           <BaseSelectField v-model="companySize" label="What’s your company size?" :options="companySizeOptions"
             placeholder="Select Company size" size="lg" :error="!!errors.companySize" :message="errors.companySize" />
+
+
         </div>
 
         <!-- Step 3 -->
@@ -79,7 +81,6 @@
 
           <div class="flex gap-4 items-center ml-auto">
             <router-link
-            v-if="activeStep==3"
               :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`"><button
                 class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link>
             <Button size="md" type="submit" @click="continueHandler">
@@ -110,11 +111,10 @@ import BaseEmailChip from '../../components/ui/BaseEmailChip.vue'
 import { useCreateCompany, useInviteCompany } from '../../services/auth'
 import { useRolesList } from '../../queries/useCommon'
 import { useWorkspaceStore } from '../../stores/workspace'
-import { useAuthStore } from '../../stores/auth'
 defineOptions({ name: 'OnboardingFlow' })
 const workspaceStore = useWorkspaceStore()
 const errors = ref<{ team?: string; role?: string; companySize?: string; emailList?: string }>({})
-const authStore = useAuthStore()
+
 function validateCompanyStep() {
   const next: { team?: string; role?: string; companySize?: string } = {}
   if (!team.value.trim()) next.team = 'Please enter your company name.'
@@ -132,17 +132,13 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   }
 });
 const { mutate: invitePeople, isPending: invitingPeople } = useInviteCompany({
-  onSuccess: async () => {
+  onSuccess: () => {
     if (workspaceStore.pricing) {
-      await authStore.bootstrap();
       router.push(`/dashboard?stripePayment=${true}`)
     } else if (workspaceStore.workspace) {
-       await authStore.bootstrap();
       router.push('/create-workspace')
-    } else {
-      await authStore.bootstrap();
+    } else
       router.push('/finish-profile');
-    }
   }
 });
 

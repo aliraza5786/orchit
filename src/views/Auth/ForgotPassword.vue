@@ -67,7 +67,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed } from 'vue'
 import { useMutation } from '@tanstack/vue-query'
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
@@ -82,9 +82,9 @@ const email = ref('')
 const errorMessage = ref('')
 const emailSent = ref(false)
 
-const touched = reactive({
+const touched = {
   email: false,
-})
+}
 
 const emailError = computed(() => {
   if (!touched.email) return ''
@@ -94,7 +94,7 @@ const emailError = computed(() => {
 })
 const emailHasError = computed(() => !!emailError.value)
 
-const isFormValid = computed(() => EMAIL_RE.test(email.value))
+const isFormValid = computed(() => !emailError.value && email.value.trim())
 
 const { mutateAsync, isPending } = useMutation({ mutationFn: forgotPassword })
 
