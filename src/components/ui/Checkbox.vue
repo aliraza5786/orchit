@@ -13,7 +13,7 @@
             'flex items-center justify-center border transition-colors duration-200',
             'md:w-5 md:min-w-5 md:h-5 md:min-h-5 w-3.5 h-3.5',
             'md:rounded-[6px] rounded-[3px] border-border D5D7DA] ',
-            checked ? 'bg-accent border-transparent' : 'bg-bg-card'
+            checked ? 'bg-black border-transparent' : 'bg-white'
         ]">
             <img v-if="checked" :src="tick" alt="check" class="w-3 transition-opacity duration-150" />
         </div>
