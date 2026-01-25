@@ -11,7 +11,7 @@
   
           <form @submit.prevent class="space-y-4 w-full">
             <!-- OTP Inputs -->
-            <div class="flex justify-center gap-2 sm:gap-4 pb-4">
+            <div class="flex justify-center gap-4 pb-4">
               <input
                 v-for="(_, index) in DIGITS"
                 :key="index"
@@ -22,9 +22,9 @@
                 maxlength="1"
                 autocomplete="one-time-code"
                 enterkeyhint="done"
-                class="w-full aspect-square text-3xl sm:text-5xl p-1 md:p-2 font-bold text-center border rounded-lg focus:outline-none"
+                class="w-full aspect-square text-5xl p-1 md:p-2 font-bold text-center border rounded-lg focus:outline-none"
                 :class="[
-                  'border-accent',
+                  'border-border',
                   otpError ? 'border-red-500' : '',
                   isVerifying ? 'opacity-60 pointer-events-none' : ''
                 ]"
@@ -71,11 +71,9 @@
   import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
   import Button from '../../components/ui/Button.vue'
   import { verifyOtp, resendOtp } from '../../services/auth'
-  import { useAuthStore } from '../../stores/auth'
   import type { ComponentPublicInstance } from 'vue'
 
   defineOptions({ name: 'OtpVerify' })
-  const authStore = useAuthStore()
   // ---- Constants (non-reactive) ----
   const DIGITS = 5
   const INITIAL_COOLDOWN = 45 // seconds
@@ -124,25 +122,6 @@ function focusIdx(i: number) {
       const fullCode = code.value.join('')
       const data = await verifyAsync({ u_email: email.value, otp: fullCode })
       localStorage.setItem('token', data?.data?.token)
-      await authStore.bootstrap()
-      
-      const intentStr = localStorage.getItem('post_auth_intent');
-      if (intentStr) {
-        try {
-          const intent = JSON.parse(intentStr);
-          localStorage.removeItem('post_auth_intent');
-          if (intent.aiResponse) {
-            const workspaceStore = (await import('../../stores/workspace')).useWorkspaceStore();
-            workspaceStore.setWorkspace(intent.aiResponse);
-          }
-          router.push(intent.path || "/dashboard");
-          return;
-        } catch (e) {
-          console.error("Failed to parse post_auth_intent", e);
-          localStorage.removeItem('post_auth_intent');
-        }
-      }
-
       router.push('/create-profile')
     } catch (err: any) {
       otpError.value = err?.response?.data?.message || 'Invalid code, please try again.'
