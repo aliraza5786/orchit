@@ -1,8 +1,8 @@
 <template>
   <div :class="[
-    'max-w-[358px] flex-grow rounded-[6px] overflow-y-auto overflow-x-hidden relative transition-all',
+    'max-w-[358px] flex-grow rounded-lg overflow-y-auto overflow-x-hidden relative transition-all',
     'text-text-primary bg-bg-card',
-    workspaceStore.showSettingPanel ? 'translate-x-0 min-w-full sm:min-w-[380px] w-full h-full' : 'translate-x-100 !max-w-0 h-0'
+    workspaceStore.showSettingPanel ? 'translate-x-0 min-w-[350px] w-full h-full' : 'translate-x-100 !max-w-0 h-0'
   ]">
     <!-- Header -->
     <div class="flex justify-between items-center border-b border-border px-5 py-4.5 sticky top-0 bg-bg-card z-10">
@@ -40,10 +40,9 @@
         <div class="min-w-0">
           <template v-if="!isEditingTitle">
             <h3 class="text-2xl font-medium truncate cursor-text text-text-primary" @click="startEditTitle"
-              v-tooltip="'Click to rename'">
+              title="Click to rename">
               {{ editableTitle }}
             </h3>
-            
           </template>
           <template v-else>
             <div class="flex items-center gap-2">
@@ -52,9 +51,6 @@
                 @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle" @blur="saveTitle" />
             </div>
           </template>
-          <p class="text-xs text-text-secondary mt-0.5" v-if="workspace?.created_at">
-              Created at {{ formatDateTime(workspace.created_at) }}
-            </p>
         </div>
       </div>
 
@@ -68,22 +64,15 @@
         <h3 class="text-sm font-medium text-text-secondary mb-2">Theme Mode</h3>
         <div class="space-y-2 flex gap-4  ">
           <label
-            :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/40': theme == 'system' }"
-            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-22  bg-bg-card items-center gap-2 text-sm"
-            @click="setTheme('system')">
-            <input class="hidden" type="radio" value="system" v-model="theme" />
-            <i class="text-2xl fa-solid fa-desktop"></i>
-          </label>
-          <label
             :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/40': theme == 'light' }"
-            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-22  bg-bg-card items-center gap-2 text-sm"
+            class="flex flex-auto justify-center cursor-pointer  rounded-lg border-border border h-30  bg-bg-card items-center gap-2 text-sm"
             @click="setTheme('light')">
             <input class="hidden" type="radio" value="light" v-model="theme" />
             <i class="text-2xl fa-regular fa-sun"></i>
           </label>
           <label
             :class="{ '!border-accent !border-2 shadow-md shadow-accent-hover/30 !bg-accent-hover/10': theme == 'dark' }"
-            class="flex flex-auto rounded-lg justify-center cursor-pointer border-border border h-22 items-center gap-2 text-sm"
+            class="flex flex-auto rounded-lg justify-center cursor-pointer border-border border h-30 items-center gap-2 text-sm"
             @click="setTheme('dark')">
             <input class="hidden" type="radio" value="dark" v-model="theme" />
             <i class="text-2xl fa-regular fa-moon"></i>
@@ -93,7 +82,7 @@
 
       <!-- ===== DETAILS ===== -->
       <div v-if="switchState === 'details'" class="space-y-6 w-full">
-         
+        <hr class="mt-6 border-t border-border" />
 
         <!-- ===== SHARE / INVITE ===== -->
         <!-- <div>
@@ -169,12 +158,9 @@
             <h3 class="text-sm font-medium text-text-secondary mb-2">Color</h3>
             <div class="grid grid-cols-5 gap-2">
               <button v-for="(color, index) in colors" :key="index" type="button"
-                class="w-13 h-13 rounded-full cursor-pointer border-2 flex items-center justify-center"
+                class="w-13 h-13 rounded-full cursor-pointer border-2"
                 :class="selectedColor === color.value ? 'border-text-primary' : 'border-transparent'"
-                :style="{ backgroundColor: color.color }" @click="handleColorClick(color.value)" aria-label="Select color">
-                <i v-if="selectedColor === color.value" class="fa-solid fa-check text-xl"
-                  :class="index === 0 ? 'text-black' : 'text-white'"></i>
-              </button>
+                :style="{ backgroundColor: color.color }" @click="selectColor(color.value)" aria-label="Select color" />
             </div>
           </div>
 
@@ -192,33 +178,17 @@
           </div>
 
 
-          <div v-if="workspace.usage_stats?.storage">
+          <div>
             <h3 class="text-sm font-medium text-text-secondary mb-2">Usage</h3>
             <div class="bg-bg-body rounded-xl p-4 space-y-3">
-              <div class="flex items-center justify-between text-text-primary text-base font-medium">
-                <div class="flex items-center gap-2">
-                  <i class="fa-regular fa-cloud"></i>
-                  <span>Storage</span>
-                </div>
-                 <span v-if="workspace.usage_stats.storage.total_allowed_mb !== 'unlimited'" class="text-sm">
-                   {{ Math.round(storagePercentage) }}% full
-                 </span>
+              <div class="flex items-center gap-2 text-text-primary text-base font-medium">
+                <i class="fa-regular fa-cloud"></i>
+                <span>Storage (80% full)</span>
               </div>
-              
               <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
-                <div class="h-full bg-accent rounded-full transition-all duration-300" 
-                     :style="{ width: `${storagePercentage}%` }">
-                </div>
+                <div class="h-full bg-accent rounded-full" style="width: 80%"></div>
               </div>
-
-              <div class="text-sm text-text-secondary">
-                 <template v-if="workspace.usage_stats.storage.total_allowed_mb === 'unlimited'">
-                     {{ workspace.usage_stats.storage.used_mb?.toFixed(2) }} MB used (Unlimited)
-                 </template>
-                 <template v-else>
-                    {{ workspace.usage_stats.storage.used_mb?.toFixed(2) }} MB of {{ workspace.usage_stats.storage.total_allowed_mb }} MB used
-                 </template>
-              </div>
+              <div class="text-sm text-text-secondary">11.98 GB of 15 GB used</div>
             </div>
           </div>
 
@@ -284,10 +254,7 @@ import ActivityTimeline from './ActivityTimeline.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 // import Dropdown from '../../../components/ui/Dropdown.vue'
 import { getInitials } from '../../../utilities'
-import { formatDateTime } from '../../../utilities/FormatDate'
 import { useDeleteInvitedPeople, useDeleteWorkspace, useInvitePeople, useUpdateWorkspaceDetail, useWorkspacesRoles } from '../../../queries/useWorkspace'
-import { usePermissions } from '../../../composables/usePermissions'
-const { canInviteUser, canEditUser } = usePermissions()
 // import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 // import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import DropMenu from '../../../components/ui/DropMenu.vue'
@@ -302,7 +269,7 @@ import { useRouter } from 'vue-router'
 const queryClient = useQueryClient()
 const router = useRouter()
 const { workspaceId } = useRouteIds();
-const { theme, setTheme, isDark } = useTheme()
+const { theme, setTheme } = useTheme()
 const props = defineProps<{ workspace: any }>()
 const { mutate: updateWS } = useUpdateWorkspaceDetail({
   onSuccess: () => {
@@ -320,75 +287,21 @@ const { mutate: invitePeople } = useInvitePeople()
 
 /* ----- UI State ----- */
 const switchState = ref<'details' | 'active-logs'>('details')
-const lightColors = [
+const selectedColor = ref<string>('#ffffff')
+const selectedTheme = ref<string>('')
+const themes = [theme1, theme2, theme3, theme4, theme5, theme6, theme7, theme6]
+const colors = [
   { color: '#EDEEF0', value: '#EDEEF0' },
   { color: '#3CBAFB', value: '#D4F0FF80' },
   { color: '#266FD4', value: '#B0BFD3' },
   { color: '#EEA832', value: '#EEA8321A' },
   { color: '#E82368', value: '#D7B0BE' },
-  { color: '#202123ff', value: '#B1B2B2' },
+  { color: '#2B2C30', value: '#B1B2B2' },
   { color: '#4026D4', value: '#B6B0D3' },
   { color: '#0DDAB1', value: '#ABD4CC' },
   { color: '#1EA0DC', value: '#AFC9D5' },
   { color: '#2587BC', value: '#B0C4CE' }
 ]
-
-const darkColors = [
-  { color: '#c1c1c9ff', value: '#1b1b1b' }, 
-  { color: '#3CBAFB', value: '#D4F0FF80' },
-  { color: '#266FD4', value: '#B0BFD3' },
-  { color: '#EEA832', value: '#EEA8321A' },
-  { color: '#E82368', value: '#D7B0BE' },
-  { color: '#202123ff', value: '#B1B2B2' },
-  { color: '#4026D4', value: '#B6B0D3' },
-  { color: '#0DDAB1', value: '#ABD4CC' },
-  { color: '#1EA0DC', value: '#AFC9D5' },
-  { color: '#2587BC', value: '#B0C4CE' }
-]
- 
-
-const colors = computed(() => isDark.value ? darkColors : lightColors)
-
-const selectedColor = ref<string>(props.workspace?.variables.color || colors.value[0].value)
-const selectedTheme = ref<string>('')
-const themes = [theme1, theme2, theme3, theme4, theme5, theme6, theme7, theme6]
-
-// Apply default selection
-const defaultLight = lightColors[0].value
-const defaultDark = darkColors[0].value
-
-// Helper to apply color locally without API call
-function setLocalColor(value: string) {
-  // Handle cross-theme defaults
-  let finalValue = value
-  if (isDark.value && value === defaultLight) finalValue = defaultDark
-  if (!isDark.value && value === defaultDark) finalValue = defaultLight
-  
-  // If still not in list (and not matching cross-defaults), validation could be added here
-  // But usually custom colors shouldn't happen unless valid.
-  
-  selectedColor.value = finalValue
-  const color30 = hexToRgba(finalValue, 0.3)
-  workspaceStore.setBackground(color30)
-}
-
-// Watch for workspace data changes (initial load or switch)
-watch(() => props.workspace?.variables?.color, (newVal) => {
-  // If prop provided, use it. Else use current theme default.
-  if (newVal) {
-    setLocalColor(newVal)
-  } else {
-    // No color in workspace? Use default for current theme.
-    setLocalColor(colors.value[0].value)
-  }
-}, { immediate: true })
-
-// Watch for theme changes
-watch(isDark, () => {
-  // Re-run local set to resolve defaults if needed (e.g. switch #EDEEF0 <-> #1b1b1b)
-  // We pass current selectedColor.value to be re-evaluated against new theme.
-  setLocalColor(selectedColor.value)
-})
 
 /* ----- Safer accessors ----- */
 const people = computed(() => props.workspace?.people ?? [])
@@ -480,7 +393,7 @@ watch(
   { immediate: true }
 )
 
-const canInvite = computed(() => canInviteUser.value && inviteEmails.value.length > 0 && !emailError.value && !!inviteRole.value)
+const canInvite = computed(() => inviteEmails.value.length > 0 && !emailError.value && !!inviteRole.value)
 
 // function onEmailsInvalid(bad: string[]) {
 //   emailError.value = bad.length ? `Invalid: ${bad.join(', ')}` : ''
@@ -507,23 +420,6 @@ function extractNameFromEmail(email: string) {
 // }
 function sendInvites() {
   if (!canInvite.value) return
-  if (!canInviteUser.value) return
-
-  // Check limits
-  const tmFeature = workspaceStore.getFeature('team_members')
-  if (tmFeature) {
-    // Current usage + new invites
-    const current = tmFeature.usage.current
-    const limit = tmFeature.limits.limit
-    const newCount = inviteEmails.value.length
-    
-    // If limit is not unlimited (usually -1 or very high number if unlimited, assuming standard finite limit logic here)
-    if (limit > 0 && (current + newCount > limit)) {
-      workspaceStore.setLimitExccedModal(true)
-      return
-    }
-  }
-
   invitePeople(
     {
       workspace_id: props.workspace._id,
@@ -582,7 +478,6 @@ function getMenuItems(user: any) {
 }
 
 function handleRemoveUser(user: any) {
-  if (!canEditUser.value) return
   deleteUser.mutate({ id: user.id })
 }
 
@@ -650,26 +545,15 @@ function hexToRgba(hex: string, alpha = 0.3) {
 }
 
 /* ----- Simple helpers for palette / theme / menu ----- */
-/* ----- Simple helpers for palette / theme / menu ----- */
-function handleColorClick(value: string) {
-  setLocalColor(value) // update UI immediately
-  updateWS({
-    workspace_id: workspaceId.value,
-    variables: {
-      color: selectedColor.value // Use the resolved value
-    }
-  })
+function selectColor(value: string) {
+  selectedColor.value = value;
+  const color30 = hexToRgba(value, 0.3); // 30% opacity
+  workspaceStore.setBackground(color30);
 }
 
 function selectTheme(th: string) {
   selectedTheme.value = th
   workspaceStore.setBackground(`url(${th})`)
-    updateWS({
-    workspace_id: workspaceId.value,
-    variables: {
-      theme: th
-    }
-  })
 }
 // function setMenu(kind: 'classic' | 'modern') {
 //   workspaceStore.setMenuType(kind)
@@ -702,16 +586,6 @@ const { mutate: deleteWorkspace } = useDeleteWorkspace({
 function openDeleteModal() {
   showDeleteModal.value = true
 }
-
-const storagePercentage = computed(() => {
-  const s = props.workspace?.usage_stats?.storage
-  if (!s) return 0
-  if (s.total_allowed_mb === 'unlimited') return 0
-  const total = Number(s.total_allowed_mb)
-  if (!total || isNaN(total)) return 0
-  const used = Number(s.used_mb) || 0
-  return Math.min((used / total) * 100, 100)
-})
 
 function handleDeleteWorkspace() {
   isDeletingWorkspace.value = true
