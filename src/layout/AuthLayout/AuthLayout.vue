@@ -1,7 +1,7 @@
 <template>
-  <div class="bg-bg-body h-screen overflow-hidden">
+  <div class="bg-bg-body h-full md:h-screen overflow-hidden">
     <Header  v-if="showHeader" />
-    <div class=" lg:shadow-xl flex flex-wrap w-full md:h-full p-4">
+    <div class=" lg:shadow-xl flex flex-wrap w-full h-full p-4">
       <!-- Left Panel -->
       <div class="w-full lg:w-1/2 py-7 md:py-10 lg:pr-[15px] flex flex-col flex-auto justify-center items-center overflow-y-auto h-full">
         <slot name="form" />
