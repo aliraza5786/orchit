@@ -99,7 +99,7 @@
     </transition>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router';
 const sidebarOpen = ref(false);
 const router = useRouter();

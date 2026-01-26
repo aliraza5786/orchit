@@ -3,7 +3,7 @@ const effectiveDate = 'June 18, 2025'
 </script>
 
 <template>
-    <section class="float-left w-full py-[40px] md:py-[60px] lg:py-[80px] px-[15px]">
+    <section class="w-full py-[40px] md:py-[60px] lg:py-[80px] px-[15px]">
         <div class=" max-w-[627px] mx-auto">
 
             <header class="text-left">

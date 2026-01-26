@@ -93,7 +93,7 @@ const scrollToNote = (id: string) => {
 </script>
 
 <template>
-  <div class="py-[40px] lg:py-[80px] px-[15px] w-full float-end release_note_content">
+  <div class="py-[40px] lg:py-[80px] px-[15px] w-full release_note_content">
     <div class="custom_container">
       <div class="release-notes-container flex flex-col md:flex-row gap-8">
         <!-- Sidebar (Left) -->
