@@ -74,7 +74,7 @@ const tryPrompt = (prompt: string) => {
           </div>
           <!-- Content -->
           <h3 class="text-xl font-semibold mb-3">{{ audience.title }}</h3>
-          <p class="text-[var(--muted)] mb-6 leading-relaxed">
+          <p class="text-[var(--muted)] leading-relaxed">
             {{ audience.description }}
           </p>
         </div>
