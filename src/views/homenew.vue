@@ -4,7 +4,7 @@
   >
   <!-- <Header :isDark="isDark" :toggleTheme="toggleTheme"  /> -->
     <!-- Hero Section - Fade in on load -->
-    <div class="animate-on-load">
+    <div class="animate-on-load" >
       <HeroSection ref="heroInputRef" :isDark="isDark" />
     </div>
 
@@ -39,7 +39,7 @@
     </div>
 
     <!-- How It Works - Slide up -->
-    <div class="scroll-animate" data-animation="slide-up">
+    <div class="scroll-animate" data-animation="slide-up" id="product">
       <HowItWorks />
     </div>
 
@@ -49,7 +49,7 @@
     </div>
 
     <!-- Pricing Section - Slide up -->
-    <div class="scroll-animate" data-animation="slide-up">
+    <div class="scroll-animate" data-animation="slide-up" id="pricing">
       <Pricing />
     </div>
 <!-- Contact sales -->
@@ -57,7 +57,7 @@
       <ContactUs />
     </div> -->
     <!-- FAQ Section - Fade in -->
-    <div class="scroll-animate" data-animation="fade-in">
+    <div class="scroll-animate" data-animation="fade-in" id="faq">
       <FaqSection />
     </div>
 
