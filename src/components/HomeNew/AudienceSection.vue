@@ -44,9 +44,9 @@ const audiences = [
     prompt: "Create a lightweight operations system for my small team",
   },
 ];
-const tryPrompt = (prompt: string) => {
-  emit("try-prompt", prompt);
-};
+// const tryPrompt = (prompt: string) => {
+//   emit("try-prompt", prompt);
+// };
 </script>
 <template>
   <section class="py-20 px-4 sm:px-6 lg:px-8">
@@ -74,11 +74,11 @@ const tryPrompt = (prompt: string) => {
           </div>
           <!-- Content -->
           <h3 class="text-xl font-semibold mb-3">{{ audience.title }}</h3>
-          <p class="text-[var(--muted)] mb-6 leading-relaxed">
+          <p class="text-[var(--muted)] mb-2 leading-relaxed">
             {{ audience.description }}
           </p>
           <!-- CTA -->
-          <button
+          <!-- <button
             @click="tryPrompt(audience.prompt)"
             class="text-accent hover:text-accent-hover font-medium flex items-center gap-2 group"
           >
@@ -96,7 +96,7 @@ const tryPrompt = (prompt: string) => {
                 d="M9 5l7 7-7 7"
               />
             </svg>
-          </button>
+          </button> -->
         </div>
       </div>
     </div>

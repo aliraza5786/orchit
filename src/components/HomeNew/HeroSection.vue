@@ -44,7 +44,7 @@ defineExpose({ setValue })
 </script>
 
 <template>
-  <section class="relative min-h-screen flex flex-col">
+  <section class="relative min-h-screen flex flex-col w-full">
     <!-- Hero Content -->
     <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
       <div class="max-w-4xl mx-auto text-center">
@@ -58,7 +58,7 @@ defineExpose({ setValue })
         </p>
 
         <!-- Interactive Prompt Box -->
-        <div class="relative mb-4">
+        <div class="relative mb-4 w-full">
           <HeroBannerInput
             ref="inputRef"
             :theme="isDark ? 'dark' : 'light'"
@@ -73,14 +73,14 @@ defineExpose({ setValue })
         </div>
 
         <!-- Trust Line -->
-         <div class="flex justify-center lg:gap-10 gap-2">
-             <p class="text-sm text-[var(--muted)]">
+         <div class="flex justify-center lg:gap-10 gap-2 text-accent font-semibold">
+             <p class="text-sm ">
           <i class="fa-solid fa-dot"></i>No credit card 
         </p>
-         <p class="text-sm text-[var(--muted)]">
+         <p class="text-sm ">
           <i class="fa-solid fa-dot"></i>Cancel anytime 
         </p>
-         <p class="text-sm text-[var(--muted)]">
+         <p class="text-sm ">
           <i class="fa-solid fa-dot"></i>Early access
         </p>
          </div>

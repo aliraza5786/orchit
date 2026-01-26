@@ -200,7 +200,10 @@
             <div class="flex-1 min-w-0">
               <div class="text-sm text-text-primary">
                 <span class="font-medium text-accent/90 pe-1">{{ activity?.user?.name }} </span>
-                <span  class="text-text-secondary" v-html="activity?.message"></span>
+                <span
+                  class="text-text-secondary"
+                  v-html="stripImages(activity?.message)"
+                ></span>
                 <a href="#" class="text-accent/90 hover:underline">{{ activity?.item }}</a>
                 <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
                   :class="getStatusClass(activity.status)">
@@ -238,6 +241,17 @@ const workspaceStore = useWorkspaceStore();
 const route = useRoute()
 const workspaceId = computed<string>(() => toParamString(route?.params?.id))
 const jobId = computed<string>(() => toParamString(route?.params?.job_id))
+function stripImages(html: string) {
+  if (!html) return "";
+
+  const div = document.createElement("div");
+  div.innerHTML = html;
+
+  // remove all images
+  div.querySelectorAll("img").forEach(img => img.remove());
+
+  return div.innerHTML;
+}
 
 /** Queries for team + activities */
 const {
