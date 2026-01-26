@@ -116,7 +116,7 @@ defineExpose({ setValue })
 
       
       <!-- Trust Line -->
-      <div class="max-w-4xl mx-auto text-center w-full px-4 sm:px-6 lg:px-8">
+      <!-- <div class="max-w-4xl mx-auto text-center w-full px-4 sm:px-6 lg:px-8">
          <div class="flex justify-center lg:gap-10 gap-2">
              <p class="text-sm text-[var(--muted)]">
           <i class="fa-solid fa-circle text-[6px] align-middle mr-2"></i>No credit card 
@@ -129,13 +129,14 @@ defineExpose({ setValue })
         </p>
          </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Scroll Indicator -->
     <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce z-10">
       <svg class="w-6 h-6 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
       </svg>
+    </div>
     </div>
 
   </section>
