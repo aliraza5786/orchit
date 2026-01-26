@@ -114,41 +114,7 @@ defineExpose({ setValue })
         </div>
       </div>
 
-      <!-- Slider Examples (Full Width) -->
-      <div class="w-full relative overflow-hidden mb-10">
-          <p class="text-center text-[14px] font-medium text-[var(--muted)] leading-[20px] mb-4">
-              Or try these examples:
-          </p>
-          <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2">
-              <div class="examples-container flex gap-[15px] lg:gap-[24px] px-4 mb-[15px]
-                  snap-x snap-mandatory animate-marquee
-                 hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
-                  <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                      <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
-                          class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer text-[var(--text-primary)]
-                  text-[12px] md:text-[14px] font-medium rounded-full border border-[var(--border)] hover:border-purple-500
-                  transition-all duration-300 whitespace-nowrap bg-[var(--card)] hover:shadow-md">
-                          {{ example }}
-                      </button>
-                  </div>
-              </div>
-          </div>
-          <!-- Second Row (Reverse) -->
-          <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2">
-              <div
-                  class="examples-container pb-1 flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2 snap-x snap-mandatory hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
-                  <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
-                      <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
-                          class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer text-[var(--text-primary)]
-                  text-[12px] md:text-[14px] font-medium rounded-full border border-[var(--border)] hover:border-purple-500
-                  transition-all duration-300 whitespace-nowrap bg-[var(--card)] hover:shadow-md">
-                          {{ example }}
-                      </button>
-                  </div>
-              </div>
-          </div>
-      </div>
-
+      
       <!-- Trust Line -->
       <div class="max-w-4xl mx-auto text-center w-full px-4 sm:px-6 lg:px-8">
          <div class="flex justify-center lg:gap-10 gap-2">
