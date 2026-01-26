@@ -1,9 +1,12 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[500px] md:mx-auto w-full">
-        <div class="mb-12 space-y-2 text-center">
-          <h2 class="text-[32px] font-medium text-text-primary">Welcome to Orchit AI</h2>
+      <div class="max-w-[500px] md:mx-auto w-full md:pt-10">
+         <router-link to="/">
+        <img :src="isDark? darkLogo : lightLogo" class="w-[150px] d-block mx-auto" alt="image">
+        </router-link>
+        <div class="mb-8 sm:mb-12 space-y-2 text-center">
+          <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary">Welcome to Orchit AI</h2>
           <p class="text-base font-medium text-text-secondary">Create your free account</p>
         </div>
         <form @submit.prevent="handleRegister" class="space-y-4 w-full">
@@ -13,6 +16,23 @@
             :message="emailError" @blur="touched.email.value = true" />
           <BaseTextField v-model="password" label="Password" placeholder="Password" size="lg" type="password"
             :error="!!passwordError" :message="passwordError" @blur="touched.password.value = true" />
+          <div class="flex items-start gap-2"> 
+            <input
+                v-model="agreeToTerms"
+                @blur="touched.terms.value = true"
+                type="checkbox" 
+                class=" h-4 w-4 mt-0.5 rounded border-border accent-accent cursor-pointer flex-shrink-0"
+            />
+           <p class="text-left font-medium text-text-secondary text-sm " > 
+            
+               By signing up, I agree to the
+            <span class="text-text-primary font-bold text-sm" >Privacy Policy</span> and
+            <span class="text-text-primary font-bold text-sm">Terms of Service</span>.
+          </p> 
+          </div> 
+          <p v-if="termsError" class="text-red-500 text-[12px]">
+           {{ termsError }}
+            </p>
           <Button :disabled="isPending" size="lg" :block="true" type="submit">
             {{ isPending ? 'Creating Account...' : 'Sign up' }}
           </Button>
@@ -52,11 +72,7 @@
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
           </p>
-          <p class="text-sm font-medium text-text-secondary text-center mt-6">
-            By signing up, I agree to the
-            <span class="text-text-primary font-bold">Privacy Policy</span> and
-            <span class="text-text-primary font-bold">Terms of Service</span>.
-          </p>
+         
           <p class="text-sm font-medium text-text-secondary text-center mt-8">
             Already have an account?
             <router-link to="/login" class="text-text-primary font-bold underline">Sign in</router-link>
@@ -79,20 +95,29 @@ import { googleTokenLogin } from "vue3-google-login";
 import axios from "axios";
 import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
-
+import darkLogo  from '@assets/global/dark-logo.png';
+import lightLogo  from '@assets/global/light-logo.png';
+import { useTheme } from "../../composables/useTheme"; 
+const {isDark } = useTheme();
 const router = useRouter();
-
 const fName = ref('');
 const email = ref('');
 const password = ref('');
 const errorMessage = ref('');
 
+const agreeToTerms = ref(false);
 // Field "touched" states
 const touched = {
   fName: ref(false),
   email: ref(false),
   password: ref(false),
+  terms: ref(false),
 };
+const termsError = computed(() => {
+  if (!touched.terms.value) return '';
+  if (!agreeToTerms.value) return 'You must agree to the Terms & Privacy Policy';
+  return '';
+});
 
 const authStore = useAuthStore();
 const workspaceStore = useWorkspaceStore();
@@ -129,7 +154,7 @@ const passwordError = computed(() => {
 
 
 const isFormValid = computed(() =>
-  !nameError.value && !emailError.value && !passwordError.value
+  !nameError.value && !emailError.value && !passwordError.value && agreeToTerms.value
 );
 
 // Mutation
@@ -241,9 +266,10 @@ function handleRegister() {
   touched.fName.value = true;
   touched.email.value = true;
   touched.password.value = true;
+   touched.terms.value = true;
 
   if (!isFormValid.value) {
-    errorMessage.value = 'Please fill all fields correctly.';
+    errorMessage.value = 'Please fill all required fields and accept the terms.';
     return;
   }
 
@@ -251,6 +277,7 @@ function handleRegister() {
     u_full_name: fName.value,
     u_email: email.value,
     u_password: password.value,
+    agree_to_terms: agreeToTerms.value,
   });
 }
 
@@ -260,3 +287,5 @@ watch([fName, email, password], () => {
 });
 
 </script>
+
+ 
