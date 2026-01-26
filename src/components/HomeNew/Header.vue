@@ -17,7 +17,7 @@
             <a href="#product" @click.prevent="scrollTo('product')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Product</a>
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a>
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a>
-            <a href="#pricing" @click.prevent="scrollTo('pricing')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a>
+            <a href="/pricing" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a>
             <a href="#faq" @click.prevent="scrollTo('faq')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a>
             <router-link to="/contact-us" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Contact Sales</router-link> 
           </nav>
@@ -91,7 +91,6 @@
           >
             Contact Sales
           </router-link>
-
           <button  @click="goToRegister" class="mt-6 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium">
             Get started free
           </button>
