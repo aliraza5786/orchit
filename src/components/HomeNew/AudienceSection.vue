@@ -68,7 +68,7 @@ const tryPrompt = (prompt: string) => {
         >
           <!-- Icon -->
           <div
-            class="w-14 h-14 bg-purple-600/10 rounded-xl flex items-center justify-center text-3xl mb-6"
+            class="w-14 h-14 bg-purple-600/10 rounded-xl flex items-center justify-center text-3xl"
           >
             {{ audience.icon }}
           </div>
