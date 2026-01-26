@@ -77,26 +77,6 @@ const tryPrompt = (prompt: string) => {
           <p class="text-[var(--muted)] mb-6 leading-relaxed">
             {{ audience.description }}
           </p>
-          <!-- CTA -->
-          <button
-            @click="tryPrompt(audience.prompt)"
-            class="text-accent hover:text-accent-hover font-medium flex items-center gap-2 group"
-          >
-            Try prompt
-            <svg
-              class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
         </div>
       </div>
     </div>
