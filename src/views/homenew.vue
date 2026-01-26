@@ -7,7 +7,6 @@
     <div class="animate-on-load" >
       <HeroSection ref="heroInputRef" :isDark="isDark" />
     </div>
-
     <!-- Stats Section - Slide up on scroll -->
     <div class="scroll-animate" data-animation="slide-up">
       <StatsSection />
@@ -19,9 +18,9 @@
     </div> -->
 
     <!-- Idea Cards - Slide up with stagger -->
-    <div class="scroll-animate" data-animation="slide-up-stagger">
+    <!-- <div class="scroll-animate" data-animation="slide-up-stagger">
       <IdeaCards @select-idea="setHeroPrompt" />
-    </div>
+    </div> -->
 
     <!-- Audience Section - Scale in -->
     <div class="scroll-animate" data-animation="scale-in">
@@ -97,14 +96,13 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
-// import Header from '../components/HomeNew/Header.vue'
 import HeroSection from '../components/HomeNew/HeroSection.vue'
 import StatsSection from '../components/HomeNew/StatsSections.vue'
 // import SocialProof from '../components/HomeNew/SocialProof.vue'
-import IdeaCards from '../components/HomeNew/IdeaCards.vue'
+// import IdeaCards from '../components/HomeNew/IdeaCards.vue'
 import AudienceSection from '../components/HomeNew/AudienceSection.vue'
 import TemplatesMarketplace from '../components/HomeNew/TemplateMarketplace.vue'
-import UnlimitedModules from '../components/HomeNew/UnlimitedModules.vue'
+// import UnlimitedModules from '../components/HomeNew/UnlimitedModules.vue'
 import HowItWorks from '../components/HomeNew/HowItWorks.vue'
 import Testimonials from '../components/HomeNew/Testimonials.vue'
 // import ContactUs from './ContactUs.vue'

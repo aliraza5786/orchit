@@ -52,10 +52,9 @@ const audiences = [
     prompt: "Create a lightweight operations system for my small team",
   },
 ];
-
-const tryPrompt = (prompt: string) => {
-  emit("try-prompt", prompt);
-};
+// const tryPrompt = (prompt: string) => {
+//   emit("try-prompt", prompt);
+// };
 </script>
 <template>
   <section class="py-20 px-4 sm:px-6 lg:px-8">
@@ -74,7 +73,6 @@ const tryPrompt = (prompt: string) => {
           v-for="audience in audiences"
           :key="audience.title"
           class="group bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden hover:border-accent-hover transition-all duration-300 hover:shadow-lg flex flex-col h-full cursor-pointer"
-          @click="tryPrompt(audience.prompt)"
         >
           <!-- Image -->
           <div class="h-48 w-full overflow-hidden shrink-0 relative">

@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref,toRef, computed, onMounted, onUnmounted } from "vue";
+import { ref,toRef, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useWorkspaceStore } from '../../stores/workspace';
 import { useRouter } from 'vue-router';
 import { useCreateWorkspaceWithAI } from '../../queries/useWorkspace';
 import { useAuthStore } from '../../stores/auth';
 import { toast } from 'vue-sonner';
 import Button from "../../components/ui/Button.vue";
-
+import { usePromptSuggestions } from "../../queries/usePropmpSuggestions";
+import mouse from "@assets/LandingPageImages/bnanerInputIcons/mouse.png"
 const props = defineProps<{
   theme?: any;
   placeholder?: string;
@@ -35,7 +36,17 @@ const placeholderSuffixes = [
   "a project roadmap...",
   "weekly schedules..."
 ];
-
+const examples = [
+    "🍽️ I want to open a food truck business.",
+    "💇 I want to start a luxury salon.",
+    "🍹 I want to open a cocktail bar.",
+    "📚 I want to write and publish a book.",
+    "✈️ I want to start a travel agency.",
+    "🚴 I want to open a fitness cycling studio.",
+    "👗 I want to launch a fashion boutique.",
+    "🚗 I want to open a car rental service.",
+    "📸 I want to become a professional photographer."
+];
 let typingInterval: ReturnType<typeof setInterval> | null = null;
 let erasingInterval: ReturnType<typeof setInterval> | null = null;
 let delayTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -93,6 +104,31 @@ onUnmounted(() => {
 function setValue(val: string) {
   inputValue.value = val;
   showError.value = false;
+}
+const {
+  data: promptSuggestions, 
+ 
+} = usePromptSuggestions({
+  refetchOnMount: true, // automatically fetch when rendered
+});
+
+//  Computed list — use API data if available, else fallback to examples
+const suggestionList = computed(() => {
+  if (promptSuggestions?.value?.length) {
+    return promptSuggestions.value.map((item: any) => item.prompt);
+  }
+  return examples;
+});
+
+function handleExampleClick(example: string) {
+  inputValue.value = example;
+  showError.value = false;
+
+  // Auto-resize the textarea after setting the value
+  nextTick(() => {
+    autoResize();
+    textareaRef.value?.focus();
+  });
 }
 
 const { mutate: generate, isPending } = useCreateWorkspaceWithAI({
@@ -374,6 +410,51 @@ defineExpose({ setValue });
       </p>
     </transition>
   </form>
+  <!-- Example Buttons -->
+        <div
+  class="relative mb-[40px] lg:mb-[72px] w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+            <p
+                class="text-center text-[14px] font-medium text-primary leading-[20px] font-manrope mb-[25px] lg:mb-[31px]">
+                Or try
+                these
+                examples:</p>
+            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                <div class="examples-container flex gap-[15px] lg:gap-[24px] px-4 mb-[15px] lg:mb-[24px]
+                    snap-x snap-mandatory animate-marquee
+                   hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
+                    <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
+                        <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
+                            class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
+                    text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
+                    transition-all duration-300 whitespace-nowrap "
+                            :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
+                            {{ example }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+                <div
+                    class="examples-container pb-1 flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2 snap-x snap-mandatory hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
+                    <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
+                        <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
+                            class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer  text-primary 
+                    text-[12px] md:text-[14px] font-manrope rounded-full border-1  hover:border-purple-500
+                    transition-all duration-300 whitespace-nowrap "
+                            :class="theme === 'dark' ? 'bg-transparent border-gray-800' : 'border-gray-300 bg-gray-100'">
+                            {{ example }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- mouse text + imge -->
+        <div class="mouse_box flex justify-center flex-col items-center ">
+            <img :src="mouse" alt="mouse icon" class="w-[24px] mb-[12px] lg:mb-[16px] ">
+            <p class="font-manrope text-[14px] text-center"
+                :class="theme === 'dark' ? 'text-[#94A3B8]' : 'text-text-primary'">Work Without Limits</p>
+        </div>
 </template>
 
 <style scoped>
@@ -436,5 +517,69 @@ textarea {
 .bg-gradient-to-r {
   background-size: 200% 200%;
   animation: gradient-shift 3s ease infinite;
+}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.heading-ingradient {
+    background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 400s linear infinite;
+    will-change: transform;
+}
+
+@keyframes marquee2 {
+    0% {
+        transform: translateX(-50%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+.animate-marquee2 {
+    display: flex;
+    width: max-content;
+    animation: marquee2 400s linear infinite;
+    will-change: transform;
+
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Pause on hover or touch */
+.examples-container:hover,
+.examples-container:active {
+    animation-play-state: paused;
 }
 </style>
