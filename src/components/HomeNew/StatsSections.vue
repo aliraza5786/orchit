@@ -25,10 +25,10 @@ const scrollToTemplates = () => {
       <!-- Header -->
       <div class="text-center mb-16">
         <h2 class="text-4xl md:text-5xl font-bold mb-6">
-          Most founders burn months (and real money) before the risks show up.
+          Most founders spend months & real <br> money before the risks become visible.
         </h2>
         <p class="text-xl text-[var(--muted)] max-w-3xl mx-auto">
-          The biggest failures aren't dramatic — they're invisible gaps discovered too late.
+          The biggest failures aren't dramatic they're invisible gaps discovered too late.
         </p>
       </div>
 

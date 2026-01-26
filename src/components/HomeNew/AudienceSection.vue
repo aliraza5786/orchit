@@ -1,49 +1,58 @@
 <script setup lang="ts">
+import startup from "@/assets/LandingPageImages/audience/startup.png";
+import agency from "@/assets/LandingPageImages/audience/agency.png";
+import academic from "@/assets/LandingPageImages/audience/academic.png";
+import creator from "@/assets/LandingPageImages/audience/creator.png";
+import consulting from "@/assets/LandingPageImages/audience/consulting.png";
+import ops from "@/assets/LandingPageImages/audience/ops.png";
+
 const emit = defineEmits<{ (e: "try-prompt", text: string): void }>();
+
 const audiences = [
   {
-    icon: "🚀",
+    image: startup,
     title: "Entrepreneurs & Startups",
     description:
       "Turn a spark into an operating system. Get modules, workflows, and a roadmap for your business idea in minutes.",
     prompt: "Create a complete startup operating system for my business idea",
   },
   {
-    icon: "🎨",
+    image: agency,
     title: "Agencies & Freelancers",
     description:
       "Create client proposals in minutes. Turn vague briefs into structured scopes, deliverables, and timelines.",
     prompt: "Build a client delivery system for my agency",
   },
   {
-    icon: "📚",
+    image: academic,
     title: "Personal/Professional/Academic",
     description:
       "Get a step-by-step plan in seconds. From thesis projects to career transitions, structure any complex goal.",
     prompt: "Help me plan and structure my personal project",
   },
   {
-    icon: "✨",
+    image: creator,
     title: "Creators & Solopreneurs",
     description:
       "Turn ideas into consistent output. Build content systems, product launches, and revenue streams.",
     prompt: "Create a content creation and monetization system",
   },
   {
-    icon: "💡",
+    image: consulting,
     title: "Consultants & Coaches",
     description:
       "Make delivery repeatable. Package your expertise into frameworks clients can follow and implement.",
     prompt: "Build a repeatable delivery framework for my consulting practice",
   },
   {
-    icon: "⚙️",
+    image: ops,
     title: "Operators & Small Teams",
     description:
       "Run projects without the overhead. Get structure, visibility, and momentum without complex tools.",
     prompt: "Create a lightweight operations system for my small team",
   },
 ];
+
 const tryPrompt = (prompt: string) => {
   emit("try-prompt", prompt);
 };
@@ -64,39 +73,28 @@ const tryPrompt = (prompt: string) => {
         <div
           v-for="audience in audiences"
           :key="audience.title"
-          class="bg-[var(--card)] border border-[var(--border)] rounded-2xl p-8 hover:border-accent-hover transition-all duration-300 hover:shadow-lg"
+          class="group bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden hover:border-accent-hover transition-all duration-300 hover:shadow-lg flex flex-col h-full cursor-pointer"
+          @click="tryPrompt(audience.prompt)"
         >
-          <!-- Icon -->
-          <div
-            class="w-14 h-14 bg-purple-600/10 rounded-xl flex items-center justify-center text-3xl mb-6"
-          >
-            {{ audience.icon }}
+          <!-- Image -->
+          <div class="h-48 w-full overflow-hidden shrink-0 relative">
+            <img 
+              :src="audience.image" 
+              :alt="audience.title"
+              class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+            />
+            <!-- Color Tint Overlay -->
+            <div class="absolute inset-0 bg-indigo-900/30 mix-blend-color-burn pointer-events-none"></div>
+            <div class="absolute inset-0 bg-purple-500/10 mix-blend-overlay pointer-events-none"></div>
           </div>
+          
           <!-- Content -->
-          <h3 class="text-xl font-semibold mb-3">{{ audience.title }}</h3>
-          <p class="text-[var(--muted)] mb-6 leading-relaxed">
-            {{ audience.description }}
-          </p>
-          <!-- CTA -->
-          <button
-            @click="tryPrompt(audience.prompt)"
-            class="text-accent hover:text-accent-hover font-medium flex items-center gap-2 group"
-          >
-            Try prompt
-            <svg
-              class="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
+          <div class="p-6 flex flex-col grow">
+            <h3 class="text-xl font-semibold mb-3">{{ audience.title }}</h3>
+            <p class="text-[var(--muted)] leading-relaxed text-sm">
+              {{ audience.description }}
+            </p>
+          </div>
         </div>
       </div>
     </div>

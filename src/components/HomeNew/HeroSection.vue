@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import HeroBannerInput from '../../landingPageViews/components/HeroBannerInput.vue'
+import { usePromptSuggestions } from "../../queries/usePropmpSuggestions";
+import heroGlow from "@/assets/LandingPageImages/hero_glow.svg";
+
 defineProps<{
   isDark: boolean
 }>()
@@ -10,6 +13,34 @@ const emit = defineEmits(['submit'])
 const inputRef = ref<any>(null)
 const isLoading = ref(false)
 const responseMessage = ref<string | null>(null)
+
+// Slider Logic
+const examples = [
+    "🍽️ I want to open a food truck business.",
+    "💇 I want to start a luxury salon.",
+    "🍹 I want to open a cocktail bar.",
+    "📚 I want to write and publish a book.",
+    "✈️ I want to start a travel agency.",
+    "🚴 I want to open a fitness cycling studio.",
+    "👗 I want to launch a fashion boutique.",
+    "🚗 I want to open a car rental service.",
+    "📸 I want to become a professional photographer."
+];
+
+const { data: promptSuggestions } = usePromptSuggestions({
+  refetchOnMount: true,
+});
+
+const suggestionList = computed(() => {
+  if (promptSuggestions?.value?.length) {
+    return promptSuggestions.value.map((item: any) => item.prompt);
+  }
+  return examples;
+});
+
+const handleExampleClick = (example: string) => {
+    inputRef.value?.setValue(example);
+}
 
 const setValue = (value: string) => {
   inputRef.value?.setValue(value)
@@ -44,21 +75,31 @@ defineExpose({ setValue })
 </script>
 
 <template>
-  <section class="relative min-h-screen flex flex-col">
+  <section class="relative min-h-screen flex flex-col overflow-hidden">
+    <!-- Background Glow SVG -->
+    <div class="absolute top-0 left-0 -translate-x-1/4 -translate-y-1/4 w-full lg:w-[1440px] z-0 pointer-events-none">
+      <img 
+        :src="heroGlow" 
+        alt="" 
+        class="w-full h-auto animate-pulse-glow opacity-80"
+      />
+    </div>
+
     <!-- Hero Content -->
-    <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
-      <div class="max-w-4xl mx-auto text-center">
+    <div class="flex-1 flex flex-col items-center justify-center py-20 w-full overflow-hidden relative z-10">
+      <!-- Top Content -->
+      <div class="max-w-4xl mx-auto text-center w-full px-4 sm:px-6 lg:px-8">
         <h1 class="text-5xl md:text-5xl font-bold mb-6 leading-tight">
           What idea do you want to 
           <span class="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">orchestrate?</span>
         </h1>
-
+        
         <p class="text-xl md:text-1xl text-[var(--muted)] mb-12 max-w-2xl mx-auto">
-          Orchit helps you plan, structure, and execute your idea from start to finish. Your next idea — organized and powered by AI.
+          Orchit helps you plan, structure, and execute your idea from start to finish. Your next idea organized and powered by AI.
         </p>
 
         <!-- Interactive Prompt Box -->
-        <div class="relative mb-4">
+        <div class="relative mb-8">
           <HeroBannerInput
             ref="inputRef"
             :theme="isDark ? 'dark' : 'light'"
@@ -71,24 +112,61 @@ defineExpose({ setValue })
             {{ responseMessage }}
           </p>
         </div>
+      </div>
 
-        <!-- Trust Line -->
+      <!-- Slider Examples (Full Width) -->
+      <div class="w-full relative overflow-hidden mb-10">
+          <p class="text-center text-[14px] font-medium text-[var(--muted)] leading-[20px] mb-4">
+              Or try these examples:
+          </p>
+          <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2">
+              <div class="examples-container flex gap-[15px] lg:gap-[24px] px-4 mb-[15px]
+                  snap-x snap-mandatory animate-marquee
+                 hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
+                  <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
+                      <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
+                          class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer text-[var(--text-primary)]
+                  text-[12px] md:text-[14px] font-medium rounded-full border border-[var(--border)] hover:border-purple-500
+                  transition-all duration-300 whitespace-nowrap bg-[var(--card)] hover:shadow-md">
+                          {{ example }}
+                      </button>
+                  </div>
+              </div>
+          </div>
+          <!-- Second Row (Reverse) -->
+          <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide py-2">
+              <div
+                  class="examples-container pb-1 flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2 snap-x snap-mandatory hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
+                  <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
+                      <button v-for="example in suggestionList" :key="example + n" @click="handleExampleClick(example)"
+                          class="flex-shrink-0 px-[10px] sm:px-[15px] lg:px-[19px] py-[10px] sm:py-[14px] lg:py-[17px] cursor-pointer text-[var(--text-primary)]
+                  text-[12px] md:text-[14px] font-medium rounded-full border border-[var(--border)] hover:border-purple-500
+                  transition-all duration-300 whitespace-nowrap bg-[var(--card)] hover:shadow-md">
+                          {{ example }}
+                      </button>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      <!-- Trust Line -->
+      <div class="max-w-4xl mx-auto text-center w-full px-4 sm:px-6 lg:px-8">
          <div class="flex justify-center lg:gap-10 gap-2">
              <p class="text-sm text-[var(--muted)]">
-          <i class="fa-solid fa-dot"></i>No credit card 
+          <i class="fa-solid fa-circle text-[6px] align-middle mr-2"></i>No credit card 
         </p>
          <p class="text-sm text-[var(--muted)]">
-          <i class="fa-solid fa-dot"></i>Cancel anytime 
+          <i class="fa-solid fa-circle text-[6px] align-middle mr-2"></i>Cancel anytime 
         </p>
          <p class="text-sm text-[var(--muted)]">
-          <i class="fa-solid fa-dot"></i>Early access
+          <i class="fa-solid fa-circle text-[6px] align-middle mr-2"></i>Early access
         </p>
          </div>
       </div>
     </div>
 
     <!-- Scroll Indicator -->
-    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce">
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce z-10">
       <svg class="w-6 h-6 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
       </svg>
@@ -99,6 +177,21 @@ defineExpose({ setValue })
 
 
 <style scoped>
+@keyframes pulse-glow {
+  0% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.05); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 0.5; }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 15s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+
+
+
+
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0) translateX(-50%);
@@ -111,6 +204,47 @@ defineExpose({ setValue })
 .animate-bounce {
   animation: bounce 2s infinite;
 }
+
+/* Marquee Animations */
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 100s linear infinite;
+    will-change: transform;
+}
+
+@keyframes marquee2 {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+}
+
+.animate-marquee2 {
+    display: flex;
+    width: max-content;
+    animation: marquee2 100s linear infinite;
+    will-change: transform;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Pause on hover */
+.examples-container:hover,
+.examples-container:active {
+    animation-play-state: paused;
+}
+
 /* fade */
 .fade-enter-active, .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -129,5 +263,4 @@ defineExpose({ setValue })
 .slide-leave-to {
   transform: translateX(100%);
 }
-
 </style>

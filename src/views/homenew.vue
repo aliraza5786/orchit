@@ -34,9 +34,9 @@
     </div>
 
     <!-- Unlimited Modules - Slide from right -->
-    <div class="scroll-animate" data-animation="slide-right">
+    <!-- <div class="scroll-animate" data-animation="slide-right">
       <UnlimitedModules />
-    </div>
+    </div> -->
 
     <!-- How It Works - Slide up -->
     <div class="scroll-animate" data-animation="slide-up">
