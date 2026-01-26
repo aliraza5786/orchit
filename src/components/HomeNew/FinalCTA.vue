@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
+import { nextTick } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 const router = useRouter();
+const route = useRoute()
 const currentYear = new Date().getFullYear()
 defineProps<{
   isDark: boolean
@@ -10,14 +12,31 @@ function goToContactUs(){
     router.push('/contact-us')
 }
 function goToRegister(){
-    router.push('/contact-us')
+    router.push('/register')
 }
+const scrollTo = async (id: string) => {
+
+  if (route.path !== "/") {
+    await router.push("/");
+    await nextTick(); // wait for DOM render
+
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  } else {
+    document.getElementById(id)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+};
 </script>
 
 <template>
-  <div>
+  <div class="w-full">
     <!-- Final CTA Band -->
-    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-purple-600 to-pink-600">
+    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-purple-600 to-pink-600 overflow-y-hidden">
       <div class="max-w-4xl mx-auto text-center">
         <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
           Ready to orchestrate your next idea?
@@ -58,10 +77,10 @@ function goToRegister(){
           <div>
             <h4 class="font-semibold mb-3">Product</h4>
             <ul class="space-y-2">
-              <li><a href="#product" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Features</a></li>
-              <li><a href="#templates" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a></li>
-              <li><a href="#marketplace" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a></li>
-              <li><a href="#pricing" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a></li>
+              <li><a href="#product" @click.prevent="scrollTo('product')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Features</a></li>
+              <li><a href="#templates" @click.prevent="scrollTo('templates')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a></li>
+              <li><a href="#marketplace" @click.prevent="scrollTo('templates')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a></li>
+              <li><a href="#pricing" @click.prevent="scrollTo('pricing')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a></li>
             </ul>
           </div>
 
@@ -69,10 +88,10 @@ function goToRegister(){
           <div>
             <h4 class="font-semibold mb-3">Resources</h4>
             <ul class="space-y-2">
-              <li><a href="/blogs" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Blog</a></li>
-              <li><a href="#" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Release notes</a></li>
+              <li><a href="/blogs"  class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Blog</a></li>
+              <li><a href="/blog/release-notes" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Release notes</a></li>
               <li><a href="/knowledge-center" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Help Center</a></li>
-              <li><a href="#faq" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a></li>
+              <li><a href="#faq" @click.prevent="scrollTo('faq')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a></li>
             </ul>
           </div>
 

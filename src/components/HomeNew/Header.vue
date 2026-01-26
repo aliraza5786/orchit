@@ -99,7 +99,7 @@
     </transition>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router';
 const sidebarOpen = ref(false);
 const router = useRouter();
@@ -114,20 +114,22 @@ sidebarOpen.value = !sidebarOpen.value;
 function goToRegister(){
     router.push('/register')
 }
-const scrollTo = (id: string) => {
-  if(route.path !=='/'){
-    router.push('/')
+const scrollTo = async (id: string) => {
+  sidebarOpen.value = false;
+
+  if (route.path !== "/") {
+    await router.push("/");
+    await nextTick(); // wait for DOM render
+
     document.getElementById(id)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-  sidebarOpen.value=false;
-  }else{
+      behavior: "smooth",
+      block: "start",
+    });
+  } else {
     document.getElementById(id)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-  sidebarOpen.value=false;
+      behavior: "smooth",
+      block: "start",
+    });
   }
 };
 
