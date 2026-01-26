@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible"
+    class="flex-auto rounded-[6px] flex-grow h-full bg-bg-card overflow-x-auto flex-col flex scrollbar-visible"
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
       <div
