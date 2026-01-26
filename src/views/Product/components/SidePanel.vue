@@ -472,9 +472,7 @@
                   "
                   class="w-full p-3 bg-transparent outline-none text-sm"
                   placeholder="Write a comment"
-                  @focus="clearError"
                 />
-                
                 <div
                   class="flex items-center w-full justify-between p-2 border-t border-orchit-white/10"
                 >
@@ -497,11 +495,7 @@
                     {{ isPostingComment ? "Posting…" : "Post" }}
                   </Button>
                 </div>
-               
               </div>
-               <div class="text-red-500 text-sm" v-if="showError">
-                 {{ showError }}
-                </div>
             </section>
 
             <!-- TAB: Attachment -->
@@ -649,7 +643,6 @@ const emit = defineEmits([
   "ticketUpdated"
 ]);
 const propsID = ref(props.details._id);
-const showError = ref("")
 const {
   data: cardDetails,
   isPending,
@@ -661,6 +654,7 @@ const {
   gcTime: 10 * 60 * 1000,
   refetchOnWindowFocus: false,
 });
+console.log("card variables", cardDetails.value);
 
 watch(props, () => {
   propsID.value = props.details._id;
@@ -668,6 +662,7 @@ watch(props, () => {
 watch(
   () => cardDetails.value,
   (card) => {
+    console.log("card variables", cardDetails.value);
     if (!card) return;
 
     sidePanelStore.selectedCard = card;
@@ -689,9 +684,6 @@ const tabOptions = [
 ];
 
 const editingTitle = ref(false);
-function clearError() {
-  showError.value = "";
-}
 const localTitle = ref(
   cardDetails.value ? cardDetails.value["card-title"] : "",
 );
@@ -884,56 +876,47 @@ const assignHandle = (user: any) => {
 };
 const commentId = computed(() => props.details?._id);
 const { data: commentsData } = useComments(commentId);
-const comments = computed(() => commentsData.value?.comments ?? []);
-function updateSheetListCard(cardId: string, updater: (card: any) => any) {
-  queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-    if (!Array.isArray(old)) return old;
-
-    return old.map((column: any) => ({
-      ...column,
-      cards: column.cards?.map((card: any) =>
-        card._id === cardId ? updater(card) : card
-      ),
-    }));
-  });
-}
+const comments = ref<any>(commentsData.value?.comments);
+watch(
+  () => commentsData.value,
+  () => {
+    comments.value = commentsData.value?.comments;
+  },
+);
 
 const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
   {
-   onMutate: async (newCommentPayload: any) => {
-  const cardId = props.details._id;
-  await queryClient.cancelQueries({ queryKey: ["comments", cardId] });
-  await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
+    onMutate: async (newCommentPayload: any) => {
+      const cardId = props.details._id;
+      await queryClient.cancelQueries({
+        queryKey: ["product-comments", cardId],
+      });
+      await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
+      const previousComments = queryClient.getQueryData([
+        "product-comments",
+        cardId,
+      ]);
+      const previousLists = queryClient.getQueryData(["sheet-list"]);
+      const optimisticComment = {
+        _id: Date.now().toString(),
+        comment_text: newCommentPayload.payload.comment_text,
+        commented_by: { u_full_name: "You", _id: currentUserId.value },
+        attachments: newCommentPayload.payload.attachments || [],
+        created_at: new Date().toISOString(),
+      };
+      queryClient.setQueryData(["product-comments", cardId], (old: any) => {
+        return {
+          ...old,
+          comments: [...(old?.comments || []), optimisticComment],
+        };
+      });
 
-  const previousComments = queryClient.getQueryData(["comments", cardId]);
-  const previousLists = queryClient.getQueryData(["sheet-list"]);
-
-  const optimisticComment = {
-    _id: Date.now().toString(),
-    comment_text: newCommentPayload.payload.comment_text,
-    commented_by: { u_full_name: "You", _id: currentUserId.value },
-    attachments: newCommentPayload.payload.attachments || [],
-    created_at: new Date().toISOString(),
-  };
-
-  queryClient.setQueryData(["comments", cardId], (old: any) => ({
-    ...old,
-    comments: [...(old?.comments || []), optimisticComment],
-  }));
-
-  // IMPORTANT: update sheet-list card too
-  updateSheetListCard(cardId, (card) => ({
-    ...card,
-    comments: [...(card.comments || []), optimisticComment],
-    comment_count: (card.comment_count || 0) + 1,
-  }));
-
-  return { previousComments, previousLists };
-},
+      return { previousComments, previousLists };
+    },
     onError: (err: any, variables: any, context: any) => {
       if (context?.previousComments)
         queryClient.setQueryData(
-          ["comments", props.details._id],
+          ["product-comments", props.details._id],
           context.previousComments,
         );
       if (context?.previousLists)
@@ -945,7 +928,7 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ["comments", props.details._id],
+        queryKey: ["product-comments", props.details._id],
       });
       queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
@@ -1174,13 +1157,6 @@ function handleFileChange(event: any) {
 }
 function postComment() {
   const comment_text = newComment.value.trim();
-
-  // Validation: attachments without text should show error
-  if (commentAttachments.value.length > 0 && !comment_text) {
-    showError.value="Please write a comment when attaching files.";
-    return;
-  }
-
   if (!comment_text && !commentAttachments.value.length) return;
 
   const cardId = props.details._id;
@@ -1199,7 +1175,6 @@ function postComment() {
       ),
     }));
   });
-
   createComment({
     id: cardId,
     payload: {
@@ -1214,7 +1189,6 @@ function postComment() {
   newComment.value = "";
   commentAttachments.value = [];
 }
-
 
 const localVarValues = reactive<Record<string, any>>({});
 const initLocalVars = () => {

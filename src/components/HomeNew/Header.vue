@@ -17,7 +17,7 @@
             <a href="#product" @click.prevent="scrollTo('product')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Product</a>
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a>
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a>
-            <a href="#pricing" @click.prevent="scrollTo('pricing')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a>
+            <a href="/pricing" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a>
             <a href="#faq" @click.prevent="scrollTo('faq')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a>
             <router-link to="/contact-us" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Contact Sales</router-link> 
           </nav>
@@ -84,7 +84,7 @@
           <a href="#marketplace" @click.prevent="scrollTo('marketplace')" class="text-[var(--text)]">Marketplace</a>
           <a href="#pricing" @click.prevent="scrollTo('pricing')" class="text-[var(--text)]">Pricing</a>
           <a href="#faq" @click.prevent="scrollTo('faq')" class="text-[var(--text)]">FAQ</a>
-          <router-link
+           <router-link
             to="/contact-us"
             class="text-[var(--text)]"
             @click="sidebarOpen = false"
@@ -114,23 +114,22 @@ sidebarOpen.value = !sidebarOpen.value;
 function goToRegister(){
     router.push('/register')
 }
-const scrollTo = async (id: string) => {
-  sidebarOpen.value = false;
-
-  if (route.path !== "/") {
-    await router.push("/");
-    await nextTick(); // wait for DOM render
-
+const scrollTo = (id: string) => {
+  if(route.path !=='/'){
+    router.push('/');
     document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  } else {
-    document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    behavior: "smooth",
+    block: "start",
+  });
+  sidebarOpen.value=false;
+  }else{
+      document.getElementById(id)?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+  sidebarOpen.value=false;
   }
+  
 };
 
 </script>

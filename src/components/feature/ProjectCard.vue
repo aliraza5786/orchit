@@ -13,8 +13,11 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <span v-if="!totalCard && status" class="text-xs border rounded-full px-2 py-0.5" :class="getColor(status)">
-          {{ status }}
+        <span v-if="!totalCard && status" class="text-xs border rounded-full px-2 py-0.5 capitalize" :class="getColor(status)">
+          {{ 
+       status === 'in_progress' ? 'In Progress':
+        status 
+       }}
         </span>
 
 

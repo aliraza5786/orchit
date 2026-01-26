@@ -23,7 +23,6 @@ import Button from '../../ui/Button.vue'
 import Loader from '../../ui/Loader.vue'
 import type { EdgeUpdateEvent } from '@vue-flow/core'
 import { useTheme } from "../../../composables/useTheme";
-import { toast } from 'vue-sonner'
 const { isDark } = useTheme();
 // --- Modal state for editing an existing transition (edge) ---
 const showEditEdgeModal = ref(false)
@@ -253,11 +252,7 @@ const { mutate: createWorkflow, isPending: isSaving } = useCreateTransition(work
   onSuccess:()=>{
     refetchWorkflow();
     refetchProcess();
-       toast.success('Workflow saved successfully!')
-    },
-     onError: (err: any) => {
-        toast.error(err?.message || 'Failed to save workflow') 
-    }
+  }
 })
 
 const defaultEdgeOptions: Partial<VFEdge> = {

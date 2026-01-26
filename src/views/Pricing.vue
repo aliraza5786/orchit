@@ -134,7 +134,7 @@ const pricingPlans = computed(() => {
 <template>
   <section
     class="w-full py-[40px] md:py-[70px] xl:py-[105px] px-[15px]"
-  id="pricing">
+  >
     <div class="custom_container">
       <!-- Heading -->
       <div class="mb-[32px] text-center">

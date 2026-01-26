@@ -1,9 +1,9 @@
 <template>
-  <div class="bg-bg-body h-full md:h-screen overflow-hidden">
+  <div class="bg-bg-body h-screen overflow-hidden">
     <Header  v-if="showHeader" />
-    <div class=" lg:shadow-xl flex flex-wrap w-full h-full p-4">
+    <div class=" lg:shadow-xl rounded-lg flex flex-wrap w-full md:h-full p-4">
       <!-- Left Panel -->
-      <div class="w-full lg:w-1/2 py-7 md:py-10 lg:pr-[15px] flex flex-col flex-auto justify-center items-center overflow-y-auto h-full">
+      <div class="w-full lg:w-1/2 py-7 md:py-10 lg:pr-[15px] flex flex-col flex-auto justify-center items-center">
         <slot name="form" />
       </div>
 
@@ -38,7 +38,7 @@
 
         <!-- Overlay content -->
         <div class="relative z-10 text-white text-center px-10 w-full h-full flex justify-center items-center ">
-          <!-- <img src="../../assets/global/favicon.png" class="absolute w-32 top-6 left-6" /> -->
+          <img src="../../assets/global/favicon.png" class="absolute w-32 top-6 left-6" />
           <slot name="illustration">
             <p class="text-2xl font-[200] leading-relaxed " style="font-family: 'Castoro', serif;">
               Experience Next-Gen Collaboration<br />

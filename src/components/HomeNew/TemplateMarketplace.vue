@@ -34,7 +34,7 @@ const modules = [
       <!-- Header -->
       <div class="text-center mb-12">
         <h2 class="text-4xl md:text-5xl font-bold mb-4">
-          Start from proven playbooks and discover ready-made modules
+          Start from proven playbooks and <br> discover ready-made modules
         </h2>
         <p class="text-xl text-[var(--muted)] max-w-3xl mx-auto mb-8">
           Browse a variety of templates and modules built for all types of businesses and needs. Ready to clone, customize, and start executing.

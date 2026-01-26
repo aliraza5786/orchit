@@ -8,7 +8,6 @@ export const register = (payload: {
   u_full_name: string;
   u_email: string;
   u_password: string;
-  agree_to_terms?: boolean
 }) => api.post("/auth/signup", payload).then((res) => res.data);
 
 export const verifyOtp = (payload: { u_email: string; otp: string }) =>

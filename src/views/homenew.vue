@@ -34,9 +34,9 @@
     </div>
 
     <!-- Unlimited Modules - Slide from right -->
-    <div class="scroll-animate" data-animation="slide-right">
+    <!-- <div class="scroll-animate" data-animation="slide-right">
       <UnlimitedModules />
-    </div>
+    </div> -->
 
     <!-- How It Works - Slide up -->
     <div class="scroll-animate" data-animation="slide-up" id="product">
@@ -49,9 +49,9 @@
     </div>
 
     <!-- Pricing Section - Slide up -->
-    <div class="scroll-animate" data-animation="slide-up" id="pricing">
+    <!-- <div class="scroll-animate" data-animation="slide-up">
       <Pricing />
-    </div>
+    </div> -->
 <!-- Contact sales -->
  <!-- <div class="scroll-animate" data-animation="slide-up">
       <ContactUs />
@@ -104,13 +104,13 @@ import StatsSection from '../components/HomeNew/StatsSections.vue'
 import IdeaCards from '../components/HomeNew/IdeaCards.vue'
 import AudienceSection from '../components/HomeNew/AudienceSection.vue'
 import TemplatesMarketplace from '../components/HomeNew/TemplateMarketplace.vue'
-import UnlimitedModules from '../components/HomeNew/UnlimitedModules.vue'
+// import UnlimitedModules from '../components/HomeNew/UnlimitedModules.vue'
 import HowItWorks from '../components/HomeNew/HowItWorks.vue'
 import Testimonials from '../components/HomeNew/Testimonials.vue'
 // import ContactUs from './ContactUs.vue'
 import FaqSection from '../components/HomeNew/FaqSection.vue'
 // import FinalCTA from '../components/HomeNew/FinalCTA.vue'
-import Pricing from './Pricing.vue'
+// import Pricing from './Pricing.vue'
 import { useAuthStore } from '../stores/auth';
 const authStore = useAuthStore();
 const { isDark } = useTheme()
