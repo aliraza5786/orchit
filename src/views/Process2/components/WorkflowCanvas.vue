@@ -72,7 +72,7 @@ watch(statusObjects, (newValue) => {
   console.log('Workflow Status Objects Change:', JSON.stringify(newValue, null, 2))
 }, { deep: true })
 
-const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
+const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
 const props = withDefaults(defineProps<{
