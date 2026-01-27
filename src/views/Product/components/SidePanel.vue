@@ -207,7 +207,7 @@
                   <div
                     class="text-xs uppercase tracking-wider text-text-secondary"
                   >
-                    Lane
+                    Tab
                   </div>
                   <BaseSelectField
                     :disabled="!canEditCard"

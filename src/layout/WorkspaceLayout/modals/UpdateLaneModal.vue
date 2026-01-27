@@ -9,7 +9,7 @@
         <div v-else>
             <div
                 class="sticky flex-col top-0 backdrop-blur-3xl z-1 flex justify-between pt-6 items-start bg-light-black px-6 border-b border-border pb-4 mb-4">
-                <h2 class="text-xl font-semibold">Update Lane</h2>
+                <h2 class="text-xl font-semibold">Update Tab</h2>
                 <!-- <Stepper :steps="steps" :currentStep="currentStep" /> -->
             </div>
 
@@ -18,15 +18,15 @@
                 <div class="space-y-2.5">
                     <h3 class="text-2xl font-semibold text-text-primary ">Project Basics</h3>
                     <p class="text-sm text-text-secondary  mt-1">
-                        Let's start by setting up the foundational details of your project lane.
+                        Let's start by setting up the foundational details of your project tab.
                     </p>
                 </div>
 
                 <div class="space-y-6">
-                    <BaseTextField v-model="form.title" label="Lane Name" placeholder="e.g., Product Development"
+                    <BaseTextField v-model="form.title" label="Tab Name" placeholder="e.g., Product Development"
                         :error="!!titleError" :message="titleError" @blur="touched.title = true" />
-                    <BaseTextAreaField v-model="form.description" label="Lane Description"
-                        placeholder="Describe your lane here" :error="!!descriptionError" :message="descriptionError"
+                    <BaseTextAreaField v-model="form.description" label="Tab Description"
+                        placeholder="Describe your tab here" :error="!!descriptionError" :message="descriptionError"
                         @blur="touched.description = true" />
                     <!-- <BaseMultiSelect v-model="form.user_type" :options="userTypes" label="User Base Type"
                     placeholder="Select a user base" :error="!!userTypeError" :message="userTypeError"

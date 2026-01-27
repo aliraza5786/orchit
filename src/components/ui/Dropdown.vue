@@ -30,7 +30,7 @@
 
       <span :class="labelSizeClass">
         <span v-if="prefix" class="font-bold">{{ prefix }}:</span>
-        <span class="text-nowrap"> {{ selectedOption?.title }} </span>
+        <span class="text-nowrap"> {{ selectedOption?.title }} <template v-if="selectedNestedOption"> ({{ selectedNestedOption.title }}) </template> </span>
       </span>
 
       <!-- Chevron -->
@@ -327,9 +327,16 @@ function handleOptionClick(option: Option) {
     }
 }
 
+
+const selectedNestedOption = ref<Option | null>(null);
+
 function emitNestedSelect(subOption: Option, parentOption: Option) {
     emit("nested-select", subOption);
     select(parentOption);
+    // Save nested for label
+    selectedNestedOption.value = subOption;
+    // Close the nested dropdown
+    openNestedId.value = null;
 }
 
 /* ------- Actions state ------- */
