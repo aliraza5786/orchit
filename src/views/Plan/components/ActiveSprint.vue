@@ -4,7 +4,7 @@
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
       <div
-      class="header lg:px-4 px-2 py-2.5 flex justify-between items-center gap-1 overflow-auto border-b border-border"
+      class="header lg:px-4 px-2 py-2 flex justify-between items-center gap-1 overflow-auto border-b border-border"
     >
       <div class="flex lg:gap-4 gap-2 py-1">
        <div class="hidden sm:flex">
@@ -562,7 +562,7 @@ function cancel() {
 }
 const { mutate: addTicket } = useAddTicket({
   onSuccess: () => {
-    // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
   },
 });
 function emitAddColumn() {

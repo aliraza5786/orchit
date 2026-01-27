@@ -1,5 +1,5 @@
 import { computed, unref, type Ref } from "vue";
-import { useQuery, type UseQueryOptions } from "@tanstack/vue-query";
+import { useQuery, useInfiniteQuery, type UseInfiniteQueryOptions } from "@tanstack/vue-query";
 import { useApiMutation } from "../libs/vq";
 import { request } from "../libs/api";
 
@@ -154,7 +154,7 @@ export const useSheets = (
 };
 
 // tiny helper for typing; you can omit if you like
-type MaybeRef<T> = T | Ref<T>;
+import type { MaybeRef } from '@vueuse/core'
 
 export function useSheetList(
   module_id: MaybeRef<string | null | undefined>,
@@ -163,11 +163,10 @@ export function useSheetList(
   view_by: MaybeRef<string | null | undefined>,
   extraParams?: MaybeRef<Record<string, any> | undefined>,
   options: Omit<
-    UseQueryOptions<any, any, any, any>,
+    UseInfiniteQueryOptions<any, any, any, any, any>,
     "queryKey" | "queryFn"
   > = {}
 ) {
-  // normalize laneIds -> "a,b,c"
   const laneIdsParam = computed<string | undefined>(() => {
     const v = unref(laneIds);
     if (v == null) return undefined;
@@ -181,7 +180,6 @@ export function useSheetList(
     return one || undefined;
   });
 
-  // reactive query key
   const queryKey = computed(() => [
     "sheet-list",
     unref(module_id),
@@ -191,34 +189,41 @@ export function useSheetList(
     unref(extraParams),
   ]);
 
-  // reactive enabled
   const enabled = computed(() =>
     Boolean(unref(module_id) && unref(sheet_id) && unref(view_by))
   );
 
-  return useQuery({
+  return useInfiniteQuery({
+    queryKey,
+    enabled,
     retry: 0,
-    queryKey, // pass the computed directly
-    enabled, // pass the computed directly
-    // keep previous data while switching keys (optional)
-    placeholderData: (prev) => prev,
-    queryFn: async () => {
+    initialPageParam: 1,
+
+    queryFn: async ({ pageParam = 1 }) => {
       const params = {
-        module_id: unref(module_id)!,
-        sheet_id: unref(sheet_id)!,
-        variable_id: unref(view_by)!,
-        ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam)! } : {}),
+        module_id: unref(module_id),
+        sheet_id: unref(sheet_id),
+        variable_id: unref(view_by),
+        per_page: unref(extraParams)?.per_page ?? 20,
+        page: pageParam,
+        ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam) } : {}),
         ...(unref(extraParams) || {}),
       };
 
-      // request() should return plain JSON (not AxiosResponse)
       return request({
         url: "/workspace/cards/grouped",
         method: "GET",
         params,
       });
     },
-    refetchOnMount:false,
+
+    getNextPageParam: (lastPage) => {
+      const hasNext = lastPage?.pagination?.has_next;
+      const currentPage = lastPage?.pagination?.page;
+
+      return hasNext ? currentPage + 1 : null;
+    },
+
     ...options,
   });
 }

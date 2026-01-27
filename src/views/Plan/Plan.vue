@@ -72,22 +72,36 @@
                   "
                 >
                   All Modules
+                  <span
+                  v-if="selectedFilter ===''"
+                  class="ml-2 text-xs font-normal"
+                >
+                  ({{ backlogResp?.cards?.length }})
+                </span>
                 </button>
 
                 <!-- Dynamic Module Tabs -->
                 <button
-                  v-for="option in visibleModules"
-                  :key="option._id"
-                  @click="selectMilestoneTab(option._id)"
-                  class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
-                  :class="
-                    selectedFilter === option._id
-                      ? 'bg-accent text-white border-none'
-                      : 'bg-transparent text-accent border border-accent'
-                  "
+                v-for="option in visibleModules"
+                :key="option._id"
+                @click="selectMilestoneTab(option._id)"
+                class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
+                :class="
+                  selectedFilter === option._id
+                    ? 'bg-accent text-white border-none'
+                    : 'bg-transparent text-accent border border-accent'
+                "
+              >
+                {{ option.variables['module-title'] }}
+
+                <span
+                  v-if="selectedFilter === option._id"
+                  class="ml-2 text-xs font-normal"
                 >
-                  {{ option.variables["module-title"] }}
-                </button>
+                  ({{ backlogResp?.cards?.length }})
+                </span>
+              </button>
+
               </div>
 
               <!-- Huddle: Dropdown -->

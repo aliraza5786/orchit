@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4">
+  <div class="px-4" @scroll="onScroll">
     <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ps-6 mb-5 ">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
@@ -177,10 +177,13 @@ const emit = defineEmits<{
   (e: 'toggleVisibility', val: any, v:any): void
   (e: 'addVar'): void
   (e: 'delete', val: any): void
+  (e: 'scroll', val: any): void
 }>()
 
 const tickets = reactive<Row[]>(props.rows || [])
-
+const onScroll = (e: Event) => {
+  emit('scroll', e);
+}
 watch(() => props.rows, newRows => {
   if (newRows) tickets.splice(0, tickets.length, ...newRows)
 })
