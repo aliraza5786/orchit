@@ -98,38 +98,57 @@
       </aside>
     </transition>
 </template>
+
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import { useRouter, useRoute } from 'vue-router';
+
 const sidebarOpen = ref(false);
 const router = useRouter();
-const route = useRoute()
+const route = useRoute();
+
 defineProps<{
   isDark: boolean
   toggleTheme: () => void
 }>()
+
 const toggleSidebar = () => {
-sidebarOpen.value = !sidebarOpen.value;
-};
-function goToRegister(){
-    router.push('/register')
-}
-const scrollTo = (id: string) => {
-  if(route.path !=='/'){
-    router.push('/');
-    document.getElementById(id)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-  sidebarOpen.value=false;
-  }else{
-      document.getElementById(id)?.scrollIntoView({
-    behavior: "smooth",
-    block: "start",
-  });
-  sidebarOpen.value=false;
-  }
-  
+  sidebarOpen.value = !sidebarOpen.value;
 };
 
+function goToRegister(){
+  router.push('/register')
+}
+
+const scrollTo = async (id: string) => {
+  sidebarOpen.value = false;
+  
+  if (route.path !== '/') {
+    // Navigate to home page first
+    await router.push('/');
+    
+    // Wait for the next tick to ensure DOM is updated
+    await nextTick();
+    
+    // Add a small delay to ensure all components are mounted
+    setTimeout(() => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 100);
+  } else {
+    // Already on home page, just scroll
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }
+};
 </script>

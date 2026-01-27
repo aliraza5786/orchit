@@ -2,6 +2,26 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
 export type ThemeMode = "light" | "dark" | "system";
+export function initThemeImmediately() {
+  const saved = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
+
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const effectiveTheme =
+    saved === "dark" ||
+    (saved === "system" && prefersDark) ||
+    (!saved && prefersDark);
+
+  const root = document.documentElement;
+
+  root.classList.toggle("dark", effectiveTheme);
+  root.setAttribute("data-theme", effectiveTheme ? "dark" : "light");
+
+  applyCSSVars(effectiveTheme ? DARK_VARS : LIGHT_VARS);
+  setThemeColorMeta(
+    effectiveTheme ? DARK_VARS["--background"] : LIGHT_VARS["--background"]
+  );
+}
+
 const STORAGE_KEY = "theme";
 
 // ---- Your variable palettes (match the CSS in your global file) ----
@@ -76,21 +96,23 @@ function applyTheme() {
 }
 
 function setTheme(next: ThemeMode) {
-  if (next === 'system') {
-    theme.value = 'system';
-    localStorage.removeItem(STORAGE_KEY); // or localStorage.setItem(STORAGE_KEY, 'system');
-    
-    // Update system preference immediate
-    const mql = window.matchMedia("(prefers-color-scheme: dark)");
-    systemPrefersDark.value = mql.matches;
-    applyTheme();
-    return;
-  }
+  const root = document.documentElement;
+  root.classList.add("theme-switching");
 
   theme.value = next;
-  localStorage.setItem(STORAGE_KEY, next);
+
+  if (next === "system") {
+    localStorage.removeItem(STORAGE_KEY);
+    systemPrefersDark.value = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  } else {
+    localStorage.setItem(STORAGE_KEY, next);
+  }
 
   applyTheme();
+
+  requestAnimationFrame(() => {
+    root.classList.remove("theme-switching");
+  });
 }
 
 function toggleTheme() {
@@ -128,7 +150,7 @@ export function useTheme() {
       }
 
       // 2) Apply theme
-      applyTheme();
+      // applyTheme();
 
       // 3) Setup system preference listeners
       mql = window.matchMedia("(prefers-color-scheme: dark)");
@@ -141,6 +163,15 @@ export function useTheme() {
       applyTheme();
     }
   });
+onMounted(() => {
+  mountedCount++;
+  if (mountedCount === 1) {
+    mql = window.matchMedia("(prefers-color-scheme: dark)");
+    systemPrefersDark.value = mql.matches;
+    mql.addEventListener("change", onSystemChange);
+    window.addEventListener("storage", onStorage);
+  }
+});
 
   onBeforeUnmount(() => {
     mountedCount--;

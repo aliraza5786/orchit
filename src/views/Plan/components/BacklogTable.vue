@@ -42,7 +42,11 @@
             v-if="isBacklogListPending"
             class="flex items-center justify-center py-10"
           >
-            <Loader />
+           <div
+                role="status"
+                aria-label="Loading"
+                class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
+              ></div>
           </div>
 
           <!-- Backlog List -->
@@ -118,7 +122,6 @@ import { useBacklogList } from "../../../queries/usePlan";
 import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
-import Loader from "../../../components/ui/Loader.vue";
 const { isDark } = useTheme();
 
 import { usePermissions } from "../../../composables/usePermissions";

@@ -39,6 +39,9 @@
   --bg-lavender: rgba(241, 238, 255, 1);
   --orchit-white: #9356c5;
 }
+html.theme-switching * {
+  transition: none !important;
+}
 
 /* dark overrides */
 [data-theme="dark"] {

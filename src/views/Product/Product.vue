@@ -166,10 +166,10 @@
       </div>
     </div>
     <template v-if="view == 'kanban'">
-      <KanbanSkeleton v-show="isSheetPending" />
+      <KanbanSkeleton v-if="isInitialLoading" />
       <div
       ref="kanbanScroll"
-        v-show="!isSheetPending"
+        v-else
         class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
         @scroll="onScroll"
       >
@@ -211,6 +211,10 @@
               :ticket="ticket"
             />
           </template>
+          <KanbanColumnCardsSkeleton
+            v-if="isPaginating"
+            :cards="2"
+          />
         </KanbanBoard>
         <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
           <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
@@ -618,6 +622,9 @@ const Searchbar = defineAsyncComponent(
 const KanbanSkeleton = defineAsyncComponent(
   () => import("../../components/skeletons/KanbanSkeleton.vue")
 );
+const KanbanColumnCardsSkeleton = defineAsyncComponent(
+  () => import("../../components/skeletons/KanbanColumnCardsSkeleton.vue")
+);
 const BaseTextField = defineAsyncComponent(
   () => import("../../components/ui/BaseTextField.vue")
 );
@@ -808,7 +815,6 @@ const removeCardFromState = (cardId: string) => {
 const {
   data,
   refetch: refetchSheets,
-  isPending: isSheetPending,
 } = useSheets({
   workspace_id: workspaceId,
   workspace_module_id: moduleId,
@@ -876,6 +882,7 @@ const workspaceStore = useWorkspaceStore();
 const Lists = ref<any[]>([]);
 const {
   data: ListsPages,
+  isLoading,
   isFetchingNextPage,
   fetchNextPage,
   hasNextPage,
@@ -890,6 +897,13 @@ const {
 watchEffect(() => {
   Lists.value = ListsPages.value?.pages?.flatMap((p:any) => p.data || []) || [];
 });
+const isInitialLoading = computed(() =>
+  isLoading.value && !Lists.value.length
+);
+
+const isPaginating = computed(() =>
+  isFetchingNextPage.value
+);
 const tableRef = ref<InstanceType<typeof TableView> | null>(null)
 const onScroll = (e: any) => {
   const el = e.target;

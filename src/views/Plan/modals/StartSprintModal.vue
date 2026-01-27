@@ -157,7 +157,6 @@ const form = reactive<any>({
   duration: null,
 });
 
-
 const formattedSprintType = computed(() => {
   if (!props.sprintType) return "";
   return props.sprintType.charAt(0).toUpperCase() + props.sprintType.slice(1);
@@ -217,6 +216,7 @@ function save() {
     end: form.end || "",
     goal: form.goal ?? "",
   });
+  form.duration=null;
 }
 
 
