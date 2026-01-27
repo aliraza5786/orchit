@@ -1,7 +1,7 @@
 <template>
   <div class=" flex flex-col gap-4 h-full overflow-x-auto w-full flex-auto">
     <!-- Header / Overview -->
-    <div class="p-5 rounded-[6px] bg-bg-card space-y-6">
+    <div class="p-5 rounded-[6px] bg-bg-card space-y-6 border border-border">
       <div class="flex items-center justify-between">
         <div class="flex flex-col w-full">
           <h3 class="text-2xl text-text-primary font-semibold">Project Overview</h3>
@@ -105,7 +105,7 @@
     <!-- Right Column: Team Workload & Recent Activity -->
     <div class="flex flex-grow flex-col sm:flex-row  gap-4">
       <!-- Team Workload -->
-      <div class="bg-bg-card w-full  max-h-full flex-auto p-5 rounded-lg">
+      <div class="bg-bg-card w-full  max-h-full flex-auto p-5 rounded-lg border border-border">
         <div class="mb-4">
           <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
           <p class="text-sm text-text-secondary mt-1">
@@ -180,7 +180,7 @@
       </div>
 
       <!-- Recent Activity -->
-      <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto  flex flex-col">
+      <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto  flex flex-col border border-border">
         <div class="mb-4">
           <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
           <p class="text-sm text-text-secondary mt-1">Stay up to date with what's happening across the project.</p>

@@ -94,7 +94,7 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: false },
       },
         {
-        path: "/release-note",
+        path: "/release-notes",
         name: "release-note",
         component: ReleaseNote,
         meta: { requiresAuth: false },

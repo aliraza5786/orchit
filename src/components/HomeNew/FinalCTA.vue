@@ -15,20 +15,32 @@ function goToRegister(){
     router.push('/register')
 }
 const scrollTo = async (id: string) => {
-
   if (route.path !== "/") {
+    // Navigate to home page first
     await router.push("/");
-    await nextTick(); // wait for DOM render
-
-    document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    
+    // Wait for the next tick to ensure DOM is updated
+    await nextTick();
+    
+    // Add a small delay to ensure all components are mounted
+    setTimeout(() => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    }, 100);
   } else {
-    document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
+    // Already on home page, just scroll
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   }
 };
 </script>
@@ -46,10 +58,10 @@ const scrollTo = async (id: string) => {
         </p>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button @click="goToRegister" class="px-8 py-4 bg-white text-purple-600 rounded-lg hover:bg-gray-100 transition-colors font-medium text-lg shadow-lg">
+          <button @click="goToRegister" class="px-8 py-4 cursor-pointer bg-white text-purple-600 rounded-lg hover:bg-gray-100 transition-colors font-medium text-lg shadow-lg">
             Get started free
           </button>
-          <button @click="goToContactUs()" class="px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white/10 transition-colors font-medium text-lg">
+          <button @click="goToContactUs()" class="px-8 py-4 cursor-pointer border-2 border-white text-white rounded-lg hover:bg-white/10 transition-colors font-medium text-lg">
             Contact Us
           </button>
         </div>
@@ -89,7 +101,7 @@ const scrollTo = async (id: string) => {
             <h4 class="font-semibold mb-3">Resources</h4>
             <ul class="space-y-2">
               <li><a href="/blogs"  class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Blog</a></li>
-              <li><a href="/blog/release-notes" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Release notes</a></li>
+              <li><a href="/release-notes" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Release notes</a></li>
               <li><a href="/knowledge-center" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Help Center</a></li>
               <li><a href="#faq" @click.prevent="scrollTo('faq')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a></li>
             </ul>

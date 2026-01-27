@@ -636,10 +636,13 @@ watch(
   { immediate: true }
 );
 
-const { data: sheets, refetch: refetchSheets } = useSheets({
-  workspace_id: workspaceId.value,
-  workspace_module_id: computed(() => selected_module_id.value),
-});
+const { data: sheets, refetch: refetchSheets } = useSheets(
+  {
+    workspace_id: workspaceId.value,
+    workspace_module_id: moduleId.value,
+  },
+  
+)
 watch(selected_module_id, (newModuleId) => {
   if (newModuleId) refetchSheets();
 });
@@ -733,7 +736,7 @@ watch(
     if (newData.length > 0) {
       selectedSheetTitle.value = newData[0].title; // store the first sheet title
     } else {
-      selectedSheetTitle.value = "";
+      selectedSheetTitle.value = "Backlog";
     }
   },
   { immediate: true } // run immediately on initialization
@@ -1372,7 +1375,8 @@ function buildMindMapDataAllSheets(sheetsData: any[]): MindNode {
   };
 
   if (!Array.isArray(sheetsData)) return root;
-
+  //  console.log("sprint grouped data", sheetsData);
+   
   const variables: Record<string, MindNode> = {};
 
   sheetsData.forEach((sheet) => {

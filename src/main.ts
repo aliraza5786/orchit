@@ -13,9 +13,10 @@ import { GanttPlugin } from '@syncfusion/ej2-vue-gantt';
 import { registerLicense } from '@syncfusion/ej2-base';
 import '@syncfusion/ej2-base/styles/material.css';
 import '@syncfusion/ej2-vue-schedule/styles/material.css';
-
+import { initThemeImmediately } from './composables/useTheme'
 registerLicense('Ngo9BigBOggjHTQxAR8/V1JGaF5cXGpCfExwWmFZfVhgdl9HZ1ZSQGYuP1ZhSXxVdkRjXn9ccXNRR2FaVEN9XEA=');
 const app = createApp(App)
+initThemeImmediately();
 import vTooltip from './directives/vTooltip'
 app.directive('tooltip', vTooltip)
 app.component('Toaster', Toaster)
