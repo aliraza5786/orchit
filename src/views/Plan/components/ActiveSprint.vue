@@ -2,8 +2,9 @@
   <div
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full border border-border flex flex-col overflow-x-auto overflow-y-auto scrollbar-visible pb-4"
   >
-    <div
-      class="header lg:px-4 px-2 py-5 flex justify-between items-center gap-1 overflow-auto"
+    <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
+      <div
+      class="header lg:px-4 px-2 py-2 flex justify-between items-center gap-1 overflow-auto border-b border-border"
     >
       <div class="flex lg:gap-4 gap-2 py-1">
        <div class="hidden sm:flex">
@@ -25,7 +26,7 @@
   </button>
 </div>
         <div
-    class="px-2 py-1 h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
+    class="lg:px-4 px-2 py-1 h-8 mt-1 rounded-2xl bg-gradient-to-tr from-accent to-accent-hover text-white font-medium cursor-pointer"
   >
     {{ activeSprint }}
   </div>
@@ -203,20 +204,18 @@
           @create="handleCreateTicket"
         />
       </template>
-      <template
-        v-if="view === 'mindmap'"
-        class="max-h-[calc(100vh-100px)] overflow-y-auto"
-      >
-        <div class="relative w-full h-full flex overflow-hidden">
-          <!-- Mind Map Canvas -->
-          <div
-            ref="mindMapRef"
-            class="flex-1 h-full overflow-y-hidden rounded-md relative"
-          ></div>
+      <template v-if="view === 'mindmap'">
+      <div class="relative w-full h-full flex overflow-hidden">
+        <!-- Mind Map Canvas -->
+       <div
+        ref="mindMapRef"
+        class="flex-1 h-full overflow-hidden rounded-md relative"
+        style="height: 600px; width: 100%;"
+      ></div>
 
-          <!-- Formatting Sidebar -->
-          <div
-          v-if="showFormatSidebar"
+        <!-- Formatting Sidebar -->
+        <div
+          v-if="showFormatSidebar && canAssignCard && canEditCard && canCreateCard"
           class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-x-hidden overflow-y-auto flex flex-col"
         >
           <!-- Header -->
@@ -333,72 +332,72 @@
             </button>
           </div>
         </div>
-        </div>
+      </div>
 
-        <!-- hyperlink pop up -->
-        <div
-          v-if="showHyperlinkModal"
-          class="fixed inset-0 bg-black/30 flex items-center justify-center"
-        >
-          <div class="bg-white p-6 rounded-xl w-80">
-            <h3 class="text-lg font-semibold mb-4">Insert Web Link</h3>
-            <input
-              v-model="hyperlink"
-              type="text"
-              placeholder="Enter or paste a URL"
-              class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div class="flex justify-end gap-2 mt-4">
-              <button
-                @click="cancel"
-                class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                :disabled="!hyperlink"
-                @click="confirm"
-                :class="[
-                  'px-4 py-2 rounded-md text-white',
-                  hyperlink
-                    ? 'bg-blue-500 hover:bg-blue-600'
-                    : 'bg-blue-300 cursor-not-allowed',
-                ]"
-              >
-                Insert
-              </button>
-            </div>
-          </div>
-        </div>
-        <!-- EXISTING POPUP (UNCHANGED) -->
-        <div
-          v-if="activeAddList"
-          class="absolute top-40 left-70 bg-bg-body rounded-lg p-4 shadow-lg z-100 min-w-[328px] border"
-          @click.stop
-        >
-          <BaseTextField
-            :autofocus="true"
-            v-model="newColumn"
-            placeholder="Add New list"
-            @keyup.enter="emitAddColumn"
+      <!-- hyperlink pop up -->
+      <div
+        v-if="showHyperlinkModal && canAssignCard && canEditCard && canCreateCard"
+        class="fixed inset-0 bg-black/30 flex items-center justify-center"
+      >
+        <div class="bg-white p-6 rounded-xl w-80">
+          <h3 class="text-lg font-semibold mb-4">Insert Web Link</h3>
+          <input
+            v-model="hyperlink"
+            type="text"
+            placeholder="Enter or paste a URL"
+            class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <p class="text-xs mt-1.5">You can add details while editing</p>
-
-          <div class="flex items-center mt-3 gap-3">
-            <Button
-              @click="emitAddColumn"
-              varaint="primary"
-              class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+          <div class="flex justify-end gap-2 mt-4">
+            <button
+              @click="cancel"
+              class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
             >
-              {{ addingList ? "Adding..." : "Add list" }}
-            </Button>
-            <i
-              class="fa-solid fa-close cursor-pointer"
-              @click="setActiveAddList"
-            ></i>
+              Cancel
+            </button>
+            <button
+              :disabled="!hyperlink"
+              @click="confirm"
+              :class="[
+                'px-4 py-2 rounded-md text-white',
+                hyperlink
+                  ? 'bg-blue-500 hover:bg-blue-600'
+                  : 'bg-blue-300 cursor-not-allowed',
+              ]"
+            >
+              Insert
+            </button>
           </div>
         </div>
-      </template>
+      </div>
+      <!-- EXISTING POPUP (UNCHANGED) -->
+      <div
+        v-if="activeAddList"
+        class="absolute top-40 left-70 bg-bg-body rounded-lg p-4 shadow-lg z-100 min-w-[328px] border"
+        @click.stop
+      >
+        <BaseTextField
+          :autofocus="true"
+          v-model="newColumn"
+          placeholder="Add New list"
+          @keyup.enter="emitAddColumn"
+        />
+        <p class="text-xs mt-1.5">You can add details while editing</p>
+
+        <div class="flex items-center mt-3 gap-3">
+          <Button
+            @click="emitAddColumn"
+            varaint="primary"
+            class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+          >
+            {{ addingList ? "Adding..." : "Add list" }}
+          </Button>
+          <i
+            class="fa-solid fa-close cursor-pointer"
+            @click="setActiveAddList"
+          ></i>
+        </div>
+      </div>
+    </template>
       <template
         v-if="view === 'calendar'"
         class="max-h-[calc(100vh-100px)] overflow-y-auto"
@@ -467,6 +466,7 @@
     </div>
     <!-- <CreateSheetModal v-model="isCreateSheetModal" /> -->
     <!-- <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" /> -->
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -562,7 +562,7 @@ function cancel() {
 }
 const { mutate: addTicket } = useAddTicket({
   onSuccess: () => {
-    // queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
   },
 });
 function emitAddColumn() {

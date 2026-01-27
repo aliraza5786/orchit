@@ -34,9 +34,9 @@
       <div class="flex flex-col" v-if="laneOptions.length > 0">
         <BaseSelectField
           size="md"
-          label="Lane"
+          label="Tab"
           :options="laneOptions"
-          placeholder="Select lane"
+          placeholder="Select tab"
           :allowCustom="false"
           :model-value="form.lane_id"
           @update:modelValue="setLane"
@@ -214,12 +214,21 @@ type Option = { _id: string | number; title: string };
 const mapOptions = (arr: string[]): Option[] => arr.map((e) => ({ _id: e, title: e }));
 
 /** Lane options (memoized) */
-const laneOptions = computed<Option[]>(() =>
-  (lanes?.value ?? []).map((el: Lane) => ({
+const laneOptions = computed<Option[]>(() => {
+  const opts = (lanes?.value ?? []).map((el: Lane) => ({
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
-  }))
-);
+  }));
+
+  // Ensure "Main" exists in the options
+  if (!opts.find((o:any) => o.title === "Main")) {
+    opts.unshift({ _id: "main", title: "Main" });
+  }
+
+  return opts;
+});
+
+
 
 /** Helpers */
 const getVarKey = (v: Variable) => v.slug;
@@ -365,7 +374,7 @@ function create() {
     sheet_list_id: props.listId,
     workspace_id: workspaceId.value,
     sheet_id: props.sheet_id,
-    workspace_lane_id: form.lane_id,
+    ...(form.lane_id && form.lane_id !== "main" ? { workspace_lane_id: form.lane_id } : {}),
     variables: {
       ...form.variables,
       [`${selectedVar.value?.slug}`]: props.listId,
@@ -410,4 +419,12 @@ watch(
     if (v?.trim() && touched.description) touched.description = false;
   }
 );
+
+watch(laneOptions, (options) => {
+  // Only set default if user hasn’t picked any lane yet
+  if (!form.lane_id) {
+    const mainLane = options.find(o => o.title === "Main");
+    if (mainLane) form.lane_id = mainLane._id;
+  }
+}, { immediate: true });
 </script>

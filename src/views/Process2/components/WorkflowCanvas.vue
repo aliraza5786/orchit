@@ -72,7 +72,7 @@ watch(statusObjects, (newValue) => {
   console.log('Workflow Status Objects Change:', JSON.stringify(newValue, null, 2))
 }, { deep: true })
 
-const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, project, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
+const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
 const props = withDefaults(defineProps<{
@@ -268,14 +268,33 @@ function handleConfirmEdit(id: string, nodeData: any) {
 async function handleAddNode(e: any) {
   const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
   const id = makeId();
-  const pos = project({ x: e.position_x, y: e.position_y }) // place near bottom-left; project to account for zoom/pan
-    addNodes({
+  
+  // Get existing nodes excluding the add button
+  const currentNodes = getNodes.value.filter(n => n.type !== 'custom-add-icon');
+  
+  // Default start position
+  let targetX = 50;
+  let targetY = 150;
+
+  // If there are existing nodes, place the new one after the last one
+  if (currentNodes.length > 0) {
+      // Find the right-most node
+      const lastNode = currentNodes.reduce((prev, current) => {
+          return current.position.x > prev.position.x ? current : prev;
+      }, currentNodes[0]);
+      
+      const PADDING_X = 300; // Space between nodes
+      targetX = lastNode.position.x + PADDING_X;
+      targetY = lastNode.position.y; // Keep alignment
+  }
+
+  // We use the calculated graph coordinates directly
+  addNodes({
       id,
-      position: pos,
+      position: { x: targetX, y: targetY },
       data: { label: e.name, status: e.status_name },
       style: { border: '2px solid #64748b', borderRadius: '8px', background: e.status_color },
-    })
-
+  })
 }
 
 
@@ -421,13 +440,11 @@ function reverseSelectedEdge() {
 // delete status node
 function deleteStatus(nodeId: string) {
   // Remove the node itself
-  setNodes(nodes => nodes.filter(n => n.id !== nodeId))
+  nodes.value = nodes.value.filter(n => n.id !== nodeId)
 
   // Remove all edges connected to this node
-  setEdges(edges =>
-    edges.filter(
-      e => e.source !== nodeId && e.target !== nodeId
-    )
+  edges.value = edges.value.filter(
+    e => e.source !== nodeId && e.target !== nodeId
   )
    // clear selection if needed
   selectedEdgeId.value = null

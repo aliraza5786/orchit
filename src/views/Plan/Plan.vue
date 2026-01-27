@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto min-h-0 rounded-[6px] overflow-x-auto flex-col flex"
+    class="flex-auto min-h-0 rounded-[6px] overflow-x-auto flex-col flex -ms-1"
   >
     <!-- sprintDetailData?.status === 'active' -->
     <template v-if="showActiveSprint">
@@ -72,22 +72,36 @@
                   "
                 >
                   All Modules
+                  <span
+                  v-if="selectedFilter ===''"
+                  class="ml-2 text-xs font-normal"
+                >
+                  ({{ backlogResp?.cards?.length }})
+                </span>
                 </button>
 
                 <!-- Dynamic Module Tabs -->
                 <button
-                  v-for="option in visibleModules"
-                  :key="option._id"
-                  @click="selectMilestoneTab(option._id)"
-                  class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
-                  :class="
-                    selectedFilter === option._id
-                      ? 'bg-accent text-white border-none'
-                      : 'bg-transparent text-accent border border-accent'
-                  "
+                v-for="option in visibleModules"
+                :key="option._id"
+                @click="selectMilestoneTab(option._id)"
+                class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
+                :class="
+                  selectedFilter === option._id
+                    ? 'bg-accent text-white border-none'
+                    : 'bg-transparent text-accent border border-accent'
+                "
+              >
+                {{ option.variables['module-title'] }}
+
+                <span
+                  v-if="selectedFilter === option._id"
+                  class="ml-2 text-xs font-normal"
                 >
-                  {{ option.variables["module-title"] }}
-                </button>
+                  ({{ backlogResp?.cards?.length }})
+                </span>
+              </button>
+
               </div>
 
               <!-- Huddle: Dropdown -->
@@ -642,7 +656,7 @@
                 class="bg-bg-card w-full p-6 flex flex-col justify-center h-full items-center text-center gap-4"
               >
                 <div
-                  class="w-20 h-20 flex justify-center items-center text-white rounded-full text-3xl"
+                  class="w-16 h-16 flex justify-center items-center text-white rounded-full text-3xl"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -664,10 +678,10 @@
                     />
                   </svg>
                 </div>
-                <h4 class="text-lg font-semibold text-accent">
-                  {{ formattedLabel }} Completed
-                </h4>
-                <p class="text-sm text-muted max-w-md">
+                <h6 class="text-sm text-text-primary font-semibold mb-1 text-center">
+                 {{ formattedLabel }} Completed
+                </h6>
+                <p class="text-sm text-text-primary/90 mb-3 max-w-120 text-center">
                   This {{ sprintType }} has been successfully completed. To
                   continue planning work, create a new {{ sprintType }} by
                   clicking the <strong>plus (+)</strong> button and start
@@ -683,14 +697,14 @@
               >
                 <!-- Icon -->
                 <div
-                  class="w-20 h-20 flex items-center justify-center rounded-full bg-muted/10 text-accent"
+                  class="w-16 h-16 flex items-center justify-center rounded-full bg-muted/10 text-accent"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     class="w-20 h-20"
                     fill="none"
                     viewBox="0 0 24 24"
-                    stroke="#ff3333"
+                    stroke="currentColor"
                     stroke-width="1.5"
                   >
                     <path
@@ -702,12 +716,12 @@
                 </div>
 
                 <!-- Heading -->
-                <h4 class="text-xl font-semibold text-accent">
+                <h6 class="text-sm text-text-primary font-semibold mb-1 text-center">
                   No {{ sprintType }}s available
-                </h4>
+                </h6>
 
                 <!-- Description -->
-                <p class="text-sm text-muted max-w-md">
+                <p class="text-sm text-text-primary/90 mb-3 max-w-120 text-center">
                   You don’t have any {{ sprintType }}s yet. Create a new
                   {{ sprintType }} to start planning and organizing your work.
                   Click the <strong>plus (+)</strong> button to get started.
@@ -818,9 +832,9 @@ const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
 const selectedFilter = ref<string | "">("");
 const sprintTypes = [
-  { label: "Milestone", value: "milestone", dot: "#7d68c8" },
-  { label: "Sprint", value: "sprint", dot: "#7d68c8" },
-  { label: "Huddle", value: "huddle", dot: "#7d68c8" },
+  { label: "Milestone", value: "milestone", dot: "#7D68C8" },
+  { label: "Sprint", value: "sprint", dot: "#7D68C8" },
+  { label: "Huddle", value: "huddle", dot: "#7D68C8" },
 ];
 const formattedLabel = computed(() => {
   if (!sprintType.value) return "";

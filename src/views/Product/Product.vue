@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible"
+    class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible"
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
       <div
@@ -166,10 +166,12 @@
       </div>
     </div>
     <template v-if="view == 'kanban'">
-      <KanbanSkeleton v-show="isPending || isSheetPending" />
+      <KanbanSkeleton v-show="isSheetPending" />
       <div
-        v-show="!isPending && !isSheetPending"
+      ref="kanbanScroll"
+        v-show="!isSheetPending"
         class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
+        @scroll="onScroll"
       >
         <KanbanBoard
           @onPlus="plusHandler"
@@ -178,6 +180,7 @@
           @update:column="(e: any) => handleUpdateColumn(e)"
           @reorder="onReorder"
           @addColumn="handleAddColumn"
+          @scroll="onScroll"
           @select:ticket="selectCardHandler"
           @onBoardUpdate="handleBoardUpdate"
           :variable_id="selected_view_by"
@@ -244,13 +247,15 @@
     </template>
     <template v-if="view == 'table'">
       <TableView
+        ref="tableRef"
         @toggleVisibility="toggleVisibilityHandler"
+        @scroll="onScrollTable"
         @addVar="
           () => {
             isCreateVar = true;
           }
         "
-        :isPending="isPending || isVariablesPending"
+        :isPending=" isVariablesPending"
         :columns="columns"
         :rows="filteredBoard"
         :canCreate="canCreateCard"
@@ -794,7 +799,7 @@ interface Sheet {
 }
 
 const removeCardFromState = (cardId: string) => {
-  Lists.value?.sheets?.forEach((sheet: Sheet) => {
+  Lists.value?.forEach((sheet: Sheet) => {
     sheet.sheet_lists?.forEach((list: SheetList) => {
       list.cards = list.cards.filter((card: Card) => card._id !== cardId);
     });
@@ -868,17 +873,45 @@ watch(viewBy, () => {
   selected_view_by.value = viewBy.value;
 });
 const workspaceStore = useWorkspaceStore();
+const Lists = ref<any[]>([]);
 const {
-  data: Lists,
-  isPending,
+  data: ListsPages,
+  isFetchingNextPage,
+  fetchNextPage,
+  hasNextPage,
   refetch: refetchSheetLists,
 } = useSheetList(
   moduleId,
   selected_sheet_id,
-  computed(() => [...workspaceStore.selectedLaneIds]), 
-  selected_view_by, 
+  computed(() => [...workspaceStore.selectedLaneIds]),
+  selected_view_by,
   listProcessPayload
 );
+watchEffect(() => {
+  Lists.value = ListsPages.value?.pages?.flatMap((p:any) => p.data || []) || [];
+});
+const tableRef = ref<InstanceType<typeof TableView> | null>(null)
+const onScroll = (e: any) => {
+  const el = e.target;
+  if (!hasNextPage.value || isFetchingNextPage.value) return;
+
+  if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
+    fetchNextPage();
+  }
+};
+const onScrollTable = (e: any) => {
+  const el = e.target;
+  console.log("event target scroll", el);
+  
+  if (!hasNextPage.value || isFetchingNextPage.value) return;
+
+  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
+    fetchNextPage();
+  }
+};
+onMounted(() => {
+  tableRef.value?.$el?.addEventListener('scroll', onScrollTable);
+});
 onMounted(() => {
   openPanelFromRoute();
 });

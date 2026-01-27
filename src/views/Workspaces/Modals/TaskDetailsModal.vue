@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :modelValue="modelValue" @update:modelValue="closeModal" class="!pt-0">
+  <BaseModal :modelValue="modelValue" class="!pt-0 hide-parent-close">
 
 
     <div v-if="isLoading || isFetching" class="flex items-center justify-center py-20">
@@ -8,8 +8,15 @@
 
     <template v-else-if="cardDetails">
       <div
-        class="sticky top-0 z-1 backdrop-blur border-b border-orchit-white/5 px-6 pb-4 flex items-center justify-between">
+        class="sticky top-1 z-1 backdrop-blur border-b border-orchit-white/5 px-6 py-2 flex justify-between">
         <h5 id="modal-title" class="text-lg font-semibold tracking-tight">Task Details</h5>
+        <button
+            class="cursor-pointer right-4 text-text-secondary hover:text-text-primary text-xl"
+            @click="closeModal"
+          >
+          <img src="../../../assets/icons/cross.svg"
+          alt="">
+          </button>
 
       </div>
 
@@ -607,6 +614,9 @@ watch(activeTab, (tab) => {
 </script>
 
 <style scoped>
+.hide-parent-close :deep(button.absolute.top-4.right-4) {
+  display: none;
+}
 .modal-enter-from,
 .modal-leave-to {
   opacity: 0;

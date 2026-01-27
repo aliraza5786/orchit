@@ -1,4 +1,4 @@
-<template>
+ <template>
   <transition name="fade">
     <div v-if="isOpen" class="fixed inset-0 z-50 bottom-[60px] sm:bottom-0 flex items-center justify-center bg-black/80 backdrop-blur-sm"
       @keydown.esc="close">
@@ -66,6 +66,7 @@ import { useProcessTransition, useUpdateTransition } from '../../../queries/useP
 import { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
 import { useRouteIds } from '../../../composables/useQueryParams'
 import { usePermissions } from "../../../composables/usePermissions";
+import { toast } from 'vue-sonner'
 const { 
   canCreateCard,
   canEditCard,
@@ -157,10 +158,16 @@ watch(() => transitionData.value, (data) => {
 /* Saving */
 const queryClient = useQueryClient()
 const { mutate: updateTransition, isPending: isSaving } = useUpdateTransition({
-    onSuccess: () => {
+    onSuccess: async () => {
         refetch()
         queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] })
+        toast.success('Workflow saved successfully!')
+         queryClient.invalidateQueries({ queryKey: ['sheets'] }) 
+    },
+     onError: (err: any) => {
+        toast.error(err?.message || 'Failed to save workflow') 
     }
+    
 })
 
 const updateButtonLabel = computed(() => isSaving.value ? 'Saving...' : 'Save Workflow')

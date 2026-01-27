@@ -120,13 +120,13 @@
     </Transition>
 
   </div>
-  <ConfirmDeleteModal v-model="showDelete" title="Delete Lane" itemLabel="lane" :itemName="label"
-    :requireMatchText="label" confirmText="Delete Lane" cancelText="Cancel" size="md" :loading="isDeleting"
+  <ConfirmDeleteModal v-model="showDelete" title="Delete Tab" itemLabel="tab" :itemName="label"
+    :requireMatchText="label" confirmText="Delete Tab" cancelText="Cancel" size="md" :loading="isDeleting"
     @confirm="handleDelete" @cancel="">
     <!-- Optional extra content -->
     <template #extra>
       <label class="flex items-center gap-2 text-sm text-muted">
-        Also delete all archived lanes
+        Also delete all archived Tabs
       </label>
     </template>
   </ConfirmDeleteModal>

@@ -200,7 +200,9 @@
             <div class="flex-1 min-w-0">
               <div class="text-sm text-text-primary">
                 <span class="font-medium text-accent/90 pe-1">{{ activity?.user?.name }} </span>
-                <span  class="text-text-secondary" v-html="activity?.message"></span>
+                <span class="text-text-secondary">
+              {{ stripHtml(activity?.message || "") }}
+            </span>
                 <a href="#" class="text-accent/90 hover:underline">{{ activity?.item }}</a>
                 <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
                   :class="getStatusClass(activity.status)">
@@ -258,6 +260,11 @@ const lastUpdateDate = computed(() => {
   }
   return workspaceCreatedAt
 })
+function stripHtml(html: string) {
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  return div.textContent || div.innerText || "";
+}
 
 /** Types */
 interface LaneProgressRow {
