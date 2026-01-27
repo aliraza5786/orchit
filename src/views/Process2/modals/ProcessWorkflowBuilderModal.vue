@@ -158,10 +158,11 @@ watch(() => transitionData.value, (data) => {
 /* Saving */
 const queryClient = useQueryClient()
 const { mutate: updateTransition, isPending: isSaving } = useUpdateTransition({
-    onSuccess: () => {
+    onSuccess: async () => {
         refetch()
         queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] })
         toast.success('Workflow saved successfully!')
+         queryClient.invalidateQueries({ queryKey: ['sheets'] }) 
     },
      onError: (err: any) => {
         toast.error(err?.message || 'Failed to save workflow') 

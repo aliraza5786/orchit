@@ -1,30 +1,29 @@
 <template>
   <BaseModal v-model="open" size="md">
     <div class="p-6">
-      <h3 class="text-lg font-semibold text-text-primary mb-4">{{ isEditing ? 'Edit Status' : 'Add Status' }}</h3>
+      <h3 class="text-lg font-semibold text-text-primary mb-4">{{ isEditing ? 'Edit Step' : 'Add Step' }}</h3>
 
       <div class="space-y-4">
         <div>
-          <label class="text-sm font-medium text-text-primary mb-1.5 block">Status Name</label>
+          <label class="text-sm font-medium text-text-primary mb-1.5 block">Step Name</label>
           <BaseTextField v-model="statusName" placeholder="e.g., To Do, In Progress, Done" :autofocus="true" />
         </div>
 
         <div>
-          <label class="text-sm font-medium text-text-primary mb-1.5 block">Category</label>
-          <select v-model="category" @change="handleCategoryChange"
-            class="w-full px-3 py-2 text-sm bg-bg-surface border border-border rounded-md text-text-primary focus:outline-none focus:ring-1 focus:ring-accent">
-            <option value="todo">To Do</option>
-            <option value="inprogress">In Progress</option>
-            <option value="done">Done</option>
-          </select>
-          <p class="text-xs text-text-secondary mt-1">Category cannot be changed after creation</p>
+           <BaseSelectField
+            v-model="category"
+            :options="categoryOptions"
+            label="Category"
+            @update="handleCategoryChange"
+            message="Category cannot be changed after creation"
+          />
         </div>
 
         <div>
-          <label class="text-sm font-medium text-text-primary mb-1.5 block">Status Color</label>
+          <label class="text-sm font-medium text-text-primary mb-1.5 block">Step Color</label>
           <div class="flex items-center gap-3">
             <input type="color" v-model="statusColor" @input="updateColorInput"
-              class="h-10 w-20 rounded border border-border cursor-pointer">
+              class="h-10 w-10 rounded border border-border cursor-pointer">
             <BaseTextField v-model="statusColor" placeholder="#3b82f6" class="flex-1" />
           </div>
         </div>
@@ -33,7 +32,7 @@
       <div class="mt-6 flex justify-end gap-2">
         <Button @click="close" variant="secondary">Cancel</Button>
         <Button @click="handleSubmit" :disabled="!statusName.trim() || isSubmitting">
-          {{ isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Status' : 'Add Status') }}
+          {{ isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Step' : 'Add Step') }}
         </Button>
       </div>
     </div>
@@ -44,6 +43,7 @@
 import { ref, computed, watch, inject } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
+import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import Button from '../../../components/ui/Button.vue'
 import type { useLocalWorkflowState } from '../../../composables/useLocalWorkflowState'
 import { toast } from 'vue-sonner'
@@ -79,6 +79,12 @@ const categoryColors: Record<string, string> = {
   inprogress: '#3b82f6',
   done: '#10b981'
 }
+
+const categoryOptions = [
+  { _id: 'todo', title: 'To Do' },
+  { _id: 'inprogress', title: 'In Progress' },
+  { _id: 'done', title: 'Done' }
+]
 
 const isEditing = computed(() => !!props.editingStatus)
 
@@ -144,7 +150,7 @@ function handleSubmit() {
     }
     close()
   } catch (error) {
-    toast.error(isEditing.value ? 'Failed to update status' : 'Failed to add status')
+    toast.error(isEditing.value ? 'Failed to update step' : 'Failed to add step')
   } finally {
     isSubmitting.value = false
   }
