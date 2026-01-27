@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex  gap-3 ">
+  <div class="h-full flex  gap-3" ref="kanbanScroll" @scroll="onScroll">
     <!-- Columns (horizontal) -->
     <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
@@ -96,6 +96,7 @@ const emit = defineEmits<{
     }
 
   }): void
+  (e: 'scroll', payload: { scrollLeft: number; scrollWidth: number; clientWidth: number }): void
 }>()
 
 /** Local mirror so we never mutate props directly (optimistic UI) */
@@ -181,6 +182,18 @@ function cloneBoard(b: Column[]): Board {
     }))
   }
 }
+const onScroll = (e: Event) => {
+  const el = e.target as HTMLElement;
+  console.log("scroll updates", el);
+  
+  emit("scroll", {
+    scrollLeft: el.scrollLeft,
+    scrollWidth: el.scrollWidth,
+    clientWidth: el.clientWidth,
+  });
+};
+
+
 </script>
 
 

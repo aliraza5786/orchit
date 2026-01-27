@@ -6,6 +6,7 @@
         @click="emit('update:modelValue', false)"
         @keydown.esc="emit('update:modelValue', false)"
       >
+
         <div
           class="bg-bg-body w-full max-w-[860px] max-h-[80vh] border border-border/70 overflow-auto mx-4 rounded-xl shadow-lg shadow-accent/30 py-6 relative"
           :class="[{'!max-w-[500px]': size=='md'},modalClass]"
@@ -15,6 +16,7 @@
         >
           <!-- Close Button -->
           <button
+          v-if="!route.path.startsWith('/workspace/plan')"
             class="absolute top-6 cursor-pointer right-4 text-text-secondary hover:text-text-primary text-xl z-10"
             @click.stop="emit('update:modelValue', false)"
           >
@@ -30,12 +32,13 @@
   </template>
   
   <script setup lang="ts">
+  import { useRoute } from 'vue-router';
    defineProps<{
     modelValue: boolean
     size?:string
     modalClass?:any
   }>()
-  
+  const route = useRoute();
   const emit = defineEmits(['update:modelValue'])
   </script>
   
