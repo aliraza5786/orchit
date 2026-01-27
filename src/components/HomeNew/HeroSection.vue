@@ -108,18 +108,18 @@ defineExpose({ setValue })
             placeholder="Ask Orchit to create a plan for…"
           />
 
-          <p v-if="responseMessage" class="text-center mt-2 text-sm font-medium text-red-600">
+          <p v-if="responseMessage" class="text-center mt-2 text-sm font-medium">
             {{ responseMessage }}
           </p>
         </div>
       </div>
-      <div class="relative overflow-hidden  mb-[40px] lg:mb-[72px]">
+      <div class="relative overflow-hidden">
             <p
-                class="text-center text-[14px] font-medium text-primary leading-[20px] font-manrope mb-[25px] lg:mb-[31px]">
+                class="text-center text-[14px] font-medium text-primary leading-[20px] font-manrope">
                 Or try
                 these
                 examples:</p>
-            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+            <!-- <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
                 <div class="examples-container flex gap-[15px] lg:gap-[24px] px-4 mb-[15px] lg:mb-[24px]
                     snap-x snap-mandatory animate-marquee
                    hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
@@ -133,8 +133,8 @@ defineExpose({ setValue })
                         </button>
                     </div>
                 </div>
-            </div>
-            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide">
+            </div> -->
+            <div class="overflow-x-auto snap-x snap-mandatory scrollbar-hide mt-5">
                 <div
                     class="examples-container pb-1 flex gap-[15px] lg:gap-[24px] px-4 animate-marquee2 snap-x snap-mandatory hover:[animation-play-state:paused] active:[animation-play-state:paused] touch-pan-x">
                     <div v-for="n in 2" :key="n" class="flex gap-[15px] lg:gap-[24px] flex-shrink-0">
@@ -149,7 +149,7 @@ defineExpose({ setValue })
                 </div>
             </div>
         </div>
-    <div class="absolute bottom-8 -mt-6 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce z-10">
+    <div class="absolute bottom-8 -mt-12 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce z-10">
       <svg class="w-6 h-6 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
       </svg>

@@ -1,9 +1,9 @@
 <template>
   <div
-    class="flex-auto min-h-0 rounded-[6px] overflow-x-auto flex-col flex -ms-1"
+    class="flex-auto min-h-0 rounded-[6px] overflow-x-auto flex-col flex backdrop-blur flex-grow h-full"
   >
     <!-- sprintDetailData?.status === 'active' -->
-    <template v-if="showActiveSprint">
+    <template v-if="showActiveSprint || isStartingSprintLoading">
       <ActiveSprint
         :sptint_id="selectedSprintId"
         :searchQuery="searchQuery"
@@ -11,10 +11,11 @@
         @go-back="showActiveSprint = false"
       />
     </template>
-    <div v-if="!showActiveSprint" class="flex flex-col flex-1 min-h-0">
-      <template v-if="isStartingSprint">
+     <!-- <template v-else-if="isStartingSprintLoading">
         <KanbanSkeleton />
-      </template>
+      </template> -->
+    <div v-else class="flex flex-col flex-1 min-h-0">
+     
       <div class="h-screen w-full flex flex-col -mt-3.5">
   <div class="overflow-x-auto w-full flex-1">
     <div class="min-w-[1200px] h-full flex flex-col">
@@ -27,7 +28,7 @@
           class="flex gap-2 min-h-0 overflow-x-auto group h-full"
         >
           <section
-            class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full"
+            class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border"
             :style="{ width: leftWidth + 'px' }"
           >
             <div class="flex items-center justify-between mt-2">
@@ -174,7 +175,7 @@
               <div
                 role="status"
                 aria-label="Loading"
-                class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"
+                class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
               ></div>
             </div>
             <div class="flex-1 min-h-0 overflow-y-auto" v-else>
@@ -221,7 +222,7 @@
 
 
           <section
-  class="rounded-md relative pt-2 flex flex-col flex-1 bg-bg-card min-h-0"
+  class="rounded-md relative pt-2 flex flex-col flex-1 bg-bg-card min-h-0 border border-border"
 >
             <div
               class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
@@ -512,7 +513,7 @@
                 </div>
                 <div
                   v-if="sprintDetailData?.status === 'active'"
-                  class="relative inline-flex ms-2"
+                  class="relative inline-flex"
                   @mouseenter="showTooltip = true"
                   @mouseleave="showTooltip = false"
                   @click="toggleTooltip"
@@ -629,10 +630,11 @@
               v-if="isLoadingSprint || isSprintsFetching"
               class="w-full h-full min-h-[250px] flex justify-center items-center"
             >
-              <div class="relative w-12 h-12">
-                <div class="absolute inset-0 rounded-full border-4 border-accent border-t-transparent animate-spin"></div>
-                <div class="absolute inset-2 rounded-full border-4 border-accent/50 border-t-transparent animate-spin animation-delay-150"></div>
-              </div>
+             <div
+                role="status"
+                aria-label="Loading"
+                class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
+              ></div>
             </div>
 
             <div class="flex-1 min-h-0 overflow-y-auto" v-else>
@@ -787,7 +789,6 @@
 <script setup lang="ts">
 import BacklogTable from "./components/BacklogTable.vue";
 import SprintCard from "./components/SprintCard.vue";
-// import TicketModal from './modals/TicketModal.vue'
 import SprintModal from "./modals/SprintModal.vue";
 import { computed, ref, watch, onMounted } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
@@ -816,7 +817,6 @@ import CreateBacklogTicketWithModuleSelection from "./modals/CreateBacklogTicket
 import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
-import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 const { isDark } = useTheme();
 const showTaskModal = ref(false);
@@ -831,6 +831,7 @@ const open = ref(false);
 const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
 const selectedFilter = ref<string | "">("");
+const isStartingSprintLoading = ref(false);
 const sprintTypes = [
   { label: "Milestone", value: "milestone", dot: "#7D68C8" },
   { label: "Sprint", value: "sprint", dot: "#7D68C8" },
@@ -944,7 +945,7 @@ const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint({
   },
 });
 const startSprintHandler = async (e: any) => {
-  isUpdatingSprint2.value = true;
+  isStartingSprintLoading.value = true;
   try {
     await updateSprint2({
       id: selectedSprintId.value,
@@ -957,8 +958,7 @@ const startSprintHandler = async (e: any) => {
       },
     });
   } finally {
-    isUpdatingSprint2.value = false;
-    startsprintModalOpen.value = false;
+    isStartingSprintLoading.value = false;
   }
 };
 

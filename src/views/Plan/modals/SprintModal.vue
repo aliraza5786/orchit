@@ -4,7 +4,7 @@
     <div
       class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-input pb-4"
     >
-      <h2 class="text-xl font-semibold">Add New {{ lable }}</h2>
+      <h2 class="text-xl font-semibold">Add New {{ formattedLabel }}</h2>
     </div>
     <div class="px-6 gap-4 bg-bg-input pt-5 pb-8">
       <!-- Name (required) -->
@@ -153,16 +153,30 @@ const sprintTypeOptions = computed(() => sprintTypes.map((t) => ({ ...t })));
 // Watch label changes and auto-select
 watch(
   () => props.lable,
-  (val) => {
-    const match = sprintTypeOptions.value.find((o) => o.title === val);
+  (newLabel) => {
+    if (!newLabel) return;
+
+    // Reset form completely
+    form.description = "";
+    form.sprintType = "";
+    resetTouched();
+
+    // Set sprint type
+    const match = sprintTypeOptions.value.find(
+      (o) => o.title === newLabel
+    );
     form.sprintType = match?._id ?? "";
+
+    // Auto-generate name
+    autoFillFormName();
   },
   { immediate: true }
 );
+
 // pre fill title
 function autoFillFormName() {
   const sprints = props.sprints || [];
-  const baseTitle = props.lable || "Sprint";
+  const baseTitle = props.lable;
   const capitalizedTitle = baseTitle.charAt(0).toUpperCase() + baseTitle.slice(1);
   form.name = `${capitalizedTitle} ${sprints.length + 1}`;
 }

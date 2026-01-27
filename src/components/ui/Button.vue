@@ -3,8 +3,9 @@
       :type="type"
       :disabled="disabled || loading"
       :class="[
-        'relative cursor-pointer disabled:cursor-not-allowed  inline-flex items-center justify-center font-medium py-1.5  text-sm rounded-xl focus:outline-none transition',
+        'relative cursor-pointer disabled:cursor-not-allowed  inline-flex items-center justify-center font-medium py-1.5  text-sm  focus:outline-none transition',
         sizeClass,
+        radiusClass,
         variantClass,
         block ? 'w-full' : '',
         disabled || loading ? 'cursor-not-allowed !opacity-90' : ''
@@ -33,7 +34,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue' // ✅ this is required
-
+import { useRoute } from 'vue-router'
 const props = defineProps<{
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'gray'
   size?: 'sm' | 'md' | 'lg' | 'base'
@@ -44,7 +45,11 @@ const props = defineProps<{
   appearance?: 'filled' | 'outlined'  // ✅ NEW
 }>()
 
+const route = useRoute()
 
+const radiusClass = computed(() => {
+  return route.path === '/' ? 'rounded-xl' : 'rounded-md'
+})
 const variantClass = computed(() => {
   const appearance = props.appearance || 'filled'
   const variant = props.variant || 'primary'
