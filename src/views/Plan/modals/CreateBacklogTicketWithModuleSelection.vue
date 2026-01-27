@@ -75,7 +75,7 @@
               <div
                 class="w-10 h-10 rounded-lg bg-bg-input flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                 <i
-                  :class="`${sheet?.variables['sheet-icon']?.prefix} ${sheet?.variables['sheet-icon']?.iconName} text-lg`"></i>
+                  :class="`fa ${sheet?.variables['sheet-icon']?.prefix} ${sheet?.variables['sheet-icon']?.iconName} text-lg`"></i>
               </div>
               <div>
                 <p class="font-medium">{{ sheet?.variables['sheet-title'] || 'Untitled Sheet' }}</p>

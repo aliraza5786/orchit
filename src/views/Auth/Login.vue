@@ -2,8 +2,11 @@
   <AuthLayout>
     <template #form>
       <div class="max-w-[500px] md:mx-auto w-full text-text-primary bg-bg-body">
+        <router-link to="/">
+        <img :src="isDark? darkLogo : lightLogo" class="w-[150px] d-block mx-auto" alt="image">
+        </router-link>
         <h2
-          class="text-[32px] font-medium mb-12 text-center text-text-primary"
+          class="text-[24px] md:text-[32px] font-medium mb-8 sm:mb-12 text-center text-text-primary"
           v-once
         >
           Sign in to Orchit AI
@@ -20,8 +23,8 @@
             @blur="touched.email = true"
             @update:modelValue="onFieldInput"
           />
-
-          <BaseTextField
+             <div>
+               <BaseTextField
             v-model="password"
             label="Password"
             placeholder="Enter your password"
@@ -31,7 +34,17 @@
             :message="passwordError"
             @blur="touched.password = true"
             @update:modelValue="onFieldInput"
-          />
+           />
+            <div class="text-end mt-1">
+            <router-link
+              to="/forgot-password"
+              class="text-sm text-accent hover:underline"
+            >
+              Forgot password?
+            </router-link>
+          </div>
+          </div>
+         
 
           <Button
             :disabled="submitDisabled"
@@ -46,6 +59,7 @@
             <span class="mx-3 text-[12px] text-primary">OR</span>
             <div class="flex-grow border-t border-border"></div>
           </div>
+        
           <Button
             size="lg"
             :block="true"
@@ -79,35 +93,10 @@
             {{ errorMessage }}
           </p>
 
-          <div class="text-center mt-4">
-            <router-link
-              to="/forgot-password"
-              class="text-sm text-accent hover:underline"
-            >
-              Forgot password?
-            </router-link>
-          </div>
+          
         </form>
 
-        <p
-          class="text-sm font-medium text-text-secondary text-center mt-6"
-          v-once
-        >
-          By signing in, you agree to the
-          <router-link
-           to="/privacy-policy"
-           class="text-text-primary font-bold hover:underline"
-          >
-           Privacy Policy
-          </router-link>
-                   and
-          <router-link
-          to="/terms-of-services"
-          class="text-text-primary font-bold hover:underline"
-          >
-          Terms of Service
-         </router-link>
-        </p>
+       
 
         <p
           class="text-sm font-medium text-text-secondary text-center mt-8"
@@ -141,8 +130,11 @@ const workspaceStore = useWorkspaceStore();
 defineOptions({ name: "LoginPage" });
 // import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
 // import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
-// import { useTheme } from "../../composables/useTheme";
-// const {isDark } = useTheme();
+import darkLogo  from '@assets/global/dark-logo.png';
+import lightLogo  from '@assets/global/light-logo.png';
+
+import { useTheme } from "../../composables/useTheme";
+const {isDark } = useTheme();
 declare const AppleID: any;
 defineProps<{
   isDark: boolean
@@ -325,3 +317,5 @@ async function handleLogin() {
 }
 
 </script>
+
+

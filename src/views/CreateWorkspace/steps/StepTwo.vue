@@ -1,7 +1,10 @@
+
+
+
 <template>
   <div class="w-full">
     <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0 ">
-      {{ ai ? ' Choose Your Lanes' : 'Create Your Lanes' }}
+      {{ ai ? ' Choose Your Tabes' : 'Create Your Tabes' }}
     </h2>
     <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0">
       {{ ai ? ' Select the components you want to include in your project' : ' Create the components you want to include in your project'}}
@@ -46,7 +49,7 @@
           <img class="w-3" src="../../../assets/icons/whitePlus.svg" alt="" />
         </div>
         <div class="flex flex-col justify-center">
-          <h3 class="font-medium capitalize text-sm text-text-primary">Add Custom Lane</h3>
+          <h3 class="font-medium capitalize text-sm text-text-primary">Add Custom Tabs</h3>
           <p class="text-[11px] text-text-secondary mt-1 line-clamp-1">Create your own component</p>
         </div>
       </div>
@@ -54,14 +57,14 @@
 
     <!-- Lanes Form -->
     <div v-if="showCustomForm" class="bg-bg-surface border border-border w-full px-4 pt-4 rounded-lg">
-      <h1 class="text-lg text-text-primary mb-3 font-semibold">{{ editMode ? 'Update Lane' : 'Add Custom Lane' }}</h1>
+      <h1 class="text-lg text-text-primary mb-3 font-semibold">{{ editMode ? 'Update Tab' : 'Add Custom Tab' }}</h1>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <BaseTextField label="Lane Name" placeholder="Lane Name" size="lg" v-model="newLane['lane-title']"
+        <BaseTextField label="Tab Name" placeholder="Tab Name" size="lg" v-model="newLane['lane-title']"
           :error="!!titleError" :message="titleError" @blur="touched.title = true" />
         <!-- Color Picker -->
         <div class="">
-          <label class="block text-base font-medium text-text-primary mb-2">Set Lane Color</label>
+          <label class="block text-base font-medium text-text-primary mb-2">Set Tab Color</label>
           <p v-if="colorError" class="text-red-500 text-sm -mt-2 mb-2">({{ colorError }})</p>
           <div class="flex items-center gap-3">
             <label class="relative block w-10 h-10 rounded-full border border-border cursor-pointer">
@@ -76,7 +79,7 @@
           </div>
         </div>
         <BaseTextAreaField class="col-span-full" v-model="newLane['lane-description']" label="Description"
-          placeholder="This lane will track support tickets." :error="!!descriptionError" :message="descriptionError"
+          placeholder="This tab will track support tickets." :error="!!descriptionError" :message="descriptionError"
           @blur="touched.description = true" />
 
       </div>
@@ -86,7 +89,7 @@
 
       <div class="flex gap-2 mt-4 justify-end border-t border-border bg-bg-surface py-4">
         <Button size="md" variant="primary" @click="editMode ? handleUpdateLane() : handleAddLane()">{{ editMode ?
-          'Update Lane' : 'Add Lane' }}</Button>
+          'Update Tab' : 'Add Tab' }}</Button>
         <Button size="md" variant="secondary" @click="handleCancelLane">Cancel</Button>
       </div>
     </div>

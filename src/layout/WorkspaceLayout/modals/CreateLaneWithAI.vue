@@ -28,10 +28,12 @@
                         </transition>
 
                         <transition v-else name="rotate-fade" appear>
-                            <div @click="() => { if (!isPending) { handleGenerate(); } }"
-                                class="absolute bottom-5 right-4 w-8 h-8 cursor-pointer p-1 bg-accent rounded-md flex items-center justify-center shadow"
-                                :class="isCreatingLane ? 'animate-pulse-ring' : ' cursor-pointer'">
-                                <i class="text-white fa-solid fa-arrow-right"></i>
+                            <div @click="handleGenerate"
+                                class="absolute bottom-5 right-4 w-8 h-8 p-1 bg-accent rounded-md flex items-center justify-center shadow"
+                                :class="isCreatingLane ? 'animate-pulse-ring cursor-not-allowed' : ' cursor-pointer'">
+                                <i class="text-white fa-solid fa-arrow-right" 
+                                :disabled="isCreatingLane"
+                                ></i>
                             </div>
                         </transition>
                     </div>
@@ -117,6 +119,7 @@ const { mutate: createLane, isPending: isCreatingLane } = useCreateWorkspaceLane
     }
 })
 const handleGenerate = () => {
+    if( isCreatingLane.value) return
     const payload = {
         workspace_id: workspaceId.value,
         lane_intent: description.value

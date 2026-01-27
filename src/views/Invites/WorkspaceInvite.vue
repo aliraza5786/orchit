@@ -1,4 +1,4 @@
-<template>
+ <template>
   <div class="min-h-[100dvh] flex items-center justify-center  bg-bg-body px-4">
     <div class="w-full max-w-xl">
       <!-- Card -->
@@ -113,13 +113,11 @@
             <Button :disabled="data.is_expire || acting" @click="accept">
               {{ acting && actionType === 'accepted' ? 'Joining…' : 'Accept invitation' }}
             </Button>
-
-            <button class="px-4 py-2 rounded-md text-sm border dark:border-border 353D50]  hover:bg-gray-50 dark:hover:bg-[#1a1a1f]
-                       disabled:opacity-60 disabled:cursor-not-allowed" :disabled="acting || data.is_expire"
+            <Button type="button" variant="secondary" :disabled="acting || data.is_expire"
               @click="decline">
               <span v-if="acting && actionType === 'decline'">Declining…</span>
               <span v-else>Decline</span>
-            </button>
+            </Button>
           </div>
 
           <!-- Already accepted / state note -->
