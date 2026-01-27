@@ -6,7 +6,7 @@ import 'vue-sonner/style.css'
   <div class="min-h-[100dvh] relative  text-text-primary  transition-colors bg-bg-body">
     <router-view />
   </div>
-  <Toaster position="top-right" />
+  <Toaster position="bottom-right" />
 </template>
 <style>
   body{
