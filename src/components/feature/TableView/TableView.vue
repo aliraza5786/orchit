@@ -1,6 +1,6 @@
 <template>
-  <div class="px-4" @scroll="onScroll">
-    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ps-6 mb-5 ">
+  <div class="" @scroll="onScroll">
+    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ps-4 mb-5 ">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
              bg-bg-body/20 text-sm

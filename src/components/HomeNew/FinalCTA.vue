@@ -92,7 +92,7 @@ const scrollTo = async (id: string) => {
               <li><a href="#product" @click.prevent="scrollTo('product')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Features</a></li>
               <li><a href="#templates" @click.prevent="scrollTo('templates')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a></li>
               <li><a href="#marketplace" @click.prevent="scrollTo('templates')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a></li>
-              <li><a href="#pricing" @click.prevent="scrollTo('pricing')" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a></li>
+              <li><a href="/pricing" class="text-sm text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a></li>
             </ul>
           </div>
 

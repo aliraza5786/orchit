@@ -1,0 +1,1 @@
+import{N as t,m as o,o as n,g as s}from"./index-CgEr45lj.js";const r={},c={class:"p-8 text-center text-red-500"};function a(d,e){return n(),o("div",c,e[0]||(e[0]=[s("h2",null,"404 | Page Not Found",-1)]))}const l=t(r,[["render",a]]);export{l as default};

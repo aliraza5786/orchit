@@ -1,4 +1,4 @@
- <template>
+<template>
   <div class="min-h-[100dvh] flex items-center justify-center  bg-bg-body px-4">
     <div class="w-full max-w-xl">
       <!-- Card -->
@@ -52,8 +52,8 @@
             </div>
           </div>
           <div v-else>
-             <div class="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-yellow-800">
-               <div class="font-medium mb-1">Invite Accepted</div>
+             <div class="rounded-lg bg-green-600/10 text-green-600   p-4 ">
+               <div class="font-bold mb-1">Invite Accepted</div>
                <p class="text-sm leading-relaxed" v-if="isLoggedIn">
                  This invite has been accepted for <strong>{{ inviteEmail }}</strong>.<br>
                  You are currently logged in as <strong>{{ currentUserEmail }}</strong>.
@@ -71,8 +71,8 @@
         <!-- Declined -->
         <div v-else-if="declined" class="p-6">
           <div
-            class="rounded-lg border border-gray-200 bg-gray-50 p-4 text-text-secondary -800 dark:border-border 1F2430] dark:bg-[#171922] text-secondary-200">
-            <div class="font-medium mb-1">Invite declined</div>
+            class="rounded-lg border border-border bg-transparent p-4 text-text-secondary -800 dark:border-border 1F2430] text-secondary-200">
+            <div class="font-bold text-text-primary mb-1">Invite declined</div>
             <p class="text-sm leading-relaxed">We’ve let the workspace know you won’t be joining.</p>
           </div>
           <div class="mt-4 flex gap-2">
