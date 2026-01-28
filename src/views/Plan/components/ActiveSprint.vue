@@ -211,24 +211,200 @@
             />
           </template>
 
-          <template v-if="view === 'mindmap'">
-            <div class="relative w-full h-full flex overflow-hidden">
-              <!-- Mind Map Canvas -->
-              <div
-                ref="mindMapRef"
-                class="flex-1 h-full overflow-hidden rounded-md relative"
-                style="height: 600px; width: 100%;"
-              ></div>
+         <template v-if="view === 'mindmap'">
+      <div class="relative w-full h-full flex overflow-hidden">
+        <!-- Mind Map Canvas -->
+       <div
+        ref="mindMapRef"
+        class="flex-1 h-full overflow-hidden rounded-md relative"
+        style="height: 600px; width: 100%;"
+      ></div>
 
-              <!-- Formatting Sidebar -->
-              <div
-                v-if="showFormatSidebar && canAssignCard && canEditCard && canCreateCard"
-                class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-x-hidden overflow-y-auto flex flex-col"
-              >
-                <!-- header + content as before -->
+        <!-- Formatting Sidebar -->
+        <div
+          v-if="showFormatSidebar && canAssignCard && canEditCard && canCreateCard"
+          class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-x-hidden overflow-y-auto flex flex-col"
+        >
+          <!-- Header -->
+          <div class="flex items-center justify-between pb-3 mb-4 border-b">
+            <h3 class="text-sm font-semibold text-secondary">Format Node</h3>
+            <button
+              @click="showFormatSidebar = false"
+              class="text-gray-400 hover:text-gray-700"
+            >
+              <i class="fa-solid fa-times"></i>
+            </button>
+          </div>
+
+          <!-- Content -->
+          <div class="format-content space-y-6">
+            <!-- ================= COLORS ================= -->
+            <div>
+              <h4 class="text-xs font-semibold text-secondary uppercase mb-3">
+                Colors
+              </h4>
+
+              <!-- ================= BACKGROUND COLOR ================= -->
+              <div class="format-group mb-3">
+                <label class="block text-xs text-secondary mb-1"
+                  >Background</label
+                >
+                <div class="flex items-center gap-2">
+                  <!-- Color Preview -->
+                  <div
+                    class="h-10 w-10 rounded-md border cursor-pointer relative"
+                    :style="{ backgroundColor: activeFormatStyle.background }"
+                  >
+                    <input
+                      type="color"
+                      :value="activeFormatStyle.background"
+                      class="absolute inset-0 opacity-0 cursor-pointer"
+                      @input="onStyleChange('bg_color', $event)"
+                      style="pointer-events: all"
+                    />
+                  </div>
+
+                  <!-- Hex Code Input -->
+                  <BaseTextField
+                    :modelValue="activeFormatStyle.background"
+                    placeholder="#3b82f6"
+                    class="flex-1"
+                    readonly
+                  />
+                </div>
+              </div>
+
+              <!-- ================= TEXT COLOR ================= -->
+              <div class="format-group mb-3">
+                <label class="block text-xs text-secondary mb-1">Text</label>
+                <div class="flex items-center gap-2">
+                  <!-- Color Preview -->
+                  <div
+                    class="h-10 w-10 rounded-md border cursor-pointer relative"
+                    :style="{ backgroundColor: activeFormatStyle.color }"
+                  >
+                    <input
+                      type="color"
+                      :value="activeFormatStyle.color"
+                      class="absolute inset-0 opacity-0 cursor-pointer"
+                      @input="onStyleChange('color', $event)"
+                      style="pointer-events: all"
+                    />
+                  </div>
+                  <!-- Hex Code Input -->
+                  <BaseTextField
+                    :modelValue="activeFormatStyle.color"
+                    placeholder="#3b82f6"
+                    class="flex-1"
+                    readonly
+                  />
+                </div>
               </div>
             </div>
-          </template>
+
+            <!-- ================= FONT WEIGHT ================= -->
+            <div>
+              <div class="grid grid-cols-1 gap-3">
+                <div>
+                  <label class="block text-xs text-secondary mb-1"
+                    >Weight</label
+                  >
+                  <select
+                    class="w-full h-8 border rounded px-2 text-sm"
+                    :value="activeFormatStyle.fontWeight"
+                    @change="onStyleChange('font_weight', $event)"
+                  >
+                    <option value="lighter">Light</option>
+                    <option value="normal">Normal</option>
+                    <option value="bold">Bold</option>
+                    <option value="bolder">Extra Bold</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="mt-6 pt-4">
+            <button
+              class="w-full cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium hover:shadow-md disabled:opacity-60"
+              :disabled="isSavingNodeStyle"
+              @click="saveNodeStyle"
+            >
+              <span
+                v-if="isSavingNodeStyle"
+                class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+              ></span>
+              <span>{{ isSavingNodeStyle ? "Updating..." : "Update" }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- hyperlink pop up -->
+      <div
+        v-if="showHyperlinkModal && canAssignCard && canEditCard && canCreateCard"
+        class="fixed inset-0 bg-black/30 flex items-center justify-center"
+      >
+        <div class="bg-white p-6 rounded-xl w-80">
+          <h3 class="text-lg font-semibold mb-4">Insert Web Link</h3>
+          <input
+            v-model="hyperlink"
+            type="text"
+            placeholder="Enter or paste a URL"
+            class="w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div class="flex justify-end gap-2 mt-4">
+            <button
+              @click="cancel"
+              class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              :disabled="!hyperlink"
+              @click="confirm"
+              :class="[
+                'px-4 py-2 rounded-md text-white',
+                hyperlink
+                  ? 'bg-blue-500 hover:bg-blue-600'
+                  : 'bg-blue-300 cursor-not-allowed',
+              ]"
+            >
+              Insert
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- EXISTING POPUP (UNCHANGED) -->
+      <div
+        v-if="activeAddList"
+        class="absolute top-40 left-70 bg-bg-body rounded-lg p-4 shadow-lg z-100 min-w-[328px] border"
+        @click.stop
+      >
+        <BaseTextField
+          :autofocus="true"
+          v-model="newColumn"
+          placeholder="Add New list"
+          @keyup.enter="emitAddColumn"
+        />
+        <p class="text-xs mt-1.5">You can add details while editing</p>
+
+        <div class="flex items-center mt-3 gap-3">
+          <Button
+            @click="emitAddColumn"
+            varaint="primary"
+            class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+          >
+            {{ addingList ? "Adding..." : "Add list" }}
+          </Button>
+          <i
+            class="fa-solid fa-close cursor-pointer"
+            @click="setActiveAddList"
+          ></i>
+        </div>
+      </div>
+    </template>
 
           <template v-if="view === 'calendar'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
             <CalendarView
