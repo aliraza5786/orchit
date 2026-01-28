@@ -251,30 +251,27 @@
       </div>
     </template>
     <template v-if="view == 'table'">
-      <TableView
-        ref="tableRef"
-        @toggleVisibility="toggleVisibilityHandler"
-        @scroll="onScrollTable"
-        @addVar="
-          () => {
-            isCreateVar = true;
-          }
-        "
-        :isPending=" isVariablesPending"
-        :columns="columns"
-        :rows="filteredBoard"
-        :canCreate="canCreateCard"
-        :canCreateVariable="canCreateVariable"
-        :canDelete="canDeleteCard"
-        @delete="(t) => {
-           ticketToDelete = t;
-           selectedDeleteId = t._id;
-           showTicketDelete = true;
-        }"
-        @create="handleCreateTicket"
-        @update:rows="handleTableRowsUpdate"
-      />
-    </template>
+  <TableView
+    ref="tableRef"
+    @toggleVisibility="toggleVisibilityHandler"
+    @scroll="onScrollTable"
+    :key="`table-${selected_sheet_id}-${selected_view_by}`"
+    @addVar="() => { isCreateVar = true; }"
+    :isPending="isVariablesPending"
+    :columns="columns"
+    :rows="tableRows" 
+    :canCreate="canCreateCard"
+    :canCreateVariable="canCreateVariable"
+    :canDelete="canDeleteCard"
+    @delete="(t) => {
+       ticketToDelete = t;
+       selectedDeleteId = t._id;
+       showTicketDelete = true;
+    }"
+    @create="handleCreateTicket"
+    @update:rows="handleTableRowsUpdate"
+  />
+</template>
     <!-- MindMap View -->
     <template v-if="view === 'mindmap'">
       <div class="relative w-full h-full flex overflow-hidden">
@@ -471,16 +468,16 @@
       </div>
     </template>
     <template v-if="view === 'calendar'">
-      <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
+      <CalendarView :data="tableRows" @select:ticket="selectCardHandler" />
     </template>
     <template v-if="view === 'gantt'">
       <GanttChartView
-        :data="filteredBoard"
+        :data="tableRows"
         @select:ticket="selectCardHandler"
       />
     </template>
     <template v-if="view === 'timeline'">
-      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+      <TimelineView :data="tableRows" @select:ticket="selectCardHandler" />
     </template>
   </div>
   <ConfirmDeleteModal
@@ -899,6 +896,8 @@ const {
 watchEffect(() => {
   const allData = ListsPages.value?.pages || [];
   const flatData = allData.flatMap((p: any) => p.data || []);
+  
+  // Deduplicate columns by title
   const uniqueColumnsMap = new Map();
   
   flatData.forEach((column: any) => {
@@ -910,7 +909,6 @@ watchEffect(() => {
         cards: [...(column.cards || [])]
       });
     } else {
-      // Existing column - merge cards
       const existing = uniqueColumnsMap.get(key);
       const existingCardIds = new Set(
         (existing.cards || []).map((c: any) => c._id)
@@ -923,18 +921,24 @@ watchEffect(() => {
       if (newCards.length > 0) {
         existing.cards = [...existing.cards, ...newCards];
       }
+      
+      // Keep latest metadata
+      if (column.transitions) existing.transitions = column.transitions;
+      if (column.flow_metadata) existing.flow_metadata = column.flow_metadata;
+      if (column.style) existing.style = column.style;
     }
   });
   
   Lists.value = Array.from(uniqueColumnsMap.values());
   
-  // Sort by sort_order or flow_metadata.position
+  // Sort columns by sort_order
   Lists.value.sort((a, b) => {
     const orderA = a.flow_metadata?.sort_order ?? a.sort_order ?? 999;
     const orderB = b.flow_metadata?.sort_order ?? b.sort_order ?? 999;
     return orderA - orderB;
   });
 });
+
 const isInitialLoading = computed(() =>
   isLoading.value && !Lists.value.length
 );
@@ -1188,8 +1192,36 @@ const filteredBoard = computed(() => {
     return { ...col, cards: filteredCards };
   });
 });
+const tableRows = computed(() => {
+  // Flatten all cards from all columns
+  let allCards = Lists.value.flatMap((col: any) => {
+    return (col.cards || []).map((card: any) => ({
+      ...card,
+      columnId: col.title,
+      columnTitle: col.title,
+      column_sort_order: col.flow_metadata?.sort_order ?? col.sort_order ?? 999,
+      'card-status': card['card-status'] || col.title,
+    }));
+  });
 
+  // Apply search filter if exists
+  if (searchQuery.value) {
+    const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
+    allCards = results;
+  }
 
+  // Sort by column order, then by card sort_order within each column
+  allCards.sort((a, b) => {
+    // First sort by column order
+    if (a.column_sort_order !== b.column_sort_order) {
+      return a.column_sort_order - b.column_sort_order;
+    }
+    // Then by card sort_order within the column
+    return (a.sort_order || 0) - (b.sort_order || 0);
+  });
+
+  return allCards;
+});
 const { data: lanes } = useLanes(workspaceId);
 
 // import ticket from '../../assets/icons/ticket.svg'
