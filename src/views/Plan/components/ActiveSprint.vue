@@ -734,12 +734,12 @@ watch(
   transformedData,
   (newData) => {
     if (newData.length > 0) {
-      selectedSheetTitle.value = newData[0].title; // store the first sheet title
+      selectedSheetTitle.value = newData[0].title;
     } else {
       selectedSheetTitle.value = "Backlog";
     }
   },
-  { immediate: true } // run immediately on initialization
+  { immediate: true }
 );
 watch(sheets, (newSheetId) => {
   if (newSheetId?.length > 0) {
