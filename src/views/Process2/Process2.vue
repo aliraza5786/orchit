@@ -151,6 +151,7 @@ import WorkflowBuilderModal from '../Process/modals/WorkflowBuilderModal.vue';
 import SearchBar from '../../components/ui/SearchBar.vue';
 import { debounce } from 'lodash';
 import { usePermissions } from "../../composables/usePermissions";
+import { toast } from 'vue-sonner';
 const { workspaceId } = useRouteIds();
 const { data: processGroups, isPending } = useProcessGroupsWithTransitions(workspaceId.value);
 
@@ -216,7 +217,11 @@ const { mutate: addList, isPending: addingList } = useCreateProcessGroup({
     newColumn.value = '';
     activeAddList.value = false;
     queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
+    toast.success('Process group created successfully!')
   },
+  onError:(err:any)=>{
+    toast.error(err.message || 'Something went wrong!')
+  }
 });
 
 function emitAddColumn() {
@@ -239,7 +244,12 @@ const { mutate: deleteList, isPending: isDeletingList } = useDeleteProcessGroup(
   onSuccess: () => {
     showDelete.value = false;
     queryClient.invalidateQueries({ queryKey: ['process-groups-with-transitions'] });
+    toast.success('Group deleted successfully!')
   },
+  onError:(err:any) =>{
+    toast.error(err.message || 'Something went wrong!') 
+  }
+
 });
 
 const handleDeleteColumn = (col: any) => {

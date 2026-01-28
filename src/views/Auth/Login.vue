@@ -1,9 +1,9 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[500px] md:mx-auto w-full text-text-primary bg-bg-body">
+      <div class="max-w-[500px] py-5  mx-auto w-full text-text-primary bg-bg-body  min-h-full flex flex-col justify-center">
         <router-link to="/">
-        <img :src="isDark? darkLogo : lightLogo" class="w-[150px] d-block mx-auto" alt="image">
+        <img :src="isDark? darkLogo : lightLogo" class="w-[130px] d-block mx-auto" alt="image">
         </router-link>
         <h2
           class="text-[24px] md:text-[32px] font-medium mb-8 sm:mb-12 text-center text-text-primary"
@@ -24,7 +24,7 @@
             @update:modelValue="onFieldInput"
           />
              <div>
-               <BaseTextField
+            <BaseTextField
             v-model="password"
             label="Password"
             placeholder="Enter your password"
@@ -74,7 +74,7 @@
             Continue with google
           </Button>
 
-          <!-- <Button
+          <Button
             size="lg"
             :block="true"
             appearance="outlined"
@@ -87,7 +87,7 @@
                 <img :src="isDark ? darkApple : lightApple" alt="Apple icon" class="w-[24px] mr-4" />
           </template>
             Continue with apple
-          </Button> -->
+          </Button>
 
           <p v-if="errorMessage" class="text-red-500 text-sm text-center mt-2">
             {{ errorMessage }}
@@ -128,8 +128,8 @@ import { useAuthStore } from "../../stores/auth";
 import { useWorkspaceStore } from "../../stores/workspace";
 const workspaceStore = useWorkspaceStore();
 defineOptions({ name: "LoginPage" });
-// import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
-// import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
+import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
+import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
 import darkLogo  from '@assets/global/dark-logo.png';
 import lightLogo  from '@assets/global/light-logo.png';
 
@@ -208,55 +208,40 @@ async function loginWithGoogle() {
   }
 }
 
-// async function loginWithApple() {
-//   try {
-//     AppleID.auth.init({
-//       clientId: '100465282340299456069',
-//       scope: 'name email',
-//       redirectURI: window.location.origin + '/login',
-//       usePopup: true
-//     });
+async function loginWithApple() {
+  try {
+    AppleID.auth.init({
+      clientId: 'com.orchit.ai',
+      scope: 'name email',
+      redirectURI: window.location.origin + '/login',
+      usePopup: true
+    });
     
-//     const response = await AppleID.auth.signIn();
-//     const idToken = response.authorization.id_token;
-//     const base64Url = idToken.split('.')[1];
-//     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-//     const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-//         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-//     }).join(''));
-//     const decodedToken = JSON.parse(jsonPayload);
+    const response = await AppleID.auth.signIn();
+    const idToken = response.authorization.id_token;
+    const base64Url = idToken.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    const decodedToken = JSON.parse(jsonPayload);
 
-//     const data = await googleLoginMutate({
-//       u_email: decodedToken.email,
-//       u_social_id: decodedToken.sub,
-//       u_social_type: "apple",
-//       u_full_name: response.user?.name ? `${response.user.name.firstName} ${response.user.name.lastName}` : (decodedToken.email?.split('@')[0] || ""),
-//     });
+    const data = await googleLoginMutate({
+      u_email: decodedToken.email,
+      u_social_id: decodedToken.sub,
+      u_social_type: "apple",
+      u_full_name: response.user?.name ? `${response.user.name.firstName} ${response.user.name.lastName}` : (decodedToken.email?.split('@')[0] || ""),
+    });
     
-//     handleLoginSuccess(data);
-//   } catch (err: any) {
-//     if (err?.error !== "popup_closed_by_user") {
-//       errorMessage.value = err?.message || "Apple Login failed. Please try again.";
-//     }
-//   }
-// }
+    handleLoginSuccess(data);
+  } catch (err: any) {
+    if (err?.error !== "popup_closed_by_user") {
+      errorMessage.value = err?.message || "Apple Login failed. Please try again.";
+    }
+  }
+}
 
-// async function handleGoogleLogin(response: any) {
-//   try {
-//     const userData: any = decodeCredential(response.credential);
-//     const data = await googleLoginMutate({
-//       u_email: userData.email,
-//       u_social_id: userData.sub,
-//       u_social_type: "google",
-//       u_full_name: userData.name,
-//     });
-    
-//     handleLoginSuccess(data);
-//   } catch (err: any) {
-//     errorMessage.value =
-//       err?.response?.data?.message || "Google Login failed. Please try again.";
-//   }
-// }
+ 
 
 async function handleLoginSuccess(data: any) {
     localStorage.setItem("token", data?.data?.token);

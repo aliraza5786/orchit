@@ -41,7 +41,7 @@ function goToRegister(){
       <!-- Steps Container -->
       <div class="relative mb-16">
         <!-- Mobile: Vertical Stack -->
-        <div class="md:hidden space-y-12">
+        <div class="md:hidden space-y-12 overflow-hidden">
           <div 
             v-for="step in steps" 
             :key="step.number"
@@ -53,9 +53,9 @@ function goToRegister(){
                 class="w-40 h-40 rounded-full flex flex-col items-center justify-center text-white relative z-10 transition-all hover:scale-105"
                 :style="{ backgroundColor: step.color }"
               >
-                <div class="text-5xl mb-2">{{ step.icon }}</div>
+                <div class="text-3xl mb-2">{{ step.icon }}</div>
                 <div class="text-3xl font-bold mb-1">{{ step.number }}</div>
-                <div class="text-sm font-semibold px-4 text-center leading-tight">{{ step.title }}</div>
+                <div class="text-xs font-medium px-4 text-center leading-tight">{{ step.title }}</div>
               </div>
               <!-- Dotted Border -->
               <div 
@@ -64,7 +64,7 @@ function goToRegister(){
               ></div>
             </div>
             <!-- Description -->
-            <p class="text-[var(--muted)] max-w-sm mx-auto leading-relaxed">
+            <p class="text-[var(--muted)] max-w-sm mx-auto text-xs">
               {{ step.description }}
             </p>
           </div>

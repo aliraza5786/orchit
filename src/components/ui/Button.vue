@@ -66,7 +66,7 @@ const variantClass = computed(() => {
       primary: 'bg-transparent text-text-primary border border-black hover:bg-black hover:text-white',
       secondary: 'bg-transparent text-[#FFFFFFCC] border border-border FFFFFF4D] ',
       danger: 'bg-transparent text-red-500 border border-red-500 hover:bg-red-500 hover:text-white',
-      ghost: 'bg-transparent text-text-secondary  border border-gray-300 hover:bg-gray-100',
+      ghost: 'bg-transparent text-text-secondary  border border-gray-300',
       gray: 'bg-transparent text-text-secondary border border-border d9d9d9] ',
     }
   }
