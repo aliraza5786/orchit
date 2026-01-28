@@ -173,7 +173,7 @@ const passwordHasError = computed(() => !!passwordError.value);
 const isFormValid = computed(() => !emailError.value && !passwordError.value);
 const router = useRouter();
 const { mutateAsync, isPending } = useMutation({ mutationFn: login });
-const { mutateAsync: googleLoginMutate,  } = useMutation({ mutationFn: socialLogin });
+const { mutateAsync: socialLoginMutate,  } = useMutation({ mutationFn: socialLogin });
 
 // --- Derived UI state ---
 const submitDisabled = computed(() => isPending.value);
@@ -192,7 +192,7 @@ async function loginWithGoogle() {
       headers: { Authorization: `Bearer ${response.access_token}` },
     });
     
-    const data = await googleLoginMutate({
+    const data = await socialLoginMutate({
       u_email: userInfo.data.email,
       u_social_id: userInfo.data.sub,
       u_social_type: "google",
@@ -213,7 +213,7 @@ async function loginWithApple() {
     AppleID.auth.init({
       clientId: 'com.orchit.ai',
       scope: 'name email',
-      redirectURI: window.location.origin + '/login',
+      redirectURI:  "https://www.orchit.ai/dashboard",
       usePopup: true
     });
     
@@ -226,7 +226,7 @@ async function loginWithApple() {
     }).join(''));
     const decodedToken = JSON.parse(jsonPayload);
 
-    const data = await googleLoginMutate({
+    const data = await socialLoginMutate({
       u_email: decodedToken.email,
       u_social_id: decodedToken.sub,
       u_social_type: "apple",

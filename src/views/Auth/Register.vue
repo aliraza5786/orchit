@@ -64,7 +64,7 @@
             @click="loginWithApple"
           >
             <template #icon>
-              <img src="../../assets/LandingPageImages/header-icons/apple.png" class="w-5 h-5 mr-4" />
+              <img :src="isDark ? darkApple : lightApple" alt="Apple icon" class="w-[24px] mr-4" />
             </template>
             Continue with apple
           </Button>
@@ -97,6 +97,8 @@ import { useWorkspaceStore } from "../../stores/workspace";
 import darkLogo  from '@assets/global/dark-logo.png';
 import lightLogo  from '@assets/global/light-logo.png';
 import { useTheme } from "../../composables/useTheme"; 
+import lightApple from '@assets/LandingPageImages/header-icons/lightapple.png';
+import darkApple from '@assets/LandingPageImages/header-icons/apple.png';
 const {isDark } = useTheme();
 const router = useRouter();
 const fName = ref('');
@@ -167,7 +169,7 @@ const { mutate, isPending } = useMutation({
   },
 });
 
-const { mutateAsync: googleLoginMutate } = useMutation({ mutationFn: socialLogin });
+const { mutateAsync: socialLoginMutate } = useMutation({ mutationFn: socialLogin });
 
 async function loginWithGoogle() {
   try {
@@ -176,7 +178,7 @@ async function loginWithGoogle() {
       headers: { Authorization: `Bearer ${response.access_token}` },
     });
 
-    const data = await googleLoginMutate({
+    const data = await socialLoginMutate({
       u_email: userInfo.data.email,
       u_social_id: userInfo.data.sub,
       u_social_type: "google",
@@ -197,7 +199,7 @@ async function loginWithApple() {
     AppleID.auth.init({
       clientId: 'com.orchit.ai',
       scope: 'name email',
-      redirectURI: window.location.origin + '/register',
+      redirectURI: 'https://www.orchit.ai/dashboard',
       usePopup: true
     });
     
@@ -210,7 +212,7 @@ async function loginWithApple() {
     }).join(''));
     const decodedToken = JSON.parse(jsonPayload);
 
-    const data = await googleLoginMutate({
+    const data = await socialLoginMutate({
       u_email: decodedToken.email,
       u_social_id: decodedToken.sub,
       u_social_type: "apple",

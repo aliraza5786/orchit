@@ -59,7 +59,7 @@ const columns = [
         key: "variables", label: 'Name', render: ({ row }: any) =>
             h('div', { class: ' capitalize flex flex-col items-start gap-1' }, [
                 h('span', { class: 'text-sm text-text-primary' }, row['u_full_name']),
-                h('p', { class: 'max-w-50 line-clamp-1 text-xs lowercase text-text-secondary' }, row['u_email'])
+                h('p', { class: 'max-w-content line-clamp-1 text-xs lowercase text-text-secondary' }, row['u_email'])
             ]),
 
     },

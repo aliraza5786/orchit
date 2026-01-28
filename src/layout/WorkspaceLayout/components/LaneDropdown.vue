@@ -133,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useDeleteWorkspaceLane, useDuplicateWorkspaceLane, useUpdateWorkspaceLane } from '../../../queries/useLane'
 import { useQueryClient } from '@tanstack/vue-query'
 // import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
@@ -207,6 +207,14 @@ onMounted(() => {
   const match = colors.find(c => c.color === props.color)
   selectedColor.value = match || { label: "Color", color: props.color }
 })
+watch(
+  () => props.label,
+  (newVal) => {
+    currentName.value = newVal
+    name.value = newVal
+  },
+  { immediate: true }
+)
 
 const handleClickOutside = (event: any) => {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {

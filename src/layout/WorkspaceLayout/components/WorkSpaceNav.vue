@@ -96,10 +96,10 @@
         >
           Main
         </li>
-
+        
         <li
           v-for="item in localWorkspace?.lanes"
-          :key="item._id"
+          :key="localWorkspace._id + '-' + item._id"
           @click="workspaceStore.toggleLane(item._id)"
         >
           <LaneDropdown
@@ -253,7 +253,7 @@ watch(
   () => props.getWorkspace,
   (newWorkspace) => {
     if (newWorkspace) {
-      localWorkspace.value = newWorkspace;
+      localWorkspace.value = { ...newWorkspace }; 
       if (newWorkspace.variables?.title) {
         localStorage.setItem("currentName", newWorkspace.variables.title);
       }
@@ -261,6 +261,7 @@ watch(
   },
   { immediate: true }
 );
+
 
 // Duplicate lane handler
 const duplicateHandler = (data: any) => {
