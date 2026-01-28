@@ -2011,19 +2011,29 @@ const handleReorderCard = async (payload: {
     // Optionally show error toast/notification to user
   }
 };
-
 // Define the toolbar functions outside watchEffect
 function injectToolbarButton() {
-  const toolbar = mindMapRef.value?.querySelector(
-    ".mind-elixir-toolbar.rb"
-  ) as HTMLElement;
+  const root = mindMapRef.value;
+  if (!root) return;
+
+  const smallScreen = window.matchMedia("(max-width: 768px)").matches;
+
+  const toolbarSelector = smallScreen
+    ? ".mind-elixir-toolbar.lt"
+    : ".mind-elixir-toolbar.rb";
+
+  const toolbar = root.querySelector(toolbarSelector) as HTMLElement;
   if (!toolbar) return;
 
-  // Prevent duplicate button
   if (toolbar.querySelector(".open-sidebar-btn")) return;
 
   const btn = document.createElement("button");
-  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
+
+  // 👇 conditional spacing class
+  btn.className = `open-sidebar-btn me-toolbar-btn ${
+    smallScreen ? "mt-2" : "ms-2"
+  }`;
+
   btn.title = "Open Formatting Sidebar";
   btn.innerHTML = `<i class="fa-solid fa-sidebar"></i>`;
   btn.addEventListener("click", () => {
@@ -2032,6 +2042,7 @@ function injectToolbarButton() {
 
   toolbar.appendChild(btn);
 }
+
 
 // Store observer reference to clean up later
 let toolbarObserver: MutationObserver | null = null;
@@ -2058,6 +2069,7 @@ function setupToolbarObserver() {
   // Inject immediately first time
   injectToolbarButton();
 }
+
 const contextMenuExtendOptions: any[] = [];
 
 if (canEditCard || canEditSheet) {
