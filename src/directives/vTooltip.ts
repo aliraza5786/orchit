@@ -128,14 +128,15 @@ export const vTooltip: ObjectDirective = {
       hideTooltip();
     });
   },
-  updated(el: HTMLElement, binding: DirectiveBinding) {
+  updated(_el: HTMLElement, binding: DirectiveBinding) {
     if (binding.value !== binding.oldValue) {
       updateTooltipContent(binding.value);
     }
-  },
-  unmounted(el: HTMLElement) {
+},
+unmounted(_el: HTMLElement) {
     hideTooltip();
-  }
+}
+
 };
 
 export default vTooltip;
