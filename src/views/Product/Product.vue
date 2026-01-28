@@ -176,6 +176,7 @@
         <KanbanBoard
           @onPlus="plusHandler"
           :board="filteredBoard"
+          :key="`kanban-${selected_sheet_id}-${selected_view_by}`"
           @delete:column="(e: any) => deleteHandler(e)"
           @update:column="(e: any) => handleUpdateColumn(e)"
           @reorder="onReorder"
@@ -894,8 +895,45 @@ const {
   selected_view_by,
   listProcessPayload
 );
+// In Product.vue, around line 898-901
 watchEffect(() => {
-  Lists.value = ListsPages.value?.pages?.flatMap((p:any) => p.data || []) || [];
+  const allData = ListsPages.value?.pages || [];
+  const flatData = allData.flatMap((p: any) => p.data || []);
+  const uniqueColumnsMap = new Map();
+  
+  flatData.forEach((column: any) => {
+    const key = column.title;
+    
+    if (!uniqueColumnsMap.has(key)) {
+      uniqueColumnsMap.set(key, { 
+        ...column,
+        cards: [...(column.cards || [])]
+      });
+    } else {
+      // Existing column - merge cards
+      const existing = uniqueColumnsMap.get(key);
+      const existingCardIds = new Set(
+        (existing.cards || []).map((c: any) => c._id)
+      );
+      
+      const newCards = (column.cards || []).filter(
+        (card: any) => !existingCardIds.has(card._id)
+      );
+      
+      if (newCards.length > 0) {
+        existing.cards = [...existing.cards, ...newCards];
+      }
+    }
+  });
+  
+  Lists.value = Array.from(uniqueColumnsMap.values());
+  
+  // Sort by sort_order or flow_metadata.position
+  Lists.value.sort((a, b) => {
+    const orderA = a.flow_metadata?.sort_order ?? a.sort_order ?? 999;
+    const orderB = b.flow_metadata?.sort_order ?? b.sort_order ?? 999;
+    return orderA - orderB;
+  });
 });
 const isInitialLoading = computed(() =>
   isLoading.value && !Lists.value.length
@@ -914,9 +952,7 @@ const onScroll = (e: any) => {
   }
 };
 const onScrollTable = (e: any) => {
-  const el = e.target;
-  console.log("event target scroll", el);
-  
+  const el = e.target;  
   if (!hasNextPage.value || isFetchingNextPage.value) return;
 
   if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
@@ -1135,61 +1171,24 @@ const fuse = computed(() => {
   });
 });
 const filteredBoard = computed(() => {
-  if (view.value === "kanban") {
-    // Kanban filtering by columns
-    if (!searchQuery.value) return Lists.value;
-    console.log("fuse data", fuse.value);
-    
-    const results = fuse.value
-      .search(searchQuery.value)
-      .map((r: any) => r.item);
-    return Lists.value.map((col: any) => ({
-      ...col,
-      cards: results.filter((c: any) => c.columnId === col.title),
-    }));
-  } else {
-    // Table filtering by flat tickets
-    const query = searchQuery.value?.trim();
-    if (!query) {
-      let array: any = [];
-      (Lists.value ?? []).forEach((col: any) => {
-        array = [...array, ...col?.cards];
-      });
+  if (view.value !== "kanban") return Lists.value;
 
-      if (localTableOrder.value.length > 0) {
-        // Create a map of all available cards for fast lookup
-        const cardMap = new Map();
-        array.forEach((c: any) => cardMap.set(c._id, c));
-        localPendingTickets.value.forEach((c: any) => cardMap.set(c.id, c));
+  if (!searchQuery.value) return Lists.value;
 
-        // Return cards in the order stored, but only if they still exist
-        const ordered = localTableOrder.value
-          .map(id => cardMap.get(id))
-          .filter(Boolean);
-        
-        // If some cards in the current 'array' or 'localPendingTickets' aren't in 'ordered' 
-        const returnedIds = new Set(ordered.map(c => c._id || c.id));
-        const extras = [
-           ...array.filter((c:any) => !returnedIds.has(c._id)),
-           ...localPendingTickets.value.filter(c => !returnedIds.has(c.id))
-        ];
+  const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
 
-        return [...ordered, ...extras];
-      }
+  return Lists.value.map((col: any) => {
+    const filteredCards = results.filter((c: any) => c.columnId === col.title);
 
-      return [...array, ...localPendingTickets.value];
+    // Only replace cards if needed, otherwise keep same object reference
+    if (filteredCards.length === (col.cards?.length ?? 0) && filteredCards.every((c, i) => c._id === col.cards[i]?._id)) {
+      return col;
     }
 
-    const fuseTable = new Fuse(normalizedTableData.value, {
-      keys: ["card-title", "card-description"], // include keys you want searchable
-      threshold: 0.3,
-    });
-    const results = fuseTable.search(query).map((r) => r.item);
-    
-    // Merge pending tickets into results if they match the query (or if query is simple)
-    return [...results, ...localPendingTickets.value];
-  }
+    return { ...col, cards: filteredCards };
+  });
 });
+
 
 const { data: lanes } = useLanes(workspaceId);
 
@@ -1360,14 +1359,6 @@ const assignHandle = (row: any, user: any) => {
     checkAndCreateTicket(row);
   }
 };
-
-const normalizedTableData = computed(() => {
-  let array: any = [];
-  (Lists.value ?? []).forEach((col: any) => {
-    array = [...array, ...col?.cards];
-  });
-  return array;
-});
 
 const getOptions = (options: any) => {
   return options.map((el: any) => ({
@@ -2004,8 +1995,6 @@ const handleReorderCard = async (payload: {
     // Refetch data after successful reorder
     refetchSheets();
     refetchSheetLists();
-
-    console.log("Card reordered successfully");
   } catch (error) {
     console.error("Failed to reorder card:", error);
     // Optionally show error toast/notification to user
@@ -2228,7 +2217,8 @@ watchEffect(() => {
 
       if (data.name === "beginEdit") {
         const editingNode = data.obj;
-        console.log("editing node", editingNode);
+        console.log(editingNode);
+        
         return;
       }
 

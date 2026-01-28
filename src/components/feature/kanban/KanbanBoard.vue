@@ -18,6 +18,7 @@
             'snap-center min-w-[270px] max-w-[270px]': isMobile,
             'min-w-[320px] max-w-[320px]': !isMobile 
           }"
+          :key="column._id"
         >
           <KanbanColumn :plusIcon="plusIcon  && canCreateCard" :canDragList="!isMobile && canDragList" @onPlus="(e) => emit('onPlus', e)" :sheet_id="sheet_id"
             :variable_id="variable_id" @update:column="(e) => emit('update:column', e)"
@@ -174,25 +175,28 @@ function handleMoveColumn({ direction, column }: { direction: 'left' | 'right', 
 /** Helpers */
 function cloneBoard(b: Column[]): Board {
   return {
-    columns: (b?.length > 0 ? b : []).map(c => ({
-      _id: c?._id,
-      title: c?.title,
-      transitions: c.transitions,
-      cards: (c?.cards ?? []).map(t => ({ ...t }))
-    }))
-  }
+    columns: (b?.length ?? 0) > 0
+      ? b.map(c => ({
+          _id: c._id,       // keep same ID
+          title: c.title,
+          transitions: c.transitions,
+          cards: c.cards ?? [],  // do not clone each card unless necessary
+        }))
+      : []
+  };
 }
+let scrollTimeout: any = null;
 const onScroll = (e: Event) => {
-  const el = e.target as HTMLElement;
-  console.log("scroll updates", el);
-  
-  emit("scroll", {
-    scrollLeft: el.scrollLeft,
-    scrollWidth: el.scrollWidth,
-    clientWidth: el.clientWidth,
-  });
+  clearTimeout(scrollTimeout);
+  scrollTimeout = setTimeout(() => {
+    const el = e.target as HTMLElement;
+    emit("scroll", {
+      scrollLeft: el.scrollLeft,
+      scrollWidth: el.scrollWidth,
+      clientWidth: el.clientWidth,
+    });
+  }, 50);
 };
-
 
 </script>
 
