@@ -1,5 +1,5 @@
 <template>
-  <div class="max-h-[calc(100vh-100px)]">
+  <div class="max-h-[calc(100vh-100px)] ms-4 border-0">
     <ejs-gantt
       ref="ganttRef"
       :dataSource="ganttItems"

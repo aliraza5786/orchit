@@ -41,7 +41,7 @@ const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
 const LandingPageLayout = () =>
   import("../layout/LandingPageLayout/LandingPageLayout.vue");
 
-// const LandingHome = () => import("../landingPageViews/LandingHome.vue");
+const peakUpdate = () => import("../views/peakDuplicate.vue");
 const NewHomepage = () => import("../views/homenew.vue");
 const Pricing = () => import("../views/Pricing.vue");
 const TermsOfServices = () => import("../views/TermsOfServices.vue");
@@ -214,7 +214,12 @@ const routes: RouteRecordRaw[] = [
     props: true,
     meta: { requiresAuth: false },
   },
-
+{
+    path: "/peak-duplicate",
+    name: "peak-duplicate",
+    component: peakUpdate,
+    meta: { requiresAuth: false },
+  },
   // Workspace area
   {
     path: "/workspace",

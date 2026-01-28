@@ -143,18 +143,18 @@
     </div>
 
     <!-- MAIN + SIDE PANEL -->
-    <div class="flex flex-1 overflow-hidden">
+    <div class="flex flex-1 overflow-hidden bg-bg-card">
       <!-- Scrollable main content -->
       <div class="flex-1 overflow-auto">
-        <div class="overflow-x-auto">
+       <div class="flex-1 min-w-0 overflow-hidden">
           <div
             v-if="view == 'kanban'"
-            class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex scrollbar-visible"
+            class="flex-1 min-h-0 bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] bg-bg-card border border-border overflow-hidden"
           >
             <KanbanSkeleton v-show="isPending" />
             <div
               v-show="!isPending"
-              class="flex overflow-x-auto gap-3 p-4 scrollbar-visible"
+              class="flex overflow-x-auto gap-3 p-4"
             >
               <KanbanBoard
                 @onPlus="plusHandler"
@@ -198,7 +198,7 @@
             </div>
           </div>
 
-          <template v-if="view == 'table'">
+          <template v-if="view == 'table'" class="-ms-6">
             <TableView
               @toggleVisibility="toggleVisibilityHandler"
               @addVar="() => { isCreateVar = true; }"

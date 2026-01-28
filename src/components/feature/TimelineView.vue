@@ -1,5 +1,5 @@
 <template>
-  <div class="schedule-container">
+  <div class="schedule-container ms-4">
     <ejs-schedule
       ref="scheduleObj"
       height="550px"
