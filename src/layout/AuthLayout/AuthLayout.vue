@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-bg-body h-screen overflow-hidden">
+  <div class="bg-bg-body h-full sm:h-screen overflow-hidden">
     <Header  v-if="showHeader" />
     <div class=" lg:shadow-xl flex flex-wrap w-full h-full p-4">
       <!-- Left Panel -->
