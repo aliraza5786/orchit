@@ -25,7 +25,7 @@
       >
         <div
           ref="containerRef"
-          class="flex gap-2 min-h-0 overflow-x-auto group h-full"
+          class="flex gap-1 min-h-0 overflow-x-auto group h-full"
         >
           <section
             class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border"
@@ -120,6 +120,12 @@
                       <img :src="filter" alt="filter" class="w-4 h-4" />
                       <span class="truncate">
                         {{ selectedHuddleModuleLabel || "All Milestones" }}
+                        <span
+                 
+                  class="ml-2 text-xs font-normal"
+                >
+                  ({{ backlogResp?.cards?.length }})
+                </span>
                       </span>
                     </span>
                     <i class="fas fa-chevron-down text-xs ml-2"></i>
@@ -132,7 +138,7 @@
                   >
                     <ul class="flex flex-col">
                       <li
-                        class="px-3 py-2 cursor-pointer hover:bg-gray-50 hover:text-gray-600"
+                        class="px-3 py-2 cursor-pointer hover:bg-bg-body hover:text-primary"
                         @click="selectMilestoneTab('')"
                       >
                         All Milestones
@@ -141,10 +147,11 @@
                       <li
                         v-for="option in visibleModules"
                         :key="option._id"
-                        class="px-3 py-2 cursor-pointer hover:bg-gray-50 hover:text-gray-600"
+                        class="px-3 py-2 cursor-pointer hover:bg-bg-body hover:text-primary"
                         @click="selectHuddleModule(option._id)"
                       >
                         {{ option.variables["module-title"] }}
+                        
                       </li>
                     </ul>
                   </div>
@@ -212,12 +219,6 @@
             />
           </svg>
 
-          <div
-            class="absolute -top-7 left-1/2 -translate-x-1/2 rounded bg-black text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition"
-            role="tooltip"
-          >
-            Resize
-          </div>
         </div>
 
 
@@ -259,7 +260,7 @@
                           selectType(item),
                             (openElipseDropDown = !openElipseDropDown)
                         "
-                        class="flex items-center gap-3 px-4 py-2 text-sm cursor-pointer"
+                        class="flex items-center gap-3 px-4 py-2 text-sm cursor-pointer hover:bg-bg-body hover:text-primary"
                       >
                         <span
                           class="w-2 h-2 rounded-full"
@@ -287,7 +288,7 @@
                         :class="
                           selectedSprintId
                             ? 'text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-gray-100 hover:bg-card hover:text-primary'
                         "
                         :style="
                           selectedSprintId
@@ -873,12 +874,20 @@ const {
 } = useBacklogStore();
 function selectMilestoneTab(tabId: string) {
   selectedFilter.value = tabId;
+
+  // 👇 this is the missing line
+  selectedHuddleModule.value = tabId || "all";
+
   isHuddleDropdownOpen.value = false;
 }
+
 function selectHuddleModule(moduleId: string) {
   selectedFilter.value = moduleId;
+  selectedHuddleModule.value = moduleId;
+
   isHuddleDropdownOpen.value = false;
 }
+
 function selectSprintTab(sprintId: string) {
   selectedFilter.value = sprintId;
   isHuddleDropdownOpen.value = false;
@@ -1375,19 +1384,18 @@ const closeSearchModal = () => {
 };
 
 // filters
-const selectedHuddleModule = ref("all");
+const selectedHuddleModule = ref<string>("all"); // dropdown      // sprint buttons
 const isHuddleDropdownOpen = ref(false);
 // Computed label for huddle button
 const selectedHuddleModuleLabel = computed(() => {
   if (selectedHuddleModule.value === "all") return "All Milestones";
-
-  const module = workspaceData.value?.modules?.find(
-    (m: { _id: string; variables: Record<string, any> }) =>
-      m._id === selectedHuddleModule.value
-  );
-
-  return module?.variables?.["module-title"] || "Select Module";
+ const module = workspaceData.value?.modules?.find(
+  (m: { _id: string; variables?: Record<string, any> }) =>
+    m._id === selectedHuddleModule.value
+);
+  return module?.variables?.["module-title"] ?? "All Milestones";
 });
+
 </script>
 
 <style scoped>
