@@ -15,7 +15,7 @@
   
           <div class="flex-1 min-w-0">
             <h3 class="text-base font-semibold text-text-primary ">
-              {{ title }}
+              Do you want to Delete This Ticket?
             </h3>
             <p class="mt-1 text-sm text-muted">
               <slot name="message">
@@ -24,7 +24,7 @@
             </p>
   
             <!-- Optional “type to confirm” -->
-            <div v-if="requireMatchText" class="mt-4">
+            <!-- <div v-if="requireMatchText" class="mt-4">
               <label class="text-xs text-muted">
                 Type <span class="font-medium text-body">{{ requireMatchText }}</span> to confirm
               </label>
@@ -34,7 +34,7 @@
                 :placeholder="requireMatchText"
                 @keyup.enter="tryConfirm"
               />
-            </div>
+            </div> -->
   
             <!-- Optional extra content slot (checkboxes, warnings, etc.) -->
             <div v-if="$slots.extra" class="mt-4">
@@ -56,7 +56,7 @@
           <button
             type="button"
             class="px-3 py-2 text-sm rounded-md text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center gap-2"
-            :disabled="!canConfirm || loading"
+            :disabled=" loading"
             @click="confirm"
           >
             <svg v-if="loading" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -108,30 +108,7 @@ import BaseModal from '../../../components/ui/BaseModal.vue';
   
   const typed = ref('')
   
-  const resolvedMessage = computed(() => {
-    if (props.message) return props.message
-    const what = [props.itemLabel, props.itemName].filter(Boolean).join(' ')
-    const label = what || 'this item'
-    return `This action cannot be undone. This will permanently delete ${label}.`
-  })
-  
-  const normalize = (s: unknown) =>
-  String(s ?? '')
-    .normalize('NFKC')                         // Unicode normalize
-    .toLowerCase()                             // ignore case (remove if you want case-sensitive)
-    .replace(/[\u200B-\u200D\u2060\u00AD\uFEFF]/g, '') // zero-width & soft hyphen
-    .replace(/\s+/g, ' ')                      // collapse runs of whitespace to one space
-    .trim();
-
-const canConfirm = computed(() => {
-  if (!props.requireMatchText) return true
-  const a = normalize(typed.value)
-  const b = normalize(props.requireMatchText)
-  // helpful, consistent log:
-  console.log({ a, b, equal: a === b })
-  return a === b
-})
-
+  const resolvedMessage = `This action cannot be undone. This Ticket will br permanently deleted.`;
   
   const computedModalClass = computed(() => {
     // Tight vertical rhythm + theme-friendly surfaces
@@ -145,13 +122,10 @@ const canConfirm = computed(() => {
   }
   
   function confirm() {
-    if (!canConfirm.value || props.loading) return
+    if (props.loading) return
     emit('confirm')
         typed.value= ''
   }
   
-  function tryConfirm() {
-    if (canConfirm.value) confirm()
-  }
   </script>
   

@@ -448,7 +448,7 @@
             itemLabel="list"
             :itemName="localColumnData?.title"
             :requireMatchText="localColumnData?.title"
-            confirmText="Delete workspace"
+            confirmText="Delete List"
             cancelText="Cancel"
             size="md"
             :loading="addingList"
