@@ -112,6 +112,62 @@
           />
         </div>
       </div>
+      <div v-if="route.path.includes('/plan')">
+        <p>Select Sheet</p>
+       <div class="border border-border rounded-lg h-fit mt-16 sm:mt-0 bg-card relative">
+        
+  <!-- Select trigger -->
+  <button
+    class="w-full flex items-center justify-between px-4 py-2 rounded-lg bg-card border border-border"
+    @click="isOpenSelect = !isOpenSelect"
+  >
+    <span class="truncate">
+     {{ selected_sheet_id ? transformedData.find(opt => opt._id === selected_sheet_id)?.title || 'Select Sheet' : 'Select Sheet' }}
+    </span>
+    <i class="fa-solid fa-chevron-down text-xs"></i>
+  </button>
+
+  <!-- Options -->
+  <div
+    v-if="isOpenSelect"
+    class="absolute z-50 mt-2 w-full bg-card border border-border rounded-lg shadow-lg"
+  >
+    <div
+      v-for="option in transformedData"
+      :key="option._id"
+      class="flex items-center justify-between px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
+      @click="selectOption(option)"
+    >
+      <span class="truncate">{{ option.title }}</span>
+
+      <!-- Actions -->
+      <div class="flex gap-2">
+        <i
+          v-if="canEditSheet"
+          class="fa-solid fa-pen text-xs hover:text-primary"
+          @click.stop="openEditSprintModal(option)"
+        ></i>
+
+        <i
+          v-if="canDeleteSheet"
+          class="fa-solid fa-trash text-xs hover:text-destructive"
+          @click.stop="handleDeleteSheetModal(option)"
+        ></i>
+      </div>
+    </div>
+
+    <!-- Add new -->
+    <div
+      v-if="canCreateSheet"
+      class="border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1"
+      @click="createSheet"
+    >
+      <i class="fa-solid fa-plus"></i> Add new
+    </div>
+  </div>
+</div>
+      </div>
+
     </div>
 
     <div class="px-6 mt-2">
@@ -142,15 +198,19 @@ import BaseModal from "../../../components/ui/BaseModal.vue";
 import BaseTextField from "../../../components/ui/BaseTextField.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 import Button from "../../../components/ui/Button.vue";
-import { useAddTicket, useLanes, useVariables } from "../../../queries/useSheets";
+import { useAddTicket, useLanes, useVariables, useSheets } from "../../../queries/useSheets";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import BaseRichTextEditor from "../../../components/ui/BaseRichTextEditor.vue";
 import DatePicker from "../components/DatePicker.vue";
 import AssigmentDropdown from "../components/AssigmentDropdown.vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { usePermissions } from "../../../composables/usePermissions";
-const { canCreateCard } = usePermissions();
-
+import { useSprintKanban } from "../../../queries/usePlan"
+import { useRoute } from "vue-router";
+const { canCreateCard, canEditSheet,
+  canDeleteSheet,
+  canCreateSheet, } = usePermissions();
+const route = useRoute();
 /** Emits */
 const emit = defineEmits<{
   (e: "update:modelValue", v: boolean): void;
@@ -176,9 +236,13 @@ const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
     reset();
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
     isOpen.value = false;
+    refetchSheetLists();
   },
+  
 });
-
+const { refetch: refetchSheetLists, } = useSprintKanban(
+  localStorage.getItem("activeSprintId") || "",
+);
 /** Lanes */
 type Lane = { _id: string | number; variables?: Record<string, any> };
 const { data: lanes } = useLanes(workspaceId.value);
@@ -192,11 +256,26 @@ type Variable = {
   data: string[];
   slug: string;
 };
+const module_id= ref(localStorage.getItem("selectedModuleId") ||"");
+const {
+  data
+} = useSheets({
+  workspace_id: workspaceId,
+  workspace_module_id: module_id,
+});
+const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
+
+const selected_sheet_id = ref<any>(sheetId.value);
+const isCreateSheetModal = ref(false);
+const selectedSheettoAction = ref<any>();
+const resolvedSheetId = computed(() => {
+  return props.sheet_id || selected_sheet_id.value || ''
+})
 const { data: variables } = useVariables(
   workspaceId,
   moduleId,
-  ref(props.sheet_id ?? "")
-);
+  resolvedSheetId
+)
 
 /** Modal open proxy */
 const isOpen = computed({
@@ -304,6 +383,46 @@ function setLane(v: SelectValue) {
 function setAssignee(user: any) {
   form.assignee = user;
 }
+interface IconData {
+  prefix: string;
+  iconName: string;
+}
+interface DropdownOption {
+  _id: string;
+  title: string;
+  icon: IconData;
+  status:string
+}
+
+function openEditSprintModal(opt: any) {
+  isCreateSheetModal.value = true;
+  selectedSheettoAction.value = opt;
+}
+const transformedData = computed<DropdownOption[]>(() => {  
+  return (data.value || []).map((item: any) => ({
+    _id: item._id,
+    title: item?.variables["sheet-title"],
+    description: item?.variables["sheet-description"],
+    icon: item["icon"],
+    status: item?.generation_status || localStorage.getItem("selectedStatusTitle"),
+  }));
+});
+const isOpenSelect = ref(false);
+
+const selectOption = (option: any) => {
+  console.log("Selected option:", option);
+  selected_sheet_id.value = option._id;
+};
+
+const showDeleteModal = ref(false);
+function handleDeleteSheetModal(opt: any) {
+  showDeleteModal.value = true;
+  selectedSheettoAction.value = opt;
+}
+const createSheet = () => {
+  selectedSheettoAction.value = {};
+  isCreateSheetModal.value = !isCreateSheetModal.value;
+};
 
 /** Actions */
 function cancel() {
@@ -324,8 +443,9 @@ function reset() {
   touched.endDate = false;
   touched.lane = false;
 }
+
 const selectedVar = computed(() =>
-  variables.value.find((e: any) => e?._id == props.selectedVariable)
+  variables.value?.find((e: any) => e?._id == props.selectedVariable)
 );
 
 const titleError = computed(() =>
@@ -370,22 +490,28 @@ function create() {
   if (!isValid.value || isSubmitting.value) return;
   if (!canCreateCard.value) return;
 
-  const payload = {
-    sheet_list_id: props.listId,
-    workspace_id: workspaceId.value,
-    sheet_id: props.sheet_id,
-    ...(form.lane_id && form.lane_id !== "main" ? { workspace_lane_id: form.lane_id } : {}),
-    variables: {
-      ...form.variables,
-      [`${selectedVar.value?.slug}`]: props.listId,
-      ["card-title"]: form.title.trim(),
-      ["card-description"]: form.description.trim(),
-      ["start-date"]: form.startDate,
-      ["end-date"]: form.endDate,
-    },
-    seat_id: form.assignee?._id ?? null,
-    createdAt: new Date().toISOString(),
-  };
+ const variableKey = selectedVar.value?.slug;
+
+const payload = {
+  sheet_list_id: props.listId,
+  workspace_id: workspaceId.value,
+  sheet_id: props.sheet_id || selected_sheet_id.value,
+  ...(form.lane_id && form.lane_id !== "main"
+    ? { workspace_lane_id: form.lane_id }
+    : {}),
+  variables: {
+    ...form.variables,
+    ...(variableKey ? { [variableKey]: props.listId } : {}),
+    ["card-title"]: form.title.trim(),
+    ["card-description"]: form.description.trim(),
+    ["start-date"]: form.startDate,
+    ["end-date"]: form.endDate,
+    ["card-status"]: localStorage.getItem("selectedStatusTitle")
+  },
+  seat_id: form.assignee?._id ?? null,
+  sprint_id: localStorage.getItem("activeSprintId") || null,
+  createdAt: new Date().toISOString(),
+};
 
   addTicket(payload);
 }

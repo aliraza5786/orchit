@@ -1,10 +1,11 @@
 <template>
   <div class="flex flex-col h-full">
-    <!-- HEADER: sticky at top -->
+    <!-- HEADER -->
     <div class="sticky top-0 z-20 bg-bg-card overflow-x-auto shrink-0">
       <div
         class="header lg:px-4 px-2 py-2 flex justify-between items-center gap-1 overflow-auto border-b border-border"
       >
+
         <div class="flex lg:gap-4 gap-2 py-1">
           <div class="hidden sm:flex">
             <button
@@ -32,7 +33,12 @@
           </div>
         </div>
 
+        <!-- VIEW SWITCHER -->
         <div class="flex gap-3 items-center">
+          <div
+            class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+          >
+           <div class="flex gap-3 items-center">
           <div
             class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
           >
@@ -139,35 +145,38 @@
             </button>
           </div>
         </div>
+          </div>
+        </div>
       </div>
     </div>
-
-    <!-- MAIN + SIDE PANEL -->
+    <!-- MAIN -->
     <div class="flex flex-1 overflow-hidden bg-bg-card">
-      <!-- Scrollable main content -->
-      <div class="flex-1 overflow-auto">
-       <div class="flex-1 min-w-0 overflow-hidden">
+      <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+
+        <!-- ================= KANBAN ================= -->
+        <template v-if="view === 'kanban'">
+          <KanbanSkeleton v-show="isPending" />
+
           <div
-            v-if="view == 'kanban'"
-            class="flex-1 min-h-0 bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] bg-bg-card border border-border overflow-hidden"
+            v-show="!isPending"
+            class="flex-1 overflow-x-auto overflow-y-hidden scrollbar-visible"
           >
-            <KanbanSkeleton v-show="isPending" />
-            <div
-              v-show="!isPending"
-              class="flex overflow-x-auto gap-3 p-4"
-            >
+            <!-- IMPORTANT: min-w-max enables horizontal scroll -->
+            <div class="flex gap-3 p-4 min-w-max h-full">
               <KanbanBoard
+                class="flex h-full"
+                :board="filteredBoard"
+                :variable_id="selected_view_by"
+                :sheet_id="selected_sheet_id"
                 @onPlus="plusHandler"
                 @delete:column="(e: any) => deleteHandler(e)"
                 @update:column="(e: any) => handleUpdateColumn(e)"
                 @reorder="onReorder"
                 @addColumn="handleAddColumn"
                 @select:ticket="selectCardHandler"
-                :board="filteredBoard"
                 @onBoardUpdate="handleBoardUpdate"
-                :variable_id="selected_view_by"
-                :sheet_id="selected_sheet_id"
               >
+                <!-- COLUMN FOOTER -->
                 <template #column-footer="column">
                   <div
                     class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
@@ -180,37 +189,41 @@
                         column.column.title
                     "
                   >
-                    Disbale ( you can't drop here )
+                    Disable ( you can't drop here )
                   </div>
                 </template>
+
+                <!-- ================= TICKETS SCROLL FIX ================= -->
                 <template #ticket="{ ticket }">
-                  <KanbanTicket
-                    :selectedVar="selected_view_by"
-                    @select="
-                      () => {
-                        selectCardHandler(ticket);
-                      }
-                    "
-                    :ticket="ticket"
-                  />
+                  <!-- This wrapper is CRITICAL -->
+                  <div
+                    class="max-h-[calc(100vh-220px)] overflow-y-auto pr-1"
+                  >
+                    <KanbanTicket
+                      :selectedVar="selected_view_by"
+                      :ticket="ticket"
+                      @select="() => selectCardHandler(ticket)"
+                    />
+                  </div>
                 </template>
               </KanbanBoard>
             </div>
           </div>
+        </template>
 
-          <template v-if="view == 'table'" class="-ms-6">
-            <TableView
-              @toggleVisibility="toggleVisibilityHandler"
-              @addVar="() => { isCreateVar = true; }"
-              :isPending="isPending || isVariablesPending"
-              :columns="columns"
-              :rows="filteredBoard"
-              :canCreate="canCreateCard"
-              :canCreateVariable="canCreateVariable"
-              @create="handleCreateTicket"
-            />
-          </template>
-
+        <!-- ================= TABLE ================= -->
+        <template v-if="view === 'table'" class="-ms-6">
+          <TableView
+            @toggleVisibility="toggleVisibilityHandler"
+            @addVar="() => { isCreateVar = true; }"
+            :isPending="isPending || isVariablesPending"
+            :columns="columns"
+            :rows="filteredBoard"
+            :canCreate="canCreateCard"
+            :canCreateVariable="canCreateVariable"
+            @create="handleCreateTicket"
+          />
+        </template>
          <template v-if="view === 'mindmap'">
       <div class="relative w-full h-full flex overflow-hidden">
         <!-- Mind Map Canvas -->
@@ -427,7 +440,6 @@
               @select:ticket="selectCardHandler"
             />
           </template>
-
           <!-- Modals and other components as before -->
           <ConfirmDeleteModal
             @click.stop=""
@@ -453,18 +465,20 @@
             v-model="createTeamModal"
             @submit=""
           />
-        </div>
       </div>
-       <SidePanel
-    v-if="selectedCard?._id"
-    class="w-[400px] flex-shrink-0"
-    :details="selectedCard"
-    @close="() => selectCardHandler({ variables: {} })"
-    :showPanel="!!selectedCard?._id"
-  />
+
+      <!-- SIDE PANEL -->
+      <SidePanel
+        v-if="selectedCard?._id"
+        class="w-[400px] flex-shrink-0"
+        :details="selectedCard"
+        @close="() => selectCardHandler({ variables: {} })"
+        :showPanel="!!selectedCard?._id"
+      />
     </div>
   </div>
 </template>
+
 
 <script setup lang="ts">
 import {
@@ -647,6 +661,8 @@ watch(selected_module_id, (newModuleId) => {
 const sheetId = computed(() => (sheets.value ? sheets.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(sheetId);
 const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
+
+
 const selected_view_by = ref(viewBy);
 const workspaceStore = useWorkspaceStore();
 const selected_sprint_id = computed(() => props.sptint_id);
@@ -780,6 +796,8 @@ const deleteHandler = (e: any) => {
 };
 const plusHandler = (e: any) => {
   createTeamModal.value = true;
+  localStorage.setItem("selectedStatusTitle", e?.title);
+  localStorage.setItem("selectedModuleId", selected_module_id.value);
   localColumnData.value = e;
 };
 const searchQuery = computed(() => props.searchQuery);
@@ -861,6 +879,7 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
   selected_module_id,
   selected_sheet_id
 );
+
 const { mutate: toggleVisibility } = useVarVisibilty();
 const toggleVisibilityHandler = (key: any, visible: any) => {
   toggleVisibility({
@@ -1051,7 +1070,7 @@ const columns = computed(() => {
         }),
     },
 
-    ...(variables.value
+    ...(variables.value?.variables
       ?.filter((e: any) => e?.type?.title === "Select")
       .map((e: any) => ({
         key: e?.slug,
