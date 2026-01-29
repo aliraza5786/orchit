@@ -63,7 +63,7 @@ import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import Button from '../../../components/ui/Button.vue'
-import { useWorkspaceStore } from '../../../stores/workspace'
+import { useWorkspaceStore } from '../../../stores/workspace' 
 // import { request } from '../../../libs/api'
 // import { usePlatforms, useTechnologies, useUserType } from '../../../queries/useWorkspace'
 import { useCreateWorkspaceLane } from '../../../queries/useLane'
@@ -145,6 +145,36 @@ const { mutate: createLane, isPending } = useCreateWorkspaceLane({
   },
 })
 
+function createTempLane(form: any, workspaceId: string) {
+  const tempId = 'temp-' + Date.now(); // temporary unique id
+  return {
+    _id: tempId, 
+    workspace_id: workspaceId,
+    is_ai_generated: false,
+    is_archive: false,
+    variables: {
+      "lane-title": form.title,
+      "lane-description": form.description,
+      "lane-color": form.color_code,
+      "platforms": form.platforms || [],
+      "user-types": form.user_types || [],
+      "technologies": form.technologies || [],
+      id: tempId  
+    },
+    updated_at: null,
+    deleted_at: null,
+    created_by: "temp-user",  
+    updated_by: null,
+    deleted_by: null,
+    is_trash: false,
+    created_at: new Date().toISOString(),
+    __v: 0,
+    generation_progress: null,
+    generation_task: null
+  };
+}
+
+
 function next() {
 
   touched.title = true;
@@ -152,9 +182,9 @@ function next() {
   if (titleError.value || descriptionError.value) return
   if (!canCreateLane.value) return
 
-
-
-
+  // Create lane locally 
+  const tempLane = createTempLane(form.value, workspaceId.value);
+  workspaceStore.addLaneLocal(tempLane);
   createLane({
     workspace_id: workspaceId.value,
     variables: {

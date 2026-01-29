@@ -183,7 +183,7 @@ import DatePicker from '../../Product/components/DatePicker.vue'
 import AssigmentDropdown from '../../Product/components/AssigmentDropdown.vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useSingleWorkspace } from '../../../queries/useWorkspace'
-
+import { useSidePanelStore } from '../../../stores/sidePanelStore'
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
   (e: 'created', payload: any): void
@@ -207,7 +207,7 @@ const selectedSheetId = ref<string | null>(null)
 const moduleIdForQuery = ref<string>('')
 const { data: workspaceData, isLoading: loadingModules } = useSingleWorkspace(workspaceId.value)
 const modules = computed(() => workspaceData.value?.modules || [])
-
+const sidePanelStore = useSidePanelStore();
 const { data: sheetsData, isFetching: loadingSheets, refetch: refetchSheet } = useSheets(
   {
     workspace_module_id: moduleIdForQuery,
@@ -266,7 +266,7 @@ type Variable = {
 }
 
 const selectVariables = computed<Variable[]>(() =>
-  (variables?.value ?? []).filter((v: any) => v?.type?.title === 'Select' && v?.slug !=='process')
+  (variables?.value?.variables ?? [])?.filter((v: any) => v?.type?.title === 'Select' && v?.slug !=='process')
 )
 
 type Option = { _id: string | number; title: string }
@@ -386,10 +386,12 @@ function reset() {
   touched.startDate = false
   touched.endDate = false
   touched.lane = false
+  localStorage.removeItem("sprintType");
+  localStorage.removeItem("activeMilestoneId");
 }
 
 const selectedVar = computed(() =>
-  variables?.value?.find((e: any) => e?._id == props.selectedVariable)
+  variables?.value?.variables?.find((e: any) => e?._id == props.selectedVariable)
 )
 
 const titleError = computed(() => (touched.title && !form.title.trim() ? 'Title is required' : ''))
@@ -438,6 +440,7 @@ function create() {
       ['end-date']: form.endDate,
     },
     seat_id: form.assignee?._id ?? null,
+    sprint_id: sidePanelStore.selectedMilestoneId || localStorage.getItem("activeMilestoneId") || null,
     createdAt: new Date().toISOString()
   }
 

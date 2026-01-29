@@ -12,11 +12,11 @@
     >
       <!-- Logo + Title (now a dropdown trigger) -->
       <div class="relative flex items-center ps-3.5 sm:ps-2">
-        <div :class="expanded ? 'w-[235px]' : 'w-auto'">
+        <div :class="props.expanded ? 'w-[235px]' : 'w-auto'">
           <button
             ref="logoBtnRef"
             class="flex items-center justify-between cursor-pointer rounded-md w-full"
-            :class="expanded? 'border-border-input  hover:shadow-md px-2 py-1 border hover:border-accent':''"
+            :class="props.expanded? 'border-border-input  hover:shadow-md px-2 py-1 border hover:border-accent':''"
             aria-haspopup="menu"
             :aria-expanded="logoMenuOpen ? 'true' : 'false'"
             @click="toggleLogoMenu"
@@ -44,7 +44,7 @@
                     class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover shrink-0"
                   />
                   <h3
-                    v-if="expanded"
+                    v-if="props.expanded"
                     class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
                   >
                     {{ localWorkspace.variables.title }}
@@ -98,13 +98,13 @@
         </li>
         
         <li
-          v-for="item in localWorkspace?.lanes"
+          v-for="item in localLanes"
           :key="localWorkspace._id + '-' + item._id"
           @click="workspaceStore.toggleLane(item._id)"
         >
           <LaneDropdown
             @duplicate="duplicateHandler"
-            :lanes="localWorkspace"
+            :lanes="localLanes"
             @update="openUpdateModal"
             :id="item._id"
             :label="item?.variables['lane-title']"
@@ -232,6 +232,11 @@ const limit = ref(30);
 const { data: workspaces } = useWorkspaces(page, limit);
 const laneId = ref("");
 const { workspaceId } = useWorkspaceId();
+
+// Use computed from store instead of local ref
+const localWorkspace = computed(() => workspaceStore.workspace); 
+// Computed lanes from store
+const localLanes = computed(() => workspaceStore.lanes || []); 
 const isWorkspaceLoading = computed(() => {
   return (
     !localWorkspace.value ||
@@ -239,37 +244,33 @@ const isWorkspaceLoading = computed(() => {
     !localWorkspace.value.variables?.title
   );
 });
-// Local reactive workspace
-const localWorkspace = ref<any>(null);
 
-// Initialize props
+// Initialize props - removed getWorkspace
 const props = defineProps<{ 
   expanded?: Boolean;
-  getWorkspace?: any;
 }>();
 
-// Watch the getWorkspace prop to keep local state in sync
+// Watch title to update localStorage (preserving existing logic)
 watch(
-  () => props.getWorkspace,
-  (newWorkspace) => {
-    if (newWorkspace) {
-      localWorkspace.value = { ...newWorkspace }; 
-      if (newWorkspace.variables?.title) {
-        localStorage.setItem("currentName", newWorkspace.variables.title);
-      }
+  () => localWorkspace.value?.variables?.title,
+  (newTitle) => {
+    if (newTitle) {
+      localStorage.setItem("currentName", newTitle);
     }
   },
   { immediate: true }
 );
 
 
-// Duplicate lane handler
+// Duplicate lane handler - updates store now
 const duplicateHandler = (data: any) => {
   if (!localWorkspace.value) return;
-  localWorkspace.value = {
+  const updatedWorkspace = {
     ...localWorkspace.value,
     lanes: [...localWorkspace.value.lanes, data],
   };
+  workspaceStore.setWorkspace(updatedWorkspace);
+  workspaceStore.setLanes([...localLanes.value, data]);
 };
 
 // Toggle sidebar

@@ -225,14 +225,13 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { toParamString } from '../composables/useQueryParams'
-import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople'
-import { useSingleWorkspace } from '../queries/useWorkspace'
+import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople' 
 import { getInitials, generateAvatarColor } from '../utilities'
 import { avatarColor } from '../utilities/avatarColor'
 import type { TeamWorkloadMember } from '../types'
 import { useTheme } from "../composables/useTheme"; 
 import { formatDateTime } from "../utilities/FormatDate";
-import { useWorkspaceStore } from "../stores/workspace";
+import { useWorkspaceStore } from "../stores/workspace"; 
 
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
@@ -249,11 +248,11 @@ const {
   refetch: refetchTeams
 } = useDashboardTeams(workspaceId)
 const { data: dashboardActiviesData } = useDashboardActivities(workspaceId)
-const { data: workspaceData } = useSingleWorkspace(workspaceId)
+const workspace = computed(() => workspaceStore.workspace)
 
 const lastUpdateDate = computed(() => {
   const activities = dashboardActiviesData.value?.activities
-  const workspaceCreatedAt = workspaceStore.workspace?.created_at || workspaceData.value?.created_at
+  const workspaceCreatedAt = workspaceStore.workspace?.created_at || workspace.value?.created_at
   
   if (activities?.length) {
     return activities[0].created_at || workspaceCreatedAt
@@ -381,6 +380,8 @@ const lanes2 = computed<LaneProgressRow[]>(
   () => taskProgress.value?.progress_details?.lanes_progress ?? []
 )
 
+ 
+
 
 
 const avatars = [
@@ -468,6 +469,24 @@ watch([workspaceId, jobId], () => {
   disconnect()
   connect()
 })
+
+ 
+
+watch(
+  () => workspaceStore.lanes,
+  (newVal, oldVal) => {
+    if (!newVal || !oldVal) return
+
+    // avoid false triggers
+    if (newVal === oldVal) return 
+    disconnect()
+    // taskProgress.value = null
+    connect()
+  },
+  { deep: true }
+)
+
+
 </script>
 
 

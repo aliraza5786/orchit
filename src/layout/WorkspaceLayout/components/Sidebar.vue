@@ -126,37 +126,37 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { computed } from "vue";
 import SideItem from "./SideItem.vue";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { usePermissions } from "../../../composables/usePermissions";
 import SidebarSkeleton from "../../../components/skeletons/SidebarSkeleton.vue";
+import { useWorkspaceStore } from "../../../stores/workspace";
 
 const {
   workspaceId
 } = useRouteIds();
 
+const workspaceStore = useWorkspaceStore();
 const { canCreateModule, canAccessModule } = usePermissions();
+
+// Removed workspace from props
 const props = defineProps<{
-  workspace: { modules: any; generation_task: any };
+  // workspace: { modules: any; generation_task: any }; 
   isLoading: boolean;
   expanded: boolean;
 }>(); 
+const { isLoading, expanded } = props;
+// Use store data for workspace
+const workspace = computed(() => workspaceStore.workspace);
 
 const filteredModules = computed(() => {
-  if (!props.workspace?.modules) return [];
-  return props.workspace.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
+  if (!workspace.value?.modules) return [];
+  return workspace.value.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
 });
 
-const modules = ref([]);
+// Removed manual watcher for modules as we use computed directly now
 const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
-
-watch(props, () => {
-  if (!props) {
-    return;
-  }
-  modules.value = props.workspace.modules;
-});
 
 </script>
 

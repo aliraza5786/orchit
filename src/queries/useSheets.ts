@@ -264,7 +264,7 @@ export const useVariables = (
         }),
       ]);
 
-      const processTypes = typesData?.values ?? [];
+      const processTypes = typesData?.values?? [];
 
       if (Array.isArray(variables)) {
         return variables.map((v) =>
@@ -281,11 +281,12 @@ export const useVariables = (
         );
       }
 
-      return variables;
+      return variables + typesData.workspace_module_id;
     },
     ...options,
   });
 };
+
 
 export const useLanes = (
   workspace_id: any,
