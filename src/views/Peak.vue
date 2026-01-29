@@ -248,11 +248,11 @@ const {
   refetch: refetchTeams
 } = useDashboardTeams(workspaceId)
 const { data: dashboardActiviesData } = useDashboardActivities(workspaceId)
-const workspace = computed(() => workspaceStore.workspace)
+const workspace = computed(() => workspaceStore.singleWorkspace)
 
 const lastUpdateDate = computed(() => {
   const activities = dashboardActiviesData.value?.activities
-  const workspaceCreatedAt = workspaceStore.workspace?.created_at || workspace.value?.created_at
+  const workspaceCreatedAt = workspaceStore.singleWorkspace?.created_at || workspace.value?.created_at
   
   if (activities?.length) {
     return activities[0].created_at || workspaceCreatedAt
