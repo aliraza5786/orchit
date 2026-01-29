@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from "vue";
+import { computed } from "vue";
 import SideItem from "./SideItem.vue";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { usePermissions } from "../../../composables/usePermissions";
@@ -146,7 +146,7 @@ const props = defineProps<{
   isLoading: boolean;
   expanded: boolean;
 }>(); 
-
+const { isLoading, expanded } = props;
 // Use store data for workspace
 const workspace = computed(() => workspaceStore.workspace);
 
