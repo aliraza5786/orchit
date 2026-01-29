@@ -7,9 +7,9 @@
           <i class="fa-solid fa-diagram-project text-accent"></i>
         </div> -->
         <div class="flex-1 min-w-0">
-            <span v-if="ticket['type_value']"
+            <span 
                     class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium captalize mb-3 inline-flex">
-                    {{ ticket['type_value'] }}
+                   {{ ticket?.type_value || 'General' }}
             </span>
           <h3 class="text-sm font-medium text-card-foreground mb-2 capitalize">
             {{ ticket?.title ?? `Process ${index + 1}` }}
