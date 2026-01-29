@@ -55,34 +55,83 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     setWorkspace(i: any) {
       this.workspace = i;
+      if (i && i.lanes) {
+        this.lanes = i.lanes;
+      }
     },
     setLanes(i:any){
        this.lanes= i;
     },
       // ---- Local lane update ----
     updateLaneLocal(laneId: string, updatedData: Partial<any>) {
+      // Helper to merge variables safely
+      const mergeLaneData = (currentLane: any, updates: any) => {
+        const mergedVariables = {
+          ...(currentLane.variables || {}),
+          ...(updates.variables || {})
+        };
+        return {
+          ...currentLane,
+          ...updates,
+          variables: mergedVariables
+        };
+      };
+
+      // 1. Update standalone lanes array
       const index = this.lanes.findIndex(
         (l: any) => l.id === laneId || l._id === laneId
       );
       if (index !== -1) {
-        this.lanes[index] = {
-          ...this.lanes[index],
-          ...updatedData
-        };
+        const updatedLane = mergeLaneData(this.lanes[index], updatedData);
+        // Create new array to ensure reactivity
+        const newLanes = [...this.lanes];
+        newLanes[index] = updatedLane;
+        this.lanes = newLanes;
+      }
+
+      // 2. Update workspace.lanes array (for WorkSpaceNav)
+      if (this.workspace && Array.isArray(this.workspace.lanes)) {
+        const wsIndex = this.workspace.lanes.findIndex(
+           (l: any) => l.id === laneId || l._id === laneId
+        );
+        if (wsIndex !== -1) {
+           const updatedWsLane = mergeLaneData(this.workspace.lanes[wsIndex], updatedData);
+           // Create new array to ensure reactivity
+           const newWsLanes = [...this.workspace.lanes];
+           newWsLanes[wsIndex] = updatedWsLane;
+           this.workspace.lanes = newWsLanes;
+        }
       }
     },
 
     // ---- Local lane delete ----
     deleteLaneLocal(laneId: string) {
+      // 1. Update standalone lanes array
       this.lanes = this.lanes.filter(
         (l: any) => l.id !== laneId && l._id !== laneId
       );
+
+      // 2. Update workspace.lanes if applicable
+      if (this.workspace && Array.isArray(this.workspace.lanes)) {
+        this.workspace.lanes = this.workspace.lanes.filter(
+          (l: any) => l.id !== laneId && l._id !== laneId
+        );
+      }
 
       // Also remove from selectedLaneIds if selected
       const selectedIndex = this.selectedLaneIds.indexOf(laneId);
       if (selectedIndex !== -1) {
         this.selectedLaneIds.splice(selectedIndex, 1);
       }
+    },
+   addLaneLocal(lane: any) {
+     // Create a new array reference so Vue detects the change
+     this.lanes = [...this.lanes, lane];
+     // Also update workspace.lanes if your components rely on it
+     if (this.workspace && Array.isArray(this.workspace.lanes)) {
+      this.workspace.lanes = [...this.workspace.lanes, lane];
+     }
+     console.log('New lanes:', this.lanes)
     },
     toggleSettingPanel() {
       this.showProfilePanel = false;

@@ -225,15 +225,13 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { toParamString } from '../composables/useQueryParams'
-import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople'
-import { useSingleWorkspace } from '../queries/useWorkspace'
+import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople' 
 import { getInitials, generateAvatarColor } from '../utilities'
 import { avatarColor } from '../utilities/avatarColor'
 import type { TeamWorkloadMember } from '../types'
 import { useTheme } from "../composables/useTheme"; 
 import { formatDateTime } from "../utilities/FormatDate";
-import { useWorkspaceStore } from "../stores/workspace";
-import { keys } from '../queries/useWorkspace'
+import { useWorkspaceStore } from "../stores/workspace"; 
 
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
@@ -475,23 +473,19 @@ watch([workspaceId, jobId], () => {
  
 
 watch(
-  () =>
-    queryClient.getQueryState(
-      keys.singleWorkspace(workspaceId.value)
-    )?.dataUpdatedAt,
-  (updatedAt, prev) => {
-    if (!updatedAt || updatedAt === prev) return
+  () => workspaceStore.lanes,
+  (newVal, oldVal) => {
+    if (!newVal || !oldVal) return
 
-    // 🔴 reset stream
+    // avoid false triggers
+    if (newVal === oldVal) return 
     disconnect()
-
-    // clear previous progress
-    taskProgress.value = null
-
-    // 🟢 reconnect fresh stream
+    // taskProgress.value = null
     connect()
-  }
+  },
+  { deep: true }
 )
+
 
 </script>
 

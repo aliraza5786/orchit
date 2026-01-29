@@ -59,9 +59,10 @@ watch(
     if (!newWorkspace) return;
 
     // shallow clone so local edits don’t mutate query cache
-    localWorkspace.value = { ...newWorkspace };
-    workspaceStore.setWorkspace(newWorkspace);
-    workspaceStore.setLanes(newWorkspace?.lanes);
+    const wsClone = { ...newWorkspace };
+    localWorkspace.value = wsClone;
+    workspaceStore.setWorkspace(wsClone);
+    workspaceStore.setLanes(wsClone?.lanes);
   },
   { immediate: true }
 );

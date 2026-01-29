@@ -195,9 +195,11 @@ const nextStep = () => {
     }
     //Update lane locally first
     workspaceStore.updateLaneLocal(props.id, {
-    'lane-title': form.value.title,
-    'lane-description': form.value.description,
-    'lane-color': form.value.color_code
+    variables: {
+        'lane-title': form.value.title,
+        'lane-description': form.value.description,
+        'lane-color': form.value.color_code
+    }
     })
     console.log(props.id, 'lane id')
 

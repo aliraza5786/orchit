@@ -217,6 +217,15 @@ watch(
   { immediate: true }
 )
 
+watch(
+  () => props.color,
+  (newColor) => {
+    const match = colors.find(c => c.color === newColor)
+    selectedColor.value = match || { label: "Color", color: newColor }
+  },
+  { immediate: true }
+)
+
 const handleClickOutside = (event: any) => {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
     isOpen.value = false

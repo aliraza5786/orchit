@@ -20,7 +20,7 @@
 
     <BaseSelectField v-model="form['workspace-type']" :options="workspaceTypeOptions" label="Workspace Type" size="lg"
       :allowCustom="true" :message="ai ? 'AI suggested this name based on your description' : ''"
-      placeholder="e.g. for team">
+      placeholder="e.g. for team" >
       <template #msgIcon>
         <img src="../../../assets/icons/stars.svg" alt="" />
       </template>
@@ -88,7 +88,7 @@ const workspaceTypeOptions = [
   { title: 'For client', _id: 'client' },
   { title: 'For Me', _id: 'personel' },
   { title: 'For Team', _id: 'team' },
-];
+]; 
 
 const { data: industryData } = useIndustries();
 const { data: allWorkspacesTitles } = useWorkspacesTitles();
@@ -111,7 +111,7 @@ onMounted(() => {
   form.value = {
     ...form.value,
     ...vars,
-    'workspace-type': String(vars['workspace-type']).toLowerCase(),
+    'workspace-type': vars['workspace-type'] ? String(vars['workspace-type']).toLowerCase() : '',
     'workspace-industries': Array.isArray(vars['workspace-industries'])
       ? (vars['workspace-industries'] as string[])
       : [],
@@ -123,7 +123,11 @@ const logoError = computed(() => !logo.value);
 const isValid = computed(() => {
   const hasLogo = !!logo.value;
   const hasTitle = !!form.value.title?.trim();
-  const hasType = !!form.value['workspace-type']?.trim();
+  const rawType = form.value['workspace-type'];
+  const hasType = typeof rawType === 'string' &&
+    rawType.trim() !== '' &&
+    rawType !== 'undefined' &&
+    rawType !== 'null';
   const hasIndustries = (form.value['workspace-industries']?.length || 0) > 0;
   return hasLogo && hasTitle && hasType && hasIndustries;
 });
@@ -181,6 +185,10 @@ const { mutate: privateMutate, isPending: isPrivatePending } = usePrivateUploadF
 });
 
 function continueHandler() {
+  if (!form.value['workspace-type']?.trim()) {
+    toast.error('Please select a workspace type.');
+    return;
+  }
   if (!isValid.value) {
     toast.error('Please fill all fields and upload a file.');
     return;

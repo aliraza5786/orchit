@@ -237,9 +237,6 @@ const { workspaceId } = useWorkspaceId();
 const localWorkspace = computed(() => workspaceStore.workspace); 
 // Computed lanes from store
 const localLanes = computed(() => workspaceStore.lanes || []); 
-watch(()=>(localLanes.value),()=>{
-  console.log(localLanes.value, 'local lanes') 
-})
 const isWorkspaceLoading = computed(() => {
   return (
     !localWorkspace.value ||
