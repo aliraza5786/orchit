@@ -53,24 +53,50 @@
 
             <!-- Assignee -->
             <div class="flex-shrink-0">
-              <span
-                v-if="ticket?.assignee == 'Unassigned'"
-                class="flex justify-center text-gray-500 items-center text-[11px] aspect-square w-[24px] h-[24px] bg-bg-body rounded-full border-border-input border-2"
-                >UA</span
-              >
-              <div
-                v-else-if="ticket.assignee?.u_profile_image"
-                class="w-6 h-6 rounded-full"
-              >
-                <img :src="ticket.assignee.u_profile_image" alt="" />
-              </div>
-              <span
-                v-else
-                class="text-[11px] aspect-square w-[24px] flex justify-center items-center h-[24px] bg-accent/30 text-accent border-accent border rounded-full"
-              >
-                {{ getInitials(ticket.assignee?.u_full_name ?? "") }}
-              </span>
-            </div>
+  <!-- SHOW DELETE BUTTON WHEN CHECKED -->
+  <button
+    v-if="selectedIds.includes(ticket.id)"
+    class="w-6 h-6 flex items-center justify-center rounded-full
+           text-red-500 hover:bg-red-500/10 transition"
+    title="Remove from sprint"
+    @click.stop="emitDeleteSingle(ticket.id, ticket.summary)"
+  >
+    <i class="fa-solid fa-xmark text-sm"></i>
+  </button>
+
+  <!-- SHOW ASSIGNEE WHEN NOT CHECKED -->
+  <template v-else>
+    <span
+      v-if="ticket?.assignee === 'Unassigned'"
+      class="flex justify-center text-gray-500 items-center text-[11px]
+             aspect-square w-[24px] h-[24px] bg-bg-body rounded-full
+             border-border-input border-2"
+    >
+      UA
+    </span>
+
+    <div
+      v-else-if="ticket.assignee?.u_profile_image"
+      class="w-6 h-6 rounded-full overflow-hidden"
+    >
+      <img
+        :src="ticket.assignee.u_profile_image"
+        alt=""
+        class="w-full h-full object-cover"
+      />
+    </div>
+
+    <span
+      v-else
+      class="text-[11px] aspect-square w-[24px] h-[24px]
+             flex justify-center items-center bg-accent/30 text-accent
+             border-accent border rounded-full"
+    >
+      {{ getInitials(ticket.assignee?.u_full_name ?? "") }}
+    </span>
+  </template>
+</div>
+
           </div>
         </div>
       </div>
@@ -289,6 +315,9 @@ watch(
     }
   }
 );
+function emitDeleteSingle(id: string, summary: string) {
+  emit("delete-selected-sprint", [id], summary);
+}
 </script>
 
 <style scoped>

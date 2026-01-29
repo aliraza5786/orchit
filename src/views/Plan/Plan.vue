@@ -651,7 +651,7 @@
                 @edit-sprint="openEditSprint"
                 @toggle-start="toggleStartSprint"
                 @move-selected-to-backlog="moveSelectedToBacklog"
-                @delete-selected-sprint="(id) => deleteSelected('sprint', id)"
+                @delete-selected-sprint="handleDeleteSelectedSprint"
                 @refresh="handleRefresh"
               />
               <div
@@ -759,7 +759,19 @@
         }
       "
     />
-    <!-- <TicketModal v-model="ticketModalOpen" :editing="!!editingTicket" :ticket="editingTicket" @save="handleSaveTicket" /> -->
+   <ConfirmDeleteSprint
+  v-model="showSprintDeleteTicket"
+  :title="`Delete ${title}`"
+  :itemLabel="sprintType"
+  :itemName="selectedSprint?.title"
+  :requireMatchText="selectedSprint?.title"
+  :confirmText="`Delete Ticket`"
+  cancelText="Cancel"
+  size="md"
+  :loading="isDeletingSprintTicket"
+  @confirm="handleConfirmDeleteSprint"
+  @cancel="resetDeleteState"
+/>
     <SprintModal
       v-model="sprintModalOpen"
       @save="saveSprintHandler"
@@ -796,6 +808,7 @@ import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
 import SearchBar from "../../components/ui/SearchBar.vue";
 import filter from "@assets/icons/filter.svg";
+import { useSidePanelStore } from "../../stores/sidePanelStore";
 import {
   useBacklogList,
   useCompleteSprint,
@@ -807,8 +820,9 @@ import {
   useSprintList,
   useStartSprint,
   useUpdateSprint,
+  useDeleteSprintCard
 } from "../../queries/usePlan";
-
+import ConfirmDeleteSprint from "./components/confirmDeleteTicket.vue";
 import { toast } from "vue-sonner";
 import { useWorkspaceId } from "../../composables/useQueryParams";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -821,18 +835,22 @@ import { useTheme } from "../../composables/useTheme";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 const { isDark } = useTheme();
 const showTaskModal = ref(false);
+const showSprintDeleteTicket = ref(false);
 const searchQuery = ref("");
 const checkedAll = ref(false);
 const checkedSprintAll = ref(false);
 import { usePermissions } from "../../composables/usePermissions";
 const { canCreateCard } = usePermissions();
 const showActiveSprint = ref(false);
+const selectedSprintIdForDelete = ref<string | null>(null);
+const selectedCardIdsForDelete = ref<string[]>([]);
 const elipseWrapperSprint = ref<HTMLElement | null>(null);
 const open = ref(false);
 const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
 const selectedFilter = ref<string | "">("");
 const isStartingSprintLoading = ref(false);
+const sidePanelStore = useSidePanelStore();
 const sprintTypes = [
   { label: "Milestone", value: "milestone", dot: "#7D68C8" },
   { label: "Sprint", value: "sprint", dot: "#7D68C8" },
@@ -844,6 +862,7 @@ const formattedLabel = computed(() => {
 });
 const selectedType = ref(sprintTypes[0]);
 import { onClickOutside } from "@vueuse/core";
+// import ConfirmDeleteTicket from "./components/confirmDeleteTicket.vue";
 const elipseWrapper = ref<HTMLElement | null>(null);
 const openElipseDrop = ref(false);
 onClickOutside(elipseWrapper, () => {
@@ -855,6 +874,7 @@ const closeModal = () => {
 };
 const handlePreviewClick = () => {
   showActiveSprint.value = true;
+  localStorage.setItem("activeSprintId", selectedSprintId.value || "");
 };
 const showTooltip = ref(false);
 
@@ -872,10 +892,51 @@ const {
   saveSprintMeta,
   toggleStartSprint,
 } = useBacklogStore();
+function handleConfirmDeleteSprint() {
+  if (!selectedSprintIdForDelete.value || !selectedCardIdsForDelete.value.length)
+    return;
+
+  selectedCardIdsForDelete.value.forEach((cardId) => {
+    deleteSprintCard({
+      sprintId: selectedSprintIdForDelete.value!,
+      cardId,
+    });
+  });
+
+  // close modal & reset state immediately
+  resetDeleteState();
+}
+function resetDeleteState() {
+  showSprintDelete.value = false;
+  selectedSprintIdForDelete.value = null;
+  selectedCardIdsForDelete.value = [];
+}
+const { mutate: deleteSprintCard, isPending: isDeletingSprintTicket } = useDeleteSprintCard({
+  onSuccess: () => {
+    // Update local store
+    deleteSelected("sprint", selectedSprintIdForDelete.value!);
+    showSprintDeleteTicket.value = false;
+    refetchSprintData();
+    // Reset modal state
+    resetDeleteState();
+  },
+});
+
+const title = ref("")
+function handleDeleteSelectedSprint(cardIds: string[], summary: string) {
+  if (!selectedSprintId.value || !cardIds.length) return;
+  console.log("Deleting selected sprint tickets:", cardIds, summary);
+  selectedSprintIdForDelete.value = selectedSprintId.value;
+  selectedCardIdsForDelete.value = cardIds;
+  title.value = summary;
+  showSprintDeleteTicket.value = true;
+}
+
 function selectMilestoneTab(tabId: string) {
   selectedFilter.value = tabId;
-
-  // 👇 this is the missing line
+  sidePanelStore.setActiveMilestoneId(tabId);
+  localStorage.setItem("activeMilestoneId", tabId);
+  localStorage.setItem("sprintType", "milestone");
   selectedHuddleModule.value = tabId || "all";
 
   isHuddleDropdownOpen.value = false;
@@ -884,19 +945,27 @@ function selectMilestoneTab(tabId: string) {
 function selectHuddleModule(moduleId: string) {
   selectedFilter.value = moduleId;
   selectedHuddleModule.value = moduleId;
-
+   sidePanelStore.setActiveMilestoneId(moduleId);
+   localStorage.setItem("activeMilestoneId", moduleId);
+   localStorage.setItem("sprintType", "huddle");
   isHuddleDropdownOpen.value = false;
 }
 
 function selectSprintTab(sprintId: string) {
   selectedFilter.value = sprintId;
+  sidePanelStore.setActiveMilestoneId(sprintId);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem("activeMilestoneId", sprintId);
+  }
+localStorage.setItem("sprintType", "sprint");
   isHuddleDropdownOpen.value = false;
 }
+
 
 const { data: backlogResp, refetch: refetchBackLogList } = useBacklogList(
   workspaceId,
   sprintType,
-  selectedFilter
+  selectedFilter,
 );
 watch(selectedFilter, () => {
   refetchBackLogList();
@@ -989,7 +1058,8 @@ watch(
 );
 const { refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(
   workspaceId,
-  sprintType
+  sprintType,
+  ref(""),
 );
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
 const selectedSprintId = ref(firstSprintId.value);

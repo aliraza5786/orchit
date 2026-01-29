@@ -96,6 +96,21 @@ export const useSprintDetail = (id: any, options = {}) => {
     ...options,
   });
 };
+export const useDeleteSprintCard = (options = {}) =>
+  useApiMutation<any, { sprintId: string; cardId: string }>(
+    {
+      key: ["delete-sprint-card"],
+    } as any,
+    {
+      mutationFn: (vars: { sprintId: string; cardId: string }) =>
+        request({
+          url: `sprints/${unref(vars.sprintId)}/cards/${unref(vars.cardId)}`,
+          method: "DELETE",
+        }),
+      ...(options as any),
+    } as any
+  );
+
 export const useBacklogList = (
   workspaceId: Ref<string> | string,
   sprintType: Ref<string> | string,

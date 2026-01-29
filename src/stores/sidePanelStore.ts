@@ -11,6 +11,7 @@ export const useSidePanelStore = defineStore("sidePanel", {
     selectedCardTitle:"",
     selectedCardId: "",
     cardDetails:[] as any[],
+    selectedMilestoneId: "" as string,
   }),
 
   getters: {
@@ -88,5 +89,8 @@ updateCardTitleOptimistic(newTitle: string) {
     saveCardDetails(card:any){
       
       this.cardDetails=card;
+    },
+    setActiveMilestoneId(milestoneId: string) {
+      this.selectedMilestoneId = milestoneId;   
     }
 }});

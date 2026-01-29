@@ -158,7 +158,8 @@ const module_id = ref<string | number | null>(props.moduleId ?? null);
 const { data: backlogResp, isPending: isBacklogListPending } = useBacklogList(
   workspaceId,
   props.sprintType,
-  module_id
+  module_id,
+  false
 );
 
 const normalizedBacklog = ref<Ticket[]>([]);

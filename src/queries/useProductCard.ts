@@ -166,6 +166,7 @@ export const useProductVarsData = (
   var_slug: any,
   options = {}
 ) => {
+  console.log("Function triggered");
   return useQuery({
     queryKey: [`product-var-data`, module_id, ws_id, var_slug],
     queryFn: ({ signal }) =>
