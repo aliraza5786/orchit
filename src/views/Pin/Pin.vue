@@ -23,6 +23,7 @@
         <KanbanSkeleton v-show="isListPending" />
 
         <!-- Kanban Board -->
+        
         <div v-show="!isListPending" class="flex overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
                 @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
@@ -166,9 +167,17 @@ const { data: Lists, isPending: isListPending, refetch: refetchList } = useSheet
     selected_view_by
 );
 
-watch(Lists, () => (localList.value = JSON.parse(JSON.stringify(Lists.value || []))
-));
-onMounted(() => (localList.value = JSON.parse(JSON.stringify(Lists.value || []))));
+watch(Lists, (newLists) => {
+  localList.value = Array.isArray(newLists) 
+    ? JSON.parse(JSON.stringify(newLists)) 
+    : []
+});
+
+onMounted(() => {
+  localList.value = Array.isArray(Lists.value)
+    ? JSON.parse(JSON.stringify(Lists.value))
+    : []
+});
 
 // Add List Logic
 const { mutate: addList, isPending: addingList } = useAddList({
@@ -335,19 +344,63 @@ const debouncedQuery = ref('')
 
 watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
 // computed filtered board
-
 const fuse = computed(() => {
-  const allCards = localList.value.flatMap((col:any) => col.cards.map((card:any) => ({ ...card, columnId: col.title })))
-  return new Fuse(allCards, { keys: ['card-title', 'card-description'], threshold: 0.3 })
-})
+  const lists = Array.isArray(Lists.value?.pages?.[0]?.data)
+    ? Lists.value.pages[0].data
+    : [];
+   console.log("lists data", lists);
+   
+  const allCards = lists.flatMap((col: any) =>
+    (col.cards || []).map((card: any) => ({
+      ...card,
+      columnId: col.title,
+      'card-title': card['card-title'] || '',        // <- top-level now
+      'card-description': card['card-description'] || '' // <- top-level
+    }))
+  );
+
+  return new Fuse(allCards, {
+    keys: ['card-title', 'card-description'],
+    threshold: 0.3
+  });
+});
+
 
 const filteredBoard = computed(() => {
-  if (!searchQuery.value) return localList.value
-  const results = fuse.value.search(searchQuery.value).map((r :any)=> r.item)
-  return localList.value.map((col:any) => ({
-    ...col,
-    cards: results.filter((c:any) => c.columnId === col.title)
-  }))
-})
+  const lists = Array.isArray(Lists.value?.pages?.[0]?.data)
+    ? Lists.value.pages[0].data
+    : [];
+
+  if (!searchQuery.value) {
+    return lists.map((col: any) => ({
+      ...col,
+      cards: (col.cards || []).map((card: any) => ({
+        _id: card._id,
+        'card-title': card['card-title'],           // include title
+        'card-description': card['card-description'], // include description
+        created_at: card.created_at,
+        'card-code': card['card-code'],
+        variables: card.variables || {},
+      }))
+    }));
+  }
+
+  const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
+
+  return lists.map((col: any) => {
+    const filteredCards = results
+      .filter((c: any) => c.columnId === col.title)
+      .map((card: any) => ({
+        _id: card._id,
+        'card-title': card['card-title'],           // include title
+        'card-description': card['card-description'], // include description
+        created_at: card.created_at,
+        'card-code': card['card-code'],
+        variables: card.variables || {},
+      }));
+
+    return { ...col, cards: filteredCards };
+  });
+});
 
 </script>
