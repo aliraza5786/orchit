@@ -135,11 +135,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useDeleteWorkspaceLane, useDuplicateWorkspaceLane, useUpdateWorkspaceLane } from '../../../queries/useLane'
-import { useQueryClient } from '@tanstack/vue-query'
-// import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { useQueryClient } from '@tanstack/vue-query' 
 import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
 import { usePermissions } from '../../../composables/usePermissions'
+import { useWorkspaceStore } from "../../../stores/workspace";
 const { canEditLane, canCreateLane, canDeleteLane } = usePermissions()
+const workspaceStore = useWorkspaceStore() // <- Pinia store
 const showDelete = ref(false)
 const queryClient = useQueryClient()
 const colors = [
@@ -230,17 +231,20 @@ function selectColor(color: any) {
 }
 const handleUpdateLane = (payload: any) => {
   if (!canEditLane.value) return
+  // Update locally first
+  workspaceStore.updateLaneLocal(String(props.id), payload.variables || payload);
   updateLane({ payload: { ...payload, lane_id: props.id } })
 }
 
 const handleDuplicateLane = () => {
   if (!canCreateLane.value) return
   duplicateLane({ id: props.id });
-
 }
 const handleDelete = () => {
   if (!canEditLane.value) return
   isOpen.value = false;
+  // Delete locally in store first
+  workspaceStore.deleteLaneLocal(String(props.id));
   deleteLane({ id: props.id });
 }
 const emit = defineEmits(['update', 'duplicate'])

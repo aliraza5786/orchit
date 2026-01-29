@@ -1,12 +1,8 @@
 <template>
     <BaseModal v-model="workspaceStore.showUpdateLaneModal" modalClass="!py-0" size="lg">
-        <div v-if="isFetching || isLanePending" class="flex justify-center min-h-[400px] items-center h-full w-full">
+       
 
-            <div role="status" aria-label="Loading"
-                class="h-10 w-10 rounded-full border-4 border-neutral-700 border-t-transparent animate-spin"></div>
-        </div>
-
-        <div v-else>
+        <div>
             <div
                 class="sticky flex-col top-0 backdrop-blur-3xl z-1 flex justify-between pt-6 items-start bg-light-black px-6 border-b border-border pb-4 mb-4">
                 <h2 class="text-xl font-semibold">Update Tab</h2>
@@ -85,7 +81,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 // import Stepper from '../../../components/ui/Stepper.vue'
@@ -95,8 +91,8 @@ import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import Button from '../../../components/ui/Button.vue'
 import { useWorkspaceStore } from '../../../stores/workspace'
 // import { usePlatforms, useTechnologies, useUserType } from '../../../queries/useWorkspace'
-import { useUpdateWorkspaceLane, useWorkspaceLane } from '../../../queries/useLane'
-import { watch } from 'vue'
+import { useUpdateWorkspaceLane } from '../../../queries/useLane'
+ 
 
 const props = defineProps<{ id: string }>()
 const workspaceStore = useWorkspaceStore()
@@ -148,9 +144,10 @@ const predefinedColors = [
     { label: 'Slate Gray', value: '#64748B' },
 ]
 
-const { data: lane, isFetching, isPending: isLanePending } = useWorkspaceLane(props.id, {
-    enabled: !!props.id // only fetch when id is truthy
-})
+ 
+const lane = computed(() =>
+  workspaceStore.lanes.find(l => l.id === props.id || l._id === props.id)
+)
 
 const { mutate: updateLane, isPending: isLaneUpdateing } = useUpdateWorkspaceLane({
     onSuccess: () => {
@@ -196,9 +193,13 @@ const nextStep = () => {
         alert('Please select a color')
         return
     }
-
-
-
+    //Update lane locally first
+    workspaceStore.updateLaneLocal(props.id, {
+    'lane-title': form.value.title,
+    'lane-description': form.value.description,
+    'lane-color': form.value.color_code
+    })
+    console.log(props.id, 'lane id')
 
     updateLane({
         payload:

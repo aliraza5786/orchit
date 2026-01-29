@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 // Define types for state
 interface WorkspaceState {
   workspace: any;
+  lanes: any[]; 
   showSettingPanel: boolean;
   showCreateLaneModal: boolean;
   showUpdateLaneModal: boolean;
@@ -23,6 +24,7 @@ export const useWorkspaceStore = defineStore("workspace", {
   state: (): WorkspaceState => ({
     showLimitExccedModal: false,
     workspace: null,
+    lanes: [],
     showSettingPanel: false,
     showCreateLaneModal: false,
     showCreateLaneModalWithAI: false,
@@ -53,6 +55,34 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     setWorkspace(i: any) {
       this.workspace = i;
+    },
+    setLanes(i:any){
+       this.lanes= i;
+    },
+      // ---- Local lane update ----
+    updateLaneLocal(laneId: string, updatedData: Partial<any>) {
+      const index = this.lanes.findIndex(
+        (l: any) => l.id === laneId || l._id === laneId
+      );
+      if (index !== -1) {
+        this.lanes[index] = {
+          ...this.lanes[index],
+          ...updatedData
+        };
+      }
+    },
+
+    // ---- Local lane delete ----
+    deleteLaneLocal(laneId: string) {
+      this.lanes = this.lanes.filter(
+        (l: any) => l.id !== laneId && l._id !== laneId
+      );
+
+      // Also remove from selectedLaneIds if selected
+      const selectedIndex = this.selectedLaneIds.indexOf(laneId);
+      if (selectedIndex !== -1) {
+        this.selectedLaneIds.splice(selectedIndex, 1);
+      }
     },
     toggleSettingPanel() {
       this.showProfilePanel = false;

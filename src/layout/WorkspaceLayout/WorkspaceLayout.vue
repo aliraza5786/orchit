@@ -60,9 +60,12 @@ watch(
 
     // shallow clone so local edits don’t mutate query cache
     localWorkspace.value = { ...newWorkspace };
+    workspaceStore.setWorkspace(newWorkspace);
+    workspaceStore.setLanes(newWorkspace?.lanes);
   },
   { immediate: true }
 );
+ 
 
 const workspaceNavRef = ref<any>(null);
 const isDrawerOpen = ref(true)

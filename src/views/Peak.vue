@@ -233,6 +233,7 @@ import type { TeamWorkloadMember } from '../types'
 import { useTheme } from "../composables/useTheme"; 
 import { formatDateTime } from "../utilities/FormatDate";
 import { useWorkspaceStore } from "../stores/workspace";
+import { keys } from '../queries/useWorkspace'
 
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
@@ -249,11 +250,11 @@ const {
   refetch: refetchTeams
 } = useDashboardTeams(workspaceId)
 const { data: dashboardActiviesData } = useDashboardActivities(workspaceId)
-const { data: workspaceData } = useSingleWorkspace(workspaceId)
+const workspace = computed(() => workspaceStore.workspace)
 
 const lastUpdateDate = computed(() => {
   const activities = dashboardActiviesData.value?.activities
-  const workspaceCreatedAt = workspaceStore.workspace?.created_at || workspaceData.value?.created_at
+  const workspaceCreatedAt = workspaceStore.workspace?.created_at || workspace.value?.created_at
   
   if (activities?.length) {
     return activities[0].created_at || workspaceCreatedAt
@@ -381,6 +382,8 @@ const lanes2 = computed<LaneProgressRow[]>(
   () => taskProgress.value?.progress_details?.lanes_progress ?? []
 )
 
+ 
+
 
 
 const avatars = [
@@ -468,6 +471,28 @@ watch([workspaceId, jobId], () => {
   disconnect()
   connect()
 })
+
+ 
+
+watch(
+  () =>
+    queryClient.getQueryState(
+      keys.singleWorkspace(workspaceId.value)
+    )?.dataUpdatedAt,
+  (updatedAt, prev) => {
+    if (!updatedAt || updatedAt === prev) return
+
+    // 🔴 reset stream
+    disconnect()
+
+    // clear previous progress
+    taskProgress.value = null
+
+    // 🟢 reconnect fresh stream
+    connect()
+  }
+)
+
 </script>
 
 
