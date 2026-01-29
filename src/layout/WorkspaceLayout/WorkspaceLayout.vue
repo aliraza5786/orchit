@@ -8,10 +8,10 @@
       backgroundSize: '110%',
       backgroundPosition: 'center'
     }">
-    <WorkSpaceNav :getWorkspace="getWorkspace" ref="workspaceNavRef" @toggle-sidebar="toggleSidebar" :expanded="sidebarExpanded" />
+    <WorkSpaceNav  ref="workspaceNavRef"   :expanded="sidebarExpanded" />
     <div class="flex flex-grow items-start h-full max-w-full overflow-x-hidden "
       style="max-height:calc(100dvh - 55px);">
-        <Sidebar v-if="localWorkspace" :workspace="localWorkspace" :isLoading="isPending || isLoading"
+        <Sidebar v-if="localWorkspace"   :isLoading="isPending || isLoading"
        :expanded="sidebarExpanded" @toggle-sidebar="toggleSidebar" />
        <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
         :style="dashboardContentStyle"

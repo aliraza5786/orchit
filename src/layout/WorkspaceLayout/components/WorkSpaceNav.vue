@@ -12,11 +12,11 @@
     >
       <!-- Logo + Title (now a dropdown trigger) -->
       <div class="relative flex items-center ps-3.5 sm:ps-2">
-        <div :class="expanded ? 'w-[235px]' : 'w-auto'">
+        <div :class="props.expanded ? 'w-[235px]' : 'w-auto'">
           <button
             ref="logoBtnRef"
             class="flex items-center justify-between cursor-pointer rounded-md w-full"
-            :class="expanded? 'border-border-input  hover:shadow-md px-2 py-1 border hover:border-accent':''"
+            :class="props.expanded? 'border-border-input  hover:shadow-md px-2 py-1 border hover:border-accent':''"
             aria-haspopup="menu"
             :aria-expanded="logoMenuOpen ? 'true' : 'false'"
             @click="toggleLogoMenu"
@@ -44,7 +44,7 @@
                     class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover shrink-0"
                   />
                   <h3
-                    v-if="expanded"
+                    v-if="props.expanded"
                     class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
                   >
                     {{ localWorkspace.variables.title }}
