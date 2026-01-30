@@ -455,7 +455,7 @@
     v-if="showMenu"
     class="absolute right-0 mt-2 w-28 bg-bg-dropdown border border-border rounded-md shadow-lg z-50"
   >
-    <!-- <div
+    <div
       class="px-3 py-2 text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover"
       @click="onUpdate"
     >
@@ -463,7 +463,7 @@
       <span>Update</span>
       <i class="fa-light fa-pen mt-0.5"></i>
     </div>
-    </div> -->
+    </div>
     <div
       class="px-3 py-2 text-sm text-red-500 cursor-pointer hover:bg-bg-dropdown-menu-hover"
       @click="onDelete"
@@ -1519,9 +1519,10 @@ const showMenu = ref(false);
 const toggleMenu = () => {
   showMenu.value = !showMenu.value;
 };
-// const onUpdate = () => {
-//   showMenu.value = false;
-// };
+const onUpdate = () => {
+  showMenu.value = false;
+  // handle update logic here
+};
 
 function onDelete() {
   if (!selectedSprintTicketIds.value.length) return;

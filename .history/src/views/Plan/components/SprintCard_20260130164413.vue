@@ -53,53 +53,61 @@
 
             <!-- Assignee -->
             <div class="flex-shrink-0">
-           <!-- Assignee -->
-<div class="flex-shrink-0">
-  <!-- Unassigned -->
-  <span
-    v-if="ticket?.assignee === 'Unassigned'"
-    class="flex justify-center text-gray-500 items-center text-[11px]
-           aspect-square w-[24px] h-[24px] bg-bg-body rounded-full
-           border-border-input border-2"
+  <!-- SHOW DELETE BUTTON WHEN CHECKED -->
+  <!-- <button
+    v-if="selectedIds.includes(ticket.id)"
+    class="w-6 h-6 flex items-center justify-center rounded-full
+           text-red-500 hover:bg-red-500/10 transition"
+    title="Remove from sprint"
+    @click.stop="emitDeleteSingle(ticket.id, ticket.summary)"
   >
-    UA
-  </span>
+    <i class="fa-solid fa-xmark text-sm"></i>
+  </button> -->
 
-  <!-- Avatar -->
-  <div
-    v-else-if="ticket.image"
-    class="w-6 h-6 rounded-full overflow-hidden"
-  >
-    <img
-      :src="ticket.image"
-      alt=""
-      class="w-full h-full object-cover"
-    />
-  </div>
-
-  <!-- Initials + Tooltip -->
-  <span
-    v-else
-    class="relative text-[11px] aspect-square w-[24px] h-[24px]
-           flex justify-center items-center bg-accent/30 text-accent
-           border-accent border rounded-full cursor-default"
-    @mouseenter="hoveredAssignee = ticket.assignee?.name || ticket.assignee || ''"
-    @mouseleave="hoveredAssignee = null"
-  >
-    {{ getInitials(ticket.assignee ?? "") }}
-
-    <!-- Tooltip (large devices only) -->
-    <div
-      v-if="hoveredAssignee"
-      class="hidden lg:block absolute top-full mt-1 right-1/2 translate-x-1/2
-             bg-bg-card text-text-primary text-xs px-2 py-1 rounded shadow
-             whitespace-nowrap z-50"
+  <!-- SHOW ASSIGNEE WHEN NOT CHECKED -->
+  <template v-if="!selectedIds">
+    <span
+      v-if="ticket?.assignee === 'Unassigned'"
+      class="flex justify-center text-gray-500 items-center text-[11px]
+             aspect-square w-[24px] h-[24px] bg-bg-body rounded-full
+             border-border-input border-2"
     >
-      {{ hoveredAssignee }}
-    </div>
-  </span>
-</div>
+      UA
+    </span>
 
+    <div
+      v-else-if="ticket.image"
+      class="w-6 h-6 rounded-full overflow-hidden"
+    >
+      <img
+        :src="ticket?.image"
+        alt=""
+        class="w-full h-full object-cover"
+      />
+    </div>
+
+    <span
+  v-else
+  class="relative text-[11px] aspect-square w-[24px] h-[24px]
+         flex justify-center items-center bg-accent/30 text-accent
+         border-accent border rounded-full cursor-default"
+  @mouseenter="hoveredAssignee = ticket.assignee?.name || ticket.assignee || ''"
+  @mouseleave="hoveredAssignee = null"
+>
+  {{ getInitials(ticket.assignee ?? "") }}
+
+  <!-- Tooltip (large devices only) -->
+  <div
+    v-if="hoveredAssignee"
+    class="hidden lg:block absolute top-full -mt-4 right-1/2 translate-x-[-25%]
+           bg-bg-card text-text-primary text-xs px-2 py-1 rounded shadow
+           whitespace-nowrap z-50"
+  >
+    {{ hoveredAssignee }}
+  </div>
+</span>
+
+  </template>
 </div>
 
           </div>
@@ -156,7 +164,6 @@ const emit = defineEmits([
   "delete-selected-sprint",
   "refresh",
   "checked-change",
-  "selection-change",
 ]);
 
 // Tickets state
@@ -175,7 +182,6 @@ watch(
   selectedIds,
   (val) => {
     emit("checked-change", val.length > 0);
-    emit("selection-change", val);
   },
   { deep: true }
 );
@@ -331,7 +337,9 @@ watch(
     }
   }
 );
-
+function emitDeleteSingle(id: string, summary: string) {
+  emit("delete-selected-sprint", [id], summary);
+}
 </script>
 
 <style scoped>

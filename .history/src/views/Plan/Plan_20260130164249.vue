@@ -455,7 +455,7 @@
     v-if="showMenu"
     class="absolute right-0 mt-2 w-28 bg-bg-dropdown border border-border rounded-md shadow-lg z-50"
   >
-    <!-- <div
+    <div
       class="px-3 py-2 text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover"
       @click="onUpdate"
     >
@@ -463,7 +463,7 @@
       <span>Update</span>
       <i class="fa-light fa-pen mt-0.5"></i>
     </div>
-    </div> -->
+    </div>
     <div
       class="px-3 py-2 text-sm text-red-500 cursor-pointer hover:bg-bg-dropdown-menu-hover"
       @click="onDelete"
@@ -689,7 +689,6 @@
                 @delete-selected-sprint="handleDeleteSelectedSprint"
                 @refresh="handleRefresh"
                 @checked-change="isSprintChecked = $event"
-                @selection-change="selectedSprintTicketIds = $event"
               />
               <div
                 v-if="sprintDetailData?.status?.toString().trim().toLowerCase() === 'completed'"
@@ -889,7 +888,6 @@ const selectedFilter = ref<string | "">("");
 const isStartingSprintLoading = ref(false);
 const sidePanelStore = useSidePanelStore();
 const isSprintChecked = ref(false);
-const selectedSprintTicketIds = ref<string[]>([]);
 const sprintTypes = [
   { label: "Milestone", value: "milestone", dot: "#7D68C8" },
   { label: "Sprint", value: "sprint", dot: "#7D68C8" },
@@ -1519,20 +1517,15 @@ const showMenu = ref(false);
 const toggleMenu = () => {
   showMenu.value = !showMenu.value;
 };
-// const onUpdate = () => {
-//   showMenu.value = false;
-// };
-
-function onDelete() {
-  if (!selectedSprintTicketIds.value.length) return;
-
-  handleDeleteSelectedSprint(
-    selectedSprintTicketIds.value,
-    `${selectedSprintTicketIds.value.length} ticket(s)`
-  );
-
+const onUpdate = () => {
   showMenu.value = false;
-}
+  // handle update logic here
+};
+
+const onDelete = () => {
+  showMenu.value = false;
+  // handle delete logic here
+};
 
 </script>
 

@@ -505,7 +505,7 @@
     v-if="createTeamModal"
     key="createTaskModalKey"
     v-model="createTeamModal"
-    @submit="handleTaskCreated"
+    @submit=""
   />
   <SidePanel
     v-if="selectedCard?._id"
