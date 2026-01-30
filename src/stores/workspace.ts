@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 // Define types for state
 interface WorkspaceState {
   workspace: any;
+  singleWorkspace: any,
   lanes: any[]; 
   showSettingPanel: boolean;
   showCreateLaneModal: boolean;
@@ -24,6 +25,7 @@ export const useWorkspaceStore = defineStore("workspace", {
   state: (): WorkspaceState => ({
     showLimitExccedModal: false,
     workspace: null,
+    singleWorkspace: null,
     lanes: [],
     showSettingPanel: false,
     showCreateLaneModal: false,
@@ -55,6 +57,12 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     setWorkspace(i: any) {
       this.workspace = i;
+      if (i && i.lanes) {
+        this.lanes = i.lanes;
+      }
+    },
+     setSingleWorkspace(i: any) {
+      this.singleWorkspace = i;
       if (i && i.lanes) {
         this.lanes = i.lanes;
       }

@@ -148,7 +148,7 @@ const props = defineProps<{
 }>(); 
 const { isLoading, expanded } = props;
 // Use store data for workspace
-const workspace = computed(() => workspaceStore.workspace);
+const workspace = computed(() => workspaceStore.singleWorkspace);
 
 const filteredModules = computed(() => {
   if (!workspace.value?.modules) return [];

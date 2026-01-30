@@ -234,7 +234,7 @@ const laneId = ref("");
 const { workspaceId } = useWorkspaceId();
 
 // Use computed from store instead of local ref
-const localWorkspace = computed(() => workspaceStore.workspace); 
+const localWorkspace = computed(() => workspaceStore.singleWorkspace); 
 // Computed lanes from store
 const localLanes = computed(() => workspaceStore.lanes || []); 
 const isWorkspaceLoading = computed(() => {
@@ -269,7 +269,7 @@ const duplicateHandler = (data: any) => {
     ...localWorkspace.value,
     lanes: [...localWorkspace.value.lanes, data],
   };
-  workspaceStore.setWorkspace(updatedWorkspace);
+  workspaceStore.setSingleWorkspace(updatedWorkspace);
   workspaceStore.setLanes([...localLanes.value, data]);
 };
 
