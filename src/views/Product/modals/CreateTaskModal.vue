@@ -112,61 +112,18 @@
           />
         </div>
       </div>
-      <div v-if="route.path.includes('/plan')">
-        <p>Select Sheet</p>
-       <div class="border border-border rounded-lg h-fit mt-16 sm:mt-0 bg-card relative">
-        
-  <!-- Select trigger -->
-  <button
-    class="w-full flex items-center justify-between px-4 py-2 rounded-lg bg-card border border-border"
-    @click="isOpenSelect = !isOpenSelect"
-  >
-    <span class="truncate">
-     {{ selected_sheet_id ? transformedData.find(opt => opt._id === selected_sheet_id)?.title || 'Select Sheet' : 'Select Sheet' }}
-    </span>
-    <i class="fa-solid fa-chevron-down text-xs"></i>
-  </button>
-
-  <!-- Options -->
-  <div
-    v-if="isOpenSelect"
-    class="absolute z-50 mt-2 w-full bg-card border border-border rounded-lg shadow-lg"
-  >
-    <div
-      v-for="option in transformedData"
-      :key="option._id"
-      class="flex items-center justify-between px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer"
-      @click="selectOption(option)"
-    >
-      <span class="truncate">{{ option.title }}</span>
-
-      <!-- Actions -->
-      <div class="flex gap-2">
-        <i
-          v-if="canEditSheet"
-          class="fa-solid fa-pen text-xs hover:text-primary"
-          @click.stop="openEditSprintModal(option)"
-        ></i>
-
-        <i
-          v-if="canDeleteSheet"
-          class="fa-solid fa-trash text-xs hover:text-destructive"
-          @click.stop="handleDeleteSheetModal(option)"
-        ></i>
-      </div>
-    </div>
-
-    <!-- Add new -->
-    <div
-      v-if="canCreateSheet"
-      class="border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1"
-      @click="createSheet"
-    >
-      <i class="fa-solid fa-plus"></i> Add new
-    </div>
-  </div>
+      <div v-if="route.path.includes('/plan')" class="flex flex-col">
+  <BaseSelectField
+    size="md"
+    label="Select Sheet"
+    placeholder="Select Sheet"
+    :options="sheetOptions"
+    :model-value="selected_sheet_id"
+    :allowCustom="false"
+    @update:modelValue="onSheetChange"
+  />
 </div>
-      </div>
+
 
     </div>
 
@@ -207,9 +164,7 @@ import { useQueryClient } from "@tanstack/vue-query";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useSprintKanban } from "../../../queries/usePlan"
 import { useRoute } from "vue-router";
-const { canCreateCard, canEditSheet,
-  canDeleteSheet,
-  canCreateSheet, } = usePermissions();
+const { canCreateCard } = usePermissions();
 const route = useRoute();
 /** Emits */
 const emit = defineEmits<{
@@ -243,6 +198,8 @@ const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
 const { refetch: refetchSheetLists, } = useSprintKanban(
   localStorage.getItem("activeSprintId") || "",
 );
+
+
 /** Lanes */
 type Lane = { _id: string | number; variables?: Record<string, any> };
 const { data: lanes } = useLanes(workspaceId.value);
@@ -264,10 +221,7 @@ const {
   workspace_module_id: module_id,
 });
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
-
 const selected_sheet_id = ref<any>(sheetId.value);
-const isCreateSheetModal = ref(false);
-const selectedSheettoAction = ref<any>();
 const resolvedSheetId = computed(() => {
   return props.sheet_id || selected_sheet_id.value || ''
 })
@@ -394,10 +348,6 @@ interface DropdownOption {
   status:string
 }
 
-function openEditSprintModal(opt: any) {
-  isCreateSheetModal.value = true;
-  selectedSheettoAction.value = opt;
-}
 const transformedData = computed<DropdownOption[]>(() => {  
   return (data.value || []).map((item: any) => ({
     _id: item._id,
@@ -407,22 +357,6 @@ const transformedData = computed<DropdownOption[]>(() => {
     status: item?.generation_status || localStorage.getItem("selectedStatusTitle"),
   }));
 });
-const isOpenSelect = ref(false);
-
-const selectOption = (option: any) => {
-  console.log("Selected option:", option);
-  selected_sheet_id.value = option._id;
-};
-
-const showDeleteModal = ref(false);
-function handleDeleteSheetModal(opt: any) {
-  showDeleteModal.value = true;
-  selectedSheettoAction.value = opt;
-}
-const createSheet = () => {
-  selectedSheettoAction.value = {};
-  isCreateSheetModal.value = !isCreateSheetModal.value;
-};
 
 /** Actions */
 function cancel() {
@@ -553,4 +487,16 @@ watch(laneOptions, (options) => {
     if (mainLane) form.lane_id = mainLane._id;
   }
 }, { immediate: true });
+
+const sheetOptions = computed(() =>
+  transformedData.value.map(sheet => ({
+    _id: sheet._id,
+    title: sheet.title,
+  }))
+);
+
+const onSheetChange = (sheetId: SelectValue) => {
+  selected_sheet_id.value = sheetId;
+};
+
 </script>

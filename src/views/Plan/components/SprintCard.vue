@@ -76,11 +76,11 @@
     </span>
 
     <div
-      v-else-if="ticket.assignee?.u_profile_image"
+      v-else-if="ticket.image"
       class="w-6 h-6 rounded-full overflow-hidden"
     >
       <img
-        :src="ticket.assignee.u_profile_image"
+        :src="ticket?.image"
         alt=""
         class="w-full h-full object-cover"
       />
@@ -92,7 +92,7 @@
              flex justify-center items-center bg-accent/30 text-accent
              border-accent border rounded-full"
     >
-      {{ getInitials(ticket.assignee?.u_full_name ?? "") }}
+      {{ getInitials(ticket.assignee ?? "") }}
     </span>
   </template>
 </div>

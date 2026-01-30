@@ -1,6 +1,6 @@
 <template>
   <div class="" @scroll="onScroll">
-    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ps-4 mb-5 ">
+    <div class="kanban-table space-y-4 mt-4 overflow-y-auto overflow-x-auto ps-4 mb-5 ">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
              bg-bg-body/20 text-sm
@@ -132,24 +132,56 @@
         </template>
 
         <!-- ADD NEW ROW FOOTER -->
-        <tr v-if="!hasActiveEmptyRow && canCreate" @click="insertEmptyRow(tickets?.length)" class=" bg-bg-surface border-t border-border cursor-pointer
-                 transition hover:bg-bg-body" @mouseenter="hoverIndex = tickets?.length"
-          @mouseleave="hoverIndex = null">
-          <td :colspan="footerColspan" class=" text-text-secondary h-8 px-3">
-            <span class="inline-flex w-5 h-5 border border-border-input rounded-full 
-                     justify-center items-center text-secondary
-                     hover:bg-bg-surface/50 transition pb-0.5">+</span> Add New Row
-          </td>
-        </tr>
+       <tr
+  v-if="!hasActiveEmptyRow && canCreate"
+  @click="onAddNewRow"
+  class="bg-bg-surface border-t border-border cursor-pointer
+         transition hover:bg-bg-body"
+  @mouseenter="hoverIndex = tickets?.length"
+  @mouseleave="hoverIndex = null"
+>
+  <td :colspan="footerColspan" class="text-text-secondary h-8 px-3">
+    <span
+      class="inline-flex w-5 h-5 border border-border-input rounded-full 
+             justify-center items-center text-secondary
+             hover:bg-bg-surface/50 transition pb-0.5"
+    >
+      +
+    </span>
+    Add New Row
+  </td>
+</tr>
+
       </tbody>
     </table>
+    <CreateTaskModal
+  v-if="createTeamModal && route.path.includes('/plan')"
+  v-model="createTeamModal"
+  :selectedVariable="selected_view_by"
+  :listId="localColumnData?.title"
+  :sheet_id="selected_sheet_id"
+/>
+
   </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { reactive, ref, nextTick, computed, watch, h, onUnmounted } from 'vue'
-
+import CreateTaskModal from '../../../views/Product/modals/CreateTaskModal.vue';
+import { useRouteIds } from '../../../composables/useQueryParams';
+import { useVariables, useSheets } from '../../../queries/useSheets';
+import { useRoute } from "vue-router";
+const route = useRoute();
+const createTeamModal = ref(false);
+const localColumnData = ref();
+const { workspaceId } = useRouteIds();
+const selected_module_id = ref<string>("");
+function onAddNewRow() {
+  if (route.path.includes("/plan")) {
+    createTeamModal.value = true;
+  }
+}
 interface Column {
   key: string
   label: string
@@ -170,7 +202,24 @@ const props = withDefaults(defineProps<{
   canCreateVariable: true,
   canDelete: false
 })
+const { data: sheets } = useSheets(
+  {
+    workspace_id: workspaceId.value,
+    workspace_module_id: selected_module_id,
+  },
+  
+)
+const sheetId = computed(() => (sheets.value ? sheets.value[0]?._id : ""));
+const selected_sheet_id = ref<any>(sheetId);
+const { data: variables } = useVariables(
+  workspaceId,
+  selected_module_id,
+  selected_sheet_id
+);
+const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
 
+
+const selected_view_by = ref(viewBy);
 const emit = defineEmits<{
   (e: 'update:rows', val: Row[]): void
   (e: 'create', val: any): void
