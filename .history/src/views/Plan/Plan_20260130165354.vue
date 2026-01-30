@@ -1519,9 +1519,10 @@ const showMenu = ref(false);
 const toggleMenu = () => {
   showMenu.value = !showMenu.value;
 };
-// const onUpdate = () => {
-//   showMenu.value = false;
-// };
+const onUpdate = () => {
+  showMenu.value = false;
+  // handle update logic here
+};
 
 function onDelete() {
   if (!selectedSprintTicketIds.value.length) return;

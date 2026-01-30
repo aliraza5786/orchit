@@ -1120,8 +1120,8 @@ const plusHandler = (e: any) => {
   localColumnData.value = e;
   localStorage.setItem("selectedStatusTitle", e?.title);
 };
-const handleTaskCreated = async () => {
-  await refetchSheetLists();
+const handleTaskCreated = async (newTicket: any) => {
+  refetchSheetLists();
 };
 const selectedSheettoAction = ref<any>();
 function handleDeleteSheetModal(opt: any) {

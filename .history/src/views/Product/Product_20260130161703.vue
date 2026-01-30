@@ -1120,8 +1120,45 @@ const plusHandler = (e: any) => {
   localColumnData.value = e;
   localStorage.setItem("selectedStatusTitle", e?.title);
 };
-const handleTaskCreated = async () => {
-  await refetchSheetLists();
+const handleTaskCreated = async (newTicket: any) => {
+  if (!newTicket) return;
+  
+  const targetColumnTitle = localColumnData.value?.title;
+  
+  // Update the query cache directly
+  const queryKey = ['sheetList', moduleId.value, selected_sheet_id.value];
+  
+  queryClient.setQueryData(queryKey, (oldData: any) => {
+    if (!oldData?.pages) return oldData;
+    
+    return {
+      ...oldData,
+      pages: oldData.pages.map((page: any, index: number) => {
+        // Only update the first page
+        if (index === 0) {
+          return {
+            ...page,
+            data: page.data.map((col: any) => {
+              if (col.title === targetColumnTitle) {
+                return {
+                  ...col,
+                  cards: [newTicket, ...(col.cards || [])]
+                };
+              }
+              return col;
+            })
+          };
+        }
+        return page;
+      })
+    };
+  });
+  
+  // Close modal
+  createTeamModal.value = false;
+  
+  // Optional: Silent refetch in background to sync
+  refetchSheetLists();
 };
 const selectedSheettoAction = ref<any>();
 function handleDeleteSheetModal(opt: any) {

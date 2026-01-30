@@ -505,7 +505,7 @@
     v-if="createTeamModal"
     key="createTaskModalKey"
     v-model="createTeamModal"
-    @submit="handleTaskCreated"
+    @submit=""
   />
   <SidePanel
     v-if="selectedCard?._id"
@@ -1118,11 +1118,8 @@ const deleteHandler = (e: any) => {
 const plusHandler = (e: any) => {
   createTeamModal.value = true;
   localColumnData.value = e;
-  localStorage.setItem("selectedStatusTitle", e?.title);
 };
-const handleTaskCreated = async () => {
-  await refetchSheetLists();
-};
+
 const selectedSheettoAction = ref<any>();
 function handleDeleteSheetModal(opt: any) {
   showDeleteModal.value = true;

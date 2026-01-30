@@ -156,7 +156,6 @@ const emit = defineEmits([
   "delete-selected-sprint",
   "refresh",
   "checked-change",
-  "selection-change",
 ]);
 
 // Tickets state
@@ -175,7 +174,6 @@ watch(
   selectedIds,
   (val) => {
     emit("checked-change", val.length > 0);
-    emit("selection-change", val);
   },
   { deep: true }
 );
@@ -331,7 +329,9 @@ watch(
     }
   }
 );
-
+function emitDeleteSingle(id: string, summary: string) {
+  emit("delete-selected-sprint", [id], summary);
+}
 </script>
 
 <style scoped>
