@@ -13,6 +13,7 @@ export interface Ticket {
   priority: "Highest" | "High" | "Medium" | "Low";
   createdAt: string;
   description?: string;
+  image:string
   
 }
 export interface Sprint {

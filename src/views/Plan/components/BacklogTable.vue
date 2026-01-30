@@ -190,6 +190,7 @@ watch(
         priority: mapPriority(rawPriority),
         createdAt: c.card?.created_at ?? new Date().toISOString(),
         description: (v["card-description"] as string) || "",
+        image: c.card?.assigned_to
       };
     });
   },

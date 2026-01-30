@@ -108,7 +108,7 @@ import BaseModal from '../../../components/ui/BaseModal.vue';
   
   const typed = ref('')
   
-  const resolvedMessage = `This action cannot be undone. This Ticket will br permanently deleted.`;
+  const resolvedMessage = `This action cannot be undone. This Ticket will be permanently deleted.`;
   
   const computedModalClass = computed(() => {
     // Tight vertical rhythm + theme-friendly surfaces

@@ -151,7 +151,7 @@
     </div>
     <!-- MAIN -->
     <div class="flex flex-1 overflow-hidden bg-bg-card">
-      <div class="flex-1 min-w-0 flex flex-col overflow-hidden">
+      <div class="flex-1 min-w-0 flex flex-col">
 
         <!-- ================= KANBAN ================= -->
         <template v-if="view === 'kanban'">
@@ -212,7 +212,8 @@
         </template>
 
         <!-- ================= TABLE ================= -->
-        <template v-if="view === 'table'" class="-ms-6">
+        <template v-if="view === 'table'" class="-ms-6 h-full">
+        <div class="flex-1 overflow-auto pb-12">
           <TableView
             @toggleVisibility="toggleVisibilityHandler"
             @addVar="() => { isCreateVar = true; }"
@@ -223,7 +224,9 @@
             :canCreateVariable="canCreateVariable"
             @create="handleCreateTicket"
           />
-        </template>
+        </div>
+      </template>
+
          <template v-if="view === 'mindmap'">
       <div class="relative w-full h-full flex overflow-hidden">
         <!-- Mind Map Canvas -->
