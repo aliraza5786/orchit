@@ -181,7 +181,6 @@ watch(
 
       return {
         id,
-        _id: c.card?._id,
         key: (v["card-code"] as string) || id?.slice(-6) || "PRJ-?",
         summary: (v["card-title"] as string) || "(untitled)",
         type: "Story",
@@ -191,7 +190,6 @@ watch(
         priority: mapPriority(rawPriority),
         createdAt: c.card?.created_at ?? new Date().toISOString(),
         description: (v["card-description"] as string) || "",
-        image: c.card?.assigned_to
       };
     });
   },

@@ -885,7 +885,7 @@ const toggleTooltip = (): void => {
 const handleSearchModal = (sprint:any) => {
   showTaskModal.value = true;
   editingTicket.value = sprint.card;
-  closeSearchModal();
+  
 }
 const { workspaceId } = useWorkspaceId();
 const isCreateTicketModalOpen = ref(false);

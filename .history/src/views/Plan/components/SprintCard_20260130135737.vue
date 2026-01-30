@@ -76,37 +76,24 @@
     </span>
 
     <div
-      v-else-if="ticket.image"
+      v-else-if="ticket.assignee?.u_profile_image"
       class="w-6 h-6 rounded-full overflow-hidden"
     >
       <img
-        :src="ticket?.image"
+        :src="ticket.assignee.u_profile_image"
         alt=""
         class="w-full h-full object-cover"
       />
     </div>
 
     <span
-  v-else
-  class="relative text-[11px] aspect-square w-[24px] h-[24px]
-         flex justify-center items-center bg-accent/30 text-accent
-         border-accent border rounded-full cursor-default"
-  @mouseenter="hoveredAssignee = ticket.assignee?.name || ticket.assignee || ''"
-  @mouseleave="hoveredAssignee = null"
->
-  {{ getInitials(ticket.assignee ?? "") }}
-
-  <!-- Tooltip (large devices only) -->
-  <div
-    v-if="hoveredAssignee"
-    class="hidden lg:block absolute top-full -mt-4 right-1/2 translate-x-[-25%]
-           bg-bg-card text-text-primary text-xs px-2 py-1 rounded shadow
-           whitespace-nowrap z-50"
-  >
-    {{ hoveredAssignee }}
-  </div>
-</span>
-
+      v-else
+      class="text-[11px] aspect-square w-[24px] h-[24px]
+             flex justify-center items-center bg-accent/30 text-accent
+             border-accent border rounded-full"
+    >
+      {{ getInitials(ticket.assignee?.u_full_name ?? "") }}
+    </span>
   </template>
 </div>
 
@@ -146,7 +133,7 @@ import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
 import { useTheme } from "../../../composables/useTheme";
 const { isDark } = useTheme();
-const hoveredAssignee = ref<string | null>(null);
+
 const props = defineProps<{
   sprint: Sprint | null;
   sprintId: any;

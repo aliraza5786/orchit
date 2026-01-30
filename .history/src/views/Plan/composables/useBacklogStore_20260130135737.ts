@@ -4,7 +4,6 @@ import { toast } from "vue-sonner";
 
 export interface Ticket {
   id: string;
-  _id:string
   key: string;
   summary: string;
   type: "Story" | "Bug" | "Task";
@@ -14,7 +13,6 @@ export interface Ticket {
   priority: "Highest" | "High" | "Medium" | "Low";
   createdAt: string;
   description?: string;
-  image:string
   
 }
 export interface Sprint {

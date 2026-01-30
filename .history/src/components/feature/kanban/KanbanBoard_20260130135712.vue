@@ -14,7 +14,6 @@
       <!-- Each column -->
       <template #item="{ element: column, index }">
         <div class="rounded-lg bg-bg-surface h-full " 
-        v-if="!(column.title === 'General' && localBoard.columns.length > 1)"
           :class="{ 
             'snap-center min-w-[270px] max-w-[270px]': isMobile,
             'min-w-[320px] max-w-[320px]': !isMobile 

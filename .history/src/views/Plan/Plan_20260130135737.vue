@@ -586,7 +586,6 @@
                           <li
                             v-for="sprint in filteredSprints"
                             :key="sprint._id"
-                            @click="handleSearchModal(sprint)"
                             class="px-4 py-2 cursor-pointer hover:bg-bg-hover text-text-primary border-b border-border-input"
                           >
                             <div class="flex items-center justify-between">
@@ -791,7 +790,7 @@
 
     <TaskDetailsModal
       v-model="showTaskModal"
-      :cardId="editingTicket?.id || editingTicket?._id"
+      :cardId="editingTicket?.id"
       @close="closeModal"
     />
 
@@ -882,11 +881,6 @@ const showTooltip = ref(false);
 const toggleTooltip = (): void => {
   showTooltip.value = !showTooltip.value;
 };
-const handleSearchModal = (sprint:any) => {
-  showTaskModal.value = true;
-  editingTicket.value = sprint.card;
-  closeSearchModal();
-}
 const { workspaceId } = useWorkspaceId();
 const isCreateTicketModalOpen = ref(false);
 const {
@@ -1189,13 +1183,11 @@ const firstSprint = computed(() => {
 
     return {
       id,
-      _id:c?.card?._id,
       key: (v["card-code"] as string) || id?.slice(-6) || "PRJ-?",
       summary: (v["card-title"] as string) || "(untitled)",
       type: "Story" as const,
       status: mapStatus(String(v["card-status"] || "").trim()),
-      assignee: c?.card?.assigned_to?.u_full_name || "Unassigned",
-      image: c?.card?.assigned_to?.u_avatar || "",
+      assignee: c?.card?.assigned_to?.name || "Unassigned",
       storyPoints: Number(c.story_points || 0),
       priority: mapPriority(String(v["priority"] || "").trim()),
       createdAt: c?.card?.created_at || new Date().toISOString(),
