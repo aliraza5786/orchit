@@ -148,6 +148,8 @@ function createProjectHandler() {
 }
 defineExpose({
   createProjectHandler,
+  createWorkspacePending,
+  isPending
 });
 const props = defineProps<{
   ai: boolean

@@ -124,7 +124,6 @@
   />
 </div>
 
-
     </div>
 
     <div class="px-6 mt-2">
@@ -376,6 +375,7 @@ function reset() {
   touched.startDate = false;
   touched.endDate = false;
   touched.lane = false;
+  localStorage.removeItem("selectedStatusTitle");
 }
 
 const selectedVar = computed(() =>
@@ -487,14 +487,12 @@ watch(laneOptions, (options) => {
     if (mainLane) form.lane_id = mainLane._id;
   }
 }, { immediate: true });
-
 const sheetOptions = computed(() =>
   transformedData.value.map(sheet => ({
     _id: sheet._id,
     title: sheet.title,
   }))
 );
-
 const onSheetChange = (sheetId: SelectValue) => {
   selected_sheet_id.value = sheetId;
 };

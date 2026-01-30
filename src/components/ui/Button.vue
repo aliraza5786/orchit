@@ -21,12 +21,11 @@
         <slot />
       </span>
   
-      <!-- Animated AI-style Loader -->
-      <span v-if="loading" class="ml-2 flex items-center gap-0.5">
-        <span class="w-1.5 h-1.5 bg-bg-body rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-        <span class="w-1.5 h-1.5 bg-bg-body rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-        <span class="w-1.5 h-1.5 bg-bg-body rounded-full animate-bounce"></span>
-      </span>
+      <!-- Spin SVG Loader -->
+      <svg v-if="loading" xmlns="http://www.w3.org/2000/svg" class="ml-2 h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="10" stroke-width="4" class="opacity-25"></circle>
+        <path d="M4 12a8 8 0 0 1 8-8" stroke-width="4" class="opacity-75"></path>
+      </svg>
     </div>
     </button>
   </template>

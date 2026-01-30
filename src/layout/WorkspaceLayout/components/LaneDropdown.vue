@@ -181,9 +181,8 @@ const { mutate: updateLane } = useUpdateWorkspaceLane({
 });
 const { mutate: duplicateLane, isPending: isDuplicating } = useDuplicateWorkspaceLane({
   onSuccess: (data: any) => {
-
     emit('duplicate', data)
-    // queryClient.invalidateQueries({ queryKey: ['workspaces'] });
+    queryClient.invalidateQueries({ queryKey: ['workspaces'] });
     isOpen.value = false
   }
 });

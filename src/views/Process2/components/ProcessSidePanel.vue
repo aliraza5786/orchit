@@ -46,7 +46,7 @@
           </h2>
         </div>
          <!-- Card Type -->
-        <div class="space-y-2">
+        <div class="space-y-2"  v-if="!localTitle.toLowerCase().includes('general')">
           <div class="mb-2 text-base font-semibold tracking-wide px-1">Card Type</div>
           <BaseSelectField 
             :options="cardTypeOptions" 

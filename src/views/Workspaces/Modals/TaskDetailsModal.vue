@@ -366,17 +366,33 @@ const dateISO = computed({
   set: (v: string) => { local.posted_on = new Date(v + 'T00:00:00').toISOString() }
 })
 const { data: lanes, isPending: isLanesLoading } = useLanes(computed(() => cardDetails.value?.workspace_id))
-const lane = ref('')
-watch(() => cardDetails.value?.workspace_lane_id, (v) => {
-  if (v) lane.value = v
-}, { immediate: true })
+const lane = ref( 
+  cardDetails?.value ? cardDetails.value["workspace_lane_id"] : "Main",
+);
 
-const laneOptions = computed<any[]>(() =>
-  (lanes?.value ?? []).map((el: any) => ({ _id: el._id, title: el?.variables?.['lane-title'] ?? String(el._id) }))
-)
+watch(() => cardDetails.value, (newCard) => {
+  lane.value = newCard?.workspace_lane_id || 'Main';
+}, { immediate: true });
+ 
+
+const mainLaneOption = {
+  _id: 'Main',
+  title: 'Main',
+};
+const laneOptions = computed<any[]>(() => {
+  const dynamicOptions =
+    (lanes?.value ?? []).map((el: any) => ({
+      _id: el._id,
+      title: el?.variables?.['lane-title'] ?? String(el._id),
+    }));
+
+  return [mainLaneOption, ...dynamicOptions];
+});
 
 function setLane(v: any) { 
   lane.value = v
+  // If Main is selected, do not call API
+  if (v === "Main") return;
   if (details.value._id) {
     moveCard.mutate({ card_id: details.value._id, 'workspace_lane_id': v })
   }
@@ -504,6 +520,7 @@ const moveCard = useMoveCard({
     queryClient.invalidateQueries({ queryKey: ['backlog-list'] })
     queryClient.invalidateQueries({ queryKey: ['tasks'] })
     // queryClient.invalidateQueries({ queryKey: ['product-card', props.cardId] })
+    queryClient.invalidateQueries({ queryKey: ['sprint-cards'] })
   }
 })
 

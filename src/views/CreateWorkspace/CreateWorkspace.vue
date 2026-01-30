@@ -70,10 +70,10 @@
           Skip
         </Button>
 
-        <Button :disabled="continueDisabled" size="md" variant="primary" @click="goNext">
+        <Button :disabled="continueDisabled" :loading="isLoading" size="md" variant="primary" @click="goNext">
           <div class="flex items-center w-full justify-between gap-2">
             {{ continueLabel }}
-            <i class="text-base fa-solid fa-arrow-right"></i>
+            <i v-if="!isLoading" class="text-base fa-solid fa-arrow-right"></i>
           </div>
         </Button>
       </div>
@@ -137,8 +137,24 @@ const stepOnePending = computed<boolean>(() => {
   return !!(pending || privatePending)
 })
 
-const continueDisabled = computed(() => currentStep.value === 1 && stepOnePending.value)
-const continueLabel = computed(() => (currentStep.value === 1 && stepOnePending.value) ? 'Continuing...' : currentStep.value === 4 ? 'Complete' :'Continue')
+const isLoading = computed(() => {
+  if (currentStep.value === 1) return stepOnePending.value
+  if (currentStep.value === 4) {
+    if (!stepFourRef.value) return false
+    return !!(stepFourRef.value.createWorkspacePending || stepFourRef.value.isPending)
+  }
+  return false
+})
+
+const continueDisabled = computed(() => isLoading.value)
+const continueLabel = computed(() => {
+  if (isLoading.value) {
+    if (currentStep.value === 1) return 'Continuing...'
+    if (currentStep.value === 4) return 'Creating...'
+    return 'Loading...'
+  }
+  return currentStep.value === 4 ? 'Complete' : 'Continue'
+})
 
 /** Handlers (stable) */
 function handleClose() {
@@ -161,6 +177,7 @@ function onManualStart(e: any) {
     isAI.value = false
   currentStep.value = 1
 }
+
 function goNext() {
   if (currentStep.value === 1 && stepOneRef.value?.continueHandler) {
     stepOneRef.value.continueHandler()
@@ -175,7 +192,7 @@ function goNext() {
     goNext2()
     return
   }
-  if (currentStep.value === 4 && stepFourRef.value?.createProjectHandler) {
+  if (currentStep.value === 4 && stepFourRef.value?.createProjectHandler ) {
     if (!localStorage.getItem('token')) {
       router.push('/register')
     }

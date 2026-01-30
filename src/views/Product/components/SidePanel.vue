@@ -213,7 +213,7 @@
                     :disabled="!canEditCard"
                     size="sm"
                     :options="laneOptions"
-                    placeholder="Select lane"
+                    placeholder="Select tab"
                     :allowCustom="false"
                     :model-value="lane"
                     @update:modelValue="setLane"
@@ -808,24 +808,35 @@ const dateISO = computed({
 
 const { data: lanes } = useLanes(workspaceId.value);
 const lane = ref(
-  cardDetails?.value ? cardDetails.value["workspace_lane_id"] : "",
+  cardDetails?.value ? cardDetails.value["workspace_lane_id"] : "Main",
 );
 watch([() => cardDetails.value, () => isFetching.value], () => {
   if (cardDetails?.value) {
     localTitle.value = cardDetails?.value["card-title"];
     description.value = cardDetails.value["card-description"];
-    lane.value = cardDetails.value["workspace_lane_id"];
+    lane.value = cardDetails.value["workspace_lane_id"] || "Main";
   }
 });
 
-const laneOptions = computed<any[]>(() =>
-  (lanes?.value ?? []).map((el: any) => ({
-    _id: el._id,
-    title: el?.variables?.["lane-title"] ?? String(el._id),
-  })),
-);
+const mainLaneOption = {
+  _id: 'Main',
+  title: 'Main',
+};
+const laneOptions = computed<any[]>(() => {
+  const dynamicOptions =
+    (lanes?.value ?? []).map((el: any) => ({
+      _id: el._id,
+      title: el?.variables?.['lane-title'] ?? String(el._id),
+    }));
+
+  return [mainLaneOption, ...dynamicOptions];
+});
+ 
 function setLane(v: any) {
   lane.value = v;
+  // If Main is selected, do not call API
+  if (v === "Main") return;
+
   moveCard.mutate({
     card_id: props.details._id,
     workspace_lane_id: v,

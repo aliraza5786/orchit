@@ -4,19 +4,24 @@
   >
     <!-- Left side: Logo + lanes -->
     <div
-      :class="`text-2xl font-bold flex items-center min-w-0 gap-4 ${
-        workspaceStore.background.startsWith('url')
-          ? 'text-text-secondary'
-          : 'text-text-primary'
-      }`"
+     :class="[
+     'text-2xl font-bold flex items-center min-w-0',
+      expanded ? 'gap-4' : 'gap-2',
+      workspaceStore.background.startsWith('url')
+      ? 'text-text-secondary'
+      : 'text-text-primary'
+     ]"
     >
       <!-- Logo + Title (now a dropdown trigger) -->
       <div class="relative flex items-center ps-3.5 sm:ps-2">
-        <div :class="props.expanded ? 'w-[235px]' : 'w-auto'">
+        <div 
+          class="transition-all duration-300 ease-in-out overflow-hidden" 
+          :class="expanded ? 'w-[235px]' : 'w-[64px]'"
+        >
           <button
             ref="logoBtnRef"
-            class="flex items-center justify-between cursor-pointer rounded-md w-full"
-            :class="props.expanded? 'border-border-input  hover:shadow-md px-2 py-1 border hover:border-accent':''"
+            class="flex items-center justify-between cursor-pointer rounded-md w-full px-2 transition-all duration-300"
+            :class="expanded? 'border-border-input  hover:shadow-md  py-1 border hover:border-accent':'border border-transparent'"
             aria-haspopup="menu"
             :aria-expanded="logoMenuOpen ? 'true' : 'false'"
             @click="toggleLogoMenu"
@@ -43,12 +48,14 @@
                     alt="Workspace menu"
                     class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover shrink-0"
                   />
-                  <h3
-                    v-if="props.expanded"
-                    class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
-                  >
-                    {{ localWorkspace.variables.title }}
-                  </h3>
+                  <Transition name="title-fade">
+                    <h3
+                      v-if="expanded"
+                      class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
+                    >
+                      {{ localWorkspace.variables.title }}
+                    </h3>
+                  </Transition>
                 </div>
               </div>
 
@@ -246,9 +253,10 @@ const isWorkspaceLoading = computed(() => {
 });
 
 // Initialize props - removed getWorkspace
-const props = defineProps<{ 
+defineProps<{ 
   expanded?: Boolean;
 }>();
+
 
 // Watch title to update localStorage (preserving existing logic)
 watch(
@@ -265,11 +273,11 @@ watch(
 // Duplicate lane handler - updates store now
 const duplicateHandler = (data: any) => {
   if (!localWorkspace.value) return;
-  const updatedWorkspace = {
-    ...localWorkspace.value,
-    lanes: [...localWorkspace.value.lanes, data],
-  };
-  workspaceStore.setSingleWorkspace(updatedWorkspace);
+  // const updatedWorkspace = {
+  //   ...localWorkspace.value,
+  //   lanes: [...localWorkspace.value.lanes, data],
+  // };
+  // workspaceStore.setSingleWorkspace(updatedWorkspace);
   workspaceStore.setLanes([...localLanes.value, data]);
 };
 
@@ -374,5 +382,18 @@ defineExpose({ laneId });
 .fade-scale-leave-to {
   opacity: 0;
   transform: translateY(-6px) scale(0.98);
+}
+
+/* Title Fade Transition */
+.title-fade-enter-active,
+.title-fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.title-fade-enter-from,
+.title-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+  max-width: 0;
 }
 </style>

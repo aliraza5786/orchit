@@ -4,7 +4,7 @@
 <template>
   <div class="w-full">
     <h2 class="text-2xl md:text-4xl font-semibold text-text-primary text-left m-0 ">
-      {{ ai ? ' Choose Your Tabes' : 'Create Your Tabes' }}
+      {{ ai ? ' Choose Your Tabs' : 'Create Your Tabs' }}
     </h2>
     <p class="text-sm md:text-base text-text-secondary text-left mt-3 sm:mt-5.5 mb-0">
       {{ ai ? ' Select the components you want to include in your project' : ' Create the components you want to include in your project'}}
