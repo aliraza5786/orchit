@@ -163,7 +163,9 @@ import { useQueryClient } from "@tanstack/vue-query";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useSprintKanban } from "../../../queries/usePlan"
 import { useRoute } from "vue-router";
-const { canCreateCard } = usePermissions();
+const { canCreateCard, canEditSheet,
+  canDeleteSheet,
+  canCreateSheet, } = usePermissions();
 const route = useRoute();
 /** Emits */
 const emit = defineEmits<{
@@ -220,6 +222,8 @@ const {
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
 
 const selected_sheet_id = ref<any>(sheetId.value);
+const isCreateSheetModal = ref(false);
+const selectedSheettoAction = ref<any>();
 const resolvedSheetId = computed(() => {
   return props.sheet_id || selected_sheet_id.value || ''
 })
@@ -346,6 +350,10 @@ interface DropdownOption {
   status:string
 }
 
+function openEditSprintModal(opt: any) {
+  isCreateSheetModal.value = true;
+  selectedSheettoAction.value = opt;
+}
 const transformedData = computed<DropdownOption[]>(() => {  
   return (data.value || []).map((item: any) => ({
     _id: item._id,
@@ -355,6 +363,22 @@ const transformedData = computed<DropdownOption[]>(() => {
     status: item?.generation_status || localStorage.getItem("selectedStatusTitle"),
   }));
 });
+const isOpenSelect = ref(false);
+
+const selectOption = (option: any) => {
+  console.log("Selected option:", option);
+  selected_sheet_id.value = option._id;
+};
+
+const showDeleteModal = ref(false);
+function handleDeleteSheetModal(opt: any) {
+  showDeleteModal.value = true;
+  selectedSheettoAction.value = opt;
+}
+const createSheet = () => {
+  selectedSheettoAction.value = {};
+  isCreateSheetModal.value = !isCreateSheetModal.value;
+};
 
 /** Actions */
 function cancel() {
@@ -491,8 +515,5 @@ const sheetOptions = computed(() =>
     title: sheet.title,
   }))
 );
-const onSheetChange = (sheetId: SelectValue) => {
-  selected_sheet_id.value = sheetId;
-};
 
 </script>

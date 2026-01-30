@@ -168,7 +168,7 @@
 <script lang="ts" setup>
 import { reactive, ref, nextTick, computed, watch, h, onUnmounted } from 'vue'
 import { useRoute } from "vue-router";
-import CreateTaskModal from '../../../views/Product/modals/CreateTaskModal.vue';
+import CreateTaskModal from '../../views/Product/modals/CreateTaskModal.vue';
 import { useRouteIds } from '../../../composables/useQueryParams';
 const {workspaceId, moduleId} = useRouteIds();
 import { useSheets, useVariables } from '../../../queries/useSheets';
