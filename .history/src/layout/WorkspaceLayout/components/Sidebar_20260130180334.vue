@@ -141,13 +141,12 @@ const workspaceStore = useWorkspaceStore();
 const { canCreateModule, canAccessModule } = usePermissions();
 
 // Removed workspace from props
-  defineProps<{
+const props = defineProps<{
   // workspace: { modules: any; generation_task: any }; 
   isLoading: boolean;
   expanded: boolean;
 }>();  
-
-
+const { isLoading, expanded } = props;
 // Use store data for workspace
 const workspace = computed(() => workspaceStore.singleWorkspace);
 
