@@ -1,6 +1,6 @@
 <template>
   <div class="" @scroll="onScroll">
-    <div class="kanban-table space-y-4  h-[85vh] mt-4 overflow-y-auto overflow-x-auto ps-4 mb-5 ">
+    <div class="kanban-table space-y-4 mt-4 overflow-y-auto overflow-x-auto ps-4 mb-5 ">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
              bg-bg-body/20 text-sm
@@ -154,6 +154,14 @@
 
       </tbody>
     </table>
+    <CreateTaskModal
+  v-if="createTeamModal && route.path.includes('/plan')"
+  v-model="createTeamModal"
+  :selectedVariable="selected_view_by"
+  :listId="localColumnData?.title"
+  :sheet_id="selected_sheet_id"
+/>
+
   </div>
   <CreateTaskModal
   v-if="createTeamModal && route.path.includes('/plan')"
@@ -218,7 +226,24 @@ const props = withDefaults(defineProps<{
   canCreateVariable: true,
   canDelete: false
 })
+const { data: sheets } = useSheets(
+  {
+    workspace_id: workspaceId.value,
+    workspace_module_id: selected_module_id,
+  },
+  
+)
+const sheetId = computed(() => (sheets.value ? sheets.value[0]?._id : ""));
+const selected_sheet_id = ref<any>(sheetId);
+const { data: variables } = useVariables(
+  workspaceId,
+  selected_module_id,
+  selected_sheet_id
+);
+const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
 
+
+const selected_view_by = ref(viewBy);
 const emit = defineEmits<{
   (e: 'update:rows', val: Row[]): void
   (e: 'create', val: any): void
