@@ -4,11 +4,13 @@
   >
     <!-- Left side: Logo + lanes -->
     <div
-      :class="`text-2xl font-bold flex items-center min-w-0 gap-4 ${
-        workspaceStore.background.startsWith('url')
-          ? 'text-text-secondary'
-          : 'text-text-primary'
-      }`"
+     :class="[
+     'text-2xl font-bold flex items-center min-w-0',
+      expanded ? 'gap-4' : 'gap-2',
+      workspaceStore.background.startsWith('url')
+      ? 'text-text-secondary'
+      : 'text-text-primary'
+     ]"
     >
       <!-- Logo + Title (now a dropdown trigger) -->
       <div class="relative flex items-center ps-3.5 sm:ps-2">

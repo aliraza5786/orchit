@@ -3,7 +3,7 @@
     @mouseenter="showTooltip = true"
     @mouseleave="showTooltip = false"
     @click="clickHandler"
-    class="group cursor-pointer flex items-center px-2 py-3.5 rounded-lg text-xs transition-all duration-300 ease-in-out relative hover:bg-bg-card hover:text-text-primary select-none"
+    class="group cursor-pointer flex items-center px-2 rounded-lg text-xs transition-all duration-300 ease-in-out relative hover:bg-bg-card hover:text-text-primary select-none"
     :class="[
       progress == 'processing' && status == 'running'
         ? 'disbled !cursor-not-allowed opacity-50'
@@ -13,8 +13,8 @@
         ? 'text-text-primary bg-bg-card'
         : ' text-text-secondary',
       expanded
-        ? 'w-[48px] h-[48px] sm:w-full sm:h-[38px] justify-start gap-2.5'
-        : 'flex-col w-[36px] h-[36px] justify-center gap-1.5 ',
+        ? 'w-[36px] h-[36px] sm:w-full sm:h-[38px] gap-2.5'
+        : ' w-[36px] h-[36px] gap-1.5 ',
     ]"
     ref="itemRef"
   >
@@ -26,7 +26,7 @@
 
     <i
       v-else
-      :class="[...iconClasses, expanded ? 'text-[16px]' : 'text-[14px]']"
+      :class="[...iconClasses, expanded ? 'text-[14px]' : 'text-[14px]']"
     ></i>
 
     <!-- Label -->
