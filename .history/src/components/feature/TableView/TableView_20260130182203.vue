@@ -178,7 +178,7 @@ import { reactive, ref, nextTick, computed, watch, h, onUnmounted } from 'vue'
 import { useRoute } from "vue-router";
 import CreateTaskModal from '../../../views/Product/modals/CreateTaskModal.vue';
 import { useRouteIds } from '../../../composables/useQueryParams';
-const {workspaceId } = useRouteIds();
+const {workspaceId, moduleId} = useRouteIds();
 import { useSheets, useVariables } from '../../../queries/useSheets';
 const route = useRoute();
 const createTeamModal = ref(false);
@@ -190,14 +190,28 @@ function handleAddRow() {
     insertEmptyRow(tickets?.length);
   }
 }
-
+const { data: sheets } = useSheets(
+  {
+    workspace_id: workspaceId.value,
+    workspace_module_id: moduleId.value,
+  },
+  
+)
 const selected_module_id = ref<string>("");
+const sheetId = computed(() => (sheets.value ? sheets.value[0]?._id : ""));
+const selected_sheet_id = ref<any>(sheetId);
+const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
+const selected_view_by = ref(viewBy);
 interface Column {
   key: string
   label: string
   visible?: boolean // optional, default true
 }
-
+const { data: variables } = useVariables(
+  workspaceId,
+  selected_module_id,
+  selected_sheet_id
+);
 type Row = Record<string, any>
 
 const props = withDefaults(defineProps<{
