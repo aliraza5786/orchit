@@ -36,7 +36,6 @@ export const useAuthStore = defineStore('auth', {
       this.user = null;
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
-      localStorage.removeItem('mannualWorkspace')
     },
   },
 })

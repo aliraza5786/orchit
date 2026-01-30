@@ -32,11 +32,25 @@ export const useAuthStore = defineStore('auth', {
     },
 
     logout() {
-      localStorage.removeItem('token')
-      this.user = null;
-      localStorage.removeItem('currentName')
-      localStorage.removeItem('jobId')
-      localStorage.removeItem('mannualWorkspace')
-    },
+  // Keys to preserve during logout
+  const keysToPreserve = ['theme']
+  
+  // Save values
+  const preserved: Record<string, string> = {}
+  keysToPreserve.forEach(key => {
+    const value = localStorage.getItem(key)
+    if (value) preserved[key] = value
+  })
+  
+  // Clear everything
+  localStorage.clear()
+  
+  // Restore preserved values
+  Object.entries(preserved).forEach(([key, value]) => {
+    localStorage.setItem(key, value)
+  })
+  
+  this.user = null
+}
   },
 })

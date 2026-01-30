@@ -330,8 +330,22 @@ async function handleLogout() {
   try {
     closeMenu()
     workspaceStore.setWorkspace(null)
+
+    localStorage.clear()
     authStore.logout()
+
+    // await queryClient.cancelQueries({ queryKey: ['me'] })
+    // await queryClient.cancelQueries({ queryKey: ['profile'] })
+    // await queryClient.cancelQueries({ queryKey: ['workspaces'] })
+    // 3) remove the profile query from cache (RAM)
+    // queryClient.removeQueries({ queryKey: ['profile'] })
+    // queryClient.removeQueries({ queryKey: ['workspaces'] })
+    // queryClient.removeQueries({ queryKey: ['me'] })
+
+    // Cancel active queries
     await queryClient.cancelQueries()
+    
+    // Clear the entire query cache to ensure no stale data persists for the next user
     queryClient.clear()
 
     router.push('/login')

@@ -32,11 +32,18 @@ export const useAuthStore = defineStore('auth', {
     },
 
     logout() {
-      localStorage.removeItem('token')
-      this.user = null;
-      localStorage.removeItem('currentName')
-      localStorage.removeItem('jobId')
-      localStorage.removeItem('mannualWorkspace')
+      // Save theme before clearing
+      const savedTheme = localStorage.getItem('theme')
+      
+      // Clear all localStorage
+      localStorage.clear() // or remove specific keys
+      
+      // Restore theme
+      if (savedTheme) {
+        localStorage.setItem('theme', savedTheme)
+      }
+      
+      this.user = null
     },
   },
 })
