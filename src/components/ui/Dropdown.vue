@@ -30,7 +30,7 @@
 
       <span :class="labelSizeClass">
         <span v-if="prefix" class="font-bold">{{ prefix }}:</span>
-        <span class="text-nowrap"> {{ selectedOption?.title }} <template v-if="selectedNestedOption"> ({{ selectedNestedOption.title }}) </template> </span>
+        <span class="text-nowrap"> {{ selectedOption?.title }} <template   v-if="selectedNested && selectedNested.parentId === selectedOption?._id">  ({{ selectedNested.option.title }}) </template> </span>
       </span>
 
       <!-- Chevron -->
@@ -310,6 +310,11 @@ function updatePosition() {
 /** Keep menu open for actions; only close on outside click or explicit toggle */
 function select(option: Option) {
   selected.value = option._id;
+  // clear stale nested value
+  if (!option.nested?.length) {
+    selectedNested.value = null;
+  }
+
   closeDropdown();
 }
 
@@ -328,16 +333,26 @@ function handleOptionClick(option: Option) {
 }
 
 
-const selectedNestedOption = ref<Option | null>(null);
+ 
+const selectedNested = ref<{
+  parentId: string
+  option: Option
+} | null>(null) 
 
 function emitNestedSelect(subOption: Option, parentOption: Option) {
-    emit("nested-select", subOption);
-    select(parentOption);
-    // Save nested for label
-    selectedNestedOption.value = subOption;
-    // Close the nested dropdown
-    openNestedId.value = null;
+  emit("nested-select", subOption);
+
+  selected.value = parentOption._id;
+
+  selectedNested.value = {
+    parentId: parentOption._id,
+    option: subOption
+  };
+
+  openNestedId.value = null;
+  closeDropdown();
 }
+
 
 /* ------- Actions state ------- */
 // actionOpenId defined above

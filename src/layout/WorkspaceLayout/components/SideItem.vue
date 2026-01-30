@@ -3,7 +3,7 @@
     @mouseenter="showTooltip = true"
     @mouseleave="showTooltip = false"
     @click="clickHandler"
-    class="group cursor-pointer flex items-center px-2 py-3.5 rounded-lg text-xs text-text-secondary transition-all relative hover:bg-bg-card hover:text-text-primary select-none"
+    class="group cursor-pointer flex items-center px-2 py-3.5 rounded-lg text-xs transition-all duration-300 ease-in-out relative hover:bg-bg-card hover:text-text-primary select-none"
     :class="[
       progress == 'processing' && status == 'running'
         ? 'disbled !cursor-not-allowed opacity-50'
@@ -30,13 +30,15 @@
     ></i>
 
     <!-- Label -->
-    <span
-      v-if="expanded"
-      class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
-      :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
-    >
-      {{ label }}
-    </span>
+    <Transition name="sidebar-label">
+      <span
+        v-if="expanded"
+        class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
+        :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
+      >
+        {{ label }}
+      </span>
+    </Transition>
   </div>
 
   <!-- Tooltip rendered in body via Teleport -->
@@ -212,5 +214,17 @@ const iconClasses = computed(() => {
 .icons-div > * {
   width: 14px !important;
   height: 14px !important;
+}
+
+.sidebar-label-enter-active,
+.sidebar-label-leave-active {
+  transition: all 0.3s ease;
+}
+
+.sidebar-label-enter-from,
+.sidebar-label-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
+  max-width: 0;
 }
 </style>

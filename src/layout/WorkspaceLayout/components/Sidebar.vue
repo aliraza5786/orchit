@@ -2,7 +2,7 @@
   <SidebarSkeleton v-if="isLoading" />
   <div class="sidebar_mobile bottom-0 start-0 fixed sm:static overflow-hidden z-2 sm:z-1 sm:h-full">
     <aside
-      class="sm:overflow-y-auto whitespace-nowrap overflow-x-auto bg-transparent z-1 sm:min-w-[36px] sm:px-2 sm:max-h-full h-[60px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2.5 sm:pt-0 pb-2.5  transition-all duration-200"
+      class="sm:overflow-y-auto whitespace-nowrap overflow-x-auto bg-transparent z-1 sm:min-w-[36px] sm:px-2 sm:max-h-full h-[60px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2.5 sm:pt-0 pb-2.5 transition-all duration-300 ease-in-out"
       :class="{ 'w-full sm:w-[250px]': expanded, 'w-full sm:w-14': !expanded }"
     >
       <!-- Mobile Toggle -->
@@ -145,8 +145,7 @@ const props = defineProps<{
   // workspace: { modules: any; generation_task: any }; 
   isLoading: boolean;
   expanded: boolean;
-}>(); 
-const { isLoading, expanded } = props;
+}>();  
 // Use store data for workspace
 const workspace = computed(() => workspaceStore.singleWorkspace);
 

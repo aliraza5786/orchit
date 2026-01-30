@@ -92,7 +92,7 @@
             :error="!!titleError" :message="titleError" @blur="touched.title = true" />
 
           <div class="flex flex-col" v-if="laneOptions.length > 0">
-            <BaseSelectField size="md" label="Lane" :options="laneOptions" placeholder="Select lane"
+            <BaseSelectField size="md" label="Tab" :options="laneOptions" placeholder="Select tab"
               :allowCustom="false" :model-value="form.lane_id" @update:modelValue="setLane" :error="!!laneError"
               :message="laneError" />
           </div>
@@ -271,12 +271,19 @@ const selectVariables = computed<Variable[]>(() =>
 
 type Option = { _id: string | number; title: string }
 type Lane = { _id: string | number; variables?: Record<string, any> }
-const laneOptions = computed<Option[]>(() =>
-  (lanes?.value ?? []).map((el: Lane) => ({
+const laneOptions = computed<Option[]>(() => {
+  const opts = (lanes?.value ?? []).map((el: Lane) => ({
     _id: el._id,
     title: el?.variables?.['lane-title'] ?? String(el._id)
-  }))
-)
+  }));
+
+  // Ensure "Main" exists in the options
+  if (!opts.find((o: any) => o.title === "Main")) {
+    opts.unshift({ _id: "main", title: "Main" });
+  }
+
+  return opts;
+})
 
 const getVarKey = (v: Variable) => v.slug
 
@@ -310,6 +317,14 @@ watch(
   },
   { immediate: true }
 )
+
+watch([laneOptions, isOpen], ([options, open]) => {
+  // Only set default if user hasn’t picked any lane yet or when modal is opening
+  if (open && !form.lane_id) {
+    const mainLane = options.find(o => o.title === "Main");
+    if (mainLane) form.lane_id = mainLane._id;
+  }
+}, { immediate: true });
 
 const touched = reactive({
   title: false,
@@ -430,7 +445,9 @@ function create() {
     sheet_list_id: props.listId,
     workspace_id: workspaceId.value,
     sheet_id: selectedSheetId.value,
-    workspace_lane_id: form.lane_id,
+    ...(form.lane_id && form.lane_id !== "main"
+      ? { workspace_lane_id: form.lane_id }
+      : {}),
     variables: {
       ...form.variables,
       [`${selectedVar.value?.slug}`]: props.listId,
