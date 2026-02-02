@@ -42,6 +42,7 @@ const LandingPageLayout = () =>
   import("../layout/LandingPageLayout/LandingPageLayout.vue");
 
 const peakUpdate = () => import("../views/peakDuplicate.vue");
+const requestDelete = () => import("../views/request_delete.vue");
 const NewHomepage = () => import("../views/homenew.vue");
 const Pricing = () => import("../views/Pricing.vue");
 const TermsOfServices = () => import("../views/TermsOfServices.vue");
@@ -218,6 +219,12 @@ const routes: RouteRecordRaw[] = [
     path: "/peak-duplicate",
     name: "peak-duplicate",
     component: peakUpdate,
+    meta: { requiresAuth: false },
+  },
+  {
+    path: "/request_delete",
+    name: "Request Delete",
+    component: requestDelete,
     meta: { requiresAuth: false },
   },
   // Workspace area

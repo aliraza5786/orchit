@@ -4,7 +4,7 @@
     <div
       class="sticky top-0 z-10 flex justify-between items-center py-6 px-6 border-b border-border bg-bg-input"
     >
-      <h2 class="text-xl font-semibold">Start {{ sprintType }}</h2>
+      <h2 class="text-xl font-semibold">Start {{ formattedSprintType }}</h2>
       <span @click="cancel" class="text-sm text-text-secondary cursor-pointer">
         <i class="fa-solid fa-xmark text-text-primary text-[19px]"></i>
       </span>
