@@ -166,90 +166,88 @@
       </div>
     </div>
     <template v-if="view == 'kanban'">
-      <KanbanSkeleton v-if="isInitialLoading" />
-      <div
-      ref="kanbanScroll"
-        v-else
-        class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
-        @scroll="onScroll"
-      >
-        <KanbanBoard
-          @onPlus="plusHandler"
-          :board="filteredBoard"
-          :key="`kanban-${selected_sheet_id}-${selected_view_by}`"
-          @delete:column="(e: any) => deleteHandler(e)"
-          @update:column="(e: any) => handleUpdateColumn(e)"
-          @reorder="onReorder"
-          @addColumn="handleAddColumn"
-          @scroll="onScroll"
-          @select:ticket="selectCardHandler"
-          @onBoardUpdate="handleBoardUpdate"
-          :variable_id="selected_view_by"
-          :sheet_id="selected_sheet_id"
+  <KanbanSkeleton v-if="isInitialLoading" />
+
+  <div
+    v-else
+    ref="kanbanScroll"
+    class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
+    @scroll="onScroll"
+  >
+    <!-- Kanban Board -->
+    <KanbanBoard
+      @onPlus="plusHandler"
+      :board="filteredBoard"
+      :key="`kanban-${selected_sheet_id}-${selected_view_by}`"
+      @delete:column="(e: any) => deleteHandler(e)"
+      @update:column="(e: any) => handleUpdateColumn(e)"
+      @reorder="onReorder"
+      @addColumn="handleAddColumn"
+      @scroll="onScroll"
+      @select:ticket="selectCardHandler"
+      @onBoardUpdate="handleBoardUpdate"
+      :variable_id="selected_view_by"
+      :sheet_id="selected_sheet_id"
+    >
+      <template #column-footer="column">
+        <div
+          class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
+          v-if="
+            workspaceStore?.transitions?.all_allowed &&
+            !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) &&
+            workspaceStore.transitions.currentColumn != column.column.title
+          "
         >
-          <template #column-footer="column">
-            <div
-              class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
-              v-if="
-                workspaceStore?.transitions?.all_allowed &&
-                !workspaceStore?.transitions?.all_allowed?.includes(
-                  column.column.title
-                ) &&
-                workspaceStore.transitions.currentColumn != column.column.title
-              "
-            >
-              Disbale ( you can't drop here )
-            </div>
-          </template>
-          <template #ticket="{ ticket }">
-            <KanbanTicket
-              :selectedVar="selected_view_by"
-              @select="
-                () => {
-                  selectCardHandler(ticket);
-                }
-              "
-              :ticket="ticket"
-            />
-          </template>
-          <KanbanColumnCardsSkeleton
-            v-if="isPaginating"
-            :cards="2"
-          />
-        </KanbanBoard>
-        <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
-          <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
-            <BaseTextField
-              :autofocus="true"
-              v-model="newColumn"
-              placeholder="Add New list"
-              @keyup.enter="emitAddColumn"
-            />
-            <p class="text-xs mt-1.5">You can add details while editing</p>
-            <div class="flex items-center mt-3 gap-3">
-              <Button
-                @click="emitAddColumn"
-                varaint="primary"
-                class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
-                >{{ addingList ? "Adding..." : "Add list" }}</Button
-              >
-              <i class="fa-solid fa-close" @click="setActiveAddList"></i>
-            </div>
-          </div>
-          <button
-            v-else
-            :disabled="!canCreateVariable"
-            class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-            :class="
-              !canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'
-            "
-            @click.stop="setActiveAddList"
+          Disable ( you can't drop here )
+        </div>
+      </template>
+
+      <template #ticket="{ ticket }">
+        <KanbanTicket
+          :selectedVar="selected_view_by"
+          @select="() => selectCardHandler(ticket)"
+          :ticket="ticket"
+        />
+      </template>
+
+      <KanbanColumnCardsSkeleton v-if="isPaginating" :cards="2" />
+    </KanbanBoard>
+
+    <!-- Add List Column -->
+    <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
+      <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
+        <BaseTextField
+          autofocus
+          v-model="newColumn"
+          placeholder="Add New list"
+          @keyup.enter="emitAddColumn"
+        />
+        <p class="text-xs mt-1.5">You can add details while editing</p>
+        <div class="flex items-center mt-3 gap-3">
+          <Button
+            @click="emitAddColumn"
+            variant="primary"
+            class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
           >
-            + Add List
-          </button>
+            {{ addingList ? "Adding..." : "Add list" }}
+          </Button>
+          <i class="fa-solid fa-close" @click="setActiveAddList"></i>
         </div>
       </div>
-    </template>
+
+      <button
+        v-else
+        :disabled="!canCreateVariable"
+        class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+        :class="!canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'"
+        @click.stop="setActiveAddList"
+      >
+        + Add List
+      </button>
+    </div>
+  </div>
+</template>
+
     <template v-if="view == 'table'">
   <TableView
     ref="tableRef"
@@ -436,34 +434,6 @@
               Insert
             </button>
           </div>
-        </div>
-      </div>
-      <!-- EXISTING POPUP (UNCHANGED) -->
-      <div
-        v-if="activeAddList"
-        class="absolute top-40 left-70 bg-bg-body rounded-lg p-4 shadow-lg z-100 min-w-[328px] border"
-        @click.stop
-      >
-        <BaseTextField
-          :autofocus="true"
-          v-model="newColumn"
-          placeholder="Add New list"
-          @keyup.enter="emitAddColumn"
-        />
-        <p class="text-xs mt-1.5">You can add details while editing</p>
-
-        <div class="flex items-center mt-3 gap-3">
-          <Button
-            @click="emitAddColumn"
-            varaint="primary"
-            class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
-          >
-            {{ addingList ? "Adding..." : "Add list" }}
-          </Button>
-          <i
-            class="fa-solid fa-close cursor-pointer"
-            @click="setActiveAddList"
-          ></i>
         </div>
       </div>
     </template>

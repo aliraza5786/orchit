@@ -73,7 +73,7 @@
                       >
                         All Modules
                         <span
-                          v-if="selectedFilter === ''"
+                          v-if="selectedFilter === '' && backlogResp?.cards?.length"
                           class="ml-2 text-xs font-normal"
                         >
                           ({{ backlogResp?.cards?.length }})
@@ -95,7 +95,7 @@
                         {{ option.variables["module-title"] }}
 
                         <span
-                          v-if="selectedFilter === option._id"
+                          v-if="selectedFilter === option._id && backlogResp?.cards?.length"
                           class="ml-2 text-xs font-normal"
                         >
                           ({{ backlogResp?.cards?.length }})
@@ -122,7 +122,7 @@
                               {{
                                 selectedHuddleModuleLabel || "All Milestones"
                               }}
-                              <span class="ml-2 text-xs font-normal">
+                              <span class="ml-2 text-xs font-normal" v-if="backlogResp?.cards?.length">
                                 ({{ backlogResp?.cards?.length }})
                               </span>
                             </span>
@@ -1570,7 +1570,12 @@ const toggleMenu = () => {
   showMenu.value = !showMenu.value;
 };
 const openStartSprintModalForUpdate = (sprint: any) => {
-  const modalSprintData = {
+  if(sprintDetailData.value?.status !== 'active'){
+    toast.error(`please start the ${sprintType.value || 'sprint'} first.`);
+    showMenu.value = false;
+    return;
+  }else{
+    const modalSprintData = {
     id: sprint._id,
     sprint_name: sprint.title,
     start: sprint.start_date,
@@ -1582,6 +1587,8 @@ const openStartSprintModalForUpdate = (sprint: any) => {
   sidePanelStore.storeActiveSprint(modalSprintData);
   startsprintModalOpen.value = true;
   showMenu.value = false;
+  }
+  
 };
 
 function onDelete() {
