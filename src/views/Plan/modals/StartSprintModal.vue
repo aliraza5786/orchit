@@ -4,12 +4,11 @@
     <div
       class="sticky top-0 z-10 flex justify-between items-center py-6 px-6 border-b border-border bg-bg-input"
     >
-      <h2 class="text-xl font-semibold">Start {{ sprintType}}</h2>
+      <h2 class="text-xl font-semibold">Start {{ formattedSprintType }}</h2>
       <span @click="cancel" class="text-sm text-text-secondary cursor-pointer">
         <i class="fa-solid fa-xmark text-text-primary text-[19px]"></i>
       </span>
     </div>
-
     <!-- Body -->
     <div class="px-6 grid grid-cols-2 gap-4 bg-bg-input pt-5">
       <!-- sprint name -->
@@ -28,6 +27,7 @@
           :options="durationOptions"
           label="Duration"
           placeholder="Select duration"
+          :disabled="isUpdate"
         />
       </div>
 
@@ -115,6 +115,7 @@ import DatePicker from "../../Product/components/DatePicker.vue";
 import type { Sprint } from "../composables/useBacklogStore";
 import BaseTextField from "../../../components/ui/BaseTextField.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
+import { useSidePanelStore } from "../../../stores/sidePanelStore";
 
 /** Emits */
 const emit = defineEmits<{
@@ -129,9 +130,9 @@ const props = withDefaults(
     modelValue: boolean;
     sprint: Sprint;
     creatingSprint: boolean;
-    sprintType:string
+    sprintType: string;
   }>(),
-  { modelValue: false }
+  { modelValue: false },
 );
 
 const durationOptions = [
@@ -148,7 +149,10 @@ const isOpen = computed({
   set: (v: boolean) => emit("update:modelValue", v),
 });
 
-/** Local form */
+const sidePanelStore = useSidePanelStore();
+const updateData = computed(() => sidePanelStore.startedSprint);
+const isUpdate = computed(() => !!updateData.value && !!updateData.value._id);
+
 const form = reactive<any>({
   goal: "",
   start: new Date().toISOString().slice(0, 10),
@@ -161,7 +165,6 @@ const formattedSprintType = computed(() => {
   if (!props.sprintType) return "";
   return props.sprintType.charAt(0).toUpperCase() + props.sprintType.slice(1);
 });
-
 
 /** Touched + validation */
 const touched = reactive({ start: false, end: false });
@@ -183,7 +186,7 @@ const endError = computed(() => {
 });
 
 const isValid = computed(() => {
-  return !startError.value && !endError.value;
+  return !startError.value && !endError.value && form.sprint_name.trim();
 });
 
 /** Handlers */
@@ -199,7 +202,7 @@ function setEndDate(v: string | null) {
 
 function cancel() {
   isOpen.value = false;
-  form.duration = null;
+  resetForm();
   emit("close");
 }
 
@@ -216,9 +219,18 @@ function save() {
     end: form.end || "",
     goal: form.goal ?? "",
   });
-  form.duration=null;
+
+  resetForm();
 }
 
+function resetForm() {
+  form.goal = "";
+  form.start = new Date().toISOString().slice(0, 10);
+  form.end = "";
+  form.sprint_name = "";
+  form.duration = null;
+  resetTouched();
+}
 
 /** Utils */
 function resetTouched() {
@@ -232,24 +244,27 @@ function toDayStartMs(val?: string | null) {
 }
 
 const isCustom = computed(() => form.duration === 5);
-watch(() => form.duration, (val) => {
-  if (!val) return;
 
-  const weeks = typeof val === "object" ? val._id : val;
+// Watch for duration changes (only for add mode)
+watch(
+  () => form.duration,
+  (newDuration) => {
+    if (isUpdate.value || !newDuration || newDuration === 5 || !form.start)
+      return;
 
-  if (weeks !== 5 && form.start) {
-    const end = addDays(form.start, weeks * 7);
-    form.end = end;
-  }
-});
+    // Auto-calculate end date based on duration
+    form.end = addDays(form.start, newDuration * 7);
+  },
+);
 
-
+// Watch for start date changes
 watch(
   () => form.start,
   (v) => {
     if (!v) return;
 
-    if (form.duration && form.duration !== 5) {
+    // Only auto-calculate end date in add mode with non-custom duration
+    if (!isUpdate.value && form.duration && form.duration !== 5) {
       form.end = addDays(form.start, form.duration * 7);
     }
 
@@ -257,39 +272,84 @@ watch(
     if (form.end && toDayStartMs(form.end) < toDayStartMs(form.start)) {
       form.end = form.start;
     }
-  }
+  },
 );
+
 function addDays(date: string, days: number) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
 }
 
+// Calculate duration in days
 const durationDays = computed(() => {
   if (!form.start || !form.end) return 0;
-  return form.duration !== 5
-    ? form.duration * 7
-    : (toDayStartMs(form.end) - toDayStartMs(form.start)) / 86400000;
+
+  const startMs = toDayStartMs(form.start);
+  const endMs = toDayStartMs(form.end);
+
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs)) return 0;
+
+  // Calculate the difference in days
+  return Math.round((endMs - startMs) / 86400000);
 });
 
-/** Hydrate form when sprint changes or when opened */
+function isoToDateString(iso: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Map duration days to dropdown option
+function getDurationOption(days: number) {
+  if (days === 7) return 1; // 1 Week
+  if (days === 14) return 2; // 2 Weeks
+  if (days === 21) return 3; // 3 Weeks
+  if (days === 28) return 4; // 4 Weeks
+  return 5; // Custom
+}
+
+/** Hydrate form when sprint changes (for add mode via props) */
 watch(
   () => props.sprint,
   (s) => {
-    if (!s) {
-      form.start = new Date().toISOString().slice(0, 10); // default today
-      form.end = "";
-      form.sprint_name = "";
-      form.goal = "";
-      resetTouched();
-      return;
-    }
+    if (!s || isUpdate.value) return;
+
     form.goal = s.goal ?? "";
     form.start = s.start ?? new Date().toISOString().slice(0, 10);
     form.end = s.end ?? "";
     form.sprint_name = s.title ?? "";
+    form.duration = null;
     resetTouched();
   },
-  { immediate: true }
+  { immediate: true },
+);
+
+/** Hydrate form when updateData changes (for update mode via store) */
+watch(
+  updateData,
+  (data) => {
+    if (!data) {
+      resetForm();
+      return;
+    }
+
+    form.sprint_name = data.sprint_name ?? "";
+    form.start = isoToDateString(data.start);
+    form.end = isoToDateString(data.end);
+    form.goal = data.goal ?? "";
+
+    // Set duration dropdown based on actual duration
+    if (data.duration) {
+      const days = Number(data.duration);
+      form.duration = getDurationOption(days);
+    } else {
+      form.duration = 5; // Custom
+    }
+  },
+  { immediate: true },
 );
 </script>

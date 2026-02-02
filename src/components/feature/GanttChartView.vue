@@ -7,7 +7,10 @@
       :taskFields="taskFields"
       :height="'100%'"
       :labelSettings="labelSettings"
+      :projectStartDate="projectStartDate"
+      :projectEndDate="projectEndDate"
       @rowSelected="onRowSelected"
+      :queryTaskbarInfo="queryTaskbarInfo"
     >
       <e-columns>
         <e-column
@@ -30,6 +33,13 @@
           width="90"
         ></e-column>
         <e-column
+          field="EndDate"
+          headerText="End Date"
+          textAlign="Right"
+          format="yMd"
+          width="90"
+        ></e-column>
+        <e-column
           field="Duration"
           headerText="Duration"
           textAlign="Right"
@@ -44,6 +54,7 @@
 import { computed, ref, watch } from "vue";
 import { GanttComponent } from "@syncfusion/ej2-vue-gantt";
 import { useTheme } from "../../composables/useTheme";
+
 interface Card {
   _id: string;
   "card-title": string;
@@ -55,10 +66,13 @@ interface Card {
 
 const props = defineProps<{ data: Card[] }>();
 const { isDark } = useTheme();
+
 const labelSettings = {
-  taskLabel: "TaskName", 
+  taskLabel: "TaskName",
 };
+
 const ganttRef = ref<InstanceType<typeof GanttComponent> | null>(null);
+
 const lightColors = [
   "#DBEAFE",
   "#DCFCE7",
@@ -78,12 +92,45 @@ const taskFields = {
   progress: "Progress",
   child: "subtasks",
 };
+
+// Calculate project date range
+const projectStartDate = computed(() => {
+  if (props.data.length === 0) return new Date();
+  
+  const dates = props.data
+    .filter(card => card["start-date"])
+    .map(card => new Date(card["start-date"]));
+  
+  return new Date(Math.min(...dates.map(d => d.getTime())));
+});
+
+const projectEndDate = computed(() => {
+  if (props.data.length === 0) return new Date();
+  
+  const dates = props.data.map(card => {
+    const endDate = card["end-date"] 
+      ? new Date(card["end-date"]) 
+      : new Date(card["start-date"]);
+    return endDate;
+  });
+  
+  const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
+  // Add 7 days buffer for better visibility
+  maxDate.setDate(maxDate.getDate() + 7);
+  return maxDate;
+});
+
 const ganttItems = computed(() =>
   props.data.map((card, index) => {
     const start = new Date(card["start-date"]);
-    const end = card["end-date"] ? new Date(card["end-date"]) : start;
-    const duration =
-      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+    const end = card["end-date"] ? new Date(card["end-date"]) : new Date(start);
+    
+    // If no end date, set it to start date + 1 day
+    if (!card["end-date"]) {
+      end.setDate(start.getDate() + 1);
+    }
+    
+    const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
 
     return {
       TaskID: card["card-code"],
@@ -93,7 +140,7 @@ const ganttItems = computed(() =>
       Duration: duration,
       Progress: 0,
 
-      // 🔥 taskbar styles
+      // Store color info
       barColor: lightColors[index % lightColors.length],
       taskLabelColor: isDark.value ? "#FFFFFF" : "#1F2937",
 
@@ -102,32 +149,40 @@ const ganttItems = computed(() =>
   })
 );
 
+// Apply custom colors to taskbars
+function queryTaskbarInfo(args: any) {
+  if (args.data && args.data.barColor) {
+    args.taskbarBgColor = args.data.barColor;
+    args.taskbarBorderColor = args.data.barColor;
+    args.progressBarBgColor = args.data.barColor;
+  }
+}
+
 const emit = defineEmits<{
   (e: "select:ticket", card: Card): void;
 }>();
+
 const onRowSelected = (args: any) => {
   const card = args.data.extendedProps.card as Card;
   emit("select:ticket", card);
 };
+
 watch(
   isDark,
   () => {
     const ejGantt = ganttRef.value?.ej2Instances;
     if (ejGantt) {
-      console.log("ejgantt chart", ejGantt);
-
       ejGantt.theme = isDark.value ? "Material3Dark" : "Material3";
       ejGantt.refresh();
     }
   },
   { immediate: true }
 );
+
 watch(
   isDark,
   () => {
-    const lightTheme = document.getElementById(
-      "light-theme"
-    ) as HTMLLinkElement;
+    const lightTheme = document.getElementById("light-theme") as HTMLLinkElement;
     const darkTheme = document.getElementById("dark-theme") as HTMLLinkElement;
 
     if (lightTheme && darkTheme) {
