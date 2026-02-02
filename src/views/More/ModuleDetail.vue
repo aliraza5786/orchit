@@ -42,8 +42,8 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <Button size="sm" :disabled="isModulePending || isusingPending" @click="useModuleHandler">{{ isusingPending
-            ? 'Processing...' :'Use this Module'}}</Button>
+          <Button size="sm" :disabled="isModulePending || isusingPending" @click="useModuleHandler" :loading="isusingPending">{{ isusingPending
+            ? 'Processing' :'Use this Module'}}</Button>
           <button
             class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">
             <span class="text-lg">♡</span>

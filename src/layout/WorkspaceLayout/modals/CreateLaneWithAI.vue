@@ -12,8 +12,9 @@
 
                 <!-- Textarea for description -->
                 <div class="relative min-h-[3.5rem] w-full  max-w-[800px]">
-                    <div
-                        class="neon-flow-border bg-bg-input after:p-4  flex h-[200px] items-start gap-2.5 self-stretch shadow-[-1px_-1px_0_0_rgba(255,255,255,0.20)_inset,1px_1px_1px_0_rgba(255,255,255,0.60)_inset] backdrop-blur-[5px]  pl-[17px] pr-[48px] py-[30px] rounded-3xl max-sm:h-[120px] max-sm:px-5 max-sm:py-5">
+                    <div 
+                        :class="`${isCreatingLane ? 'neon-flow-border' : ''} flex h-[150px] items-start gap-2.5 self-stretch shadow-[-1px_-1px_0_0_rgba(255,255,255,0.20)_inset,1px_1px_1px_0_rgba(255,255,255,0.60)_inset] backdrop-blur-[5px] bg-bg-input pl-[17px] pr-[48px] py-[30px] rounded-xl max-sm:h-[120px] max-sm:px-5 max-sm:py-5`"
+                       >
                         <textarea autofocus :disabled="isPending" v-if="!isRecording && !audioURL" v-model="description"
                             placeholder="Ask  Orchit AI to create a tab..."
                             class="w-full h-full  text-text-primary text-base font-normal leading-7 resize-none outline-none placeholder:opacity-70" />
@@ -63,10 +64,10 @@
                         } else {
                             description = suggestion.description
                         }
-                    }"
-                        class="flex h-[136px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:h-[60px] max-sm:p-[15px] hover:bg-bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
+                       }"
+                        class="flex min-w-[160px] h-[110px] items-center flex-[1_0_0] cursor-pointer bg-bg-card/50 border border-border/20 backdrop-blur-sm p-[17px] rounded-xl max-md:h-20 max-md:p-5 max-sm:p-[15px] hover:bg-card/70 hover:border-accent-hover/30 hover:shadow-lg hover:shadow-accent/10 transition-all duration-300 hover-scale">
                         <span
-                            class="text-text-secondary line-clamp-3 text-base font-normal leading-5 hover:text-text-primary transition-colors max-md:static max-md:w-auto max-md:h-auto max-sm:text-sm max-sm:leading-[18px]">
+                             class="text-text-secondary line-clamp-3 text-base font-normal leading-5 hover:text-text-primary transition-colors max-md:static max-md:w-auto max-md:h-auto max-sm:text-sm max-sm:leading-[18px]">
                             {{ suggestion.description }}
                         </span>
                     </div>
