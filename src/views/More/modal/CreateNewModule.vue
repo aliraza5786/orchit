@@ -35,8 +35,8 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
                         @click="close">Cancel</button>
-                    <Button class="px-4" @click="submitManual">
-                        {{ creatingModule ? 'Saving...' : 'Save' }}
+                    <Button class="px-4" @click="submitManual" :loading="creatingModule">
+                        {{ creatingModule ? 'Saving' : 'Save' }}
                     </Button>
                 </div>
             </section>
@@ -63,7 +63,10 @@
                         <!-- Generate Button -->
                         <transition v-else name="rotate-fade" appear>
                             <div @click="handleGenerateSheet()"
-                                class="absolute bottom-4 right-4 w-9 h-9 bg-accent rounded-md flex items-center justify-center cursor-pointer shadow">
+                                class="absolute bottom-4 right-4 w-9 h-9 bg-accent rounded-md flex items-center justify-center shadow"
+                                :class="isAiPending || isPending ? 'animate-pulse-ring cursor-not-allowed' : ' cursor-pointer'"
+                                :disabled="isAiPending || isPending"
+                                >
                                 <i class="text-white fa-solid fa-arrow-right"></i>
                             </div>
                         </transition>
@@ -174,10 +177,13 @@ function validateManual() {
 }
 
 const { mutate: createModule, isPending: creatingModule } = useCreateModule({
-    onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['workspaces'] })
-        close()
-    }
+    onSuccess: async () => {
+    // keep loader ON
+    await queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+
+    // now everything is refetched
+    close()
+  }
 })
 
 // const { mutate: updateSheet, isPending: isUpdating } = useUpdateWorkspaceSheet({
@@ -252,10 +258,11 @@ const isPending = ref(false)
 // }
 
 const { mutate: generateAI, isPending: isAiPending } = useCreateModuleAI({
-    onSuccess: () => {
-        description.value = ''
-        close();
-        queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+    onSuccess: async () => {
+          description.value = ''
+          await queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+          close()
+          isPending.value = false
         // const result: any = extractJSONFromResponse(data) ?? {}
         // createModule({
         //     payload: {
@@ -263,8 +270,7 @@ const { mutate: generateAI, isPending: isAiPending } = useCreateModuleAI({
         //         workspace_id: workspaceId.value,
         //     }
 
-        // })
-        isPending.value = false
+        // }) 
     },
     onError: () => { isPending.value = false }
 })
