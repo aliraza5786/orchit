@@ -9,7 +9,9 @@
     ]"
   >
     <!-- Header -->
-    <div class="flex justify-between items-center border-b border-border px-5 py-4.5 sticky top-0 bg-bg-card z-10">
+    <div
+      class="flex justify-between items-center border-b border-border px-5 py-4.5 sticky top-0 bg-bg-card z-10"
+    >
       <h5 class="text-[16px] font-medium flex items-center gap-2">
         <i class="fa-solid fa-sparkles text-accent"></i>
         Ask Ai
@@ -25,10 +27,9 @@
         @click="closeHandler"
       ></i>
     </div>
-
     <!-- Chat Area -->
     <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
-      <template v-if="orderedMessages.length">
+      <template v-if="orderedMessages.length || isAiThinkingBubbleVisible">
         <div
           v-for="msg in orderedMessages"
           :key="msg._id"
@@ -41,54 +42,74 @@
             :class="msg.type === 'user' ? 'bg-bg-surface' : 'bg-accent/10'"
           >
             <i
-              v-if="msg.type === 'assistant' && msg.metadata?.status === 'thinking'"
+              v-if="msg.type === 'assistant'"
               class="fa-solid fa-robot text-accent text-sm"
             ></i>
-            <div v-else-if="msg.type === 'user'" class="text-xs font-semibold text-accent">ME</div>
+            <div
+              v-else-if="msg.type === 'user'"
+              class="text-xs font-semibold text-accent"
+            >
+              ME
+            </div>
           </div>
 
           <!-- Message bubble -->
           <div
             class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border relative"
-            :class="msg.type === 'user'
-              ? 'bg-accent/10 border-accent/20 rounded-tr-none'
-              : 'bg-bg-body border-border rounded-tl-none'"
+            :class="
+              msg.type === 'user'
+                ? 'bg-accent/10 border-accent/20 rounded-tr-none'
+                : 'bg-bg-body border-border rounded-tl-none'
+            "
           >
-            <!-- AI Thinking Bubble -->
-            <template v-if="msg.type === 'assistant' && msg.metadata?.status === 'thinking'">
-              <div class="flex items-center gap-1">
-                <div class="typing-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-                <span class="text-xs text-text-secondary ml-2">AI is thinking...</span>
-              </div>
-            </template>
+            <p class="whitespace-pre-wrap">{{ msg.content }}</p>
+            <div
+              class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5"
+            >
+              <span>{{ formatTimestamp(msg.timestamp) }}</span>
+              <span v-if="msg.type === 'user'">
+                <i
+                  v-if="msg.metadata?.status === 'completed'"
+                  class="fa-solid fa-check-double text-green-500"
+                ></i>
+                <i v-else class="fa-solid fa-check text-text-secondary"></i>
+              </span>
+            </div>
+          </div>
+        </div>
 
-            <!-- Normal message -->
-            <template v-else>
-              <p class="whitespace-pre-wrap">{{ msg.content }}</p>
-              <div class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5">
-                <span>{{ formatTimestamp(msg.timestamp) }}</span>
-                <span v-if="msg.type === 'user'">
-                  <i
-                    v-if="msg.metadata?.status === 'completed'"
-                    class="fa-solid fa-check-double text-green-500"
-                  ></i>
-                  <i
-                    v-else
-                    class="fa-solid fa-check text-text-secondary"
-                  ></i>
-                </span>
+        <!-- AI Thinking Bubble (separate from messages) -->
+        <div
+          v-if="isAiThinkingBubbleVisible"
+          class="flex gap-2 relative animate-fade-in"
+        >
+          <div
+            class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-accent/10"
+          >
+            <i class="fa-solid fa-robot text-accent text-sm"></i>
+          </div>
+          <div
+            class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border bg-bg-body border-border rounded-tl-none"
+          >
+            <div class="flex items-center gap-1">
+              <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
               </div>
-            </template>
+              <span class="text-xs text-text-secondary ml-2"
+                >AI is thinking...</span
+              >
+            </div>
           </div>
         </div>
       </template>
 
       <!-- Empty state -->
-      <div v-else class="flex flex-col items-center justify-center h-full text-text-secondary">
+      <div
+        v-else
+        class="flex flex-col items-center justify-center h-full text-text-secondary"
+      >
         <i class="fa-solid fa-comments text-4xl mb-2 opacity-50"></i>
         <p class="text-sm">No messages yet. Start a conversation!</p>
       </div>
@@ -96,7 +117,10 @@
 
     <!-- Input Area -->
     <div class="p-4 border-t border-border bg-bg-card">
-      <div v-if="contextTitle" class="mb-2 flex justify-between items-center gap-1.5">
+      <div
+        v-if="contextTitle"
+        class="mb-2 flex justify-between items-center gap-1.5"
+      >
         <nav class="flex items-center text-xs text-text-secondary gap-2">
           <div class="flex items-center gap-1 font-medium text-text-primary">
             <span>{{ contextTitle }}</span>
@@ -108,12 +132,12 @@
         </nav>
         <button
           @click="showAIPreview = !showAIPreview"
+          v-if="entities.length"
           class="py-1 px-2 text-white bg-accent rounded-lg hover:bg-accent-hover transition-colors"
         >
           <i class="fa-regular fa-eye text-sm"></i> Preview
         </button>
       </div>
-
       <div class="relative">
         <textarea
           v-model="userMessage"
@@ -128,9 +152,11 @@
           :disabled="!userMessage.trim() || agentStore.isSending"
           class="absolute right-2 bottom-2 p-1.5 text-accent hover:text-accent-hover transition-colors rounded-lg hover:bg-accent/5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <i 
+          <i
             class="fa-solid"
-            :class="agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'"
+            :class="
+              agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'
+            "
           ></i>
         </button>
       </div>
@@ -150,25 +176,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount, nextTick, onMounted } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  onBeforeUnmount,
+  nextTick,
+  onMounted,
+} from "vue";
 import { useRoute } from "vue-router";
 import { io, Socket } from "socket.io-client";
 import { useWorkspaceStore } from "../../../stores/workspace";
-// import { usePeopleList } from "../../../queries/usePeople";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { useAgentStore } from "../../../stores/agentStore";
 import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
+
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
 const showAIPreview = ref(false);
 const userMessage = ref("");
-const chatContainer = ref<HTMLElement | null>(null);
 const socket = ref<Socket | null>(null);
 const isSocketConnected = ref(false);
 const socketURL = import.meta.env.VITE_SOCKET_IO_URL;
 const isAiThinkingBubbleVisible = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
 const agentStore = useAgentStore();
+
 const contextTitle = computed(() => {
   const routeName = (route.name as string)?.toLowerCase() || "workspace";
   if (routeName.includes("peak")) return "Peak";
@@ -180,24 +213,22 @@ const contextTitle = computed(() => {
   return "Workspace";
 });
 
-const refreshKey = ref(0);
-
 const orderedMessages = computed(() => {
-  refreshKey.value; 
   if (!Array.isArray(agentStore.chatHistory)) return [];
-  const messages = agentStore.chatHistory.flatMap(s => s.messages || [])
-    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-  if (isAiThinkingBubbleVisible.value) {
-    messages.push({ _id: 'ai-thinking-' + Date.now(), type: 'assistant', content: '', metadata: { status: 'thinking' }, timestamp: new Date().toISOString() });
-  }
-
-  return messages;
+  return agentStore.chatHistory
+    .flatMap((s) => s.messages || [])
+    .filter((msg) => msg.metadata?.status !== "thinking") // Filter out thinking status messages
+    .sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    );
 });
 
 function closeHandler() {
   workspaceStore.toggleChatBotPanel();
 }
+
 const messagesContainer = ref<HTMLElement | null>(null);
 
 function scrollToBottom() {
@@ -205,71 +236,85 @@ function scrollToBottom() {
     requestAnimationFrame(() => {
       const el = messagesContainer.value;
       if (!el) return;
-
       el.scrollTop = el.scrollHeight;
     });
   });
 }
+
 onMounted(() => {
   scrollToBottom();
 });
 
+// Watch for new messages and hide thinking bubble
 watch(
   () => orderedMessages.value.length,
+  (newLength, oldLength) => {
+    if (newLength > oldLength && isAiThinkingBubbleVisible.value) {
+      const lastMessage =
+        orderedMessages.value[orderedMessages.value.length - 1];
+      if (lastMessage?.type === "assistant") {
+        isAiThinkingBubbleVisible.value = false;
+        agentStore.isAiTyping = false;
+      }
+    }
+    scrollToBottom();
+  },
+);
+
+watch(
+  () => isAiThinkingBubbleVisible.value,
   () => {
     scrollToBottom();
-  }
+  },
 );
+
 function initSocket() {
   const token = localStorage.getItem("token");
   if (!token || socket.value?.connected) return;
 
-  socket.value = io(socketURL, { auth: { token }, transports: ["websocket", "polling"] });
+  socket.value = io(socketURL, {
+    auth: { token },
+    transports: ["websocket", "polling"],
+  });
 
-  socket.value?.on("connect", () => {
-  isSocketConnected.value = true;
-
-  if (workspaceId.value) {
-    socket.value?.emit("join-workspace", workspaceId.value);
-  }
-});
-
+  socket.value.on("connect", () => {
+    isSocketConnected.value = true;
+    if (workspaceId.value) {
+      socket.value?.emit("join-workspace", workspaceId.value);
+    }
+  });
 
   socket.value.on("disconnect", () => {
     isSocketConnected.value = false;
   });
-socket.value.on("realtime-update", async (data: any) => {
-  if (data.type === "agent-response") {
-    isAiThinkingBubbleVisible.value = true;
 
-    await agentStore.fetchChatHistory(workspaceId.value, true);
+  // Listen to ALL realtime updates
+  socket.value.on("realtime-update", async (data: any) => {
+    if (data.type === "agent-response" || data.type === "message_complete") {
+      isAiThinkingBubbleVisible.value = false;
+      agentStore.isAiTyping = false;
+      await agentStore.fetchChatHistory(workspaceId.value, true);
+      scrollToBottom();
+    }
+  });
 
-    // Hide bubble once history is updated
-    isAiThinkingBubbleVisible.value = false;
-
-    // Scroll to bottom
-    nextTick(() => {
-      if (chatContainer.value) {
-        chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
-      }
-    });
-  }
-});
-
+  socket.value.onAny((eventName, ...args) => {
+    console.log("Socket event:", eventName, args);
+  });
 }
-/* ================= SEND MESSAGE ================= */
 async function sendMessage() {
-  const message = userMessage.value.trim();
+  const message = userMessage.value?.trim();
   if (!message || !workspaceId.value || agentStore.isSending) return;
-
   userMessage.value = "";
   isAiThinkingBubbleVisible.value = true;
   agentStore.isSending = true;
   agentStore.isAiTyping = true;
 
+  // Scroll to show thinking bubble
   scrollToBottom();
 
   try {
+    // Send message to API
     await agentStore.sendMessage({
       workspace_id: workspaceId.value,
       message,
@@ -279,14 +324,18 @@ async function sendMessage() {
       card_id: route.params.card_id as string,
       session_id: route.params.session_id as string,
     });
-
-    // User message immediately visible
     await agentStore.fetchChatHistory(workspaceId.value);
     scrollToBottom();
-
-    // Keep bubble visible until socket emits new update
+    setTimeout(async () => {
+      if (isAiThinkingBubbleVisible.value) {
+        await agentStore.fetchChatHistory(workspaceId.value, true);
+        isAiThinkingBubbleVisible.value = false;
+        agentStore.isAiTyping = false;
+        scrollToBottom();
+      }
+    }, 10000);
   } catch (err) {
-    console.error(err);
+    console.error("Error sending message:", err);
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
   } finally {
@@ -294,20 +343,35 @@ async function sendMessage() {
   }
 }
 
-watch(workspaceId, (newId, oldId) => {
-  if (!newId) return;
-  if (!socket.value) initSocket();
-  else if (socket.value.connected) {
-    if (oldId && oldId !== newId) socket.value.emit("leave-workspace", oldId);
-    socket.value.emit("join-workspace", newId);
-  }
-}, { immediate: true });
+watch(
+  workspaceId,
+  (newId, oldId) => {
+    if (!newId) return;
+    if (!socket.value) {
+      initSocket();
+    } else if (socket.value.connected) {
+      if (oldId && oldId !== newId) {
+        socket.value.emit("leave-workspace", oldId);
+      }
+      socket.value.emit("join-workspace", newId);
+    }
+  },
+  { immediate: true },
+);
 
-watch(() => workspaceStore.showChatBotPanel, (isOpen) => {
-  if (!workspaceId.value || !socket.value) return;
-  if (isOpen) socket.value.emit("join-workspace", workspaceId.value);
-  else socket.value.emit("leave-workspace", workspaceId.value);
-});
+watch(
+  () => workspaceStore.showChatBotPanel,
+  (isOpen) => {
+    if (!workspaceId.value || !socket.value) return;
+    if (isOpen) {
+      socket.value.emit("join-workspace", workspaceId.value);
+      // Fetch chat history when panel opens
+      agentStore.fetchChatHistory(workspaceId.value, true);
+    } else {
+      socket.value.emit("leave-workspace", workspaceId.value);
+    }
+  },
+);
 
 const formatTimestamp = (ts?: string) => {
   if (!ts) return "";
@@ -315,18 +379,27 @@ const formatTimestamp = (ts?: string) => {
   return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
 };
 
-onMounted(() => initSocket());
 onMounted(() => {
+  initSocket();
   if (workspaceId.value && workspaceStore.showChatBotPanel) {
     agentStore.fetchChatHistory(workspaceId.value, true);
   }
 });
 
 onBeforeUnmount(() => {
-  if (workspaceId.value && socket.value) socket.value.emit("leave-workspace", workspaceId.value);
+  if (workspaceId.value && socket.value) {
+    socket.value.emit("leave-workspace", workspaceId.value);
+  }
   socket.value?.removeAllListeners();
   socket.value?.disconnect();
 });
+async function fetchEntities() {
+  if (workspaceId.value) {
+    await agentStore.fetchCreatedEntities(workspaceId.value);
+  }
+}
+fetchEntities();
+const entities = computed(() => agentStore.createdEntities);
 </script>
 
 <style scoped>
@@ -338,17 +411,40 @@ onBeforeUnmount(() => {
 .typing-dots span {
   width: 6px;
   height: 6px;
-  background-color: #7D68C8;
+  background-color: #7d68c8;
   border-radius: 50%;
   opacity: 0.4;
   animation: typing-bounce 1.4s infinite ease-in-out;
 }
-.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
-.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
-@keyframes typing-bounce {
-  0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
-  40% { transform: scale(1); opacity: 1; }
+.typing-dots span:nth-child(1) {
+  animation-delay: -0.32s;
 }
-@keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fade-in { animation: fade-in 0.3s ease-out; }
+.typing-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+@keyframes typing-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
 </style>

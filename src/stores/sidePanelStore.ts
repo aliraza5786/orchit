@@ -12,6 +12,7 @@ export const useSidePanelStore = defineStore("sidePanel", {
     selectedCardId: "",
     cardDetails:[] as any[],
     selectedMilestoneId: "" as string,
+    startedSprint:{} as any
   }),
 
   getters: {
@@ -92,5 +93,8 @@ updateCardTitleOptimistic(newTitle: string) {
     },
     setActiveMilestoneId(milestoneId: string) {
       this.selectedMilestoneId = milestoneId;   
+    },
+    storeActiveSprint(sprint:any){
+      this.startedSprint=sprint;
     }
 }});
