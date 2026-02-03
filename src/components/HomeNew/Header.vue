@@ -17,7 +17,7 @@
             <a href="#product" @click.prevent="scrollTo('product')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Product</a>
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a>
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a>
-            <a href="/pricing" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</a>
+            <router-link to="/pricing" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Pricing</router-link>
             <a href="#faq" @click.prevent="scrollTo('faq')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">FAQ</a>
             <router-link to="/contact-us" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Contact Sales</router-link> 
           </nav>
@@ -38,7 +38,7 @@
               </svg>
             </button>
 
-            <a href="/login" class="text-[var(--text)] hover:text-[var(--muted)] transition-colors">Log in</a>
+            <router-link to="/login" class="text-[var(--text)] hover:text-[var(--muted)] transition-colors">Log in</router-link>
 
             <!-- Get started (Desktop Only) -->
             <button @click="goToRegister" class="hidden cursor-pointer md:inline-block px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium">
@@ -82,7 +82,7 @@
           <a href="#product" @click.prevent="scrollTo('product')" class="text-[var(--text)]">Product</a>
           <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--text)]">Templates</a>
           <a href="#marketplace" @click.prevent="scrollTo('marketplace')" class="text-[var(--text)]">Marketplace</a>
-          <a href="#pricing" @click.prevent="scrollTo('pricing')" class="text-[var(--text)]">Pricing</a>
+          <router-link to="/pricing" @click="toggleSidebar" class="text-[var(--text)]">Pricing</router-link>
           <a href="#faq" @click.prevent="scrollTo('faq')" class="text-[var(--text)]">FAQ</a>
            <router-link
             to="/contact-us"
