@@ -42,7 +42,8 @@
             :can-edit="canEditCard"
             :can-delete="canDeleteCard"
             :workflow-data="transitionData?.raw_object || {}"
-            :show-transition-labels="true" 
+            :show-transition-labels="true"
+            :isSaving="isSaving" 
             @save="handleSave"
             @update:workflow="handleWorkflowUpdate"
             @add:status="handleAddStatus" 
@@ -108,52 +109,11 @@ provide('workflowState', workflowState)
 /* Initialize Workflow on Open / Data Load */
 watch(() => transitionData.value, (data) => {
     if (data && isOpen.value) {
-        // Assume raw_object or similar holds the workflow structure
-        // If raw_object is empty, we might initialize with defaults or empty
-        // const flow = data.raw_object || { nodes: [], edges: [] };
-        // WorkflowCanvas expects 'raw_transitions' structure usually, 
-        // but let's see how WorkflowCanvas consumes it. 
-        // Actually WorkflowCanvas fetches its own data internally via useProcessWorkflow usually.
-        // BUT here we want to inject OUR fetched data.
-        
-        // Wait, WorkflowCanvas in the previous file snippet looked like it takes :process-id 
-        // and calls useProcessWorkflow itself (lines 39) or accepts data via some mechanism.
-        
-        // Actually, looking at WorkflowCanvas content from step 227:
-        // It has `watch(processWorkflow, ...)`
-        // It does NOT seem to accept a prop to seed data directly easily, 
-        // UNLESS we modify WorkflowCanvas to accept a `initialData` prop or similar.
-        
-        // However, WorkflowCanvas is tightly coupled to `useProcessWorkflow` which fetches by workspaceId (line 39).
-        // It doesn't seem to fetch by process-id specific logic for single transition.
-        
-        // The user said "make new workflowprocess buider".
-        // I might need to make a wrapper that passes data to a modified WorkflowCanvas 
-        // OR duplicate WorkflowCanvas logic here if it's simple enough.
-        
-        // Given existing WorkflowCanvas is complex (vue-flow setup), it's better to Reuse.
-        // But WorkflowCanvas uses `useProcessWorkflow(workspaceId.value)`.
-        
-        // I should probably modify WorkflowCanvas to accept `workflowData` prop 
-        // and if provided, use that instead of fetching.
-        
-        // For now, I will assume I can pass data to it via a prop if I modify it, 
-        // or I'll just rely on `provide/inject` if that's easier.
-        // Checking WorkflowCanvas again...
-        // It watches `processWorkflow`. 
-        
-        // Let's modify WorkflowCanvas to accept a `workflowData` prop.
-        // But first, let's finish THIS file assuming WorkflowCanvas can accept `initialData`.
+         
     }
 })
 
-// BUT wait, WorkflowCanvas fetches data using `useProcessStatus` and `useProcessWorkflow`. 
-// Those fetch ALL statuses and transitions for the WORKSPACE.
-// The user wants "make process against EACH process card". 
-// This implies the workflow is isolated per card.
-
-// If so, `WorkflowCanvas` as it is (workspace-level) is NOT suitable without modification.
-// I need to modify `WorkflowCanvas` to support "Input Data" mode vs "Fetch from Workspace" mode.
+ 
 
 /* Saving */
 const queryClient = useQueryClient()

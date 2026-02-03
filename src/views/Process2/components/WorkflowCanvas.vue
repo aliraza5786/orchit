@@ -67,10 +67,7 @@ const statusObjects = computed(() => {
   })
 })
 
-// Output the full array of status objects whenever it changes
-watch(statusObjects, (newValue) => {
-  console.log('Workflow Status Objects Change:', JSON.stringify(newValue, null, 2))
-}, { deep: true })
+ 
 
 const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 // ---- API hooks ----
@@ -81,14 +78,16 @@ const props = withDefaults(defineProps<{
     workflowData?: any,
     canEdit?: boolean,
     canDelete?: boolean,
+    isSaving?: boolean
 
 }>(), { canEdit: true })
 
 // ---- Helpers to normalize API -> VueFlow ----
-
+const initialized = ref(false)
 // Watch for prop-injected data
 watch(() => props.workflowData, async (data) => {
-    if (data) {
+     if (!data || initialized.value) return
+     if (props.isSaving) return
         // Assuming data structure matches what we expect (nodes, edges) or the API response shape
         // If it's the raw transition object, we might need to drill down
         const fd = data.flow_diagram || data; // Adapt as needed based on API
@@ -104,7 +103,8 @@ watch(() => props.workflowData, async (data) => {
              setEdges(incomingEdges)
              fitView({ padding: 0.5, maxZoom: 1 })
         })
-    }
+        initialized.value = true
+    
 }, { immediate: true })
 
 
@@ -114,8 +114,7 @@ function triggerSave() {
 }
 
 function saveWorkflow() {
-  const payload = serializeWorkflowPayload()
-  console.log(' >>> saving workflow (process2)', payload);
+  const payload = serializeWorkflowPayload() 
   emit('save', payload)
 }
 
@@ -241,8 +240,7 @@ function openCreateNodeModal() {
 }
 
 function handleEditNode(nodeId: string, nodeData: any) {
-  const node = getNodes.value.find(n => n.id === nodeId)
-  console.log(node, '>>>>');
+  const node = getNodes.value.find(n => n.id === nodeId) 
 
   if (node) {
     emit('edit:node', {
@@ -379,8 +377,7 @@ window.addEventListener('beforeunload', () => {
 })
 
 
-function openEditEdge(edge: VFEdge) {
-  console.log(edge, 'edge');
+function openEditEdge(edge: VFEdge) { 
   
   selectedEdgeId.value = edge.id
   // prefer existing label, fallback to data.name, else empty
@@ -486,8 +483,7 @@ function cancelEditEdge() {
   selectedEdgeId.value = null
   editEdgeName.value = ''
 }
-function onEdgeClick({event, edge}:{event:any, edge:any}) {
-  console.log('>>> click',edge);
+function onEdgeClick({event, edge}:{event:any, edge:any}) { 
   
   openEditEdge(edge)
   event.stopPropagation()
@@ -568,8 +564,7 @@ watch(
   { deep: true, immediate: true }
 );
 
-function triggerAddStatus() {
-  console.log('>>> Add Status Clicked');
+function triggerAddStatus() { 
   emit('add:status');
 }
 

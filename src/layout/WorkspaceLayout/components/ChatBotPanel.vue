@@ -213,7 +213,7 @@ const contextTitle = computed(() => {
   if (routeName.includes("pin")) return "Pin";
   return "Workspace";
 });
-
+const entities = computed(() => agentStore.createdEntities);
 const orderedMessages = computed(() => {
   if (!Array.isArray(agentStore.chatHistory)) return [];
 
@@ -395,13 +395,7 @@ onBeforeUnmount(() => {
   socket.value?.removeAllListeners();
   socket.value?.disconnect();
 });
-async function fetchEntities() {
-  if (workspaceId.value) {
-    await agentStore.fetchCreatedEntities(workspaceId.value);
-  }
-}
-fetchEntities();
-const entities = computed(() => agentStore.createdEntities);
+
 </script>
 
 <style scoped>

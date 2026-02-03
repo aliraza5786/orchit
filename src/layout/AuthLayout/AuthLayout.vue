@@ -1,6 +1,5 @@
 <template>
-  <div class="bg-bg-body h-full sm:h-screen overflow-hidden">
-    <Header  v-if="showHeader" />
+  <div class="bg-bg-body h-full sm:h-screen overflow-hidden"> 
     <div class=" lg:shadow-xl flex flex-wrap w-full h-full p-4">
       <!-- Left Panel -->
       <div class="w-full lg:w-1/2 lg:pr-[15px] overflow-y-auto h-full lg:flex-1">
@@ -51,16 +50,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import Header from '../LandingPageLayout/components/Header.vue';
+<script setup lang="ts"> 
 import { useRoute } from 'vue-router'
-const route = useRoute()
-import { computed } from 'vue'
+const route = useRoute() 
 console.log("route path", route.path);
 
-const showHeader = computed(() => {
-  return route.path !== '/login' && route.path !== '/register'
-})
+ 
 // <script setup lang="ts">
 defineProps<{
   activeStep?: number

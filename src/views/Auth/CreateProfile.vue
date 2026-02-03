@@ -1,7 +1,7 @@
 <template>
   <AuthLayout :steps="['Purpose', 'About Company', 'Invite Team']" :activeStep="activeStep">
     <template #form>
-      <div class="max-w-[500px] md:mx-auto w-full">
+      <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
         <!-- Step 1 -->
         <div class="mb-6 md:mb-12 space-y-2" v-show="activeStep === 1">
           <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>

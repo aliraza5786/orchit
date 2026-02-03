@@ -1,9 +1,9 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[500px] md:mx-auto w-full text-text-primary bg-bg-body">
+      <div class="max-w-[500px] md:mx-auto w-full text-text-primary bg-bg-body ">
         <div v-if="!emailSent">
-          <h2 class="text-[32px] font-medium mb-4 text-center text-text-primary">
+          <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary">
             Forgot Password?
           </h2>
           <p class="text-sm text-text-secondary text-center mb-8">

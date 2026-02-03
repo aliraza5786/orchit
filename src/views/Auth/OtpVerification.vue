@@ -1,9 +1,9 @@
 <template>
     <AuthLayout>
       <template #form>
-        <div class="max-w-[496px] md:mx-auto w-full">
+        <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
           <div class="mb-12 space-y-2">
-            <h2 class="text-[32px] font-medium text-center text-text-primary" v-once>Enter Verification Code</h2>
+            <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary text-center" v-once>Enter Verification Code</h2>
             <p class="text-base sm:text-nowrap font-medium text-text-secondary text-center" v-once>
               We sent a five-digit code to your email <span class="font-bold">({{ email }})</span>.
             </p>
@@ -46,7 +46,7 @@
             <p class="text-sm font-medium text-text-secondary text-center">
               Didn't receive an email? Try checking your junk folder.
               <span
-                class="text-text-primary font-bold underline"
+                class="text-text-primary font-medium underline"
                 :class="cooldown > 0 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
                 role="button"
                 :aria-disabled="cooldown > 0 || isResending"
