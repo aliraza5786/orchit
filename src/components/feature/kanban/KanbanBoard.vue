@@ -59,6 +59,17 @@ export interface Column { _id: string | number; title: string; cards: Ticket[]; 
 export interface Board { columns: Column[] }
 
 const isMobile = useMediaQuery('(max-width: 650px)')
+interface ScrollPayload {
+  // horizontal
+  scrollLeft: number
+  scrollWidth: number
+  clientWidth: number
+
+  // vertical
+  scrollTop: number
+  scrollHeight: number
+  clientHeight: number
+}
 
 const canDragList = ref(canEditCard.value); 
 watchEffect(() => {
@@ -80,7 +91,6 @@ const props = withDefaults(defineProps<{
 }>(), {plusIcon:true})
 
 const emit = defineEmits<{
-  /** v-model style if you want to two-way bind the board */
   (e: 'update:board', payload: Board): void
   (e: 'select:ticket', payload: Ticket): void
   (e: 'update:column', payload: any): void
@@ -96,10 +106,11 @@ const emit = defineEmits<{
       oldIndex?: number
       newIndex?: number
     }
-
   }): void
-  (e: 'scroll', payload: { scrollLeft: number; scrollWidth: number; clientWidth: number }): void
+
+  (e: 'scroll', payload: ScrollPayload): void
 }>()
+
 
 /** Local mirror so we never mutate props directly (optimistic UI) */
 const localBoard = ref<Board>(cloneBoard(props.board))
@@ -186,21 +197,26 @@ function cloneBoard(b: Column[]): Board {
       : []
   };
 }
-let scrollTimeout: any = null;
+let scrollTimeout: ReturnType<typeof setTimeout>
+
 const onScroll = (e: Event) => {
-  clearTimeout(scrollTimeout);
+  clearTimeout(scrollTimeout)
+
   scrollTimeout = setTimeout(() => {
-    const el = e.target as HTMLElement;
-    emit("scroll", {
+    const el = e.target as HTMLElement
+
+    emit('scroll', {
       scrollLeft: el.scrollLeft,
       scrollWidth: el.scrollWidth,
       clientWidth: el.clientWidth,
-    });
-  }, 50);
-};
+      scrollTop: el.scrollTop,
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
+    })
+  }, 50)
+}
 
 </script>
-
 
 <style scoped>
 /* Drag classes from vuedraggable / SortableJS */

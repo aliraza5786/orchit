@@ -180,40 +180,141 @@
       </div>
 
       <!-- Recent Activity -->
-      <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto  flex flex-col border border-border">
-        <div class="mb-4">
-          <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
-          <p class="text-sm text-text-secondary mt-1">Stay up to date with what's happening across the project.</p>
+    <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
+  <!-- Header -->
+  <div class="mb-4">
+    <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
+    <p class="text-sm text-text-secondary mt-1">
+      Stay up to date with what's happening across the project.
+    </p>
+  </div>
+
+  <!-- Activity List -->
+  <div class="space-y-4 overflow-y-auto flex-1">
+    <!-- Loading State -->
+    <template v-if="isLoadingActivities">
+      <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
+      
+      <div
+        v-for="n in 5"
+        :key="`skeleton-${n}`"
+        class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse"
+      >
+        <!-- Avatar Skeleton -->
+        <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
+
+        <!-- Content Skeleton -->
+        <div class="flex-1 min-w-0 space-y-2">
+          <div class="space-y-1.5">
+            <div class="h-4 bg-bg-body rounded w-32"></div>
+            <div class="h-3 bg-bg-body rounded w-full"></div>
+            <div class="h-3 bg-bg-body rounded w-3/4"></div>
+          </div>
+          <div class="h-3 bg-bg-body rounded w-20"></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Activities Content -->
+    <template v-else-if="dashboardActiviesData?.activities?.length">
+      <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
+
+      <div
+        v-for="activity in dashboardActiviesData.activities"
+        :key="activity.id"
+        class="flex gap-3 pb-2 border-b border-border last:border-0"
+      >
+        <div
+          class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+          :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }"
+        >
+          {{ getInitials(activity?.user?.name) }}
         </div>
 
-        <div class="space-y-4 overflow-y-auto flex-1">
-          <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
-
-          <div v-for="activity in dashboardActiviesData?.activities" :key="activity.id"
-            class="flex gap-3 pb-4 border-b border-border last:border-0">
-            <div
-              class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-              :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }">
-              {{ getInitials(activity?.user?.name) }}
-            </div>
-
-            <div class="flex-1 min-w-0">
-              <div class="text-sm text-text-primary">
-                <span class="font-medium text-accent/90 pe-1">{{ activity?.user?.name }} </span>
-                <span class="text-text-secondary">
-              {{ stripHtml(activity?.message || "") }}
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-text-primary">
+            <span class="font-semibold text-md text-accent/90 pe-1">
+              {{ activity?.user?.name }}
             </span>
-                <a href="#" class="text-accent/90 hover:underline">{{ activity?.item }}</a>
-                <span v-if="activity.status" class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
-                  :class="getStatusClass(activity.status)">
-                  {{ activity?.status }}
-                </span>
-              </div>
-              <div class="text-xs text-text-secondary mt-1">{{ activity?.time }}</div>
-            </div>
+            <p class="text-text-secondary">
+              {{ stripHtml(activity?.message || '') }}
+            </p>
+            <button
+              type="button"
+              class="text-accent/90 hover:underline focus:outline-none"
+              @click="() => {}"
+            >
+              {{ activity?.item }}
+            </button>
+            <span
+              v-if="activity.status"
+              class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
+              :class="getStatusClass(activity.status)"
+            >
+              {{ activity?.status }}
+            </span>
+          </div>
+          <div class="text-xs text-text-secondary mt-1">
+            {{ activity?.time }}
           </div>
         </div>
       </div>
+    </template>
+
+    <!-- Empty State -->
+    <template v-else>
+      <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
+        <i class="fas fa-clock text-4xl mb-3"></i>
+        <h4 class="text-lg font-semibold mb-1">No recent activity</h4>
+        <p class="text-sm text-text-secondary/80">
+          Activities will appear here once your team starts making updates.
+        </p>
+      </div>
+    </template>
+  </div>
+
+  <!-- Pagination -->
+  <div
+    v-if="pagination && pagination.totalPages > 1"
+    class="flex items-center justify-between pt-4 mt-4 border-t border-border"
+  >
+    <p class="text-xs text-text-secondary">
+      Page {{ currentPage }} of {{ pagination.totalPages }}
+    </p>
+
+    <div class="flex items-center gap-2">
+      <button
+        class="px-3 py-1 text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        :disabled="currentPage === 1"
+        @click="changePage(currentPage - 1)"
+      >
+        Prev
+      </button>
+
+      <button
+        v-for="page in pagination.totalPages"
+        :key="page"
+        class="px-3 py-1 text-sm rounded border transition-colors"
+        :class="
+          page === currentPage
+            ? 'bg-accent text-white border-accent'
+            : 'border-border text-text-secondary hover:bg-bg-hover'
+        "
+        @click="changePage(page)"
+      >
+        {{ page }}
+      </button>
+
+      <button
+        class="px-3 py-1 text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        :disabled="currentPage === pagination.totalPages"
+        @click="changePage(currentPage + 1)"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+</div>
     </div>
 
   </div>
@@ -240,6 +341,9 @@ const route = useRoute()
 const workspaceId = computed<string>(() => toParamString(route?.params?.id))
 const jobId = computed<string>(() => toParamString(route?.params?.job_id))
 
+/** Current page for activities pagination */
+const currentPage = ref(1)
+
 /** Queries for team + activities */
 const {
   data: dashboardTeamsData,
@@ -247,7 +351,9 @@ const {
   error: teamsError,
   refetch: refetchTeams
 } = useDashboardTeams(workspaceId)
-const { data: dashboardActiviesData } = useDashboardActivities(workspaceId)
+
+const { data: dashboardActiviesData, isLoading:isLoadingActivities } = useDashboardActivities(workspaceId, currentPage)
+
 const workspace = computed(() => workspaceStore.singleWorkspace)
 
 const lastUpdateDate = computed(() => {
@@ -259,6 +365,17 @@ const lastUpdateDate = computed(() => {
   }
   return workspaceCreatedAt
 })
+
+const pagination = computed(() => dashboardActiviesData.value?.pagination)
+
+const changePage = (page: number) => {
+  if (page < 1 || (pagination.value && page > pagination.value.totalPages)) {
+    return
+  }
+  // Just update the currentPage - the query will automatically refetch due to reactive queryKey
+  currentPage.value = page
+}
+
 function stripHtml(html: string) {
   const div = document.createElement("div");
   div.innerHTML = html;

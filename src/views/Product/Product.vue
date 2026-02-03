@@ -172,7 +172,7 @@
     v-else
     ref="kanbanScroll"
     class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
-    @scroll="onScroll"
+    @scroll="onDivScroll"
   >
     <!-- Kanban Board -->
     <KanbanBoard
@@ -183,7 +183,7 @@
       @update:column="(e: any) => handleUpdateColumn(e)"
       @reorder="onReorder"
       @addColumn="handleAddColumn"
-      @scroll="onScroll"
+      @scroll="onBoardScroll"
       @select:ticket="selectCardHandler"
       @onBoardUpdate="handleBoardUpdate"
       :variable_id="selected_view_by"
@@ -564,6 +564,7 @@ import MindElixir from "mind-elixir";
 import { toast } from "vue-sonner";
 import { usePermissions } from "../../composables/usePermissions";
 import { request, toApiMessage } from "../../libs/api";
+
 import {
   ReOrderCard,
   ReOrderList,
@@ -671,6 +672,17 @@ const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
 const sidePanelStore = useSidePanelStore()
+interface ScrollPayload {
+  // horizontal
+  scrollLeft: number
+  scrollWidth: number
+  clientWidth: number
+
+  // vertical
+  scrollTop: number
+  scrollHeight: number
+  clientHeight: number
+}
 function openHyperlinkModal(callback: (link: string) => void) {
   hyperlink.value = "";
   showHyperlinkModal.value = true;
@@ -917,14 +929,43 @@ const isPaginating = computed(() =>
   isFetchingNextPage.value
 );
 const tableRef = ref<InstanceType<typeof TableView> | null>(null)
-const onScroll = (e: any) => {
-  const el = e.target;
-  if (!hasNextPage.value || isFetchingNextPage.value) return;
+// scroll from native div
+const onDivScroll = (e: Event) => {
+  const el = e.target as HTMLElement
 
-  if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 200) {
-    fetchNextPage();
+  const payload: ScrollPayload = {
+    scrollLeft: el.scrollLeft,
+    scrollWidth: el.scrollWidth,
+    clientWidth: el.clientWidth,
+    scrollTop: el.scrollTop,
+    scrollHeight: el.scrollHeight,
+    clientHeight: el.clientHeight,
   }
-};
+
+  // Reuse your existing logic
+  handleScroll(payload)
+}
+
+// scroll from child component emit
+const onBoardScroll = (payload: ScrollPayload) => {
+  handleScroll(payload)
+}
+
+// central handler
+const handleScroll = (payload: ScrollPayload) => {
+  const { scrollLeft, clientWidth, scrollWidth, scrollTop, clientHeight, scrollHeight } = payload
+
+  // Horizontal infinite scroll
+  if (scrollLeft + clientWidth >= scrollWidth - 200) {
+    fetchNextPage()
+  }
+
+  // Vertical infinite scroll
+  if (scrollTop + clientHeight >= scrollHeight - 200) {
+    fetchNextPage()
+  }
+}
+
 const onScrollTable = (e: any) => {
   const el = e.target;  
   if (!hasNextPage.value || isFetchingNextPage.value) return;

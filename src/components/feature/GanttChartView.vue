@@ -103,23 +103,21 @@ const projectStartDate = computed(() => {
   
   return new Date(Math.min(...dates.map(d => d.getTime())));
 });
-
 const projectEndDate = computed(() => {
   if (props.data.length === 0) return new Date();
-  
+
   const dates = props.data.map(card => {
-    const endDate = card["end-date"] 
-      ? new Date(card["end-date"]) 
-      : new Date(card["start-date"]);
+    const endDate = card["end-date"] ? new Date(card["end-date"]) : new Date(card["start-date"]);
     return endDate;
   });
-  
+
   const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-  // Add 7 days buffer for better visibility
-  maxDate.setDate(maxDate.getDate() + 7);
+
+  // Add 30 days buffer so timeline shows next months
+  maxDate.setDate(maxDate.getDate() + 30);
+
   return maxDate;
 });
-
 const ganttItems = computed(() =>
   props.data.map((card, index) => {
     const start = new Date(card["start-date"]);
