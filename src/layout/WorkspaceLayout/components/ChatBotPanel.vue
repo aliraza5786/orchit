@@ -172,6 +172,7 @@
     @accept="showAIPreview = false"
     @decline="showAIPreview = false"
     :title="contextTitle"
+    :data="entities"
   />
 </template>
 
@@ -294,6 +295,7 @@ function initSocket() {
       isAiThinkingBubbleVisible.value = false;
       agentStore.isAiTyping = false;
       await agentStore.fetchChatHistory(workspaceId.value, true);
+      await agentStore.fetchCreatedEntities(workspaceId.value, true);
       scrollToBottom();
     }
   });
@@ -305,16 +307,15 @@ function initSocket() {
 async function sendMessage() {
   const message = userMessage.value?.trim();
   if (!message || !workspaceId.value || agentStore.isSending) return;
+
   userMessage.value = "";
   isAiThinkingBubbleVisible.value = true;
   agentStore.isSending = true;
   agentStore.isAiTyping = true;
 
-  // Scroll to show thinking bubble
   scrollToBottom();
 
   try {
-    // Send message to API
     await agentStore.sendMessage({
       workspace_id: workspaceId.value,
       message,
@@ -324,16 +325,17 @@ async function sendMessage() {
       card_id: route.params.card_id as string,
       session_id: route.params.session_id as string,
     });
-    await agentStore.fetchChatHistory(workspaceId.value);
+
+    // Fetch both chat history and entities incrementally
+    await Promise.all([
+      agentStore.fetchChatHistory(workspaceId.value),
+      agentStore.fetchCreatedEntities(workspaceId.value, false), // incremental fetch
+    ]);
+
     scrollToBottom();
-    setTimeout(async () => {
-      if (isAiThinkingBubbleVisible.value) {
-        await agentStore.fetchChatHistory(workspaceId.value, true);
-        isAiThinkingBubbleVisible.value = false;
-        agentStore.isAiTyping = false;
-        scrollToBottom();
-      }
-    }, 10000);
+    isAiThinkingBubbleVisible.value = false;
+    agentStore.isAiTyping = false;
+
   } catch (err) {
     console.error("Error sending message:", err);
     isAiThinkingBubbleVisible.value = false;
