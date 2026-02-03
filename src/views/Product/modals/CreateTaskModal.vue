@@ -96,7 +96,7 @@
         <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
       </div>
       <!-- Assignee -->
-      <div class="flex flex-col gap-1">
+      <div class="flex flex-col gap-1" v-if="!route.path.includes('/pin')">
         <label class="text-sm">Assignee</label>
         <div class="mt-2">
           <AssigmentDropdown

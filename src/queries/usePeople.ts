@@ -197,21 +197,24 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
     ...options,
   });
 };
- export const useDashboardActivities = (
+export const useDashboardActivities = (
   workspace_id: Ref<string> | string,
+  page: Ref<number> | number = 1,
   options = {}
 ) => {
   const workspaceIdRef = computed(() => unref(workspace_id))
+  const pageRef = computed(() => unref(page))
 
   return useQuery({
     queryKey: computed(() => [
       'dashboard-activities',
       workspaceIdRef.value,
+      pageRef.value,
     ]),
 
     queryFn: ({ signal }) =>
       request<any>({
-        url: `workspace/${workspaceIdRef.value}/activities`,
+        url: `workspace/${workspaceIdRef.value}/activities?page=${pageRef.value}`,
         method: 'GET',
         signal,
       }),
@@ -227,7 +230,6 @@ export const useDashboardTeams = (workspace_id: Ref<string> | string, options = 
     ...options,
   })
 }
-
 export const ReOrderList = (options = {}) =>
   useApiMutation<any, any>(
     {

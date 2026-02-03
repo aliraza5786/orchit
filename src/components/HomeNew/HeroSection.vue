@@ -186,12 +186,14 @@ defineExpose({ setValue })
     animation: marquee 100s linear infinite;
     will-change: transform;
 }
-
 @keyframes marquee2 {
-  0% { transform: translateX(-0%); }  /* start fully right */
-  100% { transform: translateX(100%); } /* move fully left */
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
-
 
 .animate-marquee2 {
     display: flex;
