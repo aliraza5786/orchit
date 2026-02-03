@@ -149,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, watch, ref } from "vue";
+import { reactive, computed, watch, ref, onMounted } from "vue";
 import BaseModal from "../../../components/ui/BaseModal.vue";
 import BaseTextField from "../../../components/ui/BaseTextField.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
@@ -196,9 +196,26 @@ const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
 });
 const { refetch: refetchSheetLists, } = useSprintKanban(
   localStorage.getItem("activeSprintId") || "",
+  {
+    enabled: false, 
+  }
 );
 
+onMounted(() => {
+  if (route.path.includes("/workspace/plan/")) {
+    refetchSheetLists();
+  }
+});
 
+// Watch for route changes dynamically (optional)
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath.includes("/workspace/plan/")) {
+      refetchSheetLists();
+    }
+  }
+);
 /** Lanes */
 type Lane = { _id: string | number; variables?: Record<string, any> };
 const { data: lanes } = useLanes(workspaceId.value);
