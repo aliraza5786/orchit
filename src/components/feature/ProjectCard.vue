@@ -27,7 +27,7 @@
     <!-- Progress -->
     <div class=" ">
       <div class="flex justify-between text-sm text-text-secondary mb-1">
-        <div> <span>{{ status == 'in_progress' ? 'Generating lane with AI...' : 'Progress' }}</span> <i
+        <div> <span>{{ status == 'in_progress' ? 'Generating tab with AI...' : 'Progress' }}</span> <i
             v-if="status == 'in_progress'" class="fa-regular text-left fa-arrows-spin animate-spin duration-250"></i>
         </div>
         <span v-if="ai">{{ Math.round(liveProgress) }}% 
