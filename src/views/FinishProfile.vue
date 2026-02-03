@@ -1,9 +1,9 @@
 <template>
     <AuthLayout>
         <template #form>
-            <div class="max-w-[500px] md:mx-auto w-full">
+            <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
                 <div class="mb-12 space-y-2">
-                    <h2 class="text-[32px] text-primary font-medium">Great! Your Account is All Set</h2>
+                    <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary">Great! Your Account is All Set</h2>
                     <p class="text-base  font-medium text-text-secondary ">Get started with
                         Orchit AI. Create a project or explore your dashboard.
                     </p>
@@ -21,7 +21,7 @@ import Button from '../components/ui/Button.vue';
 import { useRouter } from 'vue-router'
 const router = useRouter()
 function register() {
-    router.push('/')
+    router.push('/dashboard')
 }
 function createWS() {
     router.push('/create-workspace')
