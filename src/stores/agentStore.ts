@@ -119,13 +119,18 @@ export const useAgentStore = defineStore("agent", {
       }
     },
 
-    async fetchCreatedEntities(workspace_id: string) {
+    async fetchCreatedEntities(workspace_id: string, forceRefresh = false) {
       if (!workspace_id) return;
       this.isLoadingEntities = true;
       try {
         const res = await api.request<{ data: CreatedEntityItem[] }>({
           url: `${baseUrl}agent-chat/${workspace_id}/created-entities`,
           method: "GET",
+          headers: forceRefresh ? {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          } : undefined,
         });
         this.createdEntities = res.data.data ?? [];
       } catch (err) {
