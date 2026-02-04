@@ -180,7 +180,7 @@
       </div>
 
       <!-- Recent Activity -->
-    <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
+   <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
   <!-- Header -->
   <div class="mb-4">
     <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
@@ -273,44 +273,96 @@
     </template>
   </div>
 
-  <!-- Pagination -->
+  <!-- Responsive Pagination -->
   <div
     v-if="pagination && pagination.totalPages > 1"
-    class="flex items-center justify-between pt-4 mt-4 border-t border-border"
+    class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-4 border-t border-border"
   >
-    <p class="text-xs text-text-secondary">
+    <!-- Page Info -->
+    <p class="text-xs text-text-secondary order-2 sm:order-1">
       Page {{ currentPage }} of {{ pagination.totalPages }}
     </p>
 
-    <div class="flex items-center gap-2">
+    <!-- Pagination Controls -->
+    <div class="flex items-center gap-1 sm:gap-2 flex-wrap justify-center order-1 sm:order-2">
+      <!-- Previous Button -->
       <button
-        class="px-3 py-1 text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        class="px-2 sm:px-3 py-1.5 sm:py-1 text-xs sm:text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
         :disabled="currentPage === 1"
         @click="changePage(currentPage - 1)"
       >
-        Prev
+        <span class="hidden sm:inline">Prev</span>
+        <span class="sm:hidden"><i class="fa-regular fa-chevron-left"></i></span>
       </button>
 
+      <!-- First Page (always visible) -->
       <button
-        v-for="page in pagination.totalPages"
-        :key="page"
-        class="px-3 py-1 text-sm rounded border transition-colors"
+        v-if="pagination.totalPages > 0"
+        class="px-2 sm:px-3 py-1.5 sm:py-1 text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
         :class="
-          page === currentPage
+          1 === currentPage
             ? 'bg-accent text-white border-accent'
             : 'border-border text-text-secondary hover:bg-bg-hover'
         "
-        @click="changePage(page)"
+        @click="changePage(1)"
       >
-        {{ page }}
+        1
       </button>
 
+      <!-- Left Ellipsis -->
+      <span 
+        v-if="currentPage > 3"
+        class="px-1 sm:px-2 text-text-secondary text-xs sm:text-sm"
+      >
+        ...
+      </span>
+
+      <!-- Middle Pages (dynamic based on current page) -->
+      <template v-for="page in getPaginationRange()" :key="page">
+        <button
+          v-if="page !== 1 && page !== pagination.totalPages"
+          class="px-2 sm:px-3 py-1.5 sm:py-1 text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
+          :class="
+            page === currentPage
+              ? 'bg-accent text-white border-accent'
+              : 'border-border text-text-secondary hover:bg-bg-hover'
+          "
+          @click="changePage(page)"
+        >
+          {{ page }}
+        </button>
+      </template>
+
+      <!-- Right Ellipsis -->
+      <span 
+        v-if="currentPage < pagination.totalPages - 2"
+        class="px-1 sm:px-2 text-text-secondary text-xs sm:text-sm"
+      >
+        ...
+      </span>
+
+      <!-- Last Page (always visible if more than 1 page) -->
       <button
-        class="px-3 py-1 text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        v-if="pagination.totalPages > 1"
+        class="px-2 sm:px-3 py-1.5 sm:py-1 text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
+        :class="
+          pagination.totalPages === currentPage
+            ? 'bg-accent text-white border-accent'
+            : 'border-border text-text-secondary hover:bg-bg-hover'
+        "
+        @click="changePage(pagination.totalPages)"
+      >
+        {{ pagination.totalPages }}
+      </button>
+
+      <!-- Next Button -->
+      <button
+        class="px-2 sm:px-3 py-1.5 sm:py-1 text-xs sm:text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
         :disabled="currentPage === pagination.totalPages"
         @click="changePage(currentPage + 1)"
       >
-        Next
+        <span class="hidden sm:inline">Next</span>
+        <span class="sm:hidden"><i class="fa-regular fa-chevron-right"></i></span>
       </button>
     </div>
   </div>
@@ -343,7 +395,22 @@ const jobId = computed<string>(() => toParamString(route?.params?.job_id))
 
 /** Current page for activities pagination */
 const currentPage = ref(1)
+const getPaginationRange = () => {
+  const total = pagination.value.totalPages;
+  const current = currentPage.value;
+  const range = [];
 
+  // Show pages around current page
+  // On mobile: show current and ±1 page
+  // On desktop: show current and ±2 pages
+  const delta = window.innerWidth < 640 ? 1 : 2;
+
+  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+    range.push(i);
+  }
+
+  return range;
+};
 /** Queries for team + activities */
 const {
   data: dashboardTeamsData,
