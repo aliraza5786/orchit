@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex  gap-3" ref="kanbanScroll" @scroll="onScroll">
+  <div class="h-full flex  gap-3" ref="kanbanScroll">
     <!-- Columns (horizontal) -->
     <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
@@ -197,25 +197,6 @@ function cloneBoard(b: Column[]): Board {
       : []
   };
 }
-let scrollTimeout: ReturnType<typeof setTimeout>
-
-const onScroll = (e: Event) => {
-  clearTimeout(scrollTimeout)
-
-  scrollTimeout = setTimeout(() => {
-    const el = e.target as HTMLElement
-
-    emit('scroll', {
-      scrollLeft: el.scrollLeft,
-      scrollWidth: el.scrollWidth,
-      clientWidth: el.clientWidth,
-      scrollTop: el.scrollTop,
-      scrollHeight: el.scrollHeight,
-      clientHeight: el.clientHeight,
-    })
-  }, 50)
-}
-
 </script>
 
 <style scoped>

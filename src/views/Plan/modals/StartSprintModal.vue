@@ -4,7 +4,8 @@
     <div
       class="sticky top-0 z-10 flex justify-between items-center py-6 px-6 border-b border-border bg-bg-input"
     >
-      <h2 class="text-xl font-semibold">Start {{ formattedSprintType }}</h2>
+      <h2 class="text-xl font-semibold" v-if="!updateData?.id">Start {{ formattedSprintType }}</h2>
+      <h2 class="text-xl font-semibold" v-if="updateData?.id">Update {{ formattedSprintType }}</h2>
       <span @click="cancel" class="text-sm text-text-secondary cursor-pointer">
         <i class="fa-solid fa-xmark text-text-primary text-[19px]"></i>
       </span>
@@ -100,8 +101,11 @@
     <!-- Footer -->
     <div class="flex justify-end gap-2 p-6 sticky bottom-0 bg-bg-input">
       <Button variant="secondary" @click="cancel">Cancel</Button>
-      <Button variant="primary" :disabled="!isValid" @click="save">{{
+      <Button variant="primary" :disabled="!isValid" @click="save" v-if="!updateData.id">{{
         creatingSprint ? "Starting..." : "Start"
+      }}</Button>
+      <Button variant="primary" :disabled="!isValid" @click="save" v-if="updateData.id">{{
+        creatingSprint ? "Updating..." : "Update"
       }}</Button>
     </div>
   </BaseModal>
