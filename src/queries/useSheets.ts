@@ -1,5 +1,5 @@
 import { computed, unref, type Ref } from "vue";
-import { useQuery, useInfiniteQuery, type UseInfiniteQueryOptions } from "@tanstack/vue-query";
+import { useQuery, type UseQueryOptions } from "@tanstack/vue-query";
 import { useApiMutation } from "../libs/vq";
 import { request } from "../libs/api";
 
@@ -162,20 +162,19 @@ export function useSheetList(
   laneIds: MaybeRef<string[] | string | null | undefined>,
   view_by: MaybeRef<string | null | undefined>,
   extraParams?: MaybeRef<Record<string, any> | undefined>,
-  options: Omit<
-    UseInfiniteQueryOptions<any, any, any, any, any>,
-    "queryKey" | "queryFn"
-  > = {}
+  options: Omit<UseQueryOptions<any, any, any, any>, "queryKey" | "queryFn"> = {}
 ) {
   const laneIdsParam = computed<string | undefined>(() => {
     const v = unref(laneIds);
     if (v == null) return undefined;
+
     if (Array.isArray(v)) {
       const s = Array.from(
         new Set(v.map((x) => String(x).trim()).filter(Boolean))
       ).join(",");
       return s || undefined;
     }
+
     const one = String(v).trim();
     return one || undefined;
   });
@@ -193,20 +192,19 @@ export function useSheetList(
     Boolean(unref(module_id) && unref(sheet_id) && unref(view_by))
   );
 
-  return useInfiniteQuery({
+  return useQuery({
     queryKey,
     enabled,
     retry: 0,
-    initialPageParam: 1,
 
-    queryFn: async ({ pageParam = 1 }) => {
+    queryFn: async () => {
       const params = {
         module_id: unref(module_id),
         sheet_id: unref(sheet_id),
         variable_id: unref(view_by),
-        per_page: unref(extraParams)?.per_page ?? 20,
-        page: pageParam,
-        ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam) } : {}),
+        ...(unref(laneIdsParam)
+          ? { lane_ids: unref(laneIdsParam) }
+          : {}),
         ...(unref(extraParams) || {}),
       };
 
@@ -217,17 +215,9 @@ export function useSheetList(
       });
     },
 
-    getNextPageParam: (lastPage) => {
-      const hasNext = lastPage?.pagination?.has_next;
-      const currentPage = lastPage?.pagination?.page;
-
-      return hasNext ? currentPage + 1 : null;
-    },
-
     ...options,
   });
 }
-
 export const useVariables = (
   workspace_id: Ref<string>,
   module_id: Ref<string>,
