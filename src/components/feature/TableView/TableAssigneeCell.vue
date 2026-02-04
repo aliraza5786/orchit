@@ -8,53 +8,63 @@
       :class="{ 'opacity-50 cursor-not-allowed': disabled }"
     >
       <template
-        v-if="displayUser?.user?.avatar || displayUser?._id || seat?._id"
+        v-if="displayUsers.length > 0"
       >
-        <div class="flex gap-2 items-center truncate">
-          <img
-            v-if="
-              displayUser?.avatar?.src ||
-              displayUser?.user?.avatar ||
-              displayUser?.u_profile_image
-            "
-            :src="
-              displayUser?.avatar?.src ??
-              displayUser?.u_profile_image ??
-              displayUser?.user?.avatar
-            "
-            class="w-5 h-5 object-cover rounded-full flex-shrink-0"
-            alt=""
-          />
+        <div class="flex items-center -space-x-1.5 truncate">
+          <template v-for="(u, index) in displayUsers.slice(0, 2)" :key="index">
+             
+            <img
+              v-if="
+                u?.avatar?.src ||
+                u?.user?.avatar ||
+                u?.u_profile_image
+              "
+              :src="
+                u?.avatar?.src ??
+                u?.u_profile_image ??
+                u?.user?.avatar
+              "
+              class="w-5 h-5 object-cover rounded-full border-2 border-bg-card flex-shrink-0"
+              alt=""
+            />
 
-          <div
-            v-else-if="displayUser?.u_full_name || displayUser?.name"
-            class="w-5 h-5 aspect-square rounded-full text-[11px] bg-bg-surface  text-text-primary flex items-center justify-center flex-shrink-0"
-            :style="{
-              backgroundColor:
-                displayUser?.u_full_name ?? displayUser?.title
-                  ? avatarColor({
-                      name: displayUser?.u_full_name ?? displayUser?.title,
-                      _id: displayUser?._id,
-                    })
-                  : '',
-            }"
-          >
-            {{ getInitials(displayUser?.u_full_name ?? displayUser?.name) }}
+            <div
+              v-else-if="u?.u_full_name || u?.name"
+              class="w-5 h-5 aspect-square rounded-full text-[9px] bg-bg-surface text-text-primary flex items-center justify-center border-2 border-bg-card flex-shrink-0"
+              :style="{
+                backgroundColor:
+                  u?.u_full_name ?? u?.title
+                    ? avatarColor({
+                        name: u?.u_full_name ?? u?.title,
+                        _id: u?._id,
+                      })
+                    : '',
+              }"
+            >
+              {{ getInitials(u?.u_full_name ?? u?.title) }}
+            </div>
+
+            <div
+              v-else
+              class="w-5 h-5 bg-bg-surface border-2 border-bg-card rounded-full flex justify-center items-center flex-shrink-0"
+            >
+              <i class="fa-regular fa-user text-[8px]"></i>
+            </div>
+          </template>
+          
+          <div v-if="displayUsers.length > 2" 
+            class="w-5 h-5 rounded-full bg-bg-surface border-2 border-bg-card flex items-center justify-center text-[9px] font-bold text-text-primary">
+            +{{ displayUsers.length - 2 }}
           </div>
 
-          <div
-            v-else
-            class="w-6 h-6 bg-bg-body border border-border rounded-full flex justify-center items-center flex-shrink-0"
-          >
-            <i class="fa-regular fa-user text-xs"></i>
-          </div>
-
-          <span class="text-[11px] text-text-primary truncate">{{
-            (displayUser?.name ||
-              displayUser?.title ||
-              displayUser?.u_full_name) ??
-            "Unassigned"
-          }}</span>
+          <span class="text-[11px] text-text-primary truncate ml-3">
+            {{ displayUsers.length === 1 
+               ? (displayUsers[0]?.name || displayUsers[0]?.title || displayUsers[0]?.u_full_name || 'Assigned')
+               : (displayUsers.length === 2 
+                   ? `${(displayUsers[0]?.name || displayUsers[0]?.u_full_name || 'User').split(' ')[0]} & ${(displayUsers[1]?.name || displayUsers[1]?.u_full_name || 'User').split(' ')[0]}`
+                   : `${displayUsers.length} assignees`)
+            }}
+          </span>
         </div>
       </template>
 
@@ -148,7 +158,7 @@
                 <!-- Action Text -->
                 <div class="text-xs font-medium text-text-secondary whitespace-nowrap ml-2">
                     <!-- Selected user: Hover to Unassign -->
-                    <span v-if="u._id && displayUser?._id === u._id" class="text-[10px] px-2 py-1 border rounded-full border-red-500 transition group-hover:bg-red-500 group-hover:text-white">
+                    <span v-if="u._id && displayUsers.some(du => (du._id === u._id) || (du.user?._id === u._id))" class="text-[10px] px-2 py-1 border rounded-full border-red-500 transition group-hover:bg-red-500 group-hover:text-white">
                         Unassign
                     </span>
                     <!-- Explicit unassign row -->
@@ -203,8 +213,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "update:modelValue", value: string | null): void;
-  (e: "assign", user: any): void;
+  (e: "update:modelValue", value: string[] | null): void;
+  (e: "assign", users: any[]): void;
   (e: "unassign"): void;
 }>();
 
@@ -214,9 +224,19 @@ const { data: roles } = useWorkspacesRoles(
   computed(() => props?.workspaceId ?? workspaceId.value)
 );
 
-const assignedUser = ref<any>(props.assigneeId ?? props.seat);
+const assignedUsers = ref<any[]>([]);
+
+function normalizeAssignees(assigneeId: any, seat: any) {
+  if (Array.isArray(assigneeId)) return assigneeId;
+  if (Array.isArray(seat)) return seat;
+  if (assigneeId || seat) return [assigneeId || seat];
+  return [];
+}
+
+assignedUsers.value = normalizeAssignees(props.assigneeId, props.seat);
+
 watch(() => [props.assigneeId, props.seat], () => {
-  assignedUser.value = props.assigneeId ?? props.seat
+  assignedUsers.value = normalizeAssignees(props.assigneeId, props.seat);
 }, { deep: true })
 
 const isEditing = ref(false);
@@ -227,63 +247,61 @@ const containerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const dropdownStyles = ref({ top: "0px", left: "0px", width: "100%" });
 
-const displayUser = computed(() => {
-  const current = assignedUser.value
-  if (!current) return null
+const displayUsers = computed(() => {
+  const current = (assignedUsers.value || []).filter(Boolean);
   
-  const currentId = current._id || current.id || current
+  // Deduplicate by ID to avoid showing the same user twice
+  const uniqueItems = new Map();
+  
+  current.forEach(item => {
+    const id = item?._id || item?.id || (typeof item === 'string' ? item : null);
+    if (!id) return;
+    
+    // Always prefer the object if we have both, or the first one we see
+    if (!uniqueItems.has(id) || (typeof item === 'object' && typeof uniqueItems.get(id) === 'string')) {
+      uniqueItems.set(id, item);
+    }
+  });
 
-  // Robust search: Check membership ID, direct ID, and nested user ID
-  const found = (roles.value || []).find((u: any) => {
-    const uId = u._id || u.id
-    const uUserId = u.user?._id || u.user?.id
-    return (uId == currentId) || (uUserId == currentId)
+  return Array.from(uniqueItems.values()).map(item => {
+    const currentId = item?._id || item?.id || item
+    if (!currentId) return item
+
+    const found = (roles.value || []).find((u: any) => {
+      const uId = u._id || u.id
+      const uUserId = u.user?._id || u.user?.id
+      return (uId == currentId) || (uUserId == currentId)
+    })
+    return found || item
   })
-  
-  return found || current
 })
 
 const membersData = computed(() => {
-  const current = displayUser.value 
-  const list = roles.value || []
-
-  if (current && (current._id || current.id)) {
-    const currentId = current._id || current.id
-    const currentUserInList = current
-    
-    const others = list.filter((u: any) => {
-       const uId = u._id || u.id
-       const uUserId = u.user?._id || u.user?.id
-       const cUserId = current.user?._id || current.user?.id
-       
-       return !(
-         (uId == currentId) || 
-         (uUserId && uUserId == (cUserId || currentId))
-       )
-    })
-    
-    return [
-      currentUserInList,
-      // { _id: null, name: 'Unassign', email: '' },
-      ...others
-    ]
-  }
-
-  return [
-    // { _id: null, name: 'Unassign', email: '' },
-    ...list
-  ]
+  return roles.value || []
 });
 
 const filteredUsers = computed(() => {
   const q = query.value.trim().toLowerCase();
   const arr = membersData.value;
-  if (!q) return arr;
-  return arr.filter(
-    (u: any) =>
-      (u.title || u.name || "").toLowerCase().includes(q) ||
-      (u.email || "").toLowerCase().includes(q)
-  );
+  
+  let filtered = arr;
+  if (q) {
+    filtered = arr.filter(
+      (u: any) =>
+        (u.title || u.name || "").toLowerCase().includes(q) ||
+        (u.email || "").toLowerCase().includes(q)
+    );
+  }
+
+  // Sort: Assigned users first
+  const assigned = filtered.filter((u: any) => 
+    displayUsers.value.some(du => (du._id === u._id) || (du.user?._id === u._id))
+  )
+  const unassigned = filtered.filter((u: any) => 
+    !displayUsers.value.some(du => (du._id === u._id) || (du.user?._id === u._id))
+  )
+
+  return [...assigned, ...unassigned];
 });
 
 const positionDropdown = () => {
@@ -314,10 +332,9 @@ const startEditing = async () => {
   isOpen.value = true;
   
   // Pre-fill query with current name to avoid "removed" effect
-  const currentName =
-    displayUser.value?.name ||
-    displayUser.value?.title ||
-    displayUser.value?.u_full_name;
+  const currentName = displayUsers.value.length === 1
+    ? (displayUsers.value[0]?.name || displayUsers.value[0]?.title || displayUsers.value[0]?.u_full_name)
+    : (displayUsers.value.length > 1 ? `${displayUsers.value.length} assignees` : "");
   query.value = currentName || "";
 
   await nextTick();
@@ -337,40 +354,44 @@ const cancelEditing = () => {
   window.removeEventListener("resize", positionDropdown);
 };
 
-function assign(userId: any) {
-  const user = membersData.value.find((u: any) => u._id == userId);
+function assign(user: any) {
+  if (!user) return
 
-  if (user) {
-    assignedUser.value = user;
-    emit("assign", user);
-    emit("update:modelValue", userId);
+  const isSelected = displayUsers.value.some(du => (du._id === user._id) || (du.user?._id === user._id))
+  
+  if (isSelected) {
+    onUnassign(user)
+  } else {
+    assignedUsers.value = [...assignedUsers.value, user]
+    emit("assign", assignedUsers.value);
+    emit("update:modelValue", assignedUsers.value.map(u => u._id || u.id));
   }
-  cancelEditing();
 };
 
-function onUnassign() {
-  assignedUser.value = null
+function onUnassign(user: any) {
+  assignedUsers.value = assignedUsers.value.filter(du => !((du._id === user._id) || (du.user?._id === user._id)))
   emit('unassign')
-  emit('assign', { _id: null })
-  emit('update:modelValue', null)
+  emit('assign', assignedUsers.value)
+  emit('update:modelValue', assignedUsers.value.map(u => u._id || u.id))
+}
+
+function onUnassignAll() {
+  assignedUsers.value = []
+  emit('unassign')
+  emit('assign', [])
+  emit('update:modelValue', [])
   cancelEditing()
 }
 
 function onRowClick(u: any) {
   // Explicit unassign row
   if (u._id == null) {
-    onUnassign()
+    onUnassignAll()
     return
   }
 
-  // Clicking assigned user → unassign
-  if (displayUser.value && u._id === displayUser.value._id) {
-    onUnassign()
-    return
-  }
-
-  // Assign new user
-  assign(u._id)
+  // Assign/Toggle user
+  assign(u)
 }
 
 const handleEnter = () => {

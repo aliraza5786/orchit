@@ -84,29 +84,52 @@
                 <span class="truncate">{{ ticket.summary }}</span>
               </div>
 
-              <!-- Assignee -->
-              <div class="flex-shrink-0">
-                <span
-                  v-if="ticket?.assignee === 'Unassigned'"
-                  class="flex justify-center text-gray-500 items-center text-[11px] aspect-square w-[24px] h-[24px] bg-bg-body rounded-full border-border-input border-2"
+           <!-- Assignee -->
+            <div class="flex-shrink-0">
+              <div class="flex items-center -space-x-2">
+            
+                <!-- Seats (initials only) -->
+                <template v-for="(seat) in (ticket.seats ?? []).slice(0, 2)" :key="seat._id">
+                  <abbr
+                    :title="seat.name || seat.created_by?.u_full_name || seat.title"
+                    class="w-6 h-6 rounded-full text-[10px] bg-bg-surface font-semibold
+                           text-text-primary flex items-center justify-center
+                           border-2 border-bg-card"
+                    :style="{
+                      backgroundColor: avatarColor({
+                        name: seat.name || seat.created_by?.u_full_name || seat.title,
+                        _id: seat?._id,
+                        email: seat?.email
+                      })
+                    }"
+                  >
+                    {{ getInitials(seat.name || seat.created_by?.u_full_name || seat.title) }}
+                  </abbr>
+                </template>
+            
+                <!-- +N -->
+                <div
+                  v-if="(ticket.seats ?? []).length > 2"
+                  class="w-6 h-6 rounded-full bg-bg-surface flex items-center
+                         justify-center text-[10px] font-bold text-text-primary
+                         border-2 border-bg-card"
+                >
+                  +{{ (ticket.seats ?? []).length - 2 }}
+                </div>
+            
+                <!-- UA (Unassigned) -->
+                <div
+                  v-if="(ticket.seats ?? []).length === 0"
+                  title="Unassigned"
+                  class="w-6 h-6 rounded-full bg-bg-surface flex items-center
+                         justify-center text-[10px] font-semibold text-text-secondary
+                         border-2 border-bg-card"
                 >
                   UA
-                </span>
-
-                <div
-                  v-else-if="ticket?.assignee?.u_profile_image"
-                  class="w-6 h-6 rounded-full"
-                >
-                  <img :src="ticket.assignee.u_profile_image" alt="" class="rounded-full"/>
                 </div>
-
-                <span
-                  v-else
-                  class="text-[11px] aspect-square w-[24px] h-[24px] flex justify-center items-center bg-accent/30 text-accent border-accent border rounded-full"
-                >
-                  {{ getInitials(ticket?.assignee?.u_full_name) }}
-                </span>
+            
               </div>
+            </div>
             </div>
           </template>
         </div>
@@ -121,6 +144,7 @@ import { type Ticket } from "../composables/useBacklogStore";
 import { useBacklogList } from "../../../queries/usePlan";
 import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { getInitials } from "../../../utilities";
+import { avatarColor } from '../../../utilities/avatarColor';
 import { useTheme } from "../../../composables/useTheme";
 const { isDark } = useTheme();
 
@@ -185,8 +209,8 @@ watch(
         key: (v["card-code"] as string) || id?.slice(-6) || "PRJ-?",
         summary: (v["card-title"] as string) || "(untitled)",
         type: "Story",
-        status: rawStatus,
-        assignee: c.card?.assigned_to ?? "Unassigned",
+        status: rawStatus, 
+        seats: Array.isArray(c.card?.seats) ? c.card.seats : [],
         storyPoints: Number(c.story_points ?? 0) || 0,
         priority: mapPriority(rawPriority),
         createdAt: c.card?.created_at ?? new Date().toISOString(),

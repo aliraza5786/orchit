@@ -20,7 +20,7 @@
               <button v-for="lane in lanes" :key="lane?.lane_title"
                 class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
                 type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)">
-                <ProjectCard :ai="false" :doneCard="lane?.status_distribution['Done']"
+                <ProjectCard :ai="false" :doneCard="lane?.status_distribution?.['Done']"
                   :loading="isLoading || lane?.status === 'in_progress'" :title="lane?.lane_title" subtitle=""
                   :progress="cardProgress ? getCardProgress(lane?.total_cards, lane?.status_distribution) : lane?.progress"
                   :totalCard="lane?.total_cards" :status="cardProgress ? '' : (lane?.status ?? '')" :avatars="avatars"
@@ -45,66 +45,267 @@
           </div>
         </div>
       </div>
-
-      <!-- Connection status with subtle animation
-      <div class="workspace-progress" aria-live="polite">
-        <div :class="['connection-status', isConnected ? 'connected' : 'disconnected']">
-          <span v-if="isConnected">🟢 Connected to progress stream</span>
-          <span v-else>🔴 Not connected</span>
-        </div>
-
-        <div v-if="taskProgress" class="progress-info">
-          <h3 class="text-text-primary font-medium">Workspace Generation Progress</h3>
-
-          <div class="progress-bar-container">
-            <div class="progress-bar">
-              <div
-                class="progress-fill"
-                :style="{ width: (taskProgress.percent ?? 0) + '%' }"
-                :class="progressFillClass"
-              ></div>
-            </div>
-            <div class="progress-text">{{ taskProgress.percent ?? 0 }}%</div>
-          </div>
-
-          <div class="status-info">
-            <div class="status-item">
-              <strong>Status:</strong>
-              <span :class="'status-' + (taskProgress.status || 'queued')">{{ taskProgress.status }}</span>
-            </div>
-
-            <div class="status-item">
-              <strong>Message:</strong> {{ taskProgress.message || '—' }}
-            </div>
-
-            <div v-if="taskProgress.result" class="status-item">
-              <strong>Cards Generated:</strong> {{ taskProgress.result.cards || 0 }}
-            </div>
-
-            <div v-if="taskProgress.error" class="error-message">
-              <strong>Error:</strong> {{ taskProgress.error }}
-            </div>
-
-            <div class="status-item">
-              <strong>Last Updated:</strong> {{ formatTime(taskProgress.updated_at) }}
-            </div>
-          </div>
-
-          <div class="actions">
-            <button @click="reconnect" :disabled="isConnected" class="btn-default">Reconnect</button>
-            <button @click="disconnect" :disabled="!isConnected" class="btn-default">Disconnect</button>
-          </div>
-        </div>
-      </div> -->
     </div>
 
-    <!-- Three Column Stats Section -->
-
-
-
     <!-- Right Column: Team Workload & Recent Activity -->
-    <div class="flex flex-grow flex-col sm:flex-row  gap-4">
-      <!-- Team Workload -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 items-start">     
+<ProjectPortfolio />
+      <!-- Recent Activity -->
+   <div class="bg-bg-card w-full p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
+  <!-- Header -->
+  <div class="mb-2 flex items-start justify-between">
+  <div>
+    <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
+    <p class="text-sm text-text-secondary mt-1">
+      Stay up to date with what's happening across the project.
+    </p>
+  </div>
+
+  <!-- Expand button -->
+  <button
+    @click="showAllActivities = true"
+    class="text-text-secondary hover:text-text-primary transition-colors"
+    title="View all activities"
+  >
+    <i class="fa-chisel fa-regular fa-expand"></i>
+  </button>
+</div>
+
+
+  <!-- Activity List -->
+  <div class="space-y-4 overflow-y-auto flex-1">
+    <!-- Loading State -->
+    <template v-if="isLoadingActivities">
+      <div
+        v-for="n in 5"
+        :key="`skeleton-${n}`"
+        class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse"
+      >
+        <!-- Avatar Skeleton -->
+        <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
+
+        <!-- Content Skeleton -->
+        <div class="flex-1 min-w-0 space-y-2">
+          <div class="space-y-1.5">
+            <div class="h-4 bg-bg-body rounded w-32"></div>
+            <div class="h-3 bg-bg-body rounded w-full"></div>
+            <div class="h-3 bg-bg-body rounded w-3/4"></div>
+          </div>
+          <div class="h-3 bg-bg-body rounded w-20"></div>
+        </div>
+      </div>
+    </template>
+
+    <!-- Activities Content with Dynamic Grouping -->
+    <template v-else-if="dashboardActiviesData?.activities?.length">
+      <!-- Today's Activities -->
+      <template v-if="groupedActivities.today.length > 0">
+        <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
+
+        <div
+          v-for="activity in previewActivities.today"
+          :key="activity._id"
+          class="flex gap-3 pb-2 border-b border-border last:border-0"
+        >
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+            :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }"
+          >
+            {{ getInitials(activity?.user?.name) }}
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-text-primary flex justify-between">
+              <span class="font-semibold text-md text-accent/90 pe-1">
+                {{ activity?.user?.name }}
+              </span>
+               <div class="text-xs text-text-secondary mt-1">
+              {{ formatTime(activity?.created_at) }}
+            </div>
+            </div>
+            <span class="text-text-secondary text-sm">
+                {{ stripHtml(activity?.message || '') }}
+              </span>
+           
+          </div>
+        </div>
+      </template>
+
+      <!-- Yesterday's Activities -->
+      <template v-if="groupedActivities.yesterday.length > 0">
+        <div class="text-xs font-semibold text-text-secondary mb-3">Yesterday</div>
+
+        <div
+          v-for="activity in previewActivities.yesterday"
+          :key="activity._id"
+          class="flex gap-3 pb-2 border-b border-border last:border-0"
+        >
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+            :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }"
+          >
+            {{ getInitials(activity?.user?.name) }}
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-text-primary flex justify-between">
+              <span class="font-semibold text-md text-accent/90 pe-1">
+                {{ activity?.user?.name }}
+              </span>
+               <div class="text-xs text-text-secondary font-medium mt-1">
+              {{ formatTime(activity?.created_at) }}
+            </div>
+            </div>
+            <span class="text-text-secondary text-sm">
+                {{ stripHtml(activity?.message || '') }}
+              </span>
+          </div>
+        </div>
+      </template>
+
+      <!-- Older Activities -->
+      <template v-if="groupedActivities.older.length > 0">
+        <div class="text-xs font-semibold text-text-secondary mb-3">Older</div>
+
+        <div
+          v-for="activity in previewActivities.older"
+          :key="activity._id"
+          class="flex gap-3 pb-2 border-b border-border last:border-0"
+        >
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+            :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }"
+          >
+            {{ getInitials(activity?.user?.name) }}
+          </div>
+
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-text-primary flex justify-between">
+              <span class="font-semibold text-md text-accent/90 pe-1">
+                {{ activity?.user?.name }}
+              </span>
+               <div class="text-xs text-text-secondary mt-1">
+              {{ formatTime(activity?.created_at) }}
+            </div>
+            </div>
+            <span class="text-text-secondary text-sm">
+                {{ stripHtml(activity?.message || '') }}
+              </span>
+          </div>
+        </div>
+      </template>
+    </template>
+
+    <!-- Empty State -->
+    <template v-else>
+      <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
+        <i class="fas fa-clock text-4xl mb-3"></i>
+        <h4 class="text-lg font-semibold mb-1">No recent activity</h4>
+        <p class="text-sm text-text-secondary/80">
+          Activities will appear here once your team starts making updates.
+        </p>
+      </div>
+    </template>
+  </div>
+
+  <!-- Responsive Pagination -->
+  <div
+    v-if="pagination && pagination?.totalPages > 1"
+    class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-4 border-t border-border"
+  >
+    <!-- Page Info -->
+    <p class="text-xs text-text-secondary order-2 sm:order-1">
+      Page {{ currentPage }} of {{ pagination.totalPages }}
+    </p>
+
+    <!-- Pagination Controls -->
+    <div class="flex items-center gap-1 sm:gap-2 flex-wrap justify-center order-1 sm:order-2">
+      <!-- Previous Button -->
+      <button
+        class="px-2 sm:px-3 py-1.5 cursor-pointer sm:py-1 text-xs sm:text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+        :disabled="currentPage === 1"
+        @click="changePage(currentPage - 1)"
+      >
+        <span class="hidden sm:inline">Prev</span>
+        <span class="sm:hidden"><i class="fa-regular fa-chevron-left"></i></span>
+      </button>
+
+      <!-- First Page (always visible) -->
+      <button
+        v-if="pagination?.totalPages > 0"
+        class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
+        :class="
+          1 === currentPage
+            ? 'bg-accent text-white border-accent'
+            : 'border-border text-text-secondary hover:bg-bg-hover'
+        "
+        @click="changePage(1)"
+      >
+        1
+      </button>
+
+      <!-- Left Ellipsis -->
+      <span 
+        v-if="currentPage > 3"
+        class="px-1 sm:px-2 text-text-secondary text-xs sm:text-sm"
+      >
+        ...
+      </span>
+
+      <!-- Middle Pages (dynamic based on current page) -->
+      <template v-for="page in getPaginationRange()" :key="page">
+        <button
+          v-if="page !== 1 && page !== pagination?.totalPages"
+          class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
+          :class="
+            page === currentPage
+              ? 'bg-accent text-white border-accent'
+              : 'border-border text-text-secondary hover:bg-bg-hover'
+          "
+          @click="changePage(page)"
+        >
+          {{ page }}
+        </button>
+      </template>
+
+      <!-- Right Ellipsis -->
+      <span 
+        v-if="currentPage < pagination?.totalPages - 2"
+        class="px-1 sm:px-2 text-text-secondary text-xs sm:text-sm"
+      >
+        ...
+      </span>
+
+      <!-- Last Page (always visible if more than 1 page) -->
+      <button
+        v-if="pagination?.totalPages > 1"
+        class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
+        :class="
+          pagination.totalPages === currentPage
+            ? 'bg-accent text-white border-accent'
+            : 'border-border text-text-secondary hover:bg-bg-hover'
+        "
+        @click="changePage(pagination.totalPages)"
+      >
+        {{ pagination.totalPages }}
+      </button>
+
+      <!-- Next Button -->
+      <button
+        class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+        :disabled="currentPage === pagination?.totalPages"
+        @click="changePage(currentPage + 1)"
+      >
+        <span class="hidden sm:inline">Next</span>
+        <span class="sm:hidden"><i class="fa-regular fa-chevron-right"></i></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+    </div>
+   <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-start">
+     <!-- Team Workload -->
       <div class="bg-bg-card w-full  max-h-full flex-auto p-5 rounded-lg border border-border">
         <div class="mb-4">
           <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
@@ -178,144 +379,274 @@
           </div>
         </div>
       </div>
-
-      <!-- Recent Activity -->
-    <div class="bg-bg-card w-full flex-auto p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
-  <!-- Header -->
-  <div class="mb-4">
-    <h3 class="text-lg font-semibold text-text-primary">Recent activity</h3>
-    <p class="text-sm text-text-secondary mt-1">
-      Stay up to date with what's happening across the project.
-    </p>
-  </div>
-
-  <!-- Activity List -->
-  <div class="space-y-4 overflow-y-auto flex-1">
-    <!-- Loading State -->
-    <template v-if="isLoadingActivities">
-      <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
-      
-      <div
-        v-for="n in 5"
-        :key="`skeleton-${n}`"
-        class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse"
-      >
-        <!-- Avatar Skeleton -->
-        <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
-
-        <!-- Content Skeleton -->
-        <div class="flex-1 min-w-0 space-y-2">
-          <div class="space-y-1.5">
-            <div class="h-4 bg-bg-body rounded w-32"></div>
-            <div class="h-3 bg-bg-body rounded w-full"></div>
-            <div class="h-3 bg-bg-body rounded w-3/4"></div>
-          </div>
-          <div class="h-3 bg-bg-body rounded w-20"></div>
-        </div>
-      </div>
-    </template>
-
-    <!-- Activities Content -->
-    <template v-else-if="dashboardActiviesData?.activities?.length">
-      <div class="text-xs font-semibold text-text-secondary mb-3">Today</div>
-
-      <div
-        v-for="activity in dashboardActiviesData.activities"
-        :key="activity.id"
-        class="flex gap-3 pb-2 border-b border-border last:border-0"
-      >
-        <div
-          class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
-          :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }"
-        >
-          {{ getInitials(activity?.user?.name) }}
-        </div>
-
-        <div class="flex-1 min-w-0">
-          <div class="text-sm text-text-primary">
-            <span class="font-semibold text-md text-accent/90 pe-1">
-              {{ activity?.user?.name }}
-            </span>
-            <p class="text-text-secondary">
-              {{ stripHtml(activity?.message || '') }}
-            </p>
-            <button
-              type="button"
-              class="text-accent/90 hover:underline focus:outline-none"
-              @click="() => {}"
-            >
-              {{ activity?.item }}
-            </button>
-            <span
-              v-if="activity.status"
-              class="ml-2 px-2 py-0.5 rounded text-xs font-medium"
-              :class="getStatusClass(activity.status)"
-            >
-              {{ activity?.status }}
-            </span>
-          </div>
-          <div class="text-xs text-text-secondary mt-1">
-            {{ activity?.time }}
-          </div>
-        </div>
-      </div>
-    </template>
-
-    <!-- Empty State -->
-    <template v-else>
-      <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
-        <i class="fas fa-clock text-4xl mb-3"></i>
-        <h4 class="text-lg font-semibold mb-1">No recent activity</h4>
-        <p class="text-sm text-text-secondary/80">
-          Activities will appear here once your team starts making updates.
-        </p>
-      </div>
-    </template>
-  </div>
-
-  <!-- Pagination -->
+    <ProjectUpcomingDeadlines />
+   </div>
+   <Teleport to="body" v-if="groupedActivities">
   <div
-    v-if="pagination && pagination.totalPages > 1"
-    class="flex items-center justify-between pt-4 mt-4 border-t border-border"
+    v-if="showAllActivities"
+    class="fixed inset-0 z-50 bg-black/50 flex items-center justify-center"
   >
-    <p class="text-xs text-text-secondary">
+    <div class="bg-bg-card w-full max-w-4xl max-h-[85vh] rounded-lg flex flex-col border border-border">
+
+      <!-- Modal Header -->
+      <div class="p-4 flex items-center justify-between border-b border-border">
+        <h3 class="text-lg font-semibold text-text-primary">
+          All Activities
+        </h3>
+        <button
+          @click="showAllActivities = false"
+          class="text-text-secondary hover:text-text-primary"
+        >
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Scrollable content -->
+      <div class="flex-1 overflow-y-auto p-5 space-y-4">
+
+        <!-- Loading State -->
+        <template v-if="isLoadingActivities">
+          <div
+            v-for="n in 5"
+            :key="`skeleton-${n}`"
+            class="flex gap-3 pb-2 border-b border-border last:border-0 animate-pulse"
+          >
+            <div class="w-8 h-8 rounded-full bg-bg-body flex-shrink-0"></div>
+            <div class="flex-1 min-w-0 space-y-2">
+              <div class="space-y-1.5">
+                <div class="h-4 bg-bg-body rounded w-32"></div>
+                <div class="h-3 bg-bg-body rounded w-full"></div>
+                <div class="h-3 bg-bg-body rounded w-3/4"></div>
+              </div>
+              <div class="h-3 bg-bg-body rounded w-20"></div>
+            </div>
+          </div>
+        </template>
+
+        <!-- Activities grouped by today/yesterday/older -->
+        <template v-else-if="groupedActivities.today.length || groupedActivities.yesterday.length || groupedActivities.older.length">
+          
+          <!-- Today's Activities -->
+          <template v-if="groupedActivities.today.length > 0">
+            <div class="text-xs font-semibold text-text-secondary mb-3 flex justify-between items-center">
+              <span>Today</span>
+              <span class="text-xs text-text-secondary">
+                {{ groupedActivities.today.length }} activities
+              </span>
+            </div>
+
+            <div
+              v-for="activity in groupedActivities.today"
+              :key="activity._id"
+              class="flex gap-3 pb-2 border-b border-border last:border-0"
+            >
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+                :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }"
+              >
+                {{ getInitials(activity?.user?.name) }}
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-text-primary flex justify-between">
+                  <span class="font-semibold text-md text-accent/90 pe-1">
+                    {{ activity?.user?.name }}
+                  </span>
+                  <div class="text-xs text-text-secondary mt-1">
+                    {{ formatTime(activity?.created_at) }}
+                  </div>
+                </div>
+                <span class="text-text-secondary text-sm">
+                  {{ stripHtmlModal(activity?.message || '') }}
+                </span>
+              </div>
+            </div>
+          </template>
+
+          <!-- Yesterday's Activities -->
+          <template v-if="groupedActivities.yesterday.length > 0">
+            <div class="text-xs font-semibold text-text-secondary mb-3 flex justify-between items-center">
+              <span>Yesterday</span>
+              <span class="text-xs text-text-secondary">
+                {{ groupedActivities.yesterday.length }} activities
+              </span>
+            </div>
+
+            <div
+              v-for="activity in groupedActivities.yesterday"
+              :key="activity._id"
+              class="flex gap-3 pb-2 border-b border-border last:border-0"
+            >
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+                :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }"
+              >
+                {{ getInitials(activity?.user?.name) }}
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-text-primary flex justify-between">
+                  <span class="font-semibold text-md text-accent/90 pe-1">
+                    {{ activity?.user?.name }}
+                  </span>
+                  <div class="text-xs text-text-secondary mt-1">
+                    {{ formatTime(activity?.created_at) }}
+                  </div>
+                </div>
+                <span class="text-text-secondary text-sm">
+                  {{ stripHtmlModal(activity?.message || '') }}
+                </span>
+              </div>
+            </div>
+          </template>
+
+          <!-- Older Activities -->
+          <template v-if="groupedActivities.older.length > 0">
+            <div class="text-xs font-semibold text-text-secondary mb-3 flex justify-between items-center">
+              <span>Older</span>
+              <span class="text-xs text-text-secondary">
+                {{ groupedActivities.older.length }} activities
+              </span>
+            </div>
+
+            <div
+              v-for="activity in groupedActivities.older"
+              :key="activity._id"
+              class="flex gap-3 pb-2 border-b border-border last:border-0"
+            >
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0"
+                :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }"
+              >
+                {{ getInitials(activity?.user?.name) }}
+              </div>
+
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-text-primary flex justify-between">
+                  <span class="font-semibold text-md text-accent/90 pe-1">
+                    {{ activity?.user?.name }}
+                  </span>
+                  <div class="text-xs text-text-secondary mt-1">
+                    {{ formatTime(activity?.created_at) }}
+                  </div>
+                </div>
+                <span class="text-text-secondary text-sm">
+                  {{ stripHtmlModal(activity?.message || '') }}
+                </span>
+              </div>
+            </div>
+          </template>
+
+        </template>
+
+        <!-- Empty State -->
+        <template v-else>
+          <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
+            <i class="fas fa-clock text-4xl mb-3"></i>
+            <h4 class="text-lg font-semibold mb-1">No recent activity</h4>
+            <p class="text-sm text-text-secondary/80">
+              Activities will appear here once your team starts making updates.
+            </p>
+          </div>
+        </template>
+
+      </div>
+       <div
+    v-if="pagination && pagination?.totalPages > 1"
+    class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-4 border-t border-border p-5"
+  >
+    <!-- Page Info -->
+    <p class="text-xs text-text-secondary order-2 sm:order-1">
       Page {{ currentPage }} of {{ pagination.totalPages }}
     </p>
 
-    <div class="flex items-center gap-2">
+    <!-- Pagination Controls -->
+    <div class="flex items-center gap-1 sm:gap-2 flex-wrap justify-center order-1 sm:order-2">
+      <!-- Previous Button -->
       <button
-        class="px-3 py-1 text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        class="px-2 sm:px-3 py-1.5 cursor-pointer sm:py-1 text-xs sm:text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
         :disabled="currentPage === 1"
         @click="changePage(currentPage - 1)"
       >
-        Prev
+        <span class="hidden sm:inline">Prev</span>
+        <span class="sm:hidden"><i class="fa-regular fa-chevron-left"></i></span>
       </button>
 
+      <!-- First Page (always visible) -->
       <button
-        v-for="page in pagination.totalPages"
-        :key="page"
-        class="px-3 py-1 text-sm rounded border transition-colors"
+        v-if="pagination?.totalPages > 0"
+        class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
         :class="
-          page === currentPage
+          1 === currentPage
             ? 'bg-accent text-white border-accent'
             : 'border-border text-text-secondary hover:bg-bg-hover'
         "
-        @click="changePage(page)"
+        @click="changePage(1)"
       >
-        {{ page }}
+        1
       </button>
 
+      <!-- Left Ellipsis -->
+      <span 
+        v-if="currentPage > 3"
+        class="px-1 sm:px-2 text-text-secondary text-xs sm:text-sm"
+      >
+        ...
+      </span>
+
+      <!-- Middle Pages (dynamic based on current page) -->
+      <template v-for="page in getPaginationRange()" :key="page">
+        <button
+          v-if="page !== 1 && page !== pagination?.totalPages"
+          class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
+          :class="
+            page === currentPage
+              ? 'bg-accent text-white border-accent'
+              : 'border-border text-text-secondary hover:bg-bg-hover'
+          "
+          @click="changePage(page)"
+        >
+          {{ page }}
+        </button>
+      </template>
+
+      <!-- Right Ellipsis -->
+      <span 
+        v-if="currentPage < pagination?.totalPages - 2"
+        class="px-1 sm:px-2 text-text-secondary text-xs sm:text-sm"
+      >
+        ...
+      </span>
+
+      <!-- Last Page (always visible if more than 1 page) -->
       <button
-        class="px-3 py-1 text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        :disabled="currentPage === pagination.totalPages"
+        v-if="pagination?.totalPages > 1"
+        class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
+        :class="
+          pagination.totalPages === currentPage
+            ? 'bg-accent text-white border-accent'
+            : 'border-border text-text-secondary hover:bg-bg-hover'
+        "
+        @click="changePage(pagination.totalPages)"
+      >
+        {{ pagination.totalPages }}
+      </button>
+
+      <!-- Next Button -->
+      <button
+        class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border border-border text-text-secondary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation"
+        :disabled="currentPage === pagination?.totalPages"
         @click="changePage(currentPage + 1)"
       >
-        Next
+        <span class="hidden sm:inline">Next</span>
+        <span class="sm:hidden"><i class="fa-regular fa-chevron-right"></i></span>
       </button>
     </div>
   </div>
-</div>
     </div>
+  </div>
+</Teleport>
+
 
   </div>
 </template>
@@ -333,16 +664,172 @@ import type { TeamWorkloadMember } from '../types'
 import { useTheme } from "../composables/useTheme"; 
 import { formatDateTime } from "../utilities/FormatDate";
 import { useWorkspaceStore } from "../stores/workspace"; 
-
+import ProjectPortfolio from '../components/peak/ProjectPortfolio.vue'
+import ProjectUpcomingDeadlines from '../components/peak/UpcomingDeadlines.vue'
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 
 const route = useRoute()
 const workspaceId = computed<string>(() => toParamString(route?.params?.id))
 const jobId = computed<string>(() => toParamString(route?.params?.job_id))
+const showAllActivities = ref(false)
+/** Types */
+interface LaneProgressRow {
+  lane_title: string
+  progress?: number
+  status?: string
+  total_cards?: number
+  status_distribution?: Record<string, number>
+  [key: string]: any
+}
+
+interface TaskProgress {
+  status: 'queued' | 'running' | 'completed' | 'failed' | 'canceled' | string
+  percent: number
+  message: string
+  progress_details?: { lanes_progress?: LaneProgressRow[] }
+  result?: { sheet_lists?: number; cards?: number; lanes_summary: any }
+  error?: string
+  updated_at: string
+}
+
+interface Activity {
+  _id: string
+  message: string
+  created_at: string
+  user: {
+    _id: string
+    name: string
+    email: string
+  }
+  card?: {
+    _id: string
+    title: string
+  }
+}
+
+interface GroupedActivities {
+  today: Activity[]
+  yesterday: Activity[]
+  older: Activity[]
+}
 
 /** Current page for activities pagination */
 const currentPage = ref(1)
+
+/** Pagination helper */
+const getPaginationRange = (): number[] => {
+  if (!pagination.value) return []
+  
+  const total = pagination.value.totalPages
+  const current = currentPage.value
+  const range: number[] = []
+
+  // Show pages around current page
+  // On mobile: show current and ±1 page
+  // On desktop: show current and ±2 pages
+  const delta = window.innerWidth < 640 ? 1 : 2
+
+  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+    range.push(i)
+  }
+
+  return range
+}
+
+/** Group activities by date */
+const groupedActivities = computed<GroupedActivities>(() => {
+  if (!dashboardActiviesData.value?.activities?.length) {
+    return { today: [], yesterday: [], older: [] }
+  }
+
+  const now = new Date()
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterdayStart = new Date(todayStart)
+  yesterdayStart.setDate(yesterdayStart.getDate() - 1)
+
+  const groups: GroupedActivities = {
+    today: [],
+    yesterday: [],
+    older: []
+  }
+
+  dashboardActiviesData.value.activities.forEach((activity: Activity) => {
+    const activityDate = new Date(activity.created_at)
+    const activityStart = new Date(
+      activityDate.getFullYear(),
+      activityDate.getMonth(),
+      activityDate.getDate()
+    )
+
+    if (activityStart.getTime() === todayStart.getTime()) {
+      groups.today.push(activity)
+    } else if (activityStart.getTime() === yesterdayStart.getTime()) {
+      groups.yesterday.push(activity)
+    } else {
+      groups.older.push(activity)
+    }
+  })
+
+  return groups
+})
+const PREVIEW_LIMIT = 3
+const PREVIEW_LIMIT_OLDER_ONLY = 6
+
+const previewActivities = computed(() => {
+  const today = groupedActivities.value?.today ?? []
+  const yesterday = groupedActivities.value?.yesterday ?? []
+  const older = groupedActivities.value?.older ?? []
+
+  // If today or yesterday exist, limit each to PREVIEW_LIMIT
+  if (today.length > 0 || yesterday.length > 0) {
+    return {
+      today: today.slice(0, PREVIEW_LIMIT),
+      yesterday: yesterday.slice(0, PREVIEW_LIMIT),
+      older: older.slice(0, PREVIEW_LIMIT),
+    }
+  }
+
+  // If both today & yesterday empty, show more older activities
+  return {
+    today: [],
+    yesterday: [],
+    older: older.slice(0, PREVIEW_LIMIT_OLDER_ONLY),
+  }
+})
+
+
+/** Helper function to format time */
+const formatTime = (dateString: string): string => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffInMs = now.getTime() - date.getTime()
+  const diffInMinutes = Math.floor(diffInMs / 60000)
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  const diffInDays = Math.floor(diffInHours / 24)
+
+  if (diffInMinutes < 1) {
+    return 'Just now'
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`
+  } else if (diffInHours < 24) {
+    return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`
+  } else if (diffInDays === 1) {
+    return 'Yesterday at ' + date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true 
+    })
+  } else if (diffInDays < 7) {
+    return `${diffInDays} days ago`
+  } else {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: now.getFullYear() !== date.getFullYear() ? 'numeric' : undefined
+    })
+  }
+}
 
 /** Queries for team + activities */
 const {
@@ -352,7 +839,10 @@ const {
   refetch: refetchTeams
 } = useDashboardTeams(workspaceId)
 
-const { data: dashboardActiviesData, isLoading:isLoadingActivities } = useDashboardActivities(workspaceId, currentPage)
+const { 
+  data: dashboardActiviesData, 
+  isLoading: isLoadingActivities 
+} = useDashboardActivities(workspaceId, currentPage)
 
 const workspace = computed(() => workspaceStore.singleWorkspace)
 
@@ -376,32 +866,25 @@ const changePage = (page: number) => {
   currentPage.value = page
 }
 
-function stripHtml(html: string) {
-  const div = document.createElement("div");
-  div.innerHTML = html;
-  return div.textContent || div.innerText || "";
+function stripHtml(html: string): string {
+  const div = document.createElement("div")
+  div.innerHTML = html
+  const text = div.textContent || div.innerText || ""
+
+  // Truncate if longer than 100 chars
+  if (text.length > 100) {
+    return text.slice(0, 100) + " ... "
+  }
+  return text
 }
 
-/** Types */
-interface LaneProgressRow {
-  lane_title: string
-  progress?: number
-  status?: string
-  [key: string]: any
+function stripHtmlModal(html: string): string {
+  const div = document.createElement("div")
+  div.innerHTML = html
+  const text = div.textContent || div.innerText || ""
+  return text
 }
-
-interface TaskProgress {
-  status: 'queued' | 'running' | 'completed' | 'failed' | 'canceled' | string
-  percent: number
-  message: string
-  progress_details?: { lanes_progress?: LaneProgressRow[] }
-  result?: { sheet_lists?: number; cards?: number; lanes_summary: any }
-  error?: string
-  updated_at: string
-}
-
 /** Reactive state */
-
 const isLoading = ref(false)
 
 /**
@@ -415,7 +898,8 @@ const eventSource = ref<EventSource | null>(null)
 
 /** Ensure no reconnect or re-init after unmount */
 let isStopped = false
-const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
 const connect = () => {
   if (isStopped) return
   if (eventSource.value) return // prevent duplicate connections
@@ -432,7 +916,6 @@ const connect = () => {
   eventSource.value = es
 
   es.onopen = () => {
-
     if (isStopped) return
     isConnected.value = true
   }
@@ -440,11 +923,10 @@ const connect = () => {
   es.onmessage = (event: MessageEvent) => {
     if (isStopped) return
     try {
-      
       taskProgress.value = JSON.parse(event.data) 
 
       // Close automatically when completed/final state
-      const status = taskProgress.value?.status ??'cancels'
+      const status = taskProgress.value?.status ?? 'cancels'
       if (['completed', 'failed', 'canceled'].includes(status)) {
         disconnect()
       }
@@ -457,9 +939,10 @@ const connect = () => {
   }
 
   eventSource.value.addEventListener('progress', (event: MessageEvent) => {
-    
-      try { taskProgress.value = JSON.parse(event.data) } catch { }
-    })
+    try { 
+      taskProgress.value = JSON.parse(event.data) 
+    } catch { }
+  })
 }
 
 const disconnect = () => {
@@ -476,14 +959,10 @@ onMounted(() => {
   connect()
 })
 
-
-
 onUnmounted(() => {
   isStopped = true
   disconnect()
 })
-
-
 
 /** Derived state */
 const cardProgress = computed(() =>
@@ -493,13 +972,10 @@ const cardProgress = computed(() =>
 const lanes = computed<LaneProgressRow[]>(
   () => taskProgress.value?.result?.lanes_summary ?? []
 )
+
 const lanes2 = computed<LaneProgressRow[]>(
   () => taskProgress.value?.progress_details?.lanes_progress ?? []
 )
-
- 
-
-
 
 const avatars = [
   'https://randomuser.me/api/portraits/women/1.jpg',
@@ -507,14 +983,10 @@ const avatars = [
   'https://randomuser.me/api/portraits/men/3.jpg'
 ]
 
-
-
 /** Click handler for lanes */
 const onLaneClick = (lane: LaneProgressRow) => {
   console.log('Lane clicked:', lane)
 }
-
-/** Queries for team + activities */
 
 const teamWorkload = computed(() => {
   if (!dashboardTeamsData.value?.team_workload) {
@@ -535,16 +1007,6 @@ const teamWorkload = computed(() => {
 })
 
 const teamSize = computed(() => dashboardTeamsData.value?.team_size || 0)
-
-/** Status chip styling */
-const getStatusClass = (status: string) => {
-  const classes: Record<string, string> = {
-    'DEPLOYED-PROD': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    'REOPENED': 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200',
-    'IN-PROGRESS': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-  }
-  return classes[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-}
 
 /** Local skeleton component */
 const SkeletonCard = defineComponent({
@@ -569,13 +1031,14 @@ const SkeletonCard = defineComponent({
 })
 
 /** Card progress helper */
-const getCardProgress = (total: number, status_dis: any) => {
+const getCardProgress = (total: number | undefined, status_dis: Record<string, number> | undefined): number => {
   if (!total) return 0
-  const done = status_dis['Done'] ?? 0
+  const done = status_dis?.['Done'] ?? 0
   return (done / total) * 100
 }
 
 const queryClient = useQueryClient()
+
 watch(cardProgress, (val) => {
   if (val) {
     queryClient.invalidateQueries({ queryKey: ["dashboard-teams", workspaceId.value] })
@@ -587,8 +1050,6 @@ watch([workspaceId, jobId], () => {
   connect()
 })
 
- 
-
 watch(
   () => workspaceStore.lanes,
   (newVal, oldVal) => {
@@ -597,16 +1058,11 @@ watch(
     // avoid false triggers
     if (newVal === oldVal) return 
     disconnect()
-    // taskProgress.value = null
     connect()
   },
   { deep: true }
 )
-
-
 </script>
-
-
 <style scoped>
 /* TransitionGroup animations */
 .list-enter-active,

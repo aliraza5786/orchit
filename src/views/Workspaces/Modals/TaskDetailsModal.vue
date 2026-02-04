@@ -69,14 +69,14 @@
               <div
                 class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2">
-                  <div class="text-xs uppercase tracking-wider text-text-secondary">Tab</div>
-                   <BaseSelectField size="sm" :options="laneOptions" placeholder="Select tab" :allowCustom="false"
+                  <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
+                   <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
                      :model-value="lane" @update:modelValue="setLane" :loading="isLanesLoading" />
                 </div>
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Assign</div>
                   <AssigmentDropdown :name="true" :workspaceId="cardDetails.workspace_id" @assign="assignHandle"
-                    :assigneeId="curentAssigne" :seat="details.seat" />
+                    :assigneeId="curentAssigne" :seat="cardDetails?.seats || cardDetails?.seat" />
                 </div>
                 <template v-if="!pin">
                   <div class="space-y-2">
@@ -422,10 +422,11 @@ const setEndDate = (e: any) => {
   }
 }
 
-const curentAssigne = computed(() => details.value?.assigned_to)
-const assignHandle = (user: any) => {
+const curentAssigne = computed(() => details.value?.seat_id || details.value?.assigned_to)
+const assignHandle = (users: any[]) => {
   if (details.value._id) {
-moveCard.mutate({ card_id: details.value._id, seat_id: user?._id })
+    const seat_ids = Array.isArray(users) ? users.map(u => u?._id || u?.id).filter(Boolean) : []
+    moveCard.mutate({ card_id: details.value._id, seat_id: seat_ids })
   }
 }
 

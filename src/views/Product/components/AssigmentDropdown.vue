@@ -1,23 +1,29 @@
 <template>
   <div class="relative" ref="wrapperRef" @click.stop @keydown.esc="close">
     <!-- Trigger -->
-    <div v-if="displayUser?.user?.avatar || displayUser?._id || seat?._id" class="flex gap-2 items-center" :class="(disabled || !canAssignCard) ? 'cursor-not-allowed' : 'cursor-pointer'">
-      <img v-if="displayUser?.avatar?.src || displayUser?.user?.avatar || displayUser?.u_profile_image"
-        :src="displayUser?.avatar?.src ?? displayUser?.u_profile_image ?? displayUser?.user?.avatar"
-        class="w-6 h-6 object-cover rounded-full" alt="" @click="toggle" />
-      <abbr :title="displayUser?.u_full_name" v-else-if="displayUser?.u_full_name || displayUser?.name"
-        @click="toggle"
-        class="w-6 aspect-square rounded-full text-[10px]  bg-bg-surface font-semibold text-text-primary flex items-center justify-center"
-        :style="{ backgroundColor: displayUser?.u_full_name ?? displayUser?.title ? avatarColor({ name: displayUser?.u_full_name ?? displayUser?.title, _id: displayUser?._id }) : '' }">
-        {{ getInitials(displayUser?.u_full_name ?? displayUser?.name) }}
-      </abbr>
-      <abbr :title="displayUser?.title" v-else @click="toggle"
-        class=" w-6 min-w-6  h-6 bg-bg-body border border-border rounded-full flex justify-center items-center shadow-sm">
-        <i class="fa-regular fa-user text-xs"></i>
-      </abbr>
-      <span v-if="name" class="text-sm text-text-primary ">
-          <span v-if="isRolesLoading && !displayUser?.name && !displayUser?.u_full_name">Loading...</span>
-          <span v-else>{{(displayUser?.name || displayUser?.title || displayUser?.u_full_name) ??'unAssigned'}}</span>
+    <div v-if="displayUsers.length > 0" class="flex gap-2 items-center" :class="(disabled || !canAssignCard) ? 'cursor-not-allowed' : 'cursor-pointer'" @click="toggle">
+      <div class="flex items-center -space-x-2">
+        <template v-for="(u, index) in displayUsers.slice(0, 2)" :key="u._id || index">
+          <img v-if="u?.avatar?.src || u?.u_profile_image || u?.user?.avatar"
+            :src="u?.avatar?.src ?? u?.u_profile_image ?? u?.user?.avatar"
+            class="w-6 h-6 object-cover rounded-full border-2 border-bg-card" :alt="u?.u_full_name || u?.name" />
+          <abbr :title="u?.u_full_name || u?.name || u?.title" v-else
+            class="w-6 h-6 rounded-full text-[10px] bg-bg-surface font-semibold text-text-primary flex items-center justify-center border-2 border-bg-card"
+            :style="{ backgroundColor: (u?.u_full_name || u?.name || u?.title) ? avatarColor({ name: u?.u_full_name || u?.name || u?.title, _id: u?._id }) : '' }">
+            {{ getInitials(u?.u_full_name || u?.name || u?.title) }}
+          </abbr>
+        </template>
+        <div v-if="displayUsers.length > 2" 
+          class="w-6 h-6 rounded-full bg-bg-surface flex items-center justify-center text-[10px] font-bold text-text-primary">
+          +{{ displayUsers.length - 2 }}
+        </div>
+      </div>
+      <span v-if="name" class="text-sm text-text-primary truncate max-w-[150px]">
+          <span v-if="isRolesLoading && displayUsers.length === 0">Loading...</span>
+          <span v-else>
+            {{ (displayUsers[0]?.u_full_name || displayUsers[0]?.name || displayUsers[0]?.title) }}
+            <span v-if="displayUsers.length > 1" class="text-text-secondary"> +{{ displayUsers.length - 1 }}</span>
+          </span>
       </span>
     </div>
 
@@ -58,10 +64,10 @@
               </div>
             </div>
             
-            <!-- Action Text -->
+             <!-- Action Text -->
              <div class="text-xs font-medium text-text-secondary whitespace-nowrap ml-2">
                  <!-- Selected user -->
-                <span v-if="u._id && displayUser?._id === u._id" class="text-[10px] px-2 py-1 border rounded-full border-red-500 transition group-hover:bg-red-500 group-hover:text-white">
+                <span v-if="u._id && displayUsers.some(du => (du._id === u._id) || (du.user?._id === u._id))" class="text-[10px] px-2 py-1 border rounded-full border-red-500 transition group-hover:bg-red-500 group-hover:text-white">
                  Unassign
                 </span>
                  <!-- Explicit unassign row -->
@@ -99,7 +105,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string | null): void
+  (e: 'update:modelValue', value: string | string[] | null): void
   (e: 'assign', user: any): void
   (e: 'unassign'): void
 }>()
@@ -108,26 +114,43 @@ const emit = defineEmits<{
 const { workspaceId } = useRouteIds()
 const { data: roles, isPending: isRolesLoading } = useWorkspacesRoles(computed(() => props?.workspaceId ?? workspaceId.value))
  
-const assignedUser = ref<any>(props.assigneeId ?? props.seat)
+const assignedUsers = ref<any[]>(
+  Array.isArray(props.assigneeId) ? props.assigneeId : 
+  (Array.isArray(props.seat) ? props.seat : (props.assigneeId || props.seat ? [props.assigneeId || props.seat] : []))
+)
+
 watch(() => [props.assigneeId, props.seat], () => {
-  assignedUser.value = props.assigneeId ?? props.seat
+  assignedUsers.value = Array.isArray(props.assigneeId) ? props.assigneeId : 
+    (Array.isArray(props.seat) ? props.seat : (props.assigneeId || props.seat ? [props.assigneeId || props.seat] : []))
 }, { deep: true })
 
-const displayUser = computed(() => {
-  const current = assignedUser.value
-  if (!current) return null
+const displayUsers = computed(() => {
+  const current = (assignedUsers.value || []).filter(Boolean);
   
-  const currentId = current._id || current.id || current
+  // Deduplicate by ID to avoid showing the same user twice
+  const uniqueItems = new Map();
+  
+  current.forEach(item => {
+    const id = item?._id || item?.id || (typeof item === 'string' ? item : null);
+    if (!id) return;
+    
+    // Always prefer the object if we have both, or the first one we see
+    if (!uniqueItems.has(id) || (typeof item === 'object' && typeof uniqueItems.get(id) === 'string')) {
+      uniqueItems.set(id, item);
+    }
+  });
 
-  // Robust search: Check membership ID, direct ID, and nested user ID
-  // This handles cases where assignedUser is a User ID but roles are Members memberships
-  const found = (roles.value || []).find((u: any) => {
-    const uId = u._id || u.id
-    const uUserId = u.user?._id || u.user?.id
-    return (uId == currentId) || (uUserId == currentId)
+  return Array.from(uniqueItems.values()).map(item => {
+    const currentId = item?._id || item?.id || item
+    if (!currentId) return item
+
+    const found = (roles.value || []).find((u: any) => {
+      const uId = u._id || u.id
+      const uUserId = u.user?._id || u.user?.id
+      return (uId == currentId) || (uUserId == currentId)
+    })
+    return found || item
   })
-  
-  return found || current
 })
 
 const open = ref(false)
@@ -151,56 +174,34 @@ const GAP = 8
 const ASSUMED_W = 240 // Tailwind w-60 ≈ 15rem
 const ASSUMED_H = 320 // reasonable default for max list
 
-/** Derived members list (includes "Unassign") **/
+/** Derived members list **/
 const membersData = computed(() => {
-  const current = displayUser.value // Use displayUser for consistent sorting logic
   const list = roles.value || []
-
-  if (current && (current._id || current.id)) {
-    const currentId = current._id || current.id
-
-    // Find current user in list (already done by displayUser but need consistent object reference if possible)
-    // We already have displayUser which IS the list object if found.
-    const currentUserInList = current
-    
-    // Filter out: check against found user's IDs
-    // The found user (displayUser) might be a membership.
-    // We should filter items that are "the same person"
-    const others = list.filter((u: any) => {
-       const uId = u._id || u.id
-       const uUserId = u.user?._id || u.user?.id
-       const cUserId = current.user?._id || current.user?.id
-       
-       // Match if membership ID matches OR nested user ID matches
-       return !(
-         (uId == currentId) || 
-         (uUserId && uUserId == (cUserId || currentId))
-       )
-    })
-    
-    return [
-      currentUserInList,
-      // { _id: null, name: 'Unassign', email: '' },
-      ...others
-    ]
-  }
-
-  // No user assigned
-  return [
-    // { _id: null, name: 'Unassign', email: '' },
-    ...list
-  ]
+  return list
 })
 
 /** Filtering **/
 const filteredUsers = computed(() => {
   const q = query.value.trim().toLowerCase()
   const arr = membersData.value
-  if (!q) return arr
-  return arr.filter((u: any) =>
-    (u.title || u.name || '').toLowerCase().includes(q) ||
-    (u.email || '').toLowerCase().includes(q)
+  
+  let filtered = arr;
+  if (q) {
+    filtered = arr.filter((u: any) =>
+      (u.title || u.name || '').toLowerCase().includes(q) ||
+      (u.email || '').toLowerCase().includes(q)
+    )
+  }
+
+  // Sort: Assigned users first
+  const assigned = filtered.filter((u: any) => 
+    displayUsers.value.some(du => (du._id === u._id) || (du.user?._id === u._id))
   )
+  const unassigned = filtered.filter((u: any) => 
+    !displayUsers.value.some(du => (du._id === u._id) || (du.user?._id === u._id))
+  )
+
+  return [...assigned, ...unassigned]
 })
 import { usePermissions } from '../../../composables/usePermissions';
 const { canAssignCard} = usePermissions();
@@ -273,41 +274,43 @@ watch(open, async (v) => {
 /** Actions **/
  
 
-function assign(userId: any) {
-  const user = membersData.value.find((u: any) => u._id == userId)
+function assign(user: any) {
+  if (!user) return
 
-  if (user) {
-    assignedUser.value = user
-    emit('assign', user)
-    emit('update:modelValue', userId)
+  const isSelected = displayUsers.value.some(du => (du._id === user._id) || (du.user?._id === user._id))
+  
+  if (isSelected) {
+    unassign(user)
+  } else {
+    assignedUsers.value = [...assignedUsers.value, user]
+    emit('assign', assignedUsers.value)
+    emit('update:modelValue', assignedUsers.value.map(u => u._id || u.id))
   }
-  close()
 }
 
 function onRowClick(u: any) {
   // Explicit unassign row
   if (u._id == null) {
-    onUnassign()
+    onUnassignAll()
     return
   }
 
-  // Clicking assigned user → unassign
-  if (displayUser.value && u._id === displayUser.value._id) {
-    onUnassign()
-    return
-  }
-
-  // Assign new user
-  assign(u._id)
+  // Assign/Toggle user
+  assign(u)
 }
 
-function onUnassign() {
-  assignedUser.value = null
+function unassign(user: any) {
+  assignedUsers.value = assignedUsers.value.filter(du => !((du._id === user._id) || (du.user?._id === user._id)))
+  emit('unassign') // Keep legacy emit if needed
+  emit('assign', assignedUsers.value)
+  emit('update:modelValue', assignedUsers.value.map(u => u._id || u.id))
+}
+
+function onUnassignAll() {
+  assignedUsers.value = []
   emit('unassign')
-  // Emit assign with { _id: null } so parents listening only to @assign (like KanbanTicket)
-  // receive a payload where user?._id evaluates to null, triggering backend unarchive/unassign.
-  emit('assign', { _id: null })
-  emit('update:modelValue', null)
+  emit('assign', [])
+  emit('update:modelValue', [])
   close()
 }
 

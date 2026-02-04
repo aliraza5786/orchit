@@ -39,8 +39,8 @@
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
                 <div v-if="canAssignCard" @click.stop>
-                    <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.assigned_to"
-                        :seat="ticket?.seat" />
+                    <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
+                        :seat="ticket?.seats" />
                 </div>
 
                 <div @click.stop
@@ -178,10 +178,10 @@ function getMenuItems(): { label: string; danger: boolean; action: () => void }[
 const handleDeleteTicket = () => {
     deleteCard({})
 }
-const assignHandle = (user: any) => {
+const assignHandle = (users: any[]) => {
     const payload = {
         card_id: props.ticket._id,
-        seat_id: user?._id
+        seat_id: users.map(u => u._id || u.id).filter(Boolean)
     }
     moveCard.mutate(payload);
 }

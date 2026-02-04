@@ -16,14 +16,15 @@
         >
           <!-- Close Button -->
           <button
-          v-if="!route.path.startsWith('/workspace/plan')"
+            v-if="!(
+              route.path.startsWith('/workspace/plan') ||
+              route.path.startsWith('/dashboard/task')
+            )"
             class="absolute top-6 cursor-pointer right-4 text-text-secondary hover:text-text-primary text-xl z-10"
             @click.stop="emit('update:modelValue', false)"
           >
-          <img src="../../assets/icons/cross.svg"
-          alt="">
+            <img src="../../assets/icons/cross.svg" alt="" />
           </button>
-
           <!-- Slot content -->
           <slot />
         </div>

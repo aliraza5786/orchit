@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible"
+    class="flex-auto rounded-[6px] flex-grow h-full bg-bg-card overflow-x-auto flex-col flex scrollbar-visible"
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
       <div
@@ -166,110 +166,105 @@
       </div>
     </div>
     <template v-if="view == 'kanban'">
-  <KanbanSkeleton v-if="isInitialLoading" />
-
-  <div
-    v-else
-    ref="kanbanScroll"
-    class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
-    @scroll="onDivScroll"
-  >
-    <!-- Kanban Board -->
-    <KanbanBoard
-      @onPlus="plusHandler"
-      :board="filteredBoard"
-      :key="`kanban-${selected_sheet_id}-${selected_view_by}`"
-      @delete:column="(e: any) => deleteHandler(e)"
-      @update:column="(e: any) => handleUpdateColumn(e)"
-      @reorder="onReorder"
-      @addColumn="handleAddColumn"
-      @scroll="onBoardScroll"
-      @select:ticket="selectCardHandler"
-      @onBoardUpdate="handleBoardUpdate"
-      :variable_id="selected_view_by"
-      :sheet_id="selected_sheet_id"
-    >
-      <template #column-footer="column">
-        <div
-          class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
-          v-if="
-            workspaceStore?.transitions?.all_allowed &&
-            !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) &&
-            workspaceStore.transitions.currentColumn != column.column.title
-          "
+      <KanbanSkeleton v-show="isPending || isSheetPending" />
+      <div
+        v-show="!isPending && !isSheetPending"
+        class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
+      >
+        <KanbanBoard
+          @onPlus="plusHandler"
+          :board="filteredBoard"
+          @delete:column="(e: any) => deleteHandler(e)"
+          @update:column="(e: any) => handleUpdateColumn(e)"
+          @reorder="onReorder"
+          @addColumn="handleAddColumn"
+          @select:ticket="selectCardHandler"
+          @onBoardUpdate="handleBoardUpdate"
+          :variable_id="selected_view_by"
+          :sheet_id="selected_sheet_id"
         >
-          Disable ( you can't drop here )
-        </div>
-      </template>
-
-      <template #ticket="{ ticket }">
-        <KanbanTicket
-          :selectedVar="selected_view_by"
-          @select="() => selectCardHandler(ticket)"
-          :ticket="ticket"
-        />
-      </template>
-
-      <KanbanColumnCardsSkeleton v-if="isPaginating" :cards="2" />
-    </KanbanBoard>
-
-    <!-- Add List Column -->
-    <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
-      <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
-        <BaseTextField
-          autofocus
-          v-model="newColumn"
-          placeholder="Add New list"
-          @keyup.enter="emitAddColumn"
-        />
-        <p class="text-xs mt-1.5">You can add details while editing</p>
-        <div class="flex items-center mt-3 gap-3">
-          <Button
-            @click="emitAddColumn"
-            variant="primary"
-            class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+          <template #column-footer="column">
+            <div
+              class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
+              v-if="
+                workspaceStore?.transitions?.all_allowed &&
+                !workspaceStore?.transitions?.all_allowed?.includes(
+                  column.column.title
+                ) &&
+                workspaceStore.transitions.currentColumn != column.column.title
+              "
+            >
+              Disbale ( you can't drop here )
+            </div>
+          </template>
+          <template #ticket="{ ticket }">
+            <KanbanTicket
+              :selectedVar="selected_view_by"
+              @select="
+                () => {
+                  selectCardHandler(ticket);
+                }
+              "
+              :ticket="ticket"
+            />
+          </template>
+        </KanbanBoard>
+        <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
+          <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
+            <BaseTextField
+              :autofocus="true"
+              v-model="newColumn"
+              placeholder="Add New list"
+              @keyup.enter="emitAddColumn"
+            />
+            <p class="text-xs mt-1.5">You can add details while editing</p>
+            <div class="flex items-center mt-3 gap-3">
+              <Button
+                @click="emitAddColumn"
+                varaint="primary"
+                class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+                >{{ addingList ? "Adding..." : "Add list" }}</Button
+              >
+              <i class="fa-solid fa-close" @click="setActiveAddList"></i>
+            </div>
+          </div>
+          <button
+            v-else
+            :disabled="!canCreateVariable"
+            class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+            :class="
+              !canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'
+            "
+            @click.stop="setActiveAddList"
           >
-            {{ addingList ? "Adding..." : "Add list" }}
-          </Button>
-          <i class="fa-solid fa-close" @click="setActiveAddList"></i>
+            + Add List
+          </button>
         </div>
       </div>
-
-      <button
-        v-else
-        :disabled="!canCreateVariable"
-        class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-        :class="!canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'"
-        @click.stop="setActiveAddList"
-      >
-        + Add List
-      </button>
-    </div>
-  </div>
-</template>
-
+    </template>
     <template v-if="view == 'table'">
-  <TableView
-    ref="tableRef"
-    @toggleVisibility="toggleVisibilityHandler"
-    @scroll="onScrollTable"
-    :key="`table-${selected_sheet_id}-${selected_view_by}`"
-    @addVar="() => { isCreateVar = true; }"
-    :isPending="isVariablesPending"
-    :columns="columns"
-    :rows="tableRows" 
-    :canCreate="canCreateCard"
-    :canCreateVariable="canCreateVariable"
-    :canDelete="canDeleteCard"
-    @delete="(t) => {
-       ticketToDelete = t;
-       selectedDeleteId = t._id;
-       showTicketDelete = true;
-    }"
-    @create="handleCreateTicket"
-    @update:rows="handleTableRowsUpdate"
-  />
-</template>
+      <TableView
+        @toggleVisibility="toggleVisibilityHandler"
+        @addVar="
+          () => {
+            isCreateVar = true;
+          }
+        "
+        :isPending="isPending || isVariablesPending"
+        :columns="columns"
+        :rows="filteredBoard"
+        :canCreate="canCreateCard"
+        :canCreateVariable="canCreateVariable"
+        :canDelete="canDeleteCard"
+        @delete="(t) => {
+           ticketToDelete = t;
+           selectedDeleteId = t._id;
+           showTicketDelete = true;
+        }"
+        @create="handleCreateTicket"
+        @update:rows="handleTableRowsUpdate"
+      />
+    </template>
     <!-- MindMap View -->
     <template v-if="view === 'mindmap'">
       <div class="relative w-full h-full flex overflow-hidden">
@@ -436,18 +431,46 @@
           </div>
         </div>
       </div>
+      <!-- EXISTING POPUP (UNCHANGED) -->
+      <div
+        v-if="activeAddList"
+        class="absolute top-40 left-70 bg-bg-body rounded-lg p-4 shadow-lg z-100 min-w-[328px] border"
+        @click.stop
+      >
+        <BaseTextField
+          :autofocus="true"
+          v-model="newColumn"
+          placeholder="Add New list"
+          @keyup.enter="emitAddColumn"
+        />
+        <p class="text-xs mt-1.5">You can add details while editing</p>
+
+        <div class="flex items-center mt-3 gap-3">
+          <Button
+            @click="emitAddColumn"
+            varaint="primary"
+            class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+          >
+            {{ addingList ? "Adding..." : "Add list" }}
+          </Button>
+          <i
+            class="fa-solid fa-close cursor-pointer"
+            @click="setActiveAddList"
+          ></i>
+        </div>
+      </div>
     </template>
     <template v-if="view === 'calendar'">
-      <CalendarView :data="tableRows" @select:ticket="selectCardHandler" />
+      <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
     </template>
     <template v-if="view === 'gantt'">
       <GanttChartView
-        :data="tableRows"
+        :data="filteredBoard"
         @select:ticket="selectCardHandler"
       />
     </template>
     <template v-if="view === 'timeline'">
-      <TimelineView :data="tableRows" @select:ticket="selectCardHandler" />
+      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
     </template>
   </div>
   <ConfirmDeleteModal
@@ -475,7 +498,7 @@
     v-if="createTeamModal"
     key="createTaskModalKey"
     v-model="createTeamModal"
-    @submit="handleTaskCreated"
+    @submit=""
   />
   <SidePanel
     v-if="selectedCard?._id"
@@ -564,7 +587,6 @@ import MindElixir from "mind-elixir";
 import { toast } from "vue-sonner";
 import { usePermissions } from "../../composables/usePermissions";
 import { request, toApiMessage } from "../../libs/api";
-
 import {
   ReOrderCard,
   ReOrderList,
@@ -590,9 +612,6 @@ const Searchbar = defineAsyncComponent(
 );
 const KanbanSkeleton = defineAsyncComponent(
   () => import("../../components/skeletons/KanbanSkeleton.vue")
-);
-const KanbanColumnCardsSkeleton = defineAsyncComponent(
-  () => import("../../components/skeletons/KanbanColumnCardsSkeleton.vue")
 );
 const BaseTextField = defineAsyncComponent(
   () => import("../../components/ui/BaseTextField.vue")
@@ -672,17 +691,6 @@ const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
 const sidePanelStore = useSidePanelStore()
-interface ScrollPayload {
-  // horizontal
-  scrollLeft: number
-  scrollWidth: number
-  clientWidth: number
-
-  // vertical
-  scrollTop: number
-  scrollHeight: number
-  clientHeight: number
-}
 function openHyperlinkModal(callback: (link: string) => void) {
   hyperlink.value = "";
   showHyperlinkModal.value = true;
@@ -786,7 +794,7 @@ interface Sheet {
 }
 
 const removeCardFromState = (cardId: string) => {
-  Lists.value?.forEach((sheet: Sheet) => {
+  Lists.value?.data?.sheets?.forEach((sheet: Sheet) => {
     sheet.sheet_lists?.forEach((list: SheetList) => {
       list.cards = list.cards.filter((card: Card) => card._id !== cardId);
     });
@@ -795,6 +803,7 @@ const removeCardFromState = (cardId: string) => {
 const {
   data,
   refetch: refetchSheets,
+  isPending: isSheetPending,
 } = useSheets({
   workspace_id: workspaceId,
   workspace_module_id: moduleId,
@@ -859,124 +868,17 @@ watch(viewBy, () => {
   selected_view_by.value = viewBy.value;
 });
 const workspaceStore = useWorkspaceStore();
-const Lists = ref<any[]>([]);
 const {
-  data: ListsPages,
-  isLoading,
-  isFetchingNextPage,
-  fetchNextPage,
-  hasNextPage,
+  data: Lists,
+  isPending,
   refetch: refetchSheetLists,
 } = useSheetList(
   moduleId,
   selected_sheet_id,
-  computed(() => [...workspaceStore.selectedLaneIds]),
-  selected_view_by,
+  computed(() => [...workspaceStore.selectedLaneIds]), 
+  selected_view_by, 
   listProcessPayload
 );
-// In Product.vue, around line 898-901
-watchEffect(() => {
-  const allData = ListsPages.value?.pages || [];
-  const flatData = allData.flatMap((p: any) => p.data || []);
-  
-  // Deduplicate columns by title
-  const uniqueColumnsMap = new Map();
-  
-  flatData.forEach((column: any) => {
-    const key = column.title;
-    
-    if (!uniqueColumnsMap.has(key)) {
-      uniqueColumnsMap.set(key, { 
-        ...column,
-        cards: [...(column.cards || [])]
-      });
-    } else {
-      const existing = uniqueColumnsMap.get(key);
-      const existingCardIds = new Set(
-        (existing.cards || []).map((c: any) => c._id)
-      );
-      
-      const newCards = (column.cards || []).filter(
-        (card: any) => !existingCardIds.has(card._id)
-      );
-      
-      if (newCards.length > 0) {
-        existing.cards = [...existing.cards, ...newCards];
-      }
-      
-      // Keep latest metadata
-      if (column.transitions) existing.transitions = column.transitions;
-      if (column.flow_metadata) existing.flow_metadata = column.flow_metadata;
-      if (column.style) existing.style = column.style;
-    }
-  });
-  
-  Lists.value = Array.from(uniqueColumnsMap.values());
-  
-  // Sort columns by sort_order
-  Lists.value.sort((a, b) => {
-    const orderA = a.flow_metadata?.sort_order ?? a.sort_order ?? 999;
-    const orderB = b.flow_metadata?.sort_order ?? b.sort_order ?? 999;
-    return orderA - orderB;
-  });
-});
-
-const isInitialLoading = computed(() =>
-  isLoading.value && !Lists.value.length
-);
-
-const isPaginating = computed(() =>
-  isFetchingNextPage.value
-);
-const tableRef = ref<InstanceType<typeof TableView> | null>(null)
-// scroll from native div
-const onDivScroll = (e: Event) => {
-  const el = e.target as HTMLElement
-
-  const payload: ScrollPayload = {
-    scrollLeft: el.scrollLeft,
-    scrollWidth: el.scrollWidth,
-    clientWidth: el.clientWidth,
-    scrollTop: el.scrollTop,
-    scrollHeight: el.scrollHeight,
-    clientHeight: el.clientHeight,
-  }
-
-  // Reuse your existing logic
-  handleScroll(payload)
-}
-
-// scroll from child component emit
-const onBoardScroll = (payload: ScrollPayload) => {
-  handleScroll(payload)
-}
-
-// central handler
-const handleScroll = (payload: ScrollPayload) => {
-  const { scrollLeft, clientWidth, scrollWidth, scrollTop, clientHeight, scrollHeight } = payload
-
-  // Horizontal infinite scroll
-  if (scrollLeft + clientWidth >= scrollWidth - 200) {
-    fetchNextPage()
-  }
-
-  // Vertical infinite scroll
-  if (scrollTop + clientHeight >= scrollHeight - 200) {
-    fetchNextPage()
-  }
-}
-
-const onScrollTable = (e: any) => {
-  const el = e.target;  
-  if (!hasNextPage.value || isFetchingNextPage.value) return;
-
-  if (el.scrollTop + el.clientHeight >= el.scrollHeight - 200) {
-    fetchNextPage();
-  }
-};
-onMounted(() => {
-  tableRef.value?.$el?.addEventListener('scroll', onScrollTable);
-});
 onMounted(() => {
   openPanelFromRoute();
 });
@@ -1129,19 +1031,8 @@ const deleteHandler = (e: any) => {
 const plusHandler = (e: any) => {
   createTeamModal.value = true;
   localColumnData.value = e;
-  localStorage.setItem("selectedStatusTitle", e?.title);
 };
-const kanbanScroll = ref<HTMLElement | null>(null);
 
-const handleTaskCreated = () => {
-  createTeamModal.value = false;
-  if (kanbanScroll.value) {
-    kanbanScroll.value.scrollLeft = 0;
-  }
-  queryClient.resetQueries({
-    queryKey: ['sheetList', moduleId.value, selected_sheet_id.value]
-  });
-};
 const selectedSheettoAction = ref<any>();
 function handleDeleteSheetModal(opt: any) {
   showDeleteModal.value = true;
@@ -1176,7 +1067,7 @@ watch(
   }, 200)
 );
 const fuse = computed(() => {
-  const lists = Lists.value || [];
+  const lists = Lists.value?.data || [];
   const allCards = lists.flatMap((col: any) =>
     (col.cards || []).map((card: any) => {
       const descVar = Array.isArray(card.variables)
@@ -1197,53 +1088,62 @@ const fuse = computed(() => {
   });
 });
 const filteredBoard = computed(() => {
-  if (view.value !== "kanban") return Lists.value;
-
-  if (!searchQuery.value) return Lists.value;
-
-  const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
-
-  return Lists.value.map((col: any) => {
-    const filteredCards = results.filter((c: any) => c.columnId === col.title);
-
-    // Only replace cards if needed, otherwise keep same object reference
-    if (filteredCards.length === (col.cards?.length ?? 0) && filteredCards.every((c, i) => c._id === col.cards[i]?._id)) {
-      return col;
-    }
-
-    return { ...col, cards: filteredCards };
-  });
-});
-const tableRows = computed(() => {
-  // Flatten all cards from all columns
-  let allCards = Lists.value.flatMap((col: any) => {
-    return (col.cards || []).map((card: any) => ({
-      ...card,
-      columnId: col.title,
-      columnTitle: col.title,
-      column_sort_order: col.flow_metadata?.sort_order ?? col.sort_order ?? 999,
-      'card-status': card['card-status'] || col.title,
+  if (view.value === "kanban") {
+    // Kanban filtering by columns
+    if (!searchQuery.value) return Lists.value?.data;
+    console.log("fuse data", fuse.value);
+    
+    const results = fuse.value
+      .search(searchQuery.value)
+      .map((r: any) => r.item);
+    return Lists.value?.data?.map((col: any) => ({
+      ...col,
+      cards: results.filter((c: any) => c.columnId === col.title),
     }));
-  });
+  } else {
+    // Table filtering by flat tickets
+    const query = searchQuery.value?.trim();
+    if (!query) {
+      let array: any = [];
+      (Lists.value?.data ?? []).forEach((col: any) => {
+        array = [...array, ...col?.cards];
+      });
 
-  // Apply search filter if exists
-  if (searchQuery.value) {
-    const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
-    allCards = results;
-  }
+      if (localTableOrder.value.length > 0) {
+        // Create a map of all available cards for fast lookup
+        const cardMap = new Map();
+        array.forEach((c: any) => cardMap.set(c._id, c));
+        localPendingTickets.value.forEach((c: any) => cardMap.set(c.id, c));
 
-  // Sort by column order, then by card sort_order within each column
-  allCards.sort((a, b) => {
-    // First sort by column order
-    if (a.column_sort_order !== b.column_sort_order) {
-      return a.column_sort_order - b.column_sort_order;
+        // Return cards in the order stored, but only if they still exist
+        const ordered = localTableOrder.value
+          .map(id => cardMap.get(id))
+          .filter(Boolean);
+        
+        // If some cards in the current 'array' or 'localPendingTickets' aren't in 'ordered' 
+        const returnedIds = new Set(ordered.map(c => c._id || c.id));
+        const extras = [
+           ...array.filter((c:any) => !returnedIds.has(c._id)),
+           ...localPendingTickets.value.filter(c => !returnedIds.has(c.id))
+        ];
+
+        return [...ordered, ...extras];
+      }
+
+      return [...array, ...localPendingTickets.value];
     }
-    // Then by card sort_order within the column
-    return (a.sort_order || 0) - (b.sort_order || 0);
-  });
 
-  return allCards;
+    const fuseTable = new Fuse(normalizedTableData.value, {
+      keys: ["card-title", "card-description"], // include keys you want searchable
+      threshold: 0.3,
+    });
+    const results = fuseTable.search(query).map((r) => r.item);
+    
+    // Merge pending tickets into results if they match the query (or if query is simple)
+    return [...results, ...localPendingTickets.value];
+  }
 });
+
 const { data: lanes } = useLanes(workspaceId);
 
 // import ticket from '../../assets/icons/ticket.svg'
@@ -1359,9 +1259,9 @@ const columns = computed(() => {
       render: ({ row, value }: any) =>
         h(TableAssigneeCell, {
           class: "capitalize flex items-center gap-2 ",
-          onAssign: (user: any) => assignHandle(row, user),
-          assigneeId: value,
-          seat: value,
+          onAssign: (users: any[]) => assignHandle(row, users),
+          assigneeId: row.seats || row.seat_id || value,
+          seat: row.seats || row.seat || value,
           name: true,
           disabled: !canAssignCard.value,
           emptyText: "Assignee",
@@ -1401,18 +1301,32 @@ const columns = computed(() => {
       })) ?? []),
   ];
 });
-const assignHandle = (row: any, user: any) => {
+const assignHandle = (row: any, users: any[]) => {
   const id = row?._id;
+  const userIds = (users || []).filter(u => u && (u._id || u.id)).map(u => u._id || u.id);
+  
   if (id) {
     updateOptimisticCard(id, (card) => {
-      card.seat = user;
+      card.seat = users;
+      card.seats = users;
+      card.seat_id = userIds;
     });
-    moveCard.mutate({ card_id: id, seat_id: user?._id });
+    moveCard.mutate({ card_id: id, seat_id: userIds, optimisticUser: users });
   } else {
-    row.seat = user;
+    row.seat = users;
+    row.seats = users;
+    row.seat_id = userIds;
     checkAndCreateTicket(row);
   }
 };
+
+const normalizedTableData = computed(() => {
+  let array: any = [];
+  (Lists.value?.data ?? []).forEach((col: any) => {
+    array = [...array, ...col?.cards];
+  });
+  return array;
+});
 
 const getOptions = (options: any) => {
   return options.map((el: any) => ({
@@ -1421,11 +1335,11 @@ const getOptions = (options: any) => {
   }));
 };
 const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
-  if (!Lists.value) return false;
+  if (!Lists.value?.data) return false;
 
   let found = false;
 
-  const newLists = Lists.value.map((column: any) => {
+  const newLists = Lists.value?.data?.map((column: any) => {
     const newCards = (column.cards || []).map((card: any) => {
       if (card._id !== cardId) return card;
 
@@ -1499,7 +1413,12 @@ const moveCard = useMoveCard({
     }
   }
 
-  if (newPayload.optimisticUser) updatedCard.seat = newPayload.optimisticUser;
+  if (newPayload.optimisticUser) {
+    const users = Array.isArray(newPayload.optimisticUser) ? newPayload.optimisticUser : [newPayload.optimisticUser];
+    updatedCard.seats = users;
+    updatedCard.seat_id = users.map((u: any) => u?._id || u?.id).filter(Boolean);
+    updatedCard.seat = users[0] || null;
+  }
   if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
 
   return updatedCard;
@@ -2049,34 +1968,26 @@ const handleReorderCard = async (payload: {
     // Refetch data after successful reorder
     refetchSheets();
     refetchSheetLists();
+
+    console.log("Card reordered successfully");
   } catch (error) {
     console.error("Failed to reorder card:", error);
     // Optionally show error toast/notification to user
   }
 };
+
 // Define the toolbar functions outside watchEffect
 function injectToolbarButton() {
-  const root = mindMapRef.value;
-  if (!root) return;
-
-  const smallScreen = window.matchMedia("(max-width: 768px)").matches;
-
-  const toolbarSelector = smallScreen
-    ? ".mind-elixir-toolbar.lt"
-    : ".mind-elixir-toolbar.rb";
-
-  const toolbar = root.querySelector(toolbarSelector) as HTMLElement;
+  const toolbar = mindMapRef.value?.querySelector(
+    ".mind-elixir-toolbar.rb"
+  ) as HTMLElement;
   if (!toolbar) return;
 
+  // Prevent duplicate button
   if (toolbar.querySelector(".open-sidebar-btn")) return;
 
   const btn = document.createElement("button");
-
-  // 👇 conditional spacing class
-  btn.className = `open-sidebar-btn me-toolbar-btn ${
-    smallScreen ? "mt-2" : "ms-2"
-  }`;
-
+  btn.className = "open-sidebar-btn me-toolbar-btn ms-2";
   btn.title = "Open Formatting Sidebar";
   btn.innerHTML = `<i class="fa-solid fa-sidebar"></i>`;
   btn.addEventListener("click", () => {
@@ -2085,7 +1996,6 @@ function injectToolbarButton() {
 
   toolbar.appendChild(btn);
 }
-
 
 // Store observer reference to clean up later
 let toolbarObserver: MutationObserver | null = null;
@@ -2112,7 +2022,6 @@ function setupToolbarObserver() {
   // Inject immediately first time
   injectToolbarButton();
 }
-
 const contextMenuExtendOptions: any[] = [];
 
 if (canEditCard || canEditSheet) {
@@ -2137,10 +2046,10 @@ if (canEditCard || canEditSheet) {
 }
 
 watchEffect(() => {
-  if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value) return;
+  if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value?.data) return;
 
   nextTick(() => {
-    const rootNode = buildMindMapDataAllSheets(Lists.value);
+    const rootNode = buildMindMapDataAllSheets(Lists.value?.data);
 
     if (mindMapInstance.value) {
       mindMapInstance.value.destroy?.();
@@ -2271,8 +2180,7 @@ watchEffect(() => {
 
       if (data.name === "beginEdit") {
         const editingNode = data.obj;
-        console.log(editingNode);
-        
+        console.log("editing node", editingNode);
         return;
       }
 

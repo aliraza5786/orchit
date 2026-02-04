@@ -139,8 +139,8 @@
                   :name="true" 
                   :workspaceId="workspaceId" 
                   @assign="setAssignee" 
-                  @unassign="setAssignee(null)"
-                  :assigneeId="form.assignee" 
+                  @unassign="() => setAssignee([])"
+                  :assigneeId="form.assignees" 
                   :seat="null" 
                   :disabled="false" 
                   :skipPermissionCheck="true"
@@ -294,7 +294,7 @@ type Form = {
   startDate: string | null
   endDate: string | null
   lane_id: SelectValue
-  assignee: any
+  assignees: any[]
   variables: Record<string, SelectValue>
 }
 const form = reactive<Form>({
@@ -303,7 +303,7 @@ const form = reactive<Form>({
   startDate: null,
   endDate: null,
   lane_id: null,
-  assignee: null,
+  assignees: [],
   variables: {}
 })
 
@@ -360,8 +360,8 @@ function setLane(v: SelectValue) {
   touched.lane = true
 }
 
-function setAssignee(user: any) {
-  form.assignee = user
+function setAssignee(users: any[]) {
+  form.assignees = Array.isArray(users) ? users : []
 }
 
 function selectModule(module: any) {
@@ -394,7 +394,7 @@ function reset() {
   form.startDate = null
   form.endDate = null
   form.lane_id = null
-  form.assignee = null
+  form.assignees = []
   form.variables = {}
   touched.title = false
   touched.description = false
@@ -456,7 +456,7 @@ function create() {
       ['start-date']: form.startDate,
       ['end-date']: form.endDate,
     },
-    seat_id: form.assignee?._id ?? null,
+    seat_id: form.assignees.map((u: any) => u?._id || u?.id).filter(Boolean),
     sprint_id: sidePanelStore.selectedMilestoneId || localStorage.getItem("activeMilestoneId") || null,
     createdAt: new Date().toISOString()
   }

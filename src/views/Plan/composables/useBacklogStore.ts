@@ -14,8 +14,8 @@ export interface Ticket {
   priority: "Highest" | "High" | "Medium" | "Low";
   createdAt: string;
   description?: string;
-  image:string
-  
+  image:string;
+  seats?: any[];
 }
 export interface Sprint {
   id: string;

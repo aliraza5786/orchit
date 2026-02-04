@@ -54,7 +54,7 @@
                 <label class="text-sm mb-1">Assignee</label>
                 <div class="mt-2">
                     <AssigmentDropdown :name="true" :workspaceId="workspaceId" @assign="setAssignee"
-                        @unassign="setAssignee(null)" :assigneeId="form.assignee" :seat="null" :disabled="false"
+                        @unassign="() => setAssignee([])" :assigneeId="form.assignees" :seat="null" :disabled="false"
                         :skipPermissionCheck="true" class="w-full" />
                 </div>
             </div>
@@ -165,7 +165,7 @@ type Form = {
     startDate: string | null
     endDate: string | null
     lane_id: SelectValue
-    assignee: any
+    assignees: any[]
     variables: Record<string, SelectValue>
 }
 const form = reactive<Form>({
@@ -174,7 +174,7 @@ const form = reactive<Form>({
     startDate: null,
     endDate: null,
     lane_id: null,
-    assignee: null,
+    assignees: [],
     variables: {}
 })
 
@@ -252,8 +252,8 @@ function setLane(v: SelectValue) {
     touched.lane = true
 }
 
-function setAssignee(user: any) {
-    form.assignee = user
+function setAssignee(users: any[]) {
+    form.assignees = Array.isArray(users) ? users : []
 }
 
 /** Actions */
@@ -267,7 +267,7 @@ function reset() {
     form.startDate = null
     form.endDate = null
     form.lane_id = null
-    form.assignee = null
+    form.assignees = []
     form.variables = {}
     touched.title = false
     touched.description = false
@@ -293,7 +293,7 @@ function create() {
             ? { workspace_lane_id: form.lane_id }
             : {}),
         variables: { ...form.variables, [`${selectedVar.value?.slug}`]: props.listId, ['card-title']: form.title.trim(), ['card-description']: form.description.trim(), ['start-date']: form.startDate, ['end-date']: form.endDate, },
-        seat_id: form.assignee?._id ?? null,
+        seat_id: form.assignees.map((u: any) => u?._id || u?.id).filter(Boolean),
         createdAt: new Date().toISOString()
     }
     addTicket(payload)
