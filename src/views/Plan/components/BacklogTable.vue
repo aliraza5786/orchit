@@ -89,7 +89,7 @@
               <div class="flex items-center -space-x-2">
             
                 <!-- Seats (initials only) -->
-                <template v-for="(seat, index) in (ticket.seats ?? []).slice(0, 2)" :key="seat._id || index">
+                <template v-for="(seat) in (ticket.seats ?? []).slice(0, 2)" :key="seat._id">
                   <abbr
                     :title="seat.name || seat.created_by?.u_full_name || seat.title"
                     class="w-6 h-6 rounded-full text-[10px] bg-bg-surface font-semibold

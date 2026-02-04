@@ -294,7 +294,7 @@ type Form = {
   startDate: string | null
   endDate: string | null
   lane_id: SelectValue
-  assignee: any
+  assignees: any[]
   variables: Record<string, SelectValue>
 }
 const form = reactive<Form>({
@@ -456,7 +456,7 @@ function create() {
       ['start-date']: form.startDate,
       ['end-date']: form.endDate,
     },
-    seat_id: form.assignees.map(u => u?._id || u?.id).filter(Boolean),
+    seat_id: form.assignees.map((u: any) => u?._id || u?.id).filter(Boolean),
     sprint_id: sidePanelStore.selectedMilestoneId || localStorage.getItem("activeMilestoneId") || null,
     createdAt: new Date().toISOString()
   }

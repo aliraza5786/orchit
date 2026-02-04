@@ -165,7 +165,7 @@ type Form = {
     startDate: string | null
     endDate: string | null
     lane_id: SelectValue
-    assignee: any
+    assignees: any[]
     variables: Record<string, SelectValue>
 }
 const form = reactive<Form>({
@@ -293,7 +293,7 @@ function create() {
             ? { workspace_lane_id: form.lane_id }
             : {}),
         variables: { ...form.variables, [`${selectedVar.value?.slug}`]: props.listId, ['card-title']: form.title.trim(), ['card-description']: form.description.trim(), ['start-date']: form.startDate, ['end-date']: form.endDate, },
-        seat_id: form.assignees.map(u => u?._id || u?.id).filter(Boolean),
+        seat_id: form.assignees.map((u: any) => u?._id || u?.id).filter(Boolean),
         createdAt: new Date().toISOString()
     }
     addTicket(payload)
