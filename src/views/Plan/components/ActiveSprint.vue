@@ -955,11 +955,14 @@ function setLane(id: any, v: any) {
 
   moveCard.mutate({ card_id: id, workspace_lane_id: v });
 }
-const assignHandle = (cardId: any, user: any) => {
+const assignHandle = (cardId: any, users: any[]) => {
+  const userIds = users.filter(u => u && (u._id || u.id)).map(u => u._id || u.id);
   updateOptimisticCard(cardId, (card) => {
-    card.seat = user;
+    card.seat = users;
+    card.seats = users;
+    card.seat_id = userIds;
   });
-  moveCard.mutate({ card_id: cardId, seat_id: user?._id });
+  moveCard.mutate({ card_id: cardId, seat_id: userIds });
 };
 const columns = computed(() => {
   return [
@@ -1064,9 +1067,9 @@ const columns = computed(() => {
       render: ({ row, value }: any) =>
         h(TableAssigneeCell, {
           class: "capitalize flex items-center gap-2 ",
-          onAssign: (user: any) => assignHandle(row?._id, user),
-          assigneeId: value,
-          seat: value,
+          onAssign: (users: any[]) => assignHandle(row?._id, users),
+          assigneeId: row.seats || row.seat_id || value,
+          seat: row.seats || row.seat || value,
           name: true,
           disabled: !canAssignCard.value,
           emptyText: "Assignee",

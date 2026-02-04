@@ -37,7 +37,7 @@
                 <!-- Custom slot for assignee -->
                 <template #assignee="{ row }">
                     <div class="flex justify-center" @click.stop>
-                        <AssigmentDropdown :assigneeId="row.assigned_to" :seat="row.seat"
+                        <AssigmentDropdown :assigneeId="row.seat_id || row.assigned_to" :seat="row.seats || row.seat"
                             @assign="(user: any) => handleAssign(user, row._id as string)" />
                     </div>
                 </template>
@@ -72,9 +72,10 @@ const moveCard = useMoveCard({
     }
 })
 
-const handleAssign = (user: any, cardId: string) => {
+const handleAssign = (users: any[], cardId: string) => {
     if (cardId) {
-        moveCard.mutate({ card_id: cardId, assigned_to: user?.user_info?._id })
+        const user_ids = Array.isArray(users) ? users.map(u => u?._id || u?.id).filter(Boolean) : []
+        moveCard.mutate({ card_id: cardId, assigned_to: user_ids })
     }
 }
 

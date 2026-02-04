@@ -229,7 +229,7 @@
                     :disabled="!canAssignCard"
                     @assign="(user) => assignHandle(user)"
                     :assigneeId="curentAssigne"
-                    :seat="cardDetails.seat"
+                    :seat="cardDetails?.seats || cardDetails?.seat"
                   />
                 </div>
                 <template v-if="!pin">
@@ -877,12 +877,13 @@ const setEndDate = (e: any) => {
     variables: { "end-date": e },
   });
 };
-const curentAssigne = computed(() => cardDetails?.value.assigned_to);
-const assignHandle = (user: any) => {
+const curentAssigne = computed(() => cardDetails?.value?.seat_id || cardDetails?.value?.seats || cardDetails?.value?.assigned_to);
+const assignHandle = (users: any[]) => {
+  const seat_ids = Array.isArray(users) ? users.map(u => u?._id || u?.id).filter(Boolean) : []
   moveCard.mutate({
     card_id: props.details._id,
-    seat_id: user?._id,
-    optimisticUser: user,
+    seat_id: seat_ids,
+    optimisticUser: users,
   });
 };
 const commentId = computed(() => props.details?._id);
@@ -1091,8 +1092,11 @@ const moveCard = useMoveCard({
   }
 
   if (newPayload.optimisticUser) {
-    updatedCard.seat = newPayload.optimisticUser;
-    updatedCard.assigned_to = newPayload.optimisticUser;
+    const users = Array.isArray(newPayload.optimisticUser) ? newPayload.optimisticUser : [newPayload.optimisticUser]
+    updatedCard.seats = users;
+    updatedCard.seat_id = users.map((u:any) => u?._id || u?.id).filter(Boolean);
+    updatedCard.seat = users[0] || null;
+    updatedCard.assigned_to = users;
   }
 
   return updatedCard;

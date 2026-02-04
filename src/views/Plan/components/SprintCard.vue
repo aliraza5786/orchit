@@ -49,58 +49,55 @@
               class="flex items-center text-[14px] font-sans font-medium capitalize text-text-secondary flex-1 min-w-0"
             >
               <span class="truncate">{{ ticket.summary }}</span>
-            </div>
+            </div> 
 
             <!-- Assignee -->
             <div class="flex-shrink-0">
-           <!-- Assignee -->
-<div class="flex-shrink-0">
-  <!-- Unassigned -->
-  <span
-    v-if="ticket?.assignee === 'Unassigned'"
-    class="flex justify-center text-gray-500 items-center text-[11px]
-           aspect-square w-[24px] h-[24px] bg-bg-body rounded-full
-           border-border-input border-2"
-  >
-    UA
-  </span>
+              <div class="flex items-center -space-x-2">
+            
+                <!-- Seats (initials only) -->
+                <template v-for="(seat, index) in (ticket.seats ?? []).slice(0, 2)" :key="seat._id || index">
+                  <abbr
+                    :title="seat.name || seat.created_by?.u_full_name || seat.title"
+                    class="w-6 h-6 rounded-full text-[10px] bg-bg-surface font-semibold
+                           text-text-primary flex items-center justify-center
+                           border-2 border-bg-card"
+                    :style="{
+                      backgroundColor: avatarColor({
+                        name: seat.name || seat.created_by?.u_full_name || seat.title,
+                        _id: seat?._id,
+                        email: seat?.email
+                      })
+                    }"
+                  >
+                    {{ getInitials(seat.name || seat.created_by?.u_full_name || seat.title) }}
+                  </abbr>
+                </template>
+            
+                <!-- +N -->
+                <div
+                  v-if="(ticket.seats ?? []).length > 2"
+                  class="w-6 h-6 rounded-full bg-bg-surface flex items-center
+                         justify-center text-[10px] font-bold text-text-primary
+                         border-2 border-bg-card"
+                >
+                  +{{ (ticket.seats ?? []).length - 2 }}
+                </div>
+            
+                <!-- UA (Unassigned) -->
+                <div
+                  v-if="(ticket.seats ?? []).length === 0"
+                  title="Unassigned"
+                  class="w-6 h-6 rounded-full bg-bg-surface flex items-center
+                         justify-center text-[10px] font-semibold text-text-secondary
+                         border-2 border-bg-card"
+                >
+                  UA
+                </div>
+            
+              </div>
+            </div>
 
-  <!-- Avatar -->
-  <div
-    v-else-if="ticket.image"
-    class="w-6 h-6 rounded-full overflow-hidden"
-  >
-    <img
-      :src="ticket.image"
-      alt=""
-      class="w-full h-full object-cover"
-    />
-  </div>
-
-  <!-- Initials + Tooltip -->
-  <span
-    v-else
-    class="relative text-[11px] aspect-square w-[24px] h-[24px]
-           flex justify-center items-center bg-accent/30 text-accent
-           border-accent border rounded-full cursor-default"
-    @mouseenter="hoveredAssignee = ticket.assignee?.name || ticket.assignee || ''"
-    @mouseleave="hoveredAssignee = null"
-  >
-    {{ getInitials(ticket.assignee ?? "") }}
-
-    <!-- Tooltip (large devices only) -->
-    <div
-      v-if="hoveredAssignee"
-      class="hidden lg:block absolute top-full mt-1 right-1/2 translate-x-1/2
-             bg-bg-card text-text-primary text-xs px-2 py-1 rounded shadow
-             whitespace-nowrap z-50"
-    >
-      {{ hoveredAssignee }}
-    </div>
-  </span>
-</div>
-
-</div>
 
           </div>
         </div>
@@ -136,9 +133,9 @@ import { type Sprint, type Ticket } from "../composables/useBacklogStore";
 import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
+import { avatarColor } from '../../../utilities/avatarColor';
 import { useTheme } from "../../../composables/useTheme";
-const { isDark } = useTheme();
-const hoveredAssignee = ref<string | null>(null);
+const { isDark } = useTheme(); 
 const props = defineProps<{
   sprint: Sprint | null;
   sprintId: any;
@@ -157,7 +154,7 @@ const emit = defineEmits([
   "refresh",
   "checked-change",
   "selection-change",
-]);
+]); 
 
 // Tickets state
 const sprintTickets = ref<Ticket[]>([]);

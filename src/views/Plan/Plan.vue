@@ -1293,6 +1293,7 @@ const firstSprint = computed(() => {
       priority: mapPriority(String(v["priority"] || "").trim()),
       createdAt: c?.card?.created_at || new Date().toISOString(),
       description: (v["card-description"] as string) || "",
+      seats:c?.card?.seats
     };
   });
 

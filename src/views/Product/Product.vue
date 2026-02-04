@@ -1259,9 +1259,9 @@ const columns = computed(() => {
       render: ({ row, value }: any) =>
         h(TableAssigneeCell, {
           class: "capitalize flex items-center gap-2 ",
-          onAssign: (user: any) => assignHandle(row, user),
-          assigneeId: value,
-          seat: value,
+          onAssign: (users: any[]) => assignHandle(row, users),
+          assigneeId: row.seats || row.seat_id || value,
+          seat: row.seats || row.seat || value,
           name: true,
           disabled: !canAssignCard.value,
           emptyText: "Assignee",
@@ -1301,15 +1301,21 @@ const columns = computed(() => {
       })) ?? []),
   ];
 });
-const assignHandle = (row: any, user: any) => {
+const assignHandle = (row: any, users: any[]) => {
   const id = row?._id;
+  const userIds = (users || []).filter(u => u && (u._id || u.id)).map(u => u._id || u.id);
+  
   if (id) {
     updateOptimisticCard(id, (card) => {
-      card.seat = user;
+      card.seat = users;
+      card.seats = users;
+      card.seat_id = userIds;
     });
-    moveCard.mutate({ card_id: id, seat_id: user?._id });
+    moveCard.mutate({ card_id: id, seat_id: userIds, optimisticUser: users });
   } else {
-    row.seat = user;
+    row.seat = users;
+    row.seats = users;
+    row.seat_id = userIds;
     checkAndCreateTicket(row);
   }
 };
@@ -1407,7 +1413,12 @@ const moveCard = useMoveCard({
     }
   }
 
-  if (newPayload.optimisticUser) updatedCard.seat = newPayload.optimisticUser;
+  if (newPayload.optimisticUser) {
+    const users = Array.isArray(newPayload.optimisticUser) ? newPayload.optimisticUser : [newPayload.optimisticUser];
+    updatedCard.seats = users;
+    updatedCard.seat_id = users.map((u: any) => u?._id || u?.id).filter(Boolean);
+    updatedCard.seat = users[0] || null;
+  }
   if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
 
   return updatedCard;
