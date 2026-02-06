@@ -48,8 +48,8 @@
     </div>
 
     <!-- Right Column: Team Workload & Recent Activity -->
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 items-start">     
-<ProjectPortfolio />
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 items-stretch">    
+<ProjectPortfolio :data="projectPortfolio" :isLoading="isLoadingPortfolio" />
       <!-- Recent Activity -->
    <div class="bg-bg-card w-full p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
   <!-- Header -->
@@ -304,7 +304,7 @@
 </div>
 
     </div>
-   <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-start">
+   <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-stretch">
      <!-- Team Workload -->
       <div class="bg-bg-card w-full  max-h-full flex-auto p-5 rounded-lg border border-border">
         <div class="mb-4">
@@ -379,7 +379,7 @@
           </div>
         </div>
       </div>
-    <ProjectUpcomingDeadlines />
+    <ProjectUpcomingDeadlines :data="upcomingDeadlines" />
    </div>
    <Teleport to="body" v-if="groupedActivities">
   <div
@@ -657,7 +657,7 @@ import { useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { toParamString } from '../composables/useQueryParams'
-import { useDashboardActivities, useDashboardTeams } from '../queries/usePeople' 
+import { useDashboardActivities, useDashboardTeams, useProjectPortfolio, useUpcomingDeadlines } from '../queries/usePeople' 
 import { getInitials, generateAvatarColor } from '../utilities'
 import { avatarColor } from '../utilities/avatarColor'
 import type { TeamWorkloadMember } from '../types'
@@ -773,31 +773,52 @@ const groupedActivities = computed<GroupedActivities>(() => {
 
   return groups
 })
-const PREVIEW_LIMIT = 3
-const PREVIEW_LIMIT_OLDER_ONLY = 6
+interface Activity {
+  id: string
+  title: string
+  // other fields...
+}
 
-const previewActivities = computed(() => {
+const TOTAL_PREVIEW = 6
+
+const previewActivities = computed<{
+  today: Activity[]
+  yesterday: Activity[]
+  older: Activity[]
+}>(() => {
   const today = groupedActivities.value?.today ?? []
   const yesterday = groupedActivities.value?.yesterday ?? []
   const older = groupedActivities.value?.older ?? []
 
-  // If today or yesterday exist, limit each to PREVIEW_LIMIT
-  if (today.length > 0 || yesterday.length > 0) {
-    return {
-      today: today.slice(0, PREVIEW_LIMIT),
-      yesterday: yesterday.slice(0, PREVIEW_LIMIT),
-      older: older.slice(0, PREVIEW_LIMIT),
-    }
-  }
+  let remaining = TOTAL_PREVIEW
 
-  // If both today & yesterday empty, show more older activities
-  return {
+  const result: {
+    today: Activity[]
+    yesterday: Activity[]
+    older: Activity[]
+  } = {
     today: [],
     yesterday: [],
-    older: older.slice(0, PREVIEW_LIMIT_OLDER_ONLY),
+    older: [],
   }
-})
 
+  // Fill today first
+  result.today = today.slice(0, remaining)
+  remaining -= result.today.length
+
+  // Fill yesterday next
+  if (remaining > 0) {
+    result.yesterday = yesterday.slice(0, remaining)
+    remaining -= result.yesterday.length
+  }
+
+  // Fill older last
+  if (remaining > 0) {
+    result.older = older.slice(0, remaining)
+  }
+
+  return result
+})
 
 /** Helper function to format time */
 const formatTime = (dateString: string): string => {
@@ -843,7 +864,12 @@ const {
   data: dashboardActiviesData, 
   isLoading: isLoadingActivities 
 } = useDashboardActivities(workspaceId, currentPage)
+const { 
+  data: projectPortfolio, 
+  isLoading: isLoadingPortfolio 
+} = useProjectPortfolio(workspaceId)
 
+const { data: upcomingDeadlines} = useUpcomingDeadlines(workspaceId);
 const workspace = computed(() => workspaceStore.singleWorkspace)
 
 const lastUpdateDate = computed(() => {

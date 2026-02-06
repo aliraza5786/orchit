@@ -9,6 +9,7 @@
         class="absolute inset-0 bg-black/30 backdrop-blur-sm cursor-pointer"
         @click="emit('update:modelValue', false)"
       />
+      
 
       <!-- Modal -->
       <div
@@ -43,6 +44,7 @@
             @change="toggleSelectAll"
           />
              <div class="space-y-4 mt-4" v-if="sheetsPreview?.length">
+             
   <div
     v-for="sheet in sheetsPreview"
     :key="sheet.variables['sheet-title']"
@@ -144,7 +146,6 @@
   </div>
 </div>      
         </div>
-
         <!-- Footer -->
         <div
           class="px-5 py-4 border-t border-border flex justify-end gap-3"
@@ -173,7 +174,6 @@
 <script setup>
 import { ref, computed } from 'vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
-
 const props = defineProps({
   modelValue: Boolean,
   title: String,
@@ -267,34 +267,81 @@ const toggleCard = (code) => {
     selectedCards.value.push(code)
   }
 }
-
-/**
- * Payload for backend on Accept
- */
 const acceptChanges = () => {
-  const payload = {
-    module_id: props.data?.[0]?.result?.module?.variables?.module_id,
-    sheets: selectedItems.value.map(sheetTitle => {
-      const sheetObj = sheetsPreview.value.find(s => s.variables['sheet-title'] === sheetTitle)
-      return {
-        sheet_id: sheetObj?._id || null,
-        sheet_title: sheetObj?.variables['sheet-title'],
-        cards: getSheetCards(sheetTitle)
-          .filter(code => selectedCards.value.includes(code))
-          .map(code => {
-            const cardObj = cards.value.find(c => c.variables['card-code'] === code)
-            return {
-              card_id: cardObj?._id || null,
-              card_code: cardObj?.variables['card-code'],
-              card_title: cardObj?.variables['card-title']
-            }
-          })
-      }
-    })
+  const workspace_id = props.data?.[0]?.workspace_id || null
+
+  // Module
+  const module = {
+    _id: props.data?.[0]?.result?.module?._id || null,
+    variables: {
+      'module-title':
+        props.data?.[0]?.result?.module?.variables?.['module-title'] || '',
+      'module-description':
+        props.data?.[0]?.result?.module?.variables?.['module-description'] || ''
+    },
+    is_ai_generated: true
   }
 
+  // Sheets
+  const sheets = selectedItems.value
+    .map(sheetTitle => {
+      const sheetObj = sheetsPreview.value.find(
+        s => s.variables['sheet-title'] === sheetTitle
+      )
+      if (!sheetObj) return null
+
+      // Get card codes for this sheet
+      const sheetCardCodes = getSheetCards(sheetTitle)
+
+      // Pull FULL CARD DATA from source cards
+      const selectedCardsForSheet = cards.value
+        .filter(
+          c =>
+            sheetCardCodes.includes(c.variables['card-code']) &&
+            selectedCards.value.includes(c.variables['card-code'])
+        )
+        .map(card => {
+  const originalCard = props.data?.[0]?.payload?.cards?.find(
+    c => c.variables['card-code'] === card.variables['card-code']
+  )
+
+  return {
+    _id: originalCard?._id || null,
+    variables: {
+      'card-title': card.variables['card-title'],
+      'card-status': card.variables['card-status'], // ✅ keep static status
+      'card-priority': card.variables['priority']
+    },
+    seat_id: originalCard?.variables?.seat_id
+      ? [originalCard.variables.seat_id]
+      : [],
+    assigned_to: [],
+    workspace_lane_id:
+      originalCard?.variables?.workspace_lane_id || null
+  }
+})
+
+      if (!selectedCardsForSheet.length) return null
+
+      return {
+        _id: sheetObj._id || null,
+        variables: {
+          'sheet-title': sheetObj.variables['sheet-title'],
+          'sheet-description': sheetObj.variables['sheet-description']
+        },
+        cards: selectedCardsForSheet
+      }
+    })
+    .filter(Boolean)
+
+  const payload = {
+    workspace_id,
+    module,
+    sheets
+  }
   emit('accept', payload)
 }
+
 </script>
 <style scoped>
 .fade-enter-active,

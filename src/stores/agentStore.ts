@@ -61,6 +61,7 @@ export const useAgentStore = defineStore("agent", {
     isAiTyping: false,
     isLoadingHistory: false,
     isLoadingEntities: false,
+    isAcceptingEntities:false
   }),
 
   getters: {
@@ -139,7 +140,27 @@ export const useAgentStore = defineStore("agent", {
         this.isLoadingEntities = false;
       }
     },
+   async acceptEntities(payload: any) {
+  this.isAcceptingEntities = true;
+  try {
+    const res = await api.request<{ data: CreatedEntityItem[] }>({
+      url: `${baseUrl}agent-chat/accept-structure`,
+      method: "POST",
+      data: payload, 
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
 
+    this.createdEntities = res.data.data ?? [];
+  } catch (err) {
+    console.error("Not accepted", err);
+  } finally {
+    this.isAcceptingEntities = false;
+  }
+},
     clearChatHistory() {
       this.chatHistory = [];
     },
