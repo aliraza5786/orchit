@@ -169,7 +169,7 @@
 
   <ChatBotPreviewModal
     v-model="showAIPreview"
-    @accept="showAIPreview = false"
+    @accept="acceptChanges"
     @decline="showAIPreview = false"
     :title="contextTitle"
     :data="entities"
@@ -344,7 +344,10 @@ async function sendMessage() {
     agentStore.isSending = false;
   }
 }
-
+async function acceptChanges(payload:any){
+  await agentStore.acceptEntities(payload);
+  showAIPreview.value =false;
+}
 watch(
   workspaceId,
   (newId, oldId) => {
@@ -369,6 +372,7 @@ watch(
       socket.value.emit("join-workspace", workspaceId.value);
       // Fetch chat history when panel opens
       agentStore.fetchChatHistory(workspaceId.value, true);
+      agentStore.fetchCreatedEntities(workspaceId.value, false);
     } else {
       socket.value.emit("leave-workspace", workspaceId.value);
     }
@@ -385,6 +389,7 @@ onMounted(() => {
   initSocket();
   if (workspaceId.value && workspaceStore.showChatBotPanel) {
     agentStore.fetchChatHistory(workspaceId.value, true);
+    agentStore.fetchCreatedEntities(workspaceId.value, false);
   }
 });
 

@@ -1,22 +1,22 @@
 <template>
-  <div class="border border-slate-200 dark:border-slate-700 rounded-lg bg-bg-card">
-    <div class="border-b border-slate-200 dark:border-slate-700 p-6">
-      <h3 class="font-semibold text-lg text-slate-900 dark:text-slate-50">Project Portfolio</h3>
-      <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Overview of all active projects in your workspace</p>
+  <div class="border border-border rounded-lg bg-bg-card">
+    <div class="border-b border-border p-6">
+      <h3 class="font-semibold text-lg text-primary dark:text-slate-50">Project Portfolio</h3>
+      <p class="text-text-secondary text-sm mt-1">Overview of all active projects in your workspace</p>
     </div>
     <div class="p-6 space-y-6">
-      <div class="flex justify-between lg:flex-row flex-col items-center mb-4">
+      <div class="flex justify-between flex-col items-center mb-4">
         <!-- Pie Chart -->
         <div class="flex-1 w-full max-w-full lg:max-w-xl h-64 sm:h-80 md:h-96">
           <canvas ref="chartCanvas"></canvas>
         </div>
-        <div class="flex-1 ml-4 space-y-3">
+        <div class="flex gap-4 flex-wrap ml-4 mt-3">
           <div v-for="item in chartData" :key="item.name" class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1">
               <div class="h-3 w-3 rounded-full" :style="{ backgroundColor: item.fill }"></div>
-              <span class="text-sm text-slate-600 dark:text-slate-400">{{ item.name }}</span>
+              <span class="text-sm text-text-secondary ">{{ item.name }}</span>
             </div>
-            <span class="font-semibold text-slate-900 dark:text-slate-50">{{ item.value }}</span>
+            <span class="font-semibold text-primary ms-2">{{ item.value }}</span>
           </div>
         </div>
       </div>
@@ -25,66 +25,101 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js'
+import type { ChartConfiguration } from 'chart.js'
 
 // Register Chart.js components
 Chart.register(DoughnutController, ArcElement, Tooltip, Legend)
 
-interface ChartItem {
+type PortfolioItem = {
   name: string
-  value: number
-  fill: string
+  value: any
 }
 
-const chartData: ChartItem[] = [
-  { name: 'Completed', value: 87, fill: '#10b981' },
-  { name: 'In Progress', value: 34, fill: '#3b82f6' },
-  { name: 'To Do', value: 29, fill: '#e5e7eb' },
-]
+const props = defineProps<{
+  data?: PortfolioItem[];
+  isLoading?: boolean;
+}>();
 
 const chartCanvas = ref<HTMLCanvasElement | null>(null)
 let chartInstance: Chart | null = null
 
-onMounted(() => {
-  if (!chartCanvas.value) return
+const defaultColors = [
+  "#10b981", // Emerald
+  "#3b82f6", // Blue
+  "#f59e0b", // Amber
+  "#ef4444", // Red
+  "#8b5cf6", // Purple
+  "#14b8a6", // Teal
+  "#f97316", // Orange
+  "#f43f5e", // Pink
+  "#6366f1", // Indigo
+  "#22c55e", // Lime
+  "#a855f7", // Violet
+  "#facc15", // Yellow
+  "#0ea5e9", // Sky Blue
+  "#f87171", // Light Red
+];
 
-  chartInstance = new Chart(chartCanvas.value, {
-    type: 'doughnut',
+const chartData = computed(() => {
+  if (!props.data) return [];
+
+  return Object.entries(props.data).map(([name, value], index) => ({
+    name,
+    value,
+    fill: defaultColors[index % defaultColors.length],
+  }));
+});
+
+const buildChart = () => {
+  if (!chartCanvas.value) return;
+
+  if (chartInstance) {
+    chartInstance.destroy();
+  }
+
+  const config: ChartConfiguration<'doughnut'> = {
+    type: "doughnut",
     data: {
-      labels: chartData.map(item => item.name),
+      labels: chartData.value.map((i) => i.name),
       datasets: [
         {
-          data: chartData.map(item => item.value),
-          backgroundColor: chartData.map(item => item.fill),
+          data: chartData.value?.map((i) => i.value) as any, // Type assertion
+          backgroundColor: chartData.value.map((i) => i.fill),
           borderWidth: 0,
-        }
-      ]
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      cutout: '60%',
+      cutout: "80%",
       plugins: {
-        legend: {
-          display: false
-        },
+        legend: { display: false },
         tooltip: {
           enabled: true,
           callbacks: {
-            label: (context) => {
-              return `${context.label}: ${context.parsed}`
-            }
-          }
-        }
-      }
-    }
-  })
-})
+            label: (context) => `${context.label}: ${context.parsed}`,
+          },
+        },
+      },
+    },
+  };
 
-onUnmounted(() => {
-  if (chartInstance) {
-    chartInstance.destroy()
-  }
-})
+  chartInstance = new Chart(chartCanvas.value, config);
+};
+
+onMounted(() => {
+  buildChart();
+});
+
+watch(
+  () => props.data,
+  () => {
+    buildChart(); // rebuild when parent updates
+  },
+  { deep: true }
+);
+
 </script>

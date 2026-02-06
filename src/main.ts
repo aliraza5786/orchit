@@ -14,7 +14,7 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import '@syncfusion/ej2-base/styles/material.css';
 import '@syncfusion/ej2-vue-schedule/styles/material.css';
 import { initThemeImmediately } from './composables/useTheme'
-registerLicense(import.meta.env.VITE_SYNCFUSION_API_KEY);
+registerLicense('Ngo9BigBOggjHTQxAR8/V1JGaF1cXmhKYVtpR2NbeU52fldPal9TVAciSV9jS3hTdEVlWXladHFTQGRbWE91XQ==');
 const app = createApp(App)
 initThemeImmediately();
 import vTooltip from './directives/vTooltip'

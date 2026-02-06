@@ -1,15 +1,15 @@
 <template>
-  <div class="border border-slate-200 dark:border-slate-700 rounded-lg bg-bg-card">
-    <div class="border-b border-slate-200 dark:border-slate-700 p-6">
-      <h3 class="font-semibold text-lg text-slate-900 dark:text-slate-50">Upcoming Deadlines</h3>
-      <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Next milestones and due dates</p>
+  <div class="border border-border rounded-lg bg-bg-card">
+    <div class="border-b border-border p-6">
+      <h3 class="font-semibold text-lg text-text-primary ">Upcoming Deadlines</h3>
+      <p class="text-text-secondary text-sm mt-1">Next milestones and due dates</p>
     </div>
     <div class="p-6">
       <div class="space-y-3">
         <div
           v-for="deadline in deadlines"
           :key="deadline.id"
-          :class="['p-3 border rounded-lg transition-colors', getDeadlineClass(deadline.daysUntil, deadline.priority)]"
+          :class="['p-3 border border-border rounded-lg transition-colors', getDeadlineClass(deadline.daysUntil, deadline.priority)]"
         >
           <div class="flex items-start justify-between mb-2">
             <div class="flex items-start gap-2 flex-1">
@@ -21,15 +21,15 @@
     'h-4 w-4 mt-0.5 flex-shrink-0',
     isUrgent(deadline.daysUntil)
       ? 'text-red-600 dark:text-red-400'
-      : 'text-slate-600 dark:text-slate-400'
+      : 'text-text-secondary'
   ]"
                 
               />
               <div class="flex-1 min-w-0">
-                <p :class="['font-medium text-sm', isPast(deadline.daysUntil) ? 'line-through text-slate-500' : 'text-slate-900 dark:text-slate-50']">
+                <p :class="['font-medium text-sm', isPast(deadline.daysUntil) ? 'line-through text-text-secondary' : 'text-text-primary']">
                   {{ deadline.title }}
                 </p>
-                <p class="text-xs text-slate-500 dark:text-slate-500">{{ deadline.module }}</p>
+                <p class="text-xs text-text-secondary">{{ deadline.module }}</p>
               </div>
             </div>
             <span :class="['px-2 py-1 rounded text-xs font-semibold text-white', getPriorityColor(deadline.priority)]">
@@ -38,7 +38,7 @@
           </div>
 
           <div class="flex items-center justify-between">
-            <span class="text-xs text-slate-500 dark:text-slate-500">
+            <span class="text-xs text-text-secondary">
               {{ formatDate(deadline.dueDate) }}
             </span>
             <span :class="['text-xs font-semibold px-2 py-1 rounded', getDaysUntilColor(deadline.daysUntil)]">
@@ -115,9 +115,9 @@ const isPast = (daysUntil: number): boolean => daysUntil < 0
 const getDeadlineClass = (daysUntil: number, priority: string): string => {
     console.log(priority);
     
-  if (daysUntil < 0) return 'border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-800'
+  if (daysUntil < 0) return 'border border-border bg-slate-50 dark:bg-slate-800'
   if (isUrgent(daysUntil)) return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900'
-  return 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+  return 'border border-border'
 }
 
 const getPriorityColor = (priority: string): string => {
