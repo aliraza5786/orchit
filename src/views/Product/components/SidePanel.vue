@@ -654,7 +654,6 @@ const {
   gcTime: 10 * 60 * 1000,
   refetchOnWindowFocus: false,
 });
-console.log("card variables", cardDetails.value);
 
 watch(props, () => {
   propsID.value = props.details._id;
@@ -662,7 +661,6 @@ watch(props, () => {
 watch(
   () => cardDetails.value,
   (card) => {
-    console.log("card variables", cardDetails.value);
     if (!card) return;
 
     sidePanelStore.selectedCard = card;
@@ -899,32 +897,60 @@ watch(
 const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
   {
     onMutate: async (newCommentPayload: any) => {
-      const cardId = props.details._id;
-      await queryClient.cancelQueries({
-        queryKey: ["product-comments", cardId],
-      });
-      await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
-      const previousComments = queryClient.getQueryData([
-        "product-comments",
-        cardId,
-      ]);
-      const previousLists = queryClient.getQueryData(["sheet-list"]);
-      const optimisticComment = {
-        _id: Date.now().toString(),
-        comment_text: newCommentPayload.payload.comment_text,
-        commented_by: { u_full_name: "You", _id: currentUserId.value },
-        attachments: newCommentPayload.payload.attachments || [],
-        created_at: new Date().toISOString(),
-      };
-      queryClient.setQueryData(["product-comments", cardId], (old: any) => {
-        return {
-          ...old,
-          comments: [...(old?.comments || []), optimisticComment],
-        };
-      });
+  const cardId = props.details._id;
+  
+  // Cancel queries
+  await queryClient.cancelQueries({
+    queryKey: ["product-comments", cardId],
+  });
+  await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
+  
+  // Save previous state
+  const previousComments = queryClient.getQueryData([
+    "product-comments",
+    cardId,
+  ]);
+  const previousLists = queryClient.getQueriesData({ queryKey: ["sheet-list"] });
+  
+  // Create optimistic comment
+  const optimisticComment = {
+    _id: Date.now().toString(),
+    comment_text: newCommentPayload.payload.comment_text,
+    commented_by: { u_full_name: "You", _id: currentUserId.value },
+    attachments: newCommentPayload.payload.attachments || [],
+    created_at: new Date().toISOString(),
+  };
+  
+  // Update comments list
+  queryClient.setQueryData(["product-comments", cardId], (old: any) => {
+    return {
+      ...old,
+      comments: [...(old?.comments || []), optimisticComment],
+    };
+  });
 
-      return { previousComments, previousLists };
-    },
+  // Update comment count in sheet-list (THIS IS THE KEY FIX!)
+  queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+    if (!old?.data || !Array.isArray(old.data)) return old;
+
+    return {
+      ...old,
+      data: old.data.map((column: any) => ({
+        ...column,
+        cards: column.cards?.map((card: any) =>
+          card._id === cardId
+            ? {
+                ...card,
+                comment_count: (card.comment_count || 0) + 1,
+              }
+            : card,
+        ),
+      })),
+    };
+  });
+
+  return { previousComments, previousLists };
+},
     onError: (err: any, variables: any, context: any) => {
       if (context?.previousComments)
         queryClient.setQueryData(
@@ -1103,16 +1129,22 @@ const moveCard = useMoveCard({
 };
 
     queryClient.setQueryData(["product-card", card_id], updateCardLogic);
+  // Update ALL sheet-list queries regardless of params
+queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+  if (!old || !Array.isArray(old.data)) return old;
 
-    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-      if (!Array.isArray(old)) return old;
-      return old.map((column: any) => ({
-        ...column,
-        cards: column.cards?.map((card: any) =>
-          card._id === card_id ? updateCardLogic(card) : card,
-        ),
-      }));
-    });
+  return {
+    ...old,
+    data: old.data.map((column: any) => ({
+      ...column,
+      cards: column.cards?.map((card: any) =>
+        card._id === card_id
+          ? { ...updateCardLogic(card) }
+          : card
+      ),
+    })),
+  };
+});
 
     return { previousCard, previousLists };
   },
@@ -1123,15 +1155,22 @@ const moveCard = useMoveCard({
     if (serverCard) {
       queryClient.setQueryData(["product-card", cardId], serverCard);
 
-      queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-        if (!Array.isArray(old)) return old;
-        return old.map((column: any) => ({
-          ...column,
-          cards: column.cards?.map((card: any) =>
-            card._id === cardId ? { ...card, ...serverCard } : card,
-          ),
-        }));
-      });
+      queryClient.setQueryData(["sheet-list"], (old:any)=>{
+  if (!old?.data) return old;
+
+  return {
+    ...old,
+    data: old.data.map((column:any)=>({
+      ...column,
+      cards: column.cards?.map((card:any)=>
+        card._id === cardId
+          ? { ...card, ...serverCard }
+          : card
+      )
+    }))
+  }
+});
+
       queryClient.invalidateQueries({
         queryKey: ["product-card", cardId],
       });
@@ -1175,21 +1214,8 @@ function postComment() {
   if (!comment_text && !commentAttachments.value.length) return;
 
   const cardId = props.details._id;
-  queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-    if (!Array.isArray(old)) return old;
-
-    return old.map((column: any) => ({
-      ...column,
-      cards: column.cards.map((card: any) =>
-        card._id === cardId
-          ? {
-              ...card,
-              comment_count: (card.comment_count || 0) + 1,
-            }
-          : card,
-      ),
-    }));
-  });
+  
+  // Call the mutation (onMutate will handle optimistic updates)
   createComment({
     id: cardId,
     payload: {
@@ -1201,10 +1227,10 @@ function postComment() {
     },
   });
 
+  // Clear input immediately for better UX
   newComment.value = "";
   commentAttachments.value = [];
 }
-
 const localVarValues = reactive<Record<string, any>>({});
 const initLocalVars = () => {
   if (cardDetails?.value?.variables) {

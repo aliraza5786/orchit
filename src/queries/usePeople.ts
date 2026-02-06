@@ -230,6 +230,66 @@ export const useDashboardActivities = (
     ...options,
   })
 }
+export const useProjectPortfolio = (
+  workspace_id: Ref<string> | string,
+  options = {}
+) => {
+  const workspaceIdRef = computed(() => unref(workspace_id))
+
+  return useQuery({
+    queryKey: computed(() => [
+      'project-portfolio',
+      workspaceIdRef.value,
+    ]),
+
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/cards/status-counts/${workspaceIdRef.value}`,
+        method: 'GET',
+        signal,
+      }),
+
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+
+    gcTime: 10 * 60 * 1000,
+
+    enabled: computed(() => !!workspaceIdRef.value),
+
+    ...options,
+  })
+}
+export const useUpcomingDeadlines = (
+  workspace_id: Ref<string> | string,
+  options = {}
+) => {
+  const workspaceIdRef = computed(() => unref(workspace_id))
+
+  return useQuery({
+    queryKey: computed(() => [
+      'upcoming-deadlines',
+      workspaceIdRef.value,
+    ]),
+
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `workspace/cards/upcoming/${workspaceIdRef.value}`,
+        method: 'GET',
+        signal,
+      }),
+
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+
+    gcTime: 10 * 60 * 1000,
+
+    enabled: computed(() => !!workspaceIdRef.value),
+
+    ...options,
+  })
+}
 export const ReOrderList = (options = {}) =>
   useApiMutation<any, any>(
     {
