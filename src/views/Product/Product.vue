@@ -1370,7 +1370,7 @@ const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
     return { ...column, cards: newCards };
   });
 
-  Lists.value = newLists;
+  Lists.value = { ...Lists.value, data: newLists };
 
   return found;
 };
@@ -1479,10 +1479,11 @@ function incrementCommentCount({ cardId }: { cardId: string }) {
 }
 
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
-  if (!Lists.value) return;
+  const columns = Lists.value?.data || [];
+  if (!Array.isArray(columns)) return;
 
-  // Lists.value is an array of columns (from your data structure)
-  for (const column of Lists.value) {
+  // Lists.value.data is an array of columns (from your data structure)
+  for (const column of columns) {
     if (!column.cards) continue;
     
     const cardIndex = column.cards.findIndex((c: any) => c._id === cardId);
