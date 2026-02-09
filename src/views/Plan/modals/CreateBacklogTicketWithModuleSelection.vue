@@ -23,6 +23,7 @@
         <div v-else-if="!modules || modules.length === 0" class="text-center py-12 text-text-secondary">
           No modules available
         </div>
+        
         <div v-else class="grid grid-cols-2 gap-3">
           <button v-for="module in modules" :key="module._id" @click="selectModule(module)"
             class="p-4 border rounded-lg hover:border-primary transition-all text-left group"
@@ -203,7 +204,7 @@ const { data: sheetsData, isFetching: loadingSheets, refetch: refetchSheet } = u
     workspace_id: workspaceId
   },
   {
-    enabled: computed(() => !!moduleIdForQuery)
+    enabled: computed(() => !!moduleIdForQuery.value)
   }
 )
 watch(() => selectedModuleId.value, () => {

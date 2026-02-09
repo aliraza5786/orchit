@@ -16,7 +16,7 @@
         >
          
         <div
-          class="sticky top-0 z-1 backdrop-blur border-b border-orchit-white/5 px-6 py-4 flex justify-between">
+          class="sticky top-0 z-1 bg-bg-card backdrop-blur border-b border-orchit-white/5 px-6 py-4 flex justify-between">
           <h5 id="modal-title" class="text-lg font-semibold tracking-tight">{{ title }}</h5>
           <button  class="  cursor-pointer  text-text-secondary hover:text-text-primary text-lg z-200"
             @click.stop="emit('update:modelValue', false)"
@@ -31,10 +31,7 @@
     </transition>
   </template>
   
-  <script setup lang="ts">
-import { props } from '@syncfusion/ej2-vue-gantt/src/gantt/gantt.component';
-
- 
+<script setup lang="ts">
    defineProps<{
     modelValue: boolean
     size?:string

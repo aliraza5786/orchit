@@ -379,7 +379,7 @@
           </div>
         </div>
       </div>
-    <ProjectUpcomingDeadlines :data="upcomingDeadlines" />
+    <ProjectUpcomingDeadlines :data="upcomingDeadlines" :isLoading="isLoadingDeadlines" />
    </div>
    <Teleport to="body" v-if="groupedActivities">
   <div
@@ -646,8 +646,6 @@
     </div>
   </div>
 </Teleport>
-
-
   </div>
 </template>
 
@@ -869,7 +867,7 @@ const {
   isLoading: isLoadingPortfolio 
 } = useProjectPortfolio(workspaceId)
 
-const { data: upcomingDeadlines} = useUpcomingDeadlines(workspaceId);
+const { data: upcomingDeadlines, isLoading:isLoadingDeadlines} = useUpcomingDeadlines(workspaceId);
 const workspace = computed(() => workspaceStore.singleWorkspace)
 
 const lastUpdateDate = computed(() => {
