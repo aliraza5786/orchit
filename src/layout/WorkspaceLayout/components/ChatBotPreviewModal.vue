@@ -327,7 +327,8 @@ const acceptChanges = () => {
         _id: sheetObj._id || null,
         variables: {
           'sheet-title': sheetObj.variables['sheet-title'],
-          'sheet-description': sheetObj.variables['sheet-description']
+          'sheet-description': sheetObj.variables['sheet-description'],
+          'sheet-icon': sheetObj.variables['sheet-icon']
         },
         cards: selectedCardsForSheet
       }
