@@ -1,10 +1,7 @@
 <template>
-  <BaseModal v-model="isOpen" size="md" modalClass="!py-0">
-    <!-- Header -->
-    <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
-      <h2 class="text-xl font-semibold">Invite Users</h2>
-      <p class="text-sm text-text-secondary mt-1"> Add emails, and pick a permission.</p>
-    </div>
+  <BaseModal v-model="isOpen" size="md" modalClass="!py-0" title="Invite Users">
+   
+    <p class="text-sm text-text-secondary p-6"> Add emails, and pick a permission.</p>
 
     <!-- Body -->
     <div class="px-6 flex flex-col gap-4">

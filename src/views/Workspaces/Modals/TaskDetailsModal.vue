@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :modelValue="modelValue" class="!pt-0 hide-parent-close">
+  <BaseModal :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)" title="Task Details" class="!pt-0 hide-parent-close">
 
 
     <div v-if="isLoading || isFetching" class="flex items-center justify-center py-20">
@@ -7,7 +7,7 @@
     </div>
 
     <template v-else-if="cardDetails">
-      <div
+      <!-- <div
         class="sticky top-1 z-1 backdrop-blur border-b border-orchit-white/5 px-6 py-2 flex justify-between">
         <h5 id="modal-title" class="text-lg font-semibold tracking-tight">Task Details</h5>
         <button
@@ -16,9 +16,9 @@
           >
           <img src="../../../assets/icons/cross.svg"
           alt="">
-          </button>
+        </button>
 
-      </div>
+      </div> -->
 
       <div class="flex-1 overflow-y-auto py-6 px-6">
         <div class="flex flex-col gap-5">

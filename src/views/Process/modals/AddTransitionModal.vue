@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="open" size="md">
+  <BaseModal v-model="open" size="md" >
     <div class="p-6">
       <h3 class="text-lg font-semibold text-text-primary mb-4">Add Transition</h3>
 

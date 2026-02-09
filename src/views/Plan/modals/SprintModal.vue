@@ -1,11 +1,6 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="md">
-    <!-- Header -->
-    <div
-      class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-input pb-4"
-    >
-      <h2 class="text-xl font-semibold">Add New {{ formattedLabel }}</h2>
-    </div>
+  <BaseModal v-model="isOpen" modalClass="!py-0" size="md" :title="`Add New ${formattedLabel}`">
+    
     <div class="px-6 gap-4 bg-bg-input pt-5 pb-8">
       <!-- Name (required) -->
       <BaseTextField

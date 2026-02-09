@@ -1,11 +1,8 @@
 <template>
-    <BaseModal v-model="isOpen" size="md">
-        <!-- Header -->
-        <div class="sticky top-0 z-10 flex items-start gap-2  px-6 pb-4 mb-4 border-b border-border bg-bg-body">
-            <h2 class="text-xl font-semibold">Add team member</h2>
-        </div>
+    <BaseModal v-model="isOpen" size="md" title="Add team member">
+       
         <!-- Body -->
-        <div class="px-6 pb-2">
+        <div class="px-6 pb-2 pt-8">
             <!-- Custom input field for search and adding email -->
             <div class="relative mb-4">
                 <input v-model="query" type="text" placeholder="Search or add email"

@@ -1,9 +1,6 @@
 <template>
-    <BaseModal v-model="workspaceStore.showCreateLaneModalWithAI" size="lg">
-        <!-- Header -->
-        <div class="flex justify-between items-start px-6 border-b border-border pb-6">
-            <h2 class="text-xl font-semibold">Create a New Tab</h2>
-        </div>
+    <BaseModal v-model="workspaceStore.showCreateLaneModalWithAI" title="Create a new Tab" size="lg">
+       
 
         <!-- Main Content -->
         <div class="flex flex-col gap-6 px-6 py-5">

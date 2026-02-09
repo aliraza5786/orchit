@@ -38,7 +38,7 @@
 
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
-                <div v-if="canAssignCard" @click.stop>
+                <div v-if="canAssignCard || canViewCard " @click.stop>
                     <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
                         :seat="ticket?.seats" />
                 </div>
@@ -85,7 +85,7 @@ import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
 
 import { usePermissions } from '../../../composables/usePermissions'
-const { canDeleteCard,  canAssignCard } = usePermissions()
+const { canDeleteCard,  canAssignCard, canViewCard } = usePermissions()
 
 const { workspaceId, moduleId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);

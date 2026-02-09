@@ -1,7 +1,6 @@
 <template>
-  <BaseModal v-model="open" size="md">
-    <div class="p-6">
-      <h3 class="text-lg font-semibold text-text-primary mb-4">{{ isEditing ? 'Edit Status' : 'Add Status' }}</h3>
+  <BaseModal v-model="open" size="md" :title=" isEditing ? 'Edit Status' : 'Add Status'">
+    <div class="p-6"> 
 
       <div class="space-y-4">
         <div>

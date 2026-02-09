@@ -1,27 +1,10 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="lg" >
-    <div class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4">
-  <div class="w-full flex items-start justify-between">
-    <div>
-      <h2 class="text-xl font-semibold">Create Backlog Ticket</h2>
-      <p class="text-sm text-text-secondary mt-1">
-        {{ stepDescription }}
-      </p>
-    </div>
+  <BaseModal v-model="isOpen" modalClass="!py-0" size="lg" title="Create Backlog Ticket" >  
+  <h3 class="text-md text-text-secondary p-6">
+     {{ stepDescription }}
+  </h3>
 
-    <!-- Close button -->
-    <button
-      class="ml-4 p-2 rounded-md hover:bg-border transition-colors cursor-pointer"
-      @click="cancel"
-      aria-label="Close"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10 3.636 5.05a1 1 0 011.414-1.414L10 8.586z" clip-rule="evenodd" />
-      </svg>
-    </button>
-  </div>
-
-  <div class="flex items-center gap-2 mt-4 w-full">
+  <!-- <div class="flex items-center gap-2 mt-4 w-full">
     <div v-for="step in 3" :key="step" class="flex items-center flex-1">
       <div class="flex items-center gap-2 flex-1">
         <div
@@ -30,8 +13,7 @@
         ></div>
       </div>
     </div>
-  </div>
-</div>
+  </div> --> 
     <div class="px-6 min-h-[400px]">
       <div v-if="currentStep === 1">
         <h3 class="text-lg font-medium mb-4">Select Module</h3>
@@ -48,8 +30,15 @@
             <div class="flex items-center gap-3">
               <div
                 class="w-10 h-10 rounded-lg bg-bg-input flex items-center justify-center group-hover:bg-primary/10 transition-colors">
-                <i :class="`${module?.variables?.['module-icon']?.prefix} ${module?.variables?.['module-icon']?.iconName}`"
-                  class="text-lg"></i>
+               <i
+             :class="`${module?.variables?.['module-icon']?.prefix} ${
+              module?.variables?.['module-icon']?.iconName?.startsWith('fa-')
+             ? module?.variables?.['module-icon']?.iconName
+            : `fa-${module?.variables?.['module-icon']?.iconName}`
+             }`"
+            class="text-lg"
+            ></i>
+
               </div>
               <div>
                 <p class="font-medium">{{ module.variables?.['module-title'] || 'Untitled' }}</p>

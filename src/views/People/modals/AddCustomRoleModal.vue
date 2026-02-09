@@ -5,12 +5,10 @@
       :modelValue="show"
       @update:modelValue="(val) => !val && $emit('close')"
       class=""
+      title="Add Custom Role"
     >
-      <div class="-my-6">
-        <!-- Header -->
-        <div class="bg-bg-body px-6 py-4 border-b border-border">
-           <h2 class="text-xl font-medium text-text-primary">Add Custom Role</h2>
-        </div>
+      <div class="my-4">
+         
 
         <!-- Scrollable Body -->
         <div class="px-6 py-4 space-y-4">

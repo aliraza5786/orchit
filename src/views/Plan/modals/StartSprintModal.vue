@@ -1,15 +1,8 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="md">
-    <!-- Header -->
-    <div
-      class="sticky top-0 z-10 flex justify-between items-center py-6 px-6 border-b border-border bg-bg-input"
-    >
-      <h2 class="text-xl font-semibold" v-if="!updateData?.id">Start {{ formattedSprintType }}</h2>
-      <h2 class="text-xl font-semibold" v-if="updateData?.id">Update {{ formattedSprintType }}</h2>
-      <span @click="cancel" class="text-sm text-text-secondary cursor-pointer">
-        <i class="fa-solid fa-xmark text-text-primary text-[19px]"></i>
-      </span>
-    </div>
+  <BaseModal v-model="isOpen" modalClass="!py-0" size="md"   :title="updateData?.id
+    ? `Update ${formattedSprintType}`
+    : `Start ${formattedSprintType}`">
+    
     <!-- Body -->
     <div class="px-6 grid grid-cols-2 gap-4 bg-bg-input pt-5">
       <!-- sprint name -->

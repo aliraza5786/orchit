@@ -140,11 +140,11 @@
   @mouseenter="hoverIndex = tickets?.length"
   @mouseleave="hoverIndex = null"
 >
-  <td :colspan="footerColspan" class="text-text-secondary h-8 px-3">
+  <td :colspan="footerColspan" class="text-text-secondary h-8 px-1.5">
     <span
       class="inline-flex w-5 h-5 border border-border-input rounded-full 
              justify-center items-center text-secondary
-             hover:bg-bg-surface/50 transition pb-0.5"
+             hover:bg-bg-surface/50 transition me-2"
     >
       +
     </span>
