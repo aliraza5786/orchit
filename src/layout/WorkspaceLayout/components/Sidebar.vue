@@ -91,6 +91,11 @@
         }/${workspaceId}/${item._id}`"
         :icon="item?.variables['module-icon']"
         :expanded="expanded"
+        :delete-icon="{
+        prefix:'far',
+        iconName:'ellipsis'
+      }"
+       @delete="deleteModule"
       />
     </div>
 
@@ -122,20 +127,120 @@
     </div>
   </aside>
   </div>
-  
+ <div
+  v-if="showDeleteDialog"
+  class="fixed inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center z-50"
+>
+  <div
+    class="bg-bg-card rounded-xl shadow-xl w-[520px] max-w-[92vw] p-6 flex gap-4 relative"
+  >
+    <!-- Left Icon -->
+    <div
+      class="w-12 h-12 flex items-center justify-center rounded-full bg-red-100 text-red-600 shrink-0"
+    >
+      <i class="fa-regular fa-trash text-lg"></i>
+    </div>
+
+    <!-- Content -->
+    <div class="flex flex-col gap-1.5 flex-1">
+      <div class="flex items-start justify-between">
+        <h3 class="text-[16px] font-semibold text-text-primary">
+          Delete Module
+        </h3>
+
+        <!-- Close Button -->
+        <button
+          class="cursor-pointer text-text-secondary hover:text-text-primary transition"
+          @click="cancelDelete"
+        >
+          <i class="fa-regular fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <p class="text-[13px] text-text-secondary leading-relaxed">
+        This action cannot be undone. This will permanently delete this module.
+      </p>
+
+      <!-- Actions -->
+      <div class="flex justify-end gap-3 mt-4">
+        <button
+          class="cursor-pointer px-4 py-2 text-[13px] border border-border-input rounded-md hover:bg-bg-hover transition disabled:opacity-50"
+          @click="cancelDelete"
+          :disabled="isPending"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="cursor-pointer px-4 py-2 text-[13px] bg-red-500 hover:bg-red-600 text-white rounded-md flex items-center gap-2 transition disabled:opacity-60 disabled:cursor-not-allowed"
+          :disabled="isPending"
+          @click="confirmDelete"
+        >
+          <!-- Loader -->
+          <i
+            v-if="isPending"
+            class="fa-regular fa-arrows-spin animate-spin"
+          ></i>
+
+          <span>
+            {{ isPending ? "Deleting..." : "Delete Module" }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import SideItem from "./SideItem.vue";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { usePermissions } from "../../../composables/usePermissions";
 import SidebarSkeleton from "../../../components/skeletons/SidebarSkeleton.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
-
+import { useDeleteModule } from "../../../queries/useMore"
+import { useSingleWorkspace } from "../../../queries/useWorkspace";
+import { toast } from "vue-sonner";
+const showDeleteDialog = ref(false);
+const moduleToDelete = ref<string | null>(null);
+const { mutate: deleteModuleMutation, isPending } = useDeleteModule();
 const {
   workspaceId
 } = useRouteIds();
+const { refetch } = useSingleWorkspace(workspaceId);
+function deleteModule(id: string) {
+  moduleToDelete.value = id;
+  showDeleteDialog.value = true;
+}
+
+function confirmDelete() {
+  if (!moduleToDelete.value) return;
+
+  deleteModuleMutation(
+    {
+      payload: {
+        module_id: moduleToDelete.value,
+        is_trash:true
+      },
+    },
+    {
+      onSuccess: () => {
+        showDeleteDialog.value = false;
+        toast.success("Module has been Deleted Successfully!")
+        moduleToDelete.value = null;
+        refetch();
+      },
+    }
+  );
+}
+
+
+function cancelDelete() {
+  showDeleteDialog.value = false;
+  moduleToDelete.value = null;
+}
 
 const workspaceStore = useWorkspaceStore();
 const { canCreateModule, canAccessModule } = usePermissions();
@@ -155,8 +260,6 @@ const filteredModules = computed(() => {
   if (!workspace.value?.modules) return [];
   return workspace.value.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
 });
-
-// Removed manual watcher for modules as we use computed directly now
 const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
 
 </script>

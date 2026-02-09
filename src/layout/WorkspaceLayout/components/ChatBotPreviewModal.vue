@@ -340,6 +340,7 @@ const acceptChanges = () => {
     sheets
   }
   emit('accept', payload)
+  
 }
 
 </script>
