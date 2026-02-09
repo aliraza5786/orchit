@@ -31,14 +31,28 @@
 
     <!-- Label -->
     <Transition name="sidebar-label">
-      <span
-        v-if="expanded"
-        class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
-        :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
-      >
-        {{ label }}
-      </span>
-    </Transition>
+  <div
+    v-if="expanded"
+    class="flex items-center justify-between w-full gap-2"
+  >
+    <span
+      class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
+      :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
+    >
+      {{ label }}
+    </span>
+
+    <!-- Delete Icon (only if exists + hover) -->
+    <i
+      v-if="deleteIcon && label !=='Tasks' && label !=='Pin'"
+      :class="[
+        ...deleteIconClasses,
+        'opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[13px]'
+      ]"
+      @click.stop="$emit('delete', props.id)"
+    ></i>
+  </div>
+</Transition>
   </div>
 
   <!-- Tooltip rendered in body via Teleport -->
@@ -67,6 +81,7 @@ const props = defineProps<{
   to: string;
   status?: string;
   expanded?: boolean;
+  deleteIcon?:any
 }>();
 const showTooltip = ref(false);
 const itemRef = ref<HTMLElement | null>(null);
@@ -208,6 +223,27 @@ const iconClasses = computed(() => {
 
   return [prefix, normalizedName];
 });
+const deleteIconClasses = computed(() => {
+  if (!props.deleteIcon) return [];
+
+  const placeholder = { prefix: "fas", iconName: "fa-trash" };
+
+  let icon = placeholder;
+
+  if (props.deleteIcon?.iconName) {
+    icon = props.deleteIcon;
+  } else if (props.deleteIcon?.variables?.["module-icon"]?.iconName) {
+    icon = props.deleteIcon.variables["module-icon"];
+  }
+
+  const prefix = icon.prefix || "fas";
+  const name = icon.iconName.startsWith("fa-")
+    ? icon.iconName
+    : `fa-${icon.iconName}`;
+
+  return [prefix, name];
+});
+
 </script>
 
 <style scoped>
