@@ -1030,6 +1030,7 @@ const deleteHandler = (e: any) => {
 };
 const plusHandler = (e: any) => {
   createTeamModal.value = true;
+  localStorage.setItem("selectedStatusTitle", e?.title)
   localColumnData.value = e;
 };
 

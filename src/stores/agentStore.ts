@@ -168,5 +168,30 @@ export const useAgentStore = defineStore("agent", {
     clearCreatedEntities() {
       this.createdEntities = [];
     },
+    async declineSuggestedEntities(workspace_id: string) {
+  if (!workspace_id) return;
+  this.isLoadingHistory = true;
+
+  try {
+    const url = `${baseUrl}agent-chat/created-entities/${workspace_id}`;
+
+    const res = await api.request<{
+      data: { chats: ChatSession[]; pagination: any };
+    }>({
+      url,
+      method: "DELETE",
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("❌ Failed to decline suggested entities:", err);
+  } finally {
+    this.isLoadingHistory = false;
+  }
+}
   },
 });

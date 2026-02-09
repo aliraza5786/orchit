@@ -18,6 +18,21 @@ export const useCreateModule = (options = {}) =>
       ...(options as any),
     } as any
   );
+export const useDeleteModule = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["delete-module"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/workspace/module/update`,
+          method: "PATCH",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
 export const useCreateModuleAI = (options = {}) =>
   useApiMutation<any, any>(
     {

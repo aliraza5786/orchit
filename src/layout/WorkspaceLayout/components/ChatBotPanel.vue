@@ -170,7 +170,7 @@
   <ChatBotPreviewModal
     v-model="showAIPreview"
     @accept="acceptChanges"
-    @decline="showAIPreview = false"
+    @decline="declineAgentGeneratedEntities"
     :title="contextTitle"
     :data="entities"
   />
@@ -191,6 +191,7 @@ import { useWorkspaceStore } from "../../../stores/workspace";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { useAgentStore } from "../../../stores/agentStore";
 import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
+import { toast } from "vue-sonner";
 
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
@@ -347,6 +348,11 @@ async function sendMessage() {
 async function acceptChanges(payload:any){
   await agentStore.acceptEntities(payload);
   showAIPreview.value =false;
+}
+async function declineAgentGeneratedEntities(){
+  await agentStore.declineSuggestedEntities(workspaceId.value);
+  showAIPreview.value =false;
+  toast.success("Preview entities has been rejected and deleted")
 }
 watch(
   workspaceId,
