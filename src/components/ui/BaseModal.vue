@@ -8,23 +8,22 @@
       >
 
         <div
-          class="bg-bg-body w-full max-w-[860px] max-h-[80vh] border border-border/70 overflow-auto mx-4 rounded-xl shadow-lg shadow-accent/30 py-6 relative"
+          class="bg-bg-body w-full max-w-[860px] max-h-[80vh] border border-border/70 overflow-auto mx-4 rounded-xl shadow-lg shadow-accent/30 pb-6 relative"
           :class="[{'!max-w-[500px]': size=='md'},modalClass]"
           role="dialog"
           aria-modal="true"
           @click.stop
         >
-          <!-- Close Button -->
-          <button
-            v-if="!(
-              route.path.startsWith('/workspace/plan') ||
-              route.path.startsWith('/dashboard/task')
-            )"
-            class="absolute top-6 cursor-pointer right-4 text-text-secondary hover:text-text-primary text-xl z-10"
+         
+        <div
+          class="sticky top-0 z-1 bg-bg-card backdrop-blur border-b border-orchit-white/5 px-6 py-4 flex justify-between">
+          <h5 id="modal-title" class="text-lg font-semibold tracking-tight">{{ title }}</h5>
+          <button  class="  cursor-pointer  text-text-secondary hover:text-text-primary text-lg z-200"
             @click.stop="emit('update:modelValue', false)"
-          >
-            <img src="../../assets/icons/cross.svg" alt="" />
+          >  
+          <i class="fa-solid fa-xmark"></i>
           </button>
+       </div>
           <!-- Slot content -->
           <slot />
         </div>
@@ -32,14 +31,13 @@
     </transition>
   </template>
   
-  <script setup lang="ts">
-  import { useRoute } from 'vue-router';
+<script setup lang="ts">
    defineProps<{
     modelValue: boolean
     size?:string
     modalClass?:any
-  }>()
-  const route = useRoute();
+    title?:string
+  }>() 
   const emit = defineEmits(['update:modelValue'])
   </script>
   

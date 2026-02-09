@@ -1,7 +1,6 @@
 <template>
-  <BaseModal :modelValue="modelValue" @update:modelValue="close" size="md">
-    <div class="px-6 relative">
-      <h2 class="text-xl font-semibold text-text-primary mb-6">Add New Process</h2>
+  <BaseModal :modelValue="modelValue" @update:modelValue="close" size="md" title="Add New Process">
+    <div class="px-6 relative pt-6"> 
       
       <form @submit.prevent="handleSubmit" class="space-y-5">
         <!-- Process Name -->

@@ -390,7 +390,7 @@
                     <div class="flex justify-end items-center">
                       <div class="flex gap-1">
                         <button
-                          class="flex items-center justify-center w-7 h-7 rounded-full bg-accent"
+                          class="flex items-center justify-center me-1 w-7 h-7 rounded-full bg-accent"
                           v-if="sprintDetailData?.cards?.length"
                           @click="openSearchModal"
                           :style="
@@ -494,7 +494,7 @@
                           
                         </div>
                         <!-- Start Sprint Button -->
-                        <div v-else class="ms-2 flex gap-2">
+                        <div v-else class="ms-1 flex gap-2">
                           <Button
                             v-if="sprintDetailData?.status !== 'completed'"
                             size="sm"
@@ -587,109 +587,140 @@
                     </div>
             
                     <!-- Search Modal -->
-                    <transition name="fade">
-                      <div
-                        v-if="showSearchModal"
-                        class="fixed inset-0 z-50 flex items-center justify-center w-full"
-                      >
-                        <!-- Backdrop -->
-                        <div
-                          class="absolute inset-0 bg-black/10 backdrop-blur-sm"
-                          @click="closeSearchModal"
-                        ></div>
+               <transition name="fade">
+    <div
+      v-if="showSearchModal"
+      class="fixed inset-0 z-50 flex items-center justify-center w-full"
+    >
+      <!-- Backdrop with gradient -->
+      <div
+        class="absolute inset-0 bg-black/10 backdrop-blur-xs"
+        @click="closeSearchModal"
+      ></div>
 
-                        <!-- Modal -->
-                        <div
-                          class="relative bg-bg-card rounded-lg p-4 mx-3 w-full max-w-md lg:max-w-2xl xl:max-w-3xl"
-                        >
-                          <!-- Instruction Text -->
-                          <div class="flex justify-end">
-                            <button
-                              @click="closeSearchModal"
-                              class="px-2 py-1 rounded bg-bg-input border border-border-input text-accent"
-                            >
-                              <i class="fa-solid fa-xmark"></i>
-                            </button>
-                          </div>
+      <!-- Modal with modern design -->
+      <div
+        class="relative bg-bg-card dark:bg-slate-900 rounded-2xl w-full max-w-md lg:max-w-2xl xl:max-w-4xl shadow-2xl overflow-hidden mx-4 flex flex-col"
+      >
+        <!-- Gradient top border accent -->
+        <div class="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
 
-                          <!-- Search Bar + Close -->
-                          <div class="flex flex-col gap-2 mt-4">
-                            <p class="text-sm text-muted mb-2">
-                              Search for {{ sprintType }} by name, status, or
-                              priority. Start typing to filter results.
-                            </p>
+        <!-- Header with close button -->
+        <div class="flex justify-between items-center px-6 pt-5 pb-0">
+          <div>
+            <h2 class="text-lg font-bold text-text-primary dark:text-white">
+              Search {{ sprintType }}
+            </h2>
+            <p class="text-sm text-text-secondaru mt-1">
+              Find by name, status, or priority
+            </p>
+          </div>
+          <button
+            @click="closeSearchModal"
+            class="flex items-center justify-center cursor-pointer w-10 h-10 rounded-lg bg-bg-card border border-border transition-colors duration-200"
+            aria-label="Close search"
+          >
+            <i class="fa-solid fa-xmark text-text-primary text-lg"></i>
+          </button>
+        </div>
 
-                            <div class="flex gap-2 w-full">
-                              <SearchBar
-                                :placeholder="`Search in ${sprintType}`"
-                                @onChange="handleSearchChange"
-                                @keyup.enter="handleSearchEnter"
-                                class="flex-1"
-                              />
-                            </div>
+        <!-- Search Bar with enhanced styling -->
+        <div class="px-6 py-4">
+          <div class="relative group">
+            <i
+              class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm group-focus-within:text-blue-500 transition-colors"
+            ></i>
+            <input
+              :placeholder="`Search in ${sprintType}...`"
+               v-model="searchTerm"
+              @keyup.enter="handleSearchEnter"
+              class="w-full pl-11 pr-4 py-3 bg-bg-input border border-border  rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 dark:focus:ring-offset-slate-900 transition-all duration-200"
+            />
+          </div>
+        </div>
 
-                            <!-- Dropdown Results -->
-                            <div
-                              v-if="filteredSprints.length && searchTerm"
-                              class="mt-1 w-full bg-bg-card rounded-md max-h-64 overflow-y-auto"
-                            >
-                              <ul>
-                                <li
-                                  v-for="sprint in filteredSprints"
-                                  :key="sprint._id"
-                                  @click="handleSearchModal(sprint)"
-                                  class="px-4 py-2 cursor-pointer hover:bg-bg-hover text-text-primary border-b border-border-input"
-                                >
-                                  <div
-                                    class="flex items-center justify-between"
-                                  >
-                                    <div>
-                                      <span class="font-medium">{{
-                                        sprint.card?.variables?.["card-title"]
-                                      }}</span>
-                                      <span class="text-muted text-xs ml-2">
-                                        ({{
-                                          sprint.card?.variables?.["card-code"]
-                                        }})
-                                      </span>
-                                    </div>
-                                    <div class="flex gap-2 text-xs">
-                                      <span
-                                        class="px-3 py-1 rounded text-md"
-                                        :class="
-                                          getPriorityClass(sprint.priority)
-                                        "
-                                      >
-                                        {{ sprint.priority }}
-                                      </span>
-                                      <span
-                                        class="text-muted border border-border-input rounded-md px-3 py-1"
-                                      >
-                                        {{
-                                          sprint.card?.variables?.[
-                                            "card-status"
-                                          ]
-                                        }}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </li>
-                              </ul>
-                            </div>
+        <!-- Results Container -->
+        <div class="px-6 pb-6 max-h-96 overflow-y-auto">
+          <!-- Loading or Results -->
+          <div v-if="filteredSprints.length && searchTerm" class="space-y-2">
+            <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+              {{ filteredSprints.length }} Result{{ filteredSprints.length !== 1 ? 's' : '' }}
+            </div>
+            <div
+              v-for="sprint in filteredSprints"
+              :key="sprint._id"
+              @click="handleSearchModal(sprint)"
+              class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-700 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 cursor-pointer transition-all duration-200 transform hover:scale-102"
+            >
+              <div class="flex justify-between items-start gap-4">
+                <!-- Title and Code -->
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-semibold text-slate-900 dark:text-white text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
+                    {{ sprint.card?.variables?.["card-title"] }}
+                  </h3>
+                  <div class="flex gap-2 mt-2">
+                    <span class="text-xs font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded">
+                      {{ sprint.card?.variables?.["card-code"] }}
+                    </span>
+                  </div>
+                </div>
 
-                            <!-- No Results Message -->
-                            <div
-                              v-else-if="searchTerm && !filteredSprints.length"
-                              class="absolute top-full left-0 mt-1 w-full bg-bg-card border border-border-input rounded-md shadow-md p-4 z-50 text-center text-muted"
-                            >
-                              No {{ sprintType }} found matching "{{
-                                searchTerm
-                              }}"
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </transition>
+                <!-- Priority and Status Pills -->
+                <div class="flex gap-2 items-center flex-shrink-0">
+                  <span
+                    class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
+                    :class="getPriorityClass(sprint.priority)"
+                  >
+                    {{ sprint.priority }}
+                  </span>
+                  <span
+                    class="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
+                  >
+                    {{ sprint.card?.variables?.["card-status"] }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State with results -->
+          <div
+            v-else-if="searchTerm && !filteredSprints.length"
+            class="py-12 text-center"
+          >
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+              <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 text-2xl"></i>
+            </div>
+            <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-1">
+              No results found
+            </h3>
+            <p class="text-sm text-slate-500 dark:text-slate-400">
+              No <span class="font-medium">{{ sprintType }}</span> matching<br />
+              <span class="font-mono text-blue-600 dark:text-blue-400">"{{ searchTerm }}"</span>
+            </p>
+          </div>
+
+          <!-- Initial Empty State -->
+          <div
+            v-else
+            class="py-16 text-center"
+          >
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent mb-4">
+              <i class="fa-solid fa-filter text-white text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-text-primary mb-2">
+              Start searching
+            </h3>
+            <p class="text-sm text-text-secondary max-w-sm mx-auto">
+              Type to filter {{ sprintType }} by name, status, or priority. Your search results will appear here.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
+
+
                   </div>
                   <div
                     v-if="isLoadingSprint || isSprintsFetching"
@@ -893,7 +924,6 @@ import SprintModal from "./modals/SprintModal.vue";
 import { computed, ref, watch, onMounted } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
-import SearchBar from "../../components/ui/SearchBar.vue";
 import filter from "@assets/icons/filter.svg";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import {
@@ -1222,7 +1252,7 @@ const selectedSearchCard = ref<any | null>(null);
 const filteredSprints = computed(() => {
   const data = sprintData.value as { backlog_items?: any[] } | undefined;
   if (!searchTerm.value || !data?.backlog_items) return [];
-  const query = searchTerm.value.toLowerCase().trim();
+  const query = searchTerm.value?.toLowerCase().trim();
   return data.backlog_items.filter((item: any) => {
     const title = item.card?.variables?.["card-title"]?.toLowerCase() || "";
     const code = item.card?.variables?.["card-code"]?.toLowerCase() || "";
@@ -1241,11 +1271,6 @@ const filteredSprints = computed(() => {
     );
   });
 });
-
-// Methods
-function handleSearchChange(value: any) {
-  searchTerm.value = value;
-}
 
 function handleSearchEnter() {
   if (filteredSprints.value.length === 1) {

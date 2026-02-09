@@ -1,23 +1,9 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" :size="size">
-    <!-- Header -->
-    <div
-      class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4"
-    >
-     <div class="flex justify-between w-full">
-     <h2 class="text-xl font-semibold">Create Ticket</h2>
-     <div
-      class="w-6 h-6 rounded-full cursor-pointer hover:bg-border/50 transition p-0.5"
-      @click="cancel"
-      title="Close"
-    >
-    <i class="fa-solid fa-xmark text-sm"></i>
-    </div>
-     </div>
-      <p class="text-sm text-text-secondary mt-1">
+  <BaseModal v-model="isOpen" modalClass="!py-0" title="Create Ticket" :size="size">
+      
+    <h3 class="text-md text-text-secondary p-6">
         Provide the details below and click <span class="font-medium">Add Ticket</span>.
-      </p>
-    </div>
+    </h3> 
 
     <!-- Body -->
     <div class="px-6 grid grid-cols-1 sm:grid-cols-2 gap-4">

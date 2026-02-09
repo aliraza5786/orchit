@@ -1,8 +1,6 @@
 <template>
-  <BaseModal :modelValue="modelValue" @update:modelValue="$emit('update:modelValue', $event)" size="md">
-    <div class="p-6">
-      <h2 class="text-xl font-semibold text-text-primary mb-6">Add Process Card</h2>
-      
+  <BaseModal :modelValue="modelValue" title="Add Process Card" @update:modelValue="$emit('update:modelValue', $event)" size="md">
+    <div class="p-6 sm:mt-4"> 
       <div class="space-y-4">
         <BaseTextField label="Title" v-model="form.title" placeholder="e.g. Start Task" :autofocus="true" />
         <div class="space-y-2">

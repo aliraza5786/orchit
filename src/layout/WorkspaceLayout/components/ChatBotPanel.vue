@@ -38,7 +38,7 @@
         >
           <!-- Avatar -->
           <div
-            class="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+            class="w-6 h-6 rounded-full p-1.5 flex items-center justify-center shrink-0"
             :class="msg.type === 'user' ? 'bg-bg-surface' : 'bg-accent/10'"
           >
             <i
@@ -122,13 +122,19 @@
         class="mb-2 flex justify-between items-center gap-1.5"
       >
         <nav class="flex items-center text-xs text-text-secondary gap-2">
-          <div class="flex items-center gap-1 font-medium text-text-primary">
+          <div class="flex items-center font-medium text-text-primary" v-if="!moduleId">
+            <span>Workspace</span>
+          </div>
+          <span v-if="!moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
+          <div class="flex items-center font-medium text-text-primary">
             <span>{{ contextTitle }}</span>
           </div>
-          <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
+          <div v-if="moduleId" class="flex">
+            <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
           <div class="flex items-center gap-1"><span>Sheet</span></div>
           <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
           <div class="flex items-center gap-1"><span>Cards</span></div>
+          </div>
         </nav>
         <button
           @click="showAIPreview = !showAIPreview"
@@ -140,11 +146,13 @@
       </div>
       <div class="relative">
         <textarea
+          ref="autoTextarea"
           v-model="userMessage"
           placeholder="Ask anything..."
           rows="1"
-          class="w-full pl-4 pr-10 py-3 rounded-xl border border-border bg-bg-body focus:outline-none focus:border-accent resize-none text-sm transition-colors"
+          class="w-full pl-4 pr-10 py-3 rounded-xl border border-border bg-bg-body focus:outline-none focus:border-accent resize-none text-sm transition-colors overflow-y-auto"
           @keydown.enter.prevent="sendMessage()"
+          @input="autoResize"
           :disabled="agentStore.isSending"
         ></textarea>
         <button
@@ -161,7 +169,7 @@
         </button>
       </div>
 
-      <p class="text-[10px] text-text-secondary text-center mt-2">
+      <p class="text-[12px] text-text-secondary text-center mt-2">
         AI can make mistakes. Please verify important information.
       </p>
     </div>
@@ -203,6 +211,23 @@ const socketURL = import.meta.env.VITE_SOCKET_IO_URL;
 const isAiThinkingBubbleVisible = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
 const agentStore = useAgentStore();
+const autoTextarea = ref<HTMLTextAreaElement | null>(null)
+
+const autoResize = () => {
+  const el = autoTextarea.value
+  if (!el) return
+
+  el.style.height = "auto"
+
+  const maxHeight = 5 * 24 
+  el.style.height = Math.min(el.scrollHeight, maxHeight) + "px"
+
+  if (el.scrollHeight > maxHeight) {
+    el.style.overflowY = "auto"
+  } else {
+    el.style.overflowY = "hidden"
+  }
+}
 
 const contextTitle = computed(() => {
   const routeName = (route.name as string)?.toLowerCase() || "workspace";

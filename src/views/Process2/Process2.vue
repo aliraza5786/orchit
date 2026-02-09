@@ -92,7 +92,7 @@
 
         <div v-else class="bg-bg-body rounded-lg p-3 border border-border shadow-sm">
           <BaseTextField size="md" :autofocus="true" v-model="newColumn" placeholder="Group Name..." 
-            @keyup.enter="emitAddColumn" />
+            @keydown.enter.prevent="emitAddColumn" />
           <div class="flex items-center gap-2">
             <Button @click="emitAddColumn" variant="primary" size="sm" :loading="addingList" class="mt-4">
               Add Group
@@ -225,6 +225,7 @@ const { mutate: addList, isPending: addingList } = useCreateProcessGroup({
 });
 
 function emitAddColumn() {
+  if (addingList.value) return;
   const t = newColumn.value.trim();
   if (!t) return;
   addList({ 

@@ -1,11 +1,8 @@
 <template>
-    <BaseModal v-model="isOpen" size="sm">
-      <!-- Header -->
-      <div class="flex flex-col gap-1 px-6 pb-6 border-b border-border sticky top-0 bg-bg-body z-10">
-        <h2 class="text-lg font-semibold">Create Dropdown</h2>
-        <p class="text-sm text-text-secondary">Provide a title and add options for your dropdown.</p>
-      </div>
-  
+    <BaseModal v-model="isOpen" size="sm" title="Create Dropdown">
+      <!-- Header --> 
+      
+      <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Provide a title and add options for your dropdown.</p>
       <!-- Body -->
       <div class="px-6 py-4 flex flex-col gap-4">
         <!-- Dropdown Title -->

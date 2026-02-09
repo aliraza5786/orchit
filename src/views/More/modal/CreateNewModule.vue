@@ -1,13 +1,6 @@
 <template>
-    <BaseModal v-model="model" size="lg">
-        <!-- Header -->
-        <div class="flex justify-between items-start px-6 border-b border-border pb-4">
-            <h2 class="text-xl font-semibold">
-                <!-- {{ sheet?._id ? -->
-                Add New Module
-                <!-- //   : 'Add a new Sheet' }} -->
-            </h2>
-        </div>
+    <BaseModal v-model="model" size="lg" title=" Add New Module">
+       
 
         <!-- Tabs -->
         <!-- <div class="px-6 pt-4 border-b border-border flex gap-6 text-sm font-medium">

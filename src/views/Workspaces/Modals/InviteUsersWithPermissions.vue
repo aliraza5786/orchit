@@ -1,15 +1,9 @@
 <template>
-  <BaseModal v-model="isOpen" size="md" modalClass="!py-0">
-    <!-- Header -->
-    <div
-      class="sticky top-0 z-10 flex flex-col items-start pt-6 px-6 border-b border-border bg-bg-body pb-4 mb-4"
-    >
-      <h2 class="text-xl font-semibold">Invite Users</h2>
-      <p class="text-sm text-text-secondary mt-1">
+  <BaseModal v-model="isOpen" size="md" title="Invite Users" modalClass="!py-0">
+     
+    <p class="text-sm text-text-secondary p-6">
         Add emails, workspace role and pick role based permission.
-      </p>
-      <button  @click="cancel" class="absolute top-4 cursor-pointer right-4 text-text-secondary hover:text-text-primary text-xl z-10"><img data-v-4ef80912="" src="/src/assets/icons/cross.svg" alt=""></button>
-    </div>
+    </p>
 
     <!-- Body -->
     <div class="px-6 flex flex-col gap-4">

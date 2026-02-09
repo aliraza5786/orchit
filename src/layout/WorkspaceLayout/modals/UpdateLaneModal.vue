@@ -1,14 +1,8 @@
 <template>
-    <BaseModal v-model="workspaceStore.showUpdateLaneModal" modalClass="!py-0" size="lg">
+    <BaseModal v-model="workspaceStore.showUpdateLaneModal" modalClass="!py-0" title="Update Tab" size="lg">
        
 
-        <div>
-            <div
-                class="sticky flex-col top-0 backdrop-blur-3xl z-1 flex justify-between pt-6 items-start bg-light-black px-6 border-b border-border pb-4 mb-4">
-                <h2 class="text-xl font-semibold">Update Tab</h2>
-                <!-- <Stepper :steps="steps" :currentStep="currentStep" /> -->
-            </div>
-
+        <div class="pt-6"> 
             <!-- Step 1: Basics -->
             <div class="space-y-8 px-6">
                 <div class="space-y-2.5">

@@ -1,46 +1,92 @@
 <template>
   <div class="border border-border rounded-lg bg-bg-card">
-    <div class="border-b border-border p-6">
-      <h3 class="font-semibold text-lg text-primary dark:text-slate-50">Project Portfolio</h3>
-      <p class="text-text-secondary text-sm mt-1">Overview of all active projects in your workspace</p>
-    </div>
-    <div class="p-6 space-y-6">
-      <div class="flex justify-between flex-col items-center mb-4">
-        <!-- Pie Chart -->
-        <div class="flex-1 w-full max-w-full lg:max-w-xl h-64 sm:h-80 md:h-96">
-          <canvas ref="chartCanvas"></canvas>
-        </div>
-        <div class="flex gap-4 flex-wrap ml-4 mt-3">
-          <div v-for="item in chartData" :key="item.name" class="flex items-center justify-between">
-            <div class="flex items-center gap-1">
-              <div class="h-3 w-3 rounded-full" :style="{ backgroundColor: item.fill }"></div>
-              <span class="text-sm text-text-secondary ">{{ item.name }}</span>
-            </div>
-            <span class="font-semibold text-primary ms-2">{{ item.value }}</span>
+
+    <!-- ✅ FULL CARD LOADING STATE -->
+    <div v-if="isLoading" class="p-6 animate-pulse space-y-6">
+
+      <!-- Header Skeleton -->
+      <div class="space-y-2">
+        <div class="h-5 w-48 rounded bg-slate-200 dark:bg-slate-700"></div>
+        <div class="h-3 w-72 rounded bg-slate-200 dark:bg-slate-700"></div>
+      </div>
+
+      <!-- Chart Skeleton -->
+      <div class="flex flex-col items-center">
+        <div class="w-full max-w-xl h-64 sm:h-80 md:h-96 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+
+        <!-- Legend Skeleton -->
+        <div class="flex flex-wrap gap-4 mt-6 justify-center w-full">
+          <div v-for="n in 4" :key="n" class="flex items-center gap-2">
+            <div class="h-3 w-3 rounded-full bg-slate-300 dark:bg-slate-600"></div>
+            <div class="h-3 w-16 rounded bg-slate-300 dark:bg-slate-600"></div>
+            <div class="h-3 w-6 rounded bg-slate-300 dark:bg-slate-600"></div>
           </div>
         </div>
       </div>
+
     </div>
+
+    <!-- ✅ NORMAL CONTENT -->
+    <template v-else>
+
+      <!-- Header -->
+      <div class="border-b border-border p-6">
+        <h3 class="font-semibold text-lg text-primary dark:text-slate-50">
+          Project Portfolio
+        </h3>
+        <p class="text-text-secondary text-sm mt-1">
+          Overview of all active projects in your workspace
+        </p>
+      </div>
+
+      <div class="p-6 space-y-6">
+
+        <!-- Chart -->
+        <div v-if="chartData.length" class="flex flex-col items-center mb-4">
+          <div class="flex-1 w-full max-w-full lg:max-w-xl h-64 sm:h-80 md:h-96">
+            <canvas ref="chartCanvas"></canvas>
+          </div>
+
+          <div class="flex gap-4 flex-wrap ml-4 mt-3">
+            <div v-for="item in chartData" :key="item.name" class="flex items-center">
+              <div class="flex items-center gap-1">
+                <div class="h-3 w-3 rounded-full" :style="{ backgroundColor: item.fill }"></div>
+                <span class="text-sm text-text-secondary">{{ item.name }}</span>
+              </div>
+              <span class="font-semibold text-primary ms-2">{{ item.value }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="py-16 text-center text-text-secondary">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
+            <i class="fa-solid fa-chart-pie text-slate-400 dark:text-slate-500 text-2xl"></i>
+          </div>
+          <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-1">
+            No Project Data
+          </h3>
+          <p class="text-sm text-text-secondary">
+            You currently have no active projects to display.
+          </p>
+        </div>
+
+      </div>
+
+    </template>
+
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, watch, computed, nextTick } from 'vue'
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js'
-import type { ChartConfiguration } from 'chart.js'
-
-// Register Chart.js components
 Chart.register(DoughnutController, ArcElement, Tooltip, Legend)
-
-type PortfolioItem = {
-  name: string
-  value: any
-}
-
 const props = defineProps<{
-  data?: PortfolioItem[];
+  data?: Record<string, number>;
   isLoading?: boolean;
 }>();
+
 
 const chartCanvas = ref<HTMLCanvasElement | null>(null)
 let chartInstance: Chart | null = null
@@ -61,32 +107,32 @@ const defaultColors = [
   "#0ea5e9", // Sky Blue
   "#f87171", // Light Red
 ];
-
 const chartData = computed(() => {
-  if (!props.data) return [];
+  if (!props.data || !Object.keys(props.data).length) return [];
 
   return Object.entries(props.data).map(([name, value], index) => ({
     name,
-    value,
+    value: Number(value) || 0,
     fill: defaultColors[index % defaultColors.length],
   }));
 });
 
 const buildChart = () => {
   if (!chartCanvas.value) return;
+  if (!chartData.value.length) return;
 
   if (chartInstance) {
     chartInstance.destroy();
   }
 
-  const config: ChartConfiguration<'doughnut'> = {
+  chartInstance = new Chart(chartCanvas.value, {
     type: "doughnut",
     data: {
-      labels: chartData.value.map((i) => i.name),
+      labels: chartData.value.map(i => i.name),
       datasets: [
         {
-          data: chartData.value?.map((i) => i.value) as any, // Type assertion
-          backgroundColor: chartData.value.map((i) => i.fill),
+          data: chartData.value.map(i => i.value),
+          backgroundColor: chartData.value.map(i => i.fill),
           borderWidth: 0,
         },
       ],
@@ -97,29 +143,26 @@ const buildChart = () => {
       cutout: "80%",
       plugins: {
         legend: { display: false },
-        tooltip: {
-          enabled: true,
-          callbacks: {
-            label: (context) => `${context.label}: ${context.parsed}`,
-          },
-        },
       },
     },
-  };
-
-  chartInstance = new Chart(chartCanvas.value, config);
+  });
 };
+
 
 onMounted(() => {
   buildChart();
 });
+watch(chartData, async (val) => {
+  if (!val.length) {
+    if (chartInstance) {
+      chartInstance.destroy();
+      chartInstance = null;
+    }
+    return;
+  }
+  await nextTick();
 
-watch(
-  () => props.data,
-  () => {
-    buildChart(); // rebuild when parent updates
-  },
-  { deep: true }
-);
+  buildChart();
+});
 
 </script>

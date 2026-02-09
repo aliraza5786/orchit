@@ -1,13 +1,7 @@
 <template>
-  <BaseModal v-model="workspaceStore.showCreateLaneModal" modalClass="!py-0" size="lg">
-    <!-- Header -->
-    <div
-      class="sticky flex-col top-0 flex justify-between bg-bg-body/90 z-1 items-start pt-6 px-6 border-b border-border  pb-4 mb-4">
-      <h2 class="text-xl font-semibold">Create a New Tab</h2>
-    </div>
-
+  <BaseModal v-model="workspaceStore.showCreateLaneModal" title="Create a new Tab" modalClass="!py-0" size="lg"> 
     <!-- Step 1: Basics -->
-    <div class="space-y-8 px-6">
+    <div class="space-y-8 px-6 pt-6">
       <div class="space-y-2.5">
         <h3 class="text-2xl font-semibold text-text-primary ">Project Basics</h3>
         <p class="text-sm text-text-secondary  mt-1 ">
