@@ -19,6 +19,7 @@ interface WorkspaceState {
   limits:any
   pricing:boolean
   showChatBotPanel: boolean
+  selectedAgent:string
 }
 
 export const useWorkspaceStore = defineStore("workspace", {
@@ -39,7 +40,8 @@ export const useWorkspaceStore = defineStore("workspace", {
     transitions: {},
     limits:{},
     pricing:false,
-    showChatBotPanel: false
+    showChatBotPanel: false,
+    selectedAgent:""
   }),
   actions: {
     setPricing(p:boolean){
@@ -203,6 +205,10 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     getFeature(key: string) {
       return this.limits?.features?.find((f: any) => f.key === key);
+    },
+    saveAgentModule(key:string){
+      localStorage.setItem("selectedAgentModule",key)
+      this.selectedAgent=key;
     }
   },
 });

@@ -1,20 +1,21 @@
 <template>
   <div
-    :class="[
-      'max-w-[358px] flex-grow rounded-[6px] overflow-hidden relative transition-all flex flex-col',
-      'text-text-primary bg-bg-card',
-      workspaceStore.showChatBotPanel
-        ? 'translate-x-0 min-w-full sm:min-w-[380px] w-full h-full'
-        : 'translate-x-[200%] !max-w-0 h-0 hidden',
-    ]"
-  >
+  v-if="workspaceStore.showChatBotPanel"
+  :class="[
+    'flex flex-col max-h-screen max-w-full w-full overflow-hidden bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 transition-all duration-300 ease-in-out',
+    isExpanded
+      ? 'w-full min-w-[1200px]'
+      : 'w-full sm:w-[380px] max-w-[380px] min-w-[380px]'
+  ]"
+>
+
     <!-- Header -->
     <div
-      class="flex justify-between items-center border-b border-border px-5 py-4.5 sticky top-0 bg-bg-card z-10"
+      class="flex justify-between items-center border-b border-border px-5 py-4.5 sticky top-0 bg-bg-card z-30"
     >
       <h5 class="text-[16px] font-medium flex items-center gap-2">
         <i class="fa-solid fa-sparkles text-accent"></i>
-        Ask Ai
+        {{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0,20) + '...':moduleSelected }}
         <div class="flex items-center gap-2">
           <span
             class="w-2 h-2 rounded-full"
@@ -22,13 +23,25 @@
           ></span>
         </div>
       </h5>
-      <i
-        class="cursor-pointer text-text-primary fa-solid fa-close transition-colors"
-        @click="closeHandler"
-      ></i>
+      <div class="flex items-center gap-3 shrink-0">
+  <!-- Expand Toggle -->
+  <i
+    class="fa-solid cursor-pointer transition-colors"
+    :class="isExpanded ? 'fa-compress' : 'fa-expand'"
+    @click="isExpanded = !isExpanded"
+  ></i>
+<button class="cursor-pointer" label="Configure Ai" @click="showConfigModal = true">
+  <i class="fa-regular fa-ellipsis-vertical"></i>
+</button>
+  <!-- Close -->
+  <i
+    class="cursor-pointer text-text-primary fa-solid fa-close transition-colors"
+    @click="closeHandler"
+  ></i>
+</div>
     </div>
     <!-- Chat Area -->
-    <div ref="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+    <div ref="messagesContainer" class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
       <template v-if="orderedMessages.length || isAiThinkingBubbleVisible">
         <div
           v-for="msg in orderedMessages"
@@ -181,6 +194,110 @@
     :title="contextTitle"
     :data="entities"
   />
+  <div
+  v-if="showConfigModal"
+  class="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+>
+  <div
+    class="bg-bg-card w-[900px] max-w-[95vw] max-h-[90vh] overflow-y-auto rounded-lg border border-border shadow-xl"
+  >
+    <!-- Header -->
+    <div class="flex justify-between items-center px-6 py-4 border-b border-border">
+      <h3 class="text-lg font-semibold">Configure Agent</h3>
+      <i class="fa-solid fa-close cursor-pointer" @click="showConfigModal = false"></i>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 space-y-6">
+
+      <!-- Name -->
+      <div>
+        <label class="text-sm font-medium">Agent Name</label>
+        <input v-model="agentConfig.name"
+          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm"/>
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label class="text-sm font-medium">Description</label>
+        <textarea v-model="agentConfig.description"
+          rows="2"
+          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm"/>
+      </div>
+
+      <!-- Instructions (System Prompt) -->
+      <div>
+        <label class="text-sm font-medium">Instructions</label>
+        <textarea v-model="agentConfig.instructions"
+          rows="4"
+          placeholder="How should the AI behave?"
+          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm"/>
+      </div>
+
+      <!-- Tone -->
+      <div>
+        <label class="text-sm font-medium">Tone</label>
+        <select v-model="agentConfig.tone"
+          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm">
+          <option value="professional">Professional</option>
+          <option value="friendly">Friendly</option>
+          <option value="balanced">Balanced</option>
+          <option value="technical">Technical</option>
+        </select>
+      </div>
+
+      <!-- Response Style -->
+      <div>
+        <label class="text-sm font-medium">Response Style</label>
+        <select v-model="agentConfig.responseStyle"
+          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm">
+          <option value="concise">Concise</option>
+          <option value="detailed">Detailed</option>
+          <option value="step-by-step">Step by Step</option>
+        </select>
+      </div>
+
+      <!-- Creativity -->
+      <div>
+        <label class="text-sm font-medium">Creativity (Temperature)</label>
+        <input type="range" min="0" max="1" step="0.1"
+          v-model="agentConfig.temperature"
+          class="w-full mt-2"/>
+        <p class="text-xs text-text-secondary">{{ agentConfig.temperature }}</p>
+      </div>
+
+      <!-- Permissions -->
+      <div class="space-y-2">
+        <label class="text-sm font-medium">Capabilities</label>
+
+        <label class="flex items-center gap-2">
+          <input type="checkbox" v-model="agentConfig.allowWorkspaceData"/>
+          Access Workspace Data
+        </label>
+
+        <label class="flex items-center gap-2">
+          <input type="checkbox" v-model="agentConfig.allowWeb"/>
+          Web Browsing
+        </label>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="flex justify-end gap-3 px-6 py-4 border-t border-border">
+      <button class="px-4 py-2 border border-border rounded"
+        @click="showConfigModal = false">
+        Cancel
+      </button>
+
+      <button class="px-4 py-2 bg-accent text-white rounded"
+        @click="saveConfig">
+        Save Configuration
+      </button>
+    </div>
+  </div>
+</div>
+
 </template>
 
 <script setup lang="ts">
@@ -191,6 +308,7 @@ import {
   onBeforeUnmount,
   nextTick,
   onMounted,
+  reactive,
 } from "vue";
 import { useRoute } from "vue-router";
 import { io, Socket } from "socket.io-client";
@@ -201,6 +319,7 @@ import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
 import { toast } from "vue-sonner";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 const workspaceStore = useWorkspaceStore();
+const isExpanded = ref(false)
 const route = useRoute();
 const showAIPreview = ref(false);
 const userMessage = ref("");
@@ -212,6 +331,21 @@ const { workspaceId, moduleId } = useRouteIds();
 const agentStore = useAgentStore();
 const autoTextarea = ref<HTMLTextAreaElement | null>(null)
 const { refetch:refetchModules} = useSingleWorkspace(workspaceId.value)
+const showConfigModal = ref(false)
+const moduleSelected = computed(() =>{
+  return workspaceStore.selectedAgent
+})
+const agentConfig = reactive({
+  name: '',
+  description: '',
+  instructions: '',
+  tone: 'balanced',
+  responseStyle: 'concise',
+  temperature: 0.7,
+  allowWeb: false,
+  allowWorkspaceData: true,
+})
+
 const autoResize = () => {
   const el = autoTextarea.value
   if (!el) return
@@ -431,6 +565,10 @@ onBeforeUnmount(() => {
   socket.value?.removeAllListeners();
   socket.value?.disconnect();
 });
+function saveConfig() {
+  console.log('Agent Config:', agentConfig)
+  showConfigModal.value = false
+}
 
 </script>
 
