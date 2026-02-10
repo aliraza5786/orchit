@@ -260,20 +260,31 @@ input:-webkit-autofill:active {
   color: rgb(48, 41, 246);
   text-decoration: underline;
 }
-
-/* For Chrome, Safari, Edge (Chromium-based), and Opera */
-*::-webkit-scrollbar {
+/* Hide scrollbars everywhere EXCEPT home page */
+body:not(.home-page) *::-webkit-scrollbar {
   display: none;
 }
 
-/* For Internet Explorer and older Edge */
-* {
+body:not(.home-page) * {
   -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.home-page *::-webkit-scrollbar {
+  width: 8px;
 }
 
-/* For Firefox */
-* {
-  scrollbar-width: none;
+.home-page *::-webkit-scrollbar-track {
+  background: #f0f0f0;
+}
+
+.home-page *::-webkit-scrollbar-thumb {
+  background-color: #7D68C8;
+  border-radius: 4px;
+}
+
+.home-page * {
+  scrollbar-width: auto;
+  scrollbar-color: #7D68C8 #f0f0f0;
 }
 
 /* puls */

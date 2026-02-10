@@ -174,7 +174,6 @@
       </p>
     </div>
   </div>
-
   <ChatBotPreviewModal
     v-model="showAIPreview"
     @accept="acceptChanges"
@@ -200,7 +199,7 @@ import { useRouteIds } from "../../../composables/useQueryParams";
 import { useAgentStore } from "../../../stores/agentStore";
 import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
 import { toast } from "vue-sonner";
-
+import { useSingleWorkspace } from "../../../queries/useWorkspace";
 const workspaceStore = useWorkspaceStore();
 const route = useRoute();
 const showAIPreview = ref(false);
@@ -212,7 +211,7 @@ const isAiThinkingBubbleVisible = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
 const agentStore = useAgentStore();
 const autoTextarea = ref<HTMLTextAreaElement | null>(null)
-
+const { refetch:refetchModules} = useSingleWorkspace(workspaceId.value)
 const autoResize = () => {
   const el = autoTextarea.value
   if (!el) return
@@ -370,9 +369,10 @@ async function sendMessage() {
     agentStore.isSending = false;
   }
 }
-async function acceptChanges(payload:any){
+async function acceptChanges(payload: any) {
   await agentStore.acceptEntities(payload);
-  showAIPreview.value =false;
+  showAIPreview.value = false;
+  refetchModules();
 }
 async function declineAgentGeneratedEntities(){
   await agentStore.declineSuggestedEntities(workspaceId.value);

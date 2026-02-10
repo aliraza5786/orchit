@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="min-h-screen bg-[var(--background)] text-[var(--text)] transition-colors duration-300"
-  >
+  <div class="home-page min-h-screen bg-[var(--background)] text-[var(--text)] transition-colors duration-300">
   <!-- <Header :isDark="isDark" :toggleTheme="toggleTheme"  /> -->
     <!-- Hero Section - Fade in on load -->
     <div class="animate-on-load" >
@@ -177,7 +175,27 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* Initial page load animation */
+/* Show scrollbar inside home page only */
+.home-page *::-webkit-scrollbar {
+  display: block;
+  width: 8px; /* adjust thickness */
+}
+
+.home-page *::-webkit-scrollbar-track {
+  background: #f0f0f0; /* track color */
+}
+
+.home-page *::-webkit-scrollbar-thumb {
+  background-color: #7D68C8; /* thumb color */
+  border-radius: 4px;
+}
+
+/* Firefox */
+.home-page * {
+  scrollbar-width: auto;
+  scrollbar-color: #7D68C8 #f0f0f0;
+}
+
 .animate-on-load {
   opacity: 0;
   transform: translateY(30px);

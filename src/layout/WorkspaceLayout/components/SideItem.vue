@@ -36,6 +36,7 @@
     class="flex items-center justify-between w-full gap-2"
   >
     <span
+    v-if="label"
       class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
       :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
     >

@@ -1,10 +1,10 @@
 <template>
   <div
-    class="flex-auto rounded-[6px] flex-grow h-full bg-bg-card overflow-x-auto flex-col flex scrollbar-visible"
+    class="flex-auto rounded-[6px] flex-grow h-full bg-bg-card overflow-x-auto flex-col flex px-4"
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
       <div
-        class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
+        class="header py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
       >
         <Dropdown
           @edit-option="openEditSprintModal"
@@ -169,9 +169,10 @@
       <KanbanSkeleton v-show="isPending || isSheetPending" />
       <div
         v-show="!isPending && !isSheetPending"
-        class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
+        class="flex overflow-x-auto gap-3 scrollbar-visible h-full"
       >
-        <KanbanBoard
+      <div class="mt-3 flex gap-3">
+         <KanbanBoard
           @onPlus="plusHandler"
           :board="filteredBoard"
           @delete:column="(e: any) => deleteHandler(e)"
@@ -240,6 +241,7 @@
             + Add List
           </button>
         </div>
+      </div>
       </div>
     </template>
     <template v-if="view == 'table'">

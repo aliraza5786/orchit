@@ -80,12 +80,12 @@
       <SideItem
         v-for="(item, index) in filteredModules"
         :key="index"
-        :id="item._id"
+        :id="item?._id"
         :label="item.variables['module-title']"
         :jobId="item?.generation_task?.job_id"
         :status="item?.generation_task?.status"
         :to="`/${
-          item?.variables['module-title'].toLowerCase() == 'pin'
+          item?.variables['module-title']?.toLowerCase() == 'pin'
             ? 'workspace/pin'
             : 'workspace'
         }/${workspaceId}/${item._id}`"
