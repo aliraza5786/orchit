@@ -160,7 +160,7 @@ watch(props, () => {
 function validateManual() {
     const next: any = {}
     if (!form.value.title.trim()) next.title = 'Please enter a sheet name.'
-    if (!form.value.description.trim()) next.description = 'Please enter a description.'
+    if (!form.value.description?.trim()) next.description = 'Please enter a description.'
     errors.value = next
     return Object.keys(next).length === 0
 }
@@ -169,6 +169,7 @@ const { mutate: createSheet, isPending: creatingSheet } = useCreateWorkspaceShee
     onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['sheets'] })
         queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+        // Reset the form
         close()
     }
 })
@@ -243,22 +244,18 @@ const isPending = ref(false)
 // }
 
 const { mutate: generateAI, isPending: isAiPending } = useCreateWorkspaceSheetAI({
-    onSuccess: () => {
-        // const result: any = extractJSONFromResponse(data) ?? {}
-        // createSheet({
-        //     icon: result?.icon ?? '',
-        //     variables: {
-        //         'sheet-title': result?.title ?? '',
-        //         'sheet-description': result?.description ?? ''
-        //     },
-        //     is_ai_generated: true,
-        //     workspace_id: workspaceId.value,
-        //     workspace_module_id: moduleId.value,
-        // })
+    onSuccess: () => { 
         queryClient.invalidateQueries({ queryKey: ['sheets'] })
         queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+        
+        // Clear AI description
+        description.value = ''
+        audioURL.value = null
+        isRecording.value = false
+        
         close();
         isPending.value = false
+
     },
     onError: () => { isPending.value = false }
 })
