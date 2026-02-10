@@ -15,6 +15,7 @@
           :options="transformedData"
           variant="secondary"
           customClasses="fixed w-auto"
+          ref="sheetDropdownRef"
         >
           <template #more>
             <div
@@ -30,6 +31,7 @@
         <div class="flex gap-3 items-center">
           <Dropdown
             v-if="view == 'kanban' || 'mindmap'"
+            ref="variableDropdownRef"
             :actions="false"
             v-model="selected_view_by"
             :options="variables"
@@ -43,6 +45,7 @@
                 @click="
                   () => {
                     isCreateVar = true;
+                    variableDropdownRef?.closeDropdown();
                   }
                 "
                 class="sticky bottom-0 bg-bg-dropdown shadow-md shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
@@ -680,6 +683,8 @@ const view = ref("kanban");
 const mindMapRef = ref<HTMLElement | null>(null);
 const mindMapInstance = ref<any>(null);
 const isCreateVar = ref(false);
+const variableDropdownRef = ref<any>(null);
+const sheetDropdownRef = ref<any>(null);
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
 const queryClient = useQueryClient();
@@ -918,6 +923,7 @@ const closeSidePanel = () => {
 
 const isCreateSheetModal = ref(false);
 const createSheet = () => {
+  sheetDropdownRef.value?.closeDropdown();
   selectedSheettoAction.value = {};
   isCreateSheetModal.value = !isCreateSheetModal.value;
 };
@@ -1036,6 +1042,7 @@ const plusHandler = (e: any) => {
 
 const selectedSheettoAction = ref<any>();
 function handleDeleteSheetModal(opt: any) {
+  sheetDropdownRef.value?.closeDropdown();
   showDeleteModal.value = true;
   selectedSheettoAction.value = opt;
 }
@@ -1053,6 +1060,7 @@ function handleDeleteSheet() {
   });
 }
 function openEditSprintModal(opt: any) {
+  sheetDropdownRef.value?.closeDropdown();
   isCreateSheetModal.value = true;
   selectedSheettoAction.value = opt;
 }

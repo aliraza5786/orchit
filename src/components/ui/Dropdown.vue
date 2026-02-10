@@ -419,6 +419,10 @@ watch(
   () => {},
   { deep: true }
 );
+
+defineExpose({
+  closeDropdown
+});
 </script>
 
 <style scoped>
