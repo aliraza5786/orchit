@@ -1,15 +1,14 @@
 <template>
   <transition name="fade">
-  <div
-    v-if="modelValue"
-    class="fixed inset-0 z-[9999] flex items-center justify-center px-4"
-  >
+    <div
+      v-if="modelValue"
+      class="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+    >
       <!-- Backdrop -->
       <div
         class="absolute inset-0 bg-black/30 backdrop-blur-sm cursor-pointer"
         @click="emit('update:modelValue', false)"
       />
-      
 
       <!-- Modal -->
       <div
@@ -20,7 +19,7 @@
           class="px-5 py-4 border-b border-border flex justify-between items-center"
         >
           <h3 class="text-sm font-semibold text-text-primary">
-            AI Suggested Changes
+            {{ isReadAction ? 'Fetched Cards' : 'AI Suggested Changes' }}
           </h3>
 
           <button
@@ -33,138 +32,210 @@
 
         <!-- Content -->
         <div class="p-5 space-y-4 overflow-y-auto max-h-[70vh] overflow-x-auto custom_scroll_bar">
-          <p class="text-sm text-text-secondary">
-            The AI suggests the following changes. Please review before applying.
-          </p>
+          <!-- Read Action - Display fetched cards -->
+          <template v-if="isReadAction">
+            <p class="text-sm text-text-secondary">
+              Found {{ fetchedItems.length }} card(s) matching your query.
+            </p>
 
-          <!-- Select All -->
-          <Checkbox
-            :checked="selectAll"
-            label="Select All"
-            @change="toggleSelectAll"
-          />
-             <div class="space-y-4 mt-4" v-if="sheetsPreview?.length">
-             
-  <div
-    v-for="sheet in sheetsPreview"
-    :key="sheet.variables['sheet-title']"
-    class="bg-bg-card border border-border rounded-lg p-4"
-  >
-    <!-- Sheet Header -->
-    <div
-      class="flex items-start gap-3 cursor-pointer"
-      @click="toggleItem(sheet.variables['sheet-title'])"
-      :class="{
-        'ring-2 ring-accent rounded-md p-3':
-          selectedItems.includes(sheet.variables['sheet-title'])
-      }"
-    >
-      <!-- Icon -->
-      <div
-        class="w-10 h-10 flex items-center justify-center rounded-md bg-bg-body border border-border"
-      >
-        <i
-          :class="[
-            sheet.variables['sheet-icon'].prefix,
-            sheet.variables['sheet-icon'].iconName,
-            'text-accent'
-          ]"
-        />
-      </div>
+            <Checkbox
+              :checked="selectAllRead"
+              label="Select All Cards"
+              @change="toggleSelectAllRead"
+            />
 
-      <div class="flex-1">
-        <h4 class="text-sm font-semibold text-text-primary">
-          {{ sheet.variables['sheet-title'] }}
-        </h4>
-        <p class="text-xs text-text-secondary mt-1">
-          {{ sheet.variables['sheet-description'] }}
-        </p>
-      </div>
+            <div class="space-y-3 mt-4">
+              <div
+                v-for="card in fetchedItems"
+                :key="card.id || card._id"
+                class="bg-bg-body border border-border rounded-md p-4 cursor-pointer"
+                :class="{
+                  'ring-2 ring-accent': selectedReadCards.includes(card.id || card._id)
+                }"
+                @click="toggleReadCard(card.id || card._id)"
+              >
+                <div class="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    class="mt-1"
+                    :checked="selectedReadCards.includes(card.id || card._id)"
+                    @change.stop="toggleReadCard(card.id || card._id)"
+                  />
 
-      <input
-        type="checkbox"
-        :checked="selectedItems.includes(sheet.variables['sheet-title'])"
-        @change.stop="toggleItem(sheet.variables['sheet-title'])"
-      />
-    </div>
+                  <div class="flex-1 space-y-2">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <span
+                        class="inline-block text-xs px-2 py-1 rounded bg-bg-card border border-border"
+                      >
+                        {{ card['card-code'] || 'N/A' }}
+                      </span>
+                      <span
+                        v-if="card['card-status']"
+                        class="inline-block text-xs px-2 py-1 rounded bg-accent/10 text-accent border border-accent/20"
+                      >
+                        {{ card['card-status'] }}
+                      </span>
+                      <span
+                        v-if="card.priority || card['card-priority']"
+                        class="inline-block text-xs px-2 py-1 rounded bg-orange-500/10 text-orange-500 border border-orange-500/20"
+                      >
+                        {{ card.priority || card['card-priority'] }}
+                      </span>
+                    </div>
 
-    <!-- Cards Preview -->
-    <div
-      v-if="groupedCards[sheet.variables['sheet-title']]?.length"
-      class="mt-4"
-    >
-      <p class="text-xs font-semibold text-text-secondary">
-        Cards to be created
-      </p>
-      <div class="flex flex-wrap gap-3">
-  <div
-  v-for="card in groupedCards[sheet.variables['sheet-title']]"
-  :key="card.variables['card-code']"
-  class="
-    bg-bg-body border border-border rounded-md p-3 text-sm
-    w-full mt-3
-    sm:w-[48%]
-    lg:w-[32%]
-  "
-  :class="{
-        'ring-2 ring-accent rounded-md p-3':
-          selectedCards?.includes(card.variables['card-code'])
-      }"
->
-  <div class="flex justify-between items-start cursor-pointer gap-3" @click="toggleCard(card.variables['card-code'])"
-  >
-    <!-- Card checkbox -->
-    <input
-      type="checkbox"
-      class="mt-1"
-      :checked="selectedCards?.includes(card.variables['card-code'])"
-      @change.stop="toggleCard(card.variables['card-code'])"
-    />
+                    <p class="font-medium text-text-primary">
+                      {{ card['card-title'] || card.title }}
+                    </p>
 
-    <div class="space-y-2 flex-1">
-      <span
-        class="inline-block text-xs px-2 py-1 rounded bg-bg-card border border-border"
-      >
-        {{ card.variables['card-status'] }}
-      </span>
+                    <div
+                      v-if="card['card-description']"
+                      class="text-xs text-text-secondary"
+                      v-html="card['card-description']"
+                    />
 
-      <p class="font-medium text-text-primary">
-        {{ card.variables['card-title'] }}
-      </p>
+                    <div v-if="card['start-date'] || card['end-date']" class="flex gap-3 text-xs text-text-secondary">
+                      <span v-if="card['start-date']">
+                        <i class="fa-solid fa-calendar-start mr-1"></i>
+                        {{ card['start-date'] }}
+                      </span>
+                      <span v-if="card['end-date']">
+                        <i class="fa-solid fa-calendar-end mr-1"></i>
+                        {{ card['end-date'] }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-      <p class="text-xs text-text-secondary">
-        {{ card.variables['card-description'] }}
-      </p>
-    </div>
-  </div>
-</div>
+              <div v-if="!fetchedItems.length" class="text-center py-8 text-text-secondary">
+                No cards found
+              </div>
+            </div>
+          </template>
 
-</div>
+          <!-- Create Action - Display sheets and cards to create -->
+          <template v-else>
+            <p class="text-sm text-text-secondary">
+              The AI suggests the following changes. Please review before applying.
+            </p>
 
-      
-    </div>
-  </div>
-</div>      
+            <Checkbox
+              :checked="selectAll"
+              label="Select All"
+              @change="toggleSelectAll"
+            />
+
+            <div class="space-y-4 mt-4" v-if="sheetsPreview?.length">
+              <div
+                v-for="sheet in sheetsPreview"
+                :key="sheet.variables['sheet-title']"
+                class="bg-bg-card border border-border rounded-lg p-4"
+              >
+                <!-- Sheet Header -->
+                <div
+                  class="flex items-start gap-3 cursor-pointer"
+                  @click="toggleItem(sheet.variables['sheet-title'])"
+                  :class="{
+                    'ring-2 ring-accent rounded-md p-3':
+                      selectedItems.includes(sheet.variables['sheet-title'])
+                  }"
+                >
+                  <div
+                    class="w-10 h-10 flex items-center justify-center rounded-md bg-bg-body border border-border"
+                  >
+                    <i
+                      :class="[
+                        sheet.variables['sheet-icon']?.prefix,
+                        sheet.variables['sheet-icon']?.iconName,
+                        'text-accent'
+                      ]"
+                    />
+                  </div>
+
+                  <div class="flex-1">
+                    <h4 class="text-sm font-semibold text-text-primary">
+                      {{ sheet.variables['sheet-title'] }}
+                    </h4>
+                    <p class="text-xs text-text-secondary mt-1">
+                      {{ sheet.variables['sheet-description'] }}
+                    </p>
+                  </div>
+
+                  <input
+                    type="checkbox"
+                    :checked="selectedItems.includes(sheet.variables['sheet-title'])"
+                    @change.stop="toggleItem(sheet.variables['sheet-title'])"
+                  />
+                </div>
+
+                <!-- Cards Preview -->
+                <div
+                  v-if="groupedCards[sheet.variables['sheet-title']]?.length"
+                  class="mt-4"
+                >
+                  <p class="text-xs font-semibold text-text-secondary">
+                    Cards to be created
+                  </p>
+                  <div class="flex flex-wrap gap-3">
+                    <div
+                      v-for="card in groupedCards[sheet.variables['sheet-title']]"
+                      :key="card.variables['card-code']"
+                      class="bg-bg-body border border-border rounded-md p-3 text-sm w-full mt-3 sm:w-[48%] lg:w-[32%]"
+                      :class="{
+                        'ring-2 ring-accent rounded-md p-3':
+                          selectedCards?.includes(card.variables['card-code'])
+                      }"
+                    >
+                      <div
+                        class="flex justify-between items-start cursor-pointer gap-3"
+                        @click="toggleCard(card.variables['card-code'])"
+                      >
+                        <input
+                          type="checkbox"
+                          class="mt-1"
+                          :checked="selectedCards?.includes(card.variables['card-code'])"
+                          @change.stop="toggleCard(card.variables['card-code'])"
+                        />
+
+                        <div class="space-y-2 flex-1">
+                          <span
+                            class="inline-block text-xs px-2 py-1 rounded bg-bg-card border border-border"
+                          >
+                            {{ card.variables['card-status'] }}
+                          </span>
+
+                          <p class="font-medium text-text-primary">
+                            {{ card.variables['card-title'] }}
+                          </p>
+
+                          <p class="text-xs text-text-secondary">
+                            {{ card.variables['card-description'] }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
         </div>
+
         <!-- Footer -->
-        <div
-          class="px-5 py-4 border-t border-border flex justify-end gap-3"
-        >
+        <div class="px-5 py-4 border-t border-border flex justify-end gap-3" v-if="!isReadAction">
           <button
             class="px-4 py-2 text-sm rounded-md border border-border text-text-primary hover:bg-bg-body"
             @click="emit('decline')"
           >
-            Decline
+            {{ isReadAction ? 'Cancel' : 'Decline' }}
           </button>
           <button
             class="px-4 py-2 text-sm rounded-md bg-accent text-white hover:bg-accent-hover disabled:opacity-50"
-            :disabled="!selectedItems.length && !selectedCards.length"
+            :disabled="isReadAction ? !selectedReadCards.length : (!selectedItems.length && !selectedCards.length)"
             @click="acceptChanges"
           >
-            Accept Changes
+            {{ isReadAction ? 'Add Selected Cards' : 'Accept Changes' }}
           </button>
-
-
         </div>
       </div>
     </div>
@@ -174,32 +245,63 @@
 <script setup>
 import { ref, computed } from 'vue'
 import Checkbox from '@/components/ui/Checkbox.vue'
+
 const props = defineProps({
   modelValue: Boolean,
   title: String,
   data: Array
 })
 
-const emit = defineEmits([
-  'update:modelValue',
-  'accept',
-  'decline'
-])
+const emit = defineEmits(['update:modelValue', 'accept', 'decline'])
 
+// Determine if this is a read action
+const isReadAction = computed(() => {
+  return props?.data?.[0]?.action === 'read'
+})
+
+// For READ actions
+const fetchedItems = computed(() => {
+  if (!isReadAction.value) return []
+  return props?.data?.[0]?.result?.items || []
+})
+
+const selectedReadCards = ref([])
+
+const selectAllRead = computed(() => {
+  return fetchedItems.value.length > 0 && 
+         selectedReadCards.value.length === fetchedItems.value.length
+})
+
+const toggleSelectAllRead = () => {
+  if (selectAllRead.value) {
+    selectedReadCards.value = []
+  } else {
+    selectedReadCards.value = fetchedItems.value.map(c => c.id || c._id)
+  }
+}
+
+const toggleReadCard = (id) => {
+  if (selectedReadCards.value.includes(id)) {
+    selectedReadCards.value = selectedReadCards.value.filter(c => c !== id)
+  } else {
+    selectedReadCards.value.push(id)
+  }
+}
+
+// For CREATE actions
 const sheetsPreview = computed(() => {
+  if (isReadAction.value) return []
   return props?.data?.[0]?.payload?.sheets_preview || []
 })
 
-const moduleId = computed(() => props?.data?.[0]?.result?.module?.variables?.module_id || null)
-const cards = computed(() => props?.data?.[0]?.payload?.cards || [])
+const cards = computed(() => {
+  if (isReadAction.value) return []
+  return props?.data?.[0]?.payload?.cards || []
+})
 
 const selectedItems = ref([])
 const selectedCards = ref([])
 
-/**
- * Map cards to sheets using sheet title as key
- * For now, backend doesn't provide mapping, so assume first N/2 cards belong to first sheet etc.
- */
 const groupedCards = computed(() => {
   if (!cards.value.length) return {}
 
@@ -215,14 +317,10 @@ const groupedCards = computed(() => {
   return result
 })
 
-// helper to get card codes for a sheet
 const getSheetCards = (sheetTitle) => {
   return groupedCards.value?.[sheetTitle]?.map(c => c.variables['card-code']) || []
 }
 
-/**
- * Select All Sheets + Cards
- */
 const selectAll = computed(() => {
   const allSheetsSelected = selectedItems.value.length === sheetsPreview.value.length
   const allCardsSelected = selectedCards.value.length === cards.value.length
@@ -241,9 +339,6 @@ const toggleSelectAll = () => {
   }
 }
 
-/**
- * Toggle Sheet selection
- */
 const toggleItem = (sheetTitle) => {
   const sheetCards = getSheetCards(sheetTitle)
   if (selectedItems.value.includes(sheetTitle)) {
@@ -257,9 +352,6 @@ const toggleItem = (sheetTitle) => {
   }
 }
 
-/**
- * Toggle individual Card
- */
 const toggleCard = (code) => {
   if (selectedCards.value.includes(code)) {
     selectedCards.value = selectedCards.value.filter(c => c !== code)
@@ -267,127 +359,96 @@ const toggleCard = (code) => {
     selectedCards.value.push(code)
   }
 }
+
 const acceptChanges = () => {
-  const workspace_id = props.data?.[0]?.workspace_id || null
-
-  // Module
-  const module = {
-    _id: props.data?.[0]?.result?.module?._id || null,
-    variables: {
-      'module-title':
-        props.data?.[0]?.result?.module?.variables?.['module-title'] || '',
-      'module-description':
-        props.data?.[0]?.result?.module?.variables?.['module-description'] || ''
-    },
-    is_ai_generated: true
-  }
-
-  // Sheets
-  const sheets = selectedItems.value
-    .map(sheetTitle => {
-      const sheetObj = sheetsPreview.value.find(
-        s => s.variables['sheet-title'] === sheetTitle
-      )
-      if (!sheetObj) return null
-
-      // Get card codes for this sheet
-      const sheetCardCodes = getSheetCards(sheetTitle)
-
-      // Pull FULL CARD DATA from source cards
-      const selectedCardsForSheet = cards.value
-        .filter(
-          c =>
-            sheetCardCodes.includes(c.variables['card-code']) &&
-            selectedCards.value.includes(c.variables['card-code'])
-        )
-        .map(card => {
-  const originalCard = props.data?.[0]?.payload?.cards?.find(
-    c => c.variables['card-code'] === card.variables['card-code']
-  )
-
-  return {
-    _id: originalCard?._id || null,
-    variables: {
-      'card-title': card.variables['card-title'],
-      'card-status': card.variables['card-status'], // ✅ keep static status
-      'card-priority': card.variables['priority']
-    },
-    seat_id: originalCard?.variables?.seat_id
-      ? [originalCard.variables.seat_id]
-      : [],
-    assigned_to: [],
-    workspace_lane_id:
-      originalCard?.variables?.workspace_lane_id || null
-  }
-})
-
-      if (!selectedCardsForSheet.length) return null
-
-      return {
-        _id: sheetObj._id || null,
-        variables: {
-          'sheet-title': sheetObj.variables['sheet-title'],
-          'sheet-description': sheetObj.variables['sheet-description'],
-          'sheet-icon': sheetObj.variables['sheet-icon']
-        },
-        cards: selectedCardsForSheet
-      }
+  if (isReadAction.value) {
+    // Handle READ action - emit selected cards WITH workspace_id
+    const workspace_id = props.data?.[0]?.workspace_id || null
+    const selected = fetchedItems.value.filter(card => 
+      selectedReadCards.value.includes(card.id || card._id)
+    )
+    emit('accept', { 
+      action: 'read', 
+      workspace_id,
+      cards: selected 
     })
-    .filter(Boolean)
+  } else {
+    // Handle CREATE action - existing logic
+    const workspace_id = props.data?.[0]?.workspace_id || null
 
-  const payload = {
-    workspace_id,
-    module,
-    sheets
+    const module = {
+      _id: props.data?.[0]?.result?.module?._id || null,
+      variables: {
+        'module-title':
+          props.data?.[0]?.result?.module?.variables?.['module-title'] || '',
+        'module-description':
+          props.data?.[0]?.result?.module?.variables?.['module-description'] || ''
+      },
+      is_ai_generated: true
+    }
+
+    const sheets = selectedItems.value
+      .map(sheetTitle => {
+        const sheetObj = sheetsPreview.value.find(
+          s => s.variables['sheet-title'] === sheetTitle
+        )
+        if (!sheetObj) return null
+
+        const sheetCardCodes = getSheetCards(sheetTitle)
+        const selectedCardsForSheet = cards.value
+          .filter(
+            c =>
+              sheetCardCodes.includes(c.variables['card-code']) &&
+              selectedCards.value.includes(c.variables['card-code'])
+          )
+          .map(card => {
+            const originalCard = props.data?.[0]?.payload?.cards?.find(
+              c => c.variables['card-code'] === card.variables['card-code']
+            )
+            console.log("card id", card.variables);
+            
+            return {
+              _id: originalCard?._id || null,
+              variables: {
+                '_id':card.variables['_id'],
+                'card-title': card.variables['card-title'],
+                'card-status': card.variables['card-status'],
+                'card-priority': card.variables['priority']
+              },
+              seat_id: originalCard?.variables?.seat_id
+                ? [originalCard.variables.seat_id]
+                : [],
+              assigned_to: [],
+              workspace_lane_id:
+                originalCard?.variables?.workspace_lane_id || null
+            }
+          })
+
+        if (!selectedCardsForSheet.length) return null
+
+        return {
+          _id: sheetObj._id || null,
+          variables: {
+            'sheet-title': sheetObj.variables['sheet-title'],
+            'sheet-description': sheetObj.variables['sheet-description'],
+            'sheet-icon': sheetObj.variables['sheet-icon']
+          },
+          cards: selectedCardsForSheet
+        }
+      })
+      .filter(Boolean)
+
+    const payload = {
+      workspace_id,
+      module,
+      sheets
+    }
+    emit('accept', payload)
   }
-  emit('accept', payload)
-  
 }
-
 </script>
+
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
-}
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-/* Modal animation */
-.modal-enter-active {
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-}
-
-.modal-leave-active {
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-.modal-enter-from {
-  opacity: 0;
-  transform: scale(0.95) translateY(8px);
-}
-
-.modal-enter-to {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-}
-
-.modal-leave-from {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-}
-
-.modal-leave-to {
-  opacity: 0;
-  transform: scale(0.95) translateY(8px);
-}
-
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
@@ -415,7 +476,6 @@ const acceptChanges = () => {
   background: transparent;
 }
 
-/* Firefox support */
 .custom_scroll_bar {
   scrollbar-width: thin;
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;

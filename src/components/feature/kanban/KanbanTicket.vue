@@ -12,7 +12,7 @@
 
                 </span>
                 <span v-if="ticket['card-status'] && selectedVarSlug[0]?.slug != 'card-status'"
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium">
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize">
                     {{ ticket['card-status'] }}
                 </span>
             </div>

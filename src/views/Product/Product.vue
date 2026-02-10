@@ -1,10 +1,10 @@
 <template>
   <div
-    class="flex-auto rounded-[6px] flex-grow h-full bg-bg-card overflow-x-auto flex-col flex scrollbar-visible"
+    class="flex-auto rounded-[6px] flex-grow h-full bg-bg-card overflow-x-auto flex-col flex px-4"
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
       <div
-        class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
+        class="header py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
       >
         <Dropdown
           @edit-option="openEditSprintModal"
@@ -15,6 +15,7 @@
           :options="transformedData"
           variant="secondary"
           customClasses="fixed w-auto"
+          ref="sheetDropdownRef"
         >
           <template #more>
             <div
@@ -30,6 +31,7 @@
         <div class="flex gap-3 items-center">
           <Dropdown
             v-if="view == 'kanban' || 'mindmap'"
+            ref="variableDropdownRef"
             :actions="false"
             v-model="selected_view_by"
             :options="variables"
@@ -43,6 +45,7 @@
                 @click="
                   () => {
                     isCreateVar = true;
+                    variableDropdownRef?.closeDropdown();
                   }
                 "
                 class="sticky bottom-0 bg-bg-dropdown shadow-md shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
@@ -169,9 +172,10 @@
       <KanbanSkeleton v-show="isPending || isSheetPending" />
       <div
         v-show="!isPending && !isSheetPending"
-        class="flex overflow-x-auto gap-3 p-4 scrollbar-visible h-full"
+        class="flex overflow-x-auto gap-3 scrollbar-visible h-full"
       >
-        <KanbanBoard
+      <div class="mt-3 flex gap-3">
+         <KanbanBoard
           @onPlus="plusHandler"
           :board="filteredBoard"
           @delete:column="(e: any) => deleteHandler(e)"
@@ -240,6 +244,7 @@
             + Add List
           </button>
         </div>
+      </div>
       </div>
     </template>
     <template v-if="view == 'table'">
@@ -680,6 +685,8 @@ const view = ref("kanban");
 const mindMapRef = ref<HTMLElement | null>(null);
 const mindMapInstance = ref<any>(null);
 const isCreateVar = ref(false);
+const variableDropdownRef = ref<any>(null);
+const sheetDropdownRef = ref<any>(null);
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
 const queryClient = useQueryClient();
@@ -918,6 +925,7 @@ const closeSidePanel = () => {
 
 const isCreateSheetModal = ref(false);
 const createSheet = () => {
+  sheetDropdownRef.value?.closeDropdown();
   selectedSheettoAction.value = {};
   isCreateSheetModal.value = !isCreateSheetModal.value;
 };
@@ -1036,6 +1044,7 @@ const plusHandler = (e: any) => {
 
 const selectedSheettoAction = ref<any>();
 function handleDeleteSheetModal(opt: any) {
+  sheetDropdownRef.value?.closeDropdown();
   showDeleteModal.value = true;
   selectedSheettoAction.value = opt;
 }
@@ -1053,6 +1062,7 @@ function handleDeleteSheet() {
   });
 }
 function openEditSprintModal(opt: any) {
+  sheetDropdownRef.value?.closeDropdown();
   isCreateSheetModal.value = true;
   selectedSheettoAction.value = opt;
 }

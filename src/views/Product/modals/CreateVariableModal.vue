@@ -14,6 +14,14 @@
           maxlength="30"
           @input="validateDropdownTitle"
         />
+
+        <BaseSelectField
+         v-model="selectedVariableType"
+         label="Variable Type"
+         :placeholder="'Select variable type'"
+         :options="variableTypeOptions"
+         :disabled="isVariableTypesLoading"
+        />
   
         <BaseTextField
           v-model="description"
@@ -78,15 +86,19 @@
   </template>
   
   <script setup lang="ts">
-  import { ref, computed } from 'vue'
+  import { ref, computed, watchEffect } from 'vue'
   import BaseModal from '../../../components/ui/BaseModal.vue'
   import BaseTextField from '../../../components/ui/BaseTextField.vue'
+  import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
   import Button from '../../../components/ui/Button.vue'
   import { useRouteIds } from '../../../composables/useQueryParams';
   import { useCreateVar } from '../../../queries/useSheets';
   import { useQueryClient } from '@tanstack/vue-query';
   import { usePermissions } from '../../../composables/usePermissions';
-  
+  import { useVariableTypes } from '../../../queries/useSheets'
+  /** Fetch variable types */
+  const { data: variableTypes, isLoading: isVariableTypesLoading } = useVariableTypes();
+
   const { moduleId, workspaceId } = useRouteIds()
   const { canCreateVariable } = usePermissions()
   
@@ -108,6 +120,18 @@
   const optionTitle = ref('')
   const description = ref('')
   const options = ref<string[]>([])
+  const selectedVariableType = ref('') 
+  /** Transform fetched types for BaseSelect */
+
+  const variableTypeOptions = computed(() => {
+    return (variableTypes.value ?? []).map((t: any) => ({
+      title: t.title,   // text shown in select
+      _id: t._id,     // value bound to v-model
+    }))
+  })
+   watchEffect(()=>{ 
+    console.log(selectedVariableType.value, 'variable types')
+  })
   
   /** NEW: Filterable toggle state */
   const isFilterable = ref(true)
@@ -160,6 +184,7 @@ const isValid = computed(() => {
     onSuccess: () => {
       reset();
       queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
+      queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
       isOpen.value = false
     },
     onError: (err: any) => {
@@ -180,7 +205,7 @@ const isValid = computed(() => {
       /** Use the checkbox value in the payload */
       filterable: isFilterable.value,
       visible_on_card: false,
-      type_id: "",
+      type_id: selectedVariableType.value,
       sheet_id: props.sheetID,
     }
     console.log('>>> helo', payload)

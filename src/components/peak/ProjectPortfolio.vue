@@ -48,9 +48,12 @@
           </div>
 
           <div class="flex gap-4 flex-wrap ml-4 mt-3">
-            <div v-for="item in chartData" :key="item.name" class="flex items-center">
+            <div v-for="(item, index) in chartData" :key="index" class="flex items-center">
               <div class="flex items-center gap-1">
-                <div class="h-3 w-3 rounded-full" :style="{ backgroundColor: item.fill }"></div>
+                <div
+                class="h-3 w-3 rounded-full"
+                :style="{ backgroundColor: chartColors[index] }"
+              ></div>
                 <span class="text-sm text-text-secondary">{{ item.name }}</span>
               </div>
               <span class="font-semibold text-primary ms-2">{{ item.value }}</span>
@@ -80,42 +83,24 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, computed, nextTick } from 'vue'
-import { Chart, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js'
-Chart.register(DoughnutController, ArcElement, Tooltip, Legend)
+import { Chart, DoughnutController, ArcElement, Tooltip, Legend, Colors } from 'chart.js'
+Chart.register(DoughnutController, ArcElement, Tooltip, Legend, Colors)
 const props = defineProps<{
   data?: Record<string, number>;
   isLoading?: boolean;
 }>();
 
-
+const chartColors = ref<string[]>([])
 const chartCanvas = ref<HTMLCanvasElement | null>(null)
 let chartInstance: Chart | null = null
-
-const defaultColors = [
-  "#10b981", // Emerald
-  "#3b82f6", // Blue
-  "#f59e0b", // Amber
-  "#ef4444", // Red
-  "#8b5cf6", // Purple
-  "#14b8a6", // Teal
-  "#f97316", // Orange
-  "#f43f5e", // Pink
-  "#6366f1", // Indigo
-  "#22c55e", // Lime
-  "#a855f7", // Violet
-  "#facc15", // Yellow
-  "#0ea5e9", // Sky Blue
-  "#f87171", // Light Red
-];
 const chartData = computed(() => {
-  if (!props.data || !Object.keys(props.data).length) return [];
+  if (!props.data || !Object.keys(props.data).length) return []
 
-  return Object.entries(props.data).map(([name, value], index) => ({
+  return Object.entries(props.data).map(([name, value]) => ({
     name,
-    value: Number(value) || 0,
-    fill: defaultColors[index % defaultColors.length],
-  }));
-});
+    value: Number(value) || 0
+  }))
+})
 
 const buildChart = () => {
   if (!chartCanvas.value) return;
@@ -130,11 +115,10 @@ const buildChart = () => {
     data: {
       labels: chartData.value.map(i => i.name),
       datasets: [
-        {
-          data: chartData.value.map(i => i.value),
-          backgroundColor: chartData.value.map(i => i.fill),
-          borderWidth: 0,
-        },
+         {
+        data: chartData.value.map(i => i.value),
+        borderWidth: 0,
+      },
       ],
     },
     options: {
@@ -143,9 +127,28 @@ const buildChart = () => {
       cutout: "80%",
       plugins: {
         legend: { display: false },
+        colors: {
+      forceOverride: true
+    }
       },
     },
   });
+  nextTick(() => {
+  const dataset = chartInstance?.data.datasets[0]
+
+  if (!dataset) {
+    chartColors.value = []
+    return
+  }
+
+  const colors = dataset.backgroundColor
+
+  chartColors.value = Array.isArray(colors)
+    ? colors as string[]
+    : colors
+      ? [colors as string]
+      : []
+})
 };
 
 

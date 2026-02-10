@@ -35,22 +35,55 @@
     v-if="expanded"
     class="flex items-center justify-between w-full gap-2"
   >
-    <span
-      class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
-      :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
-    >
-      {{ label }}
-    </span>
+   <span
+  v-if="label"
+  class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
+  :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
+>
+  {{ label.length > 20 ? label.slice(0, 20) + '...' : label }}
+</span>
+
 
     <!-- Delete Icon (only if exists + hover) -->
-    <i
-      v-if="deleteIcon && label !=='Tasks' && label !=='Pin'"
-      :class="[
-        ...deleteIconClasses,
-        'opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[13px]'
-      ]"
-      @click.stop="$emit('delete', props.id)"
-    ></i>
+    <div
+  v-if="deleteIcon && label !== 'Tasks' && label !== 'Pin'"
+  class="relative"
+>
+  <i
+    :class="[
+      ...deleteIconClasses,
+      'opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[13px] cursor-pointer'
+    ]"
+    @click.stop="toggleDropdown"
+  ></i>
+
+  <!-- Dropdown -->
+  <div
+    v-if="showDropdown"
+    ref="dropdownRef"
+    class="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-bg-card z-50"
+  >
+  <ul>
+    <li>
+      <button
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+      @click.stop="emitDelete"
+    >
+      Delete Module
+    </button></li>
+   <li>
+    <button
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+      @click.stop="emitConfigure"
+    >
+      Configure Agent
+    </button>
+    </li>
+  </ul>
+    
+  </div>
+</div>
+
   </div>
 </Transition>
   </div>
@@ -71,7 +104,7 @@
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useWorkspaceStore } from "../../../stores/workspace";
-
+const emit = defineEmits()
 /** --- PROPS --- **/
 const props = defineProps<{
   label: string;
@@ -85,6 +118,8 @@ const props = defineProps<{
 }>();
 const showTooltip = ref(false);
 const itemRef = ref<HTMLElement | null>(null);
+const showDropdown = ref(false)
+const dropdownRef = ref<HTMLElement | null>(null)
 const tooltipStyles = computed(() => {
   if (!itemRef.value) return {};
 
@@ -95,13 +130,43 @@ const tooltipStyles = computed(() => {
     transform: "translateY(-50%)",
   };
 });
+const handleClickOutside = (e: MouseEvent) => {
+  if (
+    dropdownRef.value &&
+    !dropdownRef.value.contains(e.target as Node)
+  ) {
+    showDropdown.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
 /** --- STATE --- **/
 const progress = ref<any>(""); // store only progress as required
 const eventSource = ref<EventSource | null>(null);
 let stopped = false;
 /** --- SSE URL --- **/
 const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value
+}
 
+const emitDelete = () => {
+  showDropdown.value = false
+  emit('delete', props.id)
+}
+
+const emitConfigure = () => {
+  showDropdown.value = false
+  workspaceStore.toggleChatBotPanel();
+  workspaceStore.saveAgentModule(props.label)
+}
 /**
  * Open SSE stream for job progress
  * Endpoint: workspace/modules/generation/:job_id/stream

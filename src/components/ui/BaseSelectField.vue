@@ -42,6 +42,7 @@
       <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
         <span
+        class="capitalize"
           :class="
             selected
               ? ' line-clamp-1 overflow-ellipsis '
@@ -97,7 +98,7 @@
             :class="[{ 'bg-bg-dropdown': option._id === selected?._id }, option.customClass]"
           >
             <img v-if="option.icon" :src="option.icon" class="w-4 h-4" />
-            <span>{{ option.title }}</span>
+            <span class="capitalize">{{ option.title }}</span>
           </div>
         </template>
       </div>

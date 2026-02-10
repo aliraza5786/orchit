@@ -361,3 +361,22 @@ export const useVarVisibilty = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+
+  /** -----------------------------
+ * Get Variable types
+ * ----------------------------- */
+
+export const useVariableTypes = (options = {}) => {
+  return useQuery({
+    queryKey: ["variable-types"],
+    queryFn: async ({ signal }) => {
+      return request({
+        url: "/common/variable-types",
+        method: "GET",
+        signal,
+      });
+    },
+    ...options,
+  });
+};

@@ -1,5 +1,5 @@
 <template>
-  <div class="h-full flex  gap-3" ref="kanbanScroll">
+  <div class="h-full flex gap-3" ref="kanbanScroll">
     <!-- Columns (horizontal) -->
     <Draggable v-model="localBoard.columns" item-key="_id" group="columns" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"

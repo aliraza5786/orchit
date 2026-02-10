@@ -6,7 +6,7 @@
       <div class="flex items-center gap-2 flex-auto max-w-4/5">
         <!-- Title: display vs edit -->
         <button v-if="!isEditingTitle"
-          class="font-semibold overflow-ellipsis line-clamp-1 text-nowrap  text-foreground px-1 py-0.5 rounded hover:bg-bg-card focus:outline-none focus:ring-1 focus:ring-border cursor-text"
+          class="font-semibold overflow-ellipsis line-clamp-1 text-nowrap capitalize  text-foreground px-1 py-0.5 rounded hover:bg-bg-card focus:outline-none focus:ring-1 focus:ring-border cursor-text"
           @click="beginEdit" @keydown.enter.prevent="beginEdit" title="Click to rename">
           {{ localTitle }}
         </button>
