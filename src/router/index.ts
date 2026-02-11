@@ -64,6 +64,15 @@ const routes: RouteRecordRaw[] = [
       path: "",
       name: "new-homepage",
       component: NewHomepage,
+      beforeEnter: (to, from, next) => {
+    const authStore = useAuthStore()
+    console.log(to, from);
+    if (authStore.isAuthenticated) {
+      next('/dashboard')
+    } else {
+      next()
+    }
+  }
     },
     {
       path: "contact-us",

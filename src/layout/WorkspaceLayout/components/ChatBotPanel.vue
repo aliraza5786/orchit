@@ -12,44 +12,53 @@
   >
     <!-- CONFIG PANEL -->
    <div
-  v-if="isExpanded"
+  v-if="isExpanded && showConfigPanel"
   class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
 >
   <!-- HEADER -->
-  <div class="px-6 pb-1.5 border-b border-border">
-    <div class="flex justify-center">
-      <div class="flex gap-1 bg-bg-body border border-border rounded-lg p-1 w-fit">
-        <button
-          class="px-5 py-1.5 text-sm font-medium rounded-md transition-all duration-200"
-          :class="activeTab==='create'
-            ? 'bg-accent border border-accent text-white shadow-sm'
-            : 'text-text-secondary hover:text-text-primary'"
-          @click="activeTab='create'"
-        >
-          Create
-        </button>
-
-        <button
-          class="px-5 py-1.5 text-sm font-medium rounded-md transition-all duration-200"
-          :class="activeTab==='config'
-            ? 'bg-accent border border-accent text-white shadow-sm'
-            : 'text-text-secondary hover:text-text-primary'"
-          @click="activeTab='config'"
-        >
-          Configure
-        </button>
-      </div>
-    </div>
+  <div class="px-6 py-2.5 bg-bg-card border-b border-border">
+   <h3 class="text-lg text-text-primary font-semibold">
+    Configure your Agent
+   </h3>
   </div>
 
   <!-- BODY -->
   <div class="flex-1 overflow-y-auto p-6 space-y-8">
-
-    <!-- CREATE TAB FORM -->
-    <div v-if="activeTab === 'create'" class="space-y-8">
+    <div class="space-y-4">
+       <div class="flex justify-center items-center">
+    <div class="relative">
+      <!-- Profile Picture Display -->
+      <label 
+        for="profile-pic-input"
+        :class="[
+          'w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-colors',
+          profilePicture 
+            ? 'border-2 border-accent bg-bg-body overflow-hidden' 
+            : 'border-2 border-dashed border-accent bg-bg-body hover:bg-opacity-80'
+        ]"
+      >
+        <img 
+          v-if="profilePicture" 
+          :src="profilePicture" 
+          alt="Profile" 
+          class="w-full h-full object-cover"
+        />
+        <i v-else class="fa-solid fa-plus text-accent text-2xl"></i>
+      </label>
+      
+      <!-- Hidden File Input -->
+      <input
+        id="profile-pic-input"
+        type="file"
+        accept="image/*"
+        @change="handleFileChange"
+        class="hidden"
+      />
+    </div>
+  </div>
       <!-- Agent Name -->
-      <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Agent Name</label>
+      <div class="space-y-1">
+        <label class="text-sm text-text-primary block">Agent Name</label>
         <input
           v-model="agentConfig.name"
           class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
@@ -59,7 +68,7 @@
 
       <!-- Description -->
       <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Description</label>
+        <label class="text-sm text-text-primary block">Description</label>
         <textarea
           v-model="agentConfig.description"
           rows="3"
@@ -70,7 +79,7 @@
 
       <!-- Instructions -->
       <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Instructions</label>
+        <label class="text-sm text-text-primary block">Instructions</label>
         <textarea
           v-model="agentConfig.instructions"
           rows="4"
@@ -81,14 +90,14 @@
 
       <!-- Conversation Starters -->
       <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Conversation Starters</label>
+        <label class="text-sm text-text-primary block">Conversation Starters</label>
         <div class="space-y-2.5">
           <div
             v-for="(starter, index) in agentConfig.conversationStarters"
             :key="starter"
             class="flex gap-3 items-center"
           >
-            <input
+             <input
               v-model="agentConfig.conversationStarters[index]"
               class="flex-1 border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
               placeholder="Add a conversation starter"
@@ -99,7 +108,7 @@
             >
               Remove
             </button>
-          </div>
+           </div>
           <button
             @click="agentConfig.conversationStarters.push('')"
             class="w-full mt-2 px-4 py-2.5 text-sm font-medium bg-bg-body border border-border rounded-lg hover:bg-bg-card transition-colors"
@@ -111,7 +120,7 @@
 
       <!-- Knowledge -->
       <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Knowledge</label>
+        <label class="text-sm text-text-primary block">Knowledge</label>
         <div class="space-y-3">
           <!-- File Input -->
           <input
@@ -142,7 +151,7 @@
 
       <!-- Capabilities -->
       <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Capabilities</label>
+        <label class="text-sm text-text-primary block">Capabilities</label>
         <div class="space-y-3">
           <div
             v-for="capability in availableCapabilities"
@@ -159,108 +168,20 @@
           </div>
         </div>
       </div>
-
-      <!-- Actions -->
-      <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Actions</label>
-        <div class="space-y-2.5">
-          <div
-            v-for="(action, index) in agentConfig.actions"
-            :key="action"
-            class="flex gap-3 items-center"
-          >
-            <input
-              v-model="agentConfig.actions[index]"
-              class="flex-1 border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
-              placeholder="Add action"
-            />
-            <button
-              @click="agentConfig.actions.splice(index,1)"
-              class="px-3 py-2.5 text-red-500 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors"
-            >
-              Remove
-            </button>
-          </div>
-          <button
-            @click="agentConfig.actions.push('')"
-            class="w-full mt-2 px-4 py-2.5 text-sm font-medium bg-bg-body border border-border rounded-lg hover:bg-bg-card transition-colors"
-          >
-            + Add Action
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- CONFIGURE TAB FORM -->
-    <div v-else-if="activeTab === 'config'" class="space-y-8">
-      <!-- Tone -->
-      <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Tone</label>
-        <select
-          v-model="agentConfig.tone"
-          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
-        >
-          <option value="professional">Professional</option>
-          <option value="friendly">Friendly</option>
-          <option value="balanced">Balanced</option>
-          <option value="technical">Technical</option>
-        </select>
-      </div>
-
-      <!-- Response Style -->
-      <div class="space-y-2.5">
-        <label class="text-sm font-semibold text-text-primary block">Response Style</label>
-        <select
-          v-model="agentConfig.responseStyle"
-          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
-        >
-          <option value="concise">Concise</option>
-          <option value="detailed">Detailed</option>
-          <option value="step-by-step">Step by Step</option>
-        </select>
-      </div>
-
-      <!-- Creativity / Temperature -->
-      <div class="space-y-3">
-        <div class="flex justify-between items-center">
-          <label class="text-sm font-semibold text-text-primary">Creativity (Temperature)</label>
-          <span class="text-sm font-medium text-accent">{{ agentConfig.temperature }}</span>
-        </div>
-        <input
-          type="range"
-          min="0"
-          max="1"
-          step="0.1"
-          v-model="agentConfig.temperature"
-          class="w-full h-2 bg-bg-body border border-border rounded-lg appearance-none cursor-pointer accent-accent"
-        />
-      </div>
-
-      <!-- Capabilities Checkboxes -->
-      <div class="space-y-3">
-        <label class="text-sm font-semibold text-text-primary block">Capabilities</label>
-
-        <label class="flex items-center gap-3 cursor-pointer hover:bg-bg-body p-2 rounded-lg transition-colors">
-          <input type="checkbox" v-model="agentConfig.allowWorkspaceData" class="h-4 w-4 rounded border-border" />
-          <span class="text-sm text-text-primary">Access Workspace Data</span>
-        </label>
-
-        <label class="flex items-center gap-3 cursor-pointer hover:bg-bg-body p-2 rounded-lg transition-colors">
-          <input type="checkbox" v-model="agentConfig.allowWeb" class="h-4 w-4 rounded border-border" />
-          <span class="text-sm text-text-primary">Web Browsing</span>
-        </label>
-      </div>
     </div>
   </div>
 </div>
     <!-- CHAT PANEL WRAPPER -->
     <div
     v-show="!isExpanded || isExpanded"
-     :class="`${isExpanded ? 'me-12 w-1/2 overflow-hidden' : 'me-0 w-full'}`"
-  class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2"
+     :class="(isExpanded && showConfigPanel)
+  ? 'w-1/2 overflow-hidden me-2'
+  : 'me-0 w-full'"
+  class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
 >
     <!-- Header -->
     <div
+     :class="(isExpanded && !showConfigPanel) ? 'me-2' : 'me-0'"
       class="flex justify-between items-center border-b border-border px-5 py-3 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
     >
       <h5 class="text-[16px] font-medium flex items-center gap-2">
@@ -386,7 +307,7 @@
         <p class="text-sm">No messages yet. Start a conversation!</p>
       </div>
     </div>
- <div class="p-4 border-t border-border bg-bg-card">
+ <div class="p-4 border-t border-border bg-bg-card" :class="(isExpanded && !showConfigPanel) ? 'me-2' : 'me-0'">
       <div
         v-if="contextTitle"
         class="mb-2 flex justify-between items-center gap-1.5"
@@ -401,7 +322,7 @@
           </div>
           <span v-if="moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
           <div class="flex items-center font-medium text-text-primary" v-if="moduleId">
-            <span>{{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0,10) + '...':moduleSelected }}</span>
+            <span>{{ moduleSelected && moduleSelected?.length > 10 ? moduleSelected?.slice(0,10) + '...':moduleSelected }}</span>
           </div>
           <div v-if="moduleId" class="flex">
             <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
@@ -412,7 +333,7 @@
         </nav>
         <button
           @click="showAIPreview = !showAIPreview"
-          v-if="entities.length"
+          v-if="hasPreviewableEntities"
           class="py-1 px-2 text-white bg-accent rounded-lg hover:bg-accent-hover transition-colors"
         >
           <i class="fa-regular fa-eye text-sm"></i> Preview
@@ -425,7 +346,7 @@
           placeholder="Ask anything..."
           rows="1"
           class="w-full pl-4 pr-10 py-3 rounded-xl border border-border bg-bg-body focus:outline-none focus:border-accent resize-none text-sm transition-colors overflow-y-auto"
-          @keydown.enter.prevent="sendMessage()"
+          @keydown="handleKeydown"
           @input="autoResize"
           :disabled="agentStore.isSending"
         ></textarea>
@@ -497,9 +418,7 @@ const socketURL = import.meta.env.VITE_SOCKET_IO_URL;
 const isAiThinkingBubbleVisible = ref(false);
 const autoTextarea = ref<HTMLTextAreaElement | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
-
-// Tabs
-const activeTab = ref<"create" | "config">("create");
+const pendingMessages = ref<any[]>([]);
 onMounted(() => {
   workspaceStore.initSelectedAgent();
 });
@@ -518,17 +437,42 @@ const contextTitle = computed(() => {
 });
 
 const entities = computed(() => agentStore.createdEntities);
+const hasPreviewableEntities = computed(() => {
+  if (!Array.isArray(entities.value)) return false;
 
-const orderedMessages = computed(() => {
-  if (!Array.isArray(agentStore.chatHistory)) return [];
-  return agentStore.chatHistory
-    .flatMap((s) => s.messages || [])
-    .filter((msg) => msg.metadata?.status !== "thinking")
-    .sort(
-      (a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
+  return entities.value.some((entity: any) => {
+    // For read actions (fetch_data)
+    if (entity.action === 'read') {
+      const itemsLength = entity?.result?.items?.length || 0;
+      const count = entity?.result?.count || 0;
+      return itemsLength > 0 || count > 0;
+    }
+    
+    // For create actions (create_module)
+    if (entity.action === 'create') {
+      const hasCards = entity?.payload?.cards?.length > 0;
+      const hasSheets = entity?.payload?.sheets_preview?.length > 0;
+      const totalCreated = entity?.result?.total_created || 0;
+      return hasCards || hasSheets || totalCreated > 0;
+    }
+    
+    return false;
+  });
 });
+const orderedMessages = computed(() => {
+  const historyMessages = Array.isArray(agentStore.chatHistory)
+    ? agentStore.chatHistory
+        .flatMap((s) => s.messages || [])
+        .filter((msg) => msg.metadata?.status !== "thinking")
+    : [];
+
+  return [...historyMessages, ...pendingMessages.value].sort(
+    (a, b) =>
+      new Date(a.timestamp).getTime() -
+      new Date(b.timestamp).getTime()
+  );
+});
+
 
 // Auto resize textarea
 const autoResize = () => {
@@ -541,6 +485,15 @@ const autoResize = () => {
   el.style.height = Math.min(el.scrollHeight, maxHeight) + "px";
 
   el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+};
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === "Enter" && e.shiftKey) {
+    return;
+  }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendMessage();
+  }
 };
 
 // Scroll messages
@@ -624,6 +577,15 @@ async function sendMessage() {
   agentStore.isAiTyping = true;
 
   scrollToBottom();
+  const tempId = "temp-" + Date.now();
+
+pendingMessages.value.push({
+  _id: tempId,
+  type: "user",
+  content: message,
+  timestamp: new Date().toISOString(),
+  metadata: { status: "sending", temp: true }
+});
 
   try {
     await agentStore.sendMessage({
@@ -640,12 +602,16 @@ async function sendMessage() {
       agentStore.fetchChatHistory(workspaceId.value),
       agentStore.fetchCreatedEntities(workspaceId.value, false),
     ]);
-
+    pendingMessages.value = [];
     scrollToBottom();
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
   } catch (err) {
     console.error("Error sending message:", err);
+    pendingMessages.value = pendingMessages.value.filter(
+      (m) => !m.metadata?.temp
+    );
+
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
   } finally {
@@ -657,7 +623,11 @@ async function sendMessage() {
 async function acceptChanges(payload: any) {
   await agentStore.acceptEntities(payload);
   showAIPreview.value = false;
+  toast.success(
+    "Preview entities has been accepted and applied to workspace"
+  );
   refetchModules();
+  agentStore.fetchCreatedEntities(workspaceId.value, false)
 }
 
 async function declineAgentGeneratedEntities() {
@@ -666,12 +636,13 @@ async function declineAgentGeneratedEntities() {
   toast.success(
     "Preview entities has been rejected and deleted"
   );
+  refetchModules();
+  agentStore.fetchCreatedEntities(workspaceId.value, false)
 }
 
 // Close handler
 function closeHandler() {
   workspaceStore.toggleChatBotPanel();
-  workspaceStore.saveWorkspaceExpanded(false);
 }
 
 // Format timestamp
@@ -693,6 +664,19 @@ onMounted(() => {
   }
   scrollToBottom();
 });
+watch(
+  () => workspaceStore.showChatBotPanel,
+  async (isOpen) => {
+    if (!workspaceId.value) return;
+
+    if (isOpen) {
+      await agentStore.fetchChatHistory(workspaceId.value, true);
+      await agentStore.fetchCreatedEntities(workspaceId.value, false);
+      scrollToBottom();
+    }
+  },
+  { immediate: true } // ← runs on mount also
+);
 
 onBeforeUnmount(() => {
   if (workspaceId.value && socket.value) {
@@ -705,19 +689,17 @@ onBeforeUnmount(() => {
 // Config panel functions
 const openConfigPanel = () => {
   if (!isExpanded.value) {
-    
-    isExpanded.value = !isExpanded.value;
-    workspaceStore.saveWorkspaceExpanded(true)
+    isExpanded.value = true;
+    showConfigPanel.value=true;
+  }else if (isExpanded.value) {
+    showConfigPanel.value = !showConfigPanel.value;
   }
-  showConfigPanel.value = !showConfigPanel.value;
 };
 const expandPanel = () =>{
-  isExpanded.value = !isExpanded.value;
-  workspaceStore.saveWorkspaceExpanded(true)
+  isExpanded.value = true;
 }
 const compressPanel = () => {
   isExpanded.value = false;
-  workspaceStore.saveWorkspaceExpanded(false);
 };
 // List of capabilities to show as checkboxes
 const availableCapabilities = [
@@ -773,9 +755,21 @@ const handleKnowledgeUpload = (event: Event) => {
 const removeKnowledge = (index: number) => {
   agentConfig.knowledge.splice(index, 1);
 };
+const profilePicture = ref<string | null>(null)
+
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      profilePicture.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
 </script>
-
-
 <style scoped>
 .typing-dots {
   display: flex;

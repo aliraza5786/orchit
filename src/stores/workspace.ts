@@ -217,9 +217,6 @@ export const useWorkspaceStore = defineStore("workspace", {
   if (saved) {
     this.selectedAgent = saved;
   }
-},
-    saveWorkspaceExpanded(isExpanded:boolean){
-      this.isExpanded = isExpanded;
-    }
+}
   },
 });
