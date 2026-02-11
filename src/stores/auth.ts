@@ -37,6 +37,11 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
       localStorage.removeItem('mannualWorkspace')
+      localStorage.removeItem('selectedAgentModule')
+      localStorage.removeItem('selectedModuleId')
+      localStorage.removeItem('sprintType')
+      localStorage.removeItem('activeMilestoneId')
+      localStorage.removeItem('activeSprintId')
     },
   },
 })

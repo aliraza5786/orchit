@@ -52,15 +52,6 @@ const { workspaceId } = useRouteIds(); // Use the shared composable
 // or we can pass a computed if needed. Inspecting useSingleWorkspace, it accepts MaybeRef.
 const { data: getWorkspace, isPending, isLoading } = useSingleWorkspace(workspaceId);
 const localWorkspace = ref<any>(null); 
-const isChatbotExpanded = computed(() => !workspaceStore.isExpanded);
-
-// Watcher to react whenever it changes
-watch(isChatbotExpanded, (newValue, oldValue) => {
-  console.log('ChatBot expanded changed:', oldValue, '→', newValue);
-
-  // Example: do something when panel expands/collapses
-  // e.g., send analytics, adjust layout, etc.
-}, { immediate: true });
 watch(
   getWorkspace,
   (newWorkspace) => {

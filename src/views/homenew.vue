@@ -1,70 +1,29 @@
 <template>
   <div class="home-page min-h-screen bg-[var(--background)] text-[var(--text)] transition-colors duration-300">
-  <!-- <Header :isDark="isDark" :toggleTheme="toggleTheme"  /> -->
-    <!-- Hero Section - Fade in on load -->
     <div class="animate-on-load" >
       <HeroSection ref="heroInputRef" :isDark="isDark" />
     </div>
-
-    <!-- Stats Section - Slide up on scroll -->
     <div class="scroll-animate" data-animation="slide-up">
       <StatsSection />
     </div>
-
-    <!-- Social Proof - Fade in on scroll -->
-    <!-- <div class="scroll-animate" data-animation="fade-in">
-      <SocialProof />
-    </div> -->
-
-    <!-- Idea Cards - Slide up with stagger -->
     <div class="scroll-animate" data-animation="slide-up-stagger">
       <IdeaCards @select-idea="setHeroPrompt" />
     </div>
-
-    <!-- Audience Section - Scale in -->
     <div class="scroll-animate" data-animation="scale-in">
       <AudienceSection @try-prompt="setHeroPrompt" />
     </div>
-
-    <!-- Templates Marketplace - Slide from left -->
     <div class="scroll-animate" data-animation="slide-left">
       <TemplatesMarketplace />
     </div>
-
-    <!-- Unlimited Modules - Slide from right -->
-    <!-- <div class="scroll-animate" data-animation="slide-right">
-      <UnlimitedModules />
-    </div> -->
-
-    <!-- How It Works - Slide up -->
     <div class="scroll-animate" data-animation="slide-up" id="product">
       <HowItWorks />
     </div>
-
-    <!-- Testimonials - Fade and scale -->
     <div class="scroll-animate" data-animation="fade-scale">
       <Testimonials />
     </div>
-
-    <!-- Pricing Section - Slide up -->
-    <!-- <div class="scroll-animate" data-animation="slide-up">
-      <Pricing />
-    </div> -->
-<!-- Contact sales -->
- <!-- <div class="scroll-animate" data-animation="slide-up">
-      <ContactUs />
-    </div> -->
-    <!-- FAQ Section - Fade in -->
     <div class="scroll-animate" data-animation="fade-in" id="faq">
       <FaqSection />
     </div>
-
-    <!-- Final CTA - Scale in -->
-    <!-- <div class="scroll-animate" data-animation="scale-in">
-      <FinalCTA :isDark="isDark" :toggleTheme="toggleTheme"/>
-    </div> -->
-
-    <!-- Scroll to Top Button -->
     <transition name="scroll-button">
       <button
         v-if="showScrollTop"
@@ -92,35 +51,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, onBeforeMount,defineAsyncComponent  } from 'vue'
 import { useRouter } from 'vue-router'
 import { useTheme } from '../composables/useTheme'
-// import Header from '../components/HomeNew/Header.vue'
-import HeroSection from '../components/HomeNew/HeroSection.vue'
-import StatsSection from '../components/HomeNew/StatsSections.vue'
-// import SocialProof from '../components/HomeNew/SocialProof.vue'
-import IdeaCards from '../components/HomeNew/IdeaCards.vue'
-import AudienceSection from '../components/HomeNew/AudienceSection.vue'
-import TemplatesMarketplace from '../components/HomeNew/TemplateMarketplace.vue'
-// import UnlimitedModules from '../components/HomeNew/UnlimitedModules.vue'
-import HowItWorks from '../components/HomeNew/HowItWorks.vue'
-import Testimonials from '../components/HomeNew/Testimonials.vue'
-// import ContactUs from './ContactUs.vue'
-import FaqSection from '../components/HomeNew/FaqSection.vue'
-// import FinalCTA from '../components/HomeNew/FinalCTA.vue'
-// import Pricing from './Pricing.vue'
 import { useAuthStore } from '../stores/auth';
+const HeroSection = defineAsyncComponent(() => import('../components/HomeNew/HeroSection.vue'));
+const StatsSection = defineAsyncComponent(() => import('../components/HomeNew/StatsSections.vue'));
+const IdeaCards = defineAsyncComponent(() => import('../components/HomeNew/IdeaCards.vue'));
+const AudienceSection = defineAsyncComponent(() => import('../components/HomeNew/AudienceSection.vue'));
+const TemplatesMarketplace = defineAsyncComponent(() => import('../components/HomeNew/TemplateMarketplace.vue'));
+const HowItWorks = defineAsyncComponent(() => import('../components/HomeNew/HowItWorks.vue'));
+const Testimonials = defineAsyncComponent(() => import('../components/HomeNew/Testimonials.vue'));
+const FaqSection = defineAsyncComponent(() => import('../components/HomeNew/FaqSection.vue'));
 const authStore = useAuthStore();
 const { isDark } = useTheme()
 const heroInputRef = ref<any>(null)
 const showScrollTop = ref(false)
 const router = useRouter()
-const isLoggedIn=() =>{
-  if(authStore.isAuthenticated){
-    router.push('/dashboard')
+onBeforeMount(() => {
+  if (authStore.isAuthenticated) {
+    router.replace('/dashboard')
   }
- }
-onMounted(isLoggedIn);
+})
 
 const setHeroPrompt = (text: string) => {
   heroInputRef.value?.setValue(text)
