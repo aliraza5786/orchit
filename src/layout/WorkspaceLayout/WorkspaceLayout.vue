@@ -16,7 +16,7 @@
        <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
         :style="dashboardContentStyle"
         >
-        <router-view />
+        <router-view  />
         <ProfilePanel />
         <FilterDrawer v-model="filters" :open="isDrawerOpen" />
         <SettingPanel :workspace="getWorkspace" />
@@ -52,7 +52,6 @@ const { workspaceId } = useRouteIds(); // Use the shared composable
 // or we can pass a computed if needed. Inspecting useSingleWorkspace, it accepts MaybeRef.
 const { data: getWorkspace, isPending, isLoading } = useSingleWorkspace(workspaceId);
 const localWorkspace = ref<any>(null); 
-
 watch(
   getWorkspace,
   (newWorkspace) => {

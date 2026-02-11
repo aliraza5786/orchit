@@ -37,13 +37,6 @@
             <p class="text-sm text-text-secondary">
               Found {{ fetchedItems.length }} card(s) matching your query.
             </p>
-
-            <Checkbox
-              :checked="selectAllRead"
-              label="Select All Cards"
-              @change="toggleSelectAllRead"
-            />
-
             <div class="space-y-3 mt-4">
               <div
                 v-for="card in fetchedItems"

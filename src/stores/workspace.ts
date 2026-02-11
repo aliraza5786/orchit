@@ -20,6 +20,7 @@ interface WorkspaceState {
   pricing:boolean
   showChatBotPanel: boolean
   selectedAgent:string
+  isExpanded:boolean
 }
 
 export const useWorkspaceStore = defineStore("workspace", {
@@ -41,7 +42,8 @@ export const useWorkspaceStore = defineStore("workspace", {
     limits:{},
     pricing:false,
     showChatBotPanel: false,
-    selectedAgent:""
+    selectedAgent:"",
+    isExpanded:false
   }),
   actions: {
     setPricing(p:boolean){
@@ -209,6 +211,12 @@ export const useWorkspaceStore = defineStore("workspace", {
     saveAgentModule(key:string){
       localStorage.setItem("selectedAgentModule",key)
       this.selectedAgent=key;
-    }
+    },
+    initSelectedAgent() {
+  const saved = localStorage.getItem("selectedAgentModule");
+  if (saved) {
+    this.selectedAgent = saved;
+  }
+}
   },
 });

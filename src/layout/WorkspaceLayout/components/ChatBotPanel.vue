@@ -1,17 +1,188 @@
 <template>
   <div
   v-if="workspaceStore.showChatBotPanel"
-  :class="[
-    'flex flex-col max-h-screen max-w-full w-full overflow-hidden bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 transition-all duration-300 ease-in-out',
-    isExpanded
-      ? 'w-full min-w-[1200px]'
-      : 'w-full sm:w-[380px] max-w-[380px] min-w-[380px]'
-  ]"
+    :class="[
+        'flex h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] border border-orchit-white/5 overflow-x-hidden transition-all duration-300 ease-in-out',
+        isExpanded
+          ? 'min-w-full max-w-full overflow-x-hidden'
+          : 'min-w-full max-w-[380px] sm:min-w-[380px]',
+      ]"
+      role="complementary"
+      aria-label="Details panel"
+  >
+    <!-- CONFIG PANEL -->
+   <div
+  v-if="isExpanded && showConfigPanel"
+  class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
 >
+  <!-- HEADER -->
+  <div class="px-6 py-2.5 bg-bg-card border-b border-border">
+   <h3 class="text-lg text-text-primary font-semibold">
+    Configure your Agent
+   </h3>
+  </div>
 
+  <!-- BODY -->
+  <div class="flex-1 overflow-y-auto p-6 space-y-8">
+    <div class="space-y-4">
+       <div class="flex justify-center items-center">
+    <div class="relative">
+      <!-- Profile Picture Display -->
+      <label 
+        for="profile-pic-input"
+        :class="[
+          'w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-colors',
+          profilePicture 
+            ? 'border-2 border-accent bg-bg-body overflow-hidden' 
+            : 'border-2 border-dashed border-accent bg-bg-body hover:bg-opacity-80'
+        ]"
+      >
+        <img 
+          v-if="profilePicture" 
+          :src="profilePicture" 
+          alt="Profile" 
+          class="w-full h-full object-cover"
+        />
+        <i v-else class="fa-solid fa-plus text-accent text-2xl"></i>
+      </label>
+      
+      <!-- Hidden File Input -->
+      <input
+        id="profile-pic-input"
+        type="file"
+        accept="image/*"
+        @change="handleFileChange"
+        class="hidden"
+      />
+    </div>
+  </div>
+      <!-- Agent Name -->
+      <div class="space-y-1">
+        <label class="text-sm text-text-primary block">Agent Name</label>
+        <input
+          v-model="agentConfig.name"
+          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
+          placeholder="Enter agent name"
+        />
+      </div>
+
+      <!-- Description -->
+      <div class="space-y-2.5">
+        <label class="text-sm text-text-primary block">Description</label>
+        <textarea
+          v-model="agentConfig.description"
+          rows="3"
+          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all resize-none"
+          placeholder="Brief description of your Agent"
+        />
+      </div>
+
+      <!-- Instructions -->
+      <div class="space-y-2.5">
+        <label class="text-sm text-text-primary block">Instructions</label>
+        <textarea
+          v-model="agentConfig.instructions"
+          rows="4"
+          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all resize-none"
+          placeholder="How should the AI behave?"
+        />
+      </div>
+
+      <!-- Conversation Starters -->
+      <div class="space-y-2.5">
+        <label class="text-sm text-text-primary block">Conversation Starters</label>
+        <div class="space-y-2.5">
+          <div
+            v-for="(starter, index) in agentConfig.conversationStarters"
+            :key="starter"
+            class="flex gap-3 items-center"
+          >
+             <input
+              v-model="agentConfig.conversationStarters[index]"
+              class="flex-1 border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
+              placeholder="Add a conversation starter"
+            />
+            <button
+              @click="agentConfig.conversationStarters.splice(index, 1)"
+              class="px-3 py-2.5 text-red-500 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors"
+            >
+              Remove
+            </button>
+           </div>
+          <button
+            @click="agentConfig.conversationStarters.push('')"
+            class="w-full mt-2 px-4 py-2.5 text-sm font-medium bg-bg-body border border-border rounded-lg hover:bg-bg-card transition-colors"
+          >
+            + Add Starter
+          </button>
+        </div>
+      </div>
+
+      <!-- Knowledge -->
+      <div class="space-y-2.5">
+        <label class="text-sm text-text-primary block">Knowledge</label>
+        <div class="space-y-3">
+          <!-- File Input -->
+          <input
+            type="file"
+            multiple
+            @change="handleKnowledgeUpload"
+            class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm cursor-pointer hover:border-accent transition-colors"
+          />
+
+          <!-- Uploaded files list -->
+          <div v-if="agentConfig.knowledge.length" class="space-y-2">
+            <div
+              v-for="(file, index) in agentConfig.knowledge"
+              :key="index"
+              class="flex items-center justify-between gap-3 bg-bg-body border border-border rounded-lg px-4 py-2.5 hover:bg-bg-card transition-colors"
+            >
+              <span class="truncate text-sm text-text-primary">{{ file.name }}</span>
+              <button
+                @click="removeKnowledge(index)"
+                class="px-3 py-1.5 text-red-500 text-sm font-medium rounded hover:bg-red-50 transition-colors whitespace-nowrap"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Capabilities -->
+      <div class="space-y-2.5">
+        <label class="text-sm text-text-primary block">Capabilities</label>
+        <div class="space-y-3">
+          <div
+            v-for="capability in availableCapabilities"
+            :key="capability.value"
+            class="flex items-center gap-3"
+          >
+            <input
+              type="checkbox"
+              :value="capability.value"
+              v-model="agentConfig.capabilities"
+              class="h-4 w-4 rounded border-border cursor-pointer"
+            />
+            <span class="text-sm text-text-primary">{{ capability.label }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <!-- CHAT PANEL WRAPPER -->
+    <div
+    v-show="!isExpanded || isExpanded"
+     :class="(isExpanded && showConfigPanel)
+  ? 'w-1/2 overflow-hidden me-2'
+  : 'me-0 w-full'"
+  class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
+>
     <!-- Header -->
     <div
-      class="flex justify-between items-center border-b border-border px-5 py-4.5 sticky top-0 bg-bg-card z-30"
+     :class="(isExpanded && !showConfigPanel) ? 'me-2' : 'me-0'"
+      class="flex justify-between items-center border-b border-border px-5 py-3 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
     >
       <h5 class="text-[16px] font-medium flex items-center gap-2">
         <i class="fa-solid fa-sparkles text-accent"></i>
@@ -24,24 +195,37 @@
         </div>
       </h5>
       <div class="flex items-center gap-3 shrink-0">
-  <!-- Expand Toggle -->
-  <i
-    class="fa-solid cursor-pointer transition-colors"
-    :class="isExpanded ? 'fa-compress' : 'fa-expand'"
-    @click="isExpanded = !isExpanded"
-  ></i>
-<button class="cursor-pointer" label="Configure Ai" @click="showConfigModal = true">
-  <i class="fa-regular fa-ellipsis-vertical"></i>
-</button>
-  <!-- Close -->
-  <i
-    class="cursor-pointer text-text-primary fa-solid fa-close transition-colors"
-    @click="closeHandler"
-  ></i>
-</div>
+         <!-- Expand Icon -->
+        <i
+          v-if="!isExpanded"      
+          class="fa-solid cursor-pointer transition-colors fa-expand"
+          @click="expandPanel"
+        ></i>
+
+        <!-- Compress Icon -->
+        <i
+          v-else    
+          class="fa-solid cursor-pointer transition-colors fa-compress"
+          @click="compressPanel"
+        ></i>
+
+        <button
+          class="cursor-pointer"
+          @click="openConfigPanel"
+        >
+          <i class="fa-regular fa-ellipsis-vertical"></i>
+        </button>
+
+        <i
+          class="cursor-pointer text-text-primary fa-solid fa-close transition-colors"
+          @click="closeHandler"
+        ></i>
+      </div>
     </div>
-    <!-- Chat Area -->
+
+    <!-- Chat Area (UNCHANGED) -->
     <div ref="messagesContainer" class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
+      <!-- KEEPING YOUR FULL ORIGINAL CHAT CONTENT EXACTLY SAME -->
       <template v-if="orderedMessages.length || isAiThinkingBubbleVisible">
         <div
           v-for="msg in orderedMessages"
@@ -49,7 +233,6 @@
           class="flex gap-2 relative animate-fade-in"
           :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
         >
-          <!-- Avatar -->
           <div
             class="w-6 h-6 rounded-full p-1.5 flex items-center justify-center shrink-0"
             :class="msg.type === 'user' ? 'bg-bg-surface' : 'bg-accent/10'"
@@ -66,7 +249,6 @@
             </div>
           </div>
 
-          <!-- Message bubble -->
           <div
             class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border relative"
             :class="
@@ -91,7 +273,6 @@
           </div>
         </div>
 
-        <!-- AI Thinking Bubble (separate from messages) -->
         <div
           v-if="isAiThinkingBubbleVisible"
           class="flex gap-2 relative animate-fade-in"
@@ -110,15 +291,14 @@
                 <span></span>
                 <span></span>
               </div>
-              <span class="text-xs text-text-secondary ml-2"
-                >AI is thinking...</span
-              >
+              <span class="text-xs text-text-secondary ml-2">
+                AI is thinking...
+              </span>
             </div>
           </div>
         </div>
       </template>
 
-      <!-- Empty state -->
       <div
         v-else
         class="flex flex-col items-center justify-center h-full text-text-secondary"
@@ -127,14 +307,12 @@
         <p class="text-sm">No messages yet. Start a conversation!</p>
       </div>
     </div>
-
-    <!-- Input Area -->
-    <div class="p-4 border-t border-border bg-bg-card">
+ <div class="p-4 border-t border-border bg-bg-card" :class="(isExpanded && !showConfigPanel) ? 'me-2' : 'me-0'">
       <div
         v-if="contextTitle"
         class="mb-2 flex justify-between items-center gap-1.5"
       >
-        <nav class="flex items-center text-xs text-text-secondary gap-2">
+        <nav class="flex items-center text-xs text-text-secondary gap-1">
           <div class="flex items-center font-medium text-text-primary" v-if="!moduleId">
             <span>Workspace</span>
           </div>
@@ -142,16 +320,20 @@
           <div class="flex items-center font-medium text-text-primary">
             <span>{{ contextTitle }}</span>
           </div>
+          <span v-if="moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
+          <div class="flex items-center font-medium text-text-primary" v-if="moduleId">
+            <span>{{ moduleSelected && moduleSelected?.length > 10 ? moduleSelected?.slice(0,10) + '...':moduleSelected }}</span>
+          </div>
           <div v-if="moduleId" class="flex">
             <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
-          <div class="flex items-center gap-1"><span>Sheet</span></div>
-          <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
-          <div class="flex items-center gap-1"><span>Cards</span></div>
+          <div class="flex items-center gap-1"><span>Sheets</span></div>
+          <!-- <span><i class="fa-solid fa-chevron-right text-xs"></i></span> -->
+          <!-- <div class="flex items-center gap-1"><span>Cards</span></div> -->
           </div>
         </nav>
         <button
           @click="showAIPreview = !showAIPreview"
-          v-if="entities.length"
+          v-if="hasPreviewableEntities"
           class="py-1 px-2 text-white bg-accent rounded-lg hover:bg-accent-hover transition-colors"
         >
           <i class="fa-regular fa-eye text-sm"></i> Preview
@@ -164,7 +346,7 @@
           placeholder="Ask anything..."
           rows="1"
           class="w-full pl-4 pr-10 py-3 rounded-xl border border-border bg-bg-body focus:outline-none focus:border-accent resize-none text-sm transition-colors overflow-y-auto"
-          @keydown.enter.prevent="sendMessage()"
+          @keydown="handleKeydown"
           @input="autoResize"
           :disabled="agentStore.isSending"
         ></textarea>
@@ -186,7 +368,10 @@
         AI can make mistakes. Please verify important information.
       </p>
     </div>
+
+    </div>
   </div>
+
   <ChatBotPreviewModal
     v-model="showAIPreview"
     @accept="acceptChanges"
@@ -194,112 +379,7 @@
     :title="contextTitle"
     :data="entities"
   />
-  <div
-  v-if="showConfigModal"
-  class="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
->
-  <div
-    class="bg-bg-card w-[900px] max-w-[95vw] max-h-[90vh] overflow-y-auto rounded-lg border border-border shadow-xl"
-  >
-    <!-- Header -->
-    <div class="flex justify-between items-center px-6 py-4 border-b border-border">
-      <h3 class="text-lg font-semibold">Configure Agent</h3>
-      <i class="fa-solid fa-close cursor-pointer" @click="showConfigModal = false"></i>
-    </div>
-
-    <!-- Body -->
-    <div class="p-6 space-y-6">
-
-      <!-- Name -->
-      <div>
-        <label class="text-sm font-medium">Agent Name</label>
-        <input v-model="agentConfig.name"
-          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm"/>
-      </div>
-
-      <!-- Description -->
-      <div>
-        <label class="text-sm font-medium">Description</label>
-        <textarea v-model="agentConfig.description"
-          rows="2"
-          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm"/>
-      </div>
-
-      <!-- Instructions (System Prompt) -->
-      <div>
-        <label class="text-sm font-medium">Instructions</label>
-        <textarea v-model="agentConfig.instructions"
-          rows="4"
-          placeholder="How should the AI behave?"
-          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm"/>
-      </div>
-
-      <!-- Tone -->
-      <div>
-        <label class="text-sm font-medium">Tone</label>
-        <select v-model="agentConfig.tone"
-          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm">
-          <option value="professional">Professional</option>
-          <option value="friendly">Friendly</option>
-          <option value="balanced">Balanced</option>
-          <option value="technical">Technical</option>
-        </select>
-      </div>
-
-      <!-- Response Style -->
-      <div>
-        <label class="text-sm font-medium">Response Style</label>
-        <select v-model="agentConfig.responseStyle"
-          class="mt-1 w-full border border-border bg-bg-body rounded px-3 py-2 text-sm">
-          <option value="concise">Concise</option>
-          <option value="detailed">Detailed</option>
-          <option value="step-by-step">Step by Step</option>
-        </select>
-      </div>
-
-      <!-- Creativity -->
-      <div>
-        <label class="text-sm font-medium">Creativity (Temperature)</label>
-        <input type="range" min="0" max="1" step="0.1"
-          v-model="agentConfig.temperature"
-          class="w-full mt-2"/>
-        <p class="text-xs text-text-secondary">{{ agentConfig.temperature }}</p>
-      </div>
-
-      <!-- Permissions -->
-      <div class="space-y-2">
-        <label class="text-sm font-medium">Capabilities</label>
-
-        <label class="flex items-center gap-2">
-          <input type="checkbox" v-model="agentConfig.allowWorkspaceData"/>
-          Access Workspace Data
-        </label>
-
-        <label class="flex items-center gap-2">
-          <input type="checkbox" v-model="agentConfig.allowWeb"/>
-          Web Browsing
-        </label>
-      </div>
-
-    </div>
-
-    <!-- Footer -->
-    <div class="flex justify-end gap-3 px-6 py-4 border-t border-border">
-      <button class="px-4 py-2 border border-border rounded"
-        @click="showConfigModal = false">
-        Cancel
-      </button>
-
-      <button class="px-4 py-2 bg-accent text-white rounded"
-        @click="saveConfig">
-        Save Configuration
-      </button>
-    </div>
-  </div>
-</div>
-
 </template>
-
 <script setup lang="ts">
 import {
   ref,
@@ -318,50 +398,33 @@ import { useAgentStore } from "../../../stores/agentStore";
 import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
 import { toast } from "vue-sonner";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
+
+// Stores
 const workspaceStore = useWorkspaceStore();
-const isExpanded = ref(false)
+const agentStore = useAgentStore();
+
+// Route
 const route = useRoute();
+const { workspaceId, moduleId } = useRouteIds();
+
+// Refs
+const isExpanded = ref(false);
+const showConfigPanel = ref(false);
 const showAIPreview = ref(false);
 const userMessage = ref("");
 const socket = ref<Socket | null>(null);
 const isSocketConnected = ref(false);
 const socketURL = import.meta.env.VITE_SOCKET_IO_URL;
 const isAiThinkingBubbleVisible = ref(false);
-const { workspaceId, moduleId } = useRouteIds();
-const agentStore = useAgentStore();
-const autoTextarea = ref<HTMLTextAreaElement | null>(null)
-const { refetch:refetchModules} = useSingleWorkspace(workspaceId.value)
-const showConfigModal = ref(false)
-const moduleSelected = computed(() =>{
-  return workspaceStore.selectedAgent
-})
-const agentConfig = reactive({
-  name: '',
-  description: '',
-  instructions: '',
-  tone: 'balanced',
-  responseStyle: 'concise',
-  temperature: 0.7,
-  allowWeb: false,
-  allowWorkspaceData: true,
-})
-
-const autoResize = () => {
-  const el = autoTextarea.value
-  if (!el) return
-
-  el.style.height = "auto"
-
-  const maxHeight = 5 * 24 
-  el.style.height = Math.min(el.scrollHeight, maxHeight) + "px"
-
-  if (el.scrollHeight > maxHeight) {
-    el.style.overflowY = "auto"
-  } else {
-    el.style.overflowY = "hidden"
-  }
-}
-
+const autoTextarea = ref<HTMLTextAreaElement | null>(null);
+const messagesContainer = ref<HTMLElement | null>(null);
+const pendingMessages = ref<any[]>([]);
+onMounted(() => {
+  workspaceStore.initSelectedAgent();
+});
+// Computed
+const moduleSelected = computed(() => workspaceStore.selectedAgent);
+const { refetch: refetchModules } = useSingleWorkspace(workspaceId.value)
 const contextTitle = computed(() => {
   const routeName = (route.name as string)?.toLowerCase() || "workspace";
   if (routeName.includes("peak")) return "Peak";
@@ -372,25 +435,68 @@ const contextTitle = computed(() => {
   if (routeName.includes("pin")) return "Pin";
   return "Workspace";
 });
-const entities = computed(() => agentStore.createdEntities);
-const orderedMessages = computed(() => {
-  if (!Array.isArray(agentStore.chatHistory)) return [];
 
-  return agentStore.chatHistory
-    .flatMap((s) => s.messages || [])
-    .filter((msg) => msg.metadata?.status !== "thinking") // Filter out thinking status messages
-    .sort(
-      (a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-    );
+const entities = computed(() => agentStore.createdEntities);
+const hasPreviewableEntities = computed(() => {
+  if (!Array.isArray(entities.value)) return false;
+
+  return entities.value.some((entity: any) => {
+    // For read actions (fetch_data)
+    if (entity.action === 'read') {
+      const itemsLength = entity?.result?.items?.length || 0;
+      const count = entity?.result?.count || 0;
+      return itemsLength > 0 || count > 0;
+    }
+    
+    // For create actions (create_module)
+    if (entity.action === 'create') {
+      const hasCards = entity?.payload?.cards?.length > 0;
+      const hasSheets = entity?.payload?.sheets_preview?.length > 0;
+      const totalCreated = entity?.result?.total_created || 0;
+      return hasCards || hasSheets || totalCreated > 0;
+    }
+    
+    return false;
+  });
+});
+const orderedMessages = computed(() => {
+  const historyMessages = Array.isArray(agentStore.chatHistory)
+    ? agentStore.chatHistory
+        .flatMap((s) => s.messages || [])
+        .filter((msg) => msg.metadata?.status !== "thinking")
+    : [];
+
+  return [...historyMessages, ...pendingMessages.value].sort(
+    (a, b) =>
+      new Date(a.timestamp).getTime() -
+      new Date(b.timestamp).getTime()
+  );
 });
 
-function closeHandler() {
-  workspaceStore.toggleChatBotPanel();
-}
 
-const messagesContainer = ref<HTMLElement | null>(null);
+// Auto resize textarea
+const autoResize = () => {
+  const el = autoTextarea.value;
+  if (!el) return;
 
+  el.style.height = "auto";
+
+  const maxHeight = 5 * 24;
+  el.style.height = Math.min(el.scrollHeight, maxHeight) + "px";
+
+  el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
+};
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === "Enter" && e.shiftKey) {
+    return;
+  }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendMessage();
+  }
+};
+
+// Scroll messages
 function scrollToBottom() {
   nextTick(() => {
     requestAnimationFrame(() => {
@@ -401,11 +507,7 @@ function scrollToBottom() {
   });
 }
 
-onMounted(() => {
-  scrollToBottom();
-});
-
-// Watch for new messages and hide thinking bubble
+// Watchers
 watch(
   () => orderedMessages.value.length,
   (newLength, oldLength) => {
@@ -418,16 +520,17 @@ watch(
       }
     }
     scrollToBottom();
-  },
+  }
 );
 
 watch(
   () => isAiThinkingBubbleVisible.value,
   () => {
     scrollToBottom();
-  },
+  }
 );
 
+// Socket
 function initSocket() {
   const token = localStorage.getItem("token");
   if (!token || socket.value?.connected) return;
@@ -448,7 +551,6 @@ function initSocket() {
     isSocketConnected.value = false;
   });
 
-  // Listen to ALL realtime updates
   socket.value.on("realtime-update", async (data: any) => {
     if (data.type === "agent-response" || data.type === "message_complete") {
       isAiThinkingBubbleVisible.value = false;
@@ -463,6 +565,8 @@ function initSocket() {
     console.log("Socket event:", eventName, args);
   });
 }
+
+// Send Message
 async function sendMessage() {
   const message = userMessage.value?.trim();
   if (!message || !workspaceId.value || agentStore.isSending) return;
@@ -473,6 +577,15 @@ async function sendMessage() {
   agentStore.isAiTyping = true;
 
   scrollToBottom();
+  const tempId = "temp-" + Date.now();
+
+pendingMessages.value.push({
+  _id: tempId,
+  type: "user",
+  content: message,
+  timestamp: new Date().toISOString(),
+  metadata: { status: "sending", temp: true }
+});
 
   try {
     await agentStore.sendMessage({
@@ -485,78 +598,85 @@ async function sendMessage() {
       session_id: route.params.session_id as string,
     });
 
-    // Fetch both chat history and entities incrementally
     await Promise.all([
       agentStore.fetchChatHistory(workspaceId.value),
-      agentStore.fetchCreatedEntities(workspaceId.value, false), // incremental fetch
+      agentStore.fetchCreatedEntities(workspaceId.value, false),
     ]);
-
+    pendingMessages.value = [];
     scrollToBottom();
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
-
   } catch (err) {
     console.error("Error sending message:", err);
+    pendingMessages.value = pendingMessages.value.filter(
+      (m) => !m.metadata?.temp
+    );
+
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
   } finally {
     agentStore.isSending = false;
   }
 }
+
+// Accept / Decline
 async function acceptChanges(payload: any) {
   await agentStore.acceptEntities(payload);
   showAIPreview.value = false;
+  toast.success(
+    "Preview entities has been accepted and applied to workspace"
+  );
   refetchModules();
+  agentStore.fetchCreatedEntities(workspaceId.value, false)
 }
-async function declineAgentGeneratedEntities(){
+
+async function declineAgentGeneratedEntities() {
   await agentStore.declineSuggestedEntities(workspaceId.value);
-  showAIPreview.value =false;
-  toast.success("Preview entities has been rejected and deleted")
+  showAIPreview.value = false;
+  toast.success(
+    "Preview entities has been rejected and deleted"
+  );
+  refetchModules();
+  agentStore.fetchCreatedEntities(workspaceId.value, false)
 }
-watch(
-  workspaceId,
-  (newId, oldId) => {
-    if (!newId) return;
-    if (!socket.value) {
-      initSocket();
-    } else if (socket.value.connected) {
-      if (oldId && oldId !== newId) {
-        socket.value.emit("leave-workspace", oldId);
-      }
-      socket.value.emit("join-workspace", newId);
-    }
-  },
-  { immediate: true },
-);
 
-watch(
-  () => workspaceStore.showChatBotPanel,
-  (isOpen) => {
-    if (!workspaceId.value || !socket.value) return;
-    if (isOpen) {
-      socket.value.emit("join-workspace", workspaceId.value);
-      // Fetch chat history when panel opens
-      agentStore.fetchChatHistory(workspaceId.value, true);
-      agentStore.fetchCreatedEntities(workspaceId.value, false);
-    } else {
-      socket.value.emit("leave-workspace", workspaceId.value);
-    }
-  },
-);
+// Close handler
+function closeHandler() {
+  workspaceStore.toggleChatBotPanel();
+}
 
+// Format timestamp
 const formatTimestamp = (ts?: string) => {
   if (!ts) return "";
   const date = new Date(ts);
-  return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+  return `${date.getHours().toString().padStart(2, "0")}:${date
+    .getMinutes()
+    .toString()
+    .padStart(2, "0")}`;
 };
 
+// Lifecycle hooks
 onMounted(() => {
   initSocket();
   if (workspaceId.value && workspaceStore.showChatBotPanel) {
     agentStore.fetchChatHistory(workspaceId.value, true);
     agentStore.fetchCreatedEntities(workspaceId.value, false);
   }
+  scrollToBottom();
 });
+watch(
+  () => workspaceStore.showChatBotPanel,
+  async (isOpen) => {
+    if (!workspaceId.value) return;
+
+    if (isOpen) {
+      await agentStore.fetchChatHistory(workspaceId.value, true);
+      await agentStore.fetchCreatedEntities(workspaceId.value, false);
+      scrollToBottom();
+    }
+  },
+  { immediate: true } // ← runs on mount also
+);
 
 onBeforeUnmount(() => {
   if (workspaceId.value && socket.value) {
@@ -565,13 +685,91 @@ onBeforeUnmount(() => {
   socket.value?.removeAllListeners();
   socket.value?.disconnect();
 });
-function saveConfig() {
-  console.log('Agent Config:', agentConfig)
-  showConfigModal.value = false
+
+// Config panel functions
+const openConfigPanel = () => {
+  if (!isExpanded.value) {
+    isExpanded.value = true;
+    showConfigPanel.value=true;
+  }else if (isExpanded.value) {
+    showConfigPanel.value = !showConfigPanel.value;
+  }
+};
+const expandPanel = () =>{
+  isExpanded.value = true;
+}
+const compressPanel = () => {
+  isExpanded.value = false;
+};
+// List of capabilities to show as checkboxes
+const availableCapabilities = [
+  { label: "Access Workspace Data", value: "workspaceData" },
+  { label: "Web Browsing", value: "webBrowsing" },
+  { label: "Execute Actions", value: "actions" },
+  { label: "Summarize Documents", value: "summarizeDocs" },
+  { label: "Answer Questions", value: "answerQuestions" },
+];
+
+
+interface AgentConfig {
+  conversationStarters: string[];
+  knowledge: File[];
+  capabilities: string[];
+  actions: string[];
+  name: string;
+  description: string;
+  instructions: string;
+  tone: 'professional' | 'friendly' | 'balanced' | 'technical';
+  responseStyle: 'concise' | 'detailed' | 'step-by-step';
+  temperature: number;
+  allowWorkspaceData: boolean;
+  allowWeb: boolean;
 }
 
-</script>
+const agentConfig = reactive<AgentConfig>({
+  conversationStarters: [''],
+  knowledge: [],
+  capabilities: [''],
+  actions: [''],
+  name: '',
+  description: '',
+  instructions: '',
+  tone: 'professional',
+  responseStyle: 'concise',
+  temperature: 0.5,
+  allowWorkspaceData: false,
+  allowWeb: false
+});
 
+const handleKnowledgeUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (!target.files) return;
+  for (const file of Array.from(target.files)) {
+    agentConfig.knowledge.push(file);
+  }
+  // Clear input value so the same file can be uploaded again
+  target.value = "";
+};
+
+// Remove file
+const removeKnowledge = (index: number) => {
+  agentConfig.knowledge.splice(index, 1);
+};
+const profilePicture = ref<string | null>(null)
+
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+  
+  if (file) {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      profilePicture.value = e.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+}
+</script>
 <style scoped>
 .typing-dots {
   display: flex;
