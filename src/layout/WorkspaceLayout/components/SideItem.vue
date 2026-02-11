@@ -263,6 +263,7 @@ const router = useRouter();
 function clickHandler() {
   if (progress.value == "processing" && props.status == "running") return;
   router.push(props.to);
+  workspaceStore.saveAgentModule(props.label)
 }
 
 // sidebar item icon normalizer
