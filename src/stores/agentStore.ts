@@ -6,6 +6,8 @@ interface AgentChatPayload {
   workspace_id: string;
   message: string;
   module_id?: string;
+  module_name?:string;
+  user_id?:string;
   lane_id?: string;
   sheet_id?: string;
   card_id?: string;
@@ -52,6 +54,31 @@ export interface CreatedEntityItem {
   sheet_id?: string;
   card_id?: string;
 }
+interface KnowledgeConfig {
+  module_id?: string
+  module_name?: string
+  source_type: "INTERNAL_TICKET" | "INTERNAL_MODULE" | "WEB_SEARCH" | "PROMPT"
+  is_active: boolean
+  metadata: Record<string, any>
+}
+interface UploadConfig {
+  name: string
+  text: string
+  type: 
+    | 'UPLOAD'
+    | 'URL'
+    | 'CMS_PAGE'
+    | 'TEXT'
+    | 'MIXED'
+    | 'INTERNAL_MODULE'
+    | 'INTERNAL_SHEET'
+    | 'INTERNAL_TICKET'
+    | 'WEB_SEARCH'
+    | 'PROMPT'
+  files: File[]
+  module_id: string
+  module_name: string
+}
 
 export const useAgentStore = defineStore("agent", {
   state: () => ({
@@ -61,7 +88,10 @@ export const useAgentStore = defineStore("agent", {
     isAiTyping: false,
     isLoadingHistory: false,
     isLoadingEntities: false,
-    isAcceptingEntities:false
+    isAcceptingEntities:false,
+    agentSettings: {} as Record<string, any>,
+    isLoadingSettings: false,
+    isLoadingKnowledge: false,
   }),
 
   getters: {
@@ -192,6 +222,130 @@ export const useAgentStore = defineStore("agent", {
   } finally {
     this.isLoadingHistory = false;
   }
-}
+},
+async trainPersona(workspace_id: string, payload: {
+  module_id?: string
+  module_name?: string
+  name: string
+  description?: string
+  role?: string
+  level?: 'JUNIOR' | 'MID' | 'SENIOR' | 'EXPERT' | 'LEAD'
+  responsibilities?: string[]
+  skills?: string[]
+  competencies?: string[]
+  capabilities?: string[]
+  conditions_rules?: string[]
+}) {
+  if (!workspace_id) return;
+  this.isLoadingHistory = true; // optional: use a loading flag if needed
+
+  try {
+    const url = `${baseUrl}agent-chat/${workspace_id}/train/persona`;
+
+    const res = await api.request<{
+      data: any; // adjust type based on response
+    }>({
+      url,
+      method: "POST",
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+      data: payload,
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error("❌ Failed to train persona:", err);
+  } finally {
+    this.isLoadingHistory = false;
+  }
+},
+async fetchAgentSettings(workspace_id: string, module_id?: string, module_name?: string) {
+      if (!workspace_id) return
+
+      this.isLoadingSettings = true
+
+      try {
+        const queryParams = new URLSearchParams()
+        if (module_id) queryParams.append("module_id", module_id)
+        if (module_name) queryParams.append("module_name", module_name)
+
+        const url = `${baseUrl}agent-chat/${workspace_id}/settings?${queryParams.toString()}`
+
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
+
+        this.agentSettings = res.data.data
+        return res.data.data
+      } catch (err) {
+        console.error("❌ Failed to fetch agent settings:", err)
+      } finally {
+        this.isLoadingSettings = false
+      }
+    },
+    async trainKnowledge(workspace_id: string, payload: KnowledgeConfig) {
+      if (!workspace_id) return
+      this.isLoadingKnowledge = true
+
+      try {
+        const url = `/agent-chat/${workspace_id}/train/knowledge`
+        const res = await api.request({
+          url,
+          method: "POST",
+          data: payload,
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        })
+
+        return res.data
+      } catch (err) {
+        console.error("❌ Failed to train knowledge:", err)
+        throw err
+      } finally {
+        this.isLoadingKnowledge = false
+      }
+    },
+    async uploadTrainingContent(workspace_id: string, payload: UploadConfig) {
+      if (!workspace_id) return
+
+      const formData = new FormData()
+      formData.append('module_id', payload.module_id)
+      formData.append('module_name', payload.module_name)
+      formData.append('name', payload.name)
+      formData.append('text', payload.text)
+      formData.append('type', payload.type)
+
+      // append files if any
+      payload.files.forEach((file) => {
+        formData.append('files', file)
+      })
+
+      try {
+        const res = await api.post(
+          `/agent-chat/${workspace_id}/train/upload`,
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          }
+        )
+        return res.data
+      } catch (err) {
+        console.error('❌ Failed to upload training content:', err)
+        throw err
+      }
+    }
+
   },
 });
