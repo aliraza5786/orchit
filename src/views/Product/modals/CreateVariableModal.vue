@@ -2,7 +2,7 @@
     <BaseModal v-model="isOpen" size="sm" title="Create Field">
       <!-- Header --> 
       
-      <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Provide a title and add required options for your field.</p>
+      <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Provide required data for your field.</p>
       <!-- Body -->
       <div class="px-6 py-4 flex flex-col gap-4">
         <!-- Dropdown Title -->
@@ -96,8 +96,8 @@
       <!-- Footer -->
       <div class="flex justify-end gap-2 px-6 py-4 border-t border-border sticky bottom-0 bg-bg-body">
         <Button variant="secondary" @click="cancel">Cancel</Button>
-        <Button variant="primary" :disabled="!isValid || isCreatingVariable" @click="submit">
-          {{ isCreatingVariable ? 'Creating...' : " Create Field" }}
+        <Button variant="primary" :loading="isCreatingVariable" :disabled="!isValid || isCreatingVariable" @click="submit">
+          {{ isCreatingVariable ? 'Creating' : " Create Field" }}
         </Button>
       </div>
     </BaseModal>
@@ -124,6 +124,7 @@
   /** Props & Emits */
   const emit = defineEmits<{
     (e: 'update:modelValue', v: boolean): void
+    (e: 'refetchCardDetails'): Promise<void>
   }>()
   function handleFilterChange(event: Event) {
   const target = event.target as HTMLInputElement
@@ -226,10 +227,14 @@ const isValid = computed(() => {
   
   const queryClient = useQueryClient();
   const { mutate: createVariable, isPending: isCreatingVariable } = useCreateVar({
-    onSuccess: () => {
-      reset();
-      queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
-      queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    onSuccess: async () => {
+     await emit('refetchCardDetails') 
+     await queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
+     await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+      queryClient.removeQueries({
+           queryKey: ['cardDetail'],
+     })
+     reset();
       isOpen.value = false
     },
     onError: (err: any) => {

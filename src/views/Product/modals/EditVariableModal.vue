@@ -2,7 +2,7 @@
     <BaseModal v-model="isOpen" size="sm" title="Edit Field">
       <!-- Header --> 
       
-      <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Edit the title, description, and options for your field.</p>
+      <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Edit the title and options for your field.</p>
       <!-- Body -->
       <div class="px-6 py-4 flex flex-col gap-4">
         <!-- Field Title -->
@@ -23,11 +23,7 @@
          :disabled="true" 
         />
   
-        <BaseTextField
-          v-model="description"
-          label="Field Description"
-          placeholder="Optional description"
-        />
+        
 
         <!-- Range Config (For Range/Slider) -->
         <div v-if="needsRange" class="flex gap-4">
@@ -204,23 +200,14 @@
           />
         </div>
 
-        <!-- Filterable toggle -->
-        <label class="flex items-center gap-2 select-none pt-2">
-          <input
-            id="filterable-toggle"
-            type="checkbox"
-            v-model="isFilterable"
-            class="h-4 w-4 accent-primary"
-          />
-          <span class="text-sm" for="filterable-toggle">Show this in filters</span>
-        </label>
+        
       </div>
   
       <!-- Footer -->
       <div class="flex justify-end gap-2 px-6 py-4 border-t border-border sticky bottom-0 bg-bg-body">
         <Button variant="secondary" @click="cancel">Cancel</Button>
-        <Button variant="primary" :disabled="!isValid || isUpdatingVariable || isMovingCard" @click="submit">
-          {{ (isUpdatingVariable || isMovingCard) ? 'Saving...' : "Save Changes" }}
+        <Button variant="primary" :loading="isUpdatingVariable || isMovingCard" :disabled="!isValid || isUpdatingVariable || isMovingCard" @click="submit">
+          {{ (isUpdatingVariable || isMovingCard) ? 'Saving' : "Save Changes" }}
         </Button>
       </div>
     </BaseModal>
@@ -259,6 +246,7 @@
 
   const emit = defineEmits<{
     (e: 'update:modelValue', v: boolean): void
+    (e: 'refetchCardDetails'): Promise<void>
   }>()
   
   /** Fetch variable types */
@@ -273,20 +261,18 @@
   
   /** Form state */
   const dropdownTitle = ref('')
-  const optionTitle = ref('')
-  const description = ref('')
+  const optionTitle = ref('') 
   const options = ref<string[]>([])
-  const selectedVariableType = ref('') 
-  const isFilterable = ref(true)
+  const selectedVariableType = ref('')  
   const rangeMin = ref(0)
   const rangeMax = ref(100)
   const localValue = ref<any>(null)
+ 
 
   /** Pre-populate form */
   const initForm = () => {
     if (!props.variable) return
-    dropdownTitle.value = props.variable.title || ''
-    description.value = props.variable.description || ''
+    dropdownTitle.value = props.variable.title || '' 
     localValue.value = props.variable.value
     
     // Find type_id from variable.type string
@@ -303,8 +289,7 @@
       rangeMin.value = props.variable.data?.[0] ?? 0
       rangeMax.value = props.variable.data?.[1] ?? 100
     }
-    
-    isFilterable.value = props.variable.filterable !== false
+     
   }
 
   onMounted(initForm)
@@ -383,10 +368,11 @@
 
   const queryClient = useQueryClient();
   const { mutate: updateVariable, isPending: isUpdatingVariable } = useUpdateVar({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
-      queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-      queryClient.invalidateQueries({ queryKey: ['product-card'] })
+    onSuccess: async () => {
+      await emit('refetchCardDetails') 
+      await queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
+      await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+      await queryClient.invalidateQueries({ queryKey: ['product-card'] })
       maybeClose()
     },
     onError: (err: any) => {
@@ -396,9 +382,10 @@
   })
 
   const { mutate: moveCard, isPending: isMovingCard } = useMoveCard({
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-      queryClient.invalidateQueries({ queryKey: ['product-card'] })
+    onSuccess: async () => {
+      await emit('refetchCardDetails')
+      await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+      await queryClient.invalidateQueries({ queryKey: ['product-card'] })
       maybeClose()
     },
     onError: (err: any) => {
@@ -424,10 +411,8 @@
     if (!isValid.value || !props.variable) return
     
     const definitionChanged = 
-        dropdownTitle.value.trim() !== props.variable.title ||
-        description.value !== props.variable.description ||
-        JSON.stringify(options.value) !== JSON.stringify(props.variable.data) ||
-        isFilterable.value !== (props.variable.filterable !== false) ||
+        dropdownTitle.value.trim() !== props.variable.title || 
+        (needsOptions.value && JSON.stringify(options.value) !== JSON.stringify(props.variable.data)) || 
         (needsRange.value && (rangeMin.value !== props.variable.data?.[0] || rangeMax.value !== props.variable.data?.[1]))
 
     const valueChanged = JSON.stringify(localValue.value) !== JSON.stringify(props.variable.value)
@@ -439,13 +424,11 @@
 
     if (definitionChanged) {
         updateVarInitiated = true
-        const payload = {
-            description: description.value,
+        const payload = { 
             title: dropdownTitle.value.trim(),
             data: needsOptions.value ? options.value : (needsRange.value ? [rangeMin.value, rangeMax.value] : []),
             workspace_module_id: moduleId.value,
-            workspace_id: workspaceId.value,
-            filterable: isFilterable.value,
+            workspace_id: workspaceId.value, 
             type_id: selectedVariableType.value,
             sheet_id: props.sheetID,
         }

@@ -16,7 +16,8 @@
         >
          
         <div
-          class="sticky top-0 z-1 bg-bg-card backdrop-blur border-b border-orchit-white/5 px-6 py-4 flex justify-between">
+          class="sticky top-0 z-1 backdrop-blur border-b border-orchit-white/5 px-6 flex justify-between"
+          :class="title? ' py-4': 'py-2'">
           <h5 id="modal-title" class="text-lg font-semibold tracking-tight">{{ title }}</h5>
           <button  class="  cursor-pointer  text-text-secondary hover:text-text-primary text-lg z-200"
             @click.stop="emit('update:modelValue', false)"

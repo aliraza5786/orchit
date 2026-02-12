@@ -3,7 +3,7 @@
     <div
       v-show="showPanel"
       :class="[
-        'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
+        'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.1)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
         isExpanded
           ? 'min-w-full max-w-full'
           : 'min-w-full max-w-[380px] sm:min-w-[380px]',
@@ -75,7 +75,7 @@
               </div>
               <BaseSelectField
                 :disabled="!canEditCard"
-                size="sm"
+                size="md"
                 :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
                 placeholder="Select option"
                 :allowCustom="false"
@@ -211,7 +211,7 @@
                   </div>
                   <BaseSelectField
                     :disabled="!canEditCard"
-                    size="sm"
+                    size="md"
                     :options="laneOptions"
                     placeholder="Select tab"
                     :allowCustom="false"
@@ -240,7 +240,7 @@
                       Start Date
                     </div>
                     <div
-                      class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
                     >
                       <i class="fa-regular fa-calendar"></i>
                       <DatePicker
@@ -248,7 +248,7 @@
                         placeholder="Set start date"
                         class="w-full"
                         :model-value="form.startDate"
-                        emit-as="ymd"
+                        emit-as="ymd" 
                         @update:modelValue="setStartDate"
                       />
                     </div>
@@ -261,7 +261,7 @@
                       Target End
                     </div>
                     <div
-                      class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
+                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
                       :class="
                         endDateError
                           ? 'border-red-500'
@@ -313,7 +313,7 @@
                       <div class="text-xs uppercase tracking-wider text-text-secondary">
                         {{ item.title }}
                       </div>
-                      <div  v-if="!['priority', 'card status'].includes(item.title?.toLowerCase())" class="hidden group-hover:flex items-center gap-1">
+                      <div  v-if="!['priority', 'card status', 'card priority'].includes(item.title?.toLowerCase())" class="hidden group-hover:flex items-center gap-1">
                         <button
                           v-if="canEditCard"
                           @click="handleEditVar(item)"
@@ -337,7 +337,7 @@
                     <BaseSelectField
                       v-if="item.type === 'Select'"
                       :disabled="!canEditCard"
-                      size="sm"
+                      size="md"
                       :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
                       placeholder="Select option"
                       :allowCustom="false"
@@ -386,7 +386,7 @@
                     <!-- Date & Time Types -->
                     <div
                       v-else-if="['Date', 'Date & Time'].includes(item.type)"
-                      class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
                     >
                       <i class="fa-regular fa-calendar text-[10px]"></i>
                       <DatePicker
@@ -720,12 +720,14 @@
   <CreateVariableModal
     v-model="isCreateVar"
     v-if="isCreateVar"
+    @refetchCardDetails="refetchCardDetails"
     :sheetID="props?.sheetID ?? ''"
   />
 
   <EditVariableModal
     v-if="isEditVar"
     v-model="isEditVar"
+    @refetchCardDetails="refetchCardDetails"
     :variable="selectedVarToEdit"
     :cardId="props.details._id"
     :sheetID="props?.sheetID ?? ''"
@@ -859,7 +861,7 @@ const {
   refetch: refetchCardDetails,
 } = useProductCard(propsID, {
   initialData: () => queryClient.getQueryData(["product-card", propsID.value]),
-  staleTime: 5 * 60 * 1000,
+  // staleTime: 5 * 60 * 1000,
   gcTime: 10 * 60 * 1000,
   refetchOnWindowFocus: false,
 });
@@ -1494,10 +1496,13 @@ const { mutate: deleteVar, isPending: isDeleting } = useDeleteVar({
     await refetchCardDetails();
     showDeleteModal.value = false
     selectedItem.value = null
+    queryClient.removeQueries({
+           queryKey: ['cardDetail'],
+     })
     toast.success("Variable deleted successfully");
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-   queryClient.invalidateQueries({ queryKey: ["product-card"] });
-   queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
+    queryClient.invalidateQueries({ queryKey: ["product-card"] });
+    queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
   },
   onError: () => {
     toast.error("Failed to delete variable");
