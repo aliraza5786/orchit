@@ -4,7 +4,7 @@
     :class="[
         'flex h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] border border-border overflow-x-hidden transition-all duration-300 ease-in-out',
         isExpanded
-          ? 'min-w-full max-w-full overflow-x-hidden'
+          ? 'min-w-full max-w-full'
           : 'min-w-full max-w-[380px] sm:min-w-[380px]',
       ]"
       role="complementary"
@@ -20,12 +20,9 @@
    <h3 class="text-lg text-text-primary font-semibold">
     Configure your Agent
    </h3>
-  </div>
-<!-- BODY -->
-<div class="flex-1 overflow-y-auto flex flex-col">
-
+   <p class="text-text-secondary text-sm">Configure your Agent according to your workspace.</p>
   <!-- TABS -->
-  <div class="px-6 flex justify-center gap-6 text-sm mt-2">
+  <div class="px-6 flex justify-center gap-6 text-sm pb-2">
     <button
       @click="activeTab='persona'"
       :class="activeTab==='persona'
@@ -50,6 +47,9 @@
       Training Content
     </button>
   </div>
+  </div>
+<!-- BODY -->
+<div class="flex-1 overflow-y-auto flex flex-col">
 
   <div class="p-6 space-y-8">
 
@@ -278,14 +278,13 @@
     <!-- CHAT PANEL WRAPPER -->
     <div
   :class="(isExpanded && showConfigPanel)
-    ? 'w-1/2 overflow-hidden me-10'
-    : (isExpanded ? 'w-full me-10' : 'w-full me-0')"
+    ? 'w-1/2 overflow-hidden me-5'
+    : (isExpanded ? 'w-full me-5' : 'w-full me-0')"
   class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
 >
 
     <!-- Header -->
     <div
-     :class="(isExpanded && !showConfigPanel) ? 'me-2' : 'me-0'"
       class="flex justify-between items-center border-b border-border px-5 py-3 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
     >
       <h5 class="text-[16px] font-medium flex items-center gap-2">
@@ -415,7 +414,7 @@
         <p class="text-sm">No messages yet. Start a conversation!</p>
       </div>
     </div>
- <div class="px-4 py-2 border-t border-border bg-bg-card" :class="(isExpanded && !showConfigPanel) ? 'me-3' : 'me-0'">
+ <div class="px-4 py-2 border-t border-border bg-bg-card">
       <div
         v-if="contextTitle"
         class="mb-2 flex justify-between items-center gap-1.5"
