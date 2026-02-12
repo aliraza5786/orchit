@@ -315,6 +315,41 @@ export const useCreateVar = (options = {}) =>
     } as any
   );
 
+export const useDeleteVar = (options = {}) =>
+  useApiMutation<any, { id: string | number; module_id: string | number }>(
+    {
+      key: ["deleteVariable"],
+    } as any,
+    {
+      mutationFn: (vars:any) =>
+        request({
+          url: `workspace/catalog/variable/${vars.id}`,
+          method: "DELETE",
+          params: {
+            module_id: vars.module_id, // 👈 passing module_id
+          },
+        }),
+      ...(options as any),
+    } as any
+  );
+
+export const useUpdateVar = (options = {}) =>
+  useApiMutation<any, { id: string | number; payload: any }>(
+    {
+      key: ["updateVariable"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `workspace/catalog/variable/${vars.id}`,
+          method: "PUT",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+
 export const ReOrderList = (options = {}) =>
   useApiMutation<any, createVAr>(
     {

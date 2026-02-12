@@ -1,15 +1,15 @@
 <template>
-    <BaseModal v-model="isOpen" size="sm" title="Create Dropdown">
+    <BaseModal v-model="isOpen" size="sm" title="Create Field">
       <!-- Header --> 
       
-      <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Provide a title and add options for your dropdown.</p>
+      <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Provide a title and add required options for your field.</p>
       <!-- Body -->
       <div class="px-6 py-4 flex flex-col gap-4">
         <!-- Dropdown Title -->
         <BaseTextField
           v-model="dropdownTitle"
-          label="Dropdown Title"
-          placeholder="Enter dropdown title (max 30 chars)"
+          label="Field Title"
+          placeholder="Enter field title (max 30 chars)"
           :error="titleError=='' ? false : true"
           maxlength="30"
           @input="validateDropdownTitle"
@@ -17,25 +17,45 @@
 
         <BaseSelectField
          v-model="selectedVariableType"
-         label="Variable Type"
-         :placeholder="'Select variable type'"
+         label="Field Type"
+         :placeholder="'Select field type'"
          :options="variableTypeOptions"
          :disabled="isVariableTypesLoading"
         />
   
         <BaseTextField
           v-model="description"
-          label="Option Description"
+          label="Field Description"
           placeholder="Optional description"
         />
+
+        <!-- Range Config (For Range/Slider) -->
+        <div v-if="needsRange" class="flex gap-4">
+          <div class="flex-1">
+            <BaseTextField
+              v-model.number="rangeMin"
+              type="number"
+              label="Min Value"
+              placeholder="0"
+            />
+          </div>
+          <div class="flex-1">
+            <BaseTextField
+              v-model.number="rangeMax"
+              type="number"
+              label="Max Value"
+              placeholder="100"
+            />
+          </div>
+        </div>
   
-        <!-- Option Input -->
-        <div class="flex gap-2 items-start">
+        <!-- Option Input (Only for types that need options) -->
+        <div v-if="needsOptions" class="flex gap-2 items-start">
           <div class="flex-1 flex flex-col gap-1">
             <BaseTextField
               v-model="optionTitle"
-              label="Option Title"
-              placeholder="Option title (max 30 chars)"
+              :label="selectedTypeTitle + ' Option'"
+              :placeholder="selectedTypeTitle + ' option title (max 30 chars)'"
               :error="optionTitleError ? true : false"
               maxlength="30"
               @input="validateOptionTitle"
@@ -48,18 +68,16 @@
   
         <!-- Filterable toggle -->
         <label class="flex items-center gap-2 select-none">
-          <input
-            id="filterable-toggle"
-            type="checkbox"
-            v-model="isFilterable"
-            class="h-4 w-4 accent-primary"
+          <Checkbox
+            :checked="isFilterable"
+            label="Show this in filters"
+            @change="handleFilterChange"
           />
-          <span class="text-sm" for="filterable-toggle">Show this dropdown in filters</span>
         </label>
   
-        <!-- List of Added Options -->
+        <!-- List of Added Options (Only for types that need options) -->
         <ul
-          v-if="options.length"
+          v-if="needsOptions && options.length"
           class="mt-2 border border-border rounded-md p-2 bg-bg-input max-h-48 overflow-auto"
         >
           <li
@@ -79,7 +97,7 @@
       <div class="flex justify-end gap-2 px-6 py-4 border-t border-border sticky bottom-0 bg-bg-body">
         <Button variant="secondary" @click="cancel">Cancel</Button>
         <Button variant="primary" :disabled="!isValid || isCreatingVariable" @click="submit">
-          {{ isCreatingVariable ? 'Creating...' : " Create Dropdown" }}
+          {{ isCreatingVariable ? 'Creating...' : " Create Field" }}
         </Button>
       </div>
     </BaseModal>
@@ -96,6 +114,7 @@
   import { useQueryClient } from '@tanstack/vue-query';
   import { usePermissions } from '../../../composables/usePermissions';
   import { useVariableTypes } from '../../../queries/useSheets'
+  import Checkbox from '../../../components/ui/Checkbox.vue'
   /** Fetch variable types */
   const { data: variableTypes, isLoading: isVariableTypesLoading } = useVariableTypes();
 
@@ -106,7 +125,10 @@
   const emit = defineEmits<{
     (e: 'update:modelValue', v: boolean): void
   }>()
-  
+  function handleFilterChange(event: Event) {
+  const target = event.target as HTMLInputElement
+  isFilterable.value = target.checked
+}
   const props = withDefaults(defineProps<{ modelValue: boolean, sheetID: string }>(), { modelValue: false })
   
   /** Modal open proxy */
@@ -132,10 +154,24 @@
    watchEffect(()=>{ 
     console.log(selectedVariableType.value, 'variable types')
   })
+
+  const selectedTypeTitle = computed(() => {
+    return variableTypes.value?.find((t: any) => t._id === selectedVariableType.value)?.title
+  })
+
+  const needsOptions = computed(() => {
+    return ["Select", "Multi Select", "Radio", "Checkbox"].includes(selectedTypeTitle.value)
+  })
+
+  const rangeMin = ref(0)
+  const rangeMax = ref(100)
+  const needsRange = computed(() => {
+    return ["Range/Slider"].includes(selectedTypeTitle.value)
+  })
   
   /** NEW: Filterable toggle state */
   const isFilterable = ref(true)
-  
+
   /** Validation */
   const titleError = ref('')
   const optionTitleError = ref('')
@@ -175,7 +211,16 @@
 const isValid = computed(() => {
   const title = dropdownTitle.value.trim()
   const titleOk = title.length > 0 && title.length <= 30
-  return titleOk && options.value.length > 0
+  
+  if (needsOptions.value) {
+    return titleOk && options.value.length > 0 && selectedVariableType.value
+  }
+  
+  if (needsRange.value) {
+    return titleOk && rangeMax.value > rangeMin.value && selectedVariableType.value
+  }
+  
+  return titleOk && selectedVariableType.value
 })
 
   
@@ -192,6 +237,7 @@ const isValid = computed(() => {
     },
   })
   
+  
   /** Actions */
   function submit() {
     if (!isValid.value) return
@@ -199,7 +245,7 @@ const isValid = computed(() => {
     const payload = {
       description: description.value,
       title: dropdownTitle.value.trim(),
-      data: options.value,
+      data: needsOptions.value ? options.value : (needsRange.value ? [rangeMin.value, rangeMax.value] : []),
       workspace_module_id: moduleId.value,
       workspace_id: workspaceId.value,
       /** Use the checkbox value in the payload */
@@ -227,6 +273,8 @@ const isValid = computed(() => {
     optionTitle.value = ''
     description.value = ''
     options.value = []
+    rangeMin.value = 0
+    rangeMax.value = 100
     titleError.value = ''
     optionTitleError.value = ''
     isFilterable.value = true // reset to default

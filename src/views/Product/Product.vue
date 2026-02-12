@@ -508,6 +508,7 @@
   <SidePanel
     v-if="selectedCard?._id"
     :details="selectedCard"
+    :moduleId="moduleId"
     @close="
       () => {
         selectCardHandler({ variables: {} });
@@ -516,6 +517,7 @@
     @closeSidePanel="closeSidePanel"
     @comment:post="incrementCommentCount"
     :showPanel="selectedCard?._id ? true : false"
+    :sheetID="selected_sheet_id"
   />
   <CreateSheetModal
     size="md"
