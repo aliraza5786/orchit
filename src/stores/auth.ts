@@ -6,6 +6,7 @@ export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as any,
     initialized: false,
+    userId: localStorage.getItem('user_id') as string | null,
   }),
 
   getters: {
@@ -22,7 +23,12 @@ export const useAuthStore = defineStore('auth', {
 
       try {
         const res = await api.get('/profile')
-        this.user = res.data
+        this.user = res.data;
+        this.userId = res?.data?._id ?? null
+
+        if (this.userId) {
+          localStorage.setItem('user_id', this.userId)
+        }
       } catch {
         localStorage.removeItem('token')
         this.user = null
@@ -33,6 +39,7 @@ export const useAuthStore = defineStore('auth', {
 
     logout() {
       localStorage.removeItem('token')
+      localStorage.removeItem('user_id')
       this.user = null;
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')

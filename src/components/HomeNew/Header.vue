@@ -13,7 +13,7 @@
           </div>
 
           <!-- Navigation (Desktop Only) -->
-          <nav class="hidden md:flex items-center space-x-8">
+          <nav class="hidden lg:flex items-center space-x-8">
             <a href="#product" @click.prevent="scrollTo('product')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Product</a>
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Templates</a>
             <a href="#templates" @click.prevent="scrollTo('templates')" class="text-[var(--muted)] hover:text-[var(--text)] transition-colors">Marketplace</a>
@@ -41,13 +41,13 @@
             <router-link to="/login" class="text-[var(--text)] hover:text-[var(--muted)] transition-colors">Log in</router-link>
 
             <!-- Get started (Desktop Only) -->
-            <button @click="goToRegister" class="hidden cursor-pointer md:inline-block px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium">
+            <button @click="goToRegister" class="hidden cursor-pointer lg:inline-block px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium">
               Get started free
             </button>
 
             <!-- Menu Icon (Mobile Only) -->
             <button
-              class="md:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
+              class="lg:hidden p-2 rounded-lg hover:bg-[var(--surface-2)] transition-colors"
               @click="toggleSidebar"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

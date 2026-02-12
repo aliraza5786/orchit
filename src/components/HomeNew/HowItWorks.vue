@@ -41,11 +41,11 @@ function goToRegister(){
       <!-- Steps Container -->
       <div class="relative mb-16">
         <!-- Mobile: Vertical Stack -->
-        <div class="md:hidden space-y-12 overflow-hidden">
+        <div class="lg:hidden space-y-12 overflow-hidden">
           <div 
             v-for="step in steps" 
             :key="step.number"
-            class="text-center"
+            class="text-center mt-6"
           >
             <!-- Circle with Dotted Border -->
             <div class="relative inline-block mb-6">
@@ -64,14 +64,14 @@ function goToRegister(){
               ></div>
             </div>
             <!-- Description -->
-            <p class="text-[var(--muted)] max-w-sm mx-auto text-xs">
+            <p class="text-[var(--muted)] max-w-sm mx-auto text-sm">
               {{ step.description }}
             </p>
           </div>
         </div>
 
         <!-- Desktop: Horizontal Flow with Arrows -->
-        <div class="hidden md:block">
+        <div class="hidden lg:block">
           <div class="flex items-center justify-center mb-12">
             <template v-for="(step, index) in steps" :key="step.number">
               <!-- Step Circle -->
