@@ -226,12 +226,13 @@ const isValid = computed(() => {
   const queryClient = useQueryClient();
   const { mutate: createVariable, isPending: isCreatingVariable } = useCreateVar({
     onSuccess: async () => {
+    queryClient.removeQueries({
+           queryKey: ['cardDetail'],
+     })
      await emit('refetchCardDetails') 
      await queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
      await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-      queryClient.removeQueries({
-           queryKey: ['cardDetail'],
-     })
+    
      reset();
       isOpen.value = false
     },

@@ -381,7 +381,7 @@
                       placeholder="Enter text..."
                       :model-value="localVarValues[item.slug]"
                       @update:modelValue="(val: any) => localVarValues[item.slug] = val"
-                      @blur="(e: any) => handleVariableUpdate(localVarValues[item.slug], item.slug)"
+                      @blur="() => handleVariableUpdate(localVarValues[item.slug], item.slug)"
                     />
 
                     <!-- Date & Time Types -->
@@ -468,7 +468,7 @@
                       placeholder="Enter value..."
                       :model-value="localVarValues[item.slug]"
                       @update:modelValue="(val: any) => localVarValues[item.slug] = val"
-                      @blur="(e: any) => handleVariableUpdate(localVarValues[item.slug], item.slug)"
+                      @blur="() => handleVariableUpdate(localVarValues[item.slug], item.slug)"
                     />
                   </div>
                 </template>
@@ -730,6 +730,7 @@
     v-if="isEditVar"
     v-model="isEditVar"
     @refetchCardDetails="refetchCardDetails"
+    @update-variable="handleVariableDefinitionUpdate"
     :variable="selectedVarToEdit"
     :cardId="props.details._id"
     :sheetID="props?.sheetID ?? ''"
@@ -756,8 +757,9 @@ import {
   onMounted,
   onBeforeUnmount,
   defineAsyncComponent,
+  unref
 } from "vue";
-import { useLanes, useMoveCard, useDeleteVar } from "../../../queries/useSheets";
+import { useLanes, useMoveCard, useDeleteVar, useUpdateVar } from "../../../queries/useSheets";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import {
@@ -1493,23 +1495,62 @@ function handleTabPermission(targetTab: any) {
   }
   return true;
 }
-const { mutate: deleteVar, isPending: isDeleting } = useDeleteVar({
-  onSuccess: async () => {
-    await refetchCardDetails();
-    showDeleteModal.value = false
-    selectedItem.value = null
-    queryClient.removeQueries({
-           queryKey: ['cardDetail'],
-     })
-    toast.success("Variable deleted successfully");
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    queryClient.invalidateQueries({ queryKey: ["product-card"] });
-    queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
-  },
-  onError: () => {
-    toast.error("Failed to delete variable");
-  },
-});
+const { mutate: deleteVar, isPending: isDeleting } = useDeleteVar();
+
+const { mutate: updateVariable } = useUpdateVar();
+
+function handleVariableDefinitionUpdate({ id, cardId, payload }: any) {
+  // Optimistic Update
+  queryClient.cancelQueries({ queryKey: ['cardDetail', cardId] })
+  const previousCardDetail = queryClient.getQueryData(['cardDetail', cardId])
+
+  queryClient.setQueryData(['cardDetail', cardId], (old: any) => {
+      if (!old || !Array.isArray(old.variables)) return old;
+      
+      return {
+          ...old,
+          variables: old.variables.map((v: any) => {
+              if (v.variable_id === id || v._id === id) {
+                  return {
+                      ...v,
+                      title: payload.title,
+                      data: payload.data
+                  };
+              }
+              return v;
+          })
+      };
+  });
+
+  
+  updateVariable({ id, payload }, {
+    onError: (err: any) => {
+        // Rollback
+        if (previousCardDetail) queryClient.setQueryData(['cardDetail', cardId], previousCardDetail);
+        console.error('Mutation failed:', err?.response ?? err)
+        toast.error('Failed to update field definition')
+    },
+    onSettled: () => { 
+        // Invalidate lists
+        queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
+        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+        queryClient.invalidateQueries({ queryKey: ['product-card'] })
+
+          // Remove cached details for ALL other cards so they fetch fresh data when opened
+          queryClient.removeQueries({ 
+            queryKey: ['cardDetail'],
+            predicate: (query) => {
+                const qId = unref(query.queryKey[1]);
+                const isOtherCard = query.queryKey[0] === 'cardDetail' && qId !== cardId;
+                if (isOtherCard) console.log('Removing cache for other card:', qId);
+                return isOtherCard;
+            }
+        })
+        console.log('Invalidations complete.');
+    }
+  })
+}
+
 
 const showDeleteModal = ref(false)
 const selectedItem = ref<any>(null)
@@ -1522,9 +1563,68 @@ function handleDeleteVar(item: any) {
  function confirmDelete() {
   if (!selectedItem.value) return
 
+  const itemToDelete = selectedItem.value
+  const cardId = props.details._id
+  
+  // Update cardDetail (the source for SidePanel)
+  queryClient.cancelQueries({ queryKey: ['cardDetail', cardId] })
+  const previousCardDetail = queryClient.getQueryData(['cardDetail', cardId])
+
+  queryClient.setQueryData(['cardDetail', cardId], (old: any) => {
+    if (!old || !Array.isArray(old.variables)) return old
+    return {
+      ...old,
+      variables: old.variables.filter((v: any) => v.variable_id !== itemToDelete.variable_id),
+    }
+  })
+
+  // Also try to update product-card (list view cache) if safe
+  queryClient.cancelQueries({ queryKey: ['product-card', cardId] })
+  const previousProductCard = queryClient.getQueryData(['product-card', cardId])
+  
+  queryClient.setQueryData(['product-card', cardId], (old: any) => {
+    if (!old || !Array.isArray(old.variables)) return old
+    return {
+      ...old,
+      variables: old.variables.filter((v: any) => v.variable_id !== itemToDelete.variable_id),
+    }
+  })
+
+
+  // Close modal immediately
+  showDeleteModal.value = false
+  selectedItem.value = null
+  toast.success("Variable deleted successfully");
+
   deleteVar({
-    id: selectedItem.value.variable_id,
+    id: itemToDelete.variable_id,
     module_id: props.moduleId ?? ''
+  }, {
+    onError: () => {
+      // Rollback on error
+      if (previousCardDetail) queryClient.setQueryData(['cardDetail', cardId], previousCardDetail)
+      if (previousProductCard) queryClient.setQueryData(['product-card', cardId], previousProductCard)
+      toast.error("Failed to delete variable");
+    },
+    onSettled: () => {
+      console.log('Delete settled, running invalidations...');
+      // Invalidate list views
+      queryClient.invalidateQueries({ queryKey: ['product-card', cardId] })
+      queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+      queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
+
+      // Remove cached details for ALL other cards so they fetch fresh data when opened
+      queryClient.removeQueries({ 
+        queryKey: ['cardDetail'],
+        predicate: (query) => {
+          const qId = unref(query.queryKey[1]);
+          const isOtherCard = query.queryKey[0] === 'cardDetail' && qId !== cardId;
+          if (isOtherCard) console.log('Removing cache for other card during delete:', qId);
+          return isOtherCard;
+        }
+      })
+      console.log('Delete invalidations complete.');
+    }
   }) 
 }
 

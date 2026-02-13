@@ -87,8 +87,8 @@
       <!-- Footer -->
       <div class="flex justify-end gap-2 px-6 py-4 border-t border-border sticky bottom-0 bg-bg-body">
         <Button variant="secondary" @click="cancel">Cancel</Button>
-        <Button variant="primary" :loading="isUpdatingVariable  " :disabled="!isValid || isUpdatingVariable" @click="submit">
-          {{ isUpdatingVariable  ? 'Saving' : "Save Changes" }}
+        <Button variant="primary"   :disabled="!isValid " @click="submit">
+          Save
         </Button>
       </div>
     </BaseModal>
@@ -101,8 +101,7 @@
   import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
   import Button from '../../../components/ui/Button.vue'
   // import { useRouteIds } from '../../../composables/useQueryParams';
-  import { useUpdateVar, useVariableTypes } from '../../../queries/useSheets';
-  import { useQueryClient } from '@tanstack/vue-query';
+  import { useVariableTypes } from '../../../queries/useSheets'; 
   import { toast } from 'vue-sonner';
 
   /** Props & Emits */
@@ -118,6 +117,7 @@
   const emit = defineEmits<{
     (e: 'update:modelValue', v: boolean): void
     (e: 'refetchCardDetails'): Promise<void>
+    (e: 'update-variable', data: any): void
   }>()
   
   /** Fetch variable types */
@@ -235,32 +235,10 @@
     return titleOk
   })
 
-  const queryClient = useQueryClient();
-  const { mutate: updateVariable, isPending: isUpdatingVariable } = useUpdateVar({
-    onSuccess: async () => {
-      await emit('refetchCardDetails') 
-      await queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
-      await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-      await queryClient.invalidateQueries({ queryKey: ['product-card'] })
-      maybeClose()
-    },
-    onError: (err: any) => {
-      console.error('Mutation failed:', err?.response ?? err)
-      toast.error('Failed to update field definition')
-    },
-  })
+ 
 
 
-  let updateVarDone = false
-  let updateVarInitiated = false
 
-
-  const maybeClose = () => {
-    if (!updateVarInitiated || updateVarDone) {
-        toast.success('Field updated successfully')
-        isOpen.value = false
-    }
-  }
   
   /** Actions */
   function submit() {
@@ -277,18 +255,26 @@
     }
 
     if (definitionChanged) {
-        updateVarInitiated = true
+        // Construct payload
         const payload = { 
             title: dropdownTitle.value.trim(),
             data: needsOptions.value ? options.value : (needsRange.value ? [rangeMin.value, rangeMax.value] : []),
-            // workspace_module_id: moduleId.value,
-            // workspace_id: workspaceId.value, 
-            // type_id: selectedVariableType.value,
-            // sheet_id: props.sheetID,
         }
-        updateVariable({ id: props.variable.variable_id ?? props.variable._id, payload }, {
-            onSettled: () => { updateVarDone = true; maybeClose() }
+
+        const currentVarId = props.variable.variable_id ?? props.variable._id;
+        const cardId = props.cardId;
+
+        // Emit to parent for handling
+        emit('update-variable', {
+             id: currentVarId, 
+             cardId: cardId, 
+             payload
         })
+
+        // Close modal AFTER emitting
+        isOpen.value = false
+        
+        toast.success('Field updated successfully')
     }
   }
   
