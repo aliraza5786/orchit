@@ -387,9 +387,9 @@
                     <!-- Date & Time Types -->
                     <div
                       v-else-if="['Date', 'Date & Time'].includes(item.type)"
-                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-orchit-white/10"
                     >
-                      <i class="fa-regular fa-calendar text-[10px]"></i>
+                      <i class="fa-regular fa-calendar text-[14px]"></i>
                       <DatePicker
                         :disabled="!canEditCard"
                         placeholder="Set date"
