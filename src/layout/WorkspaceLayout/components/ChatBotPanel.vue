@@ -18,9 +18,11 @@
   <!-- HEADER -->
   <div class="px-6 py-2.5 bg-bg-card border-b border-border">
    <h3 class="text-lg text-text-primary font-semibold">
-    Configure your Agent
-   </h3>
-   <p class="text-text-secondary text-sm">Configure your Agent according to your workspace.</p>
+  Agent Setup & Controls
+</h3>
+<p class="text-text-secondary text-[13px]">
+  Configure agent modules, data sources, capabilities, and execution rules within your workspace.
+</p>
   <!-- TABS -->
   <div class="px-6 flex justify-center gap-6 text-sm pb-2">
     <button
@@ -55,147 +57,167 @@
 
     <!-- ================= PERSONA TAB ================= -->
     <div v-if="activeTab==='persona'" class="space-y-6">
-      <div class="space-y-1">
-        <label class="text-sm text-text-primary">Agent Name</label>
-        <input v-model="agentConfig.name"
-          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
-      </div>
-      <div class="space-y-1">
-        <label class="text-sm text-text-primary">Description</label>
-        <textarea v-model="agentConfig.description"
-          rows="4"
-          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
-      </div>
-      <div class="space-y-1">
-        <label class="text-sm text-text-primary">Role</label>
-        <input v-model="agentConfig.role"
-          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
-      </div>
-       <div class="space-y-1 relative" ref="levelRef">
-  <label class="text-sm text-text-primary">Level</label>
-
-  <!-- Trigger -->
-  <button
-    type="button"
-    @click="openLevel = !openLevel"
-    class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
-  >
-    <span>{{ selectedLevelLabel }}</span>
-
-    <!-- Chevron -->
-    <svg
-      class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-        d="M19 9l-7 7-7-7" />
-    </svg>
-  </button>
-
-  <!-- Dropdown -->
-  <div
-    v-if="openLevel"
-    class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
-  >
-    <ul class="py-1 text-sm">
-      <li
-        v-for="level in availableAgentsLevels"
-        :key="level.value"
-        @click="selectLevel(level.value)"
-        class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
-      >
-        {{ level.title }}
-      </li>
-    </ul>
-  </div>
-</div>
-
-      <!-- Array Sections Reused -->
-      <div v-for="(label,group) in personaGroups":key="group" class="space-y-2.5">
-
-        <label class="text-sm text-text-primary">{{label}}</label>
-
-        <div v-for="(item,i) in getAgentArrayField(group)" :key="item"
-          class="flex gap-3 mt-2">
-
-          <input v-model="agentConfig[group][i]"
-            class="flex-1 border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"/>
-
-          <button @click="agentConfig[group].splice(i,1)"
-            class="px-3 py-2.5 text-red-500 text-sm">Remove</button>
-
-        </div>
-
-        <button @click="agentConfig[group].push('')"
-          class="w-full px-4 py-2.5 text-sm bg-bg-body border border-border rounded-lg">
-          + Add
-        </button>
-
-      </div>
-
-      <!-- Capabilities -->
-      <div class="space-y-3">
-        <label class="text-sm text-text-primary">Capabilities</label>
-        <div v-for="capability in availableCapabilities"
-          :key="capability.value"
-          class="flex items-center gap-3 mt-2">
-          <input type="checkbox"
-            :value="capability.value"
-            v-model="agentConfig.capabilities"
-            class="h-4 w-4 rounded border-border"/>
-          <span class="text-sm text-text-primary">
-            {{ capability.label }}
-          </span>
-        </div>
-      </div>
-      <button
-  @click="submitPersona"
-  v-if="!agentsData"
-  :disabled="isLoading || !agentConfig.name || !agentConfig.role"
-  class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
->
-  <span v-if="isLoading">Saving...</span>
-  <span v-else>Save Agent</span>
-</button>
-<div class="flex gap-4">
-<button
-  @click="submitPersona"
-  v-if="agentsData"
-  :disabled="isLoading || !agentConfig.name || !agentConfig.role"
-  class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
->
-  <span v-if="isLoading">Deleting...</span>
-  <span v-else>Delete Agent</span>
-</button>
-<button
-  @click="submitPersona"
-  v-if="agentsData"
-  :disabled="isLoading || !agentConfig.name || !agentConfig.role"
-  class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
->
-  <span v-if="isLoading">Updating...</span>
-  <span v-else>Update Agent</span>
-</button>
-</div>
-
+  
+  <!-- Skeleton Loader -->
+  <div v-if="isLoadingSettings" class="space-y-4">
+    <!-- Agent Name -->
+    <div class="animate-pulse space-y-2">
+      <div class="h-5 w-1/3 bg-card rounded"></div>
+      <div class="h-10 w-full bg-card rounded"></div>
+    </div>
+    
+    <!-- Description -->
+    <div class="animate-pulse space-y-2">
+      <div class="h-5 w-1/4 bg-card rounded"></div>
+      <div class="h-24 w-full bg-card rounded"></div>
+    </div>
+    
+    <!-- Role -->
+    <div class="animate-pulse space-y-2">
+      <div class="h-5 w-1/5 bg-card rounded"></div>
+      <div class="h-10 w-full bg-card rounded"></div>
+    </div>
+    
+    <!-- Level Dropdown -->
+    <div class="animate-pulse space-y-2 relative">
+      <div class="h-5 w-1/6 bg-card rounded"></div>
+      <div class="h-10 w-full bg-card rounded"></div>
+    </div>
+    
+    <!-- Array Sections -->
+    <div v-for="n in 3" :key="'array-skel-'+n" class="space-y-2">
+      <div class="h-5 w-1/6 bg-card rounded"></div>
+      <div class="h-10 w-full bg-card rounded"></div>
     </div>
 
-    <!-- ================= KNOWLEDGE TAB ================= -->
-    <div v-if="activeTab==='knowledge'" class="space-y-6">
+    <!-- Capabilities -->
+    <div class="space-y-2">
+      <div v-for="n in 3" :key="'cap-skel-'+n" class="h-4 w-2/5 bg-card rounded"></div>
+    </div>
 
-  <div class="space-y-1">
-    <label class="text-sm text-text-primary">Source Type</label>
-    <select v-model="knowledgeConfig.source_type"
-      class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm">
-      <option value="INTERNAL_TICKET">Internal Ticket</option>
-      <option value="INTERNAL_MODULE">Internal Module</option>
-      <option value="WEB_SEARCH">Web Search</option>
-      <option value="PROMPT">Prompt</option>
-    </select>
+    <!-- Buttons -->
+    <div class="h-10 w-full bg-card rounded mt-4"></div>
   </div>
 
+  <!-- Full Form -->
+  <div v-else class="space-y-6">
+    <!-- Agent Name -->
+    <div class="space-y-1">
+      <label class="text-sm text-text-primary">Agent Name</label>
+      <input v-model="agentConfig.name"
+        class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
+    </div>
+
+    <!-- Description -->
+    <div class="space-y-1">
+      <label class="text-sm text-text-primary">Description</label>
+      <textarea v-model="agentConfig.description"
+        rows="4"
+        class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
+    </div>
+
+    <!-- Role -->
+    <div class="space-y-1">
+      <label class="text-sm text-text-primary">Role</label>
+      <input v-model="agentConfig.role"
+        class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
+    </div>
+
+    <!-- Level Dropdown -->
+    <div class="space-y-1 relative" ref="levelRef">
+      <label class="text-sm text-text-primary">Level</label>
+      <button
+        type="button"
+        @click="openLevel = !openLevel"
+        class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+      >
+        <span>{{ selectedLevelLabel }}</span>
+        <svg class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <div v-if="openLevel" class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg">
+        <ul class="py-1 text-sm">
+          <li v-for="level in availableAgentsLevels" :key="level.value" @click="selectLevel(level.value)"
+              class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover">
+            {{ level.title }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Array Sections Reused -->
+    <div v-for="(label,group) in personaGroups" :key="group" class="space-y-2.5">
+      <label class="text-sm text-text-primary">{{label}}</label>
+      <div v-for="(item,i) in getAgentArrayField(group)" :key="item" class="flex gap-3 mt-2">
+        <input v-model="agentConfig[group][i]"
+          class="flex-1 border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"/>
+        <button @click="agentConfig[group].splice(i,1)"
+          class="px-3 py-2.5 text-red-500 text-sm">Remove</button>
+      </div>
+      <button @click="agentConfig[group].push('')"
+        class="w-full px-4 py-2.5 text-sm bg-bg-body border border-border rounded-lg">
+        + Add
+      </button>
+    </div>
+
+    <!-- Capabilities -->
+    <div class="space-y-3">
+      <label class="text-sm text-text-primary">Capabilities</label>
+      <div v-for="capability in availableCapabilities" :key="capability.value" class="flex items-center gap-3 mt-2">
+        <input type="checkbox" :value="capability.value" v-model="agentConfig.capabilities" class="h-4 w-4 rounded border-border"/>
+        <span class="text-sm text-text-primary">{{ capability.label }}</span>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <button @click="submitPersona" v-if="!agentsData"
+      :disabled="isLoading || !agentConfig.name || !agentConfig.role"
+      class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+      <span v-if="isLoading">Saving...</span>
+      <span v-else>Save Agent</span>
+    </button>
+
+    <div class="flex gap-4">
+      <button @click="submitPersona" v-if="agentsData"
+        :disabled="isLoading || !agentConfig.name || !agentConfig.role"
+        class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <span v-if="isLoading">Deleting...</span>
+        <span v-else>Delete Agent</span>
+      </button>
+      <button @click="submitPersona" v-if="agentsData"
+        :disabled="isLoading || !agentConfig.name || !agentConfig.role"
+        class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <span v-if="isLoading">Updating...</span>
+        <span v-else>Update Agent</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+    <!-- ================= KNOWLEDGE TAB ================= -->
+  <div v-if="activeTab === 'knowledge'" class="space-y-6">
+  <!-- Sources -->
+  <div class="space-y-1">
+    <label class="text-sm text-text-primary">Sources</label>
+    <div class="flex flex-col mt-2 gap-2">
+      <label
+        v-for="source in ['INTERNAL_TICKET','INTERNAL_MODULE','WEB_SEARCH','PROMPT'] as const"
+        :key="source"
+        class="flex items-center gap-2 cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          v-model="knowledgeConfig.sources[source]"
+          class="h-4 w-4 rounded border-border"
+        />
+        <span class="text-sm text-text-primary">{{ source }}</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Metadata -->
   <div class="space-y-1">
     <label class="text-sm text-text-primary">Metadata (JSON)</label>
     <textarea v-model="knowledgeMetadataString"
@@ -203,10 +225,13 @@
       class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"/>
   </div>
 
+  <!-- Active Checkbox -->
   <div class="flex items-center gap-3">
     <input type="checkbox" v-model="knowledgeConfig.is_active"/>
     <span class="text-sm text-text-primary">Active Source</span>
   </div>
+
+  <!-- Submit Button -->
   <button
     @click="submitKnowledge"
     :disabled="isKnowledgeLoading || !moduleId || !moduleSelected"
@@ -215,29 +240,41 @@
     <span v-if="isKnowledgeLoading">Saving...</span>
     <span v-else>Save Knowledge</span>
   </button>
-
 </div>
+
     <!-- ================= TRAINING CONTENT TAB ================= -->
 <div v-if="activeTab==='upload'" class="space-y-6">
-
   <!-- Training Name -->
   <div class="space-y-1">
     <label class="text-sm text-text-primary">Training Name</label>
-    <input v-model="uploadConfig.name"
+    <input v-model="uploadConfig.name" disabled
       class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"/>
   </div>
 
   <!-- Type -->
-  <div class="space-y-1">
-    <label class="text-sm text-text-primary">Type</label>
-    <select v-model="uploadConfig.type"
-      class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm">
-      <option>TEXT</option>
-      <option>URL</option>
-      <option>CMS_PAGE</option>
-      <option>MIXED</option>
-    </select>
+ <div class="space-y-1 relative" ref="typeRef">
+  <label class="text-sm text-text-primary">Type</label>
+  <button
+    type="button"
+    @click="openType = !openType"
+    class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+  >
+    <span>{{ selectedTypeLabel }}</span>
+    <svg class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+
+  <div v-if="openType" class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg">
+    <ul class="py-1 text-sm">
+      <li v-for="type in availableUploadTypes" :key="type.value" 
+          @click="selectType(type.value)"
+          class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover">
+        {{ type.label }}
+      </li>
+    </ul>
   </div>
+</div>
 
   <!-- Training Text -->
   <div class="space-y-1">
@@ -289,7 +326,12 @@
     >
       <h5 class="text-[16px] font-medium flex items-center gap-2">
         <i class="fa-solid fa-sparkles text-accent"></i>
-        {{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0,20) + '...':moduleSelected }}  Agent
+        <span v-if="route?.path?.includes('peak')">
+          Peak Agent
+        </span>
+        <span v-else>
+          {{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0,20) + '...':moduleSelected }}  Agent
+        </span>
         <div class="flex items-center gap-2">
           <span
             class="w-2 h-2 rounded-full"
@@ -329,9 +371,9 @@
         ></i>
       </div>
     </div>
-
     <!-- Chat Area (UNCHANGED) -->
     <div ref="messagesContainer" class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
+      
       <!-- KEEPING YOUR FULL ORIGINAL CHAT CONTENT EXACTLY SAME -->
       <template v-if="orderedMessages.length || isAiThinkingBubbleVisible">
         <div
@@ -429,7 +471,12 @@
           </div>
           <span v-if="moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
           <div class="flex items-center font-medium text-text-primary" v-if="moduleId">
-            <span>{{ moduleSelected && moduleSelected?.length > 10 ? moduleSelected?.slice(0,10) + '...':moduleSelected }}</span>
+           <span v-if="route?.path?.includes('peak')">
+          Peak 
+        </span>
+        <span v-else>
+          {{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0,20) + '...':moduleSelected }}
+        </span>
           </div>
           <div v-if="moduleId" class="flex">
             <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
@@ -527,8 +574,12 @@ const isAiThinkingBubbleVisible = ref(false);
 const autoTextarea = ref<HTMLTextAreaElement | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 const pendingMessages = ref<any[]>([]);
+const openType = ref(false)
 const agentsData = computed(() =>{
   return agentStore.agentSettings.agent;
+})
+const knowledgeData = computed(() =>{
+  return agentStore?.agentSettings?.knowledge;
 })
 onMounted(() => {
   workspaceStore.initSelectedAgent();
@@ -543,7 +594,7 @@ const contextTitle = computed(() => {
   if (routeName.includes("process")) return "Process";
   if (routeName.includes("people")) return "People";
   if (routeName.includes("more")) return "More";
-  if (routeName.includes("pin")) return "Pin";
+  // if (routeName.includes("pin")) return "Pin";
   return "Workspace";
 });
 
@@ -666,8 +717,18 @@ function initSocket() {
     if (data.type === "agent-response" || data.type === "message_complete") {
       isAiThinkingBubbleVisible.value = false;
       agentStore.isAiTyping = false;
-      await agentStore.fetchChatHistory(workspaceId.value, true);
-      await agentStore.fetchCreatedEntities(workspaceId.value, true);
+      await agentStore.fetchChatHistory(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      );
+      await agentStore.fetchCreatedEntities(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      );
       scrollToBottom();
     }
   });
@@ -712,8 +773,18 @@ pendingMessages.value.push({
     });
 
     await Promise.all([
-      agentStore.fetchChatHistory(workspaceId.value),
-      agentStore.fetchCreatedEntities(workspaceId.value, false),
+        agentStore.fetchChatHistory(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      ),
+      agentStore.fetchCreatedEntities(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      )
     ]);
     pendingMessages.value = [];
     scrollToBottom();
@@ -740,17 +811,32 @@ async function acceptChanges(payload: any) {
     "Preview entities has been accepted and applied to workspace"
   );
   refetchModules();
-  agentStore.fetchCreatedEntities(workspaceId.value, false)
+  await agentStore.fetchCreatedEntities(
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined
+);
+
 }
 
 async function declineAgentGeneratedEntities() {
-  await agentStore.declineSuggestedEntities(workspaceId.value);
+  await agentStore.declineSuggestedEntities(
+  workspaceId.value,
+  entities.value?.[0]?.id
+);
   showAIPreview.value = false;
   toast.success(
     "Preview entities has been rejected and deleted"
   );
   refetchModules();
-  agentStore.fetchCreatedEntities(workspaceId.value, false)
+  await agentStore.fetchCreatedEntities(
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined
+);
+
 }
 
 // Close handler
@@ -772,25 +858,50 @@ const formatTimestamp = (ts?: string) => {
 onMounted(() => {
   initSocket();
   if (workspaceId.value && workspaceStore.showChatBotPanel) {
-    agentStore.fetchChatHistory(workspaceId.value, true);
-    agentStore.fetchCreatedEntities(workspaceId.value, false);
+    agentStore.fetchChatHistory(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      );
+    agentStore.fetchCreatedEntities(
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined
+);
+
     loadAgentSettings();
   }
   scrollToBottom();
 });
 watch(
-  () => workspaceStore.showChatBotPanel,
-  async (isOpen) => {
-    if (!workspaceId.value) return;
+  [
+    () => workspaceStore.showChatBotPanel,
+    () => moduleSelected.value
+  ],
+  async ([isOpen]) => {
+    if (!workspaceId.value || !isOpen) return;
 
-    if (isOpen) {
-      await agentStore.fetchChatHistory(workspaceId.value, true);
-      await agentStore.fetchCreatedEntities(workspaceId.value, false);
-      scrollToBottom();
-      loadAgentSettings();
-    }
+    await agentStore.fetchChatHistory(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      moduleSelected.value ?? undefined,
+      moduleId.value ?? undefined
+    );
+
+    await agentStore.fetchCreatedEntities(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      moduleSelected.value ?? undefined,
+      moduleId.value ?? undefined
+    );
+
+    await loadAgentSettings();
+
+    scrollToBottom();
   },
-  { immediate: true } // ← runs on mount also
+  { immediate: true }
 );
 
 onBeforeUnmount(() => {
@@ -877,42 +988,64 @@ const selectLevel = (value:string) => {
   agentConfig.level = value as any
   openLevel.value = false
 }
-
 watch(
-  agentsData,
-  (agent) => {
-    if (!agent) return
-
-    agentConfig.name = agent.name || ''
-    agentConfig.description = agent.description || ''
-    agentConfig.role = agent.role || ''
-    agentConfig.system_prompt = agent.system_prompt || ''
-    agentConfig.level = agent.level || 'MID'
-    agentConfig.responsibilities = Array.isArray(agent.responsibilities) ? [...agent.responsibilities] : []
-    agentConfig.skills = Array.isArray(agent.skills) ? [...agent.skills] : []
-    agentConfig.competencies = Array.isArray(agent.competencies) ? [...agent.competencies] : []
-    agentConfig.capabilities = Array.isArray(agent.capabilities) ? [...agent.capabilities] : []
-    agentConfig.conditions_rules = Array.isArray(agent.conditions_rules) ? [...agent.conditions_rules] : []
+  [() => agentsData.value, () => moduleSelected.value],
+  ([agent, selectedModule]) => {
+    if (agent) {
+      const moduleToUse = selectedModule || "Peak";
+      console.log(moduleToUse);
+      agentConfig.name = agent.name || '';
+      agentConfig.description = agent.description || '';
+      agentConfig.role = agent.role || '';
+      agentConfig.system_prompt = agent.system_prompt || '';
+      agentConfig.level = agent.level || 'MID';
+      agentConfig.responsibilities = Array.isArray(agent.responsibilities) ? [...agent.responsibilities] : [];
+      agentConfig.skills = Array.isArray(agent.skills) ? [...agent.skills] : [];
+      agentConfig.competencies = Array.isArray(agent.competencies) ? [...agent.competencies] : [];
+      agentConfig.capabilities = Array.isArray(agent.capabilities) ? [...agent.capabilities] : [];
+      agentConfig.conditions_rules = Array.isArray(agent.conditions_rules) ? [...agent.conditions_rules] : [];
+    } else {
+      // Reset all fields when no data
+      agentConfig.name = '';
+      agentConfig.description = '';
+      agentConfig.role = '';
+      agentConfig.system_prompt = '';
+      agentConfig.level = 'MID';
+      agentConfig.responsibilities = [];
+      agentConfig.skills = [];
+      agentConfig.competencies = [];
+      agentConfig.capabilities = [];
+      agentConfig.conditions_rules = [];
+    }
   },
-  { immediate: true } // populate immediately if agentsData already has value
-)
+  { immediate: true }
+);
 interface KnowledgeConfig {
   module_id: string
   module_name: string
-  source_type: "INTERNAL_TICKET" | "INTERNAL_MODULE" | "WEB_SEARCH" | "PROMPT"
+  sources: Record<"INTERNAL_TICKET" | "INTERNAL_MODULE" | "WEB_SEARCH" | "PROMPT", boolean>
   is_active: boolean
   metadata: Record<string, any>
 }
-
-
 const knowledgeConfig = reactive<KnowledgeConfig>({
   module_id: moduleId.value,
   module_name: moduleSelected.value,
-  source_type: 'INTERNAL_TICKET',
+  sources: {
+    INTERNAL_TICKET: true,
+    INTERNAL_MODULE: false,
+    WEB_SEARCH: false,
+    PROMPT: false
+  },
   is_active: true,
   metadata: {}
 })
-
+interface KnowledgePayload {
+  module_id: string
+  module_name: string
+  sources: Array<{ source_type: string }>
+  is_active: boolean
+  metadata: Record<string, any>
+}
 const knowledgeMetadataString = computed({
   get: () => JSON.stringify(knowledgeConfig.metadata, null, 2),
   set: (val: string) => {
@@ -924,22 +1057,123 @@ const knowledgeMetadataString = computed({
   }
 })
 
-// submit knowlege
 const isKnowledgeLoading = ref(false)
 
+interface KnowledgeItem {
+  _id: string
+  name: string
+  description?: string | null
+  source_type: "INTERNAL_TICKET" | "INTERNAL_MODULE" | "WEB_SEARCH" | "PROMPT"
+  metadata: {
+    module_id?: string
+    module_name?: string
+    priority?: string
+    category?: string
+    tags?: string[]
+    created_by?: string
+    notes?: string
+    agent_id?: string
+    [key: string]: any
+  }
+  is_active: boolean
+  created_by?: string
+  updated_by?: string
+  created_at?: string
+  updated_at?: string | null
+  is_trash?: boolean
+  deleted_at?: string | null
+  deleted_by?: string | null
+  __v?: number
+}
+watch(
+  [knowledgeData, () => moduleSelected.value],
+  ([data, selectedModule]) => {
+    console.log("knowledge data", knowledgeData.value);
+    
+    if (data && data.length > 0) {
+      // Filter all knowledge items that match the selected module
+      const knowledgeForModule = data.filter(
+        (k: KnowledgeItem) => k.metadata?.module_name === selectedModule
+      )
+
+      if (knowledgeForModule.length > 0) {
+        // Get module_id and module_name from the first matching item
+        const firstItem = knowledgeForModule[0]
+        knowledgeConfig.module_id = firstItem.metadata?.module_id || moduleId.value
+        knowledgeConfig.module_name = firstItem.metadata?.module_name || selectedModule || ''
+
+        // Build the sources object based on which source_types exist
+        const defaultSources = {
+          INTERNAL_TICKET: false,
+          INTERNAL_MODULE: false,
+          WEB_SEARCH: false,
+          PROMPT: false
+        }
+
+        // Check each item's source_type and mark as true if it exists
+        knowledgeForModule.forEach((item: KnowledgeItem) => {
+          if (item.source_type in defaultSources) {
+            defaultSources[item.source_type as keyof typeof defaultSources] = true
+          }
+        })
+
+        knowledgeConfig.sources = defaultSources
+        
+        // Use is_active from the first item (or true if all items have is_active: true)
+        knowledgeConfig.is_active = knowledgeForModule.every((item: KnowledgeItem) => item.is_active)
+        
+        // Merge metadata from the first item (you can customize this logic)
+        knowledgeConfig.metadata = firstItem.metadata || {}
+        return
+      }
+    }
+
+    // No data or no matching module — reset defaults
+    knowledgeConfig.module_id = moduleId.value
+    knowledgeConfig.module_name = selectedModule || ''
+    knowledgeConfig.sources = {
+      INTERNAL_TICKET: true,
+      INTERNAL_MODULE: false,
+      WEB_SEARCH: false,
+      PROMPT: false
+    }
+    knowledgeConfig.is_active = true
+    knowledgeConfig.metadata = {}
+  },
+  { immediate: true }
+)
+const getSelectedSourcesArray = (sources: KnowledgeConfig['sources']): Array<keyof typeof sources> => {
+  return Object.keys(sources).filter(key => sources[key as keyof typeof sources]) as Array<keyof typeof sources>
+}
 const submitKnowledge = async () => {
   if (!workspaceId.value) return
   isKnowledgeLoading.value = true
 
   try {
-    await agentStore.trainKnowledge(workspaceId.value, knowledgeConfig)
+    const selectedSources = getSelectedSourcesArray(knowledgeConfig.sources)
+    
+    // Transform sources to the required format
+    const payload: KnowledgePayload = {
+      module_id: knowledgeConfig.module_id,
+      module_name: knowledgeConfig.module_name,
+      sources: selectedSources.map(source => ({ source_type: source })),
+      is_active: knowledgeConfig.is_active,
+      metadata: knowledgeConfig.metadata
+    }
+    
+    await agentStore.trainKnowledge(workspaceId.value, payload)
     toast.success("Knowledge trained successfully!")
 
-    // Clear fields after successful save
+    // Reset after save
     knowledgeConfig.module_id = ''
     knowledgeConfig.module_name = ''
     knowledgeConfig.metadata = {}
-    knowledgeConfig.source_type = 'INTERNAL_TICKET'
+    knowledgeConfig.sources = {
+      INTERNAL_TICKET: true,
+      INTERNAL_MODULE: false,
+      WEB_SEARCH: false,
+      PROMPT: false
+    }
     knowledgeConfig.is_active = true
 
   } catch (err) {
@@ -947,11 +1181,33 @@ const submitKnowledge = async () => {
     toast.error("Failed to train knowledge")
   } finally {
     isKnowledgeLoading.value = false
+    loadAgentSettings()
   }
 }
 
 /* ---------------- UPLOAD CONFIG ---------------- */
+// Define type options with labels
+const availableUploadTypes = [
+  { value: 'TEXT' as UploadType, label: 'Text Content' },
+  { value: 'URL' as UploadType, label: 'URL/Link' },
+  { value: 'CMS_PAGE' as UploadType, label: 'CMS Page' },
+  { value: 'MIXED' as UploadType, label: 'Mixed Content' }
+]
 
+// Computed property for selected type label
+const selectedTypeLabel = computed(() => {
+  const found = availableUploadTypes.find(t => t.value === uploadConfig.type)
+  return found ? found.label : uploadConfig.type
+})
+
+// Update select function
+const selectType = (type: UploadType) => {
+  uploadConfig.type = type
+  openType.value = false
+}
+const trainingData = computed(() =>{
+  return agentStore?.agentSettings?.training;
+})
 // Allowed types for training content
 type UploadType =
   | 'TEXT'
@@ -974,10 +1230,9 @@ interface UploadConfig {
   module_id: string
   module_name: string
 }
-
 // Reactive object with default values
 const uploadConfig = reactive<UploadConfig>({
-  name: '',
+  name: route.path.includes('peak') ? 'Peak Agent' : moduleSelected.value,
   text: '',
   type: 'TEXT',
   files: [],
@@ -1033,10 +1288,42 @@ const submitTrainingContent = async () => {
     toast.error('Failed to upload training content')
   } finally {
     isUploading.value = false
+    loadAgentSettings()
   }
 }
-
-
+watch(
+  [trainingData, () => moduleSelected.value],
+  ([data, selectedModule]) => {
+    console.log("training data changed", data);
+    console.log("training module", selectedModule);
+    
+    if (data) {
+      if(route.path?.includes('peak')){
+        uploadConfig.name = data.title || "Peak Agent"
+      } else {
+        uploadConfig.name = data.title || selectedModule
+      }
+      uploadConfig.text = data.source_meta?.text || ''
+      uploadConfig.type = (data.source_type as UploadType) || 'TEXT'
+      uploadConfig.module_id = moduleId.value || ''
+      uploadConfig.module_name = selectedModule || ''
+      uploadConfig.files = []
+    } else {
+      // Reset when no data
+      if(route.path?.includes('peak')){
+        uploadConfig.name = "Peak Agent"
+      } else {
+        uploadConfig.name = selectedModule || ''
+      }
+      uploadConfig.text = ''
+      uploadConfig.type = 'TEXT'
+      uploadConfig.module_id = moduleId.value || ''
+      uploadConfig.module_name = selectedModule || ''
+      uploadConfig.files = []
+    }
+  },
+  { immediate: true, deep: true }
+)
 type AgentArrayField =
   | 'responsibilities'
   | 'skills'
@@ -1105,12 +1392,15 @@ const submitPersona = async () => {
   }
 }
 // Get the agent if created
+const isLoadingSettings =ref(false)
 const loadAgentSettings = async () => { 
+isLoadingSettings.value=true;
   await agentStore.fetchAgentSettings(
   workspaceId.value,
   moduleId.value,
   moduleSelected.value
 )
+isLoadingSettings.value=false;
 }
 </script>
 <style scoped>
