@@ -104,7 +104,7 @@
   </template>
   
   <script setup lang="ts">
-  import { ref, computed, watchEffect } from 'vue'
+  import { ref, computed } from 'vue'
   import BaseModal from '../../../components/ui/BaseModal.vue'
   import BaseTextField from '../../../components/ui/BaseTextField.vue'
   import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
@@ -152,9 +152,7 @@
       _id: t._id,     // value bound to v-model
     }))
   })
-   watchEffect(()=>{ 
-    console.log(selectedVariableType.value, 'variable types')
-  })
+  
 
   const selectedTypeTitle = computed(() => {
     return variableTypes.value?.find((t: any) => t._id === selectedVariableType.value)?.title
@@ -258,11 +256,9 @@ const isValid = computed(() => {
       visible_on_card: false,
       type_id: selectedVariableType.value,
       sheet_id: props.sheetID,
-    }
-    console.log('>>> helo', payload)
+    } 
   
-    if (typeof createVariable !== 'function') {
-      console.error('createVariable is not a function. Got:', createVariable)
+    if (typeof createVariable !== 'function') { 
       return
     }
     createVariable({ payload }) // promise

@@ -380,7 +380,8 @@
                       :disabled="!canEditCard"
                       placeholder="Enter text..."
                       :model-value="localVarValues[item.slug]"
-                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                      @update:modelValue="(val: any) => localVarValues[item.slug] = val"
+                      @blur="(e: any) => handleVariableUpdate(localVarValues[item.slug], item.slug)"
                     />
 
                     <!-- Date & Time Types -->
@@ -466,7 +467,8 @@
                       :type="item.type === 'Number' ? 'number' : (item.type === 'Color Picker' ? 'color' : (item.type === 'Email' ? 'email' : (item.type === 'Password' ? 'password' : 'text')))"
                       placeholder="Enter value..."
                       :model-value="localVarValues[item.slug]"
-                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                      @update:modelValue="(val: any) => localVarValues[item.slug] = val"
+                      @blur="(e: any) => handleVariableUpdate(localVarValues[item.slug], item.slug)"
                     />
                   </div>
                 </template>
@@ -1359,7 +1361,7 @@ queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
 
     return { previousCard, previousLists };
   },
-  onSuccess: (serverCard: any, variables: any) => {
+  onSuccess: (serverCard: any, variables: any) => { 
     const cardId = variables.card_id;
     refetchCardDetails();
     // Update single card with authoritative server response
