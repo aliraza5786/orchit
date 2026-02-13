@@ -182,8 +182,10 @@ const { mutate: createRole, isPending } = useCreateRole({
 });
 
 // Helpers
-function generateSlug(val: string) {
-  form.slug = val
+function generateSlug(val: string | number) {
+  const stringValue = String(val);
+
+  form.slug = stringValue
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)+/g, '');
