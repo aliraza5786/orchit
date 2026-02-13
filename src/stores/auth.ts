@@ -24,10 +24,9 @@ export const useAuthStore = defineStore('auth', {
       try {
         const res = await api.get('/profile')
         this.user = res.data;
-        this.userId = res?.data?._id ?? null
-
-        if (this.userId) {
-          localStorage.setItem('user_id', this.userId)
+        this.userId = res?.data?.data?._id ?? null
+        if (res?.data) {
+          localStorage.setItem('user_id', res?.data?.data?._id)
         }
       } catch {
         localStorage.removeItem('token')
