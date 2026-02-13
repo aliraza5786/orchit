@@ -1393,13 +1393,13 @@ const submitPersona = async () => {
 }
 // Get the agent if created
 const isLoadingSettings =ref(false)
+const selectedModule = ref(route.path.includes('peak') ? "Peak" : moduleSelected.value)
 const loadAgentSettings = async () => { 
 isLoadingSettings.value=true;
   await agentStore.fetchAgentSettings(
   workspaceId.value,
   moduleId.value,
-  moduleSelected.value
-)
+ selectedModule.value)
 isLoadingSettings.value=false;
 }
 </script>
