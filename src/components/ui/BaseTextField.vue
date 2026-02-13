@@ -109,7 +109,7 @@ const { isDark } = useTheme();
 
 const props = withDefaults(
   defineProps<{
-    modelValue: string;
+    modelValue: string | number;
     label?: string;
     tooltip?: string;
     message?: string;
@@ -120,6 +120,7 @@ const props = withDefaults(
     theme?: string; 
   }>(),
   {
+    modelValue: '',
     size: 'md',
     type: 'text',
     error: false,
@@ -128,12 +129,12 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void
+  (e: 'update:modelValue', value: string | number): void
 }>();
 
 const model = computed({
   get: () => props.modelValue,
-  set: (val: string) => emit('update:modelValue', val),
+  set: (val: string | number) => emit('update:modelValue', val),
 });
 
 const isDarkTheme = computed(() => {

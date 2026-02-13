@@ -6,6 +6,8 @@ interface AgentChatPayload {
   workspace_id: string;
   message: string;
   module_id?: string;
+  module_name?:string;
+  user_id?:string;
   lane_id?: string;
   sheet_id?: string;
   card_id?: string;
@@ -48,9 +50,36 @@ export interface CreatedEntityItem {
   created_at: string;
   created_by?: string;
   module_id?: string;
+  module_name?:string;
+  user_id?:string;
   lane_id?: string;
   sheet_id?: string;
   card_id?: string;
+}
+interface KnowledgePayload {
+  module_id: string
+  module_name: string
+  sources: Array<{ source_type: string }>
+  is_active: boolean
+  metadata: Record<string, any>
+}
+interface UploadConfig {
+  name: string
+  text: string
+  type: 
+    | 'UPLOAD'
+    | 'URL'
+    | 'CMS_PAGE'
+    | 'TEXT'
+    | 'MIXED'
+    | 'INTERNAL_MODULE'
+    | 'INTERNAL_SHEET'
+    | 'INTERNAL_TICKET'
+    | 'WEB_SEARCH'
+    | 'PROMPT'
+  files: File[]
+  module_id: string
+  module_name: string
 }
 
 export const useAgentStore = defineStore("agent", {
@@ -61,7 +90,10 @@ export const useAgentStore = defineStore("agent", {
     isAiTyping: false,
     isLoadingHistory: false,
     isLoadingEntities: false,
-    isAcceptingEntities:false
+    isAcceptingEntities:false,
+    agentSettings: {} as Record<string, any>,
+    isLoadingSettings: false,
+    isLoadingKnowledge: false,
   }),
 
   getters: {
@@ -95,51 +127,130 @@ export const useAgentStore = defineStore("agent", {
       }
     },
 
-    async fetchChatHistory(workspace_id: string, forceRefresh = false) {
-      if (!workspace_id) return;
-      this.isLoadingHistory = true;
-      try {
-        const cacheBuster = forceRefresh ? `?_t=${Date.now()}` : '';
-        const url = `${baseUrl}agent-chat/${workspace_id}/history${cacheBuster}`;
-        const res = await api.request<{ data: { chats: ChatSession[], pagination: any } }>({
-          url,
-          method: "GET",
-          headers: forceRefresh ? {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          } : undefined,
-        });
-        const newChats = res.data.data?.chats ?? [];
-        this.chatHistory = [...newChats];
-        
-      } catch (err) {
-        console.error("❌ Failed to fetch chat history:", err);
-      } finally {
-        this.isLoadingHistory = false;
-      }
-    },
+  async fetchChatHistory(
+  workspace_id: string,
+  user_id?: string,
+  module_name?: string,
+  module_id?: string,
+  forceRefresh = false
+) {
+  if (!workspace_id) return;
 
-    async fetchCreatedEntities(workspace_id: string, forceRefresh = false) {
-      if (!workspace_id) return;
-      this.isLoadingEntities = true;
-      try {
-        const res = await api.request<{ data: CreatedEntityItem[] }>({
-          url: `${baseUrl}agent-chat/${workspace_id}/created-entities`,
-          method: "GET",
-          headers: forceRefresh ? {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          } : undefined,
-        });
-        this.createdEntities = res.data.data ?? [];
-      } catch (err) {
-        console.error("❌ Failed to fetch created entities:", err);
-      } finally {
-        this.isLoadingEntities = false;
+  this.isLoadingHistory = true;
+
+  try {
+    const params = new URLSearchParams();
+
+    // helper to safely append params
+    const addParam = (key: string, value?: unknown) => {
+      if (
+        value !== undefined &&
+        value !== null &&
+        typeof value === "string" &&
+        value.trim() !== ""
+      ) {
+        params.append(key, value);
       }
-    },
+    };
+
+    if (forceRefresh) {
+      params.append("_t", Date.now().toString());
+    }
+
+    addParam("user_id", user_id);
+    addParam("module_name", module_name);
+    addParam("module_id", module_id);
+
+    const query = params.toString();
+
+    const url = `${baseUrl}agent-chat/${workspace_id}/history/${
+      query ? `?${query}` : ""
+    }`;
+
+    const res = await api.request<{
+      data: { chats: ChatSession[]; pagination: any };
+    }>({
+      url,
+      method: "GET",
+      headers: forceRefresh
+        ? {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          }
+        : undefined,
+    });
+
+    const newChats = res.data?.data?.chats ?? [];
+    this.chatHistory = [...newChats];
+
+  } catch (err) {
+    console.error("❌ Failed to fetch chat history:", err);
+  } finally {
+    this.isLoadingHistory = false;
+  }
+},
+
+   async fetchCreatedEntities(
+  workspace_id: string,
+  user_id?: string,
+  module_name?: string,
+  module_id?: string,
+  forceRefresh = false
+) {
+  if (!workspace_id) return;
+
+  this.isLoadingEntities = true;
+
+  try {
+    const params = new URLSearchParams();
+
+    // helper to safely append params
+    const addParam = (key: string, value?: unknown) => {
+      if (
+        value !== undefined &&
+        value !== null &&
+        typeof value === "string" &&
+        value.trim() !== ""
+      ) {
+        params.append(key, value);
+      }
+    };
+
+    if (forceRefresh) {
+      params.append("_t", Date.now().toString());
+    }
+
+    addParam("user_id", user_id);
+    addParam("module_name", module_name);
+    addParam("module_id", module_id);
+
+    const query = params.toString();
+
+    const url = `${baseUrl}agent-chat/${workspace_id}/created-entities/${
+      query ? `?${query}` : ""
+    }`;
+
+    const res = await api.request<{ data: CreatedEntityItem[] }>({
+      url,
+      method: "GET",
+      headers: forceRefresh
+        ? {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          }
+        : undefined,
+    });
+
+    this.createdEntities = res.data?.data ?? [];
+
+  } catch (err) {
+    console.error("❌ Failed to fetch created entities:", err);
+  } finally {
+    this.isLoadingEntities = false;
+  }
+},
    async acceptEntities(payload: any) {
   this.isAcceptingEntities = true;
   try {
@@ -168,8 +279,12 @@ export const useAgentStore = defineStore("agent", {
     clearCreatedEntities() {
       this.createdEntities = [];
     },
-    async declineSuggestedEntities(workspace_id: string) {
+   async declineSuggestedEntities(
+  workspace_id: string,
+  entity_id?: string
+) {
   if (!workspace_id) return;
+
   this.isLoadingHistory = true;
 
   try {
@@ -180,18 +295,146 @@ export const useAgentStore = defineStore("agent", {
     }>({
       url,
       method: "DELETE",
+      data: entity_id ? { entity_id } : undefined, // ✅ body payload
       headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
       },
     });
+
     return res.data;
+
   } catch (err) {
     console.error("❌ Failed to decline suggested entities:", err);
   } finally {
     this.isLoadingHistory = false;
   }
-}
+},
+async trainPersona(workspace_id: string, payload: {
+  module_id?: string
+  module_name?: string
+  name: string
+  description?: string
+  role?: string
+  level?: 'JUNIOR' | 'MID' | 'SENIOR' | 'EXPERT' | 'LEAD'
+  responsibilities?: string[]
+  skills?: string[]
+  competencies?: string[]
+  capabilities?: string[]
+  conditions_rules?: string[]
+}) {
+  if (!workspace_id) return;
+  this.isLoadingHistory = true; // optional: use a loading flag if needed
+
+  try {
+    const url = `${baseUrl}agent-chat/${workspace_id}/train/persona`;
+
+    const res = await api.request<{
+      data: any; // adjust type based on response
+    }>({
+      url,
+      method: "POST",
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+      data: payload,
+    });
+
+    return res.data;
+  } catch (err) {
+    console.error("❌ Failed to train persona:", err);
+  } finally {
+    this.isLoadingHistory = false;
+  }
+},
+async fetchAgentSettings(workspace_id: string, module_id?: string, module_name?: string) {
+      if (!workspace_id) return
+
+      this.isLoadingSettings = true
+
+      try {
+        const queryParams = new URLSearchParams()
+        if (module_id) queryParams.append("module_id", module_id)
+        if (module_name) queryParams.append("module_name", module_name)
+
+        const url = `${baseUrl}agent-chat/${workspace_id}/settings?${queryParams.toString()}`
+
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        })
+
+        this.agentSettings = res.data.data
+        return res.data.data
+      } catch (err) {
+        console.error("❌ Failed to fetch agent settings:", err)
+      } finally {
+        this.isLoadingSettings = false
+      }
+    },
+   async trainKnowledge(workspace_id: string, payload: KnowledgePayload) {
+  if (!workspace_id) return
+  this.isLoadingKnowledge = true
+
+  try {
+    const url = `/agent-chat/${workspace_id}/train/knowledge`
+
+    const res = await api.request<{ data: any }>({
+      url,
+      method: "POST",
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+      data: payload
+    })
+
+    return res.data
+  } catch (err) {
+    console.error("❌ Failed to train knowledge:", err)
+    throw err
+  } finally {
+    this.isLoadingKnowledge = false
+  }
+},
+    async uploadTrainingContent(workspace_id: string, payload: UploadConfig) {
+      if (!workspace_id) return
+
+      const formData = new FormData()
+      formData.append('module_id', payload.module_id)
+      formData.append('module_name', payload.module_name)
+      formData.append('name', payload.name)
+      formData.append('text', payload.text)
+      formData.append('type', payload.type)
+
+      // append files if any
+      payload.files.forEach((file) => {
+        formData.append('files', file)
+      })
+
+      try {
+        const res = await api.post(
+          `/agent-chat/${workspace_id}/train/upload`,
+          formData,
+          {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          }
+        )
+        return res.data
+      } catch (err) {
+        console.error('❌ Failed to upload training content:', err)
+        throw err
+      }
+    }
+
   },
 });

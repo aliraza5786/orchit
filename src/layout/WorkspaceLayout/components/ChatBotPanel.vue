@@ -2,9 +2,9 @@
   <div
   v-if="workspaceStore.showChatBotPanel"
     :class="[
-        'flex h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] border border-orchit-white/5 overflow-x-hidden transition-all duration-300 ease-in-out',
+        'flex h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] border border-border overflow-x-hidden transition-all duration-300 ease-in-out',
         isExpanded
-          ? 'min-w-full max-w-full overflow-x-hidden'
+          ? 'min-w-full max-w-full'
           : 'min-w-full max-w-[380px] sm:min-w-[380px]',
       ]"
       role="complementary"
@@ -18,175 +18,320 @@
   <!-- HEADER -->
   <div class="px-6 py-2.5 bg-bg-card border-b border-border">
    <h3 class="text-lg text-text-primary font-semibold">
-    Configure your Agent
-   </h3>
-  </div>
+  Agent Setup & Controls
+</h3>
+<p class="text-text-secondary text-[13px]">
+  Configure agent modules, data sources, capabilities, and execution rules within your workspace.
+</p>
+  <!-- TABS -->
+  <div class="px-6 flex justify-center gap-6 text-sm pb-2">
+    <button
+      @click="activeTab='persona'"
+      :class="activeTab==='persona'
+        ? 'pt-3 border-b-2 border-accent text-accent font-bold'
+        : 'pt-3 text-text-primary font-bold'">
+      Agent
+    </button>
 
-  <!-- BODY -->
-  <div class="flex-1 overflow-y-auto p-6 space-y-8">
-    <div class="space-y-4">
-       <div class="flex justify-center items-center">
-    <div class="relative">
-      <!-- Profile Picture Display -->
-      <label 
-        for="profile-pic-input"
-        :class="[
-          'w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-colors',
-          profilePicture 
-            ? 'border-2 border-accent bg-bg-body overflow-hidden' 
-            : 'border-2 border-dashed border-accent bg-bg-body hover:bg-opacity-80'
-        ]"
-      >
-        <img 
-          v-if="profilePicture" 
-          :src="profilePicture" 
-          alt="Profile" 
-          class="w-full h-full object-cover"
-        />
-        <i v-else class="fa-solid fa-plus text-accent text-2xl"></i>
-      </label>
-      
-      <!-- Hidden File Input -->
-      <input
-        id="profile-pic-input"
-        type="file"
-        accept="image/*"
-        @change="handleFileChange"
-        class="hidden"
-      />
+    <button
+      @click="activeTab='knowledge'"
+      :class="activeTab==='knowledge'
+        ? 'pt-3 border-b-2 border-accent text-accent font-bold'
+        : 'pt-3 text-text-primary font-bold'">
+      Knowledge Sources
+    </button>
+
+    <button
+      @click="activeTab='upload'"
+      :class="activeTab==='upload'
+        ? 'pt-3 border-b-2 border-accent text-accent font-bold'
+        : 'pt-3 text-text-primary font-bold'">
+      Training Content
+    </button>
+  </div>
+  </div>
+<!-- BODY -->
+<div class="flex-1 overflow-y-auto flex flex-col">
+
+  <div class="p-6 space-y-8">
+
+    <!-- ================= PERSONA TAB ================= -->
+    <div v-if="activeTab==='persona'" class="space-y-6">
+  
+  <!-- Skeleton Loader -->
+  <div v-if="isLoadingSettings" class="space-y-4">
+    <!-- Agent Name -->
+    <div class="animate-pulse space-y-2">
+      <div class="h-5 w-1/3 bg-card rounded"></div>
+      <div class="h-10 w-full bg-card rounded"></div>
     </div>
+    
+    <!-- Description -->
+    <div class="animate-pulse space-y-2">
+      <div class="h-5 w-1/4 bg-card rounded"></div>
+      <div class="h-24 w-full bg-card rounded"></div>
+    </div>
+    
+    <!-- Role -->
+    <div class="animate-pulse space-y-2">
+      <div class="h-5 w-1/5 bg-card rounded"></div>
+      <div class="h-10 w-full bg-card rounded"></div>
+    </div>
+    
+    <!-- Level Dropdown -->
+    <div class="animate-pulse space-y-2 relative">
+      <div class="h-5 w-1/6 bg-card rounded"></div>
+      <div class="h-10 w-full bg-card rounded"></div>
+    </div>
+    
+    <!-- Array Sections -->
+    <div v-for="n in 3" :key="'array-skel-'+n" class="space-y-2">
+      <div class="h-5 w-1/6 bg-card rounded"></div>
+      <div class="h-10 w-full bg-card rounded"></div>
+    </div>
+
+    <!-- Capabilities -->
+    <div class="space-y-2">
+      <div v-for="n in 3" :key="'cap-skel-'+n" class="h-4 w-2/5 bg-card rounded"></div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="h-10 w-full bg-card rounded mt-4"></div>
   </div>
-      <!-- Agent Name -->
-      <div class="space-y-1">
-        <label class="text-sm text-text-primary block">Agent Name</label>
-        <input
-          v-model="agentConfig.name"
-          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
-          placeholder="Enter agent name"
-        />
-      </div>
 
-      <!-- Description -->
-      <div class="space-y-2.5">
-        <label class="text-sm text-text-primary block">Description</label>
-        <textarea
-          v-model="agentConfig.description"
-          rows="3"
-          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all resize-none"
-          placeholder="Brief description of your Agent"
-        />
-      </div>
+  <!-- Full Form -->
+  <div v-else class="space-y-6">
+    <!-- Agent Name -->
+    <div class="space-y-1">
+      <label class="text-sm text-text-primary">Agent Name</label>
+      <input v-model="agentConfig.name"
+        class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
+    </div>
 
-      <!-- Instructions -->
-      <div class="space-y-2.5">
-        <label class="text-sm text-text-primary block">Instructions</label>
-        <textarea
-          v-model="agentConfig.instructions"
-          rows="4"
-          class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all resize-none"
-          placeholder="How should the AI behave?"
-        />
-      </div>
+    <!-- Description -->
+    <div class="space-y-1">
+      <label class="text-sm text-text-primary">Description</label>
+      <textarea v-model="agentConfig.description"
+        rows="4"
+        class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
+    </div>
 
-      <!-- Conversation Starters -->
-      <div class="space-y-2.5">
-        <label class="text-sm text-text-primary block">Conversation Starters</label>
-        <div class="space-y-2.5">
-          <div
-            v-for="(starter, index) in agentConfig.conversationStarters"
-            :key="starter"
-            class="flex gap-3 items-center"
-          >
-             <input
-              v-model="agentConfig.conversationStarters[index]"
-              class="flex-1 border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm placeholder-text-tertiary focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-1 transition-all"
-              placeholder="Add a conversation starter"
-            />
-            <button
-              @click="agentConfig.conversationStarters.splice(index, 1)"
-              class="px-3 py-2.5 text-red-500 text-sm font-medium rounded-lg hover:bg-red-50 transition-colors"
-            >
-              Remove
-            </button>
-           </div>
-          <button
-            @click="agentConfig.conversationStarters.push('')"
-            class="w-full mt-2 px-4 py-2.5 text-sm font-medium bg-bg-body border border-border rounded-lg hover:bg-bg-card transition-colors"
-          >
-            + Add Starter
-          </button>
-        </div>
-      </div>
+    <!-- Role -->
+    <div class="space-y-1">
+      <label class="text-sm text-text-primary">Role</label>
+      <input v-model="agentConfig.role"
+        class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"/>
+    </div>
 
-      <!-- Knowledge -->
-      <div class="space-y-2.5">
-        <label class="text-sm text-text-primary block">Knowledge</label>
-        <div class="space-y-3">
-          <!-- File Input -->
-          <input
-            type="file"
-            multiple
-            @change="handleKnowledgeUpload"
-            class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm cursor-pointer hover:border-accent transition-colors"
-          />
+    <!-- Level Dropdown -->
+    <div class="space-y-1 relative" ref="levelRef">
+      <label class="text-sm text-text-primary">Level</label>
+      <button
+        type="button"
+        @click="openLevel = !openLevel"
+        class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+      >
+        <span>{{ selectedLevelLabel }}</span>
+        <svg class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
 
-          <!-- Uploaded files list -->
-          <div v-if="agentConfig.knowledge.length" class="space-y-2">
-            <div
-              v-for="(file, index) in agentConfig.knowledge"
-              :key="index"
-              class="flex items-center justify-between gap-3 bg-bg-body border border-border rounded-lg px-4 py-2.5 hover:bg-bg-card transition-colors"
-            >
-              <span class="truncate text-sm text-text-primary">{{ file.name }}</span>
-              <button
-                @click="removeKnowledge(index)"
-                class="px-3 py-1.5 text-red-500 text-sm font-medium rounded hover:bg-red-50 transition-colors whitespace-nowrap"
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        </div>
+      <div v-if="openLevel" class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg">
+        <ul class="py-1 text-sm">
+          <li v-for="level in availableAgentsLevels" :key="level.value" @click="selectLevel(level.value)"
+              class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover">
+            {{ level.title }}
+          </li>
+        </ul>
       </div>
+    </div>
 
-      <!-- Capabilities -->
-      <div class="space-y-2.5">
-        <label class="text-sm text-text-primary block">Capabilities</label>
-        <div class="space-y-3">
-          <div
-            v-for="capability in availableCapabilities"
-            :key="capability.value"
-            class="flex items-center gap-3"
-          >
-            <input
-              type="checkbox"
-              :value="capability.value"
-              v-model="agentConfig.capabilities"
-              class="h-4 w-4 rounded border-border cursor-pointer"
-            />
-            <span class="text-sm text-text-primary">{{ capability.label }}</span>
-          </div>
-        </div>
+    <!-- Array Sections Reused -->
+    <div v-for="(label,group) in personaGroups" :key="group" class="space-y-2.5">
+      <label class="text-sm text-text-primary">{{label}}</label>
+      <div v-for="(item,i) in getAgentArrayField(group)" :key="item" class="flex gap-3 mt-2">
+        <input v-model="agentConfig[group][i]"
+          class="flex-1 border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"/>
+        <button @click="agentConfig[group].splice(i,1)"
+          class="px-3 py-2.5 text-red-500 text-sm">Remove</button>
       </div>
+      <button @click="agentConfig[group].push('')"
+        class="w-full px-4 py-2.5 text-sm bg-bg-body border border-border rounded-lg">
+        + Add
+      </button>
+    </div>
+
+    <!-- Capabilities -->
+    <div class="space-y-3">
+      <label class="text-sm text-text-primary">Capabilities</label>
+      <div v-for="capability in availableCapabilities" :key="capability.value" class="flex items-center gap-3 mt-2">
+        <input type="checkbox" :value="capability.value" v-model="agentConfig.capabilities" class="h-4 w-4 rounded border-border"/>
+        <span class="text-sm text-text-primary">{{ capability.label }}</span>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <button @click="submitPersona" v-if="!agentsData"
+      :disabled="isLoading || !agentConfig.name || !agentConfig.role"
+      class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+      <span v-if="isLoading">Saving...</span>
+      <span v-else>Save Agent</span>
+    </button>
+
+    <div class="flex gap-4">
+      <button @click="submitPersona" v-if="agentsData"
+        :disabled="isLoading || !agentConfig.name || !agentConfig.role"
+        class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <span v-if="isLoading">Deleting...</span>
+        <span v-else>Delete Agent</span>
+      </button>
+      <button @click="submitPersona" v-if="agentsData"
+        :disabled="isLoading || !agentConfig.name || !agentConfig.role"
+        class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        <span v-if="isLoading">Updating...</span>
+        <span v-else>Update Agent</span>
+      </button>
     </div>
   </div>
 </div>
+
+    <!-- ================= KNOWLEDGE TAB ================= -->
+  <div v-if="activeTab === 'knowledge'" class="space-y-6">
+  <!-- Sources -->
+  <div class="space-y-1">
+    <label class="text-sm text-text-primary">Sources</label>
+    <div class="flex flex-col mt-2 gap-2">
+      <label
+        v-for="source in ['INTERNAL_TICKET','INTERNAL_MODULE','WEB_SEARCH','PROMPT'] as const"
+        :key="source"
+        class="flex items-center gap-2 cursor-pointer"
+      >
+        <input
+          type="checkbox"
+          v-model="knowledgeConfig.sources[source]"
+          class="h-4 w-4 rounded border-border"
+        />
+        <span class="text-sm text-text-primary">{{ source }}</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Metadata -->
+  <div class="space-y-1">
+    <label class="text-sm text-text-primary">Metadata (JSON)</label>
+    <textarea v-model="knowledgeMetadataString"
+      rows="4"
+      class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"/>
+  </div>
+
+  <!-- Active Checkbox -->
+  <div class="flex items-center gap-3">
+    <input type="checkbox" v-model="knowledgeConfig.is_active"/>
+    <span class="text-sm text-text-primary">Active Source</span>
+  </div>
+
+  <!-- Submit Button -->
+  <button
+    @click="submitKnowledge"
+    :disabled="isKnowledgeLoading || !moduleId || !moduleSelected"
+    class="w-full mt-4 px-4 py-2.5 text-sm rounded-lg cursor-pointer text-white bg-accent hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+  >
+    <span v-if="isKnowledgeLoading">Saving...</span>
+    <span v-else>Save Knowledge</span>
+  </button>
+</div>
+
+    <!-- ================= TRAINING CONTENT TAB ================= -->
+<div v-if="activeTab==='upload'" class="space-y-6">
+  <!-- Training Name -->
+  <div class="space-y-1">
+    <label class="text-sm text-text-primary">Training Name</label>
+    <input v-model="uploadConfig.name" disabled
+      class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"/>
+  </div>
+
+  <!-- Type -->
+ <div class="space-y-1 relative" ref="typeRef">
+  <label class="text-sm text-text-primary">Type</label>
+  <button
+    type="button"
+    @click="openType = !openType"
+    class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+  >
+    <span>{{ selectedTypeLabel }}</span>
+    <svg class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+    </svg>
+  </button>
+
+  <div v-if="openType" class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg">
+    <ul class="py-1 text-sm">
+      <li v-for="type in availableUploadTypes" :key="type.value" 
+          @click="selectType(type.value)"
+          class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover">
+        {{ type.label }}
+      </li>
+    </ul>
+  </div>
+</div>
+
+  <!-- Training Text -->
+  <div class="space-y-1">
+    <label class="text-sm text-text-primary">Training Text</label>
+    <textarea v-model="uploadConfig.text"
+      rows="4"
+      class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"/>
+  </div>
+
+  <!-- File Upload -->
+  <input type="file" multiple
+    @change="handleUploadFiles"
+    class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm"/>
+
+  <!-- Uploaded Files List -->
+  <div v-for="(file,i) in uploadConfig.files"
+    :key="i"
+    class="flex justify-between text-sm border border-border rounded-lg px-3 py-2">
+    <span>{{file.name}}</span>
+    <button @click="uploadConfig.files.splice(i,1)"
+      class="text-red-500">Remove</button>
+  </div>
+
+  <!-- Save / Upload Button -->
+  <button
+    @click="submitTrainingContent"
+    :disabled="!uploadConfig.name || (uploadConfig.text === '' && uploadConfig.files.length === 0) || isUploading"
+    class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+  >
+    <span v-if="isUploading">Uploading...</span>
+    <span v-else>Upload Training Content</span>
+  </button>
+
+</div>
+  </div>
+</div>
+</div>
     <!-- CHAT PANEL WRAPPER -->
     <div
-    v-show="!isExpanded || isExpanded"
-     :class="(isExpanded && showConfigPanel)
-  ? 'w-1/2 overflow-hidden me-2'
-  : 'me-0 w-full'"
+  :class="(isExpanded && showConfigPanel)
+    ? 'w-1/2 overflow-hidden me-5'
+    : (isExpanded ? 'w-full me-5' : 'w-full me-0')"
   class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
 >
+
     <!-- Header -->
     <div
-     :class="(isExpanded && !showConfigPanel) ? 'me-2' : 'me-0'"
       class="flex justify-between items-center border-b border-border px-5 py-3 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
     >
       <h5 class="text-[16px] font-medium flex items-center gap-2">
         <i class="fa-solid fa-sparkles text-accent"></i>
-        {{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0,20) + '...':moduleSelected }}
+        <span v-if="route?.path?.includes('peak')">
+          Peak Agent
+        </span>
+        <span v-else>
+          {{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0,20) + '...':moduleSelected }}  Agent
+        </span>
         <div class="flex items-center gap-2">
           <span
             class="w-2 h-2 rounded-full"
@@ -200,6 +345,7 @@
           v-if="!isExpanded"      
           class="fa-solid cursor-pointer transition-colors fa-expand"
           @click="expandPanel"
+          title="Expand"
         ></i>
 
         <!-- Compress Icon -->
@@ -207,13 +353,16 @@
           v-else    
           class="fa-solid cursor-pointer transition-colors fa-compress"
           @click="compressPanel"
+          title="Compress"
         ></i>
 
         <button
           class="cursor-pointer"
           @click="openConfigPanel"
+          title="Agent Configuration"
         >
           <i class="fa-regular fa-ellipsis-vertical"></i>
+          
         </button>
 
         <i
@@ -222,9 +371,9 @@
         ></i>
       </div>
     </div>
-
     <!-- Chat Area (UNCHANGED) -->
     <div ref="messagesContainer" class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
+      
       <!-- KEEPING YOUR FULL ORIGINAL CHAT CONTENT EXACTLY SAME -->
       <template v-if="orderedMessages.length || isAiThinkingBubbleVisible">
         <div
@@ -307,7 +456,7 @@
         <p class="text-sm">No messages yet. Start a conversation!</p>
       </div>
     </div>
- <div class="p-4 border-t border-border bg-bg-card" :class="(isExpanded && !showConfigPanel) ? 'me-2' : 'me-0'">
+ <div class="px-4 py-2 border-t border-border bg-bg-card">
       <div
         v-if="contextTitle"
         class="mb-2 flex justify-between items-center gap-1.5"
@@ -322,7 +471,12 @@
           </div>
           <span v-if="moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
           <div class="flex items-center font-medium text-text-primary" v-if="moduleId">
-            <span>{{ moduleSelected && moduleSelected?.length > 10 ? moduleSelected?.slice(0,10) + '...':moduleSelected }}</span>
+           <span v-if="route?.path?.includes('peak')">
+          Peak 
+        </span>
+        <span v-else>
+          {{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0,20) + '...':moduleSelected }}
+        </span>
           </div>
           <div v-if="moduleId" class="flex">
             <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
@@ -364,7 +518,7 @@
         </button>
       </div>
 
-      <p class="text-[12px] text-text-secondary text-center mt-2">
+      <p class="text-[13px] text-text-secondary text-center mt-2">
         AI can make mistakes. Please verify important information.
       </p>
     </div>
@@ -396,17 +550,18 @@ import { useWorkspaceStore } from "../../../stores/workspace";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { useAgentStore } from "../../../stores/agentStore";
 import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
+import { onClickOutside } from '@vueuse/core'
 import { toast } from "vue-sonner";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
-
+import { useAuthStore } from "../../../stores/auth";
 // Stores
 const workspaceStore = useWorkspaceStore();
 const agentStore = useAgentStore();
-
+const authStore = useAuthStore()
 // Route
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
-
+const activeTab = ref<'persona' | 'knowledge' | 'upload'>('persona')
 // Refs
 const isExpanded = ref(false);
 const showConfigPanel = ref(false);
@@ -419,6 +574,13 @@ const isAiThinkingBubbleVisible = ref(false);
 const autoTextarea = ref<HTMLTextAreaElement | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 const pendingMessages = ref<any[]>([]);
+const openType = ref(false)
+const agentsData = computed(() =>{
+  return agentStore.agentSettings.agent;
+})
+const knowledgeData = computed(() =>{
+  return agentStore?.agentSettings?.knowledge;
+})
 onMounted(() => {
   workspaceStore.initSelectedAgent();
 });
@@ -432,7 +594,7 @@ const contextTitle = computed(() => {
   if (routeName.includes("process")) return "Process";
   if (routeName.includes("people")) return "People";
   if (routeName.includes("more")) return "More";
-  if (routeName.includes("pin")) return "Pin";
+  // if (routeName.includes("pin")) return "Pin";
   return "Workspace";
 });
 
@@ -555,8 +717,18 @@ function initSocket() {
     if (data.type === "agent-response" || data.type === "message_complete") {
       isAiThinkingBubbleVisible.value = false;
       agentStore.isAiTyping = false;
-      await agentStore.fetchChatHistory(workspaceId.value, true);
-      await agentStore.fetchCreatedEntities(workspaceId.value, true);
+      await agentStore.fetchChatHistory(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      );
+      await agentStore.fetchCreatedEntities(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      );
       scrollToBottom();
     }
   });
@@ -590,8 +762,10 @@ pendingMessages.value.push({
   try {
     await agentStore.sendMessage({
       workspace_id: workspaceId.value,
+      user_id:authStore.userId as string,
       message,
       module_id: moduleId.value as string,
+      module_name:moduleSelected.value as string,
       lane_id: route.params.lane_id as string,
       sheet_id: route.params.sheet_id as string,
       card_id: route.params.card_id as string,
@@ -599,8 +773,18 @@ pendingMessages.value.push({
     });
 
     await Promise.all([
-      agentStore.fetchChatHistory(workspaceId.value),
-      agentStore.fetchCreatedEntities(workspaceId.value, false),
+        agentStore.fetchChatHistory(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      ),
+      agentStore.fetchCreatedEntities(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      )
     ]);
     pendingMessages.value = [];
     scrollToBottom();
@@ -627,17 +811,32 @@ async function acceptChanges(payload: any) {
     "Preview entities has been accepted and applied to workspace"
   );
   refetchModules();
-  agentStore.fetchCreatedEntities(workspaceId.value, false)
+  await agentStore.fetchCreatedEntities(
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined
+);
+
 }
 
 async function declineAgentGeneratedEntities() {
-  await agentStore.declineSuggestedEntities(workspaceId.value);
+  await agentStore.declineSuggestedEntities(
+  workspaceId.value,
+  entities.value?.[0]?.id
+);
   showAIPreview.value = false;
   toast.success(
     "Preview entities has been rejected and deleted"
   );
   refetchModules();
-  agentStore.fetchCreatedEntities(workspaceId.value, false)
+  await agentStore.fetchCreatedEntities(
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined
+);
+
 }
 
 // Close handler
@@ -659,23 +858,50 @@ const formatTimestamp = (ts?: string) => {
 onMounted(() => {
   initSocket();
   if (workspaceId.value && workspaceStore.showChatBotPanel) {
-    agentStore.fetchChatHistory(workspaceId.value, true);
-    agentStore.fetchCreatedEntities(workspaceId.value, false);
+    agentStore.fetchChatHistory(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined
+      );
+    agentStore.fetchCreatedEntities(
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined
+);
+
+    loadAgentSettings();
   }
   scrollToBottom();
 });
 watch(
-  () => workspaceStore.showChatBotPanel,
-  async (isOpen) => {
-    if (!workspaceId.value) return;
+  [
+    () => workspaceStore.showChatBotPanel,
+    () => moduleSelected.value
+  ],
+  async ([isOpen]) => {
+    if (!workspaceId.value || !isOpen) return;
 
-    if (isOpen) {
-      await agentStore.fetchChatHistory(workspaceId.value, true);
-      await agentStore.fetchCreatedEntities(workspaceId.value, false);
-      scrollToBottom();
-    }
+    await agentStore.fetchChatHistory(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      moduleSelected.value ?? undefined,
+      moduleId.value ?? undefined
+    );
+
+    await agentStore.fetchCreatedEntities(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      moduleSelected.value ?? undefined,
+      moduleId.value ?? undefined
+    );
+
+    await loadAgentSettings();
+
+    scrollToBottom();
   },
-  { immediate: true } // ← runs on mount also
+  { immediate: true }
 );
 
 onBeforeUnmount(() => {
@@ -703,71 +929,478 @@ const compressPanel = () => {
 };
 // List of capabilities to show as checkboxes
 const availableCapabilities = [
-  { label: "Access Workspace Data", value: "workspaceData" },
   { label: "Web Browsing", value: "webBrowsing" },
-  { label: "Execute Actions", value: "actions" },
-  { label: "Summarize Documents", value: "summarizeDocs" },
-  { label: "Answer Questions", value: "answerQuestions" },
+  { label: "Workspace Knowledge", value: "workspaceData" },
+  { label: "Module knowledge", value: "module_knowledge" },
+  { label: "Sheet knowledge", value: "sheet_knowledge" },
+  { label: "Tickets knowledge", value: "tickets_knowledge" },
+  {label:"Docs, images, screenshots, text, videos, notes knowledge", value:"accept_knowldge"},
+  {label: "Prompt knowledge", value:"prompt_knowledge"}
 ];
 
-
 interface AgentConfig {
-  conversationStarters: string[];
-  knowledge: File[];
-  capabilities: string[];
-  actions: string[];
-  name: string;
-  description: string;
-  instructions: string;
-  tone: 'professional' | 'friendly' | 'balanced' | 'technical';
-  responseStyle: 'concise' | 'detailed' | 'step-by-step';
-  temperature: number;
-  allowWorkspaceData: boolean;
-  allowWeb: boolean;
+  name: string
+  description:string
+  role: string
+  system_prompt: string
+  level: 'JUNIOR' | 'MID' | 'SENIOR' | 'EXPERT' | 'LEAD'
+  responsibilities: string[]
+  skills: string[]
+  competencies: string[]
+  capabilities: string[]
+  conditions_rules: string[]
 }
 
 const agentConfig = reactive<AgentConfig>({
-  conversationStarters: [''],
-  knowledge: [],
-  capabilities: [''],
-  actions: [''],
   name: '',
-  description: '',
-  instructions: '',
-  tone: 'professional',
-  responseStyle: 'concise',
-  temperature: 0.5,
-  allowWorkspaceData: false,
-  allowWeb: false
-});
+  description:'',
+  role: '',
+  system_prompt: '',
+  level: 'MID',
+  responsibilities: [],
+  skills: [],
+  competencies: [],
+  capabilities: [],
+  conditions_rules: []
+})
 
-const handleKnowledgeUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (!target.files) return;
-  for (const file of Array.from(target.files)) {
-    agentConfig.knowledge.push(file);
-  }
-  // Clear input value so the same file can be uploaded again
-  target.value = "";
-};
+const openLevel = ref(false)
+const levelRef = ref(null)
 
-// Remove file
-const removeKnowledge = (index: number) => {
-  agentConfig.knowledge.splice(index, 1);
-};
-const profilePicture = ref<string | null>(null)
+onClickOutside(levelRef, () => {
+  openLevel.value = false
+})
+const availableAgentsLevels =[
+   {_id:'1',title:'Expert', value:'EXPERT'},
+   {_id:'2', title:'Lead', value:'LEAD'},
+   { _id:'3', title:"Senior", value:"SENIOR"}, 
+   {_id:'4', title:'Mid', value:'MID'}, 
+   {_id:'5', title:'Junior', value:'JUNIOR'}, ]
+const selectedLevelLabel = computed(() => {
+  return (
+    availableAgentsLevels.find(
+      l => l.value === agentConfig.level
+    )?.title || availableAgentsLevels[0].title
+  )
+})
 
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  const file = target.files?.[0]
-  
-  if (file) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      profilePicture.value = e.target?.result as string
+const selectLevel = (value:string) => {
+  agentConfig.level = value as any
+  openLevel.value = false
+}
+watch(
+  [() => agentsData.value, () => moduleSelected.value],
+  ([agent, selectedModule]) => {
+    if (agent) {
+      const moduleToUse = selectedModule || "Peak";
+      console.log(moduleToUse);
+      agentConfig.name = agent.name || '';
+      agentConfig.description = agent.description || '';
+      agentConfig.role = agent.role || '';
+      agentConfig.system_prompt = agent.system_prompt || '';
+      agentConfig.level = agent.level || 'MID';
+      agentConfig.responsibilities = Array.isArray(agent.responsibilities) ? [...agent.responsibilities] : [];
+      agentConfig.skills = Array.isArray(agent.skills) ? [...agent.skills] : [];
+      agentConfig.competencies = Array.isArray(agent.competencies) ? [...agent.competencies] : [];
+      agentConfig.capabilities = Array.isArray(agent.capabilities) ? [...agent.capabilities] : [];
+      agentConfig.conditions_rules = Array.isArray(agent.conditions_rules) ? [...agent.conditions_rules] : [];
+    } else {
+      // Reset all fields when no data
+      agentConfig.name = '';
+      agentConfig.description = '';
+      agentConfig.role = '';
+      agentConfig.system_prompt = '';
+      agentConfig.level = 'MID';
+      agentConfig.responsibilities = [];
+      agentConfig.skills = [];
+      agentConfig.competencies = [];
+      agentConfig.capabilities = [];
+      agentConfig.conditions_rules = [];
     }
-    reader.readAsDataURL(file)
+  },
+  { immediate: true }
+);
+interface KnowledgeConfig {
+  module_id: string
+  module_name: string
+  sources: Record<"INTERNAL_TICKET" | "INTERNAL_MODULE" | "WEB_SEARCH" | "PROMPT", boolean>
+  is_active: boolean
+  metadata: Record<string, any>
+}
+const knowledgeConfig = reactive<KnowledgeConfig>({
+  module_id: moduleId.value,
+  module_name: moduleSelected.value,
+  sources: {
+    INTERNAL_TICKET: true,
+    INTERNAL_MODULE: false,
+    WEB_SEARCH: false,
+    PROMPT: false
+  },
+  is_active: true,
+  metadata: {}
+})
+interface KnowledgePayload {
+  module_id: string
+  module_name: string
+  sources: Array<{ source_type: string }>
+  is_active: boolean
+  metadata: Record<string, any>
+}
+const knowledgeMetadataString = computed({
+  get: () => JSON.stringify(knowledgeConfig.metadata, null, 2),
+  set: (val: string) => {
+    try {
+      knowledgeConfig.metadata = JSON.parse(val || '{}')
+    } catch {
+      console.warn('Invalid JSON metadata')
+    }
   }
+})
+
+const isKnowledgeLoading = ref(false)
+
+interface KnowledgeItem {
+  _id: string
+  name: string
+  description?: string | null
+  source_type: "INTERNAL_TICKET" | "INTERNAL_MODULE" | "WEB_SEARCH" | "PROMPT"
+  metadata: {
+    module_id?: string
+    module_name?: string
+    priority?: string
+    category?: string
+    tags?: string[]
+    created_by?: string
+    notes?: string
+    agent_id?: string
+    [key: string]: any
+  }
+  is_active: boolean
+  created_by?: string
+  updated_by?: string
+  created_at?: string
+  updated_at?: string | null
+  is_trash?: boolean
+  deleted_at?: string | null
+  deleted_by?: string | null
+  __v?: number
+}
+watch(
+  [knowledgeData, () => moduleSelected.value],
+  ([data, selectedModule]) => {
+    console.log("knowledge data", knowledgeData.value);
+    
+    if (data && data.length > 0) {
+      // Filter all knowledge items that match the selected module
+      const knowledgeForModule = data.filter(
+        (k: KnowledgeItem) => k.metadata?.module_name === selectedModule
+      )
+
+      if (knowledgeForModule.length > 0) {
+        // Get module_id and module_name from the first matching item
+        const firstItem = knowledgeForModule[0]
+        knowledgeConfig.module_id = firstItem.metadata?.module_id || moduleId.value
+        knowledgeConfig.module_name = firstItem.metadata?.module_name || selectedModule || ''
+
+        // Build the sources object based on which source_types exist
+        const defaultSources = {
+          INTERNAL_TICKET: false,
+          INTERNAL_MODULE: false,
+          WEB_SEARCH: false,
+          PROMPT: false
+        }
+
+        // Check each item's source_type and mark as true if it exists
+        knowledgeForModule.forEach((item: KnowledgeItem) => {
+          if (item.source_type in defaultSources) {
+            defaultSources[item.source_type as keyof typeof defaultSources] = true
+          }
+        })
+
+        knowledgeConfig.sources = defaultSources
+        
+        // Use is_active from the first item (or true if all items have is_active: true)
+        knowledgeConfig.is_active = knowledgeForModule.every((item: KnowledgeItem) => item.is_active)
+        
+        // Merge metadata from the first item (you can customize this logic)
+        knowledgeConfig.metadata = firstItem.metadata || {}
+        return
+      }
+    }
+
+    // No data or no matching module — reset defaults
+    knowledgeConfig.module_id = moduleId.value
+    knowledgeConfig.module_name = selectedModule || ''
+    knowledgeConfig.sources = {
+      INTERNAL_TICKET: true,
+      INTERNAL_MODULE: false,
+      WEB_SEARCH: false,
+      PROMPT: false
+    }
+    knowledgeConfig.is_active = true
+    knowledgeConfig.metadata = {}
+  },
+  { immediate: true }
+)
+const getSelectedSourcesArray = (sources: KnowledgeConfig['sources']): Array<keyof typeof sources> => {
+  return Object.keys(sources).filter(key => sources[key as keyof typeof sources]) as Array<keyof typeof sources>
+}
+const submitKnowledge = async () => {
+  if (!workspaceId.value) return
+  isKnowledgeLoading.value = true
+
+  try {
+    const selectedSources = getSelectedSourcesArray(knowledgeConfig.sources)
+    
+    // Transform sources to the required format
+    const payload: KnowledgePayload = {
+      module_id: knowledgeConfig.module_id,
+      module_name: knowledgeConfig.module_name,
+      sources: selectedSources.map(source => ({ source_type: source })),
+      is_active: knowledgeConfig.is_active,
+      metadata: knowledgeConfig.metadata
+    }
+    
+    await agentStore.trainKnowledge(workspaceId.value, payload)
+    toast.success("Knowledge trained successfully!")
+
+    // Reset after save
+    knowledgeConfig.module_id = ''
+    knowledgeConfig.module_name = ''
+    knowledgeConfig.metadata = {}
+    knowledgeConfig.sources = {
+      INTERNAL_TICKET: true,
+      INTERNAL_MODULE: false,
+      WEB_SEARCH: false,
+      PROMPT: false
+    }
+    knowledgeConfig.is_active = true
+
+  } catch (err) {
+    console.error(err)
+    toast.error("Failed to train knowledge")
+  } finally {
+    isKnowledgeLoading.value = false
+    loadAgentSettings()
+  }
+}
+
+/* ---------------- UPLOAD CONFIG ---------------- */
+// Define type options with labels
+const availableUploadTypes = [
+  { value: 'TEXT' as UploadType, label: 'Text Content' },
+  { value: 'URL' as UploadType, label: 'URL/Link' },
+  { value: 'CMS_PAGE' as UploadType, label: 'CMS Page' },
+  { value: 'MIXED' as UploadType, label: 'Mixed Content' }
+]
+
+// Computed property for selected type label
+const selectedTypeLabel = computed(() => {
+  const found = availableUploadTypes.find(t => t.value === uploadConfig.type)
+  return found ? found.label : uploadConfig.type
+})
+
+// Update select function
+const selectType = (type: UploadType) => {
+  uploadConfig.type = type
+  openType.value = false
+}
+const trainingData = computed(() =>{
+  return agentStore?.agentSettings?.training;
+})
+// Allowed types for training content
+type UploadType =
+  | 'TEXT'
+  | 'URL'
+  | 'CMS_PAGE'
+  | 'MIXED'
+  | 'UPLOAD'
+  | 'INTERNAL_MODULE'
+  | 'INTERNAL_SHEET'
+  | 'INTERNAL_TICKET'
+  | 'WEB_SEARCH'
+  | 'PROMPT'
+
+// Updated UploadConfig interface
+interface UploadConfig {
+  name: string
+  text: string
+  type: UploadType
+  files: File[]
+  module_id: string
+  module_name: string
+}
+// Reactive object with default values
+const uploadConfig = reactive<UploadConfig>({
+  name: route.path.includes('peak') ? 'Peak Agent' : moduleSelected.value,
+  text: '',
+  type: 'TEXT',
+  files: [],
+  module_id: '',
+  module_name: ''
+})
+
+// File upload handler
+const handleUploadFiles = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  if (!target.files) return
+
+  const files = Array.from(target.files)
+  uploadConfig.files.push(...files)
+
+  // reset input so same file can be re-uploaded
+  target.value = ''
+}
+
+// Loading state
+const isUploading = ref(false)
+
+// Submit function
+const submitTrainingContent = async () => {
+  if (!workspaceId.value) return
+
+  // Validate
+  if (!uploadConfig.name || (uploadConfig.text === '' && uploadConfig.files.length === 0)) {
+    toast.error('Please provide a name and either text or files')
+    return
+  }
+
+  isUploading.value = true
+
+  try {
+    await agentStore.uploadTrainingContent(workspaceId.value, {
+      ...uploadConfig,
+      module_id: moduleId.value || '',
+      module_name: moduleSelected.value || ''
+    })
+
+    toast.success('Training content uploaded successfully!')
+
+    // Reset form
+    uploadConfig.name = ''
+    uploadConfig.text = ''
+    uploadConfig.type = 'TEXT'
+    uploadConfig.files = []
+    uploadConfig.module_id = ''
+    uploadConfig.module_name = ''
+  } catch (err) {
+    console.error(err)
+    toast.error('Failed to upload training content')
+  } finally {
+    isUploading.value = false
+    loadAgentSettings()
+  }
+}
+watch(
+  [trainingData, () => moduleSelected.value],
+  ([data, selectedModule]) => {
+    console.log("training data changed", data);
+    console.log("training module", selectedModule);
+    
+    if (data) {
+      if(route.path?.includes('peak')){
+        uploadConfig.name = data.title || "Peak Agent"
+      } else {
+        uploadConfig.name = data.title || selectedModule
+      }
+      uploadConfig.text = data.source_meta?.text || ''
+      uploadConfig.type = (data.source_type as UploadType) || 'TEXT'
+      uploadConfig.module_id = moduleId.value || ''
+      uploadConfig.module_name = selectedModule || ''
+      uploadConfig.files = []
+    } else {
+      // Reset when no data
+      if(route.path?.includes('peak')){
+        uploadConfig.name = "Peak Agent"
+      } else {
+        uploadConfig.name = selectedModule || ''
+      }
+      uploadConfig.text = ''
+      uploadConfig.type = 'TEXT'
+      uploadConfig.module_id = moduleId.value || ''
+      uploadConfig.module_name = selectedModule || ''
+      uploadConfig.files = []
+    }
+  },
+  { immediate: true, deep: true }
+)
+type AgentArrayField =
+  | 'responsibilities'
+  | 'skills'
+  | 'competencies'
+  | 'conditions_rules';
+
+// Map the fields to labels for template rendering
+const personaGroups: Record<AgentArrayField, string> = {
+  responsibilities: 'Responsibilities',
+  skills: 'Skills',
+  competencies: 'Competencies',
+  conditions_rules: 'Conditions / Rules'
+}
+
+// Helper function to safely get array fields
+const getAgentArrayField = (key: AgentArrayField): string[] => {
+  return agentConfig[key]
+}
+const isLoading =ref(false)
+const resetAgentConfig = () => {
+  agentConfig.name = ''
+  agentConfig.description = ''
+  agentConfig.role = ''
+  agentConfig.system_prompt = ''
+  agentConfig.level = 'MID'
+  agentConfig.responsibilities = []
+  agentConfig.skills = []
+  agentConfig.competencies = []
+  agentConfig.capabilities = []
+  agentConfig.conditions_rules = []
+}
+// create new Agent
+const submitPersona = async () => {
+  if (!workspaceId.value) {
+    toast.error('Workspace ID is missing!')
+    return
+  }
+  if (!agentConfig.name || !agentConfig.role) {
+    toast.error('Please fill in required fields!')
+    return
+  }
+ isLoading.value=true;
+  try {
+    const payload = {
+      module_id: moduleId.value,
+      module_name: moduleSelected.value,
+      name: agentConfig.name,
+      description: agentConfig.description,
+      role: agentConfig.role,
+      level: agentConfig.level,
+      responsibilities: agentConfig.responsibilities,
+      skills: agentConfig.skills,
+      competencies: agentConfig.competencies,
+      capabilities: agentConfig.capabilities,
+      conditions_rules: agentConfig.conditions_rules
+    }
+
+    const response = await agentStore.trainPersona(workspaceId.value, payload)
+    isLoading.value=false;
+    resetAgentConfig()
+    toast.success('Agent persona saved successfully!')
+    console.log('Persona response:', response)
+  } catch (err) {
+    isLoading.value=false;
+    toast.error('Failed to save agent persona!')
+  }
+}
+// Get the agent if created
+const isLoadingSettings =ref(false)
+const loadAgentSettings = async () => { 
+isLoadingSettings.value=true;
+  await agentStore.fetchAgentSettings(
+  workspaceId.value,
+  moduleId.value,
+  moduleSelected.value
+)
+isLoadingSettings.value=false;
 }
 </script>
 <style scoped>

@@ -367,8 +367,8 @@ const fuse = computed(() => {
 
 
 const filteredBoard = computed(() => {
-  const lists = Array.isArray(Lists.value?.pages?.[0]?.data)
-    ? Lists.value.pages[0].data
+  const lists = Array.isArray(Lists.value?.data)
+    ? Lists.value?.data
     : [];
 
   if (!searchQuery.value) {

@@ -3,7 +3,7 @@
     <div
       v-show="showPanel"
       :class="[
-        'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
+        'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.1)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
         isExpanded
           ? 'min-w-full max-w-full'
           : 'min-w-full max-w-[380px] sm:min-w-[380px]',
@@ -75,12 +75,12 @@
               </div>
               <BaseSelectField
                 :disabled="!canEditCard"
-                size="sm"
+                size="md"
                 :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
                 placeholder="Select option"
                 :allowCustom="false"
                 :model-value="localVarValues[item.slug]"
-                @update:modelValue="(val) => handleSelect(val, item.slug)"
+                @update:modelValue="(val) => handleVariableUpdate(val, item.slug)"
               />
             </div>
           </template>
@@ -211,7 +211,7 @@
                   </div>
                   <BaseSelectField
                     :disabled="!canEditCard"
-                    size="sm"
+                    size="md"
                     :options="laneOptions"
                     placeholder="Select tab"
                     :allowCustom="false"
@@ -240,7 +240,7 @@
                       Start Date
                     </div>
                     <div
-                      class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
                     >
                       <i class="fa-regular fa-calendar"></i>
                       <DatePicker
@@ -248,7 +248,7 @@
                         placeholder="Set start date"
                         class="w-full"
                         :model-value="form.startDate"
-                        emit-as="ymd"
+                        emit-as="ymd" 
                         @update:modelValue="setStartDate"
                       />
                     </div>
@@ -261,7 +261,7 @@
                       Target End
                     </div>
                     <div
-                      class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
+                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
                       :class="
                         endDateError
                           ? 'border-red-500'
@@ -304,30 +304,182 @@
                   :key="item.slug || `var-${index}`"
                 >
                   <div
-                    v-if="item.type === 'Select' && item.slug !== 'card-type' && item.slug !=='ok' && item.slug !=='process'"
+                    v-if="!['card-title', 'card-description', 'start-date', 'end-date', 'card-code', 'card-type', 'ok', 'process'].includes(item.slug)"
                     class="space-y-2 sm:col-span-1"
                   >
                     <div
-                      class="text-xs uppercase tracking-wider text-text-secondary"
+                      class="flex items-center justify-between group h-5"
                     >
-                      {{ item.title }}
+                      <div class="text-xs uppercase tracking-wider text-text-secondary">
+                        {{ item.title }}
+                      </div>
+                      <div  v-if="!['priority', 'card status', 'card priority'].includes(item.title?.toLowerCase())" class="hidden group-hover:flex items-center gap-1">
+                        <button
+                          v-if="canEditCard"
+                          @click="handleEditVar(item)"
+                          class="text-text-secondary hover:text-accent transition-colors p-1"
+                          title="Edit variable"
+                        >
+                          <i class="fa-regular fa-pen-to-square text-[11px]"></i>
+                        </button>
+                        <button
+                          v-if="canEditCard"
+                          @click="handleDeleteVar(item)"
+                          class="text-text-secondary hover:text-red-500 transition-colors p-1"
+                          title="Delete variable"
+                        >
+                          <i class="fa-regular fa-trash-can text-[10px]"></i>
+                        </button>
+                      </div>
                     </div>
+
+                    <!-- Selection Types -->
                     <BaseSelectField
+                      v-if="item.type === 'Select'"
                       :disabled="!canEditCard"
-                      size="sm"
-                      :options="item?.data
-                      .filter((e: any) => e !== 'ok' && e !== 'process')
-                      .map((e: any) => ({ _id: e, title: e }))"
+                      size="md"
+                      :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
                       placeholder="Select option"
                       :allowCustom="false"
                       :model-value="localVarValues[item.slug]"
-                      @update:modelValue="
-                        (val: any) => handleSelect(val, item.slug)
-                      "
+                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                    />
+
+                    <BaseMultiSelect
+                      v-else-if="item.type === 'Multi Select'"
+                      :disabled="!canEditCard"
+                      size="md"
+                      :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+                      placeholder="Select options"
+                      :model-value="Array.isArray(localVarValues[item.slug]) ? localVarValues[item.slug] : (localVarValues[item.slug] ? [localVarValues[item.slug]] : [])"
+                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                    />
+
+                    <!-- Radio Type -->
+                    <BaseRadioGroup
+                      v-else-if="item.type === 'Radio'"
+                      :disabled="!canEditCard"
+                      :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+                      :model-value="localVarValues[item.slug]"
+                      :name="item.slug"
+                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                    />
+
+                    <!-- Checkbox Type -->
+                    <BaseCheckboxGroup
+                      v-else-if="item.type === 'Checkbox'"
+                      :disabled="!canEditCard"
+                      :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+                      :model-value="localVarValues[item.slug]"
+                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                    />
+
+                    <!-- Textarea Type -->
+                    <BaseTextAreaField
+                      v-else-if="item.type === 'Textarea'"
+                      :disabled="!canEditCard"
+                      placeholder="Enter text..."
+                      :model-value="localVarValues[item.slug]"
+                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                    />
+
+                    <!-- Date & Time Types -->
+                    <div
+                      v-else-if="['Date', 'Date & Time'].includes(item.type)"
+                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
+                    >
+                      <i class="fa-regular fa-calendar text-[10px]"></i>
+                      <DatePicker
+                        :disabled="!canEditCard"
+                        placeholder="Set date"
+                        class="w-full"
+                        :model-value="localVarValues[item.slug]"
+                        emit-as="ymd"
+                        @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                      />
+                    </div>
+
+                    <!-- Time Type -->
+                    <div
+                      v-else-if="item.type === 'Time'"
+                      class="h-8 px-3 flex items-center gap-1 rounded-md bg-bg-input border border-orchit-white/10"
+                    >
+                      <i class="fa-regular fa-clock text-[14px]"></i>
+                      <TimePicker
+                        :disabled="!canEditCard"
+                        placeholder="Set time"
+                        class="w-full"
+                        :model-value="localVarValues[item.slug]"
+                        @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                      />
+                    </div>
+
+                    <!-- File Upload -->
+                    <FileUploader
+                      v-else-if="item.type === 'File Upload'"
+                      :disabled="!canEditCard"
+                      label=""
+                      :model-value="localVarValues[item.slug]"
+                      @update:model-value="(val: any) => handleVariableUpdate(val, item.slug)"
+                    />
+
+                    <!-- Switch/Toggle -->
+                    <div v-else-if="item.type === 'Switch/Toggle'" class="flex items-center gap-2 py-1">
+                      <Checkbox
+                        :disabled="!canEditCard"
+                        :checked="!!localVarValues[item.slug]"
+                        @change="(e: any) => handleVariableUpdate(e.target.checked, item.slug)"
+                        label="Enable"
+                      />
+                    </div>
+
+                    <!-- Person Type -->
+                    <AssigmentDropdown
+                      v-else-if="item.type === 'Person'"
+                      :disabled="!canEditCard"
+                      :seat="localVarValues[item.slug]"
+                      @assign="(users) => handleVariableUpdate(users, item.slug)"
+                    />
+
+                    <!-- Range/Slider Type -->
+                    <div v-else-if="item.type === 'Range/Slider'" class="space-y-1 py-1">
+                      <div class="flex justify-between text-[10px] text-text-secondary px-1">
+                        <span>Min: {{ item.data?.[0] || 0 }}</span>
+                        <span class="font-bold text-accent">{{ localVarValues[item.slug] ?? item.data?.[0] ?? 0 }}</span>
+                        <span>Max: {{ item.data?.[1] || 100 }}</span>
+                      </div>
+                      <input
+                        type="range"
+                        :min="Number(item.data?.[0]) || 0"
+                        :max="Number(item.data?.[1]) || 100"
+                        :disabled="!canEditCard"
+                        class="w-full h-1.5 bg-orchit-white/10 rounded-lg appearance-none cursor-pointer accent-accent"
+                        :value="localVarValues[item.slug] ?? item.data?.[0] ?? 0"
+                        @input="(e: any) => handleVariableUpdate(Number(e.target.value), item.slug)"
+                      />
+                    </div>
+
+                    <!-- Default: TextField (covers Text, Number, Email, Password, Color Picker, Label, Icon, testii) -->
+                    <BaseTextField
+                      v-else
+                      :disabled="!canEditCard || item.type === 'Label'"
+                      :type="item.type === 'Number' ? 'number' : (item.type === 'Color Picker' ? 'color' : (item.type === 'Email' ? 'email' : (item.type === 'Password' ? 'password' : 'text')))"
+                      placeholder="Enter value..."
+                      :model-value="localVarValues[item.slug]"
+                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
                     />
                   </div>
                 </template>
               </div>
+              <button 
+               @click="
+                  () => {
+                    isCreateVar = true; }"
+                class="w-full py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent cursor-pointer active:scale-95 transition-all duration-150 flex items-center justify-center gap-2"
+              >
+                 <i class="fa-solid fa-plus text-xs"></i>
+               Add Custom Fields
+              </button>
             </section>
             <section v-else-if="activeTab === 'history'">
               <!-- History timeline -->
@@ -564,6 +716,32 @@
       </div>
     </div>
   </Transition>
+
+  <CreateVariableModal
+    v-model="isCreateVar"
+    v-if="isCreateVar"
+    @refetchCardDetails="refetchCardDetails"
+    :sheetID="props?.sheetID ?? ''"
+  />
+
+  <EditVariableModal
+    v-if="isEditVar"
+    v-model="isEditVar"
+    @refetchCardDetails="refetchCardDetails"
+    :variable="selectedVarToEdit"
+    :cardId="props.details._id"
+    :sheetID="props?.sheetID ?? ''"
+  />
+  <ConfirmModal
+  v-model="showDeleteModal"
+  title="Delete Variable"
+  :itemLabel="'variable'"
+  :itemName="selectedItem?.title"
+  confirmText="Delete"
+  cancelText="Cancel"
+  :loading="isDeleting"
+  @confirm="confirmDelete"
+/>
 </template>
 
 <script setup lang="ts">
@@ -577,7 +755,7 @@ import {
   onBeforeUnmount,
   defineAsyncComponent,
 } from "vue";
-import { useLanes, useMoveCard } from "../../../queries/useSheets";
+import { useLanes, useMoveCard, useDeleteVar } from "../../../queries/useSheets";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import {
@@ -603,6 +781,7 @@ const BaseSelectField = defineAsyncComponent(
   () => import("../../../components/ui/BaseSelectField.vue"),
 );
 const DatePicker = defineAsyncComponent(() => import("./DatePicker.vue"));
+const TimePicker = defineAsyncComponent(() => import("./TimePicker.vue"));
 const AssigmentDropdown = defineAsyncComponent(
   () => import("./AssigmentDropdown.vue"),
 );
@@ -612,6 +791,36 @@ const Button = defineAsyncComponent(
 const SwitchTab = defineAsyncComponent(
   () => import("../../../components/ui/SwitchTab.vue"),
 );
+const BaseTextField = defineAsyncComponent(
+  () => import("../../../components/ui/BaseTextField.vue"),
+);
+const BaseTextAreaField = defineAsyncComponent(
+  () => import("../../../components/ui/BaseTextAreaField.vue"),
+);
+const FileUploader = defineAsyncComponent(
+  () => import("../../../components/ui/FileUploader.vue"),
+);
+const Checkbox = defineAsyncComponent(
+  () => import("../../../components/ui/Checkbox.vue"),
+);
+const BaseRadioGroup = defineAsyncComponent(
+  () => import("../../../components/ui/BaseRadioGroup.vue"),
+);
+const BaseCheckboxGroup = defineAsyncComponent(
+  () => import("../../../components/ui/BaseCheckboxGroup.vue"),
+);
+const BaseMultiSelect = defineAsyncComponent(
+  () => import("../../../components/ui/BaseMultiSelect.vue"),
+);
+
+const  ConfirmModal = defineAsyncComponent(()=> import ("../modals/ConfirmDeleteModal.vue"))
+
+import CreateVariableModal from "../modals/CreateVariableModal.vue";
+import EditVariableModal from "../modals/EditVariableModal.vue";
+const isCreateVar = ref(false);
+const isEditVar = ref(false);
+const selectedVarToEdit = ref<any>(null);
+
 
 const isExpanded = ref(false);
 
@@ -633,6 +842,8 @@ const props = defineProps({
   pin: { type: Boolean, default: false },
   showPanel: { type: Boolean, default: true },
   details: { type: Object as () => any, default: () => ({}) },
+  sheetID: { type: String, required: false }, 
+  moduleId:{type: String, required: false}
 });
 const emit = defineEmits([
   "close",
@@ -650,7 +861,7 @@ const {
   refetch: refetchCardDetails,
 } = useProductCard(propsID, {
   initialData: () => queryClient.getQueryData(["product-card", propsID.value]),
-  staleTime: 5 * 60 * 1000,
+  // staleTime: 5 * 60 * 1000,
   gcTime: 10 * 60 * 1000,
   refetchOnWindowFocus: false,
 });
@@ -1090,7 +1301,7 @@ const moveCard = useMoveCard({
     Object.assign(updatedCard, updatedVariables);
 
     Object.entries(updatedVariables).forEach(([key, value]) => {
-      // 1️⃣ variables array (sidebar)
+      //  variables array (sidebar)
       const idx = updatedCard.variables.findIndex(
         (v: any) => v.slug === key,
       );
@@ -1107,7 +1318,7 @@ const moveCard = useMoveCard({
         // parent reads from flat object
         updatedCard["card-description"] = value;
 
-        // ⚠️ if parent uses a different key, keep BOTH
+        // if parent uses a different key, keep BOTH
         updatedCard.description = value;
       }
     });
@@ -1236,13 +1447,20 @@ const initLocalVars = () => {
   if (cardDetails?.value?.variables) {
     const vars = cardDetails.value.variables ?? [];
     vars.forEach((v: any) => {
-      if (!v || v.type !== "Select") return;
-      const first =
-        Array.isArray(v.data) && v.data.length
-          ? (v.data[0]?.value ?? v.data[0]?._id ?? v.data[0])
-          : undefined;
-      localVarValues[v.slug] =
-        v.value ?? localVarValues[v.slug] ?? first ?? null;
+      if (!v) return;
+
+      if (v.type === "Select" || v.type === "Multi Select" || v.type === "Radio" || v.type === "Checkbox") {
+        const first =
+          Array.isArray(v.data) && v.data.length
+            ? (v.data[0]?.value ?? v.data[0]?._id ?? v.data[0])
+            : undefined;
+        localVarValues[v.slug] =
+          v.value ?? localVarValues[v.slug] ?? first ?? null;
+      } else if (v.type === "Switch/Toggle") {
+        localVarValues[v.slug] = !!v.value;
+      } else {
+        localVarValues[v.slug] = v.value ?? null;
+      }
     });
   }
 };
@@ -1250,7 +1468,7 @@ const initLocalVars = () => {
 onMounted(initLocalVars);
 watch(() => cardDetails.value, initLocalVars, { deep: true });
 
-function handleSelect(val: any, slug: string) {
+function handleVariableUpdate(val: any, slug: string) {
   localVarValues[slug] = val;
   const prev = (cardDetails.value?.variables ?? []).find(
     (v: any) => v.slug === slug,
@@ -1272,6 +1490,46 @@ function handleTabPermission(targetTab: any) {
     return false;
   }
   return true;
+}
+const { mutate: deleteVar, isPending: isDeleting } = useDeleteVar({
+  onSuccess: async () => {
+    await refetchCardDetails();
+    showDeleteModal.value = false
+    selectedItem.value = null
+    queryClient.removeQueries({
+           queryKey: ['cardDetail'],
+     })
+    toast.success("Variable deleted successfully");
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["product-card"] });
+    queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
+  },
+  onError: () => {
+    toast.error("Failed to delete variable");
+  },
+});
+
+const showDeleteModal = ref(false)
+const selectedItem = ref<any>(null)
+
+function handleDeleteVar(item: any) {
+  selectedItem.value = item
+  showDeleteModal.value = true
+}
+ 
+ function confirmDelete() {
+  if (!selectedItem.value) return
+
+  deleteVar({
+    id: selectedItem.value.variable_id,
+    module_id: props.moduleId ?? ''
+  }) 
+}
+
+
+function handleEditVar(item: any) {
+  selectedVarToEdit.value = item;
+  isEditVar.value = true;
 }
 </script>
 

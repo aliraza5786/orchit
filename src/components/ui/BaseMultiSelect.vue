@@ -17,7 +17,7 @@
     <!-- Field (anchor) -->
     <div
       ref="anchorRef"
-      class="relative px-3 py-2 rounded-xl overflow-x-auto w-full border text-sm"
+      class="relative px-3 py-2 rounded-md overflow-x-auto w-full border text-sm"
       :class="[
         size === 'md' ? 'h-10' : 'h-12',
         isDarkTheme ? 'bg-bg-input border-border' : 'bg-bg-input border-border ',

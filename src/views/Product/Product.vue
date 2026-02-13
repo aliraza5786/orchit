@@ -1,10 +1,10 @@
 <template>
-  <div
-    class="flex-auto rounded-[6px] flex-grow h-full bg-bg-card overflow-x-auto flex-col flex px-4"
+    <div
+    class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible w-full"
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
       <div
-        class="header py-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
+        class="header py-3 px-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
       >
         <Dropdown
           @edit-option="openEditSprintModal"
@@ -172,7 +172,7 @@
       <KanbanSkeleton v-show="isPending || isSheetPending" />
       <div
         v-show="!isPending && !isSheetPending"
-        class="flex overflow-x-auto gap-3 scrollbar-visible h-full"
+        class="flex overflow-x-auto gap-3 scrollbar-visible h-full mx-3"
       >
       <div class="mt-3 flex gap-3">
          <KanbanBoard
@@ -249,6 +249,7 @@
     </template>
     <template v-if="view == 'table'">
       <TableView
+      class="mx-3"
         @toggleVisibility="toggleVisibilityHandler"
         @addVar="
           () => {
@@ -508,6 +509,7 @@
   <SidePanel
     v-if="selectedCard?._id"
     :details="selectedCard"
+    :moduleId="moduleId"
     @close="
       () => {
         selectCardHandler({ variables: {} });
@@ -516,6 +518,7 @@
     @closeSidePanel="closeSidePanel"
     @comment:post="incrementCommentCount"
     :showPanel="selectedCard?._id ? true : false"
+    :sheetID="selected_sheet_id"
   />
   <CreateSheetModal
     size="md"
@@ -2542,6 +2545,9 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
 
 .me-toolbar-btn:hover {
   background: rgba(0, 0, 0, 0.08);
+}
+.mindmap-container {
+  --bgcolor: #ffffff;
 }
 /* Toolbar container */
 :deep(.mind-elixir-toolbar.rb) {

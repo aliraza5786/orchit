@@ -10,10 +10,10 @@
 
         <!-- Styled Box -->
         <div :class="[
-            'flex items-center justify-center border transition-colors duration-200',
-            'md:w-5 md:min-w-5 md:h-5 md:min-h-5 w-3.5 h-3.5',
-            'md:rounded-[6px] rounded-[3px] border-border D5D7DA] ',
-            checked ? 'bg-accent border-transparent' : 'bg-bg-card'
+            'flex mt-0.5 items-center justify-center border transition-colors duration-200',
+            'w-4 min-w-4 h-4 min-h-4',
+            ' rounded-[3px] border-orchit-white/10 D5D7DA] ',
+            checked ? 'bg-accent border-accent' : 'bg-bg-card'
         ]">
             <img v-if="checked" :src="tick" alt="check" class="w-3 transition-opacity duration-150" />
         </div>
