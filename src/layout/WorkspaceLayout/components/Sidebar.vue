@@ -39,7 +39,7 @@
     </div>
     <div class="text-center min-w-max" :class="expanded? 'w-full': 'w-max'">
       <SideItem
-        label="People"
+        label="Talent"
         :to="`/workspace/people/${workspaceId}`"
         key="people"
         id="people"

@@ -66,7 +66,7 @@
           <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
             <i class="fa-solid fa-chart-pie text-slate-400 dark:text-slate-500 text-2xl"></i>
           </div>
-          <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-1">
+          <h3 class="text-base font-semibold text-text-primary dark:text-white mb-1">
             No Project Data
           </h3>
           <p class="text-sm text-text-secondary">

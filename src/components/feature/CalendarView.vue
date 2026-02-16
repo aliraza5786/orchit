@@ -10,11 +10,12 @@ import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-
+import listPlugin from "@fullcalendar/list";
 interface Card {
   _id: string;
   "card-title": string;
   "start-date": string;
+  "end-date":string;
   "card-status": string;
   "card-code": string;
   style?: {
@@ -30,7 +31,6 @@ const emit = defineEmits<{
 }>();
 
 const isMobile = ref(false);
-const calendarRef = ref<any>(null);
 
 const lightColors = [
   '#DBEAFE',
@@ -57,14 +57,19 @@ onBeforeUnmount(() => {
 
 const calendarEvents = computed(() =>
   props.data
-    .filter(card => card['start-date'])
+    .filter(card => card['start-date'] && card['end-date'])
     .map((card, index) => {
       const color = lightColors[index % lightColors.length];
+
+      const start = new Date(card['start-date']);
+      const end = new Date(card['end-date']);
+      end.setDate(end.getDate() + 1);
 
       return {
         id: card._id,
         title: card['card-title'],
-        start: card['start-date'],
+        start,
+        end,
         allDay: true,
         backgroundColor: color,
         borderColor: color,
@@ -75,20 +80,12 @@ const calendarEvents = computed(() =>
 );
 
 const calendarOptions = computed(() => ({
-  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
   initialView: "dayGridMonth",
   headerToolbar: {
     left: "prev,next today",
     center: "title",
-    right: "dayGridMonth,timeGridWeek,timeGridDay",
-  },
-  views: {
-    timeGridWeek: {
-      allDaySlot: false
-    },
-    timeGridDay: {
-      allDaySlot: false
-    }
+    right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
   },
   events: calendarEvents.value,
   dayMaxEventRows: true,
@@ -96,16 +93,8 @@ const calendarOptions = computed(() => ({
   eventClick(info: any) {
     emit("select:ticket", info.event.extendedProps.card);
   },
-  windowResize() {
-    // Just keep toolbar responsive by re-rendering
-    const calendarApi = calendarRef.value.getApi();
-    calendarApi.setOption("headerToolbar", {
-      left: "prev,next today",
-      center: "title",
-      right: "dayGridMonth,timeGridWeek,timeGridDay",
-    });
-  },
 }));
+
 </script>
 
 <style scoped>

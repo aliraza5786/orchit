@@ -200,7 +200,7 @@
     <template v-else>
       <div class="flex flex-col items-center justify-center py-10 text-center text-text-secondary h-full">
         <i class="fas fa-clock text-4xl mb-3"></i>
-        <h4 class="text-lg font-semibold mb-1">No recent activity</h4>
+        <h4 class="text-lg text-text-primary font-semibold mb-1">No recent activity</h4>
         <p class="text-sm text-text-secondary/80">
           Activities will appear here once your team starts making updates.
         </p>

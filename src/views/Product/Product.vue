@@ -48,7 +48,7 @@
                     variableDropdownRef?.closeDropdown();
                   }
                 "
-                class="sticky bottom-0 bg-bg-dropdown shadow-md shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
+                class="sticky bottom-0 bg-bg-dropdown shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
               >
                 <i class="fa-solid fa-plus"></i> Add new
               </div>

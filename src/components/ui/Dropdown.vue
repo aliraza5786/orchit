@@ -64,11 +64,11 @@
           v-if="open"
           ref="menuRef"
           :style="dropdownStyles"
-          class=" overflow-y-auto z-[9999] min-w-fit rounded-[6px] border border-border shadow-lg bg-bg-dropdown fixed"
+          class=" overflow-y-visible max-h-[400px] z-[9999] min-w-fit rounded-[6px] border border-border shadow-lg bg-bg-dropdown fixed"
           :class="[menuBorderClass, props.customClasses? props.customClasses :'' ]"
           @click.stop
         >
-          <ul :class="['py-1 z-[2] max-h-[500px]', listTextSizeClass]">
+          <ul :class="['py-1 z-[2]', listTextSizeClass]">
             <li
               v-for="option in options"
               :key="option._id"
