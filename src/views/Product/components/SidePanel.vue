@@ -756,8 +756,7 @@ import {
   nextTick,
   onMounted,
   onBeforeUnmount,
-  defineAsyncComponent,
-  unref
+  defineAsyncComponent, 
 } from "vue";
 import { useLanes, useMoveCard, useDeleteVar, useUpdateVar } from "../../../queries/useSheets";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -1499,133 +1498,113 @@ const { mutate: deleteVar, isPending: isDeleting } = useDeleteVar();
 
 const { mutate: updateVariable } = useUpdateVar();
 
-function handleVariableDefinitionUpdate({ id, cardId, payload }: any) {
-  // Optimistic Update
-  queryClient.cancelQueries({ queryKey: ['cardDetail', cardId] })
-  const previousCardDetail = queryClient.getQueryData(['cardDetail', cardId])
-
-  queryClient.setQueryData(['cardDetail', cardId], (old: any) => {
+/** 
+ * Helper to surgicaly update variable definitions across all card and board caches
+ * This avoids repeating the same filtering/mapping logic.
+ */
+function broadUpdateVariables(transformer: (vars: any[]) => any[]) {
+  const queryKeys = [['cardDetail'], ['product-card']];
+  
+  // 1. Update card specific caches
+  queryKeys.forEach(key => {
+    queryClient.setQueriesData({ queryKey: key }, (old: any) => {
       if (!old || !Array.isArray(old.variables)) return old;
-      
-      return {
-          ...old,
-          variables: old.variables.map((v: any) => {
-              if (v.variable_id === id || v._id === id) {
-                  return {
-                      ...v,
-                      title: payload.title,
-                      data: payload.data
-                  };
-              }
-              return v;
-          })
-      };
+      return { ...old, variables: transformer(old.variables) };
+    });
   });
 
-  
+  // 2. Update the Board (sheet-list)
+  queryClient.setQueriesData({ queryKey: ['sheet-list'] }, (old: any) => {
+    if (!old || !Array.isArray(old.data)) return old;
+    return {
+      ...old,
+      data: old.data.map((column: any) => ({
+        ...column,
+        cards: (column.cards || []).map((card: any) => {
+          if (Array.isArray(card.variables)) {
+            return { ...card, variables: transformer(card.variables) };
+          }
+          return card;
+        })
+      }))
+    };
+  });
+}
+
+function handleVariableDefinitionUpdate({ id, payload }: any) {
+  // Optimistic Definitions Update
+  const updateTransformer = (vars: any[]) => vars.map((v: any) => {
+    if ((v.variable_id || v._id) === id) {
+      return { ...v, title: payload.title, data: payload.data };
+    }
+    return v;
+  });
+
+  broadUpdateVariables(updateTransformer);
+
+  // Update Global definitions list
+  queryClient.setQueriesData({ queryKey: ['all-module-variables'] }, (old: any) => {
+    if (!Array.isArray(old)) return old;
+    return old.map((v: any) => (v.variable_id || v._id) === id ? { ...v, ...payload } : v);
+  });
+
   updateVariable({ id, payload }, {
     onError: (err: any) => {
-        // Rollback
-        if (previousCardDetail) queryClient.setQueryData(['cardDetail', cardId], previousCardDetail);
-        console.error('Mutation failed:', err?.response ?? err)
-        toast.error('Failed to update field definition')
+        console.error('Mutation failed:', err?.response ?? err);
+        toast.error('Failed to update field definition');
     },
-    onSettled: () => { 
-        // Invalidate lists
-        queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-        queryClient.invalidateQueries({ queryKey: ['product-card'] })
-
-          // Remove cached details for ALL other cards so they fetch fresh data when opened
-          queryClient.removeQueries({ 
-            queryKey: ['cardDetail'],
-            predicate: (query) => {
-                const qId = unref(query.queryKey[1]);
-                const isOtherCard = query.queryKey[0] === 'cardDetail' && qId !== cardId;
-                if (isOtherCard) console.log('Removing cache for other card:', qId);
-                return isOtherCard;
-            }
-        })
-        console.log('Invalidations complete.');
+    onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ['all-module-variables'] });
+        queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
+        queryClient.invalidateQueries({ queryKey: ['product-card'] });
+        queryClient.invalidateQueries({ queryKey: ['cardDetail'] });
     }
-  })
+  });
 }
 
-
-const showDeleteModal = ref(false)
-const selectedItem = ref<any>(null)
+const showDeleteModal = ref(false);
+const selectedItem = ref<any>(null);
 
 function handleDeleteVar(item: any) {
-  selectedItem.value = item
-  showDeleteModal.value = true
+  selectedItem.value = item;
+  showDeleteModal.value = true;
 }
- 
- function confirmDelete() {
-  if (!selectedItem.value) return
 
-  const itemToDelete = selectedItem.value
-  const cardId = props.details._id
-  
-  // Update cardDetail (the source for SidePanel)
-  queryClient.cancelQueries({ queryKey: ['cardDetail', cardId] })
-  const previousCardDetail = queryClient.getQueryData(['cardDetail', cardId])
+function confirmDelete() {
+  if (!selectedItem.value) return;
 
-  queryClient.setQueryData(['cardDetail', cardId], (old: any) => {
-    if (!old || !Array.isArray(old.variables)) return old
-    return {
-      ...old,
-      variables: old.variables.filter((v: any) => v.variable_id !== itemToDelete.variable_id),
-    }
-  })
+  const itemToDelete = selectedItem.value; 
 
-  // Also try to update product-card (list view cache) if safe
-  queryClient.cancelQueries({ queryKey: ['product-card', cardId] })
-  const previousProductCard = queryClient.getQueryData(['product-card', cardId])
-  
-  queryClient.setQueryData(['product-card', cardId], (old: any) => {
-    if (!old || !Array.isArray(old.variables)) return old
-    return {
-      ...old,
-      variables: old.variables.filter((v: any) => v.variable_id !== itemToDelete.variable_id),
-    }
-  })
+  // Optimistic Deletion
+  const deleteTransformer = (vars: any[]) => 
+    vars.filter((v: any) => (v.variable_id || v._id) !== itemToDelete.variable_id);
 
+  broadUpdateVariables(deleteTransformer);
 
-  // Close modal immediately
-  showDeleteModal.value = false
-  selectedItem.value = null
-  toast.success("Variable deleted successfully");
+  // Update Global list
+  queryClient.setQueriesData({ queryKey: ['all-module-variables'] }, (old: any) => {
+    if (!Array.isArray(old)) return old;
+    return old.filter((v: any) => (v.variable_id || v._id) !== itemToDelete.variable_id);
+  });
+
+  showDeleteModal.value = false;
+  selectedItem.value = null;
+  toast.success("Field deleted successfully");
 
   deleteVar({
     id: itemToDelete.variable_id,
     module_id: props.moduleId ?? ''
   }, {
     onError: () => {
-      // Rollback on error
-      if (previousCardDetail) queryClient.setQueryData(['cardDetail', cardId], previousCardDetail)
-      if (previousProductCard) queryClient.setQueryData(['product-card', cardId], previousProductCard)
-      toast.error("Failed to delete variable");
+      toast.error("Failed to delete field");
     },
     onSettled: () => {
-      console.log('Delete settled, running invalidations...');
-      // Invalidate list views
-      queryClient.invalidateQueries({ queryKey: ['product-card', cardId] })
+      queryClient.invalidateQueries({ queryKey: ['product-card'] });
       queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
       queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
-
-      // Remove cached details for ALL other cards so they fetch fresh data when opened
-      queryClient.removeQueries({ 
-        queryKey: ['cardDetail'],
-        predicate: (query) => {
-          const qId = unref(query.queryKey[1]);
-          const isOtherCard = query.queryKey[0] === 'cardDetail' && qId !== cardId;
-          if (isOtherCard) console.log('Removing cache for other card during delete:', qId);
-          return isOtherCard;
-        }
-      })
-      console.log('Delete invalidations complete.');
+      queryClient.invalidateQueries({ queryKey: ["cardDetail"] });
     }
-  }) 
+  });
 }
 
 

@@ -4,7 +4,7 @@
       
       <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Provide required data for your field.</p>
       <!-- Body -->
-      <div class="px-6 py-4 flex flex-col gap-4">
+      <div class="px-6 py-6 flex flex-col gap-4">
         <!-- Dropdown Title -->
         <BaseTextField
           v-model="dropdownTitle"
@@ -67,7 +67,7 @@
         </div>
   
         <!-- Filterable toggle -->
-        <label class="flex items-center gap-2 select-none">
+        <label class="flex items-center gap-2 select-none"  v-if="['Checkbox','Radio','Select','Multi Select'].includes(selectedTypeTitle)">
           <Checkbox
             :checked="isFilterable"
             label="Show this in filters"
@@ -104,7 +104,7 @@
   </template>
   
   <script setup lang="ts">
-  import { ref, computed } from 'vue'
+  import { ref, computed, watch } from 'vue'
   import BaseModal from '../../../components/ui/BaseModal.vue'
   import BaseTextField from '../../../components/ui/BaseTextField.vue'
   import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
@@ -115,6 +115,7 @@
   import { usePermissions } from '../../../composables/usePermissions';
   import { useVariableTypes } from '../../../queries/useSheets'
   import Checkbox from '../../../components/ui/Checkbox.vue'
+  import { toast } from 'vue-sonner'
   /** Fetch variable types */
   const { data: variableTypes, isLoading: isVariableTypesLoading } = useVariableTypes();
 
@@ -169,7 +170,17 @@
   })
   
   /** NEW: Filterable toggle state */
-  const isFilterable = ref(true)
+  const isFilterable = ref(false)
+
+watch(selectedVariableType, () => {
+  const typeTitle = selectedTypeTitle.value
+  // Only allow filterable for specific types
+  if (["Checkbox", "Radio", "Select", "Multi Select"].includes(typeTitle)) {
+    isFilterable.value = false // reset to unchecked on type change
+  } else {
+    isFilterable.value = false // hide anyway
+  }
+})
 
   /** Validation */
   const titleError = ref('')
@@ -225,20 +236,43 @@ const isValid = computed(() => {
   
   const queryClient = useQueryClient();
   const { mutate: createVariable, isPending: isCreatingVariable } = useCreateVar({
+    onMutate: async (newVar: any) => {
+        // Broadly update ALL 'all-module-variables' (Board Headers)
+        // We use a temp ID so it shows up instantly
+        const tempId = `temp-${Date.now()}`;
+        const tempVar = {
+            ...newVar.payload,
+            _id: tempId,
+            variable_id: tempId,
+            slug: `temp-slug-${tempId}`, // Temporary slug for board rendering
+            type: { title: selectedTypeTitle.value }
+        };
+
+        await queryClient.cancelQueries({ queryKey: ['all-module-variables'] });
+        
+        queryClient.setQueriesData({ queryKey: ['all-module-variables'] }, (old: any) => {
+            if (!Array.isArray(old)) return old;
+            return [...old, tempVar];
+        });
+
+        return { tempId };
+    },
     onSuccess: async () => {
-    queryClient.removeQueries({
-           queryKey: ['cardDetail'],
-     })
-     await emit('refetchCardDetails') 
-     await queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
-     await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-    
+     toast.success('Field created successfully')
      reset();
-      isOpen.value = false
+     isOpen.value = false
     },
     onError: (err: any) => {
       console.error('Mutation failed:', err?.response ?? err)
+      toast.error('Failed to create field')
     },
+    onSettled: () => {
+      // Refresh all related views regardless of success/fail to maintain consistency
+      queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
+      queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+      queryClient.invalidateQueries({ queryKey: ['product-card'] })
+      queryClient.invalidateQueries({ queryKey: ['cardDetail'] })
+    }
   })
   
   
@@ -279,7 +313,7 @@ const isValid = computed(() => {
     rangeMax.value = 100
     titleError.value = ''
     optionTitleError.value = ''
-    isFilterable.value = true // reset to default
+    isFilterable.value = false // reset to default
   }
   </script>
   
