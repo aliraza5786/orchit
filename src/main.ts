@@ -9,7 +9,6 @@ import { Toaster } from 'vue-sonner'
 import '@/assets/fontawesome/css/fontawesome.min.css';
 import '@/assets/fontawesome/css/regular.min.css';
 import { queryClient } from './libs/queryClient'
-import { GanttPlugin } from '@syncfusion/ej2-vue-gantt';
 import { registerLicense } from '@syncfusion/ej2-base';
 import '@syncfusion/ej2-base/styles/material.css';
 import '@syncfusion/ej2-vue-schedule/styles/material.css';
@@ -20,7 +19,6 @@ initThemeImmediately();
 import vTooltip from './directives/vTooltip'
 app.directive('tooltip', vTooltip)
 app.component('Toaster', Toaster)
-app.use(GanttPlugin)
 app.use(createPinia())
 .use(VueQueryPlugin, { queryClient })
 app.use(router)
