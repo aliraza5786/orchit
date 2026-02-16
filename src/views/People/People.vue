@@ -4,9 +4,17 @@
   >
     <div class="overflow-x-auto shrink-0 border-b border-border">
       <div class="header px-4 py-3 flex items-center justify-between gap-2">
-        <Dropdown
+         <Dropdown
           :actions="false"
-          prefix="View By"
+          v-model="selected_view_agent"
+          :options="viewAgents"
+          variant="secondary"
+          customClasses="fixed w-[135px]"
+        >
+        </Dropdown>
+        <div class="flex gap-2">
+          <Dropdown
+          :actions="false"
           v-model="selected_view_id"
           :options="viewData"
           variant="secondary"
@@ -22,6 +30,7 @@
             placeholder="Search in Orchit AI space"
           >
           </SearchBar>
+        </div>
         </div>
       </div>
     </div>
@@ -227,8 +236,34 @@ const viewData = [
     _id: "status",
   },
 ];
-
+const viewAgents = [
+  {
+    title: "Agent Peak",
+    _id: "agent_peak",
+  },
+  {
+    title: "Agent Talent",
+    _id: "agent_talent",
+  },
+  {
+    title: "Agent Process",
+    _id: "agent_process",
+  },
+  {
+    title: "Agent Plan",
+    _id: "agent_plan",
+  },
+  {
+    title: "Agent Pin",
+    _id: "agent_pin",
+  },
+  {
+    title: "Agent Tasks",
+    _id: "agent_taks",
+  },
+];
 const selected_view_id = ref("team");
+const selected_view_agent = ref("agent_peak");
 const showDelete = ref(false);
 const localColumn = ref();
 const { workspaceId } = useRouteIds();

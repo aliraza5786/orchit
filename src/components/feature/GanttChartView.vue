@@ -1,58 +1,11 @@
 <template>
-  <div class="max-h-[calc(100vh-100px)] ms-4 border-0">
-    <ejs-gantt
-      ref="ganttRef"
-      :dataSource="ganttItems"
-      :treeColumnIndex="1"
-      :taskFields="taskFields"
-      :height="'100%'"
-      :labelSettings="labelSettings"
-      :projectStartDate="projectStartDate"
-      :projectEndDate="projectEndDate"
-      @rowSelected="onRowSelected"
-      :queryTaskbarInfo="queryTaskbarInfo"
-    >
-      <e-columns>
-        <e-column
-          field="TaskID"
-          headerText="Task ID"
-          textAlign="Right"
-          width="70"
-        ></e-column>
-        <e-column
-          field="TaskName"
-          headerText="Task Name"
-          textAlign="Left"
-          width="200"
-        ></e-column>
-        <e-column
-          field="StartDate"
-          headerText="Start Date"
-          textAlign="Right"
-          format="yMd"
-          width="90"
-        ></e-column>
-        <e-column
-          field="EndDate"
-          headerText="End Date"
-          textAlign="Right"
-          format="yMd"
-          width="90"
-        ></e-column>
-        <e-column
-          field="Duration"
-          headerText="Duration"
-          textAlign="Right"
-          width="80"
-        ></e-column>
-      </e-columns>
-    </ejs-gantt>
-  </div>
+  <div ref="ganttContainer" class="gantt-container max-h-[calc(100vh-100px)] ms-4"></div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
-import { GanttComponent } from "@syncfusion/ej2-vue-gantt";
+import { ref, onMounted, onBeforeUnmount, watch, computed, nextTick } from "vue";
+import { gantt } from "dhtmlx-gantt";
+import "dhtmlx-gantt/codebase/dhtmlxgantt.css";
 import { useTheme } from "../../composables/useTheme";
 
 interface Card {
@@ -62,134 +15,184 @@ interface Card {
   "end-date"?: string;
   "card-status": string;
   "card-code": string;
+  color?: string; // Optional custom color for the task
 }
 
 const props = defineProps<{ data: Card[] }>();
 const { isDark } = useTheme();
 
-const labelSettings = {
-  taskLabel: "TaskName",
-};
-
-const ganttRef = ref<InstanceType<typeof GanttComponent> | null>(null);
-
-const lightColors = [
-  "#DBEAFE",
-  "#DCFCE7",
-  "#FEF3C7",
-  "#FCE7F3",
-  "#EDE9FE",
-  "#ECFEFF",
-  "#FFE4E6",
-];
-
-const taskFields = {
-  id: "TaskID",
-  name: "TaskName",
-  startDate: "StartDate",
-  endDate: "EndDate",
-  duration: "Duration",
-  progress: "Progress",
-  child: "subtasks",
-};
-
-// Calculate project date range
-const projectStartDate = computed(() => {
-  if (props.data.length === 0) return new Date();
-  
-  const dates = props.data
-    .filter(card => card["start-date"])
-    .map(card => new Date(card["start-date"]));
-  
-  return new Date(Math.min(...dates.map(d => d.getTime())));
-});
-const projectEndDate = computed(() => {
-  if (props.data.length === 0) return new Date();
-
-  const dates = props.data.map(card => {
-    const endDate = card["end-date"] ? new Date(card["end-date"]) : new Date(card["start-date"]);
-    return endDate;
-  });
-
-  const maxDate = new Date(Math.max(...dates.map(d => d.getTime())));
-
-  // Add 30 days buffer so timeline shows next months
-  maxDate.setDate(maxDate.getDate() + 30);
-
-  return maxDate;
-});
-const ganttItems = computed(() =>
-  props.data.map((card, index) => {
-    const start = new Date(card["start-date"]);
-    const end = card["end-date"] ? new Date(card["end-date"]) : new Date(start);
-    
-    // If no end date, set it to start date + 1 day
-    if (!card["end-date"]) {
-      end.setDate(start.getDate() + 1);
-    }
-    
-    const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) || 1;
-
-    return {
-      TaskID: card["card-code"],
-      TaskName: card["card-title"],
-      StartDate: start,
-      EndDate: end,
-      Duration: duration,
-      Progress: 0,
-
-      // Store color info
-      barColor: lightColors[index % lightColors.length],
-      taskLabelColor: isDark.value ? "#FFFFFF" : "#1F2937",
-
-      extendedProps: { card },
-    };
-  })
-);
-
-// Apply custom colors to taskbars
-function queryTaskbarInfo(args: any) {
-  if (args.data && args.data.barColor) {
-    args.taskbarBgColor = args.data.barColor;
-    args.taskbarBorderColor = args.data.barColor;
-    args.progressBarBgColor = args.data.barColor;
-  }
-}
-
 const emit = defineEmits<{
   (e: "select:ticket", card: Card): void;
 }>();
 
-const onRowSelected = (args: any) => {
-  const card = args.data.extendedProps.card as Card;
-  emit("select:ticket", card);
-};
+const ganttContainer = ref<HTMLElement | null>(null);
+let ganttInstance: any = null;
+let isInitialized = false;
 
+// Computed theme name
+const currentTheme = computed(() => isDark.value ? "dark" : "terrace");
+
+// Default colors for tasks (cycle through these)
+const defaultColors = [
+  "#7D68C8",
+  "#4F46E5",
+  "#06B6D4",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#EC4899",
+];
+
+// Transform data to DHTMLX Gantt format
+const transformedData = computed(() => {
+  const tasks = props.data.map((card, index) => {
+    const startDate = new Date(card["start-date"]);
+    const endDate = card["end-date"] 
+      ? new Date(card["end-date"]) 
+      : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
+    
+    // Calculate duration in days
+    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+
+    // Use custom color if provided, otherwise cycle through default colors
+    const taskColor = card.color || defaultColors[index % defaultColors.length];
+
+    return {
+      id: card["card-code"] || `task-${index}`,
+      text: card["card-title"],
+      start_date: formatDate(startDate),
+      duration: duration,
+      progress: 0,
+      color: taskColor,
+      _card: card,
+    };
+  });
+
+  return {
+    data: tasks,
+    links: [],
+  };
+});
+
+function formatDate(date: Date): string {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
+// CRITICAL: Set theme on document root element (this is how v9.0+ works!)
+function setGanttTheme(theme: string) {
+  // Remove any existing gantt theme attribute
+  document.documentElement.removeAttribute('data-gantt-theme');
+  
+  // Set new theme on :root (document.documentElement)
+  document.documentElement.setAttribute('data-gantt-theme', theme);
+  
+  // Also set gantt.skin for API compatibility
+  gantt.skin = theme;
+  
+  console.log('Theme set on :root:', theme);
+  console.log('documentElement has attribute:', document.documentElement.getAttribute('data-gantt-theme'));
+}
+
+function initGantt() {
+  if (!ganttContainer.value) return;
+
+  // CRITICAL: Set theme on :root BEFORE initialization
+  setGanttTheme(currentTheme.value);
+
+  // Configure Gantt
+  gantt.config.date_format = "%d-%m-%Y";
+  gantt.config.readonly = false;
+  gantt.config.columns = [
+    { name: "text", label: "Task Name", tree: true, width: 200 },
+    { name: "start_date", label: "Start Date", align: "center", width: 90 },
+    { name: "duration", label: "Duration", align: "center", width: 60 },
+  ];
+
+  // Configure grid and row heights
+  gantt.config.grid_width = 360;
+  gantt.config.row_height = 30;
+  gantt.config.scale_height = 50;
+
+  // Apply custom colors to task bars
+  gantt.templates.task_style = function(start:any, end:any, task:any) {
+    console.log(start, end);
+    
+    if (task.color) {
+      return `background-color: ${task.color}; border-color: ${task.color};`;
+    }
+    return "";
+  };
+
+  // Initialize Gantt
+  gantt?.init(ganttContainer.value);
+  isInitialized = true;
+
+  // Load data
+  gantt.parse(transformedData.value);
+
+  // Add click event handler
+  gantt.attachEvent("onTaskClick", function (id: string) {
+    const task = gantt.getTask(id);
+    if (task && task._card) {
+      emit("select:ticket", task._card);
+    }
+    return true;
+  });
+
+  ganttInstance = gantt;
+}
+
+// Watch for data changes
 watch(
-  isDark,
+  () => props.data,
   () => {
-    const ejGantt = ganttRef.value?.ej2Instances;
-    if (ejGantt) {
-      ejGantt.theme = isDark.value ? "Material3Dark" : "Material3";
-      ejGantt.refresh();
+    if (ganttInstance && isInitialized) {
+      gantt.clearAll();
+      gantt.parse(transformedData.value);
     }
   },
-  { immediate: true }
+  { deep: true }
 );
 
-watch(
-  isDark,
-  () => {
-    const lightTheme = document.getElementById("light-theme") as HTMLLinkElement;
-    const darkTheme = document.getElementById("dark-theme") as HTMLLinkElement;
+// Watch for theme changes
+watch(currentTheme, (newTheme) => {
+  console.log('Theme changing to:', newTheme);
+  
+  // Update theme on :root element
+  setGanttTheme(newTheme);
+  
+  // Re-render gantt if already initialized
+  if (ganttInstance && isInitialized) {
+    gantt.render();
+  }
+});
 
-    if (lightTheme && darkTheme) {
-      lightTheme.disabled = isDark.value;
-      darkTheme.disabled = !isDark.value;
-    }
-    const ejGantt = ganttRef.value?.ej2Instances;
-    if (ejGantt) ejGantt.refresh();
-  },
-  { immediate: true }
-);
+onMounted(() => {
+  nextTick(() => {
+    initGantt();
+  });
+});
+
+onBeforeUnmount(() => {
+  if (isInitialized) {
+    gantt.clearAll();
+  }
+});
+
 </script>
+
+<style scoped>
+.gantt-container {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  overflow: hidden;
+}
+
+:deep(.gantt_container) {
+  font-family: inherit;
+}
+</style>

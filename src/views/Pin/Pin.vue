@@ -23,7 +23,6 @@
         <KanbanSkeleton v-show="isListPending" />
 
         <!-- Kanban Board -->
-        
         <div v-show="!isListPending" class="flex overflow-x-auto gap-3 p-4">
             <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
                 @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
@@ -345,10 +344,10 @@ const debouncedQuery = ref('')
 watch(searchQuery, debounce((val:any) => { debouncedQuery.value = val }, 200))
 // computed filtered board
 const fuse = computed(() => {
-  const lists = Array.isArray(Lists.value?.pages?.[0]?.data)
-    ? Lists.value.pages[0].data
+  const lists = Array.isArray(Lists.value?.data?.data)
+    ? Lists.value?.data?.data
     : [];
-   console.log("lists data", lists);
+   console.log("lists data", Lists.value?.data);
    
   const allCards = lists.flatMap((col: any) =>
     (col.cards || []).map((card: any) => ({

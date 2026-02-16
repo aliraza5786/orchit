@@ -34,7 +34,7 @@
                 : 'pt-3 text-text-primary font-bold'
             "
           >
-            Agent
+            Configure Agent
           </button>
 
           <button
@@ -117,7 +117,6 @@
                 <label class="text-sm text-text-primary">Agent Name</label>
                 <input
                   v-model="agentConfig.name"
-                  disabled
                   class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
                 />
               </div>
@@ -275,27 +274,56 @@
           <div v-if="activeTab === 'knowledge'" class="space-y-6">
             <!-- Sources -->
             <div class="space-y-1">
-              <label class="text-sm text-text-primary">Sources</label>
-              <div class="flex flex-col mt-2 gap-2">
-                <label
-                  v-for="source in [
-                    'INTERNAL_TICKET',
-                    'INTERNAL_MODULE',
-                    'WEB_SEARCH',
-                    'PROMPT',
-                  ] as const"
-                  :key="source"
-                  class="flex items-center gap-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    v-model="knowledgeConfig.sources[source]"
-                    class="h-4 w-4 rounded border-border"
-                  />
-                  <span class="text-sm text-text-primary">{{ source }}</span>
-                </label>
-              </div>
-            </div>
+  <label class="text-sm text-text-primary">Sources</label>
+
+  <div class="flex flex-col mt-2 gap-2">
+    <div
+      v-for="source in sourceList"
+      :key="source.value"
+      class="relative"
+      ref="refsMap[source.value]"
+    >
+      <!-- Dropdown Trigger -->
+      <button
+        type="button"
+        @click="toggleSourceDropdown(source.value)"
+        class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+      >
+        <span>
+          {{ source.label }}
+        </span>
+        <i
+          class="fa-regular fa-chevron-down text-text-secondary transition-transform duration-200"
+          :class="{ 'rotate-180': openDropdowns[source.value] }"
+        ></i>
+      </button>
+
+      <!-- Dropdown Menu -->
+      <div
+        v-if="openDropdowns[source.value]"
+        class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+      >
+        <ul class="py-1 text-sm flex flex-col gap-1">
+          <label for="permissions" class="px-3 pt-2 font-semibold">Permissions</label>
+          <li
+          v-for="perm in permissionsMap[source.value]"
+          :key="perm.value"
+          class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover flex items-center gap-2"
+        >
+          <input
+            type="checkbox"
+            v-model="knowledgePermissions[source.value as keyof typeof knowledgePermissions][perm.value as keyof typeof knowledgePermissions['INTERNAL_TICKET']]"
+            class="h-4 w-4 rounded border-border"
+          />
+         <span>{{ getPermissionLabel(source.value as keyof typeof knowledgePermissions, perm.value) }}</span>
+        </li>
+
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
 
             <!-- Metadata -->
             <div class="space-y-1">
@@ -444,15 +472,47 @@
       >
         <h5 class="text-[16px] font-medium flex items-center gap-2">
           <i class="fa-solid fa-sparkles text-accent"></i>
-          <span v-if="route?.path?.includes('peak')"> Peak Agent </span>
-          <span v-else>
-            {{
-              moduleSelected && moduleSelected?.length > 20
-                ? moduleSelected?.slice(0, 20) + "..."
-                : moduleSelected
-            }}
-            Agent
-          </span>
+      <div class="relative" ref="agentRef">
+  <button
+    type="button"
+    @click="toggleDropdown"
+    class="flex items-center gap-2"
+  >
+    <span>
+      {{
+        selectedAgentLabel.length > 20
+          ? selectedAgentLabel.slice(0, 20) + "..."
+          : selectedAgentLabel
+      }}
+      Agent
+    </span>
+
+    <i
+      class="fa-regular fa-chevron-down text-sm transition-transform duration-200"
+      :class="{ 'rotate-180': openAgent }"
+    ></i>
+  </button>
+
+  <!-- TELEPORT -->
+  <Teleport to="body">
+    <div
+      v-if="openAgent"
+      class="fixed z-[9999] rounded-lg border border-border bg-bg-dropdown shadow-lg"
+      :style="dropdownStyle"
+    >
+      <ul class="py-1 text-sm">
+        <li
+          v-for="agent in availableAgents"
+          :key="agent.value"
+          @click="selectAgent(agent.value)"
+          class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
+        >
+          {{ agent.title }} Agent
+        </li>
+      </ul>
+    </div>
+  </Teleport>
+</div>
           <div class="flex items-center gap-2">
             <span
               class="w-2 h-2 rounded-full"
@@ -677,6 +737,7 @@ import {
   onMounted,
   reactive,
 } from "vue";
+import type { Ref } from "vue"
 import { useRoute } from "vue-router";
 import { io, Socket } from "socket.io-client";
 import { useWorkspaceStore } from "../../../stores/workspace";
@@ -727,7 +788,6 @@ const contextTitle = computed(() => {
   if (routeName.includes("process")) return "Process";
   if (routeName.includes("people")) return "People";
   if (routeName.includes("more")) return "More";
-  // if (routeName.includes("pin")) return "Pin";
   return "Workspace";
 });
 
@@ -1118,7 +1178,11 @@ watch(
     if (agent) {
       const moduleToUse = selectedModule || "Peak";
       console.log(moduleToUse);
-      agentConfig.name = agent.name || route.path.includes("peak") ? "Peak Agent" : moduleSelected.value || "";
+       if (route.path?.includes("peak")) {
+        agentConfig.name = agent.name || "Peak Agent";
+      } else {
+        agentConfig.name = agent.name || moduleSelected.value;
+      }
       agentConfig.description = agent.description || "";
       agentConfig.role = agent.role || "";
       agentConfig.system_prompt = agent.system_prompt || "";
@@ -1137,6 +1201,7 @@ watch(
         ? [...agent.conditions_rules]
         : [];
     } else {
+      agentConfig.name= moduleSelected.value;
       agentConfig.description = "";
       agentConfig.role = "";
       agentConfig.system_prompt = "";
@@ -1151,176 +1216,282 @@ watch(
   { immediate: true },
 );
 interface KnowledgeConfig {
-  module_id: string;
-  module_name: string;
+  module_id: string
+  module_name: string
   sources: Record<
-    "INTERNAL_TICKET" | "INTERNAL_MODULE" | "WEB_SEARCH" | "PROMPT",
+    "INTERNAL_TICKET" | "INTERNAL_MODULE" | "INTERNAL_SHEET" | "WEB_SEARCH" | "PROMPT",
     boolean
-  >;
-  is_active: boolean;
-  metadata: Record<string, any>;
+  >
+  is_active: boolean
+  metadata: Record<string, any>
 }
+
+interface KnowledgePayload {
+  module_id: string
+  module_name: string
+  sources: Array<{ source_type: string }>
+  is_active: boolean
+  metadata: Record<string, any>
+}
+
+interface KnowledgeItem {
+  _id: string
+  name: string
+  description?: string | null
+  source_type: "INTERNAL_TICKET" | "INTERNAL_MODULE" | "INTERNAL_SHEET" | "WEB_SEARCH" | "PROMPT"
+  metadata: Record<string, any>
+  is_active: boolean
+  created_by?: string
+  updated_by?: string
+  created_at?: string
+  updated_at?: string | null
+  is_trash?: boolean
+  deleted_at?: string | null
+  deleted_by?: string | null
+  __v?: number
+}
+
+// ---------------------------
+// REACTIVE STATE
+// ---------------------------
 const knowledgeConfig = reactive<KnowledgeConfig>({
   module_id: moduleId.value,
   module_name: moduleSelected.value,
   sources: {
     INTERNAL_TICKET: true,
     INTERNAL_MODULE: false,
+    INTERNAL_SHEET: false,
     WEB_SEARCH: false,
-    PROMPT: false,
+    PROMPT: false
   },
   is_active: true,
-  metadata: {},
-});
-interface KnowledgePayload {
-  module_id: string;
-  module_name: string;
-  sources: Array<{ source_type: string }>;
-  is_active: boolean;
-  metadata: Record<string, any>;
+  metadata: {}
+})
+const knowledgePermissions = reactive<Record<
+  "INTERNAL_TICKET" | "INTERNAL_MODULE" | "INTERNAL_SHEET" | "WEB_SEARCH" | "PROMPT",
+  {
+    create: boolean
+    Edit: boolean
+    delete: boolean,
+    view: boolean
+  }
+>>({
+  INTERNAL_TICKET: {  create: false, Edit: false, delete: false, view:false },
+  INTERNAL_MODULE: {  create: false, Edit: false, delete: false, view:false },
+  INTERNAL_SHEET: {  create: false, Edit: false, delete: false, view:false },
+  WEB_SEARCH: {  create: false, Edit: false, delete: false, view:false },
+  PROMPT: {  create: false, Edit: false, delete: false, view:false }
+})
+const isKnowledgeLoading = ref(false)
+
+// ---------------------------
+// SOURCES + PERMISSIONS FOR DROPDOWNS
+// ---------------------------
+const sourceList = [
+  { label: "Internal Ticket", value: "INTERNAL_TICKET" },
+  { label: "Internal Module", value: "INTERNAL_MODULE" },
+  { label: "Internal Sheet", value: "INTERNAL_SHEET" },
+  { label: "Web Search", value: "WEB_SEARCH" },
+  { label: "Prompt", value: "PROMPT" }
+]
+
+const defaultPermissions = [
+  { label: "Create", value: "create" },
+  { label: "View", value: "view"},
+  { label: "Update", value: "update" },
+  { label: "Delete", value: "delete" }
+]
+
+const permissionsMap: Record<string, typeof defaultPermissions> = {
+  INTERNAL_TICKET: defaultPermissions,
+  INTERNAL_MODULE: defaultPermissions,
+  INTERNAL_SHEET: defaultPermissions,
+  WEB_SEARCH: defaultPermissions,
+  PROMPT: defaultPermissions
 }
+
+// Dropdown open state
+const openDropdowns = reactive<Record<string, boolean>>({
+  INTERNAL_TICKET: false,
+  INTERNAL_MODULE: false,
+  INTERNAL_SHEET: false,
+  WEB_SEARCH: false,
+  PROMPT: false
+})
+
+// Refs for click-outside handling
+const refsMap: Record<string, Ref<HTMLElement | null>> = {
+  INTERNAL_TICKET: ref(null),
+  INTERNAL_MODULE: ref(null),
+  INTERNAL_SHEET: ref(null),
+  WEB_SEARCH: ref(null),
+  PROMPT: ref(null)
+}
+
+// Toggle dropdown
+function toggleSourceDropdown(source: string) {
+  openDropdowns[source] = !openDropdowns[source]
+}
+function getPermissionLabel(source: keyof typeof knowledgePermissions, perm: string) {
+  // Map for "create" actions
+  const createMap: Record<string, string> = {
+    INTERNAL_TICKET: "Ticket",
+    INTERNAL_MODULE: "Module",
+    INTERNAL_SHEET: "Sheet",
+    WEB_SEARCH: "Search",
+    PROMPT: "Prompt"
+  }
+
+  if (perm === "create") return `Create ${createMap[source]}`
+  if (perm === "update") return `Update ${createMap[source]}`
+  if (perm === "delete") return `Delete ${createMap[source]}`
+  if(perm === "view") return `View ${createMap[source]}`
+
+  return perm
+}
+
 const knowledgeMetadataString = computed({
   get: () => JSON.stringify(knowledgeConfig.metadata, null, 2),
   set: (val: string) => {
     try {
-      knowledgeConfig.metadata = JSON.parse(val || "{}");
+      knowledgeConfig.metadata = JSON.parse(val || "{}")
     } catch {
-      console.warn("Invalid JSON metadata");
+      console.warn("Invalid JSON metadata")
     }
-  },
-});
+  }
+})
 
-const isKnowledgeLoading = ref(false);
-
-interface KnowledgeItem {
-  _id: string;
-  name: string;
-  description?: string | null;
-  source_type: "INTERNAL_TICKET" | "INTERNAL_MODULE" | "WEB_SEARCH" | "PROMPT";
-  metadata: {
-    module_id?: string;
-    module_name?: string;
-    priority?: string;
-    category?: string;
-    tags?: string[];
-    created_by?: string;
-    notes?: string;
-    agent_id?: string;
-    [key: string]: any;
-  };
-  is_active: boolean;
-  created_by?: string;
-  updated_by?: string;
-  created_at?: string;
-  updated_at?: string | null;
-  is_trash?: boolean;
-  deleted_at?: string | null;
-  deleted_by?: string | null;
-  __v?: number;
-}
+// ---------------------------
+// WATCHER: UPDATE CONFIG WHEN MODULE OR DATA CHANGES
+// ---------------------------
 watch(
   [knowledgeData, () => moduleSelected.value],
   ([data, selectedModule]) => {
     if (data && data.length > 0) {
       const knowledgeForModule = data.filter(
-        (k: KnowledgeItem) => k.metadata?.module_name === selectedModule,
-      );
+        (k: KnowledgeItem) => k.metadata?.module_name === selectedModule
+      )
       if (knowledgeForModule.length > 0) {
-        const firstItem = knowledgeForModule[0];
+        const firstItem = knowledgeForModule[0]
         knowledgeConfig.module_id =
-          firstItem.metadata?.module_id || moduleId.value;
+          firstItem.metadata?.module_id || moduleId.value
         knowledgeConfig.module_name =
-          firstItem.metadata?.module_name || selectedModule || "";
+          firstItem.metadata?.module_name || selectedModule || ""
 
-        // Build the sources object based on which source_types exist
-        const defaultSources = {
+        const defaultSources: KnowledgeConfig["sources"] = {
           INTERNAL_TICKET: false,
           INTERNAL_MODULE: false,
+          INTERNAL_SHEET: false,
           WEB_SEARCH: false,
-          PROMPT: false,
-        };
+          PROMPT: false
+        }
 
-        // Check each item's source_type and mark as true if it exists
         knowledgeForModule.forEach((item: KnowledgeItem) => {
           if (item.source_type in defaultSources) {
-            defaultSources[item.source_type as keyof typeof defaultSources] =
-              true;
+            defaultSources[item.source_type as keyof KnowledgeConfig["sources"]] =
+              true
           }
-        });
+        })
 
-        knowledgeConfig.sources = defaultSources;
-
-        // Use is_active from the first item (or true if all items have is_active: true)
+        knowledgeConfig.sources = defaultSources
         knowledgeConfig.is_active = knowledgeForModule.every(
-          (item: KnowledgeItem) => item.is_active,
-        );
-
-        // Merge metadata from the first item (you can customize this logic)
-        knowledgeConfig.metadata = firstItem.metadata || {};
-        return;
+          (item: KnowledgeItem) => item.is_active
+        )
+        knowledgeConfig.metadata = firstItem.metadata || {}
+        return
       }
     }
 
-    // No data or no matching module — reset defaults
-    knowledgeConfig.module_id = moduleId.value;
-    knowledgeConfig.module_name = selectedModule || "";
+    // Reset defaults if no data
+    knowledgeConfig.module_id = moduleId.value
+    knowledgeConfig.module_name = selectedModule || ""
     knowledgeConfig.sources = {
       INTERNAL_TICKET: true,
       INTERNAL_MODULE: false,
+      INTERNAL_SHEET: false,
       WEB_SEARCH: false,
-      PROMPT: false,
-    };
-    knowledgeConfig.is_active = true;
-    knowledgeConfig.metadata = {};
+      PROMPT: false
+    }
+    knowledgeConfig.is_active = true
+    knowledgeConfig.metadata = {}
   },
-  { immediate: true },
-);
+  { immediate: true }
+)
+
+// ---------------------------
+// HELPER: GET SELECTED SOURCES ARRAY
+// ---------------------------
 const getSelectedSourcesArray = (
-  sources: KnowledgeConfig["sources"],
+  sources: KnowledgeConfig["sources"]
 ): Array<keyof typeof sources> => {
   return Object.keys(sources).filter(
-    (key) => sources[key as keyof typeof sources],
-  ) as Array<keyof typeof sources>;
-};
+    (key) => sources[key as keyof typeof sources]
+  ) as Array<keyof typeof sources>
+}
+
+// ---------------------------
+// SUBMIT
+// ---------------------------
 const submitKnowledge = async () => {
-  if (!workspaceId.value) return;
-  isKnowledgeLoading.value = true;
+  if (!workspaceId.value) return
+  isKnowledgeLoading.value = true
 
   try {
-    const selectedSources = getSelectedSourcesArray(knowledgeConfig.sources);
+    const selectedSources = getSelectedSourcesArray(knowledgeConfig.sources)
+const payload: KnowledgePayload = {
+  module_id: knowledgeConfig.module_id,
+  module_name: knowledgeConfig.module_name,
+   sources: selectedSources.map(source => ({
+    source_type: source,
+    permissions: knowledgePermissions[source]
+  })),
+  is_active: knowledgeConfig.is_active,
+  metadata: knowledgeConfig.metadata
+}
 
-    // Transform sources to the required format
-    const payload: KnowledgePayload = {
-      module_id: knowledgeConfig.module_id,
-      module_name: knowledgeConfig.module_name,
-      sources: selectedSources.map((source) => ({ source_type: source })),
-      is_active: knowledgeConfig.is_active,
-      metadata: knowledgeConfig.metadata,
-    };
-
-    await agentStore.trainKnowledge(workspaceId.value, payload);
-    toast.success("Knowledge trained successfully!");
+    await agentStore.trainKnowledge(workspaceId.value, payload)
+    toast.success("Knowledge trained successfully!")
 
     // Reset after save
-    knowledgeConfig.module_id = "";
-    knowledgeConfig.module_name = "";
-    knowledgeConfig.metadata = {};
+    knowledgeConfig.module_id = ""
+    knowledgeConfig.module_name = ""
+    knowledgeConfig.metadata = {}
     knowledgeConfig.sources = {
       INTERNAL_TICKET: true,
       INTERNAL_MODULE: false,
+      INTERNAL_SHEET: false,
       WEB_SEARCH: false,
-      PROMPT: false,
-    };
-    knowledgeConfig.is_active = true;
+      PROMPT: false
+    }
+    knowledgeConfig.is_active = true
   } catch (err) {
-    console.error(err);
-    toast.error("Failed to train knowledge");
+    console.error(err)
+    toast.error("Failed to train knowledge")
   } finally {
-    isKnowledgeLoading.value = false;
-    loadAgentSettings();
+    isKnowledgeLoading.value = false
+    loadAgentSettings()
   }
-};
+}
 
+// ---------------------------
+// CLICK OUTSIDE HANDLER FOR DROPDOWNS
+// ---------------------------
+function handleSourceClickOutside(event: MouseEvent) {
+  sourceList.forEach((source) => {
+    const refEl = refsMap[source.value].value
+    if (refEl && !refEl.contains(event.target as Node)) {
+      openDropdowns[source.value] = false
+    }
+  })
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleSourceClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleSourceClickOutside)
+})
 /* ---------------- UPLOAD CONFIG ---------------- */
 // Define type options with labels
 const availableUploadTypes = [
@@ -1524,6 +1695,8 @@ const submitPersona = async () => {
   } catch (err) {
     isLoading.value = false;
     toast.error("Failed to save agent persona!");
+  }finally{
+    await loadAgentSettings();
   }
 };
 // Get the agent if created
@@ -1540,6 +1713,70 @@ const loadAgentSettings = async () => {
   );
   isLoadingSettings.value = false;
 };
+//agent dropdown
+
+const openAgent = ref(false)
+const agentRef = ref<HTMLElement | null>(null)
+const availableAgents = ref([
+  { title: "Peak", value: "peak" },
+  { title: "Module A", value: "moduleA" },
+  { title: "Module B", value: "moduleB" }
+])
+const selectedAgent = ref(availableAgents.value[0].value)
+
+const selectedAgentLabel = computed(() => {
+  // If route contains "peak", always show Peak
+  if (route.path.split("/").includes("peak")) {
+    return "Peak"
+  }
+
+  // Otherwise, show selectedAgent label
+  const found = availableAgents.value.find(
+    (a) => a.value === selectedAgent.value
+  )
+
+  // If somehow not found, fallback to first agent
+  return found ? found.title : availableAgents.value[0].title
+})
+
+function selectAgent(value: string) {
+  selectedAgent.value = value
+  openAgent.value = false
+}
+const dropdownStyle = ref({})
+function toggleDropdown() {
+  openAgent.value = !openAgent.value
+
+  if (openAgent.value) {
+    nextTick(() => {
+      if (!agentRef.value) return
+
+      const rect = agentRef.value.getBoundingClientRect()
+
+      dropdownStyle.value = {
+        top: rect.bottom + "px",
+        left: rect.left + "px",
+        width: rect.width + "px"
+      }
+    })
+  }
+}
+
+
+function handleClickOutside(event: MouseEvent) {
+  if (agentRef.value && !agentRef.value.contains(event.target as Node)) {
+    openAgent.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutside)
+})
+
 </script>
 <style scoped>
 .typing-dots {

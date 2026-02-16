@@ -9,7 +9,7 @@
         <div class="flex lg:gap-4 gap-2 py-1">
           <div class="hidden sm:flex">
             <button
-              class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover text-white items-center justify-center gap-1 px-2 rounded-md text-xs font-medium"
+              class="lg:px-3 px-2 h-8 mt-1 rounded-2xl bg-gradient-to-tr from-accent to-accent-hover text-white font-medium cursor-pointer"
               @click="$emit('go-back')"
             >
               <i class="fa-solid fa-chevron-left"></i>
@@ -19,7 +19,7 @@
 
           <div class="flex sm:hidden">
             <button
-              class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover px-2 text-white items-center justify-center py-1 rounded-md font-medium"
+              class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover px-2 text-white items-center justify-center py-1 rounded-2xl font-medium"
               @click="$emit('go-back')"
             >
               <i class="fa-solid fa-chevron-left"></i>
@@ -27,7 +27,7 @@
           </div>
 
           <div
-            class="lg:px-4 px-2 py-1 h-8 mt-1 rounded-2xl bg-gradient-to-tr from-accent to-accent-hover text-white font-medium cursor-pointer"
+            class="lg:px-4 px-2 flex items-center h-8 mt-1 rounded-2xl bg-gradient-to-tr from-accent to-accent-hover text-white font-medium cursor-pointer"
           >
             {{ activeSprint }}
           </div>

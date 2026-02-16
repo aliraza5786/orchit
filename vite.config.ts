@@ -7,6 +7,9 @@ import { fileURLToPath, URL } from 'node:url';
 
 export default defineConfig({
   plugins: [vue(), tailwindcss()],
+  optimizeDeps: {
+    include: ['dhtmlx-gantt']
+  },
    resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -18,4 +21,9 @@ export default defineConfig({
       '@assets': fileURLToPath(new URL('./src/assets', import.meta.url)),
     },
    },
+   build: {
+    commonjsOptions: {
+      include: [/dhtmlx-gantt/, /node_modules/]
+    }
+  }
 });

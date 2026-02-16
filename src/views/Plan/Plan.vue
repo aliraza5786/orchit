@@ -1,8 +1,7 @@
 <template>
   <div
-    class="flex-auto min-h-0 rounded-[6px] overflow-x-auto flex-col flex backdrop-blur flex-grow h-full"
+    class="flex-auto min-h-0 rounded-[6px] overflow-x-auto flex-col flex backdrop-blur flex-grow h-full shrink"
   >
-    <!-- sprintDetailData?.status === 'active' -->
     <template v-if="showActiveSprint || isStartingSprintLoading">
       <ActiveSprint
         :sptint_id="selectedSprintId"
@@ -11,9 +10,6 @@
         @go-back="showActiveSprint = false"
       />
     </template>
-    <!-- <template v-else-if="isStartingSprintLoading">
-        <KanbanSkeleton />
-      </template> -->
     <div v-else class="flex flex-col flex-1 min-h-0">
       <div class="h-screen w-full flex flex-col -mt-3.5">
         <div class="overflow-x-auto w-full flex-1">
