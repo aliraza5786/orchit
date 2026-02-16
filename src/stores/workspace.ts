@@ -42,7 +42,7 @@ export const useWorkspaceStore = defineStore("workspace", {
     limits:{},
     pricing:false,
     showChatBotPanel: false,
-    selectedAgent:"",
+    selectedAgent: localStorage.getItem("selectedAgentModule") || "",
     isExpanded:false
   }),
   actions: {

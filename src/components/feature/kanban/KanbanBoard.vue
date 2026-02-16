@@ -14,7 +14,11 @@
       <!-- Each column -->
       <template #item="{ element: column, index }">
         <div class="rounded-lg bg-bg-surface h-full " 
-        v-if="!(column.title === 'General' && localBoard.columns.length > 1)"
+       v-if="
+  column.title !== 'General' || 
+  route?.path.includes('pin') || 
+  localBoard.columns.length <= 1
+"
           :class="{ 
             'snap-center min-w-[270px] max-w-[270px]': isMobile,
             'min-w-[320px] max-w-[320px]': !isMobile 
@@ -50,14 +54,14 @@ import { ref, watch, watchEffect } from 'vue'
 import Draggable from 'vuedraggable'
 import KanbanColumn from './KanbanColumn.vue'
 import { useMediaQuery } from '@vueuse/core'
-
+import { useRoute } from 'vue-router'
 import { usePermissions } from '../../../composables/usePermissions';
 const { canCreateCard, canEditCard } = usePermissions();
 
 export interface Ticket { _id: string | number;[k: string]: any }
 export interface Column { _id: string | number; title: string; cards: Ticket[]; transitions: any }
 export interface Board { columns: Column[] }
-
+const route = useRoute()
 const isMobile = useMediaQuery('(max-width: 650px)')
 interface ScrollPayload {
   // horizontal
