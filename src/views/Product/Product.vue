@@ -610,7 +610,7 @@ import {
   useCreateWorkspaceSheet,
 } from "../../queries/useSheets";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
-
+import { useAgentStore } from "../../stores/agentStore";
 // Lazy-loaded components
 const Dropdown = defineAsyncComponent(
   () => import("../../components/ui/Dropdown.vue")
@@ -701,6 +701,7 @@ const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((link: string) => void) | null>(null);
 const sidePanelStore = useSidePanelStore()
+const agentStore = useAgentStore();
 function openHyperlinkModal(callback: (link: string) => void) {
   hyperlink.value = "";
   showHyperlinkModal.value = true;
@@ -820,15 +821,44 @@ const {
 });
 
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
-
-const selected_sheet_id = ref<any>(sheetId.value);
-
+const selected_sheet_id = ref<any>(
+  localStorage.getItem("selected_sheet_id") || sheetId.value
+);
 const { data: variables, isPending: isVariablesPending } = useVariables(
   workspaceId,
   moduleId,
   selected_sheet_id
 );
+const storageKey = computed(() => {
+  return `selected_sheet_${route.params.workspace_id}_${route.params.workspace_module_id}`;
+});
+const sheetName = ref("");
+watch(data, (newData) => {
+  if (!newData?.length) return;
 
+  const storedId = localStorage.getItem(storageKey.value);
+  const exists = newData.some((item: any) => item._id === storedId);
+
+  if (storedId && exists) {
+    selected_sheet_id.value = storedId;
+  } else {
+    selected_sheet_id.value = newData[0]._id;
+  }
+}, { immediate: true });
+
+watch(selected_sheet_id, (newId) => {
+  if (!newId) return;
+
+  const selectedSheet = transformedData.value.find(
+    (item) => item._id === newId
+  );
+
+  if (selectedSheet) {
+    agentStore.saveSelectedSheetTitle(selectedSheet.title);
+    agentStore.saveSelectedSheetId(newId);
+    sheetName.value = selectedSheet.title || "";
+  }
+});
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
@@ -866,7 +896,7 @@ const handleAddColumn = (v: any) => {
 
 // Fetch sheets using `useSheets`
 
-watch(sheetId, () => {
+watch(sheetId, () => {  
   selected_sheet_id.value = sheetId.value;
 });
 
@@ -997,11 +1027,40 @@ const transformedData = computed<DropdownOption[]>(() => {
     status: item?.generation_status,
   }));
 });
+
+// Watch selected_sheet_id to update store and reactive title
+watch(selected_sheet_id, (newId) => {
+  if (!newId) return;
+
+  const selectedSheet = transformedData.value.find(
+    (item) => item._id === newId
+  );
+
+  if (selectedSheet) {
+    // Save to global agentStore immediately
+    agentStore.saveSelectedSheetTitle(selectedSheet.title);
+    agentStore.saveSelectedSheetId(newId);
+
+    sheetName.value = selectedSheet.title || "";
+  }
+}, { immediate: true });
 watch(data, (newSheetId) => {
   if (newSheetId?.length > 0) {
     selected_sheet_id.value = newSheetId[0]?._id; // Trigger the refetch with the new sheet_id
   }
 });
+watch([() => storageKey.value, () => data.value], ([newKey, newData]) => {
+  if (!newData?.length) return;
+
+  const storedId = localStorage.getItem(newKey);
+  const exists = newData.some((item: any) => item._id === storedId);
+
+  if (storedId && exists) {
+    selected_sheet_id.value = storedId;
+  } else {
+    selected_sheet_id.value = newData[0]._id;
+  }
+}, { immediate: true });
 // add column
 const activeAddList = ref(false);
 const newColumn = ref("");
@@ -1103,10 +1162,7 @@ const fuse = computed(() => {
 });
 const filteredBoard = computed(() => {
   if (view.value === "kanban") {
-    // Kanban filtering by columns
     if (!searchQuery.value) return Lists.value?.data;
-    console.log("fuse data", fuse.value);
-    
     const results = fuse.value
       .search(searchQuery.value)
       .map((r: any) => r.item);
@@ -1979,15 +2035,10 @@ const handleReorderCard = async (payload: {
       method: "PATCH",
       data: payload,
     });
-
-    // Refetch data after successful reorder
     refetchSheets();
     refetchSheetLists();
-
-    console.log("Card reordered successfully");
   } catch (error) {
     console.error("Failed to reorder card:", error);
-    // Optionally show error toast/notification to user
   }
 };
 
