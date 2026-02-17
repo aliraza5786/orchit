@@ -132,20 +132,20 @@ watch(slug, () => {
 
 <style>
 .blog_content *{
-   color: var(--color-text-secondary);
+   color: var(--color-text-secondary) !important;
 }
   .blog_content h1 {
   font-size: 36px !important;
   margin: 15px 0px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   line-height: 40px !important;
 }
 .blog_content h2 {
   font-size: 36px;
   margin: 15px 0px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   line-height: 40px !important;
 }
 
@@ -153,7 +153,7 @@ watch(slug, () => {
   font-size: 32px;
   margin: 15px 0px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   line-height: 40px !important; 
 }
 
@@ -161,7 +161,7 @@ watch(slug, () => {
   font-size: 20px;
   margin: 10px 0px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-primary) !important;
   line-height: 28px !important;
 }
 
@@ -178,7 +178,7 @@ watch(slug, () => {
   font-size: 16px;
   line-height: 24px;
   margin-bottom: 10px;
-  color: var(--color-text-primary);
+  color: var(--color-text-primary) !important;
 }
 
 .blog_content a {
