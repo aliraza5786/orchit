@@ -190,7 +190,7 @@
                 <label class="text-sm text-text-primary">{{ label }}</label>
                 <div
                   v-for="(item, i) in getAgentArrayField(group)"
-                  :key="item"
+                  :key="group + '-' + i || item"
                   class="flex gap-3 mt-2"
                 >
                   <input
@@ -211,7 +211,21 @@
                   + Add
                 </button>
               </div>
-
+             <div class="flex gap-2">
+               <input type="checkbox" class="h-4 w-4 rounded border-border" v-model="isSheet">
+              <span class="text-sm text-text-primary">Select if you want to create agent only for a specific sheet</span>
+             </div>
+              <div class="w-full" v-if="isSheet">
+                <Dropdown
+                  v-model="selected_sheet_id"
+                  :canEdit="canEditSheet"
+                  :canDelete="canDeleteSheet"
+                  :options="transformedData"
+                  variant="secondary"
+                  ref="sheetDropdownRef"
+                >
+                </Dropdown>
+              </div>
               <!-- Capabilities -->
               <div class="space-y-3">
                 <label class="text-sm text-text-primary">Capabilities</label>
@@ -748,6 +762,9 @@ import { onClickOutside } from "@vueuse/core";
 import { toast } from "vue-sonner";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { useAuthStore } from "../../../stores/auth";
+import { usePermissions } from "../../../composables/usePermissions"
+import { useSheets } from "../../../queries/useSheets";
+import Dropdown from "../../../components/ui/Dropdown.vue";
 // Stores
 const workspaceStore = useWorkspaceStore();
 const agentStore = useAgentStore();
@@ -769,14 +786,89 @@ const autoTextarea = ref<HTMLTextAreaElement | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 const pendingMessages = ref<any[]>([]);
 const openType = ref(false);
+const isSheet = ref(false)
 const agentsData = computed(() => {
   return agentStore.agentSettings.agent;
 });
 const knowledgeData = computed(() => {
   return agentStore?.agentSettings?.knowledge;
 });
+const sheetNameRef = ref(agentStore.sheetTitle || "");
+const sheetIdRef = ref(agentStore.sheetId || "");
+const sheetName = computed(() => {
+  if (
+    route.path.includes("peak") ||
+    route.path.includes("people") ||
+    route.path.includes("process") ||
+    route.path.includes("plan")
+  ) {
+    return "";
+  }
+  return sheetNameRef.value || "";
+});
+
+const sheetId = computed(() => {
+  if (
+    route.path.includes("peak") ||
+    route.path.includes("people") ||
+    route.path.includes("process") ||
+    route.path.includes("plan")
+  ) {
+    return "";
+  }
+  return sheetIdRef.value || "";
+});
 onMounted(() => {
   workspaceStore.initSelectedAgent();
+});
+const {
+  canEditSheet,
+  canDeleteSheet,
+} = usePermissions();
+const {
+  data,
+} = useSheets({
+  workspace_id: workspaceId,
+  workspace_module_id: moduleId,
+});
+
+const sheet_id = computed(() => (data.value ? data.value[0]?._id : ""));
+const selected_sheet_id = ref<any>(
+  localStorage.getItem("selected_sheet_id") || sheet_id.value
+);
+
+watch(
+  () => route.fullPath,
+  (newPath, oldPath) => {
+    if (newPath !== oldPath) {
+      // Only reset if sidebar is open
+      if (workspaceStore.showChatBotPanel) {
+        sheetIdRef.value = "";
+        sheetNameRef.value = "";
+
+        closeHandler();
+      }
+    }
+  }
+);
+interface IconData {
+  prefix: string;
+  iconName: string;
+}
+interface DropdownOption {
+  _id: string;
+  title: string;
+  icon: IconData;
+}
+// Define the `transformedData` computed property
+const transformedData = computed<DropdownOption[]>(() => {
+  return (data.value || []).map((item: any) => ({
+    _id: item._id,
+    title: item?.variables["sheet-title"],
+    description: item?.variables["sheet-description"],
+    icon: item["icon"],
+    status: item?.generation_status,
+  }));
 });
 // Computed
 const moduleSelected = computed(() => workspaceStore.selectedAgent);
@@ -881,7 +973,6 @@ watch(
     scrollToBottom();
   },
 );
-
 // Socket
 function initSocket() {
   const token = localStorage.getItem("token");
@@ -912,6 +1003,8 @@ function initSocket() {
         authStore.userId ?? undefined,
         moduleSelected.value ?? undefined,
         moduleId.value ?? undefined,
+        sheetName.value ?? undefined,
+        sheetId.value ?? undefined
       );
       await agentStore.fetchCreatedEntities(
         workspaceId.value,
@@ -968,6 +1061,8 @@ async function sendMessage() {
         authStore.userId ?? undefined,
         moduleSelected.value ?? undefined,
         moduleId.value ?? undefined,
+        sheetName.value ?? undefined,
+        sheetId.value ?? undefined
       ),
       agentStore.fetchCreatedEntities(
         workspaceId.value,
@@ -1047,6 +1142,8 @@ onMounted(() => {
       authStore.userId ?? undefined,
       moduleSelected.value ?? undefined,
       moduleId.value ?? undefined,
+      sheetName.value ?? undefined,
+      sheetId.value ?? undefined
     );
     agentStore.fetchCreatedEntities(
       workspaceId.value,
@@ -1056,6 +1153,7 @@ onMounted(() => {
     );
 
     loadAgentSettings();
+    fetchAssignedAgents();
   }
   scrollToBottom();
 });
@@ -1069,6 +1167,8 @@ watch(
       authStore.userId ?? undefined,
       moduleSelected.value ?? undefined,
       moduleId.value ?? undefined,
+      sheetName.value ?? undefined,
+      sheetId.value ?? undefined
     );
 
     await agentStore.fetchCreatedEntities(
@@ -1079,7 +1179,7 @@ watch(
     );
 
     await loadAgentSettings();
-
+    fetchAssignedAgents()
     scrollToBottom();
   },
   { immediate: true },
@@ -1677,6 +1777,8 @@ const submitPersona = async () => {
     const payload = {
       module_id: moduleId.value,
       module_name: moduleSelected.value,
+      sheet_id:moduleId.value,
+      sheet_name:moduleSelected.value,
       name: agentConfig.name,
       description: agentConfig.description,
       role: agentConfig.role,
@@ -1776,7 +1878,15 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside)
 })
-
+async function fetchAssignedAgents(){
+  await agentStore.fetchSavedAgents(
+    workspaceId.value,
+    moduleId.value,
+    selectedModule.value,
+    "module",
+    moduleId.value
+  );
+}
 </script>
 <style scoped>
 .typing-dots {

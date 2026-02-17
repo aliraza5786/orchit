@@ -37,24 +37,18 @@
             <p class="text-sm text-text-secondary">
               Found {{ fetchedItems.length }} card(s) matching your query.
             </p>
-            <div class="space-y-3 mt-4">
+            <div class="space-y-3 mt-4 flex flex-wrap gap-4">
               <div
                 v-for="card in fetchedItems"
                 :key="card.id || card._id"
-                class="bg-bg-body border border-border rounded-md p-4 cursor-pointer"
+                class="bg-bg-body border border-border rounded-md p-4 cursor-pointer
+                      w-full sm:w-full md:w-[calc(50%-1rem)] lg:w-[calc(25%-1rem)]"
                 :class="{
                   'ring-2 ring-accent': selectedReadCards.includes(card.id || card._id)
                 }"
                 @click="toggleReadCard(card.id || card._id)"
               >
                 <div class="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    class="mt-1"
-                    :checked="selectedReadCards.includes(card.id || card._id)"
-                    @change.stop="toggleReadCard(card.id || card._id)"
-                  />
-
                   <div class="flex-1 space-y-2">
                     <div class="flex items-center gap-2 flex-wrap">
                       <span
