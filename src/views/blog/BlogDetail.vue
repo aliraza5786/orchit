@@ -131,6 +131,9 @@ watch(slug, () => {
 </template>
 
 <style>
+.blog_content *{
+   color: var(--color-text-secondary);
+}
   .blog_content h1 {
   font-size: 36px !important;
   margin: 15px 0px;
@@ -166,10 +169,10 @@ watch(slug, () => {
   font-size: 16px;
   line-height: 24px;
   margin-bottom: 10px;
-  font-weight: 400;
-  font-family: manrope;
+  font-weight: 400; 
   color: var(--color-text-secondary);
 }
+
 
 .blog_content p strong {
   font-size: 16px;
@@ -191,8 +194,7 @@ watch(slug, () => {
 .blog_content li{
   font-size: 16px;
   line-height: 24px; 
-  font-weight: 400;
-  font-family: manrope;
+  font-weight: 400; 
   color: var(--color-text-secondary);
 }
 
