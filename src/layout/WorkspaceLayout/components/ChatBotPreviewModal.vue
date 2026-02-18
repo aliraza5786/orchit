@@ -1,52 +1,34 @@
 <template>
-  <transition name="fade">
     <div
-      v-if="modelValue"
-      class="fixed inset-0 z-[9999] flex items-center justify-center px-4"
+      class="w-full flex items-center justify-center"
     >
-      <!-- Backdrop -->
-      <div
-        class="absolute inset-0 bg-black/30 backdrop-blur-sm cursor-pointer"
-        @click="emit('update:modelValue', false)"
-      />
 
       <!-- Modal -->
       <div
-        class="relative bg-bg-card rounded-xl w-full max-w-[90vw] shadow-xl border border-border flex flex-col"
+        class="w-full"
       >
         <!-- Header -->
         <div
-          class="px-5 py-4 border-b border-border flex justify-between items-center"
+          class="px-3 py-1.5 border-b border-border flex flex-col justify-between"
         >
           <h3 class="text-sm font-semibold text-text-primary">
             {{ isReadAction ? 'Fetched Cards' : 'AI Suggested Changes' }}
           </h3>
-
-          <button
-            class="text-text-secondary hover:text-text-primary cursor-pointer"
-            @click="emit('update:modelValue', false)"
-          >
-            <i class="fa-solid fa-xmark"></i>
-          </button>
+          <p class="text-xs text-text-secondary" v-if="isReadAction">
+              Found {{ fetchedItems.length }} card<span v-if="fetchedItems?.length > 1">s</span> matching your query.
+            </p>
         </div>
 
         <!-- Content -->
-        <div class="p-5 space-y-4 overflow-y-auto max-h-[70vh] overflow-x-auto custom_scroll_bar">
+        <div class="py-5 px-2 space-y-4 overflow-y-auto max-h-[80vh] overflow-x-auto custom_scroll_bar">
           <!-- Read Action - Display fetched cards -->
           <template v-if="isReadAction">
-            <p class="text-sm text-text-secondary">
-              Found {{ fetchedItems.length }} card(s) matching your query.
-            </p>
-            <div class="space-y-3 mt-4 flex flex-wrap gap-4">
+            <div class="space-y-3 mt-4 flex flex-wrap gap-3">
               <div
                 v-for="card in fetchedItems"
                 :key="card.id || card._id"
-                class="bg-bg-body border border-border rounded-md p-4 cursor-pointer
-                      w-full sm:w-full md:w-[calc(50%-1rem)] lg:w-[calc(25%-1rem)]"
-                :class="{
-                  'ring-2 ring-accent': selectedReadCards.includes(card.id || card._id)
-                }"
-                @click="toggleReadCard(card.id || card._id)"
+                class="bg-bg-body border border-border rounded-md p-4
+                      w-full sm:w-full md:w-full lg:w-[calc(50%-1rem)]"
               >
                 <div class="flex items-start gap-3">
                   <div class="flex-1 space-y-2">
@@ -226,7 +208,6 @@
         </div>
       </div>
     </div>
-  </transition>
 </template>
 
 <script setup>

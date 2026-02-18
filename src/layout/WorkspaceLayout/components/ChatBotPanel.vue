@@ -10,6 +10,18 @@
     role="complementary"
     aria-label="Details panel"
   >
+ <!-- Show preview panel only when: expanded + configPanel closed + entities exist -->
+<div
+  v-if="isExpanded && !showConfigPanel && entities?.length"
+  class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+>
+  <ChatBotPreviewModal
+    @accept="acceptChanges"
+    @decline="declineAgentGeneratedEntities"
+    :title="contextTitle"
+    :data="entities"
+  />
+</div>
     <!-- CONFIG PANEL -->
     <div
       v-if="isExpanded && showConfigPanel"
@@ -182,50 +194,86 @@
               </div>
 
               <!-- Array Sections Reused -->
+              <!-- Replace old code with: -->
+              <TagInput
+                v-model="agentConfig.responsibilities"
+                label="Responsibilities"
+              />
+              <TagInput v-model="agentConfig.skills" label="Skills" />
+              <TagInput
+                v-model="agentConfig.competencies"
+                label="Competencies"
+              />
+              <TagInput
+                v-model="agentConfig.conditions_rules"
+                label="Conditions / Rules"
+              />
+              <div class="flex gap-2">
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-border"
+                  v-model="isSheet"
+                />
+                <span class="text-sm text-text-primary"
+                  >Enable to create the agent for a selected sheet instead of
+                  all sheets</span
+                >
+              </div>
               <div
-                v-for="(label, group) in personaGroups"
-                :key="group"
-                class="space-y-2.5"
+                class="space-y-1 relative w-full"
+                ref="sheetRef"
+                v-if="isSheet"
               >
-                <label class="text-sm text-text-primary">{{ label }}</label>
-                <div
-                  v-for="(item, i) in getAgentArrayField(group)"
-                  :key="group + '-' + i || item"
-                  class="flex gap-3 mt-2"
-                >
-                  <input
-                    v-model="agentConfig[group][i]"
-                    class="flex-1 border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
-                  />
-                  <button
-                    @click="agentConfig[group].splice(i, 1)"
-                    class="px-3 py-2.5 text-red-500 text-sm"
-                  >
-                    Remove
-                  </button>
-                </div>
+                <!-- Trigger -->
                 <button
-                  @click="agentConfig[group].push('')"
-                  class="w-full px-4 py-2.5 text-sm bg-bg-body border border-border rounded-lg"
+                  type="button"
+                  @click="openSheet = !openSheet"
+                  class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
                 >
-                  + Add
+                  <span>{{ selectedSheetTitle }}</span>
+
+                  <svg
+                    class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
                 </button>
-              </div>
-             <div class="flex gap-2">
-               <input type="checkbox" class="h-4 w-4 rounded border-border" v-model="isSheet">
-              <span class="text-sm text-text-primary">Select if you want to create agent only for a specific sheet</span>
-             </div>
-              <div class="w-full" v-if="isSheet">
-                <Dropdown
-                  v-model="selected_sheet_id"
-                  :canEdit="canEditSheet"
-                  :canDelete="canDeleteSheet"
-                  :options="transformedData"
-                  variant="secondary"
-                  ref="sheetDropdownRef"
+
+                <!-- Dropdown -->
+                <div
+                  v-if="openSheet"
+                  class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
                 >
-                </Dropdown>
+                  <ul class="py-1 text-sm max-h-60 overflow-auto">
+                    <li
+                      v-for="sheet in transformedData"
+                      :key="sheet._id"
+                      @click="selectSheet(sheet._id)"
+                      class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
+                    >
+                      <div class="font-medium">
+                        {{ sheet.title }}
+                      </div>
+
+                      <div
+                        v-if="sheet.description"
+                        class="text-xs text-text-secondary"
+                      >
+                        {{ sheet.description }}
+                      </div>
+                    </li>
+                  </ul>
+                </div>
               </div>
+
               <!-- Capabilities -->
               <div class="space-y-3">
                 <label class="text-sm text-text-primary">Capabilities</label>
@@ -288,56 +336,67 @@
           <div v-if="activeTab === 'knowledge'" class="space-y-6">
             <!-- Sources -->
             <div class="space-y-1">
-  <label class="text-sm text-text-primary">Sources</label>
+              <label class="text-sm text-text-primary">Sources</label>
 
-  <div class="flex flex-col mt-2 gap-2">
-    <div
-      v-for="source in sourceList"
-      :key="source.value"
-      class="relative"
-      ref="refsMap[source.value]"
-    >
-      <!-- Dropdown Trigger -->
-      <button
-        type="button"
-        @click="toggleSourceDropdown(source.value)"
-        class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
-      >
-        <span>
-          {{ source.label }}
-        </span>
-        <i
-          class="fa-regular fa-chevron-down text-text-secondary transition-transform duration-200"
-          :class="{ 'rotate-180': openDropdowns[source.value] }"
-        ></i>
-      </button>
+              <div class="flex flex-col mt-2 gap-2">
+                <div
+                  v-for="source in sourceList"
+                  :key="source.value"
+                  class="relative"
+                  ref="refsMap[source.value]"
+                >
+                  <!-- Dropdown Trigger -->
+                  <button
+                    type="button"
+                    @click="toggleSourceDropdown(source.value)"
+                    class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+                  >
+                    <span>
+                      {{ source.label }}
+                    </span>
+                    <i
+                      class="fa-regular fa-chevron-down text-text-secondary transition-transform duration-200"
+                      :class="{ 'rotate-180': openDropdowns[source.value] }"
+                    ></i>
+                  </button>
 
-      <!-- Dropdown Menu -->
-      <div
-        v-if="openDropdowns[source.value]"
-        class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
-      >
-        <ul class="py-1 text-sm flex flex-col gap-1">
-          <label for="permissions" class="px-3 pt-2 font-semibold">Permissions</label>
-          <li
-          v-for="perm in permissionsMap[source.value]"
-          :key="perm.value"
-          class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover flex items-center gap-2"
-        >
-          <input
-            type="checkbox"
-            v-model="knowledgePermissions[source.value as keyof typeof knowledgePermissions][perm.value as keyof typeof knowledgePermissions['INTERNAL_TICKET']]"
-            class="h-4 w-4 rounded border-border"
-          />
-         <span>{{ getPermissionLabel(source.value as keyof typeof knowledgePermissions, perm.value) }}</span>
-        </li>
-
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-
+                  <!-- Dropdown Menu -->
+                  <div
+                    v-if="openDropdowns[source.value]"
+                    class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+                  >
+                    <ul class="py-1 text-sm flex flex-col gap-1">
+                      <label for="permissions" class="px-3 pt-2 font-semibold"
+                        >Permissions</label
+                      >
+                      <li
+                        v-for="perm in permissionsMap[source.value]"
+                        :key="perm.value"
+                        class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover flex items-center gap-2"
+                      >
+                        <input
+                          type="checkbox"
+                          v-model="
+                            knowledgePermissions[
+                              source.value as keyof typeof knowledgePermissions
+                            ][
+                              perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
+                            ]
+                          "
+                          class="h-4 w-4 rounded border-border"
+                        />
+                        <span>{{
+                          getPermissionLabel(
+                            source.value as keyof typeof knowledgePermissions,
+                            perm.value,
+                          )
+                        }}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <!-- Metadata -->
             <div class="space-y-1">
@@ -470,63 +529,57 @@
       </div>
     </div>
     <!-- CHAT PANEL WRAPPER -->
-    <div
-      :class="
-        isExpanded && showConfigPanel
-          ? 'w-1/2 overflow-hidden me-5'
-          : isExpanded
-            ? 'w-full me-5'
-            : 'w-full me-0'
-      "
-      class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
-    >
+  <div
+  :class="isExpanded && (showConfigPanel || entities?.length) ? 'w-1/2' : 'w-full'"
+  class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
+>
       <!-- Header -->
       <div
         class="flex justify-between items-center border-b border-border px-5 py-3 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
       >
         <h5 class="text-[16px] font-medium flex items-center gap-2">
           <i class="fa-solid fa-sparkles text-accent"></i>
-      <div class="relative" ref="agentRef">
-  <button
-    type="button"
-    @click="toggleDropdown"
-    class="flex items-center gap-2"
-  >
-    <span>
-      {{
-        selectedAgentLabel.length > 20
-          ? selectedAgentLabel.slice(0, 20) + "..."
-          : selectedAgentLabel
-      }}
-      Agent
-    </span>
+          <div class="relative" ref="agentRef">
+            <button
+              type="button"
+              @click="toggleDropdown"
+              class="flex items-center gap-2"
+            >
+              <span>
+                {{
+                  selectedAgentLabel.length > 20
+                    ? selectedAgentLabel.slice(0, 20) + "..."
+                    : selectedAgentLabel
+                }}
+                Agent
+              </span>
 
-    <i
-      class="fa-regular fa-chevron-down text-sm transition-transform duration-200"
-      :class="{ 'rotate-180': openAgent }"
-    ></i>
-  </button>
+              <i
+                class="fa-regular fa-chevron-down text-sm transition-transform duration-200"
+                :class="{ 'rotate-180': openAgent }"
+              ></i>
+            </button>
 
-  <!-- TELEPORT -->
-  <Teleport to="body">
-    <div
-      v-if="openAgent"
-      class="fixed z-[9999] rounded-lg border border-border bg-bg-dropdown shadow-lg"
-      :style="dropdownStyle"
-    >
-      <ul class="py-1 text-sm">
-        <li
-          v-for="agent in availableAgents"
-          :key="agent.value"
-          @click="selectAgent(agent.value)"
-          class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
-        >
-          {{ agent.title }} Agent
-        </li>
-      </ul>
-    </div>
-  </Teleport>
-</div>
+            <!-- TELEPORT -->
+            <Teleport to="body">
+              <div
+                v-if="openAgent"
+                class="fixed z-[9999] rounded-lg border border-border bg-bg-dropdown shadow-lg"
+                :style="dropdownStyle"
+              >
+                <ul class="py-1 text-sm">
+                  <li
+                    v-for="agent in availableAgents"
+                    :key="agent.value"
+                    @click="selectAgent(agent.value)"
+                    class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
+                  >
+                    {{ agent.title }} Agent
+                  </li>
+                </ul>
+              </div>
+            </Teleport>
+          </div>
           <div class="flex items-center gap-2">
             <span
               class="w-2 h-2 rounded-full"
@@ -693,13 +746,6 @@
               <!-- <div class="flex items-center gap-1"><span>Cards</span></div> -->
             </div>
           </nav>
-          <button
-            @click="showAIPreview = !showAIPreview"
-            v-if="hasPreviewableEntities"
-            class="py-1 px-2 text-white bg-accent rounded-lg hover:bg-accent-hover transition-colors"
-          >
-            <i class="fa-regular fa-eye text-sm"></i> Preview
-          </button>
         </div>
         <div class="relative">
           <textarea
@@ -733,13 +779,13 @@
     </div>
   </div>
 
-  <ChatBotPreviewModal
+  <!-- <ChatBotPreviewModal
     v-model="showAIPreview"
     @accept="acceptChanges"
     @decline="declineAgentGeneratedEntities"
     :title="contextTitle"
     :data="entities"
-  />
+  /> -->
 </template>
 <script setup lang="ts">
 import {
@@ -751,20 +797,19 @@ import {
   onMounted,
   reactive,
 } from "vue";
-import type { Ref } from "vue"
+import type { Ref } from "vue";
 import { useRoute } from "vue-router";
 import { io, Socket } from "socket.io-client";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { useAgentStore } from "../../../stores/agentStore";
 import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
+import TagInput from "../../../components/ui/TagInput.vue";
 import { onClickOutside } from "@vueuse/core";
 import { toast } from "vue-sonner";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { useAuthStore } from "../../../stores/auth";
-import { usePermissions } from "../../../composables/usePermissions"
 import { useSheets } from "../../../queries/useSheets";
-import Dropdown from "../../../components/ui/Dropdown.vue";
 // Stores
 const workspaceStore = useWorkspaceStore();
 const agentStore = useAgentStore();
@@ -776,6 +821,7 @@ const activeTab = ref<"persona" | "knowledge" | "upload">("persona");
 // Refs
 const isExpanded = ref(false);
 const showConfigPanel = ref(false);
+const showFetchedData = ref(false)
 const showAIPreview = ref(false);
 const userMessage = ref("");
 const socket = ref<Socket | null>(null);
@@ -786,7 +832,7 @@ const autoTextarea = ref<HTMLTextAreaElement | null>(null);
 const messagesContainer = ref<HTMLElement | null>(null);
 const pendingMessages = ref<any[]>([]);
 const openType = ref(false);
-const isSheet = ref(false)
+const isSheet = ref(false);
 const agentsData = computed(() => {
   return agentStore.agentSettings.agent;
 });
@@ -821,20 +867,14 @@ const sheetId = computed(() => {
 onMounted(() => {
   workspaceStore.initSelectedAgent();
 });
-const {
-  canEditSheet,
-  canDeleteSheet,
-} = usePermissions();
-const {
-  data,
-} = useSheets({
+const { data } = useSheets({
   workspace_id: workspaceId,
   workspace_module_id: moduleId,
 });
 
 const sheet_id = computed(() => (data.value ? data.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(
-  localStorage.getItem("selected_sheet_id") || sheet_id.value
+  localStorage.getItem("selected_sheet_id") || sheet_id.value,
 );
 
 watch(
@@ -849,7 +889,7 @@ watch(
         closeHandler();
       }
     }
-  }
+  },
 );
 interface IconData {
   prefix: string;
@@ -859,6 +899,7 @@ interface DropdownOption {
   _id: string;
   title: string;
   icon: IconData;
+  description: string;
 }
 // Define the `transformedData` computed property
 const transformedData = computed<DropdownOption[]>(() => {
@@ -870,6 +911,35 @@ const transformedData = computed<DropdownOption[]>(() => {
     status: item?.generation_status,
   }));
 });
+const openSheet = ref(false);
+const sheetRef = ref<HTMLElement | null>(null);
+
+const selectedSheetTitle = computed(() => {
+  const found = transformedData.value.find(
+    (sheet) => sheet._id === selected_sheet_id.value,
+  );
+  return found ? found.title : "Select sheet";
+});
+
+function selectSheet(id: string) {
+  selected_sheet_id.value = id;
+  openSheet.value = false;
+}
+
+function handleClickOutsideSheet(event: MouseEvent) {
+  if (sheetRef.value && !sheetRef.value.contains(event.target as Node)) {
+    openSheet.value = false;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutsideSheet);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutsideSheet);
+});
+
 // Computed
 const moduleSelected = computed(() => workspaceStore.selectedAgent);
 const { refetch: refetchModules } = useSingleWorkspace(workspaceId.value);
@@ -884,28 +954,6 @@ const contextTitle = computed(() => {
 });
 
 const entities = computed(() => agentStore.createdEntities);
-const hasPreviewableEntities = computed(() => {
-  if (!Array.isArray(entities.value)) return false;
-
-  return entities.value.some((entity: any) => {
-    // For read actions (fetch_data)
-    if (entity.action === "read") {
-      const itemsLength = entity?.result?.items?.length || 0;
-      const count = entity?.result?.count || 0;
-      return itemsLength > 0 || count > 0;
-    }
-
-    // For create actions (create_module)
-    if (entity.action === "create") {
-      const hasCards = entity?.payload?.cards?.length > 0;
-      const hasSheets = entity?.payload?.sheets_preview?.length > 0;
-      const totalCreated = entity?.result?.total_created || 0;
-      return hasCards || hasSheets || totalCreated > 0;
-    }
-
-    return false;
-  });
-});
 const orderedMessages = computed(() => {
   const historyMessages = Array.isArray(agentStore.chatHistory)
     ? agentStore.chatHistory
@@ -1004,7 +1052,7 @@ function initSocket() {
         moduleSelected.value ?? undefined,
         moduleId.value ?? undefined,
         sheetName.value ?? undefined,
-        sheetId.value ?? undefined
+        sheetId.value ?? undefined,
       );
       await agentStore.fetchCreatedEntities(
         workspaceId.value,
@@ -1062,7 +1110,7 @@ async function sendMessage() {
         moduleSelected.value ?? undefined,
         moduleId.value ?? undefined,
         sheetName.value ?? undefined,
-        sheetId.value ?? undefined
+        sheetId.value ?? undefined,
       ),
       agentStore.fetchCreatedEntities(
         workspaceId.value,
@@ -1143,7 +1191,7 @@ onMounted(() => {
       moduleSelected.value ?? undefined,
       moduleId.value ?? undefined,
       sheetName.value ?? undefined,
-      sheetId.value ?? undefined
+      sheetId.value ?? undefined,
     );
     agentStore.fetchCreatedEntities(
       workspaceId.value,
@@ -1168,7 +1216,7 @@ watch(
       moduleSelected.value ?? undefined,
       moduleId.value ?? undefined,
       sheetName.value ?? undefined,
-      sheetId.value ?? undefined
+      sheetId.value ?? undefined,
     );
 
     await agentStore.fetchCreatedEntities(
@@ -1179,7 +1227,7 @@ watch(
     );
 
     await loadAgentSettings();
-    fetchAssignedAgents()
+    fetchAssignedAgents();
     scrollToBottom();
   },
   { immediate: true },
@@ -1200,6 +1248,7 @@ const openConfigPanel = () => {
     showConfigPanel.value = true;
   } else if (isExpanded.value) {
     showConfigPanel.value = !showConfigPanel.value;
+    showFetchedData.value = true;
   }
 };
 const expandPanel = () => {
@@ -1278,7 +1327,7 @@ watch(
     if (agent) {
       const moduleToUse = selectedModule || "Peak";
       console.log(moduleToUse);
-       if (route.path?.includes("peak")) {
+      if (route.path?.includes("peak")) {
         agentConfig.name = agent.name || "Peak Agent";
       } else {
         agentConfig.name = agent.name || moduleSelected.value;
@@ -1301,7 +1350,7 @@ watch(
         ? [...agent.conditions_rules]
         : [];
     } else {
-      agentConfig.name= moduleSelected.value;
+      agentConfig.name = moduleSelected.value;
       agentConfig.description = "";
       agentConfig.role = "";
       agentConfig.system_prompt = "";
@@ -1316,39 +1365,48 @@ watch(
   { immediate: true },
 );
 interface KnowledgeConfig {
-  module_id: string
-  module_name: string
+  module_id: string;
+  module_name: string;
   sources: Record<
-    "INTERNAL_TICKET" | "INTERNAL_MODULE" | "INTERNAL_SHEET" | "WEB_SEARCH" | "PROMPT",
+    | "INTERNAL_TICKET"
+    | "INTERNAL_MODULE"
+    | "INTERNAL_SHEET"
+    | "WEB_SEARCH"
+    | "PROMPT",
     boolean
-  >
-  is_active: boolean
-  metadata: Record<string, any>
+  >;
+  is_active: boolean;
+  metadata: Record<string, any>;
 }
 
 interface KnowledgePayload {
-  module_id: string
-  module_name: string
-  sources: Array<{ source_type: string }>
-  is_active: boolean
-  metadata: Record<string, any>
+  module_id: string;
+  module_name: string;
+  sources: Array<{ source_type: string }>;
+  is_active: boolean;
+  metadata: Record<string, any>;
 }
 
 interface KnowledgeItem {
-  _id: string
-  name: string
-  description?: string | null
-  source_type: "INTERNAL_TICKET" | "INTERNAL_MODULE" | "INTERNAL_SHEET" | "WEB_SEARCH" | "PROMPT"
-  metadata: Record<string, any>
-  is_active: boolean
-  created_by?: string
-  updated_by?: string
-  created_at?: string
-  updated_at?: string | null
-  is_trash?: boolean
-  deleted_at?: string | null
-  deleted_by?: string | null
-  __v?: number
+  _id: string;
+  name: string;
+  description?: string | null;
+  source_type:
+    | "INTERNAL_TICKET"
+    | "INTERNAL_MODULE"
+    | "INTERNAL_SHEET"
+    | "WEB_SEARCH"
+    | "PROMPT";
+  metadata: Record<string, any>;
+  is_active: boolean;
+  created_by?: string;
+  updated_by?: string;
+  created_at?: string;
+  updated_at?: string | null;
+  is_trash?: boolean;
+  deleted_at?: string | null;
+  deleted_by?: string | null;
+  __v?: number;
 }
 
 // ---------------------------
@@ -1362,27 +1420,33 @@ const knowledgeConfig = reactive<KnowledgeConfig>({
     INTERNAL_MODULE: false,
     INTERNAL_SHEET: false,
     WEB_SEARCH: false,
-    PROMPT: false
+    PROMPT: false,
   },
   is_active: true,
-  metadata: {}
-})
-const knowledgePermissions = reactive<Record<
-  "INTERNAL_TICKET" | "INTERNAL_MODULE" | "INTERNAL_SHEET" | "WEB_SEARCH" | "PROMPT",
-  {
-    create: boolean
-    Edit: boolean
-    delete: boolean,
-    view: boolean
-  }
->>({
-  INTERNAL_TICKET: {  create: false, Edit: false, delete: false, view:false },
-  INTERNAL_MODULE: {  create: false, Edit: false, delete: false, view:false },
-  INTERNAL_SHEET: {  create: false, Edit: false, delete: false, view:false },
-  WEB_SEARCH: {  create: false, Edit: false, delete: false, view:false },
-  PROMPT: {  create: false, Edit: false, delete: false, view:false }
-})
-const isKnowledgeLoading = ref(false)
+  metadata: {},
+});
+const knowledgePermissions = reactive<
+  Record<
+    | "INTERNAL_TICKET"
+    | "INTERNAL_MODULE"
+    | "INTERNAL_SHEET"
+    | "WEB_SEARCH"
+    | "PROMPT",
+    {
+      create: boolean;
+      Edit: boolean;
+      delete: boolean;
+      view: boolean;
+    }
+  >
+>({
+  INTERNAL_TICKET: { create: false, Edit: false, delete: false, view: false },
+  INTERNAL_MODULE: { create: false, Edit: false, delete: false, view: false },
+  INTERNAL_SHEET: { create: false, Edit: false, delete: false, view: false },
+  WEB_SEARCH: { create: false, Edit: false, delete: false, view: false },
+  PROMPT: { create: false, Edit: false, delete: false, view: false },
+});
+const isKnowledgeLoading = ref(false);
 
 // ---------------------------
 // SOURCES + PERMISSIONS FOR DROPDOWNS
@@ -1392,23 +1456,23 @@ const sourceList = [
   { label: "Internal Module", value: "INTERNAL_MODULE" },
   { label: "Internal Sheet", value: "INTERNAL_SHEET" },
   { label: "Web Search", value: "WEB_SEARCH" },
-  { label: "Prompt", value: "PROMPT" }
-]
+  { label: "Prompt", value: "PROMPT" },
+];
 
 const defaultPermissions = [
   { label: "Create", value: "create" },
-  { label: "View", value: "view"},
+  { label: "View", value: "view" },
   { label: "Update", value: "update" },
-  { label: "Delete", value: "delete" }
-]
+  { label: "Delete", value: "delete" },
+];
 
 const permissionsMap: Record<string, typeof defaultPermissions> = {
   INTERNAL_TICKET: defaultPermissions,
   INTERNAL_MODULE: defaultPermissions,
   INTERNAL_SHEET: defaultPermissions,
   WEB_SEARCH: defaultPermissions,
-  PROMPT: defaultPermissions
-}
+  PROMPT: defaultPermissions,
+};
 
 // Dropdown open state
 const openDropdowns = reactive<Record<string, boolean>>({
@@ -1416,8 +1480,8 @@ const openDropdowns = reactive<Record<string, boolean>>({
   INTERNAL_MODULE: false,
   INTERNAL_SHEET: false,
   WEB_SEARCH: false,
-  PROMPT: false
-})
+  PROMPT: false,
+});
 
 // Refs for click-outside handling
 const refsMap: Record<string, Ref<HTMLElement | null>> = {
@@ -1425,41 +1489,44 @@ const refsMap: Record<string, Ref<HTMLElement | null>> = {
   INTERNAL_MODULE: ref(null),
   INTERNAL_SHEET: ref(null),
   WEB_SEARCH: ref(null),
-  PROMPT: ref(null)
-}
+  PROMPT: ref(null),
+};
 
 // Toggle dropdown
 function toggleSourceDropdown(source: string) {
-  openDropdowns[source] = !openDropdowns[source]
+  openDropdowns[source] = !openDropdowns[source];
 }
-function getPermissionLabel(source: keyof typeof knowledgePermissions, perm: string) {
+function getPermissionLabel(
+  source: keyof typeof knowledgePermissions,
+  perm: string,
+) {
   // Map for "create" actions
   const createMap: Record<string, string> = {
     INTERNAL_TICKET: "Ticket",
     INTERNAL_MODULE: "Module",
     INTERNAL_SHEET: "Sheet",
     WEB_SEARCH: "Search",
-    PROMPT: "Prompt"
-  }
+    PROMPT: "Prompt",
+  };
 
-  if (perm === "create") return `Create ${createMap[source]}`
-  if (perm === "update") return `Update ${createMap[source]}`
-  if (perm === "delete") return `Delete ${createMap[source]}`
-  if(perm === "view") return `View ${createMap[source]}`
+  if (perm === "create") return `Create ${createMap[source]}`;
+  if (perm === "update") return `Update ${createMap[source]}`;
+  if (perm === "delete") return `Delete ${createMap[source]}`;
+  if (perm === "view") return `View ${createMap[source]}`;
 
-  return perm
+  return perm;
 }
 
 const knowledgeMetadataString = computed({
   get: () => JSON.stringify(knowledgeConfig.metadata, null, 2),
   set: (val: string) => {
     try {
-      knowledgeConfig.metadata = JSON.parse(val || "{}")
+      knowledgeConfig.metadata = JSON.parse(val || "{}");
     } catch {
-      console.warn("Invalid JSON metadata")
+      console.warn("Invalid JSON metadata");
     }
-  }
-})
+  },
+});
 
 // ---------------------------
 // WATCHER: UPDATE CONFIG WHEN MODULE OR DATA CHANGES
@@ -1469,129 +1536,130 @@ watch(
   ([data, selectedModule]) => {
     if (data && data.length > 0) {
       const knowledgeForModule = data.filter(
-        (k: KnowledgeItem) => k.metadata?.module_name === selectedModule
-      )
+        (k: KnowledgeItem) => k.metadata?.module_name === selectedModule,
+      );
       if (knowledgeForModule.length > 0) {
-        const firstItem = knowledgeForModule[0]
+        const firstItem = knowledgeForModule[0];
         knowledgeConfig.module_id =
-          firstItem.metadata?.module_id || moduleId.value
+          firstItem.metadata?.module_id || moduleId.value;
         knowledgeConfig.module_name =
-          firstItem.metadata?.module_name || selectedModule || ""
+          firstItem.metadata?.module_name || selectedModule || "";
 
         const defaultSources: KnowledgeConfig["sources"] = {
           INTERNAL_TICKET: false,
           INTERNAL_MODULE: false,
           INTERNAL_SHEET: false,
           WEB_SEARCH: false,
-          PROMPT: false
-        }
+          PROMPT: false,
+        };
 
         knowledgeForModule.forEach((item: KnowledgeItem) => {
           if (item.source_type in defaultSources) {
-            defaultSources[item.source_type as keyof KnowledgeConfig["sources"]] =
-              true
+            defaultSources[
+              item.source_type as keyof KnowledgeConfig["sources"]
+            ] = true;
           }
-        })
+        });
 
-        knowledgeConfig.sources = defaultSources
+        knowledgeConfig.sources = defaultSources;
         knowledgeConfig.is_active = knowledgeForModule.every(
-          (item: KnowledgeItem) => item.is_active
-        )
-        knowledgeConfig.metadata = firstItem.metadata || {}
-        return
+          (item: KnowledgeItem) => item.is_active,
+        );
+        knowledgeConfig.metadata = firstItem.metadata || {};
+        return;
       }
     }
 
     // Reset defaults if no data
-    knowledgeConfig.module_id = moduleId.value
-    knowledgeConfig.module_name = selectedModule || ""
+    knowledgeConfig.module_id = moduleId.value;
+    knowledgeConfig.module_name = selectedModule || "";
     knowledgeConfig.sources = {
       INTERNAL_TICKET: true,
       INTERNAL_MODULE: false,
       INTERNAL_SHEET: false,
       WEB_SEARCH: false,
-      PROMPT: false
-    }
-    knowledgeConfig.is_active = true
-    knowledgeConfig.metadata = {}
+      PROMPT: false,
+    };
+    knowledgeConfig.is_active = true;
+    knowledgeConfig.metadata = {};
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 
 // ---------------------------
 // HELPER: GET SELECTED SOURCES ARRAY
 // ---------------------------
 const getSelectedSourcesArray = (
-  sources: KnowledgeConfig["sources"]
+  sources: KnowledgeConfig["sources"],
 ): Array<keyof typeof sources> => {
   return Object.keys(sources).filter(
-    (key) => sources[key as keyof typeof sources]
-  ) as Array<keyof typeof sources>
-}
+    (key) => sources[key as keyof typeof sources],
+  ) as Array<keyof typeof sources>;
+};
 
 // ---------------------------
 // SUBMIT
 // ---------------------------
 const submitKnowledge = async () => {
-  if (!workspaceId.value) return
-  isKnowledgeLoading.value = true
+  if (!workspaceId.value) return;
+  isKnowledgeLoading.value = true;
 
   try {
-    const selectedSources = getSelectedSourcesArray(knowledgeConfig.sources)
-const payload: KnowledgePayload = {
-  module_id: knowledgeConfig.module_id,
-  module_name: knowledgeConfig.module_name,
-   sources: selectedSources.map(source => ({
-    source_type: source,
-    permissions: knowledgePermissions[source]
-  })),
-  is_active: knowledgeConfig.is_active,
-  metadata: knowledgeConfig.metadata
-}
+    const selectedSources = getSelectedSourcesArray(knowledgeConfig.sources);
+    const payload: KnowledgePayload = {
+      module_id: knowledgeConfig.module_id,
+      module_name: knowledgeConfig.module_name,
+      sources: selectedSources.map((source) => ({
+        source_type: source,
+        permissions: knowledgePermissions[source],
+      })),
+      is_active: knowledgeConfig.is_active,
+      metadata: knowledgeConfig.metadata,
+    };
 
-    await agentStore.trainKnowledge(workspaceId.value, payload)
-    toast.success("Knowledge trained successfully!")
+    await agentStore.trainKnowledge(workspaceId.value, payload);
+    toast.success("Knowledge trained successfully!");
 
     // Reset after save
-    knowledgeConfig.module_id = ""
-    knowledgeConfig.module_name = ""
-    knowledgeConfig.metadata = {}
+    knowledgeConfig.module_id = "";
+    knowledgeConfig.module_name = "";
+    knowledgeConfig.metadata = {};
     knowledgeConfig.sources = {
       INTERNAL_TICKET: true,
       INTERNAL_MODULE: false,
       INTERNAL_SHEET: false,
       WEB_SEARCH: false,
-      PROMPT: false
-    }
-    knowledgeConfig.is_active = true
+      PROMPT: false,
+    };
+    knowledgeConfig.is_active = true;
   } catch (err) {
-    console.error(err)
-    toast.error("Failed to train knowledge")
+    console.error(err);
+    toast.error("Failed to train knowledge");
   } finally {
-    isKnowledgeLoading.value = false
-    loadAgentSettings()
+    isKnowledgeLoading.value = false;
+    loadAgentSettings();
   }
-}
+};
 
 // ---------------------------
 // CLICK OUTSIDE HANDLER FOR DROPDOWNS
 // ---------------------------
 function handleSourceClickOutside(event: MouseEvent) {
   sourceList.forEach((source) => {
-    const refEl = refsMap[source.value].value
+    const refEl = refsMap[source.value].value;
     if (refEl && !refEl.contains(event.target as Node)) {
-      openDropdowns[source.value] = false
+      openDropdowns[source.value] = false;
     }
-  })
+  });
 }
 
 onMounted(() => {
-  document.addEventListener("click", handleSourceClickOutside)
-})
+  document.addEventListener("click", handleSourceClickOutside);
+});
 
 onBeforeUnmount(() => {
-  document.removeEventListener("click", handleSourceClickOutside)
-})
+  document.removeEventListener("click", handleSourceClickOutside);
+});
 /* ---------------- UPLOAD CONFIG ---------------- */
 // Define type options with labels
 const availableUploadTypes = [
@@ -1731,24 +1799,7 @@ watch(
   },
   { immediate: true, deep: true },
 );
-type AgentArrayField =
-  | "responsibilities"
-  | "skills"
-  | "competencies"
-  | "conditions_rules";
 
-// Map the fields to labels for template rendering
-const personaGroups: Record<AgentArrayField, string> = {
-  responsibilities: "Responsibilities",
-  skills: "Skills",
-  competencies: "Competencies",
-  conditions_rules: "Conditions / Rules",
-};
-
-// Helper function to safely get array fields
-const getAgentArrayField = (key: AgentArrayField): string[] => {
-  return agentConfig[key];
-};
 const isLoading = ref(false);
 const resetAgentConfig = () => {
   agentConfig.name = "";
@@ -1777,8 +1828,8 @@ const submitPersona = async () => {
     const payload = {
       module_id: moduleId.value,
       module_name: moduleSelected.value,
-      sheet_id:moduleId.value,
-      sheet_name:moduleSelected.value,
+      sheet_id: selected_sheet_id.value,
+      sheet_name: moduleSelected.value,
       name: agentConfig.name,
       description: agentConfig.description,
       role: agentConfig.role,
@@ -1789,16 +1840,14 @@ const submitPersona = async () => {
       capabilities: agentConfig.capabilities,
       conditions_rules: agentConfig.conditions_rules,
     };
-
     await agentStore.trainPersona(workspaceId.value, payload);
     isLoading.value = false;
     resetAgentConfig();
-    toast.success("Agent persona saved successfully!");
   } catch (err) {
     isLoading.value = false;
-    toast.error("Failed to save agent persona!");
-  }finally{
+  } finally {
     await loadAgentSettings();
+    await fetchAssignedAgents();
   }
 };
 // Get the agent if created
@@ -1817,74 +1866,73 @@ const loadAgentSettings = async () => {
 };
 //agent dropdown
 
-const openAgent = ref(false)
-const agentRef = ref<HTMLElement | null>(null)
+const openAgent = ref(false);
+const agentRef = ref<HTMLElement | null>(null);
 const availableAgents = ref([
   { title: "Peak", value: "peak" },
   { title: "Module A", value: "moduleA" },
-  { title: "Module B", value: "moduleB" }
-])
-const selectedAgent = ref(availableAgents.value[0].value)
+  { title: "Module B", value: "moduleB" },
+]);
+const selectedAgent = ref(availableAgents.value[0].value);
 
 const selectedAgentLabel = computed(() => {
   // If route contains "peak", always show Peak
   if (route.path.split("/").includes("peak")) {
-    return "Peak"
+    return "Peak";
   }
 
   // Otherwise, show selectedAgent label
   const found = availableAgents.value.find(
-    (a) => a.value === selectedAgent.value
-  )
+    (a) => a.value === selectedAgent.value,
+  );
 
   // If somehow not found, fallback to first agent
-  return found ? found.title : availableAgents.value[0].title
-})
+  return found ? found.title : availableAgents.value[0].title;
+});
 
 function selectAgent(value: string) {
-  selectedAgent.value = value
-  openAgent.value = false
+  selectedAgent.value = value;
+  openAgent.value = false;
 }
-const dropdownStyle = ref({})
+const dropdownStyle = ref({});
 function toggleDropdown() {
-  openAgent.value = !openAgent.value
+  openAgent.value = !openAgent.value;
 
   if (openAgent.value) {
     nextTick(() => {
-      if (!agentRef.value) return
+      if (!agentRef.value) return;
 
-      const rect = agentRef.value.getBoundingClientRect()
+      const rect = agentRef.value.getBoundingClientRect();
 
       dropdownStyle.value = {
         top: rect.bottom + "px",
         left: rect.left + "px",
-        width: rect.width + "px"
-      }
-    })
+        width: rect.width + "px",
+      };
+    });
   }
 }
 
-
 function handleClickOutside(event: MouseEvent) {
   if (agentRef.value && !agentRef.value.contains(event.target as Node)) {
-    openAgent.value = false
+    openAgent.value = false;
   }
 }
 
 onMounted(() => {
-  document.addEventListener("click", handleClickOutside)
-})
+  document.addEventListener("click", handleClickOutside);
+});
 
 onBeforeUnmount(() => {
-  document.removeEventListener("click", handleClickOutside)
-})
-async function fetchAssignedAgents(){
+  document.removeEventListener("click", handleClickOutside);
+});
+async function fetchAssignedAgents() {
   await agentStore.fetchSavedAgents(
     workspaceId.value,
     moduleId.value,
     selectedModule.value,
     "module",
-    moduleId.value
+    moduleId.value,
   );
 }
 </script>

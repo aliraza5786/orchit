@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import api from "../libs/api";
+import { toast } from "vue-sonner";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
 interface AgentChatPayload {
@@ -140,8 +141,8 @@ export const useAgentStore = defineStore("agent", {
       user_id?: string,
       module_name?: string,
       module_id?: string,
-      sheet_name?:string,
-      sheet_id?:string,
+      sheet_name?: string,
+      sheet_id?: string,
       forceRefresh = false,
     ) {
       if (!workspace_id) return;
@@ -321,8 +322,8 @@ export const useAgentStore = defineStore("agent", {
       payload: {
         module_id?: string;
         module_name?: string;
-        sheet_id?:string;
-        sheet_name?:string;
+        sheet_id?: string;
+        sheet_name?: string;
         name: string;
         description?: string;
         role?: string;
@@ -340,9 +341,7 @@ export const useAgentStore = defineStore("agent", {
       try {
         const url = `${baseUrl}agent-chat/${workspace_id}/train/persona`;
 
-        const res = await api.request<{
-          data: any;
-        }>({
+        const res = await api.request({
           url,
           method: "POST",
           headers: {
@@ -352,10 +351,20 @@ export const useAgentStore = defineStore("agent", {
           },
           data: payload,
         });
-
-        return res.data;
-      } catch (err) {
-        console.error("❌ Failed to train persona:", err);
+        if (res.status >= 200 && res.status < 300) {
+          this.isLoadingHistory = false;
+          toast.success("Agent created successfully.");
+        } else {
+          toast.error("Failed to create Agent.");
+          this.isLoadingHistory = false;
+        }
+      } catch (err: any) {
+        console.error("Failed to create Agent.", err);
+        this.isLoadingHistory = false;
+        toast.error(
+          err?.response?.data?.message ||
+            "Something went wrong while creating Agent.",
+        );
       } finally {
         this.isLoadingHistory = false;
       }
@@ -449,20 +458,20 @@ export const useAgentStore = defineStore("agent", {
         throw err;
       }
     },
-    async saveSelectedSheetTitle(title:string){
+    async saveSelectedSheetTitle(title: string) {
       this.sheetTitle = title;
       localStorage.setItem("selected_sheet_title", title);
     },
-     async saveSelectedSheetId(id:string){
+    async saveSelectedSheetId(id: string) {
       this.sheetId = id;
-      localStorage.setItem("selected_sheet_title",id);
+      localStorage.setItem("selected_sheet_title", id);
     },
     async fetchSavedAgents(
       workspace_id: string,
       module_id?: string,
       module_name?: string,
-      sheet_name?:string,
-      sheet_id?:string
+      sheet_name?: string,
+      sheet_id?: string,
     ) {
       if (!workspace_id) return;
 
@@ -472,8 +481,8 @@ export const useAgentStore = defineStore("agent", {
         const queryParams = new URLSearchParams();
         if (module_id) queryParams.append("module_id", module_id);
         if (module_name) queryParams.append("module_name", module_name);
-        if(sheet_name) queryParams.append("scope_type", sheet_name);
-        if(sheet_id) queryParams.append("scope_id", sheet_id);
+        if (sheet_name) queryParams.append("scope_type", sheet_name);
+        if (sheet_id) queryParams.append("scope_id", sheet_id);
         const url = `${baseUrl}agent-chat/${workspace_id}/assigned-agents?${queryParams.toString()}`;
 
         const res = await api.request<{ data: any }>({
