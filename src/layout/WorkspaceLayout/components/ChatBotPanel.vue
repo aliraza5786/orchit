@@ -10,18 +10,17 @@
     role="complementary"
     aria-label="Details panel"
   >
- <!-- Show preview panel only when: expanded + configPanel closed + entities exist -->
-<div
-  v-if="isExpanded && !showConfigPanel && entities?.length"
-  class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
->
-  <ChatBotPreviewModal
-    @accept="acceptChanges"
-    @decline="declineAgentGeneratedEntities"
-    :title="contextTitle"
-    :data="entities"
-  />
-</div>
+    <div
+      v-if="isExpanded && !showConfigPanel && entities?.length"
+      class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+    >
+      <ChatBotPreviewModal
+        @accept="acceptChanges"
+        @decline="declineAgentGeneratedEntities"
+        :title="contextTitle"
+        :data="entities"
+      />
+    </div>
     <!-- CONFIG PANEL -->
     <div
       v-if="isExpanded && showConfigPanel"
@@ -529,10 +528,12 @@
       </div>
     </div>
     <!-- CHAT PANEL WRAPPER -->
-  <div
-  :class="isExpanded && (showConfigPanel || entities?.length) ? 'w-1/2' : 'w-full'"
-  class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
->
+    <div
+      :class="
+        isExpanded && (showConfigPanel || entities?.length) ? 'w-1/2 me-3' : 'w-full'
+      "
+      class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
+    >
       <!-- Header -->
       <div
         class="flex justify-between items-center border-b border-border px-5 py-3 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
@@ -778,14 +779,6 @@
       </div>
     </div>
   </div>
-
-  <!-- <ChatBotPreviewModal
-    v-model="showAIPreview"
-    @accept="acceptChanges"
-    @decline="declineAgentGeneratedEntities"
-    :title="contextTitle"
-    :data="entities"
-  /> -->
 </template>
 <script setup lang="ts">
 import {
@@ -821,7 +814,7 @@ const activeTab = ref<"persona" | "knowledge" | "upload">("persona");
 // Refs
 const isExpanded = ref(false);
 const showConfigPanel = ref(false);
-const showFetchedData = ref(false)
+const showFetchedData = ref(false);
 const showAIPreview = ref(false);
 const userMessage = ref("");
 const socket = ref<Socket | null>(null);
@@ -881,7 +874,6 @@ watch(
   () => route.fullPath,
   (newPath, oldPath) => {
     if (newPath !== oldPath) {
-      // Only reset if sidebar is open
       if (workspaceStore.showChatBotPanel) {
         sheetIdRef.value = "";
         sheetNameRef.value = "";
@@ -1046,14 +1038,17 @@ function initSocket() {
     if (data.type === "agent-response" || data.type === "message_complete") {
       isAiThinkingBubbleVisible.value = false;
       agentStore.isAiTyping = false;
-      await agentStore.fetchChatHistory(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        moduleSelected.value ?? undefined,
-        moduleId.value ?? undefined,
-        sheetName.value ?? undefined,
-        sheetId.value ?? undefined,
-      );
+      agentStore.fetchChatHistory(
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined,
+  sheetName.value && !isMongoId(sheetName.value)
+    ? sheetName.value
+    : undefined,
+  // sheetId.value
+);
+
       await agentStore.fetchCreatedEntities(
         workspaceId.value,
         authStore.userId ?? undefined,
@@ -1068,6 +1063,8 @@ function initSocket() {
     console.log("Socket event:", eventName, args);
   });
 }
+const isMongoId = (val?: string) =>
+  !!val && /^[a-f\d]{24}$/i.test(val);
 
 // Send Message
 async function sendMessage() {
@@ -1105,24 +1102,29 @@ async function sendMessage() {
 
     await Promise.all([
       agentStore.fetchChatHistory(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        moduleSelected.value ?? undefined,
-        moduleId.value ?? undefined,
-        sheetName.value ?? undefined,
-        sheetId.value ?? undefined,
-      ),
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined,
+  sheetName.value && !isMongoId(sheetName.value)
+    ? sheetName.value
+    : undefined,
+  sheetId.value
+),
       agentStore.fetchCreatedEntities(
         workspaceId.value,
         authStore.userId ?? undefined,
         moduleSelected.value ?? undefined,
         moduleId.value ?? undefined,
       ),
+      isExpanded.value=true,
+    showConfigPanel.value=false,
     ]);
     pendingMessages.value = [];
     scrollToBottom();
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
+    
   } catch (err) {
     console.error("Error sending message:", err);
     pendingMessages.value = pendingMessages.value.filter(
@@ -1141,7 +1143,6 @@ async function acceptChanges(payload: any) {
   await agentStore.acceptEntities(payload);
   showAIPreview.value = false;
   toast.success("Preview entities has been accepted and applied to workspace");
-  refetchModules();
   await agentStore.fetchCreatedEntities(
     workspaceId.value,
     authStore.userId ?? undefined,
@@ -1186,13 +1187,16 @@ onMounted(() => {
   initSocket();
   if (workspaceId.value && workspaceStore.showChatBotPanel) {
     agentStore.fetchChatHistory(
-      workspaceId.value,
-      authStore.userId ?? undefined,
-      moduleSelected.value ?? undefined,
-      moduleId.value ?? undefined,
-      sheetName.value ?? undefined,
-      sheetId.value ?? undefined,
-    );
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined,
+  sheetName.value && !isMongoId(sheetName.value)
+    ? sheetName.value
+    : undefined,
+  sheetId.value
+);
+
     agentStore.fetchCreatedEntities(
       workspaceId.value,
       authStore.userId ?? undefined,
@@ -1209,15 +1213,17 @@ watch(
   [() => workspaceStore.showChatBotPanel, () => moduleSelected.value],
   async ([isOpen]) => {
     if (!workspaceId.value || !isOpen) return;
+agentStore.fetchChatHistory(
+  workspaceId.value,
+  authStore.userId ?? undefined,
+  moduleSelected.value ?? undefined,
+  moduleId.value ?? undefined,
+  sheetName.value && !isMongoId(sheetName.value)
+    ? sheetName.value
+    : undefined,
+  sheetId.value
+);
 
-    await agentStore.fetchChatHistory(
-      workspaceId.value,
-      authStore.userId ?? undefined,
-      moduleSelected.value ?? undefined,
-      moduleId.value ?? undefined,
-      sheetName.value ?? undefined,
-      sheetId.value ?? undefined,
-    );
 
     await agentStore.fetchCreatedEntities(
       workspaceId.value,

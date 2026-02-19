@@ -19,7 +19,6 @@
     <!-- <div class="hidden sm:block">
        <WorkSpaceDropdown :expanded="expanded" />
     </div> -->
-
     <div class="text-center min-w-max" :class="expanded? 'w-full': 'w-max'">
       <SideItem
         label="Peak"
@@ -203,13 +202,20 @@ import { useWorkspaceStore } from "../../../stores/workspace";
 import { useDeleteModule } from "../../../queries/useMore"
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { toast } from "vue-sonner";
+import { useRouter } from "vue-router";
 const showDeleteDialog = ref(false);
 const moduleToDelete = ref<string | null>(null);
+const router = useRouter()
 const { mutate: deleteModuleMutation, isPending } = useDeleteModule();
 const {
   workspaceId
 } = useRouteIds();
 const { refetch } = useSingleWorkspace(workspaceId);
+const workspaceStore = useWorkspaceStore();
+
+
+// Use store data for workspace
+const workspace = computed(() => workspaceStore.singleWorkspace);
 function deleteModule(id: string) {
   moduleToDelete.value = id;
   showDeleteDialog.value = true;
@@ -225,16 +231,20 @@ function confirmDelete() {
         is_trash:true
       },
     },
-    {
-      onSuccess: () => {
-        showDeleteDialog.value = false;
-        toast.success("Module has been Deleted Successfully!")
-        moduleToDelete.value = null;
-        refetch();
-      },
+        {
+          onSuccess: () => {
+            showDeleteDialog.value = false;
+            toast.success("Module has been Deleted Successfully!")
+            moduleToDelete.value = null;
+            const peakPath = `/workspace/peak/${workspaceId.value}/${
+             workspace.value?.generation_task?.job_id || ''
+             }`;
+            router.push(peakPath);
+            refetch();
+          },
+        }
+      );
     }
-  );
-}
 
 
 function cancelDelete() {
@@ -242,7 +252,7 @@ function cancelDelete() {
   moduleToDelete.value = null;
 }
 
-const workspaceStore = useWorkspaceStore();
+
 const { canCreateModule, canAccessModule } = usePermissions();
 
 // Removed workspace from props
@@ -252,9 +262,6 @@ const { canCreateModule, canAccessModule } = usePermissions();
   expanded: boolean;
 }>();  
 
-
-// Use store data for workspace
-const workspace = computed(() => workspaceStore.singleWorkspace);
 
 const filteredModules = computed(() => {
   if (!workspace.value?.modules) return [];
