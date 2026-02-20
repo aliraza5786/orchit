@@ -301,7 +301,7 @@ const props = defineProps({
   data: Array,
 });
 const queryClient = useQueryClient()
-const { workspaceId } = useRouteIds();
+const { workspaceId, moduleId } = useRouteIds();
 const emit = defineEmits(["update:modelValue", "accept", "decline"]);
 const moveCard = useMoveCard({
   onSuccess: () => {
@@ -455,15 +455,15 @@ const acceptChanges = () => {
     });
   } else {
     // Handle CREATE action - existing logic
-    const workspace_id = props.data?.[0]?.workspace_id || null;
+    const workspace_id = workspaceId.value || null;
 
     const module = {
-      _id: props.data?.[0]?.result?.module?._id || null,
+      _id: moduleId.value || props.data?.[0]?._id,
       variables: {
         "module-title":
-          props.data?.[0]?.result?.module?.variables?.["module-title"] || "",
+          props.data?.[0]?.variables?.["module-title"] || "",
         "module-description":
-          props.data?.[0]?.result?.module?.variables?.["module-description"] ||
+          props.data?.[0]?.variables?.["module-description"] ||
           "",
       },
       is_ai_generated: true,
@@ -516,17 +516,11 @@ const acceptChanges = () => {
     };
   })
   .filter(Boolean);
-
-
     const payload = {
       workspace_id,
       module,
       sheets,
     };
-    console.log("selected sheets", sheets);
-    
-    
-    
     emit("accept", payload);
   }
 };

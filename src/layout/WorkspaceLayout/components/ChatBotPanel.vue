@@ -530,7 +530,9 @@
     <!-- CHAT PANEL WRAPPER -->
     <div
       :class="
-        isExpanded && (showConfigPanel || entities?.length) ? 'w-1/2 me-3' : 'w-full'
+        isExpanded && (showConfigPanel || entities?.length)
+          ? 'w-1/2 me-3'
+          : 'w-full'
       "
       class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
     >
@@ -547,12 +549,7 @@
               class="flex items-center gap-2"
             >
               <span>
-                {{
-                  selectedAgentLabel.length > 20
-                    ? selectedAgentLabel.slice(0, 20) + "..."
-                    : selectedAgentLabel
-                }}
-                Agent
+                {{ selectedAgentName }}
               </span>
 
               <i
@@ -560,7 +557,6 @@
                 :class="{ 'rotate-180': openAgent }"
               ></i>
             </button>
-
             <!-- TELEPORT -->
             <Teleport to="body">
               <div
@@ -569,13 +565,23 @@
                 :style="dropdownStyle"
               >
                 <ul class="py-1 text-sm">
+                  <!-- Check if there are agents -->
                   <li
-                    v-for="agent in availableAgents"
-                    :key="agent.value"
-                    @click="selectAgent(agent.value)"
+                    v-for="agent in agentsCreated?.data?.agents || []"
+                    :key="agent._id"
+                    @click="selectAgent(agent._id)"
                     class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
                   >
-                    {{ agent.title }} Agent
+                    {{ agent.name }}
+                  </li>
+
+                  <!-- Show Add Agent option if no agents exist -->
+                  <li
+                    v-if="!agentsCreated?.data?.agents?.length"
+                    @click="openConfigPanel"
+                    class="px-2 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover font-semibold text-accent flex items-center gap-2"
+                  >
+                    <i class="fa-solid fa-plus"></i> Add Agent
                   </li>
                 </ul>
               </div>
@@ -826,6 +832,7 @@ const messagesContainer = ref<HTMLElement | null>(null);
 const pendingMessages = ref<any[]>([]);
 const openType = ref(false);
 const isSheet = ref(false);
+const selectedAgentId = ref("");
 const agentsData = computed(() => {
   return agentStore.agentSettings.agent;
 });
@@ -1039,15 +1046,15 @@ function initSocket() {
       isAiThinkingBubbleVisible.value = false;
       agentStore.isAiTyping = false;
       agentStore.fetchChatHistory(
-  workspaceId.value,
-  authStore.userId ?? undefined,
-  moduleSelected.value ?? undefined,
-  moduleId.value ?? undefined,
-  sheetName.value && !isMongoId(sheetName.value)
-    ? sheetName.value
-    : undefined,
-  // sheetId.value
-);
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined,
+        sheetName.value && !isMongoId(sheetName.value)
+          ? sheetName.value
+          : undefined,
+        // sheetId.value
+      );
 
       await agentStore.fetchCreatedEntities(
         workspaceId.value,
@@ -1063,8 +1070,7 @@ function initSocket() {
     console.log("Socket event:", eventName, args);
   });
 }
-const isMongoId = (val?: string) =>
-  !!val && /^[a-f\d]{24}$/i.test(val);
+const isMongoId = (val?: string) => !!val && /^[a-f\d]{24}$/i.test(val);
 
 // Send Message
 async function sendMessage() {
@@ -1102,29 +1108,28 @@ async function sendMessage() {
 
     await Promise.all([
       agentStore.fetchChatHistory(
-  workspaceId.value,
-  authStore.userId ?? undefined,
-  moduleSelected.value ?? undefined,
-  moduleId.value ?? undefined,
-  sheetName.value && !isMongoId(sheetName.value)
-    ? sheetName.value
-    : undefined,
-  sheetId.value
-),
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        moduleSelected.value ?? undefined,
+        moduleId.value ?? undefined,
+        sheetName.value && !isMongoId(sheetName.value)
+          ? sheetName.value
+          : undefined,
+        sheetId.value,
+      ),
       agentStore.fetchCreatedEntities(
         workspaceId.value,
         authStore.userId ?? undefined,
         moduleSelected.value ?? undefined,
         moduleId.value ?? undefined,
       ),
-      isExpanded.value=true,
-    showConfigPanel.value=false,
+      (isExpanded.value = true),
+      (showConfigPanel.value = false),
     ]);
     pendingMessages.value = [];
     scrollToBottom();
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
-    
   } catch (err) {
     console.error("Error sending message:", err);
     pendingMessages.value = pendingMessages.value.filter(
@@ -1187,15 +1192,15 @@ onMounted(() => {
   initSocket();
   if (workspaceId.value && workspaceStore.showChatBotPanel) {
     agentStore.fetchChatHistory(
-  workspaceId.value,
-  authStore.userId ?? undefined,
-  moduleSelected.value ?? undefined,
-  moduleId.value ?? undefined,
-  sheetName.value && !isMongoId(sheetName.value)
-    ? sheetName.value
-    : undefined,
-  sheetId.value
-);
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      moduleSelected.value ?? undefined,
+      moduleId.value ?? undefined,
+      sheetName.value && !isMongoId(sheetName.value)
+        ? sheetName.value
+        : undefined,
+      sheetId.value,
+    );
 
     agentStore.fetchCreatedEntities(
       workspaceId.value,
@@ -1213,17 +1218,16 @@ watch(
   [() => workspaceStore.showChatBotPanel, () => moduleSelected.value],
   async ([isOpen]) => {
     if (!workspaceId.value || !isOpen) return;
-agentStore.fetchChatHistory(
-  workspaceId.value,
-  authStore.userId ?? undefined,
-  moduleSelected.value ?? undefined,
-  moduleId.value ?? undefined,
-  sheetName.value && !isMongoId(sheetName.value)
-    ? sheetName.value
-    : undefined,
-  sheetId.value
-);
-
+    agentStore.fetchChatHistory(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      moduleSelected.value ?? undefined,
+      moduleId.value ?? undefined,
+      sheetName.value && !isMongoId(sheetName.value)
+        ? sheetName.value
+        : undefined,
+      sheetId.value,
+    );
 
     await agentStore.fetchCreatedEntities(
       workspaceId.value,
@@ -1291,7 +1295,7 @@ interface AgentConfig {
 }
 
 const agentConfig = reactive<AgentConfig>({
-  name: route.path.includes("peak") ? "Peak Agent" : moduleSelected.value,
+  name: "",
   description: "",
   role: "",
   system_prompt: "",
@@ -1309,6 +1313,30 @@ const levelRef = ref(null);
 onClickOutside(levelRef, () => {
   openLevel.value = false;
 });
+const agentsCreated = computed(() => {
+  return agentStore.agentsCreated;
+});
+watch(
+  () => agentsCreated.value?.data?.agents,
+  (agents) => {
+    if (agents?.length && !selectedAgentId.value) {
+      selectedAgentId.value = agents[0]._id;
+    }
+  },
+  { immediate: true },
+);
+interface Agent {
+  _id: string;
+  name: string;
+  slug?: string;
+  description?: string;
+  system_prompt?: string;
+}
+const selectedAgentName = computed(() => {
+  const agents = agentsCreated.value?.data?.agents || [];
+  const agent = agents.find((a: Agent) => a._id === selectedAgentId.value);
+  return agent?.name || "Select Agent";
+});
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
   { _id: "2", title: "Lead", value: "LEAD" },
@@ -1322,7 +1350,6 @@ const selectedLevelLabel = computed(() => {
     availableAgentsLevels[0].title
   );
 });
-
 const selectLevel = (value: string) => {
   agentConfig.level = value as any;
   openLevel.value = false;
@@ -1874,31 +1901,9 @@ const loadAgentSettings = async () => {
 
 const openAgent = ref(false);
 const agentRef = ref<HTMLElement | null>(null);
-const availableAgents = ref([
-  { title: "Peak", value: "peak" },
-  { title: "Module A", value: "moduleA" },
-  { title: "Module B", value: "moduleB" },
-]);
-const selectedAgent = ref(availableAgents.value[0].value);
-
-const selectedAgentLabel = computed(() => {
-  // If route contains "peak", always show Peak
-  if (route.path.split("/").includes("peak")) {
-    return "Peak";
-  }
-
-  // Otherwise, show selectedAgent label
-  const found = availableAgents.value.find(
-    (a) => a.value === selectedAgent.value,
-  );
-
-  // If somehow not found, fallback to first agent
-  return found ? found.title : availableAgents.value[0].title;
-});
-
-function selectAgent(value: string) {
-  selectedAgent.value = value;
+function selectAgent(id: string) {
   openAgent.value = false;
+  selectedAgentId.value = id;
 }
 const dropdownStyle = ref({});
 function toggleDropdown() {
@@ -1937,8 +1942,8 @@ async function fetchAssignedAgents() {
     workspaceId.value,
     moduleId.value,
     selectedModule.value,
-    "module",
-    moduleId.value,
+    // "module",
+    // moduleId.value,
   );
 }
 </script>

@@ -30,7 +30,8 @@
 
       <span :class="labelSizeClass">
         <span v-if="prefix" class="font-bold">{{ prefix }}:</span>
-        <span class="text-nowrap"> {{ selectedOption?.title }} <template   v-if="selectedNested && selectedNested.parentId === selectedOption?._id">  ({{ selectedNested.option.title }}) </template> </span>
+        <span class="text-nowrap" v-if="selectedOption?.title"> {{ selectedOption?.title }} <template   v-if="selectedNested && selectedNested.parentId === selectedOption?._id">  ({{ selectedNested.option.title }}) </template> </span>
+        <span v-else>{{customTitle}}</span>
       </span>
 
       <!-- Chevron -->
@@ -219,7 +220,8 @@ const props = withDefaults(
     actions?: boolean;
     canEdit?: boolean;
     canDelete?: boolean;
-    customClasses?: string 
+    customClasses?: string ;
+    customTitle?:string;
   }>(),
   {
     options: () => [],

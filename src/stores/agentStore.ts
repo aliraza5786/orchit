@@ -93,6 +93,7 @@ export const useAgentStore = defineStore("agent", {
     isLoadingEntities: false,
     isAcceptingEntities: false,
     agentSettings: {} as Record<string, any>,
+    agentsCreated: {} as Record<string, any>,
     isLoadingSettings: false,
     isLoadingKnowledge: false,
     sheetTitle: localStorage.getItem("selected_sheet_title") || "",
@@ -470,8 +471,8 @@ export const useAgentStore = defineStore("agent", {
       workspace_id: string,
       module_id?: string,
       module_name?: string,
-      sheet_name?: string,
-      sheet_id?: string,
+      // sheet_name?: string,
+      // sheet_id?: string,
     ) {
       if (!workspace_id) return;
 
@@ -481,8 +482,8 @@ export const useAgentStore = defineStore("agent", {
         const queryParams = new URLSearchParams();
         if (module_id) queryParams.append("module_id", module_id);
         if (module_name) queryParams.append("module_name", module_name);
-        if (sheet_name) queryParams.append("scope_type", sheet_name);
-        if (sheet_id) queryParams.append("scope_id", sheet_id);
+        // if (sheet_name) queryParams.append("scope_type", sheet_name);
+        // if (sheet_id) queryParams.append("scope_id", sheet_id);
         const url = `${baseUrl}agent-chat/${workspace_id}/assigned-agents?${queryParams.toString()}`;
 
         const res = await api.request<{ data: any }>({
@@ -495,7 +496,7 @@ export const useAgentStore = defineStore("agent", {
           },
         });
 
-        this.agentSettings = res.data.data;
+        this.agentsCreated = res.data;
         return res.data.data;
       } catch (err) {
         console.error("❌ Failed to fetch agent settings:", err);
