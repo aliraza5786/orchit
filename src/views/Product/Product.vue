@@ -488,7 +488,7 @@
     </template>
     <!-- No Sheets Modal -->
     <div
-  v-if="!transformedData?.length"
+  v-if="!transformedData?.length && !isPending || !isSheetPending"
   v-show="hideNoSheetsModal && canCreateSheet"
   class="flex items-center justify-center h-full"
 >
