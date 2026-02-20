@@ -1,5 +1,5 @@
 <template>
-    <div
+  <div
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible w-full"
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
@@ -16,6 +16,7 @@
           variant="secondary"
           customClasses="fixed w-auto"
           ref="sheetDropdownRef"
+          custom-title="Create Sheet"
         >
           <template #more>
             <div
@@ -27,8 +28,7 @@
             </div>
           </template>
         </Dropdown>
-
-        <div class="flex gap-3 items-center">
+        <div class="flex gap-3 items-center" :class="{ 'opacity-60 pointer-events-none': !transformedData?.length }">
           <Dropdown
             v-if="view == 'kanban' || 'mindmap'"
             ref="variableDropdownRef"
@@ -115,7 +115,7 @@
             >
               <i class="fa-regular fa-calendar"></i>
             </button>
-           <button
+            <button
               @click="view = 'gantt'"
               class="aspect-square cursor-pointer rounded-sm p-0"
               :class="
@@ -131,125 +131,127 @@
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
-                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+                <path
+                  d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
+                />
               </svg>
             </button>
             <button
-                @click="view = 'timeline'"
-                class="aspect-square cursor-pointer rounded-sm p-0"
-                :class="
-                  view === 'timeline'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-                "
-                title="Timeline view"
+              @click="view = 'timeline'"
+              class="aspect-square cursor-pointer rounded-sm p-0"
+              :class="
+                view === 'timeline'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
+              title="Timeline view"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-6 w-6"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path
-                    d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
-                    opacity="0"
-                  />
-                  <path
-                    d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
-
+                <path
+                  d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
+                  opacity="0"
+                />
+                <path
+                  d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
     </div>
     <template v-if="view == 'kanban'">
-      <KanbanSkeleton v-show="isPending || isSheetPending" />
+      <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
       <div
-        v-show="!isPending && !isSheetPending"
+        v-show="!isPending && !isSheetPending && hasSheets"
         class="flex overflow-x-auto gap-3 scrollbar-visible h-full mx-3"
       >
-      <div class="mt-3 flex gap-3">
-         <KanbanBoard
-          @onPlus="plusHandler"
-          :board="filteredBoard"
-          @delete:column="(e: any) => deleteHandler(e)"
-          @update:column="(e: any) => handleUpdateColumn(e)"
-          @reorder="onReorder"
-          @addColumn="handleAddColumn"
-          @select:ticket="selectCardHandler"
-          @onBoardUpdate="handleBoardUpdate"
-          :variable_id="selected_view_by"
-          :sheet_id="selected_sheet_id"
-        >
-          <template #column-footer="column">
-            <div
-              class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
-              v-if="
-                workspaceStore?.transitions?.all_allowed &&
-                !workspaceStore?.transitions?.all_allowed?.includes(
-                  column.column.title
-                ) &&
-                workspaceStore.transitions.currentColumn != column.column.title
-              "
-            >
-              Disbale ( you can't drop here )
-            </div>
-          </template>
-          <template #ticket="{ ticket }">
-            <KanbanTicket
-              :selectedVar="selected_view_by"
-              @select="
-                () => {
-                  selectCardHandler(ticket);
-                }
-              "
-              :ticket="ticket"
-            />
-          </template>
-        </KanbanBoard>
-        <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
-          <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
-            <BaseTextField
-              :autofocus="true"
-              v-model="newColumn"
-              placeholder="Add New list"
-              @keyup.enter="emitAddColumn"
-            />
-            <p class="text-xs mt-1.5">You can add details while editing</p>
-            <div class="flex items-center mt-3 gap-3">
-              <Button
-                @click="emitAddColumn"
-                varaint="primary"
-                class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
-                >{{ addingList ? "Adding..." : "Add list" }}</Button
-              >
-              <i class="fa-solid fa-close" @click="setActiveAddList"></i>
-            </div>
-          </div>
-          <button
-            v-else
-            :disabled="!canCreateVariable"
-            class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-            :class="
-              !canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'
-            "
-            @click.stop="setActiveAddList"
+        <div class="mt-3 flex gap-3">
+          <KanbanBoard
+            @onPlus="plusHandler"
+            :board="filteredBoard"
+            @delete:column="(e: any) => deleteHandler(e)"
+            @update:column="(e: any) => handleUpdateColumn(e)"
+            @reorder="onReorder"
+            @addColumn="handleAddColumn"
+            @select:ticket="selectCardHandler"
+            @onBoardUpdate="handleBoardUpdate"
+            :variable_id="selected_view_by"
+            :sheet_id="selected_sheet_id"
           >
-            + Add List
-          </button>
+            <template #column-footer="column">
+              <div
+                class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
+                v-if="
+                  workspaceStore?.transitions?.all_allowed &&
+                  !workspaceStore?.transitions?.all_allowed?.includes(
+                    column.column.title,
+                  ) &&
+                  workspaceStore.transitions.currentColumn !=
+                    column.column.title
+                "
+              >
+                Disbale ( you can't drop here )
+              </div>
+            </template>
+            <template #ticket="{ ticket }">
+              <KanbanTicket
+                :selectedVar="selected_view_by"
+                @select="
+                  () => {
+                    selectCardHandler(ticket);
+                  }
+                "
+                :ticket="ticket"
+              />
+            </template>
+          </KanbanBoard>
+          <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
+            <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
+              <BaseTextField
+                :autofocus="true"
+                v-model="newColumn"
+                placeholder="Add New list"
+                @keyup.enter="emitAddColumn"
+              />
+              <p class="text-xs mt-1.5">You can add details while editing</p>
+              <div class="flex items-center mt-3 gap-3">
+                <Button
+                  @click="emitAddColumn"
+                  varaint="primary"
+                  class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+                  >{{ addingList ? "Adding..." : "Add list" }}</Button
+                >
+                <i class="fa-solid fa-close" @click="setActiveAddList"></i>
+              </div>
+            </div>
+            <button
+              v-else
+              :disabled="!canCreateVariable"
+              class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+              :class="
+                !canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'
+              "
+              @click.stop="setActiveAddList"
+            >
+              + Add List
+            </button>
+          </div>
         </div>
-      </div>
       </div>
     </template>
     <template v-if="view == 'table'">
       <TableView
-      class="mx-3"
+        class="mx-3"
         @toggleVisibility="toggleVisibilityHandler"
         @addVar="
           () => {
@@ -262,11 +264,13 @@
         :canCreate="canCreateCard"
         :canCreateVariable="canCreateVariable"
         :canDelete="canDeleteCard"
-        @delete="(t) => {
-           ticketToDelete = t;
-           selectedDeleteId = t._id;
-           showTicketDelete = true;
-        }"
+        @delete="
+          (t) => {
+            ticketToDelete = t;
+            selectedDeleteId = t._id;
+            showTicketDelete = true;
+          }
+        "
         @create="handleCreateTicket"
         @update:rows="handleTableRowsUpdate"
       />
@@ -275,15 +279,17 @@
     <template v-if="view === 'mindmap'">
       <div class="relative w-full h-full flex overflow-hidden">
         <!-- Mind Map Canvas -->
-       <div
-        ref="mindMapRef"
-        class="flex-1 h-full overflow-hidden rounded-md relative"
-        style="height: 600px; width: 100%;"
-      ></div>
+        <div
+          ref="mindMapRef"
+          class="flex-1 h-full overflow-hidden rounded-md relative"
+          style="height: 600px; width: 100%"
+        ></div>
 
         <!-- Formatting Sidebar -->
         <div
-          v-if="showFormatSidebar && canAssignCard && canEditCard && canCreateCard"
+          v-if="
+            showFormatSidebar && canAssignCard && canEditCard && canCreateCard
+          "
           class="format-sidebar h-full py-4 px-4 w-[320px] border-l bg-bg-card overflow-x-hidden overflow-y-auto flex flex-col"
         >
           <!-- Header -->
@@ -404,7 +410,9 @@
 
       <!-- hyperlink pop up -->
       <div
-        v-if="showHyperlinkModal && canAssignCard && canEditCard && canCreateCard"
+        v-if="
+          showHyperlinkModal && canAssignCard && canEditCard && canCreateCard
+        "
         class="fixed inset-0 bg-black/30 flex items-center justify-center"
       >
         <div class="bg-white p-6 rounded-xl w-80">
@@ -478,7 +486,33 @@
     <template v-if="view === 'timeline'">
       <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
     </template>
+    <!-- No Sheets Modal -->
+    <div
+  v-if="!transformedData?.length"
+  v-show="hideNoSheetsModal && canCreateSheet"
+  class="flex items-center justify-center h-full"
+>
+  <div class="bg-bg-card rounded-lg p-6 w-[420px] text-center shadow-md border border-border">
+    <div class="flex items-center flex-col justify-center mb-4 gap-2">
+      <i class="fa-regular fa-file-lines text-2xl text-accent"></i>
+      <h3 class="text-lg font-semibold">No Sheets Created</h3>
+    </div>
+    <p class="text-sm text-text-secondary mb-6">
+      You don’t have any sheets yet. Create a new sheet to start organizing
+      your tasks and managing projects efficiently.
+    </p>
+    <div class="flex justify-center gap-3">
+      <Button
+        class="px-4 py-2 bg-accent text-white"
+        @click="handleCreateSheetFromModal"
+      >
+        + Create Sheet
+      </Button>
+    </div>
   </div>
+</div>
+  </div>
+
   <ConfirmDeleteModal
     @click.stop=""
     v-model="showDelete"
@@ -580,7 +614,7 @@ import {
   nextTick,
   triggerRef,
   h,
-  onMounted
+  onMounted,
 } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { useTheme } from "../../composables/useTheme";
@@ -613,61 +647,61 @@ import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
 // Lazy-loaded components
 const Dropdown = defineAsyncComponent(
-  () => import("../../components/ui/Dropdown.vue")
+  () => import("../../components/ui/Dropdown.vue"),
 );
 const Searchbar = defineAsyncComponent(
-  () => import("../../components/ui/SearchBar.vue")
+  () => import("../../components/ui/SearchBar.vue"),
 );
 const KanbanSkeleton = defineAsyncComponent(
-  () => import("../../components/skeletons/KanbanSkeleton.vue")
+  () => import("../../components/skeletons/KanbanSkeleton.vue"),
 );
 const BaseTextField = defineAsyncComponent(
-  () => import("../../components/ui/BaseTextField.vue")
+  () => import("../../components/ui/BaseTextField.vue"),
 );
 const Button = defineAsyncComponent(
-  () => import("../../components/ui/Button.vue")
+  () => import("../../components/ui/Button.vue"),
 );
 const KanbanTicket = defineAsyncComponent(
-  () => import("../../components/feature/kanban/KanbanTicket.vue")
+  () => import("../../components/feature/kanban/KanbanTicket.vue"),
 );
 const TableView = defineAsyncComponent(
-  () => import("../../components/feature/TableView/TableView.vue")
+  () => import("../../components/feature/TableView/TableView.vue"),
 );
 const DatePicker = defineAsyncComponent(
-  () => import("./components/DatePicker.vue")
+  () => import("./components/DatePicker.vue"),
 );
 const TableSearchCell = defineAsyncComponent(
-  () => import("../../components/feature/TableView/TableSearchCell.vue")
+  () => import("../../components/feature/TableView/TableSearchCell.vue"),
 );
 const TableAssigneeCell = defineAsyncComponent(
-  () => import("../../components/feature/TableView/TableAssigneeCell.vue")
+  () => import("../../components/feature/TableView/TableAssigneeCell.vue"),
 );
 const CalendarView = defineAsyncComponent(
-  () => import("../../components/feature/CalendarView.vue")
+  () => import("../../components/feature/CalendarView.vue"),
 );
 const GanttChartView = defineAsyncComponent(
-  () => import("../../components/feature/GanttChartView.vue")
+  () => import("../../components/feature/GanttChartView.vue"),
 );
 const TimelineView = defineAsyncComponent(
-  () => import("../../components/feature/TimelineView.vue")
+  () => import("../../components/feature/TimelineView.vue"),
 );
 const CreateTaskModal = defineAsyncComponent(
-  () => import("./modals/CreateTaskModal.vue")
+  () => import("./modals/CreateTaskModal.vue"),
 );
 const CreateSheetModal = defineAsyncComponent(
-  () => import("./modals/CreateSheetModal.vue")
+  () => import("./modals/CreateSheetModal.vue"),
 );
 const CreateVariableModal = defineAsyncComponent(
-  () => import("./modals/CreateVariableModal.vue")
+  () => import("./modals/CreateVariableModal.vue"),
 );
 const ConfirmDeleteModal = defineAsyncComponent(
-  () => import("./modals/ConfirmDeleteModal.vue")
+  () => import("./modals/ConfirmDeleteModal.vue"),
 );
 const SidePanel = defineAsyncComponent(
-  () => import("./components/SidePanel.vue")
+  () => import("./components/SidePanel.vue"),
 );
 const KanbanBoard = defineAsyncComponent(
-  () => import("../../components/feature/kanban/KanbanBoard.vue")
+  () => import("../../components/feature/kanban/KanbanBoard.vue"),
 );
 const {
   canEditSheet,
@@ -699,8 +733,9 @@ const selectedMindNode = ref<any>(null);
 const showFormatSidebar = ref(false);
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
+const hideNoSheetsModal = ref(false);
 const resolveCallback = ref<((link: string) => void) | null>(null);
-const sidePanelStore = useSidePanelStore()
+const sidePanelStore = useSidePanelStore();
 const agentStore = useAgentStore();
 function openHyperlinkModal(callback: (link: string) => void) {
   hyperlink.value = "";
@@ -723,9 +758,9 @@ const localTableOrder = ref<any[]>([]);
 
 const handleTableRowsUpdate = (newRows: any[]) => {
   // Capture tickets that don't have a server-side _id
-  localPendingTickets.value = newRows.filter(r => !r._id);
+  localPendingTickets.value = newRows.filter((r) => !r._id);
   // Store the full sequence of IDs (server _id or temp id)
-  localTableOrder.value = newRows.map(r => r._id || r.id);
+  localTableOrder.value = newRows.map((r) => r._id || r.id);
 };
 const selectedProcessMeta = ref<any>(null);
 const handleProcessNestedSelection = (val: any) => {
@@ -746,7 +781,7 @@ declare global {
       e: Event,
       sheetIdx: number,
       listIdx: number,
-      cardIdx: number
+      cardIdx: number,
     ) => void;
   }
 }
@@ -760,6 +795,9 @@ watch(showBgPicker, (v) => {
 watch(showTextColorPicker, (v) => {
   if (v) showBgPicker.value = false;
 });
+const handleCreateSheetFromModal = () => {
+  createSheet();
+};
 
 // delete ticket
 const deleteTicket = async () => {
@@ -822,35 +860,39 @@ const {
 
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(
-  localStorage.getItem("selected_sheet_id") || sheetId.value
+  localStorage.getItem("selected_sheet_id") || sheetId.value,
 );
 const { data: variables, isPending: isVariablesPending } = useVariables(
   workspaceId,
   moduleId,
-  selected_sheet_id
+  selected_sheet_id,
 );
 const storageKey = computed(() => {
   return `selected_sheet_${route.params.workspace_id}_${route.params.workspace_module_id}`;
 });
 const sheetName = ref("");
-watch(data, (newData) => {
-  if (!newData?.length) return;
+watch(
+  data,
+  (newData) => {
+    if (!newData?.length) return;
 
-  const storedId = localStorage.getItem(storageKey.value);
-  const exists = newData.some((item: any) => item._id === storedId);
+    const storedId = localStorage.getItem(storageKey.value);
+    const exists = newData.some((item: any) => item._id === storedId);
 
-  if (storedId && exists) {
-    selected_sheet_id.value = storedId;
-  } else {
-    selected_sheet_id.value = newData[0]._id;
-  }
-}, { immediate: true });
+    if (storedId && exists) {
+      selected_sheet_id.value = storedId;
+    } else {
+      selected_sheet_id.value = newData[0]._id;
+    }
+  },
+  { immediate: true },
+);
 
 watch(selected_sheet_id, (newId) => {
   if (!newId) return;
 
   const selectedSheet = transformedData.value.find(
-    (item) => item._id === newId
+    (item) => item._id === newId,
   );
 
   if (selectedSheet) {
@@ -896,12 +938,12 @@ const handleAddColumn = (v: any) => {
 
 // Fetch sheets using `useSheets`
 
-watch(sheetId, () => {  
+watch(sheetId, () => {
   selected_sheet_id.value = sheetId.value;
 });
 
 const viewBy = computed(() =>
-  variables?.value ? variables?.value[0]?._id : ""
+  variables?.value ? variables?.value[0]?._id : "",
 );
 const selected_view_by = ref(viewBy.value);
 watch(viewBy, () => {
@@ -915,9 +957,9 @@ const {
 } = useSheetList(
   moduleId,
   selected_sheet_id,
-  computed(() => [...workspaceStore.selectedLaneIds]), 
-  selected_view_by, 
-  listProcessPayload
+  computed(() => [...workspaceStore.selectedLaneIds]),
+  selected_view_by,
+  listProcessPayload,
 );
 onMounted(() => {
   openPanelFromRoute();
@@ -925,7 +967,7 @@ onMounted(() => {
 
 watch(
   () => route.params.card_id,
-  () => openPanelFromRoute()
+  () => openPanelFromRoute(),
 );
 
 async function openPanelFromRoute() {
@@ -938,7 +980,7 @@ async function openPanelFromRoute() {
   // Create a minimal card object
   const card = {
     _id: cardId,
-    id: cardId
+    id: cardId,
   };
 
   // Reuse existing logic
@@ -952,8 +994,8 @@ const selectCardHandler = (card: any) => {
 };
 (window as any).selectCardHandler = selectCardHandler;
 const closeSidePanel = () => {
-  selectedCard.value = null;  
-  sidePanelStore.clearSelectedCard(); 
+  selectedCard.value = null;
+  sidePanelStore.clearSelectedCard();
 };
 
 const isCreateSheetModal = ref(false);
@@ -982,7 +1024,7 @@ function onReorder(a: any) {
           refetchSheets();
           refetchSheetLists();
         },
-      }
+      },
     );
   } else {
     reorderCard.mutate(
@@ -1001,7 +1043,7 @@ function onReorder(a: any) {
           refetchSheets();
           refetchSheetLists();
         },
-      }
+      },
     );
   }
 }
@@ -1027,40 +1069,73 @@ const transformedData = computed<DropdownOption[]>(() => {
     status: item?.generation_status,
   }));
 });
-
+watch(
+  () => transformedData.value,
+  (val) => {
+    if (!val?.length && canCreateSheet) {
+      sheetDropdownRef.value?.openDropdown?.();
+    }
+  },
+  { immediate: true },
+);
+const hasSheets = computed(() => {
+  return Array.isArray(transformedData?.value)
+    ? transformedData.value.length > 0
+    : transformedData.value > 0;
+});
+const showNosheetsModal = () => {
+  if (!transformedData.value?.length) {
+    return (hideNoSheetsModal.value = true);
+  } else return (hideNoSheetsModal.value = false);
+};
+watch(
+  transformedData,
+  () => {
+    showNosheetsModal();
+  },
+  { immediate: true },
+);
 // Watch selected_sheet_id to update store and reactive title
-watch(selected_sheet_id, (newId) => {
-  if (!newId) return;
+watch(
+  selected_sheet_id,
+  (newId) => {
+    if (!newId) return;
 
-  const selectedSheet = transformedData.value.find(
-    (item) => item._id === newId
-  );
+    const selectedSheet = transformedData.value.find(
+      (item) => item._id === newId,
+    );
 
-  if (selectedSheet) {
-    // Save to global agentStore immediately
-    agentStore.saveSelectedSheetTitle(selectedSheet.title);
-    agentStore.saveSelectedSheetId(newId);
+    if (selectedSheet) {
+      // Save to global agentStore immediately
+      agentStore.saveSelectedSheetTitle(selectedSheet.title);
+      agentStore.saveSelectedSheetId(newId);
 
-    sheetName.value = selectedSheet.title || "";
-  }
-}, { immediate: true });
+      sheetName.value = selectedSheet.title || "";
+    }
+  },
+  { immediate: true },
+);
 watch(data, (newSheetId) => {
   if (newSheetId?.length > 0) {
     selected_sheet_id.value = newSheetId[0]?._id; // Trigger the refetch with the new sheet_id
   }
 });
-watch([() => storageKey.value, () => data.value], ([newKey, newData]) => {
-  if (!newData?.length) return;
+watch(
+  [() => storageKey.value, () => data.value],
+  ([newKey, newData]) => {
+    if (!newData?.length) return;
 
-  const storedId = localStorage.getItem(newKey);
-  const exists = newData.some((item: any) => item._id === storedId);
+    const storedId = localStorage.getItem(newKey);
+    const exists = newData.some((item: any) => item._id === storedId);
 
-  if (storedId && exists) {
-    selected_sheet_id.value = storedId;
-  } else {
-    selected_sheet_id.value = newData[0]._id;
-  }
-}, { immediate: true });
+    if (storedId && exists) {
+      selected_sheet_id.value = storedId;
+    } else {
+      selected_sheet_id.value = newData[0]._id;
+    }
+  },
+  { immediate: true },
+);
 // add column
 const activeAddList = ref(false);
 const newColumn = ref("");
@@ -1100,7 +1175,7 @@ const deleteHandler = (e: any) => {
 };
 const plusHandler = (e: any) => {
   createTeamModal.value = true;
-  localStorage.setItem("selectedStatusTitle", e?.title)
+  localStorage.setItem("selectedStatusTitle", e?.title);
   localColumnData.value = e;
 };
 
@@ -1137,7 +1212,7 @@ watch(
   searchQuery,
   debounce((val: any) => {
     debouncedQuery.value = val;
-  }, 200)
+  }, 200),
 );
 const fuse = computed(() => {
   const lists = Lists.value?.data || [];
@@ -1152,7 +1227,7 @@ const fuse = computed(() => {
         columnId: col.title,
         "card-description": card["card-description"] || descVar?.value || "",
       };
-    })
+    }),
   );
 
   return new Fuse(allCards, {
@@ -1187,14 +1262,14 @@ const filteredBoard = computed(() => {
 
         // Return cards in the order stored, but only if they still exist
         const ordered = localTableOrder.value
-          .map(id => cardMap.get(id))
+          .map((id) => cardMap.get(id))
           .filter(Boolean);
-        
-        // If some cards in the current 'array' or 'localPendingTickets' aren't in 'ordered' 
-        const returnedIds = new Set(ordered.map(c => c._id || c.id));
+
+        // If some cards in the current 'array' or 'localPendingTickets' aren't in 'ordered'
+        const returnedIds = new Set(ordered.map((c) => c._id || c.id));
         const extras = [
-           ...array.filter((c:any) => !returnedIds.has(c._id)),
-           ...localPendingTickets.value.filter(c => !returnedIds.has(c.id))
+          ...array.filter((c: any) => !returnedIds.has(c._id)),
+          ...localPendingTickets.value.filter((c) => !returnedIds.has(c.id)),
         ];
 
         return [...ordered, ...extras];
@@ -1208,7 +1283,7 @@ const filteredBoard = computed(() => {
       threshold: 0.3,
     });
     const results = fuseTable.search(query).map((r) => r.item);
-    
+
     // Merge pending tickets into results if they match the query (or if query is simple)
     return [...results, ...localPendingTickets.value];
   }
@@ -1221,7 +1296,7 @@ const laneOptions = computed<any[]>(() =>
   (lanes?.value ?? []).map((el: any) => ({
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
-  }))
+  })),
 );
 // const { data: statusData } = useProductVarsData(workspaceId, moduleId, 'card-status')
 // const { data: typeData } = useProductVarsData(workspaceId, moduleId, 'card-type')
@@ -1240,7 +1315,7 @@ const columns = computed(() => {
               class:
                 "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
             },
-            row["card-code"]
+            row["card-code"],
           ),
           h("div", { class: "flex-1 min-w-0" }, [
             h("input", {
@@ -1311,7 +1386,7 @@ const columns = computed(() => {
                         : ""
                     }`,
                   },
-                  getInitials(value?.u_full_name)
+                  getInitials(value?.u_full_name),
                 ),
           ]),
           h(
@@ -1319,7 +1394,7 @@ const columns = computed(() => {
             {
               class: "text-[12px]", // your class here
             },
-            value ? value?.u_full_name : ""
+            value ? value?.u_full_name : "",
           ),
         ]),
     },
@@ -1373,8 +1448,10 @@ const columns = computed(() => {
 });
 const assignHandle = (row: any, users: any[]) => {
   const id = row?._id;
-  const userIds = (users || []).filter(u => u && (u._id || u.id)).map(u => u._id || u.id);
-  
+  const userIds = (users || [])
+    .filter((u) => u && (u._id || u.id))
+    .map((u) => u._id || u.id);
+
   if (id) {
     updateOptimisticCard(id, (card) => {
       card.seat = users;
@@ -1445,55 +1522,65 @@ const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
   return found;
 };
 
-
 const moveCard = useMoveCard({
   onMutate: async (newPayload: any) => {
     const { card_id, variables: updatedVariables } = newPayload;
 
-    await queryClient.cancelQueries({ queryKey: ['product-card', card_id] });
-    await queryClient.cancelQueries({ queryKey: ['sheet-list'] });
+    await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
+    await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
 
-    const previousCard = queryClient.getQueryData(['product-card', card_id]);
-    const previousLists = queryClient.getQueryData(['sheet-list']);
+    const previousCard = queryClient.getQueryData(["product-card", card_id]);
+    const previousLists = queryClient.getQueryData(["sheet-list"]);
 
     const updateCardLogic = (oldCard: any) => {
-  if (!oldCard) return oldCard;
+      if (!oldCard) return oldCard;
 
-  const updatedCard = {
-    ...oldCard,
-    variables: Array.isArray(oldCard.variables) ? [...oldCard.variables] : { ...(oldCard.variables || {}) }
-  };
+      const updatedCard = {
+        ...oldCard,
+        variables: Array.isArray(oldCard.variables)
+          ? [...oldCard.variables]
+          : { ...(oldCard.variables || {}) },
+      };
 
-  if (updatedVariables) {
-    // 1) Update top-level fields
-    Object.assign(updatedCard, updatedVariables);
+      if (updatedVariables) {
+        // 1) Update top-level fields
+        Object.assign(updatedCard, updatedVariables);
 
-    // 2) Update variables ARRAY or OBJECT
-    if (Array.isArray(updatedCard.variables)) {
-      Object.entries(updatedVariables).forEach(([key, value]) => {
-        const idx = updatedCard.variables.findIndex((v: any) => v.slug === key);
-        if (idx !== -1) {
-          updatedCard.variables[idx] = { ...updatedCard.variables[idx], value };
+        // 2) Update variables ARRAY or OBJECT
+        if (Array.isArray(updatedCard.variables)) {
+          Object.entries(updatedVariables).forEach(([key, value]) => {
+            const idx = updatedCard.variables.findIndex(
+              (v: any) => v.slug === key,
+            );
+            if (idx !== -1) {
+              updatedCard.variables[idx] = {
+                ...updatedCard.variables[idx],
+                value,
+              };
+            } else {
+              updatedCard.variables.push({ slug: key, value, type: "Text" });
+            }
+          });
         } else {
-          updatedCard.variables.push({ slug: key, value, type: "Text" });
+          Object.assign(updatedCard.variables, updatedVariables);
         }
-      });
-    } else {
-      Object.assign(updatedCard.variables, updatedVariables);
-    }
-  }
+      }
 
-  if (newPayload.optimisticUser) {
-    const users = Array.isArray(newPayload.optimisticUser) ? newPayload.optimisticUser : [newPayload.optimisticUser];
-    updatedCard.seats = users;
-    updatedCard.seat_id = users.map((u: any) => u?._id || u?.id).filter(Boolean);
-    updatedCard.seat = users[0] || null;
-  }
-  if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+      if (newPayload.optimisticUser) {
+        const users = Array.isArray(newPayload.optimisticUser)
+          ? newPayload.optimisticUser
+          : [newPayload.optimisticUser];
+        updatedCard.seats = users;
+        updatedCard.seat_id = users
+          .map((u: any) => u?._id || u?.id)
+          .filter(Boolean);
+        updatedCard.seat = users[0] || null;
+      }
+      if (newPayload.workspace_lane_id)
+        updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
 
-  return updatedCard;
-};
-
+      return updatedCard;
+    };
 
     // CRITICAL FIX: Update the card in the local Lists structure
     if (updatedVariables && Lists.value) {
@@ -1506,31 +1593,39 @@ const moveCard = useMoveCard({
     }
 
     // Sync SidePanel Cache
-    queryClient.setQueryData(['product-card', card_id], updateCardLogic);
-      
+    queryClient.setQueryData(["product-card", card_id], updateCardLogic);
+
     // Sync Parent (Lists/Board) Cache
-    queryClient.setQueriesData({ queryKey: ['sheet-list'] }, (old: any) => {
+    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
       if (!Array.isArray(old)) return old;
       return old.map((column: any) => ({
         ...column,
-        cards: column.cards?.map((card: any) => 
-          card._id === card_id ? updateCardLogic(card) : card
-        )
+        cards: column.cards?.map((card: any) =>
+          card._id === card_id ? updateCardLogic(card) : card,
+        ),
       }));
     });
     triggerRef(Lists);
     return { previousCard, previousLists };
   },
-  onError: (err:any, variables:any, context:any) => {
-    if (context?.previousCard) queryClient.setQueryData(['product-card', variables.card_id], context.previousCard);
-    if (context?.previousLists) queryClient.setQueryData(['sheet-list'], context.previousLists);
-    
+  onError: (err: any, variables: any, context: any) => {
+    if (context?.previousCard)
+      queryClient.setQueryData(
+        ["product-card", variables.card_id],
+        context.previousCard,
+      );
+    if (context?.previousLists)
+      queryClient.setQueryData(["sheet-list"], context.previousLists);
+
     // Also revert selectedCard if it was updated
-    if (selectedCard.value && selectedCard.value._id === variables.card_id && context?.previousCard) {
+    if (
+      selectedCard.value &&
+      selectedCard.value._id === variables.card_id &&
+      context?.previousCard
+    ) {
       selectedCard.value = context.previousCard;
     }
     console.log(err);
-    
   },
 });
 function incrementCommentCount({ cardId }: { cardId: string }) {
@@ -1555,20 +1650,20 @@ const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
   // Lists.value.data is an array of columns (from your data structure)
   for (const column of columns) {
     if (!column.cards) continue;
-    
+
     const cardIndex = column.cards.findIndex((c: any) => c._id === cardId);
-    
+
     if (cardIndex !== -1) {
       // Get the current card
       const card = column.cards[cardIndex];
-      
+
       // Apply the updates directly to the card object
       // (Vue 3's reactive proxy will track these changes)
       updater(card);
 
       // Force a manual trigger for the Lists ref to notify Kanban/Table components
       triggerRef(Lists);
-      break; 
+      break;
     }
   }
 };
@@ -1584,24 +1679,24 @@ function checkAndCreateTicket(row: any) {
   // Required fields check: Title, Lane, card-status, card-type
   const title = row["card-title"];
   const laneId = row.lane?._id || row.workspace_lane_id;
-  
+
   // Find card-status and card-type in variables if they're not top-level
   let status = row["card-status"];
   let type = row["card-type"];
-  
+
   if (Array.isArray(row.variables)) {
     const sVar = row.variables.find((v: any) => v.slug === "card-status");
     if (sVar) status = sVar.value;
     const tVar = row.variables.find((v: any) => v.slug === "card-type");
     if (tVar) type = tVar.value;
-  } else if (typeof row.variables === 'object' && row.variables !== null) {
-      status = row.variables["card-status"] || status;
-      type = row.variables["card-type"] || type;
+  } else if (typeof row.variables === "object" && row.variables !== null) {
+    status = row.variables["card-status"] || status;
+    type = row.variables["card-type"] || type;
   }
 
   if (title && status && type) {
     const payloadVariables: Record<string, any> = {};
-    
+
     // Initialize all variables with null
     if (variables.value) {
       variables.value.forEach((v: any) => {
@@ -1615,7 +1710,7 @@ function checkAndCreateTicket(row: any) {
     payloadVariables["card-type"] = type;
 
     // Fill other variables from row if they exist
-    Object.keys(row).forEach(key => {
+    Object.keys(row).forEach((key) => {
       if (payloadVariables.hasOwnProperty(key)) {
         payloadVariables[key] = row[key];
       }
@@ -1628,12 +1723,12 @@ function checkAndCreateTicket(row: any) {
           payloadVariables[v.slug] = v.value;
         }
       });
-    } else if (typeof row.variables === 'object' && row.variables !== null) {
-        Object.entries(row.variables).forEach(([k, v]) => {
-            if (payloadVariables.hasOwnProperty(k)) {
-                payloadVariables[k] = v;
-            }
-        });
+    } else if (typeof row.variables === "object" && row.variables !== null) {
+      Object.entries(row.variables).forEach(([k, v]) => {
+        if (payloadVariables.hasOwnProperty(k)) {
+          payloadVariables[k] = v;
+        }
+      });
     }
 
     const payload = {
@@ -1666,11 +1761,14 @@ function handleChangeTicket(row: any, key: any, value: any) {
         } else {
           card.variables.push({ slug: key, value: cleanValue, type: "Text" });
         }
-      } else if (typeof card.variables === 'object' && card.variables !== null) {
-          card.variables[key] = cleanValue;
+      } else if (
+        typeof card.variables === "object" &&
+        card.variables !== null
+      ) {
+        card.variables[key] = cleanValue;
       }
       if (selectedCard.value?._id === id) {
-        selectedCard.value[key] = cleanValue; 
+        selectedCard.value[key] = cleanValue;
       }
     });
     moveCard.mutate({ card_id: id, variables: { [key]: cleanValue } });
@@ -1685,8 +1783,8 @@ function handleChangeTicket(row: any, key: any, value: any) {
         row.variables.push({ slug: key, value: cleanValue, type: "Text" });
       }
     } else {
-        if (!row.variables) row.variables = {};
-        row.variables[key] = cleanValue;
+      if (!row.variables) row.variables = {};
+      row.variables[key] = cleanValue;
     }
     checkAndCreateTicket(row);
   }
@@ -1754,13 +1852,13 @@ const activeFormatStyle = computed(() => {
 function resolveStyle<T>(
   uiValue: T | undefined,
   originalValue: T | undefined,
-  defaultValue: T
+  defaultValue: T,
 ): T {
   return uiValue !== undefined
     ? uiValue
     : originalValue !== undefined
-    ? originalValue
-    : defaultValue;
+      ? originalValue
+      : defaultValue;
 }
 
 function onStyleChange(prop: string, event: Event) {
@@ -1843,52 +1941,52 @@ async function saveNodeStyle() {
       bg_color: resolveStyle(
         style.background,
         original.bg_color,
-        DEFAULT_BACKEND_STYLE.bg_color
+        DEFAULT_BACKEND_STYLE.bg_color,
       ),
       color: resolveStyle(
         style.color,
         original.color,
-        DEFAULT_BACKEND_STYLE.color
+        DEFAULT_BACKEND_STYLE.color,
       ),
       font_size: resolveStyle(
         style.fontSize ? parseInt(style.fontSize) : undefined,
         original.font_size,
-        DEFAULT_BACKEND_STYLE.font_size
+        DEFAULT_BACKEND_STYLE.font_size,
       ),
       font_weight: resolveStyle(
         style.fontWeight,
         original.font_weight,
-        DEFAULT_BACKEND_STYLE.font_weight
+        DEFAULT_BACKEND_STYLE.font_weight,
       ),
       font_style: resolveStyle(
         style.fontStyle,
         original.font_style,
-        DEFAULT_BACKEND_STYLE.font_style
+        DEFAULT_BACKEND_STYLE.font_style,
       ),
       font_family: resolveStyle(
         style.fontFamily,
         original.font_family,
-        DEFAULT_BACKEND_STYLE.font_family
+        DEFAULT_BACKEND_STYLE.font_family,
       ),
       border_color: resolveStyle(
         style.borderColor,
         original.border_color,
-        DEFAULT_BACKEND_STYLE.border_color
+        DEFAULT_BACKEND_STYLE.border_color,
       ),
       border_width: resolveStyle(
         style.borderWidth ? parseInt(style.borderWidth) : undefined,
         original.border_width,
-        DEFAULT_BACKEND_STYLE.border_width
+        DEFAULT_BACKEND_STYLE.border_width,
       ),
       border_radius: resolveStyle(
         style.borderRadius ? parseInt(style.borderRadius) : undefined,
         original.border_radius,
-        DEFAULT_BACKEND_STYLE.border_radius
+        DEFAULT_BACKEND_STYLE.border_radius,
       ),
       padding: resolveStyle(
         style.padding ? parseInt(style.padding) : undefined,
         original.padding,
-        DEFAULT_BACKEND_STYLE.padding
+        DEFAULT_BACKEND_STYLE.padding,
       ),
 
       hyperLink: hyperlink.value || plainNode.hyperLink || "",
@@ -2045,7 +2143,7 @@ const handleReorderCard = async (payload: {
 // Define the toolbar functions outside watchEffect
 function injectToolbarButton() {
   const toolbar = mindMapRef.value?.querySelector(
-    ".mind-elixir-toolbar.rb"
+    ".mind-elixir-toolbar.rb",
   ) as HTMLElement;
   if (!toolbar) return;
 
@@ -2074,7 +2172,7 @@ function setupToolbarObserver() {
   }
 
   const toolbarContainer = mindMapRef.value?.querySelector(
-    ".mind-elixir-toolbar.rb"
+    ".mind-elixir-toolbar.rb",
   )?.parentElement;
   if (!toolbarContainer) return;
 
@@ -2112,7 +2210,8 @@ if (canEditCard || canEditSheet) {
 }
 
 watchEffect(() => {
-  if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value?.data) return;
+  if (view.value !== "mindmap" || !mindMapRef.value || !Lists.value?.data)
+    return;
 
   nextTick(() => {
     const rootNode = buildMindMapDataAllSheets(Lists.value?.data);
@@ -2136,8 +2235,8 @@ watchEffect(() => {
       locale: "en",
       overflowHidden: false,
       contextMenuOption: {
-      Update: canEditCard && canEditSheet && canCreateCard,
-      extend: contextMenuExtendOptions,
+        Update: canEditCard && canEditSheet && canCreateCard,
+        extend: contextMenuExtendOptions,
       },
     });
 
@@ -2203,7 +2302,7 @@ watchEffect(() => {
         if (!targetSheet) return;
 
         const newIndex = targetList.children.findIndex(
-          (c: any) => c.id === draggedNode.id
+          (c: any) => c.id === draggedNode.id,
         );
         if (newIndex === -1) return;
 
@@ -2310,7 +2409,7 @@ watchEffect(() => {
                   topic: editedNode.topic ?? "New Card",
                   id: editedNode.id,
                 },
-                parentNode
+                parentNode,
               );
 
               if (payload.variables) {
@@ -2349,10 +2448,10 @@ watch(
 
     // Switch MindElixir theme
     mindMapInstance.value.changeTheme(
-      isDark.value ? MindElixir.DARK_THEME : MindElixir.THEME
+      isDark.value ? MindElixir.DARK_THEME : MindElixir.THEME,
     );
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 // ----------------------
@@ -2618,7 +2717,9 @@ function createDefaultCardPayload(nodeObj: any, sheet: any) {
   width: 40px;
   padding: 5px;
   cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 :deep(.mind-elixir-toolbar.lt > *) {

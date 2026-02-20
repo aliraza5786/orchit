@@ -142,7 +142,7 @@ const isUrgent = (daysUntil: number) => daysUntil <= 3
 const isPast = (daysUntil: number) => daysUntil < 0
 const getDeadlineClass = (daysUntil: number) => {
   if (daysUntil < 0) return 'border border-border bg-slate-50 dark:bg-slate-800'
-  if (isUrgent(daysUntil)) return 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900'
+  if (isUrgent(daysUntil)) return 'border-red-200 dark:border-red-800 bg-card'
   return 'border border-border'
 }
 const getPriorityColor = (priority: string) => {
@@ -155,10 +155,10 @@ const getPriorityColor = (priority: string) => {
 }
 const getPriorityLabel = (priority: string) => priority.charAt(0).toUpperCase() + priority.slice(1)
 const getDaysUntilColor = (daysUntil: number) => {
-  if (daysUntil <= 3) return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900'
-  if (daysUntil <= 7) return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900'
-  if (daysUntil <= 14) return 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900'
-  return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900'
+  if (daysUntil <= 3) return 'text-text-primary bg-bg-card'
+  if (daysUntil <= 7) return 'text-text-primary bg-bg-card'
+  if (daysUntil <= 14) return 'text-text-primary bg-bg-card'
+  return 'text-text-primary bg-bg-card'
 }
 const formatDaysUntil = (daysUntil: number) => {
   if (daysUntil === 0) return 'Today'
