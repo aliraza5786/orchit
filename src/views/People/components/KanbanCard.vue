@@ -54,7 +54,7 @@
         </div>
         <!-- </div> -->
     </div>
-    <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.stop @pointerdown.stop>
+    <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.passive.stop @pointerdown.stop>
         <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Team seat" itemLabel="Seat"
             :itemName="ticket.title" :requireMatchText="ticket.title" confirmText="Delete Seat" cancelText="Cancel"
             size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {

@@ -1,273 +1,365 @@
 <template>
-  <div class="schedule-container ms-4">
-    <ejs-schedule
-      ref="scheduleObj"
-      height="550px"
-      width="100%"
-      :selectedDate="selectedDate"
-      :eventSettings="eventSettings"
-      :views="views"
-    >
-      <e-resources>
-        <e-resource
-          field="OwnerId"
-          title="Owner"
-          name="Owners"
-          :dataSource="ownerDataSource"
-          textField="OwnerText"
-          idField="Id"
-          colorField="OwnerColor"
+  <div class="schedule-container">
+    <div class="calendar-header bg-bg-card text-text-secondary">
+      <div class="nav-group bg-bg-body text-text-secondary rounded-md px-2 py-1">
+        <button class="nav-btn text-text-secondary" @click="goPrev">
+          <i class="fa-regular fa-chevron-left text-sm"></i>
+        </button>
+        <button class="nav-btn text-text-secondary" @click="goNext">
+          <i class="fa-regular fa-chevron-right text-sm"></i>
+        </button>
+        <button class="today-btn text-text-secondary border border-border" @click="goToday">Today</button>
+        <span class="date-label">{{ dateLabel }}</span>
+      </div>
+
+      <div class="tabs bg-bg-body rounded-md">
+        <button
+          v-for="v in views"
+          :key="v"
+          :class="['tab-btn', { active: currentView === v }]"
+          @click="changeView(v)"
         >
-        </e-resource>
-      </e-resources>
-    </ejs-schedule>
+          {{ v }}
+        </button>
+      </div>
+    </div>
+
+    <div class="calendar-wrapper px-3">
+      <div ref="calendarEl" class="calendar-host border border-border"></div>
+    </div>
   </div>
 </template>
-
 <script setup lang="ts">
-import { provide, computed, watch, onMounted } from "vue";
-import {
-  ScheduleComponent as EjsSchedule,
-  ResourcesDirective as EResources,
-  ResourceDirective as EResource,
-  Day,
-  Week,
-  WorkWeek,
-  Month,
-  Agenda,
-} from "@syncfusion/ej2-vue-schedule";
+// @ts-ignore — Toast UI calendar types don't resolve via package.json exports
+import Calendar from "@toast-ui/calendar";
+// @ts-ignore
+import "@toast-ui/calendar/dist/toastui-calendar.css";
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useTheme } from "../../composables/useTheme";
 
-// Types
-interface Seat {
+interface RawCard {
   _id: string;
-  title?: string;
-  name?: string;
+  "card-title": string;
+  "start-date"?: string | null;
+  "end-date"?: string | null;
+  [key: string]: any;
 }
 
-interface Card {
-  _id: string;
-  "card-title"?: string;
-  "start-date"?: string;
-  "end-date"?: string;
-  seat?: Seat;
-  "card-description"?: string;
-  "card-status"?: string;
-  "card-type"?: string;
-}
-
-interface Owner {
-  Id: string;
-  OwnerText: string;
-  OwnerColor: string;
-}
-
-interface Event {
-  Id: string;
-  Subject: string;
-  StartTime: Date;
-  EndTime: Date;
-  OwnerId: string;
-  Description: string;
-  Status: string;
-  Type: string;
-}
-
-provide("schedule", [Day, Week, WorkWeek, Month, Agenda]);
 const props = defineProps<{
-  data?: Card[];
+  data: RawCard[];
 }>();
+
+const emit = defineEmits<{
+  (e: "select:ticket", card: RawCard): void;
+}>();
+
+const scheduleEl = ref<HTMLDivElement | null>(null);
+const calendarEl = ref<HTMLDivElement | null>(null);
+let calendar: any = null;
+
 const { isDark } = useTheme();
-const views = ["Day", "Week", "WorkWeek", "Month", "Agenda"];
-const selectedDate = new Date();
-const generateColor = (id: string): string => {
-  const colors = [
-    "#ffaa00",
-    "#f8a398",
-    "#7499e1",
-    "#a4d65e",
-    "#f57f7f",
-    "#6ec6ff",
-    "#ff80ab",
-    "#ffd54f",
-    "#b39ddb",
-    "#81c784",
-  ];
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+const currentView = ref<"month" | "week" | "day">("month");
+const dateLabel = ref("");
+const views: ("month" | "week" | "day")[] = ["month", "week", "day"];
+
+/* --------------------------------------------------
+   Theme
+-------------------------------------------------- */
+function applyTheme(dark: boolean) {
+  if (!scheduleEl.value) return;
+  const bg = dark ? "#2b2c30" : "#ffffff";
+  const text = dark ? "#e5e7eb" : "#374151";
+  const border = dark ? "#3f4046" : "#e2e8f0";
+  const hover = dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+
+  scheduleEl.value.style.setProperty("--cal-bg", bg);
+  scheduleEl.value.style.setProperty("--cal-text", text);
+  scheduleEl.value.style.setProperty("--cal-border", border);
+  scheduleEl.value.style.setProperty("--cal-hover", hover);
+}
+
+watch(isDark, (val) => applyTheme(val));
+
+/* --------------------------------------------------
+   Date parsing
+-------------------------------------------------- */
+function parsePlainDate(value: string | null | undefined): Date | null {
+  if (!value) return null;
+  if (value.includes("T")) {
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? null : d;
   }
-  return colors[Math.abs(hash) % colors.length];
-};
-const ownerDataSource = computed<Owner[]>(() => {
-  if (!props.data || props.data.length === 0) {
-    return [
-      { Id: "unassigned", OwnerText: "Unassigned", OwnerColor: "#9e9e9e" },
-    ];
-  }
+  const parts = value.split("-").map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return null;
+  const [year, month, day] = parts;
+  return new Date(year, month - 1, day, 0, 0, 0);
+}
 
-  const seatsMap = new Map<string, Owner>();
-  seatsMap.set("unassigned", {
-    Id: "unassigned",
-    OwnerText: "Unassigned",
-    OwnerColor: "#9e9e9e",
-  });
-  props.data.forEach((card) => {
-    if (card.seat && card.seat._id) {
-      if (!seatsMap.has(card.seat._id)) {
-        seatsMap.set(card.seat._id, {
-          Id: card.seat._id,
-          OwnerText: card.seat.title || card.seat.name || "Unnamed Seat",
-          OwnerColor: generateColor(card.seat._id),
-        });
-      }
-    }
-  });
-
-  return Array.from(seatsMap.values());
-});
-
-const eventSettings = computed(() => {
-  if (!props.data || props.data.length === 0) {
-    return { dataSource: [] };
-  }
-
-  const events: Event[] = props.data
-    .filter((card) => {
-      return card["start-date"] && card["end-date"];
-    })
+/* --------------------------------------------------
+   Build events
+-------------------------------------------------- */
+function buildEvents(cards: RawCard[]) {
+  return cards
     .map((card) => {
-      const startDate = new Date(card["start-date"]!);
-      const endDate = new Date(card["end-date"]!);
-
-      if (endDate.getHours() === 0 && endDate.getMinutes() === 0) {
-        endDate.setHours(23, 59, 59);
-      }
-      if (startDate.getHours() === 0 && startDate.getMinutes() === 0) {
-        startDate.setHours(9, 0, 0);
-      }
-
+      const start = parsePlainDate(card["start-date"]);
+      const end = parsePlainDate(card["end-date"]);
+      if (!start || !end) return null;
+      const endInclusive = new Date(end);
+      endInclusive.setDate(endInclusive.getDate() + 1);
       return {
-        Id: card._id,
-        Subject: card["card-title"] || "Untitled Card",
-        StartTime: startDate,
-        EndTime: endDate,
-        OwnerId: card.seat?._id || "unassigned",
-        Description: card["card-description"] || "",
-        Status: card["card-status"] || "",
-        Type: card["card-type"] || "",
+        id: card._id,
+        calendarId: "default",
+        title: card["card-title"] || "Untitled",
+        start,
+        end: endInclusive,
+        isAllday: true,
+        category: "allday",
+        raw: card,
       };
+    })
+    .filter(Boolean);
+}
+
+/* --------------------------------------------------
+   Date label
+-------------------------------------------------- */
+function updateDateLabel() {
+  if (!calendar) return;
+  const date = new Date(calendar.getDate().getTime());
+
+  if (currentView.value === "month") {
+    dateLabel.value = date.toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
     });
-
-  return { dataSource: events };
-});
-onMounted(() => {
-  let themeLink = document.getElementById(
-    "syncfusion-theme",
-  ) as HTMLLinkElement | null;
-  if (!themeLink) {
-    themeLink = document.createElement("link");
-    themeLink.id = "syncfusion-theme";
-    themeLink.rel = "stylesheet";
-    document.head.appendChild(themeLink);
-  }
-
-  // Set initial theme
-  themeLink.href = isDark.value
-    ? "https://cdn.syncfusion.com/ej2/material3-dark.css"
-    : "https://cdn.syncfusion.com/ej2/material3.css";
-
-  if (isDark.value) {
-    document.body.classList.add("e-dark-mode");
+  } else if (currentView.value === "day") {
+    dateLabel.value = date.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
   } else {
-    document.body.classList.remove("e-dark-mode");
+    const start = new Date(calendar.getDateRangeStart().getTime());
+    const end = new Date(calendar.getDateRangeEnd().getTime());
+    dateLabel.value =
+      start.toLocaleDateString("en-US", { month: "short", day: "numeric" }) +
+      " – " +
+      end.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
   }
+}
+
+/* --------------------------------------------------
+   Navigation
+-------------------------------------------------- */
+function goToday() { calendar?.today(); updateDateLabel(); }
+function goPrev()  { calendar?.prev();  updateDateLabel(); }
+function goNext()  { calendar?.next();  updateDateLabel(); }
+
+function changeView(view: "month" | "week" | "day") {
+  currentView.value = view;
+  calendar?.changeView(view);
+  updateDateLabel();
+}
+
+/* --------------------------------------------------
+   Load events
+-------------------------------------------------- */
+function loadEvents(cards: RawCard[]) {
+  if (!calendar) return;
+  calendar.clear();
+  const events = buildEvents(cards);
+  if (events.length) calendar.createEvents(events);
+}
+
+/* --------------------------------------------------
+   Init
+-------------------------------------------------- */
+onMounted(async () => {
+  await nextTick();
+  if (!calendarEl.value) return;
+
+  applyTheme(isDark.value);
+
+  calendar = new Calendar(calendarEl.value, {
+    defaultView: currentView.value,
+    usageStatistics: false,
+    isReadOnly: true,
+    calendars: [
+      {
+        id: "default",
+        name: "Tasks",
+        backgroundColor: "#9356c5",
+        borderColor: "#7c3aad",
+      },
+    ],
+    template: {
+      monthGridHeaderExceed(hiddenEventsCount: number) {
+        return `<span>+${hiddenEventsCount} more</span>`;
+      },
+    },
+  });
+
+  calendar.on("clickEvent", ({ event }: any) => {
+    if (event?.raw) emit("select:ticket", event.raw);
+  });
+
+  loadEvents(props.data);
+  updateDateLabel();
 });
 
-watch(
-  isDark,
-  (newValue) => {
-    const themeLink = document.getElementById(
-      "syncfusion-theme",
-    ) as HTMLLinkElement | null;
-    if (themeLink) {
-      themeLink.href = newValue
-        ? "https://cdn.syncfusion.com/ej2/material3-dark.css"
-        : "https://cdn.syncfusion.com/ej2/material3.css";
-    }
+watch(() => props.data, (val) => loadEvents(val ?? []), { deep: true });
 
-    if (newValue) {
-      document.body.classList.add("e-dark-mode");
-    } else {
-      document.body.classList.remove("e-dark-mode");
-    }
-  },
-  { immediate: false },
-);
+onBeforeUnmount(() => {
+  calendar?.destroy();
+  calendar = null;
+});
 </script>
-
 <style scoped>
+/* ── CSS Variables (set by JS via applyTheme) ──────── */
 .schedule-container {
+  --cal-text: #374151;
+  --cal-border: #e2e8f0;
+  --cal-hover: rgba(0, 0, 0, 0.06);
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: background 0.2s;
+}
+
+/* ── Header ────────────────────────────────────────── */
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 13px;
+  transition: background 0.2s;
+}
+
+.nav-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.nav-btn:hover { background: var(--cal-hover); }
+
+.today-btn {
+  padding: 5px 14px;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.2s, color 0.2s;
+}
+.today-btn:hover { background: var(--cal-hover); }
+
+.date-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-left: 4px;
+  transition: color 0.2s;
+}
+
+/* ── View tabs ─────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  transition: border-color 0.2s;
+}
+
+.tab-btn {
+  padding: 4px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: capitalize;
+  transition: background 0.15s, color 0.15s;
+}
+.tab-btn:hover:not(.active) { background: var(--cal-hover); }
+.tab-btn.active {
+  background: #9356c5;
+  color: #ffffff;
+}
+
+/* ── Calendar wrapper ──────────────────────────────── */
+.calendar-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--cal-bg);
+  transition: background 0.2s;
+}
+
+.calendar-host {
   width: 100%;
   height: 100%;
+  background: var(--cal-bg);
 }
 
-:deep(.e-schedule) {
-  background-color: var(--bg-body) !important;
-}
-:deep(.e-schedule-toolbar-container){
-  border-bottom: 1px solid var(--color-border) !important;
-}
-:deep(.e-schedule .e-schedule-toolbar),
-:deep(.e-schedule .e-schedule-toolbar .e-toolbar-items),
-:deep(.e-schedule .e-schedule-toolbar .e-toolbar-item) {
-  background: var(--bg-body) !important;
-  background-color: var(--bg-body) !important;
-  color: var(--text-primary) !important;
-}
-
-:deep(.e-schedule .e-schedule-toolbar .e-tbar-btn) {
-  background: transparent !important;
-  color: var(--text-primary) !important;
-}
-
-:deep(.e-schedule .e-schedule-toolbar .e-icons),
-:deep(.e-schedule .e-schedule-toolbar .e-tbar-btn-text) {
-  color: var(--text-primary) !important;
-}
-:deep(.e-schedule .e-vertical-view .e-date-header-wrap table tbody td) {
-  background-color: var(--bg-body) !important;
-  color: var(--text-primary) !important;
-}
-:deep(.e-schedule .e-vertical-view .e-left-indent-wrap table tbody td) {
-  background-color: var(--bg-body) !important;
-}
-:deep(.e-schedule .e-vertical-view .e-time-cells-wrap table td) {
-  background-color: var(--bg-body) !important;
-   color: var(--text-primary) !important;
-}
-:deep(.e-schedule .e-vertical-view .e-work-cells) {
-  background-color: var(--bg-body) !important;
+/* ── Toast UI internal dark overrides ──────────────── */
+:deep(.toastui-calendar-layout),
+:deep(.toastui-calendar-week-view),
+:deep(.toastui-calendar-month),
+:deep(.toastui-calendar-day-view),
+:deep(.toastui-calendar-panel),
+:deep(.toastui-calendar-timegrid),
+:deep(.toastui-calendar-time-grid-scroll-area),
+:deep(.toastui-calendar-column),
+:deep(.toastui-calendar-day-names),
+:deep(.toastui-calendar-day-name__date),
+:deep(.toastui-calendar-month-week-item),
+:deep(.toastui-calendar-grid-cell) {
+  background: var(--cal-bg) !important;
+  color: var(--cal-text) !important;
+  border-color: var(--cal-border) !important;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
-:deep(.e-schedule .e-month-view .e-date-header-wrap table tbody td) {
-   background-color: var(--bg-body) !important;
-   color: var(--text-primary) !important;
+:deep(.toastui-calendar-weekday-grid-line),
+:deep(.toastui-calendar-gridline),
+:deep(.toastui-calendar-border) {
+  border-color: var(--cal-border) !important;
 }
 
-:deep(.e-schedule .e-month-view .e-work-cells) {
-  background-color: var(--bg-body) !important;
-  color: var(--text-primary) !important;
-  border-color: var(--border) !important;
+:deep(.toastui-calendar-day-name),
+:deep(.toastui-calendar-day-name__name),
+:deep(.toastui-calendar-grid-cell-date) {
+  color: var(--cal-text) !important;
 }
-
-:deep(.e-schedule .e-work-cells),
-:deep(.e-schedule .e-header-cells),
-:deep(.e-schedule .e-resource-cells),
-:deep(.e-schedule .e-date-header-wrap table tbody td),
-:deep(.e-schedule .e-content-wrap table tbody td),
-:deep(.e-schedule .e-time-cells-wrap table td),
-:deep(.e-schedule .e-left-indent-wrap table tbody td) {
-  border-color: var(--border) !important;
+:deep(.toastui-calendar-grid-cell-date .toastui-calendar-weekday-grid-date.toastui-calendar-weekday-grid-date-decorator){
+  background-color: #9356c5 !important;
+  color: white !important;
+}
+:deep(.toastui-calendar-template-allday){
+  color: white !important;
+}
+:deep(.toastui-calendar-template-monthGridHeaderExceed, .toastui-calendar-template-monthDayName){
+  color: #2b2c30 !important;
+}
+:deep(.toastui-calendar-weekday-grid-date .toastui-calendar-template-monthGridHeader){
+  color: #2b2c30 !important;
 }
 </style>

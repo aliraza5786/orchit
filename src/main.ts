@@ -9,11 +9,7 @@ import { Toaster } from 'vue-sonner'
 import '@/assets/fontawesome/css/fontawesome.min.css';
 import '@/assets/fontawesome/css/regular.min.css';
 import { queryClient } from './libs/queryClient'
-import { registerLicense } from '@syncfusion/ej2-base';
-import '@syncfusion/ej2-base/styles/material.css';
-import '@syncfusion/ej2-vue-schedule/styles/material.css';
 import { initThemeImmediately } from './composables/useTheme'
-registerLicense('Ngo9BigBOggjHTQxAR8/V1JGaF1cXmhKYVtpR2NbeU52fldPal9TVAciSV9jS3hTdEVlWXladHFTQGRbWE91XQ==');
 const app = createApp(App)
 initThemeImmediately();
 import vTooltip from './directives/vTooltip'

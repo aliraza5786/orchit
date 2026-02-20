@@ -38,7 +38,7 @@
 
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
             <div class="flex items-center gap-3 flex-1">
-                <div v-if="canAssignCard || canViewCard " @click.stop>
+                <div v-if="canAssignCard || canViewCard ">
                     <AssigmentDropdown :users="members" @assign="assignHandle" :assigneeId="ticket.seat_id"
                         :seat="ticket?.seats" />
                 </div>
@@ -63,7 +63,7 @@
         </div>
     </div>
 
-    <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.stop @pointerdown.stop>
+    <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.passive.stop @pointerdown.stop>
         <ConfirmDeleteModal @click.stop="" v-model="showDelete" title="Delete Ticket" itemLabel="Ticket"
             :itemName="ticket.title" :requireMatchText="ticket.title" confirmText="Delete Ticket" cancelText="Cancel"
             size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {
