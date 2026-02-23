@@ -67,7 +67,7 @@
                 </div>
                 <div class="px-6 mt-5">
                     <Button variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
-                        Create Manually
+                       <span v-if="sheet?._id">Update</span> <span v-else>Create</span> Manually
                     </Button>
                 </div>
                 <!-- Suggestions -->

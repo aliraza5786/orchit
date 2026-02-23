@@ -96,6 +96,7 @@ export const useAgentStore = defineStore("agent", {
     agentsCreated: {} as Record<string, any>,
     isLoadingSettings: false,
     isLoadingKnowledge: false,
+    isDeletingAgent:false,
     sheetTitle: localStorage.getItem("selected_sheet_title") || "",
     sheetId: localStorage.getItem("selected_sheet_id") || "",
   }),
@@ -504,5 +505,74 @@ export const useAgentStore = defineStore("agent", {
         this.isLoadingSettings = false;
       }
     },
+  async updateSelectedAgent(
+  workspace_id: string,
+  payload: Record<string, any>,
+  agent_id?: string,
+) {
+  if (!workspace_id) return;
+
+  this.isLoadingSettings = true;
+
+  try {
+    const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
+    const url = agent_id ? `${base}/${agent_id}` : base;
+
+    const res = await api.request<{ data: any }>({
+      url,
+      method: "PUT", // or PATCH if backend supports partial updates
+      data: payload,
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
+
+    console.log(res);
+
+    return res.data;
+  } catch (err) {
+    console.error("❌ Failed to update agent settings:", err);
+    throw err;
+  } finally {
+    this.isLoadingSettings = false;
+  }
+},
+ async deleteSelectedAgent(
+  workspace_id: string,
+  // payload: Record<string, any>,
+  agent_id?: string,
+) {
+  if (!workspace_id) return;
+
+  this.isDeletingAgent = true;
+
+  try {
+    const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
+    const url = agent_id ? `${base}/${agent_id}` : base;
+
+    const res = await api.request<{ data: any }>({
+      url,
+      method: "DELETE",
+      // data: payload,
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
+
+    console.log(res);
+
+    return res.data;
+  } catch (err) {
+    this.isDeletingAgent = false;
+    console.error("❌ Failed to Delete agent:", err);
+    throw err;
+  } finally {
+    this.isDeletingAgent = false;
+  }
+}
   },
 });

@@ -1,6 +1,6 @@
 <template>
   <div class="schedule-container">
-    <div class="calendar-header bg-bg-card text-text-secondary">
+    <div class="calendar-header bg-bg-card text-text-secondary lg:space-y-0 space-y-2">
       <div class="nav-group bg-bg-body text-text-secondary rounded-md px-2 py-1">
         <button class="nav-btn text-text-secondary" @click="goPrev">
           <i class="fa-regular fa-chevron-left text-sm"></i>
@@ -236,6 +236,7 @@ onBeforeUnmount(() => {
 .calendar-header {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
   padding: 12px 13px;
   transition: background 0.2s;

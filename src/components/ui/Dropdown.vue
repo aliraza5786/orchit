@@ -148,7 +148,7 @@
                   :aria-expanded="actionOpenId === option._id ? 'true' : 'false'"
                   :aria-label="`Actions for ${option.title}`"
                 >
-                  ⋯
+                 <i class="fa-regular fa-ellipsis"></i>
                 </button>
 
                 <!-- Inline action bar -->
