@@ -207,7 +207,7 @@
                 v-model="agentConfig.conditions_rules"
                 label="Conditions / Rules"
               />
-              <div class="flex gap-2">
+              <div class="flex gap-2" v-if="transformedData?.length">
                 <input
                   type="checkbox"
                   class="h-4 w-4 rounded border-border"
@@ -306,10 +306,10 @@
 
               <div class="flex gap-4">
                 <button
-                  @click="submitPersona"
+                  @click="deleteAgent(agentConfig.id)"
                   v-if="agentsData"
                   :disabled="
-                    isLoading || !agentConfig.name || !agentConfig.role
+                    agentStore.isDeletingAgent || !agentConfig.name || !agentConfig.role
                   "
                   class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -317,7 +317,7 @@
                   <span v-else>Delete Agent</span>
                 </button>
                 <button
-                  @click="submitPersona"
+                  @click="updateAgent(agentConfig.id)"
                   v-if="agentsData"
                   :disabled="
                     isLoading || !agentConfig.name || !agentConfig.role
@@ -538,61 +538,28 @@
     >
       <!-- Header -->
       <div
-        class="flex justify-between items-center border-b border-border px-5 py-3 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
+        class="flex justify-between items-center border-b border-border px-5 py-2 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
       >
         <h5 class="text-[16px] font-medium flex items-center gap-2">
           <i class="fa-solid fa-sparkles text-accent"></i>
-          <div class="relative" ref="agentRef">
-            <button
-              type="button"
-              @click="toggleDropdown"
-              class="flex items-center gap-2"
+          <Dropdown
+          v-model="selectedAgentId"
+          :options="agentOptions"
+          :custom-title="selectedAgentName"
+          :actions="false"
+          size="md"
+          variant="secondary"
+          class="relative w-60"
+        >
+          <template #more>
+            <div
+              @click="openConfigPanel"
+              class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
             >
-              <span>
-                {{ selectedAgentName }}
-              </span>
-
-              <i
-                class="fa-regular fa-chevron-down text-sm transition-transform duration-200"
-                :class="{ 'rotate-180': openAgent }"
-              ></i>
-            </button>
-            <!-- TELEPORT -->
-            <Teleport to="body">
-              <div
-                v-if="openAgent"
-                class="fixed z-[9999] rounded-lg border border-border bg-bg-dropdown shadow-lg"
-                :style="dropdownStyle"
-              >
-                <ul class="py-1 text-sm">
-                  <!-- Check if there are agents -->
-                  <li
-                    v-for="agent in agentsCreated?.data?.agents || []"
-                    :key="agent._id"
-                    @click="selectAgent(agent._id)"
-                    class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
-                  >
-                    {{ agent.name }}
-                  </li>
-
-                  <!-- Show Add Agent option if no agents exist -->
-                  <li
-                    v-if="!agentsCreated?.data?.agents?.length"
-                    @click="openConfigPanel"
-                    class="px-2 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover font-semibold text-accent flex items-center gap-2"
-                  >
-                    <i class="fa-solid fa-plus"></i> Add Agent
-                  </li>
-                </ul>
-              </div>
-            </Teleport>
-          </div>
-          <div class="flex items-center gap-2">
-            <span
-              class="w-2 h-2 rounded-full"
-              :class="isSocketConnected ? 'bg-green-500' : 'bg-red-500'"
-            ></span>
-          </div>
+              <i class="fa-solid fa-plus"></i> Add new
+            </div>
+          </template>
+        </Dropdown>
         </h5>
         <div class="flex items-center gap-3 shrink-0">
           <!-- Expand Icon -->
@@ -630,8 +597,19 @@
         ref="messagesContainer"
         class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4"
       >
+        <div
+          v-if="agentStore.isLoadingHistory"
+          class="absolute inset-0 flex items-center justify-center"
+        >
+          <div class="flex flex-col items-center gap-3 text-text-secondary">
+            <div class="chat-loader"></div>
+            <span class="text-xs">Loading conversation...</span>
+          </div>
+        </div>
         <!-- KEEPING YOUR FULL ORIGINAL CHAT CONTENT EXACTLY SAME -->
-        <template v-if="orderedMessages.length || isAiThinkingBubbleVisible">
+        <template
+          v-else-if="orderedMessages.length || isAiThinkingBubbleVisible"
+        >
           <div
             v-for="msg in orderedMessages"
             :key="msg._id"
@@ -804,6 +782,7 @@ import { useRouteIds } from "../../../composables/useQueryParams";
 import { useAgentStore } from "../../../stores/agentStore";
 import ChatBotPreviewModal from "./ChatBotPreviewModal.vue";
 import TagInput from "../../../components/ui/TagInput.vue";
+import Dropdown from "../../../components/ui/Dropdown.vue";
 import { onClickOutside } from "@vueuse/core";
 import { toast } from "vue-sonner";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
@@ -1282,6 +1261,7 @@ const availableCapabilities = [
 ];
 
 interface AgentConfig {
+  id:string;
   name: string;
   description: string;
   role: string;
@@ -1295,6 +1275,7 @@ interface AgentConfig {
 }
 
 const agentConfig = reactive<AgentConfig>({
+  id:"",
   name: "",
   description: "",
   role: "",
@@ -1316,6 +1297,24 @@ onClickOutside(levelRef, () => {
 const agentsCreated = computed(() => {
   return agentStore.agentsCreated;
 });
+
+const agentOptions = computed(() =>
+  (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
+    _id: agent._id,
+    title: agent.name,
+    description: agent.description,
+ icon: { 
+  prefix: 'fa-solid',
+  iconName: `fa-circle ${isSocketConnected.value ? 'bg-green-500 border text-green-500 rounded-full' : 'text-red-500 border rounded-full bg-red-500 rounded-full'} text-[6px]`,
+},
+  }))
+);
+const selectedAgentName = computed(() => {
+  const agent = agentsCreated.value?.data?.agents?.find(
+    (a:any) => a._id === selectedAgentId.value
+  );
+  return agent?.name || 'Select Agent';
+});
 watch(
   () => agentsCreated.value?.data?.agents,
   (agents) => {
@@ -1325,18 +1324,7 @@ watch(
   },
   { immediate: true },
 );
-interface Agent {
-  _id: string;
-  name: string;
-  slug?: string;
-  description?: string;
-  system_prompt?: string;
-}
-const selectedAgentName = computed(() => {
-  const agents = agentsCreated.value?.data?.agents || [];
-  const agent = agents.find((a: Agent) => a._id === selectedAgentId.value);
-  return agent?.name || "Select Agent";
-});
+
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
   { _id: "2", title: "Lead", value: "LEAD" },
@@ -1354,48 +1342,40 @@ const selectLevel = (value: string) => {
   agentConfig.level = value as any;
   openLevel.value = false;
 };
+const originalAgentConfig = ref<Partial<AgentConfig> | null>(null);
 watch(
   [() => agentsData.value, () => moduleSelected.value],
   ([agent, selectedModule]) => {
+    console.log(selectedModule);
+    
     if (agent) {
-      const moduleToUse = selectedModule || "Peak";
-      console.log(moduleToUse);
-      if (route.path?.includes("peak")) {
-        agentConfig.name = agent.name || "Peak Agent";
-      } else {
-        agentConfig.name = agent.name || moduleSelected.value;
-      }
+      agentConfig.name = agent.name || "Peak Agent";
+      agentConfig.id = agent?._id || "";
       agentConfig.description = agent.description || "";
       agentConfig.role = agent.role || "";
       agentConfig.system_prompt = agent.system_prompt || "";
       agentConfig.level = agent.level || "MID";
-      agentConfig.responsibilities = Array.isArray(agent.responsibilities)
-        ? [...agent.responsibilities]
-        : [];
-      agentConfig.skills = Array.isArray(agent.skills) ? [...agent.skills] : [];
-      agentConfig.competencies = Array.isArray(agent.competencies)
-        ? [...agent.competencies]
-        : [];
-      agentConfig.capabilities = Array.isArray(agent.capabilities)
-        ? [...agent.capabilities]
-        : [];
-      agentConfig.conditions_rules = Array.isArray(agent.conditions_rules)
-        ? [...agent.conditions_rules]
-        : [];
-    } else {
-      agentConfig.name = moduleSelected.value;
-      agentConfig.description = "";
-      agentConfig.role = "";
-      agentConfig.system_prompt = "";
-      agentConfig.level = "MID";
-      agentConfig.responsibilities = [];
-      agentConfig.skills = [];
-      agentConfig.competencies = [];
-      agentConfig.capabilities = [];
-      agentConfig.conditions_rules = [];
+      agentConfig.responsibilities = [...(agent.responsibilities || [])];
+      agentConfig.skills = [...(agent.skills || [])];
+      agentConfig.competencies = [...(agent.competencies || [])];
+      agentConfig.capabilities = [...(agent.capabilities || [])];
+      agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
+
+      // ✅ Save snapshot safely
+      originalAgentConfig.value = JSON.parse(JSON.stringify({
+        name: agentConfig.name,
+        description: agentConfig.description,
+        role: agentConfig.role,
+        level: agentConfig.level,
+        responsibilities: agentConfig.responsibilities,
+        skills: agentConfig.skills,
+        competencies: agentConfig.competencies,
+        capabilities: agentConfig.capabilities,
+        conditions_rules: agentConfig.conditions_rules,
+      }));
     }
   },
-  { immediate: true },
+  { immediate: true }
 );
 interface KnowledgeConfig {
   module_id: string;
@@ -1883,6 +1863,54 @@ const submitPersona = async () => {
     await fetchAssignedAgents();
   }
 };
+const getChangedFields = (original: any, current: any) => {
+  const changed: Record<string, any> = {};
+
+  Object.keys(current).forEach((key) => {
+    if (JSON.stringify(original[key]) !== JSON.stringify(current[key])) {
+      changed[key] = current[key];
+    }
+  });
+
+  return changed;
+};
+
+const updateAgent = async (agent: string) => {
+  if (!originalAgentConfig.value) return;
+
+  const currentPayload = {
+    name: agentConfig.name,
+    description: agentConfig.description,
+    role: agentConfig.role,
+    level: agentConfig.level,
+    responsibilities: agentConfig.responsibilities,
+    skills: agentConfig.skills,
+    competencies: agentConfig.competencies,
+    capabilities: agentConfig.capabilities,
+    conditions_rules: agentConfig.conditions_rules,
+  };
+
+  const payload = getChangedFields(
+    originalAgentConfig.value,
+    currentPayload
+  );
+
+  if (!Object.keys(payload).length) return;
+
+  await agentStore.updateSelectedAgent(
+    workspaceId.value,
+    payload,
+    agent
+  );
+   await fetchAssignedAgents();
+   await loadAgentSettings();
+};
+const deleteAgent = async (agent:string) =>{
+    await agentStore.deleteSelectedAgent(workspaceId.value, agent);
+    await fetchAssignedAgents();
+    await loadAgentSettings();
+    resetAgentConfig();
+}
 // Get the agent if created
 const isLoadingSettings = ref(false);
 const selectedModule = computed(() => {
@@ -1897,46 +1925,7 @@ const loadAgentSettings = async () => {
   );
   isLoadingSettings.value = false;
 };
-//agent dropdown
 
-const openAgent = ref(false);
-const agentRef = ref<HTMLElement | null>(null);
-function selectAgent(id: string) {
-  openAgent.value = false;
-  selectedAgentId.value = id;
-}
-const dropdownStyle = ref({});
-function toggleDropdown() {
-  openAgent.value = !openAgent.value;
-
-  if (openAgent.value) {
-    nextTick(() => {
-      if (!agentRef.value) return;
-
-      const rect = agentRef.value.getBoundingClientRect();
-
-      dropdownStyle.value = {
-        top: rect.bottom + "px",
-        left: rect.left + "px",
-        width: rect.width + "px",
-      };
-    });
-  }
-}
-
-function handleClickOutside(event: MouseEvent) {
-  if (agentRef.value && !agentRef.value.contains(event.target as Node)) {
-    openAgent.value = false;
-  }
-}
-
-onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener("click", handleClickOutside);
-});
 async function fetchAssignedAgents() {
   await agentStore.fetchSavedAgents(
     workspaceId.value,
@@ -1966,6 +1955,21 @@ async function fetchAssignedAgents() {
 }
 .typing-dots span:nth-child(2) {
   animation-delay: -0.16s;
+}
+.chat-loader {
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  border-radius: 9999px;
+  border: 3px solid #d9d9d9;
+  border-top-color: #7d68c8;
+  animation: chat-spin 0.8s linear infinite;
+}
+
+@keyframes chat-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 @keyframes typing-bounce {
   0%,
