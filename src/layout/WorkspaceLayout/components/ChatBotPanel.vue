@@ -320,7 +320,7 @@
                   @click="updateAgent(agentConfig.id)"
                   v-if="agentsData"
                   :disabled="
-                    isLoading || !agentConfig.name || !agentConfig.role
+                    agentStore.isUpdatingAgent || !agentConfig.name || !agentConfig.role
                   "
                   class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -1187,16 +1187,26 @@ onMounted(() => {
       moduleSelected.value ?? undefined,
       moduleId.value ?? undefined,
     );
-
-    loadAgentSettings();
+    if(selectedAgentId.value){
+     loadAgentSettings();
+    }
+    
     fetchAssignedAgents();
   }
   scrollToBottom();
 });
 watch(
-  [() => workspaceStore.showChatBotPanel, () => moduleSelected.value],
-  async ([isOpen]) => {
+  [
+    () => workspaceStore.showChatBotPanel,
+    () => moduleSelected.value,
+    () => selectedAgentId.value, // ✅ added
+  ],
+  async (
+    [isOpen, _moduleSelected, selectedAgentId],
+    [_oldIsOpen, _oldModuleSelected, oldSelectedAgentId],
+  ) => {
     if (!workspaceId.value || !isOpen) return;
+
     agentStore.fetchChatHistory(
       workspaceId.value,
       authStore.userId ?? undefined,
@@ -1215,7 +1225,11 @@ watch(
       moduleId.value ?? undefined,
     );
 
-    await loadAgentSettings();
+    // ✅ call ONLY when selectedAgentId changes
+    if (selectedAgentId !== oldSelectedAgentId) {
+      await loadAgentSettings();
+    }
+
     fetchAssignedAgents();
     scrollToBottom();
   },
@@ -1922,6 +1936,7 @@ const loadAgentSettings = async () => {
     workspaceId.value,
     moduleId.value,
     selectedModule.value,
+    selectedAgentId.value
   );
   isLoadingSettings.value = false;
 };

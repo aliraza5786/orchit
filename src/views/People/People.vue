@@ -219,9 +219,11 @@ import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { usePeopleStore } from "../../stores/peopleStore";
+import { useAgentStore } from "../../stores/agentStore";
 const { canCreateVariable, canInviteUser } = usePermissions();
 const sidePanelStore = useSidePanelStore();
-const peopleStore = usePeopleStore()
+const peopleStore = usePeopleStore();
+const agentStore = useAgentStore();
 const viewData = [
   {
     title: "Role",
@@ -238,32 +240,16 @@ const viewData = [
 ];
 const viewAgents = [
   {
-    title: "Agent Peak",
-    _id: "agent_peak",
+    title: "Module",
+    _id: "module",
   },
   {
-    title: "Agent Talent",
-    _id: "agent_talent",
-  },
-  {
-    title: "Agent Process",
-    _id: "agent_process",
-  },
-  {
-    title: "Agent Plan",
-    _id: "agent_plan",
-  },
-  {
-    title: "Agent Pin",
-    _id: "agent_pin",
-  },
-  {
-    title: "Agent Tasks",
-    _id: "agent_taks",
-  },
+    title: "Role",
+    _id: "role",
+  }
 ];
 const selected_view_id = ref("team");
-const selected_view_agent = ref("agent_peak");
+const selected_view_agent = ref("module");
 const showDelete = ref(false);
 const localColumn = ref();
 const { workspaceId } = useRouteIds();
@@ -307,6 +293,7 @@ watch(
 );
 onMounted(() => {
   fetchPeople();
+  fetchAgents();
   localList.value = peopleList.value ? JSON.parse(JSON.stringify(peopleList.value)) : [];
 });
 
@@ -541,6 +528,19 @@ const filteredBoard = computed(() => {
     }))
     .filter((col: any) => col.cards.length > 0);
 });
+//fetch talent agents to view agents by module and name
+async function fetchAgents(){
+  agentStore.fetchAgentsByRoleOrModule(workspaceId.value,selected_view_agent.value)
+}
+
+watch(
+  () => selected_view_agent.value,
+  (newVal, oldVal) => {    
+    if (newVal !== oldVal) {
+      fetchAgents();
+    }
+  }
+);
 </script>
 
 <style>

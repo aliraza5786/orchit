@@ -11,9 +11,9 @@
       />
     </template>
     <div v-else class="flex flex-col flex-1 min-h-0">
-      <div class="h-screen w-full flex flex-col -mt-3.5">
-        <div class="overflow-x-auto w-full flex-1">
-          <div class="min-w-[1200px] h-full flex flex-col">
+      <div class="flex flex-col flex-1 min-h-0 min-w-0 -mt-3.5">
+        <div class="overflow-x-auto w-full flex-1 min-w-0">
+          <div class="min-w-[800px] h-full flex flex-col">
             <div
               v-if="!isStartingSprint"
               class="px-0.5 py-4 w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
@@ -23,9 +23,9 @@
                 class="flex gap-1 min-h-0 overflow-x-auto group h-full"
               >
                 <section
-                  class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border"
-                  :style="{ width: leftWidth + 'px' }"
-                >
+                    class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border shrink-0"
+                    :style="{ width: leftWidth + 'px', minWidth: '280px', maxWidth: '50%' }"
+                  >
                   <div class="flex items-center justify-between mt-2">
                     <h2 class="text-sm font-semibold flex gap-2 items-center">
                       <input
@@ -217,7 +217,7 @@
                 </div>
 
                 <section
-                  class="rounded-md relative pt-2 flex flex-col flex-1 bg-bg-card min-h-0 border border-border"
+                  class="rounded-md relative pt-2 flex flex-col flex-1 min-w-0 bg-bg-card min-h-0 border border-border"
                 >
                   <div
                     class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"

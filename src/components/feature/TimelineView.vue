@@ -199,7 +199,7 @@ onMounted(async () => {
     ],
     template: {
       monthGridHeaderExceed(hiddenEventsCount: number) {
-        return `<span>+${hiddenEventsCount} more</span>`;
+        return `<span class="text-text-primary">+${hiddenEventsCount} more</span>`;
       },
     },
   });
@@ -319,7 +319,25 @@ onBeforeUnmount(() => {
   height: 100%;
   background: var(--cal-bg);
 }
-
+:deep(.toastui-calendar-grid-cell-date .toastui-calendar-weekday-grid-date) {
+    color: #7D68C8 !important;
+}
+:deep(.toastui-calendar-template-monthDayName){
+  color: #7D68C8 !important;
+}
+:deep(.toastui-calendar-day-name-container .toastui-calendar-day-name__date, .toastui-calendar-day-name__name){
+  color: #7D68C8 !important;
+}
+:deep(.toastui-calendar-day-name-container .toastui-calendar-day-name__name){
+  color: #7D68C8 !important;
+}
+:deep(.toastui-calendar-panel-title){
+  color: #7D68C8 !important;
+  font-weight: 600 !important;
+}
+:deep(.toastui-calendar-grid-cell-more-events){
+  color: #6e3b96 !important;
+}
 /* ── Toast UI internal dark overrides ──────────────── */
 :deep(.toastui-calendar-layout),
 :deep(.toastui-calendar-week-view),
