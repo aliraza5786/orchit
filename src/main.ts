@@ -10,6 +10,8 @@ import '@/assets/fontawesome/css/fontawesome.min.css';
 import '@/assets/fontawesome/css/regular.min.css';
 import { queryClient } from './libs/queryClient'
 import { initThemeImmediately } from './composables/useTheme'
+import { createHead } from '@vueuse/head';
+const head = createHead();
 const app = createApp(App)
 initThemeImmediately();
 import vTooltip from './directives/vTooltip'
@@ -18,6 +20,7 @@ app.component('Toaster', Toaster)
 app.use(createPinia())
 .use(VueQueryPlugin, { queryClient })
 app.use(router)
+app.use(head)
 import vue3GoogleLogin from 'vue3-google-login'
 app.use(vue3GoogleLogin, {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,

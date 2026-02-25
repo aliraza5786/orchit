@@ -53,6 +53,9 @@
           </span>
 
         </div>
+        <button class="cursor-pointer text-accent hover:text-accent-hover" @click="nativeShare(card)" title="Share this Ticket">
+          <i class="fa-light fa-share"></i>
+        </button>
       </div>
 
       <!-- Title -->
@@ -75,11 +78,11 @@
 
         <!-- Left Section -->
         <div class="flex items-center flex-1">
-
-          <div v-if="canAssignCard || canViewCard" @click.stop>
+          <div @click.stop>
             <AssigmentDropdown
               :users="members"
               :assigneeId="card.seat_id"
+              @assign="assignHandle(card)"
             />
           </div>
 
@@ -253,6 +256,15 @@
               </div>
             </div>
           </div>
+             <label class="flex items-center ms-1 gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="preserveLog"
+              class="w-3 h-3"
+            />
+
+            <span class="text-text-secondary">Do you want to preserve the suggestion log?</span>
+           </label>
         </template>
       </div>
 
@@ -294,6 +306,8 @@ import { usePermissions } from "../../../composables/usePermissions";
 import { useMoveCard } from "../../../queries/useSheets";
 import DatePicker from "../../../views/Product/components/DatePicker.vue";
 import { useQueryClient } from "@tanstack/vue-query";
+import { useHead } from '@vueuse/head'
+import { useAgentStore } from "../../../stores/agentStore";
 const { canDeleteCard, canAssignCard, canViewCard } = usePermissions();
 const props = defineProps({
   modelValue: Boolean,
@@ -301,7 +315,9 @@ const props = defineProps({
   data: Array,
 });
 const queryClient = useQueryClient()
+const preserveLog = ref(false)
 const { workspaceId, moduleId } = useRouteIds();
+const agentStore = useAgentStore();
 const emit = defineEmits(["update:modelValue", "accept", "decline"]);
 const moveCard = useMoveCard({
   onSuccess: () => {
@@ -330,6 +346,7 @@ const setDueDate = (date, id) => {
 const isReadAction = computed(() => {
   return props?.data?.[0]?.action === "read";
 });
+const ogData = computed(() => agentStore.ogTypesTicket)
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 // For READ actions
 const fetchedItems = computed(() => {
@@ -456,7 +473,6 @@ const acceptChanges = () => {
   } else {
     // Handle CREATE action - existing logic
     const workspace_id = workspaceId.value || null;
-
     const module = {
       _id: moduleId.value || props.data?.[0]?._id,
       variables: {
@@ -520,10 +536,59 @@ const acceptChanges = () => {
       workspace_id,
       module,
       sheets,
+      ispined:preserveLog.value
     };
     emit("accept", payload);
   }
 };
+const assignHandle = (card) => {
+  console.log("card data", card);
+  
+    const payload = {
+        card_id: card?._id,
+        seat_id: members.value?.map(u => u._id || u.id).filter(Boolean)
+    }
+    moveCard.mutate(payload);
+}
+//social sharing
+// Dynamically update head whenever ogData changes
+useHead({
+  title: computed(() => ogData.value?.title || ''),
+  meta: computed(() => ogData.value ? [
+    { property: 'og:title',       content: ogData.value.title || '' },
+    { property: 'og:description', content: ogData.value.description || '' },
+    { property: 'og:url',         content: ogData.value.url || window.location.href },
+    { property: 'og:type',        content: 'website' },
+    { property: 'og:image',       content: ogData.value.image || '' },
+
+    // WhatsApp / Twitter
+    { name: 'twitter:card',        content: 'summary_large_image' },
+    { name: 'twitter:title',       content: ogData.value.title || '' },
+    { name: 'twitter:description', content: ogData.value.description || '' },
+    { name: 'twitter:image',       content: ogData.value.image || '' },
+  ] : [])
+})
+const getShareUrl = (card) => {
+  const ticketId = card.id || card._id;
+  return `${window.location.origin}/workspace/${workspaceId.value}/${moduleId.value}/ticket/${ticketId}`;
+};
+
+async function nativeShare(card) {
+  // 1. Fetch OG data from your backend first
+  await agentStore.shareTicketTypes(card.id || card._id)
+
+  // 2. Small delay to let useHead inject the tags into <head>
+  await new Promise(r => setTimeout(r, 100))
+
+  // 3. Now share
+  if (navigator.share) {
+    await navigator.share({
+      title: ogData.value?.title || card['card-title'] || card?.title,
+      text:  ogData.value?.description || card['card-description'] || '',
+      url:   getShareUrl(card),
+    })
+  }
+}
 </script>
 
 <style scoped>

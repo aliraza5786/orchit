@@ -581,7 +581,7 @@
           <button
             class="cursor-pointer"
             @click="openConfigPanel"
-            title="Agent Configuration"
+            :title="showConfigPanel ? 'Preview Data' : 'Agent Configuration'"
           >
             <i class="fa-regular fa-ellipsis-vertical"></i>
           </button>
@@ -787,7 +787,8 @@ import { onClickOutside } from "@vueuse/core";
 import { toast } from "vue-sonner";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { useAuthStore } from "../../../stores/auth";
-import { useSheets } from "../../../queries/useSheets";
+import { useSheets, keys } from "../../../queries/useSheets";
+import { useQueryClient } from '@tanstack/vue-query';
 // Stores
 const workspaceStore = useWorkspaceStore();
 const agentStore = useAgentStore();
@@ -796,6 +797,7 @@ const authStore = useAuthStore();
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
 const activeTab = ref<"persona" | "knowledge" | "upload">("persona");
+const queryClient = useQueryClient();
 // Refs
 const isExpanded = ref(false);
 const showConfigPanel = ref(false);
@@ -1124,15 +1126,20 @@ async function sendMessage() {
 
 // Accept / Decline
 async function acceptChanges(payload: any) {
-  await agentStore.acceptEntities(payload);
-  showAIPreview.value = false;
-  toast.success("Preview entities has been accepted and applied to workspace");
-  await agentStore.fetchCreatedEntities(
-    workspaceId.value,
-    authStore.userId ?? undefined,
-    moduleSelected.value ?? undefined,
-    moduleId.value ?? undefined,
-  );
+  try {
+    await agentStore.acceptEntities(payload);
+    await queryClient.invalidateQueries({
+      queryKey: keys.sheets(
+        moduleId.value,
+        workspaceId.value
+      ),
+    });
+    showAIPreview.value = false;
+    toast.success("Entities has been accepted and applied to workspace");
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to accept entities");
+  }
 }
 
 async function declineAgentGeneratedEntities() {
@@ -1359,9 +1366,7 @@ const selectLevel = (value: string) => {
 const originalAgentConfig = ref<Partial<AgentConfig> | null>(null);
 watch(
   [() => agentsData.value, () => moduleSelected.value],
-  ([agent, selectedModule]) => {
-    console.log(selectedModule);
-    
+  ([agent]) => {    
     if (agent) {
       agentConfig.name = agent.name || "Peak Agent";
       agentConfig.id = agent?._id || "";
