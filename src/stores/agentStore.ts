@@ -621,7 +621,9 @@ export const useAgentStore = defineStore("agent", {
           },
         });
 
-        this.ogTypesTicket = res.data?.data;
+        this.ogTypesTicket = res?.data;
+        console.log("og types from store", res?.data);
+        
         this.isLoadingAgent = false;
       } catch (err) {
         console.error("Failed to fetch agents:", err);
