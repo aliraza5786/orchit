@@ -1,11 +1,11 @@
 <template>
-  <div class="w-full flex items-center justify-center">
-    <div class="w-full">
+  <div class="w-full h-full flex items-center justify-center">
+    <div class="w-full h-[85vh] flex flex-col">
       <!-- Header -->
       <div
-        class="px-3 py-1.5 border-b border-border flex flex-col justify-between"
+        class="px-3 py-1.5 border-b border-border flex flex-col justify-between flex-shrink-0"
       >
-        <h3 class="text-sm font-semibold text-text-primary">
+        <h3 class="text-sm font-semibold text-text-primary py-2">
           {{ isReadAction ? "Fetched Cards" : "AI Suggested Changes" }}
         </h3>
         <p class="text-xs text-text-secondary" v-if="isReadAction">
@@ -17,12 +17,11 @@
         </p>
       </div>
       <div
-        class="py-5 px-3 space-y-4 overflow-y-auto max-h-[80vh] overflow-x-auto"
-      >
+  class="flex-1 py-5 px-3 space-y-4 overflow-y-auto overflow-x-auto"
+>
         <!-- ================= READ ACTION ================= -->
         <template v-if="isReadAction">
   <div class="flex flex-wrap gap-4">
-
     <!-- CARD -->
     <div
       v-for="card in fetchedItems"
@@ -142,7 +141,7 @@
 
         <!-- ================= CREATE ACTION ================= -->
         <template v-else>
-          <p class="text-sm text-text-secondary">
+          <p class="text-sm text-text-secondary overflow-y-auto">
             The AI suggests the following changes. Please review before
             applying.
           </p>
@@ -158,7 +157,7 @@
             <div
               v-for="sheet in sheetsPreview"
               :key="sheet.variables['sheet-title']"
-              class="bg-bg-card rounded-lg shadow-sm border border-border p-4"
+              class="bg-bg-body rounded-lg border border-border p-4"
             >
               <!-- Sheet Header -->
               <div
@@ -174,12 +173,12 @@
                   class="w-10 h-10 flex items-center justify-center rounded-md bg-bg-surface border border-border"
                 >
                   <i
-                    :class="[
-                      sheet.variables['sheet-icon']?.prefix,
-                      sheet.variables['sheet-icon']?.iconName,
-                      'text-accent',
-                    ]"
-                  />
+                  :class="[
+                    'fa-solid',
+                    sheet.variables['sheet-icon'],
+                    'text-accent'
+                  ]"
+                />
                 </div>
 
                 <div class="flex-1">
@@ -213,7 +212,7 @@
                   <div
                     v-for="card in groupedCards[sheet.variables['sheet-title']]"
                     :key="card.variables['card-code']"
-                    class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 sm:w-[48%] lg:w-[32%]"
+                    class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[48%]"
                     :class="{
                       'ring-2 ring-accent': selectedCards?.includes(
                         card.variables['card-code'],
@@ -241,7 +240,7 @@
                         </span>
 
                         <h3
-                          class="text-sm font-medium text-card-foreground leading-tight capitalize"
+                          class="text-sm font-medium text-card-foreground leading-tight capitalize mt-1.5"
                         >
                           {{ card.variables["card-title"] }}
                         </h3>
@@ -267,21 +266,19 @@
            </label>
         </template>
       </div>
-
-      <!-- ================= FOOTER ================= -->
-      <div
-        class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card"
+<div
+  class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
         v-if="!isReadAction"
       >
         <button
-          class="px-4 py-2 text-sm rounded-md border border-border text-text-primary hover:bg-bg-body transition"
+          class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
           @click="emit('decline')"
         >
           {{ isReadAction ? "Cancel" : "Decline" }}
         </button>
 
         <button
-          class="px-4 py-2 text-sm rounded-md bg-accent text-white hover:bg-accent-hover transition disabled:opacity-50"
+          class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50"
           :disabled="
             isReadAction
               ? !selectedReadCards.length
@@ -570,23 +567,22 @@ useHead({
 })
 const getShareUrl = (card) => {
   const ticketId = card.id || card._id;
-  return `${window.location.origin}/workspace/${workspaceId.value}/${moduleId.value}/ticket/${ticketId}`;
+  return `https://www.orchit.ai/workspace/${workspaceId.value}/${moduleId.value}`;
 };
-
 async function nativeShare(card) {
-  // 1. Fetch OG data from your backend first
-  await agentStore.shareTicketTypes(card.id || card._id)
+  await agentStore.shareTicketTypes(card.id || card._id);
+  await new Promise(r => setTimeout(r, 100));
 
-  // 2. Small delay to let useHead inject the tags into <head>
-  await new Promise(r => setTimeout(r, 100))
+  const shareUrl = getShareUrl(card);
 
-  // 3. Now share
   if (navigator.share) {
     await navigator.share({
-      title: ogData.value?.title || card['card-title'] || card?.title,
-      text:  ogData.value?.description || card['card-description'] || '',
-      url:   getShareUrl(card),
-    })
+      // ❌ remove title and text completely
+      // WhatsApp ignores them and they cause the messy output
+      url: shareUrl  // ✅ URL only — WhatsApp will scrape it for preview
+    });
+  } else {
+    navigator.clipboard.writeText(shareUrl);
   }
 }
 </script>
