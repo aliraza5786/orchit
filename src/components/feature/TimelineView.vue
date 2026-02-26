@@ -1,6 +1,6 @@
 <template>
   <div class="schedule-container">
-    <div class="calendar-header bg-bg-card text-text-secondary">
+    <div class="calendar-header bg-bg-card text-text-secondary lg:space-y-0 space-y-2">
       <div class="nav-group bg-bg-body text-text-secondary rounded-md px-2 py-1">
         <button class="nav-btn text-text-secondary" @click="goPrev">
           <i class="fa-regular fa-chevron-left text-sm"></i>
@@ -199,7 +199,7 @@ onMounted(async () => {
     ],
     template: {
       monthGridHeaderExceed(hiddenEventsCount: number) {
-        return `<span>+${hiddenEventsCount} more</span>`;
+        return `<span class="text-text-primary">+${hiddenEventsCount} more</span>`;
       },
     },
   });
@@ -236,6 +236,7 @@ onBeforeUnmount(() => {
 .calendar-header {
   display: flex;
   justify-content: space-between;
+  flex-wrap: wrap;
   align-items: center;
   padding: 12px 13px;
   transition: background 0.2s;
@@ -318,7 +319,25 @@ onBeforeUnmount(() => {
   height: 100%;
   background: var(--cal-bg);
 }
-
+:deep(.toastui-calendar-grid-cell-date .toastui-calendar-weekday-grid-date) {
+    color: #7D68C8 !important;
+}
+:deep(.toastui-calendar-template-monthDayName){
+  color: #7D68C8 !important;
+}
+:deep(.toastui-calendar-day-name-container .toastui-calendar-day-name__date, .toastui-calendar-day-name__name){
+  color: #7D68C8 !important;
+}
+:deep(.toastui-calendar-day-name-container .toastui-calendar-day-name__name){
+  color: #7D68C8 !important;
+}
+:deep(.toastui-calendar-panel-title){
+  color: #7D68C8 !important;
+  font-weight: 600 !important;
+}
+:deep(.toastui-calendar-grid-cell-more-events){
+  color: #6e3b96 !important;
+}
 /* ── Toast UI internal dark overrides ──────────────── */
 :deep(.toastui-calendar-layout),
 :deep(.toastui-calendar-week-view),

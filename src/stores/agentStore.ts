@@ -96,8 +96,13 @@ export const useAgentStore = defineStore("agent", {
     agentsCreated: {} as Record<string, any>,
     isLoadingSettings: false,
     isLoadingKnowledge: false,
+    isUpdatingAgent: false,
+    isDeletingAgent: false,
     sheetTitle: localStorage.getItem("selected_sheet_title") || "",
     sheetId: localStorage.getItem("selected_sheet_id") || "",
+    isLoadingAgent: false,
+    agentsForTalent: {} as Record<string, any>,
+    ogTypesTicket: {} as Record<string, any>,
   }),
 
   getters: {
@@ -374,6 +379,7 @@ export const useAgentStore = defineStore("agent", {
       workspace_id: string,
       module_id?: string,
       module_name?: string,
+      agent_id?: string,
     ) {
       if (!workspace_id) return;
 
@@ -383,7 +389,7 @@ export const useAgentStore = defineStore("agent", {
         const queryParams = new URLSearchParams();
         if (module_id) queryParams.append("module_id", module_id);
         if (module_name) queryParams.append("module_name", module_name);
-
+        if (agent_id) queryParams.append("agent_id", agent_id);
         const url = `${baseUrl}agent-chat/${workspace_id}/settings?${queryParams.toString()}`;
 
         const res = await api.request<{ data: any }>({
@@ -502,6 +508,127 @@ export const useAgentStore = defineStore("agent", {
         console.error("❌ Failed to fetch agent settings:", err);
       } finally {
         this.isLoadingSettings = false;
+      }
+    },
+    async updateSelectedAgent(
+      workspace_id: string,
+      payload: Record<string, any>,
+      agent_id?: string,
+    ) {
+      if (!workspace_id) return;
+
+      this.isUpdatingAgent = true;
+
+      try {
+        const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
+        const url = agent_id ? `${base}/${agent_id}` : base;
+
+        await api.request<{ data: any }>({
+          url,
+          method: "PUT", // or PATCH if backend supports partial updates
+          data: payload,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+        this.isUpdatingAgent = false;
+      } catch (err) {
+        console.error("❌ Failed to update agent settings:", err);
+        this.isUpdatingAgent = false;
+        throw err;
+      } finally {
+        this.isUpdatingAgent = false;
+      }
+    },
+    async deleteSelectedAgent(
+      workspace_id: string,
+      // payload: Record<string, any>,
+      agent_id?: string,
+    ) {
+      if (!workspace_id) return;
+
+      this.isDeletingAgent = true;
+
+      try {
+        const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
+        const url = agent_id ? `${base}/${agent_id}` : base;
+
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "DELETE",
+          // data: payload,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        console.log(res);
+
+        return res.data;
+      } catch (err) {
+        this.isDeletingAgent = false;
+        console.error("❌ Failed to Delete agent:", err);
+        throw err;
+      } finally {
+        this.isDeletingAgent = false;
+      }
+    },
+    async fetchAgentsByRoleOrModule(workspace_id: string, groupBy?: string) {
+      if (!workspace_id) return;
+
+      this.isLoadingAgent = true;
+
+      try {
+        const queryParams = new URLSearchParams();
+        if (groupBy) queryParams.append("groupBy", groupBy);
+        const url = `${baseUrl}workspace/teams/${workspace_id}/agents-grouped?${queryParams.toString()}`;
+
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        this.agentsForTalent = res.data?.data;
+        this.isLoadingAgent = false;
+      } catch (err) {
+        console.error("Failed to fetch agents:", err);
+        this.isLoadingAgent = false;
+      } finally {
+        this.isLoadingSettings = false;
+        this.isLoadingAgent = false;
+      }
+    },
+    async shareTicketTypes(cardId: string) {
+      if (!cardId) return;
+      try {
+        const url = `${baseUrl}common/share/ticket/${cardId}`;
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        this.ogTypesTicket = res.data?.data;
+        this.isLoadingAgent = false;
+      } catch (err) {
+        console.error("Failed to fetch agents:", err);
+        this.isLoadingAgent = false;
+      } finally {
+        this.isLoadingSettings = false;
+        this.isLoadingAgent = false;
       }
     },
   },

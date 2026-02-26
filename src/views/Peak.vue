@@ -64,7 +64,7 @@
   <!-- Expand button -->
   <button
     @click="showAllActivities = true"
-    class="text-text-secondary hover:text-text-primary transition-colors"
+    class="text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
     title="View all activities"
   >
     <i class="fa-chisel fa-regular fa-expand"></i>
@@ -395,7 +395,7 @@
         </h3>
         <button
           @click="showAllActivities = false"
-          class="text-text-secondary hover:text-text-primary"
+          class="text-text-secondary hover:text-text-primary cursor-pointer"
         >
           <i class="fa-solid fa-xmark"></i>
         </button>

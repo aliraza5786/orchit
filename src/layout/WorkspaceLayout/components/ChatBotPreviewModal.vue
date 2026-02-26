@@ -1,11 +1,11 @@
 <template>
-  <div class="w-full flex items-center justify-center">
-    <div class="w-full">
+  <div class="w-full h-full flex items-center justify-center">
+    <div class="w-full h-[85vh] flex flex-col">
       <!-- Header -->
       <div
-        class="px-3 py-1.5 border-b border-border flex flex-col justify-between"
+        class="px-3 py-1.5 border-b border-border flex flex-col justify-between flex-shrink-0"
       >
-        <h3 class="text-sm font-semibold text-text-primary">
+        <h3 class="text-sm font-semibold text-text-primary py-2">
           {{ isReadAction ? "Fetched Cards" : "AI Suggested Changes" }}
         </h3>
         <p class="text-xs text-text-secondary" v-if="isReadAction">
@@ -17,12 +17,11 @@
         </p>
       </div>
       <div
-        class="py-5 px-3 space-y-4 overflow-y-auto max-h-[80vh] overflow-x-auto"
-      >
+  class="flex-1 py-5 px-3 space-y-4 overflow-y-auto overflow-x-auto"
+>
         <!-- ================= READ ACTION ================= -->
         <template v-if="isReadAction">
   <div class="flex flex-wrap gap-4">
-
     <!-- CARD -->
     <div
       v-for="card in fetchedItems"
@@ -53,6 +52,9 @@
           </span>
 
         </div>
+        <button class="cursor-pointer text-accent hover:text-accent-hover" @click="nativeShare(card)" title="Share this Ticket">
+          <i class="fa-light fa-share"></i>
+        </button>
       </div>
 
       <!-- Title -->
@@ -75,11 +77,11 @@
 
         <!-- Left Section -->
         <div class="flex items-center flex-1">
-
-          <div v-if="canAssignCard || canViewCard" @click.stop>
+          <div @click.stop>
             <AssigmentDropdown
               :users="members"
               :assigneeId="card.seat_id"
+              @assign="assignHandle(card)"
             />
           </div>
 
@@ -139,7 +141,7 @@
 
         <!-- ================= CREATE ACTION ================= -->
         <template v-else>
-          <p class="text-sm text-text-secondary">
+          <p class="text-sm text-text-secondary overflow-y-auto">
             The AI suggests the following changes. Please review before
             applying.
           </p>
@@ -155,7 +157,7 @@
             <div
               v-for="sheet in sheetsPreview"
               :key="sheet.variables['sheet-title']"
-              class="bg-bg-card rounded-lg shadow-sm border border-border p-4"
+              class="bg-bg-body rounded-lg border border-border p-4"
             >
               <!-- Sheet Header -->
               <div
@@ -171,12 +173,12 @@
                   class="w-10 h-10 flex items-center justify-center rounded-md bg-bg-surface border border-border"
                 >
                   <i
-                    :class="[
-                      sheet.variables['sheet-icon']?.prefix,
-                      sheet.variables['sheet-icon']?.iconName,
-                      'text-accent',
-                    ]"
-                  />
+                  :class="[
+                    'fa-solid',
+                    sheet.variables['sheet-icon'],
+                    'text-accent'
+                  ]"
+                />
                 </div>
 
                 <div class="flex-1">
@@ -210,7 +212,7 @@
                   <div
                     v-for="card in groupedCards[sheet.variables['sheet-title']]"
                     :key="card.variables['card-code']"
-                    class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 sm:w-[48%] lg:w-[32%]"
+                    class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[48%]"
                     :class="{
                       'ring-2 ring-accent': selectedCards?.includes(
                         card.variables['card-code'],
@@ -238,7 +240,7 @@
                         </span>
 
                         <h3
-                          class="text-sm font-medium text-card-foreground leading-tight capitalize"
+                          class="text-sm font-medium text-card-foreground leading-tight capitalize mt-1.5"
                         >
                           {{ card.variables["card-title"] }}
                         </h3>
@@ -253,23 +255,30 @@
               </div>
             </div>
           </div>
+             <label class="flex items-center ms-1 gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              v-model="preserveLog"
+              class="w-3 h-3"
+            />
+
+            <span class="text-text-secondary">Do you want to preserve the suggestion log?</span>
+           </label>
         </template>
       </div>
-
-      <!-- ================= FOOTER ================= -->
-      <div
-        class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card"
+<div
+  class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
         v-if="!isReadAction"
       >
         <button
-          class="px-4 py-2 text-sm rounded-md border border-border text-text-primary hover:bg-bg-body transition"
+          class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
           @click="emit('decline')"
         >
           {{ isReadAction ? "Cancel" : "Decline" }}
         </button>
 
         <button
-          class="px-4 py-2 text-sm rounded-md bg-accent text-white hover:bg-accent-hover transition disabled:opacity-50"
+          class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50"
           :disabled="
             isReadAction
               ? !selectedReadCards.length
@@ -294,6 +303,8 @@ import { usePermissions } from "../../../composables/usePermissions";
 import { useMoveCard } from "../../../queries/useSheets";
 import DatePicker from "../../../views/Product/components/DatePicker.vue";
 import { useQueryClient } from "@tanstack/vue-query";
+import { useHead } from '@vueuse/head'
+import { useAgentStore } from "../../../stores/agentStore";
 const { canDeleteCard, canAssignCard, canViewCard } = usePermissions();
 const props = defineProps({
   modelValue: Boolean,
@@ -301,7 +312,9 @@ const props = defineProps({
   data: Array,
 });
 const queryClient = useQueryClient()
+const preserveLog = ref(false)
 const { workspaceId, moduleId } = useRouteIds();
+const agentStore = useAgentStore();
 const emit = defineEmits(["update:modelValue", "accept", "decline"]);
 const moveCard = useMoveCard({
   onSuccess: () => {
@@ -330,6 +343,7 @@ const setDueDate = (date, id) => {
 const isReadAction = computed(() => {
   return props?.data?.[0]?.action === "read";
 });
+const ogData = computed(() => agentStore.ogTypesTicket)
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 // For READ actions
 const fetchedItems = computed(() => {
@@ -456,7 +470,6 @@ const acceptChanges = () => {
   } else {
     // Handle CREATE action - existing logic
     const workspace_id = workspaceId.value || null;
-
     const module = {
       _id: moduleId.value || props.data?.[0]?._id,
       variables: {
@@ -520,10 +533,58 @@ const acceptChanges = () => {
       workspace_id,
       module,
       sheets,
+      ispined:preserveLog.value
     };
     emit("accept", payload);
   }
 };
+const assignHandle = (card) => {
+  console.log("card data", card);
+  
+    const payload = {
+        card_id: card?._id,
+        seat_id: members.value?.map(u => u._id || u.id).filter(Boolean)
+    }
+    moveCard.mutate(payload);
+}
+//social sharing
+// Dynamically update head whenever ogData changes
+useHead({
+  title: computed(() => ogData.value?.title || ''),
+  meta: computed(() => ogData.value ? [
+    { property: 'og:title',       content: ogData.value.title || '' },
+    { property: 'og:description', content: ogData.value.description || '' },
+    { property: 'og:url',         content: ogData.value.url || window.location.href },
+    { property: 'og:type',        content: 'website' },
+    { property: 'og:image',       content: ogData.value.image || '' },
+
+    // WhatsApp / Twitter
+    { name: 'twitter:card',        content: 'summary_large_image' },
+    { name: 'twitter:title',       content: ogData.value.title || '' },
+    { name: 'twitter:description', content: ogData.value.description || '' },
+    { name: 'twitter:image',       content: ogData.value.image || '' },
+  ] : [])
+})
+const getShareUrl = (card) => {
+  const ticketId = card.id || card._id;
+  return `https://www.orchit.ai/workspace/${workspaceId.value}/${moduleId.value}`;
+};
+async function nativeShare(card) {
+  await agentStore.shareTicketTypes(card.id || card._id);
+  await new Promise(r => setTimeout(r, 100));
+
+  const shareUrl = getShareUrl(card);
+
+  if (navigator.share) {
+    await navigator.share({
+      // ❌ remove title and text completely
+      // WhatsApp ignores them and they cause the messy output
+      url: shareUrl  // ✅ URL only — WhatsApp will scrape it for preview
+    });
+  } else {
+    navigator.clipboard.writeText(shareUrl);
+  }
+}
 </script>
 
 <style scoped>
