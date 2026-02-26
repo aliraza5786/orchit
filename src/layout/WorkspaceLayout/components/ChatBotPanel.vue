@@ -1256,9 +1256,11 @@ const openConfigPanel = () => {
   if (!isExpanded.value) {
     isExpanded.value = true;
     showConfigPanel.value = true;
+    resetAgentConfig();
   } else if (isExpanded.value) {
     showConfigPanel.value = !showConfigPanel.value;
     showFetchedData.value = true;
+    resetAgentConfig();
   }
 };
 const expandPanel = () => {
