@@ -547,10 +547,8 @@ const assignHandle = (card) => {
     }
     moveCard.mutate(payload);
 }
-//social sharing
-// Dynamically update head whenever ogData changes
 useHead({
-  title: computed(() => ogData.value?.title || ''),
+  title: computed(() => ogData.value?.details || ''),
   meta: computed(() => ogData.value ? [
     { property: 'og:title',       content: ogData.value.title || '' },
     { property: 'og:description', content: ogData.value.description || '' },
@@ -565,24 +563,67 @@ useHead({
     { name: 'twitter:image',       content: ogData.value.image || '' },
   ] : [])
 })
+function parseTicketDetailsFromHTML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const details = {};
+
+  // Look for all ticket:variable meta tags
+  const metas = doc.querySelectorAll("meta[property^='ticket:variable']");
+  metas.forEach(meta => {
+    const key = meta.getAttribute("property").replace("ticket:variable:", "");
+    const value = meta.getAttribute("content") || "";
+    details[key] = value;
+  });
+
+  return details;
+}
 const getShareUrl = (card) => {
   const ticketId = card.id || card._id;
   return `https://www.orchit.ai/workspace/${workspaceId.value}/${moduleId.value}`;
 };
+function buildShareMessage(details, shareUrl) {
+  return `📌 ${details["card-code"]}: ${details["card-title"]}
+
+${details["card-description"]}
+
+🟢 Status: ${details["card-status"]}
+🔥 Priority: ${details["priority"]}
+📅 Due: ${details["end-date"]}
+
+🔗 Open Ticket:
+${shareUrl}`;
+}
 async function nativeShare(card) {
-  await agentStore.shareTicketTypes(card.id || card._id);
-  await new Promise(r => setTimeout(r, 100));
+await agentStore.shareTicketTypes(card.id || card._id);
+
+  // Parse ticket details from HTML
+  const details = parseTicketDetailsFromHTML(agentStore.ogTypesTicket);
 
   const shareUrl = getShareUrl(card);
 
+  // Build clean share message
+  const message = `
+📌 ${details["card-code"]}: ${details["card-title"]}
+
+${details["card-description"]}
+
+🟢 Status: ${details["card-status"]}
+🔥 Priority: ${details["priority"]}
+📅 Due: ${details["end-date"]}
+
+🔗 Open Ticket:
+${shareUrl}
+`;
+
+  // Native share or clipboard fallback
   if (navigator.share) {
     await navigator.share({
-      // ❌ remove title and text completely
-      // WhatsApp ignores them and they cause the messy output
-      url: shareUrl  // ✅ URL only — WhatsApp will scrape it for preview
+      title: `${details["card-code"]}: ${details["card-title"]}`,
+      text: message
     });
   } else {
-    navigator.clipboard.writeText(shareUrl);
+    await navigator.clipboard.writeText(message);
   }
 }
 </script>
