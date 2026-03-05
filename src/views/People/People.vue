@@ -4,44 +4,44 @@
   >
     <div class="overflow-x-auto shrink-0 border-b border-border">
       <div class="header px-4 py-3 flex items-center justify-between gap-2">
-          <div
-            class="flex border-b border-border bg-bg-surface/50 gap-2 rounded-md py-1 px-1"
+        <div
+          class="flex border-b border-border bg-bg-surface/50 gap-2 rounded-md py-1 px-1"
+        >
+          <button
+            @click="currentTab = 'talent'"
+            :class="
+              currentTab === 'talent'
+                ? 'bg-accent text-white font-semibold rounded-md'
+                : 'text-text-primary'
+            "
+            class="px-4 py-1 text-sm transition-colors"
           >
-            <button
-              @click="currentTab = 'talent'"
-              :class="
-                currentTab === 'talent'
-                  ? 'bg-accent text-white font-semibold rounded-md'
-                  : 'text-text-primary'
-              "
-              class="px-4 py-1 text-sm transition-colors"
-            >
-              View Talent
-            </button>
-            <button
-              @click="currentTab = 'agents'"
-              :class="
-                currentTab === 'agents'
-                  ? 'bg-accent text-white font-semibold rounded-md'
-                  : 'text-text-secondary'
-              "
-              class="px-4 py-1 text-sm transition-colors"
-            >
-              View Agents
-            </button>
-          </div>
+            View Talent
+          </button>
+          <button
+            @click="currentTab = 'agents'"
+            :class="
+              currentTab === 'agents'
+                ? 'bg-accent text-white font-semibold rounded-md'
+                : 'text-text-secondary'
+            "
+            class="px-4 py-1 text-sm transition-colors"
+          >
+            View Agents
+          </button>
+        </div>
 
         <div class="flex gap-2">
           <Dropdown
-          v-if="currentTab==='talent'"
+            v-if="currentTab === 'talent'"
             :actions="false"
             v-model="selected_view_id"
             :options="viewData"
             variant="secondary"
             customClasses="fixed w-[135px]"
           />
-           <Dropdown
-           v-if="currentTab==='agents'"
+          <Dropdown
+            v-if="currentTab === 'agents'"
             :actions="false"
             v-model="selected_view_agent"
             :options="viewAgents"
@@ -58,6 +58,47 @@
               "
               placeholder="Search in Orchit AI space"
             />
+            <div
+              class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+            >
+              <button
+                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                :class="
+                  currentView === 'kanban'
+                    ? 'text-accent bg-accent-text'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                "
+                title="Kanban view"
+                @click="currentView = 'kanban'"
+              >
+                <i class="fa-solid fa-chart-kanban"></i>
+              </button>
+
+              <button
+                @click="currentView = 'table'"
+                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                :class="
+                  currentView === 'table'
+                    ? 'text-accent bg-accent-text'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                "
+                title="List view"
+              >
+                <i class="fa-solid fa-align-left"></i>
+              </button>
+              <button
+                @click="currentView = 'mindmap'"
+                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                :class="
+                  currentView === 'mindmap'
+                    ? 'text-accent bg-accent-text'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                "
+                title="MindMap view"
+              >
+                <i class="fa-solid fa-chart-diagram"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -66,242 +107,191 @@
     <KanbanSkeleton v-if="isLoading" />
 
     <div v-else class="flex flex-col flex-1 overflow-hidden">
-      <template v-if="currentTab === 'agents'">
-  <div class="custom_scroll_bar h-full flex flex-col">
-    <!-- Section header -->
-    <div class="flex items-center gap-2 mx-4 py-2 border-b border-border">
-      <i class="fa-solid fa-robot text-accent text-sm"></i>
-      <span class="text-sm font-semibold text-text-primary capitalize">
-        Agents by {{ selected_view_agent }}
-      </span>
-      <span class="text-sm text-accent font-bold ml-1">
-        · {{ totalAgentCount }} agent{{ totalAgentCount !== 1 ? "s" : "" }}
-      </span>
-      <span v-if="isFetchingAgents" class="ml-2">
-        <i class="fa-solid fa-spinner animate-spin text-accent text-xs"></i>
-      </span>
-    </div>
-
-    <!-- Draggable agent groups row -->
-    <Draggable
-      v-model="filteredAgentGroups"
-      item-key="title"
-      group="agent-groups"
-      :animation="180"
-      :ghost-class="'kanban-ghost'"
-      :chosen-class="'kanban-chosen'"
-      :drag-class="'kanban-dragging'"
-      :force-fallback="true"
-      class="flex gap-4 mx-4 my-3 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
-      direction="horizontal"
-      @end="onAgentGroupsEnd"
-      :disabled="isMobile"
-    >
-      <template #item="{ element: group }">
-        <div
-          class="flex flex-col min-w-[220px] bg-bg-body h-full rounded-md"
-          :class="{ 
-            'snap-center min-w-[270px] max-w-[270px] h-full': isMobile,
-            'min-w-[320px] max-w-[320px] h-full': !isMobile 
-          }"
-        >
-          <!-- Group title (fixed at top of column) -->
-          <div class="text-normal font-semibold text-text-primary border-b border-border py-4 px-5">
-            {{ group.title }}
-          </div>
-
-          <!-- Agents container (scrollable, flex-1 ensures full height) -->
-          <div class="flex flex-col gap-4 mx-4 mt-4 overflow-y-auto flex-1">
-            <div
-              v-for="agent in group.agents"
-              :key="agent._id"
-              class="bg-bg-card border border-border rounded-lg px-4 py-3 flex flex-col gap-3 shadow-md hover:shadow-lg transition-shadow"
+      <template v-if="currentView === 'kanban'">
+        <!-- AGENTS KANBAN -->
+        <template v-if="currentTab === 'agents'">
+          <div class="custom_scroll_bar h-full flex flex-col">
+            <Draggable
+              v-model="filteredAgentGroups"
+              item-key="title"
+              group="agent-groups"
+              :animation="180"
+              class="flex gap-4 mx-4 my-3 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
+              direction="horizontal"
+              @end="onAgentGroupsEnd"
+              :disabled="isMobile"
             >
-              <!-- Name & Level -->
-              <div class="flex justify-between items-start">
-                <span class="text-sm font-medium text-text-primary line-clamp-2">
-                  {{ agent.name }}
-                </span>
-                <span
-                  class="shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full"
-                  :class="levelClass(agent.level)"
+              <template #item="{ element: group }">
+                <div
+                  class="flex flex-col min-w-[220px] bg-bg-body h-full rounded-md"
+                  :class="{
+                    'snap-center min-w-[270px] max-w-[270px]': isMobile,
+                    'min-w-[320px] max-w-[320px]': !isMobile,
+                  }"
                 >
-                  {{ agent.level }}
-                </span>
-              </div>
+                  <div
+                    class="text-normal font-semibold text-text-primary border-b border-border py-4 px-5"
+                  >
+                    {{ group.title }}
+                  </div>
 
-              <!-- Role -->
-              <div class="flex items-center gap-1 text-xs text-text-secondary">
-                <i class="fa-solid fa-briefcase text-[13px]"></i>
-                <span class="truncate">{{ agent.role }}</span>
-              </div>
+                  <div
+                    class="flex flex-col gap-4 mx-4 mt-4 overflow-y-auto flex-1"
+                  >
+                    <div
+                      v-for="agent in group.agents"
+                      :key="agent._id"
+                      class="bg-bg-card border border-border rounded-lg px-4 py-3 flex flex-col gap-3"
+                    >
+                      <div class="flex justify-between items-start">
+                        <span class="text-sm font-medium">
+                          {{ agent.name }}
+                        </span>
 
-              <!-- Model -->
-              <div class="flex items-center gap-1 text-xs text-accent-hover">
-                <i class="fa-solid fa-microchip text-[10px]"></i>
-                <span>{{ agent.model }}</span>
-              </div>
+                        <span
+                          class="text-xs font-semibold px-2 py-0.5 rounded-full"
+                          :class="levelClass(agent.level)"
+                        >
+                          {{ agent.level }}
+                        </span>
+                      </div>
 
-              <!-- Skills -->
-              <!-- <div v-if="agent.skills?.length" class="flex flex-wrap gap-1">
-                <span
-                  v-for="skill in agent.skills.slice(0, 3)"
-                  :key="skill"
-                  class="text-xs bg-accent/10 text-accent border border-accent/20 rounded px-2 py-0.5"
-                >
-                  {{ skill }}
-                </span>
-                <span v-if="agent.skills.length > 3" class="text-xs text-text-secondary/50 mt-1">
-                  +{{ agent.skills.length - 3 }}
-                </span>
-              </div> -->
+                      <div class="text-xs text-text-secondary">
+                        {{ agent.role }}
+                      </div>
 
-              <!-- Capabilities -->
-              <!-- <div v-if="agent.capabilities?.length" class="flex flex-wrap gap-1">
-                <span
-                  v-for="cap in agent.capabilities.slice(0, 2)"
-                  :key="cap"
-                  class="text-xs bg-accent/10 border border-border rounded px-2 py-0.5 text-accent"
-                >
-                  {{ formatCapability(cap) }}
-                </span>
-                <span v-if="agent.capabilities.length > 2" class="text-xs text-text-secondary/50">
-                  +{{ agent.capabilities.length - 2 }}
-                </span>
-              </div> -->
+                      <div class="text-xs text-accent-hover">
+                        {{ agent.model }}
+                      </div>
 
-              <!-- Active status -->
-              <div class="flex items-center gap-2 mt-auto">
-                <span
-                  class="w-2 h-2 rounded-full shrink-0"
-                  :class="agent.is_active ? 'bg-green-500' : 'bg-gray-400'"
-                ></span>
-                <span class="text-xs text-green-500">
-                  {{ agent.is_active ? "Active" : "Inactive" }}
-                </span>
-              </div>
+                      <div class="flex items-center gap-2 mt-auto">
+                        <span
+                          class="w-2 h-2 rounded-full"
+                          :class="
+                            agent.is_active ? 'bg-green-500' : 'bg-gray-400'
+                          "
+                        />
+                        <span class="text-xs text-green-500">
+                          {{ agent.is_active ? "Active" : "Inactive" }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </Draggable>
+
+            <div
+              v-if="filteredAgentGroups.length === 0"
+              class="p-6 text-center text-text-secondary/50"
+            >
+              No agents available.
             </div>
           </div>
-        </div>
+        </template>
+
+        <!-- TALENT KANBAN -->
+        <template v-else>
+          <div class="flex flex-1 p-4 overflow-x-auto gap-3 custom_scroll_bar">
+            <KanbanBoard
+              :plusIcon="false"
+              v-if="filteredBoard?.length > 0"
+              @onPlus="(e) => handlePLus(e)"
+              @delete:column="(e: any) => handleDelete(e)"
+              @update:column="(e) => handleUpdateColumn(e)"
+              @reorder="onReorder"
+              @addColumn="handleAddColumn"
+              @select:ticket="selectCardHandler"
+              :board="filteredBoard"
+              @onBoardUpdate="handleBoardUpdate"
+              variable_id=""
+              sheet_id="selected_sheet_id"
+            >
+              <template #ticket="{ ticket }">
+                <KanbanCard
+                  @click="handleClickTicket(ticket)"
+                  :ticket="ticket"
+                  @deleted="fetchPeople()"
+                  @assigned="fetchPeople"
+                  @unAssigned="fetchPeople"
+                />
+              </template>
+              <template #column-footer="{ column }: any">
+                <div
+                  v-if="!column.showADDNEW"
+                  @click="toggleAddNewColumn(column)"
+                  :disabled="!canInviteUser"
+                  :class="
+                    canInviteUser ? 'cursor-pointer' : 'cursor-not-allowed'
+                  "
+                  class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md"
+                >
+                  <i class="fa-solid fa-plus"></i> Add Seat
+                </div>
+                <div
+                  v-else-if="column.showADDNEW"
+                  class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
+                >
+                  <p class="text-sm text-text-primary">
+                    {{ column.title }} {{ column.cards.length + 1 }}
+                  </p>
+                  <BaseEmailChip
+                    :maxEmails="1"
+                    placeholder="team member email"
+                    v-model="column.email"
+                  />
+                  <p class="text-sm text-text-secondary">
+                    You can assign user later
+                  </p>
+                  <Button size="md" @click="addSeatToColumn(column)">
+                    {{ isPending ? "Adding..." : "Add Seat" }}
+                  </Button>
+                  <i
+                    class="fa-solid fa-close cursor-pointer ml-2"
+                    @click="toggleAddNewColumn('')"
+                  />
+                </div>
+              </template>
+            </KanbanBoard>
+            <!-- Add Column --> 
+             <div class="min-w-[270px] sm:min-w-[328px]" @click.stop> 
+              <form @submit.prevent="" v-if="activeAddList" class="bg-bg-body rounded-lg p-4" > 
+                <BaseTextField :autofocus="true" 
+                v-model="newColumn" 
+                placeholder="Add New list" /> 
+                <p class="text-xs mt-1.5">You can add details while editing</p> 
+                <div class="flex items-center mt-3 gap-3"> 
+                  <Button :disabled="!canCreateVariable" :class=" canCreateVariable ? 'cursor-pointer' : 'cursor-not-allowed' " @click="emitAddColumn" type="submit" variant="primary" 
+                  class="px-3 py-1 bg-accent text-white rounded" > {{ addingList ? "Adding..." : "Add Team" }} 
+                  </Button> <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList" /> 
+                </div> 
+              </form> 
+              <button v-else class="text-sm text-text-primary py-2.5 
+              font-medium flex items-center justify-center 
+              w-full gap-2 bg-bg-body rounded-lg" 
+              @click.stop="setActiveAddList" :disabled="!canCreateVariable" 
+              :class="canCreateVariable ? 'cursor-pointer' : 'cursor-not-allowed'" > 
+              + Add Team 
+            </button> 
+          </div> 
+          </div>
+        </template>
       </template>
-    </Draggable>
-
-    <!-- Empty state -->
-    <div v-if="filteredAgentGroups.length === 0" class="p-6 text-center text-text-secondary/50">
-      No agents available.
-    </div>
-  </div>
-</template>
-      <div
-        v-show="currentView === 'kanban' && currentTab === 'talent'"
-        class="flex flex-1 p-4 overflow-x-auto gap-3 custom_scroll_bar"
-      >
-        <KanbanBoard
-          :plusIcon="false"
-          v-if="filteredBoard?.length > 0"
-          @onPlus="(e) => handlePLus(e)"
-          @delete:column="(e: any) => handleDelete(e)"
-          @update:column="(e) => handleUpdateColumn(e)"
-          @reorder="onReorder"
-          @addColumn="handleAddColumn"
-          @select:ticket="selectCardHandler"
-          :board="filteredBoard"
-          @onBoardUpdate="handleBoardUpdate"
-          variable_id=""
-          sheet_id="selected_sheet_id"
-        >
-          <template #ticket="{ ticket }">
-            <KanbanCard
-              @click="handleClickTicket(ticket)"
-              :ticket="ticket"
-              @deleted="fetchPeople()"
-              @assigned="fetchPeople"
-              @unAssigned="fetchPeople"
-            />
-          </template>
-
-          <template #column-footer="{ column }: any">
-            <div
-              v-if="!column.showADDNEW"
-              @click="toggleAddNewColumn(column)"
-              :disabled="!canInviteUser"
-              :class="canInviteUser ? 'cursor-pointer' : 'cursor-not-allowed'"
-              class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md"
-            >
-              <i class="fa-solid fa-plus"></i> Add Seat
-            </div>
-            <div
-              v-else-if="column.showADDNEW"
-              class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
-            >
-              <p class="text-sm text-text-primary">
-                {{ column.title }} {{ column.cards.length + 1 }}
-              </p>
-              <BaseEmailChip
-                :maxEmails="1"
-                placeholder="team member email"
-                v-model="column.email"
-              />
-              <p class="text-sm text-text-secondary">
-                You can assign user later
-              </p>
-              <Button size="md" @click="addSeatToColumn(column)">
-                {{ isPending ? "Adding..." : "Add Seat" }}
-              </Button>
-              <i
-                class="fa-solid fa-close cursor-pointer ml-2"
-                @click="toggleAddNewColumn('')"
-              />
-            </div>
-          </template>
-        </KanbanBoard>
-
-        <!-- Add Column -->
-        <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
-          <form
-            @submit.prevent=""
-            v-if="activeAddList"
-            class="bg-bg-body rounded-lg p-4"
-          >
-            <BaseTextField
-              :autofocus="true"
-              v-model="newColumn"
-              placeholder="Add New list"
-            />
-            <p class="text-xs mt-1.5">You can add details while editing</p>
-            <div class="flex items-center mt-3 gap-3">
-              <Button
-                :disabled="!canCreateVariable"
-                :class="
-                  canCreateVariable ? 'cursor-pointer' : 'cursor-not-allowed'
-                "
-                @click="emitAddColumn"
-                type="submit"
-                variant="primary"
-                class="px-3 py-1 bg-accent text-white rounded"
-              >
-                {{ addingList ? "Adding..." : "Add Team" }}
-              </Button>
-              <i
-                class="fa-solid fa-close cursor-pointer"
-                @click="setActiveAddList"
-              />
-            </div>
-          </form>
-          <button
-            v-else
-            class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-            @click.stop="setActiveAddList"
-            :disabled="!canCreateVariable"
-            :class="canCreateVariable ? 'cursor-pointer' : 'cursor-not-allowed'"
-          >
-            + Add Team
-          </button>
-        </div>
+      <div v-else-if="currentView === 'table'" class="w-full mx-3">
+        <TableView
+          :columns="tableColumns"
+          :rows="tableRows"
+          :isPending="false"
+        />
       </div>
+
+     <div
+  v-if="currentView === 'mindmap'"
+  ref="mindMapRef"
+  style="width: 100%; height: 100vh; background: #fff; position: relative; overflow: hidden;"
+></div>
     </div>
   </div>
-
   <!-- ── Modals ─────────────────────────────────────────────────────────── -->
   <ConfirmDeleteModal
     @click.stop=""
@@ -326,9 +316,10 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch, onMounted, computed } from "vue";
+import { defineAsyncComponent, ref, watch, onMounted, computed, nextTick, toRaw } from "vue";
 import { useRouteIds } from "../../composables/useQueryParams";
-import Draggable from 'vuedraggable'
+import Draggable from "vuedraggable";
+import MindElixir from "mind-elixir";
 import {
   ReOrderCard,
   ReOrderList,
@@ -340,7 +331,7 @@ import { useUpdateInvitedWorkspace } from "../../queries/useWorkspace";
 import Fuse from "fuse.js";
 import { debounce } from "lodash";
 import { useQueryClient } from "@tanstack/vue-query";
-
+import TableView from "../../components/feature/TableView/TableView.vue";
 const KanbanSkeleton = defineAsyncComponent(
   () => import("../../components/skeletons/KanbanSkeleton.vue"),
 );
@@ -377,8 +368,7 @@ import { toast } from "vue-sonner";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { usePeopleStore } from "../../stores/peopleStore";
 import { useAgentStore } from "../../stores/agentStore";
-import { useMediaQuery } from '@vueuse/core'
-// ─── Stores & permissions ─────────────────────────────────────────────────────
+import { useMediaQuery } from "@vueuse/core";
 const { canCreateVariable, canInviteUser } = usePermissions();
 const sidePanelStore = useSidePanelStore();
 const peopleStore = usePeopleStore();
@@ -386,8 +376,7 @@ const agentStore = useAgentStore();
 const { workspaceId } = useRouteIds();
 const queryClient = useQueryClient();
 const currentTab = ref("talent");
-const isMobile = useMediaQuery('(max-width: 650px)')
-// ─── Dropdown options ─────────────────────────────────────────────────────────
+const isMobile = useMediaQuery("(max-width: 650px)");
 const viewData = [
   { title: "Role", _id: "role" },
   { title: "Team", _id: "team" },
@@ -398,8 +387,6 @@ const viewAgents = [
   { title: "Module", _id: "module" },
   { title: "Role", _id: "role" },
 ];
-
-// ─── State ────────────────────────────────────────────────────────────────────
 const selected_view_id = ref("team");
 const selected_view_agent = ref("module");
 
@@ -414,7 +401,7 @@ const searchQuery = ref("");
 const debouncedQuery = ref("");
 const activeAddList = ref(false);
 const newColumn = ref("");
-const currentView = ref<"kanban" | "list">("kanban");
+const currentView = ref("kanban");
 const selectedCard = ref<any>();
 
 // ─── People store ─────────────────────────────────────────────────────────────
@@ -428,11 +415,8 @@ const agentGroups = computed<Array<{ title: string; agents: any[] }>>(
     }>,
 );
 
-const totalAgentCount = computed(() =>
-  agentGroups.value.reduce((sum, g) => sum + (g.agents?.length ?? 0), 0),
-);
 const agentFuse = computed(() => {
-  const list = agentGroups.value.flatMap(group => group.agents);
+  const list = agentGroups.value.flatMap((group) => group.agents);
   return new Fuse(list, {
     keys: ["name", "role", "model", "skills"], // fields to search
     threshold: 0.3, // adjust sensitivity
@@ -443,13 +427,15 @@ const agentFuse = computed(() => {
 const filteredAgentGroups = computed(() => {
   if (!searchQuery.value) return agentGroups.value;
 
-  const results = agentFuse.value.search(searchQuery.value).map(r => r.item);
+  const results = agentFuse.value.search(searchQuery.value).map((r) => r.item);
 
   // Keep the original grouping structure, but only include matching agents
-  return agentGroups.value.map(group => ({
-    ...group,
-    agents: group.agents.filter(agent => results.includes(agent)),
-  })).filter(group => group.agents.length > 0); // remove empty groups
+  return agentGroups.value
+    .map((group) => ({
+      ...group,
+      agents: group.agents.filter((agent) => results.includes(agent)),
+    }))
+    .filter((group) => group.agents.length > 0); // remove empty groups
 });
 // ─── Sync people list from store ─────────────────────────────────────────────
 watch(
@@ -482,7 +468,7 @@ watch(
 );
 const onAgentGroupsEnd = (evt: any) => {
   // evt contains oldIndex, newIndex
-  console.log('Agent groups reordered:', evt);
+  console.log("Agent groups reordered:", evt);
 };
 // ─── Fetch agents ─────────────────────────────────────────────────────────────
 async function fetchAgents() {
@@ -732,9 +718,58 @@ const filteredBoard = computed(() => {
     }))
     .filter((col: any) => col.cards.length > 0);
 });
+const tableRows = computed(() => {
+  if (currentTab.value === "talent") {
+    return filteredBoard.value.flatMap((col: any) =>
+      col.cards.map((card: any) => ({
+        id: card._id,
+        title: card.title || card.name || "Untitled",
+        column: col.title,
+        role: card.role_title ?? "-",
+        seat_number: card.seat_number ?? "-",
+        status: card.status ?? "-",
+        assigned_cards_count: card.assigned_cards_count ?? 0,
+      })),
+    );
+  }
 
-// ─── Agent display helpers ────────────────────────────────────────────────────
+  if (currentTab.value === "agents") {
+    return filteredAgentGroups.value.flatMap((group: any) =>
+      group.agents.map((agent: any) => ({
+        id: agent._id,
+        title: agent.name,
+        column: group.title,
+        role: agent.role,
+        model: agent.model,
+        level: agent.level,
+        status: agent.is_active ? "Active" : "Inactive",
+      })),
+    );
+  }
 
+  return [];
+});
+const tableColumns = computed(() => {
+  if (currentTab.value === "talent") {
+    return [
+      { key: "title", label: "Title" },
+      { key: "column", label: "Team" },
+      { key: "role", label: "Role" },
+      { key: "seat_number", label: "Seat" },
+      { key: "status", label: "Status" },
+      { key: "assigned_cards_count", label: "Cards" },
+    ];
+  }
+
+  return [
+    { key: "title", label: "Agent" },
+    { key: "column", label: "Group" },
+    { key: "role", label: "Role" },
+    { key: "model", label: "Model" },
+    { key: "level", label: "Level" },
+    { key: "status", label: "Status" },
+  ];
+});
 function levelClass(level: string): string {
   const map: Record<string, string> = {
     EXPERT: "bg-purple-100 text-purple-700 border border-purple-200",
@@ -746,19 +781,113 @@ function levelClass(level: string): string {
   return map[level] ?? "bg-gray-100 text-gray-600 border border-gray-200";
 }
 
-// function formatCapability(cap: string): string {
-//   const map: Record<string, string> = {
-//     webBrowsing: "Web",
-//     workspaceData: "Workspace",
-//     module_knowledge: "Module",
-//     sheet_knowledge: "Sheet",
-//     tickets_knowledge: "Tickets",
-//   };
-//   return map[cap] ?? cap;
-// }
+const mindMapRef = ref<HTMLElement | null>(null);
+const mindmapData = computed(() => {
+  if (currentTab.value === "talent") {
+    return {
+      nodeData: {
+        id: "root",
+        topic: "Talent",
+        children: filteredBoard.value.map((col: any) => ({
+          id: `col-${col.title}`,
+          topic: col.title,
+          children: col.cards.map((card: any) => ({
+            id: card._id,
+            topic: card.title || card.name || "Untitled",
+          })),
+        })),
+      },
+    };
+  }
+
+  if (currentTab.value === "agents") {
+    console.log(filteredAgentGroups.value);
+    
+    return {
+      nodeData: {
+        id: "root",
+        topic: "Agents",
+        children: filteredAgentGroups.value.map((group: any) => ({
+          id: `group-${group.title}`,
+          topic: group.title,
+          children: group.agents.map((agent: any) => ({
+            id: agent._id,
+            topic: agent.name,
+          })),
+        })),
+      },
+    };
+  }
+
+  return { nodeData: { id: "root", topic: "Empty", children: [] } };
+});
+let mind: any = null;
+function getCleanMindData() {
+  // toRaw + JSON.parse(JSON.stringify(...)) strips Vue reactivity and proxies
+  return JSON.parse(JSON.stringify(toRaw(mindmapData.value)));
+}
+async function initMindMap() {
+  await nextTick();
+  if (!mindMapRef.value) return;
+
+  const data = mindmapData.value; // pass full object with nodeData
+
+  if (mind) {
+    mind = null;
+    mindMapRef.value.innerHTML = ""; // reset
+  }
+
+  mind = new MindElixir({
+    el: mindMapRef.value,
+    direction: MindElixir.SIDE,
+    draggable: true,
+    contextMenu: true,
+    toolBar: true,
+    nodeMenu: true,
+    keypress: true,
+  });
+
+  mind.init(data);
+}
+
+onMounted(() => {
+  if (currentView.value === "mindmap") initMindMap();
+});
+watch(
+  [() => currentTab.value, () => filteredAgentGroups.value, () => filteredBoard.value],
+  async () => {
+    await nextTick();
+    mind?.refresh(getCleanMindData());
+  }
+);
+watch(
+  [() => currentView.value, () => selected_view_agent.value, () => currentTab.value],
+  async ([view]) => {
+    if (view !== "mindmap") return;
+    await nextTick();
+    if (!mindMapRef.value) return;
+
+    if (!mind) {
+      // initialize once
+      mind = new MindElixir({
+        el: mindMapRef.value,
+        direction: MindElixir.SIDE,
+        draggable: true,
+        contextMenu: true,
+        toolBar: true,
+        nodeMenu: true,
+        keypress: true,
+      });
+      mind.init(getCleanMindData());
+    } else {
+      mind.init(getCleanMindData());
+    }
+  },
+  { immediate: true }
+);
 </script>
 
-<style>
+<style scoped>
 .custom_scroll_bar::-webkit-scrollbar {
   width: 3px;
   height: 3px;
@@ -776,5 +905,53 @@ function levelClass(level: string): string {
 .custom_scroll_bar {
   scrollbar-width: thin;
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+/* Toolbar */
+:deep(.mind-elixir-toolbar.rb) {
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: 15rem;
+}
+
+:deep(.mind-elixir-toolbar.rb > *) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  padding: 5px;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+:deep(.mind-elixir-toolbar.lt > *) {
+  cursor: pointer;
+}
+
+:deep(.mind-elixir-toolbar.rb > *:hover),
+:deep(.mind-elixir-toolbar.lt > *:hover) {
+  color: #7d68c8;
+  border: 1px solid #7d68c8;
+  border-radius: 5px;
+}
+
+.me-toolbar-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.me-toolbar-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
 }
 </style>

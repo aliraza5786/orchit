@@ -12,11 +12,71 @@
                     </div>
                 </template>
             </Dropdown>
-
-            <SearchBar class="max-w-[250px]" @onChange="(e) => {
+            <div class="flex gap-2">
+                <SearchBar class="max-w-[250px]" @onChange="(e) => {
                     searchQuery = e
                 }" placeholder="Search in Orchit AI space">
                 </SearchBar>
+                <!-- <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
+            <button
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="view === 'kanban' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Kanban view"
+              @click="view = 'kanban'"
+            >
+              <i class="fa-solid fa-chart-kanban"></i>
+            </button>
+
+            <button
+              @click="view = 'table'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="view === 'table' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="List view"
+            >
+              <i class="fa-solid fa-align-left"></i>
+            </button>
+            <button
+              @click="view = 'mindmap'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="view === 'mindmap' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="MindMap view"
+            >
+              <i class="fa-solid fa-chart-diagram"></i>
+            </button>
+
+            <button
+              @click="view = 'calendar'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="view === 'calendar' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Calendar view"
+            >
+              <i class="fa-regular fa-calendar"></i>
+            </button>
+
+            <button
+              @click="view = 'gantt'"
+              class="aspect-square cursor-pointer rounded-sm p-0"
+              :class="view === 'gantt' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Gantt Chart view"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+              </svg>
+            </button>
+
+            <button
+              @click="view = 'timeline'"
+              class="aspect-square cursor-pointer rounded-sm p-0"
+              :class="view === 'timeline' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Timeline view"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" opacity="0" />
+                <path d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div> -->
+            </div>
         </div>
 
         <!-- Kanban Skeleton -->
@@ -24,7 +84,7 @@
 
         <!-- Kanban Board -->
         <div v-show="!isListPending" class="flex overflow-x-auto gap-3 p-4">
-            <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
+            <KanbanBoard v-if="view==='kanban'" @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
                 @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
                 @onBoardUpdate="handleBoardUpdate" :board="filteredBoard" :variable_id="selected_view_by"
                 :sheet_id="selected_sheet_id">
@@ -43,9 +103,8 @@
                     </div>
                 </template>
             </KanbanBoard>
-
             <!-- Add List Section -->
-            <div class="min-w-[328px]" @click.stop>
+            <div class="min-w-[328px]" v-if="view==='kanban'" @click.stop>
                 <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
                     <BaseTextField :autofocus="true" v-model="newColumn" placeholder="Add New list"
                         @keyup.enter="emitAddColumn" />
@@ -64,6 +123,9 @@
                     @click.stop="toggleAddList" :disabled="!canCreateVariable">
                     + Add List
                 </button>
+            </div>
+            <div v-if="view==='mindmap'">
+                <PinMindmap :data="filteredBoard" />
             </div>
         </div>
 
@@ -119,7 +181,6 @@ import SearchBar from '../../components/ui/SearchBar.vue';
 const ConfirmDeleteModal = defineAsyncComponent(() => import('../Product/modals/ConfirmDeleteModal.vue'));
 const CreateVariableModal = defineAsyncComponent(() => import('../Product/modals/CreateVariableModal.vue'));
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
-
 import { usePermissions } from '../../composables/usePermissions'
 const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet } = usePermissions()
 
@@ -133,13 +194,12 @@ const activeAddList = ref(false);
 const newColumn = ref('');
 const selectedCard = ref<{ _id: any; variables: any }>();
 const localList = ref<any>([]);
-
+const view = ref("kanban");
 // Routing & Stores
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
 const workspaceStore = useWorkspaceStore();
 const queryClient = useQueryClient();
-
 // Variables & Sheets
 // Sheets Data
 const { data, refetch: refetchSheets } = useSheets(
@@ -177,7 +237,6 @@ onMounted(() => {
     ? JSON.parse(JSON.stringify(Lists.value))
     : []
 });
-
 // Add List Logic
 const { mutate: addList, isPending: addingList } = useAddList({
     onSuccess: (data: any, payload: any) => {
