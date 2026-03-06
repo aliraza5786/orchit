@@ -40,7 +40,7 @@
               </slot>
             </template>
             <template #footer="{ column }">
-              <slot name="column-footer" :column="column"></slot>
+              <slot name="column-footer" v-if="!column?._id" :column="column"></slot>
             </template>
           </KanbanColumn>
         </div>

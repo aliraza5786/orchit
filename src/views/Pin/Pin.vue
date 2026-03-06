@@ -17,7 +17,7 @@
                     searchQuery = e
                 }" placeholder="Search in Orchit AI space">
                 </SearchBar>
-                <!-- <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
+                <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
             <button
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
               :class="view === 'kanban' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
@@ -75,7 +75,7 @@
                 <path d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
-          </div> -->
+          </div>
             </div>
         </div>
 
@@ -83,8 +83,8 @@
         <KanbanSkeleton v-show="isListPending" />
 
         <!-- Kanban Board -->
-        <div v-show="!isListPending" class="flex overflow-x-auto gap-3 p-4">
-            <KanbanBoard v-if="view==='kanban'" @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
+        <div v-show="!isListPending" class="flex overflow-x-auto gap-3 p-4" v-if="view==='kanban'">
+            <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
                 @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
                 @onBoardUpdate="handleBoardUpdate" :board="filteredBoard" :variable_id="selected_view_by"
                 :sheet_id="selected_sheet_id">
@@ -124,10 +124,50 @@
                     + Add List
                 </button>
             </div>
-            <div v-if="view==='mindmap'">
-                <PinMindmap :data="filteredBoard" />
-            </div>
+            
         </div>
+         <template v-if="view == 'table'">
+      <TableView
+        class="mx-3"
+        :columns="columns"
+        :isPending="false"
+        @addVar="() => { isCreateVar = true; }"
+        :rows="tableRows"
+        :canCreate="canCreateCard"
+        :canCreateVariable="canCreateVariable"
+        :canDelete="canDeleteCard"
+      />
+    </template>
+          <div v-if="view==='mindmap'">
+             <PinMindMap  
+                :listsData="Lists?.data ?? []"
+                :selectedSheetId="selected_sheet_id"
+                :selectedViewBy="selected_view_by"
+                :workspaceId="workspaceId"
+                :moduleId="moduleId"
+                :addingList="!!addingList"
+                :activeAddList="activeAddList"
+                :newColumn="newColumn"
+                :canCreateCard="canCreateCard"
+                :canEditCard="canEditCard"
+                :canDeleteCard="canDeleteCard"
+                :canAssignCard="canAssignCard"
+                :canCreateSheet="canCreateSheet"
+                :canCreateVariable="canCreateVariable"
+                :canEditSheet="canEditSheet" />
+            </div>
+            <template v-if="view === 'calendar'">
+      <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template>
+     <!-- ── Gantt View ──────────────────────────────────────────────────────── -->
+    <template v-if="view === 'gantt'">
+      <GanttChartView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template>
+
+    <!-- ── Timeline View ───────────────────────────────────────────────────── -->
+    <template v-if="view === 'timeline'">
+      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template>
 
         <!-- Modals -->
         <ConfirmDeleteModal v-model="showDelete" title="Delete List" itemLabel="list" :itemName="localColumnData?.title"
@@ -151,7 +191,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onMounted, watch } from 'vue';
+import { ref, computed, defineAsyncComponent, onMounted, watch  } from 'vue';
 import { useRoute } from 'vue-router';
 import { useQueryClient } from '@tanstack/vue-query';
 import { useWorkspaceStore } from '../../stores/workspace';
@@ -178,11 +218,16 @@ import CreateSheetModal from '../Product/modals/CreateSheetModal.vue';
 import Fuse from 'fuse.js';
 import { debounce } from 'lodash';
 import SearchBar from '../../components/ui/SearchBar.vue';
+import PinMindMap from "../../components/feature/MindmapView.vue"
+import TableView from '../../components/feature/TableView/TableView.vue';
+import CalendarView from '../../components/feature/CalendarView.vue';
+import GanttChartView from '../../components/feature/GanttChartView.vue';
+import TimelineView from '../../components/feature/TimelineView.vue';
 const ConfirmDeleteModal = defineAsyncComponent(() => import('../Product/modals/ConfirmDeleteModal.vue'));
 const CreateVariableModal = defineAsyncComponent(() => import('../Product/modals/CreateVariableModal.vue'));
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 import { usePermissions } from '../../composables/usePermissions'
-const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet } = usePermissions()
+const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canCreateCard, canEditCard, canAssignCard, canDeleteCard } = usePermissions()
 
 // State
 const isCreateVar = ref(false);
@@ -460,5 +505,29 @@ const filteredBoard = computed(() => {
     return { ...col, cards: filteredCards };
   });
 });
+const tableRows = computed(() => {
+  const lists = Lists.value?.data || [];
 
+  return lists.flatMap((sheet: any) =>
+    (sheet.cards || []).map((card: any) => ({
+      id: card._id,
+
+      Title: card["card-title"],
+
+      "Due Date": card["end-date"],
+
+      Owner: card?.created_by?.u_full_name || "",
+
+      Assignee: card?.seat?.title || "",
+
+      raw: card
+    }))
+  );
+});
+const columns = [
+  { key: "Title", label: "Title" },
+  { key: "Due Date", label: "Due Date" },
+  { key: "Owner", label: "Owner" },
+  { key: "Assignee", label: "Assignee" }
+];
 </script>
