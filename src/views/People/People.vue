@@ -194,9 +194,8 @@
         <template v-else>
           <div class="flex flex-1 p-4 overflow-x-auto gap-3 custom_scroll_bar">
             <KanbanBoard
-              :plusIcon="false"
               v-if="filteredBoard?.length > 0"
-              @onPlus="(e) => handlePLus(e)"
+              @onPlus="(e) => handlePlus(e)"
               @delete:column="(e: any) => handleDelete(e)"
               @update:column="(e) => handleUpdateColumn(e)"
               @reorder="onReorder"
@@ -217,42 +216,76 @@
                 />
               </template>
               <template #column-footer="{ column }: any">
-                <div
-                  v-if="!column.showADDNEW"
-                  @click="toggleAddNewColumn(column)"
-                  :disabled="!canInviteUser"
-                  :class="
-                    canInviteUser ? 'cursor-pointer' : 'cursor-not-allowed'
-                  "
-                  class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md"
-                >
-                  <i class="fa-solid fa-plus"></i> Add Seat
-                </div>
-                <div
-                  v-else-if="column.showADDNEW"
-                  class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
-                >
-                  <p class="text-sm text-text-primary">
-                    {{ column.title }} {{ column.cards.length + 1 }}
-                  </p>
-                  <BaseEmailChip
-                    :maxEmails="1"
-                    placeholder="team member email"
-                    v-model="column.email"
-                  />
-                  <p class="text-sm text-text-secondary">
-                    You can assign user later
-                  </p>
-                  <Button size="md" @click="addSeatToColumn(column)">
-                    {{ isPending ? "Adding..." : "Add Seat" }}
-                  </Button>
-                  <i
-                    class="fa-solid fa-close cursor-pointer ml-2"
-                    @click="toggleAddNewColumn('')"
-                  />
-                </div>
-              </template>
+  <template >
+    <div
+      v-if="!column.showADDNEW"
+      @click="toggleAddNewColumn(column)"
+      :disabled="!canInviteUser"
+      :class="canInviteUser ? 'cursor-pointer' : 'cursor-not-allowed'"
+      class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md"
+    >
+      <i class="fa-solid fa-plus"></i> Add Seat
+    </div>
+
+    <div
+      v-else
+      class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
+    >
+      <p class="text-sm text-text-primary">
+        {{ column.title }} {{ column.cards.length + 1 }}
+      </p>
+
+      <BaseEmailChip
+        :maxEmails="1"
+        placeholder="team member email"
+        v-model="column.email"
+      />
+
+      <p class="text-sm text-text-secondary">
+        You can assign user later
+      </p>
+
+      <Button size="md" @click="addSeatToColumn(column)">
+        {{ isPending ? "Adding..." : "Add Seat" }}
+      </Button>
+
+      <i
+        class="fa-solid fa-close cursor-pointer ml-2"
+        @click="toggleAddNewColumn('')"
+      />
+    </div>
+  </template>
+</template>
             </KanbanBoard>
+            <div
+  v-if="showModal"
+  class="fixed inset-0 flex items-center justify-center bg-black/50 bg-opacity-70 z-50"
+>
+  <div class="bg-bg-surface p-4 rounded-md w-80 space-y-2 relative">
+    <p class="text-sm text-text-primary">
+      {{ modalColumn.title }} {{ modalColumn.cards.length + 1 }}
+    </p>
+
+    <BaseEmailChip
+      :maxEmails="1"
+      placeholder="team member email"
+      v-model="modalColumn.email"
+    />
+
+    <p class="text-sm text-text-secondary">
+      You can assign user later
+    </p>
+
+    <Button size="md" @click="addSeatToColumn(modalColumn)">
+      {{ isPendingSeat ? "Adding..." : "Add Seat" }}
+    </Button>
+
+    <i
+      class="fa-solid fa-close cursor-pointer absolute top-2 right-2"
+      @click="closeModal"
+    />
+  </div>
+</div>
             <!-- Add Column --> 
              <div class="min-w-[270px] sm:min-w-[328px]" @click.stop> 
               <form @submit.prevent="" v-if="activeAddList" class="bg-bg-body rounded-lg p-4" > 
@@ -403,7 +436,18 @@ const activeAddList = ref(false);
 const newColumn = ref("");
 const currentView = ref("kanban");
 const selectedCard = ref<any>();
+const showModal = ref(false);
+const modalColumn = ref({ email: [], cards: [], title: '', _id: '' });
+const isPendingSeat = ref(false);
 
+const handlePlus = (column: any) => {
+  modalColumn.value = { ...column };
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+};
 // ─── People store ─────────────────────────────────────────────────────────────
 const isLoading = computed(() => peopleStore.isFetchingPeople);
 const peopleList = computed(() => peopleStore.peopleData);
@@ -670,6 +714,7 @@ const toggleAddNewColumn = (column: any) => {
 
 const addSeatToColumn = (column: any) => {
   handlePLus(column);
+  showModal.value=false;
 };
 
 // ─── Reorder ──────────────────────────────────────────────────────────────────
@@ -885,6 +930,7 @@ watch(
   },
   { immediate: true }
 );
+
 </script>
 
 <style scoped>
