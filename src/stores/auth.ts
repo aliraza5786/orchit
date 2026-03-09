@@ -49,6 +49,9 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('activeMilestoneId')
       localStorage.removeItem('activeSprintId')
       localStorage.removeItem('showActiveSprint')
+      localStorage.removeItem('activeSprintKey')
+      localStorage.removeItem('selectedSprintTitle')
+      localStorage.removeItem('selected_sheet_title')
     },
   },
 })

@@ -1336,6 +1336,7 @@ const firstSprint = computed(() => {
 function selectSprint(sprint: any) {
   selectedSprintId.value = sprint._id;
   isSprintDropdownOpen.value = false;
+  localStorage.setItem("activeSprintKey", sprint?._id);
 }
 
 function mapStatus(s: string): "Todo" | "In Progress" | "Done" {
