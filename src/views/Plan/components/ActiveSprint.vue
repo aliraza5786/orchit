@@ -11,17 +11,17 @@
           <div class="flex lg:gap-4 gap-2 py-1">
             <div class="hidden sm:flex">
               <button
-                class="lg:px-3 px-2 h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
+                class="lg:px-3 px-2 h-8 mt-1 rounded-2xl bg-accent text-white text-sm font-medium cursor-pointer"
                 @click="$emit('go-back')"
               >
-                <i class="fa-solid fa-chevron-left"></i>
+                <i class="fa-solid fa-chevron-left text-xs"></i>
                 Go Back
               </button>
             </div>
 
             <div class="flex sm:hidden">
               <button
-                class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover px-2 text-white items-center justify-center py-1 rounded-2xl font-medium"
+                class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover px-2 text-white text-sm items-center justify-center py-1 rounded-2xl font-medium"
                 @click="$emit('go-back')"
               >
                 <i class="fa-solid fa-chevron-left"></i>
@@ -31,7 +31,7 @@
             <div
               class="lg:px-4 px-2 flex items-center h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
             >
-              {{ activeSprint }}
+              {{ activeSprintTitle }}
             </div>
           </div>
 
@@ -324,7 +324,6 @@ import { debounce } from "lodash";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor";
-
 // ─── Lazy components ──────────────────────────────────────────────────────────
 const CreateTaskModal = defineAsyncComponent(() => import("../../Product/modals/CreateTaskModal.vue"));
 const ConfirmDeleteModal = defineAsyncComponent(() => import("../../Product/modals/ConfirmDeleteModal.vue"));
@@ -370,7 +369,7 @@ const isDeletingTicket = ref(false);
 const selectedSheetTitle = ref<string>("");
 const { data: workspaces } = useSingleWorkspace(workspaceId.value);
 const modules = ref(workspaces.value.modules || []);
-
+const activeSprintTitle = localStorage.getItem("selectedSprintTitle")
 const moduleOptions = computed(() => {
   return (modules.value || []).map((m: any) => ({
     _id: m._id,
@@ -400,7 +399,9 @@ const { data: sheets, refetch: refetchSheets } = useSheets({
 watch(selected_module_id, (newModuleId) => {
   if (newModuleId) refetchSheets();
 });
-
+const laneIds = computed(() =>{
+  return workspaceStore.selectedLaneIds
+})
 const sheetId = computed(() => (sheets.value ? sheets.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(sheetId);
 const { data: variables, isPending: isVariablesPending } = useVariables(
@@ -413,7 +414,7 @@ const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
 const selected_view_by = ref(viewBy);
 
 const selected_sprint_id = computed(() => props.sptint_id);
-const { data: Lists, isPending, refetch: refetchSheetLists } = useSprintKanban(selected_sprint_id);
+const { data: Lists, isPending, refetch: refetchSheetLists } = useSprintKanban(selected_sprint_id, laneIds);
 
 interface DropdownOption {
   _id: string;

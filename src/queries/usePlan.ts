@@ -46,23 +46,39 @@ export const useSprintCard = (id: any, options: any = {}) => {
 };
 export const useSprintKanban = (
   sprint_id: any,
+  lane_ids: any,
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["sprint-kanban", sprint_id],
-
-    queryFn: ({ signal }) =>
-      request<any>({
+    queryKey: ["sprint-kanban", sprint_id, lane_ids],
+    queryFn: ({ signal }) => {
+      const resolvedLaneIds = unref(lane_ids);
+      
+      return request<any>({
         url: `workspace/cards/sprintgrouped`,
         method: "GET",
         signal,
         params: {
           sprint_id: unref(sprint_id),
-          variable_id: "68b6c96e0a95eef7d14e6981", 
-          // sheet_id: unref(sheet_id), 
+          variable_id: "68b6c96e0a95eef7d14e6981",
+          // only include lane_ids if array is non-empty
+          ...(resolvedLaneIds?.length ? { lane_ids: resolvedLaneIds } : {}),
         },
-      }),
-
+        config: {
+          paramsSerializer: (params: Record<string, any>) => {
+            const searchParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+              if (Array.isArray(value)) {
+                value.forEach((v) => searchParams.append(key, v));
+              } else {
+                searchParams.append(key, value as string);
+              }
+            });
+            return searchParams.toString();
+          },
+        },
+      });
+    },
     ...options,
   });
 };
