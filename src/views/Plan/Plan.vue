@@ -952,7 +952,12 @@ const checkedAll = ref(false);
 const checkedSprintAll = ref(false);
 import { usePermissions } from "../../composables/usePermissions";
 const { canCreateCard } = usePermissions();
-const showActiveSprint = ref(false);
+const showActiveSprint = ref(localStorage.getItem('showActiveSprint') === 'true');
+
+// Watch and persist changes
+watch(showActiveSprint, (val) => {
+  localStorage.setItem('showActiveSprint', String(val));
+});
 const selectedSprintIdForDelete = ref<string | null>(null);
 const selectedCardIdsForDelete = ref<string[]>([]);
 const elipseWrapperSprint = ref<HTMLElement | null>(null);
