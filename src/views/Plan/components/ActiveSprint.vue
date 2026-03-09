@@ -482,19 +482,25 @@ function onReorder(a: any) {
       },
     });
   } else {
-    reorderCard.mutate({
-      payload: {
-        workspace_id: workspaceId.value,
-        card_id: a.meta.moved._id,
-        group_value: a.meta.fromColumnId,
-        group_variable_id: selected_view_by.value,
-        new_index: a.meta.newIndex,
-        sheet_id: selected_sheet_id.value,
+    reorderCard.mutate(
+      {
+        payload: {
+          workspace_id: workspaceId.value,
+          card_id: a.meta.moved._id,
+          group_value: a.meta.fromColumnId,
+          group_variable_id: selected_view_by.value,
+          new_index: a.meta.newIndex,
+          sheet_id: selected_sheet_id.value || a?.meta?.moved?.sheet_id || "",
+        },
       },
-    });
+      {
+        onSuccess: () => {
+          refetchSheetLists();
+        },
+      },
+    );
   }
 }
-
 const handleBoardUpdate = (_: any) => {};
 
 const { mutate: updateSheet } = useUpdateWorkspaceSheet({
