@@ -349,7 +349,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch, onMounted, computed, nextTick, toRaw } from "vue";
+import { defineAsyncComponent, ref, watch, onMounted, computed, nextTick, toRaw, onUnmounted } from "vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
 import MindElixir from "mind-elixir";
@@ -826,7 +826,9 @@ function levelClass(level: string): string {
   return map[level] ?? "bg-gray-100 text-gray-600 border border-gray-200";
 }
 
+// ─── MindMap ──────────────────────────────────────────────────────────────────
 const mindMapRef = ref<HTMLElement | null>(null);
+
 const mindmapData = computed(() => {
   if (currentTab.value === "talent") {
     return {
@@ -846,8 +848,6 @@ const mindmapData = computed(() => {
   }
 
   if (currentTab.value === "agents") {
-    console.log(filteredAgentGroups.value);
-    
     return {
       nodeData: {
         id: "root",
@@ -866,21 +866,53 @@ const mindmapData = computed(() => {
 
   return { nodeData: { id: "root", topic: "Empty", children: [] } };
 });
+
 let mind: any = null;
+let mindInitTimer: ReturnType<typeof setTimeout> | null = null;
+
 function getCleanMindData() {
-  // toRaw + JSON.parse(JSON.stringify(...)) strips Vue reactivity and proxies
   return JSON.parse(JSON.stringify(toRaw(mindmapData.value)));
 }
-async function initMindMap() {
-  await nextTick();
-  if (!mindMapRef.value) return;
 
-  const data = mindmapData.value; // pass full object with nodeData
-
+function destroyMind() {
   if (mind) {
     mind = null;
-    mindMapRef.value.innerHTML = ""; // reset
   }
+  if (mindMapRef.value) {
+    mindMapRef.value.innerHTML = "";
+  }
+}
+
+async function initMindMap() {
+  // Cancel any pending init
+  if (mindInitTimer) {
+    clearTimeout(mindInitTimer);
+    mindInitTimer = null;
+  }
+
+  await nextTick();
+
+  // Extra safety: wait for the browser to actually paint and calculate layout
+  mindInitTimer = setTimeout(() => {
+    if (!mindMapRef.value) return;
+
+    const { offsetWidth, offsetHeight } = mindMapRef.value;
+
+    // Guard: don't init if container has no dimensions yet
+    if (offsetWidth === 0 || offsetHeight === 0) {
+      // Retry once more after another frame
+      mindInitTimer = setTimeout(() => renderMind(), 100);
+      return;
+    }
+
+    renderMind();
+  }, 50);
+}
+
+function renderMind() {
+  if (!mindMapRef.value) return;
+
+  destroyMind();
 
   mind = new MindElixir({
     el: mindMapRef.value,
@@ -892,11 +924,50 @@ async function initMindMap() {
     keypress: true,
   });
 
-  mind.init(data);
+  mind.init(getCleanMindData());
 }
 
-onMounted(() => {
-  if (currentView.value === "mindmap") initMindMap();
+// Only watch for view switching to mindmap OR tab changes WHILE in mindmap
+watch(
+  () => currentView.value,
+  async (view) => {
+    if (view !== "mindmap") {
+      // Clean up when leaving mindmap view
+      destroyMind();
+      return;
+    }
+    await initMindMap();
+  }
+);
+
+// When tab or data changes while ALREADY in mindmap view, refresh
+watch(
+  [() => currentTab.value, () => selected_view_agent.value],
+  async () => {
+    if (currentView.value !== "mindmap") return;
+    await initMindMap(); // full re-init since container might re-render
+  }
+);
+
+// Refresh when filtered data changes (search etc.) while in mindmap
+watch(
+  [() => filteredAgentGroups.value, () => filteredBoard.value],
+  async () => {
+    if (currentView.value !== "mindmap" || !mind) return;
+    await nextTick();
+    // Use refresh for data-only changes (no re-mount needed)
+    try {
+      mind.refresh(getCleanMindData());
+    } catch {
+      // If refresh fails, fall back to full re-init
+      await initMindMap();
+    }
+  }
+);
+
+onUnmounted(() => {
+  if (mindInitTimer) clearTimeout(mindInitTimer);
+  destroyMind();
 });
 watch(
   [() => currentTab.value, () => filteredAgentGroups.value, () => filteredBoard.value],
