@@ -37,6 +37,10 @@
 
           <!-- VIEW SWITCHER -->
           <div class="flex gap-3 items-center">
+            <SearchBar
+            @onChange="(e: string) => { search = e; }"
+            placeholder="Search in Orchit AI space"
+          />
             <div class="flex gap-3 items-center">
               <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
                 <button
@@ -324,6 +328,7 @@ import { debounce } from "lodash";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor";
+import SearchBar from "../../../components/ui/SearchBar.vue";
 // ─── Lazy components ──────────────────────────────────────────────────────────
 const CreateTaskModal = defineAsyncComponent(() => import("../../Product/modals/CreateTaskModal.vue"));
 const ConfirmDeleteModal = defineAsyncComponent(() => import("../../Product/modals/ConfirmDeleteModal.vue"));
@@ -351,6 +356,7 @@ const {
   canAssignCard,
 } = usePermissions();
 const view = ref("kanban");
+const search = ref("");
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
 const queryClient = useQueryClient();
@@ -558,10 +564,13 @@ watch(
 );
 
 const fuse = computed(() => {
-  const allCards = Lists.value?.flatMap((col: any) =>
+  const allCards = (Lists.value ?? []).flatMap((col: any) =>
     col.cards.map((card: any) => ({ ...card, columnId: col.title })),
   );
-  return new Fuse(allCards, { keys: ["card-title", "card-description"], threshold: 0.3 });
+  return new Fuse(allCards, { 
+    keys: ["card-title", "card-description", "title", "name"], 
+    threshold: 0.3 
+  });
 });
 
 const normalizedTableData = computed(() => {
@@ -571,20 +580,26 @@ const normalizedTableData = computed(() => {
 });
 
 const filteredBoard = computed(() => {
+  const query = searchQuery.value?.trim() || search.value?.trim();
+
   if (view.value === "kanban") {
-    if (!searchQuery.value) return Lists.value;
-    const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
-    return Lists.value.map((col: any) => ({
+    if (!query) return Lists.value;
+
+    const results = fuse.value.search(query).map((r: any) => r.item);
+    return (Lists.value ?? []).map((col: any) => ({
       ...col,
       cards: results.filter((c: any) => c.columnId === col.title),
     }));
+
   } else {
-    const query = searchQuery.value?.trim();
     if (!query) {
       let array: any = [];
-      (Lists.value ?? [])?.forEach((col: any) => { array = [...array, ...col?.cards]; });
+      (Lists.value ?? []).forEach((col: any) => { 
+        array = [...array, ...(col?.cards ?? [])]; 
+      });
       return array;
     }
+
     const fuseTable = new Fuse(normalizedTableData.value, {
       keys: ["card-title", "card-description"],
       threshold: 0.3,
