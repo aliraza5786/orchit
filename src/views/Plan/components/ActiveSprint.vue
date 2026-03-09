@@ -129,7 +129,7 @@
               v-show="!isPending"
               class="flex-1 overflow-x-auto overflow-y-hidden scrollbar-visible py-4 mx-4"
             >
-              <div class="flex gap-3 p-4 min-w-max h-full">
+              <div class="flex gap-3 min-w-max h-full">
                 <KanbanBoard
                   class="flex h-full"
                   :board="filteredBoard"
@@ -409,7 +409,7 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
 const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
 const selected_view_by = ref(viewBy);
 
-const selected_sprint_id = computed(() => localStorage.getItem("activeSprintId"));
+const selected_sprint_id = computed(() => props.sptint_id || localStorage.getItem("activeSprintId"));
 const { data: Lists, isPending, refetch: refetchSheetLists } = useSprintKanban(selected_sprint_id, laneIds);
 
 interface DropdownOption {
