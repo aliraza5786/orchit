@@ -1289,123 +1289,188 @@ const moveCard = useMoveCard({
     const previousCard = queryClient.getQueryData(["product-card", card_id]);
     const previousLists = queryClient.getQueryData(["sheet-list"]);
 
-    const updateCardLogic = (oldCard: any) => {
-  if (!oldCard || oldCard._id !== card_id) return oldCard;
-
-  const updatedCard = {
-    ...oldCard,
-    variables: Array.isArray(oldCard.variables)
-      ? [...oldCard.variables]
-      : [],
-  };
-
-  if (updatedVariables) {
-    // existing behavior (keep this)
-    Object.assign(updatedCard, updatedVariables);
-
-    Object.entries(updatedVariables).forEach(([key, value]) => {
-      //  variables array (sidebar)
-      const idx = updatedCard.variables.findIndex(
-        (v: any) => v.slug === key,
-      );
-
-      if (idx !== -1) {
-        updatedCard.variables[idx] = {
-          ...updatedCard.variables[idx],
-          value,
-        };
-      } else {
-        updatedCard.variables.push({ slug: key, value, type: "Text" });
-      }
-      if (key === "card-description") {
-        // parent reads from flat object
-        updatedCard["card-description"] = value;
-
-        // if parent uses a different key, keep BOTH
-        updatedCard.description = value;
-      }
+    // Snapshot ALL sprint-kanban queries for rollback
+    const previousSprintKanbans = queryClient.getQueriesData({
+      queryKey: ["sprint-kanban"],
     });
-  }
 
-  if (newPayload.workspace_lane_id) {
-    updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
-  }
+    const updateCardLogic = (oldCard: any) => {
+      if (!oldCard || oldCard._id !== card_id) return oldCard;
 
-  if (newPayload.optimisticUser) {
-    const users = Array.isArray(newPayload.optimisticUser) ? newPayload.optimisticUser : [newPayload.optimisticUser]
-    updatedCard.seats = users;
-    updatedCard.seat_id = users.map((u:any) => u?._id || u?.id).filter(Boolean);
-    updatedCard.seat = users[0] || null;
-    updatedCard.assigned_to = users;
-  }
+      const updatedCard = {
+        ...oldCard,
+        variables: Array.isArray(oldCard.variables)
+          ? [...oldCard.variables]
+          : [],
+      };
 
-  return updatedCard;
-};
+      if (updatedVariables) {
+        Object.assign(updatedCard, updatedVariables);
 
+        Object.entries(updatedVariables).forEach(([key, value]) => {
+          const idx = updatedCard.variables.findIndex(
+            (v: any) => v.slug === key,
+          );
+
+          if (idx !== -1) {
+            updatedCard.variables[idx] = {
+              ...updatedCard.variables[idx],
+              value,
+            };
+          } else {
+            updatedCard.variables.push({ slug: key, value, type: "Text" });
+          }
+
+          if (key === "card-description") {
+            updatedCard["card-description"] = value;
+            updatedCard.description = value;
+          }
+        });
+      }
+
+      if (newPayload.workspace_lane_id) {
+        updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+      }
+
+      if (newPayload.optimisticUser) {
+        const users = Array.isArray(newPayload.optimisticUser)
+          ? newPayload.optimisticUser
+          : [newPayload.optimisticUser];
+        updatedCard.seats = users;
+        updatedCard.seat_id = users
+          .map((u: any) => u?._id || u?.id)
+          .filter(Boolean);
+        updatedCard.seat = users[0] || null;
+        updatedCard.assigned_to = users;
+      }
+
+      return updatedCard;
+    };
+
+    // Update product-card cache
     queryClient.setQueryData(["product-card", card_id], updateCardLogic);
-  // Update ALL sheet-list queries regardless of params
-queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-  if (!old || !Array.isArray(old.data)) return old;
 
-  return {
-    ...old,
-    data: old.data.map((column: any) => ({
-      ...column,
-      cards: column.cards?.map((card: any) =>
-        card._id === card_id
-          ? { ...updateCardLogic(card) }
-          : card
-      ),
-    })),
-  };
-});
+    // Update sheet-list cache
+    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+      if (!old || !Array.isArray(old.data)) return old;
+      return {
+        ...old,
+        data: old.data.map((column: any) => ({
+          ...column,
+          cards: column.cards?.map((card: any) =>
+            card._id === card_id ? { ...updateCardLogic(card) } : card,
+          ),
+        })),
+      };
+    });
 
-    return { previousCard, previousLists };
+    // Update ALL sprint-kanban cached queries optimistically
+    // Each entry is [queryKey, data] — update only the one containing this card
+    queryClient.setQueriesData(
+      { queryKey: ["sprint-kanban"] },
+      (old: any) => {
+        // sprint-kanban returns array of columns directly
+        if (!old || !Array.isArray(old)) return old;
+
+        const hasCard = old.some((col: any) =>
+          col.cards?.some((c: any) => c._id === card_id),
+        );
+
+        // Only patch the query instance that actually contains this card
+        if (!hasCard) return old;
+
+        return old.map((col: any) => ({
+          ...col,
+          cards: (col.cards ?? []).map((card: any) =>
+            card._id === card_id ? { ...updateCardLogic(card) } : card,
+          ),
+        }));
+      },
+    );
+
+    return { previousCard, previousLists, previousSprintKanbans };
   },
-  onSuccess: (serverCard: any, variables: any) => { 
+
+  onSuccess: (serverCard: any, variables: any) => {
     const cardId = variables.card_id;
     refetchCardDetails();
-    // Update single card with authoritative server response
+
     if (serverCard) {
+      // Update product-card cache with server response
       queryClient.setQueryData(["product-card", cardId], serverCard);
 
-      queryClient.setQueryData(["sheet-list"], (old:any)=>{
-  if (!old?.data) return old;
+      // Update sheet-list cache with server response
+      queryClient.setQueryData(["sheet-list"], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.map((column: any) => ({
+            ...column,
+            cards: column.cards?.map((card: any) =>
+              card._id === cardId ? { ...card, ...serverCard } : card,
+            ),
+          })),
+        };
+      });
 
-  return {
-    ...old,
-    data: old.data.map((column:any)=>({
-      ...column,
-      cards: column.cards?.map((card:any)=>
-        card._id === cardId
-          ? { ...card, ...serverCard }
-          : card
-      )
-    }))
-  }
-});
+      // Update ALL sprint-kanban queries with server response
+      queryClient.setQueriesData(
+        { queryKey: ["sprint-kanban"] },
+        (old: any) => {
+          if (!old || !Array.isArray(old)) return old;
 
+          const hasCard = old.some((col: any) =>
+            col.cards?.some((c: any) => c._id === cardId),
+          );
+
+          if (!hasCard) return old;
+
+          return old.map((col: any) => ({
+            ...col,
+            cards: (col.cards ?? []).map((card: any) =>
+              card._id === cardId ? { ...card, ...serverCard } : card,
+            ),
+          }));
+        },
+      );
       queryClient.invalidateQueries({
         queryKey: ["product-card", cardId],
       });
     }
   },
+
   onError: (_err: any, variables: any, context: any) => {
     if (!context) return;
 
     const cardId = variables.card_id;
 
+    // Rollback product-card cache
     queryClient.setQueryData(["product-card", cardId], context.previousCard);
+
+    // Rollback sheet-list cache
     queryClient.setQueriesData(
       { queryKey: ["sheet-list"] },
       context.previousLists,
     );
+
+    // Rollback each sprint-kanban query instance individually
+    if (context.previousSprintKanbans?.length) {
+      context.previousSprintKanbans.forEach(([queryKey, data]: any) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+    }
+
+    // Refetch card details to ensure consistency
+    refetchCardDetails();
   },
+
   onSettled: (_data: any, _err: any, variables: any) => {
     const cardId = variables.card_id;
 
     queryClient.invalidateQueries({ queryKey: ["product-card", cardId] });
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    // Do NOT invalidate sprint-kanban here to avoid unnecessary refetches
+    // The cache is already updated optimistically and confirmed in onSuccess
   },
 });
 const commentAttachments = ref<File[]>([]);
