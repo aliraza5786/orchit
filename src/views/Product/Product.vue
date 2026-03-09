@@ -4,7 +4,7 @@
   >
     <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
       <div
-        class="header py-3 px-3 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
+        class="header py-3 px-4 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
       >
         <Dropdown
           @edit-option="openEditSprintModal"
@@ -126,9 +126,9 @@
       <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
       <div
         v-show="!isPending && !isSheetPending && hasSheets"
-        class="flex overflow-x-auto gap-3 scrollbar-visible h-full mx-3"
+        class="flex overflow-x-auto gap-3 scrollbar-visible h-full mx-4 py-4"
       >
-        <div class="mt-3 flex gap-3">
+        <div class=" flex gap-3">
           <KanbanBoard
             @onPlus="plusHandler"
             :board="filteredBoard"

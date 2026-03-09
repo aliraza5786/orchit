@@ -15,8 +15,8 @@
      <!-- Skeleton Loader -->
     <KanbanSkeleton v-if="isPending" />
      <!-- Board Area -->
-    <div  v-if="!isPending" class="flex-1 w-full p-4 overflow-hidden flex flex-col">      
-       <div class="flex-1 overflow-x-auto flex items-start gap-4">
+    <div  v-if="!isPending" class="flex-1 w-full px-4 overflow-hidden flex flex-col ">      
+       <div class="flex-1 overflow-x-auto flex items-start gap-4 custom_scroll_bar py-4">
 
       <!-- Kanban Board (Columns) --> 
       <!-- General Process Static Column -->
@@ -397,3 +397,24 @@ const handleTransitionCreated = () => {
 
 const showGeneralWorkflowBuilder = ref(false);
 </script>
+
+<style scoped>
+.custom_scroll_bar::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+.custom_scroll_bar::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.4);
+  border-radius: 10px;
+}
+.custom_scroll_bar::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+.custom_scroll_bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom_scroll_bar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+</style>

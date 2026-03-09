@@ -164,12 +164,14 @@
                     :key="perm._id"
                     class="flex items-start gap-2 px-3 py-2 hover:bg-bg-input"
                   >
-                   <input
-                      type="checkbox"
-                      v-model="selectedPermissions"
-                      :value="perm._id"
-                      @change="handlePermissionUpdate"
-                      class="h-4 w-4 mt-0.5 rounded border-border accent-accent cursor-pointer flex-shrink-0"
+                   <Checkbox
+                      :checked="selectedPermissions.includes(perm._id)"
+                      @change="() => { 
+                        const idx = selectedPermissions.indexOf(perm._id);
+                        if (idx === -1) selectedPermissions.push(perm._id);
+                        else selectedPermissions.splice(idx, 1);
+                        handlePermissionUpdate();
+                      }"
                     />
                     
                     <div>
@@ -249,6 +251,9 @@ const SwitchTab = defineAsyncComponent(() =>
 );
 const BaseSelectField = defineAsyncComponent(() =>
   import("../../../components/ui/BaseSelectField.vue")
+);
+const Checkbox = defineAsyncComponent(() =>
+  import("../../../components/ui/Checkbox.vue")
 );
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor"; 
