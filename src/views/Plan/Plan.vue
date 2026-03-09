@@ -297,10 +297,8 @@
                             >
                               <span class="truncate max-w-[160px]">
                                 {{
-                                  sprintsList?.sprints?.find(
-                                    (sprint: any) =>
-                                      sprint._id === selectedSprintId,
-                                  )?.title
+                               
+                                  selectedSprintTitle
                                 }}
                               </span>
                               <i class="fas fa-chevron-down text-xs"></i>
@@ -1623,6 +1621,16 @@ function onDelete() {
 
   showMenu.value = false;
 }
+//save selected sprint title
+const selectedSprintTitle = computed(() => {
+  const title = sprintsList.value?.sprints?.find(
+    (sprint: any) => sprint._id === selectedSprintId.value
+  )?.title;
+
+  if (title) localStorage.setItem('selectedSprintTitle', title);
+  
+  return title ?? localStorage.getItem('selectedSprintTitle') ?? '';
+});
 </script>
 
 <style scoped>
