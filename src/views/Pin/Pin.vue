@@ -2,7 +2,8 @@
     <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex">
 
         <!-- Header -->
-        <div class="header px-4 py-3 border-b border-border flex items-center justify-between gap-1">
+        <div class="overflow-x-auto shrink-0 border-b border-border">
+           <div class="header px-4 py-3 flex items-center justify-between gap-2">
             <Dropdown   v-model="selected_sheet_id" :options="transformedData"
                 variant="secondary" v-bind="dropdownListeners"  :canEdit="canEditSheet" :canDelete="canDeleteSheet" >
                 <template #more>
@@ -77,13 +78,13 @@
             </button>
           </div>
             </div>
+           </div>
         </div>
-
         <!-- Kanban Skeleton -->
         <KanbanSkeleton v-show="isListPending" />
 
         <!-- Kanban Board -->
-        <div v-show="!isListPending" class="flex overflow-x-auto gap-3 p-4" v-if="view==='kanban'">
+        <div v-show="!isListPending" class="flex overflow-x-auto custom_scroll_bar gap-3 py-4 h-full mx-4" v-if="view==='kanban'">
             <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
                 @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
                 @onBoardUpdate="handleBoardUpdate" :board="filteredBoard" :variable_id="selected_view_by"
@@ -531,3 +532,24 @@ const columns = [
   { key: "Assignee", label: "Assignee" }
 ];
 </script>
+
+<style scoped>
+.custom_scroll_bar::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+.custom_scroll_bar::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.4);
+  border-radius: 10px;
+}
+.custom_scroll_bar::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+.custom_scroll_bar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom_scroll_bar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
+}
+</style>
