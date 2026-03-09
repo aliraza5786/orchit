@@ -1338,7 +1338,24 @@ function selectSprint(sprint: any) {
   isSprintDropdownOpen.value = false;
   localStorage.setItem("activeSprintKey", sprint?._id);
 }
+watch(
+  () => sprintsList.value?.sprints,
+  (sprints) => {
+    if (!sprints?.length) return;
+    
+    const saved = localStorage.getItem("activeSprintKey");
+    const exists = sprints.find((s: any) => s._id === saved);
 
+    if (!exists) {
+      // No saved sprint or saved sprint no longer exists, default to first
+      selectedSprintId.value = sprints[0]._id;
+      localStorage.setItem("activeSprintKey", sprints[0]._id);
+    } else {
+      selectedSprintId.value = saved;
+    }
+  },
+  { immediate: true }
+);
 function mapStatus(s: string): "Todo" | "In Progress" | "Done" {
   const normalized = s.toLowerCase();
   if (normalized.includes("progress")) return "In Progress";
