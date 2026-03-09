@@ -9,25 +9,15 @@
           class="header lg:px-4 px-2 py-2 flex justify-between items-center gap-1 overflow-auto border-b border-border"
         >
           <div class="flex lg:gap-4 gap-2 py-1">
-            <div class="hidden sm:flex">
+            <div>
               <button
-                class="lg:px-3 px-2 h-8 mt-1 rounded-2xl bg-accent text-white text-sm font-medium cursor-pointer"
+                class="lg:px-3 px-2 h-8 mt-1 rounded-2xl text-[14px] bg-accent flex items-center gap-1 text-white font-medium cursor-pointer"
                 @click="$emit('go-back')"
               >
-                <i class="fa-solid fa-chevron-left text-xs"></i>
-                Go Back
+                <i class="fa-solid fa-chevron-left text-[12px]"></i>
+                 <span class="hidden sm:block"> Go Back</span>
               </button>
-            </div>
-
-            <div class="flex sm:hidden">
-              <button
-                class="cursor-pointer bg-gradient-to-tr from-accent to-accent-hover px-2 text-white text-sm items-center justify-center py-1 rounded-2xl font-medium"
-                @click="$emit('go-back')"
-              >
-                <i class="fa-solid fa-chevron-left"></i>
-              </button>
-            </div>
-
+            </div> 
             <div
               class="lg:px-4 px-2 flex items-center h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
             >
@@ -137,7 +127,7 @@
             <KanbanSkeleton v-show="isPending" />
             <div
               v-show="!isPending"
-              class="flex-1 overflow-x-auto overflow-y-hidden scrollbar-visible me-3"
+              class="flex-1 overflow-x-auto overflow-y-hidden scrollbar-visible py-4 mx-4"
             >
               <div class="flex gap-3 p-4 min-w-max h-full">
                 <KanbanBoard
