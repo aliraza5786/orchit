@@ -426,7 +426,6 @@ import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { usePeopleVar, useUpdateVar, useUpdatePeopleVarDef, useDeletePeopleVarDef } from "../../../queries/usePeople";
-import { useRouteIds } from "../../../composables/useQueryParams";
 const ProgressBar = defineAsyncComponent(() =>
   import("../../../components/ui/ProgressBar.vue")
 );
@@ -487,8 +486,7 @@ import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { usePermissions } from "../../../composables/usePermissions";
 const { canEditUser, isAdmin } = usePermissions();
-const sidePanelStore = useSidePanelStore();
-const { moduleId } = useRouteIds();
+const sidePanelStore = useSidePanelStore(); 
 const localVarValues = reactive<any>({});
 const isCreateVar = ref(false);
 const isEditVar = ref(false);

@@ -102,7 +102,7 @@ import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import Button from '../../../components/ui/Button.vue'
 import { useRouteIds } from '../../../composables/useQueryParams';
 import { useCreatePeopleVar } from '../../../queries/usePeople';
-import { useQueryClient } from '@tanstack/vue-query';
+// import { useQueryClient } from '@tanstack/vue-query';
 import { usePermissions } from '../../../composables/usePermissions';
 import { useVariableTypes } from '../../../queries/useSheets'
 import Checkbox from '../../../components/ui/Checkbox.vue'
@@ -214,7 +214,7 @@ const isValid = computed(() => {
   return titleOk && selectedVariableType.value
 })
 
-const queryClient = useQueryClient();
+// const queryClient = useQueryClient();
 const { mutate: createVariable, isPending: isCreatingVariable } = useCreatePeopleVar({
   onSuccess: async () => {
    toast.success('Field created successfully')
