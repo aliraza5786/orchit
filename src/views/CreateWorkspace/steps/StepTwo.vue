@@ -152,8 +152,8 @@ const touched = reactive({
 const titleError = computed(() => {
   if (!touched.title) return '';
   const v = (newLane.value['lane-title'] || '').trim();
-  if (!v) return 'Lane Name is required';
-  if (v.length < 3) return 'Lane Name must be at least 3 characters';
+  if (!v) return 'Tab name is required';
+  if (v.length < 3) return 'Tab name must be at least 3 characters';
   return '';
 });
 

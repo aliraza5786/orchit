@@ -438,5 +438,52 @@ export const useCreateRole = (options = {}) =>
     } as any
   );
 
+export const useCreatePeopleVar = (options = {}) =>
+  useApiMutation<any, { payload: any }>(
+    {
+      key: ["create-people-var"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/workspace/catalog/module-variable/add`,
+          method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+export const useUpdatePeopleVarDef = (options = {}) =>
+  useApiMutation<any, { id: string | number; payload: any }>(
+    {
+      key: ["update-people-var-def"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/workspace/catalog/module-variable/${vars.id}`,
+          method: "PATCH",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+export const useDeletePeopleVarDef = (options = {}) =>
+  useApiMutation<any, { id: string | number }>(
+    {
+      key: ["delete-people-var-def"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/workspace/catalog/module-variable/${vars.id}`,
+          method: "DELETE",
+        }),
+      ...(options as any),
+    } as any
+  );
+
 
  

@@ -53,7 +53,7 @@
     <!-- Selected Lanes -->
     <div v-if="project?.lanes?.length > 0" class=" h-full flex-grow flec flex-col">
       <h3 class="text-lg font-semibold text-text-primary mb-4">
-        Selected Project Lanes
+        Selected Project Tabs
       </h3>
       <div class="grid  grid-cols-2 md:grid-cols-3 flex-wrap gap-3 md:gap-4">
         <div v-for="lane in project.lanes" class="bg-bg-surface text-text-primary px-4 py-3 rounded-lg">

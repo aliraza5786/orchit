@@ -88,27 +88,182 @@
           </template>
         </div>
 
-        <div>
+        <div class="space-y-4">
           <div
             v-for="(item, index) in peopleVar"
-            :key="index"
-            class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4"
+            :key="item._id || index"
+            class="space-y-1.5"
           >
-            {{ item?.title }}
+            <div class="flex items-center justify-between group h-5 capitalize">
+              <div class="text-xs uppercase tracking-wider text-text-secondary">
+                {{ item.title }}
+              </div>
+              <div v-if="canEditUser" class=" flex items-center gap-1">
+                <button
+                  @click="handleEditVar(item)"
+                  class="text-text-secondary hover:text-accent transition-colors p-1"
+                  title="Edit variable"
+                >
+                  <i class="fa-regular fa-pen-to-square text-[11px]"></i>
+                </button>
+                <button
+                  @click="handleDeleteVar(item)"
+                  class="text-text-secondary hover:text-red-500 transition-colors p-1"
+                  title="Delete variable"
+                >
+                  <i class="fa-regular fa-trash-can text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Selection Types -->
             <BaseSelectField
+              v-if="item.type === 'Select'"
               size="sm"
               :model-value="localVarValues[item._id]"
-              :key="index"
-              :placeholder="` ${item.title}`"
+              :placeholder="`Select ${item.title}`"
               @click.stop
               :defaultValue="getDefaultValue(item?._id)"
-              :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
+              :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
               :cardId="cardDetails?._id"
               :disabled="!canEditUser"
               @update:modelValue="(val: any) => handleSelect(val, item._id)"
             />
+
+            <BaseMultiSelect
+              v-else-if="item.type === 'Multi Select'"
+              :disabled="!canEditUser"
+              size="md"
+              :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+              :placeholder="`Select ${item.title}`"
+              :model-value="Array.isArray(localVarValues[item._id]) ? localVarValues[item._id] : (localVarValues[item._id] ? [localVarValues[item._id]] : [])"
+              @update:modelValue="(val: any) => handleSelect(val, item._id)"
+            />
+
+            <!-- Radio Type -->
+            <BaseRadioGroup
+              v-else-if="item.type === 'Radio'"
+              :disabled="!canEditUser"
+              :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+              :model-value="localVarValues[item._id]"
+              :name="item._id"
+              @update:modelValue="(val: any) => handleSelect(val, item._id)"
+            />
+
+            <!-- Checkbox Type -->
+            <BaseCheckboxGroup
+              v-else-if="item.type === 'Checkbox'"
+              :disabled="!canEditUser"
+              :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+              :model-value="localVarValues[item._id]"
+              @update:modelValue="(val: any) => handleSelect(val, item._id)"
+            />
+
+            <!-- Textarea Type -->
+            <BaseTextAreaField
+              v-else-if="item.type === 'Textarea'"
+              :disabled="!canEditUser"
+              placeholder="Enter text..."
+              :model-value="localVarValues[item._id]"
+              @update:modelValue="(val: any) => localVarValues[item._id] = val"
+              @blur="() => handleSelect(localVarValues[item._id], item._id)"
+            />
+
+            <!-- Date & Time Types -->
+            <div
+              v-else-if="['Date', 'Date & Time'].includes(item.type)"
+              class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-border"
+            >
+              <i class="fa-regular fa-calendar text-[14px]"></i>
+              <DatePicker
+                :disabled="!canEditUser"
+                placeholder="Set date"
+                class="w-full"
+                :model-value="localVarValues[item._id]"
+                emit-as="ymd"
+                @update:modelValue="(val: any) => handleSelect(val, item._id)"
+              />
+            </div>
+
+            <!-- Time Type -->
+            <div
+              v-else-if="item.type === 'Time'"
+              class="h-8 px-3 flex items-center gap-1 rounded-md bg-bg-input border border-border"
+            >
+              <i class="fa-regular fa-clock text-[14px]"></i>
+              <TimePicker
+                :disabled="!canEditUser"
+                placeholder="Set time"
+                class="w-full"
+                :model-value="localVarValues[item._id]"
+                @update:modelValue="(val: any) => handleSelect(val, item._id)"
+              />
+            </div>
+
+            <!-- File Upload -->
+            <FileUploader
+              v-else-if="item.type === 'File Upload'"
+              :disabled="!canEditUser"
+              label=""
+              :model-value="localVarValues[item._id]"
+              @update:model-value="(val: any) => handleSelect(val, item._id)"
+            />
+
+            <!-- Switch/Toggle -->
+            <div v-else-if="item.type === 'Switch/Toggle'" class="flex items-center gap-2 py-1">
+              <Checkbox
+                :disabled="!canEditUser"
+                :checked="!!localVarValues[item._id]"
+                @change="(e: any) => handleSelect(e.target.checked, item._id)"
+                label="Enable"
+              />
+            </div>
+
+            <!-- Person Type -->
+            <AssigmentDropdown
+              v-else-if="item.type === 'Person'"
+              :disabled="!canEditUser"
+              :seat="localVarValues[item._id]"
+              @assign="(users: any) => handleSelect(users, item._id)"
+            />
+
+            <!-- Range/Slider Type -->
+            <div v-else-if="item.type === 'Range/Slider'" class="space-y-1 py-1">
+              <div class="flex justify-between text-[10px] text-text-secondary px-1">
+                <span>Min: {{ item.data?.[0] || 0 }}</span>
+                <span class="font-bold text-accent">{{ localVarValues[item._id] ?? item.data?.[0] ?? 0 }}</span>
+                <span>Max: {{ item.data?.[1] || 100 }}</span>
+              </div>
+              <input
+                type="range"
+                :min="Number(item.data?.[0]) || 0"
+                :max="Number(item.data?.[1]) || 100"
+                :disabled="!canEditUser"
+                class="w-full h-1.5 bg-bg-input rounded-lg appearance-none cursor-pointer accent-accent"
+                :value="localVarValues[item._id] ?? item.data?.[0] ?? 0"
+                @input="(e: any) => handleSelect(Number(e.target.value), item._id)"
+              />
+            </div>
+
+            <!-- Default: TextField -->
+            <BaseTextField
+              v-else
+              :disabled="!canEditUser || item.type === 'Label'"
+              :type="item.type === 'Number' ? 'number' : (item.type === 'Color Picker' ? 'color' : (item.type === 'Email' ? 'email' : (item.type === 'Password' ? 'password' : 'text')))"
+              placeholder="Enter value..."
+              :model-value="localVarValues[item._id]"
+              @update:modelValue="(val: any) => localVarValues[item._id] = val"
+              @blur="() => handleSelect(localVarValues[item._id], item._id)"
+            />
           </div>
         </div>
+        <button 
+          @click="isCreateVar = true"
+          class="w-full mt-6 py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent cursor-pointer active:scale-95 transition-all duration-150 flex items-center justify-center gap-2"
+        >
+          <i class="fa-solid fa-plus text-xs"></i>
+          Add Custom Fields
+        </button>
 
         <!-- work space  -->
         <div class="mt-5 pt-3 border-t border-border-input relstive">
@@ -234,6 +389,34 @@
       :companyId="newCompanyId"
       @close="showAddRoleModal = false"
     />
+
+    <CreateVariableModal
+      v-model="isCreateVar"
+      v-if="isCreateVar"
+      @refetchCardDetails="refetchCardDetails"
+      sheetID=""
+    />
+
+    <EditVariableModal
+      v-if="isEditVar"
+      v-model="isEditVar"
+      @refetchCardDetails="refetchCardDetails"
+      @update-variable="handleVariableDefinitionUpdate"
+      :variable="selectedVarToEdit"
+      :cardId="cardDetails?._id"
+      sheetID=""
+    />
+
+    <ConfirmModal
+      v-model="showDeleteModal"
+      title="Delete Variable"
+      :itemLabel="'variable'"
+      :itemName="selectedItem?.title"
+      confirmText="Delete"
+      cancelText="Cancel"
+      :loading="isDeleting"
+      @confirm="confirmDelete"
+    />
   </div>  
 </template>
 
@@ -242,7 +425,8 @@ import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
-import { usePeopleVar, useUpdateVar } from "../../../queries/usePeople";
+import { usePeopleVar, useUpdateVar, useUpdatePeopleVarDef, useDeletePeopleVarDef } from "../../../queries/usePeople";
+import { useRouteIds } from "../../../composables/useQueryParams";
 const ProgressBar = defineAsyncComponent(() =>
   import("../../../components/ui/ProgressBar.vue")
 );
@@ -254,6 +438,42 @@ const BaseSelectField = defineAsyncComponent(() =>
 );
 const Checkbox = defineAsyncComponent(() =>
   import("../../../components/ui/Checkbox.vue")
+);
+const BaseMultiSelect = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseMultiSelect.vue")
+);
+const BaseRadioGroup = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseRadioGroup.vue")
+);
+const BaseCheckboxGroup = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseCheckboxGroup.vue")
+);
+const BaseTextAreaField = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseTextAreaField.vue")
+);
+const FileUploader = defineAsyncComponent(() =>
+  import("../../../components/ui/FileUploader.vue")
+);
+const BaseTextField = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseTextField.vue")
+);
+const AssigmentDropdown = defineAsyncComponent(() =>
+  import("../../Product/components/AssigmentDropdown.vue")
+);
+const DatePicker = defineAsyncComponent(() =>
+  import("../../Product/components/DatePicker.vue")
+);
+const TimePicker = defineAsyncComponent(() =>
+  import("../../Product/components/TimePicker.vue")
+);
+const CreateVariableModal = defineAsyncComponent(() =>
+  import("../modals/PeopleCreateVariableModal.vue")
+);
+const EditVariableModal = defineAsyncComponent(() =>
+  import("../modals/PeopleEditVariableModal.vue")
+);
+const ConfirmModal = defineAsyncComponent(() =>
+  import("../../Product/modals/ConfirmDeleteModal.vue")
 );
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor"; 
@@ -268,7 +488,14 @@ import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { usePermissions } from "../../../composables/usePermissions";
 const { canEditUser, isAdmin } = usePermissions();
 const sidePanelStore = useSidePanelStore();
+const { moduleId } = useRouteIds();
 const localVarValues = reactive<any>({});
+const isCreateVar = ref(false);
+const isEditVar = ref(false);
+const showDeleteModal = ref(false);
+const selectedVarToEdit = ref<any>(null);
+const selectedItem = ref<any>(null);
+
 const activeTab = ref<"details" | "tasks" | "history">("details");
 const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
 const tabOptions = [
@@ -578,6 +805,52 @@ const progressPercentage = computed(() => {
   if (!totalTasks.value) return 0;
   return Math.round((completedTasks.value / totalTasks.value) * 100);
 });
+
+const { mutate: deleteVarDef, isPending: isDeleting } = useDeletePeopleVarDef();
+const { mutate: updateVarDef } = useUpdatePeopleVarDef();
+
+function handleEditVar(item: any) {
+  selectedVarToEdit.value = item;
+  isEditVar.value = true;
+}
+
+function handleDeleteVar(item: any) {
+  selectedItem.value = item;
+  showDeleteModal.value = true;
+}
+
+function confirmDelete() {
+  if (!selectedItem.value) return;
+  deleteVarDef({
+    id: selectedItem.value._id
+  }, {
+    onSuccess: () => {
+      toast.success("Variable deleted successfully");
+      showDeleteModal.value = false;
+      refetchCardDetails();
+    },
+    onError: () => {
+      toast.error("Failed to delete variable");
+    }
+  });
+}
+
+function refetchCardDetails() {
+  queryClient.invalidateQueries({ queryKey: ["people-var"] });
+  queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+}
+
+function handleVariableDefinitionUpdate({ id, payload }: any) {
+  updateVarDef({ id, payload }, {
+    onSuccess: () => {
+      toast.success("Field updated successfully");
+      refetchCardDetails();
+    },
+    onError: () => {
+      toast.error("Failed to update field");
+    }
+  });
+}
 
 </script>
 

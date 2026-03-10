@@ -554,12 +554,14 @@ onMounted(() => {
 // ─── Card selection ───────────────────────────────────────────────────────────
 const selectCardHandler = (card: any) => {
   sidePanelStore.selectCard(card);
+  console.log(card, 'card detail')
   showPanel.value = false;
 };
 
 const handleClickTicket = (ticket: any) => {
   selectedCard.value = ticket;
   sidePanelStore.selectCard(ticket);
+  console.log(ticket, 'card detail')
   showPanel.value = true;
 };
 

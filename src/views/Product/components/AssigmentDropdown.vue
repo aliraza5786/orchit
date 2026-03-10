@@ -1,5 +1,5 @@
 <template>
-  <div class="relative" ref="wrapperRef" @click.stop @keydown.esc="close">
+  <div class="relative" ref="wrapperRef" @keydown.esc="close">
     <!-- Trigger -->
     <div v-if="displayUsers.length > 0" class="flex gap-2 items-center" :class="(disabled || !canAssignCard) ? 'cursor-not-allowed' : 'cursor-pointer'" @click="toggle">
       <div class="flex items-center -space-x-2">
@@ -38,7 +38,7 @@
     <!-- Popover teleported to body to avoid clipping -->
     <teleport to="body">
       <div v-if="open" ref="menuRef" class="z-[9999] w-60 rounded-md border border-border bg-bg-dropdown shadow-xl"
-        :style="menuStyle" @click.stop>
+        :style="menuStyle">
         <div class="p-3">
           <input ref="searchRef" v-model="query" type="text" placeholder="Search people by name or email"
             class="w-full rounded-md border border-border h-[30px] bg-bg-input px-3 outline-none text-xs" />
@@ -210,7 +210,15 @@ function toggle() {
   if (props.disabled || !canAssignCard.value) return;
   open.value = !open.value
 }function close() { open.value = false }
-function onDocClick() { if (open.value) close() }
+
+function onDocClick(event: MouseEvent) {
+  if (!open.value) return
+  const target = event.target as HTMLElement
+  if (wrapperRef.value?.contains(target) || menuRef.value?.contains(target)) {
+    return
+  }
+  close()
+}
 
 /** Smart placement (escapes scroll containers and avoids clipping) **/
 function positionMenu() {
@@ -251,12 +259,12 @@ function onWindowChange() {
 }
 
 onMounted(() => {
-  document.addEventListener('click', onDocClick)
+  document.addEventListener('click', onDocClick, { capture: true })
   window.addEventListener('resize', onWindowChange, { passive: true })
   document.addEventListener('scroll', onWindowChange, { capture: true, passive: true })
 })
 onBeforeUnmount(() => {
-  document.removeEventListener('click', onDocClick)
+  document.removeEventListener('click', onDocClick, { capture: true })
   window.removeEventListener('resize', onWindowChange)
   document.removeEventListener('scroll', onWindowChange, { capture: true })
 })

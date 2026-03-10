@@ -1,4 +1,5 @@
 <template>
+  <Teleport to="body">
     <transition name="fade">
       <div
         v-if="modelValue"
@@ -30,6 +31,7 @@
         </div>
       </div>
     </transition>
+  </Teleport>
   </template>
   
 <script setup lang="ts">
