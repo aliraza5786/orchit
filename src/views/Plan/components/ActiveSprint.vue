@@ -319,6 +319,7 @@ import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor";
 import SearchBar from "../../../components/ui/SearchBar.vue";
+import { useSidePanelStore } from "../../../stores/sidePanelStore";
 // ─── Lazy components ──────────────────────────────────────────────────────────
 const CreateTaskModal = defineAsyncComponent(() => import("../../Product/modals/CreateTaskModal.vue"));
 const ConfirmDeleteModal = defineAsyncComponent(() => import("../../Product/modals/ConfirmDeleteModal.vue"));
@@ -366,6 +367,7 @@ const selectedSheetTitle = ref<string>("");
 const { data: workspaces } = useSingleWorkspace(workspaceId.value);
 const modules = ref(workspaces.value.modules || []);
 const activeSprintTitle = localStorage.getItem("selectedSprintTitle")
+const sidePanelStore = useSidePanelStore()
 const moduleOptions = computed(() => {
   return (modules.value || []).map((m: any) => ({
     _id: m._id,
@@ -387,6 +389,7 @@ watch(
   },
   { immediate: true },
 );
+
 const { data: sheets, refetch: refetchSheets } = useSheets({
   workspace_id: workspaceId.value,
   workspace_module_id: moduleId.value,
@@ -454,8 +457,11 @@ watch(sheets, (newSheetId) => {
 });
 
 const selectCardHandler = (card: any) => {
+  if (!card._id) card._id = card.id;
   selectedCard.value = card;
+  sidePanelStore.selectTaskCard(card);
 };
+(window as any).selectCardHandler = selectCardHandler;
 
 const reorderList = ReOrderList();
 const reorderCard = ReOrderCard();
@@ -626,7 +632,7 @@ const moveCard = useMoveCard({
 
 const { mutate: addTicket } = useAddTicket({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
   },
 });
 

@@ -175,6 +175,9 @@ const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
   onSuccess: () => {
     reset();
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    if(route.path.includes('/plan')){
+     queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
+    }
     isOpen.value = false;
     refetchSheetLists();
   },
@@ -455,7 +458,7 @@ const payload = {
     ["card-description"]: form.description.trim(),
     ["start-date"]: form.startDate,
     ["end-date"]: form.endDate,
-    ["card-status"]: localStorage.getItem("selectedStatusTitle")
+    ["card-status"]: localStorage.getItem("selectedStatusTitle") || "To Do"
   },
   seat_id: Array.isArray(form.assignees)
   ? form.assignees.map(u => u?._id || u?.id).filter(Boolean)
