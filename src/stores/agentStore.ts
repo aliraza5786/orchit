@@ -103,6 +103,8 @@ export const useAgentStore = defineStore("agent", {
     isLoadingAgent: false,
     agentsForTalent: {} as Record<string, any>,
     ogTypesTicket: {} as Record<string, any>,
+    isLoadingRoles:false,
+    agentsRolesPermissions:{} as Record<string, any>,
   }),
 
   getters: {
@@ -631,6 +633,34 @@ export const useAgentStore = defineStore("agent", {
       } finally {
         this.isLoadingSettings = false;
         this.isLoadingAgent = false;
+      }
+    },
+    async fetchAgentsRolesPermissions(workspace_id: string) {
+      if (!workspace_id) return;
+
+      this.isLoadingRoles = true;
+
+      try {
+        const url = `${baseUrl}workspace/agent/${workspace_id}/roles}`;
+
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        this.agentsRolesPermissions = res.data?.data;
+        this.isLoadingRoles = false;
+      } catch (err) {
+        console.error("Failed to fetch agents:", err);
+        this.isLoadingRoles = false;
+      } finally {
+        this.isLoadingSettings = false;
+        this.isLoadingRoles = false;
       }
     },
   },
