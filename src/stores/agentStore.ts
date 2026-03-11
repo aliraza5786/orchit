@@ -341,6 +341,8 @@ export const useAgentStore = defineStore("agent", {
         competencies?: string[];
         capabilities?: string[];
         conditions_rules?: string[];
+        workspace_role_id?:string;
+        workspace_access_role_id?:string;
       },
     ) {
       if (!workspace_id) return;
