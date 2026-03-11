@@ -77,25 +77,28 @@
     </div>
     <div class="flex flex-col gap-1 max-sm:flex-row pin_task min-w-max" :class="expanded? 'w-full': 'w-max'">
       <SideItem
-        v-for="(item, index) in filteredModules"
-        :key="index"
-        :id="item?._id"
-        :label="item.variables['module-title']"
-        :jobId="item?.generation_task?.job_id"
-        :status="item?.generation_task?.status"
-        :to="`/${
-          item?.variables['module-title']?.toLowerCase() == 'pin'
-            ? 'workspace/pin'
-            : 'workspace'
-        }/${workspaceId}/${item._id}`"
-        :icon="item?.variables['module-icon']"
-        :expanded="expanded"
-        :delete-icon="{
-        prefix:'far',
-        iconName:'ellipsis'
-      }"
-       @delete="deleteModule"
-      />
+  v-for="(item, index) in filteredModules"
+  :key="index"
+  :id="item?._id"
+  :label="item.variables['module-title']"
+  :jobId="item?.generation_task?.job_id"
+  :status="item?.generation_task?.status"
+  :to="`/${
+    item?.variables['module-title']?.toLowerCase() == 'pin'
+      ? 'workspace/pin'
+      : 'workspace'
+  }/${workspaceId}/${item._id}`"
+  :icon="item?.variables['module-icon']"
+  :expanded="expanded"
+  :activeDropdownId="activeDropdownId"
+  :delete-icon="{
+    prefix:'far',
+    iconName:'ellipsis'
+  }"
+  @delete="deleteModule"
+  @toggleDropdown="toggleDropdown"
+  @closeDropdown="activeDropdownId = null"
+/>
     </div>
 
     <!-- Draggable Navigation Items -->
@@ -212,7 +215,12 @@ const {
 } = useRouteIds();
 const { refetch } = useSingleWorkspace(workspaceId);
 const workspaceStore = useWorkspaceStore();
+const activeDropdownId = ref<string | null>(null)
 
+function toggleDropdown(id: string) {
+  activeDropdownId.value =
+    activeDropdownId.value === id ? null : id
+}
 
 // Use store data for workspace
 const workspace = computed(() => workspaceStore.singleWorkspace);

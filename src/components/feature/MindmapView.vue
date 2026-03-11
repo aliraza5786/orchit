@@ -1,22 +1,29 @@
 <template>
-  <div class="relative w-full h-full flex overflow-hidden" @click="closeSheetSelector">
+  <div class="relative w-full h-full flex overflow-hidden">
 
     <div
       ref="mindMapRef"
       class="flex-1 h-full overflow-hidden rounded-md relative mindmap-container"
       style="height: 600px; width: 100%"
     ></div>
-
     <!-- ── Sheet selector — opens when a List node is clicked, closes on selection ── -->
     <Teleport to="body">
       <transition name="fade">
+        
         <div
           v-if="sheetSelector.visible"
           class="sheet-selector-popover"
           :style="{ top: sheetSelector.y + 'px', left: sheetSelector.x + 'px' }"
           @click.stop
         >
+        <div class="flex justify-end -mt-2 text-xs cursor-pointer">
+          <button @click="sheetSelector.visible =false"><i class="fa-solid fa-xmark cursor-pointer"></i></button>
+        </div>
           <p class="sheet-selector-label">Select sheet for new cards</p>
+          <p v-if="showMustSelectMessage" class="text-xs text-red-500 mb-2 flex items-center gap-1">
+    <i class="fa-solid fa-circle-exclamation"></i>
+    Please select a sheet first to add a card.
+  </p>
           <BaseSelectField
             size="md"
             label="Select Sheet"
@@ -25,10 +32,15 @@
             :model-value="sheetSelector.selectedSheetId"
             :allowCustom="false"
             @update:modelValue="(val: string | number | null) => {
-              selectedListSheetId = String(val ?? '');
-              sheetSelector.selectedSheetId = String(val ?? '');
+            selectedListSheetId = String(val ?? '');
+            sheetSelector.selectedSheetId = String(val ?? '');
+            // Always confirm on selection — works for both 'info' and 'required' modes
+            if (sheetSelectorMode === 'required') {
+              confirmSheetSelection();
+            } else {
               closeSheetSelector();
-            }"
+            }
+          }"
           />
         </div>
       </transition>
@@ -200,7 +212,7 @@ const sheetOptions = computed(() =>
   transformedData.value.map(sheet => ({ _id: sheet._id, title: sheet.title }))
 );
 
-function positionAndOpenSelector(nodeObj: any) {
+function positionAndOpenSelector(nodeObj: any, mode: 'info' | 'required' = 'info') {
   const el = (
     mindMapRef.value?.querySelector(`[nodeid="${nodeObj.id}"]`) ??
     mindMapRef.value?.querySelector(`me-wrapper[nodeid="${nodeObj.id}"]`) ??
@@ -221,10 +233,24 @@ function positionAndOpenSelector(nodeObj: any) {
   // Pre-select whatever was chosen last (or the prop fallback)
   sheetSelector.selectedSheetId = selectedListSheetId.value || nodeObj.sheet_id || props.selectedSheetId || "";
   sheetSelector.listNodeObj = nodeObj;
+  sheetSelectorMode.value = mode;
   sheetSelector.visible = true;
 }
+function confirmSheetSelection() {
+  closeSheetSelector();
+  if (pendingAddChildResolve.value) {
+    pendingAddChildResolve.value(true); 
+    pendingAddChildResolve.value = null;
+  }
+}
+const showMustSelectMessage = ref(false);
 
 function closeSheetSelector() {
+  // If a child add is pending, don't close — just show the message
+  if (pendingAddChildResolve.value) {
+    setTimeout(() => { showMustSelectMessage.value = false; }, 2500);
+    return;
+  }
   sheetSelector.visible = false;
   sheetSelector.listNodeObj = null;
 }
@@ -468,7 +494,8 @@ if (props.canEditCard || props.canEditSheet) {
     onclick: () => { openHyperlinkModal(async () => { await saveNodeStyle(); }); },
   });
 }
-
+const pendingAddChildResolve = ref<((val: boolean) => void) | null>(null);
+const sheetSelectorMode = ref<'info' | 'required'>('info');
 // ── Main watchEffect ──────────────────────────────────────────────────────────
 watchEffect(() => {
   if (!mindMapRef.value || !props.listsData) return;
@@ -493,16 +520,32 @@ watchEffect(() => {
         extend: contextMenuExtendOptions,
       },
       before: {
-        addChild(el: any, obj: any) {
-          console.log(el, obj);
-          
-          return (this as any).currentNode?.nodeObj?.unique_name !== "card";
-        },
-        insertSibling(el: any, obj: any) {
-          console.log(el, obj);
-          return (this as any).currentNode?.nodeObj?.parent?.unique_name !== "card";
-        },
-      },
+  addChild(el: any, obj: any) {
+    console.log(el , obj);
+    
+    const currentNode = (this as any).currentNode?.nodeObj;
+    if (currentNode?.unique_name === "card") return false;
+
+    // If parent is a List node, block until sheet is selected
+    if (currentNode?.unique_name === "List" && props.canCreateCard) {
+      selectedListSheetId.value = currentNode.sheet_id || props.selectedSheetId;
+      nextTick(() => positionAndOpenSelector(currentNode, 'required'));
+
+      // Return a Promise — MindElixir will wait for it
+      return new Promise<boolean>((resolve) => {
+        toast.error("Please select sheet first.")
+        showMustSelectMessage.value=true;
+        pendingAddChildResolve.value = resolve;
+      });
+    }
+
+    return true;
+  },
+  insertSibling(el: any, obj: any) {
+    console.log(el , obj);
+    return (this as any).currentNode?.nodeObj?.parent?.unique_name !== "card";
+  },
+},
     });
 
     mindMapInstance.value = instance;
