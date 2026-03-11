@@ -346,7 +346,6 @@ export const useAgentStore = defineStore("agent", {
       },
     ) {
       if (!workspace_id) return;
-      this.isLoadingHistory = true;
 
       try {
         const url = `${baseUrl}agent-chat/${workspace_id}/train/persona`;
@@ -362,22 +361,18 @@ export const useAgentStore = defineStore("agent", {
           data: payload,
         });
         if (res.status >= 200 && res.status < 300) {
-          this.isLoadingHistory = false;
           toast.success("Agent created successfully.");
         } else {
           toast.error("Failed to create Agent.");
-          this.isLoadingHistory = false;
         }
       } catch (err: any) {
         console.error("Failed to create Agent.", err);
-        this.isLoadingHistory = false;
+
         toast.error(
           err?.response?.data?.message ||
             "Something went wrong while creating Agent.",
         );
-      } finally {
-        this.isLoadingHistory = false;
-      }
+      } 
     },
     async fetchAgentSettings(
       workspace_id: string,

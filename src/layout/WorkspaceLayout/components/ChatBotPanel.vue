@@ -12,7 +12,7 @@
   >
     <div
       v-if="isExpanded && !showConfigPanel && entities?.length"
-      class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
         @accept="acceptChanges"
@@ -24,7 +24,7 @@
     <!-- CONFIG PANEL -->
     <div
       v-if="isExpanded && showConfigPanel"
-      class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <!-- HEADER -->
       <div class="px-6 py-2.5 bg-bg-card border-b border-border">
@@ -548,7 +548,7 @@
     <div
       :class="
         isExpanded && (showConfigPanel || entities?.length)
-          ? 'w-1/2 me-3'
+          ? 'w-1/3'
           : 'w-full'
       "
       class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"

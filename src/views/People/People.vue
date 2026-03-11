@@ -16,7 +16,7 @@
             "
             class="px-4 py-1 text-sm transition-colors"
           >
-            View Talent
+            View Human
           </button>
           <button
             @click="currentTab = 'agents'"
@@ -129,12 +129,14 @@
                     'min-w-[320px] max-w-[320px]': !isMobile,
                   }"
                 >
-                  <div
-                    class="text-normal font-semibold text-text-primary border-b border-border py-4 px-5"
+              <div class="flex justify-between px-5 py-4">
+                   <div
+                    class="text-normal font-semibold text-text-primary border-b border-border"
                   >
                     {{ group.title }}
                   </div>
-
+                <div class="cursor-pointer"><i class="fa-solid fa-plus"></i></div>
+              </div>
                   <div
                     class="flex flex-col gap-4 mx-4 mt-4 overflow-y-auto flex-1"
                   >
