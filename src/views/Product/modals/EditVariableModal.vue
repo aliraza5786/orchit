@@ -146,15 +146,15 @@
     
     // Find type_id from variable.type string
     if (variableTypes.value) {
-        const typeObj = (variableTypes.value as any[]).find((t: any) => t.title === props.variable.type)
+        const typeObj = (variableTypes.value as any[]).find((t: any) => t.title === props.variable.variable_type_id?.title)
         if (typeObj) {
             selectedVariableType.value = typeObj._id
         }
     }
 
-    if (["Select", "Multi Select", "Radio", "Checkbox"].includes(props.variable.type)) {
+    if (["Select", "Multi Select", "Radio", "Checkbox"].includes(props.variable.variable_type_id?.title)) {
       options.value = Array.isArray(props.variable.data) ? [...props.variable.data] : []
-    } else if (props.variable.type === "Range/Slider") {
+    } else if (props.variable.variable_type_id?.title === "Range/Slider") {
       rangeMin.value = props.variable.data?.[0] ?? 0
       rangeMax.value = props.variable.data?.[1] ?? 100
     }

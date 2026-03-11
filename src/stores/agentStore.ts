@@ -641,7 +641,7 @@ export const useAgentStore = defineStore("agent", {
       this.isLoadingRoles = true;
 
       try {
-        const url = `${baseUrl}workspace/agent/${workspace_id}/roles}`;
+        const url = `${baseUrl}agent-chat/${workspace_id}/roles`;
 
         const res = await api.request<{ data: any }>({
           url,

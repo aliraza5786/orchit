@@ -118,7 +118,7 @@
 
             <!-- Selection Types -->
             <BaseSelectField
-              v-if="item.type === 'Select'"
+              v-if="item.variable_type_id?.title === 'Select'"
               size="sm"
               :model-value="localVarValues[item._id]"
               :placeholder="`Select ${item.title}`"
@@ -131,7 +131,7 @@
             />
 
             <BaseMultiSelect
-              v-else-if="item.type === 'Multi Select'"
+              v-else-if="item.variable_type_id?.title === 'Multi Select'"
               :disabled="!canEditUser"
               size="md"
               :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
@@ -142,7 +142,7 @@
 
             <!-- Radio Type -->
             <BaseRadioGroup
-              v-else-if="item.type === 'Radio'"
+              v-else-if="item.variable_type_id?.title === 'Radio'"
               :disabled="!canEditUser"
               :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
               :model-value="localVarValues[item._id]"
@@ -152,7 +152,7 @@
 
             <!-- Checkbox Type -->
             <BaseCheckboxGroup
-              v-else-if="item.type === 'Checkbox'"
+              v-else-if="item.variable_type_id?.title === 'Checkbox'"
               :disabled="!canEditUser"
               :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
               :model-value="localVarValues[item._id]"
@@ -161,7 +161,7 @@
 
             <!-- Textarea Type -->
             <BaseTextAreaField
-              v-else-if="item.type === 'Textarea'"
+              v-else-if="item.variable_type_id?.title === 'Textarea'"
               :disabled="!canEditUser"
               placeholder="Enter text..."
               :model-value="localVarValues[item._id]"
@@ -171,7 +171,7 @@
 
             <!-- Date & Time Types -->
             <div
-              v-else-if="['Date', 'Date & Time'].includes(item.type)"
+              v-else-if="['Date', 'Date & Time'].includes(item.variable_type_id?.title)"
               class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-border"
             >
               <i class="fa-regular fa-calendar text-[14px]"></i>
@@ -187,7 +187,7 @@
 
             <!-- Time Type -->
             <div
-              v-else-if="item.type === 'Time'"
+              v-else-if="item.variable_type_id?.title === 'Time'"
               class="h-8 px-3 flex items-center gap-1 rounded-md bg-bg-input border border-border"
             >
               <i class="fa-regular fa-clock text-[14px]"></i>
@@ -202,7 +202,7 @@
 
             <!-- File Upload -->
             <FileUploader
-              v-else-if="item.type === 'File Upload'"
+              v-else-if="item.variable_type_id?.title === 'File Upload'"
               :disabled="!canEditUser"
               label=""
               :model-value="localVarValues[item._id]"
@@ -210,7 +210,7 @@
             />
 
             <!-- Switch/Toggle -->
-            <div v-else-if="item.type === 'Switch/Toggle'" class="flex items-center gap-2 py-1">
+            <div v-else-if="item.variable_type_id?.title === 'Switch/Toggle'" class="flex items-center gap-2 py-1">
               <Checkbox
                 :disabled="!canEditUser"
                 :checked="!!localVarValues[item._id]"
@@ -221,14 +221,14 @@
 
             <!-- Person Type -->
             <AssigmentDropdown
-              v-else-if="item.type === 'Person'"
+              v-else-if="item.variable_type_id?.title === 'Person'"
               :disabled="!canEditUser"
               :seat="localVarValues[item._id]"
               @assign="(users: any) => handleSelect(users, item._id)"
             />
 
             <!-- Range/Slider Type -->
-            <div v-else-if="item.type === 'Range/Slider'" class="space-y-1 py-1">
+            <div v-else-if="item.variable_type_id?.title === 'Range/Slider'" class="space-y-1 py-1">
               <div class="flex justify-between text-[10px] text-text-secondary px-1">
                 <span>Min: {{ item.data?.[0] || 0 }}</span>
                 <span class="font-bold text-accent">{{ localVarValues[item._id] ?? item.data?.[0] ?? 0 }}</span>
@@ -248,8 +248,8 @@
             <!-- Default: TextField -->
             <BaseTextField
               v-else
-              :disabled="!canEditUser || item.type === 'Label'"
-              :type="item.type === 'Number' ? 'number' : (item.type === 'Color Picker' ? 'color' : (item.type === 'Email' ? 'email' : (item.type === 'Password' ? 'password' : 'text')))"
+              :disabled="!canEditUser || item.variable_type_id?.title === 'Label'"
+              :type="item.variable_type_id?.title === 'Number' ? 'number' : (item.variable_type_id?.title === 'Color Picker' ? 'color' : (item.variable_type_id?.title === 'Email' ? 'email' : (item.variable_type_id?.title === 'Password' ? 'password' : 'text')))"
               placeholder="Enter value..."
               :model-value="localVarValues[item._id]"
               @update:modelValue="(val: any) => localVarValues[item._id] = val"
@@ -275,6 +275,20 @@
             :model-value="selectedRole"
             :options="roleOptions"
             placeholder="Select Role"
+            @click.stop="handleRoleClick"
+            @update:modelValue="handleRoleChange"
+            :disabled="!canEditUser" 
+            :loading="isLoadingWorkspaceRoles || !newCompanyId"
+          />
+          <div class="flex items-center justify-between mb-1 mt-2">
+             <span class="text-base font-medium text-text-primary block">Select Job Role</span>
+          </div>
+           <BaseSelectField
+           v-if="cardDetails?.slug?.includes('agent')"
+            size="sm"
+            :model-value="selectJobRole"
+            :options="jobOptions"
+            placeholder="Select Job Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
             :disabled="!canEditUser" 
@@ -425,6 +439,7 @@ import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
+import { useAgentStore } from "../../../stores/agentStore";
 import { usePeopleVar, useUpdateVar, useUpdatePeopleVarDef, useDeletePeopleVarDef } from "../../../queries/usePeople";
 const ProgressBar = defineAsyncComponent(() =>
   import("../../../components/ui/ProgressBar.vue")
@@ -485,6 +500,8 @@ import { toast } from "vue-sonner";
 import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { usePermissions } from "../../../composables/usePermissions";
+import { useRouteIds } from "../../../composables/useQueryParams";
+const { workspaceId } = useRouteIds()
 const { canEditUser, isAdmin } = usePermissions();
 const sidePanelStore = useSidePanelStore(); 
 const localVarValues = reactive<any>({});
@@ -493,7 +510,8 @@ const isEditVar = ref(false);
 const showDeleteModal = ref(false);
 const selectedVarToEdit = ref<any>(null);
 const selectedItem = ref<any>(null);
-
+const agentStore = useAgentStore()
+const selectJobRole = ref("")
 const activeTab = ref<"details" | "tasks" | "history">("details");
 const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
 const tabOptions = [
@@ -514,7 +532,9 @@ const props = defineProps({
 const editingTitle = ref(false);
 const localTitle = ref(cardDetails.value?.title ?? "");
 const lane = ref(cardDetails.value?._id ?? "");
-
+const agentsRolesPermissions = computed(() =>{
+  return agentStore.agentsRolesPermissions;
+})
 // Watch for prop updates if details change
 watch(
   () => cardDetails.value?.title,
@@ -537,13 +557,16 @@ watch(
 watch(
   () => cardDetails.value,
   () => {
+    // clear previous values
+    Object.keys(localVarValues).forEach(key => delete localVarValues[key]);
+    console.log(cardDetails.value, 'crdd')
     if (cardDetails.value?.variable_values) {
       cardDetails.value.variable_values.forEach((v: any) => {
         localVarValues[v.module_variable_id] = v.value;
       });
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
 const emit = defineEmits([
   "close",
@@ -613,6 +636,22 @@ const moveCard = useMoveCard({
 const handleSelect = (val: any, slug: any) => { 
   localVarValues[slug] = val;
 
+  // Optimistically update the store object so switching cards stays in sync
+  if (cardDetails.value) {
+    if (!cardDetails.value.variable_values) cardDetails.value.variable_values = [];
+    const index = cardDetails.value.variable_values.findIndex(
+      (v: any) => v.module_variable_id === slug
+    );
+    if (index !== -1) {
+      cardDetails.value.variable_values[index].value = val;
+    } else {
+      cardDetails.value.variable_values.push({
+        module_variable_id: slug,
+        value: val,
+      });
+    }
+  }
+
   UpdateVar({
     id: cardDetails.value._id,
     payload: {
@@ -623,7 +662,6 @@ const handleSelect = (val: any, slug: any) => {
         },
       ],
     },
-    // ariable_id: id,
   });
 };
 
@@ -637,7 +675,6 @@ function getDefaultValue(id: any) {
 }
 
 // workspace roles 
-const workspaceId = computed(() => cardDetails.value?.workspace_id); 
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
@@ -661,17 +698,53 @@ const { mutate: assignRole } = useAssignRole({
   onError: (err: any) => console.error(err), 
 });
 
+async function fetchAgentsRolesPermissions() {
+  await agentStore.fetchAgentsRolesPermissions(workspaceId.value);
+}
+fetchAgentsRolesPermissions();
 const roleOptions = computed(() => {
-  const roles = (workspaceRoles.value || []).map((r: any) => ({
-    _id: r._id,
-    title: r.title,
-  }));
+  let roles: any[] = [];
+
+  if (cardDetails.value?.slug?.includes("agent")) {
+    roles = (agentsRolesPermissions.value?.access_roles || []).map((r: any) => ({
+      _id: r._id,
+      title: r.title,
+    }));
+  } else {
+    roles = (workspaceRoles.value || []).map((r: any) => ({
+      _id: r._id,
+      title: r.title,
+    }));
+  }
+
   roles.push({
-    _id: 'ADD_NEW_ROLE',
-    title: '+ Add New Role',
-    customClass: 'text-accent font-medium sticky bottom-0  hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown   border-t border-border w-full',
-    isAction: true
+    _id: "ADD_NEW_ROLE",
+    title: "+ Add New Role",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
   });
+
+  return roles;
+});
+const jobOptions = computed(() => {
+  let roles: any[] = [];
+
+  if (cardDetails.value?.slug?.includes("agent")) {
+    roles = (agentsRolesPermissions.value?.job_roles || []).map((r: any) => ({
+      _id: r._id,
+      title: r.title,
+    }));
+  }
+
+  roles.push({
+    _id: "ADD_NEW_ROLE",
+    title: "+ Add New Job Role",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
+  });
+
   return roles;
 });
 

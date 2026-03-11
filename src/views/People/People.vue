@@ -141,6 +141,7 @@
                     <div
                       v-for="agent in group.agents"
                       :key="agent._id"
+                      @click="handleClickTicket(agent)"
                       class="bg-bg-card border border-border rounded-lg px-4 py-3 flex flex-col gap-3"
                     >
                       <div class="flex justify-between items-start">
