@@ -2,8 +2,8 @@
   <div
     class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
-    <div class="overflow-x-auto shrink-0 border-b border-border">
-      <div class="header px-4 py-3 flex items-center justify-between gap-2">
+    <div class="overflow-x-auto shrink-0 border-b border-border mx-4">
+      <div class="header py-3 flex items-center justify-between gap-2">
         <div
           class="flex border-b border-border bg-bg-surface/50 gap-2 rounded-md py-1 px-1"
         >
@@ -11,10 +11,10 @@
             @click="currentTab = 'talent'"
             :class="
               currentTab === 'talent'
-                ? 'bg-accent text-white font-semibold rounded-md'
+                ? 'bg-accent text-white rounded-md'
                 : 'text-text-primary'
             "
-            class="px-4 py-1 text-sm transition-colors"
+            class="px-4 py-1 text-sm transition-colors text-nowrap"
           >
             View Human
           </button>
@@ -22,10 +22,10 @@
             @click="currentTab = 'agents'"
             :class="
               currentTab === 'agents'
-                ? 'bg-accent text-white font-semibold rounded-md'
+                ? 'bg-accent text-white rounded-md '
                 : 'text-text-secondary'
             "
-            class="px-4 py-1 text-sm transition-colors"
+            class="px-4 py-1 text-sm transition-colors text-nowrap"
           >
             View Agents
           </button>
@@ -106,7 +106,7 @@
 
     <KanbanSkeleton v-if="isLoading" />
 
-    <div v-else class="flex flex-col flex-1 overflow-hidden">
+    <div v-else class="flex flex-col flex-1 overflow-hidden px-4">
       <template v-if="currentView === 'kanban'">
         <!-- AGENTS KANBAN -->
         <template v-if="currentTab === 'agents'">
@@ -116,7 +116,7 @@
               item-key="title"
               group="agent-groups"
               :animation="180"
-              class="flex gap-4 mx-4 my-3 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
+              class="flex gap-4 my-4 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
               direction="horizontal"
               @end="onAgentGroupsEnd"
               :disabled="isMobile"
@@ -195,7 +195,7 @@
 
         <!-- TALENT KANBAN -->
         <template v-else>
-          <div class="flex flex-1 p-4 overflow-x-auto gap-3 custom_scroll_bar">
+          <div class="flex flex-1  overflow-x-auto gap-3 custom_scroll_bar py-4">
             <KanbanBoard
               v-if="filteredBoard?.length > 0"
               @onPlus="(e) => handlePlus(e)"

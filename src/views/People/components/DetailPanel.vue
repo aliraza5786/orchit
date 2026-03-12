@@ -90,6 +90,7 @@
 
         <div class="space-y-4">
           <div
+            v-if="canViewVariable"
             v-for="(item, index) in peopleVar"
             :key="item._id || index"
             class="space-y-1.5"
@@ -100,6 +101,7 @@
               </div>
               <div v-if="canEditUser" class=" flex items-center gap-1">
                 <button
+                  v-if="canEditVariable"
                   @click="handleEditVar(item)"
                   class="text-text-secondary hover:text-accent transition-colors p-1"
                   title="Edit variable"
@@ -107,6 +109,7 @@
                   <i class="fa-regular fa-pen-to-square text-[11px]"></i>
                 </button>
                 <button
+                  v-if="canDeleteVariable"
                   @click="handleDeleteVar(item)"
                   class="text-text-secondary hover:text-red-500 transition-colors p-1"
                   title="Delete variable"
@@ -258,9 +261,12 @@
           </div>
         </div>
         <button 
-          @click="isCreateVar = true"
-          class="w-full mt-6 py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent cursor-pointer active:scale-95 transition-all duration-150 flex items-center justify-center gap-2"
-        >
+          @click="canCreateVariable && (isCreateVar = true)"
+          :disabled="!canCreateVariable"
+          :class="[
+           'w-full mt-6 py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent flex items-center justify-center gap-2 transition-all duration-150',
+           canCreateVariable? 'cursor-pointer active:scale-95': 'cursor-not-allowed opacity-90']"
+          >
           <i class="fa-solid fa-plus text-xs"></i>
           Add Custom Fields
         </button>
@@ -502,7 +508,7 @@ import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useRouteIds } from "../../../composables/useQueryParams";
 const { workspaceId } = useRouteIds()
-const { canEditUser, isAdmin } = usePermissions();
+const { canEditUser, isAdmin, canCreateVariable,  canViewVariable,canEditVariable,canDeleteVariable, } = usePermissions();
 const sidePanelStore = useSidePanelStore(); 
 const localVarValues = reactive<any>({});
 const isCreateVar = ref(false);
