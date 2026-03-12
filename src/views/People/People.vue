@@ -135,7 +135,7 @@
                   >
                     {{ group.title }}
                   </div>
-                <div class="cursor-pointer"><i class="fa-solid fa-plus"></i></div>
+                <div class="cursor-pointer"  @click="handleClickAgent(group)"><i class="fa-solid fa-plus"></i></div>
               </div>
                   <div
                     class="flex flex-col gap-4 mx-4 mt-4 overflow-y-auto flex-1"
@@ -197,69 +197,55 @@
         <template v-else>
           <div class="flex flex-1  overflow-x-auto gap-3 custom_scroll_bar py-4">
             <KanbanBoard
-              v-if="filteredBoard?.length > 0"
-              @onPlus="(e) => handlePlus(e)"
-              @delete:column="(e: any) => handleDelete(e)"
-              @update:column="(e) => handleUpdateColumn(e)"
-              @reorder="onReorder"
-              @addColumn="handleAddColumn"
-              @select:ticket="selectCardHandler"
-              :board="filteredBoard"
-              @onBoardUpdate="handleBoardUpdate"
-              variable_id=""
-              sheet_id="selected_sheet_id"
-            >
-              <template #ticket="{ ticket }">
-                <KanbanCard
-                  @click="handleClickTicket(ticket)"
-                  :ticket="ticket"
-                  @deleted="fetchPeople()"
-                  @assigned="fetchPeople"
-                  @unAssigned="fetchPeople"
-                />
-              </template>
-              <template #column-footer="{ column }: any">
-  <template >
-    <div
-      v-if="!column.showADDNEW"
-      @click="toggleAddNewColumn(column)"
-      :disabled="!canInviteUser"
-      :class="canInviteUser ? 'cursor-pointer' : 'cursor-not-allowed'"
-      class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md"
-    >
-      <i class="fa-solid fa-plus"></i> Add Seat
-    </div>
-
-    <div
-      v-else
-      class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
-    >
-      <p class="text-sm text-text-primary">
-        {{ column.title }} {{ column.cards.length + 1 }}
-      </p>
-
-      <BaseEmailChip
-        :maxEmails="1"
-        placeholder="team member email"
-        v-model="column.email"
-      />
-
-      <p class="text-sm text-text-secondary">
-        You can assign user later
-      </p>
-
-      <Button size="md" @click="addSeatToColumn(column)">
-        {{ isPending ? "Adding..." : "Add Seat" }}
-      </Button>
-
-      <i
-        class="fa-solid fa-close cursor-pointer ml-2"
-        @click="toggleAddNewColumn('')"
-      />
-    </div>
-  </template>
-</template>
-            </KanbanBoard>
+        :plusIcon="true"
+        v-if="filteredBoard?.length > 0"
+        @onPlus="(e) => handlePLus(e)"
+        @delete:column="(e: any) => handleDelete(e)"
+        @update:column="(e) => handleUpdateColumn(e)"
+        @reorder="onReorder"
+        @addColumn="handleAddColumn"
+        @select:ticket="selectCardHandler"
+        :board="filteredBoard"
+        @onBoardUpdate="handleBoardUpdate"
+        variable_id=""
+        sheet_id="selected_sheet_id"
+      >
+        <template #ticket="{ ticket }">
+          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" @deleted="fetchPeople()", @assigned="fetchPeople" @unAssigned="fetchPeople" />
+        </template>
+        <template #column-footer="{ column }: any">
+          <div
+            v-if="!column.showADDNEW"
+            @click="toggleAddNewColumn(column)"
+            :disabled="!canInviteUser"
+            :class="canInviteUser ? 'cursor-pointer' : 'cursor-not-allowed'"
+            class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md"
+          >
+            <i class="fa-solid fa-plus"></i> Add Seat
+          </div>
+          <div
+            v-else-if="column.showADDNEW"
+            class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
+          >
+            <p class="text-sm text-text-primary">
+              {{ column.title }} {{ column.cards.length + 1 }}
+            </p>
+            <BaseEmailChip
+              :maxEmails="1"
+              placeholder="team member email"
+              v-model="column.email"
+            />
+            <p class="text-sm text-text-secondary">You can assign user later</p>
+            <Button size="md" @click="addSeatToColumn(column)">{{
+              isPending ? "Adding..." : "Add Seat"
+            }}</Button>
+            <i
+              class="fa-solid fa-close cursor-pointer ml-2"
+              @click="toggleAddNewColumn('')"
+            ></i>
+          </div>
+        </template>
+      </KanbanBoard>
             <div
   v-if="showModal"
   class="fixed inset-0 flex items-center justify-center bg-black/50 bg-opacity-70 z-50"
@@ -349,6 +335,7 @@
   />
 
   <DetailPanel @close="selectCardHandler(null)" :showPanel="showPanel" />
+  <AgentsDetailPanel @close="selectAgentHandler(null)" :showAgentPanel="showAgentPanel" />
 </template>
 
 <script setup lang="ts">
@@ -388,6 +375,9 @@ const Dropdown = defineAsyncComponent(
 );
 const DetailPanel = defineAsyncComponent(
   () => import("./components/DetailPanel.vue"),
+);
+const AgentsDetailPanel = defineAsyncComponent(
+  () => import("./components/AgentDetailsPanel.vue"),
 );
 const SearchBar = defineAsyncComponent(
   () => import("../../components/ui/SearchBar.vue"),
@@ -433,6 +423,7 @@ const showDelete = ref(false);
 const localColumn = ref();
 const localList = ref<any>([]);
 const showPanel = ref(false);
+const showAgentPanel = ref(false)
 const searchQuery = ref("");
 const debouncedQuery = ref("");
 const activeAddList = ref(false);
@@ -442,12 +433,6 @@ const selectedCard = ref<any>();
 const showModal = ref(false);
 const modalColumn = ref({ email: [], cards: [], title: '', _id: '' });
 const isPendingSeat = ref(false);
-
-const handlePlus = (column: any) => {
-  modalColumn.value = { ...column };
-  showModal.value = true;
-};
-
 const closeModal = () => {
   showModal.value = false;
 };
@@ -557,17 +542,22 @@ onMounted(() => {
 // ─── Card selection ───────────────────────────────────────────────────────────
 const selectCardHandler = (card: any) => {
   sidePanelStore.selectCard(card);
-  console.log(card, 'card detail')
   showPanel.value = false;
 };
-
+const selectAgentHandler = (card: any) => {
+  sidePanelStore.selectCard(card);
+  showAgentPanel.value = false;
+};
 const handleClickTicket = (ticket: any) => {
   selectedCard.value = ticket;
   sidePanelStore.selectCard(ticket);
-  console.log(ticket, 'card detail')
   showPanel.value = true;
 };
-
+const handleClickAgent = (agent: any) => {
+  selectedCard.value = agent;
+  sidePanelStore.selectCard(agent);
+  showAgentPanel.value = true;
+};
 const handleBoardUpdate = (_: any) => {};
 
 // ─── Add list ─────────────────────────────────────────────────────────────────
@@ -639,54 +629,82 @@ const handleDelete = (e: any) => {
 
 // ─── Add seat ─────────────────────────────────────────────────────────────────
 const { mutate: createTeam, isPending } = useCreateTeamMember({
+  // OPTIMISTIC UPDATE
   onMutate: async (variables: any) => {
     await queryClient.cancelQueries({ queryKey: ["people-lists"] });
+
     const previous = queryClient.getQueryData(["people-lists"]);
+
     const { id, payload } = variables ?? {};
     if (!id || !payload) return { previous };
-    const idx = localList.value.findIndex((e: any) => e._id === id);
-    if (idx === -1) return { previous };
-    const col = localList.value[idx];
+
     const optimisticSeat = {
       _id: `temp-${Date.now()}`,
-      name: payload.name,
+      name: payload.name || "New Seat",
+      title: payload.name || "New Seat",
       email: payload.email,
       role_id: payload.role_id,
+      status: "pending",
+      assigned_cards_count: 0,
     };
-    const nextCol = { ...col, cards: [...(col.cards ?? []), optimisticSeat] };
-    localList.value = [
-      ...localList.value.slice(0, idx),
-      nextCol,
-      ...localList.value.slice(idx + 1),
-    ];
-    queryClient.setQueryData(["people-lists"], localList.value);
+
+    // update query cache
+    queryClient.setQueryData(["people-lists"], (old: any) => {
+      if (!old) return old;
+
+      return old.map((col: any) => {
+        if (col._id !== id) return col;
+
+        return {
+          ...col,
+          cards: [...(col.cards ?? []), optimisticSeat],
+        };
+      });
+    });
+
+    // sync local UI state
+    localList.value = queryClient.getQueryData(["people-lists"]) as any;
+
     return { previous };
   },
+
+  // ROLLBACK ON ERROR
   onError: (_err: any, _variables: any, context: any) => {
     if (context?.previous) {
-      localList.value = context.previous;
       queryClient.setQueryData(["people-lists"], context.previous);
+      localList.value = context.previous;
     }
+
     toast.error("Failed to add seat. Please try again.");
   },
-  onSuccess: (data: any, variables: any) => {
+
+  // SUCCESS UPDATE
+  onSuccess: (res: any, variables: any) => {
+    const data = res?.data ?? res;
     const { id } = variables;
-    const idx = localList.value.findIndex((e: any) => e._id === id);
-    if (idx === -1) return;
-    const col = localList.value[idx];
-    const filteredCards = (col.cards ?? []).filter(
-      (c: any) => !String(c._id).startsWith("temp-"),
-    );
-    const nextCol = { ...col, cards: [...filteredCards, data.assigned_seat] };
-    localList.value = [
-      ...localList.value.slice(0, idx),
-      nextCol,
-      ...localList.value.slice(idx + 1),
-    ];
-    queryClient.setQueryData(["people-lists"], localList.value);
-    queryClient.invalidateQueries({ queryKey: ["workspaceRoles"] });
+
+    queryClient.setQueryData(["people-lists"], (old: any) => {
+      if (!old) return old;
+
+      return old.map((col: any) => {
+        if (col._id !== id) return col;
+
+        const filteredCards = (col.cards ?? []).filter(
+          (c: any) => !String(c._id).startsWith("temp-")
+        );
+
+        return {
+          ...col,
+          cards: [...filteredCards, data.assigned_seat],
+        };
+      });
+    });
+
+    queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+    localList.value = queryClient.getQueryData(["people-lists"]) as any;
   },
 });
+
 
 const handlePLus = (column: any) => {
   localColumn.value = column;
@@ -759,9 +777,16 @@ const fuse = computed(() => {
 });
 
 const filteredBoard = computed(() => {
-  if (!searchQuery.value) return localList.value;
+  const safe = localList.value.map((col: any) => ({
+    ...col,
+    cards: (col.cards || []).filter((c: any) => c && c._id),
+  }));
+
+  if (!searchQuery.value) return safe;
+
   const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
-  return localList.value
+
+  return safe
     .map((col: any) => ({
       ...col,
       cards: results.filter((c: any) => c.columnId === col.title),
