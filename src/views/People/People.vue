@@ -129,9 +129,9 @@
                     'min-w-[320px] max-w-[320px]': !isMobile,
                   }"
                 >
-              <div class="flex justify-between px-5 py-4">
+              <div class="flex justify-between px-5 py-4 border-b border-border">
                    <div
-                    class="text-normal font-semibold text-text-primary border-b border-border"
+                    class="text-normal font-semibold text-text-primary"
                   >
                     {{ group.title }}
                   </div>
