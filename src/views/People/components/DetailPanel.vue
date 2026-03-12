@@ -286,7 +286,7 @@
             :disabled="!canEditUser" 
             :loading="isLoadingWorkspaceRoles || !newCompanyId"
           />
-          <div v-if="selectedRoleData && !selectedRoleData.is_admin && isAdmin" class="flex items-center justify-between mb-1 mt-2">
+          <div v-if="cardDetails?.slug?.includes('agent')" class="flex items-center justify-between mb-1 mt-3">
              <span class="text-base font-medium text-text-primary block">Select Job Role</span>
           </div>
            <BaseSelectField
