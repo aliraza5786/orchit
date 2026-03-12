@@ -34,15 +34,18 @@ type createTeam = { payload: any };
 export const useCreateTeam = (options = {}) =>
   useApiMutation<any, createTeam>(
     {
-      key: ["add-team"],
+      key: ["add-team-member"],
     } as any,
     {
-      mutationFn: (vars: createTeam) =>
-        request({
+      mutationFn: async (vars: createTeam) => {
+        const res = await request({
           url: `/workspace/roles`,
           method: "POST",
           data: vars.payload,
-        }),
+        });
+
+        return res?.data ?? res;
+      },
       ...(options as any),
     } as any
   );
