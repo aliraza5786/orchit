@@ -350,7 +350,10 @@ const switchTo = async (ws: any) => {
     `/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ?? ""}`
   );
   // await fetchWorkspace(ws._id);
-
+  localStorage.removeItem("activeSprintKey");
+  localStorage.removeItem("selectedSprintTitle")
+  localStorage.removeItem("activeSprintId")
+  localStorage.removeItem("showActiveSprint")
   closeLogoMenu();
 };
 

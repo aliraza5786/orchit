@@ -66,7 +66,7 @@
       </div>
       <!-- Title -->
       <section v-if="activeTab == 'details'">
-        <div class="mb-2 capitalize">
+        <div class="mb-3 capitalize mt-3">
           <template v-if="editingTitle">
             <input
               ref="titleInput"
@@ -88,27 +88,188 @@
           </template>
         </div>
 
-        <div>
+        <div class="space-y-4">
           <div
+            v-if="canViewVariable"
             v-for="(item, index) in peopleVar"
-            :key="index"
-            class="grid grid-cols-2 capitalize items-center gap-2 text-sm mt-4"
+            :key="item._id || index"
+            class="space-y-1.5"
           >
-            {{ item?.title }}
+            <div class="flex items-center justify-between group h-5 capitalize">
+              <div class="text-xs uppercase tracking-wider text-text-secondary">
+                {{ item.title }}
+              </div>
+              <div v-if="canEditUser" class=" flex items-center gap-1">
+                <button
+                  v-if="canEditVariable"
+                  @click="handleEditVar(item)"
+                  class="text-text-secondary hover:text-accent transition-colors p-1"
+                  title="Edit variable"
+                >
+                  <i class="fa-regular fa-pen-to-square text-[11px]"></i>
+                </button>
+                <button
+                  v-if="canDeleteVariable"
+                  @click="handleDeleteVar(item)"
+                  class="text-text-secondary hover:text-red-500 transition-colors p-1"
+                  title="Delete variable"
+                >
+                  <i class="fa-regular fa-trash-can text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Selection Types -->
             <BaseSelectField
+              v-if="item.variable_type_id?.title === 'Select'"
               size="sm"
               :model-value="localVarValues[item._id]"
-              :key="index"
-              :placeholder="` ${item.title}`"
+              :placeholder="`Select ${item.title}`"
               @click.stop
               :defaultValue="getDefaultValue(item?._id)"
-              :options="item?.data.map((e: any) => ({ _id: e, title: e }))"
+              :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
               :cardId="cardDetails?._id"
               :disabled="!canEditUser"
               @update:modelValue="(val: any) => handleSelect(val, item._id)"
             />
+
+            <BaseMultiSelect
+              v-else-if="item.variable_type_id?.title === 'Multi Select'"
+              :disabled="!canEditUser"
+              size="md"
+              :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+              :placeholder="`Select ${item.title}`"
+              :model-value="Array.isArray(localVarValues[item._id]) ? localVarValues[item._id] : (localVarValues[item._id] ? [localVarValues[item._id]] : [])"
+              @update:modelValue="(val: any) => handleSelect(val, item._id)"
+            />
+
+            <!-- Radio Type -->
+            <BaseRadioGroup
+              v-else-if="item.variable_type_id?.title === 'Radio'"
+              :disabled="!canEditUser"
+              :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+              :model-value="localVarValues[item._id]"
+              :name="item._id"
+              @update:modelValue="(val: any) => handleSelect(val, item._id)"
+            />
+
+            <!-- Checkbox Type -->
+            <BaseCheckboxGroup
+              v-else-if="item.variable_type_id?.title === 'Checkbox'"
+              :disabled="!canEditUser"
+              :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+              :model-value="localVarValues[item._id]"
+              @update:modelValue="(val: any) => handleSelect(val, item._id)"
+            />
+
+            <!-- Textarea Type -->
+            <BaseTextAreaField
+              v-else-if="item.variable_type_id?.title === 'Textarea'"
+              :disabled="!canEditUser"
+              placeholder="Enter text..."
+              :model-value="localVarValues[item._id]"
+              @update:modelValue="(val: any) => localVarValues[item._id] = val"
+              @blur="() => handleSelect(localVarValues[item._id], item._id)"
+            />
+
+            <!-- Date & Time Types -->
+            <div
+              v-else-if="['Date', 'Date & Time'].includes(item.variable_type_id?.title)"
+              class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-border"
+            >
+              <i class="fa-regular fa-calendar text-[14px]"></i>
+              <DatePicker
+                :disabled="!canEditUser"
+                placeholder="Set date"
+                class="w-full"
+                :model-value="localVarValues[item._id]"
+                emit-as="ymd"
+                @update:modelValue="(val: any) => handleSelect(val, item._id)"
+              />
+            </div>
+
+            <!-- Time Type -->
+            <div
+              v-else-if="item.variable_type_id?.title === 'Time'"
+              class="h-8 px-3 flex items-center gap-1 rounded-md bg-bg-input border border-border"
+            >
+              <i class="fa-regular fa-clock text-[14px]"></i>
+              <TimePicker
+                :disabled="!canEditUser"
+                placeholder="Set time"
+                class="w-full"
+                :model-value="localVarValues[item._id]"
+                @update:modelValue="(val: any) => handleSelect(val, item._id)"
+              />
+            </div>
+
+            <!-- File Upload -->
+            <FileUploader
+              v-else-if="item.variable_type_id?.title === 'File Upload'"
+              :disabled="!canEditUser"
+              label=""
+              :model-value="localVarValues[item._id]"
+              @update:model-value="(val: any) => handleSelect(val, item._id)"
+            />
+
+            <!-- Switch/Toggle -->
+            <div v-else-if="item.variable_type_id?.title === 'Switch/Toggle'" class="flex items-center gap-2 py-1">
+              <Checkbox
+                :disabled="!canEditUser"
+                :checked="!!localVarValues[item._id]"
+                @change="(e: any) => handleSelect(e.target.checked, item._id)"
+                label="Enable"
+              />
+            </div>
+
+            <!-- Person Type -->
+            <AssigmentDropdown
+              v-else-if="item.variable_type_id?.title === 'Person'"
+              :disabled="!canEditUser"
+              :seat="localVarValues[item._id]"
+              @assign="(users: any) => handleSelect(users, item._id)"
+            />
+
+            <!-- Range/Slider Type -->
+            <div v-else-if="item.variable_type_id?.title === 'Range/Slider'" class="space-y-1 py-1">
+              <div class="flex justify-between text-[10px] text-text-secondary px-1">
+                <span>Min: {{ item.data?.[0] || 0 }}</span>
+                <span class="font-bold text-accent">{{ localVarValues[item._id] ?? item.data?.[0] ?? 0 }}</span>
+                <span>Max: {{ item.data?.[1] || 100 }}</span>
+              </div>
+              <input
+                type="range"
+                :min="Number(item.data?.[0]) || 0"
+                :max="Number(item.data?.[1]) || 100"
+                :disabled="!canEditUser"
+                class="w-full h-1.5 bg-bg-input rounded-lg appearance-none cursor-pointer accent-accent"
+                :value="localVarValues[item._id] ?? item.data?.[0] ?? 0"
+                @input="(e: any) => handleSelect(Number(e.target.value), item._id)"
+              />
+            </div>
+
+            <!-- Default: TextField -->
+            <BaseTextField
+              v-else
+              :disabled="!canEditUser || item.variable_type_id?.title === 'Label'"
+              :type="item.variable_type_id?.title === 'Number' ? 'number' : (item.variable_type_id?.title === 'Color Picker' ? 'color' : (item.variable_type_id?.title === 'Email' ? 'email' : (item.variable_type_id?.title === 'Password' ? 'password' : 'text')))"
+              placeholder="Enter value..."
+              :model-value="localVarValues[item._id]"
+              @update:modelValue="(val: any) => localVarValues[item._id] = val"
+              @blur="() => handleSelect(localVarValues[item._id], item._id)"
+            />
           </div>
         </div>
+        <button 
+          @click="canCreateVariable && (isCreateVar = true)"
+          :disabled="!canCreateVariable"
+          :class="[
+           'w-full mt-6 py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent flex items-center justify-center gap-2 transition-all duration-150',
+           canCreateVariable? 'cursor-pointer active:scale-95': 'cursor-not-allowed opacity-90']"
+          >
+          <i class="fa-solid fa-plus text-xs"></i>
+          Add Custom Fields
+        </button>
 
         <!-- work space  -->
         <div class="mt-5 pt-3 border-t border-border-input relstive">
@@ -116,10 +277,24 @@
              <span class="text-base font-medium text-text-primary block">Select Role</span>
           </div>
           <BaseSelectField
-            size="sm"
+            size="md"
             :model-value="selectedRole"
             :options="roleOptions"
             placeholder="Select Role"
+            @click.stop="handleRoleClick"
+            @update:modelValue="handleRoleChange"
+            :disabled="!canEditUser" 
+            :loading="isLoadingWorkspaceRoles || !newCompanyId"
+          />
+          <div v-if="cardDetails?.slug?.includes('agent')" class="flex items-center justify-between mb-1 mt-3">
+             <span class="text-base font-medium text-text-primary block">Select Job Role</span>
+          </div>
+           <BaseSelectField
+            v-if="cardDetails?.slug?.includes('agent')"
+            size="sm"
+            :model-value="selectJobRole"
+            :options="jobOptions"
+            placeholder="Select Job Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
             :disabled="!canEditUser" 
@@ -234,6 +409,34 @@
       :companyId="newCompanyId"
       @close="showAddRoleModal = false"
     />
+
+    <CreateVariableModal
+      v-model="isCreateVar"
+      v-if="isCreateVar"
+      @refetchCardDetails="refetchCardDetails"
+      sheetID=""
+    />
+
+    <EditVariableModal
+      v-if="isEditVar"
+      v-model="isEditVar"
+      @refetchCardDetails="refetchCardDetails"
+      @update-variable="handleVariableDefinitionUpdate"
+      :variable="selectedVarToEdit"
+      :cardId="cardDetails?._id"
+      sheetID=""
+    />
+
+    <ConfirmModal
+      v-model="showDeleteModal"
+      title="Delete Variable"
+      :itemLabel="'variable'"
+      :itemName="selectedItem?.title"
+      confirmText="Delete"
+      cancelText="Cancel"
+      :loading="isDeleting"
+      @confirm="confirmDelete"
+    />
   </div>  
 </template>
 
@@ -242,7 +445,8 @@ import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
 import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
-import { usePeopleVar, useUpdateVar } from "../../../queries/usePeople";
+import { useAgentStore } from "../../../stores/agentStore";
+import { usePeopleVar, useUpdateVar, useUpdatePeopleVarDef, useDeletePeopleVarDef } from "../../../queries/usePeople";
 const ProgressBar = defineAsyncComponent(() =>
   import("../../../components/ui/ProgressBar.vue")
 );
@@ -255,6 +459,42 @@ const BaseSelectField = defineAsyncComponent(() =>
 const Checkbox = defineAsyncComponent(() =>
   import("../../../components/ui/Checkbox.vue")
 );
+const BaseMultiSelect = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseMultiSelect.vue")
+);
+const BaseRadioGroup = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseRadioGroup.vue")
+);
+const BaseCheckboxGroup = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseCheckboxGroup.vue")
+);
+const BaseTextAreaField = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseTextAreaField.vue")
+);
+const FileUploader = defineAsyncComponent(() =>
+  import("../../../components/ui/FileUploader.vue")
+);
+const BaseTextField = defineAsyncComponent(() =>
+  import("../../../components/ui/BaseTextField.vue")
+);
+const AssigmentDropdown = defineAsyncComponent(() =>
+  import("../../Product/components/AssigmentDropdown.vue")
+);
+const DatePicker = defineAsyncComponent(() =>
+  import("../../Product/components/DatePicker.vue")
+);
+const TimePicker = defineAsyncComponent(() =>
+  import("../../Product/components/TimePicker.vue")
+);
+const CreateVariableModal = defineAsyncComponent(() =>
+  import("../modals/PeopleCreateVariableModal.vue")
+);
+const EditVariableModal = defineAsyncComponent(() =>
+  import("../modals/PeopleEditVariableModal.vue")
+);
+const ConfirmModal = defineAsyncComponent(() =>
+  import("../../Product/modals/ConfirmDeleteModal.vue")
+);
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor"; 
 import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
@@ -266,9 +506,18 @@ import { toast } from "vue-sonner";
 import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { usePermissions } from "../../../composables/usePermissions";
-const { canEditUser, isAdmin } = usePermissions();
-const sidePanelStore = useSidePanelStore();
+import { useRouteIds } from "../../../composables/useQueryParams";
+const { workspaceId } = useRouteIds()
+const { canEditUser, isAdmin, canCreateVariable,  canViewVariable,canEditVariable,canDeleteVariable, } = usePermissions();
+const sidePanelStore = useSidePanelStore(); 
 const localVarValues = reactive<any>({});
+const isCreateVar = ref(false);
+const isEditVar = ref(false);
+const showDeleteModal = ref(false);
+const selectedVarToEdit = ref<any>(null);
+const selectedItem = ref<any>(null);
+const agentStore = useAgentStore()
+const selectJobRole = ref("")
 const activeTab = ref<"details" | "tasks" | "history">("details");
 const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
 const tabOptions = [
@@ -276,7 +525,7 @@ const tabOptions = [
   { label: "Tasks", value: "tasks" },
   { label: "History", value: "history" },
 ];
-const { data: peopleVar } = usePeopleVar();
+const { data: peopleVar } = usePeopleVar(workspaceId.value);
 const { mutate: UpdateVar } = useUpdateVar({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["people-lists"] });
@@ -289,7 +538,9 @@ const props = defineProps({
 const editingTitle = ref(false);
 const localTitle = ref(cardDetails.value?.title ?? "");
 const lane = ref(cardDetails.value?._id ?? "");
-
+const agentsRolesPermissions = computed(() =>{
+  return agentStore.agentsRolesPermissions;
+})
 // Watch for prop updates if details change
 watch(
   () => cardDetails.value?.title,
@@ -312,13 +563,16 @@ watch(
 watch(
   () => cardDetails.value,
   () => {
+    // clear previous values
+    Object.keys(localVarValues).forEach(key => delete localVarValues[key]);
+    console.log(cardDetails.value, 'crdd')
     if (cardDetails.value?.variable_values) {
       cardDetails.value.variable_values.forEach((v: any) => {
         localVarValues[v.module_variable_id] = v.value;
       });
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
 const emit = defineEmits([
   "close",
@@ -388,6 +642,22 @@ const moveCard = useMoveCard({
 const handleSelect = (val: any, slug: any) => { 
   localVarValues[slug] = val;
 
+  // Optimistically update the store object so switching cards stays in sync
+  if (cardDetails.value) {
+    if (!cardDetails.value.variable_values) cardDetails.value.variable_values = [];
+    const index = cardDetails.value.variable_values.findIndex(
+      (v: any) => v.module_variable_id === slug
+    );
+    if (index !== -1) {
+      cardDetails.value.variable_values[index].value = val;
+    } else {
+      cardDetails.value.variable_values.push({
+        module_variable_id: slug,
+        value: val,
+      });
+    }
+  }
+
   UpdateVar({
     id: cardDetails.value._id,
     payload: {
@@ -398,7 +668,6 @@ const handleSelect = (val: any, slug: any) => {
         },
       ],
     },
-    // ariable_id: id,
   });
 };
 
@@ -412,7 +681,6 @@ function getDefaultValue(id: any) {
 }
 
 // workspace roles 
-const workspaceId = computed(() => cardDetails.value?.workspace_id); 
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
@@ -436,17 +704,53 @@ const { mutate: assignRole } = useAssignRole({
   onError: (err: any) => console.error(err), 
 });
 
+async function fetchAgentsRolesPermissions() {
+  await agentStore.fetchAgentsRolesPermissions(workspaceId.value);
+}
+fetchAgentsRolesPermissions();
 const roleOptions = computed(() => {
-  const roles = (workspaceRoles.value || []).map((r: any) => ({
-    _id: r._id,
-    title: r.title,
-  }));
+  let roles: any[] = [];
+
+  if (cardDetails.value?.slug?.includes("agent")) {
+    roles = (agentsRolesPermissions.value?.access_roles || []).map((r: any) => ({
+      _id: r._id,
+      title: r.title,
+    }));
+  } else {
+    roles = (workspaceRoles.value || []).map((r: any) => ({
+      _id: r._id,
+      title: r.title,
+    }));
+  }
+
   roles.push({
-    _id: 'ADD_NEW_ROLE',
-    title: '+ Add New Role',
-    customClass: 'text-accent font-medium sticky bottom-0  hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown   border-t border-border w-full',
-    isAction: true
+    _id: "ADD_NEW_ROLE",
+    title: "+ Add New Role",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
   });
+
+  return roles;
+});
+const jobOptions = computed(() => {
+  let roles: any[] = [];
+
+  if (cardDetails.value?.slug?.includes("agent")) {
+    roles = (agentsRolesPermissions.value?.job_roles || []).map((r: any) => ({
+      _id: r._id,
+      title: r.title,
+    }));
+  }
+
+  roles.push({
+    _id: "ADD_NEW_ROLE",
+    title: "+ Add New Job Role",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
+  });
+
   return roles;
 });
 
@@ -578,6 +882,52 @@ const progressPercentage = computed(() => {
   if (!totalTasks.value) return 0;
   return Math.round((completedTasks.value / totalTasks.value) * 100);
 });
+
+const { mutate: deleteVarDef, isPending: isDeleting } = useDeletePeopleVarDef();
+const { mutate: updateVarDef } = useUpdatePeopleVarDef();
+
+function handleEditVar(item: any) {
+  selectedVarToEdit.value = item;
+  isEditVar.value = true;
+}
+
+function handleDeleteVar(item: any) {
+  selectedItem.value = item;
+  showDeleteModal.value = true;
+}
+
+function confirmDelete() {
+  if (!selectedItem.value) return;
+  deleteVarDef({
+    id: selectedItem.value._id
+  }, {
+    onSuccess: () => {
+      toast.success("Variable deleted successfully");
+      showDeleteModal.value = false;
+      refetchCardDetails();
+    },
+    onError: () => {
+      toast.error("Failed to delete variable");
+    }
+  });
+}
+
+function refetchCardDetails() {
+  queryClient.invalidateQueries({ queryKey: ["people-var"] });
+  queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+}
+
+function handleVariableDefinitionUpdate({ id, payload }: any) {
+  updateVarDef({ id, payload }, {
+    onSuccess: () => {
+      toast.success("Field updated successfully");
+      refetchCardDetails();
+    },
+    onError: () => {
+      toast.error("Failed to update field");
+    }
+  });
+}
 
 </script>
 

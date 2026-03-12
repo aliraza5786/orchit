@@ -12,7 +12,7 @@
   >
     <div
       v-if="isExpanded && !showConfigPanel && entities?.length"
-      class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
         @accept="acceptChanges"
@@ -24,7 +24,7 @@
     <!-- CONFIG PANEL -->
     <div
       v-if="isExpanded && showConfigPanel"
-      class="w-1/2 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <!-- HEADER -->
       <div class="px-6 py-2.5 bg-bg-card border-b border-border">
@@ -292,11 +292,28 @@
                   }}</span>
                 </div>
               </div>
-
+               <div class="flex items-center justify-between mb-1">
+             <span class="text-base font-medium text-text-primary block">Select Role</span>
+          </div>
+          <BaseSelectField
+            size="sm"
+            v-model="selectedRole"
+            :options="roleOptions"
+            placeholder="Select Role"
+          />
+          <div class="flex items-center justify-between mb-1 mt-2">
+             <span class="text-base font-medium text-text-primary block">Select Job Role</span>
+          </div>
+           <BaseSelectField
+            size="sm"
+            v-model="selectJobRole"
+            :options="jobOptions"
+            placeholder="Select Job Role"
+          />
               <!-- Buttons -->
               <button
                 @click="submitPersona"
-                v-if="!agentsData"
+                v-if="!agentsData || !agentConfig?.id"
                 :disabled="isLoading || !agentConfig.name || !agentConfig.role"
                 class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -307,7 +324,7 @@
               <div class="flex gap-4">
                 <button
                   @click="deleteAgent(agentConfig.id)"
-                  v-if="agentsData"
+                  v-if="agentsData && agentConfig?.id"
                   :disabled="
                     agentStore.isDeletingAgent || !agentConfig.name || !agentConfig.role
                   "
@@ -318,7 +335,7 @@
                 </button>
                 <button
                   @click="updateAgent(agentConfig.id)"
-                  v-if="agentsData"
+                  v-if="agentsData && agentConfig?.id"
                   :disabled="
                     agentStore.isUpdatingAgent || !agentConfig.name || !agentConfig.role
                   "
@@ -531,7 +548,7 @@
     <div
       :class="
         isExpanded && (showConfigPanel || entities?.length)
-          ? 'w-1/2 me-3'
+          ? 'w-1/3'
           : 'w-full'
       "
       class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
@@ -789,6 +806,7 @@ import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { useAuthStore } from "../../../stores/auth";
 import { useSheets, keys } from "../../../queries/useSheets";
 import { useQueryClient } from '@tanstack/vue-query';
+import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 // Stores
 const workspaceStore = useWorkspaceStore();
 const agentStore = useAgentStore();
@@ -814,12 +832,17 @@ const pendingMessages = ref<any[]>([]);
 const openType = ref(false);
 const isSheet = ref(false);
 const selectedAgentId = ref("");
+const selectedRole = ref("")
+const selectJobRole = ref("")
 const agentsData = computed(() => {
   return agentStore.agentSettings.agent;
 });
 const knowledgeData = computed(() => {
   return agentStore?.agentSettings?.knowledge;
 });
+const agentsRolesPermissions = computed(() =>{
+  return agentStore.agentsRolesPermissions;
+})
 const sheetNameRef = ref(agentStore.sheetTitle || "");
 const sheetIdRef = ref(agentStore.sheetId || "");
 const sheetName = computed(() => {
@@ -1836,6 +1859,7 @@ watch(
 
 const isLoading = ref(false);
 const resetAgentConfig = () => {
+  agentConfig.id ="";
   agentConfig.name = "";
   agentConfig.description = "";
   agentConfig.role = "";
@@ -1846,6 +1870,8 @@ const resetAgentConfig = () => {
   agentConfig.competencies = [];
   agentConfig.capabilities = [];
   agentConfig.conditions_rules = [];
+  selectedRole.value = "";
+  selectJobRole.value = "";
 };
 // create new Agent
 const submitPersona = async () => {
@@ -1873,6 +1899,8 @@ const submitPersona = async () => {
       competencies: agentConfig.competencies,
       capabilities: agentConfig.capabilities,
       conditions_rules: agentConfig.conditions_rules,
+      workspace_role_id: selectedRole.value,
+      workspace_access_role_id: selectJobRole.value,
     };
     await agentStore.trainPersona(workspaceId.value, payload);
     isLoading.value = false;
@@ -1909,6 +1937,8 @@ const updateAgent = async (agent: string) => {
     competencies: agentConfig.competencies,
     capabilities: agentConfig.capabilities,
     conditions_rules: agentConfig.conditions_rules,
+    workspace_role_id: selectedRole.value,
+    workspace_access_role_id: selectJobRole.value,
   };
 
   const payload = getChangedFields(
@@ -1957,6 +1987,26 @@ async function fetchAssignedAgents() {
     // moduleId.value,
   );
 }
+async function fetchAgentsRolesPermissions() {
+  await agentStore.fetchAgentsRolesPermissions(workspaceId.value);
+}
+fetchAgentsRolesPermissions();
+const roleOptions = computed(() => {
+  let roles: any[] = [];
+    roles = (agentsRolesPermissions.value?.access_roles || []).map((r: any) => ({
+      _id: r._id,
+      title: r.title,
+    }));
+  return roles;
+});
+const jobOptions = computed(() => {
+  let roles: any[] = [];
+    roles = (agentsRolesPermissions.value?.job_roles || []).map((r: any) => ({
+      _id: r._id,
+      title: r.title,
+    }));
+  return roles;
+});
 </script>
 <style scoped>
 .typing-dots {

@@ -59,7 +59,7 @@
 
   <!-- Dropdown -->
   <div
-    v-if="showDropdown"
+    v-if="activeDropdownId === props.id"
     ref="dropdownRef"
     class="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-bg-card z-50"
   >
@@ -104,7 +104,7 @@
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useWorkspaceStore } from "../../../stores/workspace";
-const emit = defineEmits()
+const emit = defineEmits(['toggleDropdown','delete','closeDropdown'])
 /** --- PROPS --- **/
 const props = defineProps<{
   label: string;
@@ -114,11 +114,11 @@ const props = defineProps<{
   to: string;
   status?: string;
   expanded?: boolean;
-  deleteIcon?:any
+  deleteIcon?:any;
+  activeDropdownId?: string | null;
 }>();
 const showTooltip = ref(false);
 const itemRef = ref<HTMLElement | null>(null);
-const showDropdown = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
 const tooltipStyles = computed(() => {
   if (!itemRef.value) return {};
@@ -130,12 +130,13 @@ const tooltipStyles = computed(() => {
     transform: "translateY(-50%)",
   };
 });
+
 const handleClickOutside = (e: MouseEvent) => {
   if (
     dropdownRef.value &&
     !dropdownRef.value.contains(e.target as Node)
   ) {
-    showDropdown.value = false
+    emit('closeDropdown')
   }
 }
 
@@ -154,23 +155,18 @@ let stopped = false;
 /** --- SSE URL --- **/
 const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value
+  emit('toggleDropdown', props.id)
 }
-
 const emitDelete = () => {
-  showDropdown.value = false
+  emit('closeDropdown')
   emit('delete', props.id)
 }
 
 const emitConfigure = () => {
-  showDropdown.value = false
-  workspaceStore.toggleChatBotPanel();
+  emit('closeDropdown')
+  workspaceStore.toggleChatBotPanel()
   workspaceStore.saveAgentModule(props.label)
 }
-/**
- * Open SSE stream for job progress
- * Endpoint: workspace/modules/generation/:job_id/stream
- */
 const connectStream = () => {
   if (stopped) return;
   if (!props.id) return; // no job id → no stream
