@@ -66,7 +66,7 @@
       </div>
       <!-- Title -->
       <section v-if="activeTab == 'details'">
-        <div class="mb-2 capitalize">
+        <div class="mb-3 capitalize mt-3">
           <template v-if="editingTitle">
             <input
               ref="titleInput"
@@ -271,7 +271,7 @@
              <span class="text-base font-medium text-text-primary block">Select Role</span>
           </div>
           <BaseSelectField
-            size="sm"
+            size="md"
             :model-value="selectedRole"
             :options="roleOptions"
             placeholder="Select Role"
@@ -280,11 +280,11 @@
             :disabled="!canEditUser" 
             :loading="isLoadingWorkspaceRoles || !newCompanyId"
           />
-          <div class="flex items-center justify-between mb-1 mt-2">
+          <div v-if="selectedRoleData && !selectedRoleData.is_admin && isAdmin" class="flex items-center justify-between mb-1 mt-2">
              <span class="text-base font-medium text-text-primary block">Select Job Role</span>
           </div>
            <BaseSelectField
-           v-if="cardDetails?.slug?.includes('agent')"
+            v-if="cardDetails?.slug?.includes('agent')"
             size="sm"
             :model-value="selectJobRole"
             :options="jobOptions"
@@ -519,7 +519,7 @@ const tabOptions = [
   { label: "Tasks", value: "tasks" },
   { label: "History", value: "history" },
 ];
-const { data: peopleVar } = usePeopleVar();
+const { data: peopleVar } = usePeopleVar(workspaceId.value);
 const { mutate: UpdateVar } = useUpdateVar({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["people-lists"] });

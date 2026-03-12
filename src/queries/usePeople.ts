@@ -151,18 +151,19 @@ export const useCreateTeamMember = (options = {}) =>
       ...(options as any),
     } as any
   );
-  export const usePeopleVar = (options = {}) => {
-    return useQuery({
-      queryKey: ["people-var"],
-      queryFn: ({ signal }) =>
-        request<any>({
-          url: `/common/module-variables/filter?module=people`,
-          method: "GET",
-          signal,
-        }),
-      ...options,
-    });
-  };
+export const usePeopleVar = (workspaceId: any, options = {}) => {
+  return useQuery({
+    queryKey: ["people-var", workspaceId],
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `/common/module-variables/filter?module=people&workspace_id=${workspaceId}`,
+        method: "GET",
+        signal,
+      }),
+    enabled: !!workspaceId,
+    ...options,
+  });
+};
 
 
   export const useUpdateVar = (options = {}) =>
