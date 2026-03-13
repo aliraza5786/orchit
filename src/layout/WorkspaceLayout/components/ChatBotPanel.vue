@@ -1075,6 +1075,7 @@ function initSocket() {
   });
 }
 const isMongoId = (val?: string) => !!val && /^[a-f\d]{24}$/i.test(val);
+const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 // Send Message
 async function sendMessage() {
@@ -1102,12 +1103,14 @@ async function sendMessage() {
       workspace_id: workspaceId.value,
       user_id: authStore.userId as string,
       message,
+      agent_id:selectedAgentId.value as string,
       module_id: moduleId.value as string,
       module_name: moduleSelected.value as string,
       lane_id: route.params.lane_id as string,
       sheet_id: route.params.sheet_id as string,
       card_id: route.params.card_id as string,
-      session_id: route.params.session_id as string,
+      session_id: sessionId as string,
+      stream:true as boolean
     });
 
     await Promise.all([
