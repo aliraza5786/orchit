@@ -98,6 +98,37 @@
               >
                 <i class="fa-solid fa-chart-diagram"></i>
               </button>
+              <!-- <button
+              @click="currentView = 'calendar'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="currentView === 'calendar' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Calendar view"
+            >
+              <i class="fa-regular fa-calendar"></i>
+            </button>
+
+            <button
+              @click="currentView = 'gantt'"
+              class="aspect-square cursor-pointer rounded-sm p-0"
+              :class="currentView === 'gantt' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Gantt Chart view"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+              </svg>
+            </button>
+
+            <button
+              @click="currentView = 'timeline'"
+              class="aspect-square cursor-pointer rounded-sm p-0"
+              :class="currentView === 'timeline' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Timeline view"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" opacity="0" />
+                <path d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button> -->
             </div>
           </div>
         </div>
@@ -312,6 +343,16 @@
   ref="mindMapRef"
   style="width: 100%; height: 100vh; background: #fff; position: relative; overflow: hidden;"
 ></div>
+ <!-- <template v-if="currentView === 'calendar'">
+      <CalendarView :data="calendarData" @select:ticket="selectCardHandler" />
+    </template>
+
+    <template v-if="currentView === 'gantt'">
+      <GanttChartView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template>
+    <template v-if="currentView === 'timeline'">
+      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template> -->
     </div>
   </div>
   <!-- ── Modals ─────────────────────────────────────────────────────────── -->
@@ -388,7 +429,9 @@ const KanbanBoard = defineAsyncComponent(
 const KanbanCard = defineAsyncComponent(
   () => import("./components/KanbanCard.vue"),
 );
-
+// import CalendarView from "../../components/feature/CalendarView.vue";
+// import GanttChartView from "../../components/feature/GanttChartView.vue";
+// import TimelineView from "../../components/feature/TimelineView.vue";
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
@@ -824,6 +867,19 @@ const tableRows = computed(() => {
 
   return [];
 });
+// const calendarData = computed(() => {
+//   return filteredBoard.value.flatMap((column: any) =>
+//     (column.cards || []).map((card: any) => ({
+//       _id: card._id,
+//       "card-title": card.title || card.name || "",
+//       "start-date": card.start_date || card.startDate || card["start-date"] || "",
+//       "end-date": card.end_date || card.endDate || card["end-date"] || "",
+//       "card-status": card.status || "",
+//       "card-code": card.card_code || card["card-code"] || "",
+//       style: card.style || {},
+//     }))
+//   );
+// });
 const tableColumns = computed(() => {
   if (currentTab.value === "talent") {
     return [

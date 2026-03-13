@@ -6,6 +6,7 @@ const baseUrl = import.meta.env.VITE_API_BASE_URL;
 interface AgentChatPayload {
   workspace_id: string;
   message: string;
+  agent_id:string;
   module_id?: string;
   module_name?: string;
   user_id?: string;
@@ -13,6 +14,7 @@ interface AgentChatPayload {
   sheet_id?: string;
   card_id?: string;
   session_id?: string;
+  stream?:boolean;
 }
 
 interface AgentChatResponse {
@@ -131,7 +133,7 @@ export const useAgentStore = defineStore("agent", {
       this.isSending = true;
       try {
         const response = await api.request<AgentChatResponse>({
-          url: `${baseUrl}agent-chat/message`,
+          url: `${baseUrl}agent-chat/message/assistant`,
           method: "POST",
           data: payload,
         });
