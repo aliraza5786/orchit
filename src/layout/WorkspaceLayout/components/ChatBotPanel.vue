@@ -142,14 +142,28 @@
                 />
               </div>
 
-              <!-- Role -->
-              <div class="space-y-1">
-                <label class="text-sm text-text-primary">Role</label>
-                <input
-                  v-model="agentConfig.role"
-                  class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
-                />
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-base font-medium text-text-primary block"
+                  >Select Role</span
+                >
               </div>
+              <BaseSelectField
+                size="md"
+                v-model="selectedRole"
+                :options="roleOptions"
+                placeholder="Select Role"
+              />
+              <div class="flex items-center justify-between mb-1 mt-2">
+                <span class="text-base font-medium text-text-primary block"
+                  >Select Job Role</span
+                >
+              </div>
+              <BaseSelectField
+                size="md"
+                v-model="selectJobRole"
+                :options="jobOptions"
+                placeholder="Select Job Role"
+              />
 
               <!-- Level Dropdown -->
               <div class="space-y-1 relative" ref="levelRef">
@@ -292,24 +306,6 @@
                   }}</span>
                 </div>
               </div>
-               <div class="flex items-center justify-between mb-1">
-             <span class="text-base font-medium text-text-primary block">Select Role</span>
-          </div>
-          <BaseSelectField
-            size="sm"
-            v-model="selectedRole"
-            :options="roleOptions"
-            placeholder="Select Role"
-          />
-          <div class="flex items-center justify-between mb-1 mt-2">
-             <span class="text-base font-medium text-text-primary block">Select Job Role</span>
-          </div>
-           <BaseSelectField
-            size="sm"
-            v-model="selectJobRole"
-            :options="jobOptions"
-            placeholder="Select Job Role"
-          />
               <!-- Buttons -->
               <button
                 @click="submitPersona"
@@ -326,7 +322,9 @@
                   @click="deleteAgent(agentConfig.id)"
                   v-if="agentsData && agentConfig?.id"
                   :disabled="
-                    agentStore.isDeletingAgent || !agentConfig.name || !agentConfig.role
+                    agentStore.isDeletingAgent ||
+                    !agentConfig.name ||
+                    !agentConfig.role
                   "
                   class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -337,7 +335,9 @@
                   @click="updateAgent(agentConfig.id)"
                   v-if="agentsData && agentConfig?.id"
                   :disabled="
-                    agentStore.isUpdatingAgent || !agentConfig.name || !agentConfig.role
+                    agentStore.isUpdatingAgent ||
+                    !agentConfig.name ||
+                    !agentConfig.role
                   "
                   class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -547,9 +547,7 @@
     <!-- CHAT PANEL WRAPPER -->
     <div
       :class="
-        isExpanded && (showConfigPanel || entities?.length)
-          ? 'w-1/3'
-          : 'w-full'
+        isExpanded && (showConfigPanel || entities?.length) ? 'w-1/3' : 'w-full'
       "
       class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
     >
@@ -560,23 +558,23 @@
         <h5 class="text-[16px] font-medium flex items-center gap-2">
           <i class="fa-solid fa-sparkles text-accent"></i>
           <Dropdown
-          v-model="selectedAgentId"
-          :options="agentOptions"
-          :custom-title="selectedAgentName"
-          :actions="false"
-          size="md"
-          variant="secondary"
-          class="relative w-60"
-        >
-          <template #more>
-            <div
-              @click="openConfigPanel"
-              class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
-            >
-              <i class="fa-solid fa-plus"></i> Add new
-            </div>
-          </template>
-        </Dropdown>
+            v-model="selectedAgentId"
+            :options="agentOptions"
+            :custom-title="selectedAgentName"
+            :actions="false"
+            size="md"
+            variant="secondary"
+            class="relative w-60"
+          >
+            <template #more>
+              <div
+                @click="openConfigPanel"
+                class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
+              >
+                <i class="fa-solid fa-plus"></i> Add new
+              </div>
+            </template>
+          </Dropdown>
         </h5>
         <div class="flex items-center gap-3 shrink-0">
           <!-- Expand Icon -->
@@ -805,7 +803,7 @@ import { toast } from "vue-sonner";
 import { useSingleWorkspace } from "../../../queries/useWorkspace";
 import { useAuthStore } from "../../../stores/auth";
 import { useSheets, keys } from "../../../queries/useSheets";
-import { useQueryClient } from '@tanstack/vue-query';
+import { useQueryClient } from "@tanstack/vue-query";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 // Stores
 const workspaceStore = useWorkspaceStore();
@@ -832,17 +830,17 @@ const pendingMessages = ref<any[]>([]);
 const openType = ref(false);
 const isSheet = ref(false);
 const selectedAgentId = ref("");
-const selectedRole = ref("")
-const selectJobRole = ref("")
+const selectedRole = ref("");
+const selectJobRole = ref("");
 const agentsData = computed(() => {
   return agentStore.agentSettings.agent;
 });
 const knowledgeData = computed(() => {
   return agentStore?.agentSettings?.knowledge;
 });
-const agentsRolesPermissions = computed(() =>{
+const agentsRolesPermissions = computed(() => {
   return agentStore.agentsRolesPermissions;
-})
+});
 const sheetNameRef = ref(agentStore.sheetTitle || "");
 const sheetIdRef = ref(agentStore.sheetId || "");
 const sheetName = computed(() => {
@@ -951,7 +949,7 @@ const contextTitle = computed(() => {
   if (routeName.includes("peak")) return "Peak";
   if (routeName.includes("plan")) return "Plan";
   if (routeName.includes("process")) return "Process";
-  if (routeName.includes("people")) return "People";
+  if (routeName.includes("people")) return "Talent";
   if (routeName.includes("more")) return "More";
   return "Workspace";
 });
@@ -1103,14 +1101,14 @@ async function sendMessage() {
       workspace_id: workspaceId.value,
       user_id: authStore.userId as string,
       message,
-      agent_id:selectedAgentId.value as string,
+      agent_id: selectedAgentId.value as string,
       module_id: moduleId.value as string,
       module_name: moduleSelected.value as string,
-      lane_id: route.params.lane_id as string,
+      lane_id: workspaceStore.selectedLaneIds?.[0] ?? "",
       sheet_id: route.params.sheet_id as string,
       card_id: route.params.card_id as string,
       session_id: sessionId as string,
-      stream:true as boolean
+      stream: true as boolean,
     });
 
     await Promise.all([
@@ -1155,10 +1153,7 @@ async function acceptChanges(payload: any) {
   try {
     await agentStore.acceptEntities(payload);
     await queryClient.invalidateQueries({
-      queryKey: keys.sheets(
-        moduleId.value,
-        workspaceId.value
-      ),
+      queryKey: keys.sheets(moduleId.value, workspaceId.value),
     });
     showAIPreview.value = false;
     toast.success("Entities has been accepted and applied to workspace");
@@ -1220,10 +1215,10 @@ onMounted(() => {
       moduleSelected.value ?? undefined,
       moduleId.value ?? undefined,
     );
-    if(selectedAgentId.value){
-     loadAgentSettings();
+    if (selectedAgentId.value) {
+      loadAgentSettings();
     }
-    
+
     fetchAssignedAgents();
   }
   scrollToBottom();
@@ -1310,7 +1305,7 @@ const availableCapabilities = [
 ];
 
 interface AgentConfig {
-  id:string;
+  id: string;
   name: string;
   description: string;
   role: string;
@@ -1324,7 +1319,7 @@ interface AgentConfig {
 }
 
 const agentConfig = reactive<AgentConfig>({
-  id:"",
+  id: "",
   name: "",
   description: "",
   role: "",
@@ -1352,17 +1347,17 @@ const agentOptions = computed(() =>
     _id: agent._id,
     title: agent.name,
     description: agent.description,
- icon: { 
-  prefix: 'fa-solid',
-  iconName: `fa-circle ${isSocketConnected.value ? 'bg-green-500 border text-green-500 rounded-full' : 'text-red-500 border rounded-full bg-red-500 rounded-full'} text-[6px]`,
-},
-  }))
+    icon: {
+      prefix: "fa-solid",
+      iconName: `fa-circle ${isSocketConnected.value ? "bg-green-500 border text-green-500 rounded-full" : "text-red-500 border rounded-full bg-red-500 rounded-full"} text-[6px]`,
+    },
+  })),
 );
 const selectedAgentName = computed(() => {
   const agent = agentsCreated.value?.data?.agents?.find(
-    (a:any) => a._id === selectedAgentId.value
+    (a: any) => a._id === selectedAgentId.value,
   );
-  return agent?.name || 'Select Agent';
+  return agent?.name || "Select Agent";
 });
 watch(
   () => agentsCreated.value?.data?.agents,
@@ -1394,7 +1389,7 @@ const selectLevel = (value: string) => {
 const originalAgentConfig = ref<Partial<AgentConfig> | null>(null);
 watch(
   [() => agentsData.value, () => moduleSelected.value],
-  ([agent]) => {    
+  ([agent]) => {
     if (agent) {
       agentConfig.name = agent.name || "Peak Agent";
       agentConfig.id = agent?._id || "";
@@ -1409,20 +1404,22 @@ watch(
       agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
 
       // ✅ Save snapshot safely
-      originalAgentConfig.value = JSON.parse(JSON.stringify({
-        name: agentConfig.name,
-        description: agentConfig.description,
-        role: agentConfig.role,
-        level: agentConfig.level,
-        responsibilities: agentConfig.responsibilities,
-        skills: agentConfig.skills,
-        competencies: agentConfig.competencies,
-        capabilities: agentConfig.capabilities,
-        conditions_rules: agentConfig.conditions_rules,
-      }));
+      originalAgentConfig.value = JSON.parse(
+        JSON.stringify({
+          name: agentConfig.name,
+          description: agentConfig.description,
+          role: agentConfig.role,
+          level: agentConfig.level,
+          responsibilities: agentConfig.responsibilities,
+          skills: agentConfig.skills,
+          competencies: agentConfig.competencies,
+          capabilities: agentConfig.capabilities,
+          conditions_rules: agentConfig.conditions_rules,
+        }),
+      );
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 interface KnowledgeConfig {
   module_id: string;
@@ -1862,7 +1859,7 @@ watch(
 
 const isLoading = ref(false);
 const resetAgentConfig = () => {
-  agentConfig.id ="";
+  agentConfig.id = "";
   agentConfig.name = "";
   agentConfig.description = "";
   agentConfig.role = "";
@@ -1944,27 +1941,20 @@ const updateAgent = async (agent: string) => {
     workspace_access_role_id: selectJobRole.value,
   };
 
-  const payload = getChangedFields(
-    originalAgentConfig.value,
-    currentPayload
-  );
+  const payload = getChangedFields(originalAgentConfig.value, currentPayload);
 
   if (!Object.keys(payload).length) return;
 
-  await agentStore.updateSelectedAgent(
-    workspaceId.value,
-    payload,
-    agent
-  );
-   await fetchAssignedAgents();
-   await loadAgentSettings();
+  await agentStore.updateSelectedAgent(workspaceId.value, payload, agent);
+  await fetchAssignedAgents();
+  await loadAgentSettings();
 };
-const deleteAgent = async (agent:string) =>{
-    await agentStore.deleteSelectedAgent(workspaceId.value, agent);
-    await fetchAssignedAgents();
-    await loadAgentSettings();
-    resetAgentConfig();
-}
+const deleteAgent = async (agent: string) => {
+  await agentStore.deleteSelectedAgent(workspaceId.value, agent);
+  await fetchAssignedAgents();
+  await loadAgentSettings();
+  resetAgentConfig();
+};
 // Get the agent if created
 const isLoadingSettings = ref(false);
 const selectedModule = computed(() => {
@@ -1976,7 +1966,7 @@ const loadAgentSettings = async () => {
     workspaceId.value,
     moduleId.value,
     selectedModule.value,
-    selectedAgentId.value
+    selectedAgentId.value,
   );
   isLoadingSettings.value = false;
 };
@@ -1996,18 +1986,18 @@ async function fetchAgentsRolesPermissions() {
 fetchAgentsRolesPermissions();
 const roleOptions = computed(() => {
   let roles: any[] = [];
-    roles = (agentsRolesPermissions.value?.access_roles || []).map((r: any) => ({
-      _id: r._id,
-      title: r.title,
-    }));
+  roles = (agentsRolesPermissions.value?.access_roles || []).map((r: any) => ({
+    _id: r._id,
+    title: r.title,
+  }));
   return roles;
 });
 const jobOptions = computed(() => {
   let roles: any[] = [];
-    roles = (agentsRolesPermissions.value?.job_roles || []).map((r: any) => ({
-      _id: r._id,
-      title: r.title,
-    }));
+  roles = (agentsRolesPermissions.value?.job_roles || []).map((r: any) => ({
+    _id: r._id,
+    title: r.title,
+  }));
   return roles;
 });
 </script>
