@@ -98,6 +98,37 @@
               >
                 <i class="fa-solid fa-chart-diagram"></i>
               </button>
+              <!-- <button
+              @click="currentView = 'calendar'"
+              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              :class="currentView === 'calendar' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Calendar view"
+            >
+              <i class="fa-regular fa-calendar"></i>
+            </button>
+
+            <button
+              @click="currentView = 'gantt'"
+              class="aspect-square cursor-pointer rounded-sm p-0"
+              :class="currentView === 'gantt' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Gantt Chart view"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+              </svg>
+            </button>
+
+            <button
+              @click="currentView = 'timeline'"
+              class="aspect-square cursor-pointer rounded-sm p-0"
+              :class="currentView === 'timeline' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              title="Timeline view"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" opacity="0" />
+                <path d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button> -->
             </div>
           </div>
         </div>
@@ -129,21 +160,31 @@
                     'min-w-[320px] max-w-[320px]': !isMobile,
                   }"
                 >
-              <div class="flex justify-between px-5 py-4 border-b border-border">
-                   <div
-                    class="text-normal font-semibold text-text-primary"
+                  <div
+                    class="flex justify-between px-5 py-4 border-b border-border"
                   >
-                    {{ group.title }}
+                    <div
+                      class="text-normal flex gap-2 font-semibold text-text-primary"
+                    >
+                      <span>{{ group.title }}</span>
+                      <span
+                        class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 min-w-6 rounded-full"
+                      >
+                        {{ group?.agents.length }}
+                      </span>
+                    </div>
+
+                    <div class="cursor-pointer" @click="handleAgent('new')">
+                      <i class="fa-solid fa-plus"></i>
+                    </div>
                   </div>
-                <div class="cursor-pointer"  @click="handleClickAgent(group)"><i class="fa-solid fa-plus"></i></div>
-              </div>
                   <div
                     class="flex flex-col gap-4 mx-4 mt-4 overflow-y-auto flex-1"
                   >
                     <div
                       v-for="agent in group.agents"
                       :key="agent._id"
-                      @click="handleClickTicket(agent)"
+                      @click="handleClickAgent(group)"
                       class="bg-bg-card border border-border rounded-lg px-4 py-3 flex flex-col gap-3"
                     >
                       <div class="flex justify-between items-start">
@@ -195,107 +236,143 @@
 
         <!-- TALENT KANBAN -->
         <template v-else>
-          <div class="flex flex-1  overflow-x-auto gap-3 custom_scroll_bar py-4">
+          <div class="flex flex-1 overflow-x-auto gap-3 custom_scroll_bar py-4">
             <KanbanBoard
-        :plusIcon="true"
-        v-if="filteredBoard?.length > 0"
-        @onPlus="(e) => handlePLus(e)"
-        @delete:column="(e: any) => handleDelete(e)"
-        @update:column="(e) => handleUpdateColumn(e)"
-        @reorder="onReorder"
-        @addColumn="handleAddColumn"
-        @select:ticket="selectCardHandler"
-        :board="filteredBoard"
-        @onBoardUpdate="handleBoardUpdate"
-        variable_id=""
-        sheet_id="selected_sheet_id"
-      >
-        <template #ticket="{ ticket }">
-          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" @deleted="fetchPeople()", @assigned="fetchPeople" @unAssigned="fetchPeople" />
-        </template>
-        <template #column-footer="{ column }: any">
-          <div
-            v-if="!column.showADDNEW"
-            @click="toggleAddNewColumn(column)"
-            :disabled="!canInviteUser"
-            :class="canInviteUser ? 'cursor-pointer' : 'cursor-not-allowed'"
-            class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md"
-          >
-            <i class="fa-solid fa-plus"></i> Add Seat
-          </div>
-          <div
-            v-else-if="column.showADDNEW"
-            class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
-          >
-            <p class="text-sm text-text-primary">
-              {{ column.title }} {{ column.cards.length + 1 }}
-            </p>
-            <BaseEmailChip
-              :maxEmails="1"
-              placeholder="team member email"
-              v-model="column.email"
-            />
-            <p class="text-sm text-text-secondary">You can assign user later</p>
-            <Button size="md" @click="addSeatToColumn(column)">{{
-              isPending ? "Adding..." : "Add Seat"
-            }}</Button>
-            <i
-              class="fa-solid fa-close cursor-pointer ml-2"
-              @click="toggleAddNewColumn('')"
-            ></i>
-          </div>
-        </template>
-      </KanbanBoard>
+              :plusIcon="true"
+              v-if="filteredBoard?.length > 0"
+              @onPlus="(e) => handlePLus(e)"
+              @delete:column="(e: any) => handleDelete(e)"
+              @update:column="(e) => handleUpdateColumn(e)"
+              @reorder="onReorder"
+              @addColumn="handleAddColumn"
+              @select:ticket="selectCardHandler"
+              :board="filteredBoard"
+              @onBoardUpdate="handleBoardUpdate"
+              variable_id=""
+              sheet_id="selected_sheet_id"
+            >
+              <template #ticket="{ ticket }">
+                <KanbanCard
+                  @click="handleClickTicket(ticket)"
+                  :ticket="ticket"
+                  @deleted="fetchPeople()"
+                  ,
+                  @assigned="fetchPeople"
+                  @unAssigned="fetchPeople"
+                />
+              </template>
+              <template #column-footer="{ column }: any">
+                <div
+                  v-if="!column.showADDNEW"
+                  @click="toggleAddNewColumn(column)"
+                  :disabled="!canInviteUser"
+                  :class="
+                    canInviteUser ? 'cursor-pointer' : 'cursor-not-allowed'
+                  "
+                  class="flex py-3 px-3 justify-center text-sm text-text-primary items-center gap-3 border border-text-primary border-dashed mb-4 mx-4 rounded-md"
+                >
+                  <i class="fa-solid fa-plus"></i> Add Seat
+                </div>
+                <div
+                  v-else-if="column.showADDNEW"
+                  class="p-4 space-y-2 bg-bg-surface m-4 rounded-md"
+                >
+                  <p class="text-sm text-text-primary">
+                    {{ column.title }} {{ column.cards.length + 1 }}
+                  </p>
+                  <BaseEmailChip
+                    :maxEmails="1"
+                    placeholder="team member email"
+                    v-model="column.email"
+                  />
+                  <p class="text-sm text-text-secondary">
+                    You can assign user later
+                  </p>
+                  <Button size="md" @click="addSeatToColumn(column)">{{
+                    isPending ? "Adding..." : "Add Seat"
+                  }}</Button>
+                  <i
+                    class="fa-solid fa-close cursor-pointer ml-2"
+                    @click="toggleAddNewColumn('')"
+                  ></i>
+                </div>
+              </template>
+            </KanbanBoard>
             <div
-  v-if="showModal"
-  class="fixed inset-0 flex items-center justify-center bg-black/50 bg-opacity-70 z-50"
->
-  <div class="bg-bg-surface p-4 rounded-md w-80 space-y-2 relative">
-    <p class="text-sm text-text-primary">
-      {{ modalColumn.title }} {{ modalColumn.cards.length + 1 }}
-    </p>
+              v-if="showModal"
+              class="fixed inset-0 flex items-center justify-center bg-black/50 bg-opacity-70 z-50"
+            >
+              <div class="bg-bg-surface p-4 rounded-md w-80 space-y-2 relative">
+                <p class="text-sm text-text-primary">
+                  {{ modalColumn.title }} {{ modalColumn.cards.length + 1 }}
+                </p>
 
-    <BaseEmailChip
-      :maxEmails="1"
-      placeholder="team member email"
-      v-model="modalColumn.email"
-    />
+                <BaseEmailChip
+                  :maxEmails="1"
+                  placeholder="team member email"
+                  v-model="modalColumn.email"
+                />
 
-    <p class="text-sm text-text-secondary">
-      You can assign user later
-    </p>
+                <p class="text-sm text-text-secondary">
+                  You can assign user later
+                </p>
 
-    <Button size="md" @click="addSeatToColumn(modalColumn)">
-      {{ isPendingSeat ? "Adding..." : "Add Seat" }}
-    </Button>
+                <Button size="md" @click="addSeatToColumn(modalColumn)">
+                  {{ isPendingSeat ? "Adding..." : "Add Seat" }}
+                </Button>
 
-    <i
-      class="fa-solid fa-close cursor-pointer absolute top-2 right-2"
-      @click="closeModal"
-    />
-  </div>
-</div>
-            <!-- Add Column --> 
-             <div class="min-w-[270px] sm:min-w-[328px]" @click.stop> 
-              <form @submit.prevent="" v-if="activeAddList" class="bg-bg-body rounded-lg p-4" > 
-                <BaseTextField :autofocus="true" 
-                v-model="newColumn" 
-                placeholder="Add New list" /> 
-                <p class="text-xs mt-1.5">You can add details while editing</p> 
-                <div class="flex items-center mt-3 gap-3"> 
-                  <Button :disabled="!canCreateVariable" :class=" canCreateVariable ? 'cursor-pointer' : 'cursor-not-allowed' " @click="emitAddColumn" type="submit" variant="primary" 
-                  class="px-3 py-1 bg-accent text-white rounded" > {{ addingList ? "Adding..." : "Add Team" }} 
-                  </Button> <i class="fa-solid fa-close cursor-pointer" @click="setActiveAddList" /> 
-                </div> 
-              </form> 
-              <button v-else class="text-sm text-text-primary py-2.5 
-              font-medium flex items-center justify-center 
-              w-full gap-2 bg-bg-body rounded-lg" 
-              @click.stop="setActiveAddList" :disabled="!canCreateVariable" 
-              :class="canCreateVariable ? 'cursor-pointer' : 'cursor-not-allowed'" > 
-              + Add Team 
-            </button> 
-          </div> 
+                <i
+                  class="fa-solid fa-close cursor-pointer absolute top-2 right-2"
+                  @click="closeModal"
+                />
+              </div>
+            </div>
+            <!-- Add Column -->
+            <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
+              <form
+                @submit.prevent=""
+                v-if="activeAddList"
+                class="bg-bg-body rounded-lg p-4"
+              >
+                <BaseTextField
+                  :autofocus="true"
+                  v-model="newColumn"
+                  placeholder="Add New list"
+                />
+                <p class="text-xs mt-1.5">You can add details while editing</p>
+                <div class="flex items-center mt-3 gap-3">
+                  <Button
+                    :disabled="!canCreateVariable"
+                    :class="
+                      canCreateVariable
+                        ? 'cursor-pointer'
+                        : 'cursor-not-allowed'
+                    "
+                    @click="emitAddColumn"
+                    type="submit"
+                    variant="primary"
+                    class="px-3 py-1 bg-accent text-white rounded"
+                  >
+                    {{ addingList ? "Adding..." : "Add Team" }}
+                  </Button>
+                  <i
+                    class="fa-solid fa-close cursor-pointer"
+                    @click="setActiveAddList"
+                  />
+                </div>
+              </form>
+              <button
+                v-else
+                class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+                @click.stop="setActiveAddList"
+                :disabled="!canCreateVariable"
+                :class="
+                  canCreateVariable ? 'cursor-pointer' : 'cursor-not-allowed'
+                "
+              >
+                + Add Team
+              </button>
+            </div>
           </div>
         </template>
       </template>
@@ -307,11 +384,27 @@
         />
       </div>
 
-     <div
-  v-if="currentView === 'mindmap'"
-  ref="mindMapRef"
-  style="width: 100%; height: 100vh; background: #fff; position: relative; overflow: hidden;"
-></div>
+      <div
+        v-if="currentView === 'mindmap'"
+        ref="mindMapRef"
+        style="
+          width: 100%;
+          height: 100vh;
+          background: #fff;
+          position: relative;
+          overflow: hidden;
+        "
+      ></div>
+      <!-- <template v-if="currentView === 'calendar'">
+      <CalendarView :data="calendarData" @select:ticket="selectCardHandler" />
+    </template>
+
+    <template v-if="currentView === 'gantt'">
+      <GanttChartView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template>
+    <template v-if="currentView === 'timeline'">
+      <TimelineView :data="filteredBoard" @select:ticket="selectCardHandler" />
+    </template> -->
     </div>
   </div>
   <!-- ── Modals ─────────────────────────────────────────────────────────── -->
@@ -335,11 +428,23 @@
   />
 
   <DetailPanel @close="selectCardHandler(null)" :showPanel="showPanel" />
-  <AgentsDetailPanel @close="selectAgentHandler(null)" :showAgentPanel="showAgentPanel" />
+  <AgentsDetailPanel
+    @close="selectAgentHandler(null)"
+    :showAgentPanel="showAgentPanel"
+  />
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch, onMounted, computed, nextTick, toRaw, onUnmounted } from "vue";
+import {
+  defineAsyncComponent,
+  ref,
+  watch,
+  onMounted,
+  computed,
+  nextTick,
+  toRaw,
+  onUnmounted,
+} from "vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
 import MindElixir from "mind-elixir";
@@ -388,7 +493,9 @@ const KanbanBoard = defineAsyncComponent(
 const KanbanCard = defineAsyncComponent(
   () => import("./components/KanbanCard.vue"),
 );
-
+// import CalendarView from "../../components/feature/CalendarView.vue";
+// import GanttChartView from "../../components/feature/GanttChartView.vue";
+// import TimelineView from "../../components/feature/TimelineView.vue";
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
@@ -423,7 +530,7 @@ const showDelete = ref(false);
 const localColumn = ref();
 const localList = ref<any>([]);
 const showPanel = ref(false);
-const showAgentPanel = ref(false)
+const showAgentPanel = ref(false);
 const searchQuery = ref("");
 const debouncedQuery = ref("");
 const activeAddList = ref(false);
@@ -431,7 +538,7 @@ const newColumn = ref("");
 const currentView = ref("kanban");
 const selectedCard = ref<any>();
 const showModal = ref(false);
-const modalColumn = ref({ email: [], cards: [], title: '', _id: '' });
+const modalColumn = ref({ email: [], cards: [], title: "", _id: "" });
 const isPendingSeat = ref(false);
 const closeModal = () => {
   showModal.value = false;
@@ -557,6 +664,10 @@ const handleClickAgent = (agent: any) => {
   selectedCard.value = agent;
   sidePanelStore.selectCard(agent);
   showAgentPanel.value = true;
+};
+const handleAgent = (key: any) => {
+  showAgentPanel.value = true;
+  sidePanelStore.selectCard(key);
 };
 const handleBoardUpdate = (_: any) => {};
 
@@ -690,7 +801,7 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
         if (col._id !== id) return col;
 
         const filteredCards = (col.cards ?? []).filter(
-          (c: any) => !String(c._id).startsWith("temp-")
+          (c: any) => !String(c._id).startsWith("temp-"),
         );
 
         return {
@@ -704,7 +815,6 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
     localList.value = queryClient.getQueryData(["people-lists"]) as any;
   },
 });
-
 
 const handlePLus = (column: any) => {
   localColumn.value = column;
@@ -737,7 +847,7 @@ const toggleAddNewColumn = (column: any) => {
 
 const addSeatToColumn = (column: any) => {
   handlePLus(column);
-  showModal.value=false;
+  showModal.value = false;
 };
 
 // ─── Reorder ──────────────────────────────────────────────────────────────────
@@ -824,6 +934,19 @@ const tableRows = computed(() => {
 
   return [];
 });
+// const calendarData = computed(() => {
+//   return filteredBoard.value.flatMap((column: any) =>
+//     (column.cards || []).map((card: any) => ({
+//       _id: card._id,
+//       "card-title": card.title || card.name || "",
+//       "start-date": card.start_date || card.startDate || card["start-date"] || "",
+//       "end-date": card.end_date || card.endDate || card["end-date"] || "",
+//       "card-status": card.status || "",
+//       "card-code": card.card_code || card["card-code"] || "",
+//       style: card.style || {},
+//     }))
+//   );
+// });
 const tableColumns = computed(() => {
   if (currentTab.value === "talent") {
     return [
@@ -967,17 +1090,14 @@ watch(
       return;
     }
     await initMindMap();
-  }
+  },
 );
 
 // When tab or data changes while ALREADY in mindmap view, refresh
-watch(
-  [() => currentTab.value, () => selected_view_agent.value],
-  async () => {
-    if (currentView.value !== "mindmap") return;
-    await initMindMap(); // full re-init since container might re-render
-  }
-);
+watch([() => currentTab.value, () => selected_view_agent.value], async () => {
+  if (currentView.value !== "mindmap") return;
+  await initMindMap(); // full re-init since container might re-render
+});
 
 // Refresh when filtered data changes (search etc.) while in mindmap
 watch(
@@ -992,7 +1112,7 @@ watch(
       // If refresh fails, fall back to full re-init
       await initMindMap();
     }
-  }
+  },
 );
 
 onUnmounted(() => {
@@ -1000,14 +1120,22 @@ onUnmounted(() => {
   destroyMind();
 });
 watch(
-  [() => currentTab.value, () => filteredAgentGroups.value, () => filteredBoard.value],
+  [
+    () => currentTab.value,
+    () => filteredAgentGroups.value,
+    () => filteredBoard.value,
+  ],
   async () => {
     await nextTick();
     mind?.refresh(getCleanMindData());
-  }
+  },
 );
 watch(
-  [() => currentView.value, () => selected_view_agent.value, () => currentTab.value],
+  [
+    () => currentView.value,
+    () => selected_view_agent.value,
+    () => currentTab.value,
+  ],
   async ([view]) => {
     if (view !== "mindmap") return;
     await nextTick();
@@ -1029,9 +1157,8 @@ watch(
       mind.init(getCleanMindData());
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
-
 </script>
 
 <style scoped>
