@@ -87,7 +87,37 @@
             </h1>
           </template>
         </div>
+         <!-- work space  -->
+        <div class="mt-5 mb-4 relstive">
+          <div class="flex items-center justify-between mb-1">
+             <span class="text-xs uppercase tracking-wider text-text-secondary block mb-1">Select Role</span>
+          </div>
+          <BaseSelectField
+            size="md"
+            :model-value="selectedRole"
+            :options="roleOptions"
+            placeholder="Select Role"
+            @click.stop="handleRoleClick"
+            @update:modelValue="handleRoleChange"
+            :disabled="!canEditUser" 
+            :loading="isLoadingWorkspaceRoles || !newCompanyId"
+          />
+          <div v-if="cardDetails?.slug?.includes('agent')" class="flex items-center justify-between mb-1 mt-3">
+             <span class="text-base font-medium text-text-primary block">Select Job Role</span>
+          </div>
+           <BaseSelectField
+            v-if="cardDetails?.slug?.includes('agent')"
+            size="md"
+            :model-value="selectJobRole"
+            :options="jobOptions"
+            placeholder="Select Job Role"
+            @click.stop="handleRoleClick"
+            @update:modelValue="handleRoleChange"
+            :disabled="!canEditUser" 
+            :loading="isLoadingWorkspaceRoles || !newCompanyId"
+          />
 
+        </div>
         <div class="space-y-4">
           <div
             v-if="canViewVariable"
@@ -122,7 +152,7 @@
             <!-- Selection Types -->
             <BaseSelectField
               v-if="item.variable_type_id?.title === 'Select'"
-              size="sm"
+              size="md"
               :model-value="localVarValues[item._id]"
               :placeholder="`Select ${item.title}`"
               @click.stop
@@ -271,97 +301,7 @@
           Add Custom Fields
         </button>
 
-        <!-- work space  -->
-        <div class="mt-5 pt-3 border-t border-border-input relstive">
-          <div class="flex items-center justify-between mb-1">
-             <span class="text-base font-medium text-text-primary block">Select Role</span>
-          </div>
-          <BaseSelectField
-            size="md"
-            :model-value="selectedRole"
-            :options="roleOptions"
-            placeholder="Select Role"
-            @click.stop="handleRoleClick"
-            @update:modelValue="handleRoleChange"
-            :disabled="!canEditUser" 
-            :loading="isLoadingWorkspaceRoles || !newCompanyId"
-          />
-          <div v-if="cardDetails?.slug?.includes('agent')" class="flex items-center justify-between mb-1 mt-3">
-             <span class="text-base font-medium text-text-primary block">Select Job Role</span>
-          </div>
-           <BaseSelectField
-            v-if="cardDetails?.slug?.includes('agent')"
-            size="sm"
-            :model-value="selectJobRole"
-            :options="jobOptions"
-            placeholder="Select Job Role"
-            @click.stop="handleRoleClick"
-            @update:modelValue="handleRoleChange"
-            :disabled="!canEditUser" 
-            :loading="isLoadingWorkspaceRoles || !newCompanyId"
-          />
-
-           <!-- SHOW PERMISSIONS OF SELECTED ROLE -->
-           <div v-if="selectedRoleData && !selectedRoleData.is_admin && isAdmin" class="w-full mt-4">
-              <h2 class="text-base font-medium text-text-primary mb-1">
-                Permissions
-              </h2> 
-
-              <div
-                v-for="category in selectedRoleData?.permission_categories"
-                :key="category?.category"
-                class="border border-border mb-2 rounded-lg overflow-hidden bg-bg-surface/30"
-              >
-                <!-- Category Header -->
-                <button
-                  @click="togglePermissionCategory(category?.category)"
-                  class="w-full px-3 py-2 flex justify-between items-center hover:bg-bg-surface transition"
-                >
-                  <span class="text-sm font-medium text-text-primary">
-                    {{ category?.category_title }}
-                  </span>
-
-                  <i
-                    :class="[
-                      'fa-solid fa-chevron-down text-xs text-text-secondary transition-transform',
-                      openPermissions[category?.category] ? 'rotate-180' : '',
-                    ]"
-                  ></i>
-                </button>
-
-                <!-- Permission List -->
-                <div
-                  v-if="openPermissions[category?.category]"
-                  class=" py-2 border-t border-border bg-bg-card"
-                >
-                  <div
-                    v-for="perm in category?.permissions"
-                    :key="perm._id"
-                    class="flex items-start gap-2 px-3 py-2 hover:bg-bg-input"
-                  >
-                   <Checkbox
-                      :checked="selectedPermissions.includes(perm._id)"
-                      @change="() => { 
-                        const idx = selectedPermissions.indexOf(perm._id);
-                        if (idx === -1) selectedPermissions.push(perm._id);
-                        else selectedPermissions.splice(idx, 1);
-                        handlePermissionUpdate();
-                      }"
-                    />
-                    
-                    <div>
-                      <p class="text-xs font-medium text-text-primary">
-                        {{ perm.title }}
-                      </p>
-                      <p class="text-[11px] text-text-secondary leading-tight">
-                        {{ perm.description }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-        </div>
+       
       </section>
 
       <section v-if="activeTab == 'tasks'" class="mt-3">
@@ -437,6 +377,14 @@
       :loading="isDeleting"
       @confirm="confirmDelete"
     />
+
+    <ManagePermissionsModal
+      v-if="showManagePermissionsModal"
+      :show="showManagePermissionsModal"
+      :companyId="newCompanyId"
+      :initialRoleId="selectedRole"
+      @close="showManagePermissionsModal = false"
+    />
   </div>  
 </template>
 
@@ -495,24 +443,26 @@ const EditVariableModal = defineAsyncComponent(() =>
 const ConfirmModal = defineAsyncComponent(() =>
   import("../../Product/modals/ConfirmDeleteModal.vue")
 );
+const ManagePermissionsModal = defineAsyncComponent(() =>
+  import("../modals/ManagePermissionsModal.vue")
+);
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor"; 
 import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
 
 // workspace roles
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
-import { useUpdatePermissions } from "../../../queries/usePackages"; // Import permissions update hook
 import { toast } from "vue-sonner";
-import { formatPermissionsPayload } from "../../../utilities/permissionUtils";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useRouteIds } from "../../../composables/useQueryParams";
 const { workspaceId } = useRouteIds()
-const { canEditUser, isAdmin, canCreateVariable,  canViewVariable,canEditVariable,canDeleteVariable, } = usePermissions();
+const { canEditUser,  canCreateVariable,  canViewVariable,canEditVariable,canDeleteVariable, } = usePermissions();
 const sidePanelStore = useSidePanelStore(); 
 const localVarValues = reactive<any>({});
 const isCreateVar = ref(false);
 const isEditVar = ref(false);
+const showManagePermissionsModal = ref(false);
 const showDeleteModal = ref(false);
 const selectedVarToEdit = ref<any>(null);
 const selectedItem = ref<any>(null);
@@ -725,11 +675,19 @@ const roleOptions = computed(() => {
 
   roles.push({
     _id: "ADD_NEW_ROLE",
-    title: "+ Add New Role",
+    title: "➕ Add New Role",
     customClass:
       "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
     isAction: true,
-  });
+  }, 
+  {
+    _id: "MANAGE_PERMISSIONS",
+    title: "🛠 Manage Permissions",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
+  },
+  );
 
   return roles;
 });
@@ -795,6 +753,11 @@ function handleRoleChange(newRole: any) {
     return;
   }
 
+  if (newRole === 'MANAGE_PERMISSIONS') {
+    showManagePermissionsModal.value = true;
+    return;
+  }
+
   selectedRole.value = newRole;
 
   assignRole({
@@ -803,67 +766,9 @@ function handleRoleChange(newRole: any) {
   });
 }
 
-// Permissions Display Logic
-const selectedRoleData = computed(() => {
-  if (!workspaceRoles.value || !selectedRole.value) return null;
-  return workspaceRoles.value.find((r: any) => r._id === selectedRole.value);
-});
-
-const openPermissions = ref<Record<string, boolean>>({});
-const selectedPermissions = ref<string[]>([]);
-const { mutate: updatePermissions } = useUpdatePermissions();
-
-function togglePermissionCategory(category: string) {
-  openPermissions.value[category] = !openPermissions.value[category];
-}
-
-watch(selectedRoleData, (role) => {
-  if (!role) return;
-  const enabledPermissions: string[] = [];
-  role.permission_categories.forEach((category: any) => {
-    category.permissions.forEach((perm: any) => {
-      if (perm.enabled) enabledPermissions.push(perm._id);
-    });
-  });
-  selectedPermissions.value = enabledPermissions;
-}, { immediate: true });
+// Permissions Display Logic removed as it is now in ManagePermissionsModal
 
 
-function handlePermissionUpdate() {
-   if (!selectedRoleData.value?._id) return;
-   
-   const allPermissions: any[] = [];
-   selectedRoleData.value.permission_categories.forEach((cat: any) => {
-     cat.permissions.forEach((p: any) => allPermissions.push(p));
-   });
-
-   const formatted = formatPermissionsPayload(allPermissions, selectedPermissions.value);
-
-   // Optimistic update for role object in workspaceRoles is tricky without refetch, 
-   // but updatePermissions invalidates queries usually.
-   updatePermissions({
-    roleId: selectedRoleData.value._id,
-    payload: {
-      title: selectedRoleData.value.title,
-      description: selectedRoleData.value.description,
-      is_admin: selectedRoleData.value.is_admin,
-      is_editor: selectedRoleData.value.is_editor,
-      is_viewer: selectedRoleData.value.is_viewer,
-      permission_ids: formatted.permission_ids,
-      module_permissions: formatted.module_permissions,
-      workspace_id: workspaceId.value
-    },
-  }, {
-     onSuccess: () => {
-         toast.success("Permissions updated successfully");
-         queryClient.invalidateQueries({ queryKey: ["workspace-roles"] });
-     },
-     onError: (err: any) => {
-         console.error("Failed to update permissions", err);
-         toast.error("Failed to update permissions");
-     }
-  });
-}
 
 // Add Role Modal
 const showAddRoleModal = ref(false);
