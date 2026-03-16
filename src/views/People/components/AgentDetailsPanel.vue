@@ -595,6 +595,7 @@ const emit = defineEmits([
   "update:details",
   "comment:post",
   "priority:change",
+  "persona-updated"
 ]);
 
 const form = ref<any>({
@@ -729,7 +730,6 @@ const submitPersona = async () => {
     toast.error("Please fill in required fields!");
     return;
   }
-  console.log(agentConfig.capabilities);
   
   isLoading.value = true;
   try {
@@ -752,6 +752,7 @@ const submitPersona = async () => {
     await agentStore.trainPersona(workspaceId.value, payload);
     isLoading.value = false;
     resetAgentConfig();
+    emit("persona-updated");
   } catch (err) {
     isLoading.value = false;
   } finally {
@@ -823,23 +824,20 @@ const updateAgent = async (agent: string) => {
     competencies: agentConfig.competencies,
     capabilities: agentConfig.capabilities,
     conditions_rules: agentConfig.conditions_rules,
-    workspace_role_id: selectedRole.value,
-    workspace_access_role_id: selectJobRole.value,
+    workspace_role_id: selectJobRole.value,
+    workspace_access_role_id: selectedRole.value,
   };
-
-  // const payload = getChangedFields(agentConfig, currentPayload);
-
-  // if (!Object.keys(payload).length) return;
-
   await agentStore.updateSelectedAgent(workspaceId.value, currentPayload, agent);
   await fetchAssignedAgents();
   await loadAgentSettings();
+  emit("persona-updated");
 };
 const deleteAgent = async (agent: string) => {
   await agentStore.deleteSelectedAgent(workspaceId.value, agent);
   await fetchAssignedAgents();
   await loadAgentSettings();
   resetAgentConfig();
+  emit("persona-updated");
 };
 // knowledge based
 const isKnowledgeLoading = ref(false);

@@ -535,8 +535,10 @@ export const useAgentStore = defineStore("agent", {
           },
         });
         this.isUpdatingAgent = false;
+        toast.success("Agent configuration has been updated successfully.");
       } catch (err) {
-        console.error("❌ Failed to update agent settings:", err);
+        toast.error("Failed to update agent Agent configuration")
+        console.error("Failed to update agent settings:", err);
         this.isUpdatingAgent = false;
         throw err;
       } finally {
