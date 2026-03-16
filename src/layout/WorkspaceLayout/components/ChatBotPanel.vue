@@ -1345,11 +1345,15 @@ const agentsCreated = computed(() => {
 const agentOptions = computed(() =>
   (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
     _id: agent._id,
-    title: agent.name,
+    title: agent.name.includes(" ") ? agent.name : `${agent.name} agent`,
     description: agent.description,
     icon: {
       prefix: "fa-solid",
-      iconName: `fa-circle ${isSocketConnected.value ? "bg-green-500 border text-green-500 rounded-full" : "text-red-500 border rounded-full bg-red-500 rounded-full"} text-[6px]`,
+      iconName: `fa-circle ${
+        isSocketConnected.value
+          ? "bg-green-500 border text-green-500 rounded-full"
+          : "text-red-500 border rounded-full bg-red-500 rounded-full"
+      } text-[6px]`,
     },
   })),
 );
