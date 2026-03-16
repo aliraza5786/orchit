@@ -430,6 +430,7 @@
   <DetailPanel @close="selectCardHandler(null)" :showPanel="showPanel" />
   <AgentsDetailPanel
     @close="selectAgentHandler(null)"
+    @persona-updated="handlePersonaUpdated"
     :showAgentPanel="showAgentPanel"
   />
 </template>
@@ -621,7 +622,9 @@ async function fetchAgents() {
     isFetchingAgents.value = false;
   }
 }
-
+const handlePersonaUpdated = async () => {
+  await fetchAgents();
+};
 watch(
   () => selected_view_agent.value,
   (newVal, oldVal) => {
