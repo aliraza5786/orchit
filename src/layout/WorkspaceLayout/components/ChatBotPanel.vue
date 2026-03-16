@@ -1903,8 +1903,8 @@ const submitPersona = async () => {
       competencies: agentConfig.competencies,
       capabilities: agentConfig.capabilities,
       conditions_rules: agentConfig.conditions_rules,
-      workspace_role_id: selectedRole.value,
-      workspace_access_role_id: selectJobRole.value,
+      workspace_role_id: selectJobRole.value,
+      workspace_access_role_id: selectedRole.value,
     };
     await agentStore.trainPersona(workspaceId.value, payload);
     isLoading.value = false;
@@ -1941,8 +1941,8 @@ const updateAgent = async (agent: string) => {
     competencies: agentConfig.competencies,
     capabilities: agentConfig.capabilities,
     conditions_rules: agentConfig.conditions_rules,
-    workspace_role_id: selectedRole.value,
-    workspace_access_role_id: selectJobRole.value,
+    workspace_role_id: selectJobRole.value,
+    workspace_access_role_id: selectedRole.value,
   };
 
   const payload = getChangedFields(originalAgentConfig.value, currentPayload);
