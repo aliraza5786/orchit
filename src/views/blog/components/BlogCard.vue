@@ -55,7 +55,7 @@ function goToDetail() {
       </p>
 
       <h3
-        class="font-manrope text-[18px] sm:text-[20px] font-semibold leading-[28px] font-normal mb-[8px] text-text-primary group-hover:text-accent transition"
+        class="font-manrope text-[18px] sm:text-[20px] font-semibold leading-[28px] mb-[8px] text-text-primary group-hover:text-accent transition"
       >
         {{ blog.title }}
       </h3>

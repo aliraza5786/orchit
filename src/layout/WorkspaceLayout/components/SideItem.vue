@@ -61,22 +61,30 @@
   <div
     v-if="activeDropdownId === props.id"
     ref="dropdownRef"
-    class="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-bg-card z-50"
+    class="absolute right-[-8px] top-7 w-44 rounded-md shadow-lg bg-bg-card z-50"
   >
   <ul>
     <li>
       <button
-      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer flex items-center"
       @click.stop="emitDelete"
     >
-      Delete Module
-    </button></li>
+        <i class="fa-solid fa-trash text-red-500 text-[11px] me-1"></i> Delete Module
+    </button>
+  </li>
    <li>
     <button
       class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
       @click.stop="emitConfigure"
     >
-      Configure Agent
+     <i class="fa-solid fa-gear text-[11px] me-1"></i> Configure Agent
+    </button>
+    </li>
+    <li>
+    <button
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+    >
+     <i class="fa-solid fa-share-nodes text-[11px] me-1"></i> Share Module
     </button>
     </li>
   </ul>

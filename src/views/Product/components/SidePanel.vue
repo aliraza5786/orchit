@@ -1532,6 +1532,14 @@ const initLocalVars = () => {
     });
   }
 };
+watch(() => cardDetails.value, (newDetails) => {
+  if (newDetails?.variables) {
+    newDetails.variables.forEach((variable: any) => {
+      // This ensures the slug (e.g., 'card-type') is mapped to its value
+      localVarValues[variable.slug] = variable.value;
+    });
+  }
+}, { immediate: true });
 
 onMounted(initLocalVars);
 watch(() => cardDetails.value, initLocalVars, { deep: true });
