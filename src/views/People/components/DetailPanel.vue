@@ -1,3 +1,5 @@
+//DetailPanel.vue
+
 <template>
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
@@ -515,7 +517,6 @@ watch(
   () => {
     // clear previous values
     Object.keys(localVarValues).forEach(key => delete localVarValues[key]);
-    console.log(cardDetails.value, 'crdd')
     if (cardDetails.value?.variable_values) {
       cardDetails.value.variable_values.forEach((v: any) => {
         localVarValues[v.module_variable_id] = v.value;
