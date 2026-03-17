@@ -83,6 +83,7 @@
     <li>
     <button
       class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+      @click.stop="emitShare"
     >
      <i class="fa-solid fa-share-nodes text-[11px] me-1"></i> Share Module
     </button>
@@ -112,7 +113,7 @@
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useWorkspaceStore } from "../../../stores/workspace";
-const emit = defineEmits(['toggleDropdown','delete','closeDropdown'])
+const emit = defineEmits(['toggleDropdown','delete','closeDropdown','share'])
 /** --- PROPS --- **/
 const props = defineProps<{
   label: string;
@@ -174,6 +175,10 @@ const emitConfigure = () => {
   emit('closeDropdown')
   workspaceStore.toggleChatBotPanel()
   workspaceStore.saveAgentModule(props.label)
+}
+const emitShare = () => {
+  emit('closeDropdown')
+  emit('share', props.id)
 }
 const connectStream = () => {
   if (stopped) return;

@@ -96,6 +96,7 @@
     iconName:'ellipsis'
   }"
   @delete="deleteModule"
+  @share="openShareModal"
   @toggleDropdown="toggleDropdown"
   @closeDropdown="activeDropdownId = null"
 />
@@ -193,11 +194,18 @@
   </div>
 </div>
 
+<ShareModal
+  v-if="showShareModal"
+  v-model="showShareModal"
+  :resourceId="activeShareId"
+/>
+
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import SideItem from "./SideItem.vue";
+import ShareModal from "./ShareModal.vue";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { usePermissions } from "../../../composables/usePermissions";
 import SidebarSkeleton from "../../../components/skeletons/SidebarSkeleton.vue";
@@ -216,10 +224,17 @@ const {
 const { refetch } = useSingleWorkspace(workspaceId);
 const workspaceStore = useWorkspaceStore();
 const activeDropdownId = ref<string | null>(null)
+const showShareModal = ref(false)
+const activeShareId = ref<string | undefined>(undefined)
 
 function toggleDropdown(id: string) {
   activeDropdownId.value =
     activeDropdownId.value === id ? null : id
+}
+
+function openShareModal(id: string) {
+  activeShareId.value = id;
+  showShareModal.value = true;
 }
 
 // Use store data for workspace
