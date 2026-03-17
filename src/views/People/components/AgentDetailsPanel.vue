@@ -1,3 +1,5 @@
+//agentDetails.vue
+
 <template>
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
@@ -532,7 +534,7 @@ const isEditMode = computed(() => !!agentConfig.id);
 watch(
   () => updateAgentData.value,
   (val) => {
-    if (val === "new") {
+    if (val?.module_id) {
       resetAgentConfig();
     }
   },
@@ -581,7 +583,6 @@ watch(
   () => {
     // clear previous values
     Object.keys(localVarValues).forEach((key) => delete localVarValues[key]);
-    console.log(cardDetails.value, "crdd");
     if (cardDetails.value?.variable_values) {
       cardDetails.value.variable_values.forEach((v: any) => {
         localVarValues[v.module_variable_id] = v.value;
@@ -734,8 +735,8 @@ const submitPersona = async () => {
   isLoading.value = true;
   try {
     const payload = {
-      module_id: moduleId.value,
-      module_name: moduleSelected.value,
+      module_id: updateAgentData.value?.module_id,
+      module_name: updateAgentData.value?.title,
       sheet_id: selected_sheet_id.value,
       sheet_name: moduleSelected.value,
       name: agentConfig.name,
