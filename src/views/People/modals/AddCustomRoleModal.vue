@@ -94,7 +94,7 @@
             </div>
           </div>
           <div v-else class="flex justify-center py-4">
-            <Loader />
+            <BaseSpinner />
           </div>
         </div>
 
@@ -120,7 +120,7 @@ import BaseModal from '../../../components/ui/BaseModal.vue';
 import BaseTextField from '../../../components/ui/BaseTextField.vue';
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue';
 import Button from '../../../components/ui/Button.vue';
-import Loader from '../../../components/ui/Loader.vue';
+import BaseSpinner from '../../../components/ui/BaseSpinner.vue';
 import { useAllPermissions, useCreateRole } from '../../../queries/usePeople';
 import { useRouteIds } from '../../../composables/useQueryParams';
 import { toast } from 'vue-sonner';
