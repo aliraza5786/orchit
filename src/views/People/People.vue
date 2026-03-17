@@ -1,3 +1,6 @@
+//people.vue
+
+
 <template>
   <div
     class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
@@ -173,8 +176,10 @@
                         {{ group?.agents.length }}
                       </span>
                     </div>
-
-                    <div class="cursor-pointer" @click="handleAgent('new')">
+                    <div class="cursor-pointer" @click="handleAgent({ 
+                      title: group.title, 
+                      module_id: String(group.module_id) 
+                    })">
                       <i class="fa-solid fa-plus"></i>
                     </div>
                   </div>
@@ -430,6 +435,7 @@
   <DetailPanel @close="selectCardHandler(null)" :showPanel="showPanel" />
   <AgentsDetailPanel
     @close="selectAgentHandler(null)"
+    @persona-updated="handlePersonaUpdated"
     :showAgentPanel="showAgentPanel"
   />
 </template>
@@ -621,7 +627,9 @@ async function fetchAgents() {
     isFetchingAgents.value = false;
   }
 }
-
+const handlePersonaUpdated = async () => {
+  await fetchAgents();
+};
 watch(
   () => selected_view_agent.value,
   (newVal, oldVal) => {
@@ -665,9 +673,14 @@ const handleClickAgent = (agent: any) => {
   sidePanelStore.selectCard(agent);
   showAgentPanel.value = true;
 };
-const handleAgent = (key: any) => {
+type AgentPayload = {
+  title: string;
+  module_id: string;
+};
+
+const handleAgent = (payload: AgentPayload) => {
   showAgentPanel.value = true;
-  sidePanelStore.selectCard(key);
+  sidePanelStore.selectCard(payload);
 };
 const handleBoardUpdate = (_: any) => {};
 

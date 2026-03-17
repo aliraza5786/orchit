@@ -270,6 +270,16 @@ export const useInvitePeople = (options = {}) =>
     options as any
   );
 
+export const useShareResource = (options = {}) =>
+  useApiMutation<{ data: unknown }, any>(
+    {
+      key: ["share-resource"],
+      url: "/share",
+      method: "POST",
+    },
+    options as any
+  );
+
 type UpdateInvitedVars = { id: string | number; payload: any };
 export const useUpdateInvitedWorkspace = (options = {}) =>
   useApiMutation<any, UpdateInvitedVars>(

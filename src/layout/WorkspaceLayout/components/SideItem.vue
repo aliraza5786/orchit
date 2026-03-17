@@ -61,22 +61,31 @@
   <div
     v-if="activeDropdownId === props.id"
     ref="dropdownRef"
-    class="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-bg-card z-50"
+    class="absolute right-[-8px] top-7 w-44 rounded-md shadow-lg bg-bg-card z-50"
   >
   <ul>
     <li>
       <button
-      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer flex items-center"
       @click.stop="emitDelete"
     >
-      Delete Module
-    </button></li>
+        <i class="fa-solid fa-trash text-red-500 text-[11px] me-1"></i> Delete Module
+    </button>
+  </li>
    <li>
     <button
       class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
       @click.stop="emitConfigure"
     >
-      Configure Agent
+     <i class="fa-solid fa-gear text-[11px] me-1"></i> Configure Agent
+    </button>
+    </li>
+    <li>
+    <button
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+      @click.stop="emitShare"
+    >
+     <i class="fa-solid fa-share-nodes text-[11px] me-1"></i> Share Module
     </button>
     </li>
   </ul>
@@ -104,7 +113,7 @@
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useWorkspaceStore } from "../../../stores/workspace";
-const emit = defineEmits(['toggleDropdown','delete','closeDropdown'])
+const emit = defineEmits(['toggleDropdown','delete','closeDropdown','share'])
 /** --- PROPS --- **/
 const props = defineProps<{
   label: string;
@@ -166,6 +175,10 @@ const emitConfigure = () => {
   emit('closeDropdown')
   workspaceStore.toggleChatBotPanel()
   workspaceStore.saveAgentModule(props.label)
+}
+const emitShare = () => {
+  emit('closeDropdown')
+  emit('share', props.id)
 }
 const connectStream = () => {
   if (stopped) return;

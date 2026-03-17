@@ -1,3 +1,5 @@
+//agentDetails.vue
+
 <template>
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
@@ -10,7 +12,7 @@
     <div
       class="pt-[17px] pb-[18px] flex justify-between items-center border-b border-border px-5 sticky top-0 bg-bg-card z-1"
     >
-      <h5 class="text-[16px] font-medium">Agent Profile</h5>
+      <h5 class="text-[16px] font-medium">Agent Configuration</h5>
       <i
         class="cursor-pointer text-text-primary fa-solid fa-close"
         @click="$emit('close')"
@@ -230,43 +232,197 @@
           </div>
         </div>
       </section>
+      <!-- knowledge based -->
+       <div v-if="activeTab === 'knowledge'" class="space-y-6">
+            <!-- Sources -->
+            <div class="space-y-1">
+              <label class="text-sm text-text-primary">Sources</label>
 
-      <section v-if="activeTab == 'knowledge'" class="mt-3">
-        <span class="text-base text-text-primary">Worked On</span>
-        <ul
-          v-if="cardDetails?.assigned_cards?.length > 0"
-          class="border border-border space-y-1 p-2.5 mt-1 rounded-lg"
-        >
-          <li
-            class="p-2"
-            v-for="(item, index) in cardDetails?.assigned_cards"
-            :key="index"
-          >
-            <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
-            <p class="text-xs text-text-secondary">
-              Design Project . Olivia Updated on April 9, 2025
-            </p>
-          </li>
-        </ul>
-      </section>
-      <section v-if="activeTab == 'training'" class="mt-3">
-        <span class="text-base text-text-primary">history</span>
-        <ul
-          v-if="cardDetails?.assignment_history?.length > 0"
-          class="border border-border space-y-1 p-2.5 mt-1 rounded-lg"
-        >
-          <li
-            class="p-2"
-            v-for="(item, index) in cardDetails?.assignment_history"
-            :key="index"
-          >
-            <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>
-            <p class="text-xs text-text-secondary">
-              Design Project . Olivia Updated on April 9, 2025
-            </p>
-          </li>
-        </ul>
-      </section>
+              <div class="flex flex-col mt-2 gap-2">
+                <div
+                  v-for="source in sourceList"
+                  :key="source.value"
+                  class="relative"
+                  ref="refsMap[source.value]"
+                >
+                  <!-- Dropdown Trigger -->
+                  <button
+                    type="button"
+                    @click="toggleSourceDropdown(source.value)"
+                    class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+                  >
+                    <span>
+                      {{ source.label }}
+                    </span>
+                    <i
+                      class="fa-regular fa-chevron-down text-text-secondary transition-transform duration-200"
+                      :class="{ 'rotate-180': openDropdowns[source.value] }"
+                    ></i>
+                  </button>
+
+                  <!-- Dropdown Menu -->
+                  <div
+                    v-if="openDropdowns[source.value]"
+                    class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+                  >
+                    <ul class="py-1 text-sm flex flex-col gap-1">
+                      <label for="permissions" class="px-3 pt-2 font-semibold"
+                        >Permissions</label
+                      >
+                      <li
+                        v-for="perm in permissionsMap[source.value]"
+                        :key="perm.value"
+                        class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover flex items-center gap-2"
+                      >
+                        <input
+                          type="checkbox"
+                          v-model="
+                            knowledgePermissions[
+                              source.value as keyof typeof knowledgePermissions
+                            ][
+                              perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
+                            ]
+                          "
+                          class="h-4 w-4 rounded border-border"
+                        />
+                        <span>{{
+                          getPermissionLabel(
+                            source.value as keyof typeof knowledgePermissions,
+                            perm.value,
+                          )
+                        }}</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metadata -->
+            <div class="space-y-1">
+              <label class="text-sm text-text-primary">Metadata (JSON)</label>
+              <textarea
+                v-model="knowledgeMetadataString"
+                rows="4"
+                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+              />
+            </div>
+
+            <!-- Active Checkbox -->
+            <div class="flex items-center gap-3">
+              <input type="checkbox" v-model="knowledgeConfig.is_active" />
+              <span class="text-sm text-text-primary">Active Source</span>
+            </div>
+
+            <!-- Submit Button -->
+            <button
+              @click="submitKnowledge"
+              :disabled="isKnowledgeLoading || !moduleSelected"
+              class="w-full mt-4 px-4 py-2.5 text-sm rounded-lg cursor-pointer text-white bg-accent hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <span v-if="isKnowledgeLoading">Saving...</span>
+              <span v-else>Save Knowledge</span>
+            </button>
+          </div>
+        <div v-if="activeTab === 'training'" class="space-y-6">
+            <!-- Training Name -->
+            <div class="space-y-1">
+              <label class="text-sm text-text-primary">Training Name</label>
+              <input
+                v-model="uploadConfig.name"
+                disabled
+                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+              />
+            </div>
+
+            <!-- Type -->
+            <div class="space-y-1 relative" ref="typeRef">
+              <label class="text-sm text-text-primary">Type</label>
+              <button
+                type="button"
+                @click="openType = !openType"
+                class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+              >
+                <span>{{ selectedTypeLabel }}</span>
+                <svg
+                  class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              <div
+                v-if="openType"
+                class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+              >
+                <ul class="py-1 text-sm">
+                  <li
+                    v-for="type in availableUploadTypes"
+                    :key="type.value"
+                    @click="selectType(type.value)"
+                    class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
+                  >
+                    {{ type.label }}
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Training Text -->
+            <div class="space-y-1">
+              <label class="text-sm text-text-primary">Training Text</label>
+              <textarea
+                v-model="uploadConfig.text"
+                rows="4"
+                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+              />
+            </div>
+
+            <!-- File Upload -->
+            <input
+              type="file"
+              multiple
+              @change="handleUploadFiles"
+              class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm"
+            />
+
+            <!-- Uploaded Files List -->
+            <div
+              v-for="(file, i) in uploadConfig.files"
+              :key="i"
+              class="flex justify-between text-sm border border-border rounded-lg px-3 py-2"
+            >
+              <span>{{ file.name }}</span>
+              <button
+                @click="uploadConfig.files.splice(i, 1)"
+                class="text-red-500"
+              >
+                Remove
+              </button>
+            </div>
+
+            <!-- Save / Upload Button -->
+            <button
+              @click="submitTrainingContent"
+              :disabled="
+                !uploadConfig.name ||
+                (uploadConfig.text === '' && uploadConfig.files.length === 0) ||
+                isUploading
+              "
+              class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span v-if="isUploading">Uploading...</span>
+              <span v-else>Upload Training Content</span>
+            </button>
+          </div>
     </div>
 
     <ConfirmModal
@@ -378,35 +534,12 @@ const isEditMode = computed(() => !!agentConfig.id);
 watch(
   () => updateAgentData.value,
   (val) => {
-    if (val === "new") {
+    if (val?.module_id) {
       resetAgentConfig();
     }
   },
 );
-watch(
-  () => updateAgentData.value,
-  (data) => {
-    if (!data?.agents?.length) return;
 
-    const agent = data.agents[0];
-
-    agentConfig.id = agent._id;
-    agentConfig.name = agent.name;
-    agentConfig.description = agent.description;
-    agentConfig.level = agent.level;
-
-    agentConfig.responsibilities = [...(agent.responsibilities || [])];
-    agentConfig.skills = [...(agent.skills || [])];
-    agentConfig.competencies = [...(agent.competencies || [])];
-    agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
-
-    agentConfig.capabilities = [...(agent.capabilities || [])];
-
-    selectedRole.value = agent.role;
-    selectJobRole.value = agent.role;
-  },
-  { immediate: true },
-);
 function selectSheet(id: string) {
   selected_sheet_id.value = id;
   openSheet.value = false;
@@ -450,7 +583,6 @@ watch(
   () => {
     // clear previous values
     Object.keys(localVarValues).forEach((key) => delete localVarValues[key]);
-    console.log(cardDetails.value, "crdd");
     if (cardDetails.value?.variable_values) {
       cardDetails.value.variable_values.forEach((v: any) => {
         localVarValues[v.module_variable_id] = v.value;
@@ -464,6 +596,7 @@ const emit = defineEmits([
   "update:details",
   "comment:post",
   "priority:change",
+  "persona-updated"
 ]);
 
 const form = ref<any>({
@@ -521,7 +654,30 @@ watch(
   },
   { immediate: true },
 );
+watch(
+  () => updateAgentData.value,
+  (data) => {
+    if (!data?.agents?.length) return;
 
+    const agent = data.agents[0];
+
+    agentConfig.id = agent._id;
+    agentConfig.name = agent.name;
+    agentConfig.description = agent.description;
+    agentConfig.level = agent.level;
+
+    agentConfig.responsibilities = [...(agent.responsibilities || [])];
+    agentConfig.skills = [...(agent.skills || [])];
+    agentConfig.competencies = [...(agent.competencies || [])];
+    agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
+    agentConfig.capabilities = [...(agent.capabilities || [])];
+
+    // Match dropdown IDs
+    selectedRole.value = agent.workspace_role_id || null;
+    selectJobRole.value = agent.workspace_access_role_id || null;
+  },
+  { immediate: true },
+);
 const { mutate: deleteVarDef, isPending: isDeleting } = useDeletePeopleVarDef();
 
 function confirmDelete() {
@@ -575,11 +731,12 @@ const submitPersona = async () => {
     toast.error("Please fill in required fields!");
     return;
   }
+  
   isLoading.value = true;
   try {
     const payload = {
-      module_id: moduleId.value,
-      module_name: moduleSelected.value,
+      module_id: updateAgentData.value?.module_id,
+      module_name: updateAgentData.value?.title,
       sheet_id: selected_sheet_id.value,
       sheet_name: moduleSelected.value,
       name: agentConfig.name,
@@ -590,12 +747,13 @@ const submitPersona = async () => {
       competencies: agentConfig.competencies,
       capabilities: agentConfig.capabilities,
       conditions_rules: agentConfig.conditions_rules,
-      workspace_role_id: selectedRole.value,
-      workspace_access_role_id: selectJobRole.value,
+      workspace_role_id: selectJobRole.value,
+      workspace_access_role_id: selectedRole.value,
     };
     await agentStore.trainPersona(workspaceId.value, payload);
     isLoading.value = false;
     resetAgentConfig();
+    emit("persona-updated");
   } catch (err) {
     isLoading.value = false;
   } finally {
@@ -655,21 +813,7 @@ async function fetchAssignedAgents() {
     // moduleId.value,
   );
 }
-
-const getChangedFields = (original: any, current: any) => {
-  const changed: Record<string, any> = {};
-
-  Object.keys(current).forEach((key) => {
-    if (JSON.stringify(original[key]) !== JSON.stringify(current[key])) {
-      changed[key] = current[key];
-    }
-  });
-
-  return changed;
-};
 const updateAgent = async (agent: string) => {
-  console.log("agents data", agent);
-
   if (!agent) return;
 
   const currentPayload = {
@@ -681,23 +825,287 @@ const updateAgent = async (agent: string) => {
     competencies: agentConfig.competencies,
     capabilities: agentConfig.capabilities,
     conditions_rules: agentConfig.conditions_rules,
-    workspace_role_id: selectedRole.value,
-    workspace_access_role_id: selectJobRole.value,
+    workspace_role_id: selectJobRole.value,
+    workspace_access_role_id: selectedRole.value,
   };
-
-  const payload = getChangedFields(agentConfig, currentPayload);
-
-  if (!Object.keys(payload).length) return;
-
-  await agentStore.updateSelectedAgent(workspaceId.value, payload, agent);
+  await agentStore.updateSelectedAgent(workspaceId.value, currentPayload, agent);
   await fetchAssignedAgents();
   await loadAgentSettings();
+  emit("persona-updated");
 };
 const deleteAgent = async (agent: string) => {
   await agentStore.deleteSelectedAgent(workspaceId.value, agent);
   await fetchAssignedAgents();
   await loadAgentSettings();
   resetAgentConfig();
+  emit("persona-updated");
+};
+// knowledge based
+const isKnowledgeLoading = ref(false);
+const sourceList = [
+  { label: "Internal Ticket", value: "INTERNAL_TICKET" },
+  { label: "Internal Module", value: "INTERNAL_MODULE" },
+  { label: "Internal Sheet", value: "INTERNAL_SHEET" },
+  { label: "Web Search", value: "WEB_SEARCH" },
+  { label: "Prompt", value: "PROMPT" },
+];
+// Dropdown open state
+const openDropdowns = reactive<Record<string, boolean>>({
+  INTERNAL_TICKET: false,
+  INTERNAL_MODULE: false,
+  INTERNAL_SHEET: false,
+  WEB_SEARCH: false,
+  PROMPT: false,
+});
+function toggleSourceDropdown(source: string) {
+  openDropdowns[source] = !openDropdowns[source];
+}
+const defaultPermissions = [
+  { label: "Create", value: "create" },
+  { label: "View", value: "view" },
+  { label: "Update", value: "update" },
+  { label: "Delete", value: "delete" },
+];
+
+const permissionsMap: Record<string, typeof defaultPermissions> = {
+  INTERNAL_TICKET: defaultPermissions,
+  INTERNAL_MODULE: defaultPermissions,
+  INTERNAL_SHEET: defaultPermissions,
+  WEB_SEARCH: defaultPermissions,
+  PROMPT: defaultPermissions,
+};
+const knowledgePermissions = reactive<
+  Record<
+    | "INTERNAL_TICKET"
+    | "INTERNAL_MODULE"
+    | "INTERNAL_SHEET"
+    | "WEB_SEARCH"
+    | "PROMPT",
+    {
+      create: boolean;
+      Edit: boolean;
+      delete: boolean;
+      view: boolean;
+    }
+  >
+>({
+  INTERNAL_TICKET: { create: false, Edit: false, delete: false, view: false },
+  INTERNAL_MODULE: { create: false, Edit: false, delete: false, view: false },
+  INTERNAL_SHEET: { create: false, Edit: false, delete: false, view: false },
+  WEB_SEARCH: { create: false, Edit: false, delete: false, view: false },
+  PROMPT: { create: false, Edit: false, delete: false, view: false },
+});
+function getPermissionLabel(
+  source: keyof typeof knowledgePermissions,
+  perm: string,
+) {
+  // Map for "create" actions
+  const createMap: Record<string, string> = {
+    INTERNAL_TICKET: "Ticket",
+    INTERNAL_MODULE: "Module",
+    INTERNAL_SHEET: "Sheet",
+    WEB_SEARCH: "Search",
+    PROMPT: "Prompt",
+  };
+
+  if (perm === "create") return `Create ${createMap[source]}`;
+  if (perm === "update") return `Update ${createMap[source]}`;
+  if (perm === "delete") return `Delete ${createMap[source]}`;
+  if (perm === "view") return `View ${createMap[source]}`;
+
+  return perm;
+}
+
+const knowledgeMetadataString = computed({
+  get: () => JSON.stringify(knowledgeConfig.metadata, null, 2),
+  set: (val: string) => {
+    try {
+      knowledgeConfig.metadata = JSON.parse(val || "{}");
+    } catch {
+      console.warn("Invalid JSON metadata");
+    }
+  },
+});
+interface KnowledgeConfig {
+  module_id: string;
+  module_name: string;
+  sources: Record<
+    | "INTERNAL_TICKET"
+    | "INTERNAL_MODULE"
+    | "INTERNAL_SHEET"
+    | "WEB_SEARCH"
+    | "PROMPT",
+    boolean
+  >;
+  is_active: boolean;
+  metadata: Record<string, any>;
+}
+
+interface KnowledgePayload {
+  module_id: string;
+  module_name: string;
+  sources: Array<{ source_type: string }>;
+  is_active: boolean;
+  metadata: Record<string, any>;
+}
+
+const knowledgeConfig = reactive<KnowledgeConfig>({
+  module_id: moduleId.value,
+  module_name: moduleSelected.value,
+  sources: {
+    INTERNAL_TICKET: true,
+    INTERNAL_MODULE: false,
+    INTERNAL_SHEET: false,
+    WEB_SEARCH: false,
+    PROMPT: false,
+  },
+  is_active: true,
+  metadata: {},
+});
+const getSelectedSourcesArray = (
+  sources: KnowledgeConfig["sources"],
+): Array<keyof typeof sources> => {
+  return Object.keys(sources).filter(
+    (key) => sources[key as keyof typeof sources],
+  ) as Array<keyof typeof sources>;
+};
+const submitKnowledge = async () => {
+  if (!workspaceId.value) return;
+  isKnowledgeLoading.value = true;
+
+  try {
+    const selectedSources = getSelectedSourcesArray(knowledgeConfig.sources);
+    const payload: KnowledgePayload = {
+      module_id: knowledgeConfig.module_id,
+      module_name: knowledgeConfig.module_name,
+      sources: selectedSources.map((source) => ({
+        source_type: source,
+        permissions: knowledgePermissions[source],
+      })),
+      is_active: knowledgeConfig.is_active,
+      metadata: knowledgeConfig.metadata,
+    };
+
+    await agentStore.trainKnowledge(workspaceId.value, payload);
+    toast.success("Knowledge trained successfully!");
+
+    // Reset after save
+    knowledgeConfig.module_id = "";
+    knowledgeConfig.module_name = "";
+    knowledgeConfig.metadata = {};
+    knowledgeConfig.sources = {
+      INTERNAL_TICKET: true,
+      INTERNAL_MODULE: false,
+      INTERNAL_SHEET: false,
+      WEB_SEARCH: false,
+      PROMPT: false,
+    };
+    knowledgeConfig.is_active = true;
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to train knowledge");
+  } finally {
+    isKnowledgeLoading.value = false;
+    loadAgentSettings();
+  }
+};
+// training content
+const openType = ref(false);
+type UploadType =
+  | "TEXT"
+  | "URL"
+  | "CMS_PAGE"
+  | "MIXED"
+  | "UPLOAD"
+  | "INTERNAL_MODULE"
+  | "INTERNAL_SHEET"
+  | "INTERNAL_TICKET"
+  | "WEB_SEARCH"
+  | "PROMPT";
+
+// Updated UploadConfig interface
+interface UploadConfig {
+  name: string;
+  text: string;
+  type: UploadType;
+  files: File[];
+  module_id: string;
+  module_name: string;
+}
+// Reactive object with default values
+const uploadConfig = reactive<UploadConfig>({
+  name: route.path.includes("peak") ? "Peak Agent" : moduleSelected.value,
+  text: "",
+  type: "TEXT",
+  files: [],
+  module_id: "",
+  module_name: "",
+});
+
+// File upload handler
+const handleUploadFiles = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  if (!target.files) return;
+
+  const files = Array.from(target.files);
+  uploadConfig.files.push(...files);
+
+  // reset input so same file can be re-uploaded
+  target.value = "";
+};
+const availableUploadTypes = [
+  { value: "TEXT" as UploadType, label: "Text Content" },
+  { value: "URL" as UploadType, label: "URL/Link" },
+  { value: "CMS_PAGE" as UploadType, label: "CMS Page" },
+  { value: "MIXED" as UploadType, label: "Mixed Content" },
+];
+// Loading state
+const isUploading = ref(false);
+const selectedTypeLabel = computed(() => {
+  const found = availableUploadTypes.find((t) => t.value === uploadConfig.type);
+  return found ? found.label : uploadConfig.type;
+});
+const selectType = (type: UploadType) => {
+  uploadConfig.type = type;
+  openType.value = false;
+};
+const submitTrainingContent = async () => {
+  if (!workspaceId.value) return;
+
+  // Validate
+  if (
+    !uploadConfig.name ||
+    (uploadConfig.text === "" && uploadConfig.files.length === 0)
+  ) {
+    toast.error("Please provide a name and either text or files");
+    return;
+  }
+
+  isUploading.value = true;
+
+  try {
+    await agentStore.uploadTrainingContent(workspaceId.value, {
+      ...uploadConfig,
+      module_id: moduleId.value || "",
+      module_name: moduleSelected.value || "",
+    });
+
+    toast.success("Training content uploaded successfully!");
+
+    // Reset form
+    uploadConfig.name = "";
+    uploadConfig.text = "";
+    uploadConfig.type = "TEXT";
+    uploadConfig.files = [];
+    uploadConfig.module_id = "";
+    uploadConfig.module_name = "";
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to upload training content");
+  } finally {
+    isUploading.value = false;
+    loadAgentSettings();
+  }
 };
 </script>
 

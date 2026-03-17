@@ -411,10 +411,11 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
 
 const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
 const selected_view_by = ref(viewBy);
-
-const selected_sprint_id = computed(() => localStorage.getItem("activeSprintKey"));
+const selected_sprint_id = ref(localStorage.getItem("activeSprintKey"));
 const { data: Lists, isPending, refetch: refetchSheetLists } = useSprintKanban(selected_sprint_id, laneIds);
-
+watch(selected_sprint_id, () => {
+  refetchSheetLists();
+});
 interface DropdownOption {
   _id: string;
   title: string;
