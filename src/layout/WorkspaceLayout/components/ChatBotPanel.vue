@@ -575,6 +575,8 @@
               </div>
             </template>
           </Dropdown>
+          
+          
         </h5>
         <div class="flex items-center gap-3 shrink-0">
           <!-- Expand Icon -->
@@ -620,11 +622,12 @@
             <div class="chat-loader"></div>
             <span class="text-xs">Loading conversation...</span>
           </div>
-        </div>
+        </div>   
         <!-- KEEPING YOUR FULL ORIGINAL CHAT CONTENT EXACTLY SAME -->
         <template
           v-else-if="orderedMessages.length || isAiThinkingBubbleVisible"
         >
+       
           <div
             v-for="msg in orderedMessages"
             :key="msg._id"
@@ -835,6 +838,11 @@ const selectJobRole = ref("");
 const agentsData = computed(() => {
   return agentStore.agentSettings.agent;
 });
+const agentPassedData = computed(() =>{
+  return agentStore.agentPassed;
+})
+const agentModuleId = computed(() => agentStore.module_id);
+const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => {
   return agentStore?.agentSettings?.knowledge;
 });
@@ -854,7 +862,17 @@ const sheetName = computed(() => {
   }
   return sheetNameRef.value || "";
 });
+const isTalentRoute = computed(() => route.path?.includes('talent'));
 
+watch(
+  [isTalentRoute, agentPassedData],
+  ([isTalent, agentData]) => {
+    if (isTalent && agentData?._id) {
+      selectedAgentId.value = agentData._id;
+    }
+  },
+  { immediate: true }
+);
 const sheetId = computed(() => {
   if (
     route.path.includes("peak") ||
@@ -1022,6 +1040,7 @@ watch(
     scrollToBottom();
   },
 );
+
 // Socket
 function initSocket() {
   const token = localStorage.getItem("token");
@@ -1043,30 +1062,36 @@ function initSocket() {
     isSocketConnected.value = false;
   });
 
-  socket.value.on("realtime-update", async (data: any) => {
-    if (data.type === "agent-response" || data.type === "message_complete") {
-      isAiThinkingBubbleVisible.value = false;
-      agentStore.isAiTyping = false;
-      agentStore.fetchChatHistory(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        moduleSelected.value ?? undefined,
-        moduleId.value ?? undefined,
-        sheetName.value && !isMongoId(sheetName.value)
-          ? sheetName.value
-          : undefined,
-        // sheetId.value
-      );
+   socket.value.on("realtime-update", async (data: any) => {
+  if (data.type === "agent-response" || data.type === "message_complete") {
+    isAiThinkingBubbleVisible.value = false;
+    agentStore.isAiTyping = false;
 
-      await agentStore.fetchCreatedEntities(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        moduleSelected.value ?? undefined,
-        moduleId.value ?? undefined,
-      );
-      scrollToBottom();
-    }
-  });
+    const useAgentModule =
+      route.path.includes("talent") &&
+      agentModuleId.value &&
+      agentModuleName.value;
+
+    agentStore.fetchChatHistory(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      useAgentModule ? agentModuleName.value : moduleSelected.value,
+      useAgentModule ? agentModuleId.value : moduleId.value,
+      sheetName.value && !isMongoId(sheetName.value)
+        ? sheetName.value
+        : undefined,
+    );
+
+    await agentStore.fetchCreatedEntities(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      useAgentModule ? agentModuleName.value : moduleSelected.value,
+      useAgentModule ? agentModuleId.value : moduleId.value,
+    );
+
+    scrollToBottom();
+  }
+});
 
   socket.value.onAny((eventName, ...args) => {
     console.log("Socket event:", eventName, args);
@@ -1102,21 +1127,32 @@ async function sendMessage() {
       user_id: authStore.userId as string,
       message,
       agent_id: selectedAgentId.value as string,
-      module_id: moduleId.value as string,
-      module_name: moduleSelected.value as string,
+      // Use agent module values if on talent route
+      module_id:
+        route.path.includes("talent") && agentModuleId.value
+          ? agentModuleId.value
+          : moduleId.value as string,
+      module_name:
+        route.path.includes("talent") && agentModuleName.value
+          ? agentModuleName.value
+          : moduleSelected.value as string,
       lane_id: workspaceStore.selectedLaneIds?.[0] ?? "",
       sheet_id: route.params.sheet_id as string,
       card_id: route.params.card_id as string,
       session_id: sessionId as string,
-      stream: true as boolean,
+      stream: true,
     });
 
     await Promise.all([
       agentStore.fetchChatHistory(
         workspaceId.value,
         authStore.userId ?? undefined,
-        moduleSelected.value ?? undefined,
-        moduleId.value ?? undefined,
+        route.path.includes("talent") && agentModuleName.value
+          ? agentModuleName.value
+          : moduleSelected.value ?? undefined,
+        route.path.includes("talent") && agentModuleId.value
+          ? agentModuleId.value
+          : moduleId.value ?? undefined,
         sheetName.value && !isMongoId(sheetName.value)
           ? sheetName.value
           : undefined,
@@ -1125,12 +1161,17 @@ async function sendMessage() {
       agentStore.fetchCreatedEntities(
         workspaceId.value,
         authStore.userId ?? undefined,
-        moduleSelected.value ?? undefined,
-        moduleId.value ?? undefined,
+        route.path.includes("talent") && agentModuleName.value
+          ? agentModuleName.value
+          : moduleSelected.value ?? undefined,
+        route.path.includes("talent") && agentModuleId.value
+          ? agentModuleId.value
+          : moduleId.value ?? undefined,
       ),
       (isExpanded.value = true),
       (showConfigPanel.value = false),
     ]);
+
     pendingMessages.value = [];
     scrollToBottom();
     isAiThinkingBubbleVisible.value = false;
@@ -1201,8 +1242,12 @@ onMounted(() => {
     agentStore.fetchChatHistory(
       workspaceId.value,
       authStore.userId ?? undefined,
-      moduleSelected.value ?? undefined,
-      moduleId.value ?? undefined,
+      route.path.includes("talent") && agentModuleName.value
+        ? agentModuleName.value
+        : moduleSelected.value ?? undefined,
+      route.path.includes("talent") && agentModuleId.value
+        ? agentModuleId.value
+        : moduleId.value ?? undefined,
       sheetName.value && !isMongoId(sheetName.value)
         ? sheetName.value
         : undefined,
@@ -1212,9 +1257,14 @@ onMounted(() => {
     agentStore.fetchCreatedEntities(
       workspaceId.value,
       authStore.userId ?? undefined,
-      moduleSelected.value ?? undefined,
-      moduleId.value ?? undefined,
+      route.path.includes("talent") && agentModuleName.value
+        ? agentModuleName.value
+        : moduleSelected.value ?? undefined,
+      route.path.includes("talent") && agentModuleId.value
+        ? agentModuleId.value
+        : moduleId.value ?? undefined,
     );
+
     if (selectedAgentId.value) {
       loadAgentSettings();
     }
@@ -1223,6 +1273,7 @@ onMounted(() => {
   }
   scrollToBottom();
 });
+
 watch(
   [
     () => workspaceStore.showChatBotPanel,
@@ -1238,8 +1289,12 @@ watch(
     agentStore.fetchChatHistory(
       workspaceId.value,
       authStore.userId ?? undefined,
-      moduleSelected.value ?? undefined,
-      moduleId.value ?? undefined,
+      route.path.includes("talent") && agentModuleName.value
+        ? agentModuleName.value
+        : moduleSelected.value ?? undefined,
+      route.path.includes("talent") && agentModuleId.value
+        ? agentModuleId.value
+        : moduleId.value ?? undefined,
       sheetName.value && !isMongoId(sheetName.value)
         ? sheetName.value
         : undefined,
@@ -1249,8 +1304,12 @@ watch(
     await agentStore.fetchCreatedEntities(
       workspaceId.value,
       authStore.userId ?? undefined,
-      moduleSelected.value ?? undefined,
-      moduleId.value ?? undefined,
+      route.path.includes("talent") && agentModuleName.value
+        ? agentModuleName.value
+        : moduleSelected.value ?? undefined,
+      route.path.includes("talent") && agentModuleId.value
+        ? agentModuleId.value
+        : moduleId.value ?? undefined,
     );
 
     // ✅ call ONLY when selectedAgentId changes
@@ -1341,9 +1400,17 @@ onClickOutside(levelRef, () => {
 const agentsCreated = computed(() => {
   return agentStore.agentsCreated;
 });
-
-const agentOptions = computed(() =>
-  (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
+type Agent = {
+  _id: string;
+  name: string;
+  description: string;
+  level?: string;
+  is_active?: boolean;
+  model?: string;
+  role?: string;
+};
+const agentOptions = computed(() => {
+  const base = (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
     _id: agent._id,
     title: agent.name.includes(" ") ? agent.name : `${agent.name} agent`,
     description: agent.description,
@@ -1352,12 +1419,32 @@ const agentOptions = computed(() =>
       iconName: `fa-circle ${
         isSocketConnected.value
           ? "bg-green-500 border text-green-500 rounded-full"
-          : "text-red-500 border rounded-full bg-red-500 rounded-full"
+          : "text-red-500 border rounded-full bg-red-500"
       } text-[6px]`,
     },
-  })),
-);
+  }));
+  const passedAgent = agentPassedData.value;
+  if (
+  isTalentRoute.value &&
+  passedAgent &&
+  !base.find((a: Agent) => a._id === passedAgent._id)
+) {
+  base.unshift({
+    _id: passedAgent._id,
+    title: passedAgent.name,
+    description: passedAgent.description,
+    icon: {
+      prefix: "fa-solid",
+      iconName: "fa-circle text-green-500 text-[6px]",
+    },
+  });
+}
+  return base;
+});
 const selectedAgentName = computed(() => {
+  if (isTalentRoute.value && agentPassedData.value?.name) {
+    return agentPassedData.value.name;
+  }
   const agent = agentsCreated.value?.data?.agents?.find(
     (a: any) => a._id === selectedAgentId.value,
   );
