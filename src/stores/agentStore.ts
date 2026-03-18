@@ -84,6 +84,17 @@ interface UploadConfig {
   module_id: string;
   module_name: string;
 }
+type Agent = {
+  module_id:string,
+  moduleName:string;
+  _id: string;
+  name: string;
+  description: string;
+  level?: string;
+  is_active?: boolean;
+  model?: string;
+  role?: string;
+};
 
 export const useAgentStore = defineStore("agent", {
   state: () => ({
@@ -107,6 +118,9 @@ export const useAgentStore = defineStore("agent", {
     ogTypesTicket: {} as Record<string, any>,
     isLoadingRoles:false,
     agentsRolesPermissions:{} as Record<string, any>,
+    agentPassed: null as Agent | null,
+    module_id: null as string | null,
+    moduleName: null as string | null,
   }),
 
   getters: {
@@ -664,5 +678,12 @@ export const useAgentStore = defineStore("agent", {
         this.isLoadingRoles = false;
       }
     },
+    handleAgentPassed(agent:any, module_id:any, module_name:any){
+      console.log("store module name", module_name);
+      
+      this.agentPassed = agent;
+      this.module_id = module_id;
+      this.moduleName = module_name;
+    }
   },
 });
