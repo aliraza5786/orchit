@@ -30,12 +30,12 @@
           <span
             v-for="(e, i) in internal"
             :key="e + i"
-            class="inline-flex items-center w-full gap-2 rounded-full px-2 py-1 text-xs
+            class="inline-flex items-center w-max-content gap-2 rounded-full px-2 py-1 text-xs
                    bg-bg-body text-text-secondary"
           >
             <span v-if="showName" class="font-medium">{{ extractNameFromEmail(e) }}</span>
-            <span v-if="showName" class="opacity-70 w-[90%] overflow-ellipsis overflow-hidden">&lt;{{ e }}&gt;</span>
-            <span v-else class=" w-[90%] overflow-ellipsis overflow-hidden">{{ e }}</span>
+            <span v-if="showName" class="opacity-70 overflow-ellipsis overflow-hidden">&lt;{{ e }}&gt;</span>
+            <span v-else class="  overflow-ellipsis overflow-hidden">{{ e }}</span>
 
             <button
               type="button"

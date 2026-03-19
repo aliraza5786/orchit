@@ -12,10 +12,12 @@
       <div class="flex items-center justify-between mb-2">
         <div class="flex gap-4 items-start text-2xl justify-between w-full">
           <div class="flex flex-col text-text-primary text-lg font-semibold flex-1 min-w-0">
-            <span>
-              <span v-if="role?.role_emoji" class="text-xl mr-2">{{ role.role_emoji }}</span> {{ role.title }}
+            <span class="flex items-center gap-2">
+              <span v-if="role?.role_emoji" class="text-xl">{{ role.role_emoji }}</span> 
+              <i v-if="role?.role_icon" :class="[role.role_icon.prefix, role.role_icon.iconName]" class="text-lg" />
+              {{ role.title }}
             </span>
-            <p class="text-sm text-text-secondary break-words">{{ role.description }}</p>
+            <!-- <p class="text-sm text-text-secondary break-words">{{ role.description }}</p> -->
           </div>
           <!-- Update max number of people -->
          <!-- Update max number of people -->
@@ -106,6 +108,10 @@
       <BaseTextField label="Team Name" v-model="form.name" placeholder="Enter Team Name" size="lg" />
       <BaseTextAreaField label="Description" class="mt-4" v-model="form.description" placeholder="Enter Description"
         size="lg" />
+      <div class="mt-4">
+        <label class="block text-sm font-medium text-text-primary mb-2">Select Icon</label>
+        <IconPicker v-model="form.icon" :relevantIcons="relevantIcons" />
+      </div>
       <div class="flex gap-2 mt-6 justify-end">
         <Button :disabled="isAddTeamDisabled" size="md" variant="primary" @click="addNewRole">
           Add Team
@@ -122,8 +128,16 @@ import Button from '../../../components/ui/Button.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
 import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
+import IconPicker from '../../Product/components/IconPicker.vue'
 import { useWorkspaceStore } from '../../../stores/workspace';
 const workspaceStore = useWorkspaceStore();
+
+const relevantIcons = [
+  'user', 'users', 'user-plus', 'users-cog', 'user-friends', 'user-md', 
+  'user-nurse', 'user-tie', 'user-graduate', 'user-astronaut', 'user-secret', 
+  'user-cog', 'user-check', 'user-edit', 'user-lock', 'user-shield', 
+  'user-tag', 'user-clock', 'people-carry'
+];
 
 defineProps<{ ai: boolean }>()
 interface TeamMember { name: string; email: string }
@@ -135,13 +149,14 @@ interface Role {
   showInput: boolean
   max_num_people: number
   role_emoji: string
+  role_icon?: { prefix: string; iconName: string } | null
   emailList: string[]
   emailError: string
   capacityWarning: boolean
 }
 
 const addTeam = ref(false)
-const form = ref({ name: '', description: '' })
+const form = ref({ name: '', description: '', icon: null as any })
 const workspace = reactive<any>({ roles: [] })
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i
@@ -221,6 +236,7 @@ function addNewRole() {
     showInput: false,
     max_num_people: 1,
     role_emoji: '',
+    role_icon: form.value.icon,
     emailList: [],
     emailError: '',
     capacityWarning: false
@@ -229,6 +245,7 @@ function addNewRole() {
 
   form.value.name = ''
   form.value.description = ''
+  form.value.icon = null
   addTeam.value = false
 }
 
@@ -251,7 +268,8 @@ onMounted(() => {
         emailError: '',
         capacityWarning: false,
         max_num_people: typeof r.max_num_people === 'number' ? r.max_num_people : 1,
-        role_emoji: r.role_emoji ?? ''
+        role_emoji: r.role_emoji ?? '',
+        role_icon: r.role_icon ?? null
       }))
     }
   } catch (error) {
