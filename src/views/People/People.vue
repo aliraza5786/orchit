@@ -1,6 +1,3 @@
-//people.vue
-
-
 <template>
   <div
     class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
@@ -212,18 +209,28 @@
                       <div class="text-xs text-accent-hover">
                         {{ agent.model }}
                       </div>
-
-                      <div class="flex items-center gap-2 mt-auto">
+                       <div class="flex justify-between">
+                        <div class="flex items-center gap-2 mt-auto">
                         <span
                           class="w-2 h-2 rounded-full"
                           :class="
                             agent.is_active ? 'bg-green-500' : 'bg-gray-400'
                           "
                         />
-                        <span class="text-xs text-green-500">
+                       <div class="flex justify-between">
+                         <span class="text-xs text-green-500">
                           {{ agent.is_active ? "Active" : "Inactive" }}
                         </span>
+                        
+                       </div>
                       </div>
+                      <div>
+                          <button class="bg-accent text-xs rounded-full px-2 py-1 text-white cursor-pointer"
+                          @click.stop="handleChatWithAgent(agent, group.module_id, group?.title)">
+                          Chat Agent
+                        </button>
+                        </div>
+                       </div>
                     </div>
                   </div>
                 </div>
@@ -462,6 +469,7 @@ import {
   useDeleteTeam,
 } from "../../queries/usePeople";
 import { useUpdateInvitedWorkspace } from "../../queries/useWorkspace";
+import { useWorkspaceStore } from "../../stores/workspace";
 import Fuse from "fuse.js";
 import { debounce } from "lodash";
 import { useQueryClient } from "@tanstack/vue-query";
@@ -514,6 +522,7 @@ const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
 const { workspaceId } = useRouteIds();
 const queryClient = useQueryClient();
+const workspaceStore = useWorkspaceStore()
 const currentTab = ref("talent");
 const isMobile = useMediaQuery("(max-width: 650px)");
 const viewData = [
@@ -1172,6 +1181,12 @@ watch(
   },
   { immediate: true },
 );
+function handleChatWithAgent(agent:any, module_id:any, module_name:any){
+  console.log("module name", module_name);
+  
+  agentStore.handleAgentPassed(agent, module_id, module_name)
+  workspaceStore.toggleChatBotPanel()
+}
 </script>
 
 <style scoped>

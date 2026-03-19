@@ -42,6 +42,7 @@
           <li v-for="role in project.variables?.roles" class="flex justify-between">
             <span class="flex gap-2 items-center text-text-primary text-base font-semibold">
               <span v-if="role.role_emoji" class="mr-2 text-lg"> {{ role.role_emoji }}</span>
+              <span v-if="role.role_icon" class="mr-2 text-lg"><i :class="[role.role_icon.prefix, role.role_icon.iconName]" class="text-[14px]" /></span>
               {{ role.title }}
             </span>
             <span> {{ role.people.length }} / {{ role.max_num_people }} </span>

@@ -4,26 +4,95 @@
 
     <!-- Body -->
     <div class="px-6 flex flex-col gap-4">
-      <!-- Emails -->
-      <BaseEmailChip class="w-full" label="User emails" v-model="form.emails" :error="!!emailError"
-        :message="emailError || 'Press Enter after each email'" showName @invalid="onEmailsInvalid"
-        @add="onEmailsAdd" />
+      <!-- Emails and Access Role Side-by-Side -->
+      <div class="flex items-start gap-3">
+        <EmailSearchChip class="flex-1" label="User emails" v-model="form.emails" :error="!!emailError"
+          :message="emailError || 'Press Enter after each email'" showName @invalid="onEmailsInvalid"
+          @add="onEmailsAdd" :suggestions="allUsers" />
 
-      <!-- Access Role -->
-      <BaseSelectField size="md" label="Access Role" :options="[
-        {
-          title: 'Viewer',
-          _id: 'viewer'
-        },
-        {
-          title: 'Editor',
-          _id: 'editor'
-        }
-      ]" placeholder="Choose role" :model-value="form.access_level" @update:modelValue="v => (form.access_level = v)"
-        :message="roleError" :error="!!roleError" />
+        <BaseSelectField 
+          v-if="form.emails.length > 0"
+          size="md"   
+          class="w-32 shrink-0 mt-7" 
+          :options="[
+            { title: 'Viewer', _id: 'viewer' },
+            { title: 'Editor', _id: 'editor' }
+          ]" 
+          placeholder="Role" 
+          :model-value="form.access_level" 
+          @update:modelValue="v => (form.access_level = v)" 
+          :message="roleError" :error="!!roleError"
+        />
+      </div>
+
+      <!-- People with access -->
+      <div v-if="sharedUsers?.length && form.emails.length < 1 " class="mt-2">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-semibold text-text-primary">People with access</h3>
+          <!-- <div class="flex gap-2">
+            <button class="p-1 hover:bg-bg-hover rounded transition-colors text-text-secondary" title="Copy link">
+              <i class="fa-regular fa-copy text-sm"></i>
+            </button>
+            <button class="p-1 hover:bg-bg-hover rounded transition-colors text-text-secondary" title="Email">
+              <i class="fa-regular fa-envelope text-sm"></i>
+            </button>
+          </div> -->
+        </div>
+
+        <div class="space-y-4 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+          <div v-for="item in sharedUsers" :key="item.user._id" class="flex items-center justify-between group">
+            <div class="flex items-center gap-3">
+              <img 
+                v-if="item.user.u_profile_image"
+                :src="item.user.u_profile_image"
+                class="w-8 h-8 rounded-full object-cover shrink-0"
+              />
+              <div 
+                v-else
+                class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                :style="{ backgroundColor: generateAvatarColor(item.user._id, item.user.u_full_name || item.user.u_email) }"
+              >
+                {{ getInitials(item.user.u_full_name || item.user.u_email) }}
+              </div>
+              <div class="flex flex-col min-w-0">
+                <span class="text-sm font-medium text-text-primary truncate">
+                  {{ item.user.u_full_name }} {{ item.user._id === currentUserId ? '(you)' : '' }}
+                </span>
+                <span class="text-xs text-text-secondary truncate">{{ item.user.u_email }}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span v-if="item.is_owner" class="text-xs text-text-secondary px-2">Owner</span>
+              <div v-else class="flex items-center gap-2">
+                <BaseSelectField 
+                  size="sm"
+                  variant="ghost"
+                  class="!w-24 border-none shadow-none !px-0"
+                  :options="[
+                    { title: 'Editor', _id: 'editor' },
+                    { title: 'Viewer', _id: 'viewer' }
+                  ]"
+                  :model-value="item.role"
+                  @update:modelValue="(val) => val && handleUpdateUserRole(item.user._id, val)"
+                />
+                <button 
+                  @click="handleRemoveAccess(item)"
+                  class="text-xs text-red-500 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50"
+                >
+                  Remove access
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
 
       <!-- Note -->
       <BaseTextAreaField
+        v-if="form.emails.length > 0"
         label="Note"
         placeholder="Add a note (optional)..."
         :model-value="form.note"
@@ -48,10 +117,14 @@ import { toast } from 'vue-sonner'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
-import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
+import EmailSearchChip from './EmailSearchChip.vue'
 import Button from '../../../components/ui/Button.vue'
-import { useShareResource } from '../../../queries/useWorkspace'
+import { useShareResource, useSharedUsers, useUpdateShareRole, useRemoveShareAccess, useUsers } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
+import { getInitials, generateAvatarColor } from '../../../utilities'
+import { useWorkspaceStore } from '../../../stores/workspace'
+
+const currentUserId = localStorage.getItem('user_id') // or similar from store
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
@@ -94,6 +167,86 @@ const canSubmit = computed(
 function onEmailsInvalid(_bad: string[]) { }
 function onEmailsAdd() { }
 
+ const workspaceStore = useWorkspaceStore()
+
+  const companyId = computed(() => {
+    const id = workspaceStore.singleWorkspace?.company_id
+    return  id
+  })
+
+const { data: allUsersData } = useUsers(companyId)
+
+const allUsers = computed(() => {
+  if (!allUsersData.value?.data?.users) return []
+  return allUsersData.value.data.users.map((u: any) => ({
+    _id: u._id,
+    name: u.u_full_name,
+    email: u.u_email,
+    profile_image: u.u_profile_image
+  }))
+})
+
+const { data: sharedUsersData, refetch: refetchSharedUsers } = useSharedUsers({
+  resource_type: 'module',
+  resource_id: props.resourceId || '',
+  workspace_id: workspaceId.value
+})
+
+const sharedUsers = computed(() => sharedUsersData.value || [])
+
+const { mutate: updateRole } = useUpdateShareRole({
+  type: 'module',
+  id: props.resourceId || ''
+})
+
+const { mutate: removeAccess } = useRemoveShareAccess({
+  resource_type: 'module',
+  resource_id: props.resourceId || ''
+})
+
+function handleUpdateUserRole(userId: string, newRole: string | number) {
+  updateRole(
+    {
+      payload: {
+        user_id: userId,
+        access_level: newRole
+      }
+    },
+    {
+      onSuccess: () => {
+        toast.success('Role updated successfully')
+        refetchSharedUsers()
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.message || err?.message || 'Failed to update role.'
+        toast.error(msg)
+      }
+    }
+  )
+}
+
+function handleRemoveAccess(item: any) {
+  removeAccess(
+    {
+      params: {
+        workspace_id: workspaceId.value,
+        user_id: item.user._id,
+        email: item.user.u_email
+      }
+    },
+    {
+      onSuccess: () => {
+        toast.success('Access removed successfully')
+        refetchSharedUsers()
+      },
+      onError: (err: any) => {
+        const msg = err?.response?.data?.message || err?.message || 'Failed to remove access.'
+        toast.error(msg)
+      }
+    }
+  )
+}
+
 const { mutate: shareResource, isPending: isSharing } = useShareResource()
 
 function submit() {
@@ -113,6 +266,7 @@ function submit() {
     {
       onSuccess: () => {
         toast.success('Module shared successfully')
+        refetchSharedUsers()
         emit('shared')
         reset()
         isOpen.value = false

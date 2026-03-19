@@ -84,7 +84,7 @@
 
           <!-- Loading state while role data is loading -->
           <div v-else-if="selectedRoleId && !selectedRoleData" class="flex justify-center py-4">
-            <Loader />
+            <BaseSpinner />
           </div>
 
           <!-- Empty state when no role selected -->
@@ -116,7 +116,7 @@ import { ref, computed, watch } from 'vue';
 import BaseModal from '../../../components/ui/BaseModal.vue';
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue';
 import Button from '../../../components/ui/Button.vue';
-import Loader from '../../../components/ui/Loader.vue';
+import BaseSpinner from '../../../components/ui/BaseSpinner.vue';
 import { useWorkspaceRoles } from '../../../queries/usePeople';
 import { useUpdatePermissions } from '../../../queries/usePackages';
 import { formatPermissionsPayload } from '../../../utilities/permissionUtils';

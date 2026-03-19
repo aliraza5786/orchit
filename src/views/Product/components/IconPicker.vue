@@ -7,7 +7,10 @@ type IconPrefix = 'fa';
 
 type IconValue = { prefix: IconPrefix; iconName: string } | null;
 
-defineProps<{ modelValue?: IconValue }>();
+const props = defineProps<{ 
+  modelValue?: IconValue,
+  relevantIcons?: string[]
+}>();
 const emit = defineEmits<{ (e: 'update:modelValue', value: any): void }>();
 
 type CatalogItem = {
@@ -26,7 +29,12 @@ const pageSize = 120;
 const activePrefixes = ref<IconPrefix[]>(['fa']);
 
 onMounted(() => {
-  const items: CatalogItem[] = primeIcons.map((name) => {
+  let iconsToUse = primeIcons;
+  if (props.relevantIcons && props.relevantIcons.length > 0) {
+    iconsToUse = primeIcons.filter(name => props.relevantIcons!.includes(name));
+  }
+
+  const items: CatalogItem[] = iconsToUse.map((name) => {
     const iconName = `fa-${name}`;
     return {
       prefix: 'fa' as IconPrefix,
