@@ -95,6 +95,8 @@
     prefix:'far',
     iconName:'ellipsis'
   }"
+  :canDelete="item.user_permissions?.can_read"
+  :canShare = item.user_permissions.source
   @delete="deleteModule"
   @share="openShareModal"
   @toggleDropdown="toggleDropdown"
@@ -288,7 +290,17 @@ const { canCreateModule, canAccessModule } = usePermissions();
 
 const filteredModules = computed(() => {
   if (!workspace.value?.modules) return [];
-  return workspace.value.modules.filter((m: any) => canAccessModule(m._id, 'view_all'));
+
+  const alwaysAllowed = ["tasks", "pin"];
+
+  return workspace.value.modules.filter((m: any) => {
+    if (alwaysAllowed.includes(m.title?.toLowerCase())) return true;
+
+    return (
+      canAccessModule(m._id, "view_all") &&
+      m.user_permissions?.can_read
+    );
+  });
 });
 const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
 

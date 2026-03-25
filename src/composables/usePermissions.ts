@@ -1,21 +1,21 @@
 import { computed } from "vue";
-import { useSingleWorkspace } from "../queries/useWorkspace";
+// import { useSingleWorkspace } from "../queries/useWorkspace";
 import { useWorkspaceStore } from "../stores/workspace";
-import { useWorkspaceId } from "./useQueryParams";
+// import { useWorkspaceId } from "./useQueryParams";
 
 /**
  * Fully fixed & optimized permission composable
  */
 export function usePermissions() {
   const workspaceStore = useWorkspaceStore();
-  const { workspaceId } = useWorkspaceId();
+  // const { workspaceId } = useWorkspaceId();
 
   // Load workspace via Vue Query (reactive)
-  const { data: workspaceData } = useSingleWorkspace(workspaceId as any);
+  // const { data: workspaceData } = useSingleWorkspace(workspaceId as any);
 
   //  Get workspace (query → store fallback)
   const workspace = computed(() => {
-    return workspaceData.value || workspaceStore.workspace || null;
+    return workspaceStore.singleWorkspace || null;
   });
 
   //  Extract user_access_role
@@ -45,7 +45,7 @@ export function usePermissions() {
     const role = userAccessRole.value;
     if (!role) return [];
     return role.permissions || role.access_role?.permissions || [];
-  });
+  }); 
 
   //  Main Permission Checker
   const hasPermission = (slug: string): boolean => {
@@ -116,7 +116,7 @@ export function usePermissions() {
     hasPermission("workspace.comment.update")
   );
   const canDeleteComment = computed(() =>
-    hasPermission("workspace.delete.delete")
+    hasPermission("workspace.comment.delete")
   );
 
   // ---- Attachment Permissions ----
