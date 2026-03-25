@@ -203,12 +203,13 @@ onMounted(() => {
 })
 
 const accessRoles = computed(() => {
-  return (agentStore.agentsRolesPermissions.access_roles || []).map((r: any) => ({
-    _id: r._id,
-    title: r.title
-  }))
+  return (agentStore.agentsRolesPermissions.access_roles || [])
+    .filter((r: any) => r?.title?.toLowerCase?.() !== 'workspace admin')
+    .map((r: any) => ({
+      _id: r._id,
+      title: r.title.replace(/workspace/gi, '').trim()
+    }))
 })
-
 const jobRoles = computed(() => {
   return (agentStore.agentsRolesPermissions.job_roles || []).map((r: any) => ({
     _id: r._id,
