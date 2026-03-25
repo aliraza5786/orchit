@@ -19,7 +19,26 @@ interface Card {
   color?: string;
 }
 
-const props = defineProps<{ data: Card[] }>();
+const props = defineProps<{ data: Card[] | CardList[] }>();
+interface CardList {
+  _id: string;
+  title: string;
+  cards: Card[];
+}
+
+const isCardListArray = (data: Card[] | CardList[]): data is CardList[] => {
+  return data.length > 0 && "cards" in data[0];
+};
+
+const flattenedCards = computed(() => {
+  if (!props.data || props.data.length === 0) return [];
+
+  if (isCardListArray(props.data)) {
+    return props.data.flatMap(list => list.cards || []);
+  } else {
+    return props.data as Card[];
+  }
+});
 const { isDark } = useTheme();
 
 const emit = defineEmits<{
@@ -40,20 +59,21 @@ const defaultColors = [
   "#EC4899",
 ];
 
-// Transform data to DHTMLX Gantt format
 const transformedData = computed(() => {
-  const tasks = props.data.map((card, index) => {
+  const tasks = flattenedCards.value.map((card, index) => {
     const startDate = card["start-date"]
-  ? new Date(card["start-date"])
-  : new Date(card.created_at);
-    const endDate = card["end-date"] 
-      ? new Date(card["end-date"]) 
+      ? new Date(card["start-date"])
+      : new Date(card.created_at);
+    const endDate = card["end-date"]
+      ? new Date(card["end-date"])
       : new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
-    const duration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+    const duration =
+      Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) ||
+      1;
     const taskColor = card.color || defaultColors[index % defaultColors.length];
     return {
       id: card["card-code"] || `task-${index}`,
-      text: card["card-title"],
+      text: card["card-title"] || card["card-code"] || "Untitled",
       start_date: startDate,
       duration: duration,
       progress: 0,

@@ -23,8 +23,12 @@ interface Card {
     color?: string;
   };
 }
-
-const props = defineProps<{ data: Card[] }>();
+interface CardList {
+  _id: string;
+  title: string;
+  cards: Card[];
+}
+const props = defineProps<{ data: Card[] | CardList[] }>();
 
 const emit = defineEmits<{
   (e: "select:ticket", card: Card): void;
@@ -55,19 +59,33 @@ onBeforeUnmount(() => {
   window.removeEventListener("resize", checkMobile);
 });
 
-const calendarEvents = computed(() =>
-  props.data
+const isCardListArray = (data: any[]): data is CardList[] => {
+  return data.length > 0 && "cards" in data[0];
+};
+const calendarEvents = computed(() => {
+  let allCards: Card[] = [];
+
+  if (!props.data || props.data.length === 0) return [];
+
+  if (isCardListArray(props.data)) {
+    // Flatten lists
+    allCards = props.data.flatMap(list => list.cards || []);
+  } else {
+    // Already flat array of cards
+    allCards = props.data as Card[];
+  }
+
+  return allCards
     .filter(card => card['start-date'] && card['end-date'])
     .map((card, index) => {
       const color = lightColors[index % lightColors.length];
-
       const start = new Date(card['start-date']);
       const end = new Date(card['end-date']);
       end.setDate(end.getDate() + 1);
 
       return {
         id: card._id,
-        title: card['card-title'],
+        title: card['card-title'] || card['card-code'] || "Untitled",
         start,
         end,
         allDay: true,
@@ -76,8 +94,8 @@ const calendarEvents = computed(() =>
         textColor: '#374151',
         extendedProps: { card },
       };
-    })
-);
+    });
+});
 
 const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
