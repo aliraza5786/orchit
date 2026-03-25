@@ -214,6 +214,7 @@
                 :disabled="!canEditUser"
                 placeholder="Set date"
                 class="w-full"
+                size="md"
                 :model-value="localVarValues[item._id]"
                 emit-as="ymd"
                 @update:modelValue="(val: any) => handleSelect(val, item._id)"
@@ -223,13 +224,14 @@
             <!-- Time Type -->
             <div
               v-else-if="item.variable_type_id?.title === 'Time'"
-              class="h-8 px-3 flex items-center gap-1 rounded-md bg-bg-input border border-border"
+              class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-border"
             >
               <i class="fa-regular fa-clock text-[14px]"></i>
               <TimePicker
                 :disabled="!canEditUser"
                 placeholder="Set time"
                 class="w-full"
+                size="md"
                 :model-value="localVarValues[item._id]"
                 @update:modelValue="(val: any) => handleSelect(val, item._id)"
               />

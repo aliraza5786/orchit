@@ -3,10 +3,11 @@
     <!-- Trigger -->
     <button
       type="button"
-      class="inline-flex h-full text-xs w-full items-center transition  px-2 rounded-sm"
+      class="inline-flex text-xs w-full items-center transition px-2 rounded-lg"
       :class="[
         disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-bg-surface-hover',
-        isDarkTheme ? 'text-text-secondary' : 'text-text-primary'
+        isDarkTheme ? 'text-text-secondary' : 'text-text-primary',
+        size === 'md' ? 'h-10' : size === 'sm' ? 'h-8' : 'h-12',
       ]"
       @click="toggle"
       :disabled="disabled"
@@ -110,11 +111,13 @@ const props = withDefaults(defineProps<{
   placeholder: string
   emptyText?: string
   tableInputClass?: Boolean 
+  size?: 'sm' | 'md' | 'lg'
 }>(), {
   disabled: false,
   clearable: true,
   theme: 'system',
   emitAs: 'ymd',
+  size: 'md'
 })
 
 const emit = defineEmits<{ (e: 'update:modelValue', v: any): void }>()

@@ -7,10 +7,12 @@
     :class="[
       progress == 'processing' && status == 'running'
         ? 'disbled !cursor-not-allowed opacity-50'
+        : workspaceStore.background.startsWith('url') && !isActive
+        ? 'text-text-primary bg-bg-card'
+        : workspaceStore.background.startsWith('url') && isActive
+        ? 'text-text-primary bg-accent'
         : isActive
         ? 'text-text-primary bg-bg-card '
-        : workspaceStore.background.startsWith('url')
-        ? 'text-text-primary bg-bg-card'
         : ' text-text-secondary',
       expanded
         ? 'w-[36px] h-[36px] sm:w-full sm:h-[38px] gap-2.5'
