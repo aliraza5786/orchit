@@ -1,5 +1,5 @@
 <template>
-    <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex">
+    <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border flex-col flex overflow-hidden">
 
         <!-- Header -->
         <div class="overflow-x-auto shrink-0 border-b border-border">
@@ -86,7 +86,7 @@
         <!-- Kanban Board -->
         <div v-show="!isListPending" class="flex overflow-x-auto custom_scroll_bar gap-3 py-4 h-full mx-4" v-if="view==='kanban'">
             <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
-                @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
+                @reorder="onReorder" @addColumn="handleAddColumn"  @select:ticket="selectCardHandler"
                 @onBoardUpdate="handleBoardUpdate" :board="filteredBoard" :variable_id="selected_view_by"
                 :sheet_id="selected_sheet_id">
                 <template #ticket="{ ticket }">
@@ -139,23 +139,22 @@
         :canDelete="canDeleteCard"
       />
     </template>
-          <div v-if="view==='mindmap'">
-             <PinMindMap  
-                :listsData="Lists?.data ?? []"
-                :selectedSheetId="selected_sheet_id"
-                :selectedViewBy="selected_view_by"
-                :workspaceId="workspaceId"
-                :moduleId="moduleId"
-                :addingList="!!addingList"
-                :activeAddList="activeAddList"
-                :newColumn="newColumn"
-                :canCreateCard="canCreateCard"
-                :canEditCard="canEditCard"
-                :canDeleteCard="canDeleteCard"
-                :canAssignCard="canAssignCard"
-                :canCreateSheet="canCreateSheet"
-                :canCreateVariable="canCreateVariable"
-                :canEditSheet="canEditSheet" />
+          <div v-if="view==='mindmap'" class="flex-1 h-full min-h-0 overflow-hidden">
+             <PinMindmapView
+              :listsData="Lists?.data ?? []"
+              :workspaceId="String(workspaceId)"
+              :moduleId="String(moduleId)"
+              :canCreateCard="canCreateCard"
+              :canEditCard="canEditCard"
+              :canDeleteCard="canDeleteCard"
+              :canAssignCard="canAssignCard"
+              :canCreateSheet="canCreateSheet"
+              :canCreateVariable="canCreateVariable"
+              :canEditSheet="canEditSheet"
+              @select:ticket="selectCardHandler"
+              @delete:ticket="(id) => openDeleteModal(id)"
+              @create:card="(payload) => handleMindmapCreateCard(payload)"
+            />
             </div>
             <template v-if="view === 'calendar'">
       <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
@@ -174,7 +173,9 @@
         <ConfirmDeleteModal v-model="showDelete" title="Delete List" itemLabel="list" :itemName="localColumnData?.title"
             :requireMatchText="localColumnData?.title" confirmText="Delete List" cancelText="Cancel" size="md"
             :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => (showDelete = false)" />
-
+         <ConfirmDeleteModal v-model="showDeleteTicket" title="Delete Ticket" itemLabel="Ticket" :itemName="localColumnData?.title"
+            :requireMatchText="localColumnData?.title" confirmText="Delete Ticket" cancelText="Cancel" size="md"
+            :loading="addingList" @confirm="handleDeleteCard" @cancel="() => (showDeleteTicket = false)" />
         <CreateTaskModal size="md" :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
             :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" />
 
@@ -203,7 +204,8 @@ import {
     useVariables,
     ReOrderList,
     ReOrderCard,
-    useUpdateWorkspaceSheet
+    useUpdateWorkspaceSheet,
+    useAddTicket
 } from '../../queries/useSheets';
 import { useRouteIds } from '../../composables/useQueryParams';
 
@@ -218,8 +220,9 @@ import SidePanel from '../Product/components/SidePanel.vue';
 import CreateSheetModal from '../Product/modals/CreateSheetModal.vue';
 import Fuse from 'fuse.js';
 import { debounce } from 'lodash';
+import { request, toApiMessage } from "../../libs/api";
 import SearchBar from '../../components/ui/SearchBar.vue';
-import PinMindMap from "../../components/feature/MindmapView.vue"
+import PinMindmapView from '../Pin/components/MindMap.vue';
 import TableView from '../../components/feature/TableView/TableView.vue';
 import CalendarView from '../../components/feature/CalendarView.vue';
 import GanttChartView from '../../components/feature/GanttChartView.vue';
@@ -228,13 +231,15 @@ const ConfirmDeleteModal = defineAsyncComponent(() => import('../Product/modals/
 const CreateVariableModal = defineAsyncComponent(() => import('../Product/modals/CreateVariableModal.vue'));
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 import { usePermissions } from '../../composables/usePermissions'
-const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canCreateCard, canEditCard, canAssignCard, canDeleteCard } = usePermissions()
+import { toast } from 'vue-sonner';
+const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canCreateCard, canDeleteCard, canAssignCard, canEditCard } = usePermissions()
 
 // State
 const isCreateVar = ref(false);
 const isCreateSheetModal = ref(false);
 const createTeamModal = ref(false);
 const showDelete = ref(false);
+const showDeleteTicket = ref(false)
 const localColumnData = ref<any>();
 const activeAddList = ref(false);
 const newColumn = ref('');
@@ -391,6 +396,7 @@ function handleClickTicket(ticket: any) {
 
 function plusHandler(e: any) {
     createTeamModal.value = true;
+    localStorage.setItem("selectedStatusTitle", e?.title);
     localColumnData.value = e;
 }
 
@@ -485,6 +491,8 @@ const filteredBoard = computed(() => {
         created_at: card.created_at,
         'card-code': card['card-code'],
         variables: card.variables || {},
+        'start-date':card['start-date'],
+        'end-date':card['end-date']
       }))
     }));
   }
@@ -531,6 +539,43 @@ const columns = [
   { key: "Owner", label: "Owner" },
   { key: "Assignee", label: "Assignee" }
 ];
+const selectedDeleteId = ref<string | null>(null);
+  const openDeleteModal = (cardId: string) => {
+  selectedDeleteId.value = cardId;
+  showDeleteTicket.value = true;
+};
+const handleDeleteCard = async () => {
+  if (!selectedDeleteId.value) return;
+
+  try {
+    await request({ 
+      url: `workspace/card/${selectedDeleteId.value}`, 
+      method: "DELETE" 
+    });
+
+    toast.success("Ticket deleted successfully");
+
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
+    await refetchSheets();
+    refetchList();
+
+  } catch (err) {
+    toast.error(toApiMessage(err));
+  } finally {
+    showDeleteTicket.value = false;
+    selectedDeleteId.value = null;
+  }
+};
+const localPendingTickets = ref<any[]>([]);
+const { mutate: addTicket } = useAddTicket({
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    localPendingTickets.value = [];
+  },
+});
+function handleMindmapCreateCard(payload: any) {
+  addTicket(payload);
+}
 </script>
 
 <style scoped>

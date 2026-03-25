@@ -1,6 +1,5 @@
 <template>
   <div class="relative w-full h-full flex overflow-hidden mindmap-root" ref="rootEl" :data-dark="isDark ? 'true' : 'false'">
-
     <div
       class="viewport flex-1 relative overflow-hidden"
       ref="viewportEl"
@@ -32,15 +31,16 @@
         >
           <defs>
           </defs>
+          <!-- ✦ CHANGE 1: per-edge color + dashed (card edges use lane color, dashed) -->
           <g v-for="e in visibleEdges" :key="e.id">
             <path :d="e.path" stroke="transparent" stroke-width="10" fill="none" />
             <path
               :d="e.path"
-              stroke="#6e3b96"
+              :stroke="e.color || '#6e3b96'"
               stroke-width="1.5"
               fill="none"
               stroke-linecap="round"
-              marker-end="url(#arr)"
+              :stroke-dasharray="e.dashed ? '5 4' : 'none'"
               class="edge-path"
             />
           </g>
@@ -210,7 +210,7 @@
                 <div class="node-card-actions-row" v-if="!isPlanRoute">
                   <button
                     v-if="canCreateCard && node.parent?.uniqueName === 'List'"
-                    class="nact nact--add" @click.stop="node.parent && startInlineCardCreation(node.parent)"
+                    class="nact nact--add" @click="ctxAddCard"
                     title="Add sibling card"
                   ><i class="fa-solid fa-plus"></i></button>
                   <button
@@ -235,6 +235,7 @@
         </div>
       </div>
 
+      <!-- ✦ CHANGE 2: controls panel with fit/reset/center added -->
       <div class="canvas-controls">
         <button class="ctrl-btn" @click="handleZoomIn" title="Zoom In (+)">
           <i class="fa-solid fa-plus"></i>
@@ -247,6 +248,17 @@
         <button class="ctrl-btn" :class="{ 'ctrl-btn--active': layoutDirection === 'right' }" @click="setLayout('right')" title="Layout: Left to Right"><i class="fa-solid fa-arrow-right"></i></button>
         <button class="ctrl-btn" :class="{ 'ctrl-btn--active': layoutDirection === 'left' }" @click="setLayout('left')" title="Layout: Right to Left"><i class="fa-solid fa-arrow-left"></i></button>
         <button class="ctrl-btn" :class="{ 'ctrl-btn--active': layoutDirection === 'center' }" @click="setLayout('center')" title="Layout: Centered"><i class="fa-solid fa-arrows-left-right"></i></button>
+        <div class="ctrl-divider"></div>
+        <!-- NEW: center, fit, reset buttons -->
+        <button class="ctrl-btn" @click="centerView" title="Center view (C)">
+          <i class="fa-solid fa-compress"></i>
+        </button>
+        <button class="ctrl-btn" @click="fitToScreen" title="Fit to screen (F)">
+          <i class="fa-solid fa-expand"></i>
+        </button>
+        <button class="ctrl-btn" @click="handleResetView" title="Reset zoom (R)">
+          <i class="fa-solid fa-rotate-left"></i>
+        </button>
         <div class="ctrl-divider"></div>
         <button
           v-if="canAssignCard && canEditCard && canCreateCard"
@@ -699,24 +711,26 @@ interface MindNode {
   collapsed: boolean;
 }
 
-interface Edge { id: string; path: string; level: number; }
+// ✦ CHANGE 3: Edge interface gets color + dashed fields
+interface Edge { id: string; path: string; level: number; color: string; dashed: boolean; }
+
 const nodeStore = reactive<Record<string, MindNode>>({});
 const rootNodeId = ref<string>("");
 const collapseVersion = ref(0);
 const collapsedIds = ref<string[]>([]);
 const showTicketDelete = ref(false);
 const ticketToDelete = ref<any>(null);
-  const workspaceStore = useWorkspaceStore();
-const localWorkspace = computed(() => workspaceStore.singleWorkspace); 
-  function openDeleteModal(node: any) {
+const workspaceStore = useWorkspaceStore();
+const instancePrefix = `mm_${props.moduleId}_${Date.now()}`;
+const localWorkspace = computed(() => workspaceStore.singleWorkspace);
+
+function openDeleteModal(node: any) {
   ticketToDelete.value = node
   showTicketDelete.value = true
 }
 function handleDeleteTicket() {
   if (!ticketToDelete.value) return
-
   emit("delete:ticket", ticketToDelete.value.id)
-
   showTicketDelete.value = false
   ticketToDelete.value = null
 }
@@ -983,55 +997,84 @@ function setLayout(dir: "right"|"left"|"center") {
 
 function buildTree(sheets: any[]): MindNode {
   const root: MindNode = {
-    id: "root", sheet_id: "",
+    id: `${instancePrefix}_root`,
+    sheet_id: "",
     topic: localStorage.getItem("currentName") ?? "Mindmap",
-    isRoot: true, children: [], style: {}, _originalStyle: {},
-    uniqueName: "root", x: 0, y: 0,
+    isRoot: true,
+    children: [],
+    style: {},
+    _originalStyle: {},
+    uniqueName: "root",
+    x: 0, y: 0,
     width: NODE_W.root, height: 56, collapsed: false,
   };
-  if (!Array.isArray(sheets)) return root;
 
   const varMap: Record<string, MindNode> = {};
   sheets.forEach((sheet) => {
     const title = sheet.variables?.["sheet-title"] || localStorage.getItem("selectedSprintTitle") || "Sheet";
-    const link  = sheet.style?.hyperLink || "";
+    const link = sheet.style?.hyperLink || "";
+
     if (!varMap[title]) {
       varMap[title] = {
-        id: `sheet_group_${sheet._id}`, sheet_id: sheet._id, topic: title,
-        variables: sheet?.variables, children: [],
-        style: mapBackendStyle(sheet?.style), _originalStyle: sheet?.style || {},
-        uniqueName: "sheet", hyperLink: link,
-        x: 0, y: 0, width: NODE_W.sheet, height: 66, collapsed: false,
+        id: `${instancePrefix}_sheet_${sheet._id}`,
+        sheet_id: sheet._id,
+        topic: title,
+        variables: sheet?.variables,
+        children: [],
+        style: mapBackendStyle(sheet?.style),
+        _originalStyle: sheet?.style || {},
+        uniqueName: "sheet",
+        hyperLink: link,
+        x: 0, y: 0,
+        width: NODE_W.sheet,
+        height: 66,
+        collapsed: false,
       };
       root.children.push(varMap[title]);
     }
+
     const listTitle = sheet.title || sheet.variables?.["sheet-title"] || title;
     const safeTitle = (listTitle || "").toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
-    const listUniqueId = `list_${sheet._id}_${safeTitle}_${sheet.sort_order ?? 0}`;
     const listNode: MindNode = {
-      id: listUniqueId, sheet_id: sheet._id,
+      id: `${instancePrefix}_list_${sheet._id}_${safeTitle}_${sheet.sort_order ?? 0}`,
+      sheet_id: sheet._id,
       topic: listTitle,
-      children: [], style: mapBackendStyle(sheet?.style),
+      children: [],
+      style: mapBackendStyle(sheet?.style),
       _originalStyle: sheet?.style || {},
-      uniqueName: "List", hyperLink: link,
-      x: 0, y: 0, width: NODE_W.List, height: 72, collapsed: false,
+      uniqueName: "List",
+      hyperLink: link,
+      x: 0, y: 0,
+      width: NODE_W.List,
+      height: 72,
+      collapsed: false,
     };
+
     (sheet.cards || []).forEach((card: any, i: number) => {
       const cn: MindNode = {
-        id: card._id || `card-${i}`, sheet_id: card?.sheet_id, seat_id: card.seat_id,
+        id: `${instancePrefix}_card_${card._id || i}`,
+        sheet_id: card?.sheet_id,
+        seat_id: card.seat_id,
         topic: card["card-title"],
-        style: mapBackendStyle(card.style), _originalStyle: card.style || {},
-        children: [], uniqueName: "card", hyperLink: card.style?.hyperLink || "",
+        style: mapBackendStyle(card.style),
+        _originalStyle: card.style || {},
+        children: [],
+        uniqueName: "card",
+        hyperLink: card.style?.hyperLink || "",
         variables: { ...card.variables, ...card, "card-title": card["card-title"], lane: card.lane },
-        x: 0, y: 0, width: NODE_W.card, height: nodeHeight({ uniqueName: "card", variables: card } as any),
+        x: 0, y: 0,
+        width: NODE_W.card,
+        height: nodeHeight({ uniqueName: "card", variables: card } as any),
         collapsed: false,
       };
       cn.parent = listNode;
       listNode.children.push(cn);
     });
+
     listNode.parent = varMap[title];
     varMap[title].children.push(listNode);
   });
+
   return root;
 }
 
@@ -1070,29 +1113,48 @@ function nodeLevel(node: MindNode): number {
   return l;
 }
 
+// ✦ CHANGE 4: visibleEdges returns color + dashed per edge
 const visibleEdges = computed<Edge[]>(() => {
+  const root = nodeMap.get(rootNodeId.value);
+  if (!root) return [];
+
   const edges: Edge[] = [];
-  const vis = new Set(allNodes.value.map((n) => n.id));
+  const vis = new Set(allNodes.value.map(n => n.id));
+
   for (const node of allNodes.value) {
     if (!node.children || isCollapsed(node.id)) continue;
     for (const child of node.children) {
       if (!vis.has(child.id)) continue;
       const isLeft = nodeSides.get(child.id) === "left";
-      const x1 = isLeft ? node.x                : node.x + node.width;
+      const x1 = isLeft ? node.x : node.x + node.width;
       const y1 = node.y + node.height / 2;
       const x2 = isLeft ? child.x + child.width : child.x;
       const y2 = child.y + child.height / 2;
       const mx = (x1 + x2) / 2;
+
+      // Card edges: use lane color + dashed. All other edges: solid purple.
+      const isCardEdge = node.uniqueName === "List" && child.uniqueName === "card";
+      const edgeColor = isCardEdge
+        ? (child.variables?.lane?.variables?.["lane-color"] || child.style?.borderColor || "#7D68C8")
+        : "#7D68C8";
+
       edges.push({
         id: `${node.id}-${child.id}`,
         path: `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`,
         level: nodeLevel(node),
+        color: edgeColor,
+        dashed: isCardEdge,
       });
     }
   }
   return edges;
 });
 
+watchEffect(() => {
+  const root = nodeMap.get(rootNodeId.value);
+  if (!root) return;
+  layoutTree(root, 60, 60);
+});
 
 function nodeInlineStyle(node: MindNode): Record<string, string> {
   const s   = node.style || {};
@@ -1449,7 +1511,7 @@ function createDefaultCardPayload(nodeObj: { topic: string }, listNode: MindNode
     workspace_id:  props.workspaceId,
     sheet_id:      sheetId ?? props.selectedSheetId,
     variables: {
-      "card-status":      "To Do",
+      "card-status": listNode?.topic || "To Do",
       priority:           "medium",
       process:            null,
       "card-title":       nodeObj.topic || "New Card",
@@ -1665,7 +1727,7 @@ onBeforeUnmount(() => {
   overflow: visible;
 }
 .edge-path {
-  opacity: 0.6;
+  opacity: 0.65;
   transition: opacity 0.2s;
 }
 
@@ -1837,7 +1899,6 @@ onBeforeUnmount(() => {
   padding-top: 5px;
   border-top: 1px solid rgba(0,0,0,.05);
   opacity: 0;
-  transition: opacity 0.15s;
   height: 0;
   overflow: hidden;
   transition: opacity 0.15s, height 0.15s;
@@ -1998,11 +2059,9 @@ onBeforeUnmount(() => {
 .fs-node-name {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 14px 6px;
-  font-size: 13px !important;
-  font-weight: normal !important;
+  font-size: 13px !important; font-weight: normal !important;
   color: var(--text-primary, #2b2c30) !important;
-  font-family: 'Lato', sans-serif !important;
-  font-style: normal !important;
+  font-family: 'Lato', sans-serif !important; font-style: normal !important;
   border-bottom: 1px solid var(--border, #d9d9d9);
 }
 .fs-node-icon { font-size: 10px; flex-shrink: 0; }
@@ -2033,10 +2092,7 @@ onBeforeUnmount(() => {
 .fs-body::-webkit-scrollbar-track { background: transparent; }
 .fs-body::-webkit-scrollbar-thumb { background: var(--border, #d9d9d9); border-radius: 3px; }
 
-.fs-section {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border, #d9d9d9);
-}
+.fs-section { padding: 10px 12px; border-bottom: 1px solid var(--border, #d9d9d9); }
 .fs-section-label {
   font-size: 9.5px !important; font-weight: 700 !important; text-transform: uppercase;
   letter-spacing: .07em; color: var(--text-secondary, #6b6b6e) !important; margin-bottom: 8px;
@@ -2076,26 +2132,16 @@ onBeforeUnmount(() => {
 }
 .fs-select:focus { border-color: var(--accent, #7D68C8); }
 
-.input-with-unit {
-  position: relative; display: flex; align-items: center;
-}
+.input-with-unit { position: relative; display: flex; align-items: center; }
 .input-with-unit .fs-input { padding-right: 26px; }
-.unit {
-  position: absolute; right: 6px;
-  font-size: 9.5px; font-weight: 600; color: var(--text-secondary, #6b6b6e); pointer-events: none;
-}
+.unit { position: absolute; right: 6px; font-size: 9.5px; font-weight: 600; color: var(--text-secondary, #6b6b6e); pointer-events: none; }
 
 .color-row { display: flex; align-items: center; gap: 6px; }
 .color-swatch {
   width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
-  position: relative; cursor: pointer;
-  border: 1px solid rgba(0,0,0,.1);
-  overflow: hidden;
+  position: relative; cursor: pointer; border: 1px solid rgba(0,0,0,.1); overflow: hidden;
 }
-.color-swatch input[type="color"] {
-  position: absolute; inset: 0; opacity: 0; cursor: pointer;
-  width: 100%; height: 100%;
-}
+.color-swatch input[type="color"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 .color-hex {
   flex: 1; padding: 4px 6px; font-size: 11px;
   background: var(--bg-surface, #dedfe3);
@@ -2140,11 +2186,7 @@ onBeforeUnmount(() => {
 }
 .fs-reset-btn:hover { border-color: #f87171; color: #ef4444; background: #fef2f2; }
 
-.fs-footer {
-  padding: 10px 12px;
-  border-top: 1px solid var(--border, #d9d9d9);
-  flex-shrink: 0;
-}
+.fs-footer { padding: 10px 12px; border-top: 1px solid var(--border, #d9d9d9); flex-shrink: 0; }
 .fs-save-btn {
   width: 100%; padding: 8px;
   background: var(--accent, #7D68C8); color: var(--accent-text, #fff);
@@ -2164,11 +2206,8 @@ onBeforeUnmount(() => {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .list-sheet-picker {
-  margin-top: 6px;
-  background: var(--bg-surface, #dedfe3);
-  border: 1px dashed rgba(125,104,200,.35);
-  border-radius: 6px;
-  padding: 6px 8px;
+  margin-top: 6px; background: var(--bg-surface, #dedfe3);
+  border: 1px dashed rgba(125,104,200,.35); border-radius: 6px; padding: 6px 8px;
   display: flex; flex-direction: column; gap: 5px;
 }
 .list-sheet-picker-label {
@@ -2176,31 +2215,17 @@ onBeforeUnmount(() => {
   font-size: 9.5px !important; font-weight: 600 !important;
   color: var(--accent, #7D68C8) !important; text-transform: uppercase; letter-spacing: .05em;
 }
-.list-sheet-picker-selected {
-  margin-left: auto;
-  font-size: 9px !important; font-weight: 500 !important;
-  color: #22c55e !important;
-  max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.list-sheet-picker-error {
-  font-size: 9px !important; color: #ef4444 !important;
-  display: flex; align-items: center; gap: 3px; margin: 0;
-}
 
 .add-list-panel {
   position: absolute; top: 160px; left: 280px;
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--border, #d9d9d9);
-  border-radius: 10px; padding: 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.1);
+  background: var(--bg-card, #fff); border: 1px solid var(--border, #d9d9d9);
+  border-radius: 10px; padding: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.1);
   z-index: 200; min-width: 320px;
 }
 .add-list-input {
   width: 100%; padding: 8px 12px; font-size: 13px;
-  border: 1px solid var(--border, #d9d9d9);
-  border-radius: 6px; outline: none;
-  background: var(--bg-surface, #dedfe3);
-  color: var(--text-primary, #2b2c30);
+  border: 1px solid var(--border, #d9d9d9); border-radius: 6px; outline: none;
+  background: var(--bg-surface, #dedfe3); color: var(--text-primary, #2b2c30);
 }
 .add-list-input:focus { border-color: var(--accent, #7D68C8); }
 .add-list-btn {
@@ -2211,8 +2236,7 @@ onBeforeUnmount(() => {
 .add-list-btn:hover { background: var(--accent-hover, #6e3b96); }
 
 .modal-backdrop {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.3); backdrop-filter: blur(2px);
+  position: fixed; inset: 0; background: rgba(0,0,0,.3); backdrop-filter: blur(2px);
   display: flex; align-items: center; justify-content: center; z-index: 9999;
 }
 .modal-card {
@@ -2239,35 +2263,22 @@ onBeforeUnmount(() => {
 .modal-btn-confirm.disabled { background: rgba(125,104,200,.4); cursor: not-allowed; }
 
 .card-ctx-menu {
-  position: fixed;
-  z-index: 9999;
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--border, #d9d9d9);
-  border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
-  padding: 6px;
-  min-width: 200px;
-  font-size: 13px !important;
-  font-weight: normal !important;
-  font-style: normal !important;
-  color: var(--text-primary, #2b2c30) !important;
-  font-family: 'Lato', sans-serif !important;
+  position: fixed; z-index: 9999;
+  background: var(--bg-card, #fff); border: 1px solid var(--border, #d9d9d9);
+  border-radius: 10px; box-shadow: 0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
+  padding: 6px; min-width: 200px;
+  font-size: 13px !important; font-weight: normal !important; font-style: normal !important;
+  color: var(--text-primary, #2b2c30) !important; font-family: 'Lato', sans-serif !important;
 }
 .ctx-header {
   display: flex; align-items: center; gap: 7px;
-  padding: 6px 10px 8px;
-  border-bottom: 1px solid var(--border, #d9d9d9);
-  margin-bottom: 4px;
+  padding: 6px 10px 8px; border-bottom: 1px solid var(--border, #d9d9d9); margin-bottom: 4px;
 }
-.ctx-header-icon {
-  color: var(--accent, #7D68C8); font-size: 12px; flex-shrink: 0;
-}
+.ctx-header-icon { color: var(--accent, #7D68C8); font-size: 12px; flex-shrink: 0; }
 .ctx-header-title {
-  font-size: 11px !important;
-  font-weight: 600 !important;
+  font-size: 11px !important; font-weight: 600 !important;
   color: var(--text-primary, #2b2c30) !important;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 150px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;
 }
 .ctx-item {
   display: flex; align-items: center; gap: 9px;
@@ -2275,15 +2286,12 @@ onBeforeUnmount(() => {
   background: transparent; border: none; border-radius: 6px;
   cursor: pointer; text-align: left;
   font-size: 12px !important; font-weight: 500 !important;
-  color: var(--text-primary, #2b2c30) !important;
-  transition: background 0.1s;
+  color: var(--text-primary, #2b2c30) !important; transition: background 0.1s;
 }
 .ctx-item:hover { background: var(--bg-surface, #dedfe3); }
 .ctx-item--danger { color: #ef4444 !important; }
 .ctx-item--danger:hover { background: #fef2f2; }
-.ctx-item-icon {
-  font-size: 11px; width: 14px; text-align: center; flex-shrink: 0;
-}
+.ctx-item-icon { font-size: 11px; width: 14px; text-align: center; flex-shrink: 0; }
 .ctx-icon--add    { color: #22c55e; }
 .ctx-icon--open   { color: var(--accent, #7D68C8); }
 .ctx-icon--format { color: #9356c5; }
@@ -2293,12 +2301,9 @@ onBeforeUnmount(() => {
   font-size: 9px !important; font-weight: 500 !important;
   color: var(--text-secondary, #6b6b6e) !important;
   background: var(--bg-surface, #dedfe3); border: 1px solid var(--border, #d9d9d9);
-  border-radius: 3px; padding: 1px 5px;
-  font-family: monospace !important;
+  border-radius: 3px; padding: 1px 5px; font-family: monospace !important;
 }
-.ctx-divider {
-  height: 1px; background: var(--border, #d9d9d9); margin: 4px 0;
-}
+.ctx-divider { height: 1px; background: var(--border, #d9d9d9); margin: 4px 0; }
 
 .fade-enter-active, .fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-6px); }
@@ -2306,6 +2311,7 @@ onBeforeUnmount(() => {
 .slide-sidebar-enter-active, .slide-sidebar-leave-active { transition: width 0.22s ease, opacity 0.22s ease; }
 .slide-sidebar-enter-from, .slide-sidebar-leave-to { width: 0 !important; opacity: 0; }
 
+/* ── Dark mode ─────────────────────────────────────────────────────────── */
 .mindmap-root[data-dark="true"] { background: var(--bg-surface, #1a1a1a); }
 .mindmap-root[data-dark="true"] .viewport {
   background: var(--bg-surface, #1a1a1a);
@@ -2331,7 +2337,6 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .node-root-icon { color: #9356c5; }
 .mindmap-root[data-dark="true"] .node-sheet-icon { color: #9356c5; }
 .mindmap-root[data-dark="true"] .meta-pill       { background: rgba(147,86,197,.15); }
-
 .mindmap-root[data-dark="true"] .node-list-dot { background: #9356c5; }
 
 .mindmap-root[data-dark="true"] .card-badge--status  { background: rgba(147,86,197,.2); color: #c4b8f0; }
@@ -2346,14 +2351,10 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .node-card-actions-row { border-color: rgba(255,255,255,.06); }
 
 .mindmap-root[data-dark="true"] .canvas-controls {
-  background: var(--bg-card, #2b2c30);
-  border-color: var(--border, #3e3e42);
+  background: var(--bg-card, #2b2c30); border-color: var(--border, #3e3e42);
   box-shadow: 0 4px 16px rgba(0,0,0,.5);
 }
-.mindmap-root[data-dark="true"] .ctrl-btn {
-  border-color: var(--border, #3e3e42);
-  color: var(--text-secondary, #b0b0b0);
-}
+.mindmap-root[data-dark="true"] .ctrl-btn { border-color: var(--border, #3e3e42); color: var(--text-secondary, #b0b0b0); }
 .mindmap-root[data-dark="true"] .ctrl-btn:hover,
 .mindmap-root[data-dark="true"] .ctrl-btn--active {
   background: var(--accent, #9356c5); color: #fff; border-color: var(--accent, #9356c5);
@@ -2362,35 +2363,21 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .zoom-label   { color: #b0b0b0 !important; }
 
 .mindmap-root[data-dark="true"] .canvas-stats {
-  background: rgba(13,13,13,.85);
-  border-color: #3e3e42;
-  color: #b0b0b0;
+  background: rgba(13,13,13,.85); border-color: #3e3e42; color: #b0b0b0;
 }
 
 .mindmap-root[data-dark="true"] .nact:hover { background: rgba(147,86,197,.15); }
 
 .mindmap-root[data-dark="true"] .inline-card-input {
-  background: var(--bg-card, #2b2c30);
-  color: var(--text-primary, #f5f5f5);
-  border-color: var(--accent, #9356c5);
+  background: var(--bg-card, #2b2c30); color: var(--text-primary, #f5f5f5); border-color: var(--accent, #9356c5);
 }
 .mindmap-root[data-dark="true"] .inline-card-input::placeholder { color: #b0b0b0; }
 .mindmap-root[data-dark="true"] .inline-btn--confirm { background: var(--accent, #9356c5); }
-.mindmap-root[data-dark="true"] .inline-btn--cancel {
-  background: var(--bg-surface, #1a1a1a); color: var(--text-secondary, #b0b0b0);
-}
+.mindmap-root[data-dark="true"] .inline-btn--cancel { background: var(--bg-surface, #1a1a1a); color: var(--text-secondary, #b0b0b0); }
 .mindmap-root[data-dark="true"] .inline-btn--cancel:hover { background: var(--border, #3e3e42); }
-.mindmap-root[data-dark="true"] .list-add-card-btn {
-  color: #9356c5;
-  background: rgba(147,86,197,.12);
-  border-color: rgba(147,86,197,.3);
-}
+.mindmap-root[data-dark="true"] .list-add-card-btn { color: #9356c5; background: rgba(147,86,197,.12); border-color: rgba(147,86,197,.3); }
 
-.mindmap-root[data-dark="true"] .format-sidebar {
-  background: var(--bg-card, #2b2c30) !important;
-  border-color: var(--border, #3e3e42) !important;
-  color: var(--text-primary, #f5f5f5) !important;
-}
+.mindmap-root[data-dark="true"] .format-sidebar { background: var(--bg-card, #2b2c30) !important; border-color: var(--border, #3e3e42) !important; color: var(--text-primary, #f5f5f5) !important; }
 .mindmap-root[data-dark="true"] .fs-header        { border-color: #3e3e42; }
 .mindmap-root[data-dark="true"] .fs-header-left   { color: #f5f5f5 !important; }
 .mindmap-root[data-dark="true"] .fs-close         { color: #b0b0b0; }
@@ -2402,21 +2389,9 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .fs-section       { border-color: #3e3e42; }
 .mindmap-root[data-dark="true"] .fs-section-label { color: #b0b0b0 !important; }
 .mindmap-root[data-dark="true"] .fs-field label   { color: #b0b0b0 !important; }
-.mindmap-root[data-dark="true"] .fs-input {
-  background: var(--bg-surface, #1a1a1a) !important;
-  border-color: var(--border, #3e3e42) !important;
-  color: var(--text-primary, #f5f5f5) !important;
-}
-.mindmap-root[data-dark="true"] .fs-input-full {
-  background: var(--bg-surface, #1a1a1a) !important;
-  border-color: var(--border, #3e3e42) !important;
-  color: var(--text-primary, #f5f5f5) !important;
-}
-.mindmap-root[data-dark="true"] .fs-select {
-  background: var(--bg-surface, #1a1a1a) !important;
-  border-color: var(--border, #3e3e42) !important;
-  color: var(--text-primary, #f5f5f5) !important;
-}
+.mindmap-root[data-dark="true"] .fs-input { background: var(--bg-surface, #1a1a1a) !important; border-color: var(--border, #3e3e42) !important; color: var(--text-primary, #f5f5f5) !important; }
+.mindmap-root[data-dark="true"] .fs-input-full { background: var(--bg-surface, #1a1a1a) !important; border-color: var(--border, #3e3e42) !important; color: var(--text-primary, #f5f5f5) !important; }
+.mindmap-root[data-dark="true"] .fs-select { background: var(--bg-surface, #1a1a1a) !important; border-color: var(--border, #3e3e42) !important; color: var(--text-primary, #f5f5f5) !important; }
 .mindmap-root[data-dark="true"] .color-hex  { background: #1a1a1a; border-color: #3e3e42; color: #f5f5f5; }
 .mindmap-root[data-dark="true"] .align-btn  { background: #1a1a1a; border-color: #3e3e42; color: #b0b0b0; }
 .mindmap-root[data-dark="true"] .shadow-btn { background: #1a1a1a; border-color: #3e3e42; color: #b0b0b0; }
@@ -2426,12 +2401,7 @@ onBeforeUnmount(() => {
 .mindmap-root[data-dark="true"] .unit         { color: #b0b0b0; }
 .mindmap-root[data-dark="true"] .fs-body::-webkit-scrollbar-thumb { background: #3e3e42; }
 
-.card-ctx-menu--dark {
-  background: var(--bg-card, #2b2c30) !important;
-  border-color: var(--border, #3e3e42) !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5) !important;
-  color: var(--text-primary, #f5f5f5) !important;
-}
+.card-ctx-menu--dark { background: var(--bg-card, #2b2c30) !important; border-color: var(--border, #3e3e42) !important; box-shadow: 0 8px 32px rgba(0,0,0,.5) !important; color: var(--text-primary, #f5f5f5) !important; }
 .card-ctx-menu--dark .ctx-header        { border-color: #3e3e42; }
 .card-ctx-menu--dark .ctx-header-title  { color: #f5f5f5 !important; }
 .card-ctx-menu--dark .ctx-item          { color: #b0b0b0 !important; }
@@ -2441,13 +2411,6 @@ onBeforeUnmount(() => {
 .card-ctx-menu--dark .ctx-divider       { background: #3e3e42; }
 .card-ctx-menu--dark .ctx-kbd           { background: #3e3e42; border-color: #3e3e42; color: #b0b0b0 !important; }
 
-.mindmap-root[data-dark="true"] .add-list-panel {
-  background: var(--bg-card, #2b2c30);
-  border-color: var(--border, #3e3e42);
-}
-.mindmap-root[data-dark="true"] .add-list-input {
-  background: var(--bg-surface, #1a1a1a);
-  border-color: var(--border, #3e3e42);
-  color: var(--text-primary, #f5f5f5);
-}
+.mindmap-root[data-dark="true"] .add-list-panel { background: var(--bg-card, #2b2c30); border-color: var(--border, #3e3e42); }
+.mindmap-root[data-dark="true"] .add-list-input { background: var(--bg-surface, #1a1a1a); border-color: var(--border, #3e3e42); color: var(--text-primary, #f5f5f5); }
 </style>
