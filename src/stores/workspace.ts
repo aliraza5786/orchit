@@ -142,8 +142,7 @@ export const useWorkspaceStore = defineStore("workspace", {
      // Also update workspace.lanes if your components rely on it
      if (this.workspace && Array.isArray(this.workspace.lanes)) {
       this.workspace.lanes = [...this.workspace.lanes, lane];
-     }
-     console.log('New lanes:', this.lanes)
+     } 
     },
     toggleSettingPanel() {
       this.showProfilePanel = false;

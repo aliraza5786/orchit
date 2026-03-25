@@ -184,6 +184,14 @@ export const useWorkspacesVariables = () =>
     url: "/common/prompt-variables-filterable",
     method: "GET",
   });
+export const useSharedUsers = (params: { resource_type: string; resource_id: string; workspace_id: string }) =>
+  useApiQuery({
+    key: ["shared-users", params.resource_type, params.resource_id, params.workspace_id],
+    url: `/share/${params.resource_type}/${params.resource_id}`,
+    method: "GET",
+    params: { workspace_id: params.workspace_id },
+    enabled: !!params.resource_id && !!params.workspace_id,
+  });
 
 export const useInvitedWorkspace = (id: string | number) =>
   useApiQuery({
@@ -280,6 +288,26 @@ export const useShareResource = (options = {}) =>
     options as any
   );
 
+export const useUpdateShareRole = (params: { type: string; id: string }, options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["update-share-role", params.type, params.id],
+      url: `/share/${params.type}/${params.id}`,
+      method: "PUT",
+    },
+    options as any
+  );
+
+export const useRemoveShareAccess = (params: { resource_type: string; resource_id: string }, options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["remove-share-access", params.resource_type, params.resource_id],
+      url: `/share/${params.resource_type}/${params.resource_id}`,
+      method: "DELETE",
+    },
+    options as any
+  );
+
 type UpdateInvitedVars = { id: string | number; payload: any };
 export const useUpdateInvitedWorkspace = (options = {}) =>
   useApiMutation<any, UpdateInvitedVars>(
@@ -350,8 +378,10 @@ export function useTasks(userId: any) {
     enabled: computed(() => !!unref(userId)), // don't run until we have an id
   });
 }
-export const getUsers = (id: any) =>
-  api.get(`workspace/team-users?company_id=${id?._id}`).then((r) => r.data);
+export const getUsers = (id: any) => {
+  const companyId = typeof id === 'object' ? id?._id : id;
+  return api.get(`workspace/team-users?company_id=${companyId}`).then((r) => r.data);
+};
 
 export function useUsers(companyId: any) {
   return useQuery({
