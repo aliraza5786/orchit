@@ -1,7 +1,6 @@
 <template>
   <div class="relative w-full h-full flex overflow-hidden mindmap-root" ref="rootEl" :data-dark="isDark ? 'true' : 'false'">
 
-    <!-- ── Viewport (clips the infinite canvas) ──────────────────────────── -->
     <div
       class="viewport flex-1 relative overflow-hidden"
       ref="viewportEl"
@@ -10,7 +9,6 @@
       @click="handleCanvasClick"
       @contextmenu.prevent
     >
-      <!-- ── Infinite canvas (pan + zoom transform) ─────────────────────── -->
       <div
         ref="canvasEl"
         class="canvas-area"
@@ -21,31 +19,24 @@
           willChange: 'transform',
         }"
       >
-        <!-- Empty state -->
         <div v-if="allNodes.length === 0" class="canvas-placeholder">
           <i class="fa-solid fa-diagram-project fa-3x mb-3" style="color:#94a3b8"></i>
           <h5 style="color:#64748b">No data to display</h5>
           <p style="color:#94a3b8;font-size:13px">Add sheets and cards to see your mindmap</p>
         </div>
 
-        <!-- ── SVG connection layer ──────────────────────────────────────── -->
         <svg
           class="connections-svg"
           :style="{ width: svgW + 'px', height: svgH + 'px' }"
           :viewBox="`0 0 ${svgW} ${svgH}`"
         >
           <defs>
-            <marker id="arr" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
-              <path d="M0,0 L0,6 L6,3 z" :fill="isDark ? '#475569' : '#94a3b8'" />
-            </marker>
           </defs>
           <g v-for="e in visibleEdges" :key="e.id">
-            <!-- hit area -->
             <path :d="e.path" stroke="transparent" stroke-width="10" fill="none" />
-            <!-- visible -->
             <path
               :d="e.path"
-              :stroke="edgeColor(e.level)"
+              stroke="#6e3b96"
               stroke-width="1.5"
               fill="none"
               stroke-linecap="round"
@@ -55,7 +46,6 @@
           </g>
         </svg>
 
-        <!-- ── Nodes ─────────────────────────────────────────────────────── -->
         <div
           v-for="node in allNodes"
           :key="node.id"
@@ -69,15 +59,13 @@
           @click.stop="handleNodeClick(node.id)"
           @contextmenu.stop.prevent="handleNodeContextMenu($event, node)"
         >
-          <!-- ── ROOT node ────────────────────────────────────────────────── -->
           <template v-if="node.uniqueName === 'root'">
             <div class="node-root-inner">
-              <i class="fa-solid fa-brain node-root-icon"></i>
+              <img :src="localWorkspace.logo ?? dp" class="w-10 h-10 rounded-full" alt="logo">
               <span class="node-root-title">{{ node.topic }}</span>
             </div>
           </template>
 
-          <!-- ── SHEET node ──────────────────────────────────────────────── -->
           <template v-else-if="node.uniqueName === 'sheet'">
             <div class="node-sheet-inner">
               <div class="node-sheet-header">
@@ -107,7 +95,6 @@
             </div>
           </template>
 
-          <!-- ── LIST node ───────────────────────────────────────────────── -->
           <template v-else-if="node.uniqueName === 'List'">
             <div class="node-list-inner">
               <div class="node-list-header">
@@ -130,7 +117,6 @@
                 <i class="fa-solid fa-layer-group me-1"></i>{{ node.children.length }} hidden
               </div>
 
-              <!-- ── Inline card creation input ─────────────────────────── -->
               <div
                 v-if="creatingCardForListId === node.id && !isPlanRoute"
                 class="inline-create-card"
@@ -146,7 +132,7 @@
                   @blur="() => { if (!newCardTitle.trim()) cancelInlineCreation(); }"
                   autofocus
                 />
-                <div class="inline-card-actions">
+                <div class="inline-card-actions" v-if="!isPlanRoute">
                   <button
                     class="inline-btn inline-btn--confirm"
                     :disabled="!newCardTitle.trim() || isCreatingCard"
@@ -161,7 +147,6 @@
                 </div>
               </div>
 
-              <!-- "Add card" trigger shown on hover when not already creating -->
               <button
                 v-if="canCreateCard && creatingCardForListId !== node.id && !isPlanRoute"
                 class="list-add-card-btn"
@@ -173,93 +158,83 @@
             </div>
           </template>
 
-          <!-- ── CARD node ───────────────────────────────────────────────── -->
           <template v-else-if="node.uniqueName === 'card'">
             <div class="node-card-inner">
-          <!-- Card top stripe — uses borderColor if set, otherwise accent default -->
               <div
                 class="node-card-stripe"
-                :style="{ background: node.style?.borderColor || node.style?.color || '#6366f1' }"
+                :style="{ background: node.variables?.lane?.variables?.['lane-color'] || node.style?.borderColor || node.style?.color || '#6e3b96' }"
               ></div>
 
-              <!-- Card body -->
               <div class="node-card-body">
-                <!-- Header row -->
-                <div class="node-card-header">
-                  <span class="node-card-title">{{ node.topic }}</span>
-                  <div class="node-actions">
-                    <button
-                      v-if="canCreateCard && node.parent?.uniqueName === 'List' && !isPlanRoute"
-                      class="nact nact--add" @click.stop="node.parent && startInlineCardCreation(node.parent)"
-                      title="Add sibling card (Enter)"
-                    ><i class="fa-solid fa-plus"></i></button>
-                    <button
-                      v-if="canAssignCard && canEditCard"
-                      class="nact" @click.stop="openFormatSidebar(node.id)" title="Format"
-                    ><i class="fa-solid fa-palette"></i></button>
-                    <button class="nact nact--open" @click.stop="handleOpenNode(node)" title="Open card">
-                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    </button>
-                    <button
-                      v-if="canDeleteCard"
-                      class="nact nact--danger" @click.stop="handleDeleteNode(node.id)" title="Delete"
-                    ><i class="fa-solid fa-trash-can"></i></button>
-                  </div>
-                </div>
-
-                <!-- Status + Priority row -->
-                <div class="node-card-tags">
+                <div class="node-card-badges">
+                  <span
+                    v-if="node.variables?.['card-type']"
+                    class="card-badge card-badge--type"
+                  >{{ node.variables['card-type'] || 'General' }}</span>
                   <span
                     v-if="node.variables?.['card-status']"
-                    class="card-tag card-tag--status"
+                    class="card-badge card-badge--status"
                   >{{ node.variables['card-status'] }}</span>
                   <span
                     v-if="node.variables?.priority"
-                    class="card-tag"
-                    :class="`card-tag--${node.variables.priority}`"
+                    class="card-badge"
+                    :class="`card-badge--${node.variables.priority}`"
                   >
-                    <i class="fa-solid fa-flag me-1" style="font-size:9px"></i>
+                    <i class="fa-solid fa-flag" style="font-size:8px"></i>
                     {{ node.variables.priority }}
                   </span>
-                  <span
-                    v-if="node.variables?.process != null"
-                    class="card-tag card-tag--process"
-                  >{{ node.variables.process }}%</span>
                 </div>
 
-                <!-- Dates row -->
-                <div
-                  v-if="node.variables?.['start-date'] || node.variables?.['end-date']"
-                  class="node-card-dates"
-                >
-                  <i class="fa-regular fa-calendar" style="font-size:9px;opacity:.6"></i>
-                  <span v-if="node.variables['start-date']">{{ formatDate(node.variables['start-date']) }}</span>
-                  <span v-if="node.variables['start-date'] && node.variables['end-date']" style="opacity:.4">→</span>
-                  <span v-if="node.variables['end-date']">{{ formatDate(node.variables['end-date']) }}</span>
-                </div>
+                <span class="node-card-title">{{ node.topic }}</span>
 
-                <!-- Description snippet -->
                 <div
                   v-if="node.variables?.['card-description']"
-                  class="node-card-desc"
-                >{{ node.variables['card-description'] }}</div>
+                  class="node-card-desc" v-html="node.variables['card-description']"
+                ></div>
 
-                <!-- Footer: hyperlink + seat_id -->
                 <div class="node-card-footer">
-                  <a v-if="node.hyperLink" :href="node.hyperLink" target="_blank" class="card-link" @click.stop>
-                    <i class="fa-solid fa-link"></i> Link
-                  </a>
-                  <span v-if="node.seat_id" class="card-seat">
-                    <i class="fa-solid fa-fingerprint" style="font-size:9px;opacity:.5"></i>
-                  </span>
+                  <div class="node-card-footer-left">
+                    <div
+                      v-if="node.variables?.['start-date'] || node.variables?.['end-date']"
+                      class="node-card-dates"
+                    >
+                      <i class="fa-regular fa-calendar" style="font-size:9px;opacity:.6"></i>
+                      <span v-if="node.variables['start-date']">{{ formatDate(node.variables['start-date']) }}</span>
+                      <span v-if="node.variables['start-date'] && node.variables['end-date']" style="opacity:.4">→</span>
+                      <span v-if="node.variables['end-date']">{{ formatDate(node.variables['end-date']) }}</span>
+                    </div>
+                    <span v-if="node.variables?.process != null" class="card-badge card-badge--process">{{ node.variables.process }}%</span>
+                  </div>
+                </div>
+
+                <div class="node-card-actions-row" v-if="!isPlanRoute">
+                  <button
+                    v-if="canCreateCard && node.parent?.uniqueName === 'List'"
+                    class="nact nact--add" @click.stop="node.parent && startInlineCardCreation(node.parent)"
+                    title="Add sibling card"
+                  ><i class="fa-solid fa-plus"></i></button>
+                  <button
+                    v-if="canAssignCard && canEditCard"
+                    class="nact" @click.stop="openFormatSidebar(node.id)" title="Format"
+                  ><i class="fa-solid fa-palette"></i></button>
+                  <button class="nact nact--open" @click.stop="handleOpenNode(node)" title="Open card">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                  </button>
+                  <button
+                      v-if="canDeleteCard"
+                      class="nact nact--danger"
+                      @click.stop="openDeleteModal(node)"
+                      title="Delete"
+                    >
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
                 </div>
               </div>
             </div>
           </template>
         </div>
-      </div><!-- /canvas-area -->
+      </div>
 
-      <!-- ── Canvas Controls ────────────────────────────────────────────── -->
       <div class="canvas-controls">
         <button class="ctrl-btn" @click="handleZoomIn" title="Zoom In (+)">
           <i class="fa-solid fa-plus"></i>
@@ -284,23 +259,20 @@
         </button>
       </div>
 
-      <!-- Stats -->
       <div class="canvas-stats">
         <span><i class="fa-solid fa-circle-nodes me-1"></i>{{ allNodes.length }}</span>
         <span><i class="fa-solid fa-bezier-curve me-1"></i>{{ visibleEdges.length }}</span>
       </div>
-    </div><!-- /viewport -->
+    </div>
 
-    <!-- ── Format Sidebar ────────────────────────────────────────────────── -->
     <transition name="slide-sidebar">
       <div
         v-if="showFormatSidebar && canAssignCard && canEditCard && canCreateCard"
         class="format-sidebar"
       >
-        <!-- Header -->
         <div class="fs-header">
           <div class="fs-header-left">
-            <i class="fa-solid fa-sliders" style="color:var(--accent,#6366f1)"></i>
+            <i class="fa-solid fa-sliders" style="color:var(--accent,#6e3b96)"></i>
             <span>Format Node</span>
           </div>
           <button class="fs-close" @click="showFormatSidebar = false">
@@ -308,7 +280,6 @@
           </button>
         </div>
 
-        <!-- No selection hint -->
         <div v-if="!selectedNodeId" class="fs-empty">
           <i class="fa-solid fa-arrow-pointer fa-xl" style="color:#cbd5e1;margin-bottom:8px"></i>
           <p>Click any node<br>to format it</p>
@@ -316,14 +287,12 @@
 
         <div v-else class="fs-body">
 
-          <!-- ── Selected node name (plain, no style inheritance) ────────── -->
           <div class="fs-node-name">
             <i class="fa-solid fa-circle-dot fs-node-icon" :class="`fs-icon--${selectedNode?.uniqueName}`"></i>
             <span class="fs-node-label">{{ selectedNode?.topic || 'Node' }}</span>
             <span class="fs-node-type">{{ selectedNode?.uniqueName }}</span>
           </div>
 
-          <!-- ── Quick presets ─────────────────────────────────────────── -->
           <div class="fs-section">
             <div class="fs-section-label">Quick Presets</div>
             <div class="fs-presets">
@@ -338,7 +307,6 @@
             </div>
           </div>
 
-          <!-- ── Colors ────────────────────────────────────────────────── -->
           <div class="fs-section">
             <div class="fs-section-label">Colors</div>
             <div class="fs-row">
@@ -365,21 +333,19 @@
                 </div>
               </div>
             </div>
-            <!-- Border color -->
             <div class="fs-field">
               <label>Border Color</label>
               <div class="color-row">
-                <div class="color-swatch" :style="{ background: activeFormatStyle.borderColor || '#e2e8f0' }">
-                  <input type="color" :value="activeFormatStyle.borderColor || '#e2e8f0'"
+                <div class="color-swatch" :style="{ background: activeFormatStyle.borderColor || '#d9d9d9' }">
+                  <input type="color" :value="activeFormatStyle.borderColor || '#d9d9d9'"
                     @input="onStyleChange('border_color', $event)" />
                 </div>
                 <input class="color-hex" :value="activeFormatStyle.borderColor || ''"
-                  placeholder="#e2e8f0" readonly />
+                  placeholder="#d9d9d9" readonly />
               </div>
             </div>
           </div>
 
-          <!-- ── Typography ────────────────────────────────────────────── -->
           <div class="fs-section">
             <div class="fs-section-label">Typography</div>
             <div class="fs-row">
@@ -446,7 +412,6 @@
             </div>
           </div>
 
-          <!-- ── Border & Shape ────────────────────────────────────────── -->
           <div class="fs-section">
             <div class="fs-section-label">Border & Shape</div>
             <div class="fs-row">
@@ -475,7 +440,6 @@
                 </div>
               </div>
             </div>
-            <!-- Border style -->
             <div class="fs-field">
               <label>Border Style</label>
               <select class="fs-select" :value="(activeFormatStyle as any).borderStyle || 'solid'" @change="onStyleChangeDirect('border_style', ($event.target as HTMLSelectElement).value)">
@@ -488,7 +452,6 @@
             </div>
           </div>
 
-          <!-- ── Spacing & Opacity ─────────────────────────────────────── -->
           <div class="fs-section">
             <div class="fs-section-label">Spacing & Visibility</div>
             <div class="fs-row">
@@ -519,7 +482,6 @@
             </div>
           </div>
 
-          <!-- ── Shadow ────────────────────────────────────────────────── -->
           <div class="fs-section">
             <div class="fs-section-label">Shadow</div>
             <div class="shadow-presets">
@@ -534,7 +496,6 @@
             </div>
           </div>
 
-          <!-- ── Hyperlink ─────────────────────────────────────────────── -->
           <div class="fs-section">
             <div class="fs-section-label">Hyperlink</div>
             <div class="fs-field">
@@ -547,15 +508,13 @@
             </div>
           </div>
 
-          <!-- ── Reset ─────────────────────────────────────────────────── -->
           <div class="fs-section" style="border:none;padding-bottom:0">
             <button class="fs-reset-btn" @click="resetNodeStyle">
               <i class="fa-solid fa-rotate me-1"></i> Reset to default
             </button>
           </div>
-        </div><!-- /fs-body -->
+        </div>
 
-        <!-- Save -->
         <div class="fs-footer">
           <button
             class="fs-save-btn"
@@ -570,8 +529,7 @@
       </div>
     </transition>
 
-    <!-- ── Card right-click context menu ───────────────────────────────────── -->
-    <Teleport to="body">
+    <Teleport to="body" v-if="!isPlanRoute">
       <transition name="fade">
         <div
           v-if="ctxMenu.visible"
@@ -581,13 +539,11 @@
           @click.stop
           @mousedown.stop
         >
-          <!-- Card info header -->
           <div class="ctx-header">
             <i class="fa-solid fa-square-check ctx-header-icon"></i>
             <span class="ctx-header-title">{{ ctxMenuNode?.topic }}</span>
           </div>
 
-          <!-- Add sibling -->
           <button
             v-if="canCreateCard && !isPlanRoute"
             class="ctx-item"
@@ -598,15 +554,13 @@
             <kbd class="ctx-kbd">Enter</kbd>
           </button>
 
-          <!-- Open / view -->
-          <button class="ctx-item" @click="ctxOpenCard">
+          <button class="ctx-item" @click="ctxOpenCard" v-if="!isPlanRoute">
             <i class="fa-solid fa-arrow-up-right-from-square ctx-item-icon ctx-icon--open"></i>
             <span>Open card</span>
           </button>
 
-          <!-- Format -->
           <button
-            v-if="canAssignCard && canEditCard"
+            v-if="canAssignCard && canEditCard && !isPlanRoute"
             class="ctx-item"
             @click="ctxFormatCard"
           >
@@ -616,9 +570,8 @@
 
           <div class="ctx-divider"></div>
 
-          <!-- Delete -->
           <button
-            v-if="canDeleteCard"
+            v-if="canDeleteCard && !isPlanRoute"
             class="ctx-item ctx-item--danger"
             @click="ctxDeleteCard"
           >
@@ -630,9 +583,6 @@
       </transition>
     </Teleport>
 
-    <!-- Sheet selector moved inside List node (plan route only) -->
-
-    <!-- ── Add List Input ─────────────────────────────────────────────────── -->
     <div
       v-if="activeAddList"
       class="add-list-panel"
@@ -645,17 +595,16 @@
         @keyup.enter="emitAddColumn"
         class="add-list-input"
       />
-      <p style="font-size:11px;margin-top:6px;color:#64748b">You can add details while editing</p>
+      <p style="font-size:11px;margin-top:6px;color:#6b6b6e">You can add details while editing</p>
       <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
         <button @click="emitAddColumn" class="add-list-btn">
           {{ addingList ? 'Adding...' : 'Add list' }}
         </button>
-        <i class="fa-solid fa-close" style="cursor:pointer;color:#94a3b8" @click="emit('toggle-add-list')"></i>
+        <i class="fa-solid fa-close" style="cursor:pointer;color:#6b6b6e" @click="emit('toggle-add-list')"></i>
       </div>
     </div>
   </div>
 
-  <!-- ── Hyperlink Modal ──────────────────────────────────────────────────── -->
   <div
     v-if="showHyperlinkModal && canAssignCard && canEditCard && canCreateCard"
     class="modal-backdrop"
@@ -669,6 +618,18 @@
       </div>
     </div>
   </div>
+  <ConfirmDeleteModal
+    v-model="showTicketDelete"
+    title="Delete Ticket"
+    itemLabel="Ticket"
+    :itemName="ticketToDelete?.title"
+    :requireMatchText="ticketToDelete?.title"
+    confirmText="Delete Ticket"
+    cancelText="Cancel"
+    size="md"
+    @confirm="handleDeleteTicket"
+    @cancel="() => { showTicketDelete = false; ticketToDelete = null; }"
+  />
 </template>
 
 <script setup lang="ts">
@@ -679,8 +640,9 @@ import {
 import { toast } from "vue-sonner";
 import { useTheme } from "../../composables/useTheme";
 import { useRoute } from "vue-router";
-
-// ── Props / Emits ─────────────────────────────────────────────────────────────
+import ConfirmDeleteModal from "../../views/Product/modals/ConfirmDeleteModal.vue"
+import { useWorkspaceStore } from "../../stores/workspace";
+import dp from "../../assets/global/dummy.jpeg";
 const props = defineProps<{
   listsData: any[];
   selectedSheetId: string;
@@ -711,11 +673,9 @@ const emit = defineEmits<{
   (e: "add-column", value: string): void;
 }>();
 
-// ── Theme ─────────────────────────────────────────────────────────────────────
 const { isDark } = useTheme();
 const route = useRoute();
 
-// ── Interfaces ────────────────────────────────────────────────────────────────
 interface NodeStyle {
   background?: string; color?: string;
   fontSize?: string; fontWeight?: string; fontStyle?: string; fontFamily?: string;
@@ -735,29 +695,35 @@ interface MindNode {
   isRoot?: boolean;
   uniqueName: "root" | "sheet" | "List" | "card";
   variables?: any; hyperLink?: string;
-  // layout
   x: number; y: number; width: number; height: number;
   collapsed: boolean;
 }
 
 interface Edge { id: string; path: string; level: number; }
-
-// ── Registry ──────────────────────────────────────────────────────────────────
-// reactive() gives deep tracking: mutating node.style.fontSize will
-// immediately re-render any template binding that reads it.
-// ref<Map> does NOT track nested property mutations — that was the bug.
 const nodeStore = reactive<Record<string, MindNode>>({});
 const rootNodeId = ref<string>("");
-// Incremented on every collapse toggle to force allNodes recomputation
 const collapseVersion = ref(0);
-// Plain ref array of collapsed node IDs — Vue 3 fully tracks ref reassignment
 const collapsedIds = ref<string[]>([]);
-// Helpers that mirror Set API used throughout
+const showTicketDelete = ref(false);
+const ticketToDelete = ref<any>(null);
+  const workspaceStore = useWorkspaceStore();
+const localWorkspace = computed(() => workspaceStore.singleWorkspace); 
+  function openDeleteModal(node: any) {
+  ticketToDelete.value = node
+  showTicketDelete.value = true
+}
+function handleDeleteTicket() {
+  if (!ticketToDelete.value) return
+
+  emit("delete:ticket", ticketToDelete.value.id)
+
+  showTicketDelete.value = false
+  ticketToDelete.value = null
+}
 function isCollapsed(id: string): boolean { return collapsedIds.value.includes(id); }
 function collapseNode(id: string): void   { if (!isCollapsed(id)) collapsedIds.value = [...collapsedIds.value, id]; }
 function expandNode(id: string): void     { collapsedIds.value = collapsedIds.value.filter(x => x !== id); }
 
-// Drop-in shim that matches every Map call used in this file
 const nodeMap = {
   get(id: string): MindNode | null { return nodeStore[id] ?? null; },
   set(id: string, node: MindNode): void { nodeStore[id] = node; },
@@ -765,8 +731,6 @@ const nodeMap = {
   has(id: string): boolean { return id in nodeStore; },
 };
 
-// ── Viewport / pan / zoom ─────────────────────────────────────────────────────
-const rootEl      = ref<HTMLElement | null>(null);
 const viewportEl  = ref<HTMLElement | null>(null);
 const canvasEl    = ref<HTMLDivElement | null>(null);
 
@@ -781,67 +745,44 @@ const panStart     = ref({ x: 0, y: 0 });
 const svgW = ref(8000);
 const svgH = ref(8000);
 
-// ── Layout direction: "right" | "left" | "center" ────────────────────────────
-// ── Layout direction ─────────────────────────────────────────────────────────
 const layoutDirection = ref<"right" | "left" | "center">("right");
-// Stores which side each node is on (for center layout edge drawing)
-// Kept outside nodeStore to avoid Vue reactivity tracking issues with late-added props
 const nodeSides = new Map<string, "left" | "right">();
 
-// ── Drag ──────────────────────────────────────────────────────────────────────
 const draggedNodeId = ref<string | null>(null);
 const dragOffset    = ref({ x: 0, y: 0 });
 
-// ── Inline card creation ──────────────────────────────────────────────────────
-const creatingCardForListId = ref<string | null>(null);  // which List node is active
+const creatingCardForListId = ref<string | null>(null);
 const newCardTitle          = ref<string>("");
 const isCreatingCard        = ref(false);
 
-// ── Right-click context menu ──────────────────────────────────────────────────
 const ctxMenu = reactive({
   visible:  false,
   x:        0,
   y:        0,
   nodeId:   null as string | null,
 });
-// Skip the very next global click after opening (same event propagation)
 let ctxSkipNextClick = false;
 
-// ── Selection ─────────────────────────────────────────────────────────────────
 const selectedNodeId = ref<string | null>(null);
 
-// ── Format sidebar ────────────────────────────────────────────────────────────
 const showFormatSidebar = ref(false);
 const isSavingNodeStyle = ref(false);
 const hyperlinkInput    = ref("");
-// inlineCardInput removed — autofocus attr handles focus
 
-// ── Hyperlink modal ───────────────────────────────────────────────────────────
 const showHyperlinkModal = ref(false);
 const hyperlink = ref("");
 const resolveCallback = ref<((l: string) => void) | null>(null);
 
-// ── Sheet selector ────────────────────────────────────────────────────────────
 const selectedListSheetId = ref<string>(props.selectedSheetId);
 const sheetSelector = reactive({
   visible: false, x: 0, y: 0, selectedSheetId: "", listNodeObj: null as MindNode | null,
 });
 const showMustSelectMessage = ref(false);
 
-// ── Pending card creation (plan route — sheet must be selected first) ─────────
-// Stores the listNode + title waiting for a sheet to be picked before emit
-const pendingCard = reactive<{
-  listNode: MindNode | null;
-  title:    string;
-  mode:     "direct" | "inline"; // direct = Enter/ctx, inline = typed title
-}>({ listNode: null, title: "", mode: "direct" });
-
 const module_id = ref(localStorage.getItem("selectedModuleId") || "");
 watch(() => props.moduleId, (v) => { if (v) module_id.value = v; }, { immediate: true });
-const isPlanRoute = computed(() => route.path.includes("plan"));
+const isPlanRoute = computed(() => route.path.includes("plan") || route.path.includes("talent"));
 
-
-// ── Add-list ──────────────────────────────────────────────────────────────────
 const newColumnLocal = ref(props.newColumn);
 watch(() => props.newColumn, (v) => { newColumnLocal.value = v; });
 function emitAddColumn() {
@@ -849,12 +790,11 @@ function emitAddColumn() {
   if (t) emit("add-column", t);
 }
 
-// ── Style defaults ────────────────────────────────────────────────────────────
 const DEFAULT_BACKEND_STYLE = {
-  bg_color: "#ffffff", color: "#1e293b",
+  bg_color: "#ffffff", color: "#2b2c30",
   font_size: 13, font_weight: "normal", font_style: "normal",
   font_family: "inherit", text_align: "left",
-  border_color: "#e2e8f0", border_width: 0, border_radius: 8,
+  border_color: "#d9d9d9", border_width: 0, border_radius: 8,
   border_style: "solid", padding: 12, opacity: 1, box_shadow: "",
 };
 
@@ -887,16 +827,15 @@ function parsePx(val?: string): number {
   return parseInt(val) || 0;
 }
 
-// ── Color presets ─────────────────────────────────────────────────────────────
 const colorPresets = [
-  { name: "Indigo",  bg: "#6366f1", border: "#4f46e5", color: "#fff" },
+  { name: "Violet",  bg: "#7D68C8", border: "#6e3b96", color: "#fff" },
+  { name: "Purple",  bg: "#9356c5", border: "#7D68C8", color: "#fff" },
   { name: "Sky",     bg: "#0ea5e9", border: "#0284c7", color: "#fff" },
   { name: "Emerald", bg: "#10b981", border: "#059669", color: "#fff" },
   { name: "Amber",   bg: "#f59e0b", border: "#d97706", color: "#fff" },
   { name: "Rose",    bg: "#f43f5e", border: "#e11d48", color: "#fff" },
-  { name: "Slate",   bg: "#64748b", border: "#475569", color: "#fff" },
-  { name: "White",   bg: "#ffffff", border: "#e2e8f0", color: "#1e293b" },
-  { name: "Dark",    bg: "#1e293b", border: "#0f172a", color: "#f1f5f9" },
+  { name: "White",   bg: "#ffffff", border: "#d9d9d9", color: "#2b2c30" },
+  { name: "Dark",    bg: "#2b2c30", border: "#0f172a", color: "#f5f5f5" },
 ];
 
 const shadowPresets = [
@@ -905,7 +844,7 @@ const shadowPresets = [
   { label: "Medium", value: "0 4px 16px rgba(0,0,0,.14)" },
   { label: "Hard",   value: "0 8px 24px rgba(0,0,0,.22)" },
   { label: "Inner",  value: "inset 0 2px 6px rgba(0,0,0,.12)" },
-  { label: "Glow",   value: "0 0 0 3px rgba(99,102,241,.4)" },
+  { label: "Glow",   value: "0 0 0 3px rgba(125,104,200,.4)" },
 ];
 
 function applyPreset(p: { bg: string; border: string; color: string }) {
@@ -925,23 +864,20 @@ function resetNodeStyle() {
   hyperlinkInput.value = "";
 }
 
-// ── Node dimensions ───────────────────────────────────────────────────────────
 const NODE_W: Record<string, number> = {
-  root: 220, sheet: 200, List: 180, card: 200,
+  root: 220, sheet: 200, List: 180, card: 210,
 };
 
-/** Compute dynamic height for card nodes (more content = taller) */
 function nodeHeight(node: MindNode): number {
   if (node.uniqueName === "card") {
-    let h = 80; // base: title + stripe
+    let h = 96;
     const v = node.variables || {};
-    if (v["card-status"] || v.priority || v.process != null) h += 24;
-    if (v["start-date"] || v["end-date"]) h += 20;
-    if (v["card-description"]) h += 28;
-    if (node.hyperLink || node.seat_id) h += 18;
+    if (v["card-type"] || v["card-status"] || v.priority) h += 22;
+    if (v["start-date"] || v["end-date"] || v.process != null) h += 20;
+    if (v["card-description"]) h += 30;
     return h;
   }
-  if (node.uniqueName === "List")  return 72;  // extra room for "+ Add card" button
+  if (node.uniqueName === "List")  return 72;
   if (node.uniqueName === "sheet") return 66;
   if (node.uniqueName === "root")  return 56;
   return 46;
@@ -950,8 +886,6 @@ function nodeHeight(node: MindNode): number {
 const H_GAP = 80;
 const V_GAP = 16;
 
-// ── Layout engine (right / left / center) ─────────────────────────────────────
-// Returns the total vertical height consumed by the subtree
 function layoutTree(node: MindNode, x: number, y: number, dir?: "right"|"left"|"center"): number {
   const d = dir ?? layoutDirection.value;
   node.width  = NODE_W[node.uniqueName] ?? 180;
@@ -963,43 +897,53 @@ function layoutTree(node: MindNode, x: number, y: number, dir?: "right"|"left"|"
     return node.height;
   }
 
-  // ── CENTER layout: root in middle, children alternate left/right ─────────────
   if (d === "center" && node.uniqueName === "root") {
-    // Split children: even indices → right, odd indices → left (alternating)
     const rightKids: MindNode[] = [];
-    const leftKids:  MindNode[] = [];
+    const leftKids: MindNode[] = [];
+
     node.children.forEach((c, i) => {
-      if (i % 2 === 0) { nodeSides.set(c.id, "right"); rightKids.push(c); }
-      else             { nodeSides.set(c.id, "left");  leftKids.push(c);  }
+      if (i % 2 === 0) {
+        nodeSides.set(c.id, "right");
+        rightKids.push(c);
+      } else {
+        nodeSides.set(c.id, "left");
+        leftKids.push(c);
+      }
     });
 
-    // Layout right side — children go right, accumulate from y downward
     let ry = y;
     for (const c of rightKids) {
       const cX = x + node.width + H_GAP;
-      const h  = layoutTree(c, cX, ry, "right");
+      const h = layoutTree(c, cX, ry, "right");
       ry += h + V_GAP;
     }
 
-    // Layout left side — children go left, accumulate from y downward
     let ly = y;
     for (const c of leftKids) {
       const cX = x - H_GAP - (NODE_W[c.uniqueName] ?? 180);
-      const h  = layoutTree(c, cX, ly, "left");
+      const h = layoutTree(c, cX, ly, "left");
       ly += h + V_GAP;
     }
 
-    // Centre root over the union of all children
     const allKids = [...rightKids, ...leftKids];
-    if (allKids.length === 0) { node.x = x; node.y = y; return node.height; }
-    const minY = Math.min(...allKids.map(c => c.y));
-    const maxY = Math.max(...allKids.map(c => c.y + c.height));
+
+    if (allKids.length === 0) {
+      node.x = x;
+      node.y = y;
+      return node.height;
+    }
+
+    const allYTops = allKids.map(c => c.y);
+    const allYBottoms = allKids.map(c => c.y + c.height);
+    const minY = Math.min(...allYTops);
+    const maxY = Math.max(...allYBottoms);
+
     node.x = x;
     node.y = minY + (maxY - minY) / 2 - node.height / 2;
+
     return maxY - minY;
   }
 
-  // ── RIGHT or LEFT layout ──────────────────────────────────────────────────────
   let childY = y; let total = 0;
   for (const child of node.children) {
     nodeSides.set(child.id, d === "left" ? "left" : "right");
@@ -1023,24 +967,20 @@ function setLayout(dir: "right"|"left"|"center") {
   layoutDirection.value = dir;
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
-  // Place root at a position that gives enough canvas space on both sides
   const startX = dir === "left"   ? 4000 - NODE_W.root
                : dir === "center" ? 2500 - NODE_W.root / 2
                : 60;
   layoutTree(root, startX, 60, dir);
-  // Recalc SVG to cover all nodes (including left-side nodes for center/left)
   let minX = Infinity, maxX = -Infinity, maxY = 0;
-  for (const n of flattenVisible(root)) {
+  for (const n of flattenTree(root)) {
     minX = Math.min(minX, n.x); maxX = Math.max(maxX, n.x + n.width);
     maxY = Math.max(maxY, n.y + n.height);
   }
-  // SVG origin is 0,0 — left nodes have x < startX which is fine; just ensure width
   svgW.value = Math.max(maxX + 300, 5000);
   svgH.value = Math.max(maxY + 300, 3000);
   nextTick(() => centerView());
 }
 
-// ── Build tree ────────────────────────────────────────────────────────────────
 function buildTree(sheets: any[]): MindNode {
   const root: MindNode = {
     id: "root", sheet_id: "",
@@ -1056,7 +996,6 @@ function buildTree(sheets: any[]): MindNode {
     const title = sheet.variables?.["sheet-title"] || localStorage.getItem("selectedSprintTitle") || "Sheet";
     const link  = sheet.style?.hyperLink || "";
     if (!varMap[title]) {
-      // Sheet node id uses a prefix so it never collides with any list node id
       varMap[title] = {
         id: `sheet_group_${sheet._id}`, sheet_id: sheet._id, topic: title,
         variables: sheet?.variables, children: [],
@@ -1066,11 +1005,7 @@ function buildTree(sheets: any[]): MindNode {
       };
       root.children.push(varMap[title]);
     }
-    // sheet.title is the actual list name (e.g. "approved", "pending")
-    // Each item in listsData is a list with its own _id — use that directly.
     const listTitle = sheet.title || sheet.variables?.["sheet-title"] || title;
-    // Make a truly unique ID: combine the sheet _id with the list title + sort_order
-    // so even if multiple lists share the same parent sheet _id, they collapse independently
     const safeTitle = (listTitle || "").toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
     const listUniqueId = `list_${sheet._id}_${safeTitle}_${sheet.sort_order ?? 0}`;
     const listNode: MindNode = {
@@ -1087,7 +1022,7 @@ function buildTree(sheets: any[]): MindNode {
         topic: card["card-title"],
         style: mapBackendStyle(card.style), _originalStyle: card.style || {},
         children: [], uniqueName: "card", hyperLink: card.style?.hyperLink || "",
-        variables: { ...card.variables, ...card, "card-title": card["card-title"] },
+        variables: { ...card.variables, ...card, "card-title": card["card-title"], lane: card.lane },
         x: 0, y: 0, width: NODE_W.card, height: nodeHeight({ uniqueName: "card", variables: card } as any),
         collapsed: false,
       };
@@ -1106,21 +1041,28 @@ function assignParents(node: MindNode, parent?: MindNode) {
   for (const c of node.children) assignParents(c, node);
 }
 
-function flattenVisible(node: MindNode, out: MindNode[] = []): MindNode[] {
-  out.push(node);
-  if (!isCollapsed(node.id) && node.children)
-    for (const c of node.children) flattenVisible(c, out);
-  return out;
+function flattenTree(node: MindNode, out: MindNode[] = []): MindNode[] {
+  out.push(node)
+  node.children?.forEach(c => flattenTree(c, out))
+  return out
 }
 
-// ── Computed nodes / edges ────────────────────────────────────────────────────
 const allNodes = computed<MindNode[]>(() => {
-  void nodeStore;
-  void collapseVersion.value;
-  // collapsedIds is a reactive Set — Vue tracks .has() calls on it
-  const root = nodeMap.get(rootNodeId.value);
-  return root ? flattenVisible(root) : [];
-});
+  void nodeStore
+  void collapseVersion.value
+
+  const root = nodeMap.get(rootNodeId.value)
+  if (!root) return []
+
+  return flattenTree(root).filter(node => {
+    let p = node.parent
+    while (p) {
+      if (isCollapsed(p.id)) return false
+      p = p.parent
+    }
+    return true
+  })
+})
 
 function nodeLevel(node: MindNode): number {
   let l = 0, cur: MindNode | undefined = node;
@@ -1135,7 +1077,6 @@ const visibleEdges = computed<Edge[]>(() => {
     if (!node.children || isCollapsed(node.id)) continue;
     for (const child of node.children) {
       if (!vis.has(child.id)) continue;
-      // For left-side nodes: source = parent left edge, target = child right edge
       const isLeft = nodeSides.get(child.id) === "left";
       const x1 = isLeft ? node.x                : node.x + node.width;
       const y1 = node.y + node.height / 2;
@@ -1152,16 +1093,7 @@ const visibleEdges = computed<Edge[]>(() => {
   return edges;
 });
 
-function edgeColor(level: number): string {
-  const colors = isDark.value
-    ? ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b"]
-    : ["#a5b4fc", "#7dd3fc", "#6ee7b7", "#fcd34d"];
-  return colors[level % colors.length];
-}
 
-// ── Node inline styles ────────────────────────────────────────────────────────
-// ALL user-set style properties must reach the node element here.
-// Child elements use `color: inherit` so text color cascades automatically.
 function nodeInlineStyle(node: MindNode): Record<string, string> {
   const s   = node.style || {};
   const ext = s as any;
@@ -1173,38 +1105,23 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     height: `${node.height}px`,
   };
 
-  // ── Background ──────────────────────────────────────────────────────────────
-  // Only override the CSS-class default if the user has actually set a value
   if (s.background)              base.background  = s.background;
-
-  // ── Text color — cascade to all children via `color: inherit` ───────────────
   if (s.color)                   base.color       = s.color;
-
-  // ── Typography ──────────────────────────────────────────────────────────────
   if (s.fontFamily)              base.fontFamily  = s.fontFamily;
   if (s.fontSize)                base.fontSize    = s.fontSize;
   if (s.fontWeight)              base.fontWeight  = s.fontWeight;
   if (s.fontStyle)               base.fontStyle   = s.fontStyle;
   if (ext.textAlign)             base.textAlign   = ext.textAlign;
-
-  // ── Border ──────────────────────────────────────────────────────────────────
   if (s.borderRadius)            base.borderRadius = s.borderRadius;
-  // Always apply border together so none of the three properties goes missing
   if (s.borderWidth && s.borderWidth !== "0px") {
     base.borderWidth = s.borderWidth;
     base.borderStyle = ext.borderStyle  || "solid";
-    base.borderColor = s.borderColor    || "#e2e8f0";
+    base.borderColor = s.borderColor    || "#d9d9d9";
   } else if (s.borderColor) {
-    // User may set border color even without explicit width — keep it visible
     base.borderWidth = "1.5px";
     base.borderStyle = ext.borderStyle  || "solid";
     base.borderColor = s.borderColor;
   }
-
-  // ── Spacing & visibility ────────────────────────────────────────────────────
-  // For card nodes: padding goes on the body div, not the outer wrapper
-  // (the stripe sits at the top of the wrapper and must not be indented).
-  // We pass it as a CSS custom property and pick it up in .node-card-body.
   if (s.padding && node.uniqueName !== "card") base.padding = s.padding;
   if (s.padding && node.uniqueName === "card")  base["--card-body-padding"] = s.padding;
   if (ext.opacity != null)       base.opacity     = String(ext.opacity);
@@ -1213,7 +1130,6 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
   return base;
 }
 
-// ── Active format style ───────────────────────────────────────────────────────
 const activeFormatStyle = computed<NodeStyle>(() => {
   if (selectedNodeId.value) {
     const n = nodeMap.get(selectedNodeId.value);
@@ -1226,8 +1142,6 @@ const selectedNode = computed<MindNode | null>(() =>
   selectedNodeId.value ? (nodeMap.get(selectedNodeId.value) || null) : null
 );
 
-
-// ── watchEffect: rebuild on data change ──────────────────────────────────────
 watchEffect(() => {
   if (!props.listsData) return;
   nextTick(() => {
@@ -1236,26 +1150,22 @@ watchEffect(() => {
     assignParents(root);
     rootNodeId.value = root.id;
     layoutTree(root, 60, 60);
-    // Recalc SVG extents
     let mx = 0, my = 0;
-    for (const n of flattenVisible(root)) {
+    for (const n of flattenTree(root)) {
       mx = Math.max(mx, n.x + n.width);
       my = Math.max(my, n.y + n.height);
     }
     svgW.value = Math.max(mx + 300, 3000);
     svgH.value = Math.max(my + 300, 3000);
-    // Auto-center on first build
     nextTick(() => centerView());
   });
 });
 
-// ── Center / fit ─────────────────────────────────────────────────────────────
 function centerView() {
   const vp = viewportEl.value;
   if (!vp || allNodes.value.length === 0) return;
   const vW = vp.clientWidth;
   const vH = vp.clientHeight;
-  // find bounding box of all nodes
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const n of allNodes.value) {
     minX = Math.min(minX, n.x); minY = Math.min(minY, n.y);
@@ -1290,7 +1200,6 @@ function handleResetView() {
   nextTick(() => centerView());
 }
 
-// ── Zoom ──────────────────────────────────────────────────────────────────────
 function handleWheel(e: WheelEvent) {
   const vp = viewportEl.value;
   if (!vp) return;
@@ -1299,7 +1208,6 @@ function handleWheel(e: WheelEvent) {
   const mouseY = e.clientY - rect.top;
   const delta  = e.deltaY > 0 ? -zoomStep : zoomStep;
   const newZoom = Math.max(minZoom, Math.min(maxZoom, zoom.value + delta));
-  // Zoom towards mouse pointer
   const ratio = newZoom / zoom.value;
   panX.value = mouseX - (mouseX - panX.value) * ratio;
   panY.value = mouseY - (mouseY - panY.value) * ratio;
@@ -1323,9 +1231,7 @@ function zoomAt(cx: number, cy: number, delta: number) {
   zoom.value    = newZoom;
 }
 
-// ── Pan (left-click drag on viewport background) ──────────────────────────────
 function handleViewportMouseDown(e: MouseEvent) {
-  // Only pan when clicking directly on viewport/canvas (not a node)
   if (e.target !== viewportEl.value && e.target !== canvasEl.value) return;
   if (e.button !== 0) return;
   isPanning.value = true;
@@ -1334,7 +1240,6 @@ function handleViewportMouseDown(e: MouseEvent) {
 }
 
 function handleGlobalMouseMove(e: MouseEvent) {
-  // Node drag
   if (draggedNodeId.value) {
     const x = (e.clientX - panX.value) / zoom.value - dragOffset.value.x;
     const y = (e.clientY - panY.value) / zoom.value - dragOffset.value.y;
@@ -1342,7 +1247,6 @@ function handleGlobalMouseMove(e: MouseEvent) {
     if (n) { n.x = x; n.y = y; }
     return;
   }
-  // Pan
   if (!isPanning.value) return;
   panX.value = e.clientX - panStart.value.x;
   panY.value = e.clientY - panStart.value.y;
@@ -1353,7 +1257,6 @@ function handleGlobalMouseUp() {
   draggedNodeId.value = null;
 }
 
-// ── Node drag ─────────────────────────────────────────────────────────────────
 function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
   const n = nodeMap.get(nodeId);
   if (!n) return;
@@ -1365,13 +1268,10 @@ function handleNodeMouseDown(e: MouseEvent, nodeId: string) {
   e.stopPropagation();
 }
 
-// ── Node click ────────────────────────────────────────────────────────────────
 function handleNodeClick(nodeId: string) {
   selectedNodeId.value = nodeId;
   const node = nodeMap.get(nodeId);
   if (!node) return;
-  // The sheet picker is now embedded inside the List node and shows automatically
-  // when isPlanRoute && selectedNodeId === node.id — no external popover needed.
   hyperlinkInput.value = node.hyperLink || node.style?.hyperLink || "";
 }
 
@@ -1393,7 +1293,6 @@ function handleDeleteNode(nodeId: string) { emit("delete:ticket", nodeId); }
 function toggleCollapse(nodeId: string) {
   const n = nodeMap.get(nodeId);
   if (!n) return;
-  // Toggle in the reactive Set (guaranteed Vue tracking)
   if (isCollapsed(nodeId)) {
     expandNode(nodeId);
     n.collapsed = false;
@@ -1403,10 +1302,15 @@ function toggleCollapse(nodeId: string) {
   }
   collapseVersion.value++;
   const root = nodeMap.get(rootNodeId.value);
-  if (root) layoutTree(root, 60, 60);
+  if (root) {
+    const startX =
+      layoutDirection.value === "left"   ? 4000 - NODE_W.root
+      : layoutDirection.value === "center" ? 2500 - NODE_W.root / 2
+      : 60;
+    layoutTree(root, startX, 60, layoutDirection.value);
+  }
 }
 
-// ── Format sidebar ────────────────────────────────────────────────────────────
 function openFormatSidebar(nodeId: string) {
   selectedNodeId.value    = nodeId;
   showFormatSidebar.value = true;
@@ -1495,78 +1399,12 @@ async function saveNodeStyle() {
   }
 }
 
-// ── Hyperlink modal ───────────────────────────────────────────────────────────
-function openHyperlinkModal(cb: (l: string) => void) {
-  hyperlink.value = ""; showHyperlinkModal.value = true; resolveCallback.value = cb;
-}
 function confirmHyperlink() {
   if (resolveCallback.value) resolveCallback.value(hyperlink.value);
   showHyperlinkModal.value = false;
 }
 function cancelHyperlink() { showHyperlinkModal.value = false; }
 
-// ── Sheet selector ────────────────────────────────────────────────────────────
-
-/** Position the picker relative to the List node's DOM element (mirrors reference). */
-function positionAndOpenSheetSelector(node: MindNode) {
-  // Try to find the node's rendered DOM element by its id
-  const el = document.getElementById(node.id) as HTMLElement | null;
-  if (el) {
-    const rect = el.getBoundingClientRect();
-    sheetSelector.x = Math.min(rect.left, window.innerWidth - 260);
-    sheetSelector.y = Math.min(rect.bottom + 6, window.innerHeight - 200);
-  } else {
-    // Fallback: right side of viewport
-    sheetSelector.x = Math.max(20, window.innerWidth - 280);
-    sheetSelector.y = 80;
-  }
-  sheetSelector.selectedSheetId = selectedListSheetId.value || props.selectedSheetId || "";
-  sheetSelector.listNodeObj     = node;
-  showMustSelectMessage.value   = false;
-  sheetSelector.visible         = true;
-}
-
-/** Open picker as prerequisite before creating a card (Enter / ctx / inline). */
-function openPlanSheetPicker(listNode: MindNode, title: string, mode: "direct" | "inline") {
-  pendingCard.listNode = listNode;
-  pendingCard.title    = title;
-  pendingCard.mode     = mode;
-  positionAndOpenSheetSelector(listNode);
-}
-
-/** Called when user picks a sheet from the plan-route picker.
- *  If there's a pending card (Enter / ctx / inline flow) → create it.
- *  If the picker was opened by clicking a List node (info mode) → just store the sheet. */
-async function onPlanSheetSelected(sheetId: string) {
-  if (!sheetId) {
-    showMustSelectMessage.value = true;
-    setTimeout(() => { showMustSelectMessage.value = false; }, 2500);
-    return;
-  }
-  selectedListSheetId.value         = sheetId;
-  sheetSelector.selectedSheetId     = sheetId;
-
-  const { listNode, title, mode } = pendingCard;
-
-  // No pending card — user just clicked a List node to pre-select the sheet
-  if (!listNode) {
-    closeSheetSelector();
-    return;
-  }
-
-  // Pending card: create it with the selected sheet
-  pendingCard.listNode = null;
-  closeSheetSelector();
-
-  if (mode === "inline") {
-    await _doCreateCard(title, listNode, sheetId);
-    cancelInlineCreation();
-  } else {
-    await _doCreateCard(title, listNode, sheetId);
-  }
-}
-
-/** Core card creation logic — shared by both direct and inline flows */
 async function _doCreateCard(title: string, listNode: MindNode, sheetId: string) {
   isCreatingCard.value = true;
   try {
@@ -1579,7 +1417,7 @@ async function _doCreateCard(title: string, listNode: MindNode, sheetId: string)
       style: {}, _originalStyle: {},
       children: [], parent: listNode, uniqueName: "card",
       variables: payload.variables,
-      x: 0, y: 0, width: 200, height: h, collapsed: false,
+      x: 0, y: 0, width: 210, height: h, collapsed: false,
     };
     listNode.children.push(tempCard);
     nodeMap.set(tempId, tempCard);
@@ -1595,18 +1433,6 @@ async function _doCreateCard(title: string, listNode: MindNode, sheetId: string)
   }
 }
 
-function closeSheetSelector() {
-  sheetSelector.visible = false;
-  sheetSelector.listNodeObj = null;
-  showMustSelectMessage.value = false;
-  // Also clear any pending card if user dismissed without selecting
-  if (pendingCard.listNode) {
-    pendingCard.listNode = null;
-    pendingCard.title    = "";
-  }
-}
-
-// ── Date formatter ────────────────────────────────────────────────────────────
 function formatDate(d?: string): string {
   if (!d) return "";
   try {
@@ -1614,8 +1440,6 @@ function formatDate(d?: string): string {
   } catch { return d; }
 }
 
-// ── Card creation helpers ────────────────────────────────────────────────────
-// Matches the exact reference payload shape from MindmapView (original)
 function createDefaultCardPayload(nodeObj: { topic: string }, listNode: MindNode, sheetId?: string) {
   const now       = new Date();
   const startDate = now.toISOString().split("T")[0];
@@ -1641,26 +1465,21 @@ function createDefaultCardPayload(nodeObj: { topic: string }, listNode: MindNode
   return payload;
 }
 
-/** Start inline creation for the List parent of the currently selected card */
 function startInlineCardCreation(listNode: MindNode) {
   creatingCardForListId.value = listNode.id;
   newCardTitle.value          = "";
-  // expand the list if collapsed
   if (listNode.collapsed) {
     listNode.collapsed = false;
     const root = nodeMap.get(rootNodeId.value);
     if (root) layoutTree(root, 60, 60);
   }
-  // select the list so it's visually active
   selectedNodeId.value = listNode.id;
-  // autofocus attr on the input handles focusing
 }
 
 function cancelInlineCreation() {
   creatingCardForListId.value = null;
   newCardTitle.value          = "";
   isCreatingCard.value        = false;
-  // Return focus to viewport so keyboard shortcuts keep working
   nextTick(() => { viewportEl.value?.focus(); });
 }
 
@@ -1673,7 +1492,6 @@ async function submitInlineCard() {
   const listNode = nodeMap.get(listId);
   if (!listNode) return;
 
-  // On plan routes: use embedded picker, which is already visible when list is selected
   if (isPlanRoute.value && !listNode.sheet_id) {
     if (!selectedListSheetId.value) {
       selectedNodeId.value = listNode.id;
@@ -1691,18 +1509,15 @@ async function submitInlineCard() {
   cancelInlineCreation();
 }
 
-// ── Context menu ─────────────────────────────────────────────────────────────
 const ctxMenuNode = computed<MindNode | null>(() =>
   ctxMenu.nodeId ? (nodeMap.get(ctxMenu.nodeId) || null) : null
 );
 
 function handleNodeContextMenu(e: MouseEvent, node: MindNode) {
-  // Only show context menu for card nodes
   if (node.uniqueName !== "card") return;
   e.preventDefault();
   e.stopPropagation();
   selectedNodeId.value = node.id;
-  // Position near cursor, keep inside viewport
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const menuW = 210;
@@ -1711,7 +1526,6 @@ function handleNodeContextMenu(e: MouseEvent, node: MindNode) {
   ctxMenu.y       = Math.min(e.clientY, vh - menuH - 8);
   ctxMenu.nodeId  = node.id;
   ctxMenu.visible = true;
-  // Skip the immediately-following global click so the menu doesn't close
   ctxSkipNextClick = true;
 }
 
@@ -1726,7 +1540,6 @@ function ctxAddCard() {
   if (!node || node.uniqueName !== "card") return;
   const listNode = node.parent;
   if (!listNode || listNode.uniqueName !== "List") return;
-  // Short delay so menu closes before async work begins
   nextTick(() => createCardDirectly(listNode));
 }
 
@@ -1748,15 +1561,13 @@ function ctxDeleteCard() {
   nextTick(() => { if (node) handleDeleteNode(node.id); });
 }
 
-// ── Direct card creation (Enter key / ctx menu — straight to API) ───────────
 async function createCardDirectly(listNode: MindNode) {
   if (isCreatingCard.value) return;
   const title = "New Card";
 
-  // On plan routes: sheet must be selected via embedded picker inside the List node
   if (isPlanRoute.value && !listNode.sheet_id) {
     if (!selectedListSheetId.value) {
-      selectedNodeId.value = listNode.id;  // show the embedded picker
+      selectedNodeId.value = listNode.id;
       showMustSelectMessage.value = true;
       setTimeout(() => { showMustSelectMessage.value = false; }, 2500);
       return;
@@ -1769,7 +1580,6 @@ async function createCardDirectly(listNode: MindNode) {
   await _doCreateCard(title, listNode, sheetId);
 }
 
-// ── Keyboard ──────────────────────────────────────────────────────────────────
 function handleKeyDown(e: KeyboardEvent) {
   const t = e.target as HTMLElement;
   if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable) return;
@@ -1786,29 +1596,23 @@ function handleKeyDown(e: KeyboardEvent) {
     const n = nodeMap.get(selectedNodeId.value);
     if (n?.uniqueName === "card" && props.canDeleteCard) handleDeleteNode(selectedNodeId.value);
   }
-  // Enter on a selected card → directly create a sibling card via API (non-plan only)
   if (e.key === "Enter" && selectedNodeId.value && props.canCreateCard && !isPlanRoute.value) {
     e.preventDefault();
     const n = nodeMap.get(selectedNodeId.value);
     if (n?.uniqueName === "card" && n.parent?.uniqueName === "List") {
       createCardDirectly(n.parent);
     }
-    // Enter on a List node → directly create a card in it
     if (n?.uniqueName === "List") {
       createCardDirectly(n);
     }
   }
-  // Escape cancels inline creation (for the hover "+" flow)
   if (e.key === "Escape" && creatingCardForListId.value) {
     cancelInlineCreation();
   }
 }
 
-// ── Lifecycle ─────────────────────────────────────────────────────────────────
 function handleGlobalClick(e: MouseEvent) {
-  // Skip the first click right after opening (it's the same mouseup from right-click)
   if (ctxSkipNextClick) { ctxSkipNextClick = false; return; }
-  // Close context menu if click lands outside it
   if (ctxMenu.visible) {
     const target = e.target as HTMLElement;
     if (!target.closest(".card-ctx-menu")) closeCtxMenu();
@@ -1832,31 +1636,27 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* ── Root ──────────────────────────────────────────────────────────────────── */
 .mindmap-root {
-  background: var(--bg-surface, #f8fafc);
-  font-family: inherit;
+  background: var(--bg-surface, #dedfe3);
+  font-family: 'Lato', sans-serif;
 }
 
-/* ── Viewport ──────────────────────────────────────────────────────────────── */
 .viewport {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: var(--bg-surface, #f8fafc);
+  background: var(--bg-surface, #dedfe3);
   background-image:
-    linear-gradient(var(--mindmap-grid, rgba(0,0,0,.06)) 1px, transparent 1px),
-    linear-gradient(90deg, var(--mindmap-grid, rgba(0,0,0,.06)) 1px, transparent 1px);
+    linear-gradient(var(--mindmap-grid, rgba(0,0,0,.05)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--mindmap-grid, rgba(0,0,0,.05)) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-/* ── Canvas ────────────────────────────────────────────────────────────────── */
 .canvas-area {
   position: absolute;
   top: 0; left: 0;
 }
 
-/* ── SVG connections ───────────────────────────────────────────────────────── */
 .connections-svg {
   position: absolute;
   top: 0; left: 0;
@@ -1869,7 +1669,6 @@ onBeforeUnmount(() => {
   transition: opacity 0.2s;
 }
 
-/* ── Base node ─────────────────────────────────────────────────────────────── */
 .mm-node {
   position: absolute;
   z-index: 2;
@@ -1878,163 +1677,203 @@ onBeforeUnmount(() => {
   overflow: hidden;
   cursor: grab;
   user-select: none;
-  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
   transition: box-shadow 0.15s, border-color 0.15s;
 }
 .mm-node:active { cursor: grabbing; }
-.mm-node:hover  { box-shadow: 0 4px 16px rgba(0,0,0,.16); }
+.mm-node:hover  { box-shadow: 0 4px 16px rgba(125,104,200,.15); }
 .mm-node--selected {
-  border-color: #6366f1 !important;
-  box-shadow: 0 0 0 2px rgba(99,102,241,.3), 0 4px 16px rgba(0,0,0,.18) !important;
+  border-color: var(--accent, #7D68C8) !important;
+  box-shadow: 0 0 0 2px rgba(125,104,200,.25), 0 4px 16px rgba(0,0,0,.12) !important;
 }
 
-/* ── Node type background DEFAULTS (low specificity so inline style always wins) ── */
-/* Using :where() gives specificity of 0, ensuring inline style overrides it      */
-/* Pastel palette matching the reference custom mindmap screenshot                  */
-:where(.mm-node--root)  { background: #e8f4f0; color: #1a3a30; }
-:where(.mm-node--sheet) { background: #eef6ee; color: #1a3a1a; }
-:where(.mm-node--List)  { background: #fef8ee; color: #3a2a0a; }
-:where(.mm-node--card)  { background: var(--bg-card, #ffffff); color: var(--text-primary, #1a1a3a); }
+:where(.mm-node--root)  { background: #f1eeff; color: #2b2c30; }
+:where(.mm-node--sheet) { background: #ede9fb; color: #2b2c30; }
+:where(.mm-node--List)  { background: #f3f4f6; color: #2b2c30; }
+:where(.mm-node--card)  { background: var(--bg-card, #ffffff); color: var(--text-primary, #2b2c30); }
 
-/* ── ROOT ──────────────────────────────────────────────────────────────────── */
 .mm-node--root {
   border-radius: 28px;
-  border-color: #c5ddd7;
+  border-color: #c4b8f0;
 }
 .node-root-inner {
   height: 100%;
   display: flex; align-items: center; justify-content: center;
   gap: 10px; padding: 0 20px;
 }
-.node-root-icon { font-size: 18px; opacity: 0.75; flex-shrink: 0; }
+.node-root-icon { font-size: 18px; opacity: 0.75; flex-shrink: 0; color: var(--accent, #6e3b96); }
 .node-root-title {
   color: inherit;
   font-size: 15px; font-weight: 700;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-/* ── SHEET ─────────────────────────────────────────────────────────────────── */
 .mm-node--sheet {
-  border-color: #c6e6c6;
+  border-color: #b8a8e8;
   border-radius: 10px;
 }
 .node-sheet-inner { height: 100%; padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; }
 .node-sheet-header { display: flex; align-items: center; gap: 7px; }
-.node-sheet-icon { color: #2d7a2d; font-size: 13px; flex-shrink: 0; }
+.node-sheet-icon { color: var(--accent, #6e3b96); font-size: 13px; flex-shrink: 0; }
 .node-sheet-title { flex:1; font-size: 13px; font-weight: 600; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .node-sheet-meta { display: flex; gap: 6px; }
 .meta-pill {
   font-size: 10px; color: inherit; opacity: 0.65;
-  background: rgba(0,0,0,.07); border-radius: 20px;
+  background: rgba(125,104,200,.1); border-radius: 20px;
   padding: 1px 8px;
 }
 
-/* ── LIST ──────────────────────────────────────────────────────────────────── */
 .mm-node--List {
-  border-color: #f5dfa0;
+  border-color: var(--border, #d9d9d9);
   border-radius: 8px;
-  overflow: visible;  /* allow inline card input to pop out below */
+  overflow: visible;
 }
 .node-list-inner { height: 100%; padding: 8px 12px 6px; display: flex; flex-direction: column; gap: 3px; }
 .node-list-header { display: flex; align-items: center; gap: 7px; }
 .node-list-dot {
   width: 8px; height: 8px; border-radius: 50%;
-  background: #d4a017; flex-shrink: 0;
+  background: var(--accent, #6e3b96); flex-shrink: 0;
 }
 .node-list-title { flex:1; font-size: 12px; font-weight: 600; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* node-list-count defined once below with the card section */
 
-/* ── CARD ──────────────────────────────────────────────────────────────────── */
 .mm-node--card {
-  border-color: #d4d4f8;
+  border-color: #c4b8f0;
   border-radius: 8px;
+  overflow: hidden;
 }
-.node-card-inner { height: 100%; display: flex; flex-direction: column; }
+.node-card-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 .node-card-stripe {
-  height: 4px; flex-shrink: 0;
+  height: 4px;
+  flex-shrink: 0;
   border-radius: 6px 6px 0 0;
 }
 .node-card-body {
-  flex: 1; padding: var(--card-body-padding, 6px 10px 6px);
-  display: flex; flex-direction: column; gap: 4px;
-  overflow: hidden;
-  /* Note: when user sets padding via format sidebar it applies to .mm-node wrapper,
-     so the stripe + body layout is unaffected */
-}
-.node-card-header {
-  display: flex; align-items: flex-start; gap: 4px;
-}
-.node-card-title {
   flex: 1;
-  font-size: 12px; font-weight: 600;
-  color: inherit;          /* inherits from nodeInlineStyle color */
-  line-height: 1.35;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-clamp: 2;
+  padding: var(--card-body-padding, 8px 10px 6px);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
   overflow: hidden;
 }
-.node-card-tags {
-  display: flex; flex-wrap: wrap; gap: 4px;
-}
-.card-tag {
-  font-size: 9.5px; font-weight: 500;
-  border-radius: 4px; padding: 1px 6px;
-  white-space: nowrap;
-}
-.card-tag--status  { background: #ede9fe; color: #7c3aed; }
-.card-tag--low     { background: #dcfce7; color: #16a34a; }
-.card-tag--medium  { background: #fef9c3; color: #a16207; }
-.card-tag--high    { background: #fee2e2; color: #dc2626; }
-.card-tag--critical{ background: #1e293b; color: #f1f5f9; }
-.card-tag--process { background: #e0f2fe; color: #0369a1; }
 
+.node-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-height: 18px;
+}
+.card-badge {
+  font-size: 9.5px; font-weight: 500;
+  border-radius: 4px; padding: 1px 7px;
+  white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.card-badge--type   { background: rgba(125,104,200,.08); color: inherit; opacity: 0.75; }
+.card-badge--status { background: rgba(125,104,200,.12); color: var(--accent, #7D68C8); }
+.card-badge--low     { background: #dcfce7; color: #16a34a; }
+.card-badge--medium  { background: #fef9c3; color: #a16207; }
+.card-badge--high    { background: #fee2e2; color: #dc2626; }
+.card-badge--critical{ background: #2b2c30; color: #f5f5f5; }
+.card-badge--process { background: rgba(125,104,200,.1); color: var(--accent, #7D68C8); }
+
+.node-card-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: inherit;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.node-card-desc {
+  font-size: 10.5px;
+  color: inherit;
+  opacity: 0.6;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.node-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  padding-top: 5px;
+  border-top: 1px solid rgba(0,0,0,.06);
+}
+.node-card-footer-left {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.node-card-footer-right {
+  display: flex; align-items: center; gap: 4px;
+}
 .node-card-dates {
   display: flex; align-items: center; gap: 4px;
-  font-size: 9.5px; color: inherit; opacity: 0.65;
-}
-.node-card-desc {
-  font-size: 10.5px; color: inherit; opacity: 0.7; line-height: 1.4;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-clamp: 2;
-  overflow: hidden;
-}
-.node-list-count { font-size: 10px; color: inherit; opacity: 0.6; padding-left: 15px; }
-.node-card-footer {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-top: auto;
+  font-size: 9.5px; color: inherit; opacity: 0.6;
 }
 .card-link {
-  font-size: 9.5px; color: #6366f1; text-decoration: none;
+  font-size: 9.5px; color: var(--accent, #6e3b96); text-decoration: none;
   display: flex; align-items: center; gap: 3px;
 }
 .card-link:hover { text-decoration: underline; }
 .card-seat { opacity: .4; }
 
-/* ── Shared node utilities ─────────────────────────────────────────────────── */
+.node-card-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(0,0,0,.05);
+  opacity: 0;
+  transition: opacity 0.15s;
+  height: 0;
+  overflow: hidden;
+  transition: opacity 0.15s, height 0.15s;
+}
+.mm-node--card:hover .node-card-actions-row {
+  opacity: 1;
+  height: 26px;
+}
+
+.node-list-count { font-size: 10px; color: inherit; opacity: 0.6; padding-left: 15px; }
+
 .node-actions {
   display: flex; gap: 2px; margin-left: auto; flex-shrink: 0;
   opacity: 0; transition: opacity 0.15s;
 }
 .mm-node:hover .node-actions { opacity: 1; }
 .nact {
-  width: 20px; height: 20px;
+  width: 22px; height: 22px;
   display: flex; align-items: center; justify-content: center;
   background: transparent; border: none; cursor: pointer;
   border-radius: 4px; font-size: 10px;
   color: inherit; opacity: 0.65;
   transition: background 0.12s, opacity 0.12s;
 }
-.nact:hover { background: rgba(0,0,0,.07); opacity: 1; }
+.nact:hover { background: rgba(125,104,200,.1); opacity: 1; }
 .nact--danger:hover { color: #ef4444 !important; }
-.nact--open:hover   { color: #6366f1 !important; }
+.nact--open:hover   { color: var(--accent, #7D68C8) !important; }
 .nact--add:hover    { color: #22c55e !important; }
 
-/* ── List node: add card button ────────────────────────────────────────────── */
 .list-add-card-btn {
   display: none;
   width: 100%; margin-top: 4px;
   padding: 3px 8px;
   font-size: 10px; font-weight: 500;
-  color: #6366f1; background: rgba(99,102,241,.07);
-  border: 1px dashed rgba(99,102,241,.3); border-radius: 5px;
+  color: var(--accent, #7D68C8); background: rgba(125,104,200,.07);
+  border: 1px dashed rgba(125,104,200,.3); border-radius: 5px;
   cursor: pointer; text-align: left;
   transition: background 0.12s, border-color 0.12s;
   align-items: center; gap: 5px;
@@ -2042,26 +1881,24 @@ onBeforeUnmount(() => {
 .list-add-card-btn i { font-size: 9px; }
 .mm-node--List:hover .list-add-card-btn { display: flex; }
 .list-add-card-btn:hover {
-  background: rgba(99,102,241,.14); border-color: rgba(99,102,241,.5);
+  background: rgba(125,104,200,.14); border-color: rgba(125,104,200,.5);
 }
 
-/* ── Inline card creation ──────────────────────────────────────────────────── */
 .inline-create-card {
   margin-top: 6px;
   display: flex; flex-direction: column; gap: 4px;
-  /* overflow visible so it pops out of the node boundary */
   position: relative; z-index: 10;
 }
 .inline-card-input {
   width: 100%; padding: 5px 8px;
   font-size: 11px; font-weight: 500;
-  color: var(--text-primary, #1e293b);
+  color: var(--text-primary, #2b2c30);
   background: var(--bg-card, #fff);
-  border: 1.5px solid #6366f1; border-radius: 5px;
-  outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,.15);
+  border: 1.5px solid var(--accent, #7D68C8); border-radius: 5px;
+  outline: none; box-shadow: 0 0 0 2px rgba(125,104,200,.15);
   box-sizing: border-box;
 }
-.inline-card-input::placeholder { color: #94a3b8; font-weight: normal; }
+.inline-card-input::placeholder { color: var(--text-secondary, #6b6b6e); font-weight: normal; }
 .inline-card-actions {
   display: flex; gap: 4px; justify-content: flex-end;
 }
@@ -2072,14 +1909,14 @@ onBeforeUnmount(() => {
   transition: background 0.12s;
 }
 .inline-btn--confirm {
-  background: #6366f1; color: #fff;
+  background: var(--accent, #7D68C8); color: var(--accent-text, #fff);
 }
-.inline-btn--confirm:hover:not(:disabled) { background: #4f46e5; }
-.inline-btn--confirm:disabled { background: #a5b4fc; cursor: not-allowed; }
+.inline-btn--confirm:hover:not(:disabled) { background: var(--accent-hover, #6e3b96); }
+.inline-btn--confirm:disabled { background: rgba(125,104,200,.4); cursor: not-allowed; }
 .inline-btn--cancel {
-  background: var(--bg-surface, #f1f5f9); color: var(--text-secondary, #64748b);
+  background: var(--bg-surface, #dedfe3); color: var(--text-secondary, #6b6b6e);
 }
-.inline-btn--cancel:hover { background: var(--border, #e2e8f0); }
+.inline-btn--cancel:hover { background: var(--border, #d9d9d9); }
 
 .node-collapsed-badge {
   font-size: 9px; color: inherit; opacity: 0.6;
@@ -2091,159 +1928,153 @@ onBeforeUnmount(() => {
 }
 .node-link:hover { opacity: 1; }
 
-/* ── Empty state ───────────────────────────────────────────────────────────── */
 .canvas-placeholder {
   position: absolute; top: 200px; left: 400px;
   transform: translate(-50%, 0);
   text-align: center; pointer-events: none;
 }
 
-/* ── Canvas controls ───────────────────────────────────────────────────────── */
 .canvas-controls {
   position: absolute; top: 16px; left: 16px;
   display: flex; flex-direction: column; align-items: center; gap: 5px;
   z-index: 100;
   background: var(--bg-card, #fff);
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border, #d9d9d9);
   border-radius: 12px; padding: 8px 6px;
-  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
 }
 .ctrl-btn {
   width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border, #d9d9d9);
   border-radius: 6px; background: transparent; cursor: pointer;
-  font-size: 12px; color: var(--text-secondary, #64748b);
+  font-size: 12px; color: var(--text-secondary, #6b6b6e);
   transition: all 0.15s;
 }
 .ctrl-btn:hover, .ctrl-btn--active {
-  background: var(--accent, #6366f1); color: #fff;
-  border-color: var(--accent, #6366f1);
+  background: var(--accent, #7D68C8); color: var(--accent-text, #fff);
+  border-color: var(--accent, #7D68C8);
 }
-.ctrl-divider { width: 20px; height: 1px; background: var(--border, #e2e8f0); margin: 1px 0; }
-.zoom-label { font-size: 9px !important; font-weight: 700 !important; color: var(--text-secondary, #94a3b8) !important; letter-spacing: .03em; }
+.ctrl-divider { width: 20px; height: 1px; background: var(--border, #d9d9d9); margin: 1px 0; }
+.zoom-label { font-size: 9px !important; font-weight: 700 !important; color: var(--text-secondary, #6b6b6e) !important; letter-spacing: .03em; }
 
 .canvas-stats {
   position: absolute; bottom: 20px; right: 20px;
   display: flex; gap: 12px;
-  font-size: 11px; color: var(--text-secondary, #94a3b8);
+  font-size: 11px; color: var(--text-secondary, #6b6b6e);
   background: var(--bg-card, rgba(255,255,255,.9));
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border, #d9d9d9);
   border-radius: 8px; padding: 4px 12px;
   z-index: 100; backdrop-filter: blur(6px);
 }
 
-/* ── Format sidebar ────────────────────────────────────────────────────────── */
 .format-sidebar {
   width: 280px; min-width: 280px;
   display: flex; flex-direction: column;
-  border-left: 1px solid var(--border, #e2e8f0);
+  border-left: 1px solid var(--border, #d9d9d9);
   background: var(--bg-card, #fff);
   overflow: hidden;
-  /* Hard reset — prevents any inherited font/color from leaking in from the canvas */
   font-size: 13px !important;
   font-weight: normal !important;
   font-style: normal !important;
-  font-family: inherit !important;
-  color: var(--text-primary, #1e293b) !important;
+  font-family: 'Lato', sans-serif !important;
+  color: var(--text-primary, #2b2c30) !important;
   text-align: left !important;
   opacity: 1 !important;
 }
 .fs-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 14px; border-bottom: 1px solid var(--border, #f1f5f9);
+  padding: 12px 14px; border-bottom: 1px solid var(--border, #d9d9d9);
   flex-shrink: 0;
 }
-.fs-header-left { display: flex; align-items: center; gap: 8px; font-size: 13px !important; font-weight: 600 !important; color: var(--text-primary, #1e293b) !important; font-style: normal !important; font-family: inherit !important; }
+.fs-header-left { display: flex; align-items: center; gap: 8px; font-size: 13px !important; font-weight: 600 !important; color: var(--text-primary, #2b2c30) !important; font-style: normal !important; font-family: 'Lato', sans-serif !important; }
 .fs-close {
   width: 24px; height: 24px; border: none; background: transparent; cursor: pointer;
-  border-radius: 4px; color: var(--text-secondary, #94a3b8);
+  border-radius: 4px; color: var(--text-secondary, #6b6b6e);
   display: flex; align-items: center; justify-content: center; font-size: 13px;
 }
-.fs-close:hover { background: var(--bg-surface, #f1f5f9); color: var(--text-primary, #1e293b); }
+.fs-close:hover { background: var(--bg-surface, #dedfe3); color: var(--text-primary, #2b2c30); }
 
 .fs-node-name {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 14px 6px;
-  /* Hard reset — no inherited styles from nodes */
   font-size: 13px !important;
   font-weight: normal !important;
-  color: var(--text-primary, #1e293b) !important;
-  font-family: inherit !important;
+  color: var(--text-primary, #2b2c30) !important;
+  font-family: 'Lato', sans-serif !important;
   font-style: normal !important;
-  border-bottom: 1px solid var(--border, #f1f5f9);
+  border-bottom: 1px solid var(--border, #d9d9d9);
 }
 .fs-node-icon { font-size: 10px; flex-shrink: 0; }
-.fs-icon--root  { color: #6366f1; }
-.fs-icon--sheet { color: #3b82f6; }
-.fs-icon--List  { color: #22c55e; }
-.fs-icon--card  { color: #f59e0b; }
+.fs-icon--root  { color: var(--accent, #7D68C8); }
+.fs-icon--sheet { color: var(--accent, #7D68C8); }
+.fs-icon--List  { color: var(--accent-hover, #6e3b96); }
+.fs-icon--card  { color: #9356c5; }
 .fs-node-label {
   flex: 1; font-size: 12px !important; font-weight: 600 !important;
-  color: var(--text-primary, #1e293b) !important;
+  color: var(--text-primary, #2b2c30) !important;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .fs-node-type {
   font-size: 9px !important; font-weight: 500 !important;
   text-transform: uppercase; letter-spacing: .06em;
-  color: #94a3b8 !important;
-  background: #f1f5f9; border-radius: 4px; padding: 1px 6px;
+  color: var(--text-secondary, #6b6b6e) !important;
+  background: var(--bg-surface, #dedfe3); border-radius: 4px; padding: 1px 6px;
   flex-shrink: 0;
 }
 
 .fs-empty {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; color: #94a3b8; font-size: 12px; text-align: center; line-height: 1.6;
+  gap: 8px; color: var(--text-secondary, #6b6b6e); font-size: 12px; text-align: center; line-height: 1.6;
 }
 
 .fs-body { flex: 1; overflow-y: auto; }
 .fs-body::-webkit-scrollbar { width: 5px; }
 .fs-body::-webkit-scrollbar-track { background: transparent; }
-.fs-body::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
-
+.fs-body::-webkit-scrollbar-thumb { background: var(--border, #d9d9d9); border-radius: 3px; }
 
 .fs-section {
   padding: 10px 12px;
-  border-bottom: 1px solid var(--border, #f1f5f9);
+  border-bottom: 1px solid var(--border, #d9d9d9);
 }
 .fs-section-label {
   font-size: 9.5px !important; font-weight: 700 !important; text-transform: uppercase;
-  letter-spacing: .07em; color: #94a3b8 !important; margin-bottom: 8px;
-  font-style: normal !important; font-family: inherit !important;
+  letter-spacing: .07em; color: var(--text-secondary, #6b6b6e) !important; margin-bottom: 8px;
+  font-style: normal !important; font-family: 'Lato', sans-serif !important;
 }
 .fs-row { display: flex; gap: 8px; }
 .fs-field { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-.fs-field label { font-size: 10.5px !important; font-weight: 500 !important; color: #64748b !important; font-style: normal !important; }
+.fs-field label { font-size: 10.5px !important; font-weight: 500 !important; color: var(--text-secondary, #6b6b6e) !important; font-style: normal !important; }
 
 .fs-input {
   width: 100%; padding: 4px 6px;
-  background: var(--bg-surface, #f8fafc) !important;
-  border: 1px solid var(--border, #e2e8f0); border-radius: 5px;
-  font-size: 12px !important; color: var(--text-primary, #1e293b) !important;
+  background: var(--bg-surface, #dedfe3) !important;
+  border: 1px solid var(--border, #d9d9d9); border-radius: 5px;
+  font-size: 12px !important; color: var(--text-primary, #2b2c30) !important;
   font-weight: normal !important; font-style: normal !important;
   outline: none;
 }
-.fs-input:focus { border-color: var(--accent, #6366f1); box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
+.fs-input:focus { border-color: var(--accent, #7D68C8); box-shadow: 0 0 0 2px rgba(125,104,200,.15); }
 
 .fs-input-full {
   width: 100%; padding: 5px 8px;
-  background: var(--bg-surface, #f8fafc) !important;
-  border: 1px solid var(--border, #e2e8f0); border-radius: 5px;
-  font-size: 12px !important; color: var(--text-primary, #1e293b) !important;
+  background: var(--bg-surface, #dedfe3) !important;
+  border: 1px solid var(--border, #d9d9d9); border-radius: 5px;
+  font-size: 12px !important; color: var(--text-primary, #2b2c30) !important;
   font-weight: normal !important; font-style: normal !important;
   outline: none; box-sizing: border-box;
 }
-.fs-input-full:focus { border-color: var(--accent, #6366f1); box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
+.fs-input-full:focus { border-color: var(--accent, #7D68C8); box-shadow: 0 0 0 2px rgba(125,104,200,.15); }
 
 .fs-select {
   width: 100%; padding: 4px 6px;
-  background: var(--bg-surface, #f8fafc) !important;
-  border: 1px solid var(--border, #e2e8f0); border-radius: 5px;
-  font-size: 11.5px !important; color: var(--text-primary, #1e293b) !important;
+  background: var(--bg-surface, #dedfe3) !important;
+  border: 1px solid var(--border, #d9d9d9); border-radius: 5px;
+  font-size: 11.5px !important; color: var(--text-primary, #2b2c30) !important;
   font-weight: normal !important; font-style: normal !important;
   outline: none;
 }
-.fs-select:focus { border-color: var(--accent, #6366f1); }
+.fs-select:focus { border-color: var(--accent, #7D68C8); }
 
 .input-with-unit {
   position: relative; display: flex; align-items: center;
@@ -2251,10 +2082,9 @@ onBeforeUnmount(() => {
 .input-with-unit .fs-input { padding-right: 26px; }
 .unit {
   position: absolute; right: 6px;
-  font-size: 9.5px; font-weight: 600; color: #94a3b8; pointer-events: none;
+  font-size: 9.5px; font-weight: 600; color: var(--text-secondary, #6b6b6e); pointer-events: none;
 }
 
-/* Color pickers */
 .color-row { display: flex; align-items: center; gap: 6px; }
 .color-swatch {
   width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
@@ -2268,12 +2098,11 @@ onBeforeUnmount(() => {
 }
 .color-hex {
   flex: 1; padding: 4px 6px; font-size: 11px;
-  background: var(--bg-surface, #f8fafc);
-  border: 1px solid var(--border, #e2e8f0); border-radius: 5px;
-  color: var(--text-primary, #1e293b); font-family: monospace;
+  background: var(--bg-surface, #dedfe3);
+  border: 1px solid var(--border, #d9d9d9); border-radius: 5px;
+  color: var(--text-primary, #2b2c30); font-family: monospace;
 }
 
-/* Presets */
 .fs-presets { display: flex; flex-wrap: wrap; gap: 6px; }
 .preset-swatch {
   width: 22px; height: 22px; border-radius: 5px; cursor: pointer;
@@ -2281,52 +2110,50 @@ onBeforeUnmount(() => {
 }
 .preset-swatch:hover { transform: scale(1.2); box-shadow: 0 2px 8px rgba(0,0,0,.2); }
 
-/* Text align */
 .btn-group-row { display: flex; gap: 4px; }
 .align-btn {
   flex: 1; height: 26px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg-surface, #f8fafc); border: 1px solid var(--border, #e2e8f0);
-  border-radius: 5px; cursor: pointer; font-size: 12px; color: #64748b;
+  background: var(--bg-surface, #dedfe3); border: 1px solid var(--border, #d9d9d9);
+  border-radius: 5px; cursor: pointer; font-size: 12px; color: var(--text-secondary, #6b6b6e);
   transition: all 0.12s;
 }
 .align-btn:hover, .align-btn--active {
-  background: var(--accent, #6366f1); color: #fff; border-color: var(--accent, #6366f1);
+  background: var(--accent, #7D68C8); color: var(--accent-text, #fff); border-color: var(--accent, #7D68C8);
 }
 
-/* Shadow presets */
 .shadow-presets { display: flex; flex-wrap: wrap; gap: 5px; }
 .shadow-btn {
   padding: 3px 10px; font-size: 10.5px; font-weight: 500;
-  background: var(--bg-surface, #f8fafc); border: 1px solid var(--border, #e2e8f0);
-  border-radius: 5px; cursor: pointer; color: #475569;
+  background: var(--bg-surface, #dedfe3); border: 1px solid var(--border, #d9d9d9);
+  border-radius: 5px; cursor: pointer; color: var(--text-primary, #2b2c30);
   transition: all 0.12s;
 }
 .shadow-btn:hover, .shadow-btn--active {
-  background: var(--accent, #6366f1); color: #fff; border-color: var(--accent, #6366f1);
+  background: var(--accent, #7D68C8); color: var(--accent-text, #fff); border-color: var(--accent, #7D68C8);
 }
 
 .fs-reset-btn {
-  width: 100%; padding: 6px; font-size: 11px; color: #94a3b8;
-  background: transparent; border: 1px dashed #e2e8f0; border-radius: 6px;
+  width: 100%; padding: 6px; font-size: 11px; color: var(--text-secondary, #6b6b6e);
+  background: transparent; border: 1px dashed var(--border, #d9d9d9); border-radius: 6px;
   cursor: pointer; transition: all 0.12s;
 }
 .fs-reset-btn:hover { border-color: #f87171; color: #ef4444; background: #fef2f2; }
 
 .fs-footer {
   padding: 10px 12px;
-  border-top: 1px solid var(--border, #f1f5f9);
+  border-top: 1px solid var(--border, #d9d9d9);
   flex-shrink: 0;
 }
 .fs-save-btn {
   width: 100%; padding: 8px;
-  background: var(--accent, #6366f1); color: #fff;
+  background: var(--accent, #7D68C8); color: var(--accent-text, #fff);
   border: none; border-radius: 7px; cursor: pointer;
   font-size: 13px; font-weight: 600;
   display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: opacity 0.15s, box-shadow 0.15s;
 }
-.fs-save-btn:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(99,102,241,.4); }
+.fs-save-btn:hover:not(:disabled) { background: var(--accent-hover, #6e3b96); box-shadow: 0 4px 12px rgba(125,104,200,.35); }
 .fs-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .spinner {
   width: 14px; height: 14px;
@@ -2336,11 +2163,10 @@ onBeforeUnmount(() => {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Embedded sheet picker (plan route, inside List node) ──────────────────── */
 .list-sheet-picker {
   margin-top: 6px;
-  background: var(--bg-surface, #f8fafc);
-  border: 1px dashed rgba(99,102,241,.35);
+  background: var(--bg-surface, #dedfe3);
+  border: 1px dashed rgba(125,104,200,.35);
   border-radius: 6px;
   padding: 6px 8px;
   display: flex; flex-direction: column; gap: 5px;
@@ -2348,7 +2174,7 @@ onBeforeUnmount(() => {
 .list-sheet-picker-label {
   display: flex; align-items: center; gap: 5px;
   font-size: 9.5px !important; font-weight: 600 !important;
-  color: #6366f1 !important; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--accent, #7D68C8) !important; text-transform: uppercase; letter-spacing: .05em;
 }
 .list-sheet-picker-selected {
   margin-left: auto;
@@ -2361,86 +2187,85 @@ onBeforeUnmount(() => {
   display: flex; align-items: center; gap: 3px; margin: 0;
 }
 
-/* ── Add list panel ────────────────────────────────────────────────────────── */
 .add-list-panel {
   position: absolute; top: 160px; left: 280px;
-  background: var(--bg-body, #fff);
-  border: 1px solid var(--border, #e2e8f0);
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #d9d9d9);
   border-radius: 10px; padding: 16px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  box-shadow: 0 8px 24px rgba(0,0,0,.1);
   z-index: 200; min-width: 320px;
 }
 .add-list-input {
   width: 100%; padding: 8px 12px; font-size: 13px;
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--border, #d9d9d9);
   border-radius: 6px; outline: none;
-  background: var(--bg-surface, #f8fafc);
-  color: var(--text-primary, #1e293b);
+  background: var(--bg-surface, #dedfe3);
+  color: var(--text-primary, #2b2c30);
 }
-.add-list-input:focus { border-color: var(--accent, #6366f1); }
+.add-list-input:focus { border-color: var(--accent, #7D68C8); }
 .add-list-btn {
-  padding: 6px 16px; background: var(--accent, #6366f1);
-  color: #fff; border: none; border-radius: 6px;
+  padding: 6px 16px; background: var(--accent, #7D68C8);
+  color: var(--accent-text, #fff); border: none; border-radius: 6px;
   cursor: pointer; font-size: 13px; font-weight: 500;
 }
+.add-list-btn:hover { background: var(--accent-hover, #6e3b96); }
 
-/* ── Hyperlink modal ───────────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed; inset: 0;
   background: rgba(0,0,0,.3); backdrop-filter: blur(2px);
   display: flex; align-items: center; justify-content: center; z-index: 9999;
 }
 .modal-card {
-  background: #fff; border-radius: 14px; padding: 24px; width: 340px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+  background: var(--bg-card, #fff); border-radius: 14px; padding: 24px; width: 340px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.15);
 }
-.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; color: #1e293b; }
+.modal-title { font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--text-primary, #2b2c30); }
 .modal-input {
-  width: 100%; padding: 9px 12px; border: 1px solid #e2e8f0;
+  width: 100%; padding: 9px 12px; border: 1px solid var(--border, #d9d9d9);
   border-radius: 7px; font-size: 13px; outline: none; box-sizing: border-box;
+  background: var(--bg-surface, #dedfe3); color: var(--text-primary, #2b2c30);
 }
-.modal-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
+.modal-input:focus { border-color: var(--accent, #7D68C8); box-shadow: 0 0 0 2px rgba(125,104,200,.15); }
 .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .modal-btn-cancel {
-  padding: 7px 16px; border: 1px solid #e2e8f0; border-radius: 7px;
-  background: #f1f5f9; cursor: pointer; font-size: 13px; color: #475569;
+  padding: 7px 16px; border: 1px solid var(--border, #d9d9d9); border-radius: 7px;
+  background: var(--bg-surface, #dedfe3); cursor: pointer; font-size: 13px; color: var(--text-secondary, #6b6b6e);
 }
 .modal-btn-confirm {
-  padding: 7px 16px; background: #6366f1; color: #fff;
+  padding: 7px 16px; background: var(--accent, #7D68C8); color: var(--accent-text, #fff);
   border: none; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600;
 }
-.modal-btn-confirm.disabled { background: #a5b4fc; cursor: not-allowed; }
+.modal-btn-confirm:hover:not(.disabled) { background: var(--accent-hover, #6e3b96); }
+.modal-btn-confirm.disabled { background: rgba(125,104,200,.4); cursor: not-allowed; }
 
-/* ── Card context menu ─────────────────────────────────────────────────────── */
 .card-ctx-menu {
   position: fixed;
   z-index: 9999;
   background: var(--bg-card, #fff);
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border, #d9d9d9);
   border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.16), 0 2px 8px rgba(0,0,0,.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.06);
   padding: 6px;
   min-width: 200px;
-  /* Full isolation — no inherited node styles */
   font-size: 13px !important;
   font-weight: normal !important;
   font-style: normal !important;
-  color: #1e293b !important;
-  font-family: inherit !important;
+  color: var(--text-primary, #2b2c30) !important;
+  font-family: 'Lato', sans-serif !important;
 }
 .ctx-header {
   display: flex; align-items: center; gap: 7px;
   padding: 6px 10px 8px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--border, #d9d9d9);
   margin-bottom: 4px;
 }
 .ctx-header-icon {
-  color: #6366f1; font-size: 12px; flex-shrink: 0;
+  color: var(--accent, #7D68C8); font-size: 12px; flex-shrink: 0;
 }
 .ctx-header-title {
   font-size: 11px !important;
   font-weight: 600 !important;
-  color: #1e293b !important;
+  color: var(--text-primary, #2b2c30) !important;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   max-width: 150px;
 }
@@ -2450,204 +2275,179 @@ onBeforeUnmount(() => {
   background: transparent; border: none; border-radius: 6px;
   cursor: pointer; text-align: left;
   font-size: 12px !important; font-weight: 500 !important;
-  color: #374151 !important;
+  color: var(--text-primary, #2b2c30) !important;
   transition: background 0.1s;
 }
-.ctx-item:hover { background: #f8fafc; }
+.ctx-item:hover { background: var(--bg-surface, #dedfe3); }
 .ctx-item--danger { color: #ef4444 !important; }
 .ctx-item--danger:hover { background: #fef2f2; }
 .ctx-item-icon {
   font-size: 11px; width: 14px; text-align: center; flex-shrink: 0;
 }
 .ctx-icon--add    { color: #22c55e; }
-.ctx-icon--open   { color: #6366f1; }
-.ctx-icon--format { color: #f59e0b; }
+.ctx-icon--open   { color: var(--accent, #7D68C8); }
+.ctx-icon--format { color: #9356c5; }
 .ctx-item--danger .ctx-item-icon { color: #ef4444; }
 .ctx-kbd {
   margin-left: auto; flex-shrink: 0;
   font-size: 9px !important; font-weight: 500 !important;
-  color: #94a3b8 !important;
-  background: #f1f5f9; border: 1px solid #e2e8f0;
+  color: var(--text-secondary, #6b6b6e) !important;
+  background: var(--bg-surface, #dedfe3); border: 1px solid var(--border, #d9d9d9);
   border-radius: 3px; padding: 1px 5px;
   font-family: monospace !important;
 }
 .ctx-divider {
-  height: 1px; background: #f1f5f9; margin: 4px 0;
+  height: 1px; background: var(--border, #d9d9d9); margin: 4px 0;
 }
 
-/* ── Transitions ───────────────────────────────────────────────────────────── */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.15s, transform 0.15s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-6px); }
 
 .slide-sidebar-enter-active, .slide-sidebar-leave-active { transition: width 0.22s ease, opacity 0.22s ease; }
 .slide-sidebar-enter-from, .slide-sidebar-leave-to { width: 0 !important; opacity: 0; }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   DARK MODE — triggered by [data-dark="true"] on .mindmap-root
-   Every light value has a dark counterpart here. No JS inline styles needed.
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Canvas background ───────────────────────────────────────────────────── */
-.mindmap-root[data-dark="true"] { background: var(--bg-surface, #0f172a); }
+.mindmap-root[data-dark="true"] { background: var(--bg-surface, #1a1a1a); }
 .mindmap-root[data-dark="true"] .viewport {
-  background: var(--bg-surface, #0f172a);
-  --mindmap-grid: rgba(255,255,255,.04);
+  background: var(--bg-surface, #1a1a1a);
+  --mindmap-grid: rgba(255,255,255,.03);
   background-image:
     linear-gradient(var(--mindmap-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--mindmap-grid) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-/* ── Node defaults (low specificity via :where so user inline styles win) ── */
-.mindmap-root[data-dark="true"] :where(.mm-node--root)  { background: #1e3a2f; color: #a7f3d0; }
-.mindmap-root[data-dark="true"] :where(.mm-node--sheet) { background: #1a2e1a; color: #86efac; }
-.mindmap-root[data-dark="true"] :where(.mm-node--List)  { background: #2a2000; color: #fde68a; }
-.mindmap-root[data-dark="true"] :where(.mm-node--card)  { background: var(--bg-card, #1e1b4b); color: var(--text-primary, #c7d2fe); }
+.mindmap-root[data-dark="true"] :where(.mm-node--root)  { background: #27272a; color: #c4b8f0; }
+.mindmap-root[data-dark="true"] :where(.mm-node--sheet) { background: #2b2c30; color: #b0b0b0; }
+.mindmap-root[data-dark="true"] :where(.mm-node--List)  { background: #1a1a1a; color: #b0b0b0; }
+.mindmap-root[data-dark="true"] :where(.mm-node--card)  { background: var(--bg-card, #2b2c30); color: var(--text-primary, #f5f5f5); }
 
-/* ── Node borders ───────────────────────────────────────────────────────── */
-.mindmap-root[data-dark="true"] .mm-node--root  { border-color: #2d6a52; }
-.mindmap-root[data-dark="true"] .mm-node--sheet { border-color: #2d5a2d; }
-.mindmap-root[data-dark="true"] .mm-node--List  { border-color: #6b4e00; }
-.mindmap-root[data-dark="true"] .mm-node--card  { border-color: #3730a3; }
+.mindmap-root[data-dark="true"] .mm-node--root  { border-color: #4a3d8c; }
+.mindmap-root[data-dark="true"] .mm-node--sheet { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .mm-node--List  { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .mm-node--card  { border-color: #4a3d8c; }
 .mindmap-root[data-dark="true"] .mm-node        { box-shadow: 0 1px 6px rgba(0,0,0,.5); }
-.mindmap-root[data-dark="true"] .mm-node:hover  { box-shadow: 0 4px 20px rgba(0,0,0,.6); }
+.mindmap-root[data-dark="true"] .mm-node:hover  { box-shadow: 0 4px 20px rgba(147,86,197,.2); }
 
-/* ── Sheet node internals ───────────────────────────────────────────────── */
-.mindmap-root[data-dark="true"] .node-sheet-icon { color: #4ade80; }
-.mindmap-root[data-dark="true"] .meta-pill       { background: rgba(255,255,255,.08); }
+.mindmap-root[data-dark="true"] .node-root-icon { color: #9356c5; }
+.mindmap-root[data-dark="true"] .node-sheet-icon { color: #9356c5; }
+.mindmap-root[data-dark="true"] .meta-pill       { background: rgba(147,86,197,.15); }
 
-/* ── List node internals ────────────────────────────────────────────────── */
-.mindmap-root[data-dark="true"] .node-list-dot { background: #ca8a04; }
+.mindmap-root[data-dark="true"] .node-list-dot { background: #9356c5; }
 
-/* ── Card node internals ────────────────────────────────────────────────── */
-.mindmap-root[data-dark="true"] .card-tag--status  { background: #3b0764; color: #d8b4fe; }
-.mindmap-root[data-dark="true"] .card-tag--low     { background: #052e16; color: #86efac; }
-.mindmap-root[data-dark="true"] .card-tag--medium  { background: #422006; color: #fde68a; }
-.mindmap-root[data-dark="true"] .card-tag--high    { background: #450a0a; color: #fca5a5; }
-.mindmap-root[data-dark="true"] .card-tag--critical{ background: #f1f5f9; color: #1e293b; }
-.mindmap-root[data-dark="true"] .card-tag--process { background: #0c4a6e; color: #7dd3fc; }
-.mindmap-root[data-dark="true"] .card-link         { color: #818cf8; }
+.mindmap-root[data-dark="true"] .card-badge--status  { background: rgba(147,86,197,.2); color: #c4b8f0; }
+.mindmap-root[data-dark="true"] .card-badge--low     { background: #052e16; color: #86efac; }
+.mindmap-root[data-dark="true"] .card-badge--medium  { background: #422006; color: #fde68a; }
+.mindmap-root[data-dark="true"] .card-badge--high    { background: #450a0a; color: #fca5a5; }
+.mindmap-root[data-dark="true"] .card-badge--critical{ background: #f5f5f5; color: #2b2c30; }
+.mindmap-root[data-dark="true"] .card-badge--process { background: rgba(147,86,197,.15); color: #c4b8f0; }
+.mindmap-root[data-dark="true"] .card-badge--type    { background: rgba(255,255,255,.07); }
+.mindmap-root[data-dark="true"] .card-link           { color: #9356c5; }
+.mindmap-root[data-dark="true"] .node-card-footer    { border-color: rgba(255,255,255,.07); }
+.mindmap-root[data-dark="true"] .node-card-actions-row { border-color: rgba(255,255,255,.06); }
 
-/* ── Canvas controls ────────────────────────────────────────────────────── */
 .mindmap-root[data-dark="true"] .canvas-controls {
-  background: var(--bg-card, #1e293b);
-  border-color: var(--border, #334155);
+  background: var(--bg-card, #2b2c30);
+  border-color: var(--border, #3e3e42);
   box-shadow: 0 4px 16px rgba(0,0,0,.5);
 }
 .mindmap-root[data-dark="true"] .ctrl-btn {
-  border-color: var(--border, #334155);
-  color: var(--text-secondary, #94a3b8);
+  border-color: var(--border, #3e3e42);
+  color: var(--text-secondary, #b0b0b0);
 }
 .mindmap-root[data-dark="true"] .ctrl-btn:hover,
 .mindmap-root[data-dark="true"] .ctrl-btn--active {
-  background: #6366f1; color: #fff; border-color: #6366f1;
+  background: var(--accent, #9356c5); color: #fff; border-color: var(--accent, #9356c5);
 }
-.mindmap-root[data-dark="true"] .ctrl-divider { background: #334155; }
-.mindmap-root[data-dark="true"] .zoom-label   { color: #64748b !important; }
+.mindmap-root[data-dark="true"] .ctrl-divider { background: #3e3e42; }
+.mindmap-root[data-dark="true"] .zoom-label   { color: #b0b0b0 !important; }
 
-/* ── Canvas stats ────────────────────────────────────────────────────────── */
 .mindmap-root[data-dark="true"] .canvas-stats {
-  background: rgba(15,23,42,.85);
-  border-color: #334155;
-  color: #64748b;
+  background: rgba(13,13,13,.85);
+  border-color: #3e3e42;
+  color: #b0b0b0;
 }
 
-/* ── Nact buttons ────────────────────────────────────────────────────────── */
-.mindmap-root[data-dark="true"] .nact:hover { background: rgba(255,255,255,.1); }
+.mindmap-root[data-dark="true"] .nact:hover { background: rgba(147,86,197,.15); }
 
-/* ── Inline card input ───────────────────────────────────────────────────── */
 .mindmap-root[data-dark="true"] .inline-card-input {
-  background: var(--bg-card, #1e293b);
-  color: var(--text-primary, #e2e8f0);
-  border-color: #6366f1;
+  background: var(--bg-card, #2b2c30);
+  color: var(--text-primary, #f5f5f5);
+  border-color: var(--accent, #9356c5);
 }
-.mindmap-root[data-dark="true"] .inline-card-input::placeholder { color: #475569; }
+.mindmap-root[data-dark="true"] .inline-card-input::placeholder { color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .inline-btn--confirm { background: var(--accent, #9356c5); }
 .mindmap-root[data-dark="true"] .inline-btn--cancel {
-  background: var(--bg-surface, #334155); color: var(--text-secondary, #94a3b8);
+  background: var(--bg-surface, #1a1a1a); color: var(--text-secondary, #b0b0b0);
 }
-.mindmap-root[data-dark="true"] .inline-btn--cancel:hover { background: var(--border, #475569); }
+.mindmap-root[data-dark="true"] .inline-btn--cancel:hover { background: var(--border, #3e3e42); }
 .mindmap-root[data-dark="true"] .list-add-card-btn {
-  color: #818cf8;
-  background: rgba(99,102,241,.12);
-  border-color: rgba(99,102,241,.3);
+  color: #9356c5;
+  background: rgba(147,86,197,.12);
+  border-color: rgba(147,86,197,.3);
 }
 
-/* ── Format sidebar ──────────────────────────────────────────────────────── */
 .mindmap-root[data-dark="true"] .format-sidebar {
-  background: var(--bg-card, #1e293b) !important;
-  border-color: var(--border, #334155) !important;
-  color: var(--text-primary, #e2e8f0) !important;
+  background: var(--bg-card, #2b2c30) !important;
+  border-color: var(--border, #3e3e42) !important;
+  color: var(--text-primary, #f5f5f5) !important;
 }
-.mindmap-root[data-dark="true"] .fs-header        { border-color: #334155; }
-.mindmap-root[data-dark="true"] .fs-header-left   { color: #e2e8f0 !important; }
-.mindmap-root[data-dark="true"] .fs-close         { color: #64748b; }
-.mindmap-root[data-dark="true"] .fs-close:hover   { background: #334155; color: #e2e8f0; }
-.mindmap-root[data-dark="true"] .fs-node-name     { color: #e2e8f0 !important; border-color: #334155; }
-.mindmap-root[data-dark="true"] .fs-node-label    { color: #e2e8f0 !important; }
-.mindmap-root[data-dark="true"] .fs-node-type     { background: #334155; color: #64748b !important; }
-.mindmap-root[data-dark="true"] .fs-empty         { color: #475569; }
-.mindmap-root[data-dark="true"] .fs-section       { border-color: #334155; }
-.mindmap-root[data-dark="true"] .fs-section-label { color: #475569 !important; }
-.mindmap-root[data-dark="true"] .fs-field label   { color: #64748b !important; }
+.mindmap-root[data-dark="true"] .fs-header        { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .fs-header-left   { color: #f5f5f5 !important; }
+.mindmap-root[data-dark="true"] .fs-close         { color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .fs-close:hover   { background: #3e3e42; color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .fs-node-name     { color: #f5f5f5 !important; border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .fs-node-label    { color: #f5f5f5 !important; }
+.mindmap-root[data-dark="true"] .fs-node-type     { background: #3e3e42; color: #b0b0b0 !important; }
+.mindmap-root[data-dark="true"] .fs-empty         { color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .fs-section       { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .fs-section-label { color: #b0b0b0 !important; }
+.mindmap-root[data-dark="true"] .fs-field label   { color: #b0b0b0 !important; }
 .mindmap-root[data-dark="true"] .fs-input {
-  background: var(--bg-surface, #0f172a) !important;
-  border-color: var(--border, #334155) !important;
-  color: var(--text-primary, #e2e8f0) !important;
+  background: var(--bg-surface, #1a1a1a) !important;
+  border-color: var(--border, #3e3e42) !important;
+  color: var(--text-primary, #f5f5f5) !important;
 }
 .mindmap-root[data-dark="true"] .fs-input-full {
-  background: var(--bg-surface, #0f172a) !important;
-  border-color: var(--border, #334155) !important;
-  color: var(--text-primary, #e2e8f0) !important;
+  background: var(--bg-surface, #1a1a1a) !important;
+  border-color: var(--border, #3e3e42) !important;
+  color: var(--text-primary, #f5f5f5) !important;
 }
 .mindmap-root[data-dark="true"] .fs-select {
-  background: var(--bg-surface, #0f172a) !important;
-  border-color: var(--border, #334155) !important;
-  color: var(--text-primary, #e2e8f0) !important;
+  background: var(--bg-surface, #1a1a1a) !important;
+  border-color: var(--border, #3e3e42) !important;
+  color: var(--text-primary, #f5f5f5) !important;
 }
-.mindmap-root[data-dark="true"] .color-hex  { background: #0f172a; border-color: #334155; color: #e2e8f0; }
-.mindmap-root[data-dark="true"] .align-btn  { background: #0f172a; border-color: #334155; color: #64748b; }
-.mindmap-root[data-dark="true"] .shadow-btn { background: #0f172a; border-color: #334155; color: #94a3b8; }
-.mindmap-root[data-dark="true"] .fs-reset-btn { border-color: #334155; color: #475569; }
+.mindmap-root[data-dark="true"] .color-hex  { background: #1a1a1a; border-color: #3e3e42; color: #f5f5f5; }
+.mindmap-root[data-dark="true"] .align-btn  { background: #1a1a1a; border-color: #3e3e42; color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .shadow-btn { background: #1a1a1a; border-color: #3e3e42; color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .fs-reset-btn { border-color: #3e3e42; color: #b0b0b0; }
 .mindmap-root[data-dark="true"] .fs-reset-btn:hover { background: #450a0a; color: #f87171; border-color: #7f1d1d; }
-.mindmap-root[data-dark="true"] .fs-footer    { border-color: #334155; }
-.mindmap-root[data-dark="true"] .unit         { color: #475569; }
+.mindmap-root[data-dark="true"] .fs-footer    { border-color: #3e3e42; }
+.mindmap-root[data-dark="true"] .unit         { color: #b0b0b0; }
+.mindmap-root[data-dark="true"] .fs-body::-webkit-scrollbar-thumb { background: #3e3e42; }
 
-/* ── Context menu ────────────────────────────────────────────────────────── */
 .card-ctx-menu--dark {
-  background: var(--bg-card, #1e293b) !important;
-  border-color: var(--border, #334155) !important;
+  background: var(--bg-card, #2b2c30) !important;
+  border-color: var(--border, #3e3e42) !important;
   box-shadow: 0 8px 32px rgba(0,0,0,.5) !important;
-  color: var(--text-primary, #e2e8f0) !important;
+  color: var(--text-primary, #f5f5f5) !important;
 }
-.card-ctx-menu--dark .ctx-header        { border-color: #334155; }
-.card-ctx-menu--dark .ctx-header-title  { color: #e2e8f0 !important; }
-.card-ctx-menu--dark .ctx-item          { color: #cbd5e1 !important; }
-.card-ctx-menu--dark .ctx-item:hover    { background: #334155; }
+.card-ctx-menu--dark .ctx-header        { border-color: #3e3e42; }
+.card-ctx-menu--dark .ctx-header-title  { color: #f5f5f5 !important; }
+.card-ctx-menu--dark .ctx-item          { color: #b0b0b0 !important; }
+.card-ctx-menu--dark .ctx-item:hover    { background: #3e3e42; }
 .card-ctx-menu--dark .ctx-item--danger  { color: #f87171 !important; }
 .card-ctx-menu--dark .ctx-item--danger:hover { background: #450a0a; }
-.card-ctx-menu--dark .ctx-divider       { background: #334155; }
-.card-ctx-menu--dark .ctx-kbd           { background: #334155; border-color: #475569; color: #64748b !important; }
+.card-ctx-menu--dark .ctx-divider       { background: #3e3e42; }
+.card-ctx-menu--dark .ctx-kbd           { background: #3e3e42; border-color: #3e3e42; color: #b0b0b0 !important; }
 
-/* ── Sheet selector popover ──────────────────────────────────────────────── */
-.mindmap-root[data-dark="true"] .sheet-selector-popover {
-  background: #1e293b;
-  border-color: #334155;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5);
-}
-.mindmap-root[data-dark="true"] .sheet-selector-label { color: #475569; }
-
-/* ── Add list panel ──────────────────────────────────────────────────────── */
 .mindmap-root[data-dark="true"] .add-list-panel {
-  background: #1e293b;
-  border-color: #334155;
+  background: var(--bg-card, #2b2c30);
+  border-color: var(--border, #3e3e42);
 }
 .mindmap-root[data-dark="true"] .add-list-input {
-  background: #0f172a;
-  border-color: #334155;
-  color: #e2e8f0;
+  background: var(--bg-surface, #1a1a1a);
+  border-color: var(--border, #3e3e42);
+  color: var(--text-primary, #f5f5f5);
 }
-
-/* ── Scrollbar (dark) ────────────────────────────────────────────────────── */
-.mindmap-root[data-dark="true"] .fs-body::-webkit-scrollbar-thumb { background: #334155; }
-
 </style>
