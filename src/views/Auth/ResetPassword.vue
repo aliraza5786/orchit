@@ -1,7 +1,7 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[500px] md:mx-auto w-full text-text-primary bg-bg-body">
+      <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
         <div v-if="verifying" class="text-center py-12">
           <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
           <p class="text-sm text-text-secondary">Verifying your reset link...</p>

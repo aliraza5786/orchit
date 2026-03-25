@@ -1,12 +1,12 @@
 <template>
   <AuthLayout>
     <template #form>
-      <div class="max-w-[500px] md:mx-auto w-full text-text-primary bg-bg-body ">
+      <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
         <div v-if="!emailSent">
           <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary">
             Forgot Password?
           </h2>
-          <p class="text-sm text-text-secondary text-center mb-8">
+          <p class="text-sm text-text-secondary mb-8">
             Enter your email address and we'll send you instructions to reset your password.
           </p>
 

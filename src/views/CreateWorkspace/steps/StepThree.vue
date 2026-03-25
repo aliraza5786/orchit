@@ -223,7 +223,7 @@ function cancelChips(role: Role) {
 }
 
 const isAddTeamDisabled = computed(() => {
-  return !form.value.name.trim() || !form.value.description.trim()
+  return !form.value.name.trim() || !form.value.description.trim() || !form.value.icon
 })
 
 function addNewRole() {

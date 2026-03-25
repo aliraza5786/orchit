@@ -82,7 +82,7 @@
             v-if="activeStep==3"
               :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`"><button
                 class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link>
-            <Button size="md" type="submit" @click="continueHandler">
+            <Button :disabled="creatingProfile || invitingPeople" size="md" type="submit" @click="continueHandler">
               {{ creatingProfile || invitingPeople ? 'Continuing...' : activeStep == 3 ? 'Invite' : 'Continue' }}
             </Button>
           </div>

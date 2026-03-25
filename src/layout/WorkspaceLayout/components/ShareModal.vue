@@ -14,13 +14,9 @@
           v-if="form.emails.length > 0"
           size="md"   
           class="w-32 shrink-0 mt-7" 
-          :options="[
-            { title: 'Viewer', _id: 'viewer' },
-            { title: 'Editor', _id: 'editor' }
-          ]" 
+          :options="accessRoles" 
           placeholder="Role" 
-          :model-value="form.access_level" 
-          @update:modelValue="v => (form.access_level = v)" 
+          v-model="form.workspace_access_role_id"
           :message="roleError" :error="!!roleError"
         />
       </div>
@@ -90,6 +86,15 @@
 
 
 
+      <!-- Job Role -->
+      <BaseSelectField 
+        v-if="form.emails.length > 0"
+        label="Job Role"
+        :options="jobRoles" 
+        placeholder="Choose Job Role" 
+        v-model="form.workspace_role_id"
+      />
+
       <!-- Note -->
       <BaseTextAreaField
         v-if="form.emails.length > 0"
@@ -112,7 +117,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, onMounted } from 'vue'
 import { toast } from 'vue-sonner'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
@@ -123,6 +128,7 @@ import { useShareResource, useSharedUsers, useUpdateShareRole, useRemoveShareAcc
 import { useRouteIds } from '../../../composables/useQueryParams'
 import { getInitials, generateAvatarColor } from '../../../utilities'
 import { useWorkspaceStore } from '../../../stores/workspace'
+import { useAgentStore } from '../../../stores/agentStore'
 
 const currentUserId = localStorage.getItem('user_id') // or similar from store
 
@@ -147,12 +153,13 @@ const isOpen = computed({
 const { workspaceId } = useRouteIds()
 
 const form = reactive({
-  access_level: 'viewer' as string | number | null,
+  workspace_access_role_id: null as string | number | null,
+  workspace_role_id: null as string | number | null,
   emails: [] as string[],
   note: ''
 })
 
-const roleError = computed(() => (!form.access_level ? 'Role is required' : ''))
+const roleError = computed(() => (!form.workspace_access_role_id ? 'Role is required' : ''))
 const invalidEmails = computed<string[]>(() => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return form.emails.filter(e => !re.test(e))
@@ -161,7 +168,7 @@ const emailError = computed(() =>
   invalidEmails.value.length ? `Invalid: ${invalidEmails.value.join(', ')}` : ''
 )
 const canSubmit = computed(
-  () => !!form.access_level && form.emails.length > 0 && invalidEmails.value.length === 0
+  () => !!form.workspace_access_role_id && !!form.workspace_role_id && form.emails.length > 0 && invalidEmails.value.length === 0
 )
 
 function onEmailsInvalid(_bad: string[]) { }
@@ -183,6 +190,29 @@ const allUsers = computed(() => {
     name: u.u_full_name,
     email: u.u_email,
     profile_image: u.u_profile_image
+  }))
+})
+
+// Roles and permissions from agentStore
+const agentStore = useAgentStore()
+
+onMounted(() => {
+  if (workspaceId.value) {
+    agentStore.fetchAgentsRolesPermissions(workspaceId.value)
+  }
+})
+
+const accessRoles = computed(() => {
+  return (agentStore.agentsRolesPermissions.access_roles || []).map((r: any) => ({
+    _id: r._id,
+    title: r.title
+  }))
+})
+
+const jobRoles = computed(() => {
+  return (agentStore.agentsRolesPermissions.job_roles || []).map((r: any) => ({
+    _id: r._id,
+    title: r.title
   }))
 })
 
@@ -258,8 +288,9 @@ function submit() {
         workspace_id: workspaceId.value,
         resource_type: 'module',
         resource_id: props.resourceId,
+        workspace_access_role_id: form.workspace_access_role_id,
+        workspace_role_id: form.workspace_role_id,
         email: form.emails,
-        access_level: form.access_level,
         note: form.note
       }
     },
@@ -285,7 +316,8 @@ function cancel() {
 }
 
 function reset() {
-  form.access_level = 'viewer'
+  form.workspace_access_role_id = null
+  form.workspace_role_id = null
   form.emails = []
   form.note = ''
 }

@@ -5,9 +5,9 @@
             <div class="rounded-2xl border border-border bg-bg-card  1F2430] shadow-sm overflow-hidden">
                 <!-- Header -->
                 <div class="px-6 py-5 border-b border-border  ">
-                    <h1 class="text-2xl font-semibold text-text-primary ">Space invitation</h1>
+                    <h1 class="text-2xl font-semibold text-text-primary ">Company invitation</h1>
                     <p class="text-sm text-text-secondary  text-secondary-300 mt-1">
-                        Accept the invite to join this space, or decline to ignore it.
+                        Accept the invite to join the space, or decline to ignore it.
                     </p>
                 </div>
                 <!-- Loading -->
@@ -167,7 +167,15 @@ async function accept() {
     actionType.value = 'accepted'
     error.value = null
     try {
-        await api.post(`/common/invite-accept`, { token: token.value })
+        // Get token from localStorage
+        const token = localStorage.getItem('token') // replace 'token' with your key
+        if (!token) throw new Error('User not authenticated');
+
+        await api.post(`/common/invitation/accept/${data.value._id}`, {  status: 'accepted' }, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            })
         accepted.value = true
     } catch (e: any) {
         error.value = e?.response?.data?.message || 'Could not accept the invitation.'
@@ -183,7 +191,7 @@ async function decline() {
     actionType.value = 'decline'
     error.value = null
     try {
-        await api.post(`/common/invite-accept`, { status: 'rejected', token: encodeURIComponent(token.value) })
+        await api.post(`/common/invitation/accept/${data.value._id}`, { status: 'rejected' })
         declined.value = true
     } catch (e: any) {
         error.value = e?.response?.data?.message || 'Could not decline the invitation.'
@@ -195,7 +203,7 @@ async function decline() {
 
 /** ---- navigation helpers ---- */
 function goHome() {
-    router.push({ name: 'home' }).catch(() => { }) // adjust route name
+   router.push('/')
 }
 function goToWorkspace() {
     if (data.value?.workspace_id) {
