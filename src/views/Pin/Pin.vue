@@ -407,7 +407,7 @@ const moveCard = useMoveCard({
 
     await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
     await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
-
+    toast.success("Card Formatted successfully")
     const previousCard = queryClient.getQueryData(["product-card", card_id]);
     const previousLists = queryClient.getQueryData(["sheet-list"]);
 
