@@ -154,7 +154,7 @@ export function usePermissions() {
     );
  
 
-    // console.log(permissionsList.value, "..");
+    
     if (!modulePerms) return false;
 
     // Separate static and dynamic permissions
@@ -164,7 +164,7 @@ export function usePermissions() {
 
     const dynamicPermissions = modulePerms.filter((p: any) =>
       p._id.includes("_")
-    );
+    ); 
 
     for (let i = 0; i < dynamicPermissions.length; i++) {
       if (dynamicPermissions[i].slug.includes(moduleId)) {

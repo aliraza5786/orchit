@@ -22,7 +22,10 @@
       </div>
 
       <!-- People with access -->
-      <div v-if="sharedUsers?.length && form.emails.length < 1 " class="mt-2">
+      <div v-if="isLoadingSharedUsers" class="flex justify-center items-center py-6">
+        <i class="fa-solid fa-spinner animate-spin text-2xl text-accent"></i>
+      </div>
+      <div v-else-if="sharedUsers?.length && form.emails.length < 1 " class="mt-2">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-sm font-semibold text-text-primary">People with access</h3>
           <!-- <div class="flex gap-2">
@@ -54,7 +57,10 @@
                 <span class="text-sm font-medium text-text-primary truncate">
                   {{ item.user.u_full_name }} {{ item.user._id === currentUserId ? '(you)' : '' }}
                 </span>
-                <span class="text-xs text-text-secondary truncate">{{ item.user.u_email }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-text-secondary truncate">{{ item.user.u_email }}</span>
+                  
+                </div>
               </div>
             </div>
 
@@ -64,20 +70,14 @@
                 <BaseSelectField 
                   size="sm"
                   variant="ghost"
-                  class="!w-24 border-none shadow-none !px-0"
+                  class="!w-35 border-none shadow-none !px-0"
                   :options="[
-                    { title: 'Editor', _id: 'editor' },
-                    { title: 'Viewer', _id: 'viewer' }
+                    ...accessRoles,
+                    { _id: 'REMOVE_ACCESS', title: 'Remove access', isAction: true, customClass: '!text-red-500 hover:!bg-red-50' }
                   ]"
-                  :model-value="item.role"
-                  @update:modelValue="(val) => val && handleUpdateUserRole(item.user._id, val)"
+                  :model-value="item.workspace_access_role?._id || item.role"
+                  @update:modelValue="(val) => val && (val === 'REMOVE_ACCESS' ? handleRemoveAccess(item) : handleUpdateUserRole(item, val))"
                 />
-                <button 
-                  @click="handleRemoveAccess(item)"
-                  class="text-xs text-red-500 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50"
-                >
-                  Remove access
-                </button>
               </div>
             </div>
           </div>
@@ -217,7 +217,7 @@ const jobRoles = computed(() => {
   }))
 })
 
-const { data: sharedUsersData, refetch: refetchSharedUsers } = useSharedUsers({
+const { data: sharedUsersData, isLoading: isLoadingSharedUsers, refetch: refetchSharedUsers } = useSharedUsers({
   resource_type: 'module',
   resource_id: props.resourceId || '',
   workspace_id: workspaceId.value
@@ -235,13 +235,14 @@ const { mutate: removeAccess } = useRemoveShareAccess({
   resource_id: props.resourceId || ''
 })
 
-function handleUpdateUserRole(userId: string, newRole: string | number) {
+function handleUpdateUserRole(item: any, newRole: string | number) {
   updateRole(
     {
-      payload: {
-        user_id: userId,
-        access_level: newRole
-      }
+      workspace_id: workspaceId.value,
+      email: item.user.u_email,
+      user_id: item.user._id,
+      seat_id: item.seat_id || item._id,
+      workspace_access_role_id: newRole
     },
     {
       onSuccess: () => {
@@ -259,11 +260,10 @@ function handleUpdateUserRole(userId: string, newRole: string | number) {
 function handleRemoveAccess(item: any) {
   removeAccess(
     {
-      params: {
-        workspace_id: workspaceId.value,
-        user_id: item.user._id,
-        email: item.user.u_email
-      }
+      workspace_id: workspaceId.value,
+      email: item.user.u_email,
+      user_id: item.user._id,
+      invitation_id: item.invitation_id || item._id
     },
     {
       onSuccess: () => {
@@ -285,15 +285,13 @@ function submit() {
   
   shareResource(
     {
-      payload: {
-        workspace_id: workspaceId.value,
-        resource_type: 'module',
-        resource_id: props.resourceId,
-        workspace_access_role_id: form.workspace_access_role_id,
-        workspace_role_id: form.workspace_role_id,
-        email: form.emails,
-        note: form.note
-      }
+      workspace_id: workspaceId.value,
+      resource_type: 'module',
+      resource_id: props.resourceId,
+      workspace_access_role_id: form.workspace_access_role_id,
+      workspace_role_id: form.workspace_role_id,
+      email: form.emails,
+      note: form.note
     },
     {
       onSuccess: () => {

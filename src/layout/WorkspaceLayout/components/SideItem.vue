@@ -86,6 +86,7 @@
     </li>
     <li>
     <button
+      v-if="canShare?.toLocaleLowerCase() === 'owner'"
       :disabled="canShare?.toLocaleLowerCase() !== 'owner'"
       class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm"
       :class="canShare?.toLocaleLowerCase() !== 'owner'? 'cursor-not-allowed':'cursor-pointer'"
