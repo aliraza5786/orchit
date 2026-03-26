@@ -39,7 +39,8 @@
         <!-- Bottom Info -->
         <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
             <DatePicker placeholder="set start date" :model-value="startDate" theme="dark" emit-as="ymd"
-                @update:modelValue="setStartDate" /> -
+                @update:modelValue="setStartDate" /> 
+                <div class="mt-3 font-bold">-</div>
             <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setDueDate" />
         </div>
