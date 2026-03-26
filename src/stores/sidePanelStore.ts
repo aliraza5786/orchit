@@ -60,6 +60,11 @@ export const useSidePanelStore = defineStore("sidePanel", {
     clearCard() {
       this.selectedCardPeople= null;
     },
+    updatePeopleRoleOptimistic(roleId: string) {
+      if (this.selectedCardPeople) {
+        this.selectedCardPeople.workspace_access_role_id = roleId;
+      }
+    },
      // sidePanelStore.ts
 updateCardTitleOptimistic(newTitle: string) {
   if (this.selectedCard) {

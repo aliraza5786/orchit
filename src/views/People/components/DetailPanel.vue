@@ -652,7 +652,7 @@ const { mutate: assignRole } = useAssignRole({
     console.log("Role assigned successfully!");
     // Optionally refetch people or roles 
     queryClient.invalidateQueries({ queryKey: ["people-lists"]});  
-
+    queryClient.invalidateQueries({ queryKey: ["people"]});  
   },
   onError: (err: any) => console.error(err), 
 });
@@ -762,6 +762,9 @@ function handleRoleChange(newRole: any) {
   }
 
   selectedRole.value = newRole;
+
+  // Optimistic update
+  sidePanelStore.updatePeopleRoleOptimistic(newRole);
 
   assignRole({
     id: cardDetails.value?._id!,
