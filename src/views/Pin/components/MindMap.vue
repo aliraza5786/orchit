@@ -980,8 +980,6 @@ async function saveNodeStyle() {
         : card?.seat_id;
       emit("update:card", { card_id: id, seat_id: seatIds, style: p });
     }
-
-    toast.success("Style saved");
   } catch {
     toast.error("Failed to save style");
   } finally {
