@@ -1,5 +1,5 @@
 <template>
-    <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex">
+    <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border flex-col flex overflow-hidden">
 
         <!-- Header -->
         <div class="overflow-x-auto shrink-0 border-b border-border">
@@ -86,7 +86,7 @@
         <!-- Kanban Board -->
         <div v-show="!isListPending" class="flex overflow-x-auto custom_scroll_bar gap-3 py-4 h-full mx-4" v-if="view==='kanban'">
             <KanbanBoard @onPlus="plusHandler" @delete:column="deleteHandler" @update:column="handleUpdateColumn"
-                @reorder="onReorder" @addColumn="handleAddColumn" @select:ticket="selectCardHandler"
+                @reorder="onReorder" @addColumn="handleAddColumn"  @select:ticket="selectCardHandler"
                 @onBoardUpdate="handleBoardUpdate" :board="filteredBoard" :variable_id="selected_view_by"
                 :sheet_id="selected_sheet_id">
                 <template #ticket="{ ticket }">
@@ -139,23 +139,23 @@
         :canDelete="canDeleteCard"
       />
     </template>
-          <div v-if="view==='mindmap'">
-             <PinMindMap  
-                :listsData="Lists?.data ?? []"
-                :selectedSheetId="selected_sheet_id"
-                :selectedViewBy="selected_view_by"
-                :workspaceId="workspaceId"
-                :moduleId="moduleId"
-                :addingList="!!addingList"
-                :activeAddList="activeAddList"
-                :newColumn="newColumn"
-                :canCreateCard="canCreateCard"
-                :canEditCard="canEditCard"
-                :canDeleteCard="canDeleteCard"
-                :canAssignCard="canAssignCard"
-                :canCreateSheet="canCreateSheet"
-                :canCreateVariable="canCreateVariable"
-                :canEditSheet="canEditSheet" />
+          <div v-if="view==='mindmap'" class="flex-1 h-full min-h-0 overflow-hidden">
+             <PinMindmapView
+              :listsData="Lists?.data ?? []"
+              :workspaceId="String(workspaceId)"
+              :moduleId="String(moduleId)"
+              :canCreateCard="canCreateCard"
+              :canEditCard="canEditCard"
+              :canDeleteCard="canDeleteCard"
+              :canAssignCard="canAssignCard"
+              :canCreateSheet="canCreateSheet"
+              :canCreateVariable="canCreateVariable"
+              :canEditSheet="canEditSheet"
+               @update:card="handleMindmapUpdateCard"
+              @select:ticket="selectCardHandler"
+              @delete:ticket="(id) => openDeleteModal(id)"
+              @create:card="(payload) => handleMindmapCreateCard(payload)"
+            />
             </div>
             <template v-if="view === 'calendar'">
       <CalendarView :data="filteredBoard" @select:ticket="selectCardHandler" />
@@ -174,7 +174,9 @@
         <ConfirmDeleteModal v-model="showDelete" title="Delete List" itemLabel="list" :itemName="localColumnData?.title"
             :requireMatchText="localColumnData?.title" confirmText="Delete List" cancelText="Cancel" size="md"
             :loading="addingList" @confirm="handleDeleteColumn" @cancel="() => (showDelete = false)" />
-
+         <ConfirmDeleteModal v-model="showDeleteTicket" title="Delete Ticket" itemLabel="Ticket" :itemName="localColumnData?.title"
+            :requireMatchText="localColumnData?.title" confirmText="Delete Ticket" cancelText="Cancel" size="md"
+            :loading="addingList" @confirm="handleDeleteCard" @cancel="() => (showDeleteTicket = false)" />
         <CreateTaskModal size="md" :pin="true" :selectedVariable="selected_view_by" :listId="localColumnData?.title"
             :sheet_id="selected_sheet_id" v-if="createTeamModal" key="createTaskModalKey" v-model="createTeamModal" />
 
@@ -187,7 +189,7 @@
             confirmText="Delete Sheet" cancelText="Cancel" size="md" :loading="isDeleting" @confirm="handleDeleteSheet"
             @cancel="() => { showDeleteModal = false }" />
     </div>
-    <SidePanel  v-if="selectedCard?._id" :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
+    <SidePanel  v-if="selectedCard?._id" :details="selectedCard" :showPanel="!!selectedCard?._id"
         @close="() => selectCardHandler({ variables: {} })" />
 </template>
 
@@ -203,7 +205,8 @@ import {
     useVariables,
     ReOrderList,
     ReOrderCard,
-    useUpdateWorkspaceSheet
+    useUpdateWorkspaceSheet,
+    useAddTicket
 } from '../../queries/useSheets';
 import { useRouteIds } from '../../composables/useQueryParams';
 
@@ -218,8 +221,9 @@ import SidePanel from '../Product/components/SidePanel.vue';
 import CreateSheetModal from '../Product/modals/CreateSheetModal.vue';
 import Fuse from 'fuse.js';
 import { debounce } from 'lodash';
+import { request, toApiMessage } from "../../libs/api";
 import SearchBar from '../../components/ui/SearchBar.vue';
-import PinMindMap from "../../components/feature/MindmapView.vue"
+import PinMindmapView from '../Pin/components/MindMap.vue';
 import TableView from '../../components/feature/TableView/TableView.vue';
 import CalendarView from '../../components/feature/CalendarView.vue';
 import GanttChartView from '../../components/feature/GanttChartView.vue';
@@ -228,13 +232,16 @@ const ConfirmDeleteModal = defineAsyncComponent(() => import('../Product/modals/
 const CreateVariableModal = defineAsyncComponent(() => import('../Product/modals/CreateVariableModal.vue'));
 const KanbanBoard = defineAsyncComponent(() => import('../../components/feature/kanban/KanbanBoard.vue'));
 import { usePermissions } from '../../composables/usePermissions'
-const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canCreateCard, canEditCard, canAssignCard, canDeleteCard } = usePermissions()
+import { toast } from 'vue-sonner';
+import { useMoveCard } from '../../queries/useSheets';
+const {  canEditSheet, canDeleteSheet, canCreateVariable, canCreateSheet, canCreateCard, canDeleteCard, canAssignCard, canEditCard } = usePermissions()
 
 // State
 const isCreateVar = ref(false);
 const isCreateSheetModal = ref(false);
 const createTeamModal = ref(false);
 const showDelete = ref(false);
+const showDeleteTicket = ref(false)
 const localColumnData = ref<any>();
 const activeAddList = ref(false);
 const newColumn = ref('');
@@ -391,9 +398,194 @@ function handleClickTicket(ticket: any) {
 
 function plusHandler(e: any) {
     createTeamModal.value = true;
+    localStorage.setItem("selectedStatusTitle", e?.title);
     localColumnData.value = e;
 }
+const moveCard = useMoveCard({
+  onMutate: async (newPayload: any) => {
+    const { card_id, variables: updatedVariables } = newPayload;
 
+    await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
+    await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
+    toast.success("Card Formatted successfully")
+    const previousCard = queryClient.getQueryData(["product-card", card_id]);
+    const previousLists = queryClient.getQueryData(["sheet-list"]);
+
+    // Snapshot ALL sprint-kanban queries for rollback
+    const previousSprintKanbans = queryClient.getQueriesData({
+      queryKey: ["sprint-kanban"],
+    });
+
+    const updateCardLogic = (oldCard: any) => {
+      if (!oldCard || oldCard._id !== card_id) return oldCard;
+
+      const updatedCard = {
+        ...oldCard,
+        variables: Array.isArray(oldCard.variables)
+          ? [...oldCard.variables]
+          : [],
+      };
+
+      if (updatedVariables) {
+        Object.assign(updatedCard, updatedVariables);
+
+        Object.entries(updatedVariables).forEach(([key, value]) => {
+          const idx = updatedCard.variables.findIndex(
+            (v: any) => v.slug === key,
+          );
+
+          if (idx !== -1) {
+            updatedCard.variables[idx] = {
+              ...updatedCard.variables[idx],
+              value,
+            };
+          } else {
+            updatedCard.variables.push({ slug: key, value, type: "Text" });
+          }
+
+          if (key === "card-description") {
+            updatedCard["card-description"] = value;
+            updatedCard.description = value;
+          }
+        });
+      }
+
+      if (newPayload.workspace_lane_id) {
+        updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+      }
+
+      if (newPayload.optimisticUser) {
+        const users = Array.isArray(newPayload.optimisticUser)
+          ? newPayload.optimisticUser
+          : [newPayload.optimisticUser];
+        updatedCard.seats = users;
+        updatedCard.seat_id = users
+          .map((u: any) => u?._id || u?.id)
+          .filter(Boolean);
+        updatedCard.seat = users[0] || null;
+        updatedCard.assigned_to = users;
+      }
+
+      return updatedCard;
+    };
+
+    // Update product-card cache
+    queryClient.setQueryData(["product-card", card_id], updateCardLogic);
+
+    // Update sheet-list cache
+    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+      if (!old || !Array.isArray(old.data)) return old;
+      return {
+        ...old,
+        data: old.data.map((column: any) => ({
+          ...column,
+          cards: column.cards?.map((card: any) =>
+            card._id === card_id ? { ...updateCardLogic(card) } : card,
+          ),
+        })),
+      };
+    });
+
+    // Update ALL sprint-kanban cached queries optimistically
+    // Each entry is [queryKey, data] — update only the one containing this card
+    queryClient.setQueriesData(
+      { queryKey: ["sprint-kanban"] },
+      (old: any) => {
+        // sprint-kanban returns array of columns directly
+        if (!old || !Array.isArray(old)) return old;
+
+        const hasCard = old.some((col: any) =>
+          col.cards?.some((c: any) => c._id === card_id),
+        );
+
+        // Only patch the query instance that actually contains this card
+        if (!hasCard) return old;
+
+        return old.map((col: any) => ({
+          ...col,
+          cards: (col.cards ?? []).map((card: any) =>
+            card._id === card_id ? { ...updateCardLogic(card) } : card,
+          ),
+        }));
+      },
+    );
+
+    return { previousCard, previousLists, previousSprintKanbans };
+  },
+
+  onSuccess: (serverCard: any, variables: any) => {
+    const cardId = variables.card_id;
+
+    if (serverCard) {
+      // Update product-card cache with server response
+      queryClient.setQueryData(["product-card", cardId], serverCard);
+
+      // Update sheet-list cache with server response
+      queryClient.setQueryData(["sheet-list"], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.map((column: any) => ({
+            ...column,
+            cards: column.cards?.map((card: any) =>
+              card._id === cardId ? { ...card, ...serverCard } : card,
+            ),
+          })),
+        };
+      });
+
+      // Update ALL sprint-kanban queries with server response
+      queryClient.setQueriesData(
+        { queryKey: ["sprint-kanban"] },
+        (old: any) => {
+          if (!old || !Array.isArray(old)) return old;
+
+          const hasCard = old.some((col: any) =>
+            col.cards?.some((c: any) => c._id === cardId),
+          );
+
+          if (!hasCard) return old;
+
+          return old.map((col: any) => ({
+            ...col,
+            cards: (col.cards ?? []).map((card: any) =>
+              card._id === cardId ? { ...card, ...serverCard } : card,
+            ),
+          }));
+        },
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["product-card", cardId],
+      });
+    }
+  },
+
+  onError: (_err: any, variables: any, context: any) => {
+    if (!context) return;
+
+    const cardId = variables.card_id;
+
+    // Rollback product-card cache
+    queryClient.setQueryData(["product-card", cardId], context.previousCard);
+
+    // Rollback sheet-list cache
+    queryClient.setQueriesData(
+      { queryKey: ["sheet-list"] },
+      context.previousLists,
+    );
+  },
+
+  onSettled: (_data: any, _err: any, variables: any) => {
+    const cardId = variables.card_id;
+
+    queryClient.invalidateQueries({ queryKey: ["product-card", cardId] });
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+
+  },
+});
+function handleMindmapUpdateCard(payload: any) { 
+  moveCard.mutate(payload);
+}
 function toggleCreateSheet() {
     selectedSheettoAction.value = {};
     isCreateSheetModal.value = !isCreateSheetModal.value;
@@ -485,6 +677,8 @@ const filteredBoard = computed(() => {
         created_at: card.created_at,
         'card-code': card['card-code'],
         variables: card.variables || {},
+        'start-date':card['start-date'],
+        'end-date':card['end-date']
       }))
     }));
   }
@@ -531,6 +725,43 @@ const columns = [
   { key: "Owner", label: "Owner" },
   { key: "Assignee", label: "Assignee" }
 ];
+const selectedDeleteId = ref<string | null>(null);
+  const openDeleteModal = (cardId: string) => {
+  selectedDeleteId.value = cardId;
+  showDeleteTicket.value = true;
+};
+const handleDeleteCard = async () => {
+  if (!selectedDeleteId.value) return;
+
+  try {
+    await request({ 
+      url: `workspace/card/${selectedDeleteId.value}`, 
+      method: "DELETE" 
+    });
+
+    toast.success("Ticket deleted successfully");
+
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
+    await refetchSheets();
+    refetchList();
+
+  } catch (err) {
+    toast.error(toApiMessage(err));
+  } finally {
+    showDeleteTicket.value = false;
+    selectedDeleteId.value = null;
+  }
+};
+const localPendingTickets = ref<any[]>([]);
+const { mutate: addTicket } = useAddTicket({
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    localPendingTickets.value = [];
+  },
+});
+function handleMindmapCreateCard(payload: any) {
+  addTicket(payload);
+}
 </script>
 
 <style scoped>

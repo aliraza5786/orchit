@@ -34,7 +34,7 @@
 import Calendar from "@toast-ui/calendar";
 // @ts-ignore
 import "@toast-ui/calendar/dist/toastui-calendar.css";
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from "vue";
 import { useTheme } from "../../composables/useTheme";
 
 interface RawCard {
@@ -44,11 +44,21 @@ interface RawCard {
   "end-date"?: string | null;
   [key: string]: any;
 }
+interface CardList {
+  _id: string;
+  title: string;
+  cards: RawCard[];
+}
+const props = defineProps<{ data: RawCard[] | CardList[] }>();
+const flattenedCards = computed(() => {
+  if (!props.data || props.data.length === 0) return [];
 
-const props = defineProps<{
-  data: RawCard[];
-}>();
-
+  if ("cards" in props.data[0]) {
+    return (props.data as CardList[]).flatMap(list => list.cards || []);
+  } else {
+    return props.data as RawCard[];
+  }
+});
 const emit = defineEmits<{
   (e: "select:ticket", card: RawCard): void;
 }>();
@@ -166,19 +176,16 @@ function changeView(view: "month" | "week" | "day") {
   updateDateLabel();
 }
 
-/* --------------------------------------------------
-   Load events
--------------------------------------------------- */
-function loadEvents(cards: RawCard[]) {
+function loadEvents(data: RawCard[] | CardList[]) {
+  console.log(data);
+  
   if (!calendar) return;
   calendar.clear();
-  const events = buildEvents(cards);
+
+  const events = buildEvents(flattenedCards.value); // flattened here
   if (events.length) calendar.createEvents(events);
 }
-
-/* --------------------------------------------------
-   Init
--------------------------------------------------- */
+watch(() => props.data, () => loadEvents(flattenedCards.value), { deep: true });
 onMounted(async () => {
   await nextTick();
   if (!calendarEl.value) return;

@@ -26,8 +26,8 @@
            <p class="text-left font-medium text-text-secondary text-sm " > 
             
                By signing up, I agree to the
-            <span class="text-text-primary font-medium text-sm" >Privacy Policy</span> and
-            <span class="text-text-primary font-medium text-sm">Terms of Service</span>.
+           <router-link to="/privacy-policy"> <span class="text-text-primary font-medium text-sm" >Privacy Policy</span></router-link> and
+           <router-link to="/terms-of-services"> <span class="text-text-primary font-medium text-sm">Terms of Service</span></router-link>.
           </p> 
           </div> 
           <p v-if="termsError" class="text-red-500 text-[12px]">

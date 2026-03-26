@@ -100,6 +100,7 @@
                 v-model="localTitle"
                 @keydown.enter.prevent="saveTitle"
                 @keydown.esc.prevent="cancelEdit"
+                @blur="saveTitle"
                 class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition"
                 type="text"
                 aria-label="Edit title"
@@ -232,7 +233,7 @@
                     :seat="cardDetails?.seats || cardDetails?.seat"
                   />
                 </div>
-                <template v-if="!pin">
+                <template>
                   <div class="space-y-2">
                     <div
                       class="text-xs uppercase tracking-wider text-text-secondary"
@@ -842,7 +843,6 @@ const {
 const { workspaceId } = useRouteIds();
 const queryClient = useQueryClient();
 const props = defineProps({
-  pin: { type: Boolean, default: false },
   showPanel: { type: Boolean, default: true },
   details: { type: Object as () => any, default: () => ({}) },
   sheetID: { type: String, required: false }, 
@@ -934,21 +934,7 @@ function saveTitle() {
 
   editingTitle.value = false;
 }
-const description = ref(
-  cardDetails?.value ? cardDetails?.value["card-description"] : "",
-);
-watch(
-  () => sidePanelStore.selectedCard?.["card-description"],
-  (newDesc) => {
-    if (
-      newDesc &&
-      sidePanelStore.selectedCard?._id === sidePanelStore.selectedCardId
-    ) {
-      sidePanelStore.selectedCard["card-description"] = newDesc;
-      sidePanelStore.selectedCard = { ...sidePanelStore.selectedCard };
-    }
-  },
-);
+const description = ref("");
 const editingDesc = ref(false);
 const descEditorWrap = ref<HTMLElement | null>(null);
 
@@ -969,33 +955,45 @@ async function startEditDesc() {
   await nextTick();
   focusProseMirror(descEditorWrap.value || undefined);
 }
+watch(
+  () => cardDetails.value?.["card-description"],
+  (val) => {
+    if (!editingDesc.value) {
+      description.value = val ?? "";
+    }
+  },
+  { immediate: true }
+);
 function finishDescEdit() {
-  const newDescription = description.value?.trim();
-  const prevDescription = cardDetails.value?.["card-description"] ?? "";
+  const normalize = (html: string) =>
+    html.replace(/<p><\/p>/g, "").trim();
 
-  if (!newDescription || newDescription === prevDescription) {
+  const newDescription = normalize(description.value || "");
+  const prevDescription = normalize(
+    cardDetails.value?.["card-description"] || ""
+  );
+
+  if (newDescription === prevDescription) {
     editingDesc.value = false;
     return;
   }
 
-  moveCard.mutate(
-  {
+  moveCard.mutate({
     card_id: props.details._id,
     variables: { "card-description": newDescription },
-  },
-  {
-    onSuccess: () => {
-      emit("ticketUpdated", {
-        cardId: props.details._id,
-        updates: { "card-description": newDescription },
-      });
-    },
-  }
-);
+  });
 
   editingDesc.value = false;
 }
-
+watch(
+  () => cardDetails.value?.["card-description"],
+  (val) => {
+    if (!editingDesc.value) {
+      description.value = val ?? "";
+    }
+  },
+  { immediate: true }
+);
 function onDocMouseDown(e: MouseEvent) {
   if (!editingDesc.value) return;
   const target = e.target as Node;
@@ -1469,8 +1467,7 @@ const moveCard = useMoveCard({
 
     queryClient.invalidateQueries({ queryKey: ["product-card", cardId] });
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    // Do NOT invalidate sprint-kanban here to avoid unnecessary refetches
-    // The cache is already updated optimistically and confirmed in onSuccess
+
   },
 });
 const commentAttachments = ref<File[]>([]);

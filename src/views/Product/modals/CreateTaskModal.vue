@@ -45,7 +45,7 @@
       />
 
       <!-- Start date -->
-      <div class="flex gap-1 flex-col" v-if="!pin">
+      <div class="flex gap-1 flex-col">
         <label class="text-sm">Start date</label>
         <div
           class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
@@ -64,7 +64,7 @@
       </div>
 
       <!-- End date -->
-      <div class="flex gap-1 flex-col" v-if="!pin">
+      <div class="flex gap-1 flex-col">
         <label class="text-sm">End date</label>
         <div
           class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
@@ -98,7 +98,7 @@
           />
         </div>
       </div>
-      <div v-if="route.path.includes('/plan')" class="flex flex-col">
+      <div v-if="route.path.includes('plan')" class="flex flex-col">
   <BaseSelectField
     size="md"
     label="Select Sheet"
@@ -175,33 +175,41 @@ const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
   onSuccess: () => {
     reset();
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    if(route.path.includes('/plan')){
+    if(route.path.includes("plan")){
+      console.log("onSuccess triggered");
      queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
+     refetchSheetLists();
     }
     isOpen.value = false;
-    refetchSheetLists();
   },
   
 });
-const { refetch: refetchSheetLists, } = useSprintKanban(
-  localStorage.getItem("activeSprintId") || "",
-  {
-    enabled: false, 
-  }
-);
+const isPlanRoute = computed(() => route.path.includes("plan"));
+
+const sprintId = localStorage.getItem("activeSprintId") || "";
+
+const { refetch: refetchSheetLists } = isPlanRoute.value
+  ? useSprintKanban(sprintId, [], { enabled: false })
+  : { refetch: () => {} };
 
 onMounted(() => {
-  if (route.path.includes("/workspace/plan/")) {
-    refetchSheetLists();
-  }
-});
+  console.log("onMounted route:", route.path);
 
-// Watch for route changes dynamically (optional)
+  const isPlan = route.path.includes("plan");
+  console.log("includes plan?", isPlan);
+
+  if (!isPlan) return; 
+
+  console.log("REFETCH TRIGGERED");
+  refetchSheetLists();
+});
 watch(
   () => route.path,
   (newPath) => {
-    if (newPath.includes("/workspace/plan/")) {
+    console.log("route path watch", route.path);
+    if (newPath.includes("plan")) {
       refetchSheetLists();
+       console.log("REFETCH TRIGGERED");
     }
   }
 );

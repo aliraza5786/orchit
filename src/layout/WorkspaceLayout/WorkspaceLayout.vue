@@ -5,7 +5,7 @@
     :style="{
       background: `${workspaceStore.background} `,
       backgroundRepeat: 'no-repeat',
-      backgroundSize: '110%',
+      backgroundSize: 'cover',
       backgroundPosition: 'center'
     }">
     <WorkSpaceNav  ref="workspaceNavRef"   :expanded="sidebarExpanded" />
@@ -62,9 +62,32 @@ watch(
     localWorkspace.value = wsClone;
     workspaceStore.setSingleWorkspace(wsClone);
     workspaceStore.setLanes(wsClone?.lanes);
+
+    // Initialize background from workspace variables
+    const { theme, color } = wsClone?.variables || {};
+    if (theme) {
+      workspaceStore.setBackground(`url(${theme})`);
+    } else if (color) { 
+      workspaceStore.setBackground(hexToRgba(color, 0.3));
+    }
   },
   { immediate: true }
 );
+
+function hexToRgba(hex: string, alpha = 0.3) {
+  if (!hex || typeof hex !== 'string') return hex;
+  let h = hex.trim();
+  if (!h.startsWith('#')) return h;
+  if (/^#([0-9a-f]{3})$/i.test(h)) {
+    h = '#' + h.slice(1).split('').map(c => c + c).join('');
+  }
+  if (/^#([0-9a-f]{8})$/i.test(h)) h = '#' + h.slice(1, 7);
+  if (!/^#([0-9a-f]{6})$/i.test(h)) return hex;
+  const r = parseInt(h.slice(1, 3), 16);
+  const g = parseInt(h.slice(3, 5), 16);
+  const b = parseInt(h.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
  
 
 const workspaceNavRef = ref<any>(null);

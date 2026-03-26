@@ -183,10 +183,13 @@
             <h3 class="text-sm font-medium text-text-secondary mb-2">Theme</h3>
             <div class="grid grid-cols-4 gap-2.5">
               <button v-for="(th, index) in themes" :key="index" type="button"
-                class="h-12 w-full rounded-md overflow-hidden border-2"
+                class="h-12 w-full rounded-md overflow-hidden border-2 relative flex items-center justify-center"
                 :class="selectedTheme === th ? 'border-accent' : 'border-transparent'" @click="selectTheme(th)"
                 aria-label="Select theme">
                 <img :src="th" class="h-12 w-full object-cover" />
+                <div v-if="selectedTheme === th" class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                  <i class="fa-solid fa-check text-white text-xl"></i>
+                </div>
               </button>
             </div>
           </div>
@@ -305,8 +308,8 @@ const { workspaceId } = useRouteIds();
 const { theme, setTheme, isDark } = useTheme()
 const props = defineProps<{ workspace: any }>()
 const { mutate: updateWS } = useUpdateWorkspaceDetail({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+  onSuccess: async() => {
+   await queryClient.invalidateQueries({ queryKey: ['workspaces'] })
   }
 });
 /* ----- Stores / Queries ----- */
@@ -358,30 +361,49 @@ const defaultLight = lightColors[0].value
 const defaultDark = darkColors[0].value
 
 // Helper to apply color locally without API call
-function setLocalColor(value: string) {
+function setLocalColor(value: string, updateBackground = true) {
   // Handle cross-theme defaults
   let finalValue = value
   if (isDark.value && value === defaultLight) finalValue = defaultDark
   if (!isDark.value && value === defaultDark) finalValue = defaultLight
   
-  // If still not in list (and not matching cross-defaults), validation could be added here
-  // But usually custom colors shouldn't happen unless valid.
-  
   selectedColor.value = finalValue
-  const color30 = hexToRgba(finalValue, 0.3)
-  workspaceStore.setBackground(color30)
+  
+  if (updateBackground) {
+    const color30 = hexToRgba(finalValue, 0.3)
+    workspaceStore.setBackground(color30)
+  }
 }
 
 // Watch for workspace data changes (initial load or switch)
 watch(() => props.workspace?.variables?.color, (newVal) => {
-  // If prop provided, use it. Else use current theme default.
+  // If we have a theme, don't update background with color
+  const hasTheme = !!props.workspace?.variables?.theme
+  
   if (newVal) {
-    setLocalColor(newVal)
+    setLocalColor(newVal, !hasTheme)
   } else {
-    // No color in workspace? Use default for current theme.
-    setLocalColor(colors.value[0].value)
+    // If color is empty in DB, it means a theme is likely active
+    // We can reset selectedColor to a default without applying it to background
+    setLocalColor(colors.value[0].value, false)
+    if (!hasTheme) {
+      // If neither is present, use default color
+      workspaceStore.setBackground(hexToRgba(colors.value[0].value, 0.3))
+    }
   }
 }, { immediate: true })
+
+// Watch for workspace theme changes to keep selectedTheme in sync
+watch(() => props.workspace?.variables?.theme, (newTheme) => {
+  if (newTheme) {
+    selectedTheme.value = newTheme
+    workspaceStore.setBackground(`url(${newTheme})`)
+  } else {
+    selectedTheme.value = ''
+  }
+}, { immediate: true })
+
+
 
 // Watch for theme changes
 watch(isDark, () => {
@@ -418,10 +440,17 @@ function saveTitle() {
     return
   }
   isEditingTitle.value = false
+  
+  // Optimistic update
+  workspaceStore.updateSingleWorkspaceLocal({
+    variables: {
+      title: editableTitle.value
+    }
+  })
+
   updateWS({
     workspace_id: workspaceId.value,
     variables: {
-
       'title': editableTitle.value
     }
   })
@@ -652,11 +681,13 @@ function hexToRgba(hex: string, alpha = 0.3) {
 /* ----- Simple helpers for palette / theme / menu ----- */
 /* ----- Simple helpers for palette / theme / menu ----- */
 function handleColorClick(value: string) {
+  selectedTheme.value = '' // Clear UI selection
   setLocalColor(value) // update UI immediately
   updateWS({
     workspace_id: workspaceId.value,
     variables: {
-      color: selectedColor.value // Use the resolved value
+      color: selectedColor.value,
+      theme: '' // Explicitly clear theme in DB
     }
   })
 }
@@ -667,7 +698,8 @@ function selectTheme(th: string) {
     updateWS({
     workspace_id: workspaceId.value,
     variables: {
-      theme: th
+      theme: th,
+      color: '' // Explicitly clear color in DB
     }
   })
 }

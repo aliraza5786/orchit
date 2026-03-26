@@ -7,10 +7,12 @@
     :class="[
       progress == 'processing' && status == 'running'
         ? 'disbled !cursor-not-allowed opacity-50'
+        : workspaceStore.background.startsWith('url') && !isActive
+        ? 'text-text-primary bg-bg-card'
+        : workspaceStore.background.startsWith('url') && isActive
+        ? 'text-text-primary bg-accent'
         : isActive
         ? 'text-text-primary bg-bg-card '
-        : workspaceStore.background.startsWith('url')
-        ? 'text-text-primary bg-bg-card'
         : ' text-text-secondary',
       expanded
         ? 'w-[36px] h-[36px] sm:w-full sm:h-[38px] gap-2.5'
@@ -66,7 +68,9 @@
   <ul>
     <li>
       <button
-      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer flex items-center"
+      :disabled="!canDelete"
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm flex items-center"
+      :class="!canDelete? 'cursor-not-allowed':'cursor-pointer'"
       @click.stop="emitDelete"
     >
         <i class="fa-solid fa-trash text-red-500 text-[11px] me-1"></i> Delete Module
@@ -82,7 +86,10 @@
     </li>
     <li>
     <button
-      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+      v-if="canShare?.toLocaleLowerCase() === 'owner'"
+      :disabled="canShare?.toLocaleLowerCase() !== 'owner'"
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm"
+      :class="canShare?.toLocaleLowerCase() !== 'owner'? 'cursor-not-allowed':'cursor-pointer'"
       @click.stop="emitShare"
     >
      <i class="fa-solid fa-share-nodes text-[11px] me-1"></i> Share Module
@@ -112,7 +119,7 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useWorkspaceStore } from "../../../stores/workspace";
+import { useWorkspaceStore } from "../../../stores/workspace"; 
 const emit = defineEmits(['toggleDropdown','delete','closeDropdown','share'])
 /** --- PROPS --- **/
 const props = defineProps<{
@@ -125,6 +132,8 @@ const props = defineProps<{
   expanded?: boolean;
   deleteIcon?:any;
   activeDropdownId?: string | null;
+  canDelete?: boolean;
+  canShare?: string
 }>();
 const showTooltip = ref(false);
 const itemRef = ref<HTMLElement | null>(null);
@@ -166,7 +175,8 @@ const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const toggleDropdown = () => {
   emit('toggleDropdown', props.id)
 }
-const emitDelete = () => {
+const emitDelete = () => { 
+  if(!props.canDelete) return
   emit('closeDropdown')
   emit('delete', props.id)
 }

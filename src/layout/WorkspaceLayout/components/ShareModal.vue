@@ -14,19 +14,18 @@
           v-if="form.emails.length > 0"
           size="md"   
           class="w-32 shrink-0 mt-7" 
-          :options="[
-            { title: 'Viewer', _id: 'viewer' },
-            { title: 'Editor', _id: 'editor' }
-          ]" 
+          :options="accessRoles" 
           placeholder="Role" 
-          :model-value="form.access_level" 
-          @update:modelValue="v => (form.access_level = v)" 
+          v-model="form.workspace_access_role_id"
           :message="roleError" :error="!!roleError"
         />
       </div>
 
       <!-- People with access -->
-      <div v-if="sharedUsers?.length && form.emails.length < 1 " class="mt-2">
+      <div v-if="isLoadingSharedUsers" class="flex justify-center items-center py-6">
+        <i class="fa-solid fa-spinner animate-spin text-2xl text-accent"></i>
+      </div>
+      <div v-else-if="sharedUsers?.length && form.emails.length < 1 " class="mt-2">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-sm font-semibold text-text-primary">People with access</h3>
           <!-- <div class="flex gap-2">
@@ -39,8 +38,8 @@
           </div> -->
         </div>
 
-        <div class="space-y-4 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
-          <div v-for="item in sharedUsers" :key="item.user._id" class="flex items-center justify-between group">
+        <div class="space-y-4 max-h-[240px] overflow-auto pr-1 custom-scrollbar">
+          <div v-for="item in sharedUsers" :key="item.user._id" class="flex items-center justify-between group min-w-[400px]">
             <div class="flex items-center gap-3">
               <img 
                 v-if="item.user.u_profile_image"
@@ -58,7 +57,10 @@
                 <span class="text-sm font-medium text-text-primary truncate">
                   {{ item.user.u_full_name }} {{ item.user._id === currentUserId ? '(you)' : '' }}
                 </span>
-                <span class="text-xs text-text-secondary truncate">{{ item.user.u_email }}</span>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-text-secondary truncate">{{ item.user.u_email }}</span>
+                  
+                </div>
               </div>
             </div>
 
@@ -68,20 +70,14 @@
                 <BaseSelectField 
                   size="sm"
                   variant="ghost"
-                  class="!w-24 border-none shadow-none !px-0"
+                  class="!w-35 border-none shadow-none !px-0"
                   :options="[
-                    { title: 'Editor', _id: 'editor' },
-                    { title: 'Viewer', _id: 'viewer' }
+                    ...accessRoles,
+                    { _id: 'REMOVE_ACCESS', title: 'Remove access', isAction: true, customClass: '!text-red-500 hover:!bg-red-50' }
                   ]"
-                  :model-value="item.role"
-                  @update:modelValue="(val) => val && handleUpdateUserRole(item.user._id, val)"
+                  :model-value="item.workspace_access_role?._id || item.role"
+                  @update:modelValue="(val) => val && (val === 'REMOVE_ACCESS' ? handleRemoveAccess(item) : handleUpdateUserRole(item, val))"
                 />
-                <button 
-                  @click="handleRemoveAccess(item)"
-                  class="text-xs text-red-500 hover:text-red-600 transition-colors px-2 py-1 rounded hover:bg-red-50"
-                >
-                  Remove access
-                </button>
               </div>
             </div>
           </div>
@@ -89,6 +85,15 @@
       </div>
 
 
+
+      <!-- Job Role -->
+      <BaseSelectField 
+        v-if="form.emails.length > 0"
+        label="Job Role"
+        :options="jobRoles" 
+        placeholder="Choose Job Role" 
+        v-model="form.workspace_role_id"
+      />
 
       <!-- Note -->
       <BaseTextAreaField
@@ -112,7 +117,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive } from 'vue'
+import { computed, reactive, onMounted } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
@@ -123,6 +129,7 @@ import { useShareResource, useSharedUsers, useUpdateShareRole, useRemoveShareAcc
 import { useRouteIds } from '../../../composables/useQueryParams'
 import { getInitials, generateAvatarColor } from '../../../utilities'
 import { useWorkspaceStore } from '../../../stores/workspace'
+import { useAgentStore } from '../../../stores/agentStore'
 
 const currentUserId = localStorage.getItem('user_id') // or similar from store
 
@@ -145,14 +152,16 @@ const isOpen = computed({
 })
 
 const { workspaceId } = useRouteIds()
+const queryClient = useQueryClient()
 
 const form = reactive({
-  access_level: 'viewer' as string | number | null,
+  workspace_access_role_id: null as string | number | null,
+  workspace_role_id: null as string | number | null,
   emails: [] as string[],
   note: ''
 })
 
-const roleError = computed(() => (!form.access_level ? 'Role is required' : ''))
+const roleError = computed(() => (!form.workspace_access_role_id ? 'Role is required' : ''))
 const invalidEmails = computed<string[]>(() => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return form.emails.filter(e => !re.test(e))
@@ -161,7 +170,7 @@ const emailError = computed(() =>
   invalidEmails.value.length ? `Invalid: ${invalidEmails.value.join(', ')}` : ''
 )
 const canSubmit = computed(
-  () => !!form.access_level && form.emails.length > 0 && invalidEmails.value.length === 0
+  () => !!form.workspace_access_role_id && !!form.workspace_role_id && form.emails.length > 0 && invalidEmails.value.length === 0
 )
 
 function onEmailsInvalid(_bad: string[]) { }
@@ -186,7 +195,31 @@ const allUsers = computed(() => {
   }))
 })
 
-const { data: sharedUsersData, refetch: refetchSharedUsers } = useSharedUsers({
+// Roles and permissions from agentStore
+const agentStore = useAgentStore()
+
+onMounted(() => {
+  if (workspaceId.value) {
+    agentStore.fetchAgentsRolesPermissions(workspaceId.value)
+  }
+})
+
+const accessRoles = computed(() => {
+  return (agentStore.agentsRolesPermissions.access_roles || [])
+    .filter((r: any) => r?.title?.toLowerCase?.() !== 'workspace admin')
+    .map((r: any) => ({
+      _id: r._id,
+      title: r.title.replace(/workspace/gi, '').trim()
+    }))
+})
+const jobRoles = computed(() => {
+  return (agentStore.agentsRolesPermissions.job_roles || []).map((r: any) => ({
+    _id: r._id,
+    title: r.title
+  }))
+})
+
+const { data: sharedUsersData, isLoading: isLoadingSharedUsers } = useSharedUsers({
   resource_type: 'module',
   resource_id: props.resourceId || '',
   workspace_id: workspaceId.value
@@ -204,18 +237,19 @@ const { mutate: removeAccess } = useRemoveShareAccess({
   resource_id: props.resourceId || ''
 })
 
-function handleUpdateUserRole(userId: string, newRole: string | number) {
+function handleUpdateUserRole(item: any, newRole: string | number) {
   updateRole(
     {
-      payload: {
-        user_id: userId,
-        access_level: newRole
-      }
+      workspace_id: workspaceId.value,
+      email: item.user.u_email,
+      user_id: item.user._id,
+      seat_id: item.seat_id || item._id,
+      workspace_access_role_id: newRole
     },
     {
-      onSuccess: () => {
+      onSuccess: async() => {
         toast.success('Role updated successfully')
-        refetchSharedUsers()
+        await queryClient.invalidateQueries({ queryKey: ['shared-users'] })
       },
       onError: (err: any) => {
         const msg = err?.response?.data?.message || err?.message || 'Failed to update role.'
@@ -228,16 +262,15 @@ function handleUpdateUserRole(userId: string, newRole: string | number) {
 function handleRemoveAccess(item: any) {
   removeAccess(
     {
-      params: {
-        workspace_id: workspaceId.value,
-        user_id: item.user._id,
-        email: item.user.u_email
-      }
+      workspace_id: workspaceId.value,
+      email: item.user.u_email,
+      user_id: item.user._id,
+      invitation_id: item.invitation_id || item._id
     },
     {
-      onSuccess: () => {
+      onSuccess: async() => {
         toast.success('Access removed successfully')
-        refetchSharedUsers()
+        await queryClient.invalidateQueries({ queryKey: ['shared-users'] })
       },
       onError: (err: any) => {
         const msg = err?.response?.data?.message || err?.message || 'Failed to remove access.'
@@ -254,19 +287,18 @@ function submit() {
   
   shareResource(
     {
-      payload: {
-        workspace_id: workspaceId.value,
-        resource_type: 'module',
-        resource_id: props.resourceId,
-        email: form.emails,
-        access_level: form.access_level,
-        note: form.note
-      }
+      workspace_id: workspaceId.value,
+      resource_type: 'module',
+      resource_id: props.resourceId,
+      workspace_access_role_id: form.workspace_access_role_id,
+      workspace_role_id: form.workspace_role_id,
+      email: form.emails,
+      note: form.note
     },
     {
-      onSuccess: () => {
+      onSuccess: async() => {
         toast.success('Module shared successfully')
-        refetchSharedUsers()
+        await queryClient.invalidateQueries({ queryKey: ['shared-users'] })
         emit('shared')
         reset()
         isOpen.value = false
@@ -285,7 +317,8 @@ function cancel() {
 }
 
 function reset() {
-  form.access_level = 'viewer'
+  form.workspace_access_role_id = null
+  form.workspace_role_id = null
   form.emails = []
   form.note = ''
 }
