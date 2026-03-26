@@ -1079,15 +1079,10 @@ const updateMoveCard = useMoveCard({
 
     await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
     await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
-
+    toast.success("Card Formatted successfully")
     const previousCard = queryClient.getQueryData(["product-card", card_id]);
     const previousLists = queryClient.getQueryData(["sheet-list"]);
-
-    // Snapshot ALL sprint-kanban queries for rollback
-    const previousSprintKanbans = queryClient.getQueriesData({
-      queryKey: ["sprint-kanban"],
-    });
-
+    
     const updateCardLogic = (oldCard: any) => {
       if (!oldCard || oldCard._id !== card_id) return oldCard;
 
@@ -1157,32 +1152,7 @@ const updateMoveCard = useMoveCard({
         })),
       };
     });
-
-    // Update ALL sprint-kanban cached queries optimistically
-    // Each entry is [queryKey, data] — update only the one containing this card
-    queryClient.setQueriesData(
-      { queryKey: ["sprint-kanban"] },
-      (old: any) => {
-        // sprint-kanban returns array of columns directly
-        if (!old || !Array.isArray(old)) return old;
-
-        const hasCard = old.some((col: any) =>
-          col.cards?.some((c: any) => c._id === card_id),
-        );
-
-        // Only patch the query instance that actually contains this card
-        if (!hasCard) return old;
-
-        return old.map((col: any) => ({
-          ...col,
-          cards: (col.cards ?? []).map((card: any) =>
-            card._id === card_id ? { ...updateCardLogic(card) } : card,
-          ),
-        }));
-      },
-    );
-
-    return { previousCard, previousLists, previousSprintKanbans };
+    return { previousCard, previousLists };
   },
 
   onSuccess: (serverCard: any, variables: any) => {

@@ -1968,7 +1968,6 @@ async function saveNodeStyle() {
         style: p,
       });
     }
-    toast.success("Style saved");
   } catch (err) {
     console.error(err);
     toast.error("Failed to save style");
