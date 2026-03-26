@@ -1001,6 +1001,9 @@ const moveCard = useMoveCard({
         ...oldCard,
         variables: Array.isArray(oldCard.variables) ? [...oldCard.variables] : { ...(oldCard.variables || {}) },
       };
+      if (newPayload.style !== undefined) {
+  updatedCard.style = newPayload.style;
+}
       if (updatedVariables) {
         Object.assign(updatedCard, updatedVariables);
         if (Array.isArray(updatedCard.variables)) {
@@ -1027,13 +1030,37 @@ const moveCard = useMoveCard({
     if (selectedCard.value && selectedCard.value._id === card_id) selectedCard.value = updateCardLogic(selectedCard.value);
 
     queryClient.setQueryData(["product-card", card_id], updateCardLogic);
-    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-      if (!Array.isArray(old)) return old;
+    queryClient.setQueriesData(
+  { queryKey: ["sheet-list"], exact: false },
+  (old: any) => {
+    if (!old) return old;
+
+    // CASE 1: array (rare)
+    if (Array.isArray(old)) {
       return old.map((column: any) => ({
         ...column,
-        cards: column.cards?.map((card: any) => card._id === card_id ? updateCardLogic(card) : card),
+        cards: column.cards?.map((card: any) =>
+          card._id === card_id ? updateCardLogic(card) : card
+        ),
       }));
-    });
+    }
+
+    // CASE 2: object with data (MOST COMMON)
+    if (Array.isArray(old.data)) {
+      return {
+        ...old,
+        data: old.data.map((column: any) => ({
+          ...column,
+          cards: column.cards?.map((card: any) =>
+            card._id === card_id ? updateCardLogic(card) : card
+          ),
+        })),
+      };
+    }
+
+    return old;
+  }
+);
     triggerRef(Lists);
     return { previousCard, previousLists };
   },
@@ -1046,7 +1073,188 @@ const moveCard = useMoveCard({
     console.log(err);
   },
 });
+const updateMoveCard = useMoveCard({
+  onMutate: async (newPayload: any) => {
+    const { card_id, variables: updatedVariables } = newPayload;
 
+    await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
+    await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
+
+    const previousCard = queryClient.getQueryData(["product-card", card_id]);
+    const previousLists = queryClient.getQueryData(["sheet-list"]);
+
+    // Snapshot ALL sprint-kanban queries for rollback
+    const previousSprintKanbans = queryClient.getQueriesData({
+      queryKey: ["sprint-kanban"],
+    });
+
+    const updateCardLogic = (oldCard: any) => {
+      if (!oldCard || oldCard._id !== card_id) return oldCard;
+
+      const updatedCard = {
+        ...oldCard,
+        variables: Array.isArray(oldCard.variables)
+          ? [...oldCard.variables]
+          : [],
+      };
+
+      if (updatedVariables) {
+        Object.assign(updatedCard, updatedVariables);
+
+        Object.entries(updatedVariables).forEach(([key, value]) => {
+          const idx = updatedCard.variables.findIndex(
+            (v: any) => v.slug === key,
+          );
+
+          if (idx !== -1) {
+            updatedCard.variables[idx] = {
+              ...updatedCard.variables[idx],
+              value,
+            };
+          } else {
+            updatedCard.variables.push({ slug: key, value, type: "Text" });
+          }
+
+          if (key === "card-description") {
+            updatedCard["card-description"] = value;
+            updatedCard.description = value;
+          }
+        });
+      }
+
+      if (newPayload.workspace_lane_id) {
+        updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+      }
+
+      if (newPayload.optimisticUser) {
+        const users = Array.isArray(newPayload.optimisticUser)
+          ? newPayload.optimisticUser
+          : [newPayload.optimisticUser];
+        updatedCard.seats = users;
+        updatedCard.seat_id = users
+          .map((u: any) => u?._id || u?.id)
+          .filter(Boolean);
+        updatedCard.seat = users[0] || null;
+        updatedCard.assigned_to = users;
+      }
+
+      return updatedCard;
+    };
+
+    // Update product-card cache
+    queryClient.setQueryData(["product-card", card_id], updateCardLogic);
+
+    // Update sheet-list cache
+    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+      if (!old || !Array.isArray(old.data)) return old;
+      return {
+        ...old,
+        data: old.data.map((column: any) => ({
+          ...column,
+          cards: column.cards?.map((card: any) =>
+            card._id === card_id ? { ...updateCardLogic(card) } : card,
+          ),
+        })),
+      };
+    });
+
+    // Update ALL sprint-kanban cached queries optimistically
+    // Each entry is [queryKey, data] — update only the one containing this card
+    queryClient.setQueriesData(
+      { queryKey: ["sprint-kanban"] },
+      (old: any) => {
+        // sprint-kanban returns array of columns directly
+        if (!old || !Array.isArray(old)) return old;
+
+        const hasCard = old.some((col: any) =>
+          col.cards?.some((c: any) => c._id === card_id),
+        );
+
+        // Only patch the query instance that actually contains this card
+        if (!hasCard) return old;
+
+        return old.map((col: any) => ({
+          ...col,
+          cards: (col.cards ?? []).map((card: any) =>
+            card._id === card_id ? { ...updateCardLogic(card) } : card,
+          ),
+        }));
+      },
+    );
+
+    return { previousCard, previousLists, previousSprintKanbans };
+  },
+
+  onSuccess: (serverCard: any, variables: any) => {
+    const cardId = variables.card_id;
+
+    if (serverCard) {
+      // Update product-card cache with server response
+      queryClient.setQueryData(["product-card", cardId], serverCard);
+
+      // Update sheet-list cache with server response
+      queryClient.setQueryData(["sheet-list"], (old: any) => {
+        if (!old?.data) return old;
+        return {
+          ...old,
+          data: old.data.map((column: any) => ({
+            ...column,
+            cards: column.cards?.map((card: any) =>
+              card._id === cardId ? { ...card, ...serverCard } : card,
+            ),
+          })),
+        };
+      });
+
+      // Update ALL sprint-kanban queries with server response
+      queryClient.setQueriesData(
+        { queryKey: ["sprint-kanban"] },
+        (old: any) => {
+          if (!old || !Array.isArray(old)) return old;
+
+          const hasCard = old.some((col: any) =>
+            col.cards?.some((c: any) => c._id === cardId),
+          );
+
+          if (!hasCard) return old;
+
+          return old.map((col: any) => ({
+            ...col,
+            cards: (col.cards ?? []).map((card: any) =>
+              card._id === cardId ? { ...card, ...serverCard } : card,
+            ),
+          }));
+        },
+      );
+      queryClient.invalidateQueries({
+        queryKey: ["product-card", cardId],
+      });
+    }
+  },
+
+  onError: (_err: any, variables: any, context: any) => {
+    if (!context) return;
+
+    const cardId = variables.card_id;
+
+    // Rollback product-card cache
+    queryClient.setQueryData(["product-card", cardId], context.previousCard);
+
+    // Rollback sheet-list cache
+    queryClient.setQueriesData(
+      { queryKey: ["sheet-list"] },
+      context.previousLists,
+    );
+  },
+
+  onSettled: (_data: any, _err: any, variables: any) => {
+    const cardId = variables.card_id;
+
+    queryClient.invalidateQueries({ queryKey: ["product-card", cardId] });
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+
+  },
+});
 function incrementCommentCount({ cardId }: { cardId: string }) {
   queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
     if (!Array.isArray(old)) return old;
@@ -1263,8 +1471,8 @@ function handleMindmapCreateCard(payload: any) {
   addTicket(payload);
 }
 
-function handleMindmapUpdateCard(payload: any) {
-  moveCard.mutate(payload);
+function handleMindmapUpdateCard(payload: any) { 
+  updateMoveCard.mutate(payload);
 }
 
 function handleMindmapUpdateSheet(payload: any) {

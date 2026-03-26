@@ -151,12 +151,51 @@
                 <i class="fa-solid fa-layer-group me-1"></i
                 >{{ sheet.cards.length }} hidden
               </div>
+              <!-- Inline add-card -->
+              <div
+                v-if="creatingForSheetId === sheet._id && canCreateCard"
+                class="inline-create"
+                @click.stop
+                @mousedown.stop
+              >
+                <input
+                  v-model="newCardTitle"
+                  class="inline-input"
+                  placeholder="Card title…"
+                  autofocus
+                  @keydown.enter.prevent="submitInlineCard"
+                  @keydown.escape.prevent="cancelInlineCreate"
+                  @blur="
+                    () => {
+                      if (!newCardTitle.trim()) cancelInlineCreate();
+                    }
+                  "
+                />
+                <div class="inline-actions">
+                  <button
+                    class="inline-btn inline-btn--ok"
+                    :disabled="!newCardTitle.trim() || isCreating"
+                    @click.stop="submitInlineCard"
+                  >
+                    <i
+                      v-if="isCreating"
+                      class="fa-solid fa-spinner fa-spin"
+                    ></i>
+                    <i v-else class="fa-solid fa-check"></i>
+                  </button>
+                  <button
+                    class="inline-btn inline-btn--cancel"
+                    @click.stop="cancelInlineCreate"
+                  >
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
               <!-- Add card button -->
               <button
-                v-if="canCreateCard"
+                v-else-if="canCreateCard && creatingForSheetId !== sheet._id"
                 class="add-card-btn"
-                @click.stop="createCardDirectly(sheet._id)"
-                title="Add card (Enter)"
+                @click.stop="startInlineCreate(sheet._id)"
               >
                 <i class="fa-solid fa-plus"></i> Add card
               </button>
@@ -239,7 +278,7 @@
                   <button
                     v-if="canCreateCard"
                     class="nact nact--add"
-                    @click.stop="createCardDirectly(card.sheet_id)"
+                    @click.stop="startInlineCreate(card.sheet_id)"
                     title="Add sibling card"
                   ><i class="fa-solid fa-plus"></i></button>
                   <button
@@ -349,7 +388,7 @@
             </button>
             <button v-if="canCreateCard" class="ctx-item" @click="ctxAddCard">
               <i class="fa-solid fa-plus ctx-item-icon ctx-icon--add"></i>
-              <span>Add sibling card</span>
+              <span>Add card to sheet</span>
               <kbd class="ctx-kbd">Enter</kbd>
             </button>
             <div class="ctx-divider"></div>
@@ -439,7 +478,7 @@
 
           <div class="fs-section">
             <div class="fs-section-label">Colors</div>
-            <div class="">
+            <div class="fs-row">
               <div class="fs-field">
                 <label>Background</label>
                 <div class="color-row">
@@ -695,6 +734,8 @@ const emit = defineEmits<{
   (e: "select:ticket", card: any): void;
   (e: "delete:ticket", cardId: string): void;
   (e: "create:card", payload: any): void;
+  (e: "update:card", payload: any): void;
+  (e: "update:sheet", payload: any): void;
 }>();
 
 const { isDark } = useTheme();
@@ -883,15 +924,63 @@ function resetNodeStyle() {
   hyperlinkInput.value = "";
 }
 
+const DEFAULT_BACKEND_STYLE = {
+  bg_color: "#ffffff", color: "#2b2c30",
+  font_size: 13, font_weight: "normal", font_style: "normal",
+  font_family: "inherit", text_align: "left",
+  border_color: "#d9d9d9", border_width: 0, border_radius: 8,
+  border_style: "solid", padding: 12, opacity: 1, box_shadow: "",
+};
+
+function resolveStyle<T>(ui: T | undefined, orig: T | undefined, def: T): T {
+  return ui !== undefined ? ui : orig !== undefined ? orig : def;
+}
+
 async function saveNodeStyle() {
   if (!selectedNodeId.value || isSavingNodeStyle.value) return;
   isSavingNodeStyle.value = true;
   try {
-    // Persist hyperlink into the node style store
     ensureNodeStyle(selectedNodeId.value);
     nodeStyles[selectedNodeId.value].hyperLink = hyperlinkInput.value;
-    // TODO: plug in your actual API call here to persist node styles
-    await new Promise((r) => setTimeout(r, 400)); // simulate network
+
+    const id = selectedNodeId.value;
+    const s = nodeStyles[id] || {};
+
+    const isSheet = allSheets.value.some((sh: any) => sh._id === id);
+    const card = !isSheet
+      ? allSheets.value.flatMap((sh: any) => sh.cards || []).find((c: any) => c._id === id)
+      : null;
+    const origStyle = isSheet
+      ? (allSheets.value.find((sh: any) => sh._id === id)?.style || {})
+      : (card?.style || {});
+
+    const p = {
+      bg_color:      resolveStyle(s.background,                                          origStyle.bg_color,      DEFAULT_BACKEND_STYLE.bg_color),
+      color:         resolveStyle(s.color,                                               origStyle.color,         DEFAULT_BACKEND_STYLE.color),
+      font_size:     resolveStyle(s.fontSize ? parseInt(s.fontSize) : undefined,         origStyle.font_size,     DEFAULT_BACKEND_STYLE.font_size),
+      font_weight:   resolveStyle(s.fontWeight,                                          origStyle.font_weight,   DEFAULT_BACKEND_STYLE.font_weight),
+      font_style:    resolveStyle(s.fontStyle,                                           origStyle.font_style,    DEFAULT_BACKEND_STYLE.font_style),
+      font_family:   resolveStyle(s.fontFamily,                                          origStyle.font_family,   DEFAULT_BACKEND_STYLE.font_family),
+      text_align:    resolveStyle(s.textAlign,                                           origStyle.text_align,    DEFAULT_BACKEND_STYLE.text_align),
+      border_color:  resolveStyle(s.borderColor,                                         origStyle.border_color,  DEFAULT_BACKEND_STYLE.border_color),
+      border_width:  resolveStyle(s.borderWidth  ? parseInt(s.borderWidth)  : undefined, origStyle.border_width,  DEFAULT_BACKEND_STYLE.border_width),
+      border_radius: resolveStyle(s.borderRadius ? parseInt(s.borderRadius) : undefined, origStyle.border_radius, DEFAULT_BACKEND_STYLE.border_radius),
+      border_style:  resolveStyle(s.borderStyle,                                         origStyle.border_style,  DEFAULT_BACKEND_STYLE.border_style),
+      padding:       resolveStyle(s.padding      ? parseInt(s.padding)      : undefined, origStyle.padding,       DEFAULT_BACKEND_STYLE.padding),
+      opacity:       resolveStyle(s.opacity,                                             origStyle.opacity,       DEFAULT_BACKEND_STYLE.opacity),
+      box_shadow:    resolveStyle(s.boxShadow,                                           origStyle.box_shadow,    DEFAULT_BACKEND_STYLE.box_shadow),
+      hyperLink:     hyperlinkInput.value || "",
+    };
+
+    if (isSheet) {
+      emit("update:sheet", { sheet_id: id, workspace_id: props.workspaceId, workspace_module_id: props.moduleId, style: p });
+    } else {
+      const seatIds = Array.isArray(card?.seat_id)
+        ? card.seat_id.map((s: any) => s._id || s)
+        : card?.seat_id;
+      emit("update:card", { card_id: id, seat_id: seatIds, style: p });
+    }
+
     toast.success("Style saved");
   } catch {
     toast.error("Failed to save style");
@@ -901,36 +990,51 @@ async function saveNodeStyle() {
 }
 
 // ─── Inline card creation ─────────────────────────────────────────────────
+const creatingForSheetId = ref<string | null>(null);
+const newCardTitle = ref("");
 const isCreating = ref(false);
 
-async function createCardDirectly(sheetId: string) {
-  if (isCreating.value) return;
+function startInlineCreate(sheetId: string) {
+  creatingForSheetId.value = sheetId;
+  newCardTitle.value = "";
+  if (isCollapsed(sheetId)) {
+    collapsedIds.value = collapsedIds.value.filter((x) => x !== sheetId);
+    nextTick(runLayout);
+  }
+}
+
+function cancelInlineCreate() {
+  creatingForSheetId.value = null;
+  newCardTitle.value = "";
+  isCreating.value = false;
+}
+
+async function submitInlineCard() {
+  const title = newCardTitle.value.trim();
+  if (!title || isCreating.value) return;
+  const sheetId = creatingForSheetId.value;
+  if (!sheetId) return;
   const sheet = props.listsData.find((s) => s._id === sheetId);
   if (!sheet) return;
 
   isCreating.value = true;
   try {
     const now = new Date();
-    const startDate = now.toISOString().split("T")[0];
-    const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
-    const sheetTitle = sheet.title || sheet.variables?.["sheet-title"] || "To Do";
     const payload = {
-      sheet_list_id: sheetTitle,
-      workspace_id: props.workspaceId,
       sheet_id: sheetId,
-      variables: {
-        "card-status": sheetTitle,
-        priority: "medium",
-        process: null,
-        "card-title": "New Card",
-        "card-description": "This is a default description",
-        "start-date": startDate,
-        "end-date": endDate,
-      },
-      createdAt: new Date().toISOString(),
+      workspace_id: props.workspaceId,
+      workspace_module_id: props.moduleId,
+      "card-title": title,
+      "card-status": "To Do",
+      "start-date": now.toISOString().split("T")[0],
+      "end-date": new Date(now.getTime() + 3 * 86400000)
+        .toISOString()
+        .split("T")[0],
+      variables: [{ slug: "card-status", value: "To Do", type: "Select" }],
     };
     emit("create:card", payload);
-    toast.success(`Card created`);
+    toast.success(`Card "${title}" created`);
+    cancelInlineCreate();
   } catch {
     toast.error("Failed to create card");
   } finally {
@@ -1004,13 +1108,13 @@ function ctxFormatCard() {
 function ctxAddCard() {
   const d = ctxMenu.data;
   closeCtxMenu();
-  if (d?.sheet_id) nextTick(() => createCardDirectly(d.sheet_id));
+  if (d?.sheet_id) nextTick(() => startInlineCreate(d.sheet_id));
 }
 
 function ctxAddCardToSheet() {
   const id = ctxMenu.nodeId;
   closeCtxMenu();
-  nextTick(() => createCardDirectly(id));
+  nextTick(() => startInlineCreate(id));
 }
 
 function ctxDelete() {
@@ -1058,6 +1162,10 @@ function cardHeight(card: any): number {
   return h;
 }
 
+function computeSheetH(sheet: any): number {
+  return creatingForSheetId.value === sheet._id ? SHEET_H + 52 : SHEET_H;
+}
+
 function runLayout() {
   const sheets = allSheets.value;
   const dir = layout.value;
@@ -1065,7 +1173,7 @@ function runLayout() {
   const ROOT_X = dir === "left" ? 3200 : dir === "center" ? 2000 : 60;
 
   const sheetBlocks = sheets.map((sheet) => {
-    const sh = SHEET_H;
+    const sh = computeSheetH(sheet);
     const collapsed = isCollapsed(sheet._id);
     const cards = collapsed ? [] : sheet.cards || [];
     const cardHeights = cards.map(cardHeight);
@@ -1414,6 +1522,7 @@ function handleKeyDown(e: KeyboardEvent) {
       closeCtxMenu();
       return;
     }
+    cancelInlineCreate();
     selectedNodeId.value = null;
   }
   if (e.key === "c" || e.key === "C") centerView();
@@ -1436,11 +1545,11 @@ function handleKeyDown(e: KeyboardEvent) {
         (c: any) => c._id === selectedNodeId.value,
       );
       if (hit) {
-        createCardDirectly(sheet._id);
+        startInlineCreate(sheet._id);
         break;
       }
       if (sheet._id === selectedNodeId.value) {
-        createCardDirectly(sheet._id);
+        startInlineCreate(sheet._id);
         break;
       }
     }
@@ -1491,7 +1600,7 @@ watch(
 );
 
 watch(
-  () => collapsedIds.value,
+  () => [collapsedIds.value, creatingForSheetId.value],
   () => nextTick(runLayout),
   { deep: true },
 );
