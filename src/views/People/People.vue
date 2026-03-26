@@ -357,7 +357,7 @@
           </div>
         </template>
       </template>
-      <div v-else-if="currentView === 'table'" class="flex flex-1 overflow-x-auto gap-3 custom_scroll_bar py-4">
+      <div v-else-if="currentView === 'table'" class="flex flex-1 overflow-x-auto gap-3">
       <TableView
         :columns="tableColumns"
         :rows="tableRows"
@@ -436,6 +436,7 @@ import {
 } from "vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
+import { useWorkspaceRoles } from "../../queries/usePeople";
 import {
   ReOrderCard,
   ReOrderList,
@@ -450,7 +451,7 @@ import { debounce } from "lodash";
 import { useQueryClient } from "@tanstack/vue-query";
 import TableView from "../../components/feature/TableView/TableView.vue";
 import MindmapView from "../../components/feature/MindmapView.vue";
-
+import { useSingleWorkspaceCompany } from '../../queries/useWorkspace'
 const KanbanSkeleton = defineAsyncComponent(
   () => import("../../components/skeletons/KanbanSkeleton.vue"),
 );
@@ -571,7 +572,16 @@ watch(
   },
   { immediate: true },
 );
-
+const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
+  enabled: computed(() => !!workspaceId.value), //reactive
+});
+const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
+const { data: workspaceRoles } = useWorkspaceRoles( {
+    company_id: newCompanyId,
+    workspace_id:  workspaceId
+  }, {  
+ enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
+});
 // ─── Fetch people ─────────────────────────────────────────────────────────────
 const controller = new AbortController();
 
@@ -964,36 +974,29 @@ const handleMindmapSelectTicket = (node: any) => {
     showAgentPanel.value = true;
   }
 };
+const roleMap = computed(() => {
+  const map: Record<string, string> = {};
 
+  (workspaceRoles.value || []).forEach((r: any) => {
+    map[r._id] = r.title;
+  });
+
+  return map;
+});
 const tableRows = computed(() => {
-  if (currentTab.value === "talent") {
+  if (currentTab.value === "talent") {    
     return filteredBoard.value.flatMap((col: any) =>
       col.cards.map((card: any) => ({
         id: card._id,
         title: card.title || card.name || "Untitled",
         column: col.title,
-        role: card.role_title ?? "-",
+        role: roleMap.value[card.workspace_access_role_id] ?? "-",
         seat_number: card.seat_number ?? "-",
         status: card.status ?? "-",
         assigned_cards_count: card.assigned_cards_count ?? 0,
       })),
     );
   }
-
-  if (currentTab.value === "agents") {
-    return filteredAgentGroups.value.flatMap((group: any) =>
-      group.agents.map((agent: any) => ({
-        id: agent._id,
-        title: agent.name,
-        column: group.title,
-        role: agent.role,
-        model: agent.model,
-        level: agent.level,
-        status: agent.is_active ? "Active" : "Inactive",
-      })),
-    );
-  }
-
   return [];
 });
 
@@ -1002,7 +1005,7 @@ const tableColumns = computed(() => {
     return [
       { key: "title", label: "Title" },
       { key: "column", label: "Team" },
-      { key: "role", label: "Role" },
+      { key: "role", label: "Access Role" },
       { key: "seat_number", label: "Seat" },
       { key: "status", label: "Status" },
       { key: "assigned_cards_count", label: "Cards" },
