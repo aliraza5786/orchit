@@ -61,6 +61,22 @@
         </div>
         <!-- Body -->
         <div class="py-5 px-4 sm:px-6 flex flex-col gap-5 flex-grow">
+           <!-- Sprint/Milestone Badge -->
+            <div v-if="cardDetails?.sprint" class="flex items-center gap-2">
+              <span 
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm transition-all duration-300 border"
+                :class="cardDetails.sprint.status === 'active' 
+                  ? 'bg-accent/15 text-accent border-accent/20' 
+                  : 'bg-orchit-white/5 text-text-secondary border-orchit-white/10'"
+              >
+                <i class="fa-solid fa-layer-group text-[10px]"></i>
+                {{ cardDetails.sprint.title }}
+                <span v-if="cardDetails.sprint.status === 'active'" class="flex h-2 w-2 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[rgb(34,139,34)] opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-[rgb(34,139,34)]"></span>
+                </span>
+              </span>
+            </div>
           <!-- card type -->
           <template
             v-for="(item, index) in cardDetails?.variables"
@@ -84,6 +100,7 @@
               />
             </div>
           </template>
+           
           <!-- Title row -->
           <div class="capitalize">
             <Transition name="fade-scale" mode="out-in">
@@ -121,6 +138,8 @@
                 {{ localTitle || "Untitled" }}
               </h1>
             </Transition>
+            
+          
           </div>
 
           <!-- Description -->
