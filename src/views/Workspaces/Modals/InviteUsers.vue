@@ -136,13 +136,14 @@ function submit() {
       }
     },
     {
-      onSuccess: (res: any) => {
+      onSuccess: async (res: any) => {
         if (res?.failedInvites?.length) {
           toast.error(res.failedInvites[0]?.error ?? 'Some invites failed')
         } else {
           toast.success('Invitations sent')
         }
         queryClient.invalidateQueries({ queryKey: ['all-users'] })
+        await queryClient.invalidateQueries({ queryKey: ['shared-users'] })
         emit('invited', res)
         reset()
         isOpen.value = false

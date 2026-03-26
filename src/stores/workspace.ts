@@ -71,6 +71,23 @@ export const useWorkspaceStore = defineStore("workspace", {
         this.lanes = i.lanes;
       }
     },
+    updateSingleWorkspaceLocal(updatedData: Partial<any>) {
+      if (!this.singleWorkspace) return;
+
+      const mergeData = (current: any, updates: any) => {
+        const mergedVariables = {
+          ...(current.variables || {}),
+          ...(updates.variables || {})
+        };
+        return {
+          ...current,
+          ...updates,
+          variables: mergedVariables
+        };
+      };
+
+      this.singleWorkspace = mergeData(this.singleWorkspace, updatedData);
+    },
     setLanes(i:any){
        this.lanes= i;
     },

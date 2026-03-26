@@ -308,8 +308,8 @@ const { workspaceId } = useRouteIds();
 const { theme, setTheme, isDark } = useTheme()
 const props = defineProps<{ workspace: any }>()
 const { mutate: updateWS } = useUpdateWorkspaceDetail({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+  onSuccess: async() => {
+   await queryClient.invalidateQueries({ queryKey: ['workspaces'] })
   }
 });
 /* ----- Stores / Queries ----- */
@@ -440,10 +440,17 @@ function saveTitle() {
     return
   }
   isEditingTitle.value = false
+  
+  // Optimistic update
+  workspaceStore.updateSingleWorkspaceLocal({
+    variables: {
+      title: editableTitle.value
+    }
+  })
+
   updateWS({
     workspace_id: workspaceId.value,
     variables: {
-
       'title': editableTitle.value
     }
   })

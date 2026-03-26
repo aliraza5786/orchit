@@ -38,8 +38,8 @@
           </div> -->
         </div>
 
-        <div class="space-y-4 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
-          <div v-for="item in sharedUsers" :key="item.user._id" class="flex items-center justify-between group">
+        <div class="space-y-4 max-h-[240px] overflow-auto pr-1 custom-scrollbar">
+          <div v-for="item in sharedUsers" :key="item.user._id" class="flex items-center justify-between group min-w-[400px]">
             <div class="flex items-center gap-3">
               <img 
                 v-if="item.user.u_profile_image"
@@ -118,6 +118,7 @@
 
 <script setup lang="ts">
 import { computed, reactive, onMounted } from 'vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { toast } from 'vue-sonner'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
@@ -151,6 +152,7 @@ const isOpen = computed({
 })
 
 const { workspaceId } = useRouteIds()
+const queryClient = useQueryClient()
 
 const form = reactive({
   workspace_access_role_id: null as string | number | null,
@@ -217,7 +219,7 @@ const jobRoles = computed(() => {
   }))
 })
 
-const { data: sharedUsersData, isLoading: isLoadingSharedUsers, refetch: refetchSharedUsers } = useSharedUsers({
+const { data: sharedUsersData, isLoading: isLoadingSharedUsers } = useSharedUsers({
   resource_type: 'module',
   resource_id: props.resourceId || '',
   workspace_id: workspaceId.value
@@ -245,9 +247,9 @@ function handleUpdateUserRole(item: any, newRole: string | number) {
       workspace_access_role_id: newRole
     },
     {
-      onSuccess: () => {
+      onSuccess: async() => {
         toast.success('Role updated successfully')
-        refetchSharedUsers()
+        await queryClient.invalidateQueries({ queryKey: ['shared-users'] })
       },
       onError: (err: any) => {
         const msg = err?.response?.data?.message || err?.message || 'Failed to update role.'
@@ -266,9 +268,9 @@ function handleRemoveAccess(item: any) {
       invitation_id: item.invitation_id || item._id
     },
     {
-      onSuccess: () => {
+      onSuccess: async() => {
         toast.success('Access removed successfully')
-        refetchSharedUsers()
+        await queryClient.invalidateQueries({ queryKey: ['shared-users'] })
       },
       onError: (err: any) => {
         const msg = err?.response?.data?.message || err?.message || 'Failed to remove access.'
@@ -294,9 +296,9 @@ function submit() {
       note: form.note
     },
     {
-      onSuccess: () => {
+      onSuccess: async() => {
         toast.success('Module shared successfully')
-        refetchSharedUsers()
+        await queryClient.invalidateQueries({ queryKey: ['shared-users'] })
         emit('shared')
         reset()
         isOpen.value = false
