@@ -307,9 +307,9 @@
 
                 <div class="node-card-actions-row" v-if="!isPlanRoute">
                   <button
-                    v-if="canCreateCard && node.parent?.uniqueName === 'List'"
+                    v-if="canCreateCard"
                     class="nact nact--add"
-                    @click="ctxAddCard"
+                    @click.stop="node.parent && createCardDirectly(node.parent)"
                     title="Add sibling card"
                   >
                     <i class="fa-solid fa-plus"></i>
@@ -473,9 +473,9 @@
 
           <div class="fs-section">
             <div class="fs-section-label">Colors</div>
-            <div class="">
-              <div class="fs-field space-y-2">
-                <label class="mt-2">Background</label>
+            <div class="fs-row">
+              <div class="fs-field">
+                <label>Background</label>
                 <div class="color-row">
                   <div
                     class="color-swatch"
@@ -497,7 +497,7 @@
                   />
                 </div>
               </div>
-              <div class="fs-field mt-2">
+              <div class="fs-field">
                 <label>Text</label>
                 <div class="color-row">
                   <div
@@ -519,7 +519,7 @@
                 </div>
               </div>
             </div>
-            <div class="fs-field mt-2">
+            <div class="fs-field">
               <label>Border Color</label>
               <div class="color-row">
                 <div
@@ -1968,6 +1968,7 @@ async function saveNodeStyle() {
         style: p,
       });
     }
+    toast.success("Style saved");
   } catch (err) {
     console.error(err);
     toast.error("Failed to save style");
@@ -1988,6 +1989,7 @@ async function _doCreateCard(
   title: string,
   listNode: MindNode,
   sheetId: string,
+  directCreate = false,
 ) {
   isCreatingCard.value = true;
   try {
@@ -1995,6 +1997,7 @@ async function _doCreateCard(
       { topic: title },
       listNode,
       sheetId,
+      directCreate,
     );
     emit("create:card", payload);
     const tempId = `temp-card-${Date.now()}`;
@@ -2048,18 +2051,21 @@ function createDefaultCardPayload(
   nodeObj: { topic: string },
   listNode: MindNode,
   sheetId?: string,
+  directCreate = false,
 ) {
   const now = new Date();
   const startDate = now.toISOString().split("T")[0];
   const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0];
+  const resolvedSheetId = sheetId ?? props.selectedSheetId;
+  const status = directCreate ? "To Do" : listNode.topic || "To Do";
   const payload: any = {
-    sheet_list_id: listNode.topic || "To Do",
+    sheet_list_id: status,
     workspace_id: props.workspaceId,
-    sheet_id: sheetId ?? props.selectedSheetId,
+    sheet_id: resolvedSheetId,
     variables: {
-      "card-status": listNode?.topic || "To Do",
+      "card-status": status,
       priority: "medium",
       process: null,
       "card-title": nodeObj.topic || "New Card",
@@ -2195,13 +2201,13 @@ async function createCardDirectly(listNode: MindNode) {
       }, 2500);
       return;
     }
-    await _doCreateCard(title, listNode, selectedListSheetId.value);
+    await _doCreateCard(title, listNode, selectedListSheetId.value, true);
     return;
   }
 
   const sheetId =
     listNode.sheet_id || selectedListSheetId.value || props.selectedSheetId;
-  await _doCreateCard(title, listNode, sheetId);
+  await _doCreateCard(title, listNode, sheetId, true);
 }
 
 function handleKeyDown(e: KeyboardEvent) {
