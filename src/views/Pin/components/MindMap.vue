@@ -151,51 +151,12 @@
                 <i class="fa-solid fa-layer-group me-1"></i
                 >{{ sheet.cards.length }} hidden
               </div>
-              <!-- Inline add-card -->
-              <div
-                v-if="creatingForSheetId === sheet._id && canCreateCard"
-                class="inline-create"
-                @click.stop
-                @mousedown.stop
-              >
-                <input
-                  v-model="newCardTitle"
-                  class="inline-input"
-                  placeholder="Card title…"
-                  autofocus
-                  @keydown.enter.prevent="submitInlineCard"
-                  @keydown.escape.prevent="cancelInlineCreate"
-                  @blur="
-                    () => {
-                      if (!newCardTitle.trim()) cancelInlineCreate();
-                    }
-                  "
-                />
-                <div class="inline-actions">
-                  <button
-                    class="inline-btn inline-btn--ok"
-                    :disabled="!newCardTitle.trim() || isCreating"
-                    @click.stop="submitInlineCard"
-                  >
-                    <i
-                      v-if="isCreating"
-                      class="fa-solid fa-spinner fa-spin"
-                    ></i>
-                    <i v-else class="fa-solid fa-check"></i>
-                  </button>
-                  <button
-                    class="inline-btn inline-btn--cancel"
-                    @click.stop="cancelInlineCreate"
-                  >
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
-                </div>
-              </div>
               <!-- Add card button -->
               <button
-                v-else-if="canCreateCard && creatingForSheetId !== sheet._id"
+                v-if="canCreateCard"
                 class="add-card-btn"
-                @click.stop="startInlineCreate(sheet._id)"
+                @click.stop="createCardDirectly(sheet._id)"
+                title="Add card (Enter)"
               >
                 <i class="fa-solid fa-plus"></i> Add card
               </button>
@@ -278,7 +239,7 @@
                   <button
                     v-if="canCreateCard"
                     class="nact nact--add"
-                    @click.stop="startInlineCreate(card.sheet_id)"
+                    @click.stop="createCardDirectly(card.sheet_id)"
                     title="Add sibling card"
                   ><i class="fa-solid fa-plus"></i></button>
                   <button
@@ -388,7 +349,7 @@
             </button>
             <button v-if="canCreateCard" class="ctx-item" @click="ctxAddCard">
               <i class="fa-solid fa-plus ctx-item-icon ctx-icon--add"></i>
-              <span>Add card to sheet</span>
+              <span>Add sibling card</span>
               <kbd class="ctx-kbd">Enter</kbd>
             </button>
             <div class="ctx-divider"></div>
@@ -478,7 +439,7 @@
 
           <div class="fs-section">
             <div class="fs-section-label">Colors</div>
-            <div class="fs-row">
+            <div class="">
               <div class="fs-field">
                 <label>Background</label>
                 <div class="color-row">
@@ -940,51 +901,36 @@ async function saveNodeStyle() {
 }
 
 // ─── Inline card creation ─────────────────────────────────────────────────
-const creatingForSheetId = ref<string | null>(null);
-const newCardTitle = ref("");
 const isCreating = ref(false);
 
-function startInlineCreate(sheetId: string) {
-  creatingForSheetId.value = sheetId;
-  newCardTitle.value = "";
-  if (isCollapsed(sheetId)) {
-    collapsedIds.value = collapsedIds.value.filter((x) => x !== sheetId);
-    nextTick(runLayout);
-  }
-}
-
-function cancelInlineCreate() {
-  creatingForSheetId.value = null;
-  newCardTitle.value = "";
-  isCreating.value = false;
-}
-
-async function submitInlineCard() {
-  const title = newCardTitle.value.trim();
-  if (!title || isCreating.value) return;
-  const sheetId = creatingForSheetId.value;
-  if (!sheetId) return;
+async function createCardDirectly(sheetId: string) {
+  if (isCreating.value) return;
   const sheet = props.listsData.find((s) => s._id === sheetId);
   if (!sheet) return;
 
   isCreating.value = true;
   try {
     const now = new Date();
+    const startDate = now.toISOString().split("T")[0];
+    const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const sheetTitle = sheet.title || sheet.variables?.["sheet-title"] || "To Do";
     const payload = {
-      sheet_id: sheetId,
+      sheet_list_id: sheetTitle,
       workspace_id: props.workspaceId,
-      workspace_module_id: props.moduleId,
-      "card-title": title,
-      "card-status": "To Do",
-      "start-date": now.toISOString().split("T")[0],
-      "end-date": new Date(now.getTime() + 3 * 86400000)
-        .toISOString()
-        .split("T")[0],
-      variables: [{ slug: "card-status", value: "To Do", type: "Select" }],
+      sheet_id: sheetId,
+      variables: {
+        "card-status": sheetTitle,
+        priority: "medium",
+        process: null,
+        "card-title": "New Card",
+        "card-description": "This is a default description",
+        "start-date": startDate,
+        "end-date": endDate,
+      },
+      createdAt: new Date().toISOString(),
     };
     emit("create:card", payload);
-    toast.success(`Card "${title}" created`);
-    cancelInlineCreate();
+    toast.success(`Card created`);
   } catch {
     toast.error("Failed to create card");
   } finally {
@@ -1058,13 +1004,13 @@ function ctxFormatCard() {
 function ctxAddCard() {
   const d = ctxMenu.data;
   closeCtxMenu();
-  if (d?.sheet_id) nextTick(() => startInlineCreate(d.sheet_id));
+  if (d?.sheet_id) nextTick(() => createCardDirectly(d.sheet_id));
 }
 
 function ctxAddCardToSheet() {
   const id = ctxMenu.nodeId;
   closeCtxMenu();
-  nextTick(() => startInlineCreate(id));
+  nextTick(() => createCardDirectly(id));
 }
 
 function ctxDelete() {
@@ -1112,10 +1058,6 @@ function cardHeight(card: any): number {
   return h;
 }
 
-function computeSheetH(sheet: any): number {
-  return creatingForSheetId.value === sheet._id ? SHEET_H + 52 : SHEET_H;
-}
-
 function runLayout() {
   const sheets = allSheets.value;
   const dir = layout.value;
@@ -1123,7 +1065,7 @@ function runLayout() {
   const ROOT_X = dir === "left" ? 3200 : dir === "center" ? 2000 : 60;
 
   const sheetBlocks = sheets.map((sheet) => {
-    const sh = computeSheetH(sheet);
+    const sh = SHEET_H;
     const collapsed = isCollapsed(sheet._id);
     const cards = collapsed ? [] : sheet.cards || [];
     const cardHeights = cards.map(cardHeight);
@@ -1472,7 +1414,6 @@ function handleKeyDown(e: KeyboardEvent) {
       closeCtxMenu();
       return;
     }
-    cancelInlineCreate();
     selectedNodeId.value = null;
   }
   if (e.key === "c" || e.key === "C") centerView();
@@ -1495,11 +1436,11 @@ function handleKeyDown(e: KeyboardEvent) {
         (c: any) => c._id === selectedNodeId.value,
       );
       if (hit) {
-        startInlineCreate(sheet._id);
+        createCardDirectly(sheet._id);
         break;
       }
       if (sheet._id === selectedNodeId.value) {
-        startInlineCreate(sheet._id);
+        createCardDirectly(sheet._id);
         break;
       }
     }
@@ -1550,7 +1491,7 @@ watch(
 );
 
 watch(
-  () => [collapsedIds.value, creatingForSheetId.value],
+  () => collapsedIds.value,
   () => nextTick(runLayout),
   { deep: true },
 );

@@ -188,7 +188,7 @@
             confirmText="Delete Sheet" cancelText="Cancel" size="md" :loading="isDeleting" @confirm="handleDeleteSheet"
             @cancel="() => { showDeleteModal = false }" />
     </div>
-    <SidePanel  v-if="selectedCard?._id" :pin="true" :details="selectedCard" :showPanel="!!selectedCard?._id"
+    <SidePanel  v-if="selectedCard?._id" :details="selectedCard" :showPanel="!!selectedCard?._id"
         @close="() => selectCardHandler({ variables: {} })" />
 </template>
 

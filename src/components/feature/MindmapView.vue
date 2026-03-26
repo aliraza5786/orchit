@@ -321,7 +321,7 @@
 
           <div class="fs-section">
             <div class="fs-section-label">Colors</div>
-            <div class="fs-row">
+            <div class="">
               <div class="fs-field">
                 <label>Background</label>
                 <div class="color-row">
