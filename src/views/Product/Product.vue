@@ -29,7 +29,12 @@
           </template>
         </Dropdown>
 
-        <div class="flex gap-3 items-center" :class="{ 'opacity-60 pointer-events-none': !transformedData?.length }">
+        <div
+          class="flex gap-3 items-center"
+          :class="{
+            'opacity-60 pointer-events-none': !transformedData?.length,
+          }"
+        >
           <Dropdown
             v-if="view == 'kanban' || 'mindmap'"
             ref="variableDropdownRef"
@@ -43,7 +48,12 @@
             <template #more>
               <div
                 v-if="canCreateVariable"
-                @click="() => { isCreateVar = true; variableDropdownRef?.closeDropdown(); }"
+                @click="
+                  () => {
+                    isCreateVar = true;
+                    variableDropdownRef?.closeDropdown();
+                  }
+                "
                 class="sticky bottom-0 bg-bg-dropdown shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
               >
                 <i class="fa-solid fa-plus"></i> Add new
@@ -52,14 +62,24 @@
           </Dropdown>
 
           <Searchbar
-            @onChange="(e) => { searchQuery = e; }"
+            @onChange="
+              (e) => {
+                searchQuery = e;
+              }
+            "
             placeholder="Search in Orchit AI space"
           />
 
-          <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
+          <div
+            class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+          >
             <button
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="view === 'kanban' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'kanban'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="Kanban view"
               @click="view = 'kanban'"
             >
@@ -69,7 +89,11 @@
             <button
               @click="view = 'table'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="view === 'table' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'table'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="List view"
             >
               <i class="fa-solid fa-align-left"></i>
@@ -79,7 +103,11 @@
             <button
               @click="view = 'mindmap'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="view === 'mindmap' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'mindmap'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="MindMap view"
             >
               <i class="fa-solid fa-chart-diagram"></i>
@@ -88,7 +116,11 @@
             <button
               @click="view = 'calendar'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="view === 'calendar' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'calendar'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="Calendar view"
             >
               <i class="fa-regular fa-calendar"></i>
@@ -97,23 +129,52 @@
             <button
               @click="view = 'gantt'"
               class="aspect-square cursor-pointer rounded-sm p-0"
-              :class="view === 'gantt' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'gantt'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="Gantt Chart view"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
+                />
               </svg>
             </button>
 
             <button
               @click="view = 'timeline'"
               class="aspect-square cursor-pointer rounded-sm p-0"
-              :class="view === 'timeline' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'timeline'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="Timeline view"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" opacity="0" />
-                <path d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
+                  opacity="0"
+                />
+                <path
+                  d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -128,7 +189,7 @@
         v-show="!isPending && !isSheetPending && hasSheets"
         class="flex overflow-x-auto gap-3 scrollbar-visible h-full mx-4 py-4"
       >
-        <div class=" flex gap-3">
+        <div class="flex gap-3">
           <KanbanBoard
             @onPlus="plusHandler"
             :board="filteredBoard"
@@ -146,8 +207,11 @@
                 class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
                 v-if="
                   workspaceStore?.transitions?.all_allowed &&
-                  !workspaceStore?.transitions?.all_allowed?.includes(column.column.title) &&
-                  workspaceStore.transitions.currentColumn != column.column.title
+                  !workspaceStore?.transitions?.all_allowed?.includes(
+                    column.column.title,
+                  ) &&
+                  workspaceStore.transitions.currentColumn !=
+                    column.column.title
                 "
               >
                 Disbale ( you can't drop here )
@@ -156,11 +220,14 @@
             <template #ticket="{ ticket }">
               <KanbanTicket
                 :selectedVar="selected_view_by"
-                @select="() => { selectCardHandler(ticket); }"
+                @select="
+                  () => {
+                    selectCardHandler(ticket);
+                  }
+                "
                 :ticket="ticket"
               />
             </template>
-            
           </KanbanBoard>
 
           <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
@@ -177,7 +244,8 @@
                   @click="emitAddColumn"
                   varaint="primary"
                   class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
-                >{{ addingList ? "Adding..." : "Add list" }}</Button>
+                  >{{ addingList ? "Adding..." : "Add list" }}</Button
+                >
                 <i class="fa-solid fa-close" @click="setActiveAddList"></i>
               </div>
             </div>
@@ -185,7 +253,9 @@
               v-else
               :disabled="!canCreateVariable"
               class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
-              :class="!canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'"
+              :class="
+                !canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'
+              "
               @click.stop="setActiveAddList"
             >
               + Add List
@@ -200,14 +270,24 @@
       <TableView
         class="mx-3"
         @toggleVisibility="toggleVisibilityHandler"
-        @addVar="() => { isCreateVar = true; }"
+        @addVar="
+          () => {
+            isCreateVar = true;
+          }
+        "
         :isPending="isPending || isVariablesPending"
         :columns="columns"
         :rows="filteredBoard"
         :canCreate="canCreateCard"
         :canCreateVariable="canCreateVariable"
         :canDelete="canDeleteCard"
-        @delete="(t) => { ticketToDelete = t; selectedDeleteId = t._id; showTicketDelete = true; }"
+        @delete="
+          (t) => {
+            ticketToDelete = t;
+            selectedDeleteId = t._id;
+            showTicketDelete = true;
+          }
+        "
         @create="handleCreateTicket"
         @update:rows="handleTableRowsUpdate"
       />
@@ -250,7 +330,10 @@
 
     <!-- ── Gantt View ──────────────────────────────────────────────────────── -->
     <template v-if="view === 'gantt'">
-      <GanttChartView :data="filteredBoard" @select:ticket="selectCardHandler" />
+      <GanttChartView
+        :data="filteredBoard"
+        @select:ticket="selectCardHandler"
+      />
     </template>
 
     <!-- ── Timeline View ───────────────────────────────────────────────────── -->
@@ -260,11 +343,13 @@
 
     <!-- ── No Sheets Modal ─────────────────────────────────────────────────── -->
     <div
-      v-if="!transformedData?.length && !isPending || !isSheetPending"
+      v-if="(!transformedData?.length && !isPending) || !isSheetPending"
       v-show="hideNoSheetsModal && canCreateSheet"
       class="flex items-center justify-center h-full"
     >
-      <div class="bg-bg-card rounded-lg p-6 w-[420px] text-center shadow-md border border-border">
+      <div
+        class="bg-bg-card rounded-lg p-6 w-[420px] text-center shadow-md border border-border"
+      >
         <div class="flex items-center flex-col justify-center mb-4 gap-2">
           <i class="fa-regular fa-file-lines text-2xl text-accent"></i>
           <h3 class="text-lg font-semibold">No Sheets Created</h3>
@@ -274,7 +359,10 @@
           your tasks and managing projects efficiently.
         </p>
         <div class="flex justify-center gap-3">
-          <Button class="px-4 py-2 bg-accent text-white" @click="handleCreateSheetFromModal">
+          <Button
+            class="px-4 py-2 bg-accent text-white"
+            @click="handleCreateSheetFromModal"
+          >
             + Create Sheet
           </Button>
         </div>
@@ -295,7 +383,11 @@
     size="md"
     :loading="addingList"
     @confirm="handleDeleteColumn"
-    @cancel="() => { showDelete = false; }"
+    @cancel="
+      () => {
+        showDelete = false;
+      }
+    "
   />
 
   <CreateTaskModal
@@ -312,16 +404,28 @@
     v-if="selectedCard?._id"
     :details="selectedCard"
     :moduleId="moduleId"
-    @close="() => { selectCardHandler({ variables: {} }); }"
+    @close="
+      () => {
+        selectCardHandler({ variables: {} });
+      }
+    "
     @closeSidePanel="closeSidePanel"
     @comment:post="incrementCommentCount"
     :showPanel="selectedCard?._id ? true : false"
     :sheetID="selected_sheet_id"
   />
 
-  <CreateSheetModal size="md" :sheet="selectedSheettoAction" v-model="isCreateSheetModal" />
+  <CreateSheetModal
+    size="md"
+    :sheet="selectedSheettoAction"
+    v-model="isCreateSheetModal"
+  />
 
-  <CreateVariableModal v-model="isCreateVar" v-if="isCreateVar" :sheetID="selected_sheet_id" />
+  <CreateVariableModal
+    v-model="isCreateVar"
+    v-if="isCreateVar"
+    :sheetID="selected_sheet_id"
+  />
 
   <ConfirmDeleteModal
     @click.stop=""
@@ -335,7 +439,11 @@
     size="md"
     :loading="isDeleting"
     @confirm="handleDeleteSheet"
-    @cancel="() => { showDeleteModal = false; }"
+    @cancel="
+      () => {
+        showDeleteModal = false;
+      }
+    "
   />
 
   <ConfirmDeleteModal
@@ -349,7 +457,12 @@
     size="md"
     :loading="isDeletingTicket"
     @confirm="handleDeleteTicket"
-    @cancel="() => { showTicketDelete = false; ticketToDelete = null; }"
+    @cancel="
+      () => {
+        showTicketDelete = false;
+        ticketToDelete = null;
+      }
+    "
   />
 
   <div></div>
@@ -394,28 +507,68 @@ import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
 
 // ─── Lazy-loaded components ───────────────────────────────────────────────────
-const Dropdown = defineAsyncComponent(() => import("../../components/ui/Dropdown.vue"));
-const Searchbar = defineAsyncComponent(() => import("../../components/ui/SearchBar.vue"));
-const KanbanSkeleton = defineAsyncComponent(() => import("../../components/skeletons/KanbanSkeleton.vue"));
-const BaseTextField = defineAsyncComponent(() => import("../../components/ui/BaseTextField.vue"));
-const Button = defineAsyncComponent(() => import("../../components/ui/Button.vue"));
-const KanbanTicket = defineAsyncComponent(() => import("../../components/feature/kanban/KanbanTicket.vue"));
-const TableView = defineAsyncComponent(() => import("../../components/feature/TableView/TableView.vue"));
-const DatePicker = defineAsyncComponent(() => import("./components/DatePicker.vue"));
-const TableSearchCell = defineAsyncComponent(() => import("../../components/feature/TableView/TableSearchCell.vue"));
-const TableAssigneeCell = defineAsyncComponent(() => import("../../components/feature/TableView/TableAssigneeCell.vue"));
-const CalendarView = defineAsyncComponent(() => import("../../components/feature/CalendarView.vue"));
-const GanttChartView = defineAsyncComponent(() => import("../../components/feature/GanttChartView.vue"));
-const TimelineView = defineAsyncComponent(() => import("../../components/feature/TimelineView.vue"));
-const CreateTaskModal = defineAsyncComponent(() => import("./modals/CreateTaskModal.vue"));
-const CreateSheetModal = defineAsyncComponent(() => import("./modals/CreateSheetModal.vue"));
-const CreateVariableModal = defineAsyncComponent(() => import("./modals/CreateVariableModal.vue"));
-const ConfirmDeleteModal = defineAsyncComponent(() => import("./modals/ConfirmDeleteModal.vue"));
-const SidePanel = defineAsyncComponent(() => import("./components/SidePanel.vue"));
-const KanbanBoard = defineAsyncComponent(() => import("../../components/feature/kanban/KanbanBoard.vue"));
+const Dropdown = defineAsyncComponent(
+  () => import("../../components/ui/Dropdown.vue"),
+);
+const Searchbar = defineAsyncComponent(
+  () => import("../../components/ui/SearchBar.vue"),
+);
+const KanbanSkeleton = defineAsyncComponent(
+  () => import("../../components/skeletons/KanbanSkeleton.vue"),
+);
+const BaseTextField = defineAsyncComponent(
+  () => import("../../components/ui/BaseTextField.vue"),
+);
+const Button = defineAsyncComponent(
+  () => import("../../components/ui/Button.vue"),
+);
+const KanbanTicket = defineAsyncComponent(
+  () => import("../../components/feature/kanban/KanbanTicket.vue"),
+);
+const TableView = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableView.vue"),
+);
+const DatePicker = defineAsyncComponent(
+  () => import("./components/DatePicker.vue"),
+);
+const TableSearchCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableSearchCell.vue"),
+);
+const TableAssigneeCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableAssigneeCell.vue"),
+);
+const CalendarView = defineAsyncComponent(
+  () => import("../../components/feature/CalendarView.vue"),
+);
+const GanttChartView = defineAsyncComponent(
+  () => import("../../components/feature/GanttChartView.vue"),
+);
+const TimelineView = defineAsyncComponent(
+  () => import("../../components/feature/TimelineView.vue"),
+);
+const CreateTaskModal = defineAsyncComponent(
+  () => import("./modals/CreateTaskModal.vue"),
+);
+const CreateSheetModal = defineAsyncComponent(
+  () => import("./modals/CreateSheetModal.vue"),
+);
+const CreateVariableModal = defineAsyncComponent(
+  () => import("./modals/CreateVariableModal.vue"),
+);
+const ConfirmDeleteModal = defineAsyncComponent(
+  () => import("./modals/ConfirmDeleteModal.vue"),
+);
+const SidePanel = defineAsyncComponent(
+  () => import("./components/SidePanel.vue"),
+);
+const KanbanBoard = defineAsyncComponent(
+  () => import("../../components/feature/kanban/KanbanBoard.vue"),
+);
 
 // ── MindMapView component (extracted from this file) ──────────────────────────
-const MindMapView = defineAsyncComponent(() => import("../../components/feature/MindmapView.vue"));
+const MindMapView = defineAsyncComponent(
+  () => import("../../components/feature/MindmapView.vue"),
+);
 
 // ─── Permissions ──────────────────────────────────────────────────────────────
 const {
@@ -453,8 +606,12 @@ const selectedProcessMeta = ref<any>(null);
 const showBgPicker = ref(false);
 const showTextColorPicker = ref(false);
 
-watch(showBgPicker, (v) => { if (v) showTextColorPicker.value = false; });
-watch(showTextColorPicker, (v) => { if (v) showBgPicker.value = false; });
+watch(showBgPicker, (v) => {
+  if (v) showTextColorPicker.value = false;
+});
+watch(showTextColorPicker, (v) => {
+  if (v) showBgPicker.value = false;
+});
 
 // ─── Table row update ─────────────────────────────────────────────────────────
 const handleTableRowsUpdate = (newRows: any[]) => {
@@ -474,9 +631,15 @@ const {
 } = useSheets({ workspace_id: workspaceId, workspace_module_id: moduleId });
 
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
-const selected_sheet_id = ref<any>(localStorage.getItem("selected_sheet_id") || sheetId.value);
+const selected_sheet_id = ref<any>(
+  localStorage.getItem("selected_sheet_id") || sheetId.value,
+);
 
-const { data: variables, isPending: isVariablesPending } = useVariables(workspaceId, moduleId, selected_sheet_id);
+const { data: variables, isPending: isVariablesPending } = useVariables(
+  workspaceId,
+  moduleId,
+  selected_sheet_id,
+);
 
 const storageKey = computed(() => {
   return `selected_sheet_${route.params.workspace_id}_${route.params.workspace_module_id}`;
@@ -496,7 +659,9 @@ watch(
 
 watch(selected_sheet_id, (newId) => {
   if (!newId) return;
-  const selectedSheet = transformedData.value.find((item) => item._id === newId);
+  const selectedSheet = transformedData.value.find(
+    (item) => item._id === newId,
+  );
   if (selectedSheet) {
     agentStore.saveSelectedSheetTitle(selectedSheet.title);
     agentStore.saveSelectedSheetId(newId);
@@ -515,7 +680,10 @@ const { mutate: addList, isPending: addingList } = useAddList({
 });
 
 const listProcessPayload = computed(() => {
-  if (selectedViewByVariable.value?.title === "Process" && selectedProcessMeta.value) {
+  if (
+    selectedViewByVariable.value?.title === "Process" &&
+    selectedProcessMeta.value
+  ) {
     return {
       variable_slug: "card-type",
       type_value: selectedProcessMeta.value.title,
@@ -535,11 +703,17 @@ const handleAddColumn = (v: any) => {
   addList(payload);
 };
 
-watch(sheetId, () => { selected_sheet_id.value = sheetId.value; });
+watch(sheetId, () => {
+  selected_sheet_id.value = sheetId.value;
+});
 
-const viewBy = computed(() => (variables?.value ? variables?.value[0]?._id : ""));
+const viewBy = computed(() =>
+  variables?.value ? variables?.value[0]?._id : "",
+);
 const selected_view_by = ref(viewBy.value);
-watch(viewBy, () => { selected_view_by.value = viewBy.value; });
+watch(viewBy, () => {
+  selected_view_by.value = viewBy.value;
+});
 
 const selectedViewByVariable = computed(() => {
   return variables.value?.find((v: any) => v._id === selected_view_by.value);
@@ -559,8 +733,13 @@ const {
 );
 
 // ─── Route card open ──────────────────────────────────────────────────────────
-onMounted(() => { openPanelFromRoute(); });
-watch(() => route.params.card_id, () => openPanelFromRoute());
+onMounted(() => {
+  openPanelFromRoute();
+});
+watch(
+  () => route.params.card_id,
+  () => openPanelFromRoute(),
+);
 
 async function openPanelFromRoute() {
   const cardId = route.params.card_id as string;
@@ -588,7 +767,9 @@ const createSheet = () => {
   selectedSheettoAction.value = {};
   isCreateSheetModal.value = !isCreateSheetModal.value;
 };
-const handleCreateSheetFromModal = () => { createSheet(); };
+const handleCreateSheetFromModal = () => {
+  createSheet();
+};
 
 // ─── Reorder ──────────────────────────────────────────────────────────────────
 const reorderList = ReOrderList();
@@ -606,7 +787,12 @@ function onReorder(a: any) {
           new_index: a.meta.newIndex,
         },
       },
-      { onSuccess: () => { refetchSheets(); refetchSheetLists(); } },
+      {
+        onSuccess: () => {
+          refetchSheets();
+          refetchSheetLists();
+        },
+      },
     );
   } else {
     reorderCard.mutate(
@@ -620,7 +806,12 @@ function onReorder(a: any) {
           sheet_id: selected_sheet_id.value,
         },
       },
-      { onSuccess: () => { refetchSheets(); refetchSheetLists(); } },
+      {
+        onSuccess: () => {
+          refetchSheets();
+          refetchSheetLists();
+        },
+      },
     );
   }
 }
@@ -628,8 +819,15 @@ function onReorder(a: any) {
 const handleBoardUpdate = (_: any) => {};
 
 // ─── Transformed Data ─────────────────────────────────────────────────────────
-interface IconData { prefix: string; iconName: string; }
-interface DropdownOption { _id: string; title: string; icon: IconData; }
+interface IconData {
+  prefix: string;
+  iconName: string;
+}
+interface DropdownOption {
+  _id: string;
+  title: string;
+  icon: IconData;
+}
 
 const transformedData = computed<DropdownOption[]>(() => {
   return (data.value || []).map((item: any) => ({
@@ -643,24 +841,37 @@ const transformedData = computed<DropdownOption[]>(() => {
 
 watch(
   () => transformedData.value,
-  (val) => { if (!val?.length && canCreateSheet) sheetDropdownRef.value?.openDropdown?.(); },
+  (val) => {
+    if (!val?.length && canCreateSheet)
+      sheetDropdownRef.value?.openDropdown?.();
+  },
   { immediate: true },
 );
 
 const hasSheets = computed(() => {
-  return Array.isArray(transformedData?.value) ? transformedData.value.length > 0 : transformedData.value > 0;
+  return Array.isArray(transformedData?.value)
+    ? transformedData.value.length > 0
+    : transformedData.value > 0;
 });
 
 const showNosheetsModal = () => {
   hideNoSheetsModal.value = !transformedData.value?.length;
 };
-watch(transformedData, () => { showNosheetsModal(); }, { immediate: true });
+watch(
+  transformedData,
+  () => {
+    showNosheetsModal();
+  },
+  { immediate: true },
+);
 
 watch(
   selected_sheet_id,
   (newId) => {
     if (!newId) return;
-    const selectedSheet = transformedData.value.find((item) => item._id === newId);
+    const selectedSheet = transformedData.value.find(
+      (item) => item._id === newId,
+    );
     if (selectedSheet) {
       agentStore.saveSelectedSheetTitle(selectedSheet.title);
       agentStore.saveSelectedSheetId(newId);
@@ -689,7 +900,9 @@ watch(
 const activeAddList = ref(false);
 const newColumn = ref("");
 
-function setActiveAddList() { activeAddList.value = !activeAddList.value; }
+function setActiveAddList() {
+  activeAddList.value = !activeAddList.value;
+}
 function emitAddColumn() {
   const t = newColumn.value.trim();
   if (!t) return;
@@ -720,7 +933,10 @@ const handleDeleteColumn = () => {
   });
 };
 
-const deleteHandler = (e: any) => { showDelete.value = true; localColumnData.value = e; };
+const deleteHandler = (e: any) => {
+  showDelete.value = true;
+  localColumnData.value = e;
+};
 const plusHandler = (e: any) => {
   createTeamModal.value = true;
   localStorage.setItem("selectedStatusTitle", e?.title);
@@ -737,7 +953,10 @@ function handleDeleteSheetModal(opt: any) {
 }
 
 const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
-  onSuccess: () => { refetchSheets(); showDeleteModal.value = false; },
+  onSuccess: () => {
+    refetchSheets();
+    showDeleteModal.value = false;
+  },
 });
 
 function handleDeleteSheet() {
@@ -760,7 +979,9 @@ const debouncedQuery = ref("");
 
 watch(
   searchQuery,
-  debounce((val: any) => { debouncedQuery.value = val; }, 200),
+  debounce((val: any) => {
+    debouncedQuery.value = val;
+  }, 200),
 );
 
 const fuse = computed(() => {
@@ -777,13 +998,18 @@ const fuse = computed(() => {
       };
     }),
   );
-  return new Fuse(allCards, { keys: ["card-title", "card-description"], threshold: 0.3 });
+  return new Fuse(allCards, {
+    keys: ["card-title", "card-description"],
+    threshold: 0.3,
+  });
 });
 
 const filteredBoard = computed(() => {
   if (view.value === "kanban") {
     if (!searchQuery.value) return Lists.value?.data;
-    const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
+    const results = fuse.value
+      .search(searchQuery.value)
+      .map((r: any) => r.item);
     return Lists.value?.data?.map((col: any) => ({
       ...col,
       cards: results.filter((c: any) => c.columnId === col.title),
@@ -792,13 +1018,17 @@ const filteredBoard = computed(() => {
     const query = searchQuery.value?.trim();
     if (!query) {
       let array: any = [];
-      (Lists.value?.data ?? []).forEach((col: any) => { array = [...array, ...col?.cards]; });
+      (Lists.value?.data ?? []).forEach((col: any) => {
+        array = [...array, ...col?.cards];
+      });
 
       if (localTableOrder.value.length > 0) {
         const cardMap = new Map();
         array.forEach((c: any) => cardMap.set(c._id, c));
         localPendingTickets.value.forEach((c: any) => cardMap.set(c.id, c));
-        const ordered = localTableOrder.value.map((id) => cardMap.get(id)).filter(Boolean);
+        const ordered = localTableOrder.value
+          .map((id) => cardMap.get(id))
+          .filter(Boolean);
         const returnedIds = new Set(ordered.map((c) => c._id || c.id));
         const extras = [
           ...array.filter((c: any) => !returnedIds.has(c._id)),
@@ -836,14 +1066,22 @@ const columns = computed(() => {
       label: "Title",
       render: ({ row, value }: any) =>
         h("div", { class: "flex items-center gap-1 w-full ps-2" }, [
-          h("a", {
-            onClick: () => (selectedCard.value = row),
-            class: "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
-          }, row["card-code"]),
+          h(
+            "a",
+            {
+              onClick: () => (selectedCard.value = row),
+              class:
+                "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
+            },
+            row["card-code"],
+          ),
           h("div", { class: "flex-1 min-w-0" }, [
             h("input", {
-              onFocusout: (e: any) => { handleChangeTicket(row, "card-title", e?.target?.value); },
-              class: "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
+              onFocusout: (e: any) => {
+                handleChangeTicket(row, "card-title", e?.target?.value);
+              },
+              class:
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
               defaultValue: value,
               disabled: !canEditCard.value,
             }),
@@ -887,11 +1125,19 @@ const columns = computed(() => {
         h("div", { class: "capitalize flex items-center gap-2 px-3" }, [
           h("div", { class: "rounded-full" }, [
             value?.u_profile_image
-              ? h("img", { class: "w-6 h-6 rounded-full", src: value?.u_profile_image })
-              : h("div", {
-                  class: "w-5 h-5 rounded-full flex justify-center items-center text-[11px]",
-                  style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ""}`,
-                }, getInitials(value?.u_full_name)),
+              ? h("img", {
+                  class: "w-6 h-6 rounded-full",
+                  src: value?.u_profile_image,
+                })
+              : h(
+                  "div",
+                  {
+                    class:
+                      "w-5 h-5 rounded-full flex justify-center items-center text-[11px]",
+                    style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ""}`,
+                  },
+                  getInitials(value?.u_full_name),
+                ),
           ]),
           h("span", { class: "text-[12px]" }, value ? value?.u_full_name : ""),
         ]),
@@ -929,7 +1175,9 @@ const columns = computed(() => {
               modelValue: cellValue,
               disabled: !canEditCard.value,
               emptyText: e.slug,
-              "onUpdate:modelValue": (val: any) => { handleChangeTicket(row, e.slug, val); },
+              "onUpdate:modelValue": (val: any) => {
+                handleChangeTicket(row, e.slug, val);
+              },
               columnName: e.slug,
             }),
           ]);
@@ -941,23 +1189,34 @@ const columns = computed(() => {
 
 const assignHandle = (row: any, users: any[]) => {
   const id = row?._id;
-  const userIds = (users || []).filter((u) => u && (u._id || u.id)).map((u) => u._id || u.id);
+  const userIds = (users || [])
+    .filter((u) => u && (u._id || u.id))
+    .map((u) => u._id || u.id);
   if (id) {
-    updateOptimisticCard(id, (card) => { card.seat = users; card.seats = users; card.seat_id = userIds; });
+    updateOptimisticCard(id, (card) => {
+      card.seat = users;
+      card.seats = users;
+      card.seat_id = userIds;
+    });
     moveCard.mutate({ card_id: id, seat_id: userIds, optimisticUser: users });
   } else {
-    row.seat = users; row.seats = users; row.seat_id = userIds;
+    row.seat = users;
+    row.seats = users;
+    row.seat_id = userIds;
     checkAndCreateTicket(row);
   }
 };
 
 const normalizedTableData = computed(() => {
   let array: any = [];
-  (Lists.value?.data ?? []).forEach((col: any) => { array = [...array, ...col?.cards]; });
+  (Lists.value?.data ?? []).forEach((col: any) => {
+    array = [...array, ...col?.cards];
+  });
   return array;
 });
 
-const getOptions = (options: any) => options.map((el: any) => ({ _id: el.value ?? el, title: el.value ?? el }));
+const getOptions = (options: any) =>
+  options.map((el: any) => ({ _id: el.value ?? el, title: el.value ?? el }));
 
 // ─── Optimistic Updates ───────────────────────────────────────────────────────
 const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
@@ -999,17 +1258,25 @@ const moveCard = useMoveCard({
       if (!oldCard) return oldCard;
       const updatedCard = {
         ...oldCard,
-        variables: Array.isArray(oldCard.variables) ? [...oldCard.variables] : { ...(oldCard.variables || {}) },
+        variables: Array.isArray(oldCard.variables)
+          ? [...oldCard.variables]
+          : { ...(oldCard.variables || {}) },
       };
       if (newPayload.style !== undefined) {
-  updatedCard.style = newPayload.style;
-}
+        updatedCard.style = newPayload.style;
+      }
       if (updatedVariables) {
         Object.assign(updatedCard, updatedVariables);
         if (Array.isArray(updatedCard.variables)) {
           Object.entries(updatedVariables).forEach(([key, value]) => {
-            const idx = updatedCard.variables.findIndex((v: any) => v.slug === key);
-            if (idx !== -1) updatedCard.variables[idx] = { ...updatedCard.variables[idx], value };
+            const idx = updatedCard.variables.findIndex(
+              (v: any) => v.slug === key,
+            );
+            if (idx !== -1)
+              updatedCard.variables[idx] = {
+                ...updatedCard.variables[idx],
+                value,
+              };
             else updatedCard.variables.push({ slug: key, value, type: "Text" });
           });
         } else {
@@ -1017,57 +1284,73 @@ const moveCard = useMoveCard({
         }
       }
       if (newPayload.optimisticUser) {
-        const users = Array.isArray(newPayload.optimisticUser) ? newPayload.optimisticUser : [newPayload.optimisticUser];
+        const users = Array.isArray(newPayload.optimisticUser)
+          ? newPayload.optimisticUser
+          : [newPayload.optimisticUser];
         updatedCard.seats = users;
-        updatedCard.seat_id = users.map((u: any) => u?._id || u?.id).filter(Boolean);
+        updatedCard.seat_id = users
+          .map((u: any) => u?._id || u?.id)
+          .filter(Boolean);
         updatedCard.seat = users[0] || null;
       }
-      if (newPayload.workspace_lane_id) updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
+      if (newPayload.workspace_lane_id)
+        updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
       return updatedCard;
     };
 
-    if (updatedVariables && Lists.value) updateCardInLists(card_id, updatedVariables);
-    if (selectedCard.value && selectedCard.value._id === card_id) selectedCard.value = updateCardLogic(selectedCard.value);
+    if (updatedVariables && Lists.value)
+      updateCardInLists(card_id, updatedVariables);
+    if (selectedCard.value && selectedCard.value._id === card_id)
+      selectedCard.value = updateCardLogic(selectedCard.value);
 
     queryClient.setQueryData(["product-card", card_id], updateCardLogic);
     queryClient.setQueriesData(
-  { queryKey: ["sheet-list"], exact: false },
-  (old: any) => {
-    if (!old) return old;
+      { queryKey: ["sheet-list"], exact: false },
+      (old: any) => {
+        if (!old) return old;
 
-    // CASE 1: array (rare)
-    if (Array.isArray(old)) {
-      return old.map((column: any) => ({
-        ...column,
-        cards: column.cards?.map((card: any) =>
-          card._id === card_id ? updateCardLogic(card) : card
-        ),
-      }));
-    }
+        // CASE 1: array (rare)
+        if (Array.isArray(old)) {
+          return old.map((column: any) => ({
+            ...column,
+            cards: column.cards?.map((card: any) =>
+              card._id === card_id ? updateCardLogic(card) : card,
+            ),
+          }));
+        }
 
-    // CASE 2: object with data (MOST COMMON)
-    if (Array.isArray(old.data)) {
-      return {
-        ...old,
-        data: old.data.map((column: any) => ({
-          ...column,
-          cards: column.cards?.map((card: any) =>
-            card._id === card_id ? updateCardLogic(card) : card
-          ),
-        })),
-      };
-    }
+        // CASE 2: object with data (MOST COMMON)
+        if (Array.isArray(old.data)) {
+          return {
+            ...old,
+            data: old.data.map((column: any) => ({
+              ...column,
+              cards: column.cards?.map((card: any) =>
+                card._id === card_id ? updateCardLogic(card) : card,
+              ),
+            })),
+          };
+        }
 
-    return old;
-  }
-);
+        return old;
+      },
+    );
     triggerRef(Lists);
     return { previousCard, previousLists };
   },
   onError: (err: any, variables: any, context: any) => {
-    if (context?.previousCard) queryClient.setQueryData(["product-card", variables.card_id], context.previousCard);
-    if (context?.previousLists) queryClient.setQueryData(["sheet-list"], context.previousLists);
-    if (selectedCard.value && selectedCard.value._id === variables.card_id && context?.previousCard) {
+    if (context?.previousCard)
+      queryClient.setQueryData(
+        ["product-card", variables.card_id],
+        context.previousCard,
+      );
+    if (context?.previousLists)
+      queryClient.setQueryData(["sheet-list"], context.previousLists);
+    if (
+      selectedCard.value &&
+      selectedCard.value._id === variables.card_id &&
+      context?.previousCard
+    ) {
       selectedCard.value = context.previousCard;
     }
     console.log(err);
@@ -1079,10 +1362,10 @@ const updateMoveCard = useMoveCard({
 
     await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
     await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
-    toast.success("Card Formatted successfully")
+    toast.success("Card Formatted successfully");
     const previousCard = queryClient.getQueryData(["product-card", card_id]);
     const previousLists = queryClient.getQueryData(["sheet-list"]);
-    
+
     const updateCardLogic = (oldCard: any) => {
       if (!oldCard || oldCard._id !== card_id) return oldCard;
 
@@ -1222,7 +1505,6 @@ const updateMoveCard = useMoveCard({
 
     queryClient.invalidateQueries({ queryKey: ["product-card", cardId] });
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-
   },
 });
 function incrementCommentCount({ cardId }: { cardId: string }) {
@@ -1231,7 +1513,9 @@ function incrementCommentCount({ cardId }: { cardId: string }) {
     return old.map((column: any) => ({
       ...column,
       cards: column.cards.map((card: any) =>
-        card._id === cardId ? { ...card, comment_count: (card.comment_count || 0) + 1 } : card,
+        card._id === cardId
+          ? { ...card, comment_count: (card.comment_count || 0) + 1 }
+          : card,
       ),
     }));
   });
@@ -1252,9 +1536,15 @@ const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
 };
 
 // ─── Ticket CRUD ──────────────────────────────────────────────────────────────
-interface Card { _id: string; }
-interface SheetList { cards: Card[]; }
-interface Sheet { sheet_lists: SheetList[]; }
+interface Card {
+  _id: string;
+}
+interface SheetList {
+  cards: Card[];
+}
+interface Sheet {
+  sheet_lists: SheetList[];
+}
 
 const removeCardFromState = (cardId: string) => {
   Lists.value?.data?.sheets?.forEach((sheet: Sheet) => {
@@ -1268,7 +1558,10 @@ const deleteTicket = async () => {
   if (!selectedDeleteId.value) return;
   try {
     isDeletingTicket.value = true;
-    await request({ url: `workspace/card/${selectedDeleteId.value}`, method: "DELETE" });
+    await request({
+      url: `workspace/card/${selectedDeleteId.value}`,
+      method: "DELETE",
+    });
     removeCardFromState(selectedDeleteId.value);
     showTicketDelete.value = false;
     ticketToDelete.value = null;
@@ -1282,7 +1575,9 @@ const deleteTicket = async () => {
   }
 };
 
-const handleDeleteTicket = async () => { await deleteTicket(); };
+const handleDeleteTicket = async () => {
+  await deleteTicket();
+};
 
 const { mutate: addTicket } = useAddTicket({
   onSuccess: () => {
@@ -1310,19 +1605,24 @@ function checkAndCreateTicket(row: any) {
 
   if (title && status && type) {
     const payloadVariables: Record<string, any> = {};
-    if (variables.value) variables.value.forEach((v: any) => { payloadVariables[v.slug] = null; });
+    if (variables.value)
+      variables.value.forEach((v: any) => {
+        payloadVariables[v.slug] = null;
+      });
 
     payloadVariables["card-title"] = title.trim();
     payloadVariables["card-status"] = status;
     payloadVariables["card-type"] = type;
 
     Object.keys(row).forEach((key) => {
-      if (payloadVariables.hasOwnProperty(key)) payloadVariables[key] = row[key];
+      if (payloadVariables.hasOwnProperty(key))
+        payloadVariables[key] = row[key];
     });
 
     if (Array.isArray(row.variables)) {
       row.variables.forEach((v: any) => {
-        if (payloadVariables.hasOwnProperty(v.slug)) payloadVariables[v.slug] = v.value;
+        if (payloadVariables.hasOwnProperty(v.slug))
+          payloadVariables[v.slug] = v.value;
       });
     } else if (typeof row.variables === "object" && row.variables !== null) {
       Object.entries(row.variables).forEach(([k, v]) => {
@@ -1354,8 +1654,12 @@ function handleChangeTicket(row: any, key: any, value: any) {
       if (Array.isArray(card.variables)) {
         const varIndex = card.variables.findIndex((v: any) => v.slug === key);
         if (varIndex !== -1) card.variables[varIndex].value = cleanValue;
-        else card.variables.push({ slug: key, value: cleanValue, type: "Text" });
-      } else if (typeof card.variables === "object" && card.variables !== null) {
+        else
+          card.variables.push({ slug: key, value: cleanValue, type: "Text" });
+      } else if (
+        typeof card.variables === "object" &&
+        card.variables !== null
+      ) {
         card.variables[key] = cleanValue;
       }
       if (selectedCard.value?._id === id) selectedCard.value[key] = cleanValue;
@@ -1375,12 +1679,16 @@ function handleChangeTicket(row: any, key: any, value: any) {
   }
 }
 
-function handleCreateTicket(row: any) { checkAndCreateTicket(row); }
+function handleCreateTicket(row: any) {
+  checkAndCreateTicket(row);
+}
 
 const setStartDate = (row: any, e: any) => {
   const card_id = row?._id;
   if (card_id) {
-    updateOptimisticCard(card_id, (card) => { card["end-date"] = e; });
+    updateOptimisticCard(card_id, (card) => {
+      card["end-date"] = e;
+    });
     moveCard.mutate({ card_id, variables: { "start-date": e } });
   } else {
     row["end-date"] = e;
@@ -1399,7 +1707,10 @@ function setLane(row: any, v: any) {
     moveCard.mutate({ card_id: id, workspace_lane_id: v });
   } else {
     const newLane = laneOptions.value.find((l: any) => l._id === v);
-    if (newLane) { row.lane = newLane; row.workspace_lane_id = v; }
+    if (newLane) {
+      row.lane = newLane;
+      row.workspace_lane_id = v;
+    }
     checkAndCreateTicket(row);
   }
 }
@@ -1441,7 +1752,7 @@ function handleMindmapCreateCard(payload: any) {
   addTicket(payload);
 }
 
-function handleMindmapUpdateCard(payload: any) { 
+function handleMindmapUpdateCard(payload: any) {
   updateMoveCard.mutate(payload);
 }
 
@@ -1460,7 +1771,12 @@ declare global {
     toggleMenu: (el: HTMLElement) => void;
     handleEdit: (e: Event) => void;
     handleDelete: (e: Event) => void;
-    handleStatusChange: (e: Event, sheetIdx: number, listIdx: number, cardIdx: number) => void;
+    handleStatusChange: (
+      e: Event,
+      sheetIdx: number,
+      listIdx: number,
+      cardIdx: number,
+    ) => void;
   }
 }
 </script>

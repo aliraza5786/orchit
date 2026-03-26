@@ -71,10 +71,6 @@ const { isDark } = useTheme();
 const currentView = ref<"month" | "week" | "day">("month");
 const dateLabel = ref("");
 const views: ("month" | "week" | "day")[] = ["month", "week", "day"];
-
-/* --------------------------------------------------
-   Theme
--------------------------------------------------- */
 function applyTheme(dark: boolean) {
   if (!scheduleEl.value) return;
   const bg = dark ? "#2b2c30" : "#ffffff";
@@ -89,10 +85,6 @@ function applyTheme(dark: boolean) {
 }
 
 watch(isDark, (val) => applyTheme(val));
-
-/* --------------------------------------------------
-   Date parsing
--------------------------------------------------- */
 function parsePlainDate(value: string | null | undefined): Date | null {
   if (!value) return null;
   if (value.includes("T")) {
@@ -104,10 +96,6 @@ function parsePlainDate(value: string | null | undefined): Date | null {
   const [year, month, day] = parts;
   return new Date(year, month - 1, day, 0, 0, 0);
 }
-
-/* --------------------------------------------------
-   Build events
--------------------------------------------------- */
 function buildEvents(cards: RawCard[]) {
   return cards
     .map((card) => {
@@ -129,10 +117,6 @@ function buildEvents(cards: RawCard[]) {
     })
     .filter(Boolean);
 }
-
-/* --------------------------------------------------
-   Date label
--------------------------------------------------- */
 function updateDateLabel() {
   if (!calendar) return;
   const date = new Date(calendar.getDate().getTime());
@@ -162,10 +146,6 @@ function updateDateLabel() {
       });
   }
 }
-
-/* --------------------------------------------------
-   Navigation
--------------------------------------------------- */
 function goToday() { calendar?.today(); updateDateLabel(); }
 function goPrev()  { calendar?.prev();  updateDateLabel(); }
 function goNext()  { calendar?.next();  updateDateLabel(); }
@@ -182,7 +162,7 @@ function loadEvents(data: RawCard[] | CardList[]) {
   if (!calendar) return;
   calendar.clear();
 
-  const events = buildEvents(flattenedCards.value); // flattened here
+  const events = buildEvents(flattenedCards.value);
   if (events.length) calendar.createEvents(events);
 }
 watch(() => props.data, () => loadEvents(flattenedCards.value), { deep: true });
@@ -227,7 +207,6 @@ onBeforeUnmount(() => {
 });
 </script>
 <style scoped>
-/* ── CSS Variables (set by JS via applyTheme) ──────── */
 .schedule-container {
   --cal-text: #374151;
   --cal-border: #e2e8f0;
@@ -238,8 +217,6 @@ onBeforeUnmount(() => {
   height: 100%;
   transition: background 0.2s;
 }
-
-/* ── Header ────────────────────────────────────────── */
 .calendar-header {
   display: flex;
   justify-content: space-between;
@@ -287,7 +264,6 @@ onBeforeUnmount(() => {
   transition: color 0.2s;
 }
 
-/* ── View tabs ─────────────────────────────────────── */
 .tabs {
   display: flex;
   gap: 4px;
@@ -311,8 +287,6 @@ onBeforeUnmount(() => {
   background: #9356c5;
   color: #ffffff;
 }
-
-/* ── Calendar wrapper ──────────────────────────────── */
 .calendar-wrapper {
   flex: 1;
   min-height: 0;
@@ -345,7 +319,6 @@ onBeforeUnmount(() => {
 :deep(.toastui-calendar-grid-cell-more-events){
   color: #6e3b96 !important;
 }
-/* ── Toast UI internal dark overrides ──────────────── */
 :deep(.toastui-calendar-layout),
 :deep(.toastui-calendar-week-view),
 :deep(.toastui-calendar-month),

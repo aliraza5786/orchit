@@ -142,10 +142,15 @@
                         {{ group?.agents.length }}
                       </span>
                     </div>
-                    <div class="cursor-pointer" @click="handleAgent({ 
-                      title: group.title, 
-                      module_id: String(group.module_id) 
-                    })">
+                    <div
+                      class="cursor-pointer"
+                      @click="
+                        handleAgent({
+                          title: group.title,
+                          module_id: String(group.module_id),
+                        })
+                      "
+                    >
                       <i class="fa-solid fa-plus"></i>
                     </div>
                   </div>
@@ -178,28 +183,35 @@
                       <div class="text-xs text-accent-hover">
                         {{ agent.model }}
                       </div>
-                       <div class="flex justify-between">
+                      <div class="flex justify-between">
                         <div class="flex items-center gap-2 mt-auto">
-                        <span
-                          class="w-2 h-2 rounded-full"
-                          :class="
-                            agent.is_active ? 'bg-green-500' : 'bg-gray-400'
-                          "
-                        />
-                       <div class="flex justify-between">
-                         <span class="text-xs text-green-500">
-                          {{ agent.is_active ? "Active" : "Inactive" }}
-                        </span>
-                        
-                       </div>
-                      </div>
-                      <div>
-                          <button class="bg-accent text-xs rounded-full px-2 py-1 text-white cursor-pointer"
-                          @click.stop="handleChatWithAgent(agent, group.module_id, group?.title)">
-                          Chat Agent
-                        </button>
+                          <span
+                            class="w-2 h-2 rounded-full"
+                            :class="
+                              agent.is_active ? 'bg-green-500' : 'bg-gray-400'
+                            "
+                          />
+                          <div class="flex justify-between">
+                            <span class="text-xs text-green-500">
+                              {{ agent.is_active ? "Active" : "Inactive" }}
+                            </span>
+                          </div>
                         </div>
-                       </div>
+                        <div>
+                          <button
+                            class="bg-accent text-xs rounded-full px-2 py-1 text-white cursor-pointer"
+                            @click.stop="
+                              handleChatWithAgent(
+                                agent,
+                                group.module_id,
+                                group?.title,
+                              )
+                            "
+                          >
+                            Chat Agent
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -357,18 +369,18 @@
           </div>
         </template>
       </template>
-      <div v-else-if="currentView === 'table'" class="flex flex-1 overflow-x-auto gap-3">
-      <TableView
-        :columns="tableColumns"
-        :rows="tableRows"
-        :isPending="false"
-      />
-    </div>
-
       <div
-        v-if="currentView === 'mindmap'"
-        class="flex flex-1 overflow-hidden"
+        v-else-if="currentView === 'table'"
+        class="flex flex-1 overflow-x-auto gap-3"
       >
+        <TableView
+          :columns="tableColumns"
+          :rows="tableRows"
+          :isPending="false"
+        />
+      </div>
+
+      <div v-if="currentView === 'mindmap'" class="flex flex-1 overflow-hidden">
         <MindmapView
           :listsData="mindmapListsData"
           :selectedSheetId="''"
@@ -427,13 +439,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  defineAsyncComponent,
-  ref,
-  watch,
-  onMounted,
-  computed,
-} from "vue";
+import { defineAsyncComponent, ref, watch, onMounted, computed } from "vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
 import { useWorkspaceRoles } from "../../queries/usePeople";
@@ -451,7 +457,7 @@ import { debounce } from "lodash";
 import { useQueryClient } from "@tanstack/vue-query";
 import TableView from "../../components/feature/TableView/TableView.vue";
 import MindmapView from "../../components/feature/MindmapView.vue";
-import { useSingleWorkspaceCompany } from '../../queries/useWorkspace'
+import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 const KanbanSkeleton = defineAsyncComponent(
   () => import("../../components/skeletons/KanbanSkeleton.vue"),
 );
@@ -497,7 +503,7 @@ const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
 const { workspaceId } = useRouteIds();
 const queryClient = useQueryClient();
-const workspaceStore = useWorkspaceStore()
+const workspaceStore = useWorkspaceStore();
 const currentTab = ref("talent");
 const isMobile = useMediaQuery("(max-width: 650px)");
 const viewData = [
@@ -575,13 +581,16 @@ watch(
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
   enabled: computed(() => !!workspaceId.value), //reactive
 });
-const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
-const { data: workspaceRoles } = useWorkspaceRoles( {
+const newCompanyId = computed(() => workspaceData.value?.company_id ?? null);
+const { data: workspaceRoles } = useWorkspaceRoles(
+  {
     company_id: newCompanyId,
-    workspace_id:  workspaceId
-  }, {  
- enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
-});
+    workspace_id: workspaceId,
+  },
+  {
+    enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
+  },
+);
 // ─── Fetch people ─────────────────────────────────────────────────────────────
 const controller = new AbortController();
 
@@ -984,7 +993,7 @@ const roleMap = computed(() => {
   return map;
 });
 const tableRows = computed(() => {
-  if (currentTab.value === "talent") {    
+  if (currentTab.value === "talent") {
     return filteredBoard.value.flatMap((col: any) =>
       col.cards.map((card: any) => ({
         id: card._id,
@@ -1033,10 +1042,10 @@ function levelClass(level: string): string {
   return map[level] ?? "bg-gray-100 text-gray-600 border border-gray-200";
 }
 
-function handleChatWithAgent(agent:any, module_id:any, module_name:any){
+function handleChatWithAgent(agent: any, module_id: any, module_name: any) {
   console.log("module name", module_name);
-  agentStore.handleAgentPassed(agent, module_id, module_name)
-  workspaceStore.toggleChatBotPanel()
+  agentStore.handleAgentPassed(agent, module_id, module_name);
+  workspaceStore.toggleChatBotPanel();
 }
 </script>
 
@@ -1059,5 +1068,4 @@ function handleChatWithAgent(agent:any, module_id:any, module_name:any){
   scrollbar-width: thin;
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
 }
-
 </style>

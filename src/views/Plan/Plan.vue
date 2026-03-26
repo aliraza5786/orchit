@@ -4,7 +4,7 @@
   >
     <template v-if="showActiveSprint || isStartingSprintLoading">
       <ActiveSprint
-        :sptint_id="selectedSprintId"
+        :sprint_id="selectedSprintId"
         :searchQuery="searchQuery"
         :active-sprint="sprintType"
         @go-back="showActiveSprint = false"
@@ -992,7 +992,7 @@ const closeModal = () => {
 };
 const handlePreviewClick = () => {
   showActiveSprint.value = true;
-  localStorage.setItem("activeSprintId", selectedSprintId.value || "");
+  localStorage.setItem("activeSprintKey", selectedSprintId.value || "");
 };
 const showTooltip = ref(false);
 

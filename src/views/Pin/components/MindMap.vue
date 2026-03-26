@@ -100,7 +100,11 @@
           @click.stop="selectedNodeId = '__root__'"
         >
           <div class="root-inner">
-            <img :src="localWorkspace.logo ?? dp" class="w-10 h-10 rounded-full" alt="logo">
+            <img
+              :src="localWorkspace.logo ?? dp"
+              class="w-10 h-10 rounded-full"
+              alt="logo"
+            />
             <span class="root-title">{{ workspaceName }}</span>
           </div>
         </div>
@@ -195,7 +199,7 @@
               <button
                 v-else-if="canCreateCard && creatingForSheetId !== sheet._id"
                 class="add-card-btn"
-                @click.stop="startInlineCreate(sheet)"
+                @click.stop="startInlineCreate(sheet._id, sheet)"
               >
                 <i class="fa-solid fa-plus"></i> Add card
               </button>
@@ -232,8 +236,11 @@
                 <!-- Title -->
                 <p class="card-title">{{ card["card-title"] || "Untitled" }}</p>
                 <!-- Description -->
-                <p v-if="card['card-description']" class="card-desc" v-html="card['card-description']">
-                </p>
+                <p
+                  v-if="card['card-description']"
+                  class="card-desc"
+                  v-html="card['card-description']"
+                ></p>
                 <!-- Footer: dates + seats -->
                 <div class="card-footer">
                   <div
@@ -272,27 +279,34 @@
                   <button
                     class="nact nact--open"
                     @click.stop="emit('select:ticket', card)"
-                    title="Open card">
+                    title="Open card"
+                  >
                     <i class="fa-solid fa-arrow-up-right-from-square"></i>
                   </button>
                   <button
                     v-if="canCreateCard"
                     class="nact nact--add"
-                    @click.stop="startInlineCreate(card.sheet_id)"
+                    @click.stop="createCardDirectly(card.sheet_id)"
                     title="Add sibling card"
-                  ><i class="fa-solid fa-plus"></i></button>
+                  >
+                    <i class="fa-solid fa-plus"></i>
+                  </button>
                   <button
                     v-if="canAssignCard && canEditCard"
-                    class="nact" @click.stop="openFormatSidebar(card._id)" title="Format"
-                  ><i class="fa-solid fa-palette"></i></button>
+                    class="nact"
+                    @click.stop="openFormatSidebar(card._id)"
+                    title="Format"
+                  >
+                    <i class="fa-solid fa-palette"></i>
+                  </button>
                   <button
                     v-if="canDeleteCard"
                     class="nact nact--danger"
                     @click.stop="emit('delete:ticket', card._id)"
                     title="Delete"
-                    >
-                      <i class="fa-solid fa-trash-can"></i>
-                    </button>
+                  >
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
                 </div>
               </div>
             </div>
@@ -381,9 +395,13 @@
             </button>
             <button
               v-if="canAssignCard && canEditCard"
-              class="ctx-item" @click="ctxFormatCard"
+              class="ctx-item"
+              @click="ctxFormatCard"
             >
-              <i class="fa-solid fa-palette ctx-item-icon" style="color:#7d68c8"></i>
+              <i
+                class="fa-solid fa-palette ctx-item-icon"
+                style="color: #7d68c8"
+              ></i>
               <span>Format</span>
             </button>
             <button v-if="canCreateCard" class="ctx-item" @click="ctxAddCard">
@@ -437,12 +455,17 @@
     <!-- ─── FORMAT SIDEBAR ───────────────────────────────────────────────── -->
     <transition name="slide-sidebar">
       <div
-        v-if="showFormatSidebar && canAssignCard && canEditCard && canCreateCard"
+        v-if="
+          showFormatSidebar && canAssignCard && canEditCard && canCreateCard
+        "
         class="format-sidebar"
       >
         <div class="fs-header">
           <div class="fs-header-left">
-            <i class="fa-solid fa-sliders" style="color:var(--accent,#6e3b96)"></i>
+            <i
+              class="fa-solid fa-sliders"
+              style="color: var(--accent, #6e3b96)"
+            ></i>
             <span>Format Node</span>
           </div>
           <button class="fs-close" @click="showFormatSidebar = false">
@@ -451,12 +474,14 @@
         </div>
 
         <div v-if="!selectedNodeId" class="fs-empty">
-          <i class="fa-solid fa-arrow-pointer fa-xl" style="color:#cbd5e1;margin-bottom:8px"></i>
-          <p>Click any node<br>to format it</p>
+          <i
+            class="fa-solid fa-arrow-pointer fa-xl"
+            style="color: #cbd5e1; margin-bottom: 8px"
+          ></i>
+          <p>Click any node<br />to format it</p>
         </div>
 
         <div v-else class="fs-body">
-
           <div class="fs-node-name">
             <i class="fa-solid fa-circle-dot fs-node-icon"></i>
             <span class="fs-node-label">{{ selectedNodeLabel }}</span>
@@ -482,35 +507,69 @@
               <div class="fs-field">
                 <label>Background</label>
                 <div class="color-row">
-                  <div class="color-swatch" :style="{ background: activeFormatStyle.background || '#fff' }">
-                    <input type="color" :value="activeFormatStyle.background || '#ffffff'"
-                      @input="onStyleChange('bg_color', $event)" />
+                  <div
+                    class="color-swatch"
+                    :style="{
+                      background: activeFormatStyle.background || '#fff',
+                    }"
+                  >
+                    <input
+                      type="color"
+                      :value="activeFormatStyle.background || '#ffffff'"
+                      @input="onStyleChange('bg_color', $event)"
+                    />
                   </div>
-                  <input class="color-hex" :value="activeFormatStyle.background || ''"
-                    placeholder="#ffffff" readonly />
+                  <input
+                    class="color-hex"
+                    :value="activeFormatStyle.background || ''"
+                    placeholder="#ffffff"
+                    readonly
+                  />
                 </div>
               </div>
               <div class="fs-field">
                 <label>Text</label>
                 <div class="color-row">
-                  <div class="color-swatch" :style="{ background: activeFormatStyle.color || '#000' }">
-                    <input type="color" :value="activeFormatStyle.color || '#000000'"
-                      @input="onStyleChange('color', $event)" />
+                  <div
+                    class="color-swatch"
+                    :style="{ background: activeFormatStyle.color || '#000' }"
+                  >
+                    <input
+                      type="color"
+                      :value="activeFormatStyle.color || '#000000'"
+                      @input="onStyleChange('color', $event)"
+                    />
                   </div>
-                  <input class="color-hex" :value="activeFormatStyle.color || ''"
-                    placeholder="#000000" readonly />
+                  <input
+                    class="color-hex"
+                    :value="activeFormatStyle.color || ''"
+                    placeholder="#000000"
+                    readonly
+                  />
                 </div>
               </div>
             </div>
             <div class="fs-field">
               <label>Border Color</label>
               <div class="color-row">
-                <div class="color-swatch" :style="{ background: activeFormatStyle.borderColor || '#d9d9d9' }">
-                  <input type="color" :value="activeFormatStyle.borderColor || '#d9d9d9'"
-                    @input="onStyleChange('border_color', $event)" />
+                <div
+                  class="color-swatch"
+                  :style="{
+                    background: activeFormatStyle.borderColor || '#d9d9d9',
+                  }"
+                >
+                  <input
+                    type="color"
+                    :value="activeFormatStyle.borderColor || '#d9d9d9'"
+                    @input="onStyleChange('border_color', $event)"
+                  />
                 </div>
-                <input class="color-hex" :value="activeFormatStyle.borderColor || ''"
-                  placeholder="#d9d9d9" readonly />
+                <input
+                  class="color-hex"
+                  :value="activeFormatStyle.borderColor || ''"
+                  placeholder="#d9d9d9"
+                  readonly
+                />
               </div>
             </div>
           </div>
@@ -522,7 +581,10 @@
                 <label>Font Size</label>
                 <div class="input-with-unit">
                   <input
-                    type="number" min="8" max="32" step="1"
+                    type="number"
+                    min="8"
+                    max="32"
+                    step="1"
                     :value="parsePx(activeFormatStyle.fontSize) || 14"
                     @input="onStyleChange('font_size', $event)"
                     class="fs-input"
@@ -532,7 +594,11 @@
               </div>
               <div class="fs-field">
                 <label>Weight</label>
-                <select class="fs-select" :value="activeFormatStyle.fontWeight || 'normal'" @change="onStyleChange('font_weight', $event)">
+                <select
+                  class="fs-select"
+                  :value="activeFormatStyle.fontWeight || 'normal'"
+                  @change="onStyleChange('font_weight', $event)"
+                >
                   <option value="300">Light</option>
                   <option value="normal">Normal</option>
                   <option value="500">Medium</option>
@@ -545,7 +611,11 @@
             <div class="fs-row">
               <div class="fs-field">
                 <label>Font Family</label>
-                <select class="fs-select" :value="activeFormatStyle.fontFamily || 'inherit'" @change="onStyleChange('font_family', $event)">
+                <select
+                  class="fs-select"
+                  :value="activeFormatStyle.fontFamily || 'inherit'"
+                  @change="onStyleChange('font_family', $event)"
+                >
                   <option value="inherit">Default</option>
                   <option value="Inter, sans-serif">Inter</option>
                   <option value="'Segoe UI', sans-serif">Segoe UI</option>
@@ -558,7 +628,11 @@
               </div>
               <div class="fs-field">
                 <label>Style</label>
-                <select class="fs-select" :value="activeFormatStyle.fontStyle || 'normal'" @change="onStyleChange('font_style', $event)">
+                <select
+                  class="fs-select"
+                  :value="activeFormatStyle.fontStyle || 'normal'"
+                  @change="onStyleChange('font_style', $event)"
+                >
                   <option value="normal">Normal</option>
                   <option value="italic">Italic</option>
                   <option value="oblique">Oblique</option>
@@ -569,10 +643,12 @@
               <label>Text Align</label>
               <div class="btn-group-row">
                 <button
-                  v-for="align in ['left','center','right']"
+                  v-for="align in ['left', 'center', 'right']"
                   :key="align"
                   class="align-btn"
-                  :class="{ 'align-btn--active': activeFormatStyle.textAlign === align }"
+                  :class="{
+                    'align-btn--active': activeFormatStyle.textAlign === align,
+                  }"
                   @click="onStyleChangeDirect('text_align', align)"
                 >
                   <i :class="`fa-solid fa-align-${align}`"></i>
@@ -588,7 +664,10 @@
                 <label>Border Width</label>
                 <div class="input-with-unit">
                   <input
-                    type="number" min="0" max="16" step="1"
+                    type="number"
+                    min="0"
+                    max="16"
+                    step="1"
                     :value="parsePx(activeFormatStyle.borderWidth) || 0"
                     @input="onStyleChange('border_width', $event)"
                     class="fs-input"
@@ -600,7 +679,10 @@
                 <label>Border Radius</label>
                 <div class="input-with-unit">
                   <input
-                    type="number" min="0" max="50" step="1"
+                    type="number"
+                    min="0"
+                    max="50"
+                    step="1"
                     :value="parsePx(activeFormatStyle.borderRadius) || 0"
                     @input="onStyleChange('border_radius', $event)"
                     class="fs-input"
@@ -611,7 +693,16 @@
             </div>
             <div class="fs-field">
               <label>Border Style</label>
-              <select class="fs-select" :value="activeFormatStyle.borderStyle || 'solid'" @change="onStyleChangeDirect('border_style', ($event.target as HTMLSelectElement).value)">
+              <select
+                class="fs-select"
+                :value="activeFormatStyle.borderStyle || 'solid'"
+                @change="
+                  onStyleChangeDirect(
+                    'border_style',
+                    ($event.target as HTMLSelectElement).value,
+                  )
+                "
+              >
                 <option value="solid">Solid</option>
                 <option value="dashed">Dashed</option>
                 <option value="dotted">Dotted</option>
@@ -628,7 +719,10 @@
                 <label>Padding</label>
                 <div class="input-with-unit">
                   <input
-                    type="number" min="0" max="40" step="2"
+                    type="number"
+                    min="0"
+                    max="40"
+                    step="2"
                     :value="parsePx(activeFormatStyle.padding) || 0"
                     @input="onStyleChange('padding', $event)"
                     class="fs-input"
@@ -640,9 +734,24 @@
                 <label>Opacity</label>
                 <div class="input-with-unit">
                   <input
-                    type="number" min="10" max="100" step="5"
-                    :value="Math.round(((activeFormatStyle.opacity as number) ?? 1) * 100)"
-                    @input="onStyleChangeDirect('opacity', String(Number(($event.target as HTMLInputElement).value) / 100))"
+                    type="number"
+                    min="10"
+                    max="100"
+                    step="5"
+                    :value="
+                      Math.round(
+                        ((activeFormatStyle.opacity as number) ?? 1) * 100,
+                      )
+                    "
+                    @input="
+                      onStyleChangeDirect(
+                        'opacity',
+                        String(
+                          Number(($event.target as HTMLInputElement).value) /
+                            100,
+                        ),
+                      )
+                    "
                     class="fs-input"
                   />
                   <span class="unit">%</span>
@@ -658,10 +767,14 @@
                 v-for="s in shadowPresets"
                 :key="s.label"
                 class="shadow-btn"
-                :class="{ 'shadow-btn--active': activeFormatStyle.boxShadow === s.value }"
+                :class="{
+                  'shadow-btn--active': activeFormatStyle.boxShadow === s.value,
+                }"
                 :style="{ boxShadow: s.value || 'none' }"
                 @click="onStyleChangeDirect('box_shadow', s.value)"
-              >{{ s.label }}</button>
+              >
+                {{ s.label }}
+              </button>
             </div>
           </div>
 
@@ -677,7 +790,7 @@
             </div>
           </div>
 
-          <div class="fs-section" style="border:none;padding-bottom:0">
+          <div class="fs-section" style="border: none; padding-bottom: 0">
             <button class="fs-reset-btn" @click="resetNodeStyle">
               <i class="fa-solid fa-rotate me-1"></i> Reset to default
             </button>
@@ -692,7 +805,7 @@
           >
             <span v-if="isSavingNodeStyle" class="spinner"></span>
             <i v-else class="fa-solid fa-floppy-disk me-1"></i>
-            {{ isSavingNodeStyle ? 'Saving...' : 'Save Style' }}
+            {{ isSavingNodeStyle ? "Saving..." : "Save Style" }}
           </button>
         </div>
       </div>
@@ -713,7 +826,7 @@ import {
 import { useTheme } from "../../../composables/useTheme";
 import { toast } from "vue-sonner";
 import { useWorkspaceStore } from "../../../stores/workspace";
-import dp from "../../../assets/global/dummy.jpeg"
+import dp from "../../../assets/global/dummy.jpeg";
 
 // ─── Props & Emits ──────────────────────────────────────────────────────────
 const props = defineProps<{
@@ -816,7 +929,9 @@ const selectedNodeLabel = computed<string>(() => {
     if (sheet._id === selectedNodeId.value) {
       return sheet.title || sheet.variables?.["sheet-title"] || "Sheet";
     }
-    const card = (sheet.cards || []).find((c: any) => c._id === selectedNodeId.value);
+    const card = (sheet.cards || []).find(
+      (c: any) => c._id === selectedNodeId.value,
+    );
     if (card) return card["card-title"] || "Card";
   }
   return selectedNodeId.value;
@@ -825,19 +940,19 @@ const selectedNodeLabel = computed<string>(() => {
 // Color presets for quick styling
 const colorPresets = [
   { name: "Lavender", bg: "#f1eeff", border: "#c4b8f0" },
-  { name: "Rose",     bg: "#fff1f2", border: "#fecdd3" },
-  { name: "Sky",      bg: "#f0f9ff", border: "#bae6fd" },
-  { name: "Mint",     bg: "#f0fdf4", border: "#bbf7d0" },
-  { name: "Amber",    bg: "#fffbeb", border: "#fde68a" },
-  { name: "Slate",    bg: "#f8fafc", border: "#cbd5e1" },
-  { name: "Indigo",   bg: "#eef2ff", border: "#c7d2fe" },
-  { name: "Pink",     bg: "#fdf4ff", border: "#f0abfc" },
+  { name: "Rose", bg: "#fff1f2", border: "#fecdd3" },
+  { name: "Sky", bg: "#f0f9ff", border: "#bae6fd" },
+  { name: "Mint", bg: "#f0fdf4", border: "#bbf7d0" },
+  { name: "Amber", bg: "#fffbeb", border: "#fde68a" },
+  { name: "Slate", bg: "#f8fafc", border: "#cbd5e1" },
+  { name: "Indigo", bg: "#eef2ff", border: "#c7d2fe" },
+  { name: "Pink", bg: "#fdf4ff", border: "#f0abfc" },
 ];
 
 // Shadow presets
 const shadowPresets = [
-  { label: "None",   value: "" },
-  { label: "Soft",   value: "0 2px 8px rgba(0,0,0,0.10)" },
+  { label: "None", value: "" },
+  { label: "Soft", value: "0 2px 8px rgba(0,0,0,0.10)" },
   { label: "Medium", value: "0 4px 16px rgba(0,0,0,0.14)" },
   { label: "Strong", value: "0 8px 32px rgba(0,0,0,0.20)" },
   { label: "Purple", value: "0 4px 20px rgba(125,104,200,0.35)" },
@@ -925,11 +1040,20 @@ function resetNodeStyle() {
 }
 
 const DEFAULT_BACKEND_STYLE = {
-  bg_color: "#ffffff", color: "#2b2c30",
-  font_size: 13, font_weight: "normal", font_style: "normal",
-  font_family: "inherit", text_align: "left",
-  border_color: "#d9d9d9", border_width: 0, border_radius: 8,
-  border_style: "solid", padding: 12, opacity: 1, box_shadow: "",
+  bg_color: "#ffffff",
+  color: "#2b2c30",
+  font_size: 13,
+  font_weight: "normal",
+  font_style: "normal",
+  font_family: "inherit",
+  text_align: "left",
+  border_color: "#d9d9d9",
+  border_width: 0,
+  border_radius: 8,
+  border_style: "solid",
+  padding: 12,
+  opacity: 1,
+  box_shadow: "",
 };
 
 function resolveStyle<T>(ui: T | undefined, orig: T | undefined, def: T): T {
@@ -945,41 +1069,104 @@ async function saveNodeStyle() {
 
     const id = selectedNodeId.value;
     const s = nodeStyles[id] || {};
-
     const isSheet = allSheets.value.some((sh: any) => sh._id === id);
     const card = !isSheet
-      ? allSheets.value.flatMap((sh: any) => sh.cards || []).find((c: any) => c._id === id)
+      ? allSheets.value
+          .flatMap((sh: any) => sh.cards || [])
+          .find((c: any) => c._id === id)
       : null;
     const origStyle = isSheet
-      ? (allSheets.value.find((sh: any) => sh._id === id)?.style || {})
-      : (card?.style || {});
+      ? allSheets.value.find((sh: any) => sh._id === id)?.style || {}
+      : card?.style || {};
 
     const p = {
-      bg_color:      resolveStyle(s.background,                                          origStyle.bg_color,      DEFAULT_BACKEND_STYLE.bg_color),
-      color:         resolveStyle(s.color,                                               origStyle.color,         DEFAULT_BACKEND_STYLE.color),
-      font_size:     resolveStyle(s.fontSize ? parseInt(s.fontSize) : undefined,         origStyle.font_size,     DEFAULT_BACKEND_STYLE.font_size),
-      font_weight:   resolveStyle(s.fontWeight,                                          origStyle.font_weight,   DEFAULT_BACKEND_STYLE.font_weight),
-      font_style:    resolveStyle(s.fontStyle,                                           origStyle.font_style,    DEFAULT_BACKEND_STYLE.font_style),
-      font_family:   resolveStyle(s.fontFamily,                                          origStyle.font_family,   DEFAULT_BACKEND_STYLE.font_family),
-      text_align:    resolveStyle(s.textAlign,                                           origStyle.text_align,    DEFAULT_BACKEND_STYLE.text_align),
-      border_color:  resolveStyle(s.borderColor,                                         origStyle.border_color,  DEFAULT_BACKEND_STYLE.border_color),
-      border_width:  resolveStyle(s.borderWidth  ? parseInt(s.borderWidth)  : undefined, origStyle.border_width,  DEFAULT_BACKEND_STYLE.border_width),
-      border_radius: resolveStyle(s.borderRadius ? parseInt(s.borderRadius) : undefined, origStyle.border_radius, DEFAULT_BACKEND_STYLE.border_radius),
-      border_style:  resolveStyle(s.borderStyle,                                         origStyle.border_style,  DEFAULT_BACKEND_STYLE.border_style),
-      padding:       resolveStyle(s.padding      ? parseInt(s.padding)      : undefined, origStyle.padding,       DEFAULT_BACKEND_STYLE.padding),
-      opacity:       resolveStyle(s.opacity,                                             origStyle.opacity,       DEFAULT_BACKEND_STYLE.opacity),
-      box_shadow:    resolveStyle(s.boxShadow,                                           origStyle.box_shadow,    DEFAULT_BACKEND_STYLE.box_shadow),
-      hyperLink:     hyperlinkInput.value || "",
+      bg_color: resolveStyle(
+        s.background,
+        origStyle.bg_color,
+        DEFAULT_BACKEND_STYLE.bg_color,
+      ),
+      color: resolveStyle(
+        s.color,
+        origStyle.color,
+        DEFAULT_BACKEND_STYLE.color,
+      ),
+      font_size: resolveStyle(
+        s.fontSize ? parseInt(s.fontSize) : undefined,
+        origStyle.font_size,
+        DEFAULT_BACKEND_STYLE.font_size,
+      ),
+      font_weight: resolveStyle(
+        s.fontWeight,
+        origStyle.font_weight,
+        DEFAULT_BACKEND_STYLE.font_weight,
+      ),
+      font_style: resolveStyle(
+        s.fontStyle,
+        origStyle.font_style,
+        DEFAULT_BACKEND_STYLE.font_style,
+      ),
+      font_family: resolveStyle(
+        s.fontFamily,
+        origStyle.font_family,
+        DEFAULT_BACKEND_STYLE.font_family,
+      ),
+      text_align: resolveStyle(
+        s.textAlign,
+        origStyle.text_align,
+        DEFAULT_BACKEND_STYLE.text_align,
+      ),
+      border_color: resolveStyle(
+        s.borderColor,
+        origStyle.border_color,
+        DEFAULT_BACKEND_STYLE.border_color,
+      ),
+      border_width: resolveStyle(
+        s.borderWidth ? parseInt(s.borderWidth) : undefined,
+        origStyle.border_width,
+        DEFAULT_BACKEND_STYLE.border_width,
+      ),
+      border_radius: resolveStyle(
+        s.borderRadius ? parseInt(s.borderRadius) : undefined,
+        origStyle.border_radius,
+        DEFAULT_BACKEND_STYLE.border_radius,
+      ),
+      border_style: resolveStyle(
+        s.borderStyle,
+        origStyle.border_style,
+        DEFAULT_BACKEND_STYLE.border_style,
+      ),
+      padding: resolveStyle(
+        s.padding ? parseInt(s.padding) : undefined,
+        origStyle.padding,
+        DEFAULT_BACKEND_STYLE.padding,
+      ),
+      opacity: resolveStyle(
+        s.opacity,
+        origStyle.opacity,
+        DEFAULT_BACKEND_STYLE.opacity,
+      ),
+      box_shadow: resolveStyle(
+        s.boxShadow,
+        origStyle.box_shadow,
+        DEFAULT_BACKEND_STYLE.box_shadow,
+      ),
+      hyperLink: hyperlinkInput.value || "",
     };
 
     if (isSheet) {
-      emit("update:sheet", { sheet_id: id, workspace_id: props.workspaceId, workspace_module_id: props.moduleId, style: p });
+      emit("update:sheet", {
+        sheet_id: id,
+        workspace_id: props.workspaceId,
+        workspace_module_id: props.moduleId,
+        style: p,
+      });
     } else {
       const seatIds = Array.isArray(card?.seat_id)
         ? card.seat_id.map((s: any) => s._id || s)
         : card?.seat_id;
       emit("update:card", { card_id: id, seat_id: seatIds, style: p });
     }
+    toast.success("Style saved");
   } catch {
     toast.error("Failed to save style");
   } finally {
@@ -989,21 +1176,24 @@ async function saveNodeStyle() {
 
 // ─── Inline card creation ─────────────────────────────────────────────────
 const creatingForSheetId = ref<string | null>(null);
+const creatingForSheet = ref<any>(null);
 const newCardTitle = ref("");
 const isCreating = ref(false);
-const sheetTitle = ref("")
-function startInlineCreate(sheet:any) {
-  creatingForSheetId.value = sheet?._id;
+
+function startInlineCreate(sheetId: string, sheet?: any) {
+  creatingForSheetId.value = sheetId;
+  creatingForSheet.value =
+    sheet ?? props.listsData.find((s) => s._id === sheetId) ?? null;
   newCardTitle.value = "";
-  sheetTitle.value = sheet?.variables?.["sheet-title"] ?? "";
-  if (isCollapsed(sheet?._id)) {
-    collapsedIds.value = collapsedIds.value.filter((x) => x !== sheet?._id);
+  if (isCollapsed(sheetId)) {
+    collapsedIds.value = collapsedIds.value.filter((x) => x !== sheetId);
     nextTick(runLayout);
   }
 }
 
 function cancelInlineCreate() {
   creatingForSheetId.value = null;
+  creatingForSheet.value = null;
   newCardTitle.value = "";
   isCreating.value = false;
 }
@@ -1011,39 +1201,37 @@ function cancelInlineCreate() {
 async function submitInlineCard() {
   const title = newCardTitle.value.trim();
   if (!title || isCreating.value) return;
-
   const sheetId = creatingForSheetId.value;
   if (!sheetId) return;
-
-  const sheet = props.listsData.find((s) => s._id === sheetId);
+  const sheet =
+    creatingForSheet.value ?? props.listsData.find((s) => s._id === sheetId);
   if (!sheet) return;
 
-  isCreating.value = true;
+  const sheetTitle = sheet.variables?.["sheet-title"] || sheet.title || "To Do";
+  const status = sheetTitle || "To Do";
 
+  isCreating.value = true;
   try {
     const now = new Date();
     const startDate = now.toISOString().split("T")[0];
-    const endDate = new Date(now.getTime() + 3 * 86400000)
+    const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
       .toISOString()
       .split("T")[0];
-
     const payload = {
-      sheet_id: sheetId,
+      sheet_list_id: status,
       workspace_id: props.workspaceId,
-      workspace_module_id: props.moduleId,
+      sheet_id: sheetId,
       variables: {
-        "card-title": title,
-        "card-status": sheetTitle.value || "To Do",
+        "card-status": status,
         priority: "medium",
         process: null,
-        "card-description": "", // or default
+        "card-title": title,
+        "card-description": "This is a default description",
         "start-date": startDate,
         "end-date": endDate,
       },
-
       createdAt: new Date().toISOString(),
     };
-
     emit("create:card", payload);
     toast.success(`Card "${title}" created`);
     cancelInlineCreate();
@@ -1053,6 +1241,44 @@ async function submitInlineCard() {
     isCreating.value = false;
   }
 }
+
+async function createCardDirectly(sheetId: string) {
+  if (isCreating.value) return;
+  const sheet = props.listsData.find((s) => s._id === sheetId);
+  if (!sheet) return;
+  isCreating.value = true;
+  try {
+    const now = new Date();
+    const startDate = now.toISOString().split("T")[0];
+    const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+    const sheetTitle =
+      sheet.title || sheet.variables?.["sheet-title"] || "To Do";
+    const payload = {
+      sheet_list_id: sheetTitle,
+      workspace_id: props.workspaceId,
+      sheet_id: sheetId,
+      variables: {
+        "card-status": sheetTitle,
+        priority: "medium",
+        process: null,
+        "card-title": "New Card",
+        "card-description": "This is a default description",
+        "start-date": startDate,
+        "end-date": endDate,
+      },
+      createdAt: new Date().toISOString(),
+    };
+    emit("create:card", payload);
+    toast.success("Card created");
+  } catch {
+    toast.error("Failed to create card");
+  } finally {
+    isCreating.value = false;
+  }
+}
+
 // ─── Dragging ────────────────────────────────────────────────────────────────
 const dragId = ref<string | null>(null);
 const dragOffset = ref({ x: 0, y: 0 });
@@ -1119,7 +1345,7 @@ function ctxFormatCard() {
 function ctxAddCard() {
   const d = ctxMenu.data;
   closeCtxMenu();
-  if (d?.sheet_id) nextTick(() => startInlineCreate(d.sheet_id));
+  if (d?.sheet_id) nextTick(() => createCardDirectly(d.sheet_id));
 }
 
 function ctxAddCardToSheet() {
@@ -1143,7 +1369,6 @@ const totalCards = computed(() =>
 function getLaneColor(card: any): string {
   return card.lane?.variables?.["lane-color"] || "#7D68C8";
 }
-
 
 function fmtDate(d: string): string {
   if (!d) return "";
@@ -1336,17 +1561,30 @@ const visibleEdges = computed<Edge[]>(() => {
 
 // Keys that apply to the outer node wrapper (box, border, shadow)
 const WRAPPER_STYLE_KEYS = [
-  "background", "borderColor", "borderWidth", "borderRadius",
-  "borderStyle", "boxShadow", "opacity",
+  "background",
+  "borderColor",
+  "borderWidth",
+  "borderRadius",
+  "borderStyle",
+  "boxShadow",
+  "opacity",
 ];
 
 // Keys that apply to the inner text/body container (typography, spacing)
 const BODY_STYLE_KEYS = [
-  "color", "fontSize", "fontWeight", "fontFamily",
-  "fontStyle", "textAlign", "padding",
+  "color",
+  "fontSize",
+  "fontWeight",
+  "fontFamily",
+  "fontStyle",
+  "textAlign",
+  "padding",
 ];
 
-function pickStyles(source: Record<string, any>, keys: string[]): Record<string, any> {
+function pickStyles(
+  source: Record<string, any>,
+  keys: string[],
+): Record<string, any> {
   const out: Record<string, any> = {};
   for (const k of keys) {
     if (source[k] !== undefined && source[k] !== "") out[k] = source[k];
@@ -1556,7 +1794,7 @@ function handleKeyDown(e: KeyboardEvent) {
         (c: any) => c._id === selectedNodeId.value,
       );
       if (hit) {
-        startInlineCreate(sheet._id);
+        createCardDirectly(sheet._id);
         break;
       }
       if (sheet._id === selectedNodeId.value) {
@@ -2273,7 +2511,7 @@ watch(
   flex-direction: column;
   z-index: 50;
   overflow: hidden;
-  box-shadow: -4px 0 16px rgba(0,0,0,0.06);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.06);
 }
 .fs-header {
   display: flex;
@@ -2354,14 +2592,14 @@ watch(
 .fs-node-type {
   font-size: 9px;
   font-weight: 500;
-  background: rgba(125,104,200,0.1);
+  background: rgba(125, 104, 200, 0.1);
   color: #7d68c8;
   border-radius: 3px;
   padding: 1px 6px;
 }
 .fs-section {
   padding: 10px 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 .fs-section-label {
   font-size: 10px;
@@ -2396,7 +2634,7 @@ watch(
   width: 26px;
   height: 26px;
   border-radius: 5px;
-  border: 1.5px solid rgba(0,0,0,0.1);
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
   cursor: pointer;
   flex-shrink: 0;
   position: relative;
@@ -2518,12 +2756,14 @@ watch(
   border-radius: 5px;
   border: 2px solid;
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition:
+    transform 0.12s,
+    box-shadow 0.12s;
   padding: 0;
 }
 .preset-swatch:hover {
   transform: scale(1.18);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 .shadow-presets {
   display: flex;
@@ -2539,12 +2779,14 @@ watch(
   background: #fff;
   cursor: pointer;
   color: #2b2c30;
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
 }
 .shadow-btn:hover,
 .shadow-btn--active {
   border-color: #7d68c8;
-  background: rgba(125,104,200,0.07);
+  background: rgba(125, 104, 200, 0.07);
   color: #7d68c8;
 }
 .fs-reset-btn {
@@ -2587,26 +2829,30 @@ watch(
   background: #6e3b96;
 }
 .fs-save-btn:disabled {
-  background: rgba(125,104,200,0.45);
+  background: rgba(125, 104, 200, 0.45);
   cursor: not-allowed;
 }
 .spinner {
   width: 12px;
   height: 12px;
-  border: 2px solid rgba(255,255,255,0.4);
+  border: 2px solid rgba(255, 255, 255, 0.4);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   display: inline-block;
 }
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ── Slide sidebar transition ───────────────────────────────────────────── */
 .slide-sidebar-enter-active,
 .slide-sidebar-leave-active {
-  transition: transform 0.22s ease, opacity 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    opacity 0.22s ease;
 }
 .slide-sidebar-enter-from,
 .slide-sidebar-leave-to {
@@ -2751,7 +2997,7 @@ watch(
   color: #f1f5f9;
 }
 .pin-mindmap-root[data-dark="true"] .fs-section {
-  border-color: rgba(255,255,255,0.06);
+  border-color: rgba(255, 255, 255, 0.06);
 }
 .pin-mindmap-root[data-dark="true"] .fs-field label {
   color: #94a3b8;
@@ -2778,7 +3024,7 @@ watch(
   border-color: #334155;
 }
 .pin-mindmap-root[data-dark="true"] .fs-reset-btn {
-  background: rgba(239,68,68,0.12);
-  border-color: rgba(239,68,68,0.3);
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 </style>

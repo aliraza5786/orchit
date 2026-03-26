@@ -335,7 +335,7 @@ const MindMapView = defineAsyncComponent(
   () => import("../../../components/feature/MindmapView.vue"),
 );
 const props = defineProps<{
-  sptint_id: any;
+  sprint_id: any;
   searchQuery: string;
   activeSprint: string;
 }>();
@@ -411,7 +411,12 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
 
 const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
 const selected_view_by = ref(viewBy);
-const selected_sprint_id = ref(localStorage.getItem("activeSprintKey"));
+const selected_sprint_id = ref(props.sprint_id || localStorage.getItem("activeSprintKey"));
+watch(() => props.sprint_id, (newId) => {
+  if (newId) {
+    selected_sprint_id.value = newId;
+  }
+});
 const { data: Lists, isPending, refetch: refetchSheetLists } = useSprintKanban(selected_sprint_id, laneIds);
 watch(selected_sprint_id, () => {
   refetchSheetLists();
