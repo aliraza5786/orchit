@@ -195,7 +195,7 @@
               <button
                 v-else-if="canCreateCard && creatingForSheetId !== sheet._id"
                 class="add-card-btn"
-                @click.stop="startInlineCreate(sheet._id)"
+                @click.stop="startInlineCreate(sheet)"
               >
                 <i class="fa-solid fa-plus"></i> Add card
               </button>
@@ -991,12 +991,13 @@ async function saveNodeStyle() {
 const creatingForSheetId = ref<string | null>(null);
 const newCardTitle = ref("");
 const isCreating = ref(false);
-
-function startInlineCreate(sheetId: string) {
-  creatingForSheetId.value = sheetId;
+const sheetTitle = ref("")
+function startInlineCreate(sheet:any) {
+  creatingForSheetId.value = sheet?._id;
   newCardTitle.value = "";
-  if (isCollapsed(sheetId)) {
-    collapsedIds.value = collapsedIds.value.filter((x) => x !== sheetId);
+  sheetTitle.value = sheet?.variables?.["sheet-title"] ?? "";
+  if (isCollapsed(sheet?._id)) {
+    collapsedIds.value = collapsedIds.value.filter((x) => x !== sheet?._id);
     nextTick(runLayout);
   }
 }
@@ -1010,26 +1011,39 @@ function cancelInlineCreate() {
 async function submitInlineCard() {
   const title = newCardTitle.value.trim();
   if (!title || isCreating.value) return;
+
   const sheetId = creatingForSheetId.value;
   if (!sheetId) return;
+
   const sheet = props.listsData.find((s) => s._id === sheetId);
   if (!sheet) return;
 
   isCreating.value = true;
+
   try {
     const now = new Date();
+    const startDate = now.toISOString().split("T")[0];
+    const endDate = new Date(now.getTime() + 3 * 86400000)
+      .toISOString()
+      .split("T")[0];
+
     const payload = {
       sheet_id: sheetId,
       workspace_id: props.workspaceId,
       workspace_module_id: props.moduleId,
-      "card-title": title,
-      "card-status": "To Do",
-      "start-date": now.toISOString().split("T")[0],
-      "end-date": new Date(now.getTime() + 3 * 86400000)
-        .toISOString()
-        .split("T")[0],
-      variables: [{ slug: "card-status", value: "To Do", type: "Select" }],
+      variables: {
+        "card-title": title,
+        "card-status": sheetTitle.value || "To Do",
+        priority: "medium",
+        process: null,
+        "card-description": "", // or default
+        "start-date": startDate,
+        "end-date": endDate,
+      },
+
+      createdAt: new Date().toISOString(),
     };
+
     emit("create:card", payload);
     toast.success(`Card "${title}" created`);
     cancelInlineCreate();
@@ -1039,7 +1053,6 @@ async function submitInlineCard() {
     isCreating.value = false;
   }
 }
-
 // ─── Dragging ────────────────────────────────────────────────────────────────
 const dragId = ref<string | null>(null);
 const dragOffset = ref({ x: 0, y: 0 });
