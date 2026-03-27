@@ -20,8 +20,8 @@
         >
           <button
             ref="logoBtnRef"
-            class="flex items-center justify-between cursor-pointer rounded-md w-full px-2 transition-all duration-300"
-            :class="expanded? 'border-border-input  hover:shadow-md  py-1 border hover:border-accent':'border border-transparent'"
+            class="flex relative group items-center overflow-hidden justify-between cursor-pointer rounded-md w-full px-2 transition-all duration-300"
+            :class="expanded? 'b hover:shadow-md border-bg-card bg-bg-card py-1':''"
             aria-haspopup="menu"
             :aria-expanded="logoMenuOpen ? 'true' : 'false'"
             @click="toggleLogoMenu"
@@ -36,9 +36,9 @@
                   class="flex items-center gap-2"
                 >
                  <svg class="animate-spin h-5 w-5 text-text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="#6e3b96" stroke-width="2"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-           </svg>
+                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="#6e3b96" stroke-width="2"></circle>
+                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
                 </div>
 
                 <!-- Workspace content -->
@@ -60,8 +60,9 @@
               </div>
 
             <svg
+             v-if="!expanded"
               class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1 shrink-0"
-              :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'"
+              :class="logoMenuOpen  ? 'rotate-180' : 'rotate-0'"
               viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
@@ -72,16 +73,14 @@
                 clip-rule="evenodd"
               />
             </svg>
+             <div @click.stop="toggleLogoMenu"
+             v-if="expanded"
+             class="transition-all duration-400 flex items-center  w-8 p-1 bg-bg-card  -right-8 top-0 h-9 group-hover:right-[-4px]  absolute"
+              >
+             <i class="fa-solid fa-ellipsis text-[12px]"></i>
+           </div>
           </button>
-        </div>
-        <!-- <div
-          class="hidden sm:flex items-center justify-center transition-all duration-200 w-[40px] h-[50px]"
-        >
-            <i
-            class="fa-solid fa-sidebar ms-3 text-[16px] hover:text-[18px] cursor-w-resize text-text-secondary shrink-0"
-            @click="handleSidebarToggle"
-          ></i>
-        </div> -->
+        </div> 
       </div>
 
       <!-- Navigation Links -->

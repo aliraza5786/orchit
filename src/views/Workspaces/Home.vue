@@ -24,6 +24,16 @@
       <div class="mt-21 mb-8 flex items-center justify-between">
         <h2 class="text-xl font-medium">All Workspaces</h2>
         <div class="flex items-center gap-3">
+          <!-- Filter Dropdown -->
+          <div class="w-48">
+            <BaseSelectField 
+              v-model="filter" 
+              :options="filterOptions" 
+              size="sm" 
+              placeholder="Filter Workspaces"
+            />
+          </div>
+
           <button class="aspect-square w-8 cursor-pointer rounded-md p-1"
             :class="currentView === 'list' ? 'text-accent bg-accent-text' : ' hover:bg-border/50 backdrop-blur-2xl  transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
             @click="setView('list')" title="List view">
@@ -39,13 +49,12 @@
       </div>
 
       <!-- table/list view -->
-      <div v-if="!isPending && isEmpty" class="flex items-center justify-center py-10 text-sm text-text-secondary">
-        No Workspace
-      </div>
+      <WorkspaceListTable v-if="currentView === 'list'" :filter="filter" />
 
-      <WorkspaceListTable v-else-if="currentView === 'list'" />
+      <!-- gallery view -->
+      <ProjectGallery v-else-if="currentView === 'gallery'" :projects="workspaces?.workspaces" :loading="isLoading" />
 
-      <ProjectGallery v-else-if="currentView === 'gallery'" :projects="workspaces?.workspaces" :loading="isPending" />
+     
     </div>
   </div>
 </template>
@@ -58,17 +67,32 @@ import WorkspaceListTable from './components/WorkspaceListTable.vue'
 import { useWorkspaces } from '../../queries/useWorkspace'
 import { useWorkspaceStore } from '../../stores/workspace'
 import { useRouter } from 'vue-router'
+import BaseSelectField from '../../components/ui/BaseSelectField.vue'
+
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
-// 🔑 pagination + sort state
+
+// pagination + sort + filter state
 const page = ref(1)
-const pageSize = ref(10)
-// 🔑 query now accepts reactive params
-const { data: workspaces, isPending } = useWorkspaces(page, pageSize)
 type View = 'list' | 'gallery'
 const currentView = ref<View>('list')
 const setView = (v: View) => { currentView.value = v }
-// const workspaces = computed(() => (Array.isArray(items?.value) ? items!.value : []))
-const isEmpty = computed(() => workspaces.value.length === 0)
 
+const pageSize = computed(() => currentView.value === 'gallery' ? 1000 : 10)
+const filter = ref('all')
+
+const filterOptions = [
+  { title: 'All Workspaces', _id: 'all' },
+  { title: 'Private', _id: 'private' },
+  { title: 'Shared', _id: 'shared' },
+  { title: 'Archived', _id: 'archived' },
+  { title: 'Deleted', _id: 'deleted' },
+]
+
+//  query now accepts reactive params
+const { data: workspaces, isPending, isFetching } = useWorkspaces(page, pageSize, filter)
+
+const isLoading = computed(() => isPending.value || isFetching.value)
+
+// const isEmpty = computed(() => !workspaces.value?.workspaces?.length)
 </script>
