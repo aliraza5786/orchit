@@ -291,22 +291,22 @@ const { canCreateModule, canAccessModule } = usePermissions();
 const filteredModules = computed(() => {
  if (!workspace.value?.modules) return [];
 
-const alwaysAllowed = ["tasks", "pin"];
+const alwaysAllowed = ["tasks", "pin", "marketing"];
 
 return workspace.value.modules.filter((m: any) => {
   const source = m.user_permissions?.source?.toLowerCase();
 
   // Always allowed modules
-  if (alwaysAllowed.includes(m.title?.toLowerCase())) return true;
+  if (alwaysAllowed.includes(m.variables?.['module-title']?.toLowerCase())) return true;
 
   // Owner can always view
-  if (source === "owner") return true;
+ else if (source === "owner") return true;
 
   // Shared with read permission
-  if (source === "shared" && m.user_permissions?.can_read) return true;
+ else if (source === "shared" && m.user_permissions?.can_read) return true;
 
   // Team permission
-  if (canAccessModule(m._id, "view_all")) return true;
+  else if (canAccessModule(m._id, "view_all")) return true;
 
   return false; // important
 });
