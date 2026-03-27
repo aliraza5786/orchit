@@ -15,7 +15,6 @@
       <template #item="{ element: column, index }">
         <div class="rounded-lg bg-bg-surface h-full " 
        v-if="
-  column.title !== 'General' || 
   route?.path.includes('pin') || 
   localBoard.columns.length <= 1
 "

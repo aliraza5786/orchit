@@ -278,7 +278,7 @@ function cancelDelete() {
 }
 
 
-const { canCreateModule } = usePermissions();
+const { canCreateModule, canAccessModule } = usePermissions();
 
 // Removed workspace from props
   defineProps<{
@@ -306,7 +306,7 @@ return workspace.value.modules.filter((m: any) => {
   if (source === "shared" && m.user_permissions?.can_read) return true;
 
   // Team permission
-  // if (canAccessModule(m._id, "view_all")) return true;
+  if (canAccessModule(m._id, "view_all")) return true;
 
   return false; // important
 });
