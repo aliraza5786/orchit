@@ -94,22 +94,22 @@ export const useWorkspacesPrompt = () =>
     method: "GET",
   });
 
-export const useWorkspaces = (page: Ref<number>, limit: Ref<number>) => {
+export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
   return useQuery({
     queryKey: computed(() => [
       "workspaces",
       unref(page),
       unref(limit),
+      unref(filter) || "all",
     ]),
     queryFn: () =>
       request({
-        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}`,
+        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}&filter=${unref(filter) || "all"}`,
         method: "GET",
       }),
 
     staleTime: 0,
     refetchOnMount: "always",
-    placeholderData: (previousData) => previousData,
   });
 };
 
@@ -404,6 +404,19 @@ export const useDeleteWorkspace = (options = {}) =>
         request({
           url: `/workspace/${vars.id}`,
           method: "DELETE",
+        }),
+      ...(options as any),
+    } as any
+  );
+
+export const useArchiveWorkspace = (options = {}) =>
+  useApiMutation<any, { id: string | number }>(
+    { key: ["workspace", "archive"] } as any,
+    {
+      mutationFn: (vars: { id: string | number }) =>
+        request({
+          url: `/workspace/${vars.id}/archive`,
+          method: "PATCH",
         }),
       ...(options as any),
     } as any

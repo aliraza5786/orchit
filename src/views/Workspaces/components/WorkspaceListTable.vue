@@ -4,10 +4,14 @@ import { h, ref, computed, watch } from 'vue'
 import { formatDate } from '../../../utilities/FormatDate'
 import Collaborators from '../../../components/ui/Collaborators.vue'
 import { useRouter } from 'vue-router'
-import { useWorkspaces } from '../../../queries/useWorkspace'
+import { useWorkspaces, useDeleteWorkspace, useArchiveWorkspace } from '../../../queries/useWorkspace'
 import InviteUsersWithPermissions from '../Modals/InviteUsersWithPermissions.vue'
+import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
+import { toast } from 'vue-sonner'
+import { useQueryClient } from '@tanstack/vue-query'
 
 const router = useRouter()
+const queryClient = useQueryClient()
 
 /* ------------ Column render helpers ------------ */
 const dateCache = new Map<string, string>()
@@ -31,6 +35,82 @@ const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
 const openInviteModal = (workspaceId: string | number) => {
     selectedInvitingWorkspaceId.value = workspaceId
     showInviteModal.value = true
+}
+
+/* ------------ Actions handlers ------------ */
+const showDeleteConfirm = ref(false)
+const workspaceToAction = ref<any>(null)
+const isDeleting = ref(false)
+
+const { mutate: deleteWorkspace } = useDeleteWorkspace({
+    onSuccess: () => {
+        toast.success('Workspace deleted successfully')
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+        showDeleteConfirm.value = false
+        isDeleting.value = false
+    },
+    onError: (err: any) => {
+        isDeleting.value = false
+        toast.error(err?.response?.data?.message || 'Failed to delete workspace')
+    }
+})
+
+const { mutate: archiveWorkspace } = useArchiveWorkspace({
+    onSuccess: () => {
+        const msg = props.filter === 'archived' ? 'Workspace unarchived successfully' : 'Workspace archived successfully'
+        toast.success(msg)
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+    },
+    onError: (err: any) => {
+        toast.error(err?.response?.data?.message || 'Failed to archive workspace')
+    }
+})
+
+const handleArchive = (row: any) => {
+    archiveWorkspace({ id: row._id })
+}
+
+const openDeleteConfirm = (row: any) => {
+    workspaceToAction.value = row
+    showDeleteConfirm.value = true
+}
+
+const onConfirmDelete = () => {
+    if (!workspaceToAction.value) return
+    isDeleting.value = true
+    deleteWorkspace({ id: workspaceToAction.value._id })
+}
+
+const renderActions = ({ row }: any) => {
+    if (props.filter === 'deleted') return h('div', { class: 'h-8' })
+    if(!row?.has_permission_to_manage_user) return
+
+    const isArchived = props.filter === 'archived'
+    const archiveIcon = isArchived ? 'fa-regular fa-folder-open' : 'fa-regular fa-folder-closed'
+    const archiveTitle = isArchived ? 'Unarchive' : 'Archive'
+
+    return h('div', { class: 'flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity' }, [
+        h('button', {
+            class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary group/action',
+            onClick: (e: Event) => {
+                e.stopPropagation()
+                handleArchive(row)
+            },
+            title: archiveTitle
+        }, [
+            h('i', { class: `${archiveIcon} text-sm` })
+        ]),
+        h('button', {
+            class: 'p-2 hover:bg-red-500/10 rounded-md transition-colors text-red-500 hover:text-red-600 group/action',
+            onClick: (e: Event) => {
+                e.stopPropagation()
+                openDeleteConfirm(row)
+            },
+            title: 'Delete'
+        }, [
+            h('i', { class: 'fa-regular fa-trash-can text-sm' })
+        ])
+    ])
 }
 
 const renderProject = ({ row, value }: any) =>
@@ -120,13 +200,20 @@ const renderCompanyAdmin = ({ row }: any) => {
 
 /* ------------ Table columns ------------ */
 const columns = [
-    { key: 'variables', label: 'Project', render: renderProject },
-    { key: 'variables', label: 'Project type', render: renderProjectType },
-    { key: 'People', label: 'People', render: renderPeople },
-    { key: 'created_at', label: 'Start Date', render: renderStartDate },
-    { key: 'admin', label: 'Workspace Owner', render:  renderCompanyAdmin },
-
+    { key: 'variables', label: 'Project', render: renderProject, width: '300px' },
+    { key: 'variables', label: 'Project type', render: renderProjectType, width: '150px' },
+    { key: 'People', label: 'People', render: renderPeople, width: '120px' },
+    { key: 'created_at', label: 'Start Date', render: renderStartDate, width: '150px' },
+    { key: 'admin', label: 'Workspace Owner', render:  renderCompanyAdmin, width: '200px' },
+    { key: 'actions', label: '', render: renderActions, align: 'right' as const, width: '50px' },
 ]
+
+const props = defineProps({
+    filter: {
+        type: String,
+        default: 'all'
+    }
+})
 
 /* ------------ Internal pagination + sort state ------------ */
 const page = ref(1)
@@ -134,21 +221,23 @@ const pageSize = ref(10)
 
 /* ------------ Data fetching (server mode) ------------ */
 /** useWorkspaces must accept reactive { page, pageSize, sort } and refetch when they change */
-const { data, isPending } = useWorkspaces(page, pageSize)
+const { data, isPending, isFetching } = useWorkspaces(page, pageSize, computed(() => props.filter))
+
+const isLoading = computed(() => isPending.value || isFetching.value)
 
 /** Unwrap API shape: { workspaces: any[]; pagination: { totalCount: number } } */
 const items = computed(() => data.value?.workspaces ?? [])
 const totalCount = ref(0)
 
-watch(data, () => {
-    if (data.value?.pagination?.totalCount)
-        totalCount.value = data.value?.pagination?.totalCount;
-})
+watch(data, (newVal) => {
+    if (newVal?.pagination?.totalCount !== undefined)
+        totalCount.value = newVal.pagination.totalCount;
+}, { immediate: true })
 </script>
 
 <template>
-    <Table :columns="columns" :rows="items" :loading="isPending" :total="totalCount" v-model:page="page"
-        v-model:pageSize="pageSize" :pageSizes="[10, 20, 50, 100]" >
+    <Table :columns="columns" :rows="items" :loading="isLoading" :total="totalCount" v-model:page="page"
+        v-model:pageSize="pageSize" :pageSizes="[10, 20, 50, 100]" :rowClass="() => 'group'">
         <!-- Optional slots you were using -->
         <template #status="{ row }">
             <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
@@ -170,4 +259,24 @@ watch(data, () => {
         </template>
     </Table>
     <InviteUsersWithPermissions v-model="showInviteModal" :defaultWorkspaceId="selectedInvitingWorkspaceId" />
+    
+    <ConfirmDeleteModal 
+        v-model="showDeleteConfirm" 
+        title="Delete Workspace" 
+        :item-label="'workspace'"
+        :item-name="workspaceToAction?.variables?.title || 'this workspace'" 
+        :require-match-text="workspaceToAction?.variables?.title || ''" 
+        :loading="isDeleting"
+        confirm-text="Delete Workspace" 
+        size="md" 
+        @confirm="onConfirmDelete" 
+        @cancel="showDeleteConfirm = false"
+    >
+        <template #message>
+            <p class="text-sm text-text-secondary">
+                This action cannot be undone. This will permanently delete the workspace <span
+                    class="font-semibold text-text-primary">{{ workspaceToAction?.variables?.title }}</span> and all of its data.
+            </p>
+        </template>
+    </ConfirmDeleteModal>
 </template>

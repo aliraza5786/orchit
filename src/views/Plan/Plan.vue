@@ -964,7 +964,7 @@ const elipseWrapperSprint = ref<HTMLElement | null>(null);
 const open = ref(false);
 const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
-const selectedFilter = ref<string | "">("");
+const selectedFilter = ref<string | "">(localStorage.getItem("activeMilestoneId") || "");
 const isStartingSprintLoading = ref(false);
 const sidePanelStore = useSidePanelStore();
 const isSprintChecked = ref(false);
@@ -978,7 +978,9 @@ const formattedLabel = computed(() => {
   if (!sprintType.value) return "";
   return sprintType.value.charAt(0).toUpperCase() + sprintType.value.slice(1);
 });
-const selectedType = ref(sprintTypes[0]);
+const savedSprintType = localStorage.getItem("sprintType");
+const initialType = sprintTypes.find(t => t.value === savedSprintType) || sprintTypes[0];
+const selectedType = ref(initialType);
 import { onClickOutside } from "@vueuse/core";
 // import ConfirmDeleteTicket from "./components/confirmDeleteTicket.vue";
 const elipseWrapper = ref<HTMLElement | null>(null);
@@ -1187,11 +1189,13 @@ const { refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(
   ref(""),
 );
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
-const selectedSprintId = ref(firstSprintId.value);
+const selectedSprintId = ref(localStorage.getItem("activeSprintKey") || "");
 watch(
   () => firstSprintId.value,
   (newVal) => {
-    selectedSprintId.value = newVal;
+    if (!selectedSprintId.value && newVal) {
+      selectedSprintId.value = newVal;
+    }
   },
 );
 watch(
@@ -1551,6 +1555,9 @@ onClickOutside(elipseWrapperSprint, () => {
 });
 const selectType = (item: (typeof sprintTypes)[number]) => {
   selectedType.value = item;
+  selectedSprintId.value = "";
+  selectedFilter.value = "";
+  localStorage.setItem("sprintType", item.value);
   open.value = false;
 };
 
@@ -1577,7 +1584,7 @@ const closeSearchModal = () => {
 };
 
 // filters
-const selectedHuddleModule = ref<string>("all"); // dropdown      // sprint buttons
+const selectedHuddleModule = ref<string>(localStorage.getItem("activeMilestoneId") || "all"); // dropdown      // sprint buttons
 const isHuddleDropdownOpen = ref(false);
 // Computed label for huddle button
 const selectedHuddleModuleLabel = computed(() => {
