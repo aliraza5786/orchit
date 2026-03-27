@@ -23,7 +23,7 @@
         <p v-html="ticket['card-description']" v-once
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
         </p>
-        <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
+        <!-- <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
             <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
                 <i class="fa-regular fa-message"></i>
                 {{ ticket?.comments_count }}
@@ -33,17 +33,17 @@
                 {{ ticket?.attachments?.length }}
             </div>
 
-        </div>
+        </div> -->
       
 
         <!-- Bottom Info -->
-        <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
+        <!-- <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
             <DatePicker placeholder="set start date" :model-value="startDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setStartDate" /> 
                 <div class="mt-3 font-bold">-</div>
             <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setDueDate" />
-        </div>
+        </div> -->
 
       
     </div>
@@ -66,7 +66,7 @@ import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
 import DropMenu from '../../../components/ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
-import DatePicker from '../../../views/Product/components/DatePicker.vue'
+// import DatePicker from '../../../views/Product/components/DatePicker.vue'
 
 import { usePermissions } from '../../../composables/usePermissions';
 const { canViewCard, canDeleteCard } = usePermissions();
@@ -167,19 +167,19 @@ const handleDeleteTicket = () => {
     deleteCard({})
 }
 
-const setStartDate = (date: string | null) => {
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        variables: { 'start-date': date }
-    })
-}
+// const setStartDate = (date: string | null) => {
+//     moveCard.mutate({
+//         card_id: props.ticket._id,
+//         variables: { 'start-date': date }
+//     })
+// }
 
-const setDueDate = (date: string | null) => {
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        variables: { 'end-date': date }
-    })
-}
+// const setDueDate = (date: string | null) => {
+//     moveCard.mutate({
+//         card_id: props.ticket._id,
+//         variables: { 'end-date': date }
+//     })
+// }
 
 const emit = defineEmits(['click'])
 </script>

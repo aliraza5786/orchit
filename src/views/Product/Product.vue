@@ -1580,11 +1580,32 @@ const handleDeleteTicket = async () => {
 };
 
 const { mutate: addTicket } = useAddTicket({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    localPendingTickets.value = [];
-    localTableOrder.value = [];
-  },
+  onSuccess: (newCard:any) => {
+  queryClient.setQueriesData(
+    { queryKey: ["sheet-list"], exact: false },
+    (oldData: any) => {
+      if (!oldData) return oldData;
+
+      const isList = Array.isArray(oldData);
+      const sheets: any[] = isList ? oldData : (oldData?.data ?? oldData?.sheets ?? []);
+
+      const updatedSheets = sheets.map((sheet: any) => {
+        if (sheet._id !== newCard?.sheet_id) return sheet;
+
+        const existingCards: any[] = sheet.cards ?? [];
+        const alreadyExists = existingCards.some((c) => c._id === newCard._id);
+        if (alreadyExists) return sheet;
+
+        return { ...sheet, cards: [...existingCards, newCard] };
+      });
+
+      return isList ? updatedSheets : { ...oldData, data: updatedSheets };
+    },
+  );
+
+  localPendingTickets.value = [];
+  localTableOrder.value = [];
+},
 });
 
 function checkAndCreateTicket(row: any) {

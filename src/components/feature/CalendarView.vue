@@ -63,40 +63,54 @@ const isCardListArray = (data: any[]): data is CardList[] => {
   return data.length > 0 && "cards" in data[0];
 };
 const calendarEvents = computed(() => {
-  let allCards: Card[] = [];
+  let allCards: any[] = [];
 
   if (!props.data || props.data.length === 0) return [];
 
   if (isCardListArray(props.data)) {
-    // Flatten lists
     allCards = props.data.flatMap(list => list.cards || []);
   } else {
-    // Already flat array of cards
-    allCards = props.data as Card[];
+    allCards = props.data as any[];
   }
 
   return allCards
-    .filter(card => card['start-date'] && card['end-date'])
     .map((card, index) => {
+      let start = card["start-date"]
+        ? new Date(card["start-date"])
+        : card.created_at
+        ? new Date(card.created_at)
+        : null;
+
+      if (!start || isNaN(start.getTime())) return null;
+
+      let end = card["end-date"]
+        ? new Date(card["end-date"])
+        : null;
+
+      if (!end || isNaN(end.getTime())) {
+        end = new Date(start);
+        end.setDate(end.getDate() + 1);
+      }
+
+      const endExclusive = new Date(end);
+      endExclusive.setDate(endExclusive.getDate() + 1);
+
       const color = lightColors[index % lightColors.length];
-      const start = new Date(card['start-date']);
-      const end = new Date(card['end-date']);
-      end.setDate(end.getDate() + 1);
 
       return {
         id: card._id,
-        title: card['card-title'] || card['card-code'] || "Untitled",
+        title: card["card-title"] || card["card-code"] || "Untitled",
         start,
-        end,
+        end: endExclusive,
         allDay: true,
         backgroundColor: color,
         borderColor: color,
-        textColor: '#374151',
+        textColor: "#374151",
         extendedProps: { card },
       };
-    });
+    })
+    .filter((event): event is any => event !== null); // ✅ FIX
 });
-
 const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin],
   initialView: "dayGridMonth",
