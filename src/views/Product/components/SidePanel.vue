@@ -252,7 +252,7 @@
                     :seat="cardDetails?.seats || cardDetails?.seat"
                   />
                 </div>
-                <template>
+                <template v-if="!pin">
                   <div class="space-y-2">
                     <div
                       class="text-xs uppercase tracking-wider text-text-secondary"
@@ -862,6 +862,7 @@ const {
 const { workspaceId } = useRouteIds();
 const queryClient = useQueryClient();
 const props = defineProps({
+  pin: { type: Boolean, default: false },
   showPanel: { type: Boolean, default: true },
   details: { type: Object as () => any, default: () => ({}) },
   sheetID: { type: String, required: false }, 

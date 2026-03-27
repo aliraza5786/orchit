@@ -99,19 +99,34 @@ function parsePlainDate(value: string | null | undefined): Date | null {
 function buildEvents(cards: RawCard[]) {
   return cards
     .map((card) => {
-      const start = parsePlainDate(card["start-date"]);
-      const end = parsePlainDate(card["end-date"]);
-      if (!start || !end) return null;
+      // ✅ Start date fallback
+      let start =
+        parsePlainDate(card["start-date"]) ||
+        (card.created_at ? new Date(card.created_at) : null);
+
+      if (!start || isNaN(start.getTime())) return null;
+
+      // ✅ End date fallback
+      let end =
+        parsePlainDate(card["end-date"]);
+
+      if (!end || isNaN(end.getTime())) {
+        end = new Date(start);
+        end.setDate(end.getDate() + 1); // default 1 day
+      }
+
+      // Toast UI expects exclusive end date
       const endInclusive = new Date(end);
       endInclusive.setDate(endInclusive.getDate() + 1);
+
       return {
         id: card._id,
         calendarId: "default",
         title: card["card-title"] || "Untitled",
         start,
         end: endInclusive,
-        isAllday: true,
-        category: "allday",
+        isAllday: currentView.value === "month",
+        category: currentView.value === "month" ? "allday" : "time",
         raw: card,
       };
     })

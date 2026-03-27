@@ -143,7 +143,7 @@
                   @select:ticket="selectCardHandler"
                   @onBoardUpdate="handleBoardUpdate"
                 >
-                  <template #column-footer="column">
+                  <!-- <template #column-footer="column">
                     <div
                       class="mx-auto text-text-secondary/80 m-2 w-[90%] h-full justify-center flex items-center border border-dashed border-border"
                       v-if="
@@ -154,7 +154,7 @@
                     >
                       Disable ( you can't drop here )
                     </div>
-                  </template>
+                  </template> -->
 
                   <template #ticket="{ ticket }">
                     <div class="max-h-[calc(100vh-220px)] overflow-y-auto pr-1">

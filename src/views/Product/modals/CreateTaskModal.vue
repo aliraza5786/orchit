@@ -45,7 +45,7 @@
       />
 
       <!-- Start date -->
-      <div class="flex gap-1 flex-col">
+      <div class="flex gap-1 flex-col" v-if="!pin">
         <label class="text-sm">Start date</label>
         <div
           class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
@@ -64,7 +64,7 @@
       </div>
 
       <!-- End date -->
-      <div class="flex gap-1 flex-col">
+      <div class="flex gap-1 flex-col" v-if="!pin">
         <label class="text-sm">End date</label>
         <div
           class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"

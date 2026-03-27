@@ -20,7 +20,6 @@ const ResetPassword = () => import("../views/Auth/ResetPassword.vue");
 const FinishProfile = () => import("../views/FinishProfile.vue");
 const NotFound = () => import("../views/NotFound.vue");
 const ModuleDetail=()=> import( "../views/More/ModuleDetail.vue");
-
 const Plan = () => import("../views/Plan/Plan.vue");
 const Pin = () => import("../views/Pin/Pin.vue");
 const LandingLayout = () =>
@@ -40,8 +39,6 @@ const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
 const LandingPageLayout = () =>
   import("../layout/LandingPageLayout/LandingPageLayout.vue");
-
-const peakUpdate = () => import("../views/peakDuplicate.vue");
 const requestDelete = () => import("../views/request_delete.vue");
 const NewHomepage = () => import("../views/homenew.vue");
 const Pricing = () => import("../views/Pricing.vue");
@@ -224,12 +221,6 @@ const routes: RouteRecordRaw[] = [
     props: true,
     meta: { requiresAuth: false },
   },
-{
-    path: "/peak-duplicate",
-    name: "peak-duplicate",
-    component: peakUpdate,
-    meta: { requiresAuth: false },
-  },
   {
     path: "/request_delete",
     name: "Request Delete",
@@ -250,7 +241,7 @@ const routes: RouteRecordRaw[] = [
       { path: "process/:id", name: "process", component: Process2 },
       { path: "more/:id", name: "more", component: More },
       { path: "more/detail/:id/:module_id", name: "moreDetail", component: ModuleDetail },
-      // { path: "custom-process/:id", name: "process2", component: Process2 },
+     
       {
       path: ":id/:module_id",
       component: Product,
