@@ -227,7 +227,7 @@
           </template>
 
           <template v-else-if="node.uniqueName === 'card'">
-            <div class="node-card-inner">
+            <div class="node-card-wrapper">
               <div
                 class="node-card-stripe"
                 :style="{
@@ -239,8 +239,8 @@
                 }"
               ></div>
 
-              <div class="node-card-body">
-                <div class="node-card-badges">
+              <div class="node-card-body py-2">
+                <div class="node-card-badges mt-1.5">
                   <span
                     v-if="node.variables?.['card-type']"
                     class="card-badge card-badge--type"
@@ -261,55 +261,25 @@
                   </span>
                 </div>
 
-                <span class="node-card-title">{{ node.topic }}</span>
+                <div class="relative inline-block group">
+                  <span class="node-card-title mt-1">
+                    {{ node.topic }}
+                  </span>
 
-                <div
-                  v-if="node.variables?.['card-description']"
-                  class="node-card-desc"
-                  v-html="node.variables['card-description']"
-                ></div>
-
-                <div class="node-card-footer">
-                  <div class="node-card-footer-left">
-                    <div
-                      v-if="
-                        node.variables?.['start-date'] ||
-                        node.variables?.['end-date']
-                      "
-                      class="node-card-dates"
-                    >
-                      <i
-                        class="fa-regular fa-calendar"
-                        style="font-size: 9px; opacity: 0.6"
-                      ></i>
-                      <span v-if="node.variables['start-date']">{{
-                        formatDate(node.variables["start-date"])
-                      }}</span>
-                      <span
-                        v-if="
-                          node.variables['start-date'] &&
-                          node.variables['end-date']
-                        "
-                        style="opacity: 0.4"
-                        >→</span
-                      >
-                      <span v-if="node.variables['end-date']">{{
-                        formatDate(node.variables["end-date"])
-                      }}</span>
-                    </div>
-                    <span
-                      v-if="node.variables?.process != null"
-                      class="card-badge card-badge--process"
-                      >{{ node.variables.process }}%</span
-                    >
+                  <div
+                  v-if="node?.topic?.length > 30"
+                    class="absolute -right-32 z-100 -top-6 mt-1 hidden group-hover:block bg-bg-card text-accent text-xs px-2 py-1 rounded shadow"
+                  >
+                    {{ node.topic }}
                   </div>
                 </div>
-
                 <div class="node-card-actions-row" v-if="!isPlanRoute">
                   <button
                     v-if="canCreateCard"
                     class="nact nact--add"
-                    @click.stop="node.parent && createCardDirectly(node.parent)"
+                    @click.stop="
+                      node.parent && createCardDirectly(node.parent, node)
+                    "
                     title="Add sibling card"
                   >
                     <i class="fa-solid fa-plus"></i>
@@ -356,19 +326,19 @@
         <div class="ctrl-divider"></div>
         <button
           class="ctrl-btn"
-          :class="{ 'ctrl-btn--active': layoutDirection === 'right' }"
-          @click="setLayout('right')"
-          title="Layout: Left to Right"
+          :class="{ 'ctrl-btn--active': layoutDirection === 'left' }"
+          @click="setLayout('left')"
+          title="Layout: Left"
         >
-          <i class="fa-solid fa-arrow-right"></i>
+          <i class="fa-solid fa-arrow-left"></i>
         </button>
         <button
           class="ctrl-btn"
-          :class="{ 'ctrl-btn--active': layoutDirection === 'left' }"
-          @click="setLayout('left')"
-          title="Layout: Right to Left"
+          :class="{ 'ctrl-btn--active': layoutDirection === 'right' }"
+          @click="setLayout('right')"
+          title="Layout: Right"
         >
-          <i class="fa-solid fa-arrow-left"></i>
+          <i class="fa-solid fa-arrow-right"></i>
         </button>
         <button
           class="ctrl-btn"
@@ -377,6 +347,37 @@
           title="Layout: Centered"
         >
           <i class="fa-solid fa-arrows-left-right"></i>
+        </button>
+        <button
+          class="ctrl-btn"
+          :class="{ 'ctrl-btn--active': layoutDirection === 'top' }"
+          @click="setLayout('top')"
+          title="Layout: Top Down"
+        >
+          <i class="fa-solid fa-arrow-down"></i>
+        </button>
+        <button
+          class="ctrl-btn"
+          :class="{ 'ctrl-btn--active': layoutDirection === 'bottom' }"
+          @click="setLayout('bottom')"
+          title="Layout: Bottom Up"
+        >
+          <i class="fa-solid fa-arrow-up"></i>
+        </button>
+        <div class="ctrl-divider"></div>
+        <button
+          class="ctrl-btn"
+          :class="{ 'ctrl-btn--active': isFullscreen }"
+          @click="toggleFullscreen"
+          :title="isFullscreen ? 'Exit Fullscreen (Esc / G)' : 'Fullscreen (G)'"
+        >
+          <i
+            :class="
+              isFullscreen
+                ? 'fa-light fa-arrows-minimize'
+                : 'fa-light fa-arrows-maximize'
+            "
+          ></i>
         </button>
         <div class="ctrl-divider"></div>
         <!-- NEW: center, fit, reset buttons -->
@@ -416,6 +417,12 @@
         >
       </div>
     </div>
+    <!-- ✦ Shortcut hint toast -->
+    <transition name="hint-fade">
+      <div v-if="showShortcutHint" class="shortcut-hint">
+        {{ lastShortcutLabel }}
+      </div>
+    </transition>
 
     <transition name="slide-sidebar">
       <div
@@ -427,22 +434,153 @@
         <div class="fs-header">
           <div class="fs-header-left">
             <i
-              class="fa-solid fa-sliders"
+              :class="
+                selectedNodeId ? 'fa-solid fa-sliders' : 'fa-solid fa-palette'
+              "
               style="color: var(--accent, #6e3b96)"
             ></i>
-            <span>Format Node</span>
+            <span>{{ selectedNodeId ? "Format Node" : "Map Theme" }}</span>
           </div>
           <button class="fs-close" @click="showFormatSidebar = false">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
-        <div v-if="!selectedNodeId" class="fs-empty">
-          <i
-            class="fa-solid fa-arrow-pointer fa-xl"
-            style="color: #cbd5e1; margin-bottom: 8px"
-          ></i>
-          <p>Click any node<br />to format it</p>
+        <!-- ✦ Theme panel shown when no node selected -->
+        <div v-if="!selectedNodeId" class="theme-panel">
+          <!-- Background Color -->
+          <div class="fs-section">
+            <div class="fs-section-label">Canvas Background</div>
+
+            <!-- Color grid -->
+            <div class="bg-color-grid">
+              <button
+                v-for="color in BG_COLORS"
+                :key="color"
+                class="bg-swatch"
+                :class="{ 'bg-swatch--active': activeCanvasBg === color }"
+                :style="{ background: color }"
+                :title="color"
+                @click="applyCustomBg(color)"
+              ></button>
+            </div>
+
+            <!-- Custom color + hex input row -->
+            <div class="bg-custom-row">
+              <div class="color-swatch" :style="{ background: customBgColor }">
+                <input
+                  type="color"
+                  :value="customBgColor"
+                  @input="
+                    applyCustomBg(($event.target as HTMLInputElement).value)
+                  "
+                />
+              </div>
+              <span class="bg-hex-label">#</span>
+              <input
+                class="bg-hex-input"
+                :value="customBgColor.replace('#', '')"
+                maxlength="6"
+                placeholder="dedfe3"
+                @change="
+                  applyCustomBg('#' + ($event.target as HTMLInputElement).value)
+                "
+              />
+              <span class="bg-opacity-label">100%</span>
+            </div>
+
+            <!-- Recently used -->
+            <div v-if="recentlyUsedColors.length" class="bg-recent">
+              <div class="bg-recent-label">Recently Used</div>
+              <div class="bg-color-grid">
+                <button
+                  v-for="color in recentlyUsedColors"
+                  :key="color"
+                  class="bg-swatch"
+                  :class="{ 'bg-swatch--active': activeCanvasBg === color }"
+                  :style="{ background: color }"
+                  @click="applyCustomBg(color)"
+                ></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Color Themes -->
+          <div class="fs-section">
+            <div class="fs-section-label">Color Theme</div>
+            <div class="theme-grid">
+              <button
+                v-for="theme in THEMES"
+                :key="theme.id"
+                class="theme-card"
+                :class="{ 'theme-card--active': activeThemeId === theme.id }"
+                :title="theme.name"
+                @click="applyTheme(theme)"
+              >
+                <!-- Mini mindmap preview -->
+                <div class="theme-preview" :style="{ background: theme.bg }">
+                  <div
+                    class="tp-center"
+                    :style="{
+                      background: theme.nodeColors.root,
+                      color: theme.textColor,
+                    }"
+                  ></div>
+                  <div class="tp-branches">
+                    <div
+                      class="tp-branch"
+                      :style="{ background: theme.nodeColors.sheet }"
+                    ></div>
+                    <div
+                      class="tp-branch"
+                      :style="{ background: theme.nodeColors.sheet }"
+                    ></div>
+                    <div
+                      class="tp-branch"
+                      :style="{ background: theme.nodeColors.sheet }"
+                    ></div>
+                  </div>
+                  <svg class="tp-lines" viewBox="0 0 60 40">
+                    <line
+                      x1="22"
+                      y1="20"
+                      x2="38"
+                      y2="8"
+                      :stroke="theme.edgeColor"
+                      stroke-width="1.5"
+                    />
+                    <line
+                      x1="22"
+                      y1="20"
+                      x2="38"
+                      y2="20"
+                      :stroke="theme.edgeColor"
+                      stroke-width="1.5"
+                    />
+                    <line
+                      x1="22"
+                      y1="20"
+                      x2="38"
+                      y2="32"
+                      :stroke="theme.edgeColor"
+                      stroke-width="1.5"
+                    />
+                  </svg>
+                </div>
+                <span class="theme-name">{{ theme.name }}</span>
+                <i
+                  v-if="activeThemeId === theme.id"
+                  class="fa-solid fa-check theme-check"
+                ></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Hint -->
+          <div class="theme-hint">
+            <i class="fa-solid fa-circle-info me-1" style="color: #94a3b8"></i>
+            <span>Click a node to format it</span>
+          </div>
         </div>
 
         <div v-else class="fs-body">
@@ -471,10 +609,10 @@
             </div>
           </div>
 
-          <div class="fs-section">
+          <div class="fs-section space-y-2">
             <div class="fs-section-label">Colors</div>
-            <div class="fs-row">
-              <div class="fs-field">
+            <div class="">
+              <div class="fs-field mt-1">
                 <label>Background</label>
                 <div class="color-row">
                   <div
@@ -497,7 +635,7 @@
                   />
                 </div>
               </div>
-              <div class="fs-field">
+              <div class="fs-field mt-1">
                 <label>Text</label>
                 <div class="color-row">
                   <div
@@ -519,7 +657,7 @@
                 </div>
               </div>
             </div>
-            <div class="fs-field">
+            <div class="fs-field mt-1">
               <label>Border Color</label>
               <div class="color-row">
                 <div
@@ -544,7 +682,7 @@
             </div>
           </div>
 
-          <div class="fs-section">
+          <div class="fs-section space-y-2">
             <div class="fs-section-label">Typography</div>
             <div class="fs-row">
               <div class="fs-field">
@@ -587,13 +725,60 @@
                   @change="onStyleChange('font_family', $event)"
                 >
                   <option value="inherit">Default</option>
+
+                  <!-- Modern UI Fonts -->
                   <option value="Inter, sans-serif">Inter</option>
                   <option value="'Segoe UI', sans-serif">Segoe UI</option>
                   <option value="'Roboto', sans-serif">Roboto</option>
                   <option value="'Poppins', sans-serif">Poppins</option>
                   <option value="'DM Sans', sans-serif">DM Sans</option>
-                  <option value="monospace">Monospace</option>
+                  <option value="'Open Sans', sans-serif">Open Sans</option>
+                  <option value="'Lato', sans-serif">Lato</option>
+                  <option value="'Nunito', sans-serif">Nunito</option>
+                  <option value="'Work Sans', sans-serif">Work Sans</option>
+                  <option value="'Montserrat', sans-serif">Montserrat</option>
+
+                  <!-- System Font Stack (Best Performance) -->
+                  <option
+                    value="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+                  >
+                    System UI
+                  </option>
+
+                  <!-- Classic Web Safe Fonts -->
+                  <option value="Arial, sans-serif">Arial</option>
+                  <option
+                    value="'Helvetica Neue', Helvetica, Arial, sans-serif"
+                  >
+                    Helvetica
+                  </option>
+                  <option value="'Times New Roman', serif">
+                    Times New Roman
+                  </option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="'Courier New', monospace">Courier New</option>
+
+                  <!-- Designer / Premium Feel -->
+                  <option value="'Playfair Display', serif">
+                    Playfair Display
+                  </option>
+                  <option value="'Merriweather', serif">Merriweather</option>
+                  <option value="'Raleway', sans-serif">Raleway</option>
+                  <option value="'Oswald', sans-serif">Oswald</option>
+                  <option value="'Ubuntu', sans-serif">Ubuntu</option>
+
+                  <!-- Fun / Stylized -->
+                  <option value="'Pacifico', cursive">Pacifico</option>
+                  <option value="'Dancing Script', cursive">
+                    Dancing Script
+                  </option>
+                  <option value="'Fira Code', monospace">Fira Code</option>
+
+                  <!-- Generic -->
+                  <option value="sans-serif">Sans-serif</option>
                   <option value="serif">Serif</option>
+                  <option value="monospace">Monospace</option>
+                  <option value="cursive">Cursive</option>
                 </select>
               </div>
               <div class="fs-field">
@@ -628,7 +813,7 @@
             </div>
           </div>
 
-          <div class="fs-section">
+          <div class="fs-section space-y-2">
             <div class="fs-section-label">Border & Shape</div>
             <div class="fs-row">
               <div class="fs-field">
@@ -798,6 +983,7 @@
             <span class="ctx-header-title">{{ ctxMenuNode?.topic }}</span>
           </div>
 
+          <!-- Add card below -->
           <button
             v-if="canCreateCard && !isPlanRoute"
             class="ctx-item"
@@ -808,13 +994,42 @@
             <kbd class="ctx-kbd">Enter</kbd>
           </button>
 
+          <!-- Add child card (Tab) -->
+          <button
+            v-if="canCreateCard && !isPlanRoute"
+            class="ctx-item"
+            @click="ctxAddChildCard"
+          >
+            <i
+              class="fa-solid fa-arrow-turn-down-right ctx-item-icon ctx-icon--add"
+            ></i>
+            <span>Add child card</span>
+            <kbd class="ctx-kbd">Tab</kbd>
+          </button>
+
+          <!-- Open card -->
           <button class="ctx-item" @click="ctxOpenCard" v-if="!isPlanRoute">
             <i
               class="fa-solid fa-arrow-up-right-from-square ctx-item-icon ctx-icon--open"
             ></i>
             <span>Open card</span>
+            <kbd class="ctx-kbd">Space</kbd>
           </button>
 
+          <!-- Duplicate -->
+          <button
+            v-if="canCreateCard && !isPlanRoute"
+            class="ctx-item"
+            @click="ctxDuplicate"
+          >
+            <i class="fa-solid fa-clone ctx-item-icon ctx-icon--duplicate"></i>
+            <span>Duplicate</span>
+            <kbd class="ctx-kbd">Ctrl+D</kbd>
+          </button>
+
+          <div class="ctx-divider"></div>
+
+          <!-- Format -->
           <button
             v-if="canAssignCard && canEditCard && !isPlanRoute"
             class="ctx-item"
@@ -824,8 +1039,50 @@
             <span>Format</span>
           </button>
 
+          <!-- Copy Style -->
+          <button
+            v-if="canAssignCard && canEditCard && !isPlanRoute"
+            class="ctx-item"
+            @click="ctxCopyStyle"
+          >
+            <i
+              class="fa-solid fa-paintbrush ctx-item-icon ctx-icon--copy-style"
+            ></i>
+            <span>Copy style</span>
+            <kbd class="ctx-kbd">Alt+Ctrl+C</kbd>
+          </button>
+
+          <!-- Paste Style -->
+          <button
+            v-if="
+              canAssignCard && canEditCard && !isPlanRoute && styleClipboard
+            "
+            class="ctx-item"
+            @click="ctxPasteStyle"
+          >
+            <i
+              class="fa-solid fa-paste ctx-item-icon ctx-icon--paste-style"
+            ></i>
+            <span>Paste style</span>
+            <kbd class="ctx-kbd">Alt+Ctrl+V</kbd>
+          </button>
+
+          <!-- Reset Style -->
+          <button
+            v-if="canAssignCard && canEditCard && !isPlanRoute"
+            class="ctx-item"
+            @click="ctxResetStyle"
+          >
+            <i
+              class="fa-solid fa-rotate-left ctx-item-icon ctx-icon--reset-style"
+            ></i>
+            <span>Reset style</span>
+            <kbd class="ctx-kbd">Alt+Ctrl+0</kbd>
+          </button>
+
           <div class="ctx-divider"></div>
 
+          <!-- Delete -->
           <button
             v-if="canDeleteCard && !isPlanRoute"
             class="ctx-item ctx-item--danger"
@@ -1027,7 +1284,280 @@ const ticketToDelete = ref<any>(null);
 const workspaceStore = useWorkspaceStore();
 const instancePrefix = `mm_${props.moduleId}_${Date.now()}`;
 const localWorkspace = computed(() => workspaceStore.singleWorkspace);
+const isFullscreen = ref(false);
+// const clipboardNodeId = ref<string | null>(null);
+// const clipboardAction = ref<'copy' | 'cut' | null>(null);
+const styleClipboard = ref<NodeStyle | null>(null);
 
+const showShortcutHint = ref(false);
+const shortcutHintTimer = ref<ReturnType<typeof setTimeout> | null>(null);
+const lastShortcutLabel = ref("");
+// ✦ Theme system
+interface MapTheme {
+  id: string;
+  name: string;
+  bg: string;
+  nodeColors: { root: string; sheet: string; list: string; card: string };
+  edgeColor: string;
+  textColor: string;
+}
+
+const THEMES: MapTheme[] = [
+  {
+    id: "default",
+    name: "Default",
+    bg: "#dedfe3",
+    nodeColors: {
+      root: "#f1eeff",
+      sheet: "#ede9fb",
+      list: "#f3f4f6",
+      card: "#ffffff",
+    },
+    edgeColor: "#7D68C8",
+    textColor: "#2b2c30",
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    bg: "#e0f2fe",
+    nodeColors: {
+      root: "#0ea5e9",
+      sheet: "#38bdf8",
+      list: "#e0f2fe",
+      card: "#f0f9ff",
+    },
+    edgeColor: "#0284c7",
+    textColor: "#0c4a6e",
+  },
+  {
+    id: "forest",
+    name: "Forest",
+    bg: "#dcfce7",
+    nodeColors: {
+      root: "#16a34a",
+      sheet: "#4ade80",
+      list: "#dcfce7",
+      card: "#f0fdf4",
+    },
+    edgeColor: "#15803d",
+    textColor: "#14532d",
+  },
+  {
+    id: "sunset",
+    name: "Sunset",
+    bg: "#fff7ed",
+    nodeColors: {
+      root: "#ea580c",
+      sheet: "#fb923c",
+      list: "#fff7ed",
+      card: "#ffffff",
+    },
+    edgeColor: "#c2410c",
+    textColor: "#7c2d12",
+  },
+  {
+    id: "rose",
+    name: "Rose",
+    bg: "#fff1f2",
+    nodeColors: {
+      root: "#e11d48",
+      sheet: "#fb7185",
+      list: "#fff1f2",
+      card: "#ffffff",
+    },
+    edgeColor: "#be123c",
+    textColor: "#881337",
+  },
+  {
+    id: "violet",
+    name: "Violet",
+    bg: "#f5f3ff",
+    nodeColors: {
+      root: "#7c3aed",
+      sheet: "#a78bfa",
+      list: "#f5f3ff",
+      card: "#ffffff",
+    },
+    edgeColor: "#6d28d9",
+    textColor: "#2e1065",
+  },
+  {
+    id: "midnight",
+    name: "Midnight",
+    bg: "#0f172a",
+    nodeColors: {
+      root: "#1e293b",
+      sheet: "#334155",
+      list: "#1e293b",
+      card: "#1e293b",
+    },
+    edgeColor: "#7c3aed",
+    textColor: "#f1f5f9",
+  },
+  {
+    id: "slate",
+    name: "Slate",
+    bg: "#f1f5f9",
+    nodeColors: {
+      root: "#334155",
+      sheet: "#64748b",
+      list: "#f1f5f9",
+      card: "#ffffff",
+    },
+    edgeColor: "#475569",
+    textColor: "#0f172a",
+  },
+  {
+    id: "amber",
+    name: "Golden",
+    bg: "#fffbeb",
+    nodeColors: {
+      root: "#d97706",
+      sheet: "#fbbf24",
+      list: "#fffbeb",
+      card: "#ffffff",
+    },
+    edgeColor: "#b45309",
+    textColor: "#78350f",
+  },
+  {
+    id: "teal",
+    name: "Teal",
+    bg: "#f0fdfa",
+    nodeColors: {
+      root: "#0d9488",
+      sheet: "#2dd4bf",
+      list: "#f0fdfa",
+      card: "#ffffff",
+    },
+    edgeColor: "#0f766e",
+    textColor: "#134e4a",
+  },
+  {
+    id: "dark-purple",
+    name: "Dark Purple",
+    bg: "#1a0a2e",
+    nodeColors: {
+      root: "#2d1b4e",
+      sheet: "#4a2870",
+      list: "#2d1b4e",
+      card: "#2d1b4e",
+    },
+    edgeColor: "#9333ea",
+    textColor: "#e9d5ff",
+  },
+  {
+    id: "nord",
+    name: "Nord",
+    bg: "#2e3440",
+    nodeColors: {
+      root: "#3b4252",
+      sheet: "#434c5e",
+      list: "#3b4252",
+      card: "#3b4252",
+    },
+    edgeColor: "#88c0d0",
+    textColor: "#eceff4",
+  },
+];
+
+const BG_COLORS = [
+  "#dedfe3",
+  "#ffffff",
+  "#f8fafc",
+  "#f0f9ff",
+  "#f0fdf4",
+  "#fff7ed",
+  "#fdf4ff",
+  "#fff1f2",
+  "#fffbeb",
+  "#f1f5f9",
+  "#0f172a",
+  "#1a1a2e",
+  "#0d1117",
+  "#1e293b",
+  "#2e3440",
+  "#6fd0f9",
+  "#fde68a",
+  "#bbf7d0",
+  "#fecdd3",
+  "#ddd6fe",
+];
+
+const activeThemeId = ref<string>("default");
+const activeCanvasBg = ref<string>("#dedfe3");
+const recentlyUsedColors = ref<string[]>([]);
+// const themeColorPickerOpen = ref(false);
+const customBgColor = ref("#dedfe3");
+
+function applyTheme(theme: MapTheme) {
+  activeThemeId.value = theme.id;
+  activeCanvasBg.value = theme.bg;
+  customBgColor.value = theme.bg;
+
+  // Apply CSS variables to the root element
+  const el = rootEl.value;
+  if (!el) return;
+  el.style.setProperty("--mm-bg", theme.bg);
+  el.style.setProperty("--mm-node-root-bg", theme.nodeColors.root);
+  el.style.setProperty("--mm-node-sheet-bg", theme.nodeColors.sheet);
+  el.style.setProperty("--mm-node-list-bg", theme.nodeColors.list);
+  el.style.setProperty("--mm-node-card-bg", theme.nodeColors.card);
+  el.style.setProperty("--mm-edge-color", theme.edgeColor);
+  el.style.setProperty("--mm-text-color", theme.textColor);
+
+  // Persist locally
+  localStorage.setItem(
+    "mm_theme",
+    JSON.stringify({
+      themeId: theme.id,
+      bg: theme.bg,
+      nodeColors: theme.nodeColors,
+      edgeColor: theme.edgeColor,
+      textColor: theme.textColor,
+    }),
+  );
+}
+
+function applyCustomBg(color: string) {
+  activeCanvasBg.value = color;
+  customBgColor.value = color;
+  activeThemeId.value = "custom";
+  const el = rootEl.value;
+  if (!el) return;
+  el.style.setProperty("--mm-bg", color);
+
+  // Track recently used
+  if (!recentlyUsedColors.value.includes(color)) {
+    recentlyUsedColors.value = [color, ...recentlyUsedColors.value].slice(0, 7);
+  }
+  localStorage.setItem("mm_custom_bg", color);
+  localStorage.setItem(
+    "mm_recent_colors",
+    JSON.stringify(recentlyUsedColors.value),
+  );
+}
+
+function loadSavedTheme() {
+  const savedTheme = localStorage.getItem("mm_theme");
+  const savedBg = localStorage.getItem("mm_custom_bg");
+  const savedRecent = localStorage.getItem("mm_recent_colors");
+
+  if (savedRecent) {
+    try {
+      recentlyUsedColors.value = JSON.parse(savedRecent);
+    } catch {}
+  }
+  if (savedTheme) {
+    try {
+      const t = JSON.parse(savedTheme);
+      const found = THEMES.find((th) => th.id === t.themeId);
+      if (found) applyTheme(found);
+    } catch {}
+  } else if (savedBg) {
+    applyCustomBg(savedBg);
+  }
+}
 function openDeleteModal(node: any) {
   ticketToDelete.value = node;
   showTicketDelete.value = true;
@@ -1080,7 +1610,9 @@ const panStart = ref({ x: 0, y: 0 });
 const svgW = ref(8000);
 const svgH = ref(8000);
 
-const layoutDirection = ref<"right" | "left" | "center">("right");
+const layoutDirection = ref<"right" | "left" | "center" | "top" | "bottom">(
+  "right",
+);
 const nodeSides = new Map<string, "left" | "right">();
 
 const draggedNodeId = ref<string | null>(null);
@@ -1109,12 +1641,18 @@ const hyperlink = ref("");
 const resolveCallback = ref<((l: string) => void) | null>(null);
 
 const selectedListSheetId = ref<string>(props.selectedSheetId);
-const sheetSelector = reactive({
+const sheetSelector = reactive<{
+  visible: boolean;
+  x: number;
+  y: number;
+  selectedSheetId: string;
+  listNodeObj: MindNode | null;
+}>({
   visible: false,
   x: 0,
   y: 0,
   selectedSheetId: "",
-  listNodeObj: null as MindNode | null,
+  listNodeObj: null,
 });
 const showMustSelectMessage = ref(false);
 
@@ -1236,12 +1774,7 @@ const NODE_W: Record<string, number> = {
 
 function nodeHeight(node: MindNode): number {
   if (node.uniqueName === "card") {
-    let h = 96;
-    const v = node.variables || {};
-    if (v["card-type"] || v["card-status"] || v.priority) h += 22;
-    if (v["start-date"] || v["end-date"] || v.process != null) h += 20;
-    if (v["card-description"]) h += 30;
-    return h;
+    return 70;
   }
   if (node.uniqueName === "List") return 72;
   if (node.uniqueName === "sheet") return 66;
@@ -1251,12 +1784,25 @@ function nodeHeight(node: MindNode): number {
 
 const H_GAP = 80;
 const V_GAP = 16;
+const CARD_V_GAP = 44;
+
+// Returns the total horizontal width a node's subtree occupies in top/bottom layout
+function getSubtreeWidth(node: MindNode, dir: string): number {
+  const w = NODE_W[node.uniqueName] ?? 180;
+  if (isCollapsed(node.id) || !node.children || node.children.length === 0) {
+    return w;
+  }
+  const childWidths = node.children.map((c) => getSubtreeWidth(c, dir));
+  const total =
+    childWidths.reduce((a, b) => a + b, 0) + V_GAP * (node.children.length - 1);
+  return Math.max(total, w);
+}
 
 function layoutTree(
   node: MindNode,
   x: number,
   y: number,
-  dir?: "right" | "left" | "center",
+  dir?: "right" | "left" | "center" | "top" | "bottom",
 ): number {
   const d = dir ?? layoutDirection.value;
   node.width = NODE_W[node.uniqueName] ?? 180;
@@ -1269,11 +1815,23 @@ function layoutTree(
     return node.height;
   }
 
-  if (d === "center" && node.uniqueName === "root") {
+  if (
+    d === "center" &&
+    (node.uniqueName === "root" || node.uniqueName === "sheet")
+  ) {
+    // Collect the children to split — for root it's sheets, for sheet it's lists
+    const kids = node.children;
+
+    if (kids.length === 0) {
+      node.x = x;
+      node.y = y;
+      return node.height;
+    }
+
+    // Split children: even indices go right, odd go left
     const rightKids: MindNode[] = [];
     const leftKids: MindNode[] = [];
-
-    node.children.forEach((c, i) => {
+    kids.forEach((c, i) => {
       if (i % 2 === 0) {
         nodeSides.set(c.id, "right");
         rightKids.push(c);
@@ -1298,13 +1856,6 @@ function layoutTree(
     }
 
     const allKids = [...rightKids, ...leftKids];
-
-    if (allKids.length === 0) {
-      node.x = x;
-      node.y = y;
-      return node.height;
-    }
-
     const allYTops = allKids.map((c) => c.y);
     const allYBottoms = allKids.map((c) => c.y + c.height);
     const minY = Math.min(...allYTops);
@@ -1316,6 +1867,52 @@ function layoutTree(
     return maxY - minY;
   }
 
+  // ── Top-down layout ──────────────────────────────────────────────────
+  if (d === "top" || d === "bottom") {
+    const sign = d === "top" ? 1 : -1;
+    const childGapV = H_GAP; // vertical gap between levels
+    const childGapH = V_GAP; // horizontal gap between siblings
+
+    // First pass: recursively layout each child to get their subtree widths
+    const childWidths: number[] = [];
+    for (const child of node.children) {
+      child.width = NODE_W[child.uniqueName] ?? 180;
+      child.height = nodeHeight(child);
+      // Temporarily layout to get total width of subtree
+      const w = getSubtreeWidth(child, d);
+      childWidths.push(w);
+    }
+
+    const totalChildrenWidth =
+      childWidths.reduce((a, b) => a + b, 0) +
+      childGapH * (node.children.length - 1);
+
+    // Center the children under/over the parent
+    let childX = x + node.width / 2 - totalChildrenWidth / 2;
+    const childY =
+      y +
+      (sign > 0
+        ? node.height + childGapV
+        : -(childGapV + nodeHeight(node.children[0])));
+
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i];
+      nodeSides.set(child.id, "right");
+      layoutTree(
+        child,
+        childX + childWidths[i] / 2 - child.width / 2,
+        childY,
+        d,
+      );
+      childX += childWidths[i] + childGapH;
+    }
+
+    node.x = x;
+    node.y = y;
+    return totalChildrenWidth;
+  }
+
+  // ── Left / Right layout (default) ────────────────────────────────────
   let childY = y;
   let total = 0;
   for (const child of node.children) {
@@ -1325,10 +1922,14 @@ function layoutTree(
         ? x - H_GAP - (NODE_W[child.uniqueName] ?? 180)
         : x + node.width + H_GAP;
     const h = layoutTree(child, cX, childY, d);
-    childY += h + V_GAP;
-    total += h + V_GAP;
+    const gap = child.uniqueName === "card" ? CARD_V_GAP : V_GAP;
+    childY += h + gap;
+    total += h + gap;
   }
-  total -= V_GAP;
+  total -=
+    node.children[node.children.length - 1].uniqueName === "card"
+      ? CARD_V_GAP
+      : V_GAP;
 
   const firstY = node.children[0].y;
   const lastY = node.children[node.children.length - 1].y;
@@ -1340,7 +1941,7 @@ function layoutTree(
   return Math.max(total, node.height);
 }
 
-function setLayout(dir: "right" | "left" | "center") {
+function setLayout(dir: "right" | "left" | "center" | "top" | "bottom") {
   layoutDirection.value = dir;
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
@@ -1349,8 +1950,11 @@ function setLayout(dir: "right" | "left" | "center") {
       ? 4000 - NODE_W.root
       : dir === "center"
         ? 2500 - NODE_W.root / 2
-        : 60;
-  layoutTree(root, startX, 60, dir);
+        : dir === "top" || dir === "bottom"
+          ? 2000
+          : 60;
+  const startY = dir === "bottom" ? 3000 : 60;
+  layoutTree(root, startX, startY, dir);
   let minX = Infinity,
     maxX = -Infinity,
     maxY = 0;
@@ -1506,7 +2110,10 @@ function nodeLevel(node: MindNode): number {
   }
   return l;
 }
-
+const currentEdgeColor = computed(() => {
+  const theme = THEMES.find((t) => t.id === activeThemeId.value);
+  return theme?.edgeColor ?? "#7D68C8";
+});
 // ✦ CHANGE 4: visibleEdges returns color + dashed per edge
 const visibleEdges = computed<Edge[]>(() => {
   const root = nodeMap.get(rootNodeId.value);
@@ -1532,8 +2139,8 @@ const visibleEdges = computed<Edge[]>(() => {
       const edgeColor = isCardEdge
         ? child.variables?.lane?.variables?.["lane-color"] ||
           child.style?.borderColor ||
-          "#7D68C8"
-        : "#7D68C8";
+          currentEdgeColor.value
+        : currentEdgeColor.value;
 
       edges.push({
         id: `${node.id}-${child.id}`,
@@ -1550,7 +2157,16 @@ const visibleEdges = computed<Edge[]>(() => {
 watchEffect(() => {
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
-  layoutTree(root, 60, 60);
+  const startX =
+    layoutDirection.value === "left"
+      ? 4000 - NODE_W.root
+      : layoutDirection.value === "center"
+        ? 2500 - NODE_W.root / 2
+        : layoutDirection.value === "top" || layoutDirection.value === "bottom"
+          ? 2000
+          : 60;
+  const startY = layoutDirection.value === "bottom" ? 3000 : 60;
+  layoutTree(root, startX, startY, layoutDirection.value);
 });
 
 function nodeInlineStyle(node: MindNode): Record<string, string> {
@@ -1602,9 +2218,17 @@ const selectedNode = computed<MindNode | null>(() =>
   selectedNodeId.value ? nodeMap.get(selectedNodeId.value) || null : null,
 );
 
+const isFirstLoad = ref(true);
+
 watchEffect(() => {
   if (!props.listsData) return;
   nextTick(() => {
+    // Snapshot current pan/zoom BEFORE clearing the tree
+    const savedPanX = panX.value;
+    const savedPanY = panY.value;
+    const savedZoom = zoom.value;
+    const wasFirstLoad = isFirstLoad.value;
+
     nodeMap.clear();
     const root = buildTree(props.listsData);
     assignParents(root);
@@ -1618,7 +2242,19 @@ watchEffect(() => {
     }
     svgW.value = Math.max(mx + 300, 3000);
     svgH.value = Math.max(my + 300, 3000);
-    nextTick(() => centerView());
+
+    nextTick(() => {
+      if (wasFirstLoad) {
+        // Only center on the very first load
+        isFirstLoad.value = false;
+        centerView();
+      } else {
+        // Restore the saved position so the viewport doesn't jump
+        panX.value = savedPanX;
+        panY.value = savedPanY;
+        zoom.value = savedZoom;
+      }
+    });
   });
 });
 
@@ -1668,7 +2304,186 @@ function handleResetView() {
   zoom.value = 0.85;
   nextTick(() => centerView());
 }
+// ✦ Navigate to sibling/parent/child nodes by arrow keys
+function navigateNode(direction: "up" | "down" | "left" | "right") {
+  if (!selectedNodeId.value) {
+    // Select root if nothing selected
+    const root = nodeMap.get(rootNodeId.value);
+    if (root) selectedNodeId.value = root.id;
+    return;
+  }
+  const node = nodeMap.get(selectedNodeId.value);
+  if (!node) return;
 
+  if (direction === "right") {
+    // Go to first child
+    const visibleChildren = (node.children || []).filter((c) =>
+      allNodes.value.some((n) => n.id === c.id),
+    );
+    if (visibleChildren.length > 0) {
+      selectedNodeId.value = visibleChildren[0].id;
+      scrollToNode(visibleChildren[0]);
+    }
+    return;
+  }
+
+  if (direction === "left") {
+    // Go to parent
+    if (node.parent) {
+      selectedNodeId.value = node.parent.id;
+      scrollToNode(node.parent);
+    }
+    return;
+  }
+
+  // Up / Down: navigate among siblings
+  const parent = node.parent;
+  if (!parent) return;
+  const siblings = (parent.children || []).filter((c) =>
+    allNodes.value.some((n) => n.id === c.id),
+  );
+  const idx = siblings.findIndex((s) => s.id === node.id);
+  if (idx === -1) return;
+
+  let targetIdx = direction === "up" ? idx - 1 : idx + 1;
+  if (targetIdx < 0) targetIdx = siblings.length - 1;
+  if (targetIdx >= siblings.length) targetIdx = 0;
+  selectedNodeId.value = siblings[targetIdx].id;
+  scrollToNode(siblings[targetIdx]);
+}
+
+function scrollToNode(node: MindNode) {
+  const vp = viewportEl.value;
+  if (!vp) return;
+  const nx = node.x * zoom.value + panX.value;
+  const ny = node.y * zoom.value + panY.value;
+  const vW = vp.clientWidth;
+  const vH = vp.clientHeight;
+  const margin = 80;
+  if (nx < margin || nx > vW - margin || ny < margin || ny > vH - margin) {
+    panX.value = vW / 2 - (node.x + node.width / 2) * zoom.value;
+    panY.value = vH / 2 - (node.y + node.height / 2) * zoom.value;
+  }
+}
+
+// ✦ Duplicate card
+async function duplicateNode(nodeId: string) {
+  const node = nodeMap.get(nodeId);
+  if (!node || node.uniqueName !== "card") return;
+  const parent = node.parent;
+  if (!parent) return;
+  showHint("Duplicate");
+  await _doCreateCard(
+    node.topic + " (copy)",
+    parent,
+    node.sheet_id || props.selectedSheetId,
+    true,
+    node.variables?.["card-status"] ?? parent.topic,
+  );
+}
+
+// ✦ Copy node style
+function copyStyle(nodeId: string) {
+  const node = nodeMap.get(nodeId);
+  if (!node) return;
+  styleClipboard.value = { ...node.style };
+  showHint("Style Copied");
+  toast.success("Style copied");
+}
+
+// ✦ Paste style to selected node
+function pasteStyle(nodeId: string) {
+  if (!styleClipboard.value) {
+    toast.info("No style in clipboard");
+    return;
+  }
+  const node = nodeMap.get(nodeId);
+  if (!node) return;
+  node.style = { ...styleClipboard.value };
+  showHint("Style Pasted");
+  toast.success("Style pasted — click Save Style to persist");
+}
+
+// ✦ Reset style of selected node (Alt+Ctrl+0)
+function resetStyle(nodeId: string) {
+  const node = nodeMap.get(nodeId);
+  if (!node) return;
+  node.style = mapBackendStyle(DEFAULT_BACKEND_STYLE);
+  showHint("Style Reset");
+  toast.success("Style reset");
+}
+
+// ✦ Collapse/expand selected node subtopic (Ctrl+/)
+function toggleCollapseSelected() {
+  if (!selectedNodeId.value) return;
+  const node = nodeMap.get(selectedNodeId.value);
+  if (!node || !node.children?.length) return;
+  toggleCollapse(selectedNodeId.value);
+  showHint(isCollapsed(selectedNodeId.value) ? "Collapsed" : "Expanded");
+}
+
+// ✦ Collapse ALL nodes (Alt+Ctrl+/)
+function collapseAll() {
+  const root = nodeMap.get(rootNodeId.value);
+  if (!root) return;
+  const all = flattenTree(root);
+  for (const n of all) {
+    if (n.children?.length && !isCollapsed(n.id)) {
+      collapseNode(n.id);
+      n.collapsed = true;
+    }
+  }
+  collapseVersion.value++;
+  const startX =
+    layoutDirection.value === "left"
+      ? 4000 - NODE_W.root
+      : layoutDirection.value === "center"
+        ? 2500 - NODE_W.root / 2
+        : 60;
+  layoutTree(root, startX, 60, layoutDirection.value);
+  showHint("All Collapsed");
+}
+
+// ✦ Expand ALL nodes
+function expandAll() {
+  const root = nodeMap.get(rootNodeId.value);
+  if (!root) return;
+  const all = flattenTree(root);
+  for (const n of all) {
+    if (isCollapsed(n.id)) {
+      expandNode(n.id);
+      n.collapsed = false;
+    }
+  }
+  collapseVersion.value++;
+  const startX =
+    layoutDirection.value === "left"
+      ? 4000 - NODE_W.root
+      : layoutDirection.value === "center"
+        ? 2500 - NODE_W.root / 2
+        : 60;
+  layoutTree(root, startX, 60, layoutDirection.value);
+  showHint("All Expanded");
+}
+
+// ✦ Show brief shortcut feedback toast in top-right of canvas
+function showHint(label: string) {
+  lastShortcutLabel.value = label;
+  showShortcutHint.value = true;
+  if (shortcutHintTimer.value) clearTimeout(shortcutHintTimer.value);
+  shortcutHintTimer.value = setTimeout(() => {
+    showShortcutHint.value = false;
+  }, 900);
+}
+
+// ✦ Select all cards (Ctrl+A)
+function selectFirstNode() {
+  const root = nodeMap.get(rootNodeId.value);
+  if (root) {
+    selectedNodeId.value = root.id;
+    scrollToNode(root);
+  }
+}
 function handleWheel(e: WheelEvent) {
   const vp = viewportEl.value;
   if (!vp) return;
@@ -1984,12 +2799,12 @@ function confirmHyperlink() {
 function cancelHyperlink() {
   showHyperlinkModal.value = false;
 }
-
 async function _doCreateCard(
   title: string,
   listNode: MindNode,
   sheetId: string,
   directCreate = false,
+  siblingStatus?: string,
 ) {
   isCreatingCard.value = true;
   try {
@@ -1998,6 +2813,7 @@ async function _doCreateCard(
       listNode,
       sheetId,
       directCreate,
+      siblingStatus,
     );
     emit("create:card", payload);
     const tempId = `temp-card-${Date.now()}`;
@@ -2023,8 +2839,17 @@ async function _doCreateCard(
     };
     listNode.children.push(tempCard);
     nodeMap.set(tempId, tempCard);
+    // Don't re-center — just re-layout in place preserving current pan/zoom
     const root = nodeMap.get(rootNodeId.value);
-    if (root) layoutTree(root, 60, 60);
+    if (root) {
+      const startX =
+        layoutDirection.value === "left"
+          ? 4000 - NODE_W.root
+          : layoutDirection.value === "center"
+            ? 2500 - NODE_W.root / 2
+            : 60;
+      layoutTree(root, startX, 60, layoutDirection.value);
+    }
     selectedNodeId.value = tempId;
     toast.success(`Card "${title}" created`);
   } catch (err) {
@@ -2035,31 +2860,22 @@ async function _doCreateCard(
   }
 }
 
-function formatDate(d?: string): string {
-  if (!d) return "";
-  try {
-    return new Date(d).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return d;
-  }
-}
-
 function createDefaultCardPayload(
   nodeObj: { topic: string },
   listNode: MindNode,
   sheetId?: string,
   directCreate = false,
+  siblingStatus?: string,
 ) {
   const now = new Date();
   const startDate = now.toISOString().split("T")[0];
   const endDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
     .toISOString()
     .split("T")[0];
+  console.log(directCreate);
+
   const resolvedSheetId = sheetId ?? props.selectedSheetId;
-  const status = directCreate ? "To Do" : listNode.topic || "To Do";
+  const status = siblingStatus ?? listNode.topic ?? "To Do";
   const payload: any = {
     sheet_list_id: status,
     workspace_id: props.workspaceId,
@@ -2087,7 +2903,19 @@ function startInlineCardCreation(listNode: MindNode) {
   if (listNode.collapsed) {
     listNode.collapsed = false;
     const root = nodeMap.get(rootNodeId.value);
-    if (root) layoutTree(root, 60, 60);
+    if (root) {
+      const startX =
+        layoutDirection.value === "left"
+          ? 4000 - NODE_W.root
+          : layoutDirection.value === "center"
+            ? 2500 - NODE_W.root / 2
+            : layoutDirection.value === "top" ||
+                layoutDirection.value === "bottom"
+              ? 2000
+              : 60;
+      const startY = layoutDirection.value === "bottom" ? 3000 : 60;
+      layoutTree(root, startX, startY, layoutDirection.value);
+    }
   }
   selectedNodeId.value = listNode.id;
 }
@@ -2161,7 +2989,7 @@ function ctxAddCard() {
   if (!node || node.uniqueName !== "card") return;
   const listNode = node.parent;
   if (!listNode || listNode.uniqueName !== "List") return;
-  nextTick(() => createCardDirectly(listNode));
+  nextTick(() => createCardDirectly(listNode, node));
 }
 
 function ctxOpenCard() {
@@ -2187,10 +3015,55 @@ function ctxDeleteCard() {
     if (node) handleDeleteNode(node.id);
   });
 }
+function ctxAddChildCard() {
+  const node = ctxMenuNode.value;
+  closeCtxMenu();
+  if (!node) return;
+  nextTick(() => {
+    if (node.uniqueName === "card" && node.parent?.uniqueName === "List") {
+      startInlineCardCreation(node.parent);
+    } else if (node.uniqueName === "List") {
+      startInlineCardCreation(node);
+    }
+  });
+}
 
-async function createCardDirectly(listNode: MindNode) {
+function ctxDuplicate() {
+  const node = ctxMenuNode.value;
+  closeCtxMenu();
+  if (!node || node.uniqueName !== "card") return;
+  nextTick(() => duplicateNode(node.id));
+}
+
+function ctxCopyStyle() {
+  const node = ctxMenuNode.value;
+  closeCtxMenu();
+  if (!node) return;
+  styleClipboard.value = { ...node.style };
+  toast.success("Style copied");
+}
+
+function ctxPasteStyle() {
+  const node = ctxMenuNode.value;
+  closeCtxMenu();
+  if (!node || !styleClipboard.value) return;
+  node.style = { ...styleClipboard.value };
+  toast.success("Style pasted — click Save Style to persist");
+}
+
+function ctxResetStyle() {
+  const node = ctxMenuNode.value;
+  closeCtxMenu();
+  if (!node) return;
+  node.style = mapBackendStyle(DEFAULT_BACKEND_STYLE);
+  toast.success("Style reset");
+}
+
+async function createCardDirectly(listNode: MindNode, siblingNode?: MindNode) {
   if (isCreatingCard.value) return;
   const title = "New Card";
+  const siblingStatus: string =
+    siblingNode?.variables?.["card-status"] ?? listNode.topic ?? "To Do";
 
   if (isPlanRoute.value && !listNode.sheet_id) {
     if (!selectedListSheetId.value) {
@@ -2201,60 +3074,215 @@ async function createCardDirectly(listNode: MindNode) {
       }, 2500);
       return;
     }
-    await _doCreateCard(title, listNode, selectedListSheetId.value, true);
+    await _doCreateCard(
+      title,
+      listNode,
+      selectedListSheetId.value,
+      true,
+      siblingStatus,
+    );
     return;
   }
 
   const sheetId =
     listNode.sheet_id || selectedListSheetId.value || props.selectedSheetId;
-  await _doCreateCard(title, listNode, sheetId, true);
+  await _doCreateCard(title, listNode, sheetId, true, siblingStatus);
 }
-
 function handleKeyDown(e: KeyboardEvent) {
   const t = e.target as HTMLElement;
-  if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)
-    return;
+  const inInput =
+    t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
+
+  // Escape always works
   if (e.key === "Escape") {
+    if (creatingCardForListId.value) {
+      cancelInlineCreation();
+      return;
+    }
     if (ctxMenu.visible) {
       closeCtxMenu();
       return;
     }
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+      return;
+    }
     selectedNodeId.value = null;
     sheetSelector.visible = false;
+    return;
   }
-  if (e.key === "c" || e.key === "C") centerView();
-  if (e.key === "f" || e.key === "F") fitToScreen();
-  if (e.key === "r" || e.key === "R") handleResetView();
-  if (e.key === "+" || (e.ctrlKey && e.key === "=")) {
+
+  // When typing in inputs, only allow Escape above
+  if (inInput) return;
+
+  const sel = selectedNodeId.value ? nodeMap.get(selectedNodeId.value) : null;
+
+  // ── Navigation ───────────────────────────────────────────────────────
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    navigateNode("right");
+    return;
+  }
+  if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    navigateNode("left");
+    return;
+  }
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    navigateNode("up");
+    return;
+  }
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    navigateNode("down");
+    return;
+  }
+
+  // ── View shortcuts ───────────────────────────────────────────────────
+  if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+    if (e.key === "c" || e.key === "C") {
+      centerView();
+      showHint("Center");
+      return;
+    }
+    if (e.key === "f" || e.key === "F") {
+      fitToScreen();
+      showHint("Fit");
+      return;
+    }
+    if (e.key === "r" || e.key === "R") {
+      handleResetView();
+      showHint("Reset Zoom");
+      return;
+    }
+    if (e.key === "g" || e.key === "G") {
+      toggleFullscreen();
+      return;
+    }
+    if (e.key === "+") {
+      handleZoomIn();
+      return;
+    }
+    if (e.key === "-") {
+      handleZoomOut();
+      return;
+    }
+  }
+
+  // ── Zoom with Ctrl ───────────────────────────────────────────────────
+  if (e.ctrlKey && (e.key === "=" || e.key === "+")) {
     e.preventDefault();
     handleZoomIn();
+    return;
   }
-  if (e.key === "-" || (e.ctrlKey && e.key === "-")) {
+  if (e.ctrlKey && e.key === "-") {
     e.preventDefault();
     handleZoomOut();
+    return;
   }
-  if ((e.key === "Delete" || e.key === "Backspace") && selectedNodeId.value) {
-    const n = nodeMap.get(selectedNodeId.value);
-    if (n?.uniqueName === "card" && props.canDeleteCard)
-      handleDeleteNode(selectedNodeId.value);
+
+  // ── Space → Open card ────────────────────────────────────────────────
+  if (e.key === " " && sel?.uniqueName === "card") {
+    e.preventDefault();
+    handleOpenNode(sel);
+    return;
   }
+
+  // ── Tab → Add child card (from List or card) ─────────────────────────
   if (
-    e.key === "Enter" &&
-    selectedNodeId.value &&
+    e.key === "Tab" &&
+    !e.shiftKey &&
     props.canCreateCard &&
     !isPlanRoute.value
   ) {
     e.preventDefault();
-    const n = nodeMap.get(selectedNodeId.value);
-    if (n?.uniqueName === "card" && n.parent?.uniqueName === "List") {
-      createCardDirectly(n.parent);
+    if (!sel) return;
+    if (sel.uniqueName === "List") {
+      startInlineCardCreation(sel);
+    } else if (sel.uniqueName === "card" && sel.parent?.uniqueName === "List") {
+      startInlineCardCreation(sel.parent);
     }
-    if (n?.uniqueName === "List") {
-      createCardDirectly(n);
-    }
+    return;
   }
-  if (e.key === "Escape" && creatingCardForListId.value) {
-    cancelInlineCreation();
+
+  // ── Enter → Add sibling card ─────────────────────────────────────────
+  if (e.key === "Enter" && props.canCreateCard && !isPlanRoute.value) {
+    e.preventDefault();
+    if (!sel) return;
+    if (sel.uniqueName === "card" && sel.parent?.uniqueName === "List") {
+      createCardDirectly(sel.parent, sel);
+    } else if (sel.uniqueName === "List") {
+      createCardDirectly(sel);
+    }
+    return;
+  }
+
+  // ── Delete / Backspace → Delete selected card ────────────────────────
+  if (
+    (e.key === "Delete" || e.key === "Backspace") &&
+    sel?.uniqueName === "card" &&
+    props.canDeleteCard
+  ) {
+    e.preventDefault();
+    openDeleteModal(sel);
+    return;
+  }
+
+  // ── Ctrl+D → Duplicate ───────────────────────────────────────────────
+  if (e.ctrlKey && e.key === "d" && !e.altKey) {
+    e.preventDefault();
+    if (sel?.uniqueName === "card") duplicateNode(sel.id);
+    return;
+  }
+
+  // ── Ctrl+/ → Toggle collapse selected ───────────────────────────────
+  if (e.ctrlKey && e.key === "/") {
+    e.preventDefault();
+    toggleCollapseSelected();
+    return;
+  }
+
+  // ── Alt+Ctrl+/ → Collapse all ────────────────────────────────────────
+  if (e.altKey && e.ctrlKey && e.key === "/") {
+    e.preventDefault();
+    collapseAll();
+    return;
+  }
+
+  // ── Alt+Ctrl+= → Expand all ──────────────────────────────────────────
+  if (e.altKey && e.ctrlKey && (e.key === "=" || e.key === "+")) {
+    e.preventDefault();
+    expandAll();
+    return;
+  }
+
+  // ── Alt+Ctrl+C → Copy Style ──────────────────────────────────────────
+  if (e.altKey && e.ctrlKey && e.key === "c") {
+    e.preventDefault();
+    if (sel) copyStyle(sel.id);
+    return;
+  }
+
+  // ── Alt+Ctrl+V → Paste Style ─────────────────────────────────────────
+  if (e.altKey && e.ctrlKey && e.key === "v") {
+    e.preventDefault();
+    if (sel) pasteStyle(sel.id);
+    return;
+  }
+
+  // ── Alt+Ctrl+0 → Reset Style ─────────────────────────────────────────
+  if (e.altKey && e.ctrlKey && e.key === "0") {
+    e.preventDefault();
+    if (sel) resetStyle(sel.id);
+    return;
+  }
+
+  // ── Ctrl+A → Select root / focus map ─────────────────────────────────
+  if (e.ctrlKey && e.key === "a") {
+    e.preventDefault();
+    selectFirstNode();
+    return;
   }
 }
 
@@ -2268,7 +3296,28 @@ function handleGlobalClick(e: MouseEvent) {
     if (!target.closest(".card-ctx-menu")) closeCtxMenu();
   }
 }
+// ✦ NEW: Fullscreen API
+async function toggleFullscreen() {
+  const el = rootEl.value as HTMLElement | null;
+  if (!el) return;
 
+  if (!document.fullscreenElement) {
+    try {
+      await el.requestFullscreen();
+    } catch (err) {
+      // Fallback: some browsers might block — silently ignore
+      console.warn("Fullscreen request denied:", err);
+    }
+  } else {
+    await document.exitFullscreen();
+  }
+}
+const rootEl = ref<HTMLElement | null>(null);
+function handleFullscreenChange() {
+  isFullscreen.value = !!document.fullscreenElement;
+  // Re-center after fullscreen transition so content is properly positioned
+  nextTick(() => centerView());
+}
 onMounted(() => {
   document.addEventListener("mousemove", handleGlobalMouseMove);
   document.addEventListener("mouseup", handleGlobalMouseUp);
@@ -2277,6 +3326,8 @@ onMounted(() => {
   document.addEventListener("contextmenu", () => {
     if (ctxMenu.visible) closeCtxMenu();
   });
+  document.addEventListener("fullscreenchange", handleFullscreenChange);
+  loadSavedTheme();
 });
 
 onBeforeUnmount(() => {
@@ -2284,12 +3335,13 @@ onBeforeUnmount(() => {
   document.removeEventListener("mouseup", handleGlobalMouseUp);
   document.removeEventListener("keydown", handleKeyDown);
   document.removeEventListener("click", handleGlobalClick);
+  document.removeEventListener("fullscreenchange", handleFullscreenChange);
 });
 </script>
 
 <style scoped>
 .mindmap-root {
-  background: var(--bg-surface, #dedfe3);
+  background: var(--mm-bg, var(--bg-surface, #dedfe3));
   font-family: "Lato", sans-serif;
 }
 
@@ -2297,7 +3349,7 @@ onBeforeUnmount(() => {
   flex: 1;
   position: relative;
   overflow: hidden;
-  background: var(--bg-surface, #dedfe3);
+  background: var(--mm-bg, var(--bg-surface, #dedfe3)); /* ← add --mm-bg */
   background-image:
     linear-gradient(
       var(--mindmap-grid, rgba(0, 0, 0, 0.05)) 1px,
@@ -2316,7 +3368,21 @@ onBeforeUnmount(() => {
   top: 0;
   left: 0;
 }
+/* ── Fullscreen mode ─────────────────────────────────────────────────── */
+:fullscreen .mindmap-root,
+:-webkit-full-screen .mindmap-root {
+  width: 100vw !important;
+  height: 100vh !important;
+}
 
+/* When the root itself is the fullscreen element */
+.mindmap-root:fullscreen,
+.mindmap-root:-webkit-full-screen {
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+}
 .connections-svg {
   position: absolute;
   top: 0;
@@ -2357,22 +3423,21 @@ onBeforeUnmount(() => {
 }
 
 :where(.mm-node--root) {
-  background: #f1eeff;
-  color: #2b2c30;
+  background: var(--mm-node-root-bg, #f1eeff);
+  color: var(--mm-text-color, #2b2c30);
 }
 :where(.mm-node--sheet) {
-  background: #ede9fb;
-  color: #2b2c30;
+  background: var(--mm-node-sheet-bg, #ede9fb);
+  color: var(--mm-text-color, #2b2c30);
 }
 :where(.mm-node--List) {
-  background: #f3f4f6;
-  color: #2b2c30;
+  background: var(--mm-node-list-bg, #f3f4f6);
+  color: var(--mm-text-color, #2b2c30);
 }
 :where(.mm-node--card) {
-  background: var(--bg-card, #ffffff);
-  color: var(--text-primary, #2b2c30);
+  background: var(--mm-node-card-bg, var(--bg-card, #ffffff));
+  color: var(--mm-text-color, var(--text-primary, #2b2c30));
 }
-
 .mm-node--root {
   border-radius: 28px;
   border-color: #c4b8f0;
@@ -2481,9 +3546,17 @@ onBeforeUnmount(() => {
   border-color: #c4b8f0;
   border-radius: 8px;
   overflow: hidden;
+  transition: overflow 0s;
+}
+.mm-node--card:hover {
+  overflow: visible;
+}
+.node-card-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 .node-card-inner {
-  height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -2493,20 +3566,19 @@ onBeforeUnmount(() => {
   border-radius: 6px 6px 0 0;
 }
 .node-card-body {
-  flex: 1;
-  padding: var(--card-body-padding, 8px 10px 6px);
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  overflow: hidden;
+  padding: 4px 8px 4px;
+  gap: 2px;
+  overflow: visible;
 }
-
 .node-card-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
-  min-height: 18px;
+  min-height: 14px;
 }
 .card-badge {
   font-size: 9.5px;
@@ -2550,13 +3622,13 @@ onBeforeUnmount(() => {
 
 .node-card-title {
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 500;
   color: inherit;
-  line-height: 1.4;
+  line-height: 1.25;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
-  line-clamp: 3;
+  line-clamp: 1;
   overflow: hidden;
 }
 
@@ -2615,21 +3687,26 @@ onBeforeUnmount(() => {
 }
 
 .node-card-actions-row {
+  position: absolute;
+  bottom: -28px;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 2px;
-  padding-top: 5px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 4px 8px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
   opacity: 0;
-  height: 0;
-  overflow: hidden;
-  transition:
-    opacity 0.15s,
-    height 0.15s;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 10;
 }
 .mm-node--card:hover .node-card-actions-row {
   opacity: 1;
-  height: 26px;
+  pointer-events: auto;
 }
 
 .node-list-count {
@@ -2998,10 +4075,10 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--border, #d9d9d9);
 }
 .fs-section-label {
-  font-size: 9.5px !important;
-  font-weight: 700 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.05em;
   color: var(--text-secondary, #6b6b6e) !important;
   margin-bottom: 8px;
   font-style: normal !important;
@@ -3607,9 +4684,9 @@ onBeforeUnmount(() => {
   border-color: rgba(255, 255, 255, 0.07);
 }
 .mindmap-root[data-dark="true"] .node-card-actions-row {
-  border-color: rgba(255, 255, 255, 0.06);
+  background: var(--bg-card, #2b2c30);
+  border-color: rgba(255, 255, 255, 0.08);
 }
-
 .mindmap-root[data-dark="true"] .canvas-controls {
   background: var(--bg-card, #2b2c30);
   border-color: var(--border, #3e3e42);
@@ -3797,5 +4874,291 @@ onBeforeUnmount(() => {
   background: var(--bg-surface, #1a1a1a);
   border-color: var(--border, #3e3e42);
   color: var(--text-primary, #f5f5f5);
+}
+/* ── Shortcut hint ───────────────────────────────────────────────────── */
+.shortcut-hint {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 20, 60, 0.85);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 14px;
+  border-radius: 20px;
+  z-index: 500;
+  pointer-events: none;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  letter-spacing: 0.03em;
+}
+.hint-fade-enter-active,
+.hint-fade-leave-active {
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+}
+.hint-fade-enter-from,
+.hint-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-6px);
+}
+
+/* ── Shortcuts legend ────────────────────────────────────────────────── */
+.shortcuts-legend {
+  position: absolute;
+  bottom: 20px;
+  left: 66px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 100;
+  background: var(--bg-card, rgba(255, 255, 255, 0.88));
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 10px;
+  padding: 8px 10px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+.sl-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: var(--text-secondary, #6b6b6e);
+}
+.sl-row kbd {
+  font-size: 9px;
+  font-weight: 600;
+  background: var(--bg-surface, #dedfe3);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: monospace;
+  color: var(--text-primary, #2b2c30);
+  white-space: nowrap;
+}
+
+/* Dark mode for legend */
+.mindmap-root[data-dark="true"] .shortcuts-legend {
+  background: rgba(27, 27, 32, 0.9);
+  border-color: #3e3e42;
+}
+.mindmap-root[data-dark="true"] .sl-row kbd {
+  background: #3e3e42;
+  border-color: #555;
+  color: #f5f5f5;
+}
+/* ── Theme Panel ─────────────────────────────────────────────────────── */
+.theme-panel {
+  flex: 1;
+  overflow-y: auto;
+}
+.theme-panel::-webkit-scrollbar {
+  width: 5px;
+}
+.theme-panel::-webkit-scrollbar-thumb {
+  background: var(--border, #d9d9d9);
+  border-radius: 3px;
+}
+
+/* Background swatches */
+.bg-color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+.bg-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition:
+    transform 0.1s,
+    box-shadow 0.1s;
+  outline: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+.bg-swatch:hover {
+  transform: scale(1.18);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.bg-swatch--active {
+  border-color: var(--accent, #7d68c8) !important;
+  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.4) !important;
+}
+
+.bg-custom-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  background: var(--bg-surface, #dedfe3);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 7px;
+}
+.bg-hex-label {
+  font-size: 11px;
+  color: var(--text-secondary, #6b6b6e);
+  font-family: monospace;
+}
+.bg-hex-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--text-primary, #2b2c30);
+  min-width: 0;
+}
+.bg-opacity-label {
+  font-size: 10px;
+  color: var(--text-secondary, #6b6b6e);
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+.bg-recent {
+  margin-top: 8px;
+}
+.bg-recent-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary, #6b6b6e);
+  margin-bottom: 6px;
+}
+
+/* Theme cards grid */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+.theme-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 2px solid var(--border, #d9d9d9);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 4px 4px 5px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+  overflow: hidden;
+}
+.theme-card:hover {
+  border-color: var(--accent, #7d68c8);
+  box-shadow: 0 2px 10px rgba(125, 104, 200, 0.2);
+}
+.theme-card--active {
+  border-color: var(--accent, #7d68c8) !important;
+  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.3) !important;
+}
+
+/* Mini mindmap preview inside each theme card */
+.theme-preview {
+  position: relative;
+  width: 100%;
+  height: 44px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 4px;
+  overflow: hidden;
+}
+.tp-center {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: 4px;
+  z-index: 2;
+}
+.tp-branches {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-left: auto;
+  margin-right: 4px;
+  z-index: 2;
+}
+.tp-branch {
+  width: 20px;
+  height: 7px;
+  border-radius: 3px;
+}
+.tp-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+.theme-name {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b6b6e);
+  text-align: center;
+  line-height: 1;
+}
+.theme-check {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 8px;
+  color: var(--accent, #7d68c8);
+  background: white;
+  border-radius: 50%;
+  padding: 1px;
+}
+
+.theme-hint {
+  padding: 10px 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+/* Dark mode for theme panel */
+.mindmap-root[data-dark="true"] .bg-custom-row {
+  background: var(--bg-surface, #1a1a1a);
+  border-color: #3e3e42;
+}
+.mindmap-root[data-dark="true"] .bg-hex-input {
+  color: #f5f5f5;
+}
+.mindmap-root[data-dark="true"] .bg-opacity-label {
+  background: #3e3e42;
+  border-color: #555;
+  color: #b0b0b0;
+}
+.mindmap-root[data-dark="true"] .bg-recent-label {
+  color: #b0b0b0;
+}
+.mindmap-root[data-dark="true"] .theme-card {
+  border-color: #3e3e42;
+}
+.mindmap-root[data-dark="true"] .theme-name {
+  color: #b0b0b0;
+}
+.mindmap-root[data-dark="true"] .theme-panel::-webkit-scrollbar-thumb {
+  background: #3e3e42;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="" @scroll="onScroll">
+  <div class="">
     <div class="kanban-table space-y-4 mt-4 overflow-y-auto overflow-x-auto mb-5 ">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
@@ -75,7 +75,7 @@
 
         <!-- ROW INSERT HOVER -->
         <template v-else v-for="(ticket, index) in tickets" :key="ticket?.id">
-          <tr v-if="hoverIndex === index && !hasActiveEmptyRow" class="relative bg-bg-surface/20 transition-all cursor-pointer 
+          <tr v-if="hoverIndex === index && !hasActiveEmptyRow && !isTalent" class="relative bg-bg-surface/20 transition-all cursor-pointer 
                   border border-accent" @mouseleave="hoverIndex = null">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
               <span class="absolute left-[-20px] top-[-14px] bg-bg-surface border border-border 
@@ -133,7 +133,7 @@
 
         <!-- ADD NEW ROW FOOTER -->
         <tr
-  v-if="!hasActiveEmptyRow && canCreate"
+  v-if="!hasActiveEmptyRow && canCreate && !isTalent"
   @click="handleAddRow"
   class="bg-bg-surface border-t border-border cursor-pointer
          transition hover:bg-bg-body"
@@ -207,6 +207,7 @@ const props = withDefaults(defineProps<{
   canCreate?: boolean
   canCreateVariable?: boolean
   canDelete?: boolean
+  isTalent?:boolean
 }>(), {
   canCreate: true,
   canCreateVariable: true,
@@ -240,9 +241,6 @@ const emit = defineEmits<{
 }>()
 
 const tickets = reactive<Row[]>(props.rows || [])
-const onScroll = (e: Event) => {
-  emit('scroll', e);
-}
 watch(() => props.rows, newRows => {
   if (newRows) tickets.splice(0, tickets.length, ...newRows)
 })

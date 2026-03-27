@@ -371,12 +371,13 @@
       </template>
       <div
         v-else-if="currentView === 'table'"
-        class="flex flex-1 overflow-x-auto gap-3"
+        class=""
       >
         <TableView
           :columns="tableColumns"
           :rows="tableRows"
           :isPending="false"
+          :isTalent="true"
         />
       </div>
 
@@ -1006,9 +1007,23 @@ const tableRows = computed(() => {
       })),
     );
   }
+
+  if (currentTab.value === "agents") {
+    return filteredAgentGroups.value.flatMap((group: any) =>
+      group.agents.map((agent: any) => ({
+        id: agent._id,
+        title: agent.name || "Unnamed Agent",
+        column: group.title,
+        role: agent.role || "-",
+        model: agent.model || "-",
+        level: agent.level || "-",
+        status: agent.is_active ? "Active" : "Inactive",
+      })),
+    );
+  }
+
   return [];
 });
-
 const tableColumns = computed(() => {
   if (currentTab.value === "talent") {
     return [

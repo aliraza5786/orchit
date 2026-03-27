@@ -342,6 +342,7 @@
     v-if="selectedCard?._id"
     :details="selectedCard"
     :showPanel="!!selectedCard?._id"
+    :pin="true"
     @close="() => selectCardHandler({ variables: {} })"
   />
 </template>
@@ -850,8 +851,8 @@ const filteredBoard = computed(() => {
         created_at: card.created_at,
         "card-code": card["card-code"],
         variables: card.variables || {},
-        "start-date": card["start-date"],
-        "end-date": card["end-date"],
+        // "start-date": card["start-date"],
+        // "end-date": card["end-date"],
       })),
     }));
   }
