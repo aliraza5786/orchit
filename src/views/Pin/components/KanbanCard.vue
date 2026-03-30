@@ -44,6 +44,9 @@
             <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setDueDate" />
         </div> -->
+        <div class="flex justify-start text-sm text-text-secondary mt-2">
+            {{ formatDate(ticket?.created_at) }}
+        </div>
 
       
     </div>
@@ -180,6 +183,17 @@ const handleDeleteTicket = () => {
 //         variables: { 'end-date': date }
 //     })
 // }
+const formatDate = (dateString?: string) => {
+  if (!dateString) return "";
 
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return "";
+
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 const emit = defineEmits(['click'])
 </script>
