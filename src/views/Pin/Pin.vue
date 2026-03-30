@@ -219,7 +219,7 @@
       </div>
     </div>
     <template v-if="view == 'table'">
-        <div class="ps-4">
+        <div class="ps-4 overflow-auto">
               <TableView
         class="mx-3"
         :columns="columns"
@@ -299,7 +299,7 @@
       confirmText="Delete Ticket"
       cancelText="Cancel"
       size="md"
-      :loading="addingList"
+      :loading="isDeletingTicket"
       @confirm="handleDeleteCard"
       @cancel="() => (showDeleteTicket = false)"
     />
@@ -344,7 +344,7 @@
     />
   </div>
   <SidePanel
-    v-if="selectedCard?._id"
+    v-if="selectedTicketId"
     :details="selectedCard"
     :showPanel="!!selectedCard?._id"
     :pin="true"
@@ -437,6 +437,9 @@ const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
 const workspaceStore = useWorkspaceStore();
 const queryClient = useQueryClient();
+const selectedTicketId = ref("")
+const isDeletingTicket = ref(false);
+
 // Variables & Sheets
 // Sheets Data
 const { data, refetch: refetchSheets } = useSheets(
@@ -596,10 +599,14 @@ function onReorder(a: any) {
 function handleBoardUpdate(_: any) {}
 
 function selectCardHandler(card: any) {
+  console.log(card, "card data");
+  
   selectedCard.value = card;
 }
 
 function handleClickTicket(ticket: any) {
+  console.log("selected card", ticket);
+  selectedTicketId.value = ticket?._id;
   selectedCard.value = ticket;
 }
 
@@ -1209,7 +1216,7 @@ const handleTableDelete = (row: any) => {
 };
 const handleDeleteCard = async () => {
   if (!selectedDeleteId.value) return;
-
+ isDeletingTicket.value = true;
   try {
     await request({
       url: `workspace/card/${selectedDeleteId.value}`,
@@ -1223,7 +1230,9 @@ const handleDeleteCard = async () => {
     refetchList();
   } catch (err) {
     toast.error(toApiMessage(err));
+    isDeletingTicket.value = false;
   } finally {
+    isDeletingTicket.value = false;
     showDeleteTicket.value = false;
     selectedDeleteId.value = null;
   }

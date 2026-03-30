@@ -882,16 +882,16 @@ const {
   isPending,
   isFetching,
   refetch: refetchCardDetails,
-} = useProductCard(propsID, {
-  initialData: () => queryClient.getQueryData(["product-card", propsID.value]),
-  // staleTime: 5 * 60 * 1000,
-  gcTime: 10 * 60 * 1000,
-  refetchOnWindowFocus: false,
-});
+} = useProductCard(propsID);
 
-watch(props, () => {
-  propsID.value = props.details._id;
-});
+watch(
+  () => props.details._id,
+  (newId) => {
+    if (newId && newId !== propsID.value) {
+      propsID.value = newId;
+    }
+  }
+);
 watch(
   () => cardDetails.value,
   (card) => {
