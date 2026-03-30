@@ -646,6 +646,9 @@
     </div>
   </div>
 </Teleport>
+<!-- <PeakWidgets
+   :workspaceId="workspaceId" 
+/> -->
   </div>
 </template>
 
@@ -664,6 +667,7 @@ import { formatDateTime } from "../utilities/FormatDate";
 import { useWorkspaceStore } from "../stores/workspace"; 
 import ProjectPortfolio from '../components/peak/ProjectPortfolio.vue'
 import ProjectUpcomingDeadlines from '../components/peak/UpcomingDeadlines.vue'
+// import PeakWidgets from '../components/peak/PeakWidgets.vue'
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 

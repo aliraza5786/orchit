@@ -2,7 +2,16 @@ import { defineStore } from "pinia";
 import api from "../libs/api";
 import { toast } from "vue-sonner";
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
-
+interface Attachment {
+  mode: "inline" | "inline_text";
+  file_id: string | null;
+  data_url: string | null;
+  text: string | null;
+  filename: string;
+  mimetype: string;
+  size: number;
+  is_image: boolean;
+}
 interface AgentChatPayload {
   workspace_id: string;
   message: string;
@@ -15,6 +24,7 @@ interface AgentChatPayload {
   card_id?: string;
   session_id?: string;
   stream?:boolean;
+  attachments?: Attachment[];
 }
 
 interface AgentChatResponse {
@@ -84,6 +94,7 @@ interface UploadConfig {
   module_id: string;
   module_name: string;
 }
+
 type Agent = {
   module_id:string,
   moduleName:string;
@@ -159,7 +170,29 @@ export const useAgentStore = defineStore("agent", {
         this.isSending = false;
       }
     },
+  async uploadAssistantFiles(files: File[] | File) {
+  const formData = new FormData();
 
+  const filesArray = Array.isArray(files) ? files : [files];
+
+  filesArray.forEach((file) => {
+    formData.append("files[]", file); 
+  });
+
+  try {
+    const res = await api.post(
+      `${baseUrl}agent-chat/message/assistant/upload`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Failed to upload file", err);
+    throw err;
+  }
+},
     async fetchChatHistory(
       workspace_id: string,
       user_id?: string,
@@ -480,13 +513,13 @@ export const useAgentStore = defineStore("agent", {
         throw err;
       }
     },
-    async saveSelectedSheetTitle(title: string) {
+    async saveSelectedSheetTitle(title: string) {   
       this.sheetTitle = title;
       localStorage.setItem("selected_sheet_title", title);
     },
     async saveSelectedSheetId(id: string) {
       this.sheetId = id;
-      localStorage.setItem("selected_sheet_title", id);
+      localStorage.setItem("selected_sheet_id", id);
     },
     async fetchSavedAgents(
       workspace_id: string,
