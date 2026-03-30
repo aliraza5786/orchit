@@ -219,10 +219,11 @@
       </div>
     </div>
     <template v-if="view == 'table'">
-      <TableView
+        <div class="ps-4">
+              <TableView
         class="mx-3"
         :columns="columns"
-        :isPending="false"
+        :isPending="isListPending"
         @addVar="
           () => {
             isCreateVar = true;
@@ -232,7 +233,11 @@
         :canCreate="canCreateCard"
         :canCreateVariable="canCreateVariable"
         :canDelete="canDeleteCard"
+        @create="handleCreateTicket"
+        @update:rows="handleTableRowsUpdate"
+        @delete="handleTableDelete"
       />
+        </div>
     </template>
     <div
       v-if="view === 'mindmap'"
@@ -348,7 +353,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onMounted, watch } from "vue";
+import { ref, computed, defineAsyncComponent, onMounted, watch, h, nextTick, triggerRef } from "vue";
 import { useRoute } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useWorkspaceStore } from "../../stores/workspace";
@@ -373,6 +378,9 @@ import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
 import CreateTaskModal from "../Product/modals/CreateTaskModal.vue";
 import SidePanel from "../Product/components/SidePanel.vue";
 import CreateSheetModal from "../Product/modals/CreateSheetModal.vue";
+import { useAuthStore } from "../../stores/auth";
+import { getInitials } from "../../utilities";
+import { avatarColor } from "../../utilities/avatarColor";
 import Fuse from "fuse.js";
 import { debounce } from "lodash";
 import { request, toApiMessage } from "../../libs/api";
@@ -382,6 +390,15 @@ import TableView from "../../components/feature/TableView/TableView.vue";
 import CalendarView from "../../components/feature/CalendarView.vue";
 import GanttChartView from "../../components/feature/GanttChartView.vue";
 import TimelineView from "../../components/feature/TimelineView.vue";
+const DatePicker = defineAsyncComponent(
+  () => import("../Product/components/DatePicker.vue"),
+);
+const TableSearchCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableSearchCell.vue"),
+);
+const TableAssigneeCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableAssigneeCell.vue"),
+);
 const ConfirmDeleteModal = defineAsyncComponent(
   () => import("../Product/modals/ConfirmDeleteModal.vue"),
 );
@@ -428,6 +445,10 @@ const { data, refetch: refetchSheets } = useSheets(
   { workspace_id: workspaceId, workspace_module_id: moduleId },
   { onSuccess: () => refetchList() },
 );
+
+const authStore = useAuthStore();
+const pendingCreations = ref(new Set<string | number>());
+const localTableOrder = ref<any[]>([]);
 
 const selected_sheet_id = ref<any>(data.value?.[0]?._id ?? null);
 const { data: variables } = useVariables(
@@ -876,32 +897,303 @@ const filteredBoard = computed(() => {
 });
 const tableRows = computed(() => {
   const lists = Lists.value?.data || [];
-
-  return lists.flatMap((sheet: any) =>
+  const rows = lists.flatMap((sheet: any) =>
     (sheet.cards || []).map((card: any) => ({
+      ...card,
+      _id: card._id,
       id: card._id,
-
-      Title: card["card-title"],
-
-      "Due Date": card["end-date"],
-
-      Owner: card?.created_by?.u_full_name || "",
-
-      Assignee: card?.seat?.title || "",
-
+      "card-title": card["card-title"],
+      lane: card.lane,
+      created_by: card.created_by,
+      seat: card.seat || card.seats?.[0],
       raw: card,
     })),
   );
+
+  if (localTableOrder.value.length > 0) {
+    const orderMap = new Map(localTableOrder.value.map((id, index) => [id, index]));
+    return rows.sort((a, b) => {
+      const indexA = orderMap.has(a._id) ? orderMap.get(a._id) : 1000000;
+      const indexB = orderMap.has(b._id) ? orderMap.get(b._id) : 1000000;
+      return (indexA as number) - (indexB as number);
+    });
+  }
+  return rows;
 });
-const columns = [
-  { key: "Title", label: "Title" },
-  { key: "Due Date", label: "Due Date" },
-  { key: "Owner", label: "Owner" },
-  { key: "Assignee", label: "Assignee" },
-];
+
+const columns = computed(() => {
+  const variableList = variables.value || [];
+  return [
+    {
+      key: "card-title",
+      label: "Title",
+      render: ({ row, value }: any) =>
+        h("div", { class: "flex items-center gap-1 w-full ps-2" }, [
+          row._id && !String(row._id).startsWith("temp-")
+            ? h(
+                "a",
+                {
+                  class:
+                    "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
+                  onClick: (e: Event) => {
+                    e.stopPropagation();
+                    handleClickTicket(row);
+                  },
+                },
+                row["card-code"] || "Link",
+              )
+            : null,
+          h("div", { class: "flex-1 min-w-0" }, [
+            h("input", {
+              class:
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
+              value: row["card-title"] || value,
+              placeholder: "Enter title...",
+              disabled: !canEditCard.value,
+              onInput: (e: any) => {
+                row["card-title"] = e.target.value;
+              },
+              onBlur: (e: any) => {
+                const id = row._id || row.id;
+                if (id && !String(id).startsWith("temp-")) {
+                  handleChangeTicket(row, "card-title", e.target.value);
+                } else {
+                  checkAndCreateTicket(row);
+                }
+              },
+              onKeydown: (e: KeyboardEvent) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              },
+            }),
+          ]),
+        ]),
+    },
+    {
+      key: "lane",
+      label: "Lane",
+      render: ({ row, value }: any) =>
+        h(TableSearchCell, {
+          options: (workspaceStore.workspaceLanes || []).map((l: any) => ({
+            _id: l._id,
+            title: l.title,
+          })),
+          modelValue: row.lane?._id || row.workspace_lane_id || value?._id || value,
+          onUpdate: (val: any) => setLane(row, val),
+          disabled: !canEditCard.value,
+          emptyText: "Lane",
+        }),
+    },
+    {
+      key: "created_by",
+      label: "Owner",
+      render: ({ value }: any) =>
+        h("div", { class: "capitalize flex items-center gap-2 px-3" }, [
+          h("div", { class: "rounded-full" }, [
+            value?.u_profile_image
+              ? h("img", {
+                  class: "w-6 h-6 rounded-full",
+                  src: value?.u_profile_image,
+                })
+              : h(
+                  "div",
+                  {
+                    class:
+                      "w-5 h-5 rounded-full flex justify-center items-center text-[11px]",
+                    style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ""}`,
+                  },
+                  getInitials(value?.u_full_name),
+                ),
+          ]),
+          h("span", { class: "text-[12px]" }, value ? value?.u_full_name : ""),
+        ]),
+    },
+    {
+      key: "seat",
+      label: "Assignee",
+      render: ({ row, value }: any) =>
+        h(TableAssigneeCell, {
+          class: "capitalize flex items-center gap-2",
+          onAssign: (users: any[]) => assignHandle(row, users),
+          assigneeId: row.seats || row.seat_id || value,
+          seat: row.seats || row.seat || value,
+          name: true,
+          disabled: !canAssignCard.value,
+          emptyText: "Assignee",
+        }),
+    },
+    ...(variableList
+      ?.filter((e: any) => e?.type?.title === "Select")
+      .map((e: any) => ({
+        key: e?.slug,
+        label: e?.slug,
+        render: ({ row, value }: any) => {
+          let cellValue = value;
+          if (Array.isArray(row?.variables)) {
+            const found = row.variables.find((v: any) => v.slug === e.slug);
+            if (found) cellValue = found.value;
+          } else {
+            cellValue = row?.variables?.[e.slug] ?? row?.[e.slug] ?? value;
+          }
+          return h("div", { class: "capitalize flex items-center gap-2" }, [
+            h(TableSearchCell, {
+              options: (e.data ?? []).map((el: any) => ({
+                _id: el.value ?? el,
+                title: el.value ?? el,
+              })),
+              modelValue: cellValue,
+              disabled: !canEditCard.value,
+              emptyText: e.slug,
+              "onUpdate:modelValue": (val: any) => handleChangeTicket(row, e.slug, val),
+              columnName: e.slug,
+            }),
+          ]);
+        },
+        visible: e?.is_visible,
+      })) ?? []),
+  ];
+});
+
+function handleTableRowsUpdate(newRows: any[]) {
+  const pending = newRows.filter((r) => String(r._id).startsWith("temp-"));
+  localPendingTickets.value = pending;
+  localTableOrder.value = newRows.map((r) => r._id);
+}
+
+function setStartDate(row: any, date: any) {
+  const id = row._id;
+  if (id && !String(id).startsWith("temp-")) {
+    moveCard.mutate({ card_id: id, variables: { "end-date": date } });
+  } else {
+    row["end-date"] = date;
+    checkAndCreateTicket(row);
+  }
+}
+
+function setLane(row: any, laneId: string) {
+  const id = row._id;
+  if (id && !String(id).startsWith("temp-")) {
+    moveCard.mutate({ card_id: id, workspace_lane_id: laneId });
+  } else {
+    row.workspace_lane_id = laneId;
+    checkAndCreateTicket(row);
+  }
+}
+
+const assignHandle = (row: any, users: any[]) => {
+  const id = row?._id;
+  const userIds = (users || [])
+    .filter((u) => u && (u._id || u.id))
+    .map((u) => u._id || u.id);
+  if (id && !String(id).startsWith("temp-")) {
+    moveCard.mutate({ card_id: id, seat_id: userIds, optimisticUser: users });
+  } else {
+    row.seat = users;
+    row.seats = users;
+    row.seat_id = userIds;
+    checkAndCreateTicket(row);
+  }
+};
+
+function handleChangeTicket(row: any, key: any, value: any) {
+  const id = row?._id;
+  if (id && !String(id).startsWith("temp-")) {
+    moveCard.mutate({ card_id: id, variables: { [key]: value } });
+  } else {
+    if (!row.variables) row.variables = {};
+    if (Array.isArray(row.variables)) {
+      const idx = row.variables.findIndex((v: any) => v.slug === key);
+      if (idx !== -1) row.variables[idx].value = value;
+      else row.variables.push({ slug: key, value });
+    } else {
+      row.variables[key] = value;
+    }
+    checkAndCreateTicket(row);
+  }
+}
+
+function checkAndCreateTicket(row: any) {
+  const title = row["card-title"];
+  if (!title || !title.trim()) return;
+
+  const tempId = row._id || row.id;
+  if (pendingCreations.value.has(tempId)) return;
+
+  let status = row["card-status"];
+  let type = row["card-type"];
+
+  if (Array.isArray(row.variables)) {
+    const sVar = row.variables.find((v: any) => v.slug === "card-status");
+    if (sVar) status = sVar.value;
+    const tVar = row.variables.find((v: any) => v.slug === "card-type");
+    if (tVar) type = tVar.value;
+  } else if (typeof row.variables === "object" && row.variables !== null) {
+    status = row.variables["card-status"] || status;
+    type = row.variables["card-type"] || type;
+  }
+
+  // Fallbacks if status or type missing
+  if (!status && Lists.value?.data?.[0]?.title) {
+    status = Lists.value.data[0].title;
+  }
+  if (!type) type = "Text";
+
+  if (status && type) {
+    pendingCreations.value.add(tempId);
+
+    const payloadVariables: Record<string, any> = {};
+    if (variables.value) {
+      variables.value.forEach((v: any) => {
+        payloadVariables[v.slug] = null;
+      });
+    }
+
+    payloadVariables["card-title"] = title.trim();
+    payloadVariables["card-status"] = status;
+    payloadVariables["card-type"] = type;
+
+    Object.keys(row).forEach((key) => {
+      if (payloadVariables.hasOwnProperty(key)) {
+        payloadVariables[key] = row[key];
+      }
+    });
+
+    if (Array.isArray(row.variables)) {
+      row.variables.forEach((v: any) => {
+        if (payloadVariables.hasOwnProperty(v.slug)) {
+          payloadVariables[v.slug] = v.value;
+        }
+      });
+    } else if (typeof row.variables === "object" && row.variables !== null) {
+      Object.entries(row.variables).forEach(([k, v]) => {
+        if (payloadVariables.hasOwnProperty(k)) payloadVariables[k] = v;
+      });
+    }
+
+    const payload = {
+      sheet_list_id: status,
+      workspace_id: workspaceId.value,
+      sheet_id: selected_sheet_id.value,
+      workspace_lane_id: row.lane?._id || row.workspace_lane_id || null,
+      seat_id: row.seat?._id || row.seat_id || null,
+      variables: payloadVariables,
+      "end-date": row["end-date"] || null,
+      temp_row_id: tempId,
+    };
+
+    addTicket(payload);
+  }
+}
 const selectedDeleteId = ref<string | null>(null);
+const ticketToDelete = ref<any>(null);
+const isDeletingTicket = ref(false);
+
 const openDeleteModal = (cardId: string) => {
   selectedDeleteId.value = cardId;
+  showDeleteTicket.value = true;
+};
+
+const handleTableDelete = (row: any) => {
+  selectedDeleteId.value = row._id;
   showDeleteTicket.value = true;
 };
 const handleDeleteCard = async () => {
@@ -927,55 +1219,58 @@ const handleDeleteCard = async () => {
 };
 const localPendingTickets = ref<any[]>([]);
 const { mutate: addTicket } = useAddTicket({
-  onSuccess: (newCard: any) => {
+  onMutate: () => {
+    // Optimistic UI update could go here
+  },
+  onSuccess: (newCard: any, variables: any) => {
+    const tempId = variables.temp_row_id;
+    pendingCreations.value.delete(tempId);
+
     queryClient.setQueriesData(
       { queryKey: ["sheet-list"], exact: false },
       (oldData: any) => {
         if (!oldData) return oldData;
-
         const isArray = Array.isArray(oldData);
-
-        // normalize shape
-        const sheets = isArray
-          ? oldData
-          : oldData?.data ?? oldData?.sheets ?? [];
-
+        const sheets = isArray ? oldData : oldData?.data ?? oldData?.sheets ?? [];
         if (!Array.isArray(sheets)) return oldData;
 
         const updatedSheets = sheets.map((sheet: any) => {
           if (sheet._id !== newCard?.sheet_id) return sheet;
-
           const existingCards = sheet.cards ?? [];
-
-          // dedupe guard
-          if (existingCards.some((c: any) => c._id === newCard._id)) {
-            return sheet;
-          }
-
-          return {
-            ...sheet,
-            cards: [...existingCards, newCard],
-          };
+          if (existingCards.some((c: any) => c._id === newCard._id)) return sheet;
+          return { ...sheet, cards: [...existingCards, newCard] };
         });
 
-        // preserve original structure
-        if (isArray) return updatedSheets;
-
-        if (oldData?.data) {
-          return { ...oldData, data: updatedSheets };
-        }
-
-        if (oldData?.sheets) {
-          return { ...oldData, sheets: updatedSheets };
-        }
-
-        return oldData;
-      }
+        return isArray ? updatedSheets : { ...oldData, data: updatedSheets };
+      },
     );
 
-    localPendingTickets.value = [];
+    if (tempId) {
+      localPendingTickets.value = localPendingTickets.value.filter(
+        (t) => t._id !== tempId && t.id !== tempId,
+      );
+      localTableOrder.value = localTableOrder.value.map((id) =>
+        id === tempId ? newCard._id : id,
+      );
+    }
+  },
+  onError: (_err: any, variables: any) => {
+    pendingCreations.value.delete(variables.temp_row_id);
+    toast.error("Failed to create ticket");
   },
 });
+
+function handleCreateTicket(newRow: any) {
+  // Fill default owner
+  if (authStore.profile) {
+    newRow.created_by = {
+      u_full_name: authStore.profile.u_full_name,
+      u_profile_image: authStore.profile.u_profile_image,
+      u_email: authStore.profile.u_email,
+    };
+  }
+}
+
 function handleMindmapCreateCard(payload: any) {
   addTicket(payload);
 }

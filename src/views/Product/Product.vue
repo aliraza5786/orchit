@@ -267,6 +267,7 @@
 
     <!-- ── Table View ──────────────────────────────────────────────────────── -->
     <template v-if="view == 'table'">
+      <div class="ps-4">
       <TableView
         class="mx-3"
         @toggleVisibility="toggleVisibilityHandler"
@@ -291,6 +292,7 @@
         @create="handleCreateTicket"
         @update:rows="handleTableRowsUpdate"
       />
+      </div>
     </template>
 
     <!-- ── MindMap View ────────────────────────────────────────────────────── -->
@@ -1608,6 +1610,14 @@ const { mutate: addTicket } = useAddTicket({
 },
 });
 
+const { mutate: addTableTicket } = useAddTicket({
+  onSuccess: () => {
+    localPendingTickets.value = []
+    localTableOrder.value = []
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+  }
+})
+
 function checkAndCreateTicket(row: any) {
   const title = row["card-title"];
   const laneId = row.lane?._id || row.workspace_lane_id;
@@ -1662,7 +1672,7 @@ function checkAndCreateTicket(row: any) {
       "end-date": row["end-date"] || null,
       createdAt: new Date().toISOString(),
     };
-    addTicket(payload);
+    addTableTicket(payload);
   }
 }
 
