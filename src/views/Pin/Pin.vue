@@ -353,7 +353,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onMounted, watch, h, nextTick, triggerRef } from "vue";
+import { ref, computed, defineAsyncComponent, onMounted, watch, h} from "vue";
 import { useRoute } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useWorkspaceStore } from "../../stores/workspace";
@@ -366,6 +366,8 @@ import {
   ReOrderCard,
   useUpdateWorkspaceSheet,
   useAddTicket,
+  useMoveCard,
+  useLanes,
 } from "../../queries/useSheets";
 import { useRouteIds } from "../../composables/useQueryParams";
 
@@ -390,9 +392,6 @@ import TableView from "../../components/feature/TableView/TableView.vue";
 import CalendarView from "../../components/feature/CalendarView.vue";
 import GanttChartView from "../../components/feature/GanttChartView.vue";
 import TimelineView from "../../components/feature/TimelineView.vue";
-const DatePicker = defineAsyncComponent(
-  () => import("../Product/components/DatePicker.vue"),
-);
 const TableSearchCell = defineAsyncComponent(
   () => import("../../components/feature/TableView/TableSearchCell.vue"),
 );
@@ -410,7 +409,6 @@ const KanbanBoard = defineAsyncComponent(
 );
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
-import { useMoveCard } from "../../queries/useSheets";
 const {
   canEditSheet,
   canDeleteSheet,
@@ -487,6 +485,15 @@ onMounted(() => {
     ? JSON.parse(JSON.stringify(Lists.value))
     : [];
 });
+
+const { data: lanes } = useLanes(workspaceId);
+const laneOptions = computed<any[]>(() =>
+  (lanes?.value ?? []).map((el: any) => ({
+    _id: el._id,
+    title: el?.variables?.["lane-title"] ?? String(el._id),
+  })),
+);
+
 // Add List Logic
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: (data: any, payload: any) => {
@@ -897,28 +904,30 @@ const filteredBoard = computed(() => {
 });
 const tableRows = computed(() => {
   const lists = Lists.value?.data || [];
-  const rows = lists.flatMap((sheet: any) =>
-    (sheet.cards || []).map((card: any) => ({
-      ...card,
-      _id: card._id,
-      id: card._id,
-      "card-title": card["card-title"],
-      lane: card.lane,
-      created_by: card.created_by,
-      seat: card.seat || card.seats?.[0],
-      raw: card,
-    })),
-  );
+  let rows: any[] = [];
+  lists.forEach((sheet: any) => {
+    rows = [...rows, ...(sheet.cards || [])];
+  });
 
   if (localTableOrder.value.length > 0) {
-    const orderMap = new Map(localTableOrder.value.map((id, index) => [id, index]));
-    return rows.sort((a, b) => {
-      const indexA = orderMap.has(a._id) ? orderMap.get(a._id) : 1000000;
-      const indexB = orderMap.has(b._id) ? orderMap.get(b._id) : 1000000;
-      return (indexA as number) - (indexB as number);
-    });
+    const cardMap = new Map();
+    rows.forEach((c: any) => cardMap.set(c._id, c));
+    localPendingTickets.value.forEach((c: any) => cardMap.set(c.id || c._id, c));
+    
+    const ordered = localTableOrder.value
+      .map((id) => cardMap.get(id))
+      .filter(Boolean);
+      
+    const returnedIds = new Set(ordered.map((c) => c._id || c.id));
+    
+    const extras = [
+      ...rows.filter((c: any) => !returnedIds.has(c._id)),
+      ...localPendingTickets.value.filter((c: any) => !returnedIds.has(c.id || c._id)),
+    ];
+    return [...ordered, ...extras];
   }
-  return rows;
+  
+  return [...rows, ...localPendingTickets.value];
 });
 
 const columns = computed(() => {
@@ -929,7 +938,7 @@ const columns = computed(() => {
       label: "Title",
       render: ({ row, value }: any) =>
         h("div", { class: "flex items-center gap-1 w-full ps-2" }, [
-          row._id && !String(row._id).startsWith("temp-")
+          row._id
             ? h(
                 "a",
                 {
@@ -946,7 +955,7 @@ const columns = computed(() => {
           h("div", { class: "flex-1 min-w-0" }, [
             h("input", {
               class:
-                "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body h-8",
               value: row["card-title"] || value,
               placeholder: "Enter title...",
               disabled: !canEditCard.value,
@@ -954,10 +963,12 @@ const columns = computed(() => {
                 row["card-title"] = e.target.value;
               },
               onBlur: (e: any) => {
-                const id = row._id || row.id;
-                if (id && !String(id).startsWith("temp-")) {
+                if (row._id) {
+                  // Existing server row — update in place
                   handleChangeTicket(row, "card-title", e.target.value);
                 } else {
+                  // New temp row — attempt to create
+                  row["card-title"] = e.target.value;
                   checkAndCreateTicket(row);
                 }
               },
@@ -973,13 +984,12 @@ const columns = computed(() => {
       label: "Lane",
       render: ({ row, value }: any) =>
         h(TableSearchCell, {
-          options: (workspaceStore.workspaceLanes || []).map((l: any) => ({
-            _id: l._id,
-            title: l.title,
-          })),
-          modelValue: row.lane?._id || row.workspace_lane_id || value?._id || value,
-          onUpdate: (val: any) => setLane(row, val),
+          options: laneOptions.value ?? [],
+          modelValue: row.lane?._id || row.workspace_lane_id || value?._id || value || null,
+          "onUpdate:modelValue": (val: any) => setLane(row, val),
+          displayField: "title",
           disabled: !canEditCard.value,
+          placeholder: "Select lane",
           emptyText: "Lane",
         }),
     },
@@ -1054,38 +1064,39 @@ const columns = computed(() => {
 });
 
 function handleTableRowsUpdate(newRows: any[]) {
-  const pending = newRows.filter((r) => String(r._id).startsWith("temp-"));
+  // new rows have numeric `id` but no `_id` — treat those as pending
+  const pending = newRows.filter((r) => !r._id);
   localPendingTickets.value = pending;
-  localTableOrder.value = newRows.map((r) => r._id);
+  localTableOrder.value = newRows.map((r) => r._id || r.id);
 }
 
-function setStartDate(row: any, date: any) {
-  const id = row._id;
-  if (id && !String(id).startsWith("temp-")) {
-    moveCard.mutate({ card_id: id, variables: { "end-date": date } });
-  } else {
-    row["end-date"] = date;
-    checkAndCreateTicket(row);
-  }
-}
+ 
 
 function setLane(row: any, laneId: string) {
-  const id = row._id;
-  if (id && !String(id).startsWith("temp-")) {
-    moveCard.mutate({ card_id: id, workspace_lane_id: laneId });
+  if (row._id) {
+    moveCard.mutate({ card_id: row._id, workspace_lane_id: laneId });
+    // Update local state optimistically
+    const newLane = laneOptions.value.find((l: any) => l._id === laneId);
+    if (newLane) {
+      row.lane = newLane;
+      row.workspace_lane_id = laneId;
+    }
   } else {
-    row.workspace_lane_id = laneId;
+    const newLane = laneOptions.value.find((l: any) => l._id === laneId);
+    if (newLane) {
+      row.lane = newLane;
+      row.workspace_lane_id = laneId;
+    }
     checkAndCreateTicket(row);
   }
 }
 
 const assignHandle = (row: any, users: any[]) => {
-  const id = row?._id;
   const userIds = (users || [])
     .filter((u) => u && (u._id || u.id))
     .map((u) => u._id || u.id);
-  if (id && !String(id).startsWith("temp-")) {
-    moveCard.mutate({ card_id: id, seat_id: userIds, optimisticUser: users });
+  if (row._id) {
+    moveCard.mutate({ card_id: row._id, seat_id: userIds, optimisticUser: users });
   } else {
     row.seat = users;
     row.seats = users;
@@ -1095,9 +1106,8 @@ const assignHandle = (row: any, users: any[]) => {
 };
 
 function handleChangeTicket(row: any, key: any, value: any) {
-  const id = row?._id;
-  if (id && !String(id).startsWith("temp-")) {
-    moveCard.mutate({ card_id: id, variables: { [key]: value } });
+  if (row._id) {
+    moveCard.mutate({ card_id: row._id, variables: { [key]: value } });
   } else {
     if (!row.variables) row.variables = {};
     if (Array.isArray(row.variables)) {
@@ -1110,11 +1120,12 @@ function handleChangeTicket(row: any, key: any, value: any) {
     checkAndCreateTicket(row);
   }
 }
-
+console.log(workspaceStore.lanes, 'lanes')
 function checkAndCreateTicket(row: any) {
   const title = row["card-title"];
   if (!title || !title.trim()) return;
 
+  // Guard against duplicate creation
   const tempId = row._id || row.id;
   if (pendingCreations.value.has(tempId)) return;
 
@@ -1131,61 +1142,61 @@ function checkAndCreateTicket(row: any) {
     type = row.variables["card-type"] || type;
   }
 
-  // Fallbacks if status or type missing
-  if (!status && Lists.value?.data?.[0]?.title) {
-    status = Lists.value.data[0].title;
+  // Fallback: use first list's _id as the status/sheet_list_id
+  if (!status) {
+    const firstList = Lists.value?.data?.[0];
+    status = firstList?._id || firstList?.title;
   }
+  // Fallback type — always allow creation when title is present
   if (!type) type = "Text";
 
-  if (status && type) {
-    pendingCreations.value.add(tempId);
+  // Can now always proceed since we always have title, status fallback, and type fallback
+  pendingCreations.value.add(tempId);
 
-    const payloadVariables: Record<string, any> = {};
-    if (variables.value) {
-      variables.value.forEach((v: any) => {
-        payloadVariables[v.slug] = null;
-      });
+  const payloadVariables: Record<string, any> = {};
+  if (variables.value) {
+    variables.value.forEach((v: any) => {
+      payloadVariables[v.slug] = null;
+    });
+  }
+
+  payloadVariables["card-title"] = title.trim();
+  if (status) payloadVariables["card-status"] = status;
+  if (type) payloadVariables["card-type"] = type;
+
+  Object.keys(row).forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(payloadVariables, key)) {
+      payloadVariables[key] = row[key];
     }
+  });
 
-    payloadVariables["card-title"] = title.trim();
-    payloadVariables["card-status"] = status;
-    payloadVariables["card-type"] = type;
-
-    Object.keys(row).forEach((key) => {
-      if (payloadVariables.hasOwnProperty(key)) {
-        payloadVariables[key] = row[key];
+  if (Array.isArray(row.variables)) {
+    row.variables.forEach((v: any) => {
+      if (Object.prototype.hasOwnProperty.call(payloadVariables, v.slug)) {
+        payloadVariables[v.slug] = v.value;
       }
     });
-
-    if (Array.isArray(row.variables)) {
-      row.variables.forEach((v: any) => {
-        if (payloadVariables.hasOwnProperty(v.slug)) {
-          payloadVariables[v.slug] = v.value;
-        }
-      });
-    } else if (typeof row.variables === "object" && row.variables !== null) {
-      Object.entries(row.variables).forEach(([k, v]) => {
-        if (payloadVariables.hasOwnProperty(k)) payloadVariables[k] = v;
-      });
-    }
-
-    const payload = {
-      sheet_list_id: status,
-      workspace_id: workspaceId.value,
-      sheet_id: selected_sheet_id.value,
-      workspace_lane_id: row.lane?._id || row.workspace_lane_id || null,
-      seat_id: row.seat?._id || row.seat_id || null,
-      variables: payloadVariables,
-      "end-date": row["end-date"] || null,
-      temp_row_id: tempId,
-    };
-
-    addTicket(payload);
+  } else if (typeof row.variables === "object" && row.variables !== null) {
+    Object.entries(row.variables).forEach(([k, v]) => {
+      if (Object.prototype.hasOwnProperty.call(payloadVariables, k)) payloadVariables[k] = v;
+    });
   }
+
+  const payload = {
+    sheet_list_id: status,
+    workspace_id: workspaceId.value,
+    sheet_id: selected_sheet_id.value,
+    workspace_lane_id: row.lane?._id || row.workspace_lane_id || null,
+    seat_id: row.seat?._id || row.seat_id || null,
+    variables: payloadVariables,
+    "end-date": row["end-date"] || null,
+    temp_row_id: tempId,
+  };
+
+  addTicket(payload);
 }
 const selectedDeleteId = ref<string | null>(null);
-const ticketToDelete = ref<any>(null);
-const isDeletingTicket = ref(false);
+  
 
 const openDeleteModal = (cardId: string) => {
   selectedDeleteId.value = cardId;
@@ -1262,11 +1273,11 @@ const { mutate: addTicket } = useAddTicket({
 
 function handleCreateTicket(newRow: any) {
   // Fill default owner
-  if (authStore.profile) {
+  if (authStore.user?.data) {
     newRow.created_by = {
-      u_full_name: authStore.profile.u_full_name,
-      u_profile_image: authStore.profile.u_profile_image,
-      u_email: authStore.profile.u_email,
+      u_full_name: authStore.user?.data.u_full_name,
+      u_profile_image: authStore.user?.data.u_profile_image,
+      u_email: authStore.user?.data.u_email,
     };
   }
 }
