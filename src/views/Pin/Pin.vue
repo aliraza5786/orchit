@@ -927,8 +927,52 @@ const handleDeleteCard = async () => {
 };
 const localPendingTickets = ref<any[]>([]);
 const { mutate: addTicket } = useAddTicket({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+  onSuccess: (newCard: any) => {
+    queryClient.setQueriesData(
+      { queryKey: ["sheet-list"], exact: false },
+      (oldData: any) => {
+        if (!oldData) return oldData;
+
+        const isArray = Array.isArray(oldData);
+
+        // normalize shape
+        const sheets = isArray
+          ? oldData
+          : oldData?.data ?? oldData?.sheets ?? [];
+
+        if (!Array.isArray(sheets)) return oldData;
+
+        const updatedSheets = sheets.map((sheet: any) => {
+          if (sheet._id !== newCard?.sheet_id) return sheet;
+
+          const existingCards = sheet.cards ?? [];
+
+          // dedupe guard
+          if (existingCards.some((c: any) => c._id === newCard._id)) {
+            return sheet;
+          }
+
+          return {
+            ...sheet,
+            cards: [...existingCards, newCard],
+          };
+        });
+
+        // preserve original structure
+        if (isArray) return updatedSheets;
+
+        if (oldData?.data) {
+          return { ...oldData, data: updatedSheets };
+        }
+
+        if (oldData?.sheets) {
+          return { ...oldData, sheets: updatedSheets };
+        }
+
+        return oldData;
+      }
+    );
+
     localPendingTickets.value = [];
   },
 });
