@@ -2364,15 +2364,33 @@ if (d === "center") {
     node.y = y;
     return runningY - y;
   }
-  // ── Logic Right layout (flush left, bracket connector) ───────────────
+// ── Logic Right layout (flush left, bracket connector) ───────────────
 if (d === "logic-right") {
-  const bracketX = x + node.width + 40;
-  const childX   = bracketX + 20;
+  const childX = x + node.width + 60;
   let runY = y;
   for (const child of node.children) {
     nodeSides.set(child.id, "right");
-    const h = layoutTree(child, childX, runY, "right");
-    runY += h + V_GAP;
+    child.width  = NODE_W[child.uniqueName] ?? 180;
+    child.height = nodeHeight(child);
+    child.x = childX;
+    child.y = runY;
+    nodeMap.set(child.id, child);
+    // Layout grandchildren (cards) further to the right
+    if (child.children?.length) {
+      const gcX = childX + child.width + H_GAP;
+      let gcY = runY;
+      for (const gc of child.children) {
+        nodeSides.set(gc.id, "right");
+        const h = layoutTree(gc, gcX, gcY, "right");
+        gcY += h + V_GAP;
+      }
+      const firstGcY = child.children[0].y + child.children[0].height / 2;
+      const lastGc   = child.children[child.children.length - 1];
+      child.y = (firstGcY + lastGc.y + lastGc.height / 2) / 2 - child.height / 2;
+      runY = gcY;
+    } else {
+      runY += child.height + V_GAP;
+    }
   }
   const firstY = node.children[0].y + node.children[0].height / 2;
   const lastC  = node.children[node.children.length - 1];
@@ -2384,14 +2402,32 @@ if (d === "logic-right") {
 
 // ── Logic Left layout (flush right, bracket connector) ───────────────
 if (d === "logic-left") {
-  const bracketX = x - 40;
-  const childW   = NODE_W.List ?? 180;
-  const childX   = bracketX - 20 - childW;
+  const childW = NODE_W.List ?? 180;
+  const childX = x - H_GAP - childW;
   let runY = y;
   for (const child of node.children) {
     nodeSides.set(child.id, "left");
-    const h = layoutTree(child, childX, runY, "left");
-    runY += h + V_GAP;
+    child.width  = NODE_W[child.uniqueName] ?? 180;
+    child.height = nodeHeight(child);
+    child.x = childX;
+    child.y = runY;
+    nodeMap.set(child.id, child);
+    if (child.children?.length) {
+      const gcW = NODE_W.card ?? 210;
+      const gcX = childX - H_GAP - gcW;
+      let gcY = runY;
+      for (const gc of child.children) {
+        nodeSides.set(gc.id, "left");
+        const h = layoutTree(gc, gcX, gcY, "left");
+        gcY += h + V_GAP;
+      }
+      const firstGcY = child.children[0].y + child.children[0].height / 2;
+      const lastGc   = child.children[child.children.length - 1];
+      child.y = (firstGcY + lastGc.y + lastGc.height / 2) / 2 - child.height / 2;
+      runY = gcY;
+    } else {
+      runY += child.height + V_GAP;
+    }
   }
   const firstY = node.children[0].y + node.children[0].height / 2;
   const lastC  = node.children[node.children.length - 1];
@@ -2460,69 +2496,187 @@ if (d === "org-chart") {
   return totalW;
 }
 
-// ── Timeline layout (horizontal spine, nodes alternate above/below) ───
 if (d === "timeline") {
-  const spineY    = y + 200;
-  const nodeSpacingX = Math.max(NODE_W.List + H_GAP, 320);
-  node.x = x;
-  node.y = spineY - node.height / 2;
-  for (let i = 0; i < node.children.length; i++) {
-    const child = node.children[i];
-    child.width  = NODE_W[child.uniqueName] ?? 180;
-    child.height = nodeHeight(child);
-    const cx = x + node.width + H_GAP + i * nodeSpacingX;
-    const above = i % 2 === 0;
-    child.x = cx;
-    child.y = above
-      ? spineY - H_GAP - child.height
-      : spineY + H_GAP;
-    nodeSides.set(child.id, "right");
-    // Layout grandchildren downward
-    if (child.children?.length) {
-      layoutTree(child, child.x, child.y, above ? "top" : "bottom");
-    }
-  }
-  node.x = x;
-  node.y = spineY - node.height / 2;
-  return (node.children.length * nodeSpacingX) + node.width;
-}
+  const SPINE_Y        = y;                 
+  const LIST_W         = NODE_W.List ?? 180;
+  const CARD_W         = NODE_W.card ?? 210;
+  const LIST_COL_W     = Math.max(LIST_W, CARD_W) + 24; 
+  const SHEET_PAD_X    = 40;                
+  const SPINE_TO_LIST  = 60;         
+  const LIST_GAP       = 16;       
+  const sheetColWidths: number[] = node.children.map(sheet => {
+    const lists = sheet.children ?? [];
+    const listsW = lists.length * LIST_COL_W + Math.max(0, lists.length - 1) * V_GAP;
+    return Math.max(NODE_W[sheet.uniqueName] ?? 200, listsW) + SHEET_PAD_X;
+  });
 
-// ── Tree Map layout (proportional area blocks, no connections) ────────
-if (d === "tree-map") {
-  // Place root at top-left as a header, then tile children as blocks
-  const blockW  = NODE_W.List + 40;
-  const blockH  = 120;
-  const cols    = 3;
-  const padX    = 20;
-  const padY    = 20;
-  const startBX = x;
-  const startBY = y + node.height + padY;
-  node.x = x;
-  node.y = y;
+  node.width  = NODE_W[node.uniqueName] ?? 220;
+  node.height = nodeHeight(node);
+  node.x      = x;
+  node.y      = SPINE_Y - node.height / 2;
+  nodeMap.set(node.id, node);
+
+  // ── pass 2: place sheets + their lists + cards ───────────────────────
+  let cursorX = x + node.width + H_GAP;
+
   for (let i = 0; i < node.children.length; i++) {
-    const child = node.children[i];
-    const col   = i % cols;
-    const row   = Math.floor(i / cols);
-    child.x = startBX + col * (blockW + padX);
-    child.y = startBY + row * (blockH + padY);
-    child.width  = blockW;
-    child.height = blockH;
-    nodeSides.set(child.id, "right");
-    // Stack grandchildren inside the block vertically
-    if (child.children?.length) {
-      let gy = child.y + nodeHeight(child) + 6;
-      for (const gc of child.children) {
-        gc.x = child.x + 8;
-        gc.y = gy;
-        gc.width  = blockW - 16;
-        gc.height = 28;
-        nodeSides.set(gc.id, "right");
-        gy += gc.height + 4;
+    const sheet     = node.children[i];
+    const colW      = sheetColWidths[i];
+    sheet.width     = NODE_W[sheet.uniqueName] ?? 200;
+    sheet.height    = nodeHeight(sheet);
+
+    // Sheet centred horizontally in its column, vertically on spine
+    sheet.x = cursorX + (colW - SHEET_PAD_X - sheet.width) / 2;
+    sheet.y = SPINE_Y - sheet.height / 2;
+    nodeSides.set(sheet.id, "right");
+    nodeMap.set(sheet.id, sheet);
+
+    const lists = sheet.children ?? [];
+
+    // Split lists: evens above spine, odds below spine
+    const aboveLists = lists.filter((_, j) => j % 2 === 0);
+    const belowLists = lists.filter((_, j) => j % 2 !== 0);
+
+    // ── place above lists (stack upward from spine) ──────────────────
+    // All above-lists share columns starting at sheet.x, side by side
+    let aboveCursorY = SPINE_Y - SPINE_TO_LIST; // bottom edge of next list slot
+    // Group all above lists in a single upward stack, centred on sheet
+    const aboveTotalW = aboveLists.length * LIST_COL_W + Math.max(0, aboveLists.length - 1) * V_GAP;
+    let aboveStartX   = sheet.x + sheet.width / 2 - aboveTotalW / 2;
+
+    for (let j = 0; j < aboveLists.length; j++) {
+      const list    = aboveLists[j];
+      list.width    = LIST_W;
+      list.height   = nodeHeight(list);
+      list.x        = aboveStartX + j * (LIST_COL_W + V_GAP);
+      list.y        = aboveCursorY - list.height;
+      nodeSides.set(list.id, "right");
+      nodeMap.set(list.id, list);
+
+      // Cards stack upward from list top
+      const cards = list.children ?? [];
+      let cardY = list.y - LIST_GAP;
+      for (let k = cards.length - 1; k >= 0; k--) {
+        const card   = cards[k];
+        card.width   = CARD_W;
+        card.height  = nodeHeight(card);
+        card.x       = list.x + (list.width - card.width) / 2;
+        cardY        -= card.height;
+        card.y       = cardY;
+        cardY        -= LIST_GAP;
+        nodeSides.set(card.id, "right");
+        nodeMap.set(card.id, card);
+      }
+    }
+
+    // ── place below lists (stack downward from spine) ────────────────
+    const belowTotalW = belowLists.length * LIST_COL_W + Math.max(0, belowLists.length - 1) * V_GAP;
+    let belowStartX   = sheet.x + sheet.width / 2 - belowTotalW / 2;
+    let belowCursorY  = SPINE_Y + SPINE_TO_LIST; // top edge of next list slot
+
+    for (let j = 0; j < belowLists.length; j++) {
+      const list    = belowLists[j];
+      list.width    = LIST_W;
+      list.height   = nodeHeight(list);
+      list.x        = belowStartX + j * (LIST_COL_W + V_GAP);
+      list.y        = belowCursorY;
+      nodeSides.set(list.id, "right");
+      nodeMap.set(list.id, list);
+
+      // Cards stack downward from list bottom
+      const cards = list.children ?? [];
+      let cardY = list.y + list.height + LIST_GAP;
+      for (let k = 0; k < cards.length; k++) {
+        const card   = cards[k];
+        card.width   = CARD_W;
+        card.height  = nodeHeight(card);
+        card.x       = list.x + (list.width - card.width) / 2;
+        card.y       = cardY;
+        cardY       += card.height + LIST_GAP;
+        nodeSides.set(card.id, "right");
+        nodeMap.set(card.id, card);
+      }
+    }
+
+    cursorX += colW;
+  }
+
+  return cursorX - x;
+}
+// ── Tree Map layout ───────────────────────────────────────────────────
+if (d === "tree-map") {
+  const COLS        = 3;
+  const TILE_W      = 220;
+  const TILE_PAD_X  = 20;
+  const TILE_PAD_Y  = 20;
+  const TILE_INNER  = 10;
+  const HDR_H       = 36;   // sheet header row height
+  const LIST_H      = 26;   // fixed compact height per list row
+  const LIST_GAP    = 4;
+  const MAX_LISTS   = 5;    // cap — never show more than 5 list rows per tile
+
+  // Root header
+  node.width  = NODE_W[node.uniqueName] ?? 220;
+  node.height = nodeHeight(node);
+  node.x      = x;
+  node.y      = y;
+  nodeMap.set(node.id, node);
+
+  const startX = x;
+  const startY = y + node.height + TILE_PAD_Y * 2;
+
+  // Fixed tile height: header + up to MAX_LISTS rows + padding
+  const TILE_H = HDR_H + TILE_INNER + MAX_LISTS * (LIST_H + LIST_GAP) + TILE_INNER;
+
+  for (let i = 0; i < node.children.length; i++) {
+    const sheet = node.children[i];
+    const col   = i % COLS;
+    const row   = Math.floor(i / COLS);
+
+    sheet.x      = startX + col * (TILE_W + TILE_PAD_X);
+    sheet.y      = startY + row * (TILE_H + TILE_PAD_Y);
+    sheet.width  = TILE_W;
+    sheet.height = TILE_H;
+    nodeSides.set(sheet.id, "right");
+    nodeMap.set(sheet.id, sheet);
+
+    const lists  = sheet.children ?? [];
+    const visible = Math.min(lists.length, MAX_LISTS);
+    let listY    = sheet.y + HDR_H + TILE_INNER;
+
+    for (let j = 0; j < lists.length; j++) {
+      const list  = lists[j];
+      list.width  = TILE_W - TILE_INNER * 2;
+      list.height = LIST_H;
+
+      if (j < visible) {
+        // Visible inside tile
+        list.x = sheet.x + TILE_INNER;
+        list.y = listY;
+        listY += LIST_H + LIST_GAP;
+      } else {
+        // Hidden — park off-screen
+        list.x = sheet.x + TILE_W + 99999;
+        list.y = sheet.y;
+      }
+
+      nodeSides.set(list.id, "right");
+      nodeMap.set(list.id, list);
+
+      // All cards parked off-screen
+      for (const card of list.children ?? []) {
+        card.x      = sheet.x + TILE_W + 99999;
+        card.y      = sheet.y;
+        card.width  = NODE_W.card ?? 210;
+        card.height = nodeHeight(card);
+        nodeSides.set(card.id, "right");
+        nodeMap.set(card.id, card);
       }
     }
   }
-  const rows = Math.ceil(node.children.length / cols);
-  return rows * (blockH + padY) + node.height + padY;
+
+  const totalRows = Math.ceil(node.children.length / COLS);
+  return startY - y + totalRows * (TILE_H + TILE_PAD_Y);
 }
   // ── Left / Right layout (default) ────────────────────────────────────
   let childY = y;
@@ -2740,13 +2894,13 @@ const currentEdgeColor = computed(() => {
   const theme = THEMES.find((t) => t.id === activeThemeId.value);
   return theme?.edgeColor ?? "#7D68C8";
 });
-// ✦ CHANGE 4: visibleEdges returns color + dashed per edge
 const visibleEdges = computed<Edge[]>(() => {
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return [];
 
   const edges: Edge[] = [];
   const vis = new Set(allNodes.value.map(n => n.id));
+  const dir = layoutDirection.value;
 
   for (const node of allNodes.value) {
     if (!node.children || isCollapsed(node.id)) continue;
@@ -2754,30 +2908,104 @@ const visibleEdges = computed<Edge[]>(() => {
     for (const child of node.children) {
       if (!vis.has(child.id)) continue;
 
-      // Compute edge path based on existing node positions
-      const x1 = node.x + node.width / 2;
-      const y1 = node.y + node.height / 2;
-      const x2 = child.x + child.width / 2;
-      const y2 = child.y + child.height / 2;
+      // Midpoints
+      const nMidX = node.x + node.width / 2;
+      const nMidY = node.y + node.height / 2;
+      const cMidX = child.x + child.width / 2;
+      const cMidY = child.y + child.height / 2;
 
-      let path = `M ${x1} ${y1} L ${x2} ${y2}`;
+      // Edge points of nodes
+      const nRight  = node.x + node.width;
+      const nLeft   = node.x;
+      const nTop    = node.y;
+      const nBottom = node.y + node.height;
+      const cRight  = child.x + child.width;
+      const cLeft   = child.x;
+      const cTop    = child.y;
+      const cBottom = child.y + child.height;
 
-      // Customize path per layout
-      const dir = layoutDirection.value;
-      if (dir === "logic-right" || dir === "logic-left") {
-        const bracketX = dir === "logic-right" ? node.x + node.width + 40 : node.x - 40;
-        const childMidY = child.y + child.height / 2;
-        path = `M ${x1} ${y1} L ${bracketX} ${y1} L ${bracketX} ${childMidY} L ${x2} ${childMidY}`;
+      let path = "";
+
+       if (dir === "tree-map") {
+        // Only draw root→sheet connector; list/card edges skipped (inside tile)
+        if (node.uniqueName !== "root") continue;
+        // Small dot connector from root bottom to sheet top-left corner
+        path = `M ${nMidX} ${nBottom} L ${cLeft + 20} ${cTop}`;
+      } else if (dir === "logic-right") {
+        const bracketX = nRight + 30;
+        path = `M ${nRight} ${nMidY} L ${bracketX} ${nMidY} L ${bracketX} ${cMidY} L ${cLeft} ${cMidY}`;
+      } else if (dir === "logic-left") {
+        const bracketX = nLeft - 30;
+        path = `M ${nLeft} ${nMidY} L ${bracketX} ${nMidY} L ${bracketX} ${cMidY} L ${cRight} ${cMidY}`;
       } else if (dir === "fishbone") {
-        const spineX = node.x + node.width / 2 + 60;
         const spineY = node.y + node.height / 2;
-        path = `M ${spineX} ${spineY} L ${x2} ${y2}`;
+        const isAbove = child.y + child.height < spineY;
+        const cEdgeY = isAbove ? cBottom : cTop;
+        // Diagonal from spine to child bottom/top edge
+        path = `M ${cMidX} ${spineY} L ${cMidX} ${cEdgeY}`;
       } else if (dir === "timeline") {
         const spineY = node.y + node.height / 2;
-        path = `M ${x2} ${spineY} L ${x2} ${y2}`;
-      } else if (dir === "tree-map") {
-        path = ""; // No connectors
+        if (node.uniqueName === "root") {
+          // Horizontal spine line: root right edge → sheet left edge, both on spine Y
+          path = `M ${nRight} ${nMidY} L ${cLeft} ${cMidY}`;
+        } else if (node.uniqueName === "sheet") {
+          // Sheet → List: vertical line from sheet top or bottom to list edge
+          const isAbove = cMidY < spineY;
+          const fromY   = isAbove ? nTop : nBottom;
+          const toY     = isAbove ? cBottom : cTop;
+          // Use child mid X so line goes straight down from sheet centre
+          path = `M ${cMidX} ${fromY} L ${cMidX} ${toY}`;
+        } else {
+          // List → Card: straight vertical line
+          const isAbove = cMidY < nMidY;
+          const fromY   = isAbove ? nTop : nBottom;
+          const toY     = isAbove ? cBottom : cTop;
+          path = `M ${cMidX} ${fromY} L ${cMidX} ${toY}`;
+        }
+       } else if (dir === "org-chart") {
+        // Elbow: parent bottom → horizontal bar → child top
+        const midY = nBottom + (cTop - nBottom) / 2;
+        path = `M ${nMidX} ${nBottom} L ${nMidX} ${midY} L ${cMidX} ${midY} L ${cMidX} ${cTop}`;
+      } else if (dir === "top") {
+        // Parent bottom → child top
+        const midY = nBottom + (cTop - nBottom) / 2;
+        path = `M ${nMidX} ${nBottom} C ${nMidX} ${midY} ${cMidX} ${midY} ${cMidX} ${cTop}`;
+      } else if (dir === "bottom") {
+        // Parent top → child bottom
+        const midY = nTop - (nTop - cBottom) / 2;
+        path = `M ${nMidX} ${nTop} C ${nMidX} ${midY} ${cMidX} ${midY} ${cMidX} ${cBottom}`;
+      } else if (dir === "left") {
+        // Parent left edge → child right edge (flowing leftward)
+        const midX = nLeft - (nLeft - cRight) / 2;
+        path = `M ${nLeft} ${nMidY} C ${midX} ${nMidY} ${midX} ${cMidY} ${cRight} ${cMidY}`;
+      } else if (dir === "radial") {
+        // Center of parent → nearest edge of child (direction-aware)
+        const dx = cMidX - nMidX;
+        const dy = cMidY - nMidY;
+        const angle = Math.atan2(dy, dx);
+        // Find child edge point closest to parent
+        const cEdgeX = cMidX - Math.cos(angle) * (child.width / 2);
+        const cEdgeY = cMidY - Math.sin(angle) * (child.height / 2);
+        // Find parent edge point closest to child
+        const nEdgeX = nMidX + Math.cos(angle) * (node.width / 2);
+        const nEdgeY = nMidY + Math.sin(angle) * (node.height / 2);
+        path = `M ${nEdgeX} ${nEdgeY} L ${cEdgeX} ${cEdgeY}`;
+      } else {
+        // Default: right-flowing layouts (right, center, zigzag, staggered, split-horizontal, ladder)
+        // Determine side from nodeSides map
+        const side = nodeSides.get(child.id) ?? "right";
+        if (side === "left") {
+          // Parent left → child right, cubic bezier
+          const cpX = nLeft - (nLeft - cRight) / 2;
+          path = `M ${nLeft} ${nMidY} C ${cpX} ${nMidY} ${cpX} ${cMidY} ${cRight} ${cMidY}`;
+        } else {
+          // Parent right → child left, cubic bezier
+          const cpX = nRight + (cLeft - nRight) / 2;
+          path = `M ${nRight} ${nMidY} C ${cpX} ${nMidY} ${cpX} ${cMidY} ${cLeft} ${cMidY}`;
+        }
       }
+
+      if (!path) continue;
 
       edges.push({
         id: `${node.id}-${child.id}`,
@@ -2791,25 +3019,6 @@ const visibleEdges = computed<Edge[]>(() => {
 
   return edges;
 });
-
-// FIND:
-watchEffect(() => {
-  const root = nodeMap.get(rootNodeId.value);
-  if (!root) return;
-  const startX =
-    layoutDirection.value === "left"
-      ? 4000 - NODE_W.root
-      : layoutDirection.value === "center"
-        ? 2500 - NODE_W.root / 2
-        : layoutDirection.value === "top" || layoutDirection.value === "bottom"
-          ? 2000
-          : 60;
-  const startY2 = layoutDirection.value === "bottom" ? 3000
-      : ["radial","zigzag","staggered","split-horizontal","ladder"].includes(layoutDirection.value) ? 1500 : 60;
-    layoutTree(root, startX, startY2, layoutDirection.value);
-});
-
-// REPLACE with:
 watchEffect(() => {
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;

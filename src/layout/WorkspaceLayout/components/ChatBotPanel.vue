@@ -14,6 +14,7 @@
       v-if="isExpanded && !showConfigPanel && entities?.length"
       class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
+
       <ChatBotPreviewModal
         @accept="acceptChanges"
         @decline="declineAgentGeneratedEntities"
