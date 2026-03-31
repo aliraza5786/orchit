@@ -194,6 +194,7 @@
               :selectedViewBy="selected_view_by"
               :workspaceId="workspaceId"
               :moduleId="moduleId"
+              :sheetId="selectedSheetId"
               :addingList="!!addingList"
               :activeAddList="activeAddList"
               :newColumn="newColumn"
@@ -338,6 +339,7 @@ const props = defineProps<{
   sprint_id: any;
   searchQuery: string;
   activeSprint: string;
+  selectedSheetId:string;
 }>();
 const {
   canCreateVariable,

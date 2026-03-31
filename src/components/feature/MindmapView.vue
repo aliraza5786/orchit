@@ -194,7 +194,7 @@
                   <button
                     class="inline-btn inline-btn--confirm"
                     :disabled="!newCardTitle.trim() || isCreatingCard"
-                    @click.stop="submitInlineCard"
+                    @click.stop="submitInlineCard(node?.topic)"
                   >
                     <i
                       v-if="isCreatingCard"
@@ -237,9 +237,10 @@
                     '#6e3b96',
                 }"
               ></div>
-
+               
               <div class="node-card-body py-2">
                 <div class="node-card-badges mt-1.5">
+                  
                   <span
                     v-if="node.variables?.['card-type']"
                     class="card-badge card-badge--type"
@@ -259,7 +260,6 @@
                     {{ node.variables.priority }}
                   </span>
                 </div>
-
                 <div class="relative inline-block group">
                   <span class="node-card-title mt-1">
                     {{ node.topic }}
@@ -1156,6 +1156,7 @@ const props = defineProps<{
   canCreateVariable: boolean;
   canEditSheet: boolean;
   asTalent?: boolean;
+  sheetId?:string;
 }>();
 
 const emit = defineEmits<{
@@ -1204,6 +1205,7 @@ interface MindNode {
   real_id?: string;
   sheet_id: string;
   seat_id?: string;
+  listId?:string;
   topic: string;
   style: NodeStyle;
   _originalStyle: Record<string, any>;
@@ -2747,7 +2749,7 @@ function setLayout(dir: LayoutDirection) {
     centerView(); // safe, called after layout
   });
 }
-
+const sheetCardMap = ref<Record<string, any[]>>({});
 function buildTree(sheets: any[]): MindNode {
   const root: MindNode = {
     id: `${instancePrefix}_root`,
@@ -2766,18 +2768,22 @@ function buildTree(sheets: any[]): MindNode {
   };
 
   const varMap: Record<string, MindNode> = {};
+  sheetCardMap.value = {}; // reset
+
   sheets.forEach((sheet) => {
     const title =
       sheet.variables?.["sheet-title"] ||
       localStorage.getItem("selectedSprintTitle") ||
       "Sheet";
-    const link = sheet.style?.hyperLink || "";
 
+    const link = sheet.style?.hyperLink || "";
+    console.log("sheet id of card", sheet);
+    // create sheet node
     if (!varMap[title]) {
       varMap[title] = {
         id: `${instancePrefix}_sheet_${sheet._id}`,
         real_id: sheet._id,
-        sheet_id: sheet._id,
+        sheet_id: sheet?.sheet_id, // <-- sheet_id here
         topic: title,
         variables: sheet?.variables,
         children: [],
@@ -2794,14 +2800,16 @@ function buildTree(sheets: any[]): MindNode {
       root.children.push(varMap[title]);
     }
 
+    // create list node
     const listTitle = sheet.title || sheet.variables?.["sheet-title"] || title;
     const safeTitle = (listTitle || "")
       .toLowerCase()
       .replace(/\s+/g, "_")
       .replace(/[^a-z0-9_]/g, "");
+
     const listNode: MindNode = {
       id: `${instancePrefix}_list_${sheet._id}_${safeTitle}_${sheet.sort_order ?? 0}`,
-      sheet_id: sheet._id,
+      sheet_id: sheet?.cards[0]?.sheet_id, // <-- propagate sheet_id to list node
       topic: listTitle,
       children: [],
       style: mapBackendStyle(sheet?.style),
@@ -2814,12 +2822,15 @@ function buildTree(sheets: any[]): MindNode {
       height: 72,
       collapsed: false,
     };
-
+    console.log("sheet id first card", sheet?.cards[0]?.sheet_id);
+    
+    // add cards
+    sheetCardMap.value[sheet._id] = []; // initialize array
     (sheet.cards || []).forEach((card: any, i: number) => {
       const cn: MindNode = {
         id: `${instancePrefix}_card_${card._id || i}`,
         real_id: card._id,
-        sheet_id: card?.sheet_id,
+        sheet_id: sheet._id, // <-- important, same as sheet
         seat_id: Array.isArray(card.seat_id)
           ? card.seat_id.map((s: any) => s._id || s)
           : card.seat_id,
@@ -2843,6 +2854,9 @@ function buildTree(sheets: any[]): MindNode {
       };
       cn.parent = listNode;
       listNode.children.push(cn);
+
+      // save card to reactive ref
+      sheetCardMap.value[sheet._id].push(cn);
     });
 
     listNode.parent = varMap[title];
@@ -2851,6 +2865,7 @@ function buildTree(sheets: any[]): MindNode {
 
   return root;
 }
+console.log("sheet id of card", sheetCardMap.value);
 
 function assignParents(node: MindNode, parent?: MindNode) {
   if (parent) node.parent = parent;
@@ -3749,7 +3764,7 @@ function createDefaultCardPayload(
   const payload: any = {
     sheet_list_id: status,
     workspace_id: props.workspaceId,
-    sheet_id: resolvedSheetId,
+    sheet_id: resolvedSheetId || props.sheetId,
     variables: {
       "card-status": status,
       priority: "medium",
@@ -3762,13 +3777,14 @@ function createDefaultCardPayload(
     createdAt: new Date().toISOString(),
   };
   if (route.path.includes("plan")) {
-    payload.sprint_id = localStorage.getItem("activeSprintId") || null;
+    payload.sprint_id = localStorage.getItem("activeSprintKey") || null;
   }
   return payload;
 }
 
 function startInlineCardCreation(listNode: MindNode) {
   creatingCardForListId.value = listNode.id;
+  console.log("list node data", listNode)
   newCardTitle.value = "";
   if (listNode.collapsed) {
     listNode.collapsed = false;
@@ -3799,32 +3815,49 @@ function cancelInlineCreation() {
     viewportEl.value?.focus();
   });
 }
-
-async function submitInlineCard() {
+async function submitInlineCard(topic: string) {
   const title = newCardTitle.value.trim();
-  if (!title || isCreatingCard.value) return;
+  if (!title) return;
 
-  const listId = creatingCardForListId.value;
+  const isPlanRoute = route.path.includes("/plan");
+
+  const listId = isPlanRoute
+    ? topic
+    : creatingCardForListId.value || topic;
+const listNode = nodeMap.get(listId);
   if (!listId) return;
-  const listNode = nodeMap.get(listId);
+  if (isPlanRoute) {
+    const sheetId = props.selectedSheetId;
+
+    await _doCreateCard(title,listNode, sheetId);
+    cancelInlineCreation();
+    return;
+  }
+
   if (!listNode) return;
 
   if (!listNode.sheet_id) {
     if (!selectedListSheetId.value) {
       selectedNodeId.value = listNode.id;
       showMustSelectMessage.value = true;
+
       setTimeout(() => {
         showMustSelectMessage.value = false;
       }, 2500);
+
       return;
     }
+
     await _doCreateCard(title, listNode, selectedListSheetId.value);
     cancelInlineCreation();
     return;
   }
 
   const sheetId =
-    listNode.sheet_id || selectedListSheetId.value || props.selectedSheetId;
+    listNode.sheet_id ||
+    selectedListSheetId.value ||
+    props.selectedSheetId;
+
   await _doCreateCard(title, listNode, sheetId);
   cancelInlineCreation();
 }
@@ -3933,6 +3966,7 @@ function ctxResetStyle() {
 async function createCardDirectly(listNode: MindNode, siblingNode?: MindNode) {
   if (isCreatingCard.value) return;
   const title = "New Card";
+  console.log("new card data", listNode)
   const siblingStatus: string =
     siblingNode?.variables?.["card-status"] ?? listNode.topic ?? "To Do";
 

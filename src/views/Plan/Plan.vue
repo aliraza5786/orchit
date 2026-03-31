@@ -7,6 +7,7 @@
         :sprint_id="selectedSprintId"
         :searchQuery="searchQuery"
         :active-sprint="sprintType"
+        :selectedSheetId="selected_sheet_id"
         @go-back="showActiveSprint = false"
       />
     </template>
@@ -955,6 +956,8 @@ import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
+import { usePermissions } from "../../composables/usePermissions";
+import { useSheets } from "../../queries/useSheets";
 const SidePanel = defineAsyncComponent(
   () => import("../Product/components/SidePanel.vue"),
 );
@@ -965,14 +968,22 @@ const showSprintDeleteTicket = ref(false);
 const searchQuery = ref("");
 const checkedAll = ref(false);
 const checkedSprintAll = ref(false);
-import { usePermissions } from "../../composables/usePermissions";
 const { canCreateCard } = usePermissions();
 const showActiveSprint = ref(localStorage.getItem('showActiveSprint') === 'true');
-
+const { workspaceId } = useWorkspaceId();
 // Watch and persist changes
 watch(showActiveSprint, (val) => {
   localStorage.setItem('showActiveSprint', String(val));
 });
+const module_id= ref(localStorage.getItem("selectedModuleId") ||"");
+const {
+  data
+} = useSheets({
+  workspace_id: workspaceId,
+  workspace_module_id: module_id,
+});
+const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
+const selected_sheet_id = ref<any>(sheetId.value);
 const selectedSprintIdForDelete = ref<string | null>(null);
 const selectedCardIdsForDelete = ref<string[]>([]);
 const elipseWrapperSprint = ref<HTMLElement | null>(null);
@@ -1023,7 +1034,7 @@ const handleSearchModal = (sprint: any) => {
   editingTicket.value = sprint.card;
   closeSearchModal();
 };
-const { workspaceId } = useWorkspaceId();
+
 const isCreateTicketModalOpen = ref(false);
 const {
   // backlog, sprints,
