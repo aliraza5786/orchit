@@ -306,7 +306,7 @@ return workspace.value.modules.filter((m: any) => {
  else if (source === "shared" && m.user_permissions?.can_read) return true;
 
   // Team permission
-  else if (canAccessModule(m._id, "view_all")) return true;
+  // else if (canAccessModule(m._id, "view_all")) return true;
 
   return false; // important
 });

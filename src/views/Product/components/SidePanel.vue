@@ -61,7 +61,7 @@
         </div>
         <!-- Body -->
         <div class="py-5 px-4 sm:px-6 flex flex-col gap-5 flex-grow">
-           <!-- Sprint/Milestone Badge -->
+           <!-- Sprint/Milestone Badge --> 
             <div v-if="cardDetails?.sprint" class="flex items-center gap-2">
               <span 
                 class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm transition-all duration-300 border"
@@ -215,7 +215,7 @@
                   >
                     ID
                   </div>
-                  <div class="mt-1 font-medium">{{ details["card-code"] }}</div>
+                  <div class="mt-1 font-medium">{{ details["card-code"] || cardDetails["card-code"]  }}</div>
                 </div>
               </div>
 
@@ -1025,8 +1025,10 @@ onBeforeUnmount(() =>
   document.removeEventListener("mousedown", onDocMouseDown),
 );
 const local = reactive({
-  posted_on: props.details?.posted_on ?? props.details?.created_at ?? "",
+  posted_on: props.details?.posted_on ?? props.details?.created_at ?? props.details?.createdAt ?? "",
 });
+
+console.log(props.details, "dta detail")
 
 const dateISO = computed({
   get: () =>

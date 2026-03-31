@@ -10,7 +10,7 @@
         @go-back="showActiveSprint = false"
       />
     </template>
-    <div v-else class="flex flex-col flex-1 min-h-0">
+    <div v-else class="flex flex-row flex-1 min-h-0">
       <div class="flex flex-col flex-1 min-h-0 min-w-0 -mt-3.5">
         <div class="overflow-x-auto w-full flex-1 min-w-0">
           <div class="min-w-[800px] h-full flex flex-col">
@@ -850,6 +850,14 @@
           </div>
         </div>
       </div>
+       <SidePanel
+        v-if="selectedCard?._id"
+        :details="selectedCard"
+       @close="closeSidePanel"
+       @closeSidePanel="closeSidePanel"
+      :showPanel="!!selectedCard?._id"
+    />
+
     </div>
     <!-- Modals -->
     <ConfirmDeleteModal
@@ -901,10 +909,13 @@
     />
 
     <TaskDetailsModal
+      v-if="false"
       v-model="showTaskModal"
       :cardId="editingTicket?.id || editingTicket?._id"
       @close="closeModal"
     />
+
+   
 
     <CreateBacklogTicketWithModuleSelection v-model="isCreateTicketModalOpen" />
     <!-- <CreateSheetModal v-model="sprintModalOpen" size="md"  /> -->
@@ -915,7 +926,7 @@
 import BacklogTable from "./components/BacklogTable.vue";
 import SprintCard from "./components/SprintCard.vue";
 import SprintModal from "./modals/SprintModal.vue";
-import { computed, ref, watch, onMounted } from "vue";
+import { computed, ref, watch, onMounted, defineAsyncComponent } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
 import filter from "@assets/icons/filter.svg";
@@ -944,7 +955,11 @@ import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
+const SidePanel = defineAsyncComponent(
+  () => import("../Product/components/SidePanel.vue"),
+);
 const { isDark } = useTheme();
+const selectedCard = ref<any>(null);
 const showTaskModal = ref(false);
 const showSprintDeleteTicket = ref(false);
 const searchQuery = ref("");
@@ -1002,7 +1017,9 @@ const toggleTooltip = (): void => {
   showTooltip.value = !showTooltip.value;
 };
 const handleSearchModal = (sprint: any) => {
-  showTaskModal.value = true;
+  selectedCard.value = sprint.card;
+  sidePanelStore.selectTaskCard(sprint.card);
+  showTaskModal.value = false;
   editingTicket.value = sprint.card;
   closeSearchModal();
 };
@@ -1404,10 +1421,17 @@ function openCreateBacklogTicket() {
 }
 
 function openTicket(t: Ticket) {
+  selectedCard.value = t; 
+  sidePanelStore.selectTaskCard(t);
   editingTicket.value = t;
-  showTaskModal.value = true;
+  showTaskModal.value = false;
   ticketModalOpen.value = true;
 }
+
+const closeSidePanel = () => {
+  selectedCard.value = null;
+  sidePanelStore.clearSelectedCard();
+};
 const sprintModalOpen = ref(false);
 function openEditSprint() {
   sprintModalOpen.value = true;

@@ -91,7 +91,7 @@ export const useAddCardPriority = (options = {}) => {
 
 export const useComments = (card_id: any, options = {}) => {
   return useQuery({
-    queryKey: ["comments", unref(card_id)], 
+    queryKey: ["comments", card_id], 
     queryFn: ({ signal }) =>
       request<any>({
         url: `workspace/cards/${unref(card_id)}/comments`,
@@ -149,7 +149,7 @@ export const useUpdateComment = (options = {}) =>
   );
 export const useProductCard = (card_id: any, options = {}) => {
   return useQuery({
-    queryKey: ["cardDetail", unref(card_id)], 
+    queryKey: ["cardDetail", card_id], 
     queryFn: ({ signal }) =>
       request<any>({
         url: `/workspace/card/${unref(card_id)}`,
