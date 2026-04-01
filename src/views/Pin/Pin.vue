@@ -258,6 +258,7 @@
         @select:ticket="selectCardHandler"
         @delete:ticket="(id) => openDeleteModal(id)"
         @create:card="(payload) => handleMindmapCreateCard(payload)"
+        @save:theme="handleSaveTheme"
       />
     </div>
     <template v-if="view === 'calendar'">
@@ -819,10 +820,9 @@ const showDeleteModal = ref(false);
 const selectedSheettoAction = ref<any>();
 const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
   onSuccess: () => {
-    console.log(">>. clicong");
-
     showDeleteModal.value = false;
     refetchSheets();
+    refetchList();
   },
 });
 function handleDeleteSheetModal(opt: any) {
@@ -1293,6 +1293,16 @@ function handleCreateTicket(newRow: any) {
 
 function handleMindmapCreateCard(payload: any) {
   addTicket(payload);
+}
+// saving theme
+function handleSaveTheme(style: Record<string, any>) {
+  updateSheet({
+    sheet_id: selected_sheet_id.value,   
+    style,                              
+    is_ai_generated: false,
+    workspace_id:           workspaceId.value,
+    workspace_module_id:    moduleId.value,
+  })
 }
 </script>
 

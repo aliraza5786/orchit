@@ -1141,6 +1141,7 @@ import { useWorkspaceStore } from "../../stores/workspace";
 import dp from "../../assets/global/dummy.jpeg";
 const props = defineProps<{
   listsData: any[];
+  style?: object;
   selectedSheetId: string;
   selectedViewBy: string;
   workspaceId: string;
@@ -1177,6 +1178,7 @@ const emit = defineEmits<{
   (e: "reorder:card", payload: any): void;
   (e: "toggle-add-list"): void;
   (e: "add-column", value: string): void;
+  (e: "save:theme", style: Record<string, any>): void;
 }>();
 
 const { isDark } = useTheme();
@@ -1241,14 +1243,13 @@ const workspaceStore = useWorkspaceStore();
 const instancePrefix = `mm_${props.moduleId}_${Date.now()}`;
 const localWorkspace = computed(() => workspaceStore.singleWorkspace);
 const isFullscreen = ref(false);
-// const clipboardNodeId = ref<string | null>(null);
-// const clipboardAction = ref<'copy' | 'cut' | null>(null);
 const styleClipboard = ref<NodeStyle | null>(null);
 
 const showShortcutHint = ref(false);
 const shortcutHintTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const lastShortcutLabel = ref("");
 const activeFormatTab = ref<'theme' | 'layout'>('theme');
+const isTreeMap = computed(() => layoutDirection.value === "tree-map");
 // ✦ Theme system
 interface MapTheme {
   id: string;
@@ -1602,13 +1603,10 @@ const activeCanvasBg = ref<string>("#dedfe3");
 const recentlyUsedColors = ref<string[]>([]);
 // const themeColorPickerOpen = ref(false);
 const customBgColor = ref("#dedfe3");
-
-function applyTheme(theme: MapTheme) {
+function applyTheme(theme: MapTheme, persist = true) {
   activeThemeId.value = theme.id;
   activeCanvasBg.value = theme.bg;
   customBgColor.value = theme.bg;
-
-  // Apply CSS variables to the root element
   const el = rootEl.value;
   if (!el) return;
   el.style.setProperty("--mm-bg", theme.bg);
@@ -1618,21 +1616,19 @@ function applyTheme(theme: MapTheme) {
   el.style.setProperty("--mm-node-card-bg", theme.nodeColors.card);
   el.style.setProperty("--mm-edge-color", theme.edgeColor);
   el.style.setProperty("--mm-text-color", theme.textColor);
-
-  // Persist locally
-  localStorage.setItem(
-    "mm_theme",
-    JSON.stringify({
-      themeId: theme.id,
-      bg: theme.bg,
-      nodeColors: theme.nodeColors,
-      edgeColor: theme.edgeColor,
-      textColor: theme.textColor,
-    }),
-  );
+  if (!persist) return;
+  emit("save:theme", {
+    mm_theme_id:   theme.id,
+    mm_bg:         theme.bg,
+    mm_edge_color: theme.edgeColor,
+    mm_text_color: theme.textColor,
+    mm_node_root:  theme.nodeColors.root,
+    mm_node_sheet: theme.nodeColors.sheet,
+    mm_node_list:  theme.nodeColors.list,
+    mm_node_card:  theme.nodeColors.card,
+  });
 }
-
-function applyCustomBg(color: string) {
+function applyCustomBg(color: string, persist = true) {
   activeCanvasBg.value = color;
   customBgColor.value = color;
   activeThemeId.value = "custom";
@@ -1640,35 +1636,44 @@ function applyCustomBg(color: string) {
   if (!el) return;
   el.style.setProperty("--mm-bg", color);
 
-  // Track recently used
   if (!recentlyUsedColors.value.includes(color)) {
     recentlyUsedColors.value = [color, ...recentlyUsedColors.value].slice(0, 7);
   }
-  localStorage.setItem("mm_custom_bg", color);
-  localStorage.setItem(
-    "mm_recent_colors",
-    JSON.stringify(recentlyUsedColors.value),
-  );
+
+  if (!persist) return;
+  emit("save:theme", {
+    mm_theme_id: "custom",
+    mm_bg:       color,
+  });
 }
 
 function loadSavedTheme() {
-  const savedTheme = localStorage.getItem("mm_theme");
-  const savedBg = localStorage.getItem("mm_custom_bg");
-  const savedRecent = localStorage.getItem("mm_recent_colors");
+  
+  const style = props.listsData?.[0]?.style || props.style;
+  if (!style?.mm_theme_id) return;
 
-  if (savedRecent) {
-    try {
-      recentlyUsedColors.value = JSON.parse(savedRecent);
-    } catch {}
+  if (style.mm_theme_id === "custom") {
+    if (style.mm_bg) applyCustomBg(style.mm_bg, false);  // false = don't re-save
+    return;
   }
-  if (savedTheme) {
-    try {
-      const t = JSON.parse(savedTheme);
-      const found = THEMES.find((th) => th.id === t.themeId);
-      if (found) applyTheme(found);
-    } catch {}
-  } else if (savedBg) {
-    applyCustomBg(savedBg);
+
+  const found = THEMES.find((t) => t.id === style.mm_theme_id);
+  if (found) {
+    const restored: MapTheme = {
+      ...found,
+      bg:        style.mm_bg         ?? found.bg,
+      edgeColor: style.mm_edge_color ?? found.edgeColor,
+      textColor: style.mm_text_color ?? found.textColor,
+      nodeColors: {
+        root:  style.mm_node_root  ?? found.nodeColors.root,
+        sheet: style.mm_node_sheet ?? found.nodeColors.sheet,
+        list:  style.mm_node_list  ?? found.nodeColors.list,
+        card:  style.mm_node_card  ?? found.nodeColors.card,
+      },
+    };
+    applyTheme(restored, false);  // false = don't re-save
+  } else if (style.mm_bg) {
+    applyCustomBg(style.mm_bg, false);
   }
 }
 function openDeleteModal(node: any) {
@@ -2438,10 +2443,7 @@ if (d === "logic-left") {
   node.y = (firstY + lastY) / 2 - node.height / 2;
   return runY - y;
 }
-
-// ── Fishbone (Ishikawa) layout ────────────────────────────────────────
 if (d === "fishbone") {
-  // Root (effect) sits at the right. Children (causes) branch diagonally.
   const spineY   = y + node.height / 2;
   const spineLen = 500;
   const branchLen= 180;
@@ -2455,28 +2457,28 @@ if (d === "fishbone") {
 
   topKids.forEach((child, i) => {
     const sx = x - spineLen + spacing * (i + 1);
-    const sy = spineY;
-    child.x = sx - branchLen * 0.6 - child.width / 2;
-    child.y = sy - branchLen * 0.8 - child.height / 2;
     child.width  = NODE_W[child.uniqueName] ?? 180;
     child.height = nodeHeight(child);
+    child.x = sx - child.width / 2;
+    child.y = spineY - branchLen * 0.8 - child.height / 2;
     nodeSides.set(child.id, "right");
-    // Layout grandchildren to the right of each cause
+    nodeMap.set(child.id, child);
     if (child.children?.length) layoutTree(child, child.x, child.y, "right");
   });
   bottomKids.forEach((child, i) => {
     const sx = x - spineLen + spacing * (i + 1);
-    const sy = spineY;
-    child.x = sx - branchLen * 0.6 - child.width / 2;
-    child.y = sy + branchLen * 0.6 - child.height / 2;
     child.width  = NODE_W[child.uniqueName] ?? 180;
     child.height = nodeHeight(child);
+    child.x = sx - child.width / 2;
+    child.y = spineY + branchLen * 0.6 - child.height / 2;
     nodeSides.set(child.id, "right");
+    nodeMap.set(child.id, child);
     if (child.children?.length) layoutTree(child, child.x, child.y, "right");
   });
   node.x = x;
   node.y = y;
-  return node.height + branchLen * 2;
+  nodeMap.set(node.id, node);
+  return node.height + branchLen * 2;  // ← this MUST be inside the if block
 }
 
 // ── Org Chart layout (top-down with straight elbow connectors) ────────
@@ -2605,19 +2607,17 @@ if (d === "timeline") {
 
   return cursorX - x;
 }
-// ── Tree Map layout ───────────────────────────────────────────────────
 if (d === "tree-map") {
   const COLS        = 3;
   const TILE_W      = 220;
   const TILE_PAD_X  = 20;
   const TILE_PAD_Y  = 20;
   const TILE_INNER  = 10;
-  const HDR_H       = 36;   // sheet header row height
-  const LIST_H      = 26;   // fixed compact height per list row
+  const HDR_H       = 36;
+  const LIST_H      = 26;
   const LIST_GAP    = 4;
-  const MAX_LISTS   = 5;    // cap — never show more than 5 list rows per tile
+  const MAX_LISTS   = 5;
 
-  // Root header
   node.width  = NODE_W[node.uniqueName] ?? 220;
   node.height = nodeHeight(node);
   node.x      = x;
@@ -2627,7 +2627,6 @@ if (d === "tree-map") {
   const startX = x;
   const startY = y + node.height + TILE_PAD_Y * 2;
 
-  // Fixed tile height: header + up to MAX_LISTS rows + padding
   const TILE_H = HDR_H + TILE_INNER + MAX_LISTS * (LIST_H + LIST_GAP) + TILE_INNER;
 
   for (let i = 0; i < node.children.length; i++) {
@@ -2652,25 +2651,26 @@ if (d === "tree-map") {
       list.height = LIST_H;
 
       if (j < visible) {
-        // Visible inside tile
         list.x = sheet.x + TILE_INNER;
         list.y = listY;
         listY += LIST_H + LIST_GAP;
       } else {
-        // Hidden — park off-screen
-        list.x = sheet.x + TILE_W + 99999;
+        // Park hidden lists directly behind their sheet (same coords, zero size — still registered but invisible)
+        list.x = sheet.x;
         list.y = sheet.y;
+        list.width  = 0;
+        list.height = 0;
       }
 
       nodeSides.set(list.id, "right");
       nodeMap.set(list.id, list);
 
-      // All cards parked off-screen
+      // All cards hidden inside the sheet tile (zero size, parked at sheet position)
       for (const card of list.children ?? []) {
-        card.x      = sheet.x + TILE_W + 99999;
+        card.x      = sheet.x;
         card.y      = sheet.y;
-        card.width  = NODE_W.card ?? 210;
-        card.height = nodeHeight(card);
+        card.width  = 0;
+        card.height = 0;
         nodeSides.set(card.id, "right");
         nodeMap.set(card.id, card);
       }
@@ -2941,11 +2941,11 @@ const visibleEdges = computed<Edge[]>(() => {
 
       let path = "";
 
-       if (dir === "tree-map") {
-        // Only draw root→sheet connector; list/card edges skipped (inside tile)
+      if (dir === "tree-map") {
+        // Only root→sheet connector; skip lists/cards (zero-size, hidden)
         if (node.uniqueName !== "root") continue;
-        // Small dot connector from root bottom to sheet top-left corner
-        path = `M ${nMidX} ${nBottom} L ${cLeft + 20} ${cTop}`;
+        if (child.width === 0 || child.height === 0) continue;
+        path = `M ${nMidX} ${nBottom} L ${child.x + 20} ${child.y}`;
       } else if (dir === "logic-right") {
         const bracketX = nRight + 30;
         path = `M ${nRight} ${nMidY} L ${bracketX} ${nMidY} L ${bracketX} ${cMidY} L ${cLeft} ${cMidY}`;
@@ -3065,6 +3065,41 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     height: `${node.height}px`,
   };
 
+  // Tree-map tile: sheet acts as a container tile, list rows sit inside it
+  if (isTreeMap.value && node.uniqueName === "sheet") {
+    base.borderRadius = "10px";
+    base.border = "1.5px solid #b8a8e8";
+    base.background = "var(--mm-node-sheet-bg, #ede9fb)";
+    base.overflow = "hidden";
+    base.display = "flex";
+    base.flexDirection = "column";
+    base.padding = "0";
+    return base;
+  }
+
+  // Tree-map tile: list rows are compact inline rows, no independent card look
+  if (isTreeMap.value && node.uniqueName === "List") {
+    base.borderRadius = "4px";
+    base.border = "none";
+    base.background = "rgba(125,104,200,0.07)";
+    base.boxShadow = "none";
+    base.overflow = "hidden";
+    return base;
+  }
+
+  // Tree-map: hide cards and overflow lists (zero size)
+  if (isTreeMap.value && node.uniqueName === "card" && node.width === 0) {
+    base.display = "none";
+    base.pointerEvents = "none";
+    return base;
+  }
+  if (isTreeMap.value && node.uniqueName === "List" && node.width === 0) {
+    base.display = "none";
+    base.pointerEvents = "none";
+    return base;
+  }
+
+  // ... rest of existing nodeInlineStyle code unchanged below ...
   if (s.background) base.background = s.background;
   if (s.color) base.color = s.color;
   if (s.fontFamily) base.fontFamily = s.fontFamily;
@@ -4244,7 +4279,27 @@ onMounted(() => {
   document.addEventListener("fullscreenchange", handleFullscreenChange);
   loadSavedTheme();
 });
+function applyDefaultTheme() {
+  const defaultTheme = THEMES[0]; 
 
+  if (!defaultTheme) return;
+
+  applyTheme(defaultTheme, false); 
+}
+watch(
+  () => props.listsData?.[0]?.style?.mm_theme_id,
+  (newVal) => {
+    console.log("new theme value is", newVal);
+
+    if (!newVal) {
+      applyDefaultTheme();
+      return;
+    }
+
+    loadSavedTheme();
+  },
+  { immediate: true }
+);
 onBeforeUnmount(() => {
   document.removeEventListener("mousemove", handleGlobalMouseMove);
   document.removeEventListener("mouseup", handleGlobalMouseUp);
