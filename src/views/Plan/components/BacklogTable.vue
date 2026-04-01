@@ -135,7 +135,7 @@
         </div>
       </div>
       <!-- Pagination -->
-       <div class="overflow-x-auto">
+       <div class="overflow-x-auto overflow-y-hidden">
         <Pagination
            v-if="backlogResp?.pagination?.pages > 1"
            :current-page="page"
