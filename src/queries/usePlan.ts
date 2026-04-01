@@ -29,6 +29,27 @@ export const useSprintList = (
   });
 };
 
+// Sprint groups all data ______________________
+export const useGroupedSprints = (
+  workspace_id: Ref<string> | string, 
+  options = {}
+) => {
+  return useQuery({
+    queryKey: computed(() => [
+      "sprint-grouped",
+      unref(workspace_id) 
+    ]),
+    queryFn: ({ signal }) =>
+      request<any>({
+        url: `sprints/${unref(workspace_id)}/grouped`,
+        method: "GET",
+        signal 
+      }),
+    ...options,
+  });
+};
+
+
 export const useSprintCard = (id: any, options: any = {}) => {
   const enabled = computed(() => !!unref(id));
 
@@ -130,11 +151,24 @@ export const useDeleteSprintCard = (options = {}) =>
 export const useBacklogList = (
   workspaceId: Ref<string> | string,
   sprintType: Ref<string> | string,
-  moduleId: Ref<string | number | null> | string | number | null = null,
+  moduleId: Ref<any> | any = null,
+  sheetId: Ref<any> | any = null,
+  sprintId: Ref<any> | any = null,
+  includeSprintCards: Ref<boolean> | boolean = false,
+  page: Ref<number> | number = 1,
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["backlog-list", workspaceId, unref(sprintType), unref(moduleId)],
+    queryKey: [
+      "backlog-list", 
+      workspaceId, 
+      unref(sprintType), 
+      unref(moduleId), 
+      unref(sheetId),
+      unref(sprintId),
+      unref(includeSprintCards),
+      unref(page)
+    ],
 
     queryFn: ({ signal }) =>
       request<any>({
@@ -142,9 +176,28 @@ export const useBacklogList = (
         method: "GET",
         signal,
         params: {
-          include_sprint_cards: false, // static param
-          sprintType: unref(sprintType),
-          module_id: unref(moduleId), // new dynamic param
+          module_id: unref(moduleId),
+          sheet_id: unref(sheetId),
+          sprint_id: unref(sprintId),
+          include_sprint_cards: unref(includeSprintCards),
+          page: unref(page),
+        },
+        config: {
+          paramsSerializer: (params: Record<string, any>) => {
+            const searchParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+              if (value === null || value === undefined || value === "") return;
+              
+              if (Array.isArray(value)) {
+                if (value.length > 0) {
+                  searchParams.append(key, value.join(","));
+                }
+              } else {
+                searchParams.append(key, value as string);
+              }
+            });
+            return searchParams.toString();
+          },
         },
       }),
 

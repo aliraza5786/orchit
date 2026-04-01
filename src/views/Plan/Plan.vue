@@ -53,127 +53,24 @@
                   </div>
                   <!-- filters -->
                   <div class="mt-3">
-                    <!-- Milestone: Horizontal Tabs -->
-                    <div
-                      v-if="sprintType === 'milestone'"
-                      class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1"
-                    >
-                      <!-- Default "All" Tab -->
-                      <button
-                        @click="selectMilestoneTab('')"
-                        class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap"
-                        :class="
-                          selectedFilter === ''
-                            ? 'bg-accent text-white border-none'
-                            : 'bg-transparent text-accent border border-accent'
-                        "
-                      >
-                        All Modules
-                        <span
-                          v-if="selectedFilter === '' && backlogResp?.cards?.length"
-                          class="ml-2 text-xs font-normal"
-                        >
-                          ({{ backlogResp?.cards?.length }})
-                        </span>
-                      </button>
-
-                      <!-- Dynamic Module Tabs -->
-                      <button
-                        v-for="option in visibleModules"
-                        :key="option._id"
-                        @click="selectMilestoneTab(option._id)"
-                        class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium transition-colors whitespace-nowrap cursor-pointer"
-                        :class="
-                          selectedFilter === option._id
-                            ? 'bg-accent text-white border-none'
-                            : 'bg-transparent text-accent border border-accent'
-                        "
-                      >
-                        {{ option.variables["module-title"] }}
-
-                        <span
-                          v-if="selectedFilter === option._id && backlogResp?.cards?.length"
-                          class="ml-2 text-xs font-normal"
-                        >
-                          ({{ backlogResp?.cards?.length }})
-                        </span>
-                      </button>
-                    </div>
-
-                    <!-- Huddle: Dropdown -->
-                    <div
-                      v-else-if="
-                        sprintType === 'huddle' || sprintType === 'sprint'
-                      "
-                      class="relative flex items-center gap-3"
-                    >
-                      <!-- FILTER DROPDOWN (NO OVERFLOW PARENT) -->
-                      <div class="relative flex-shrink-0">
-                        <button
-                          class="h-8 min-w-[160px] flex items-center justify-between px-2 rounded-md border text-sm border-border hover:bg-bg-body"
-                          @click="isHuddleDropdownOpen = !isHuddleDropdownOpen"
-                        >
-                          <span class="flex items-center gap-2 truncate">
-                            <img :src="filter" alt="filter" class="w-4 h-4" />
-                            <span class="truncate">
-                              {{
-                                selectedHuddleModuleLabel || "All Milestones"
-                              }}
-                              <span class="ml-2 text-xs font-normal" v-if="backlogResp?.cards?.length">
-                                ({{ backlogResp?.cards?.length }})
-                              </span>
-                            </span>
-                          </span>
-                          <i class="fas fa-chevron-down text-xs ml-2"></i>
-                        </button>
-
-                        <!-- DROPDOWN -->
-                        <div
-                          v-if="isHuddleDropdownOpen"
-                          class="absolute left-0 top-full mt-1 w-44 bg-bg-card border border-gray-200 rounded-lg shadow-lg z-[9999]"
-                        >
-                          <ul class="flex flex-col">
-                            <li
-                              class="px-3 py-2 cursor-pointer hover:bg-bg-body hover:text-primary"
-                              @click="selectMilestoneTab('')"
-                            >
-                              All Milestones
-                            </li>
-
-                            <li
-                              v-for="option in visibleModules"
-                              :key="option._id"
-                              class="px-3 py-2 cursor-pointer hover:bg-bg-body hover:text-primary"
-                              @click="selectHuddleModule(option._id)"
-                            >
-                              {{ option.variables["module-title"] }}
-                            </li>
-                          </ul>
-                        </div>
-                      </div>
-
-                      <!-- SPRINT TABS (SCROLL ONLY HERE) -->
-                      <div
-                        class="flex gap-2 overflow-x-auto no-scrollbar flex-1"
-                      >
-                        <button
-                          v-for="option in sprintOptions"
-                          :key="option._id"
-                          @click="selectSprintTab(option._id)"
-                          class="flex-shrink-0 px-4 py-1 rounded-2xl text-sm font-medium whitespace-nowrap transition-colors"
-                          :class="
-                            selectedFilter === option._id
-                              ? 'bg-accent text-white border-none'
-                              : 'bg-transparent text-accent border border-accent'
-                          "
-                        >
-                          {{ option.title }}
-                        </button>
-                      </div>
+                    <div class="flex flex-wrap gap-2 mb-3">
+                      <ModuleSheetDropdown 
+                        :modules="visibleModules" 
+                        :selectedIds="selectedFilter" 
+                        :selectedSheetIds="selectedSheetFilter"
+                        :selectedLabel="selectedFilterLabelWithCount"
+                        @select="handleDropdownSelect"
+                      />
+                      <PlanSelectDropdown 
+                        :groups="sprintOptions"
+                        :selectedIds="selectedPlanIds"
+                        :selectedLabel="selectedPlanLabel"
+                        @select="handlePlanSelect"
+                      />
                     </div>
                   </div>
                   <div
-                    v-if="isBacklogPenidng"
+                    v-if="isBacklogPenidng || isBacklogRefreshing"
                     class="w-full h-full flex justify-center items-center"
                   >
                     <div
@@ -182,19 +79,23 @@
                       class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
                     ></div>
                   </div>
-                  <div class="flex-1 min-h-0 overflow-y-auto" v-else>
-                    <BacklogTable
-                      :checkedAll="checkedAll"
-                      :sprint-type="sprintType"
-                      :searchQuery="searchQuery"
-                      :module-id="selectedFilter"
-                      @move-selected-to-sprint="moveSelectedToSprint"
-                      @delete-selected-backlog="deleteSelected('backlog')"
-                      @open-ticket="openTicket"
-                      @ticket-moved-to-backlog="handleTicketMovedToBacklog"
-                      @open-create-ticket="openCreateBacklogTicket"
-                    />
-                  </div>
+                    <div class="flex-1 min-h-0 overflow-y-auto" v-else>
+                      <BacklogTable
+                        :checkedAll="checkedAll"
+                        :sprint-type="sprintType"
+                        :search-query="searchTerm"
+                        :module-id="selectedFilter"
+                        :sheet-id="selectedSheetFilter"
+                        :sprint-id="selectedPlanIds"
+                        :include-sprint-cards="includeSprintCards"
+                        v-model:page="currentPage"
+                        @move-selected-to-sprint="moveSelectedToSprint"
+                        @delete-selected-backlog="deleteSelected('backlog')"
+                        @open-ticket="openTicket"
+                        @ticket-moved-to-backlog="handleTicketMovedToBacklog"
+                        @open-create-ticket="openCreateBacklogTicket"
+                      />
+                    </div>
                 </section>
                 <div class="relative z-10 group">
                   <svg
@@ -927,10 +828,11 @@
 import BacklogTable from "./components/BacklogTable.vue";
 import SprintCard from "./components/SprintCard.vue";
 import SprintModal from "./modals/SprintModal.vue";
+import ModuleSheetDropdown from "./components/ModuleSheetDropdown.vue";
+import PlanSelectDropdown from "./components/PlanSelectDropdown.vue"; 
 import { computed, ref, watch, onMounted, defineAsyncComponent } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
-import filter from "@assets/icons/filter.svg";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import {
   useBacklogList,
@@ -941,6 +843,7 @@ import {
   useSprintCard,
   useSprintDetail,
   useSprintList,
+  useGroupedSprints,
   useStartSprint,
   useUpdateSprint,
   useDeleteSprintCard,
@@ -990,7 +893,32 @@ const elipseWrapperSprint = ref<HTMLElement | null>(null);
 const open = ref(false);
 const openElipseDropDown = ref(false);
 const sprintType = computed(() => selectedType.value.value);
-const selectedFilter = ref<string | "">(localStorage.getItem("activeMilestoneId") || "");
+const parseInitialArray = (key: string) => {
+  const val = localStorage.getItem(key);
+  if (!val) return [];
+  try {
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [val];
+  } catch {
+    return [val];
+  }
+};
+
+const selectedFilter = ref<string[]>(parseInitialArray("activeMilestoneId"));
+const selectedSheetFilter = ref<string[]>(parseInitialArray("activeSheetId"));
+const selectedFilterLabel = ref(localStorage.getItem("activeMilestoneLabel") || "All Modules");
+
+const selectedPlanIds = ref<string[]>(parseInitialArray("activePlanIds"));
+const selectedPlanLabel = ref(localStorage.getItem("activePlanLabel") || "Select Plans");
+const includeSprintCards = computed(() => selectedPlanIds.value.length > 0);
+const currentPage = ref(1);
+
+const selectedFilterLabelWithCount = computed(() => {
+  const label = selectedFilterLabel.value || "All Modules";
+  if (isBacklogRefreshing.value) return label;
+  const count = backlogResp.value?.cards?.length;
+  return count ? `${label} (${count})` : label;
+});
 const isStartingSprintLoading = ref(false);
 const sidePanelStore = useSidePanelStore();
 const isSprintChecked = ref(false);
@@ -1088,41 +1016,51 @@ function handleDeleteSelectedSprint(cardIds: string[], summary: string) {
   showSprintDeleteTicket.value = true;
 }
 
-function selectMilestoneTab(tabId: string) {
-  selectedFilter.value = tabId;
-  sidePanelStore.setActiveMilestoneId(tabId);
-  localStorage.setItem("activeMilestoneId", tabId);
-  localStorage.setItem("sprintType", "milestone");
-  selectedHuddleModule.value = tabId || "all";
+ 
 
-  isHuddleDropdownOpen.value = false;
+function handleDropdownSelect(payload: { ids: string[], sheetIds: string[], label: string }) {
+  selectedFilter.value = payload.ids;
+  selectedSheetFilter.value = payload.sheetIds;
+  selectedFilterLabel.value = payload.label;
+  
+  // Update side panel if single selection, or clear if multiple?
+  // Keeping first one for backward compatibility where possible
+  sidePanelStore.setActiveMilestoneId(payload.ids[0] || "");
+  
+  localStorage.setItem("activeMilestoneId", JSON.stringify(payload.ids));
+  localStorage.setItem("activeSheetId", JSON.stringify(payload.sheetIds));
+  localStorage.setItem("activeMilestoneLabel", payload.label);
 }
 
-function selectHuddleModule(moduleId: string) {
-  selectedFilter.value = moduleId;
-  selectedHuddleModule.value = moduleId;
-  sidePanelStore.setActiveMilestoneId(moduleId);
-  localStorage.setItem("activeMilestoneId", moduleId);
-  localStorage.setItem("sprintType", "huddle");
-  isHuddleDropdownOpen.value = false;
+function handlePlanSelect(payload: { ids: string[], label: string }) {
+  selectedPlanIds.value = payload.ids;
+  selectedPlanLabel.value = payload.label;
+  localStorage.setItem("activePlanIds", JSON.stringify(payload.ids));
+  localStorage.setItem("activePlanLabel", payload.label);
 }
 
-function selectSprintTab(sprintId: string) {
-  selectedFilter.value = sprintId;
-  sidePanelStore.setActiveMilestoneId(sprintId);
-  if (typeof window !== "undefined") {
-    localStorage.setItem("activeMilestoneId", sprintId);
-  }
-  localStorage.setItem("sprintType", "sprint");
-  isHuddleDropdownOpen.value = false;
-}
+ 
 
-const { data: backlogResp, refetch: refetchBackLogList } = useBacklogList(
+ 
+
+const { 
+  data: backlogResp, 
+  refetch: refetchBackLogList, 
+  isPending: isBacklogRefreshing 
+} = useBacklogList(
   workspaceId,
   sprintType,
   selectedFilter,
+  selectedSheetFilter,
+  selectedPlanIds,
+  includeSprintCards,
+  currentPage,
 );
-watch(selectedFilter, () => {
+watch([selectedFilter, selectedSheetFilter, selectedPlanIds, sprintType], () => {
+  currentPage.value = 1;
+  refetchBackLogList();
+});
+watch(currentPage, () => {
   refetchBackLogList();
 });
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId);
@@ -1200,9 +1138,21 @@ const {
   refetch: refetchSprints,
   isLoading: isLoadingSprint,
 } = useSprintList(workspaceId.value, sprintType);
+
+const {
+  data: groupedSprints 
+} = useGroupedSprints(workspaceId);
 const sprintOptions = computed(() => {
-  return sprintsList.value?.sprints ?? [];
+  const grouped = groupedSprints.value?.grouped;
+  if (!grouped) return [];
+
+  return [
+    { id: "milestone", title: "Milestones", sprints: grouped.milestone || [] },
+    { id: "sprint", title: "Sprints", sprints: grouped.sprint || [] },
+    { id: "huddle", title: "Huddles", sprints: grouped.huddle || [] },
+  ];
 });
+ 
 watch(
   () => sprintType.value,
   (newVal, oldVal) => {
@@ -1588,10 +1538,23 @@ function cancelEdit() {
 onClickOutside(elipseWrapperSprint, () => {
   openElipseDropDown.value = false;
 });
+ 
+
+ 
+
+ 
+
 const selectType = (item: (typeof sprintTypes)[number]) => {
   selectedType.value = item;
   selectedSprintId.value = "";
-  selectedFilter.value = "";
+  selectedFilter.value = [];
+  selectedSheetFilter.value = [];
+  selectedPlanIds.value = [];
+  selectedPlanLabel.value = "Select Plans";
+  localStorage.setItem("activeSheetId", JSON.stringify([]));
+  localStorage.setItem("activeMilestoneId", JSON.stringify([]));
+  localStorage.setItem("activePlanIds", JSON.stringify([]));
+  localStorage.setItem("activePlanLabel", "Select Plans");
   localStorage.setItem("sprintType", item.value);
   open.value = false;
 };
@@ -1618,18 +1581,7 @@ const closeSearchModal = () => {
   searchTerm.value = "";
 };
 
-// filters
-const selectedHuddleModule = ref<string>(localStorage.getItem("activeMilestoneId") || "all"); // dropdown      // sprint buttons
-const isHuddleDropdownOpen = ref(false);
-// Computed label for huddle button
-const selectedHuddleModuleLabel = computed(() => {
-  if (selectedHuddleModule.value === "all") return "All Milestones";
-  const module = workspaceData.value?.modules?.find(
-    (m: { _id: string; variables?: Record<string, any> }) =>
-      m._id === selectedHuddleModule.value,
-  );
-  return module?.variables?.["module-title"] ?? "All Milestones";
-});
+// Computed label for huddle button (Removed legacy filters)
 
 // sprint menu button icon
 const showMenu = ref(false);

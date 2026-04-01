@@ -134,7 +134,17 @@
           </template>
         </div>
       </div>
-    </div>
+      <!-- Pagination -->
+       <div class="overflow-x-auto">
+        <Pagination
+           v-if="backlogResp?.pagination?.pages > 1"
+           :current-page="page"
+           :last-page="backlogResp?.pagination?.pages"
+           @update:page="$emit('update:page', $event)"
+          class=" mt-auto sticky bottom-0 min-w-[300px]"
+         />
+       </div>
+      </div>
   </section>
 </template>
 
@@ -142,6 +152,7 @@
 import { ref, watch, computed } from "vue";
 import { type Ticket } from "../composables/useBacklogStore";
 import { useBacklogList } from "../../../queries/usePlan";
+import Pagination from "../../../components/ui/Pagination.vue";
 import { useWorkspaceId } from "../../../composables/useQueryParams";
 import { getInitials } from "../../../utilities";
 import { avatarColor } from '../../../utilities/avatarColor';
@@ -156,6 +167,7 @@ const emit = defineEmits([
   "open-ticket",
   "ticket-moved-to-backlog",
   "open-create-ticket",
+  "update:page",
 ]);
 const props = defineProps({
   searchQuery: {
@@ -171,8 +183,24 @@ const props = defineProps({
     default: false,
   },
   moduleId: {
-    type: String,
-    default: "",
+    type: [String, Array],
+    default: () => [],
+  },
+  sheetId: {
+    type: [String, Array],
+    default: () => [],
+  },
+  sprintId: {
+    type: [String, Array],
+    default: () => [],
+  },
+  includeSprintCards: {
+    type: Boolean,
+    default: false,
+  },
+  page: {
+    type: Number,
+    default: 1,
   },
 });
 
@@ -184,7 +212,11 @@ const { data: backlogResp, isPending: isBacklogListPending } = useBacklogList(
   workspaceId,
   sprint_Type,
   module_id,
-  false
+  computed(() => props.sheetId),
+  computed(() => props.sprintId),
+  computed(() => props.includeSprintCards),
+  computed(() => props.page),
+  {}
 );
 
 const normalizedBacklog = ref<Ticket[]>([]);
