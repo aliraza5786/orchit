@@ -278,7 +278,7 @@ function cancelDelete() {
 }
 
 
-const { canCreateModule, canAccessModule } = usePermissions();
+const { canCreateModule } = usePermissions();
 
 // Removed workspace from props
   defineProps<{

@@ -178,7 +178,7 @@ let hoverTimeout: any = null;
 
 const getCurrentGroup = computed(() => props.groups.find(g => g.id === hoveredGroupId.value));
 const isSelectedItem = (id: string) => props.selectedIds.includes(id);
-const isSelectedNone = computed(() => props.selectedIds.length === 0);
+computed(() => props.selectedIds.length === 0);
 
 const getAllIds = computed(() => {
   const ids: string[] = [];
