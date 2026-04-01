@@ -3759,12 +3759,16 @@ function createDefaultCardPayload(
     .split("T")[0];
   console.log(directCreate);
 
-  const resolvedSheetId = sheetId ?? props.selectedSheetId;
+  const isPlanRoute = route.path.includes("/plan");
   const status = siblingStatus ?? listNode.topic ?? "To Do";
+  const resolvedSheetId = isPlanRoute
+    ? (props.sheetId || props.selectedSheetId || localStorage.getItem("selected_sheet_id") || "")
+    : (sheetId ?? props.selectedSheetId);
+
   const payload: any = {
     sheet_list_id: status,
     workspace_id: props.workspaceId,
-    sheet_id: resolvedSheetId || props.sheetId,
+    sheet_id: resolvedSheetId,
     variables: {
       "card-status": status,
       priority: "medium",
@@ -3827,12 +3831,12 @@ async function submitInlineCard(topic: string) {
 const listNode = nodeMap.get(listId);
   if (!listId) return;
   if (isPlanRoute) {
-    const sheetId = props.selectedSheetId;
-
-    await _doCreateCard(title,listNode, sheetId);
-    cancelInlineCreation();
-    return;
-  }
+  const listNode = nodeMap.get(creatingCardForListId.value!);
+  const status = listNode?.topic ?? "To Do";
+  await _doCreateCard(title, listNode!, props.sheetId ?? props.selectedSheetId, false, status);
+  cancelInlineCreation();
+  return;
+}
 
   if (!listNode) return;
 
@@ -3966,7 +3970,14 @@ function ctxResetStyle() {
 async function createCardDirectly(listNode: MindNode, siblingNode?: MindNode) {
   if (isCreatingCard.value) return;
   const title = "New Card";
-  console.log("new card data", listNode)
+  console.log("new card data", listNode);
+
+  const isPlanRoute = route.path.includes("/plan");
+  if (isPlanRoute) {
+    const status = listNode.topic ?? "To Do";
+    await _doCreateCard(title, listNode, props.sheetId ?? props.selectedSheetId, true, status);
+    return;
+  }
   const siblingStatus: string =
     siblingNode?.variables?.["card-status"] ?? listNode.topic ?? "To Do";
 
