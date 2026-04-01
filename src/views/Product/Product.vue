@@ -322,6 +322,7 @@
         @reorder:card="handleMindmapReorderCard"
         @toggle-add-list="setActiveAddList"
         @add-column="handleAddColumn"
+        @save:theme="handleSaveTheme"
       />
     </template>
 
@@ -958,6 +959,7 @@ const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
   onSuccess: () => {
     refetchSheets();
     showDeleteModal.value = false;
+      refetchSheetLists();
   },
 });
 
@@ -1809,6 +1811,18 @@ declare global {
       cardIdx: number,
     ) => void;
   }
+}
+// saving theme
+function handleSaveTheme(style: Record<string, any>) {
+  console.log("style for sheets", style);
+  
+  updateSheet({
+    sheet_id: selected_sheet_id.value,   
+    style,                              
+    is_ai_generated: false,
+    workspace_id:           workspaceId.value,
+    workspace_module_id:    moduleId.value,
+  })
 }
 </script>
 

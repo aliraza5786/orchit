@@ -659,7 +659,25 @@
                   : 'bg-bg-body border-border rounded-tl-none'
               "
             >
-              <p class="whitespace-pre-wrap">{{ msg.content }}</p>
+              <p class="whitespace-pre-wrap" v-if="msg.content">{{ msg.content }}</p>
+
+              <!-- Attachments -->
+              <div
+                v-if="msg.attachments && msg.attachments.length"
+                class="flex flex-wrap gap-1.5 mt-1"
+              >
+                <div
+                  v-for="(attachment, idx) in msg.attachments"
+                  :key="idx"
+                  class="flex items-center gap-1.5 px-2 py-1 rounded-md border border-accent/20 bg-accent/5 text-xs text-text-primary"
+                >
+                  <i
+                    class="fa-solid text-accent"
+                    :class="attachment.mimetype === 'application/pdf' ? 'fa-file-pdf' : 'fa-file-image'"
+                  ></i>
+                  <span class="max-w-[120px] truncate">{{ attachment.filename || attachment.name }}</span>
+                </div>
+              </div>
               <div
                 class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5"
               >
@@ -1258,6 +1276,17 @@ if (selectedFiles.value.length) {
     content: finalMessage,
     timestamp: new Date().toISOString(),
     metadata: { status: "sending", temp: true },
+     attachments: attachments.length
+  ? attachments.map((f: any) => ({
+      filename: f.filename || f.name,
+      mimetype: f.mimetype || f.type,
+      url: f.url || f.objectUrl,
+    }))
+  : selectedFiles.value.map(f => ({
+      filename: f.name,
+      mimetype: f.type,
+      url: f.objectUrl,
+    })),
   });
 
   try {
