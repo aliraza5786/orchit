@@ -207,7 +207,7 @@ const props = defineProps({
 const { workspaceId } = useWorkspaceId();
 const module_id = computed(() => props.moduleId);
 const sprint_Type = computed(() => props.sprintType);
-
+console.log(sprint_Type.value);
 const { data: backlogResp, isPending: isBacklogListPending } = useBacklogList(
   workspaceId,
   ref(""),
