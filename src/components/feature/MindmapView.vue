@@ -284,7 +284,7 @@
                     <i class="fa-solid fa-plus"></i>
                   </button>
                   <button
-                    v-if="canAssignCard && canEditCard"
+                    v-if="canAssignCard && canEditCard && !asTalent"
                     class="nact"
                     @click.stop="openFormatSidebar(node.id)"
                     title="Format"
