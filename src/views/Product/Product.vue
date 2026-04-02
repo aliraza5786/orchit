@@ -267,6 +267,7 @@
 
     <!-- ── Table View ──────────────────────────────────────────────────────── -->
     <template v-if="view == 'table'">
+      <div class="ps-4">
       <TableView
         class="mx-3"
         @toggleVisibility="toggleVisibilityHandler"
@@ -291,6 +292,7 @@
         @create="handleCreateTicket"
         @update:rows="handleTableRowsUpdate"
       />
+      </div>
     </template>
 
     <!-- ── MindMap View ────────────────────────────────────────────────────── -->
@@ -320,6 +322,7 @@
         @reorder:card="handleMindmapReorderCard"
         @toggle-add-list="setActiveAddList"
         @add-column="handleAddColumn"
+        @save:theme="handleSaveTheme"
       />
     </template>
 
@@ -956,6 +959,7 @@ const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
   onSuccess: () => {
     refetchSheets();
     showDeleteModal.value = false;
+      refetchSheetLists();
   },
 });
 
@@ -1608,6 +1612,14 @@ const { mutate: addTicket } = useAddTicket({
 },
 });
 
+const { mutate: addTableTicket } = useAddTicket({
+  onSuccess: () => {
+    localPendingTickets.value = []
+    localTableOrder.value = []
+    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+  }
+})
+
 function checkAndCreateTicket(row: any) {
   const title = row["card-title"];
   const laneId = row.lane?._id || row.workspace_lane_id;
@@ -1662,7 +1674,7 @@ function checkAndCreateTicket(row: any) {
       "end-date": row["end-date"] || null,
       createdAt: new Date().toISOString(),
     };
-    addTicket(payload);
+    addTableTicket(payload);
   }
 }
 
@@ -1799,6 +1811,18 @@ declare global {
       cardIdx: number,
     ) => void;
   }
+}
+// saving theme
+function handleSaveTheme(style: Record<string, any>) {
+  console.log("style for sheets", style);
+  
+  updateSheet({
+    sheet_id: selected_sheet_id.value,   
+    style,                              
+    is_ai_generated: false,
+    workspace_id:           workspaceId.value,
+    workspace_module_id:    moduleId.value,
+  })
 }
 </script>
 

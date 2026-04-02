@@ -91,15 +91,15 @@ export const useAddCardPriority = (options = {}) => {
 
 export const useComments = (card_id: any, options = {}) => {
   return useQuery({
-    queryKey: ["comments", card_id],
+    queryKey: ["comments", card_id], 
     queryFn: ({ signal }) =>
       request<any>({
         url: `workspace/cards/${unref(card_id)}/comments`,
         method: "GET",
         signal,
       }),
+    enabled: !!unref(card_id), 
     ...options,
-    enabled: !unref(card_id) ? false : true,
   });
 };
 export const useCreateComment = (options = {}) =>
@@ -149,15 +149,15 @@ export const useUpdateComment = (options = {}) =>
   );
 export const useProductCard = (card_id: any, options = {}) => {
   return useQuery({
-    queryKey: [`cardDetail`, card_id],
+    queryKey: ["cardDetail", card_id], 
     queryFn: ({ signal }) =>
       request<any>({
         url: `/workspace/card/${unref(card_id)}`,
         method: "GET",
         signal,
       }),
+    enabled: !!unref(card_id), 
     ...options,
-    enabled: !unref(card_id) ? false : true,
   });
 };
 export const useProductVarsData = (

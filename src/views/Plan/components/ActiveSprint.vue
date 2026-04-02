@@ -189,11 +189,13 @@
           <!-- ── MindMap View ─────────────────────────────────────── -->
           <template v-if="view === 'mindmap'">
             <MindMapView
-              :listsData="Lists ?? []"
+              :listsData="Lists?.groups ?? []"
+              :style="Lists?.style"
               :selectedSheetId="selected_sheet_id"
               :selectedViewBy="selected_view_by"
               :workspaceId="workspaceId"
               :moduleId="moduleId"
+              :sheetId="selectedSheetId"
               :addingList="!!addingList"
               :activeAddList="activeAddList"
               :newColumn="newColumn"
@@ -213,6 +215,7 @@
               @reorder:card="handleMindmapReorderCard"
               @toggle-add-list="setActiveAddList"
               @add-column="handleAddColumn"
+              @save:theme="handleSaveTheme "
             />
           </template>
 
@@ -320,6 +323,7 @@ import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor";
 import SearchBar from "../../../components/ui/SearchBar.vue";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
+import { useUpdateSprint } from "../../../queries/usePlan";
 // ─── Lazy components ──────────────────────────────────────────────────────────
 const CreateTaskModal = defineAsyncComponent(() => import("../../Product/modals/CreateTaskModal.vue"));
 const ConfirmDeleteModal = defineAsyncComponent(() => import("../../Product/modals/ConfirmDeleteModal.vue"));
@@ -338,6 +342,7 @@ const props = defineProps<{
   sprint_id: any;
   searchQuery: string;
   activeSprint: string;
+  selectedSheetId:string;
 }>();
 const {
   canCreateVariable,
@@ -507,8 +512,11 @@ const handleBoardUpdate = (_: any) => {};
 
 const { mutate: updateSheet } = useUpdateWorkspaceSheet({
   onSuccess: () => {
-    refetchSheets();
+    if(!route?.path?.includes("plan")) {
+      refetchSheets();
+    }
     showDeleteModal.value = false;
+    refetchSheetLists();
   },
 });
 
@@ -589,12 +597,12 @@ const normalizedTableData = computed(() => {
 
 const filteredBoard = computed(() => {
   const query = searchQuery.value?.trim() || search.value?.trim();
-
+  
   if (view.value === "kanban") {
-    if (!query) return Lists.value;
+    if (!query) return Lists.value?.groups;
 
     const results = fuse.value.search(query).map((r: any) => r.item);
-    return (Lists.value ?? []).map((col: any) => ({
+    return (Lists.value?.groups ?? []).map((col: any) => ({
       ...col,
       cards: results.filter((c: any) => c.columnId === col.title),
     }));
@@ -602,7 +610,7 @@ const filteredBoard = computed(() => {
   } else {
     if (!query) {
       let array: any = [];
-      (Lists.value ?? []).forEach((col: any) => { 
+      (Lists.value?.groups ?? []).forEach((col: any) => { 
         array = [...array, ...(col?.cards ?? [])]; 
       });
       return array;
@@ -897,6 +905,28 @@ function handleMindmapReorderCard(_payload: any) {
   refetchSheets();
   refetchSheetLists();
 }
+// saving theme
+const { mutate: updateSprint2 } = useUpdateSprint();
+const handleSaveTheme = (e: any) => {
+  console.log("e data in plan active", e);
+
+  updateSprint2(
+    {
+      id: localStorage.getItem("activeSprintKey") || props.sprint_id,
+      payload: {
+        style: e,
+      },
+    },
+    {
+      onSuccess: () => {
+        refetchSheetLists(); 
+      },
+      onError: (err) => {
+        console.error("Error updating sprint theme:", err);
+      },
+    }
+  );
+};
 </script>
 
 <style scoped>

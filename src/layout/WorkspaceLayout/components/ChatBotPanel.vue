@@ -14,6 +14,7 @@
       v-if="isExpanded && !showConfigPanel && entities?.length"
       class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
+
       <ChatBotPreviewModal
         @accept="acceptChanges"
         @decline="declineAgentGeneratedEntities"
@@ -658,7 +659,25 @@
                   : 'bg-bg-body border-border rounded-tl-none'
               "
             >
-              <p class="whitespace-pre-wrap">{{ msg.content }}</p>
+              <p class="whitespace-pre-wrap" v-if="msg.content">{{ msg.content }}</p>
+
+              <!-- Attachments -->
+              <div
+                v-if="msg.attachments && msg.attachments.length"
+                class="flex flex-wrap gap-1.5 mt-1"
+              >
+                <div
+                  v-for="(attachment, idx) in msg.attachments"
+                  :key="idx"
+                  class="flex items-center gap-1.5 px-2 py-1 rounded-md border border-accent/20 bg-accent/5 text-xs text-text-primary"
+                >
+                  <i
+                    class="fa-solid text-accent"
+                    :class="attachment.mimetype === 'application/pdf' ? 'fa-file-pdf' : 'fa-file-image'"
+                  ></i>
+                  <span class="max-w-[120px] truncate">{{ attachment.filename || attachment.name }}</span>
+                </div>
+              </div>
               <div
                 class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5"
               >
@@ -744,36 +763,90 @@
             </div>
             <div v-if="moduleId" class="flex">
               <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
-              <div class="flex items-center gap-1"><span>Sheets</span></div>
-              <!-- <span><i class="fa-solid fa-chevron-right text-xs"></i></span> -->
-              <!-- <div class="flex items-center gap-1"><span>Cards</span></div> -->
+              <div class="flex items-center gap-1"><span>{{ sheetNameRef }}</span></div>
             </div>
           </nav>
         </div>
-        <div class="relative">
-          <textarea
-            ref="autoTextarea"
-            v-model="userMessage"
-            placeholder="Ask anything..."
-            rows="1"
-            class="w-full pl-4 pr-10 py-3 rounded-xl border border-border bg-bg-body focus:outline-none focus:border-accent resize-none text-sm transition-colors overflow-y-auto"
-            @keydown="handleKeydown"
-            @input="autoResize"
-            :disabled="agentStore.isSending"
-          ></textarea>
-          <button
-            @click="sendMessage()"
-            :disabled="!userMessage.trim() || agentStore.isSending"
-            class="absolute right-2 bottom-2 p-1.5 text-accent hover:text-accent-hover transition-colors rounded-lg hover:bg-accent/5 disabled:opacity-50 disabled:cursor-not-allowed"
+       <div class="relative w-full">
+  <!-- Chat Input Box -->
+  <div
+    class="flex flex-col border border-border rounded-xl px-3 py-2 bg-bg-body focus-within:border-accent transition-colors"
+  >
+    <!-- Uploaded files (thumbnails) -->
+    <div v-if="selectedFiles.length" class="flex flex-wrap gap-2 mb-2">
+      <template v-for="file in selectedFiles" :key="file.tempId">
+        <div class="relative w-12 h-12 rounded-md overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center">
+          <!-- Image preview if it's an image -->
+         <img
+          v-if="file && typeof file.type === 'string' && file.type.startsWith('image/')"
+          :src="createObjectURL(file)"
+          class="w-full h-full object-cover"
+          alt="preview"
+        />
+          <!-- PDF icon for PDFs -->
+          <div
+            v-else
+            class="w-full h-full flex items-center justify-center text-xs font-semibold text-gray-700 bg-gray-100"
           >
-            <i
-              class="fa-solid"
-              :class="
-                agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'
-              "
-            ></i>
+            PDF
+          </div>
+          <!-- Remove button -->
+          <button
+            type="button"
+            @click="removeFile(file.tempId!)"
+            class="absolute top-0.5 right-0.5 w-3 h-3 text-white text-xs bg-red-500 rounded-full flex items-center justify-center hover:bg-red-700"
+          >
+            &times;
           </button>
         </div>
+      </template>
+    </div>
+
+    <!-- Textarea + Buttons -->
+    <div class="flex items-center gap-2">
+      <textarea
+        v-model="userMessage"
+        placeholder="Ask anything..."
+        rows="1"
+        class="flex-1 resize-none bg-transparent outline-none text-sm"
+        :disabled="agentStore.isSending"
+        @keydown="handleKeydown"
+        @input="autoResize"
+      ></textarea>
+
+      <!-- File Upload Button -->
+      <button
+        type="button"
+        @click="triggerFileInput"
+        class="p-1 text-gray-500 hover:text-accent transition-colors rounded-lg hover:bg-accent/5"
+      >
+        <i class="fa-solid fa-paperclip"></i>
+      </button>
+
+      <!-- Send Button -->
+      <button
+        @click="sendMessage"
+        :disabled="(!userMessage.trim() && !selectedFiles.length) || agentStore.isSending"
+        class="p-1.5 text-accent hover:text-accent-hover transition-colors rounded-lg hover:bg-accent/5 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <i
+          class="fa-solid"
+          :class="agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'"
+        ></i>
+      </button>
+
+      <!-- Hidden file input -->
+      <input
+        ref="fileInput"
+        type="file"
+        class="hidden"
+        multiple
+        accept="image/*,.pdf"
+        @change="handleFileChange"
+      />
+    </div>
+  </div>
+</div>
 
         <p class="text-[13px] text-text-secondary text-center mt-2">
           AI can make mistakes. Please verify important information.
@@ -835,6 +908,7 @@ const isSheet = ref(false);
 const selectedAgentId = ref("");
 const selectedRole = ref("");
 const selectJobRole = ref("");
+
 const agentsData = computed(() => {
   return agentStore.agentSettings.agent;
 });
@@ -849,7 +923,8 @@ const knowledgeData = computed(() => {
 const agentsRolesPermissions = computed(() => {
   return agentStore.agentsRolesPermissions;
 });
-const sheetNameRef = ref(agentStore.sheetTitle || "");
+const sheetNameRef = computed(() => agentStore.sheetTitle);
+const sheetNameValue = ref(sheetNameRef.value)
 const sheetIdRef = ref(agentStore.sheetId || "");
 const sheetName = computed(() => {
   if (
@@ -863,7 +938,6 @@ const sheetName = computed(() => {
   return sheetNameRef.value || "";
 });
 const isTalentRoute = computed(() => route.path?.includes('talent'));
-
 watch(
   [isTalentRoute, agentPassedData],
   ([isTalent, agentData]) => {
@@ -903,7 +977,7 @@ watch(
     if (newPath !== oldPath) {
       if (workspaceStore.showChatBotPanel) {
         sheetIdRef.value = "";
-        sheetNameRef.value = "";
+        sheetNameValue.value = "";
 
         closeHandler();
       }
@@ -932,6 +1006,7 @@ const transformedData = computed<DropdownOption[]>(() => {
 });
 const openSheet = ref(false);
 const sheetRef = ref<HTMLElement | null>(null);
+console.log("sheet title", sheetRef.value);
 
 const selectedSheetTitle = computed(() => {
   const found = transformedData.value.find(
@@ -1099,12 +1174,94 @@ function initSocket() {
 }
 const isMongoId = (val?: string) => !!val && /^[a-f\d]{24}$/i.test(val);
 const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const fileInput = ref<HTMLInputElement | null>(null);
+interface FileWithId extends File {
+  tempId?: string;
+  objectUrl?: string;
+}
+const selectedFiles = ref<FileWithId[]>([]);
+const createObjectURL = (file: FileWithId): string => {
+  return file.objectUrl || "";
+};
+const MAX_IMAGES = 5;
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
+const handleFileChange = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const files = Array.from(target.files || []);
 
-// Send Message
+  if (!files.length) return;
+
+  const images = files.filter(f => f.type.startsWith("image/"));
+  const pdfs = files.filter(f => f.type === "application/pdf");
+
+  if (pdfs.length > 1) {
+    alert("Only one PDF is allowed");
+    return;
+  }
+  if (images.length > MAX_IMAGES) {
+    alert(`You can upload up to ${MAX_IMAGES} images`);
+    return;
+  }
+  if (pdfs.length === 1 && images.length > 0) {
+    alert("You can upload either images or a single PDF, not both");
+    return;
+  }
+
+ const filesWithId: FileWithId[] = files.map(f => {
+  const fileWithId = f as FileWithId;
+  fileWithId.tempId = "temp-" + Date.now() + Math.random().toString(36).substr(2, 5);
+  fileWithId.objectUrl = f.type.startsWith("image/") ? URL.createObjectURL(f) : "";
+  return fileWithId;
+});
+
+  selectedFiles.value = [...selectedFiles.value, ...filesWithId];
+
+  // Clear input to allow re-upload of same file
+  if (fileInput.value) fileInput.value.value = "";
+};
+const removeFile = (tempId: string) => {
+  const fileToRemove = selectedFiles.value.find(f => f.tempId === tempId);
+  if (fileToRemove?.objectUrl) {
+    URL.revokeObjectURL(fileToRemove.objectUrl);
+  }
+  selectedFiles.value = selectedFiles.value.filter(f => f.tempId !== tempId);
+};
+const uploadFiles = async (): Promise<any[]> => {
+  if (!selectedFiles.value.length) return [];
+
+  try {
+    // Pass raw files
+    const res = await agentStore.uploadAssistantFiles(selectedFiles.value);
+    console.log("Upload response:", res);
+
+    // API response format: res.data.files
+    return res?.data?.files || [];
+  } catch (err) {
+    console.error("Upload error:", err);
+    return [];
+  }
+};
 async function sendMessage() {
   const message = userMessage.value?.trim();
-  if (!message || !workspaceId.value || agentStore.isSending) return;
+  if ((!message && !selectedFiles.value.length) || !workspaceId.value || agentStore.isSending) return;
+let attachments: any[] = [];
 
+if (selectedFiles.value.length) {
+  attachments = await uploadFiles();
+
+  // cleanup previews
+  selectedFiles.value.forEach(f => {
+    if ((f as any).previewUrl) {
+      URL.revokeObjectURL((f as any).previewUrl);
+    }
+  });
+
+  selectedFiles.value = [];
+}
+
+  const finalMessage = message || "";
   userMessage.value = "";
   isAiThinkingBubbleVisible.value = true;
   agentStore.isSending = true;
@@ -1116,18 +1273,30 @@ async function sendMessage() {
   pendingMessages.value.push({
     _id: tempId,
     type: "user",
-    content: message,
+    content: finalMessage,
     timestamp: new Date().toISOString(),
     metadata: { status: "sending", temp: true },
+     attachments: attachments.length
+  ? attachments.map((f: any) => ({
+      filename: f.filename || f.name,
+      mimetype: f.mimetype || f.type,
+      url: f.url || f.objectUrl,
+    }))
+  : selectedFiles.value.map(f => ({
+      filename: f.name,
+      mimetype: f.type,
+      url: f.objectUrl,
+    })),
   });
 
   try {
     await agentStore.sendMessage({
       workspace_id: workspaceId.value,
       user_id: authStore.userId as string,
-      message,
+      message: finalMessage,
       agent_id: selectedAgentId.value as string,
-      // Use agent module values if on talent route
+      sheet_id: sheetIdRef.value as string,
+      attachments: attachments,
       module_id:
         route.path.includes("talent") && agentModuleId.value
           ? agentModuleId.value
@@ -1137,7 +1306,6 @@ async function sendMessage() {
           ? agentModuleName.value
           : moduleSelected.value as string,
       lane_id: workspaceStore.selectedLaneIds?.[0] ?? "",
-      sheet_id: route.params.sheet_id as string,
       card_id: route.params.card_id as string,
       session_id: sessionId as string,
       stream: true,
@@ -1181,7 +1349,6 @@ async function sendMessage() {
     pendingMessages.value = pendingMessages.value.filter(
       (m) => !m.metadata?.temp,
     );
-
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
   } finally {

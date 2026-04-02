@@ -172,7 +172,7 @@
               </div>
 
               <div
-                v-if="creatingCardForListId === node.id && !isPlanRoute"
+                v-if="creatingCardForListId === node.id"
                 class="inline-create-card"
                 @click.stop
                 @mousedown.stop
@@ -190,11 +190,11 @@
                   "
                   autofocus
                 />
-                <div class="inline-card-actions" v-if="!isPlanRoute">
+                <div class="inline-card-actions">
                   <button
                     class="inline-btn inline-btn--confirm"
                     :disabled="!newCardTitle.trim() || isCreatingCard"
-                    @click.stop="submitInlineCard"
+                    @click.stop="submitInlineCard(node?.topic)"
                   >
                     <i
                       v-if="isCreatingCard"
@@ -213,9 +213,8 @@
 
               <button
                 v-if="
-                  canCreateCard &&
-                  creatingCardForListId !== node.id &&
-                  !isPlanRoute
+                  canCreateCard && !asTalent &&
+                  creatingCardForListId !== node.id
                 "
                 class="list-add-card-btn"
                 @click.stop="startInlineCardCreation(node)"
@@ -238,9 +237,10 @@
                     '#6e3b96',
                 }"
               ></div>
-
+               
               <div class="node-card-body py-2">
                 <div class="node-card-badges mt-1.5">
+                  
                   <span
                     v-if="node.variables?.['card-type']"
                     class="card-badge card-badge--type"
@@ -260,7 +260,6 @@
                     {{ node.variables.priority }}
                   </span>
                 </div>
-
                 <div class="relative inline-block group">
                   <span class="node-card-title mt-1">
                     {{ node.topic }}
@@ -273,9 +272,9 @@
                     {{ node.topic }}
                   </div>
                 </div>
-                <div class="node-card-actions-row" v-if="!isPlanRoute">
+                <div class="node-card-actions-row">
                   <button
-                    v-if="canCreateCard"
+                    v-if="canCreateCard && !asTalent"
                     class="nact nact--add"
                     @click.stop="
                       node.parent && createCardDirectly(node.parent, node)
@@ -326,47 +325,6 @@
         <div class="ctrl-divider"></div>
         <button
           class="ctrl-btn"
-          :class="{ 'ctrl-btn--active': layoutDirection === 'left' }"
-          @click="setLayout('left')"
-          title="Layout: Left"
-        >
-          <i class="fa-solid fa-arrow-left"></i>
-        </button>
-        <button
-          class="ctrl-btn"
-          :class="{ 'ctrl-btn--active': layoutDirection === 'right' }"
-          @click="setLayout('right')"
-          title="Layout: Right"
-        >
-          <i class="fa-solid fa-arrow-right"></i>
-        </button>
-        <button
-          class="ctrl-btn"
-          :class="{ 'ctrl-btn--active': layoutDirection === 'center' }"
-          @click="setLayout('center')"
-          title="Layout: Centered"
-        >
-          <i class="fa-solid fa-arrows-left-right"></i>
-        </button>
-        <button
-          class="ctrl-btn"
-          :class="{ 'ctrl-btn--active': layoutDirection === 'top' }"
-          @click="setLayout('top')"
-          title="Layout: Top Down"
-        >
-          <i class="fa-solid fa-arrow-down"></i>
-        </button>
-        <button
-          class="ctrl-btn"
-          :class="{ 'ctrl-btn--active': layoutDirection === 'bottom' }"
-          @click="setLayout('bottom')"
-          title="Layout: Bottom Up"
-        >
-          <i class="fa-solid fa-arrow-up"></i>
-        </button>
-        <div class="ctrl-divider"></div>
-        <button
-          class="ctrl-btn"
           :class="{ 'ctrl-btn--active': isFullscreen }"
           @click="toggleFullscreen"
           :title="isFullscreen ? 'Exit Fullscreen (Esc / G)' : 'Fullscreen (G)'"
@@ -378,11 +336,6 @@
                 : 'fa-light fa-arrows-maximize'
             "
           ></i>
-        </button>
-        <div class="ctrl-divider"></div>
-        <!-- NEW: center, fit, reset buttons -->
-        <button class="ctrl-btn" @click="centerView" title="Center view (C)">
-          <i class="fa-solid fa-compress"></i>
         </button>
         <button class="ctrl-btn" @click="fitToScreen" title="Fit to screen (F)">
           <i class="fa-solid fa-expand"></i>
@@ -447,142 +400,142 @@
         </div>
 
         <!-- ✦ Theme panel shown when no node selected -->
-        <div v-if="!selectedNodeId" class="theme-panel">
-          <!-- Background Color -->
-          <div class="fs-section">
-            <div class="fs-section-label">Canvas Background</div>
+       <!-- ✦ Theme panel shown when no node selected -->
+<div v-if="!selectedNodeId" class="theme-panel">
 
-            <!-- Color grid -->
-            <div class="bg-color-grid">
-              <button
-                v-for="color in BG_COLORS"
-                :key="color"
-                class="bg-swatch"
-                :class="{ 'bg-swatch--active': activeCanvasBg === color }"
-                :style="{ background: color }"
-                :title="color"
-                @click="applyCustomBg(color)"
-              ></button>
-            </div>
+  <!-- Tab bar -->
+  <div class="fs-tabs">
+    <button
+      class="fs-tab"
+      :class="{ 'fs-tab--active': activeFormatTab === 'theme' }"
+      @click="activeFormatTab = 'theme'"
+    >
+      <i class="fa-solid fa-palette" style="font-size:11px"></i>
+      Theme
+    </button>
+    <button
+      class="fs-tab"
+      :class="{ 'fs-tab--active': activeFormatTab === 'layout' }"
+      @click="activeFormatTab = 'layout'"
+    >
+      <i class="fa-solid fa-table-cells-large" style="font-size:11px"></i>
+      Layout
+    </button>
+  </div>
 
-            <!-- Custom color + hex input row -->
-            <div class="bg-custom-row">
-              <div class="color-swatch" :style="{ background: customBgColor }">
-                <input
-                  type="color"
-                  :value="customBgColor"
-                  @input="
-                    applyCustomBg(($event.target as HTMLInputElement).value)
-                  "
-                />
-              </div>
-              <span class="bg-hex-label">#</span>
-              <input
-                class="bg-hex-input"
-                :value="customBgColor.replace('#', '')"
-                maxlength="6"
-                placeholder="dedfe3"
-                @change="
-                  applyCustomBg('#' + ($event.target as HTMLInputElement).value)
-                "
-              />
-              <span class="bg-opacity-label">100%</span>
-            </div>
+  <!-- ── THEME TAB ──────────────────────────────────────────── -->
+  <template v-if="activeFormatTab === 'theme'">
 
-            <!-- Recently used -->
-            <div v-if="recentlyUsedColors.length" class="bg-recent">
-              <div class="bg-recent-label">Recently Used</div>
-              <div class="bg-color-grid">
-                <button
-                  v-for="color in recentlyUsedColors"
-                  :key="color"
-                  class="bg-swatch"
-                  :class="{ 'bg-swatch--active': activeCanvasBg === color }"
-                  :style="{ background: color }"
-                  @click="applyCustomBg(color)"
-                ></button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Color Themes -->
-          <div class="fs-section">
-            <div class="fs-section-label">Color Theme</div>
-            <div class="theme-grid">
-              <button
-                v-for="theme in THEMES"
-                :key="theme.id"
-                class="theme-card"
-                :class="{ 'theme-card--active': activeThemeId === theme.id }"
-                :title="theme.name"
-                @click="applyTheme(theme)"
-              >
-                <!-- Mini mindmap preview -->
-                <div class="theme-preview" :style="{ background: theme.bg }">
-                  <div
-                    class="tp-center"
-                    :style="{
-                      background: theme.nodeColors.root,
-                      color: theme.textColor,
-                    }"
-                  ></div>
-                  <div class="tp-branches">
-                    <div
-                      class="tp-branch"
-                      :style="{ background: theme.nodeColors.sheet }"
-                    ></div>
-                    <div
-                      class="tp-branch"
-                      :style="{ background: theme.nodeColors.sheet }"
-                    ></div>
-                    <div
-                      class="tp-branch"
-                      :style="{ background: theme.nodeColors.sheet }"
-                    ></div>
-                  </div>
-                  <svg class="tp-lines" viewBox="0 0 60 40">
-                    <line
-                      x1="22"
-                      y1="20"
-                      x2="38"
-                      y2="8"
-                      :stroke="theme.edgeColor"
-                      stroke-width="1.5"
-                    />
-                    <line
-                      x1="22"
-                      y1="20"
-                      x2="38"
-                      y2="20"
-                      :stroke="theme.edgeColor"
-                      stroke-width="1.5"
-                    />
-                    <line
-                      x1="22"
-                      y1="20"
-                      x2="38"
-                      y2="32"
-                      :stroke="theme.edgeColor"
-                      stroke-width="1.5"
-                    />
-                  </svg>
-                </div>
-                <span class="theme-name">{{ theme.name }}</span>
-                <i
-                  v-if="activeThemeId === theme.id"
-                  class="fa-solid fa-check theme-check"
-                ></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Hint -->
-          <div class="theme-hint">
-            <i class="fa-solid fa-circle-info me-1" style="color: #94a3b8"></i>
-            <span>Click a node to format it</span>
-          </div>
+    <!-- Background Color -->
+    <div class="fs-section">
+      <div class="fs-section-label">Canvas Background</div>
+      <div class="bg-color-grid">
+        <button
+          v-for="color in BG_COLORS"
+          :key="color"
+          class="bg-swatch"
+          :class="{ 'bg-swatch--active': activeCanvasBg === color }"
+          :style="{ background: color }"
+          :title="color"
+          @click="applyCustomBg(color)"
+        ></button>
+      </div>
+      <div class="bg-custom-row">
+        <div class="color-swatch" :style="{ background: customBgColor }">
+          <input
+            type="color"
+            :value="customBgColor"
+            @input="applyCustomBg(($event.target as HTMLInputElement).value)"
+          />
         </div>
+        <span class="bg-hex-label">#</span>
+        <input
+          class="bg-hex-input"
+          :value="customBgColor.replace('#', '')"
+          maxlength="6"
+          placeholder="dedfe3"
+          @change="applyCustomBg('#' + ($event.target as HTMLInputElement).value)"
+        />
+        <span class="bg-opacity-label">100%</span>
+      </div>
+      <div v-if="recentlyUsedColors.length" class="bg-recent">
+        <div class="bg-recent-label">Recently Used</div>
+        <div class="bg-color-grid">
+          <button
+            v-for="color in recentlyUsedColors"
+            :key="color"
+            class="bg-swatch"
+            :class="{ 'bg-swatch--active': activeCanvasBg === color }"
+            :style="{ background: color }"
+            @click="applyCustomBg(color)"
+          ></button>
+        </div>
+      </div>
+    </div>
 
+    <!-- Color Themes -->
+    <div class="fs-section">
+      <div class="fs-section-label">Color Theme</div>
+      <div class="theme-grid">
+        <button
+          v-for="theme in THEMES"
+          :key="theme.id"
+          class="theme-card"
+          :class="{ 'theme-card--active': activeThemeId === theme.id }"
+          :title="theme.name"
+          @click="applyTheme(theme)"
+        >
+          <div class="theme-preview" :style="{ background: theme.bg }">
+            <div class="tp-center" :style="{ background: theme.nodeColors.root, color: theme.textColor }"></div>
+            <div class="tp-branches">
+              <div class="tp-branch" :style="{ background: theme.nodeColors.sheet }"></div>
+              <div class="tp-branch" :style="{ background: theme.nodeColors.sheet }"></div>
+              <div class="tp-branch" :style="{ background: theme.nodeColors.sheet }"></div>
+            </div>
+            <svg class="tp-lines" viewBox="0 0 60 40">
+              <line x1="22" y1="20" x2="38" y2="8"  :stroke="theme.edgeColor" stroke-width="1.5"/>
+              <line x1="22" y1="20" x2="38" y2="20" :stroke="theme.edgeColor" stroke-width="1.5"/>
+              <line x1="22" y1="20" x2="38" y2="32" :stroke="theme.edgeColor" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="theme-name">{{ theme.name }}</span>
+          <i v-if="activeThemeId === theme.id" class="fa-solid fa-check theme-check"></i>
+        </button>
+      </div>
+    </div>
+
+  </template>
+
+  <!-- ── LAYOUT TAB ─────────────────────────────────────────── -->
+ <!-- ── LAYOUT TAB ─────────────────────────────────────────── -->
+<template v-else>
+  <div v-for="group in LAYOUT_GROUPS" :key="group.label" class="fs-section">
+    <div class="fs-section-label">{{ group.label }}</div>
+    <div class="layout-grid">
+      <button
+        v-for="lv in group.views"
+        :key="lv.id"
+        class="layout-card"
+        :class="{ 'layout-card--active': layoutDirection === lv.id }"
+        :title="lv.name"
+       @click="setLayout(lv.id as LayoutDirection)"
+      >
+        <div class="layout-preview">
+          <svg viewBox="0 0 60 44" width="60" height="44" v-html="lv.svg"></svg>
+        </div>
+        <span class="layout-name">{{ lv.name }}</span>
+        <i v-if="layoutDirection === lv.id" class="fa-solid fa-check layout-check"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="theme-hint">
+    <i class="fa-solid fa-circle-info me-1" style="color: #94a3b8"></i>
+    <span>Click a layout to reorganise the map</span>
+  </div>
+</template>
+
+</div>
         <div v-else class="fs-body">
           <div class="fs-node-name">
             <i
@@ -968,7 +921,7 @@
       </div>
     </transition>
 
-    <Teleport to="body" v-if="!isPlanRoute">
+    <Teleport to="body">
       <transition name="fade">
         <div
           v-if="ctxMenu.visible"
@@ -985,7 +938,7 @@
 
           <!-- Add card below -->
           <button
-            v-if="canCreateCard && !isPlanRoute"
+            v-if="canCreateCard && !asTalent"
             class="ctx-item"
             @click="ctxAddCard"
           >
@@ -996,7 +949,7 @@
 
           <!-- Add child card (Tab) -->
           <button
-            v-if="canCreateCard && !isPlanRoute"
+            v-if="canCreateCard && !asTalent"
             class="ctx-item"
             @click="ctxAddChildCard"
           >
@@ -1008,7 +961,7 @@
           </button>
 
           <!-- Open card -->
-          <button class="ctx-item" @click="ctxOpenCard" v-if="!isPlanRoute">
+          <button class="ctx-item" @click="ctxOpenCard">
             <i
               class="fa-solid fa-arrow-up-right-from-square ctx-item-icon ctx-icon--open"
             ></i>
@@ -1018,7 +971,7 @@
 
           <!-- Duplicate -->
           <button
-            v-if="canCreateCard && !isPlanRoute"
+            v-if="canCreateCard"
             class="ctx-item"
             @click="ctxDuplicate"
           >
@@ -1031,7 +984,7 @@
 
           <!-- Format -->
           <button
-            v-if="canAssignCard && canEditCard && !isPlanRoute"
+            v-if="canAssignCard && canEditCard"
             class="ctx-item"
             @click="ctxFormatCard"
           >
@@ -1041,7 +994,7 @@
 
           <!-- Copy Style -->
           <button
-            v-if="canAssignCard && canEditCard && !isPlanRoute"
+            v-if="canAssignCard && canEditCard"
             class="ctx-item"
             @click="ctxCopyStyle"
           >
@@ -1055,7 +1008,7 @@
           <!-- Paste Style -->
           <button
             v-if="
-              canAssignCard && canEditCard && !isPlanRoute && styleClipboard
+              canAssignCard && canEditCard && styleClipboard
             "
             class="ctx-item"
             @click="ctxPasteStyle"
@@ -1069,7 +1022,7 @@
 
           <!-- Reset Style -->
           <button
-            v-if="canAssignCard && canEditCard && !isPlanRoute"
+            v-if="canAssignCard && canEditCard"
             class="ctx-item"
             @click="ctxResetStyle"
           >
@@ -1084,7 +1037,7 @@
 
           <!-- Delete -->
           <button
-            v-if="canDeleteCard && !isPlanRoute"
+            v-if="canDeleteCard"
             class="ctx-item ctx-item--danger"
             @click="ctxDeleteCard"
           >
@@ -1188,6 +1141,7 @@ import { useWorkspaceStore } from "../../stores/workspace";
 import dp from "../../assets/global/dummy.jpeg";
 const props = defineProps<{
   listsData: any[];
+  style?: object;
   selectedSheetId: string;
   selectedViewBy: string;
   workspaceId: string;
@@ -1202,6 +1156,8 @@ const props = defineProps<{
   canCreateSheet: boolean;
   canCreateVariable: boolean;
   canEditSheet: boolean;
+  asTalent?: boolean;
+  sheetId?:string;
 }>();
 
 const emit = defineEmits<{
@@ -1222,6 +1178,7 @@ const emit = defineEmits<{
   (e: "reorder:card", payload: any): void;
   (e: "toggle-add-list"): void;
   (e: "add-column", value: string): void;
+  (e: "save:theme", style: Record<string, any>): void;
 }>();
 
 const { isDark } = useTheme();
@@ -1250,6 +1207,7 @@ interface MindNode {
   real_id?: string;
   sheet_id: string;
   seat_id?: string;
+  listId?:string;
   topic: string;
   style: NodeStyle;
   _originalStyle: Record<string, any>;
@@ -1285,13 +1243,13 @@ const workspaceStore = useWorkspaceStore();
 const instancePrefix = `mm_${props.moduleId}_${Date.now()}`;
 const localWorkspace = computed(() => workspaceStore.singleWorkspace);
 const isFullscreen = ref(false);
-// const clipboardNodeId = ref<string | null>(null);
-// const clipboardAction = ref<'copy' | 'cut' | null>(null);
 const styleClipboard = ref<NodeStyle | null>(null);
 
 const showShortcutHint = ref(false);
 const shortcutHintTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const lastShortcutLabel = ref("");
+const activeFormatTab = ref<'theme' | 'layout'>('theme');
+const isTreeMap = computed(() => layoutDirection.value === "tree-map");
 // ✦ Theme system
 interface MapTheme {
   id: string;
@@ -1459,6 +1417,162 @@ const THEMES: MapTheme[] = [
     edgeColor: "#88c0d0",
     textColor: "#eceff4",
   },
+  {
+  id: "lavender",
+  name: "Lavender",
+  bg: "#faf5ff",
+  nodeColors: {
+    root: "#c084fc",
+    sheet: "#e9d5ff",
+    list: "#faf5ff",
+    card: "#ffffff",
+  },
+  edgeColor: "#a855f7",
+  textColor: "#4c1d95",
+},
+{
+  id: "cyberpunk",
+  name: "Cyberpunk",
+  bg: "#0a0a0a",
+  nodeColors: {
+    root: "#ff00ff",
+    sheet: "#00ffff",
+    list: "#111111",
+    card: "#1a1a1a",
+  },
+  edgeColor: "#facc15",
+  textColor: "#e5e5e5",
+},
+{
+  id: "mint",
+  name: "Mint",
+  bg: "#ecfdf5",
+  nodeColors: {
+    root: "#10b981",
+    sheet: "#6ee7b7",
+    list: "#ecfdf5",
+    card: "#ffffff",
+  },
+  edgeColor: "#059669",
+  textColor: "#064e3b",
+},
+{
+  id: "coral",
+  name: "Coral",
+  bg: "#fff5f5",
+  nodeColors: {
+    root: "#ff6b6b",
+    sheet: "#ffa8a8",
+    list: "#fff5f5",
+    card: "#ffffff",
+  },
+  edgeColor: "#fa5252",
+  textColor: "#7f1d1d",
+},
+{
+  id: "ice",
+  name: "Ice",
+  bg: "#f0f9ff",
+  nodeColors: {
+    root: "#7dd3fc",
+    sheet: "#bae6fd",
+    list: "#f0f9ff",
+    card: "#ffffff",
+  },
+  edgeColor: "#38bdf8",
+  textColor: "#0c4a6e",
+},
+{
+  id: "charcoal",
+  name: "Charcoal",
+  bg: "#18181b",
+  nodeColors: {
+    root: "#27272a",
+    sheet: "#3f3f46",
+    list: "#27272a",
+    card: "#27272a",
+  },
+  edgeColor: "#a1a1aa",
+  textColor: "#fafafa",
+},
+{
+  id: "peach",
+  name: "Peach",
+  bg: "#fff7ed",
+  nodeColors: {
+    root: "#fb923c",
+    sheet: "#fdba74",
+    list: "#fff7ed",
+    card: "#ffffff",
+  },
+  edgeColor: "#ea580c",
+  textColor: "#7c2d12",
+},
+{
+  id: "aqua",
+  name: "Aqua",
+  bg: "#ecfeff",
+  nodeColors: {
+    root: "#06b6d4",
+    sheet: "#67e8f9",
+    list: "#ecfeff",
+    card: "#ffffff",
+  },
+  edgeColor: "#0891b2",
+  textColor: "#083344",
+},
+{
+  id: "crimson",
+  name: "Crimson",
+  bg: "#fef2f2",
+  nodeColors: {
+    root: "#b91c1c",
+    sheet: "#ef4444",
+    list: "#fef2f2",
+    card: "#ffffff",
+  },
+  edgeColor: "#991b1b",
+  textColor: "#450a0a",
+},
+{
+  id: "indigo",
+  name: "Indigo",
+  bg: "#eef2ff",
+  nodeColors: {
+    root: "#4f46e5",
+    sheet: "#818cf8",
+    list: "#eef2ff",
+    card: "#ffffff",
+  },
+  edgeColor: "#4338ca",
+  textColor: "#1e1b4b",
+},
+{
+  id: "sand",
+  name: "Sand",
+  bg: "#fdf6e3",
+  nodeColors: {
+    root: "#d4a373",
+    sheet: "#e6ccb2",
+    list: "#fdf6e3",
+    card: "#ffffff",
+  },
+  edgeColor: "#b08968",
+  textColor: "#583101",
+},
+{
+  id: "neon",
+  name: "Neon",
+  bg: "#050505",
+  nodeColors: {
+    root: "#39ff14",
+    sheet: "#00ffcc",
+    list: "#0a0a0a",
+    card: "#111111",
+  },
+  edgeColor: "#ff073a",
+  textColor: "#eaffea",
+},
 ];
 
 const BG_COLORS = [
@@ -1489,13 +1603,10 @@ const activeCanvasBg = ref<string>("#dedfe3");
 const recentlyUsedColors = ref<string[]>([]);
 // const themeColorPickerOpen = ref(false);
 const customBgColor = ref("#dedfe3");
-
-function applyTheme(theme: MapTheme) {
+function applyTheme(theme: MapTheme, persist = true) {
   activeThemeId.value = theme.id;
   activeCanvasBg.value = theme.bg;
   customBgColor.value = theme.bg;
-
-  // Apply CSS variables to the root element
   const el = rootEl.value;
   if (!el) return;
   el.style.setProperty("--mm-bg", theme.bg);
@@ -1505,21 +1616,19 @@ function applyTheme(theme: MapTheme) {
   el.style.setProperty("--mm-node-card-bg", theme.nodeColors.card);
   el.style.setProperty("--mm-edge-color", theme.edgeColor);
   el.style.setProperty("--mm-text-color", theme.textColor);
-
-  // Persist locally
-  localStorage.setItem(
-    "mm_theme",
-    JSON.stringify({
-      themeId: theme.id,
-      bg: theme.bg,
-      nodeColors: theme.nodeColors,
-      edgeColor: theme.edgeColor,
-      textColor: theme.textColor,
-    }),
-  );
+  if (!persist) return;
+  emit("save:theme", {
+    mm_theme_id:   theme.id,
+    mm_bg:         theme.bg,
+    mm_edge_color: theme.edgeColor,
+    mm_text_color: theme.textColor,
+    mm_node_root:  theme.nodeColors.root,
+    mm_node_sheet: theme.nodeColors.sheet,
+    mm_node_list:  theme.nodeColors.list,
+    mm_node_card:  theme.nodeColors.card,
+  });
 }
-
-function applyCustomBg(color: string) {
+function applyCustomBg(color: string, persist = true) {
   activeCanvasBg.value = color;
   customBgColor.value = color;
   activeThemeId.value = "custom";
@@ -1527,35 +1636,44 @@ function applyCustomBg(color: string) {
   if (!el) return;
   el.style.setProperty("--mm-bg", color);
 
-  // Track recently used
   if (!recentlyUsedColors.value.includes(color)) {
     recentlyUsedColors.value = [color, ...recentlyUsedColors.value].slice(0, 7);
   }
-  localStorage.setItem("mm_custom_bg", color);
-  localStorage.setItem(
-    "mm_recent_colors",
-    JSON.stringify(recentlyUsedColors.value),
-  );
+
+  if (!persist) return;
+  emit("save:theme", {
+    mm_theme_id: "custom",
+    mm_bg:       color,
+  });
 }
 
 function loadSavedTheme() {
-  const savedTheme = localStorage.getItem("mm_theme");
-  const savedBg = localStorage.getItem("mm_custom_bg");
-  const savedRecent = localStorage.getItem("mm_recent_colors");
+  
+  const style = props.listsData?.[0]?.style || props.style;
+  if (!style?.mm_theme_id) return;
 
-  if (savedRecent) {
-    try {
-      recentlyUsedColors.value = JSON.parse(savedRecent);
-    } catch {}
+  if (style.mm_theme_id === "custom") {
+    if (style.mm_bg) applyCustomBg(style.mm_bg, false);  // false = don't re-save
+    return;
   }
-  if (savedTheme) {
-    try {
-      const t = JSON.parse(savedTheme);
-      const found = THEMES.find((th) => th.id === t.themeId);
-      if (found) applyTheme(found);
-    } catch {}
-  } else if (savedBg) {
-    applyCustomBg(savedBg);
+
+  const found = THEMES.find((t) => t.id === style.mm_theme_id);
+  if (found) {
+    const restored: MapTheme = {
+      ...found,
+      bg:        style.mm_bg         ?? found.bg,
+      edgeColor: style.mm_edge_color ?? found.edgeColor,
+      textColor: style.mm_text_color ?? found.textColor,
+      nodeColors: {
+        root:  style.mm_node_root  ?? found.nodeColors.root,
+        sheet: style.mm_node_sheet ?? found.nodeColors.sheet,
+        list:  style.mm_node_list  ?? found.nodeColors.list,
+        card:  style.mm_node_card  ?? found.nodeColors.card,
+      },
+    };
+    applyTheme(restored, false);  // false = don't re-save
+  } else if (style.mm_bg) {
+    applyCustomBg(style.mm_bg, false);
   }
 }
 function openDeleteModal(node: any) {
@@ -1610,9 +1728,24 @@ const panStart = ref({ x: 0, y: 0 });
 const svgW = ref(8000);
 const svgH = ref(8000);
 
-const layoutDirection = ref<"right" | "left" | "center" | "top" | "bottom">(
-  "right",
-);
+const layoutDirection = ref<
+  | "right"
+  | "left"
+  | "center"
+  | "top"
+  | "bottom"
+  | "radial"
+  | "zigzag"
+  | "staggered"
+  | "split-horizontal"
+  | "ladder"
+  | "fishbone"
+  | "org-chart"
+  | "timeline"
+  | "tree-map"
+  | "logic-left"
+  | "logic-right"
+>("right");
 const nodeSides = new Map<string, "left" | "right">();
 
 const draggedNodeId = ref<string | null>(null);
@@ -1664,9 +1797,6 @@ watch(
   },
   { immediate: true },
 );
-const isPlanRoute = computed(
-  () => route.path.includes("plan") || route.path.includes("talent"),
-);
 
 const newColumnLocal = ref(props.newColumn);
 watch(
@@ -1697,6 +1827,220 @@ const DEFAULT_BACKEND_STYLE = {
   box_shadow: "",
 };
 
+const LAYOUT_VIEWS = [
+  // Mind Map group
+  { id: 'right',            name: 'Right',          group: 'mindmap' },
+  { id: 'left',             name: 'Left',           group: 'mindmap' },
+  { id: 'center',           name: 'Centered',       group: 'mindmap' },
+  { id: 'top',              name: 'Top down',       group: 'mindmap' },
+  { id: 'bottom',           name: 'Bottom up',      group: 'mindmap' },
+  { id: 'radial',           name: 'Radial',         group: 'mindmap' },
+  { id: 'zigzag',           name: 'Zigzag',         group: 'mindmap' },           // added
+  { id: 'staggered',        name: 'Staggered',      group: 'mindmap' },           // added
+  { id: 'split-horizontal', name: 'Split Horizontal', group: 'mindmap' },       // added
+  { id: 'ladder',           name: 'Ladder',         group: 'mindmap' },           // added
+  // Logic Chart group
+  { id: 'logic-right',      name: 'Logic Right',    group: 'logic' },
+  { id: 'logic-left',       name: 'Logic Left',     group: 'logic' },
+  { id: 'fishbone',         name: 'Fishbone',       group: 'logic' },
+  // Structure group
+  { id: 'org-chart',        name: 'Org Chart',      group: 'structure' },
+  { id: 'timeline',         name: 'Timeline',       group: 'structure' },
+  { id: 'tree-map',         name: 'Tree Map',       group: 'structure' },
+] as const;
+
+const LAYOUT_GROUPS = [
+  {
+    label: 'Mind Map',
+    views: [
+      {
+        id: 'right',
+        name: 'Right',
+        svg: `<g>
+          <rect x="4" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="32" y="6" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="32" y="18" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="32" y="30" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 9 32 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 21 32 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M18 22 C25 22 25 33 32 33" fill="none" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'left',
+        name: 'Left',
+        svg: `<g>
+          <rect x="42" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="6" y="6" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="6" y="18" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="6" y="30" width="22" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 9 28 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 21 28 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M42 22 C35 22 35 33 28 33" fill="none" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'center',
+        name: 'Centered',
+        svg: `<g>
+          <rect x="23" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="6" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="18" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="31" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="42" y="6" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="42" y="18" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="42" y="31" width="16" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 9 18 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 21 18 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M23 22 C15 22 15 34 18 34" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 9 42 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 21 42 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M37 22 C45 22 45 34 42 34" fill="none" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'top',
+        name: 'Top down',
+        svg: `<g>
+          <rect x="23" y="4" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="4" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="23" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="42" y="28" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <path d="M30 12 C30 20 11 20 11 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M30 12 C30 20 30 20 30 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M30 12 C30 20 49 20 49 28" fill="none" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'bottom',
+        name: 'Bottom up',
+        svg: `<g>
+          <rect x="23" y="30" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="4" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="23" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="42" y="8" width="14" height="7" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <path d="M30 30 C30 22 11 22 11 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M30 30 C30 22 30 22 30 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M30 30 C30 22 49 22 49 15" fill="none" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'radial',
+        name: 'Radial',
+        svg: `<g>
+          <rect x="23" y="18" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="23" y="2" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="23" y="38" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="18" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="44" y="18" width="14" height="6" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <path d="M30 22 C30 14 30 10 30 8" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M30 22 C30 30 30 36 30 38" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M23 22 C16 22 14 22 16 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M37 22 C44 22 46 22 44 21" fill="none" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+    ]
+  },
+  {
+    label: 'Logic Chart',
+    views: [
+      {
+        id: 'logic-right',
+        name: 'Logic Right',
+        svg: `<g>
+          <rect x="2" y="18" width="16" height="8" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="30" y="6" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="30" y="16" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="30" y="26" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="30" y="36" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <path d="M18 22 L22 22 L22 9 L30 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M22 22 L22 19 L30 19" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M22 22 L22 29 L30 29" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M22 22 L22 39 L30 39" fill="none" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'logic-left',
+        name: 'Logic Left',
+        svg: `<g>
+          <rect x="42" y="18" width="16" height="8" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="6" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="16" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="26" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="36" width="28" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <path d="M42 22 L38 22 L38 9 L30 9" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M38 22 L38 19 L30 19" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M38 22 L38 29 L30 29" fill="none" stroke="#7D68C8" stroke-width="1"/>
+          <path d="M38 22 L38 39 L30 39" fill="none" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'fishbone',
+        name: 'Fishbone',
+        svg: `<g>
+          <rect x="36" y="19" width="20" height="6" rx="1" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <line x1="4" y1="22" x2="36" y2="22" stroke="#7D68C8" stroke-width="1.5"/>
+          <line x1="10" y1="22" x2="18" y2="10" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="22" y1="22" x2="30" y2="10" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="10" y1="22" x2="18" y2="34" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="22" y1="22" x2="30" y2="34" stroke="#7D68C8" stroke-width="1"/>
+          <rect x="14" y="5" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="26" y="5" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="14" y="33" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="26" y="33" width="12" height="6" rx="1" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+        </g>`
+      },
+    ]
+  },
+  {
+    label: 'Structure',
+    views: [
+      {
+        id: 'org-chart',
+        name: 'Org Chart',
+        svg: `<g>
+          <rect x="22" y="2" width="16" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="4" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="23" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="42" y="22" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <line x1="30" y1="10" x2="30" y2="15" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="11" y1="15" x2="49" y2="15" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="11" y1="15" x2="11" y2="22" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="30" y1="15" x2="30" y2="22" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="49" y1="15" x2="49" y2="22" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'timeline',
+        name: 'Timeline',
+        svg: `<g>
+          <line x1="4" y1="22" x2="56" y2="22" stroke="#7D68C8" stroke-width="1.5"/>
+          <circle cx="12" cy="22" r="2.5" fill="#7D68C8"/>
+          <circle cx="30" cy="22" r="2.5" fill="#7D68C8"/>
+          <circle cx="48" cy="22" r="2.5" fill="#7D68C8"/>
+          <rect x="5" y="8" width="14" height="8" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="23" y="28" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="41" y="8" width="14" height="8" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <line x1="12" y1="19" x2="12" y2="16" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="30" y1="25" x2="30" y2="28" stroke="#7D68C8" stroke-width="1"/>
+          <line x1="48" y1="19" x2="48" y2="16" stroke="#7D68C8" stroke-width="1"/>
+        </g>`
+      },
+      {
+        id: 'tree-map',
+        name: 'Tree Map',
+        svg: `<g>
+          <rect x="2" y="2" width="56" height="40" rx="2" fill="none" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="2" width="30" height="22" rx="2" fill="#f1eeff" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="32" y="2" width="26" height="22" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="2" y="24" width="18" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="20" y="24" width="20" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+          <rect x="40" y="24" width="18" height="18" rx="2" fill="#ede9fb" stroke="#b8a8e8" stroke-width="1"/>
+        </g>`
+      },
+    ]
+  },
+];
 function mapBackendStyle(style: any = {}): NodeStyle {
   return {
     background: style.bg_color,
@@ -1802,9 +2146,9 @@ function layoutTree(
   node: MindNode,
   x: number,
   y: number,
-  dir?: "right" | "left" | "center" | "top" | "bottom",
+  dir?: string,
 ): number {
-  const d = dir ?? layoutDirection.value;
+  const d = (dir ?? layoutDirection.value) as string;
   node.width = NODE_W[node.uniqueName] ?? 180;
   node.height = nodeHeight(node);
 
@@ -1814,31 +2158,72 @@ function layoutTree(
     node.y = y;
     return node.height;
   }
+// ── Center layout ─────────────────────────────────────────────────────
+if (d === "center") {
+  const kids = node.children;
+  if (kids.length === 0) { node.x = x; node.y = y; return node.height; }
 
-  if (
-    d === "center" &&
-    (node.uniqueName === "root" || node.uniqueName === "sheet")
-  ) {
-    // Collect the children to split — for root it's sheets, for sheet it's lists
-    const kids = node.children;
+  // For root with a single sheet child: center the sheet and split its lists
+  if (node.uniqueName === "root" && kids.length === 1) {
+    const sheet = kids[0];
+    nodeSides.set(sheet.id, "right"); // side doesn't matter, sheet is centered
+    sheet.width = NODE_W[sheet.uniqueName] ?? 180;
+    sheet.height = nodeHeight(sheet);
 
-    if (kids.length === 0) {
+    const lists = sheet.children || [];
+    if (lists.length === 0) {
+      // No lists — just place sheet to the right of root normally
+      const h = layoutTree(sheet, x + node.width + H_GAP, y, "right");
       node.x = x;
-      node.y = y;
-      return node.height;
+      node.y = sheet.y + sheet.height / 2 - node.height / 2;
+      return h;
     }
 
-    // Split children: even indices go right, odd go left
+    // Split lists: even → right of sheet, odd → left of sheet
+    const rightLists: MindNode[] = [];
+    const leftLists: MindNode[] = [];
+    lists.forEach((l, i) => {
+      if (i % 2 === 0) { nodeSides.set(l.id, "right"); rightLists.push(l); }
+      else             { nodeSides.set(l.id, "left");  leftLists.push(l); }
+    });
+
+    // Sheet x is centered between root and its children
+    const sheetX = x + node.width + H_GAP;
+    const sheetY = y; // will be recomputed after children are laid out
+    console.log(sheetY)
+    let ry = y;
+    for (const l of rightLists) {
+      const cX = sheetX + sheet.width + H_GAP;
+      const h = layoutTree(l, cX, ry, "right");
+      ry += h + V_GAP;
+    }
+    let ly = y;
+    for (const l of leftLists) {
+      const cX = sheetX - H_GAP - (NODE_W[l.uniqueName] ?? 180);
+      const h = layoutTree(l, cX, ly, "left");
+      ly += h + V_GAP;
+    }
+
+    // Center sheet vertically among all its laid-out list children
+    const allLists = [...rightLists, ...leftLists];
+    const minLY = Math.min(...allLists.map(l => l.y));
+    const maxLY = Math.max(...allLists.map(l => l.y + l.height));
+    sheet.x = sheetX;
+    sheet.y = minLY + (maxLY - minLY) / 2 - sheet.height / 2;
+
+    // Center root vertically to the sheet
+    node.x = x;
+    node.y = sheet.y + sheet.height / 2 - node.height / 2;
+    return maxLY - minLY;
+  }
+
+  // For root/sheet with multiple children: original split logic
+  if (node.uniqueName === "root" || node.uniqueName === "sheet") {
     const rightKids: MindNode[] = [];
     const leftKids: MindNode[] = [];
     kids.forEach((c, i) => {
-      if (i % 2 === 0) {
-        nodeSides.set(c.id, "right");
-        rightKids.push(c);
-      } else {
-        nodeSides.set(c.id, "left");
-        leftKids.push(c);
-      }
+      if (i % 2 === 0) { nodeSides.set(c.id, "right"); rightKids.push(c); }
+      else             { nodeSides.set(c.id, "left");  leftKids.push(c); }
     });
 
     let ry = y;
@@ -1847,7 +2232,6 @@ function layoutTree(
       const h = layoutTree(c, cX, ry, "right");
       ry += h + V_GAP;
     }
-
     let ly = y;
     for (const c of leftKids) {
       const cX = x - H_GAP - (NODE_W[c.uniqueName] ?? 180);
@@ -1856,118 +2240,606 @@ function layoutTree(
     }
 
     const allKids = [...rightKids, ...leftKids];
-    const allYTops = allKids.map((c) => c.y);
-    const allYBottoms = allKids.map((c) => c.y + c.height);
-    const minY = Math.min(...allYTops);
-    const maxY = Math.max(...allYBottoms);
-
+    const minY = Math.min(...allKids.map(c => c.y));
+    const maxY = Math.max(...allKids.map(c => c.y + c.height));
     node.x = x;
     node.y = minY + (maxY - minY) / 2 - node.height / 2;
-
     return maxY - minY;
   }
+}
 
-  // ── Top-down layout ──────────────────────────────────────────────────
+  // ── Top / Bottom layout ───────────────────────────────────────────────
   if (d === "top" || d === "bottom") {
     const sign = d === "top" ? 1 : -1;
-    const childGapV = H_GAP; // vertical gap between levels
-    const childGapH = V_GAP; // horizontal gap between siblings
-
-    // First pass: recursively layout each child to get their subtree widths
-    const childWidths: number[] = [];
-    for (const child of node.children) {
-      child.width = NODE_W[child.uniqueName] ?? 180;
-      child.height = nodeHeight(child);
-      // Temporarily layout to get total width of subtree
-      const w = getSubtreeWidth(child, d);
-      childWidths.push(w);
-    }
-
-    const totalChildrenWidth =
-      childWidths.reduce((a, b) => a + b, 0) +
-      childGapH * (node.children.length - 1);
-
-    // Center the children under/over the parent
-    let childX = x + node.width / 2 - totalChildrenWidth / 2;
-    const childY =
-      y +
-      (sign > 0
-        ? node.height + childGapV
-        : -(childGapV + nodeHeight(node.children[0])));
-
+    const childGapH = V_GAP;
+    const childWidths = node.children.map(c => getSubtreeWidth(c, d));
+    const totalW = childWidths.reduce((a, b) => a + b, 0) + childGapH * (node.children.length - 1);
+    let childX = x + node.width / 2 - totalW / 2;
+    const childY = sign > 0
+      ? y + node.height + H_GAP
+      : y - H_GAP - nodeHeight(node.children[0]);
     for (let i = 0; i < node.children.length; i++) {
       const child = node.children[i];
       nodeSides.set(child.id, "right");
-      layoutTree(
-        child,
-        childX + childWidths[i] / 2 - child.width / 2,
-        childY,
-        d,
-      );
+      layoutTree(child, childX + childWidths[i] / 2 - child.width / 2, childY, d);
       childX += childWidths[i] + childGapH;
+    }
+    node.x = x;
+    node.y = y;
+    return totalW;
+  }
+
+  // ── Radial layout ─────────────────────────────────────────────────────
+  if (d === "radial") {
+    const radius = 320;
+    const count = node.children.length;
+    for (let i = 0; i < count; i++) {
+      const angle = (2 * Math.PI * i) / count - Math.PI / 2;
+      const cx = x + node.width / 2 + Math.cos(angle) * radius - (NODE_W[node.children[i].uniqueName] ?? 180) / 2;
+      const cy = y + node.height / 2 + Math.sin(angle) * radius - nodeHeight(node.children[i]) / 2;
+      nodeSides.set(node.children[i].id, cx >= x ? "right" : "left");
+      layoutTree(node.children[i], cx, cy, "right");
+    }
+    node.x = x;
+    node.y = y;
+    return node.height;
+  }
+
+  // ── Zigzag layout ─────────────────────────────────────────────────────
+  if (d === "zigzag") {
+    const colLeft  = x + node.width + H_GAP;
+    const colRight = x + node.width + H_GAP * 2 + (NODE_W.sheet ?? 180);
+    let rowY = y;
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i];
+      const cx = i % 2 === 0 ? colLeft : colRight;
+      nodeSides.set(child.id, "right");
+      const h = layoutTree(child, cx, rowY, "right");
+      rowY += h + V_GAP * 2;
+    }
+    node.x = x;
+    node.y = y;
+    return rowY - y;
+  }
+
+  // ── Staggered layout ──────────────────────────────────────────────────
+  if (d === "staggered") {
+    const baseX = x + node.width + H_GAP;
+    const staggerOffset = 40;
+    let childY = y;
+    for (let i = 0; i < node.children.length; i++) {
+      const child = node.children[i];
+      const cx = baseX + (i % 2 === 0 ? 0 : staggerOffset);
+      nodeSides.set(child.id, "right");
+      const h = layoutTree(child, cx, childY, "right");
+      childY += h + V_GAP;
+    }
+    const firstY = node.children[0].y;
+    const lastC  = node.children[node.children.length - 1];
+    node.x = x;
+    node.y = firstY + (lastC.y + lastC.height - firstY) / 2 - node.height / 2;
+    return childY - y;
+  }
+
+  // ── Split-Horizontal layout ────────────────────────────────────────────
+  if (d === "split-horizontal") {
+    const topKids: MindNode[]    = [];
+    const bottomKids: MindNode[] = [];
+    node.children.forEach((c, i) => {
+      if (i % 2 === 0) topKids.push(c);
+      else             bottomKids.push(c);
+    });
+
+    // top row
+    const topGap = V_GAP;
+    const topWidths = topKids.map(c => NODE_W[c.uniqueName] ?? 180);
+    const totalTopW = topWidths.reduce((a, b) => a + b, 0) + topGap * (topKids.length - 1);
+    let tx = x + node.width / 2 - totalTopW / 2;
+    const topY = y - H_GAP - (nodeHeight(topKids[0] ?? node));
+    for (let i = 0; i < topKids.length; i++) {
+      nodeSides.set(topKids[i].id, "right");
+      layoutTree(topKids[i], tx, topY, "right");
+      tx += topWidths[i] + topGap;
+    }
+
+    // bottom row
+    const botWidths = bottomKids.map(c => NODE_W[c.uniqueName] ?? 180);
+    const totalBotW = botWidths.reduce((a, b) => a + b, 0) + topGap * (bottomKids.length - 1);
+    let bx = x + node.width / 2 - totalBotW / 2;
+    const botY = y + node.height + H_GAP;
+    for (let i = 0; i < bottomKids.length; i++) {
+      nodeSides.set(bottomKids[i].id, "right");
+      layoutTree(bottomKids[i], bx, botY, "right");
+      bx += botWidths[i] + topGap;
     }
 
     node.x = x;
     node.y = y;
-    return totalChildrenWidth;
+    return node.height;
   }
 
+  // ── Ladder layout ─────────────────────────────────────────────────────
+  if (d === "ladder") {
+    const ladderX = x + node.width + H_GAP;
+    let runningY = y;
+    for (const child of node.children) {
+      nodeSides.set(child.id, "right");
+      const h = layoutTree(child, ladderX, runningY, "right");
+      runningY += h + V_GAP;
+    }
+    node.x = x;
+    node.y = y;
+    return runningY - y;
+  }
+// ── Logic Right layout (flush left, bracket connector) ───────────────
+if (d === "logic-right") {
+  const childX = x + node.width + 60;
+  let runY = y;
+  for (const child of node.children) {
+    nodeSides.set(child.id, "right");
+    child.width  = NODE_W[child.uniqueName] ?? 180;
+    child.height = nodeHeight(child);
+    child.x = childX;
+    child.y = runY;
+    nodeMap.set(child.id, child);
+    // Layout grandchildren (cards) further to the right
+    if (child.children?.length) {
+      const gcX = childX + child.width + H_GAP;
+      let gcY = runY;
+      for (const gc of child.children) {
+        nodeSides.set(gc.id, "right");
+        const h = layoutTree(gc, gcX, gcY, "right");
+        gcY += h + V_GAP;
+      }
+      const firstGcY = child.children[0].y + child.children[0].height / 2;
+      const lastGc   = child.children[child.children.length - 1];
+      child.y = (firstGcY + lastGc.y + lastGc.height / 2) / 2 - child.height / 2;
+      runY = gcY;
+    } else {
+      runY += child.height + V_GAP;
+    }
+  }
+  const firstY = node.children[0].y + node.children[0].height / 2;
+  const lastC  = node.children[node.children.length - 1];
+  const lastY  = lastC.y + lastC.height / 2;
+  node.x = x;
+  node.y = (firstY + lastY) / 2 - node.height / 2;
+  return runY - y;
+}
+
+// ── Logic Left layout (flush right, bracket connector) ───────────────
+if (d === "logic-left") {
+  const childW = NODE_W.List ?? 180;
+  const childX = x - H_GAP - childW;
+  let runY = y;
+  for (const child of node.children) {
+    nodeSides.set(child.id, "left");
+    child.width  = NODE_W[child.uniqueName] ?? 180;
+    child.height = nodeHeight(child);
+    child.x = childX;
+    child.y = runY;
+    nodeMap.set(child.id, child);
+    if (child.children?.length) {
+      const gcW = NODE_W.card ?? 210;
+      const gcX = childX - H_GAP - gcW;
+      let gcY = runY;
+      for (const gc of child.children) {
+        nodeSides.set(gc.id, "left");
+        const h = layoutTree(gc, gcX, gcY, "left");
+        gcY += h + V_GAP;
+      }
+      const firstGcY = child.children[0].y + child.children[0].height / 2;
+      const lastGc   = child.children[child.children.length - 1];
+      child.y = (firstGcY + lastGc.y + lastGc.height / 2) / 2 - child.height / 2;
+      runY = gcY;
+    } else {
+      runY += child.height + V_GAP;
+    }
+  }
+  const firstY = node.children[0].y + node.children[0].height / 2;
+  const lastC  = node.children[node.children.length - 1];
+  const lastY  = lastC.y + lastC.height / 2;
+  node.x = x;
+  node.y = (firstY + lastY) / 2 - node.height / 2;
+  return runY - y;
+}
+if (d === "fishbone") {
+  // Constants
+  const SPINE_STEP  = 240;  // horizontal spacing between list attach-points on spine
+  const BRANCH_H    = 150;  // vertical distance from spine-Y to list node centre
+  const CARD_GAP    = 12;   // vertical gap between cards stacked on a list branch
+  const LIST_TO_CARD_GAP = 20; // gap between list bottom/top and first card
+ 
+  // The root node data-structure is: root → sheets → lists → cards
+  // For fishbone we flatten: take first sheet's lists as the branches
+  // (if multiple sheets exist, merge all their lists into one set of branches)
+  const allLists: MindNode[] = [];
+  for (const sheet of node.children ?? []) {
+    for (const list of sheet.children ?? []) {
+      allLists.push(list);
+    }
+  }
+ 
+  const listCount   = allLists.length;
+  const spineLen    = (listCount + 1) * SPINE_STEP;
+  const spineY      = y;   // y IS the spine centre Y
+ 
+  // ── 1. Place ROOT at far RIGHT end of spine ──────────────────────────
+  node.width  = NODE_W[node.uniqueName] ?? 220;
+  node.height = nodeHeight(node);
+  node.x      = x + spineLen;
+  node.y      = spineY - node.height / 2;
+  nodeMap.set(node.id, node);
+ 
+  // ── 2. Place SHEET(S) just left of root, centred on spine ────────────
+  //    Sheet acts as the neck between root and the spine branches
+  for (const sheet of node.children ?? []) {
+    sheet.width  = NODE_W[sheet.uniqueName] ?? 200;
+    sheet.height = nodeHeight(sheet);
+    sheet.x      = node.x - sheet.width - 24;   // just left of root
+    sheet.y      = spineY - sheet.height / 2;   // centred on spine
+    nodeSides.set(sheet.id, "right");
+    nodeMap.set(sheet.id, sheet);
+  }
+ 
+  // ── 3. Distribute LISTS along the spine, alternating above/below ─────
+  const topLists:    MindNode[] = [];
+  const bottomLists: MindNode[] = [];
+  allLists.forEach((list, i) => {
+    if (i % 2 === 0) topLists.push(list);
+    else             bottomLists.push(list);
+  });
+ 
+  // top lists — above spine, stacked from right to left (closest to root first)
+  topLists.forEach((list, i) => {
+    const attachX   = x + SPINE_STEP * (i + 1);
+    list.width      = NODE_W[list.uniqueName] ?? 180;
+    list.height     = nodeHeight(list);
+    list.x          = attachX - list.width / 2;
+    list.y          = spineY - BRANCH_H - list.height / 2;
+    nodeSides.set(list.id, "right");
+    nodeMap.set(list.id, list);
+ 
+    // Cards stack UPWARD from list top
+    const cards = list.children ?? [];
+    let nextCardBottom = list.y - LIST_TO_CARD_GAP;
+    cards.forEach((card) => {
+      card.width  = NODE_W[card.uniqueName] ?? 210;
+      card.height = nodeHeight(card);
+      card.x      = list.x + list.width / 2 - card.width / 2; // centred on list
+      card.y      = nextCardBottom - card.height;
+      nextCardBottom = card.y - CARD_GAP;
+      nodeSides.set(card.id, "right");
+      nodeMap.set(card.id, card);
+    });
+  });
+ 
+  // bottom lists — below spine
+  bottomLists.forEach((list, i) => {
+    const attachX   = x + SPINE_STEP * (i + 1);
+    list.width      = NODE_W[list.uniqueName] ?? 180;
+    list.height     = nodeHeight(list);
+    list.x          = attachX - list.width / 2;
+    list.y          = spineY + BRANCH_H - list.height / 2;
+    nodeSides.set(list.id, "right");
+    nodeMap.set(list.id, list);
+ 
+    // Cards stack DOWNWARD from list bottom
+    const cards = list.children ?? [];
+    let nextCardTop = list.y + list.height + LIST_TO_CARD_GAP;
+    cards.forEach((card) => {
+      card.width  = NODE_W[card.uniqueName] ?? 210;
+      card.height = nodeHeight(card);
+      card.x      = list.x + list.width / 2 - card.width / 2;
+      card.y      = nextCardTop;
+      nextCardTop = card.y + card.height + CARD_GAP;
+      nodeSides.set(card.id, "right");
+      nodeMap.set(card.id, card);
+    });
+  });
+ 
+  return spineLen + node.width;
+}
+
+// ── Org Chart layout (top-down with straight elbow connectors) ────────
+if (d === "org-chart") {
+  // Same as top but we flag it separately so edges can use elbow style
+  const childGapH = V_GAP * 2;
+  const childWidths = node.children.map(c => getSubtreeWidth(c, d));
+  const totalW = childWidths.reduce((a, b) => a + b, 0) + childGapH * (node.children.length - 1);
+  let childX = x + node.width / 2 - totalW / 2;
+  const childY = y + node.height + H_GAP;
+  for (let i = 0; i < node.children.length; i++) {
+    const child = node.children[i];
+    nodeSides.set(child.id, "right");
+    layoutTree(child, childX + childWidths[i] / 2 - child.width / 2, childY, d);
+    childX += childWidths[i] + childGapH;
+  }
+  node.x = x;
+  node.y = y;
+  return totalW;
+}
+
+if (d === "timeline") {
+  const SPINE_Y        = y;                 
+  const LIST_W         = NODE_W.List ?? 180;
+  const CARD_W         = NODE_W.card ?? 210;
+  const LIST_COL_W     = Math.max(LIST_W, CARD_W) + 24; 
+  const SHEET_PAD_X    = 40;                
+  const SPINE_TO_LIST  = 60;         
+  const LIST_GAP       = 16;       
+  const sheetColWidths: number[] = node.children.map(sheet => {
+    const lists = sheet.children ?? [];
+    const listsW = lists.length * LIST_COL_W + Math.max(0, lists.length - 1) * V_GAP;
+    return Math.max(NODE_W[sheet.uniqueName] ?? 200, listsW) + SHEET_PAD_X;
+  });
+
+  node.width  = NODE_W[node.uniqueName] ?? 220;
+  node.height = nodeHeight(node);
+  node.x      = x;
+  node.y      = SPINE_Y - node.height / 2;
+  nodeMap.set(node.id, node);
+
+  // ── pass 2: place sheets + their lists + cards ───────────────────────
+  let cursorX = x + node.width + H_GAP;
+
+  for (let i = 0; i < node.children.length; i++) {
+    const sheet     = node.children[i];
+    const colW      = sheetColWidths[i];
+    sheet.width     = NODE_W[sheet.uniqueName] ?? 200;
+    sheet.height    = nodeHeight(sheet);
+
+    // Sheet centred horizontally in its column, vertically on spine
+    sheet.x = cursorX + (colW - SHEET_PAD_X - sheet.width) / 2;
+    sheet.y = SPINE_Y - sheet.height / 2;
+    nodeSides.set(sheet.id, "right");
+    nodeMap.set(sheet.id, sheet);
+
+    const lists = sheet.children ?? [];
+
+    // Split lists: evens above spine, odds below spine
+    const aboveLists = lists.filter((_, j) => j % 2 === 0);
+    const belowLists = lists.filter((_, j) => j % 2 !== 0);
+
+    // ── place above lists (stack upward from spine) ──────────────────
+    // All above-lists share columns starting at sheet.x, side by side
+    let aboveCursorY = SPINE_Y - SPINE_TO_LIST; // bottom edge of next list slot
+    // Group all above lists in a single upward stack, centred on sheet
+    const aboveTotalW = aboveLists.length * LIST_COL_W + Math.max(0, aboveLists.length - 1) * V_GAP;
+    let aboveStartX   = sheet.x + sheet.width / 2 - aboveTotalW / 2;
+
+    for (let j = 0; j < aboveLists.length; j++) {
+      const list    = aboveLists[j];
+      list.width    = LIST_W;
+      list.height   = nodeHeight(list);
+      list.x        = aboveStartX + j * (LIST_COL_W + V_GAP);
+      list.y        = aboveCursorY - list.height;
+      nodeSides.set(list.id, "right");
+      nodeMap.set(list.id, list);
+
+      // Cards stack upward from list top
+      const cards = list.children ?? [];
+      let cardY = list.y - LIST_GAP;
+      for (let k = cards.length - 1; k >= 0; k--) {
+        const card   = cards[k];
+        card.width   = CARD_W;
+        card.height  = nodeHeight(card);
+        card.x       = list.x + (list.width - card.width) / 2;
+        cardY        -= card.height;
+        card.y       = cardY;
+        cardY        -= LIST_GAP;
+        nodeSides.set(card.id, "right");
+        nodeMap.set(card.id, card);
+      }
+    }
+
+    // ── place below lists (stack downward from spine) ────────────────
+    const belowTotalW = belowLists.length * LIST_COL_W + Math.max(0, belowLists.length - 1) * V_GAP;
+    let belowStartX   = sheet.x + sheet.width / 2 - belowTotalW / 2;
+    let belowCursorY  = SPINE_Y + SPINE_TO_LIST; // top edge of next list slot
+
+    for (let j = 0; j < belowLists.length; j++) {
+      const list    = belowLists[j];
+      list.width    = LIST_W;
+      list.height   = nodeHeight(list);
+      list.x        = belowStartX + j * (LIST_COL_W + V_GAP);
+      list.y        = belowCursorY;
+      nodeSides.set(list.id, "right");
+      nodeMap.set(list.id, list);
+
+      // Cards stack downward from list bottom
+      const cards = list.children ?? [];
+      let cardY = list.y + list.height + LIST_GAP;
+      for (let k = 0; k < cards.length; k++) {
+        const card   = cards[k];
+        card.width   = CARD_W;
+        card.height  = nodeHeight(card);
+        card.x       = list.x + (list.width - card.width) / 2;
+        card.y       = cardY;
+        cardY       += card.height + LIST_GAP;
+        nodeSides.set(card.id, "right");
+        nodeMap.set(card.id, card);
+      }
+    }
+
+    cursorX += colW;
+  }
+
+  return cursorX - x;
+}
+if (d === "tree-map") {
+  const COLS       = 3;
+  const TILE_W     = 240;
+  const TILE_PAD_X = 20;
+  const TILE_PAD_Y = 24;
+  const TILE_INNER = 10;
+  const HDR_H      = 40;   // sheet header height
+  const LIST_H     = 28;   // list row height
+  const LIST_GAP   = 4;
+  const CARD_H     = 60;   // card height inside tile
+  const CARD_GAP   = 4;
+  const CARD_INDENT = 8;   // indent cards under list
+ 
+  node.width  = NODE_W[node.uniqueName] ?? 220;
+  node.height = nodeHeight(node);
+  node.x      = x;
+  node.y      = y;
+  nodeMap.set(node.id, node);
+ 
+  const startX = x;
+  const startY = y + node.height + TILE_PAD_Y * 2;
+ 
+  // Pass 1: compute each tile's natural height based on its content
+  const tileHeights: number[] = node.children.map((sheet) => {
+    const lists = sheet.children ?? [];
+    let h = HDR_H + TILE_INNER;
+    for (const list of lists) {
+      h += LIST_H + LIST_GAP;
+      const cardCount = (list.children ?? []).length;
+      if (cardCount > 0) {
+        h += cardCount * (CARD_H + CARD_GAP) + TILE_INNER;
+      }
+    }
+    h += TILE_INNER; // bottom padding
+    return Math.max(h, 120);
+  });
+ 
+  // Pass 2: lay out every sheet, list, and card
+  for (let i = 0; i < node.children.length; i++) {
+    const sheet = node.children[i];
+    const col   = i % COLS;
+    const row   = Math.floor(i / COLS);
+ 
+    // Row height = tallest tile in this row (so tiles align horizontally)
+    const rowStart = row * COLS;
+    const rowEnd   = Math.min(rowStart + COLS, node.children.length);
+    const rowH     = Math.max(...tileHeights.slice(rowStart, rowEnd));
+ 
+    // Cumulative Y: sum all previous row heights
+    let tileY = startY;
+    for (let r = 0; r < row; r++) {
+      const rStart = r * COLS;
+      const rEnd   = Math.min(rStart + COLS, node.children.length);
+      const rH     = Math.max(...tileHeights.slice(rStart, rEnd));
+      tileY += rH + TILE_PAD_Y;
+    }
+ 
+    sheet.x      = startX + col * (TILE_W + TILE_PAD_X);
+    sheet.y      = tileY;
+    sheet.width  = TILE_W;
+    sheet.height = rowH;
+    nodeSides.set(sheet.id, "right");
+    nodeMap.set(sheet.id, sheet);
+ 
+    const lists = sheet.children ?? [];
+    let curY    = sheet.y + HDR_H + TILE_INNER;
+ 
+    for (const list of lists) {
+      // List row — full tile width minus padding
+      list.width  = TILE_W - TILE_INNER * 2;
+      list.height = LIST_H;
+      list.x      = sheet.x + TILE_INNER;
+      list.y      = curY;
+      curY       += LIST_H + LIST_GAP;
+      nodeSides.set(list.id, "right");
+      nodeMap.set(list.id, list);
+ 
+      // Cards — indented under each list
+      const cards = list.children ?? [];
+      for (const card of cards) {
+        card.width  = TILE_W - TILE_INNER * 2 - CARD_INDENT;
+        card.height = CARD_H;
+        card.x      = sheet.x + TILE_INNER + CARD_INDENT;
+        card.y      = curY;
+        curY       += CARD_H + CARD_GAP;
+        nodeSides.set(card.id, "right");
+        nodeMap.set(card.id, card);
+      }
+      if (cards.length > 0) curY += TILE_INNER; // gap after card group
+    }
+  }
+ 
+  // Return total bounding height
+  const totalRows = Math.ceil(node.children.length / COLS);
+  let totalH = startY - y;
+  for (let r = 0; r < totalRows; r++) {
+    const rStart = r * COLS;
+    const rEnd   = Math.min(rStart + COLS, node.children.length);
+    const rH     = Math.max(...tileHeights.slice(rStart, rEnd));
+    totalH += rH + TILE_PAD_Y;
+  }
+  return totalH;
+}
   // ── Left / Right layout (default) ────────────────────────────────────
   let childY = y;
   let total = 0;
   for (const child of node.children) {
     nodeSides.set(child.id, d === "left" ? "left" : "right");
-    const cX =
-      d === "left"
-        ? x - H_GAP - (NODE_W[child.uniqueName] ?? 180)
-        : x + node.width + H_GAP;
+    const cX = d === "left"
+      ? x - H_GAP - (NODE_W[child.uniqueName] ?? 180)
+      : x + node.width + H_GAP;
     const h = layoutTree(child, cX, childY, d);
     const gap = child.uniqueName === "card" ? CARD_V_GAP : V_GAP;
     childY += h + gap;
-    total += h + gap;
+    total  += h + gap;
   }
-  total -=
-    node.children[node.children.length - 1].uniqueName === "card"
-      ? CARD_V_GAP
-      : V_GAP;
+  total -= node.children[node.children.length - 1].uniqueName === "card" ? CARD_V_GAP : V_GAP;
 
   const firstY = node.children[0].y;
-  const lastY = node.children[node.children.length - 1].y;
+  const lastY  = node.children[node.children.length - 1].y;
   node.x = x;
-  node.y =
-    firstY +
-    (lastY + node.children[node.children.length - 1].height - firstY) / 2 -
-    node.height / 2;
+  node.y = firstY + (lastY + node.children[node.children.length - 1].height - firstY) / 2 - node.height / 2;
   return Math.max(total, node.height);
 }
+type LayoutDirection = typeof LAYOUT_VIEWS[number]["id"];
+function setLayout(dir: LayoutDirection) {
+  layoutDirection.value = dir; // reactive
 
-function setLayout(dir: "right" | "left" | "center" | "top" | "bottom") {
-  layoutDirection.value = dir;
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
-  const startX =
-    dir === "left"
-      ? 4000 - NODE_W.root
-      : dir === "center"
-        ? 2500 - NODE_W.root / 2
-        : dir === "top" || dir === "bottom"
-          ? 2000
-          : 60;
-  const startY = dir === "bottom" ? 3000 : 60;
-  layoutTree(root, startX, startY, dir);
-  let minX = Infinity,
-    maxX = -Infinity,
-    maxY = 0;
-  for (const n of flattenTree(root)) {
-    minX = Math.min(minX, n.x);
-    maxX = Math.max(maxX, n.x + n.width);
-    maxY = Math.max(maxY, n.y + n.height);
-  }
-  svgW.value = Math.max(maxX + 300, 5000);
-  svgH.value = Math.max(maxY + 300, 3000);
-  nextTick(() => centerView());
-}
 
+  let startX = 60;
+  let startY = 60;
+
+  switch (dir) {
+    case "right": startX=60; startY=60; break;
+    case "left": startX=4000-NODE_W.root; startY=60; break;
+    case "center": startX=2000-NODE_W.root/2; startY=60; break;
+    case "top": startX=2000; startY=60; break;
+    case "bottom": startX=2000; startY=3000; break;
+    case "logic-right":
+    case "logic-left":
+      startX=2500-NODE_W.root/2; startY=1500; break;
+    case "fishbone": startX=300; startY=1400; break;
+    case "org-chart": startX=2000; startY=200; break;
+    case "timeline": startX=200; startY=1000; break;
+    case "tree-map": startX=400; startY=400; break;
+    case "radial":
+    case "zigzag":
+    case "staggered":
+    case "split-horizontal":
+    case "ladder": startX=2500-NODE_W.root/2; startY=1500; break;
+  }
+
+  // Schedule layout after DOM update
+  nextTick(() => {
+    layoutTree(root, startX, startY, dir);
+
+    // Update SVG bounds
+    let minX = Infinity, maxX = -Infinity, maxY = 0;
+    for (const n of flattenTree(root)) {
+      minX = Math.min(minX, n.x);
+      maxX = Math.max(maxX, n.x+n.width);
+      maxY = Math.max(maxY, n.y+n.height);
+    }
+
+    svgW.value = Math.max(maxX + 300, 5000);
+    svgH.value = Math.max(maxY + 300, 3000);
+
+    centerView(); // safe, called after layout
+  });
+}
+const sheetCardMap = ref<Record<string, any[]>>({});
 function buildTree(sheets: any[]): MindNode {
   const root: MindNode = {
     id: `${instancePrefix}_root`,
@@ -1986,18 +2858,22 @@ function buildTree(sheets: any[]): MindNode {
   };
 
   const varMap: Record<string, MindNode> = {};
+  sheetCardMap.value = {}; // reset
+
   sheets.forEach((sheet) => {
     const title =
       sheet.variables?.["sheet-title"] ||
       localStorage.getItem("selectedSprintTitle") ||
       "Sheet";
-    const link = sheet.style?.hyperLink || "";
 
+    const link = sheet.style?.hyperLink || "";
+    console.log("sheet id of card", sheet);
+    // create sheet node
     if (!varMap[title]) {
       varMap[title] = {
         id: `${instancePrefix}_sheet_${sheet._id}`,
         real_id: sheet._id,
-        sheet_id: sheet._id,
+        sheet_id: sheet?.sheet_id, // <-- sheet_id here
         topic: title,
         variables: sheet?.variables,
         children: [],
@@ -2014,14 +2890,16 @@ function buildTree(sheets: any[]): MindNode {
       root.children.push(varMap[title]);
     }
 
+    // create list node
     const listTitle = sheet.title || sheet.variables?.["sheet-title"] || title;
     const safeTitle = (listTitle || "")
       .toLowerCase()
       .replace(/\s+/g, "_")
       .replace(/[^a-z0-9_]/g, "");
+
     const listNode: MindNode = {
       id: `${instancePrefix}_list_${sheet._id}_${safeTitle}_${sheet.sort_order ?? 0}`,
-      sheet_id: sheet._id,
+      sheet_id: sheet?.cards[0]?.sheet_id, // <-- propagate sheet_id to list node
       topic: listTitle,
       children: [],
       style: mapBackendStyle(sheet?.style),
@@ -2034,12 +2912,15 @@ function buildTree(sheets: any[]): MindNode {
       height: 72,
       collapsed: false,
     };
-
+    console.log("sheet id first card", sheet?.cards[0]?.sheet_id);
+    
+    // add cards
+    sheetCardMap.value[sheet._id] = []; // initialize array
     (sheet.cards || []).forEach((card: any, i: number) => {
       const cn: MindNode = {
         id: `${instancePrefix}_card_${card._id || i}`,
         real_id: card._id,
-        sheet_id: card?.sheet_id,
+        sheet_id: sheet._id, // <-- important, same as sheet
         seat_id: Array.isArray(card.seat_id)
           ? card.seat_id.map((s: any) => s._id || s)
           : card.seat_id,
@@ -2063,6 +2944,9 @@ function buildTree(sheets: any[]): MindNode {
       };
       cn.parent = listNode;
       listNode.children.push(cn);
+
+      // save card to reactive ref
+      sheetCardMap.value[sheet._id].push(cn);
     });
 
     listNode.parent = varMap[title];
@@ -2071,6 +2955,7 @@ function buildTree(sheets: any[]): MindNode {
 
   return root;
 }
+console.log("sheet id of card", sheetCardMap.value);
 
 function assignParents(node: MindNode, parent?: MindNode) {
   if (parent) node.parent = parent;
@@ -2114,59 +2999,177 @@ const currentEdgeColor = computed(() => {
   const theme = THEMES.find((t) => t.id === activeThemeId.value);
   return theme?.edgeColor ?? "#7D68C8";
 });
-// ✦ CHANGE 4: visibleEdges returns color + dashed per edge
 const visibleEdges = computed<Edge[]>(() => {
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return [];
 
   const edges: Edge[] = [];
-  const vis = new Set(allNodes.value.map((n) => n.id));
+  const vis = new Set(allNodes.value.map(n => n.id));
+  const dir = layoutDirection.value;
 
   for (const node of allNodes.value) {
     if (!node.children || isCollapsed(node.id)) continue;
+
     for (const child of node.children) {
       if (!vis.has(child.id)) continue;
-      const isLeft = nodeSides.get(child.id) === "left";
-      const x1 = isLeft ? node.x : node.x + node.width;
-      const y1 = node.y + node.height / 2;
-      const x2 = isLeft ? child.x + child.width : child.x;
-      const y2 = child.y + child.height / 2;
-      const mx = (x1 + x2) / 2;
 
-      // Card edges: use lane color + dashed. All other edges: solid purple.
-      const isCardEdge =
-        node.uniqueName === "List" && child.uniqueName === "card";
-      const edgeColor = isCardEdge
-        ? child.variables?.lane?.variables?.["lane-color"] ||
-          child.style?.borderColor ||
-          currentEdgeColor.value
-        : currentEdgeColor.value;
+      // Midpoints
+      const nMidX = node.x + node.width / 2;
+      const nMidY = node.y + node.height / 2;
+      const cMidX = child.x + child.width / 2;
+      const cMidY = child.y + child.height / 2;
+
+      // Edge points of nodes
+      const nRight  = node.x + node.width;
+      const nLeft   = node.x;
+      const nTop    = node.y;
+      const nBottom = node.y + node.height;
+      const cRight  = child.x + child.width;
+      const cLeft   = child.x;
+      const cTop    = child.y;
+      const cBottom = child.y + child.height;
+
+      let path = "";
+
+      if (dir === "tree-map") {
+        // Skip zero-size (hidden) nodes
+        if (child.width === 0 || child.height === 0) continue;
+        if (node.uniqueName === "root") {
+          // Curved line from root bottom → sheet tile top
+          const tx = child.x + 20;
+          const ty = child.y;
+          path = `M ${nMidX} ${nBottom} C ${nMidX} ${ty - 30} ${tx} ${ty - 30} ${tx} ${ty}`;
+        } else {
+          // No SVG edges inside the tile — lists/cards are implicit by position
+          continue;
+        }
+      } else if (dir === "logic-right") {
+        const bracketX = nRight + 30;
+        path = `M ${nRight} ${nMidY} L ${bracketX} ${nMidY} L ${bracketX} ${cMidY} L ${cLeft} ${cMidY}`;
+      } else if (dir === "logic-left") {
+        const bracketX = nLeft - 30;
+        path = `M ${nLeft} ${nMidY} L ${bracketX} ${nMidY} L ${bracketX} ${cMidY} L ${cRight} ${cMidY}`;
+      } else if (dir === "fishbone") {
+        const rootNode = nodeMap.get(rootNodeId.value);
+        if (!rootNode) continue;
+        const spineY = rootNode.y + rootNode.height / 2;
+ 
+        if (node.uniqueName === "root") {
+          // Root → Sheet: horizontal line along spine from root left-edge to sheet right-edge
+          path = `M ${nLeft} ${spineY} L ${cRight} ${spineY}`;
+ 
+        } else if (node.uniqueName === "sheet") {
+          // Sheet → List: diagonal line from spine (at list's attach X) to list near-edge
+          // The attach point on the spine is directly above/below the list centre
+          const isAbove  = cMidY < spineY;
+          const attachX  = cMidX;                      // list centre X = attach X on spine
+          const toY      = isAbove ? cBottom : cTop;   // nearest edge of list node
+          path = `M ${attachX} ${spineY} L ${attachX} ${toY}`;
+ 
+        } else if (node.uniqueName === "List") {
+          // List → Card: straight vertical line between closest edges
+          const isAbove  = cMidY < nMidY;
+          const fromY    = isAbove ? nTop    : nBottom;
+          const toY      = isAbove ? cBottom : cTop;
+          path = `M ${nMidX} ${fromY} L ${cMidX} ${toY}`;
+ 
+        } else {
+          continue;
+        }
+      }else if (dir === "timeline") {
+        const spineY = node.y + node.height / 2;
+        if (node.uniqueName === "root") {
+          // Horizontal spine line: root right edge → sheet left edge, both on spine Y
+          path = `M ${nRight} ${nMidY} L ${cLeft} ${cMidY}`;
+        } else if (node.uniqueName === "sheet") {
+          // Sheet → List: vertical line from sheet top or bottom to list edge
+          const isAbove = cMidY < spineY;
+          const fromY   = isAbove ? nTop : nBottom;
+          const toY     = isAbove ? cBottom : cTop;
+          // Use child mid X so line goes straight down from sheet centre
+          path = `M ${cMidX} ${fromY} L ${cMidX} ${toY}`;
+        } else {
+          // List → Card: straight vertical line
+          const isAbove = cMidY < nMidY;
+          const fromY   = isAbove ? nTop : nBottom;
+          const toY     = isAbove ? cBottom : cTop;
+          path = `M ${cMidX} ${fromY} L ${cMidX} ${toY}`;
+        }
+       } else if (dir === "org-chart") {
+        // Elbow: parent bottom → horizontal bar → child top
+        const midY = nBottom + (cTop - nBottom) / 2;
+        path = `M ${nMidX} ${nBottom} L ${nMidX} ${midY} L ${cMidX} ${midY} L ${cMidX} ${cTop}`;
+      } else if (dir === "top") {
+        // Parent bottom → child top
+        const midY = nBottom + (cTop - nBottom) / 2;
+        path = `M ${nMidX} ${nBottom} C ${nMidX} ${midY} ${cMidX} ${midY} ${cMidX} ${cTop}`;
+      } else if (dir === "bottom") {
+        // Parent top → child bottom
+        const midY = nTop - (nTop - cBottom) / 2;
+        path = `M ${nMidX} ${nTop} C ${nMidX} ${midY} ${cMidX} ${midY} ${cMidX} ${cBottom}`;
+      } else if (dir === "left") {
+        // Parent left edge → child right edge (flowing leftward)
+        const midX = nLeft - (nLeft - cRight) / 2;
+        path = `M ${nLeft} ${nMidY} C ${midX} ${nMidY} ${midX} ${cMidY} ${cRight} ${cMidY}`;
+      } else if (dir === "radial") {
+        // Center of parent → nearest edge of child (direction-aware)
+        const dx = cMidX - nMidX;
+        const dy = cMidY - nMidY;
+        const angle = Math.atan2(dy, dx);
+        // Find child edge point closest to parent
+        const cEdgeX = cMidX - Math.cos(angle) * (child.width / 2);
+        const cEdgeY = cMidY - Math.sin(angle) * (child.height / 2);
+        // Find parent edge point closest to child
+        const nEdgeX = nMidX + Math.cos(angle) * (node.width / 2);
+        const nEdgeY = nMidY + Math.sin(angle) * (node.height / 2);
+        path = `M ${nEdgeX} ${nEdgeY} L ${cEdgeX} ${cEdgeY}`;
+      } else {
+        // Default: right-flowing layouts (right, center, zigzag, staggered, split-horizontal, ladder)
+        // Determine side from nodeSides map
+        const side = nodeSides.get(child.id) ?? "right";
+        if (side === "left") {
+          // Parent left → child right, cubic bezier
+          const cpX = nLeft - (nLeft - cRight) / 2;
+          path = `M ${nLeft} ${nMidY} C ${cpX} ${nMidY} ${cpX} ${cMidY} ${cRight} ${cMidY}`;
+        } else {
+          // Parent right → child left, cubic bezier
+          const cpX = nRight + (cLeft - nRight) / 2;
+          path = `M ${nRight} ${nMidY} C ${cpX} ${nMidY} ${cpX} ${cMidY} ${cLeft} ${cMidY}`;
+        }
+      }
+
+      if (!path) continue;
 
       edges.push({
         id: `${node.id}-${child.id}`,
-        path: `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`,
+        path,
         level: nodeLevel(node),
-        color: edgeColor,
-        dashed: isCardEdge,
+        color: currentEdgeColor.value,
+        dashed: node.uniqueName === "List" && child.uniqueName === "card",
       });
     }
   }
+
   return edges;
 });
-
 watchEffect(() => {
   const root = nodeMap.get(rootNodeId.value);
   if (!root) return;
-  const startX =
-    layoutDirection.value === "left"
-      ? 4000 - NODE_W.root
-      : layoutDirection.value === "center"
-        ? 2500 - NODE_W.root / 2
-        : layoutDirection.value === "top" || layoutDirection.value === "bottom"
-          ? 2000
-          : 60;
-  const startY = layoutDirection.value === "bottom" ? 3000 : 60;
-  layoutTree(root, startX, startY, layoutDirection.value);
+  const dir = layoutDirection.value;
+  let startX = 60, startY = 60;
+  if (dir === "left") { startX = 4000 - NODE_W.root; }
+  else if (dir === "center") { startX = 2000 - NODE_W.root / 2; }
+  else if (dir === "top") { startX = 2000; }
+  else if (dir === "bottom") { startX = 2000; startY = 3000; }
+  else if (dir === "logic-right" || dir === "logic-left") { startX = 2500 - NODE_W.root / 2; startY = 1500; }
+  else if (dir === "fishbone") { startX = 300; startY = 1400; }
+  else if (dir === "org-chart") { startX = 2000; startY = 200; }
+  else if (dir === "timeline") { startX = 200; startY = 1000; }
+  else if (dir === "tree-map") { startX = 400; startY = 400; }
+  else if (["radial","zigzag","staggered","split-horizontal","ladder"].includes(dir)) {
+    startX = 2500 - NODE_W.root / 2; startY = 1500;
+  }
+  layoutTree(root, startX, startY, dir);
 });
 
 function nodeInlineStyle(node: MindNode): Record<string, string> {
@@ -2180,6 +3183,49 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     height: `${node.height}px`,
   };
 
+  if (isTreeMap.value && node.uniqueName === "sheet") {
+    base.borderRadius = "10px";
+    base.border = "1.5px solid #b8a8e8";
+    base.background = "var(--mm-node-sheet-bg, #ede9fb)";
+    base.overflow = "visible"; // must be visible so cards aren't clipped
+    base.display = "block";
+    base.padding = "0";
+    base.boxSizing = "border-box";
+    return base;
+  }
+ 
+  if (isTreeMap.value && node.uniqueName === "List") {
+    if (node.width === 0) {
+      base.display = "none";
+      base.pointerEvents = "none";
+      return base;
+    }
+    base.borderRadius = "4px";
+    base.border = "none";
+    base.background = "rgba(125,104,200,0.10)";
+    base.boxShadow = "none";
+    base.overflow = "hidden";
+    base.display = "flex";
+    base.alignItems = "center";
+    base.padding = "0 8px";
+    return base;
+  }
+ 
+  if (isTreeMap.value && node.uniqueName === "card") {
+    if (node.width === 0) {
+      base.display = "none";
+      base.pointerEvents = "none";
+      return base;
+    }
+    base.borderRadius = "6px";
+    base.border = "1px solid #c4b8f0";
+    base.background = "var(--mm-node-card-bg, #ffffff)";
+    base.boxShadow = "0 1px 3px rgba(0,0,0,0.07)";
+    base.overflow = "hidden";
+    return base;
+  }
+
+  // ... rest of existing nodeInlineStyle code unchanged below ...
   if (s.background) base.background = s.background;
   if (s.color) base.color = s.color;
   if (s.fontFamily) base.fontFamily = s.fontFamily;
@@ -2845,7 +3891,7 @@ async function _doCreateCard(
       const startX =
         layoutDirection.value === "left"
           ? 4000 - NODE_W.root
-          : layoutDirection.value === "center"
+          : ["center","radial","zigzag","staggered","split-horizontal","ladder"].includes(layoutDirection.value)
             ? 2500 - NODE_W.root / 2
             : 60;
       layoutTree(root, startX, 60, layoutDirection.value);
@@ -2874,8 +3920,12 @@ function createDefaultCardPayload(
     .split("T")[0];
   console.log(directCreate);
 
-  const resolvedSheetId = sheetId ?? props.selectedSheetId;
+  const isPlanRoute = route.path.includes("/plan");
   const status = siblingStatus ?? listNode.topic ?? "To Do";
+  const resolvedSheetId = isPlanRoute
+    ? (props.sheetId || props.selectedSheetId || localStorage.getItem("selected_sheet_id") || "")
+    : (sheetId ?? props.selectedSheetId);
+
   const payload: any = {
     sheet_list_id: status,
     workspace_id: props.workspaceId,
@@ -2892,13 +3942,14 @@ function createDefaultCardPayload(
     createdAt: new Date().toISOString(),
   };
   if (route.path.includes("plan")) {
-    payload.sprint_id = localStorage.getItem("activeSprintId") || null;
+    payload.sprint_id = localStorage.getItem("activeSprintKey") || null;
   }
   return payload;
 }
 
 function startInlineCardCreation(listNode: MindNode) {
   creatingCardForListId.value = listNode.id;
+  console.log("list node data", listNode)
   newCardTitle.value = "";
   if (listNode.collapsed) {
     listNode.collapsed = false;
@@ -2907,19 +3958,20 @@ function startInlineCardCreation(listNode: MindNode) {
       const startX =
         layoutDirection.value === "left"
           ? 4000 - NODE_W.root
-          : layoutDirection.value === "center"
+          : ["center", "radial", "zigzag", "staggered", "split-horizontal", "ladder"].includes(layoutDirection.value)
             ? 2500 - NODE_W.root / 2
-            : layoutDirection.value === "top" ||
-                layoutDirection.value === "bottom"
+            : layoutDirection.value === "top" || layoutDirection.value === "bottom"
               ? 2000
               : 60;
-      const startY = layoutDirection.value === "bottom" ? 3000 : 60;
+      const startY =
+        layoutDirection.value === "bottom" ? 3000
+        : ["radial", "zigzag", "staggered", "split-horizontal", "ladder"].includes(layoutDirection.value) ? 1500
+        : 60;
       layoutTree(root, startX, startY, layoutDirection.value);
     }
   }
   selectedNodeId.value = listNode.id;
 }
-
 function cancelInlineCreation() {
   creatingCardForListId.value = null;
   newCardTitle.value = "";
@@ -2928,32 +3980,49 @@ function cancelInlineCreation() {
     viewportEl.value?.focus();
   });
 }
-
-async function submitInlineCard() {
+async function submitInlineCard(topic: string) {
   const title = newCardTitle.value.trim();
-  if (!title || isCreatingCard.value) return;
+  if (!title) return;
 
-  const listId = creatingCardForListId.value;
+  const isPlanRoute = route.path.includes("/plan");
+
+  const listId = isPlanRoute
+    ? topic
+    : creatingCardForListId.value || topic;
+const listNode = nodeMap.get(listId);
   if (!listId) return;
-  const listNode = nodeMap.get(listId);
+  if (isPlanRoute) {
+  const listNode = nodeMap.get(creatingCardForListId.value!);
+  const status = listNode?.topic ?? "To Do";
+  await _doCreateCard(title, listNode!, props.sheetId ?? props.selectedSheetId, false, status);
+  cancelInlineCreation();
+  return;
+}
+
   if (!listNode) return;
 
-  if (isPlanRoute.value && !listNode.sheet_id) {
+  if (!listNode.sheet_id) {
     if (!selectedListSheetId.value) {
       selectedNodeId.value = listNode.id;
       showMustSelectMessage.value = true;
+
       setTimeout(() => {
         showMustSelectMessage.value = false;
       }, 2500);
+
       return;
     }
+
     await _doCreateCard(title, listNode, selectedListSheetId.value);
     cancelInlineCreation();
     return;
   }
 
   const sheetId =
-    listNode.sheet_id || selectedListSheetId.value || props.selectedSheetId;
+    listNode.sheet_id ||
+    selectedListSheetId.value ||
+    props.selectedSheetId;
+
   await _doCreateCard(title, listNode, sheetId);
   cancelInlineCreation();
 }
@@ -3062,10 +4131,18 @@ function ctxResetStyle() {
 async function createCardDirectly(listNode: MindNode, siblingNode?: MindNode) {
   if (isCreatingCard.value) return;
   const title = "New Card";
+  console.log("new card data", listNode);
+
+  const isPlanRoute = route.path.includes("/plan");
+  if (isPlanRoute) {
+    const status = listNode.topic ?? "To Do";
+    await _doCreateCard(title, listNode, props.sheetId ?? props.selectedSheetId, true, status);
+    return;
+  }
   const siblingStatus: string =
     siblingNode?.variables?.["card-status"] ?? listNode.topic ?? "To Do";
 
-  if (isPlanRoute.value && !listNode.sheet_id) {
+  if (!listNode.sheet_id) {
     if (!selectedListSheetId.value) {
       selectedNodeId.value = listNode.id;
       showMustSelectMessage.value = true;
@@ -3193,8 +4270,7 @@ function handleKeyDown(e: KeyboardEvent) {
   if (
     e.key === "Tab" &&
     !e.shiftKey &&
-    props.canCreateCard &&
-    !isPlanRoute.value
+    props.canCreateCard
   ) {
     e.preventDefault();
     if (!sel) return;
@@ -3207,7 +4283,7 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 
   // ── Enter → Add sibling card ─────────────────────────────────────────
-  if (e.key === "Enter" && props.canCreateCard && !isPlanRoute.value) {
+  if (e.key === "Enter" && props.canCreateCard) {
     e.preventDefault();
     if (!sel) return;
     if (sel.uniqueName === "card" && sel.parent?.uniqueName === "List") {
@@ -3329,7 +4405,27 @@ onMounted(() => {
   document.addEventListener("fullscreenchange", handleFullscreenChange);
   loadSavedTheme();
 });
+function applyDefaultTheme() {
+  const defaultTheme = THEMES[0]; 
 
+  if (!defaultTheme) return;
+
+  applyTheme(defaultTheme, false); 
+}
+watch(
+  () => props.listsData?.[0]?.style?.mm_theme_id,
+  (newVal) => {
+    console.log("new theme value is", newVal);
+
+    if (!newVal) {
+      applyDefaultTheme();
+      return;
+    }
+
+    loadSavedTheme();
+  },
+  { immediate: true }
+);
 onBeforeUnmount(() => {
   document.removeEventListener("mousemove", handleGlobalMouseMove);
   document.removeEventListener("mouseup", handleGlobalMouseUp);
@@ -5160,5 +6256,124 @@ onBeforeUnmount(() => {
 }
 .mindmap-root[data-dark="true"] .theme-panel::-webkit-scrollbar-thumb {
   background: #3e3e42;
+}
+/* ── Format sidebar tabs ─────────────────────────────────────────────── */
+.fs-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border, #d9d9d9);
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+.fs-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  color: var(--text-secondary, #6b6b6e) !important;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -1px;
+}
+.fs-tab:hover {
+  color: var(--text-primary, #2b2c30) !important;
+}
+.fs-tab--active {
+  color: var(--accent, #7d68c8) !important;
+  border-bottom-color: var(--accent, #7d68c8);
+}
+
+/* ── Layout cards grid ───────────────────────────────────────────────── */
+.layout-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+.layout-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: 2px solid var(--border, #d9d9d9);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 4px 4px 5px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+.layout-card:hover {
+  border-color: var(--accent, #7d68c8);
+  box-shadow: 0 2px 10px rgba(125, 104, 200, 0.2);
+}
+.layout-card--active {
+  border-color: var(--accent, #7d68c8) !important;
+  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.3) !important;
+}
+.layout-preview {
+  width: 100%;
+  background: var(--bg-surface, #f3f4f6);
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 2px;
+  overflow: hidden;
+}
+.layout-preview svg {
+  display: block;
+}
+.layout-name {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b6b6e);
+  text-align: center;
+  line-height: 1;
+}
+.layout-check {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 8px;
+  color: var(--accent, #7d68c8);
+  background: white;
+  border-radius: 50%;
+  padding: 1px;
+}
+
+/* Dark mode for tabs + layout cards */
+.mindmap-root[data-dark="true"] .fs-tabs {
+  border-color: #3e3e42;
+}
+.mindmap-root[data-dark="true"] .fs-tab {
+  color: #b0b0b0 !important;
+}
+.mindmap-root[data-dark="true"] .fs-tab:hover {
+  color: #f5f5f5 !important;
+}
+.mindmap-root[data-dark="true"] .fs-tab--active {
+  color: #c4b8f0 !important;
+  border-bottom-color: #9356c5;
+}
+.mindmap-root[data-dark="true"] .layout-card {
+  border-color: #3e3e42;
+}
+.mindmap-root[data-dark="true"] .layout-preview {
+  background: #1a1a1a;
+}
+.mindmap-root[data-dark="true"] .layout-name {
+  color: #b0b0b0;
+}
+.mindmap-root[data-dark="true"] .layout-check {
+  background: #2b2c30;
+  color: #c4b8f0;
 }
 </style>

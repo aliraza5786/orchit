@@ -219,10 +219,11 @@
       </div>
     </div>
     <template v-if="view == 'table'">
-      <TableView
+        <div class="ps-4 overflow-auto">
+              <TableView
         class="mx-3"
         :columns="columns"
-        :isPending="false"
+        :isPending="isListPending"
         @addVar="
           () => {
             isCreateVar = true;
@@ -232,7 +233,11 @@
         :canCreate="canCreateCard"
         :canCreateVariable="canCreateVariable"
         :canDelete="canDeleteCard"
+        @create="handleCreateTicket"
+        @update:rows="handleTableRowsUpdate"
+        @delete="handleTableDelete"
       />
+        </div>
     </template>
     <div
       v-if="view === 'mindmap'"
@@ -253,6 +258,7 @@
         @select:ticket="selectCardHandler"
         @delete:ticket="(id) => openDeleteModal(id)"
         @create:card="(payload) => handleMindmapCreateCard(payload)"
+        @save:theme="handleSaveTheme"
       />
     </div>
     <template v-if="view === 'calendar'">
@@ -294,7 +300,7 @@
       confirmText="Delete Ticket"
       cancelText="Cancel"
       size="md"
-      :loading="addingList"
+      :loading="isDeletingTicket"
       @confirm="handleDeleteCard"
       @cancel="() => (showDeleteTicket = false)"
     />
@@ -339,7 +345,7 @@
     />
   </div>
   <SidePanel
-    v-if="selectedCard?._id"
+    v-if="selectedTicketId"
     :details="selectedCard"
     :showPanel="!!selectedCard?._id"
     :pin="true"
@@ -348,7 +354,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onMounted, watch } from "vue";
+import { ref, computed, defineAsyncComponent, onMounted, watch, h} from "vue";
 import { useRoute } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useWorkspaceStore } from "../../stores/workspace";
@@ -361,6 +367,8 @@ import {
   ReOrderCard,
   useUpdateWorkspaceSheet,
   useAddTicket,
+  useMoveCard,
+  useLanes,
 } from "../../queries/useSheets";
 import { useRouteIds } from "../../composables/useQueryParams";
 
@@ -373,6 +381,9 @@ import KanbanSkeleton from "../../components/skeletons/KanbanSkeleton.vue";
 import CreateTaskModal from "../Product/modals/CreateTaskModal.vue";
 import SidePanel from "../Product/components/SidePanel.vue";
 import CreateSheetModal from "../Product/modals/CreateSheetModal.vue";
+import { useAuthStore } from "../../stores/auth";
+import { getInitials } from "../../utilities";
+import { avatarColor } from "../../utilities/avatarColor";
 import Fuse from "fuse.js";
 import { debounce } from "lodash";
 import { request, toApiMessage } from "../../libs/api";
@@ -382,6 +393,12 @@ import TableView from "../../components/feature/TableView/TableView.vue";
 import CalendarView from "../../components/feature/CalendarView.vue";
 import GanttChartView from "../../components/feature/GanttChartView.vue";
 import TimelineView from "../../components/feature/TimelineView.vue";
+const TableSearchCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableSearchCell.vue"),
+);
+const TableAssigneeCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableAssigneeCell.vue"),
+);
 const ConfirmDeleteModal = defineAsyncComponent(
   () => import("../Product/modals/ConfirmDeleteModal.vue"),
 );
@@ -393,7 +410,6 @@ const KanbanBoard = defineAsyncComponent(
 );
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
-import { useMoveCard } from "../../queries/useSheets";
 const {
   canEditSheet,
   canDeleteSheet,
@@ -422,12 +438,19 @@ const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
 const workspaceStore = useWorkspaceStore();
 const queryClient = useQueryClient();
+const selectedTicketId = ref("")
+const isDeletingTicket = ref(false);
+
 // Variables & Sheets
 // Sheets Data
 const { data, refetch: refetchSheets } = useSheets(
   { workspace_id: workspaceId, workspace_module_id: moduleId },
   { onSuccess: () => refetchList() },
 );
+
+const authStore = useAuthStore();
+const pendingCreations = ref(new Set<string | number>());
+const localTableOrder = ref<any[]>([]);
 
 const selected_sheet_id = ref<any>(data.value?.[0]?._id ?? null);
 const { data: variables } = useVariables(
@@ -466,6 +489,15 @@ onMounted(() => {
     ? JSON.parse(JSON.stringify(Lists.value))
     : [];
 });
+
+const { data: lanes } = useLanes(workspaceId);
+const laneOptions = computed<any[]>(() =>
+  (lanes?.value ?? []).map((el: any) => ({
+    _id: el._id,
+    title: el?.variables?.["lane-title"] ?? String(el._id),
+  })),
+);
+
 // Add List Logic
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: (data: any, payload: any) => {
@@ -568,10 +600,14 @@ function onReorder(a: any) {
 function handleBoardUpdate(_: any) {}
 
 function selectCardHandler(card: any) {
+  console.log(card, "card data");
+  
   selectedCard.value = card;
 }
 
 function handleClickTicket(ticket: any) {
+  console.log("selected card", ticket);
+  selectedTicketId.value = ticket?._id;
   selectedCard.value = ticket;
 }
 
@@ -784,10 +820,9 @@ const showDeleteModal = ref(false);
 const selectedSheettoAction = ref<any>();
 const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
   onSuccess: () => {
-    console.log(">>. clicong");
-
     showDeleteModal.value = false;
     refetchSheets();
+    refetchList();
   },
 });
 function handleDeleteSheetModal(opt: any) {
@@ -876,37 +911,312 @@ const filteredBoard = computed(() => {
 });
 const tableRows = computed(() => {
   const lists = Lists.value?.data || [];
+  let rows: any[] = [];
+  lists.forEach((sheet: any) => {
+    rows = [...rows, ...(sheet.cards || [])];
+  });
 
-  return lists.flatMap((sheet: any) =>
-    (sheet.cards || []).map((card: any) => ({
-      id: card._id,
-
-      Title: card["card-title"],
-
-      "Due Date": card["end-date"],
-
-      Owner: card?.created_by?.u_full_name || "",
-
-      Assignee: card?.seat?.title || "",
-
-      raw: card,
-    })),
-  );
+  if (localTableOrder.value.length > 0) {
+    const cardMap = new Map();
+    rows.forEach((c: any) => cardMap.set(c._id, c));
+    localPendingTickets.value.forEach((c: any) => cardMap.set(c.id || c._id, c));
+    
+    const ordered = localTableOrder.value
+      .map((id) => cardMap.get(id))
+      .filter(Boolean);
+      
+    const returnedIds = new Set(ordered.map((c) => c._id || c.id));
+    
+    const extras = [
+      ...rows.filter((c: any) => !returnedIds.has(c._id)),
+      ...localPendingTickets.value.filter((c: any) => !returnedIds.has(c.id || c._id)),
+    ];
+    return [...ordered, ...extras];
+  }
+  
+  return [...rows, ...localPendingTickets.value];
 });
-const columns = [
-  { key: "Title", label: "Title" },
-  { key: "Due Date", label: "Due Date" },
-  { key: "Owner", label: "Owner" },
-  { key: "Assignee", label: "Assignee" },
-];
+
+const columns = computed(() => {
+  const variableList = variables.value || [];
+  return [
+    {
+      key: "card-title",
+      label: "Title",
+      render: ({ row, value }: any) =>
+        h("div", { class: "flex items-center gap-1 w-full ps-2" }, [
+          row._id
+            ? h(
+                "a",
+                {
+                  class:
+                    "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
+                  onClick: (e: Event) => {
+                    e.stopPropagation();
+                    handleClickTicket(row);
+                  },
+                },
+                row["card-code"] || "Link",
+              )
+            : null,
+          h("div", { class: "flex-1 min-w-0" }, [
+            h("input", {
+              class:
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body h-8",
+              value: row["card-title"] || value,
+              placeholder: "Enter title...",
+              disabled: !canEditCard.value,
+              onInput: (e: any) => {
+                row["card-title"] = e.target.value;
+              },
+              onBlur: (e: any) => {
+                if (row._id) {
+                  // Existing server row — update in place
+                  handleChangeTicket(row, "card-title", e.target.value);
+                } else {
+                  // New temp row — attempt to create
+                  row["card-title"] = e.target.value;
+                  checkAndCreateTicket(row);
+                }
+              },
+              onKeydown: (e: KeyboardEvent) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+              },
+            }),
+          ]),
+        ]),
+    },
+    {
+      key: "lane",
+      label: "Lane",
+      render: ({ row, value }: any) =>
+        h(TableSearchCell, {
+          options: laneOptions.value ?? [],
+          modelValue: row.lane?._id || row.workspace_lane_id || value?._id || value || null,
+          "onUpdate:modelValue": (val: any) => setLane(row, val),
+          displayField: "title",
+          disabled: !canEditCard.value,
+          placeholder: "Select lane",
+          emptyText: "Lane",
+        }),
+    },
+    {
+      key: "created_by",
+      label: "Owner",
+      render: ({ value }: any) =>
+        h("div", { class: "capitalize flex items-center gap-2 px-3" }, [
+          h("div", { class: "rounded-full" }, [
+            value?.u_profile_image
+              ? h("img", {
+                  class: "w-6 h-6 rounded-full",
+                  src: value?.u_profile_image,
+                })
+              : h(
+                  "div",
+                  {
+                    class:
+                      "w-5 h-5 rounded-full flex justify-center items-center text-[11px]",
+                    style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ""}`,
+                  },
+                  getInitials(value?.u_full_name),
+                ),
+          ]),
+          h("span", { class: "text-[12px]" }, value ? value?.u_full_name : ""),
+        ]),
+    },
+    {
+      key: "seat",
+      label: "Assignee",
+      render: ({ row, value }: any) =>
+        h(TableAssigneeCell, {
+          class: "capitalize flex items-center gap-2",
+          onAssign: (users: any[]) => assignHandle(row, users),
+          assigneeId: row.seats || row.seat_id || value,
+          seat: row.seats || row.seat || value,
+          name: true,
+          disabled: !canAssignCard.value,
+          emptyText: "Assignee",
+        }),
+    },
+    ...(variableList
+      ?.filter((e: any) => e?.type?.title === "Select")
+      .map((e: any) => ({
+        key: e?.slug,
+        label: e?.slug,
+        render: ({ row, value }: any) => {
+          let cellValue = value;
+          if (Array.isArray(row?.variables)) {
+            const found = row.variables.find((v: any) => v.slug === e.slug);
+            if (found) cellValue = found.value;
+          } else {
+            cellValue = row?.variables?.[e.slug] ?? row?.[e.slug] ?? value;
+          }
+          return h("div", { class: "capitalize flex items-center gap-2" }, [
+            h(TableSearchCell, {
+              options: (e.data ?? []).map((el: any) => ({
+                _id: el.value ?? el,
+                title: el.value ?? el,
+              })),
+              modelValue: cellValue,
+              disabled: !canEditCard.value,
+              emptyText: e.slug,
+              "onUpdate:modelValue": (val: any) => handleChangeTicket(row, e.slug, val),
+              columnName: e.slug,
+            }),
+          ]);
+        },
+        visible: e?.is_visible,
+      })) ?? []),
+  ];
+});
+
+function handleTableRowsUpdate(newRows: any[]) {
+  // new rows have numeric `id` but no `_id` — treat those as pending
+  const pending = newRows.filter((r) => !r._id);
+  localPendingTickets.value = pending;
+  localTableOrder.value = newRows.map((r) => r._id || r.id);
+}
+
+ 
+
+function setLane(row: any, laneId: string) {
+  if (row._id) {
+    moveCard.mutate({ card_id: row._id, workspace_lane_id: laneId });
+    // Update local state optimistically
+    const newLane = laneOptions.value.find((l: any) => l._id === laneId);
+    if (newLane) {
+      row.lane = newLane;
+      row.workspace_lane_id = laneId;
+    }
+  } else {
+    const newLane = laneOptions.value.find((l: any) => l._id === laneId);
+    if (newLane) {
+      row.lane = newLane;
+      row.workspace_lane_id = laneId;
+    }
+    checkAndCreateTicket(row);
+  }
+}
+
+const assignHandle = (row: any, users: any[]) => {
+  const userIds = (users || [])
+    .filter((u) => u && (u._id || u.id))
+    .map((u) => u._id || u.id);
+  if (row._id) {
+    moveCard.mutate({ card_id: row._id, seat_id: userIds, optimisticUser: users });
+  } else {
+    row.seat = users;
+    row.seats = users;
+    row.seat_id = userIds;
+    checkAndCreateTicket(row);
+  }
+};
+
+function handleChangeTicket(row: any, key: any, value: any) {
+  if (row._id) {
+    moveCard.mutate({ card_id: row._id, variables: { [key]: value } });
+  } else {
+    if (!row.variables) row.variables = {};
+    if (Array.isArray(row.variables)) {
+      const idx = row.variables.findIndex((v: any) => v.slug === key);
+      if (idx !== -1) row.variables[idx].value = value;
+      else row.variables.push({ slug: key, value });
+    } else {
+      row.variables[key] = value;
+    }
+    checkAndCreateTicket(row);
+  }
+}
+console.log(workspaceStore.lanes, 'lanes')
+function checkAndCreateTicket(row: any) {
+  const title = row["card-title"];
+  if (!title || !title.trim()) return;
+
+  // Guard against duplicate creation
+  const tempId = row._id || row.id;
+  if (pendingCreations.value.has(tempId)) return;
+
+  let status = row["card-status"];
+  let type = row["card-type"];
+
+  if (Array.isArray(row.variables)) {
+    const sVar = row.variables.find((v: any) => v.slug === "card-status");
+    if (sVar) status = sVar.value;
+    const tVar = row.variables.find((v: any) => v.slug === "card-type");
+    if (tVar) type = tVar.value;
+  } else if (typeof row.variables === "object" && row.variables !== null) {
+    status = row.variables["card-status"] || status;
+    type = row.variables["card-type"] || type;
+  }
+
+  // Fallback: use first list's _id as the status/sheet_list_id
+  if (!status) {
+    const firstList = Lists.value?.data?.[0];
+    status = firstList?._id || firstList?.title;
+  }
+  // Fallback type — always allow creation when title is present
+  if (!type) type = "Text";
+
+  // Can now always proceed since we always have title, status fallback, and type fallback
+  pendingCreations.value.add(tempId);
+
+  const payloadVariables: Record<string, any> = {};
+  if (variables.value) {
+    variables.value.forEach((v: any) => {
+      payloadVariables[v.slug] = null;
+    });
+  }
+
+  payloadVariables["card-title"] = title.trim();
+  if (status) payloadVariables["card-status"] = status;
+  if (type) payloadVariables["card-type"] = type;
+
+  Object.keys(row).forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(payloadVariables, key)) {
+      payloadVariables[key] = row[key];
+    }
+  });
+
+  if (Array.isArray(row.variables)) {
+    row.variables.forEach((v: any) => {
+      if (Object.prototype.hasOwnProperty.call(payloadVariables, v.slug)) {
+        payloadVariables[v.slug] = v.value;
+      }
+    });
+  } else if (typeof row.variables === "object" && row.variables !== null) {
+    Object.entries(row.variables).forEach(([k, v]) => {
+      if (Object.prototype.hasOwnProperty.call(payloadVariables, k)) payloadVariables[k] = v;
+    });
+  }
+
+  const payload = {
+    sheet_list_id: status,
+    workspace_id: workspaceId.value,
+    sheet_id: selected_sheet_id.value,
+    workspace_lane_id: row.lane?._id || row.workspace_lane_id || null,
+    seat_id: row.seat?._id || row.seat_id || null,
+    variables: payloadVariables,
+    "end-date": row["end-date"] || null,
+    temp_row_id: tempId,
+  };
+
+  addTicket(payload);
+}
 const selectedDeleteId = ref<string | null>(null);
+  
+
 const openDeleteModal = (cardId: string) => {
   selectedDeleteId.value = cardId;
   showDeleteTicket.value = true;
 };
+
+const handleTableDelete = (row: any) => {
+  selectedDeleteId.value = row._id;
+  showDeleteTicket.value = true;
+};
 const handleDeleteCard = async () => {
   if (!selectedDeleteId.value) return;
-
+ isDeletingTicket.value = true;
   try {
     await request({
       url: `workspace/card/${selectedDeleteId.value}`,
@@ -920,20 +1230,79 @@ const handleDeleteCard = async () => {
     refetchList();
   } catch (err) {
     toast.error(toApiMessage(err));
+    isDeletingTicket.value = false;
   } finally {
+    isDeletingTicket.value = false;
     showDeleteTicket.value = false;
     selectedDeleteId.value = null;
   }
 };
 const localPendingTickets = ref<any[]>([]);
 const { mutate: addTicket } = useAddTicket({
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    localPendingTickets.value = [];
+  onMutate: () => {
+    // Optimistic UI update could go here
+  },
+  onSuccess: (newCard: any, variables: any) => {
+    const tempId = variables.temp_row_id;
+    pendingCreations.value.delete(tempId);
+
+    queryClient.setQueriesData(
+      { queryKey: ["sheet-list"], exact: false },
+      (oldData: any) => {
+        if (!oldData) return oldData;
+        const isArray = Array.isArray(oldData);
+        const sheets = isArray ? oldData : oldData?.data ?? oldData?.sheets ?? [];
+        if (!Array.isArray(sheets)) return oldData;
+
+        const updatedSheets = sheets.map((sheet: any) => {
+          if (sheet._id !== newCard?.sheet_id) return sheet;
+          const existingCards = sheet.cards ?? [];
+          if (existingCards.some((c: any) => c._id === newCard._id)) return sheet;
+          return { ...sheet, cards: [...existingCards, newCard] };
+        });
+
+        return isArray ? updatedSheets : { ...oldData, data: updatedSheets };
+      },
+    );
+
+    if (tempId) {
+      localPendingTickets.value = localPendingTickets.value.filter(
+        (t) => t._id !== tempId && t.id !== tempId,
+      );
+      localTableOrder.value = localTableOrder.value.map((id) =>
+        id === tempId ? newCard._id : id,
+      );
+    }
+  },
+  onError: (_err: any, variables: any) => {
+    pendingCreations.value.delete(variables.temp_row_id);
+    toast.error("Failed to create ticket");
   },
 });
+
+function handleCreateTicket(newRow: any) {
+  // Fill default owner
+  if (authStore.user?.data) {
+    newRow.created_by = {
+      u_full_name: authStore.user?.data.u_full_name,
+      u_profile_image: authStore.user?.data.u_profile_image,
+      u_email: authStore.user?.data.u_email,
+    };
+  }
+}
+
 function handleMindmapCreateCard(payload: any) {
   addTicket(payload);
+}
+// saving theme
+function handleSaveTheme(style: Record<string, any>) {
+  updateSheet({
+    sheet_id: selected_sheet_id.value,   
+    style,                              
+    is_ai_generated: false,
+    workspace_id:           workspaceId.value,
+    workspace_module_id:    moduleId.value,
+  })
 }
 </script>
 

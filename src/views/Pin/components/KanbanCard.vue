@@ -23,17 +23,6 @@
         <p v-html="ticket['card-description']" v-once
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
         </p>
-        <!-- <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
-            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
-                <i class="fa-regular fa-message"></i>
-                {{ ticket?.comments_count }}
-            </div>
-            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
-                <i class="fa-regular fa-file"></i>
-                {{ ticket?.attachments?.length }}
-            </div>
-
-        </div> -->
       
 
         <!-- Bottom Info -->
@@ -44,8 +33,22 @@
             <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                 @update:modelValue="setDueDate" />
         </div> -->
+        <div class="flex justify-between">
+            <div class="flex justify-start text-sm text-text-secondary mt-2">
+            {{ formatDate(ticket?.created_at) }}
+        </div>
+             <div class="flex justify-end pt-2 items-center text-xs gap-4  text-text-secondary">
+            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
+                <i class="fa-regular fa-message"></i>
+                {{ ticket?.comments_count }}
+            </div>
+            <div class="flex justify-center items-center text-xs gap-1 text-text-secondary ">
+                <i class="fa-regular fa-file"></i>
+                {{ ticket?.attachments?.length }}
+            </div>
 
-      
+        </div>
+        </div>
     </div>
 
     <div class="no-drag-zone" draggable="false" @mousedown.stop @touchstart.passive.stop @pointerdown.stop>
@@ -180,6 +183,17 @@ const handleDeleteTicket = () => {
 //         variables: { 'end-date': date }
 //     })
 // }
+const formatDate = (dateString?: string) => {
+  if (!dateString) return "";
 
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return "";
+
+  return d.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+};
 const emit = defineEmits(['click'])
 </script>

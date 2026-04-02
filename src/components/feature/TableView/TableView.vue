@@ -1,11 +1,10 @@
 <template>
   <div class="">
-    <div class="kanban-table space-y-4 mt-4 overflow-y-auto overflow-x-auto mb-5 ">
+    <div class="kanban-table space-y-4 mt-4 overflow-y-auto overflow-x-auto mb-5">
 
     <table class="w-full table-fixed border-collapse rounded-[6px] shadow-sm 
              bg-bg-body/20 text-sm
              border border-border/60 ">
-
       <!-- HEADER -->
       <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-10 ">
         <tr class="text-text-secondary">
@@ -21,7 +20,6 @@
                hover:bg-accent/20 active:bg-accent/40 transition" @mousedown="(e) => startResize(e, col.key)">
             </div>
           </th>
-
           <!-- Toggle Columns Button -->
           <th class="w-10 p-2 text-center relative">
             <div class="relative inline-block">
@@ -48,8 +46,6 @@
 
             </div>
           </th>
-
-
         </tr>
       </thead>
 
@@ -76,17 +72,18 @@
         <!-- ROW INSERT HOVER -->
         <template v-else v-for="(ticket, index) in tickets" :key="ticket?.id">
           <tr v-if="hoverIndex === index && !hasActiveEmptyRow && !isTalent" class="relative bg-bg-surface/20 transition-all cursor-pointer 
-                  border border-accent" @mouseleave="hoverIndex = null">
+                  border border-accent" @mouseleave="handleLeave" @mouseenter="cancelLeave">
             <td class="!p-0 w-8" @click="insertEmptyRow(index)">
-              <span class="absolute left-[-20px] top-[-14px] bg-bg-surface border border-border 
+              <!-- <span class="absolute left-[-20px] top-[-14px] bg-bg-surface border border-border 
                        w-6 h-6 text-sm rounded-md flex justify-center items-center 
-                       shadow-sm hover:bg-bg-surface pb-[0.5px]">+</span>
+                       shadow-sm hover:bg-bg-surface pb-[0.5px]">+...</span> -->
             </td>
             <td class="!p-0" :colspan="columns?.length"></td>
           </tr>
 
           <!-- ACTUAL ROW -->
-          <tr @mouseenter="hoverIndex = index"
+          <tr  @mouseenter="(e) => { cancelLeave(); setHoverRow(e, index) }"
+               @mouseleave="handleLeave"
             class="border-b border-border hover:bg-bg-surface/40 transition-colors">
             <td class="w-8  group text-center align-middle border-r border-border/40 relative">
                  <div class="flex justify-center items-center h-full w-full relative">
@@ -171,6 +168,30 @@
   :sheet_id="selected_sheet_id"
 />
   </div>
+
+
+ <!-- insert row icon -->
+  <Teleport to="body">
+  <div
+    v-if="hoverIndex !== null && hoverRowRect && !hasActiveEmptyRow && !isTalent"
+    class="fixed z-[9999]"
+    :style="{
+      top: hoverRowRect.top + hoverRowRect.height / 26 - 12 + 'px',
+      left: hoverRowRect.left - 18 + 'px'
+    }"
+    @mouseenter="() => { isHoveringTeleport = true; cancelLeave() }"
+    @mouseleave="() => { isHoveringTeleport = false; handleLeave() }"
+  >
+    <span
+      @click="insertEmptyRow(hoverIndex)"
+      class="bg-bg-surface border border-border 
+             w-6 h-6 text-sm rounded-md flex justify-center items-center 
+             shadow-sm hover:bg-bg-surface cursor-pointer"
+    >
+      +
+    </span>
+  </div>
+</Teleport>
 </template>
 
 <script lang="ts" setup>
@@ -275,9 +296,24 @@ const finishEdit = (ticket: Row) => {
   emit('create', ticket)
 }
 
+import { useAuthStore } from '../../../stores/auth';
+const authStore = useAuthStore();
+
 const insertEmptyRow = (index: number) => {
   const newRow: Row = { id: Date.now() }
-  props.columns.forEach(col => newRow[col.key] = '')
+  const currentUser = authStore.user?.data;
+
+  props.columns.forEach(col => {
+    if (col.key === 'created_by' && currentUser) {
+      newRow[col.key] = {
+        u_full_name: currentUser.u_full_name,
+        u_profile_image: currentUser.u_profile_image,
+        u_email: currentUser.u_email
+      }
+    } else {
+      newRow[col.key] = ''
+    }
+  })
   tickets.splice(index, 0, newRow)
   editField(newRow, props.columns[0]?.key || '')
   hoverIndex.value = null
@@ -390,5 +426,36 @@ const toggleColumn = (key: string) => {
 const footerColspan = computed(() => {
   return 1 + visibleColumns.value.length + 1
 })
+
+
+// hover row insert  __________________________________
+const isHoveringTeleport = ref(false)
+let leaveTimeout: any = null
+const hoverRowRect = ref<{ top: number; left: number; height: number } | null>(null)
+
+const setHoverRow = (e: MouseEvent, index: number) => {
+  const tr = (e.currentTarget as HTMLElement)
+  const rect = tr.getBoundingClientRect()
+
+  hoverIndex.value = index
+  hoverRowRect.value = {
+    top: rect.top,
+    left: rect.left,
+    height: rect.height
+  }
+}
+
+const handleLeave = () => {
+  leaveTimeout = setTimeout(() => {
+    if (!isHoveringTeleport.value) {
+      hoverIndex.value = null
+      hoverRowRect.value = null
+    }
+  }, 120) // delay is IMPORTANT
+}
+
+const cancelLeave = () => {
+  clearTimeout(leaveTimeout)
+}
 
 </script>

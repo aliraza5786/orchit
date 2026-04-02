@@ -151,7 +151,6 @@
             label="Select All"
             @change="toggleSelectAll"
           />
-
           <div class="space-y-4 mt-4" v-if="sheetsPreview?.length">
             <!-- SHEET -->
             <div
@@ -212,7 +211,7 @@
                   <div
                     v-for="card in groupedCards[sheet.variables['sheet-title']]"
                     :key="card.variables['card-code']"
-                    class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[48%]"
+                    class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[32%]"
                     :class="{
                       'ring-2 ring-accent': selectedCards?.includes(
                         card.variables['card-code'],
@@ -311,6 +310,8 @@ const props = defineProps({
   title: String,
   data: Array,
 });
+console.log("props data", props.data);
+
 const queryClient = useQueryClient()
 const preserveLog = ref(false)
 const { workspaceId, moduleId } = useRouteIds();
@@ -375,26 +376,37 @@ const toggleReadCard = (id) => {
     selectedReadCards.value.push(id);
   }
 };
-
-// For CREATE actions
+// Example computed for sheetsPreview
 const sheetsPreview = computed(() => {
   if (isReadAction.value) return [];
-  return props?.data?.[0]?.payload?.sheets_preview || [];
+
+  // Make sure listsData exists and is an array
+  const listsArray = Array.isArray(props.data) ? props.data : [];
+
+  return listsArray
+    .map(item => item.payload?.sheets || [])
+    .flat();
 });
 
 const cards = computed(() => {
   if (isReadAction.value) return [];
-  return props?.data?.[0]?.payload?.cards || [];
+
+  const listsArray = Array.isArray(props.data) ? props.data : [];
+
+  return listsArray
+    .map(item => item.payload?.sheets?.flatMap(sheet => sheet.items) || [])
+    .flat();
 });
+console.log("cards", cards);
+
 
 const selectedItems = ref([]);
 const selectedCards = ref([]);
-
 const groupedCards = computed(() => {
   if (!cards.value.length) return {};
 
   const result = {};
-  const sheetsCount = sheetsPreview.value.length;
+  const sheetsCount = sheetsPreview.value?.length;
   const cardsPerSheet = Math.ceil(cards.value.length / sheetsCount);
 
   sheetsPreview.value.forEach((sheet, index) => {
@@ -413,9 +425,9 @@ const getSheetCards = (sheetTitle) => {
 
 const selectAll = computed(() => {
   const allSheetsSelected =
-    selectedItems.value.length === sheetsPreview.value.length;
-  const allCardsSelected = selectedCards.value.length === cards.value.length;
-  return sheetsPreview.value.length && cards.value.length
+    selectedItems.value?.length === sheetsPreview.value?.length;
+  const allCardsSelected = selectedCards.value?.length === cards.value?.length;
+  return sheetsPreview.value?.length && cards.value?.length
     ? allSheetsSelected && allCardsSelected
     : allSheetsSelected;
 });
