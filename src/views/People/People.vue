@@ -399,6 +399,7 @@
           :canCreateVariable="false"
           :canEditSheet="false"
           :asTalent="true"
+          :talent-type="currentTab"
           @select:ticket="handleMindmapSelectTicket"
           @delete:ticket="() => {}"
           @create:sheet="() => {}"

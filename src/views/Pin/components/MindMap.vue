@@ -1100,7 +1100,7 @@ import { useTheme } from "../../../composables/useTheme";
 import { toast } from "vue-sonner";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import dp from "../../../assets/global/dummy.jpeg";
-
+import { useThemeStore } from "../../../stores/theme";
 const props = defineProps<{
   listsData: any[];
   workspaceId: string;
@@ -1121,7 +1121,6 @@ const emit = defineEmits<{
   (e: "create:card", payload: any): void;
   (e: "update:card", payload: any): void;
   (e: "update:sheet", payload: any): void;
-  (e: "save:theme", style: Record<string, any>): void;
 }>();
 
 const { isDark } = useTheme();
@@ -1149,7 +1148,7 @@ const svgH = ref(6000);
 const MIN_ZOOM = 0.15;
 const MAX_ZOOM = 3;
 const ZOOM_STEP = 0.1;
-
+const themeStore = useThemeStore();
 const workspaceStore = useWorkspaceStore();
 const localWorkspace = computed(() => workspaceStore.singleWorkspace);
 const workspaceName = ref(localStorage.getItem("currentName"));
@@ -1399,8 +1398,33 @@ const activeThemeId = ref("default");
 const activeCanvasBg = ref("#dedfe3");
 const recentlyUsedColors = ref<string[]>([]);
 const customBgColor = ref("#dedfe3");
+const savedThemeDocId = ref<string | null>(null);
+  async function persistTheme(stylePayload: Record<string, any>) {
+  const userId = localStorage.getItem("user_id") ?? undefined;
+  const type_id = props.workspaceId; // pin mindmap has no sprint/sheet context
+  const type = "pin";
 
-function applyTheme(theme: MapTheme, persist = true) {
+  const payload = {
+    workspace_id: props.workspaceId,
+    type,
+    type_id,
+    style: stylePayload,
+    created_by: userId,
+  };
+
+  if (savedThemeDocId.value) {
+    await themeStore.updateMindmapTheme(savedThemeDocId.value, payload);
+  } else {
+    await themeStore.saveMindmapTheme(payload);
+    const match = await themeStore.getMindmapThemeByWorkflow(
+      props.workspaceId,
+      type_id,
+      type
+    );
+    if (match?._id) savedThemeDocId.value = match._id;
+  }
+}
+async function applyTheme(theme: MapTheme, persist = true) {
   activeThemeId.value = theme.id;
   activeCanvasBg.value = theme.bg;
   customBgColor.value = theme.bg;
@@ -1414,19 +1438,22 @@ function applyTheme(theme: MapTheme, persist = true) {
   el.style.setProperty("--mm-edge-color", theme.edgeColor);
   el.style.setProperty("--mm-text-color", theme.textColor);
   if (!persist) return;
-  emit("save:theme", {
-    mm_theme_id: theme.id,
-    mm_bg: theme.bg,
+
+  const stylePayload = {
+    mm_theme_id:   theme.id,
+    mm_bg:         theme.bg,
     mm_edge_color: theme.edgeColor,
     mm_text_color: theme.textColor,
-    mm_node_root: theme.nodeColors.root,
+    mm_node_root:  theme.nodeColors.root,
     mm_node_sheet: theme.nodeColors.sheet,
-    mm_node_list: theme.nodeColors.list,
-    mm_node_card: theme.nodeColors.card,
-  });
+    mm_node_list:  theme.nodeColors.list,
+    mm_node_card:  theme.nodeColors.card,
+  };
+
+  await persistTheme(stylePayload);
 }
 
-function applyCustomBg(color: string, persist = true) {
+async function applyCustomBg(color: string, persist = true) {
   activeCanvasBg.value = color;
   customBgColor.value = color;
   activeThemeId.value = "custom";
@@ -1437,12 +1464,10 @@ function applyCustomBg(color: string, persist = true) {
     recentlyUsedColors.value = [color, ...recentlyUsedColors.value].slice(0, 7);
   }
   if (!persist) return;
-  emit("save:theme", { mm_theme_id: "custom", mm_bg: color });
+  await persistTheme({ mm_theme_id: "custom", mm_bg: color });
 }
 
-function saveTheme() {
-  const el = rootEl.value;
-  if (!el) return;
+async function saveTheme() {
   const themePayload: Record<string, any> = {
     mm_theme_id: activeThemeId.value,
     mm_bg: activeCanvasBg.value,
@@ -1452,34 +1477,68 @@ function saveTheme() {
     if (found) {
       themePayload.mm_edge_color = found.edgeColor;
       themePayload.mm_text_color = found.textColor;
-      themePayload.mm_node_root = found.nodeColors.root;
+      themePayload.mm_node_root  = found.nodeColors.root;
       themePayload.mm_node_sheet = found.nodeColors.sheet;
-      themePayload.mm_node_card = found.nodeColors.card;
+      themePayload.mm_node_list  = found.nodeColors.list;
+      themePayload.mm_node_card  = found.nodeColors.card;
     }
   }
-  emit("save:theme", themePayload);
+  await persistTheme(themePayload);
   toast.success("Theme saved");
 }
+async function loadSavedTheme() {
+  try {
+    const type = "pin";
+    const type_id = props.workspaceId;
 
-function loadSavedTheme() {
+    const match = await themeStore.getMindmapThemeByWorkflow(
+      props.workspaceId,
+      type_id,
+      type
+    );
+
+    if (match) {
+      savedThemeDocId.value = match._id ?? null;
+
+      // Ensure rootEl is mounted before applying CSS vars
+      let attempts = 0;
+      while (!rootEl.value && attempts < 10) {
+        await nextTick();
+        attempts++;
+      }
+      if (!rootEl.value) await new Promise(resolve => setTimeout(resolve, 100));
+
+      applyStyleObject(match.style);
+      return;
+    }
+  } catch (err) {
+    console.warn("Could not load theme from API, falling back", err);
+  }
+
+  // Fallback: read from listsData style
   const style = props.listsData?.[0]?.style;
+  if (style?.mm_theme_id) applyStyleObject(style);
+}
+function applyStyleObject(style: Record<string, any>) {
   if (!style?.mm_theme_id) return;
+
   if (style.mm_theme_id === "custom") {
     if (style.mm_bg) applyCustomBg(style.mm_bg, false);
     return;
   }
+
   const found = THEMES.find((t) => t.id === style.mm_theme_id);
   if (found) {
     const restored: MapTheme = {
       ...found,
-      bg: style.mm_bg ?? found.bg,
+      bg:        style.mm_bg         ?? found.bg,
       edgeColor: style.mm_edge_color ?? found.edgeColor,
       textColor: style.mm_text_color ?? found.textColor,
       nodeColors: {
-        root: style.mm_node_root ?? found.nodeColors.root,
+        root:  style.mm_node_root  ?? found.nodeColors.root,
         sheet: style.mm_node_sheet ?? found.nodeColors.sheet,
-        list: style.mm_node_list ?? found.nodeColors.list,
-        card: style.mm_node_card ?? found.nodeColors.card,
+        list:  style.mm_node_list  ?? found.nodeColors.list,
+        card:  style.mm_node_card  ?? found.nodeColors.card,
       },
     };
     applyTheme(restored, false);
@@ -1487,7 +1546,6 @@ function loadSavedTheme() {
     applyCustomBg(style.mm_bg, false);
   }
 }
-
 // ── Layout Groups ─────────────────────────────────────────────────────────
 const LAYOUT_GROUPS = [
   {
@@ -2934,6 +2992,7 @@ onMounted(() => {
   nextTick(() => {
     runLayout();
     nextTick(() => { centerView(); loadSavedTheme(); });
+    loadSavedTheme();
   });
 });
 onBeforeUnmount(() => {
@@ -3428,7 +3487,7 @@ watch(
   align-items: center;
   gap: 5px;
   z-index: 100;
-  background: var(--bg-card, #fff);
+  background: var(--mm-node-card-bg, var(--bg-card, #ffffff));
   border: 1px solid var(--border, #d9d9d9);
   border-radius: 12px;
   padding: 8px 6px;
