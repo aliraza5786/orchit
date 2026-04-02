@@ -41,10 +41,21 @@
                       class="flex items-center gap-2 relative"
                       ref="filterDropdownRef"
                     >
+                      <ExpandableSearch
+                        v-if="backlogResp?.cards?.length"
+                        v-model="backlogSearchQuery"
+                        placeholder="Search ticket by title...." 
+                        buttonClass="w-8 h-8 rounded border border-accent text-white hover:opacity-90"
+                        :buttonStyle="{ backgroundColor: selectedType.dot }"
+                      >
+                        <template #icon>
+                          <i class="fa-solid fa-magnifying-glass text-[12px] text-white"></i>
+                        </template>
+                      </ExpandableSearch>
                       <!-- Add Card Button -->
                       <button
                         v-if="canCreateCard"
-                        class="w-8 h-8 rounded cursor-pointer text-sm hover:bg-bg-body flex items-center justify-center"
+                        class="w-8 h-8 rounded cursor-pointer text-sm hover:bg-bg-body flex items-center justify-center border border-border"
                         @click="openCreateBacklogTicket"
                       >
                         <i class="text-text-primary fa-regular fa-plus"></i>
@@ -81,9 +92,9 @@
                   </div>
                     <div class="flex-1 min-h-0 overflow-y-hidden pb-2" v-else>
                       <BacklogTable
+                        :searchQuery="backlogSearchQuery"
                         :checkedAll="checkedAll"
                         :sprint-type="sprintType"
-                        :search-query="searchTerm"
                         :module-id="selectedFilter"
                         :sheet-id="selectedSheetFilter"
                         :sprint-id="selectedPlanIds"
@@ -215,43 +226,29 @@
                             >
                               <!-- Title / Edit -->
                               <div class="relative flex-1 min-w-0">
-                                <template v-if="editingSprintId !== sprint._id">
-                                  <button
-                                    class="text-left truncate w-full flex items-center gap-2"
-                                    @click="selectSprint(sprint)"
-                                  >
-                                    <span
-                                      class="w-2 h-2 rounded-full flex-shrink-0"
-                                      :style="{ backgroundColor: selectedType.dot }"
-                                    ></span>
-                                    <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
-                                  </button>
-                                </template>
-                                <template v-else>
-                                  <input
-                                    ref="editingInputRef"
-                                    v-model="editingSprintTitle"
-                                    class="w-full px-1 py-1 text-sm rounded outline-none bg-bg-card border border-accent"
-                                    placeholder="Enter new name"
-                                    @click.stop
-                                    @blur="saveInlineSprintTitle(sprint)"
-                                    @keyup.enter="saveInlineSprintTitle(sprint)"
-                                    @keyup.esc="cancelEdit"
-                                  />
-                                </template>
+                                <button
+                                  class="text-left truncate w-full flex items-center gap-2"
+                                  @click="selectSprint(sprint)"
+                                >
+                                  <span
+                                    class="w-2 h-2 rounded-full flex-shrink-0"
+                                    :style="{ backgroundColor: selectedType.dot }"
+                                  ></span>
+                                  <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
+                                </button>
                               </div>
 
                               <!-- Actions -->
                               <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
                                 <button
                                   class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-accent hover:bg-bg-body transition-colors"
-                                  @click.stop="enableEdit(sprint)"
-                                  title="Rename"
+                                  @click.stop="openModalEditSprint(sprint)"
+                                  title="Edit"
                                 >
                                   <i class="fas fa-pen text-[10px]"></i>
                                 </button>
                                 <button
-                                  v-if="sprintsList?.sprints.length && editingSprintId !== sprint._id"
+                                  v-if="sprintsList?.sprints.length"
                                   @click.stop="handleDeleteSprint(sprint)"
                                   class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
                                   title="Delete"
@@ -275,24 +272,19 @@
                       </button>
                     </div>
                     <!-- Right Section: Actions -->
-                    <div class="flex justify-end items-center gap-2">
-                      <div class="flex gap-2">
-                        <button
-                          class="w-8.5 h-8.5 flex items-center justify-center rounded-[6px] border text-white transition-colors shrink-0 hover:opacity-90"
+                    <div class="flex justify-end items-center">
+                      <div class="me-2" >
+                        <ExpandableSearch
                           v-if="sprintDetailData?.cards?.length"
-                          @click="openSearchModal"
-                          :style="
-                            selectedSprintId
-                              ? { backgroundColor: selectedType.dot }
-                              : {}
-                          "
+                          v-model="searchQuery"
+                          placeholder="Search ticket by title...."
+                          buttonClass="w-8.5 h-8.5 rounded-[6px] border border-accent text-white hover:opacity-90"
+                          :buttonStyle="selectedSprintId ? { backgroundColor: selectedType.dot } : {}"
                         >
-                          <i
-                            class="fa-solid fa-magnifying-glass text-[13px] text-white"
-                          ></i>
-                        </button>
-                        
-                      
+                          <template #icon>
+                            <i class="fa-solid fa-magnifying-glass text-[13px] text-white"></i>
+                          </template>
+                        </ExpandableSearch>
                         <div
                         v-if="sprintDetailData?.status === 'completed'"
                         class="relative inline-flex"
@@ -313,12 +305,9 @@
                         >
                           {{ sprintDetailData?.title }} is completed
                         </div>
-                      </div>
-                      </div>
-                      <!-- End / Start Sprint Buttons -->
-                      <!-- End Sprint Button -->
-                      
-                      <div class="gap-2 flex">
+                        </div>
+                      </div> 
+                      <div>
                         <!-- End Sprint Button --> 
                         <div
                           v-if="sprintDetailData?.status === 'active'"
@@ -351,7 +340,7 @@
                           
                         </div>
                         <!-- Start Sprint Button -->
-                        <div v-else class="ms-1 flex gap-2">
+                        <div v-else>
                           <Button
                             v-if="sprintDetailData?.status !== 'completed'"
                             size="sm"
@@ -366,15 +355,11 @@
                             :style="{ backgroundColor: selectedType.dot }"
                           >
                             Start {{ selectedType.label }}
-                          </Button>
-                           <!-- Small Screen Icon Buttons -->
-                         
+                          </Button> 
                         </div>
-                         
                       </div>
                       
-                      <div
-                        class="gap-2"
+                      <div 
                         v-if="firstSprint && firstSprint.tickets.length"
                       >
                         <button
@@ -443,141 +428,7 @@
                           </div>
                     </div>
             
-                    <!-- Search Modal -->
-               <transition name="fade">
-    <div
-      v-if="showSearchModal"
-      class="fixed inset-0 z-50 flex items-center justify-center w-full"
-    >
-      <!-- Backdrop with gradient -->
-      <div
-        class="absolute inset-0 bg-black/10 backdrop-blur-xs"
-        @click="closeSearchModal"
-      ></div>
-
-      <!-- Modal with modern design -->
-      <div
-        class="relative bg-bg-card dark:bg-slate-900 rounded-2xl w-full max-w-md lg:max-w-2xl xl:max-w-4xl shadow-2xl overflow-hidden mx-4 flex flex-col"
-      >
-        <!-- Gradient top border accent -->
-        <div class="h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-
-        <!-- Header with close button -->
-        <div class="flex justify-between items-center px-6 pt-5 pb-0">
-          <div>
-            <h2 class="text-lg font-bold text-text-primary dark:text-white">
-              Search {{ sprintType }}
-            </h2>
-            <p class="text-sm text-text-secondaru mt-1">
-              Find by name, status, or priority
-            </p>
-          </div>
-          <button
-            @click="closeSearchModal"
-            class="flex items-center justify-center cursor-pointer w-10 h-10 rounded-lg bg-bg-card border border-border transition-colors duration-200"
-            aria-label="Close search"
-          >
-            <i class="fa-solid fa-xmark text-text-primary text-lg"></i>
-          </button>
-        </div>
-
-        <!-- Search Bar with enhanced styling -->
-        <div class="px-6 py-4">
-          <div class="relative group">
-            <i
-              class="fa-solid fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 text-sm group-focus-within:text-blue-500 transition-colors"
-            ></i>
-            <input
-              :placeholder="`Search in ${sprintType}...`"
-               v-model="searchTerm"
-              @keyup.enter="handleSearchEnter"
-              class="w-full pl-11 pr-4 py-3 bg-bg-input border border-border  rounded-xl text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 dark:focus:ring-offset-slate-900 transition-all duration-200"
-            />
-          </div>
-        </div>
-
-        <!-- Results Container -->
-        <div class="px-6 pb-6 max-h-96 overflow-y-auto">
-          <!-- Loading or Results -->
-          <div v-if="filteredSprints.length && searchTerm" class="space-y-2">
-            <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
-              {{ filteredSprints.length }} Result{{ filteredSprints.length !== 1 ? 's' : '' }}
-            </div>
-            <div
-              v-for="sprint in filteredSprints"
-              :key="sprint._id"
-              @click="handleSearchModal(sprint)"
-              class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-800 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:hover:from-slate-700 dark:hover:to-slate-700 border border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 cursor-pointer transition-all duration-200 transform hover:scale-102"
-            >
-              <div class="flex justify-between items-start gap-4">
-                <!-- Title and Code -->
-                <div class="flex-1 min-w-0">
-                  <h3 class="font-semibold text-slate-900 dark:text-white text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2">
-                    {{ sprint.card?.variables?.["card-title"] }}
-                  </h3>
-                  <div class="flex gap-2 mt-2">
-                    <span class="text-xs font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded">
-                      {{ sprint.card?.variables?.["card-code"] }}
-                    </span>
-                  </div>
-                </div>
-
-                <!-- Priority and Status Pills -->
-                <div class="flex gap-2 items-center flex-shrink-0">
-                  <span
-                    class="px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200"
-                    :class="getPriorityClass(sprint.priority)"
-                  >
-                    {{ sprint.priority }}
-                  </span>
-                  <span
-                    class="px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600"
-                  >
-                    {{ sprint.card?.variables?.["card-status"] }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Empty State with results -->
-          <div
-            v-else-if="searchTerm && !filteredSprints.length"
-            class="py-12 text-center"
-          >
-            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
-              <i class="fa-solid fa-magnifying-glass text-slate-400 dark:text-slate-500 text-2xl"></i>
-            </div>
-            <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-1">
-              No results found
-            </h3>
-            <p class="text-sm text-slate-500 dark:text-slate-400">
-              No <span class="font-medium">{{ sprintType }}</span> matching<br />
-              <span class="font-mono text-blue-600 dark:text-blue-400">"{{ searchTerm }}"</span>
-            </p>
-          </div>
-
-          <!-- Initial Empty State -->
-          <div
-            v-else
-            class="py-16 text-center"
-          >
-            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent mb-4">
-              <i class="fa-solid fa-filter text-white text-3xl"></i>
-            </div>
-            <h3 class="text-lg font-semibold text-text-primary mb-2">
-              Start searching
-            </h3>
-            <p class="text-sm text-text-secondary max-w-sm mx-auto">
-              Type to filter {{ sprintType }} by name, status, or priority. Your search results will appear here.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </transition>
-
-
+                    
                   </div>
                   <div
                     v-if="isLoadingSprint || isSprintsFetching"
@@ -594,9 +445,7 @@
                     <SprintCard
                       :searchQuery="searchQuery"
                       :sprintId="selectedSprintId"
-                      :searchedData="
-                        selectedSearchCard ? [selectedSearchCard] : []
-                      "
+                      :searchedData="[]"
                       :label="sprintType"
                       v-if="
                         firstSprint &&
@@ -764,11 +613,11 @@
       :sprints="sprintsDataFromPlus"
     />
     <StartSprintModal
-      :sprint="selectedSprint"
       v-model="startsprintModalOpen"
-      @save="startSprintHandler"
-      :creatingSprint="isStartingSprint || isUpdatingSprint2"
+      :creatingSprint="isStartingSprint"
       :sprintType="sprintType"
+      @edit-sprint="handleEditFromStart"
+      @start-now="handleStartNow"
     />
 
     <TaskDetailsModal
@@ -783,6 +632,7 @@
     <CreateBacklogTicketWithModuleSelection v-model="isCreateTicketModalOpen" />
     <!-- <CreateSheetModal v-model="sprintModalOpen" size="md"  /> -->
   </div>
+  
 </template>
 
 <script setup lang="ts">
@@ -791,6 +641,7 @@ import SprintCard from "./components/SprintCard.vue";
 import SprintModal from "./modals/SprintModal.vue";
 import ModuleSheetDropdown from "./components/ModuleSheetDropdown.vue";
 import PlanSelectDropdown from "./components/PlanSelectDropdown.vue"; 
+import ExpandableSearch from "../../components/ui/ExpandableSearch.vue";
 import { computed, ref, watch, onMounted, defineAsyncComponent } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
@@ -830,6 +681,7 @@ const selectedCard = ref<any>(null);
 const showTaskModal = ref(false);
 const showSprintDeleteTicket = ref(false);
 const searchQuery = ref("");
+const backlogSearchQuery = ref("");
 const checkedAll = ref(false);
 const checkedSprintAll = ref(false);
 const { canCreateCard } = usePermissions();
@@ -916,13 +768,6 @@ const showTooltip = ref(false);
 const toggleTooltip = (): void => {
   showTooltip.value = !showTooltip.value;
 };
-const handleSearchModal = (sprint: any) => {
-  selectedCard.value = sprint.card;
-  sidePanelStore.selectTaskCard(sprint.card);
-  showTaskModal.value = false;
-  editingTicket.value = sprint.card;
-  closeSearchModal();
-};
 
 const isCreateTicketModalOpen = ref(false);
 const {
@@ -1005,12 +850,11 @@ function handlePlanSelect(payload: { ids: string[], label: string }) {
  
 
 const { 
-  data: backlogResp, 
-  refetch: refetchBackLogList, 
+  data: backlogResp,   
   isPending: isBacklogRefreshing 
 } = useBacklogList(
   workspaceId,
-  sprintType,
+  ref(""),
   selectedFilter,
   selectedSheetFilter,
   selectedPlanIds,
@@ -1018,7 +862,7 @@ const {
   currentPage,
 );
 // Reset to page 1 whenever filters change (TanStack Query re-fetches via reactive queryKey)
-watch([selectedFilter, selectedSheetFilter, selectedPlanIds, sprintType], () => {
+watch([selectedFilter, selectedSheetFilter, selectedPlanIds], () => {
   currentPage.value = 1;
 });
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId);
@@ -1028,14 +872,7 @@ const visibleModules = computed(
       (m: any) => m?.variables?.["module-title"] !== "Pin",
     ) || [],
 );
-watch(
-  () => sprintType.value,
-  (newVal, oldVal) => {
-    if (newVal !== oldVal) {
-      refetchBackLogList();
-    }
-  },
-);
+ 
 
 // delete sprint
 const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
@@ -1049,43 +886,42 @@ const showSprintDelete = ref(false);
 const handleDeleteTicket = () => {
   deleteSprint(selectedSprint.value?._id);
 };
-const { mutate: updateSprint2, isPending: isUpdatingSprint2 } = useUpdateSprint(
-  {
-    onSuccess: (data: any) => {
-      saveSprintMeta({ name: data.title });
-      startSprint({
-        id: selectedSprintId.value,
-        payload: {
-          title: data.title,
-          start_date: data.start_date,
-          end_date: data.end_date,
-          goal: data.goal,
-          duration: Number(data.duration_days),
-        },
-      });
-      // queryClient.invalidateQueries({ queryKey: ['sprint-list'] })
-      startsprintModalOpen.value = false;
-    },
-  },
-);
+ 
 const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint({
   onSuccess: () => {
     refetchSprintDetail();
   },
 });
-const startSprintHandler = async (e: any) => {
+const handleEditFromStart = () => {
+  startsprintModalOpen.value = false;
+  // Hydrate selectedSprint with data from store for editing
+  selectedSprint.value = {
+    ...sidePanelStore.startedSprint,
+    _id: sidePanelStore.startedSprint?.id,
+    title: sidePanelStore.startedSprint?.sprint_name
+  };
+  sprintModalOpen.value = true;
+};
+
+const handleStartNow = async () => {
+  const data = sidePanelStore.startedSprint;
+  if (!data) return;
+  
   isStartingSprintLoading.value = true;
   try {
-    await updateSprint2({
+    await startSprint({
       id: selectedSprintId.value,
       payload: {
-        title: e.title,
-        duration: e.duration,
-        start_date: e.start,
-        end_date: e.end,
-        goal: e.goal,
+        title: data.sprint_name,
+        start_date: data.start,
+        end_date: data.end,
+        goal: data.goal,
+        duration: Number(data.duration),
+        ...(data.num_sprints ? { num_sprints: data.num_sprints } : {}),
+        ...(data.parent_sprint_id ? { parent_sprint_id: data.parent_sprint_id } : {})
       },
     });
+    startsprintModalOpen.value = false;
   } finally {
     isStartingSprintLoading.value = false;
   }
@@ -1121,7 +957,7 @@ watch(
 );
 const { refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(
   workspaceId,
-  sprintType,
+  ref(""),
   ref(""),
 );
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
@@ -1149,6 +985,22 @@ const { data: sprintDetailData, refetch: refetchSprintDetail } =
 
 const startsprintModalOpen = ref(false);
 const openStartSprintModal = () => {
+  if (sprintDetailData.value) {
+    const data = sprintDetailData.value;
+    const modalSprintData = {
+      id: data._id,
+      sprint_name: data.title,
+      start: data.start_date,
+      end: data.end_date,
+      sprintType: data.sprintType,
+      duration: data.duration,
+      goal: data.goal || "",
+      num_sprints: data.num_sprints,
+      parent_sprint_id: data.parent_sprint_id,
+      description: data.description || "",
+    };
+    sidePanelStore.storeActiveSprint(modalSprintData);
+  }
   localStorage.setItem("asFirstTime", JSON.stringify(true));
   startsprintModalOpen.value = true;
 };
@@ -1186,52 +1038,7 @@ watch(
   },
 );
 
-const searchTerm = ref("");
-const selectedSearchCard = ref<any | null>(null);
-const filteredSprints = computed(() => {
-  const data = sprintData.value as { backlog_items?: any[] } | undefined;
-  if (!searchTerm.value || !data?.backlog_items) return [];
-  const query = searchTerm.value?.toLowerCase().trim();
-  return data.backlog_items.filter((item: any) => {
-    const title = item.card?.variables?.["card-title"]?.toLowerCase() || "";
-    const code = item.card?.variables?.["card-code"]?.toLowerCase() || "";
-    const status = item.card?.variables?.["card-status"]?.toLowerCase() || "";
-    const priority = item.priority?.toLowerCase() || "";
-    const itemId = String(item._id || "").toLowerCase();
-    const cardId = String(item.card_id || "").toLowerCase();
 
-    return (
-      title.includes(query) ||
-      code.includes(query) ||
-      status.includes(query) ||
-      priority.includes(query) ||
-      itemId.includes(query) ||
-      cardId.includes(query)
-    );
-  });
-});
-
-function handleSearchEnter() {
-  if (filteredSprints.value.length === 1) {
-    selectSprint(filteredSprints.value[0]);
-  }
-}
-type Priority = "high" | "medium" | "low";
-const priorityClasses: Record<Priority, string> = {
-  high: "bg-red-500/20 text-red-500",
-  medium: "bg-yellow-500/20 text-yellow-500",
-  low: "bg-green-500/20 text-green-500",
-};
-
-function getPriorityClass(priority?: string): string {
-  const key = priority?.toLowerCase() as Priority;
-
-  return priorityClasses[key] ?? "bg-gray-500/20 text-gray-500";
-}
-// function handleSearchSelect(card: any) {
-//   selectedSearchCard.value = card;
-//   showSearchModal.value = false;
-// }
 
 // Convert API sprint to store Sprint format with cards
 const firstSprint = computed(() => {
@@ -1361,34 +1168,51 @@ const { mutate: createSprint, isPending: creatingSprint } = useCreateSprint({
     saveSprintMeta({ name: data.title });
     queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
     sprintModalOpen.value = false;
+    if (data && data._id) {
+      const modalSprintData = {
+        id: data._id,
+        sprint_name: data.title,
+        start: data.start_date,
+        end: data.end_date,
+        sprintType: data.sprintType,
+        duration: data.duration,
+        goal: data.goal || "",
+        num_sprints: data.num_sprints,
+        parent_sprint_id: data.parent_sprint_id,
+        description: data.description || "",
+      };
+      sidePanelStore.storeActiveSprint(modalSprintData);
+      selectSprint(data);
+    }
   },
 });
 const { mutate: updateSprint, isPending: isUpdatingSprint } = useUpdateSprint({
   onSuccess: (data: any) => {
     saveSprintMeta({ name: data.title });
     queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+    queryClient.invalidateQueries({
+      queryKey: ["sprint-detail", selectedSprintId.value],
+    });
+
+    // Update store with fresh data so StartSprintModal is reactive
+    const modalSprintData = {
+      id: data._id,
+      sprint_name: data.title,
+      start: data.start_date,
+      end: data.end_date,
+      sprintType: data.sprintType,
+      duration: data.duration,
+      goal: data.goal || "",
+      num_sprints: data.num_sprints,
+      parent_sprint_id: data.parent_sprint_id,
+      description: data.description || "",
+    };
+    sidePanelStore.storeActiveSprint(modalSprintData);
+
     sprintModalOpen.value = false;
   },
 });
-const editingSprintTitle = ref("");
-function saveInlineSprintTitle(sprint: any) {
-  const newTitle = editingSprintTitle.value.trim();
-
-  if (!newTitle || newTitle === sprint.title) {
-    cancelEdit();
-    return;
-  }
-
-  updateSprint({
-    id: sprint._id,
-    payload: {
-      workspace_id: workspaceId.value,
-      title: newTitle,
-    },
-  });
-
-  editingSprintId.value = null;
-}
+// Removed inline edit state as we now use SprintModal for all edits
 
 function saveSprintHandler(e: any) {
   if (selectedSprint.value) {
@@ -1396,18 +1220,30 @@ function saveSprintHandler(e: any) {
       id: selectedSprint.value?._id,
       payload: {
         workspace_id: workspaceId.value,
-        title: e.name,
+        title: e.name || e.title,
         sprintType: e.value,
         description: e.description,
+        duration: e.duration,
+        start_date: e.start,
+        end_date: e.end,
+        goal: e.goal,
+        ...(e.num_sprints ? { num_sprints: e.num_sprints } : {}),
+        ...(e.parent_sprint_id ? { parent_sprint_id: e.parent_sprint_id } : {}),
       },
     });
   } else {
     createSprint({
       payload: {
         workspace_id: workspaceId.value,
-        title: e.name,
+        title: e.name || e.title,
         sprintType: e.value,
         description: e.description,
+        duration: e.duration,
+        start_date: e.start,
+        end_date: e.end,
+        goal: e.goal,
+        ...(e.num_sprints ? { num_sprints: e.num_sprints } : {}),
+        ...(e.parent_sprint_id ? { parent_sprint_id: e.parent_sprint_id } : {}),
       },
     });
   }
@@ -1473,24 +1309,11 @@ function stopResize() {
   document.removeEventListener("mouseup", stopResize);
 }
 /////
-const editingSprintId = ref(null);
 
-function enableEdit(sprint: any) {
-  editingSprintId.value = sprint._id;
-  sprint.tempTitle = sprint.title;
-  editingSprintTitle.value = sprint.title;
-}
 
-function cancelEdit() {
-  const sprint = sprintsList.value?.sprints.find(
-    (s: any) => s._id === editingSprintId.value,
-  );
-
-  if (sprint) {
-    sprint.tempTitle = sprint.title;
-  }
-
-  editingSprintId.value = null;
+function openModalEditSprint(sprint: any) {
+  selectedSprint.value = sprint;
+  sprintModalOpen.value = true;
 }
 
 onClickOutside(elipseWrapperSprint, () => {
@@ -1528,16 +1351,7 @@ onClickOutside(sprintDropdownWrapperRef, () => {
   isSprintDropdownOpen.value = false;
 });
 
-const showSearchModal = ref(false);
-
-const openSearchModal = () => {
-  showSearchModal.value = true;
-};
-
-const closeSearchModal = () => {
-  showSearchModal.value = false;
-  searchTerm.value = "";
-};
+  
 
 // Computed label for huddle button (Removed legacy filters)
 
