@@ -322,7 +322,6 @@
         @reorder:card="handleMindmapReorderCard"
         @toggle-add-list="setActiveAddList"
         @add-column="handleAddColumn"
-        @save:theme="handleSaveTheme"
       />
     </template>
 
@@ -1812,18 +1811,7 @@ declare global {
     ) => void;
   }
 }
-// saving theme
-function handleSaveTheme(style: Record<string, any>) {
-  console.log("style for sheets", style);
-  
-  updateSheet({
-    sheet_id: selected_sheet_id.value,   
-    style,                              
-    is_ai_generated: false,
-    workspace_id:           workspaceId.value,
-    workspace_module_id:    moduleId.value,
-  })
-}
+
 </script>
 
 <style scoped>

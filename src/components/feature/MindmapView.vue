@@ -1139,6 +1139,7 @@ import { useRoute } from "vue-router";
 import ConfirmDeleteModal from "../../views/Product/modals/ConfirmDeleteModal.vue";
 import { useWorkspaceStore } from "../../stores/workspace";
 import dp from "../../assets/global/dummy.jpeg";
+import { useThemeStore } from "../../stores/theme";
 const props = defineProps<{
   listsData: any[];
   style?: object;
@@ -1158,6 +1159,7 @@ const props = defineProps<{
   canEditSheet: boolean;
   asTalent?: boolean;
   sheetId?:string;
+  talentType?: string;
 }>();
 
 const emit = defineEmits<{
@@ -1178,12 +1180,11 @@ const emit = defineEmits<{
   (e: "reorder:card", payload: any): void;
   (e: "toggle-add-list"): void;
   (e: "add-column", value: string): void;
-  (e: "save:theme", style: Record<string, any>): void;
 }>();
 
 const { isDark } = useTheme();
 const route = useRoute();
-
+const themeStore = useThemeStore();
 interface NodeStyle {
   background?: string;
   color?: string;
@@ -1244,7 +1245,7 @@ const instancePrefix = `mm_${props.moduleId}_${Date.now()}`;
 const localWorkspace = computed(() => workspaceStore.singleWorkspace);
 const isFullscreen = ref(false);
 const styleClipboard = ref<NodeStyle | null>(null);
-
+const savedThemeDocId = ref<string | null>(null);
 const showShortcutHint = ref(false);
 const shortcutHintTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const lastShortcutLabel = ref("");
@@ -1603,7 +1604,38 @@ const activeCanvasBg = ref<string>("#dedfe3");
 const recentlyUsedColors = ref<string[]>([]);
 // const themeColorPickerOpen = ref(false);
 const customBgColor = ref("#dedfe3");
-function applyTheme(theme: MapTheme, persist = true) {
+async function persistTheme(stylePayload: Record<string, any>) {
+  const { type, type_id } = resolveThemeContext();
+  const userId = localStorage.getItem("user_id") ?? undefined;
+
+  const payload = {
+    workspace_id: props.workspaceId,
+    type,
+    type_id,
+    style: stylePayload,
+    created_by: userId,
+  };
+
+  if (savedThemeDocId.value) {
+    // UPDATE
+    await themeStore.updateMindmapTheme(savedThemeDocId.value, payload);
+  } else {
+    // CREATE
+    await themeStore.saveMindmapTheme(payload);
+    const theme = await themeStore.getMindmapThemeByWorkflow(
+      props.workspaceId,
+      type_id,
+      type
+    );
+
+    if (theme?._id) {
+      savedThemeDocId.value = theme._id;
+    }
+  }
+
+}
+ 
+async function applyTheme(theme: MapTheme, persist = true) {
   activeThemeId.value = theme.id;
   activeCanvasBg.value = theme.bg;
   customBgColor.value = theme.bg;
@@ -1617,7 +1649,8 @@ function applyTheme(theme: MapTheme, persist = true) {
   el.style.setProperty("--mm-edge-color", theme.edgeColor);
   el.style.setProperty("--mm-text-color", theme.textColor);
   if (!persist) return;
-  emit("save:theme", {
+ 
+  const stylePayload = {
     mm_theme_id:   theme.id,
     mm_bg:         theme.bg,
     mm_edge_color: theme.edgeColor,
@@ -1626,37 +1659,34 @@ function applyTheme(theme: MapTheme, persist = true) {
     mm_node_sheet: theme.nodeColors.sheet,
     mm_node_list:  theme.nodeColors.list,
     mm_node_card:  theme.nodeColors.card,
-  });
+  };
+ 
+  await persistTheme(stylePayload);
 }
-function applyCustomBg(color: string, persist = true) {
+async function applyCustomBg(color: string, persist = true) {
   activeCanvasBg.value = color;
   customBgColor.value = color;
   activeThemeId.value = "custom";
   const el = rootEl.value;
   if (!el) return;
   el.style.setProperty("--mm-bg", color);
-
+ 
   if (!recentlyUsedColors.value.includes(color)) {
     recentlyUsedColors.value = [color, ...recentlyUsedColors.value].slice(0, 7);
   }
-
+ 
   if (!persist) return;
-  emit("save:theme", {
-    mm_theme_id: "custom",
-    mm_bg:       color,
-  });
+ 
+  await persistTheme({ mm_theme_id: "custom", mm_bg: color });
 }
-
-function loadSavedTheme() {
-  
-  const style = props.listsData?.[0]?.style || props.style;
+function applyStyleObject(style: Record<string, any>, persist = false) {
   if (!style?.mm_theme_id) return;
-
+ 
   if (style.mm_theme_id === "custom") {
-    if (style.mm_bg) applyCustomBg(style.mm_bg, false);  // false = don't re-save
+    if (style.mm_bg) applyCustomBg(style.mm_bg, persist);
     return;
   }
-
+ 
   const found = THEMES.find((t) => t.id === style.mm_theme_id);
   if (found) {
     const restored: MapTheme = {
@@ -1671,9 +1701,47 @@ function loadSavedTheme() {
         card:  style.mm_node_card  ?? found.nodeColors.card,
       },
     };
-    applyTheme(restored, false);  // false = don't re-save
+    applyTheme(restored, persist);
   } else if (style.mm_bg) {
-    applyCustomBg(style.mm_bg, false);
+    applyCustomBg(style.mm_bg, persist);
+  }
+}
+console.log("selected theme data", themeStore.selectedTheme);
+
+async function loadSavedTheme() {
+  try {
+    const { type, type_id } = resolveThemeContext();
+
+    const match = await themeStore.getMindmapThemeByWorkflow(
+      props.workspaceId,
+      type_id,
+      type
+    );
+
+    if (match?._id && match?.style) {
+      
+      
+      savedThemeDocId.value = match._id;
+
+      // Ensure rootEl is mounted
+      let tries = 0;
+      while (!rootEl.value && tries < 20) {
+        await nextTick();
+        tries++;
+      }
+
+      if (rootEl.value) {
+        applyStyleObject(match.style, false);
+      }
+      return;
+    }
+  } catch (err) {
+    console.warn("Could not load theme from API:", err);
+  }
+
+  // Fallback — no saved theme, apply default only
+  if (!savedThemeDocId.value && rootEl.value) {
+    applyDefaultTheme();
   }
 }
 function openDeleteModal(node: any) {
@@ -2867,7 +2935,6 @@ function buildTree(sheets: any[]): MindNode {
       "Sheet";
 
     const link = sheet.style?.hyperLink || "";
-    console.log("sheet id of card", sheet);
     // create sheet node
     if (!varMap[title]) {
       varMap[title] = {
@@ -2912,7 +2979,6 @@ function buildTree(sheets: any[]): MindNode {
       height: 72,
       collapsed: false,
     };
-    console.log("sheet id first card", sheet?.cards[0]?.sheet_id);
     
     // add cards
     sheetCardMap.value[sheet._id] = []; // initialize array
@@ -2955,7 +3021,6 @@ function buildTree(sheets: any[]): MindNode {
 
   return root;
 }
-console.log("sheet id of card", sheetCardMap.value);
 
 function assignParents(node: MindNode, parent?: MindNode) {
   if (parent) node.parent = parent;
@@ -4394,7 +4459,8 @@ function handleFullscreenChange() {
   // Re-center after fullscreen transition so content is properly positioned
   nextTick(() => centerView());
 }
-onMounted(() => {
+// Replace your entire onMounted with this:
+onMounted(async () => {
   document.addEventListener("mousemove", handleGlobalMouseMove);
   document.addEventListener("mouseup", handleGlobalMouseUp);
   document.addEventListener("keydown", handleKeyDown);
@@ -4403,29 +4469,49 @@ onMounted(() => {
     if (ctxMenu.visible) closeCtxMenu();
   });
   document.addEventListener("fullscreenchange", handleFullscreenChange);
-  loadSavedTheme();
+
+  // Wait for DOM + props to stabilize
+  await nextTick();
+  await nextTick();
+  await loadSavedTheme();
 });
 function applyDefaultTheme() {
-  const defaultTheme = THEMES[0]; 
-
+  // Don't override a saved theme
+  if (savedThemeDocId.value) return;
+  const defaultTheme = THEMES[0];
   if (!defaultTheme) return;
-
-  applyTheme(defaultTheme, false); 
+  applyTheme(defaultTheme, false);
 }
-watch(
-  () => props.listsData?.[0]?.style?.mm_theme_id,
-  (newVal) => {
-    console.log("new theme value is", newVal);
 
-    if (!newVal) {
-      applyDefaultTheme();
-      return;
-    }
+function resolveThemeContext(): { type: string; type_id: string | null } {
+  const path = route.path;
+ 
+  if (path.includes("/plan")) {
+    return {
+      type: "sprint",
+      type_id: localStorage.getItem("activeSprintKey") ?? null,
+    };
+  }
+ 
+  if (path.includes("/talent")) {
+    return {
+      type: props.talentType ?? "talent",
+      type_id: null,
+    };
+  }
+ 
+  // Default: regular board / sheet view
+  return {
+    type: "sheet",
+    type_id:
+      props.sheetId ||
+      props.selectedSheetId ||
+      localStorage.getItem("selected_sheet_id") ||
+      null,
+  };
+}
 
-    loadSavedTheme();
-  },
-  { immediate: true }
-);
+
 onBeforeUnmount(() => {
   document.removeEventListener("mousemove", handleGlobalMouseMove);
   document.removeEventListener("mouseup", handleGlobalMouseUp);
@@ -4791,7 +4877,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 2px;
   padding: 4px 8px;
-  background: var(--bg-card, #ffffff);
+  background: var(--mm-node-card-bg, var(--bg-card, #ffffff));
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-top: none;
   border-radius: 0 0 8px 8px;
@@ -4982,7 +5068,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 5px;
   z-index: 100;
-  background: var(--bg-card, #fff);
+  background: var(--mm-node-card-bg, var(--bg-card, #ffffff));
   border: 1px solid var(--border, #d9d9d9);
   border-radius: 12px;
   padding: 8px 6px;
@@ -5780,11 +5866,11 @@ onBeforeUnmount(() => {
   border-color: rgba(255, 255, 255, 0.07);
 }
 .mindmap-root[data-dark="true"] .node-card-actions-row {
-  background: var(--bg-card, #2b2c30);
+   background: var(--mm-node-card-bg, var(--bg-card, #2b2c30));
   border-color: rgba(255, 255, 255, 0.08);
 }
 .mindmap-root[data-dark="true"] .canvas-controls {
-  background: var(--bg-card, #2b2c30);
+  background: var(--mm-node-card-bg, var(--bg-card, #2b2c30));
   border-color: var(--border, #3e3e42);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
