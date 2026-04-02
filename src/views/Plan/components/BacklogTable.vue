@@ -210,7 +210,7 @@ const sprint_Type = computed(() => props.sprintType);
 
 const { data: backlogResp, isPending: isBacklogListPending } = useBacklogList(
   workspaceId,
-  sprint_Type,
+  ref(""),
   module_id,
   computed(() => props.sheetId),
   computed(() => props.sprintId),
