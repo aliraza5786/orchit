@@ -122,12 +122,16 @@ const members = ref([]);
 const showDelete = ref(false)
 const queryClient = useQueryClient()
 function getMenuItems() {
-  const isAdmin = props.ticket?.role_title?.toLowerCase() === 'admin'
-  const hasUser = Boolean(props.ticket?.name)
+  const isOwner = Boolean(props.ticket?.is_owner)
+  const hasUser = Boolean(props.ticket?.email
+
+  )
+
+  if (isOwner) return [] 
 
   const items = []
 
-  if (canInviteUser.value && !isAdmin) {
+  if (canInviteUser.value && !hasUser) {
     items.push({
       label: 'Assign User',
       danger: true,
@@ -141,7 +145,7 @@ function getMenuItems() {
     })
   }
 
-  if (hasUser && canEditUser.value && !isAdmin) {
+  if (hasUser && canEditUser.value) {  // ← removed !isAdmin
     items.push({
       label: 'UnAssign User',
       danger: true,
@@ -153,7 +157,7 @@ function getMenuItems() {
     })
   }
 
-  if (canDeleteUser.value && !isAdmin) {
+  if (canDeleteUser.value) {  // ← removed !isAdmin
     items.push({
       label: 'Delete Seat',
       danger: true,
