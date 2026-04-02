@@ -9,8 +9,8 @@ export const useThemeStore = defineStore("theme", {
     isLoadingtheme: false,
     isUpdatingTheme: false,
     isDeletingTheme: false,
-    allSavedThemes: [] as any[], 
-    selectedTheme: null as any, 
+    allSavedThemes: [] as any[],
+    selectedTheme: null as any,
   }),
 
   actions: {
@@ -30,54 +30,54 @@ export const useThemeStore = defineStore("theme", {
         this.isSavingTheme = false;
       }
     },
-      async getMindmapThemeByWorkflow(workspaceId: string, typeId: any, type?: string) {
-        console.log("selected type", type);
-        
-  this.isLoadingtheme = true;
-  try {
-    const params: Record<string, any> = {
-      workspace_id: workspaceId,
-    };
+    async getMindmapThemeByWorkflow(
+      workspaceId: string,
+      typeId: any,
+      type?: string,
+    ) {
+      this.isLoadingtheme = true;
+      try {
+        const params: Record<string, any> = {
+          workspace_id: workspaceId,
+        };
 
-    // Only send type_id if it has a value
-    if (typeId !== null && typeId !== undefined) {
-      params.type_id = typeId;
-    }
+        // Only send type_id if it has a value
+        if (typeId !== null && typeId !== undefined) {
+          params.type_id = typeId;
+        }
 
-    const res = await api.request({
-      url: `${baseUrl}mindmap-styles`,
-      method: "GET",
-      params,
-    });
+        const res = await api.request({
+          url: `${baseUrl}mindmap-styles`,
+          method: "GET",
+          params,
+        });
 
-    const themes = res?.data?.data || [];
-    this.allSavedThemes = themes;
+        const themes = res?.data?.data || [];
+        this.allSavedThemes = themes;
+        let match = null;
+        if (type) {
+          match =
+            themes.find((t: any) => {
+              const typeMatch = t.type === type;
+              const typeIdMatch =
+                typeId === null
+                  ? t.type_id === null || t.type_id === undefined
+                  : t.type_id === typeId;
+              return typeMatch && typeIdMatch;
+            }) ?? null;
+        } else {
+          match = themes[0] ?? null;
+        }
 
-    // Filter by type AND type_id to get the exact match
-    let match = null;
-    if (type) {
-      match = themes.find((t: any) => {
-        console.log("selected theme match", t);
-        
-        const typeMatch = t.type === type;
-        const typeIdMatch = typeId === null
-          ? (t.type_id === null || t.type_id === undefined)
-          : t.type_id === typeId;
-        return typeMatch && typeIdMatch;
-      }) ?? null;
-    } else {
-      match = themes[0] ?? null;
-    }
-
-    this.selectedTheme = match;
-    return match;
-  } catch (err) {
-    toast.error("Failed to fetch theme");
-    return null;
-  } finally {
-    this.isLoadingtheme = false;
-  }
-},
+        this.selectedTheme = match;
+        return match;
+      } catch (err) {
+        toast.error("Failed to fetch theme");
+        return null;
+      } finally {
+        this.isLoadingtheme = false;
+      }
+    },
     // ✅ UPDATE
     async updateMindmapTheme(id: string, payload: any) {
       this.isUpdatingTheme = true;
@@ -106,7 +106,7 @@ export const useThemeStore = defineStore("theme", {
 
         // Optional: remove from local state instantly
         this.allSavedThemes = this.allSavedThemes.filter(
-          (theme: any) => theme.id !== id
+          (theme: any) => theme.id !== id,
         );
 
         toast.success("Mindmap theme deleted successfully");
