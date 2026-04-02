@@ -79,7 +79,7 @@
                       class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
                     ></div>
                   </div>
-                    <div class="flex-1 min-h-0 overflow-y-hidden" v-else>
+                    <div class="flex-1 min-h-0 overflow-y-hidden pb-2" v-else>
                       <BacklogTable
                         :checkedAll="checkedAll"
                         :sprint-type="sprintType"
@@ -126,167 +126,159 @@
                   >
                     <!-- Left Section: Sprint Tabs -->
                     <div class="flex items-center gap-2 min-w-0 py-1">
-                      <!-- Sprint Dropdown -->
-                      <div
-                        ref="elipseWrapperSprint"
-                        class="relative inline-block"
-                      >
+
+                      <!-- Sprint Type Dropdown -->
+                      <div ref="elipseWrapperSprint" class="relative inline-block">
                         <!-- Trigger Button -->
                         <button
                           @click.stop="openElipseDropDown = !openElipseDropDown"
-                          class="flex items-center gap-2 lg:px-3 px-2 py-1.5 text-sm font-medium bg-transparent rounded-lg"
-                          :style="{ border: '1px solid ' + selectedType.dot }"
+                          type="button"
+                          class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
+                          :class="openElipseDropDown ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'"
                         >
-                          <span
-                            class="w-2 h-2 rounded-full hidden lg:flex"
-                            :style="{ backgroundColor: selectedType.dot }"
-                          ></span>
-                          {{ selectedType.label }}
-                          <i class="fas fa-chevron-down text-xs"></i>
+                          <div class="flex items-center gap-2">
+                            <span
+                              class="w-2 h-2 rounded-full"
+                              :style="{ backgroundColor: selectedType.dot }"
+                            ></span>
+                            <span>{{ selectedType.label }}</span>
+                          </div>
+                          <svg
+                            class="w-4 h-4 text-text-secondary transition-transform duration-200"
+                            :class="{ 'rotate-180': openElipseDropDown }"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                          >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
                         </button>
 
                         <!-- Dropdown -->
-                        <transition name="fade">
+                        <transition name="fade-scale">
                           <ul
                             v-if="openElipseDropDown"
                             @click.stop
-                            class="absolute left-0 mt-2 w-44 bg-bg-dropdown border border-border rounded-xl shadow-lg z-50"
+                            class="absolute left-0 mt-1.5 min-w-[160px] bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-50 py-1 text-sm"
                           >
                             <li
                               v-for="item in sprintTypes"
                               :key="item.value"
-                              @click="
-                                (selectType(item),
-                                (openElipseDropDown = !openElipseDropDown))
-                              "
-                              class="flex items-center gap-3 px-4 py-2 text-sm cursor-pointer hover:bg-bg-body hover:text-primary"
+                              @click="selectType(item); openElipseDropDown = false"
+                              class="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
                             >
                               <span
-                                class="w-2 h-2 rounded-full"
+                                class="w-2 h-2 rounded-full flex-shrink-0"
                                 :style="{ backgroundColor: item.dot }"
                               ></span>
-                              {{ item.label }}
+                              <span :class="item.value === selectedType.value ? 'font-semibold text-accent' : ''">{{ item.label }}</span>
                             </li>
                           </ul>
                         </transition>
                       </div>
 
-                      <div class="flex items-center lg:gap-2 max-w-full">
-                        <!-- Sprint Dropdown -->
-                        <div class="flex items-center lg:gap-2 max-w-full">
-                          <!-- Sprint Dropdown -->
-                          <div
-                            ref="sprintDropdownWrapperRef"
-                            class="relative min-w-0"
+                      <!-- Sprint Selector Dropdown -->
+                      <div ref="sprintDropdownWrapperRef" class="relative min-w-0">
+                        <!-- Trigger -->
+                        <button
+                          v-if="sprintsList?.sprints.length"
+                          @click="isSprintDropdownOpen = !isSprintDropdownOpen"
+                          type="button"
+                          class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
+                          :class="isSprintDropdownOpen ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'"
+                        >
+                          <div class="flex items-center gap-2">
+                            <span
+                              v-if="selectedSprintId"
+                              class="w-2 h-2 rounded-full flex-shrink-0"
+                              :style="{ backgroundColor: selectedType.dot }"
+                            ></span>
+                            <span class="truncate max-w-[160px]">{{ selectedSprintTitle || 'Select ' + selectedType.label }}</span>
+                          </div>
+                          <svg
+                            class="w-4 h-4 text-text-secondary transition-transform duration-200"
+                            :class="{ 'rotate-180': isSprintDropdownOpen }"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24"
                           >
-                            <!-- Trigger -->
-                            <button
-                              @click="
-                                isSprintDropdownOpen = !isSprintDropdownOpen
-                              "
-                              v-if="sprintsList?.sprints.length"
-                              class="flex items-center gap-3 lg:px-6 px-1 py-1.5 rounded-lg text-sm font-medium transition-all"
-                              :class="
-                                selectedSprintId
-                                  ? 'text-white'
-                                  : 'bg-gray-100 hover:bg-card hover:text-primary'
-                              "
-                              :style="
-                                selectedSprintId
-                                  ? { backgroundColor: selectedType.dot }
-                                  : {}
-                              "
-                            >
-                              <span class="truncate max-w-[160px]">
-                                {{
-                               
-                                  selectedSprintTitle
-                                }}
-                              </span>
-                              <i class="fas fa-chevron-down text-xs"></i>
-                            </button>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
 
-                            <!-- Dropdown -->
+                        <!-- Dropdown -->
+                        <transition name="fade-scale">
+                          <div
+                            v-if="isSprintDropdownOpen"
+                            class="absolute left-0 mt-1.5 w-64 bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-50 max-h-64 overflow-y-auto py-1"
+                          >
                             <div
-                              v-if="isSprintDropdownOpen"
-                              class="absolute left-0 mt-2 w-60 bg-bg-card border-accent-hover rounded-xl shadow-lg z-50 max-h-64 overflow-y-auto overflow-x-hidden"
+                              v-for="sprint in sprintsList?.sprints"
+                              :key="sprint._id"
+                              class="relative px-3 py-2 flex items-center justify-between text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
                             >
-                              <div
-                                v-for="sprint in sprintsList?.sprints"
-                                :key="sprint._id"
-                                class="relative px-4 py-2 flex items-center justify-between text-sm cursor-pointer transition-color"
-                              >
-                                <!-- Title / Edit -->
-                                <div class="relative flex-1">
-                                  <template
-                                    v-if="editingSprintId !== sprint._id"
-                                  >
-                                    <button
-                                      class="text-left truncate w-full"
-                                      @click="selectSprint(sprint)"
-                                    >
-                                      {{ sprint.title }}
-                                    </button>
-                                  </template>
-
-                                  <template v-else>
-                                    <input
-                                      ref="editingInputRef"
-                                      v-model="editingSprintTitle"
-                                      class="w-full px-1 py-1 text-sm rounded outline-none bg-bg-card border border-[#7d68c8]"
-                                      placeholder="Enter new name"
-                                      @click.stop
-                                      @blur="saveInlineSprintTitle(sprint)"
-                                      @keyup.enter="
-                                        saveInlineSprintTitle(sprint)
-                                      "
-                                      @keyup.esc="cancelEdit"
-                                    />
-                                  </template>
-                                </div>
-
-                                <!-- Delete Button -->
-                                <div class="relative ml-2 flex gap-2">
+                              <!-- Title / Edit -->
+                              <div class="relative flex-1 min-w-0">
+                                <template v-if="editingSprintId !== sprint._id">
                                   <button
-                                    class="ml-2 text-xs text-gray-400 hover:text-accent"
-                                    @click.stop="enableEdit(sprint)"
+                                    class="text-left truncate w-full flex items-center gap-2"
+                                    @click="selectSprint(sprint)"
                                   >
-                                    <i class="fas fa-pen"></i>
+                                    <span
+                                      class="w-2 h-2 rounded-full flex-shrink-0"
+                                      :style="{ backgroundColor: selectedType.dot }"
+                                    ></span>
+                                    <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
                                   </button>
-                                  <button
-                                    v-if="
-                                      sprintsList?.sprints.length &&
-                                      editingSprintId !== sprint._id
-                                    "
-                                    @click.stop="handleDeleteSprint(sprint)"
-                                    class="w-4 h-4 rounded-full flex items-center justify-center text-red-500"
-                                  >
-                                    <i class="fas fa-times text-xs"></i>
-                                  </button>
-                                </div>
+                                </template>
+                                <template v-else>
+                                  <input
+                                    ref="editingInputRef"
+                                    v-model="editingSprintTitle"
+                                    class="w-full px-1 py-1 text-sm rounded outline-none bg-bg-card border border-accent"
+                                    placeholder="Enter new name"
+                                    @click.stop
+                                    @blur="saveInlineSprintTitle(sprint)"
+                                    @keyup.enter="saveInlineSprintTitle(sprint)"
+                                    @keyup.esc="cancelEdit"
+                                  />
+                                </template>
+                              </div>
+
+                              <!-- Actions -->
+                              <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
+                                <button
+                                  class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-accent hover:bg-bg-body transition-colors"
+                                  @click.stop="enableEdit(sprint)"
+                                  title="Rename"
+                                >
+                                  <i class="fas fa-pen text-[10px]"></i>
+                                </button>
+                                <button
+                                  v-if="sprintsList?.sprints.length && editingSprintId !== sprint._id"
+                                  @click.stop="handleDeleteSprint(sprint)"
+                                  class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
+                                  title="Delete"
+                                >
+                                  <i class="fas fa-times text-[10px]"></i>
+                                </button>
                               </div>
                             </div>
                           </div>
-                        </div>
+                        </transition>
                       </div>
-                      <!-- Add Sprint Button (Outside Dropdown) -->
+
+                      <!-- Add Sprint Button -->
                       <button
                         @click="openSprintModal(sprintsList?.sprints)"
-                        :class="[
-                          'w-8 h-8 lg:flex sm:hidden items-center justify-center rounded-full border text-white transition-colors shrink-0',
-                        ]"
-                        :style="{
-                          backgroundColor: selectedType.dot,
-                        }"
+                        class="w-8.5 h-8.5 flex items-center justify-center rounded-[6px] border text-white transition-colors shrink-0 hover:opacity-90"
+                        :style="{ backgroundColor: selectedType.dot, borderColor: selectedType.dot }"
+                        title="Add new"
                       >
-                        <i class="fa-solid fa-plus"></i>
+                        <i class="fa-solid fa-plus text-xs"></i>
                       </button>
                     </div>
                     <!-- Right Section: Actions -->
-                    <div class="flex justify-end items-center">
-                      <div class="flex gap-1">
+                    <div class="flex justify-end items-center gap-2">
+                      <div class="flex gap-2">
                         <button
-                          class="flex items-center justify-center me-1 w-7 h-7 rounded-full bg-accent"
+                          class="w-8.5 h-8.5 flex items-center justify-center rounded-[6px] border text-white transition-colors shrink-0 hover:opacity-90"
                           v-if="sprintDetailData?.cards?.length"
                           @click="openSearchModal"
                           :style="
@@ -296,50 +288,20 @@
                           "
                         >
                           <i
-                            class="fa-solid fa-magnifying-glass text-sm text-white"
+                            class="fa-solid fa-magnifying-glass text-[13px] text-white"
                           ></i>
                         </button>
-                        <button
-                          class="flex lg:hidden cursor-pointer text-white items-center justify-center rounded-full w-7 h-7 text-sm font-medium mt-0.5"
-                          @click="handlePreviewClick"
-                          v-if="
-                            sprintDetailData?.status === 'active' &&
-                            sprintDetailData.cards.length
-                          "
-                          :style="
-                            selectedSprintId
-                              ? { backgroundColor: selectedType.dot }
-                              : {}
-                          "
-                        >
-                          <i class="fa-regular fa-eye text-sm"></i>
-                        </button>
-                        <button
-                            @click="handleCompleteSprint"
-                            v-if="sprintDetailData?.status === 'active'"
-                            class="w-7 h-7 flex lg:hidden items-center justify-center rounded-full bg-accent"
-                            :title="
-                              isCompletingSprint ? 'Ending...' : 'End Sprint'
-                            "
-                            :style="
-                              selectedSprintId
-                                ? { backgroundColor: selectedType.dot }
-                                : {}
-                            "
-                          >
-                            <i
-                              class="fa-solid fa-flag-checkered text-white"
-                            ></i>
-                          </button>
-                           <div
-                        v-if="sprintDetailData?.status === 'active'"
+                        
+                      
+                        <div
+                        v-if="sprintDetailData?.status === 'completed'"
                         class="relative inline-flex"
                         @mouseenter="showTooltip = true"
                         @mouseleave="showTooltip = false"
                         @click="toggleTooltip"
                       >
                         <span
-                          class="flex lg:hidden bg-emerald-500 text-white w-7 h-7 rounded-full justify-center items-center cursor-pointer"
+                          class="flex bg-emerald-500 text-white w-8.5 h-8.5 rounded-[6px] justify-center items-center cursor-pointer"
                         >
                           <i class="fa-solid fa-check"></i>
                         </span>
@@ -349,16 +311,15 @@
                           v-show="showTooltip"
                           class="absolute z-50 top-10 mb-2 -translate-x-2/3 bg-card border border-accent text-accent text-xs px-2 py-1 rounded whitespace-nowrap"
                         >
-                          Sprint is active
+                          {{ sprintDetailData?.title }} is completed
                         </div>
                       </div>
                       </div>
                       <!-- End / Start Sprint Buttons -->
                       <!-- End Sprint Button -->
                       
-                      <div class="gap-2 hidden lg:flex">
-                        <!-- End Sprint Button -->
-                        <!-- {{ sprintDetailData }} -->
+                      <div class="gap-2 flex">
+                        <!-- End Sprint Button --> 
                         <div
                           v-if="sprintDetailData?.status === 'active'"
                           class="flex gap-2"
@@ -1056,12 +1017,9 @@ const {
   includeSprintCards,
   currentPage,
 );
+// Reset to page 1 whenever filters change (TanStack Query re-fetches via reactive queryKey)
 watch([selectedFilter, selectedSheetFilter, selectedPlanIds, sprintType], () => {
   currentPage.value = 1;
-  refetchBackLogList();
-});
-watch(currentPage, () => {
-  refetchBackLogList();
 });
 const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId);
 const visibleModules = computed(

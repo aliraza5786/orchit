@@ -162,12 +162,12 @@ export const useBacklogList = (
     queryKey: [
       "backlog-list", 
       workspaceId, 
-      unref(sprintType), 
-      unref(moduleId), 
-      unref(sheetId),
-      unref(sprintId),
-      unref(includeSprintCards),
-      unref(page)
+      sprintType, 
+      moduleId, 
+      sheetId,
+      sprintId,
+      includeSprintCards,
+      page
     ],
 
     queryFn: ({ signal }) =>

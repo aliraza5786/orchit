@@ -1,5 +1,5 @@
 <template>
-  <section class="h-full min-h-0 mt-2">
+  <section class="h-full min-h-0">
     <div
       class="rounded-lg flex flex-col h-full"
       :class="dropOverBacklog ? 'ring-2 ring-blue-400' : ''"
