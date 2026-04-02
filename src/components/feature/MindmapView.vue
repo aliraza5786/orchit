@@ -2444,41 +2444,101 @@ if (d === "logic-left") {
   return runY - y;
 }
 if (d === "fishbone") {
-  const spineY   = y + node.height / 2;
-  const spineLen = 500;
-  const branchLen= 180;
-  const topKids: MindNode[]    = [];
-  const bottomKids: MindNode[] = [];
-  node.children.forEach((c, i) => {
-    if (i % 2 === 0) topKids.push(c); else bottomKids.push(c);
-  });
-  const totalKids = Math.max(topKids.length, bottomKids.length);
-  const spacing   = totalKids > 0 ? spineLen / (totalKids + 1) : spineLen;
-
-  topKids.forEach((child, i) => {
-    const sx = x - spineLen + spacing * (i + 1);
-    child.width  = NODE_W[child.uniqueName] ?? 180;
-    child.height = nodeHeight(child);
-    child.x = sx - child.width / 2;
-    child.y = spineY - branchLen * 0.8 - child.height / 2;
-    nodeSides.set(child.id, "right");
-    nodeMap.set(child.id, child);
-    if (child.children?.length) layoutTree(child, child.x, child.y, "right");
-  });
-  bottomKids.forEach((child, i) => {
-    const sx = x - spineLen + spacing * (i + 1);
-    child.width  = NODE_W[child.uniqueName] ?? 180;
-    child.height = nodeHeight(child);
-    child.x = sx - child.width / 2;
-    child.y = spineY + branchLen * 0.6 - child.height / 2;
-    nodeSides.set(child.id, "right");
-    nodeMap.set(child.id, child);
-    if (child.children?.length) layoutTree(child, child.x, child.y, "right");
-  });
-  node.x = x;
-  node.y = y;
+  // Constants
+  const SPINE_STEP  = 240;  // horizontal spacing between list attach-points on spine
+  const BRANCH_H    = 150;  // vertical distance from spine-Y to list node centre
+  const CARD_GAP    = 12;   // vertical gap between cards stacked on a list branch
+  const LIST_TO_CARD_GAP = 20; // gap between list bottom/top and first card
+ 
+  // The root node data-structure is: root → sheets → lists → cards
+  // For fishbone we flatten: take first sheet's lists as the branches
+  // (if multiple sheets exist, merge all their lists into one set of branches)
+  const allLists: MindNode[] = [];
+  for (const sheet of node.children ?? []) {
+    for (const list of sheet.children ?? []) {
+      allLists.push(list);
+    }
+  }
+ 
+  const listCount   = allLists.length;
+  const spineLen    = (listCount + 1) * SPINE_STEP;
+  const spineY      = y;   // y IS the spine centre Y
+ 
+  // ── 1. Place ROOT at far RIGHT end of spine ──────────────────────────
+  node.width  = NODE_W[node.uniqueName] ?? 220;
+  node.height = nodeHeight(node);
+  node.x      = x + spineLen;
+  node.y      = spineY - node.height / 2;
   nodeMap.set(node.id, node);
-  return node.height + branchLen * 2;  // ← this MUST be inside the if block
+ 
+  // ── 2. Place SHEET(S) just left of root, centred on spine ────────────
+  //    Sheet acts as the neck between root and the spine branches
+  for (const sheet of node.children ?? []) {
+    sheet.width  = NODE_W[sheet.uniqueName] ?? 200;
+    sheet.height = nodeHeight(sheet);
+    sheet.x      = node.x - sheet.width - 24;   // just left of root
+    sheet.y      = spineY - sheet.height / 2;   // centred on spine
+    nodeSides.set(sheet.id, "right");
+    nodeMap.set(sheet.id, sheet);
+  }
+ 
+  // ── 3. Distribute LISTS along the spine, alternating above/below ─────
+  const topLists:    MindNode[] = [];
+  const bottomLists: MindNode[] = [];
+  allLists.forEach((list, i) => {
+    if (i % 2 === 0) topLists.push(list);
+    else             bottomLists.push(list);
+  });
+ 
+  // top lists — above spine, stacked from right to left (closest to root first)
+  topLists.forEach((list, i) => {
+    const attachX   = x + SPINE_STEP * (i + 1);
+    list.width      = NODE_W[list.uniqueName] ?? 180;
+    list.height     = nodeHeight(list);
+    list.x          = attachX - list.width / 2;
+    list.y          = spineY - BRANCH_H - list.height / 2;
+    nodeSides.set(list.id, "right");
+    nodeMap.set(list.id, list);
+ 
+    // Cards stack UPWARD from list top
+    const cards = list.children ?? [];
+    let nextCardBottom = list.y - LIST_TO_CARD_GAP;
+    cards.forEach((card) => {
+      card.width  = NODE_W[card.uniqueName] ?? 210;
+      card.height = nodeHeight(card);
+      card.x      = list.x + list.width / 2 - card.width / 2; // centred on list
+      card.y      = nextCardBottom - card.height;
+      nextCardBottom = card.y - CARD_GAP;
+      nodeSides.set(card.id, "right");
+      nodeMap.set(card.id, card);
+    });
+  });
+ 
+  // bottom lists — below spine
+  bottomLists.forEach((list, i) => {
+    const attachX   = x + SPINE_STEP * (i + 1);
+    list.width      = NODE_W[list.uniqueName] ?? 180;
+    list.height     = nodeHeight(list);
+    list.x          = attachX - list.width / 2;
+    list.y          = spineY + BRANCH_H - list.height / 2;
+    nodeSides.set(list.id, "right");
+    nodeMap.set(list.id, list);
+ 
+    // Cards stack DOWNWARD from list bottom
+    const cards = list.children ?? [];
+    let nextCardTop = list.y + list.height + LIST_TO_CARD_GAP;
+    cards.forEach((card) => {
+      card.width  = NODE_W[card.uniqueName] ?? 210;
+      card.height = nodeHeight(card);
+      card.x      = list.x + list.width / 2 - card.width / 2;
+      card.y      = nextCardTop;
+      nextCardTop = card.y + card.height + CARD_GAP;
+      nodeSides.set(card.id, "right");
+      nodeMap.set(card.id, card);
+    });
+  });
+ 
+  return spineLen + node.width;
 }
 
 // ── Org Chart layout (top-down with straight elbow connectors) ────────
@@ -2608,77 +2668,107 @@ if (d === "timeline") {
   return cursorX - x;
 }
 if (d === "tree-map") {
-  const COLS        = 3;
-  const TILE_W      = 220;
-  const TILE_PAD_X  = 20;
-  const TILE_PAD_Y  = 20;
-  const TILE_INNER  = 10;
-  const HDR_H       = 36;
-  const LIST_H      = 26;
-  const LIST_GAP    = 4;
-  const MAX_LISTS   = 5;
-
+  const COLS       = 3;
+  const TILE_W     = 240;
+  const TILE_PAD_X = 20;
+  const TILE_PAD_Y = 24;
+  const TILE_INNER = 10;
+  const HDR_H      = 40;   // sheet header height
+  const LIST_H     = 28;   // list row height
+  const LIST_GAP   = 4;
+  const CARD_H     = 60;   // card height inside tile
+  const CARD_GAP   = 4;
+  const CARD_INDENT = 8;   // indent cards under list
+ 
   node.width  = NODE_W[node.uniqueName] ?? 220;
   node.height = nodeHeight(node);
   node.x      = x;
   node.y      = y;
   nodeMap.set(node.id, node);
-
+ 
   const startX = x;
   const startY = y + node.height + TILE_PAD_Y * 2;
-
-  const TILE_H = HDR_H + TILE_INNER + MAX_LISTS * (LIST_H + LIST_GAP) + TILE_INNER;
-
+ 
+  // Pass 1: compute each tile's natural height based on its content
+  const tileHeights: number[] = node.children.map((sheet) => {
+    const lists = sheet.children ?? [];
+    let h = HDR_H + TILE_INNER;
+    for (const list of lists) {
+      h += LIST_H + LIST_GAP;
+      const cardCount = (list.children ?? []).length;
+      if (cardCount > 0) {
+        h += cardCount * (CARD_H + CARD_GAP) + TILE_INNER;
+      }
+    }
+    h += TILE_INNER; // bottom padding
+    return Math.max(h, 120);
+  });
+ 
+  // Pass 2: lay out every sheet, list, and card
   for (let i = 0; i < node.children.length; i++) {
     const sheet = node.children[i];
     const col   = i % COLS;
     const row   = Math.floor(i / COLS);
-
+ 
+    // Row height = tallest tile in this row (so tiles align horizontally)
+    const rowStart = row * COLS;
+    const rowEnd   = Math.min(rowStart + COLS, node.children.length);
+    const rowH     = Math.max(...tileHeights.slice(rowStart, rowEnd));
+ 
+    // Cumulative Y: sum all previous row heights
+    let tileY = startY;
+    for (let r = 0; r < row; r++) {
+      const rStart = r * COLS;
+      const rEnd   = Math.min(rStart + COLS, node.children.length);
+      const rH     = Math.max(...tileHeights.slice(rStart, rEnd));
+      tileY += rH + TILE_PAD_Y;
+    }
+ 
     sheet.x      = startX + col * (TILE_W + TILE_PAD_X);
-    sheet.y      = startY + row * (TILE_H + TILE_PAD_Y);
+    sheet.y      = tileY;
     sheet.width  = TILE_W;
-    sheet.height = TILE_H;
+    sheet.height = rowH;
     nodeSides.set(sheet.id, "right");
     nodeMap.set(sheet.id, sheet);
-
-    const lists  = sheet.children ?? [];
-    const visible = Math.min(lists.length, MAX_LISTS);
-    let listY    = sheet.y + HDR_H + TILE_INNER;
-
-    for (let j = 0; j < lists.length; j++) {
-      const list  = lists[j];
+ 
+    const lists = sheet.children ?? [];
+    let curY    = sheet.y + HDR_H + TILE_INNER;
+ 
+    for (const list of lists) {
+      // List row — full tile width minus padding
       list.width  = TILE_W - TILE_INNER * 2;
       list.height = LIST_H;
-
-      if (j < visible) {
-        list.x = sheet.x + TILE_INNER;
-        list.y = listY;
-        listY += LIST_H + LIST_GAP;
-      } else {
-        // Park hidden lists directly behind their sheet (same coords, zero size — still registered but invisible)
-        list.x = sheet.x;
-        list.y = sheet.y;
-        list.width  = 0;
-        list.height = 0;
-      }
-
+      list.x      = sheet.x + TILE_INNER;
+      list.y      = curY;
+      curY       += LIST_H + LIST_GAP;
       nodeSides.set(list.id, "right");
       nodeMap.set(list.id, list);
-
-      // All cards hidden inside the sheet tile (zero size, parked at sheet position)
-      for (const card of list.children ?? []) {
-        card.x      = sheet.x;
-        card.y      = sheet.y;
-        card.width  = 0;
-        card.height = 0;
+ 
+      // Cards — indented under each list
+      const cards = list.children ?? [];
+      for (const card of cards) {
+        card.width  = TILE_W - TILE_INNER * 2 - CARD_INDENT;
+        card.height = CARD_H;
+        card.x      = sheet.x + TILE_INNER + CARD_INDENT;
+        card.y      = curY;
+        curY       += CARD_H + CARD_GAP;
         nodeSides.set(card.id, "right");
         nodeMap.set(card.id, card);
       }
+      if (cards.length > 0) curY += TILE_INNER; // gap after card group
     }
   }
-
+ 
+  // Return total bounding height
   const totalRows = Math.ceil(node.children.length / COLS);
-  return startY - y + totalRows * (TILE_H + TILE_PAD_Y);
+  let totalH = startY - y;
+  for (let r = 0; r < totalRows; r++) {
+    const rStart = r * COLS;
+    const rEnd   = Math.min(rStart + COLS, node.children.length);
+    const rH     = Math.max(...tileHeights.slice(rStart, rEnd));
+    totalH += rH + TILE_PAD_Y;
+  }
+  return totalH;
 }
   // ── Left / Right layout (default) ────────────────────────────────────
   let childY = y;
@@ -2720,7 +2810,7 @@ function setLayout(dir: LayoutDirection) {
     case "logic-right":
     case "logic-left":
       startX=2500-NODE_W.root/2; startY=1500; break;
-    case "fishbone": startX=3500; startY=1500; break;
+    case "fishbone": startX=300; startY=1400; break;
     case "org-chart": startX=2000; startY=200; break;
     case "timeline": startX=200; startY=1000; break;
     case "tree-map": startX=400; startY=400; break;
@@ -2942,10 +3032,17 @@ const visibleEdges = computed<Edge[]>(() => {
       let path = "";
 
       if (dir === "tree-map") {
-        // Only root→sheet connector; skip lists/cards (zero-size, hidden)
-        if (node.uniqueName !== "root") continue;
+        // Skip zero-size (hidden) nodes
         if (child.width === 0 || child.height === 0) continue;
-        path = `M ${nMidX} ${nBottom} L ${child.x + 20} ${child.y}`;
+        if (node.uniqueName === "root") {
+          // Curved line from root bottom → sheet tile top
+          const tx = child.x + 20;
+          const ty = child.y;
+          path = `M ${nMidX} ${nBottom} C ${nMidX} ${ty - 30} ${tx} ${ty - 30} ${tx} ${ty}`;
+        } else {
+          // No SVG edges inside the tile — lists/cards are implicit by position
+          continue;
+        }
       } else if (dir === "logic-right") {
         const bracketX = nRight + 30;
         path = `M ${nRight} ${nMidY} L ${bracketX} ${nMidY} L ${bracketX} ${cMidY} L ${cLeft} ${cMidY}`;
@@ -2953,12 +3050,33 @@ const visibleEdges = computed<Edge[]>(() => {
         const bracketX = nLeft - 30;
         path = `M ${nLeft} ${nMidY} L ${bracketX} ${nMidY} L ${bracketX} ${cMidY} L ${cRight} ${cMidY}`;
       } else if (dir === "fishbone") {
-        const spineY = node.y + node.height / 2;
-        const isAbove = child.y + child.height < spineY;
-        const cEdgeY = isAbove ? cBottom : cTop;
-        // Diagonal from spine to child bottom/top edge
-        path = `M ${cMidX} ${spineY} L ${cMidX} ${cEdgeY}`;
-      } else if (dir === "timeline") {
+        const rootNode = nodeMap.get(rootNodeId.value);
+        if (!rootNode) continue;
+        const spineY = rootNode.y + rootNode.height / 2;
+ 
+        if (node.uniqueName === "root") {
+          // Root → Sheet: horizontal line along spine from root left-edge to sheet right-edge
+          path = `M ${nLeft} ${spineY} L ${cRight} ${spineY}`;
+ 
+        } else if (node.uniqueName === "sheet") {
+          // Sheet → List: diagonal line from spine (at list's attach X) to list near-edge
+          // The attach point on the spine is directly above/below the list centre
+          const isAbove  = cMidY < spineY;
+          const attachX  = cMidX;                      // list centre X = attach X on spine
+          const toY      = isAbove ? cBottom : cTop;   // nearest edge of list node
+          path = `M ${attachX} ${spineY} L ${attachX} ${toY}`;
+ 
+        } else if (node.uniqueName === "List") {
+          // List → Card: straight vertical line between closest edges
+          const isAbove  = cMidY < nMidY;
+          const fromY    = isAbove ? nTop    : nBottom;
+          const toY      = isAbove ? cBottom : cTop;
+          path = `M ${nMidX} ${fromY} L ${cMidX} ${toY}`;
+ 
+        } else {
+          continue;
+        }
+      }else if (dir === "timeline") {
         const spineY = node.y + node.height / 2;
         if (node.uniqueName === "root") {
           // Horizontal spine line: root right edge → sheet left edge, both on spine Y
@@ -3044,7 +3162,7 @@ watchEffect(() => {
   else if (dir === "top") { startX = 2000; }
   else if (dir === "bottom") { startX = 2000; startY = 3000; }
   else if (dir === "logic-right" || dir === "logic-left") { startX = 2500 - NODE_W.root / 2; startY = 1500; }
-  else if (dir === "fishbone") { startX = 3500; startY = 1500; }
+  else if (dir === "fishbone") { startX = 300; startY = 1400; }
   else if (dir === "org-chart") { startX = 2000; startY = 200; }
   else if (dir === "timeline") { startX = 200; startY = 1000; }
   else if (dir === "tree-map") { startX = 400; startY = 400; }
@@ -3065,37 +3183,45 @@ function nodeInlineStyle(node: MindNode): Record<string, string> {
     height: `${node.height}px`,
   };
 
-  // Tree-map tile: sheet acts as a container tile, list rows sit inside it
   if (isTreeMap.value && node.uniqueName === "sheet") {
     base.borderRadius = "10px";
     base.border = "1.5px solid #b8a8e8";
     base.background = "var(--mm-node-sheet-bg, #ede9fb)";
-    base.overflow = "hidden";
-    base.display = "flex";
-    base.flexDirection = "column";
+    base.overflow = "visible"; // must be visible so cards aren't clipped
+    base.display = "block";
     base.padding = "0";
+    base.boxSizing = "border-box";
     return base;
   }
-
-  // Tree-map tile: list rows are compact inline rows, no independent card look
+ 
   if (isTreeMap.value && node.uniqueName === "List") {
+    if (node.width === 0) {
+      base.display = "none";
+      base.pointerEvents = "none";
+      return base;
+    }
     base.borderRadius = "4px";
     base.border = "none";
-    base.background = "rgba(125,104,200,0.07)";
+    base.background = "rgba(125,104,200,0.10)";
     base.boxShadow = "none";
     base.overflow = "hidden";
+    base.display = "flex";
+    base.alignItems = "center";
+    base.padding = "0 8px";
     return base;
   }
-
-  // Tree-map: hide cards and overflow lists (zero size)
-  if (isTreeMap.value && node.uniqueName === "card" && node.width === 0) {
-    base.display = "none";
-    base.pointerEvents = "none";
-    return base;
-  }
-  if (isTreeMap.value && node.uniqueName === "List" && node.width === 0) {
-    base.display = "none";
-    base.pointerEvents = "none";
+ 
+  if (isTreeMap.value && node.uniqueName === "card") {
+    if (node.width === 0) {
+      base.display = "none";
+      base.pointerEvents = "none";
+      return base;
+    }
+    base.borderRadius = "6px";
+    base.border = "1px solid #c4b8f0";
+    base.background = "var(--mm-node-card-bg, #ffffff)";
+    base.boxShadow = "0 1px 3px rgba(0,0,0,0.07)";
+    base.overflow = "hidden";
     return base;
   }
 
