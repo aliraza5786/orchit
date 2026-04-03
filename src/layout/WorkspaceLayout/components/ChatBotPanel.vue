@@ -1363,6 +1363,7 @@ async function acceptChanges(payload: any) {
     await queryClient.invalidateQueries({
       queryKey: keys.sheets(moduleId.value, workspaceId.value),
     });
+    await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
     showAIPreview.value = false;
     toast.success("Entities has been accepted and applied to workspace");
   } catch (error) {

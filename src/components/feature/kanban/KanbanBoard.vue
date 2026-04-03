@@ -85,6 +85,7 @@ const props = withDefaults(defineProps<{
   variable_id: string
   sheet_id: string
   plusIcon?:boolean
+  sprint_id?: string
 }>(), {plusIcon:true})
 
 const emit = defineEmits<{

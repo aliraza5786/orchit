@@ -104,8 +104,25 @@
       </div>
     </div>
 
-    <KanbanSkeleton v-if="isLoading" />
-
+   <KanbanSkeleton v-if="isLoading && currentView !== 'mindmap' && currentView !== 'table'" />
+   <div
+  v-else-if="isLoading && currentView === 'table'"
+  class="flex flex-1 items-center justify-center"
+>
+  <div class="flex flex-col items-center gap-3 text-text-secondary">
+    <i class="fa-solid fa-align-left text-2xl animate-pulse text-accent"></i>
+    <span class="text-sm animate-pulse">Loading table...</span>
+  </div>
+</div>
+   <div
+  v-else-if="isLoading && currentView === 'mindmap'"
+  class="flex flex-1 items-center justify-center"
+>
+  <div class="flex flex-col items-center gap-3 text-text-secondary">
+    <i class="fa-solid fa-chart-diagram text-2xl animate-pulse text-accent"></i>
+    <span class="text-sm animate-pulse">Loading mindmap...</span>
+  </div>
+</div>
     <div v-else class="flex flex-col flex-1 overflow-hidden px-4">
       <template v-if="currentView === 'kanban'">
         <!-- AGENTS KANBAN -->
