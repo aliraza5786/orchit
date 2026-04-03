@@ -9,12 +9,23 @@
       @dragenter="onDragEnterSprint"
       @dragleave="onDragLeaveSprint"
       @drop="onDropSprint"
-      class="h-full box-border mt-3"
+      class="h-full box-border relative"
     >
+      <!-- Loading Overlay -->
+      <div
+        v-if="isMoving"
+        class="absolute inset-0 bg-bg-card/50 backdrop-blur-[1px] z-50 flex items-center justify-center rounded-lg"
+      >
+        <div
+          role="status"
+          aria-label="Loading"
+          class="h-8 w-8 rounded-full border-4 border-accent border-t-transparent animate-spin"
+        ></div>
+      </div>
       <!-- Tickets List -->
       <div
         v-if="filteredTickets.length > 0 && sprint"
-        class="overflow-y-auto h-[calc(100%-50px)] tickets-scroll"
+        class="overflow-y-auto h-[calc(100%-15px)] tickets-scroll"
       >
         <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1">
           <div
@@ -106,7 +117,7 @@
       <!-- Empty State -->
       <div
         v-else
-        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-50px)] min-h-0"
+        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-15px)] min-h-0"
       >
         <img
           src="../../../assets/emptyStates/sprint-plan.svg"
@@ -135,6 +146,8 @@ import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
 import { avatarColor } from '../../../utilities/avatarColor';
 import { useTheme } from "../../../composables/useTheme";
+import { useQueryClient } from "@tanstack/vue-query";
+
 const { isDark } = useTheme(); 
 const props = defineProps<{
   sprint: Sprint | null;
@@ -204,13 +217,31 @@ const filteredTickets = computed(() => {
 // Drag & Drop
 const dropOverSprint = ref(false);
 const draggedTicketIds = ref<string[]>([]);
-const { mutate: moveCardApi } = useMoveCard({
-  onSuccess: () => {
-    toast.success("Card moved to sprint successfully");
+const queryClient = useQueryClient();
+// WITH
+type MoveCardVars = {
+  id: string;
+  payload: {
+    card_ids: string[];
+    priority: string;
+    story_points: number;
+  };
+};
+
+const { mutate: moveCardApi, isPending: isMoving } = useMoveCard({
+  onSuccess: async (_data: unknown, vars: MoveCardVars) => {
+    const count = vars.payload?.card_ids?.length || 1;
+      queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-detail", props.sprintId] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
+      toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
+
     emit("refresh");
   },
-  onError: (error: any) => {
-    toast.error("Failed to move card: " + (error.message || "Unknown error"));
+  onError: (error: unknown) => {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    toast.error("Failed to move card: " + message);
   },
 });
 
@@ -289,15 +320,17 @@ function onDropSprint(e: DragEvent) {
     if (!deduped.length) return;
     sprintTickets.value.push(...deduped);
 
-    deduped.forEach((ticket) => {
-      moveCardApi({
-        id: props.sprintId,
-        payload: {
-          card_ids: [ticket.id],
-          priority: (ticket.priority || "Medium").toLowerCase(),
-          story_points: ticket.storyPoints || 0,
-        },
-      });
+    const cardIds = deduped.map((t) => t.id);
+    const totalPoints = deduped.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+    const topPriority = deduped[0]?.priority?.toLowerCase() || "medium";
+
+    moveCardApi({
+      id: props.sprintId,
+      payload: {
+        card_ids: cardIds,
+        priority: topPriority,
+        story_points: totalPoints,
+      },
     });
   } catch (error) {
     console.error("Drop error:", error);

@@ -1,63 +1,26 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="md" :title="`Add New ${formattedLabel}`">
+  <BaseModal v-model="isOpen" modalClass="!py-0" size="md" :title="sprint ? `Edit ${formattedLabel}` : `Add New ${formattedLabel}`">
     
     <div class="px-6 gap-4 bg-bg-input pt-5 pb-8">
       <!-- Name (required) -->
       <BaseTextField
         class="rounded-1"
         v-model="form.name"
-        label="Name"
+        :label="`${formattedLabel} name`"
         :placeholder="lable"
         :error="!!nameError"
         :message="nameError"
         @blur="touched.name = true"
       />
  
-      <!-- Extra Fields Based on Type -->
-      <!-- Milestone: Number of Sprints -->
-      <div v-if="form.sprintType === 'milestone'" class="flex flex-col mt-3">
-        <BaseSelectField
-          v-model="form.num_sprints"
-          :options="[
-            { _id: 1, title: '1' },
-            { _id: 2, title: '2' },
-            { _id: 3, title: '3' },
-            { _id: 4, title: '4' },
-            { _id: null, title: 'More' }
-          ]"
-          label="Number of Sprints"
-          placeholder="Select number of sprints"
-        />
-      </div>
-
-      <!-- Sprint: Parent Milestone -->
-      <div v-if="form.sprintType === 'sprint'" class="flex flex-col mt-3">
-        <BaseSelectField
-          v-model="form.parent_sprint_id"
-          :options="milestoneOptions"
-          label="Select Milestone"
-          placeholder="Choose milestone"
-          :disabled="milestoneOptions.length <= 1"
-        />
-      </div>
-
-      <!-- Huddle: Parent Sprint -->
-      <div v-if="form.sprintType === 'huddle'" class="flex flex-col mt-3">
-        <BaseSelectField
-          v-model="form.parent_sprint_id"
-          :options="sprintOptionsList"
-          label="Select Sprint"
-          placeholder="Choose sprint"
-          :disabled="sprintOptionsList.length <= 1"
-        />
-      </div>
+     
 
       <!-- Duration -->
       <div class="mt-3">
         <BaseSelectField
           v-model="form.duration"
           :options="durationOptions"
-          label="Duration"
+          :label="`${formattedLabel} duration`"
           placeholder="Select duration"
         />
       </div>
@@ -66,7 +29,7 @@
       <div class="grid grid-cols-2 gap-4 mt-3">
         <!-- Start date -->
         <div class="flex gap-1 flex-col">
-          <label class="text-sm font-medium">Start date</label>
+          <label class="text-sm font-medium">{{ formattedLabel }} start date</label>
           <div
             class="border relative flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
           >
@@ -83,7 +46,7 @@
 
         <!-- End date -->
         <div class="flex gap-1 flex-col">
-          <label class="text-sm font-medium">End date</label>
+          <label class="text-sm font-medium">{{ formattedLabel }} end date</label>
           <div
             class="border relative flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
           >
@@ -106,6 +69,50 @@
           </div>
         </div>
       </div>
+
+       <!-- Checkbox for Optional Fields -->
+      <Checkbox 
+        v-if="form.sprintType === 'milestone' || form.sprintType === 'sprint' || form.sprintType === 'huddle'"
+        :checked="form.showOptionalFields"
+        @change="form.showOptionalFields = !form.showOptionalFields"
+        :label="checkboxLabel"
+        class="mt-4"
+      />
+
+      <!-- Extra Fields Based on Type -->
+      <template v-if="form.showOptionalFields">
+        <!-- Milestone: Number of Sprints -->
+        <div v-if="form.sprintType === 'milestone'" class="flex flex-col mt-3">
+          <BaseSelectField
+            v-model="form.num_sprints"
+            :options="Array.from({ length: 10 }, (_, i) => ({ _id: i + 1, title: (i + 1).toString() }))"
+            label="Number of Sprints"
+            placeholder="Select number of sprints"
+          />
+        </div>
+
+        <!-- Sprint: Parent Milestone -->
+        <div v-if="form.sprintType === 'sprint'" class="flex flex-col mt-3">
+          <BaseSelectField
+            v-model="form.parent_sprint_id"
+            :options="milestoneOptions"
+            label="Select Milestone"
+            placeholder="Choose milestone"
+            :disabled="milestoneOptions.length <= 1"
+          />
+        </div>
+
+        <!-- Huddle: Parent Sprint -->
+        <div v-if="form.sprintType === 'huddle'" class="flex flex-col mt-3">
+          <BaseSelectField
+            v-model="form.parent_sprint_id"
+            :options="sprintOptionsList"
+            label="Select Sprint"
+            placeholder="Choose sprint"
+            :disabled="sprintOptionsList.length <= 1"
+          />
+        </div>
+      </template>
 
       <!-- Goal -->
       <div class="mt-3">
@@ -147,9 +154,8 @@ import Button from "../../../components/ui/Button.vue";
 import type { Sprint } from "../composables/useBacklogStore";
 import BaseTextAreaField from "../../../components/ui/BaseTextAreaField.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
-import DatePicker from "../../Product/components/DatePicker.vue";
-import { useWorkspaceId } from "../../../composables/useQueryParams";
-import { useGroupedSprints } from "../../../queries/usePlan";
+import Checkbox from "../../../components/ui/Checkbox.vue";
+import DatePicker from "../../Product/components/DatePicker.vue"; 
 
 /** Emits */
 const emit = defineEmits<{
@@ -165,7 +171,9 @@ const props = withDefaults(
     lable: string;
     sprint: Sprint;
     creatingSprint: boolean;
-    sprints:any
+    sprints: any; // For default name calculation
+    milestoneOptionsList?: any[];
+    sprintOptionsListItems?: any[];
   }>(),
   { modelValue: false }
 );
@@ -190,15 +198,13 @@ const form = reactive<any>({
   goal: "",
   num_sprints: null,
   parent_sprint_id: null,
+  showOptionalFields: false,
 });
-
-const { workspaceId } = useWorkspaceId();
-const { data: groupedSprints } = useGroupedSprints(workspaceId);
-
+ 
 const milestoneOptions = computed(() => {
   const milestones = [
     { _id: null, title: "None" },
-    ...(groupedSprints.value?.grouped?.milestone || []).map((m: any) => ({
+    ...(props.milestoneOptionsList || []).map((m: any) => ({
       _id: m._id,
       title: m.title
     }))
@@ -209,12 +215,19 @@ const milestoneOptions = computed(() => {
 const sprintOptionsList = computed(() => {
   const sprints = [
     { _id: null, title: "None" },
-    ...(groupedSprints.value?.grouped?.sprint || []).map((s: any) => ({
+    ...(props.sprintOptionsListItems || []).map((s: any) => ({
       _id: s._id,
       title: s.title
     }))
   ];
   return sprints;
+}); 
+
+const checkboxLabel = computed(() => {
+  if (form.sprintType === 'milestone') return "Do you want to add sprints in milestone";
+  if (form.sprintType === 'sprint') return "Do you want to select a milestone for this sprint?";
+  if (form.sprintType === 'huddle') return "Do you want to select a sprint for this huddle?";
+  return "";
 });
 
 const durationOptions = computed(() => {
@@ -322,15 +335,20 @@ function save() {
   touched.name = true;
 
   if (!isValid.value) return;
+  
+  // Reset values if checkbox not checked
+  const finalNumSprints = form.showOptionalFields && form.sprintType === 'milestone' ? form.num_sprints : null;
+  const finalParentId = form.showOptionalFields && (form.sprintType === 'sprint' || form.sprintType === 'huddle') ? form.parent_sprint_id : null;
+
   emit("save", {
     name: String(form.name || "").trim(),
-    value: String(props.lable || "").trim(),
+    value: String(form.sprintType || props.lable || "").trim(),
     duration: form.duration ? String(form.duration) : null,
     start: form.start,
     end: form.end,
     goal: form.goal,
-    num_sprints: form.num_sprints,
-    parent_sprint_id: form.parent_sprint_id,
+    num_sprints: finalNumSprints,
+    parent_sprint_id: finalParentId,
   });
 }
 
@@ -340,35 +358,6 @@ function resetTouched() {
   touched.sprintType = false;
   touched.description = false;
 }
-watch(
-  () => props.sprint,
-  (s: any) => {
-    if (!s) {
-      form.name = "";
-      form.sprintType = null;
-      form.description = "";
-      form.duration = null;
-      form.start = new Date().toISOString().slice(0, 10);
-      form.end = "";
-      form.goal = "";
-      form.num_sprints = null;
-      form.parent_sprint_id = null;
-      return;
-    }
-    form.name = s.title || s.name || "";
-    form.description = s.description || "";
-    form.sprintType = s.sprintType || null;
-    form.duration = s.duration ? Number(s.duration) : null;
-    form.start = s.start ? s.start.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    form.end = s.end ? s.end.slice(0, 10) : "";
-    form.goal = s.goal || "";
-    form.num_sprints = s.num_sprints || null;
-    form.parent_sprint_id = s.parent_sprint_id || null;
-    resetTouched();
-  },
-  { immediate: true }
-);
-
 // sprint types options
 const sprintTypes = [
   { title: "Milestone", _id: "milestone", dot: "#2e9bda" },
@@ -377,11 +366,88 @@ const sprintTypes = [
 ];
 
 const sprintTypeOptions = computed(() => sprintTypes.map((t) => ({ ...t })));
+
+function applyDefaultFields(type: string) {
+  const lowerLabel = type.toLowerCase();
+  
+  // Reset defaults
+  form.num_sprints = null;
+  form.parent_sprint_id = null;
+  form.showOptionalFields = false;
+
+  if (lowerLabel === 'sprint' && milestoneOptions.value.length > 1) {
+    // We don't pre-set parent_sprint_id anymore based on user feedback
+    form.duration = 7; // Default 1 week
+  } else if (lowerLabel === 'huddle' && sprintOptionsList.value.length > 1) {
+    form.duration = 1; // Default 1 day
+  } else if (lowerLabel === 'milestone') {
+    form.duration = 14; // Default 2 weeks
+  }
+}
+
+watch(
+  () => props.sprint,
+  (s: any) => {
+    if (!s) {
+      form.name = "";
+      const lowerLabel = props.lable?.toLowerCase() || "";
+      const match = sprintTypes.find(
+        (o) => o._id === lowerLabel || o.title.toLowerCase() === lowerLabel
+      );
+      form.sprintType = match?._id ?? null;
+      form.description = "";
+      form.duration = null;
+      form.start = new Date().toISOString().slice(0, 10);
+      form.end = "";
+      form.goal = "";
+      form.num_sprints = null;
+      form.parent_sprint_id = null;
+      form.showOptionalFields = false;
+      
+      if (form.sprintType) {
+        applyDefaultFields(form.sprintType);
+      }
+      return;
+    }
+    form.name = s.title || s.name || "";
+    form.description = s.description || "";
+    form.sprintType = s.sprintType || null;
+    form.duration = s.duration ? Number(s.duration) : null;
+    const startDate = s.start || s.start_date || "";
+    const endDate = s.end || s.end_date || "";
+    form.start = startDate ? startDate.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    form.end = endDate ? endDate.slice(0, 10) : "";
+    form.goal = s.goal || "";
+    form.num_sprints = s.num_sprints || null;
+    form.parent_sprint_id = s.parent_sprint_id || null;
+    form.showOptionalFields = !!(s.num_sprints || s.parent_sprint_id);
+    resetTouched();
+  },
+  { immediate: true }
+);
+
+// Watch showOptionalFields to pre-fill if turned on
+watch(
+  () => form.showOptionalFields,
+  (val) => {
+    if (val && !props.sprint) {
+       if (form.sprintType === 'milestone') {
+         form.num_sprints = 4;
+       } else if (form.sprintType === 'sprint' && milestoneOptions.value.length > 1) {
+         form.parent_sprint_id = milestoneOptions.value[1]._id;
+       } else if (form.sprintType === 'huddle' && sprintOptionsList.value.length > 1) {
+         form.parent_sprint_id = sprintOptionsList.value[1]._id;
+       }
+    }
+  }
+)
+
+
 // Watch label changes and auto-select
 watch(
   () => props.lable,
   (newLabel) => {
-    if (!newLabel) return;
+    if (!newLabel || props.sprint) return;
     const lowerLabel = newLabel.toLowerCase();
 
     // Reset form fields that depend on type
@@ -401,16 +467,7 @@ watch(
 
     // Default parents and num_sprints for NEW items
     if (!props.sprint) {
-      if (lowerLabel === 'sprint' && milestoneOptions.value.length > 1) {
-        form.parent_sprint_id = milestoneOptions.value[1]._id;
-        form.duration = 7; // Default 1 week
-      } else if (lowerLabel === 'huddle' && sprintOptionsList.value.length > 1) {
-        form.parent_sprint_id = sprintOptionsList.value[1]._id;
-        form.duration = 1; // Default 1 day
-      } else if (lowerLabel === 'milestone') {
-        form.num_sprints = 4;
-        form.duration = 14; // Default 2 weeks
-      }
+      applyDefaultFields(lowerLabel);
     }
   },
   { immediate: true }

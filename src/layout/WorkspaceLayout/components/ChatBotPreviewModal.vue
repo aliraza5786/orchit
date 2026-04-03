@@ -1,6 +1,7 @@
 <template>
   <div class="w-full h-full flex items-center justify-center">
     <div class="w-full h-[85vh] flex flex-col">
+      <!-- {{ sheetsPreview}}  -->
       <!-- Header -->
       <div
         class="px-3 py-1.5 border-b border-border flex flex-col justify-between flex-shrink-0"
@@ -19,6 +20,7 @@
       <div
   class="flex-1 py-5 px-3 space-y-4 overflow-y-auto overflow-x-auto"
 >
+
         <!-- ================= READ ACTION ================= -->
         <template v-if="isReadAction">
   <div class="flex flex-wrap gap-4">
@@ -153,6 +155,7 @@
           />
           <div class="space-y-4 mt-4" v-if="sheetsPreview?.length">
             <!-- SHEET -->
+             <!-- {{ sheetsPreview}} -->
             <div
               v-for="sheet in sheetsPreview"
               :key="sheet.variables['sheet-title']"
@@ -212,23 +215,22 @@
                     v-for="card in groupedCards[sheet.variables['sheet-title']]"
                     :key="card.variables['card-code']"
                     class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[32%]"
-                    :class="{
-                      'ring-2 ring-accent': selectedCards?.includes(
-                        card.variables['card-code'],
-                      ),
-                    }"
+                    :class="{ 'ring-2 ring-accent': selectedCards?.includes(card._id) }"
+                      @click="toggleCard(card._id)"
+                      :checked="selectedCards?.includes(card._id)"
+                      @change.stop="toggleCard(card._id)"
                   >
                     <div
                       class="flex justify-between items-start gap-3 cursor-pointer"
-                      @click="toggleCard(card.variables['card-code'])"
+                      @click="toggleCard(card?._id)"
                     >
                       <input
                         type="checkbox"
                         class="mt-1"
                         :checked="
-                          selectedCards?.includes(card.variables['card-code'])
+                          selectedCards?.includes(card.variables['_id'])
                         "
-                        @change.stop="toggleCard(card.variables['card-code'])"
+                        @change.stop="toggleCard(card.variables['_id'])"
                       />
 
                       <div class="flex-1 space-y-2">
@@ -277,16 +279,32 @@
         </button>
 
         <button
-          class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50"
-          :disabled="
-            isReadAction
-              ? !selectedReadCards.length
-              : !selectedItems.length && !selectedCards.length
-          "
-          @click="acceptChanges"
-        >
-          {{ isReadAction ? "Add Selected Cards" : "Accept Changes" }}
-        </button>
+  class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
+  :disabled="
+    agentStore.isAcceptingEntities ||
+    (isReadAction
+      ? !selectedReadCards.length
+      : !selectedItems.length && !selectedCards.length)
+  "
+  @click="acceptChanges"
+>
+  <!-- Spinner -->
+  <span
+    v-if="agentStore.isAcceptingEntities"
+    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+  ></span>
+
+  <!-- Text -->
+  <span>
+    {{
+      agentStore.isAcceptingEntities
+        ? "Processing..."
+        : isReadAction
+        ? "Add Selected Cards"
+        : "Accept Changes"
+    }}
+  </span>
+</button>
       </div>
     </div>
   </div>
@@ -302,51 +320,43 @@ import { usePermissions } from "../../../composables/usePermissions";
 import { useMoveCard } from "../../../queries/useSheets";
 import DatePicker from "../../../views/Product/components/DatePicker.vue";
 import { useQueryClient } from "@tanstack/vue-query";
-import { useHead } from '@vueuse/head'
+import { useHead } from "@vueuse/head";
 import { useAgentStore } from "../../../stores/agentStore";
+
 const { canDeleteCard, canAssignCard, canViewCard } = usePermissions();
+
 const props = defineProps({
   modelValue: Boolean,
   title: String,
   data: Array,
 });
-console.log("props data", props.data);
 
-const queryClient = useQueryClient()
-const preserveLog = ref(false)
+const queryClient = useQueryClient();
+const preserveLog = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
 const agentStore = useAgentStore();
 const emit = defineEmits(["update:modelValue", "accept", "decline"]);
+
 const moveCard = useMoveCard({
   onSuccess: () => {
-
     queryClient.invalidateQueries({
       predicate: (query) =>
-        [
-          'people-lists',
-          'get-sheets',
-          'sheet-list',
-          'cards',
-          'lanes'
-        ].includes(query.queryKey[0])
-    })
-
-  }
-})
+        ["people-lists", "get-sheets", "sheet-list", "cards", "lanes"].includes(
+          query.queryKey[0]
+        ),
+    });
+  },
+});
 
 const setDueDate = (date, id) => {
-    moveCard.mutate({
-        card_id: id,
-        variables: { 'end-date': date }
-    })
-}
-// Determine if this is a read action
-const isReadAction = computed(() => {
-  return props?.data?.[0]?.action === "read";
-});
-const ogData = computed(() => agentStore.ogTypesTicket)
+  moveCard.mutate({ card_id: id, variables: { "end-date": date } });
+};
+
+const isReadAction = computed(() => props?.data?.[0]?.action === "read");
+const ogData = computed(() => agentStore.ogTypesTicket);
 const { data: members } = useWorkspacesRoles(workspaceId.value);
-// For READ actions
+
+// ── READ ──────────────────────────────────────────────────────────────
 const fetchedItems = computed(() => {
   if (!isReadAction.value) return [];
   return props?.data?.[0]?.result?.items || [];
@@ -354,12 +364,11 @@ const fetchedItems = computed(() => {
 
 const selectedReadCards = ref([]);
 
-const selectAllRead = computed(() => {
-  return (
+const selectAllRead = computed(
+  () =>
     fetchedItems.value.length > 0 &&
     selectedReadCards.value.length === fetchedItems.value.length
-  );
-});
+);
 
 const toggleSelectAllRead = () => {
   if (selectAllRead.value) {
@@ -376,60 +385,58 @@ const toggleReadCard = (id) => {
     selectedReadCards.value.push(id);
   }
 };
-// Example computed for sheetsPreview
+
 const sheetsPreview = computed(() => {
   if (isReadAction.value) return [];
-
-  // Make sure listsData exists and is an array
-  const listsArray = Array.isArray(props.data) ? props.data : [];
-
-  return listsArray
-    .map(item => item.payload?.sheets || [])
-    .flat();
+  return (Array.isArray(props.data) ? props.data : [])
+    .flatMap((item) => item.payload?.sheets || [])
+    .filter((sheet) => sheet?.variables?.["sheet-title"]); // guard here
 });
 
-const cards = computed(() => {
+
+// ALL cards flat, each card has root-level _id and sheet_id
+const allCards = computed(() => {
   if (isReadAction.value) return [];
-
-  const listsArray = Array.isArray(props.data) ? props.data : [];
-
-  return listsArray
-    .map(item => item.payload?.sheets?.flatMap(sheet => sheet.items) || [])
-    .flat();
+  return (Array.isArray(props.data) ? props.data : [])
+    .flatMap((item) =>
+      item.payload?.sheets?.flatMap((sheet) => sheet.items || sheet.cards || []) ?? []
+    );
 });
-console.log("cards", cards);
 
-
-const selectedItems = ref([]);
-const selectedCards = ref([]);
+// Group cards by sheet using sheet_id — NOT index math
 const groupedCards = computed(() => {
-  if (!cards.value.length) return {};
-
   const result = {};
-  const sheetsCount = sheetsPreview.value?.length;
-  const cardsPerSheet = Math.ceil(cards.value.length / sheetsCount);
-
-  sheetsPreview.value.forEach((sheet, index) => {
-    const start = index * cardsPerSheet;
-    const end = start + cardsPerSheet;
-    result[sheet.variables["sheet-title"]] = cards.value.slice(start, end);
-  });
+  for (const sheet of sheetsPreview.value) {
+    result[sheet.variables["sheet-title"]] = allCards.value.filter(
+      (c) => c.sheet_id === sheet._id
+    );
+  }
   return result;
 });
 
-const getSheetCards = (sheetTitle) => {
-  return (
-    groupedCards.value?.[sheetTitle]?.map((c) => c.variables["card-code"]) || []
+// ── Selection state ───────────────────────────────────────────────────
+const selectedItems = ref([]);
+const selectedCards = ref([]); // stores root-level card._id strings
+
+// Returns root _id list for cards belonging to a sheet
+const getSheetCardIds = (sheetTitle) => {
+  const sheet = sheetsPreview.value.find(
+    (s) => s.variables["sheet-title"] === sheetTitle
   );
+  if (!sheet) return [];
+  return allCards.value
+    .filter((c) => c.sheet_id === sheet._id)
+    .map((c) => c._id);
 };
 
 const selectAll = computed(() => {
+  if (!sheetsPreview.value.length) return false;
   const allSheetsSelected =
-    selectedItems.value?.length === sheetsPreview.value?.length;
-  const allCardsSelected = selectedCards.value?.length === cards.value?.length;
-  return sheetsPreview.value?.length && cards.value?.length
-    ? allSheetsSelected && allCardsSelected
-    : allSheetsSelected;
+    selectedItems.value.length === sheetsPreview.value.length;
+  const allCardsSelected =
+    allCards.value.length === 0 ||
+    selectedCards.value.length === allCards.value.length;
+  return allSheetsSelected && allCardsSelected;
 });
 
 const toggleSelectAll = () => {
@@ -438,201 +445,168 @@ const toggleSelectAll = () => {
     selectedCards.value = [];
   } else {
     selectedItems.value = sheetsPreview.value.map(
-      (s) => s.variables["sheet-title"],
+      (s) => s.variables["sheet-title"]
     );
-    selectedCards.value = cards.value.map((c) => c.variables["card-code"]);
+    // KEY FIX: use root _id, not variables["_id"]
+    selectedCards.value = allCards.value.map((c) => c._id);
   }
 };
 
 const toggleItem = (sheetTitle) => {
-  const sheetCards = getSheetCards(sheetTitle);
+  const sheetCardIds = getSheetCardIds(sheetTitle);
   if (selectedItems.value.includes(sheetTitle)) {
     selectedItems.value = selectedItems.value.filter((s) => s !== sheetTitle);
     selectedCards.value = selectedCards.value.filter(
-      (c) => !sheetCards.includes(c),
+      (id) => !sheetCardIds.includes(id)
     );
   } else {
     selectedItems.value.push(sheetTitle);
-    sheetCards.forEach((code) => {
-      if (!selectedCards.value.includes(code)) selectedCards.value.push(code);
+    sheetCardIds.forEach((id) => {
+      if (!selectedCards.value.includes(id)) selectedCards.value.push(id);
     });
   }
 };
 
-const toggleCard = (code) => {
-  if (selectedCards.value.includes(code)) {
-    selectedCards.value = selectedCards.value.filter((c) => c !== code);
+const toggleCard = (id) => {
+  if (selectedCards.value.includes(id)) {
+    selectedCards.value = selectedCards.value.filter((c) => c !== id);
   } else {
-    selectedCards.value.push(code);
+    selectedCards.value.push(id);
   }
 };
 
+// ── Accept ────────────────────────────────────────────────────────────
 const acceptChanges = () => {
   if (isReadAction.value) {
-    // Handle READ action - emit selected cards WITH workspace_id
     const workspace_id = props.data?.[0]?.workspace_id || null;
     const selected = fetchedItems.value.filter((card) =>
-      selectedReadCards.value.includes(card.id || card._id),
+      selectedReadCards.value.includes(card.id || card._id)
     );
-    emit("accept", {
-      action: "read",
-      workspace_id,
-      cards: selected,
-    });
-  } else {
-    // Handle CREATE action - existing logic
-    const workspace_id = workspaceId.value || null;
-    const module = {
-      _id: moduleId.value || props.data?.[0]?._id,
-      variables: {
-        "module-title":
-          props.data?.[0]?.variables?.["module-title"] || "",
-        "module-description":
-          props.data?.[0]?.variables?.["module-description"] ||
-          "",
-      },
-      is_ai_generated: true,
-    };
-
-   const sheets = selectedItems.value
-  .map((sheetTitle) => {
-    const sheetObj = sheetsPreview.value.find(
-      (s) => s.variables["sheet-title"] === sheetTitle
-    );
-    if (!sheetObj) return null;
-
-    const sheetCardCodes = getSheetCards(sheetTitle);
-
-    const selectedCardsForSheet = cards.value
-      .filter(
-        (c) =>
-          sheetCardCodes.includes(c.variables["_id"]) &&
-          selectedCards.value.includes(c.variables["_id"])
-      )
-      .map((card) => {
-        const originalCard = props.data?.[0]?.payload?.cards?.find(
-          (c) => c.variables["_id"] === card.variables["_id"]
-        );
-
-        return {
-          _id: originalCard?._id || null,
-          variables: {
-            _id: card.variables["_id"],
-            "card-title": card.variables["card-title"],
-            "card-status": card.variables["card-status"],
-            "card-priority": card.variables["priority"],
-          },
-          seat_id: originalCard?.variables?.seat_id
-            ? [originalCard.variables.seat_id]
-            : [],
-          assigned_to: [],
-          workspace_lane_id:
-            originalCard?.variables?.workspace_lane_id || null,
-        };
-      });
-    return {
-      _id: sheetObj._id || null,
-      variables: {
-        "sheet-title": sheetObj.variables["sheet-title"],
-        "sheet-description": sheetObj.variables["sheet-description"],
-        "sheet-icon": sheetObj.variables["sheet-icon"],
-      },
-      cards: selectedCardsForSheet.length ? selectedCardsForSheet : [],
-    };
-  })
-  .filter(Boolean);
-    const payload = {
-      workspace_id,
-      module,
-      sheets,
-      ispined:preserveLog.value
-    };
-    emit("accept", payload);
+    emit("accept", { action: "read", workspace_id, cards: selected });
+    return;
   }
-};
-const assignHandle = (card) => {
-  console.log("card data", card);
-  
-    const payload = {
-        card_id: card?._id,
-        seat_id: members.value?.map(u => u._id || u.id).filter(Boolean)
-    }
-    moveCard.mutate(payload);
-}
-useHead({
-  title: computed(() => ogData.value?.details || ''),
-  meta: computed(() => ogData.value ? [
-    { property: 'og:title',       content: ogData.value.title || '' },
-    { property: 'og:description', content: ogData.value.description || '' },
-    { property: 'og:url',         content: ogData.value.url || window.location.href },
-    { property: 'og:type',        content: 'website' },
-    { property: 'og:image',       content: ogData.value.image || '' },
 
-    // WhatsApp / Twitter
-    { name: 'twitter:card',        content: 'summary_large_image' },
-    { name: 'twitter:title',       content: ogData.value.title || '' },
-    { name: 'twitter:description', content: ogData.value.description || '' },
-    { name: 'twitter:image',       content: ogData.value.image || '' },
-  ] : [])
-})
+  const workspace_id =
+    workspaceId.value || props.data?.[0]?.workspace_id || null;
+
+  const module = {
+    _id:
+      props.data?.[0]?.module_id ||
+      props.data?.[0]?.payload?.module?._id ||
+      moduleId.value,
+    variables: {
+      "module-title": props.data?.[0]?.variables?.["module-title"] || "",
+      "module-description":
+        props.data?.[0]?.variables?.["module-description"] || "",
+    },
+    is_ai_generated: true,
+  };
+
+  const sheets = selectedItems.value
+    .map((sheetTitle) => {
+      const sheetObj = sheetsPreview.value.find(
+        (s) => s.variables["sheet-title"] === sheetTitle
+      );
+      if (!sheetObj) return null;
+
+      // Cards for this sheet that the user selected
+      const cardsForSheet = allCards.value.filter(
+        (c) => c.sheet_id === sheetObj._id && selectedCards.value.includes(c._id)
+      );
+
+      const items = cardsForSheet.map((card) => ({
+        _id: card._id || null,
+        workspace_lane_id: card.workspace_lane_id || null,
+        variables: {
+          // API contract uses "title" not "card-title"
+          title:
+            card["card-title"] || card.variables?.["card-title"] || "",
+          description:
+            card["card-description"] ||
+            card.variables?.["card-description"] ||
+            "",
+          "card-type":
+            card["card-type"] || card.variables?.["card-type"] || "Task",
+          "card-status":
+            card["card-status"] || card.variables?.["card-status"] || "To Do",
+          "story-points":
+            card["story-points"] || card.variables?.["story-points"] || 0,
+            "end-date":
+            card["end-date"] ||
+            card.variables?.["end-date"] ||
+            new Date().toISOString().split("T")[0],
+        },
+        assigned_to: card.assigned_to || [],
+        seat_id: Array.isArray(card.seat_id) && card.seat_id.length
+          ? card.seat_id
+          : [],
+      }));
+
+      return {
+        _id: sheetObj._id || null,
+        variables: {
+          "sheet-title": sheetObj.variables["sheet-title"],
+          "sheet-description": sheetObj.variables["sheet-description"] || "",
+          "sheet-icon": sheetObj.variables["sheet-icon"] || null,
+        },
+        items, // ← API expects "items" not "cards"
+      };
+    })
+    .filter(Boolean);
+
+  emit("accept", { workspace_id, module, sheets, ispined: preserveLog.value });
+};
+
+// ── Assign / share helpers (unchanged) ───────────────────────────────
+const assignHandle = (card) => {
+  moveCard.mutate({
+    card_id: card?._id,
+    seat_id: members.value?.map((u) => u._id || u.id).filter(Boolean),
+  });
+};
+
+useHead({
+  title: computed(() => ogData.value?.details || ""),
+  meta: computed(() =>
+    ogData.value
+      ? [
+          { property: "og:title", content: ogData.value.title || "" },
+          { property: "og:description", content: ogData.value.description || "" },
+          { property: "og:url", content: ogData.value.url || window.location.href },
+          { property: "og:type", content: "website" },
+          { property: "og:image", content: ogData.value.image || "" },
+          { name: "twitter:card", content: "summary_large_image" },
+          { name: "twitter:title", content: ogData.value.title || "" },
+          { name: "twitter:description", content: ogData.value.description || "" },
+          { name: "twitter:image", content: ogData.value.image || "" },
+        ]
+      : []
+  ),
+});
+
 function parseTicketDetailsFromHTML(html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, "text/html");
   const details = {};
-
-  // Look for all ticket:variable meta tags
-  const metas = doc.querySelectorAll("meta[property^='ticket:variable']");
-  metas.forEach(meta => {
+  doc.querySelectorAll("meta[property^='ticket:variable']").forEach((meta) => {
     const key = meta.getAttribute("property").replace("ticket:variable:", "");
-    const value = meta.getAttribute("content") || "";
-    details[key] = value;
+    details[key] = meta.getAttribute("content") || "";
   });
-
   return details;
 }
-const getShareUrl = (card) => {
-  const ticketId = card.id || card._id;
-  return `https://www.orchit.ai/workspace/${workspaceId.value}/${moduleId.value}`;
-};
-function buildShareMessage(details, shareUrl) {
-  return `📌 ${details["card-code"]}: ${details["card-title"]}
 
-${details["card-description"]}
+const getShareUrl = (card) =>
+  `https://www.orchit.ai/workspace/${workspaceId.value}/${moduleId.value}`;
 
-🟢 Status: ${details["card-status"]}
-🔥 Priority: ${details["priority"]}
-📅 Due: ${details["end-date"]}
-
-🔗 Open Ticket:
-${shareUrl}`;
-}
 async function nativeShare(card) {
-await agentStore.shareTicketTypes(card.id || card._id);
-
-  // Parse ticket details from HTML
+  await agentStore.shareTicketTypes(card.id || card._id);
   const details = parseTicketDetailsFromHTML(agentStore.ogTypesTicket);
-
   const shareUrl = getShareUrl(card);
-
-  // Build clean share message
-  const message = `
-📌 ${details["card-code"]}: ${details["card-title"]}
-
-${details["card-description"]}
-
-🟢 Status: ${details["card-status"]}
-🔥 Priority: ${details["priority"]}
-📅 Due: ${details["end-date"]}
-
-🔗 Open Ticket:
-${shareUrl}
-`;
-
-  // Native share or clipboard fallback
+  const message = `📌 ${details["card-code"]}: ${details["card-title"]}\n\n${details["card-description"]}\n\n🟢 Status: ${details["card-status"]}\n🔥 Priority: ${details["priority"]}\n📅 Due: ${details["end-date"]}\n\n🔗 Open Ticket:\n${shareUrl}`;
   if (navigator.share) {
     await navigator.share({
       title: `${details["card-code"]}: ${details["card-title"]}`,
-      text: message
+      text: message,
     });
   } else {
     await navigator.clipboard.writeText(message);

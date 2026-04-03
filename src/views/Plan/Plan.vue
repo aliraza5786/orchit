@@ -8,7 +8,7 @@
         :searchQuery="searchQuery"
         :active-sprint="sprintType"
         :selectedSheetId="selected_sheet_id"
-        @go-back="showActiveSprint = false"
+        @go-back="handleGoBack"
       />
     </template>
     <div v-else class="flex flex-row flex-1 min-h-0">
@@ -17,7 +17,7 @@
           <div class="min-w-[800px] h-full flex flex-col">
             <div
               v-if="!isStartingSprint"
-              class="px-0.5 py-4 w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
+              class="pe-[4px] pt-[14px] w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
             >
               <div
                 ref="containerRef"
@@ -81,7 +81,7 @@
                     </div>
                   </div>
                   <div
-                    v-if="isBacklogPenidng || isBacklogRefreshing"
+                    v-if="isBacklogPenidng || isBacklogRefreshing || isMovingFromStore || isRemoving"
                     class="w-full h-full flex justify-center items-center"
                   >
                     <div
@@ -130,18 +130,20 @@
                 </div>
 
                 <section
-                  class="rounded-md relative pt-2 flex flex-col flex-1 min-w-0 bg-bg-card min-h-0 border border-border"
+                  class="rounded-md relative flex flex-col flex-1 min-w-0 bg-bg-card min-h-0 border border-border"
                 >
                   <div
-                    class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
+                    class="flex pt-2 justify-between gap-4 px-3 pb-2 border-b border-border-input"
                   >
                     <!-- Left Section: Sprint Tabs -->
-                    <div class="flex items-center gap-2 min-w-0 py-1">
+                    <div class="overflow-x-auto">
+                    <div class="flex items-center gap-2 py-1 min-w-max">
 
                       <!-- Sprint Type Dropdown -->
                       <div ref="elipseWrapperSprint" class="relative inline-block">
                         <!-- Trigger Button -->
                         <button
+                          ref="typeTriggerRef"
                           @click.stop="openElipseDropDown = !openElipseDropDown"
                           type="button"
                           class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
@@ -164,26 +166,30 @@
                         </button>
 
                         <!-- Dropdown -->
-                        <transition name="fade-scale">
-                          <ul
-                            v-if="openElipseDropDown"
-                            @click.stop
-                            class="absolute left-0 mt-1.5 min-w-[160px] bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-50 py-1 text-sm"
-                          >
-                            <li
-                              v-for="item in sprintTypes"
-                              :key="item.value"
-                              @click="selectType(item); openElipseDropDown = false"
-                              class="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
+                        <Teleport to="body">
+                          <transition name="fade-scale">
+                            <ul
+                              v-if="openElipseDropDown"
+                              ref="typeMenuRef"
+                              :style="typeStyles"
+                              @click.stop
+                              class="fixed min-w-[160px] bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-[9999] py-1 text-sm"
                             >
-                              <span
-                                class="w-2 h-2 rounded-full flex-shrink-0"
-                                :style="{ backgroundColor: item.dot }"
-                              ></span>
-                              <span :class="item.value === selectedType.value ? 'font-semibold text-accent' : ''">{{ item.label }}</span>
-                            </li>
-                          </ul>
-                        </transition>
+                              <li
+                                v-for="item in sprintTypes"
+                                :key="item.value"
+                                @click="selectType(item); openElipseDropDown = false"
+                                class="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
+                              >
+                                <span
+                                  class="w-2 h-2 rounded-full flex-shrink-0"
+                                  :style="{ backgroundColor: item.dot }"
+                                ></span>
+                                <span :class="item.value === selectedType.value ? 'font-semibold text-accent' : ''">{{ item.label }}</span>
+                              </li>
+                            </ul>
+                          </transition>
+                        </Teleport>
                       </div>
 
                       <!-- Sprint Selector Dropdown -->
@@ -191,6 +197,7 @@
                         <!-- Trigger -->
                         <button
                           v-if="sprintsList?.sprints.length"
+                          ref="selectorTriggerRef"
                           @click="isSprintDropdownOpen = !isSprintDropdownOpen"
                           type="button"
                           class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
@@ -214,51 +221,55 @@
                         </button>
 
                         <!-- Dropdown -->
-                        <transition name="fade-scale">
-                          <div
-                            v-if="isSprintDropdownOpen"
-                            class="absolute left-0 mt-1.5 w-64 bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-50 max-h-64 overflow-y-auto py-1"
-                          >
+                        <Teleport to="body">
+                          <transition name="fade-scale">
                             <div
-                              v-for="sprint in sprintsList?.sprints"
-                              :key="sprint._id"
-                              class="relative px-3 py-2 flex items-center justify-between text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
+                              v-if="isSprintDropdownOpen"
+                              ref="selectorMenuRef"
+                              :style="selectorStyles"
+                              class="fixed w-64 bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-[9999] max-h-64 overflow-y-auto py-1"
                             >
-                              <!-- Title / Edit -->
-                              <div class="relative flex-1 min-w-0">
-                                <button
-                                  class="text-left truncate w-full flex items-center gap-2"
-                                  @click="selectSprint(sprint)"
-                                >
-                                  <span
-                                    class="w-2 h-2 rounded-full flex-shrink-0"
-                                    :style="{ backgroundColor: selectedType.dot }"
-                                  ></span>
-                                  <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
-                                </button>
-                              </div>
+                              <div
+                                v-for="sprint in sprintsList?.sprints"
+                                :key="sprint._id"
+                                class="relative px-3 py-2 flex items-center justify-between text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
+                              >
+                                <!-- Title / Edit -->
+                                <div class="relative flex-1 min-w-0">
+                                  <button
+                                    class="text-left truncate w-full flex items-center gap-2"
+                                    @click="selectSprint(sprint)"
+                                  >
+                                    <span
+                                      class="w-2 h-2 rounded-full flex-shrink-0"
+                                      :style="{ backgroundColor: selectedType.dot }"
+                                    ></span>
+                                    <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
+                                  </button>
+                                </div>
 
-                              <!-- Actions -->
-                              <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
-                                <button
-                                  class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-accent hover:bg-bg-body transition-colors"
-                                  @click.stop="openModalEditSprint(sprint)"
-                                  title="Edit"
-                                >
-                                  <i class="fas fa-pen text-[10px]"></i>
-                                </button>
-                                <button
-                                  v-if="sprintsList?.sprints.length"
-                                  @click.stop="handleDeleteSprint(sprint)"
-                                  class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
-                                  title="Delete"
-                                >
-                                  <i class="fas fa-times text-[10px]"></i>
-                                </button>
+                                <!-- Actions -->
+                                <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
+                                  <button
+                                    class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-accent hover:bg-bg-body transition-colors"
+                                    @click.stop="openModalEditSprint(sprint)"
+                                    title="Edit"
+                                  >
+                                    <i class="fas fa-pen text-[10px]"></i>
+                                  </button>
+                                  <button
+                                    v-if="sprintsList?.sprints.length"
+                                    @click.stop="handleDeleteSprint(sprint)"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
+                                    title="Delete"
+                                  >
+                                    <i class="fas fa-times text-[10px]"></i>
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </transition>
+                          </transition>
+                        </Teleport>
                       </div>
 
                       <!-- Add Sprint Button -->
@@ -270,6 +281,7 @@
                       >
                         <i class="fa-solid fa-plus text-xs"></i>
                       </button>
+                    </div>
                     </div>
                     <!-- Right Section: Actions -->
                     <div class="flex justify-end items-center">
@@ -317,17 +329,17 @@
                             size="sm"
                             @click="handleCompleteSprint"
                             :variant="isDark ? 'primary' : 'primary'"
-                            class="border-border-input border"
+                            class="border-accent border"
                             :style="
                               selectedSprintId
                                 ? { backgroundColor: selectedType.dot }
                                 : {}
                             "
                           >
-                            {{ isCompletingSprint ? "Ending..." : "End" }}
+                            {{ completingSprintId === 'parent' ? "Ending..." : "End" }}
                           </Button>
                           <button
-                            class="cursor-pointer text-white flex items-center justify-end gap-1 px-2 py-1 rounded-md text-sm font-medium"
+                            class="cursor-pointer border border-accent text-white flex items-center justify-end gap-1 px-2 py-1 rounded-md text-sm font-medium"
                             @click="handlePreviewClick"
                             :style="
                               selectedSprintId
@@ -345,93 +357,21 @@
                             v-if="sprintDetailData?.status !== 'completed'"
                             size="sm"
                             :variant="isDark ? 'primary' : 'primary'"
-                            class="border-border-input border"
+                            class="border-accent border"
                             @click="openStartSprintModal"
-                            :disabled="
-                              !firstSprint ||
-                              firstSprint.tickets.length === 0 ||
-                              sprintDetailData?.status === 'completed'
-                            "
+                            :disabled="isStartButtonDisabled"
                             :style="{ backgroundColor: selectedType.dot }"
-                          >
-                            Start {{ selectedType.label }}
+                          > 
+                            Start {{ selectedType.label }} 
                           </Button> 
                         </div>
-                      </div>
-                      
-                      <div 
-                        v-if="firstSprint && firstSprint.tickets.length"
-                      >
-                        <button
-                          v-if="sprintDetailData?.status === 'planning'"
-                          @click="openStartSprintModal"
-                          :disabled="
-                            !firstSprint ||
-                            firstSprint.tickets.length === 0 ||
-                            sprintDetailData?.status === 'completed'
-                          "
-                          class="w-7 h-7 ms-1.5 flex items-center justify-center rounded-full text-white
-                           bg-accent disabled:opacity-50 disabled:cursor-not-allowed lg:hidden"
-                          title="Start Sprint"
-                          :style="
-                            selectedSprintId
-                              ? { backgroundColor: selectedType.dot }
-                              : {}
-                          "
-                        >
-                          <i class="fa-solid fa-play text-sm"></i>
-                        </button>
-                      </div>
-                       <!-- Small Screen Icon Buttons -->
-                         <div
-                            class="relative"
-                            v-if="sprintDetailData?.status === 'active' || sprintDetailData?.status === 'planning'"
-                          >
-                            <!-- Ellipsis Icon -->
-                            <i
-                              class="fa-solid fa-ellipsis-vertical text-lg mt-2 cursor-pointer"
-                              @click.stop="toggleMenu"
-                            ></i>
-
-                            <!-- Dropdown -->
-                            <div
-                              v-if="showMenu"
-                              class="absolute right-0 mt-2 w-28 bg-bg-dropdown border border-border rounded-md shadow-lg z-50"
-                            >
-                              <div
-                                class="px-3 py-1.5 text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover"
-                                @click="
-                                  openStartSprintModalForUpdate(
-                                    sprintDetailData,
-                                  )
-                                "
-                              >
-                                <div class="flex justify-between">
-                                  <span>Update</span>
-                                  <i class="fa-light fa-pen mt-0.5"></i>
-                                </div>
-                              </div>
-                              <div
-                                class="px-3 py-1.5 text-sm text-red-500 cursor-pointer hover:bg-bg-dropdown-menu-hover"
-                                @click="onDelete"
-                                v-if="isSprintChecked"
-                              >
-                                <div
-                                  class="flex justify-between"
-                                  
-                                >
-                                  <span>Delete</span>
-                                  <i class="fa-light fa-trash mt-0.5"></i>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                      </div>  
                     </div>
             
                     
                   </div>
                   <div
-                    v-if="isLoadingSprint || isSprintsFetching"
+                    v-if="isLoadingSprint || isSprintsFetching || isMovingFromStore || isRemoving"
                     class="w-full h-full min-h-[250px] flex justify-center items-center"
                   >
                     <div
@@ -441,29 +381,181 @@
                     ></div>
                   </div>
 
-                  <div class="flex-1 min-h-0 overflow-y-auto" v-else>
-                    <SprintCard
-                      :searchQuery="searchQuery"
-                      :sprintId="selectedSprintId"
-                      :searchedData="[]"
-                      :label="sprintType"
-                      v-if="
-                        firstSprint &&
-                        ['planning', 'active'].includes(
-                          sprintDetailData?.status?.toLowerCase(),
-                        )
-                      "
-                      :checkedSprintAll="checkedSprintAll"
-                      :sprint="firstSprint"
-                      @open-ticket="openTicket"
-                      @edit-sprint="openEditSprint"
-                      @toggle-start="toggleStartSprint"
-                      @move-selected-to-backlog="moveSelectedToBacklog"
-                      @delete-selected-sprint="handleDeleteSelectedSprint"
-                      @refresh="handleRefresh"
-                      @checked-change="isSprintChecked = $event"
-                      @selection-change="selectedSprintTicketIds = $event"
-                    />
+                  <div class="flex-1 min-h-0 overflow-y-auto mt-4 px-3" v-else ref="subSprintsContainer">
+                    <template v-if="hasSubSprints && ['planning', 'active'].includes(sprintDetailData?.status?.toLowerCase())">
+                      <!-- Milestone Global Tickets -->
+                      <div class="mb-2 border border-border rounded-lg overflow-hidden bg-bg-card">
+                        <div 
+                          @click="toggleSprintCollapse('milestone-global')"
+                          class="flex items-center justify-between p-3 cursor-pointer hover:bg-bg-body transition-colors border-b border-border"
+                        >
+                          <div class="flex items-center gap-2">
+                             <i 
+                              class="fas fa-chevron-right transition-transform duration-200 text-text-secondary text-xs"
+                              :class="{ 'rotate-90': expandedSprints['milestone-global'] }"
+                            ></i>
+                            <span class="font-semibold text-sm text-text-primary">Milestone Tickets</span>
+                            <span class="text-xs text-text-secondary bg-bg-body px-2 py-0.5 rounded-full border border-border">
+                              {{ firstSprint?.tickets?.length || 0 }} {{ (firstSprint?.tickets?.length || 0) > 1 ? 'Tickets' : 'Ticket' }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div v-if="expandedSprints['milestone-global']" class="pt-[15px] px-[5px] h-[350px]">
+                           <SprintCard
+                            :searchQuery="searchQuery"
+                            :sprintId="selectedSprintId"
+                            :searchedData="[]"
+                            :label="sprintType"
+                            :checkedSprintAll="checkedSprintAll"
+                            :sprint="firstSprint"
+                            @open-ticket="openTicket"
+                            @refresh="handleRefresh"
+                          />
+                        </div>
+                      </div>
+
+                      <!-- Sub Sprints -->
+                      <div v-for="sprint in sprintDetailData.sprints" :key="sprint._id" 
+                           class="mb-2 border border-border rounded-lg bg-bg-card transition-all"
+                           :class="{ 'relative z-50': activeSubSprintMenuId === sprint._id }">
+                        <!-- Sprint Header -->
+                        <div 
+                          @click="sprint.status !== 'completed' && toggleSprintCollapse(sprint._id)"
+                          class="flex items-center justify-between p-3 hover:bg-bg-body transition-colors border-b rounded-[6px]  border-border"
+                          :class="sprint.status === 'completed'? 'cursor-not-allowed': 'cursor-pointer'"
+                        >
+                          <div class="flex items-center gap-2">
+                             <i 
+                              class="fas fa-chevron-right transition-transform duration-200 text-text-secondary text-xs"
+                              :class="{ 'rotate-90': expandedSprints[sprint._id] }"
+                            ></i>
+                            <span class="font-semibold text-sm text-text-primary">{{ sprint.title }}</span>
+                            <span class="text-xs text-text-secondary bg-bg-body px-2 py-0.5 rounded-full border border-border">
+                              {{ sprint.cards?.length || 0 }} {{ (sprint.cards?.length || 0) > 1 ? 'Tickets' : 'Ticket' }}
+                            </span>
+                          </div>
+
+                          <!-- Action Buttons -->
+                          <div class="flex items-center gap-2">
+                            <!-- Start Sprint Button -->
+                            <Button
+                              v-if="sprint.status === 'planning'"
+                              size="sm"
+                              @click.stop="openStartSprintModal(sprint)"
+                              class="border-accent border text-[11px] h-7 px-3"
+                              :style="{ backgroundColor: selectedType.dot }"
+                              :disabled="!sprint.cards?.length"
+                            >
+                              Start
+                            </Button>
+
+                            <!-- Active Sprint Buttons -->
+                            <template v-if="sprint.status === 'active'">
+                               <button
+                                class="cursor-pointer border border-accent text-white flex items-center justify-center gap-1 px-2 py-0.5 rounded-md text-[11px] h-8.5 font-medium"
+                                @click.stop="handlePreviewClick(sprint._id, sprint.title)"
+                                :style="{ backgroundColor: selectedType.dot }"
+                              >
+                                <i class="fa-regular fa-eye text-[11px]"></i> Preview
+                              </button>
+                               <Button
+                                size="sm"
+                                @click.stop="handleCompleteSprint(sprint._id)"
+                                class="border-accent border text-[11px] h-8.5 px-3"
+                                :style="{ backgroundColor: selectedType.dot }"
+                              >
+                                 {{ completingSprintId === sprint._id ? "Ending..." : "End" }}
+                              </Button>
+                            </template>
+
+                            <!-- Completed Badge -->
+                            <span 
+                              v-if="sprint.status === 'completed'" 
+                              class="text-[10px] font-semibold text-emerald-500 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full"
+                            >
+                              Completed
+                            </span>
+
+                            <!-- Row-Level Menu -->
+                            <div class="relative flex items-center">
+                              <button 
+                                @click.stop="toggleSubSprintMenu(sprint._id)"
+                                class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-bg-body text-text-secondary transition-colors"
+                              >
+                                <i class="fas fa-ellipsis-v text-[10px]"></i>
+                              </button>
+                              
+                              <div 
+                                v-if="activeSubSprintMenuId === sprint._id"
+                                class="absolute right-0 top-full mt-1 w-48 bg-bg-card border border-border shadow-xl rounded-lg z-50 py-1 overflow-hidden"
+                              >
+                                <button 
+                                  @click.stop="openModalEditSprint(sprint); activeSubSprintMenuId = null"
+                                  class="w-full text-left px-4 py-2 text-[12px] text-text-primary hover:bg-bg-body flex items-center gap-2 transition-colors font-medium border-b border-border/50"
+                                  :class="sprint.status === 'completed'? 'cursor-not-allowed': 'cursor-pointer'"
+                                >
+                                  <i class="fa-light fa-pen-to-square text-sm"></i> Edit Milestone Sprint
+                                </button>
+                                <button 
+                                  @click.stop="handleDeleteSprint(sprint); activeSubSprintMenuId = null"
+                                  class="w-full text-left cursor-pointer px-4 py-2 text-[12px] text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium"
+                                >
+                                  <i class="fa-light fa-trash text-sm"></i> Delete Milestone Sprint
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Content Area (SprintCard) -->
+                        <div v-if="expandedSprints[sprint._id]" class=" pt-[15px] px-[5px] h-[350px]">
+                           <SprintCard
+                            :searchQuery="searchQuery"
+                            :sprintId="sprint._id"
+                            :searchedData="[]"
+                            :label="'sprint'"
+                            :checkedSprintAll="false"
+                            :sprint="{
+                              id: sprint._id,
+                              name: sprint.title,
+                              title: sprint.title,
+                              goal: '',
+                              start: '',
+                              end: '',
+                              started: false,
+                              tickets: mapApiCardsToTickets(sprint.cards)
+                            }"
+                            @open-ticket="openTicket"
+                            @refresh="handleRefresh"
+                          />
+                        </div>
+                      </div>
+                    </template>
+                    <template v-else-if="!hasSubSprints">
+                      <SprintCard
+                        :searchQuery="searchQuery"
+                        :sprintId="selectedSprintId"
+                        :searchedData="[]"
+                        :label="sprintType"
+                        v-if="
+                          firstSprint &&
+                          ['planning', 'active'].includes(
+                            sprintDetailData?.status?.toLowerCase(),
+                          )
+                        "
+                        :checkedSprintAll="checkedSprintAll"
+                        :sprint="firstSprint"
+                        @open-ticket="openTicket"
+                        @edit-sprint="openEditSprint"
+                        @toggle-start="toggleStartSprint"
+                        @move-selected-to-backlog="moveSelectedToBacklog"
+                        @delete-selected-sprint="handleDeleteSelectedSprint"
+                        @refresh="handleRefresh"
+                        @checked-change="isSprintChecked = $event"
+                        @selection-change="selectedSprintTicketIds = $event"
+                      />
+                    </template>
                     <div
                       v-if="
                         sprintDetailData?.status
@@ -608,14 +700,16 @@
       v-model="sprintModalOpen"
       @save="saveSprintHandler"
       :sprint="selectedSprint"
-      :lable="sprintType"
+      :lable="editingLabel || sprintType"
       :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint"
       :sprints="sprintsDataFromPlus"
+      :milestoneOptionsList="groupedSprints?.grouped?.milestone || []"
+      :sprintOptionsListItems="groupedSprints?.grouped?.sprint || []"
     />
     <StartSprintModal
       v-model="startsprintModalOpen"
       :creatingSprint="isStartingSprint"
-      :sprintType="sprintType"
+      :sprintType="startModalSprintType"
       @edit-sprint="handleEditFromStart"
       @start-now="handleStartNow"
     />
@@ -636,13 +730,14 @@
 </template>
 
 <script setup lang="ts">
+import { onClickOutside } from "@vueuse/core";
 import BacklogTable from "./components/BacklogTable.vue";
 import SprintCard from "./components/SprintCard.vue";
 import SprintModal from "./modals/SprintModal.vue";
 import ModuleSheetDropdown from "./components/ModuleSheetDropdown.vue";
 import PlanSelectDropdown from "./components/PlanSelectDropdown.vue"; 
 import ExpandableSearch from "../../components/ui/ExpandableSearch.vue";
-import { computed, ref, watch, onMounted, defineAsyncComponent } from "vue";
+import { computed, ref, watch, onMounted, onUnmounted, nextTick, defineAsyncComponent } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
@@ -673,6 +768,8 @@ import { useTheme } from "../../composables/useTheme";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 import { usePermissions } from "../../composables/usePermissions";
 import { useSheets } from "../../queries/useSheets";
+import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
+import type { CSSProperties } from 'vue';
 const SidePanel = defineAsyncComponent(
   () => import("../Product/components/SidePanel.vue"),
 );
@@ -692,20 +789,11 @@ watch(showActiveSprint, (val) => {
   localStorage.setItem('showActiveSprint', String(val));
 });
 const module_id= ref(localStorage.getItem("selectedModuleId") ||"");
-const {
-  data
-} = useSheets({
-  workspace_id: workspaceId,
-  workspace_module_id: module_id,
-});
-const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
-const selected_sheet_id = ref<any>(sheetId.value);
-const selectedSprintIdForDelete = ref<string | null>(null);
-const selectedCardIdsForDelete = ref<string[]>([]);
-const elipseWrapperSprint = ref<HTMLElement | null>(null);
-const open = ref(false);
-const openElipseDropDown = ref(false);
-const sprintType = computed(() => selectedType.value.value);
+const selectedSprintId = ref(localStorage.getItem("activeSprintKey") || "");
+const lastSelectedParentId = ref(localStorage.getItem("lastSelectedParentId") || "");
+const isSprintDropdownOpen = ref(false);
+const sprintDropdownWrapperRef = ref<HTMLElement | null>(null);
+
 const parseInitialArray = (key: string) => {
   const val = localStorage.getItem(key);
   if (!val) return [];
@@ -720,11 +808,38 @@ const parseInitialArray = (key: string) => {
 const selectedFilter = ref<string[]>(parseInitialArray("activeMilestoneId"));
 const selectedSheetFilter = ref<string[]>(parseInitialArray("activeSheetId"));
 const selectedFilterLabel = ref(localStorage.getItem("activeMilestoneLabel") || "All Modules");
-
 const selectedPlanIds = ref<string[]>(parseInitialArray("activePlanIds"));
 const selectedPlanLabel = ref(localStorage.getItem("activePlanLabel") || "Select Plans");
 const includeSprintCards = computed(() => selectedPlanIds.value.length > 0);
 const currentPage = ref(1);
+
+const { 
+  data: backlogResp,   
+  isPending: isBacklogRefreshing 
+} = useBacklogList(
+  workspaceId,
+  ref(""),
+  selectedFilter,
+  selectedSheetFilter,
+  selectedPlanIds,
+  includeSprintCards,
+  currentPage,
+);
+
+const {
+  data
+} = useSheets({
+  workspace_id: workspaceId,
+  workspace_module_id: module_id,
+});
+const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
+const selected_sheet_id = ref<any>(sheetId.value);
+const selectedSprintIdForDelete = ref<string | null>(null);
+const selectedCardIdsForDelete = ref<string[]>([]);
+const elipseWrapperSprint = ref<HTMLElement | null>(null);
+const openElipseDropDown = ref(false);
+const sprintType = computed(() => selectedType.value.value);
+const isStartingSprintLoading = ref(false);
 
 const selectedFilterLabelWithCount = computed(() => {
   const label = selectedFilterLabel.value || "All Modules";
@@ -732,7 +847,7 @@ const selectedFilterLabelWithCount = computed(() => {
   const count = backlogResp.value?.cards?.length;
   return count ? `${label} (${count})` : label;
 });
-const isStartingSprintLoading = ref(false);
+// const isStartingSprintLoading = ref(false);
 const sidePanelStore = useSidePanelStore();
 const isSprintChecked = ref(false);
 const selectedSprintTicketIds = ref<string[]>([]);
@@ -748,26 +863,150 @@ const formattedLabel = computed(() => {
 const savedSprintType = localStorage.getItem("sprintType");
 const initialType = sprintTypes.find(t => t.value === savedSprintType) || sprintTypes[0];
 const selectedType = ref(initialType);
-import { onClickOutside } from "@vueuse/core";
-// import ConfirmDeleteTicket from "./components/confirmDeleteTicket.vue";
-const elipseWrapper = ref<HTMLElement | null>(null);
-const openElipseDrop = ref(false);
-onClickOutside(elipseWrapper, () => {
-  openElipseDrop.value = false;
+const expandedSprints = ref<Record<string, boolean>>({});
+
+const toggleSprintCollapse = (id: string) => {
+  expandedSprints.value[id] = !expandedSprints.value[id];
+};
+
+const mapApiCardsToTickets = (cards: any[]) => {
+  return (cards || []).map((c: any) => {
+    // Check if card object is nested (from sprintDetailData.sprints[].cards)
+    // or if it's the direct card object (from sprintData.value.backlog_items[].card)
+    const cardObj = c?.card || c;
+    const v = cardObj?.variables || {};
+    const id = cardObj?._id || c.card_id;
+
+    return {
+      id,
+      _id: cardObj?._id,
+      key: (v["card-code"] as string) || id?.slice(-6) || "PRJ-?",
+      summary: (v["card-title"] as string) || "(untitled)",
+      type: "Story" as const,
+      status: mapStatus(String(v["card-status"] || "").trim()),
+      assignee: cardObj?.assigned_to?.u_full_name || "Unassigned",
+      image: cardObj?.assigned_to?.u_avatar || "",
+      storyPoints: Number(c.story_points || 0),
+      priority: mapPriority(String(v["priority"] || "").trim()),
+      createdAt: cardObj?.created_at || new Date().toISOString(),
+      description: (v["card-description"] as string) || "",
+      seats: cardObj?.seats
+    };
+  });
+};
+
+const hasSubSprints = computed(() => {
+  return sprintType.value === 'milestone' && (sprintDetailData.value?.sprints?.length || 0) > 0;
+});
+
+const isStartButtonDisabled = computed(() => {
+  const detail = sprintDetailData.value;
+  if (!detail) return true;
+  if (detail.status === 'completed') return true;
+  
+  if (!hasSubSprints.value) {
+    // If it's a standalone sprint/huddle, check its direct tickets
+    return !firstSprint.value || firstSprint.value.tickets.length === 0;
+  }
+  
+  // For milestones with sub-sprints, check if any sub-sprint has cards
+  return !detail.sprints?.some((s: any) => (s.cards?.length ?? 0) > 0);
 });
 
 const closeModal = () => {
   showTaskModal.value = false;
 };
-const handlePreviewClick = () => {
+const handlePreviewClick = (id?: string | MouseEvent, title?: string) => {
+  const sprintId = (id && typeof id === 'string') ? id : selectedSprintId.value;
+  if (sprintId) {
+    if (sprintId !== selectedSprintId.value) {
+      lastSelectedParentId.value = selectedSprintId.value;
+      localStorage.setItem("lastSelectedParentId", selectedSprintId.value);
+    }
+    selectedSprintId.value = sprintId;
+    localStorage.setItem("activeSprintKey", sprintId);
+    if (title) {
+      localStorage.setItem("selectedSprintTitle", title);
+    }
+  }
   showActiveSprint.value = true;
-  localStorage.setItem("activeSprintKey", selectedSprintId.value || "");
+};
+
+const handleGoBack = () => {
+  showActiveSprint.value = false;
+  if (lastSelectedParentId.value) {
+    selectedSprintId.value = lastSelectedParentId.value;
+    localStorage.setItem("activeSprintKey", lastSelectedParentId.value);
+    lastSelectedParentId.value = "";
+    localStorage.removeItem("lastSelectedParentId");
+  }
 };
 const showTooltip = ref(false);
 
 const toggleTooltip = (): void => {
   showTooltip.value = !showTooltip.value;
 };
+
+const typeTriggerRef = ref<HTMLElement | null>(null);
+const typeMenuRef = ref<HTMLElement | null>(null);
+const typeStyles = ref<CSSProperties>({ position: 'fixed', top: '-9999px', left: '-9999px' });
+let cleanupType: (() => void) | null = null;
+
+const selectorTriggerRef = ref<HTMLElement | null>(null);
+const selectorMenuRef = ref<HTMLElement | null>(null);
+const selectorStyles = ref<CSSProperties>({ position: 'fixed', top: '-9999px', left: '-9999px' });
+let cleanupSelector: (() => void) | null = null;
+
+function updateTypePosition() {
+  if (!typeTriggerRef.value || !typeMenuRef.value) return;
+  computePosition(typeTriggerRef.value, typeMenuRef.value, {
+    placement: 'bottom-start',
+    strategy: 'fixed',
+    middleware: [offset(6), flip(), shift({ padding: 5 })],
+  }).then(({ x, y }) => {
+    typeStyles.value = { position: 'fixed', left: `${x}px`, top: `${y}px` };
+  });
+}
+
+function updateSelectorPosition() {
+  if (!selectorTriggerRef.value || !selectorMenuRef.value) return;
+  computePosition(selectorTriggerRef.value, selectorMenuRef.value, {
+    placement: 'bottom-start',
+    strategy: 'fixed',
+    middleware: [offset(6), flip(), shift({ padding: 5 })],
+  }).then(({ x, y }) => {
+    selectorStyles.value = { position: 'fixed', left: `${x}px`, top: `${y}px` };
+  });
+}
+
+watch(openElipseDropDown, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      if (typeTriggerRef.value && typeMenuRef.value) {
+        cleanupType = autoUpdate(typeTriggerRef.value, typeMenuRef.value, updateTypePosition);
+      }
+    });
+  } else {
+    if (cleanupType) { cleanupType(); cleanupType = null; }
+  }
+});
+
+watch(isSprintDropdownOpen, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      if (selectorTriggerRef.value && selectorMenuRef.value) {
+        cleanupSelector = autoUpdate(selectorTriggerRef.value, selectorMenuRef.value, updateSelectorPosition);
+      }
+    });
+  } else {
+    if (cleanupSelector) { cleanupSelector(); cleanupSelector = null; }
+  }
+});
+
+onUnmounted(() => {
+  if (cleanupType) cleanupType();
+  if (cleanupSelector) cleanupSelector();
+});
 
 const isCreateTicketModalOpen = ref(false);
 const {
@@ -778,6 +1017,7 @@ const {
   deleteSelected,
   saveSprintMeta,
   toggleStartSprint,
+  isMoving: isMovingFromStore,
 } = useBacklogStore();
 function handleConfirmDeleteSprint() {
   if (
@@ -849,18 +1089,6 @@ function handlePlanSelect(payload: { ids: string[], label: string }) {
 
  
 
-const { 
-  data: backlogResp,   
-  isPending: isBacklogRefreshing 
-} = useBacklogList(
-  workspaceId,
-  ref(""),
-  selectedFilter,
-  selectedSheetFilter,
-  selectedPlanIds,
-  includeSprintCards,
-  currentPage,
-);
 // Reset to page 1 whenever filters change (TanStack Query re-fetches via reactive queryKey)
 watch([selectedFilter, selectedSheetFilter, selectedPlanIds], () => {
   currentPage.value = 1;
@@ -883,6 +1111,12 @@ const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
 });
 const selectedSprint = ref<any>(null);
 const showSprintDelete = ref(false);
+const editingLabel = ref("");
+const activeSubSprintMenuId = ref<string | null>(null);
+
+const toggleSubSprintMenu = (id: string) => {
+  activeSubSprintMenuId.value = activeSubSprintMenuId.value === id ? null : id;
+};
 const handleDeleteTicket = () => {
   deleteSprint(selectedSprint.value?._id);
 };
@@ -894,12 +1128,15 @@ const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint({
 });
 const handleEditFromStart = () => {
   startsprintModalOpen.value = false;
-  // Hydrate selectedSprint with data from store for editing
-  selectedSprint.value = {
-    ...sidePanelStore.startedSprint,
-    _id: sidePanelStore.startedSprint?.id,
-    title: sidePanelStore.startedSprint?.sprint_name
-  };
+  const data = sidePanelStore.startedSprint;
+  if (data) {
+    editingLabel.value = data.sprintType;
+    selectedSprint.value = {
+      ...data,
+      _id: data.id,
+      title: data.sprint_name
+    };
+  }
   sprintModalOpen.value = true;
 };
 
@@ -910,7 +1147,7 @@ const handleStartNow = async () => {
   isStartingSprintLoading.value = true;
   try {
     await startSprint({
-      id: selectedSprintId.value,
+      id: data.id,
       payload: {
         title: data.sprint_name,
         start_date: data.start,
@@ -961,7 +1198,6 @@ const { refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(
   ref(""),
 );
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
-const selectedSprintId = ref(localStorage.getItem("activeSprintKey") || "");
 watch(
   () => firstSprintId.value,
   (newVal) => {
@@ -984,9 +1220,11 @@ const { data: sprintDetailData, refetch: refetchSprintDetail } =
   });
 
 const startsprintModalOpen = ref(false);
-const openStartSprintModal = () => {
-  if (sprintDetailData.value) {
-    const data = sprintDetailData.value;
+const openStartSprintModal = (sprint?: any) => {
+  // Improved check: if sprint has _id, it's a valid sprint object
+  const data = (sprint && sprint?._id) ? sprint : sprintDetailData.value;
+  
+  if (data) {
     const modalSprintData = {
       id: data._id,
       sprint_name: data.title,
@@ -1046,27 +1284,7 @@ const firstSprint = computed(() => {
     ?.backlog_items;
   if (!apiSprint) return null;
 
-  // Map sprint cards from API
-  const sprintCards = (apiSprint || []).map((c: any) => {
-    const v = c?.card?.variables || {};
-    const id = c?.card?._id || c.card_id;
-
-    return {
-      id,
-      _id: c?.card?._id,
-      key: (v["card-code"] as string) || id?.slice(-6) || "PRJ-?",
-      summary: (v["card-title"] as string) || "(untitled)",
-      type: "Story" as const,
-      status: mapStatus(String(v["card-status"] || "").trim()),
-      assignee: c?.card?.assigned_to?.u_full_name || "Unassigned",
-      image: c?.card?.assigned_to?.u_avatar || "",
-      storyPoints: Number(c.story_points || 0),
-      priority: mapPriority(String(v["priority"] || "").trim()),
-      createdAt: c?.card?.created_at || new Date().toISOString(),
-      description: (v["card-description"] as string) || "",
-      seats:c?.card?.seats
-    };
-  });
+  const sprintCards = mapApiCardsToTickets(apiSprint);
 
   return {
     id: (sprintData.value as any)?._id, // fallback for TS
@@ -1084,6 +1302,8 @@ function selectSprint(sprint: any) {
   selectedSprintId.value = sprint._id;
   isSprintDropdownOpen.value = false;
   localStorage.setItem("activeSprintKey", sprint?._id);
+  lastSelectedParentId.value = "";
+  localStorage.removeItem("lastSelectedParentId");
 }
 
 function mapStatus(s: string): "Todo" | "In Progress" | "Done" {
@@ -1102,9 +1322,10 @@ function mapPriority(p: string): "Highest" | "High" | "Medium" | "Low" {
   return "Low";
 }
 
-const { mutate: removeCardFromSprint } = useRemoveCardFromSprint({
-  onSuccess: () => {
-    toast.success("Card removed from sprint successfully");
+const { mutate: removeCardFromSprint, isPending: isRemoving } = useRemoveCardFromSprint({
+  onSuccess: (_data: unknown, vars: { sprintId: string; cardIds: string[] }) => {
+    const count = vars.cardIds?.length || 1;
+    toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to backlog`);
     handleRefresh();
   },
   onError: (error: any) => {
@@ -1113,6 +1334,12 @@ const { mutate: removeCardFromSprint } = useRemoveCardFromSprint({
 });
 
 function handleRefresh() {
+  queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-detail", selectedSprintId.value] });
+  queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
+  
+  // Also call individual refetches for immediate response if needed
   refetchSprintData();
   refetchSprints();
   refetchBacklog();
@@ -1126,11 +1353,10 @@ function handleTicketMovedToBacklog(
   const ids = Array.isArray(ticketIds) ? ticketIds : [ticketIds];
   const sourceSprintId = sprintId || selectedSprintId.value;
   if (!sourceSprintId || !ids.length) return;
-  ids.forEach((id) => {
-    removeCardFromSprint({
-      sprintId: sourceSprintId,
-      cardId: id,
-    });
+  
+  removeCardFromSprint({
+    sprintId: sourceSprintId,
+    cardIds: ids,
   });
 }
 
@@ -1160,6 +1386,7 @@ const closeSidePanel = () => {
 };
 const sprintModalOpen = ref(false);
 function openEditSprint() {
+  editingLabel.value = "";
   sprintModalOpen.value = true;
 }
 const queryClient = useQueryClient();
@@ -1250,6 +1477,7 @@ function saveSprintHandler(e: any) {
 }
 const sprintsDataFromPlus = ref([] as any);
 function openSprintModal(sprintsData: any) {
+  editingLabel.value = "";
   selectedSprint.value = null;
   sprintModalOpen.value = true;
   sprintsDataFromPlus.value = sprintsData;
@@ -1258,20 +1486,31 @@ function openSprintModal(sprintsData: any) {
 function handleDeleteSprint(e: any) {
   selectedSprint.value = e;
   showSprintDelete.value = true;
+  isSprintDropdownOpen.value = false;
 }
-const { mutate: completeSprint, isPending: isCompletingSprint } =
+const completingSprintId = ref<string | null>(null);
+const { mutate: completeSprint } =
   useCompleteSprint(selectedSprintId, {
     onSuccess: () => {
+       completingSprintId.value = null;
       refetchSprintDetail();
+    },
+     onError: () => {
+      completingSprintId.value = null;
     },
   });
 
-const handleCompleteSprint = () => {
-  completeSprint({});
+const handleCompleteSprint = (id?: string | PointerEvent) => {
+  const sprintId = (id && typeof id === 'string') ? id : "";
+  completingSprintId.value = sprintId || "parent";
+  completeSprint({
+    ...(sprintId ? { id: sprintId } : {})
+  });
 };
 
 // resize sections
 
+const subSprintsContainer = ref<HTMLElement | null>(null);
 const containerRef = ref<HTMLElement | null>(null);
 const leftWidth = ref(0);
 
@@ -1312,8 +1551,10 @@ function stopResize() {
 
 
 function openModalEditSprint(sprint: any) {
+  editingLabel.value = sprint?.sprintType || "";
   selectedSprint.value = sprint;
   sprintModalOpen.value = true;
+  isSprintDropdownOpen.value = false;
 }
 
 onClickOutside(elipseWrapperSprint, () => {
@@ -1337,62 +1578,26 @@ const selectType = (item: (typeof sprintTypes)[number]) => {
   localStorage.setItem("activePlanIds", JSON.stringify([]));
   localStorage.setItem("activePlanLabel", "Select Plans");
   localStorage.setItem("sprintType", item.value);
-  open.value = false;
+  openElipseDropDown.value = false;
 };
 
-onClickOutside(elipseWrapper, () => {
-  open.value = false;
+onClickOutside(elipseWrapperSprint, (event) => {
+  const target = event.target as Node;
+  if (typeMenuRef.value?.contains(target)) return;
+  openElipseDropDown.value = false;
 });
 
-const sprintDropdownWrapperRef = ref<HTMLElement | null>(null);
-const isSprintDropdownOpen = ref(false);
-
-onClickOutside(sprintDropdownWrapperRef, () => {
+onClickOutside(sprintDropdownWrapperRef, (event) => {
+  const target = event.target as Node;
+  if (selectorMenuRef.value?.contains(target)) return;
   isSprintDropdownOpen.value = false;
 });
 
+onClickOutside(subSprintsContainer, () => {
+  activeSubSprintMenuId.value = null;
+});
+
   
-
-// Computed label for huddle button (Removed legacy filters)
-
-// sprint menu button icon
-const showMenu = ref(false);
-
-const toggleMenu = () => {
-  showMenu.value = !showMenu.value;
-};
-const openStartSprintModalForUpdate = (sprint: any) => {
-  if(sprintDetailData.value?.status !== 'active'){
-    toast.error(`please start the ${sprintType.value || 'sprint'} first.`);
-    showMenu.value = false;
-    return;
-  }else{
-    const modalSprintData = {
-    id: sprint._id,
-    sprint_name: sprint.title,
-    start: sprint.start_date,
-    end: sprint.end_date,
-    sprintType: sprint.sprintType,
-    duration: sprint.duration,
-    goal: sprint.goal || "",
-  };
-  sidePanelStore.storeActiveSprint(modalSprintData);
-  startsprintModalOpen.value = true;
-  showMenu.value = false;
-  }
-  
-};
-
-function onDelete() {
-  if (!selectedSprintTicketIds.value.length) return;
-
-  handleDeleteSelectedSprint(
-    selectedSprintTicketIds.value,
-    `${selectedSprintTicketIds.value.length} ticket(s)`,
-  );
-
-  showMenu.value = false;
-}
 //save selected sprint title
 const selectedSprintTitle = computed(() => {
   const title = sprintsList.value?.sprints?.find(
@@ -1402,6 +1607,10 @@ const selectedSprintTitle = computed(() => {
   if (title) localStorage.setItem('selectedSprintTitle', title);
   
   return title ?? localStorage.getItem('selectedSprintTitle') ?? '';
+});
+
+const startModalSprintType = computed(() => {
+  return sidePanelStore.startedSprint?.sprintType || sprintType.value;
 });
 </script>
 
@@ -1447,5 +1656,15 @@ const selectedSprintTitle = computed(() => {
 .fade-enter-to,
 .fade-leave-from {
   opacity: 1;
+}
+
+.fade-scale-enter-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.fade-scale-leave-active {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.fade-scale-enter-from, .fade-scale-leave-to {
+  transform: scale(0.97); opacity: 0;
 }
 </style>
