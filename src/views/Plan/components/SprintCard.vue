@@ -231,10 +231,10 @@ type MoveCardVars = {
 const { mutate: moveCardApi, isPending: isMoving } = useMoveCard({
   onSuccess: async (_data: unknown, vars: MoveCardVars) => {
     const count = vars.payload?.card_ids?.length || 1;
-    await queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
-    await queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
-    await queryClient.invalidateQueries({ queryKey: ["sprint-detail", props.sprintId] });
-    await queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-detail", props.sprintId] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
       toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
 
     emit("refresh");

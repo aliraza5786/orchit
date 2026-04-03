@@ -359,11 +359,7 @@
                             :variant="isDark ? 'primary' : 'primary'"
                             class="border-accent border"
                             @click="openStartSprintModal"
-                            :disabled="
-                              (!hasSubSprints && (!firstSprint || firstSprint.tickets.length === 0)) ||
-                              (hasSubSprints && !sprintDetailData?.sprints?.some((s: { cards?: unknown[] }) => (s.cards?.length ?? 0) > 0)) ||
-                              sprintDetailData?.status === 'completed'
-                            "
+                            :disabled="isStartButtonDisabled"
                             :style="{ backgroundColor: selectedType.dot }"
                           > 
                             Start {{ selectedType.label }} 
@@ -901,6 +897,20 @@ const mapApiCardsToTickets = (cards: any[]) => {
 
 const hasSubSprints = computed(() => {
   return sprintType.value === 'milestone' && (sprintDetailData.value?.sprints?.length || 0) > 0;
+});
+
+const isStartButtonDisabled = computed(() => {
+  const detail = sprintDetailData.value;
+  if (!detail) return true;
+  if (detail.status === 'completed') return true;
+  
+  if (!hasSubSprints.value) {
+    // If it's a standalone sprint/huddle, check its direct tickets
+    return !firstSprint.value || firstSprint.value.tickets.length === 0;
+  }
+  
+  // For milestones with sub-sprints, check if any sub-sprint has cards
+  return !detail.sprints?.some((s: any) => (s.cards?.length ?? 0) > 0);
 });
 
 const closeModal = () => {
