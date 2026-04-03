@@ -767,10 +767,104 @@
             </div>
           </nav>
         </div>
+           <div
+  v-if="pinnedEntities.length"
+  class="border-t border-border bg-bg-card rounded-lg"
+>
+  <!-- Section Header -->
+  <div
+    class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-bg-body rounded-lg transition-colors"
+    @click="allPinnedExpanded = !allPinnedExpanded"
+  >
+    <div class="flex items-center gap-2">
+      <i class="fa-solid fa-thumbtack text-accent text-xs"></i>
+      <span class="text-xs font-semibold text-text-primary">
+        Pinned Suggestions ({{ pinnedEntities.length }})
+      </span>
+    </div>
+    <i
+      class="fa-solid text-text-secondary text-xs transition-transform duration-200"
+      :class="allPinnedExpanded ? 'fa-chevron-down' : 'fa-chevron-right'"
+    ></i>
+  </div>
+
+  <!-- Groups — only render when expanded -->
+  <div
+    v-if="allPinnedExpanded"
+    class="max-h-[280px] overflow-y-auto px-3 pb-2 space-y-2"
+  >
+    <div
+      v-for="entity in pinnedEntities"
+      :key="entity.id ?? entity._id"
+      class="border border-border rounded-lg bg-bg-body overflow-hidden"
+    >
+      <!-- Group Header -->
+      <div
+        class="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-bg-surface transition-colors"
+        @click="togglePinnedGroup(entity.id ?? entity._id)"
+      >
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+          <i class="fa-solid fa-layer-group text-accent text-[10px] shrink-0"></i>
+          <span class="text-xs font-medium text-text-primary truncate">
+            {{ getEntityLabel(entity) }}
+          </span>
+          <span
+            class="text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent font-medium shrink-0"
+          >
+            {{ getEntityCards(entity).length }}
+          </span>
+        </div>
+        <i
+          class="fa-solid text-text-secondary text-[10px] shrink-0 ml-2 transition-transform duration-200"
+          :class="expandedPinnedGroups.includes(entity.id ?? entity._id ?? '') ? 'fa-chevron-down' : 'fa-chevron-right'"
+        ></i>
+      </div>
+
+      <!-- Cards -->
+      <div
+        v-if="expandedPinnedGroups.includes(entity.id ?? entity._id ?? '')"
+        class="px-3 pb-2 space-y-1.5 border-t border-border"
+      >
+        <div
+          v-for="card in getEntityCards(entity)"
+          :key="card._id"
+          class="bg-bg-card rounded-md px-3 py-2 border border-border/60 hover:border-accent/30 transition-colors"
+        >
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex-1 min-w-0">
+              <p class="text-xs font-medium text-text-primary leading-tight truncate">
+                {{ card["card-title"] || card.variables?.["card-title"] || "Untitled" }}
+              </p>
+              <p
+                v-if="card['card-description'] || card.variables?.['card-description']"
+                class="text-[10px] text-text-secondary mt-0.5 line-clamp-1"
+              >
+                {{ card["card-description"] || card.variables?.["card-description"] }}
+              </p>
+            </div>
+            <span
+              class="text-[9px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium shrink-0 capitalize whitespace-nowrap"
+            >
+              {{ card["card-status"] || card.variables?.["card-status"] || "—" }}
+            </span>
+          </div>
+        </div>
+
+        <p
+          v-if="!getEntityCards(entity).length"
+          class="text-[10px] text-text-secondary text-center py-2"
+        >
+          No cards
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ── End Pinned Entities ─────────────────────────────────────────── -->
        <div class="relative w-full">
   <!-- Chat Input Box -->
   <div
-    class="flex flex-col border border-border rounded-xl px-3 py-2 bg-bg-body focus-within:border-accent transition-colors"
+    class="flex flex-col border border-border rounded-xl mt-2 px-3 py-2 bg-bg-body focus-within:border-accent transition-colors"
   >
     <!-- Uploaded files (thumbnails) -->
     <div v-if="selectedFiles.length" class="flex flex-wrap gap-2 mb-2">
@@ -807,6 +901,7 @@
       <textarea
         v-model="userMessage"
         placeholder="Ask anything..."
+        ref="autoTextarea"
         rows="1"
         class="flex-1 resize-none bg-transparent outline-none text-sm"
         :disabled="agentStore.isSending"
@@ -1046,7 +1141,21 @@ const contextTitle = computed(() => {
   if (routeName.includes("more")) return "More";
   return "Workspace";
 });
-
+type Entity = {
+  id?: string;
+  _id?: string;
+  type: string;
+  title: string;
+  created_at: string;
+  created_by?: string;
+  module_id?: string;
+  module_name?: string;
+  user_id?: string;
+  lane_id?: string;
+  sheet_id?: string;
+  card_id?: string;
+  ispined?: boolean;
+};
 const entities = computed(() => agentStore.createdEntities);
 const orderedMessages = computed(() => {
   const historyMessages = Array.isArray(agentStore.chatHistory)
@@ -1059,6 +1168,40 @@ const orderedMessages = computed(() => {
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
   );
 });
+// ── Pinned entities state ─────────────────────────────────────────────────────
+const allPinnedExpanded = ref(false);
+const expandedPinnedGroups = ref<string[]>([]);
+
+const pinnedEntities = computed<Entity[]>(() =>
+  (entities.value || []).filter((e: Entity) => e.ispined === true)
+);
+const togglePinnedGroup = (id: string | undefined) => {
+  if (!id) return;
+  if (expandedPinnedGroups.value.includes(id)) {
+    expandedPinnedGroups.value = expandedPinnedGroups.value.filter((g) => g !== id);
+  } else {
+    expandedPinnedGroups.value.push(id);
+  }
+};
+// Pull cards from payload.sheets[].items (the actual card objects with titles)
+const getEntityCards = (entity:any) => {
+  return (entity.payload?.sheets || [])
+    .flatMap((sheet:any) => sheet.items || sheet.cards || [])
+    .filter(Boolean);
+};
+
+// Use the assistant's message as the group label, fallback to module_name + date
+const getEntityLabel = (entity:any) => {
+  const assistantMsg = entity.agent_chat_message_id?.messages?.find(
+    (m:any) => m.type === "assistant"
+  );
+  if (assistantMsg?.content) {
+    const text = assistantMsg.content;
+    return text.length > 50 ? text.slice(0, 50) + "…" : text;
+  }
+  const date = new Date(entity.created_at).toLocaleDateString();
+  return `${entity.module_name || "Tasks"} — ${date}`;
+};
 
 // Auto resize textarea
 const autoResize = () => {

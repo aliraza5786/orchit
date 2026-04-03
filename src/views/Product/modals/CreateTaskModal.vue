@@ -471,7 +471,7 @@ const payload = {
   seat_id: Array.isArray(form.assignees)
   ? form.assignees.map(u => u?._id || u?.id).filter(Boolean)
   : [],
-  sprint_id: localStorage.getItem("activeSprintId") || null,
+  sprint_id: localStorage.getItem("activeSprintId") || localStorage.getItem("activeSprintKey") || null,
   createdAt: new Date().toISOString(),
 };
 
