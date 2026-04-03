@@ -25,7 +25,7 @@
       <!-- Tickets List -->
       <div
         v-if="filteredTickets.length > 0 && sprint"
-        class="overflow-y-auto h-[calc(100%-50px)] tickets-scroll"
+        class="overflow-y-auto h-[calc(100%-15px)] tickets-scroll"
       >
         <div class="flex flex-col flex-1 gap-[4px] min-w-0 me-1">
           <div
@@ -117,7 +117,7 @@
       <!-- Empty State -->
       <div
         v-else
-        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-50px)] min-h-0"
+        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-15px)] min-h-0"
       >
         <img
           src="../../../assets/emptyStates/sprint-plan.svg"
@@ -218,19 +218,30 @@ const filteredTickets = computed(() => {
 const dropOverSprint = ref(false);
 const draggedTicketIds = ref<string[]>([]);
 const queryClient = useQueryClient();
+// WITH
+type MoveCardVars = {
+  id: string;
+  payload: {
+    card_ids: string[];
+    priority: string;
+    story_points: number;
+  };
+};
+
 const { mutate: moveCardApi, isPending: isMoving } = useMoveCard({
-  onSuccess: (_, vars) => {
+  onSuccess: async (_data: unknown, vars: MoveCardVars) => {
     const count = vars.payload?.card_ids?.length || 1;
-    toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
-    
-    queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
-    queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
-    queryClient.invalidateQueries({ queryKey: ["sprint-detail", props.sprintId] });
-    
+    await queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+    await queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+    await queryClient.invalidateQueries({ queryKey: ["sprint-detail", props.sprintId] });
+    await queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
+      toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
+
     emit("refresh");
   },
-  onError: (error: any) => {
-    toast.error("Failed to move card: " + (error.message || "Unknown error"));
+  onError: (error: unknown) => {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    toast.error("Failed to move card: " + message);
   },
 });
 

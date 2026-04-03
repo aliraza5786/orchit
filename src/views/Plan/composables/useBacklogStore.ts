@@ -167,6 +167,7 @@ export function useBacklogStore() {
       queryClient.invalidateQueries({
         queryKey: ["sprint-detail", vars.id],
       });
+      queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
     },
     onError: (error: any) => {
       toast.error(

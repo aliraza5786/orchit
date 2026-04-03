@@ -71,7 +71,7 @@ export const useSprintKanban = (
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["sprint-kanban", sprint_id, lane_ids],
+    queryKey: ["sprint-kanban", unref(sprint_id), unref(lane_ids)],
     queryFn: ({ signal }) => {
       const resolvedLaneIds = unref(lane_ids);
       
@@ -110,12 +110,14 @@ export const useCompleteSprint = (sprint_id: any, options = {}) =>
       key: ["sprint-complete"],
     } as any,
     {
-      mutationFn: (vars: any) =>
-        request({
-          url: `sprints/${unref(sprint_id)}/complete`,
+      mutationFn: (vars: any) => {
+        const id = vars.id || unref(sprint_id);
+        return request({
+          url: `sprints/${id}/complete`,
           method: "POST",
           data: vars.payload,
-        }),
+        });
+      },
       ...(options as any),
     } as any
   );

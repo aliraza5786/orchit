@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="md" :title="`Add New ${formattedLabel}`">
+  <BaseModal v-model="isOpen" modalClass="!py-0" size="md" :title="sprint ? `Edit ${formattedLabel}` : `Add New ${formattedLabel}`">
     
     <div class="px-6 gap-4 bg-bg-input pt-5 pb-8">
       <!-- Name (required) -->
@@ -342,7 +342,7 @@ function save() {
 
   emit("save", {
     name: String(form.name || "").trim(),
-    value: String(props.lable || "").trim(),
+    value: String(form.sprintType || props.lable || "").trim(),
     duration: form.duration ? String(form.duration) : null,
     start: form.start,
     end: form.end,
@@ -413,8 +413,10 @@ watch(
     form.description = s.description || "";
     form.sprintType = s.sprintType || null;
     form.duration = s.duration ? Number(s.duration) : null;
-    form.start = s.start ? s.start.slice(0, 10) : new Date().toISOString().slice(0, 10);
-    form.end = s.end ? s.end.slice(0, 10) : "";
+    const startDate = s.start || s.start_date || "";
+    const endDate = s.end || s.end_date || "";
+    form.start = startDate ? startDate.slice(0, 10) : new Date().toISOString().slice(0, 10);
+    form.end = endDate ? endDate.slice(0, 10) : "";
     form.goal = s.goal || "";
     form.num_sprints = s.num_sprints || null;
     form.parent_sprint_id = s.parent_sprint_id || null;
@@ -445,7 +447,7 @@ watch(
 watch(
   () => props.lable,
   (newLabel) => {
-    if (!newLabel) return;
+    if (!newLabel || props.sprint) return;
     const lowerLabel = newLabel.toLowerCase();
 
     // Reset form fields that depend on type
