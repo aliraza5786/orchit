@@ -135,6 +135,7 @@
                   :board="filteredBoard"
                   :variable_id="selected_view_by"
                   :sheet_id="selected_sheet_id"
+                  :sprint_id="selected_sprint_id"
                   @onPlus="plusHandler"
                   @delete:column="(e: any) => deleteHandler(e)"
                   @update:column="(e: any) => handleUpdateColumn(e)"
@@ -482,7 +483,7 @@ function onReorder(a: any) {
     reorderList.mutate({
       payload: {
         workspace_id: workspaceId.value,
-        workspace_module_id: moduleId.value,
+        workspace_module_id: moduleId.value || selected_sprint_id.value || localStorage.getItem("activeSprintKey") || "",
         variable_id: selected_view_by.value,
         moved_value: a.meta.id,
         new_index: a.meta.newIndex,
@@ -545,7 +546,7 @@ function setActiveAddList() {
 const handleUpdateColumn = (newTitle: any) => {
   addList({
     workspace_id: route.params.id,
-    module_id: route.params.module_id,
+    module_id: route.params.module_id || selected_sprint_id.value || localStorage.getItem("activeSprintKey") || "",
     new_value: newTitle.title,
     value: newTitle.oldTitle,
     variable_id: selected_view_by.value,
