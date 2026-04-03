@@ -289,11 +289,11 @@ export const useRemoveCardFromSprint = (options = {}) =>
       key: ["remove-card-from-sprint"],
     } as any,
     {
-      mutationFn: (vars: { sprintId: string; cardId: string }) =>
+      mutationFn: (vars: { sprintId: string; cardIds: string[] }) =>
         request({
           url: `sprints/${unref(vars.sprintId)}/cards/remove `,
           method: "POST",
-          data: { card_ids: [vars.cardId] },
+          data: { card_ids: vars.cardIds },
         }),
       ...(options as any),
     } as any

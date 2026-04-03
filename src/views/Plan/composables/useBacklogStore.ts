@@ -1,4 +1,5 @@
 import { ref, reactive, watch, computed } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
 
@@ -155,9 +156,17 @@ export function useBacklogStore() {
     return `PRJ-${next}`;
   }
 
-  const { mutate: moveCard } = useMoveCard({
-    onSuccess: () => {
-      toast.success("Cards moved to sprint successfully");
+  const queryClient = useQueryClient();
+  const { mutate: moveCard, isPending: isMoving } = useMoveCard({
+    onSuccess: (_: any, vars: any) => {
+      const count = vars.payload?.card_ids?.length || 1;
+      toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
+
+      queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+      queryClient.invalidateQueries({
+        queryKey: ["sprint-detail", vars.id],
+      });
     },
     onError: (error: any) => {
       toast.error(
@@ -269,5 +278,6 @@ export function useBacklogStore() {
     moveSelectedToBacklog,
     deleteSelected,
     priorityClass,
+    isMoving,
   };
 }

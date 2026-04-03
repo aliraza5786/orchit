@@ -17,7 +17,7 @@
           <div class="min-w-[800px] h-full flex flex-col">
             <div
               v-if="!isStartingSprint"
-              class="px-0.5 py-4 w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
+              class="pe-[4px] pt-[14px] w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
             >
               <div
                 ref="containerRef"
@@ -81,7 +81,7 @@
                     </div>
                   </div>
                   <div
-                    v-if="isBacklogPenidng || isBacklogRefreshing"
+                    v-if="isBacklogPenidng || isBacklogRefreshing || isMovingFromStore || isRemoving"
                     class="w-full h-full flex justify-center items-center"
                   >
                     <div
@@ -130,10 +130,10 @@
                 </div>
 
                 <section
-                  class="rounded-md relative pt-2 flex flex-col flex-1 min-w-0 bg-bg-card min-h-0 border border-border"
+                  class="rounded-md relative flex flex-col flex-1 min-w-0 bg-bg-card min-h-0 border border-border"
                 >
                   <div
-                    class="flex justify-between gap-4 px-3 pb-2 border-b border-border-input"
+                    class="flex pt-2 justify-between gap-4 px-3 pb-2 border-b border-border-input"
                   >
                     <!-- Left Section: Sprint Tabs -->
                     <div class="flex items-center gap-2 min-w-0 py-1">
@@ -431,7 +431,7 @@
                     
                   </div>
                   <div
-                    v-if="isLoadingSprint || isSprintsFetching"
+                    v-if="isLoadingSprint || isSprintsFetching || isMovingFromStore || isRemoving"
                     class="w-full h-full min-h-[250px] flex justify-center items-center"
                   >
                     <div
@@ -441,7 +441,7 @@
                     ></div>
                   </div>
 
-                  <div class="flex-1 min-h-0 overflow-y-auto" v-else>
+                  <div class="flex-1 min-h-0 overflow-y-auto mt-4" v-else>
                     <SprintCard
                       :searchQuery="searchQuery"
                       :sprintId="selectedSprintId"
@@ -778,6 +778,7 @@ const {
   deleteSelected,
   saveSprintMeta,
   toggleStartSprint,
+  isMoving: isMovingFromStore,
 } = useBacklogStore();
 function handleConfirmDeleteSprint() {
   if (
@@ -1102,9 +1103,10 @@ function mapPriority(p: string): "Highest" | "High" | "Medium" | "Low" {
   return "Low";
 }
 
-const { mutate: removeCardFromSprint } = useRemoveCardFromSprint({
-  onSuccess: () => {
-    toast.success("Card removed from sprint successfully");
+const { mutate: removeCardFromSprint, isPending: isRemoving } = useRemoveCardFromSprint({
+  onSuccess: (_, vars) => {
+    const count = vars.cardIds?.length || 1;
+    toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to backlog`);
     handleRefresh();
   },
   onError: (error: any) => {
@@ -1113,6 +1115,11 @@ const { mutate: removeCardFromSprint } = useRemoveCardFromSprint({
 });
 
 function handleRefresh() {
+  queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-detail", selectedSprintId.value] });
+  queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+  
+  // Also call individual refetches for immediate response if needed
   refetchSprintData();
   refetchSprints();
   refetchBacklog();
@@ -1126,11 +1133,10 @@ function handleTicketMovedToBacklog(
   const ids = Array.isArray(ticketIds) ? ticketIds : [ticketIds];
   const sourceSprintId = sprintId || selectedSprintId.value;
   if (!sourceSprintId || !ids.length) return;
-  ids.forEach((id) => {
-    removeCardFromSprint({
-      sprintId: sourceSprintId,
-      cardId: id,
-    });
+  
+  removeCardFromSprint({
+    sprintId: sourceSprintId,
+    cardIds: ids,
   });
 }
 

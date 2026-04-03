@@ -9,8 +9,19 @@
       @dragenter="onDragEnterSprint"
       @dragleave="onDragLeaveSprint"
       @drop="onDropSprint"
-      class="h-full box-border mt-3"
+      class="h-full box-border relative"
     >
+      <!-- Loading Overlay -->
+      <div
+        v-if="isMoving"
+        class="absolute inset-0 bg-bg-card/50 backdrop-blur-[1px] z-50 flex items-center justify-center rounded-lg"
+      >
+        <div
+          role="status"
+          aria-label="Loading"
+          class="h-8 w-8 rounded-full border-4 border-accent border-t-transparent animate-spin"
+        ></div>
+      </div>
       <!-- Tickets List -->
       <div
         v-if="filteredTickets.length > 0 && sprint"
@@ -135,6 +146,8 @@ import { toast } from "vue-sonner";
 import { getInitials } from "../../../utilities";
 import { avatarColor } from '../../../utilities/avatarColor';
 import { useTheme } from "../../../composables/useTheme";
+import { useQueryClient } from "@tanstack/vue-query";
+
 const { isDark } = useTheme(); 
 const props = defineProps<{
   sprint: Sprint | null;
@@ -204,9 +217,16 @@ const filteredTickets = computed(() => {
 // Drag & Drop
 const dropOverSprint = ref(false);
 const draggedTicketIds = ref<string[]>([]);
-const { mutate: moveCardApi } = useMoveCard({
-  onSuccess: () => {
-    toast.success("Card moved to sprint successfully");
+const queryClient = useQueryClient();
+const { mutate: moveCardApi, isPending: isMoving } = useMoveCard({
+  onSuccess: (_, vars) => {
+    const count = vars.payload?.card_ids?.length || 1;
+    toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
+    
+    queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-detail", props.sprintId] });
+    
     emit("refresh");
   },
   onError: (error: any) => {
@@ -289,15 +309,17 @@ function onDropSprint(e: DragEvent) {
     if (!deduped.length) return;
     sprintTickets.value.push(...deduped);
 
-    deduped.forEach((ticket) => {
-      moveCardApi({
-        id: props.sprintId,
-        payload: {
-          card_ids: [ticket.id],
-          priority: (ticket.priority || "Medium").toLowerCase(),
-          story_points: ticket.storyPoints || 0,
-        },
-      });
+    const cardIds = deduped.map((t) => t.id);
+    const totalPoints = deduped.reduce((sum, t) => sum + (t.storyPoints || 0), 0);
+    const topPriority = deduped[0]?.priority?.toLowerCase() || "medium";
+
+    moveCardApi({
+      id: props.sprintId,
+      payload: {
+        card_ids: cardIds,
+        priority: topPriority,
+        story_points: totalPoints,
+      },
     });
   } catch (error) {
     console.error("Drop error:", error);
