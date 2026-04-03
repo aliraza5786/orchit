@@ -136,12 +136,14 @@
                     class="flex pt-2 justify-between gap-4 px-3 pb-2 border-b border-border-input"
                   >
                     <!-- Left Section: Sprint Tabs -->
-                    <div class="flex items-center gap-2 min-w-0 py-1">
+                    <div class="overflow-x-auto">
+                    <div class="flex items-center gap-2 py-1 min-w-max">
 
                       <!-- Sprint Type Dropdown -->
                       <div ref="elipseWrapperSprint" class="relative inline-block">
                         <!-- Trigger Button -->
                         <button
+                          ref="typeTriggerRef"
                           @click.stop="openElipseDropDown = !openElipseDropDown"
                           type="button"
                           class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
@@ -164,26 +166,30 @@
                         </button>
 
                         <!-- Dropdown -->
-                        <transition name="fade-scale">
-                          <ul
-                            v-if="openElipseDropDown"
-                            @click.stop
-                            class="absolute left-0 mt-1.5 min-w-[160px] bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-50 py-1 text-sm"
-                          >
-                            <li
-                              v-for="item in sprintTypes"
-                              :key="item.value"
-                              @click="selectType(item); openElipseDropDown = false"
-                              class="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
+                        <Teleport to="body">
+                          <transition name="fade-scale">
+                            <ul
+                              v-if="openElipseDropDown"
+                              ref="typeMenuRef"
+                              :style="typeStyles"
+                              @click.stop
+                              class="fixed min-w-[160px] bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-[9999] py-1 text-sm"
                             >
-                              <span
-                                class="w-2 h-2 rounded-full flex-shrink-0"
-                                :style="{ backgroundColor: item.dot }"
-                              ></span>
-                              <span :class="item.value === selectedType.value ? 'font-semibold text-accent' : ''">{{ item.label }}</span>
-                            </li>
-                          </ul>
-                        </transition>
+                              <li
+                                v-for="item in sprintTypes"
+                                :key="item.value"
+                                @click="selectType(item); openElipseDropDown = false"
+                                class="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
+                              >
+                                <span
+                                  class="w-2 h-2 rounded-full flex-shrink-0"
+                                  :style="{ backgroundColor: item.dot }"
+                                ></span>
+                                <span :class="item.value === selectedType.value ? 'font-semibold text-accent' : ''">{{ item.label }}</span>
+                              </li>
+                            </ul>
+                          </transition>
+                        </Teleport>
                       </div>
 
                       <!-- Sprint Selector Dropdown -->
@@ -191,6 +197,7 @@
                         <!-- Trigger -->
                         <button
                           v-if="sprintsList?.sprints.length"
+                          ref="selectorTriggerRef"
                           @click="isSprintDropdownOpen = !isSprintDropdownOpen"
                           type="button"
                           class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
@@ -214,51 +221,55 @@
                         </button>
 
                         <!-- Dropdown -->
-                        <transition name="fade-scale">
-                          <div
-                            v-if="isSprintDropdownOpen"
-                            class="absolute left-0 mt-1.5 w-64 bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-50 max-h-64 overflow-y-auto py-1"
-                          >
+                        <Teleport to="body">
+                          <transition name="fade-scale">
                             <div
-                              v-for="sprint in sprintsList?.sprints"
-                              :key="sprint._id"
-                              class="relative px-3 py-2 flex items-center justify-between text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
+                              v-if="isSprintDropdownOpen"
+                              ref="selectorMenuRef"
+                              :style="selectorStyles"
+                              class="fixed w-64 bg-bg-dropdown border border-border rounded-[6px] shadow-lg z-[9999] max-h-64 overflow-y-auto py-1"
                             >
-                              <!-- Title / Edit -->
-                              <div class="relative flex-1 min-w-0">
-                                <button
-                                  class="text-left truncate w-full flex items-center gap-2"
-                                  @click="selectSprint(sprint)"
-                                >
-                                  <span
-                                    class="w-2 h-2 rounded-full flex-shrink-0"
-                                    :style="{ backgroundColor: selectedType.dot }"
-                                  ></span>
-                                  <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
-                                </button>
-                              </div>
+                              <div
+                                v-for="sprint in sprintsList?.sprints"
+                                :key="sprint._id"
+                                class="relative px-3 py-2 flex items-center justify-between text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
+                              >
+                                <!-- Title / Edit -->
+                                <div class="relative flex-1 min-w-0">
+                                  <button
+                                    class="text-left truncate w-full flex items-center gap-2"
+                                    @click="selectSprint(sprint)"
+                                  >
+                                    <span
+                                      class="w-2 h-2 rounded-full flex-shrink-0"
+                                      :style="{ backgroundColor: selectedType.dot }"
+                                    ></span>
+                                    <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
+                                  </button>
+                                </div>
 
-                              <!-- Actions -->
-                              <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
-                                <button
-                                  class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-accent hover:bg-bg-body transition-colors"
-                                  @click.stop="openModalEditSprint(sprint)"
-                                  title="Edit"
-                                >
-                                  <i class="fas fa-pen text-[10px]"></i>
-                                </button>
-                                <button
-                                  v-if="sprintsList?.sprints.length"
-                                  @click.stop="handleDeleteSprint(sprint)"
-                                  class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
-                                  title="Delete"
-                                >
-                                  <i class="fas fa-times text-[10px]"></i>
-                                </button>
+                                <!-- Actions -->
+                                <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
+                                  <button
+                                    class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-accent hover:bg-bg-body transition-colors"
+                                    @click.stop="openModalEditSprint(sprint)"
+                                    title="Edit"
+                                  >
+                                    <i class="fas fa-pen text-[10px]"></i>
+                                  </button>
+                                  <button
+                                    v-if="sprintsList?.sprints.length"
+                                    @click.stop="handleDeleteSprint(sprint)"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-red-500 hover:bg-red-50 transition-colors"
+                                    title="Delete"
+                                  >
+                                    <i class="fas fa-times text-[10px]"></i>
+                                  </button>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </transition>
+                          </transition>
+                        </Teleport>
                       </div>
 
                       <!-- Add Sprint Button -->
@@ -270,6 +281,7 @@
                       >
                         <i class="fa-solid fa-plus text-xs"></i>
                       </button>
+                    </div>
                     </div>
                     <!-- Right Section: Actions -->
                     <div class="flex justify-end items-center">
@@ -317,7 +329,7 @@
                             size="sm"
                             @click="handleCompleteSprint"
                             :variant="isDark ? 'primary' : 'primary'"
-                            class="border-border-input border"
+                            class="border-accent border"
                             :style="
                               selectedSprintId
                                 ? { backgroundColor: selectedType.dot }
@@ -327,7 +339,7 @@
                             {{ isCompletingSprint ? "Ending..." : "End" }}
                           </Button>
                           <button
-                            class="cursor-pointer text-white flex items-center justify-end gap-1 px-2 py-1 rounded-md text-sm font-medium"
+                            class="cursor-pointer border border-accent text-white flex items-center justify-end gap-1 px-2 py-1 rounded-md text-sm font-medium"
                             @click="handlePreviewClick"
                             :style="
                               selectedSprintId
@@ -345,7 +357,7 @@
                             v-if="sprintDetailData?.status !== 'completed'"
                             size="sm"
                             :variant="isDark ? 'primary' : 'primary'"
-                            class="border-border-input border"
+                            class="border-accent border"
                             @click="openStartSprintModal"
                             :disabled="
                               !firstSprint ||
@@ -353,79 +365,11 @@
                               sprintDetailData?.status === 'completed'
                             "
                             :style="{ backgroundColor: selectedType.dot }"
-                          >
-                            Start {{ selectedType.label }}
+                          > 
+                            Start {{ selectedType.label }} 
                           </Button> 
                         </div>
-                      </div>
-                      
-                      <div 
-                        v-if="firstSprint && firstSprint.tickets.length"
-                      >
-                        <button
-                          v-if="sprintDetailData?.status === 'planning'"
-                          @click="openStartSprintModal"
-                          :disabled="
-                            !firstSprint ||
-                            firstSprint.tickets.length === 0 ||
-                            sprintDetailData?.status === 'completed'
-                          "
-                          class="w-7 h-7 ms-1.5 flex items-center justify-center rounded-full text-white
-                           bg-accent disabled:opacity-50 disabled:cursor-not-allowed lg:hidden"
-                          title="Start Sprint"
-                          :style="
-                            selectedSprintId
-                              ? { backgroundColor: selectedType.dot }
-                              : {}
-                          "
-                        >
-                          <i class="fa-solid fa-play text-sm"></i>
-                        </button>
-                      </div>
-                       <!-- Small Screen Icon Buttons -->
-                         <div
-                            class="relative"
-                            v-if="sprintDetailData?.status === 'active' || sprintDetailData?.status === 'planning'"
-                          >
-                            <!-- Ellipsis Icon -->
-                            <i
-                              class="fa-solid fa-ellipsis-vertical text-lg mt-2 cursor-pointer"
-                              @click.stop="toggleMenu"
-                            ></i>
-
-                            <!-- Dropdown -->
-                            <div
-                              v-if="showMenu"
-                              class="absolute right-0 mt-2 w-28 bg-bg-dropdown border border-border rounded-md shadow-lg z-50"
-                            >
-                              <div
-                                class="px-3 py-1.5 text-sm cursor-pointer hover:bg-bg-dropdown-menu-hover"
-                                @click="
-                                  openStartSprintModalForUpdate(
-                                    sprintDetailData,
-                                  )
-                                "
-                              >
-                                <div class="flex justify-between">
-                                  <span>Update</span>
-                                  <i class="fa-light fa-pen mt-0.5"></i>
-                                </div>
-                              </div>
-                              <div
-                                class="px-3 py-1.5 text-sm text-red-500 cursor-pointer hover:bg-bg-dropdown-menu-hover"
-                                @click="onDelete"
-                                v-if="isSprintChecked"
-                              >
-                                <div
-                                  class="flex justify-between"
-                                  
-                                >
-                                  <span>Delete</span>
-                                  <i class="fa-light fa-trash mt-0.5"></i>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                      </div>  
                     </div>
             
                     
@@ -611,6 +555,8 @@
       :lable="sprintType"
       :creatingSprint="selectedSprint ? isUpdatingSprint : creatingSprint"
       :sprints="sprintsDataFromPlus"
+      :milestoneOptionsList="groupedSprints?.grouped?.milestone || []"
+      :sprintOptionsListItems="groupedSprints?.grouped?.sprint || []"
     />
     <StartSprintModal
       v-model="startsprintModalOpen"
@@ -636,13 +582,14 @@
 </template>
 
 <script setup lang="ts">
+import { onClickOutside } from "@vueuse/core";
 import BacklogTable from "./components/BacklogTable.vue";
 import SprintCard from "./components/SprintCard.vue";
 import SprintModal from "./modals/SprintModal.vue";
 import ModuleSheetDropdown from "./components/ModuleSheetDropdown.vue";
 import PlanSelectDropdown from "./components/PlanSelectDropdown.vue"; 
 import ExpandableSearch from "../../components/ui/ExpandableSearch.vue";
-import { computed, ref, watch, onMounted, defineAsyncComponent } from "vue";
+import { computed, ref, watch, onMounted, onUnmounted, nextTick, defineAsyncComponent } from "vue";
 import { useBacklogStore, type Ticket } from "./composables/useBacklogStore";
 import Button from "../../components/ui/Button.vue";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
@@ -673,6 +620,8 @@ import { useTheme } from "../../composables/useTheme";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 import { usePermissions } from "../../composables/usePermissions";
 import { useSheets } from "../../queries/useSheets";
+import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
+import type { CSSProperties } from 'vue';
 const SidePanel = defineAsyncComponent(
   () => import("../Product/components/SidePanel.vue"),
 );
@@ -692,20 +641,10 @@ watch(showActiveSprint, (val) => {
   localStorage.setItem('showActiveSprint', String(val));
 });
 const module_id= ref(localStorage.getItem("selectedModuleId") ||"");
-const {
-  data
-} = useSheets({
-  workspace_id: workspaceId,
-  workspace_module_id: module_id,
-});
-const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
-const selected_sheet_id = ref<any>(sheetId.value);
-const selectedSprintIdForDelete = ref<string | null>(null);
-const selectedCardIdsForDelete = ref<string[]>([]);
-const elipseWrapperSprint = ref<HTMLElement | null>(null);
-const open = ref(false);
-const openElipseDropDown = ref(false);
-const sprintType = computed(() => selectedType.value.value);
+const selectedSprintId = ref(localStorage.getItem("activeSprintKey") || "");
+const isSprintDropdownOpen = ref(false);
+const sprintDropdownWrapperRef = ref<HTMLElement | null>(null);
+
 const parseInitialArray = (key: string) => {
   const val = localStorage.getItem(key);
   if (!val) return [];
@@ -720,11 +659,38 @@ const parseInitialArray = (key: string) => {
 const selectedFilter = ref<string[]>(parseInitialArray("activeMilestoneId"));
 const selectedSheetFilter = ref<string[]>(parseInitialArray("activeSheetId"));
 const selectedFilterLabel = ref(localStorage.getItem("activeMilestoneLabel") || "All Modules");
-
 const selectedPlanIds = ref<string[]>(parseInitialArray("activePlanIds"));
 const selectedPlanLabel = ref(localStorage.getItem("activePlanLabel") || "Select Plans");
 const includeSprintCards = computed(() => selectedPlanIds.value.length > 0);
 const currentPage = ref(1);
+
+const { 
+  data: backlogResp,   
+  isPending: isBacklogRefreshing 
+} = useBacklogList(
+  workspaceId,
+  ref(""),
+  selectedFilter,
+  selectedSheetFilter,
+  selectedPlanIds,
+  includeSprintCards,
+  currentPage,
+);
+
+const {
+  data
+} = useSheets({
+  workspace_id: workspaceId,
+  workspace_module_id: module_id,
+});
+const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
+const selected_sheet_id = ref<any>(sheetId.value);
+const selectedSprintIdForDelete = ref<string | null>(null);
+const selectedCardIdsForDelete = ref<string[]>([]);
+const elipseWrapperSprint = ref<HTMLElement | null>(null);
+const openElipseDropDown = ref(false);
+const sprintType = computed(() => selectedType.value.value);
+const isStartingSprintLoading = ref(false);
 
 const selectedFilterLabelWithCount = computed(() => {
   const label = selectedFilterLabel.value || "All Modules";
@@ -732,7 +698,7 @@ const selectedFilterLabelWithCount = computed(() => {
   const count = backlogResp.value?.cards?.length;
   return count ? `${label} (${count})` : label;
 });
-const isStartingSprintLoading = ref(false);
+// const isStartingSprintLoading = ref(false);
 const sidePanelStore = useSidePanelStore();
 const isSprintChecked = ref(false);
 const selectedSprintTicketIds = ref<string[]>([]);
@@ -748,14 +714,6 @@ const formattedLabel = computed(() => {
 const savedSprintType = localStorage.getItem("sprintType");
 const initialType = sprintTypes.find(t => t.value === savedSprintType) || sprintTypes[0];
 const selectedType = ref(initialType);
-import { onClickOutside } from "@vueuse/core";
-// import ConfirmDeleteTicket from "./components/confirmDeleteTicket.vue";
-const elipseWrapper = ref<HTMLElement | null>(null);
-const openElipseDrop = ref(false);
-onClickOutside(elipseWrapper, () => {
-  openElipseDrop.value = false;
-});
-
 const closeModal = () => {
   showTaskModal.value = false;
 };
@@ -768,6 +726,67 @@ const showTooltip = ref(false);
 const toggleTooltip = (): void => {
   showTooltip.value = !showTooltip.value;
 };
+
+const typeTriggerRef = ref<HTMLElement | null>(null);
+const typeMenuRef = ref<HTMLElement | null>(null);
+const typeStyles = ref<CSSProperties>({ position: 'fixed', top: '-9999px', left: '-9999px' });
+let cleanupType: (() => void) | null = null;
+
+const selectorTriggerRef = ref<HTMLElement | null>(null);
+const selectorMenuRef = ref<HTMLElement | null>(null);
+const selectorStyles = ref<CSSProperties>({ position: 'fixed', top: '-9999px', left: '-9999px' });
+let cleanupSelector: (() => void) | null = null;
+
+function updateTypePosition() {
+  if (!typeTriggerRef.value || !typeMenuRef.value) return;
+  computePosition(typeTriggerRef.value, typeMenuRef.value, {
+    placement: 'bottom-start',
+    strategy: 'fixed',
+    middleware: [offset(6), flip(), shift({ padding: 5 })],
+  }).then(({ x, y }) => {
+    typeStyles.value = { position: 'fixed', left: `${x}px`, top: `${y}px` };
+  });
+}
+
+function updateSelectorPosition() {
+  if (!selectorTriggerRef.value || !selectorMenuRef.value) return;
+  computePosition(selectorTriggerRef.value, selectorMenuRef.value, {
+    placement: 'bottom-start',
+    strategy: 'fixed',
+    middleware: [offset(6), flip(), shift({ padding: 5 })],
+  }).then(({ x, y }) => {
+    selectorStyles.value = { position: 'fixed', left: `${x}px`, top: `${y}px` };
+  });
+}
+
+watch(openElipseDropDown, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      if (typeTriggerRef.value && typeMenuRef.value) {
+        cleanupType = autoUpdate(typeTriggerRef.value, typeMenuRef.value, updateTypePosition);
+      }
+    });
+  } else {
+    if (cleanupType) { cleanupType(); cleanupType = null; }
+  }
+});
+
+watch(isSprintDropdownOpen, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      if (selectorTriggerRef.value && selectorMenuRef.value) {
+        cleanupSelector = autoUpdate(selectorTriggerRef.value, selectorMenuRef.value, updateSelectorPosition);
+      }
+    });
+  } else {
+    if (cleanupSelector) { cleanupSelector(); cleanupSelector = null; }
+  }
+});
+
+onUnmounted(() => {
+  if (cleanupType) cleanupType();
+  if (cleanupSelector) cleanupSelector();
+});
 
 const isCreateTicketModalOpen = ref(false);
 const {
@@ -850,18 +869,6 @@ function handlePlanSelect(payload: { ids: string[], label: string }) {
 
  
 
-const { 
-  data: backlogResp,   
-  isPending: isBacklogRefreshing 
-} = useBacklogList(
-  workspaceId,
-  ref(""),
-  selectedFilter,
-  selectedSheetFilter,
-  selectedPlanIds,
-  includeSprintCards,
-  currentPage,
-);
 // Reset to page 1 whenever filters change (TanStack Query re-fetches via reactive queryKey)
 watch([selectedFilter, selectedSheetFilter, selectedPlanIds], () => {
   currentPage.value = 1;
@@ -962,7 +969,6 @@ const { refetch: refetchBacklog, isPending: isBacklogPenidng } = useBacklogList(
   ref(""),
 );
 const firstSprintId = computed(() => sprintsList?.value?.sprints[0]?._id);
-const selectedSprintId = ref(localStorage.getItem("activeSprintKey") || "");
 watch(
   () => firstSprintId.value,
   (newVal) => {
@@ -1343,62 +1349,22 @@ const selectType = (item: (typeof sprintTypes)[number]) => {
   localStorage.setItem("activePlanIds", JSON.stringify([]));
   localStorage.setItem("activePlanLabel", "Select Plans");
   localStorage.setItem("sprintType", item.value);
-  open.value = false;
+  openElipseDropDown.value = false;
 };
 
-onClickOutside(elipseWrapper, () => {
-  open.value = false;
+onClickOutside(elipseWrapperSprint, (event) => {
+  const target = event.target as Node;
+  if (typeMenuRef.value?.contains(target)) return;
+  openElipseDropDown.value = false;
 });
 
-const sprintDropdownWrapperRef = ref<HTMLElement | null>(null);
-const isSprintDropdownOpen = ref(false);
-
-onClickOutside(sprintDropdownWrapperRef, () => {
+onClickOutside(sprintDropdownWrapperRef, (event) => {
+  const target = event.target as Node;
+  if (selectorMenuRef.value?.contains(target)) return;
   isSprintDropdownOpen.value = false;
 });
 
   
-
-// Computed label for huddle button (Removed legacy filters)
-
-// sprint menu button icon
-const showMenu = ref(false);
-
-const toggleMenu = () => {
-  showMenu.value = !showMenu.value;
-};
-const openStartSprintModalForUpdate = (sprint: any) => {
-  if(sprintDetailData.value?.status !== 'active'){
-    toast.error(`please start the ${sprintType.value || 'sprint'} first.`);
-    showMenu.value = false;
-    return;
-  }else{
-    const modalSprintData = {
-    id: sprint._id,
-    sprint_name: sprint.title,
-    start: sprint.start_date,
-    end: sprint.end_date,
-    sprintType: sprint.sprintType,
-    duration: sprint.duration,
-    goal: sprint.goal || "",
-  };
-  sidePanelStore.storeActiveSprint(modalSprintData);
-  startsprintModalOpen.value = true;
-  showMenu.value = false;
-  }
-  
-};
-
-function onDelete() {
-  if (!selectedSprintTicketIds.value.length) return;
-
-  handleDeleteSelectedSprint(
-    selectedSprintTicketIds.value,
-    `${selectedSprintTicketIds.value.length} ticket(s)`,
-  );
-
-  showMenu.value = false;
-}
 //save selected sprint title
 const selectedSprintTitle = computed(() => {
   const title = sprintsList.value?.sprints?.find(
@@ -1453,5 +1419,15 @@ const selectedSprintTitle = computed(() => {
 .fade-enter-to,
 .fade-leave-from {
   opacity: 1;
+}
+
+.fade-scale-enter-active {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.fade-scale-leave-active {
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.fade-scale-enter-from, .fade-scale-leave-to {
+  transform: scale(0.97); opacity: 0;
 }
 </style>
