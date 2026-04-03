@@ -1,7 +1,7 @@
 <template>
   <div class="w-full h-full flex items-center justify-center">
     <div class="w-full h-[85vh] flex flex-col">
-      {{ sheetsPreview}} 
+      <!-- {{ sheetsPreview}}  -->
       <!-- Header -->
       <div
         class="px-3 py-1.5 border-b border-border flex flex-col justify-between flex-shrink-0"
@@ -155,7 +155,7 @@
           />
           <div class="space-y-4 mt-4" v-if="sheetsPreview?.length">
             <!-- SHEET -->
-             {{ sheetsPreview}}
+             <!-- {{ sheetsPreview}} -->
             <div
               v-for="sheet in sheetsPreview"
               :key="sheet.variables['sheet-title']"
@@ -279,16 +279,32 @@
         </button>
 
         <button
-          class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50"
-          :disabled="
-            isReadAction
-              ? !selectedReadCards.length
-              : !selectedItems.length && !selectedCards.length
-          "
-          @click="acceptChanges"
-        >
-          {{ isReadAction ? "Add Selected Cards" : "Accept Changes" }}
-        </button>
+  class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
+  :disabled="
+    agentStore.isAcceptingEntities ||
+    (isReadAction
+      ? !selectedReadCards.length
+      : !selectedItems.length && !selectedCards.length)
+  "
+  @click="acceptChanges"
+>
+  <!-- Spinner -->
+  <span
+    v-if="agentStore.isAcceptingEntities"
+    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+  ></span>
+
+  <!-- Text -->
+  <span>
+    {{
+      agentStore.isAcceptingEntities
+        ? "Processing..."
+        : isReadAction
+        ? "Add Selected Cards"
+        : "Accept Changes"
+    }}
+  </span>
+</button>
       </div>
     </div>
   </div>
@@ -370,12 +386,13 @@ const toggleReadCard = (id) => {
   }
 };
 
-// ── CREATE — source data ──────────────────────────────────────────────
 const sheetsPreview = computed(() => {
   if (isReadAction.value) return [];
   return (Array.isArray(props.data) ? props.data : [])
-    .flatMap((item) => item.payload?.sheets || []);
+    .flatMap((item) => item.payload?.sheets || [])
+    .filter((sheet) => sheet?.variables?.["sheet-title"]); // guard here
 });
+
 
 // ALL cards flat, each card has root-level _id and sheet_id
 const allCards = computed(() => {
