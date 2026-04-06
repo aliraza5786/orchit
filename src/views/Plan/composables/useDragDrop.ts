@@ -1,4 +1,5 @@
 import { nextTick, reactive, ref, type Ref } from "vue";
+import { useQueryClient } from "@tanstack/vue-query";
 import type { Ticket, Sprint } from "./useBacklogStore.ts";
 import { useMoveCard } from "../../../queries/usePlan";
 import { toast } from "vue-sonner";
@@ -12,9 +13,16 @@ export function useDragDrop(
   const dropOverBacklog = ref(false);
   const dropOverSprintId = ref<string | null>(null);
 
+  const queryClient = useQueryClient();
   const { mutate: moveCard } = useMoveCard({
     onSuccess: () => {
-      toast.success('Card moved successfully')
+      toast.success('Card moved successfully');
+      queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-detail"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-cards"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["sprint-grouped"] });
     },
     onError: (error: any) => {
       toast.error('Failed to move card: ' + (error.message || 'Unknown error'))

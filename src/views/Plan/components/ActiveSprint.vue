@@ -8,18 +8,19 @@
         <div
           class="header lg:px-4 px-2 py-2 flex justify-between items-center gap-1 overflow-auto border-b border-border"
         >
-          <div class="flex lg:gap-4 gap-2 py-1">
+          <div class="flex lg:gap-4 gap-2 py-1 items-center">
             <div>
               <button
-                class="lg:px-3 px-2 h-8 mt-1 rounded-2xl text-[14px] bg-accent flex items-center gap-1 text-white font-medium cursor-pointer"
+                class=" bg-bg-body px-2 py-2 rounded-[6px] font-medium text-[14px] cursor-pointer gap-2 flex items-center"
                 @click="$emit('go-back')"
+                tooltip="go back"
+                v-tooltip="'Go Back'"
               >
-                <i class="fa-solid fa-chevron-left text-[12px]"></i>
-                 <span class="hidden sm:block"> Go Back</span>
+                <i class="fa-solid fa-chevrons-left text-[10px]"></i> Back
               </button>
             </div> 
             <div
-              class="lg:px-4 px-2 flex items-center h-8 mt-1 rounded-2xl bg-accent text-white font-medium cursor-pointer"
+              class="text-lg font-semibold text-foreground text-nowrap"
             >
               {{ activeSprintTitle }}
             </div>

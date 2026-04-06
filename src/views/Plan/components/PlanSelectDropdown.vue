@@ -116,12 +116,13 @@
             @click="toggleGroup(getCurrentGroup!)"
           >
             <div class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                 :class="isGroupFullySelected(getCurrentGroup!) ? 'bg-accent border-accent' : 'border-border bg-white'">
+                 :class="isGroupFullySelected(getCurrentGroup!) ? 'bg-accent border-accent' : (isGroupPartiallySelected(getCurrentGroup!) ? 'border-accent bg-accent/20' : 'border-border bg-white')">
               <i v-if="isGroupFullySelected(getCurrentGroup!)" class="fas fa-check text-[10px] text-white"></i>
+              <div v-else-if="isGroupPartiallySelected(getCurrentGroup!)" class="w-2 h-0.5 bg-accent"></div>
             </div>
             <span class="font-semibold text-xs">All {{ getCurrentGroup?.title }}</span>
            </li>
-
+ 
            <!-- Items List -->
            <li
             v-for="item in getCurrentGroup?.sprints"
@@ -130,8 +131,9 @@
             @click="toggleItem(item._id)"
           >
              <div class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                  :class="isSelectedItem(item._id) ? 'bg-accent border-accent' : 'border-border bg-white'">
-               <i v-if="isSelectedItem(item._id)" class="fas fa-check text-[10px] text-white"></i>
+                  :class="isItemSelectedRecursive(item) ? 'bg-accent border-accent' : (isItemPartiallySelected(item) ? 'border-accent bg-accent/20' : 'border-border bg-white')">
+               <i v-if="isItemSelectedRecursive(item)" class="fas fa-check text-[10px] text-white"></i>
+               <div v-else-if="isItemPartiallySelected(item)" class="w-2 h-0.5 bg-accent"></div>
              </div>
              <i class="fa-regular fa-calendar text-[10px] opacity-40"></i>
              <span class="truncate">{{ item.title }}</span>
@@ -180,12 +182,25 @@ const getCurrentGroup = computed(() => props.groups.find(g => g.id === hoveredGr
 const isSelectedItem = (id: string) => props.selectedIds.includes(id);
 computed(() => props.selectedIds.length === 0);
 
-const getAllIds = computed(() => {
-  const ids: string[] = [];
-  props.groups.forEach(g => {
-    g.sprints.forEach((s: any) => ids.push(s._id));
-  });
+function getAllRecursiveIds(item: any): string[] {
+  let ids = [item._id];
+  if (item.sprints && Array.isArray(item.sprints)) {
+    item.sprints.forEach((child: any) => {
+      ids = [...ids, ...getAllRecursiveIds(child)];
+    });
+  }
   return ids;
+}
+
+const getAllIds = computed(() => {
+  let ids: string[] = [];
+  props.groups.forEach(g => {
+    g.sprints.forEach((s: any) => {
+      ids = [...ids, ...getAllRecursiveIds(s)];
+    });
+  });
+  // Remove duplicates just in case
+  return [...new Set(ids)];
 });
 
 const isSelectedAll = computed(() => {
@@ -195,15 +210,33 @@ const isSelectedAll = computed(() => {
 });
 
 const isGroupEmpty = (group: any) => !group?.sprints?.length;
-
+ 
 const isGroupFullySelected = (group: any) => {
   if (!group || !group.sprints?.length) return false;
-  return group.sprints.every((s: any) => isSelectedItem(s._id));
+  let allIds: string[] = [];
+  group.sprints.forEach((s: any) => {
+    allIds = [...allIds, ...getAllRecursiveIds(s)];
+  });
+  return allIds.every(id => isSelectedItem(id));
 };
-
+ 
 const isGroupPartiallySelected = (group: any) => {
   if (!group || !group.sprints?.length) return false;
-  return group.sprints.some((s: any) => isSelectedItem(s._id)) && !isGroupFullySelected(group);
+  let allIds: string[] = [];
+  group.sprints.forEach((s: any) => {
+    allIds = [...allIds, ...getAllRecursiveIds(s)];
+  });
+  return allIds.some(id => isSelectedItem(id)) && !isGroupFullySelected(group);
+};
+
+const isItemSelectedRecursive = (item: any) => {
+  const ids = getAllRecursiveIds(item);
+  return ids.every(id => isSelectedItem(id));
+};
+
+const isItemPartiallySelected = (item: any) => {
+  const ids = getAllRecursiveIds(item);
+  return ids.some(id => isSelectedItem(id)) && !isItemSelectedRecursive(item);
 };
 
 onClickOutside(wrapperRef, (event) => {
@@ -262,9 +295,13 @@ function startNestedFloating(id: string) {
   if (reference && floating) {
     cleanupNested = autoUpdate(reference, floating, () => {
       computePosition(reference, floating, {
-        placement: 'right-start',
+        placement: window.innerWidth < 640 ? 'bottom-start' : 'right-start',
         strategy: 'fixed',
-        middleware: [offset(10), flip(), shift({ padding: 5 })]
+        middleware: [
+          offset(window.innerWidth < 640 ? 5 : 10), 
+          flip({ fallbackPlacements: ['left-start', 'bottom-start', 'top-start'] }), 
+          shift({ padding: 5 })
+        ]
       }).then(({ x, y }) => {
         nestedStyles.value = { position: 'fixed', left: `${x-8}px`, top: `${y}px` };
       });
@@ -291,12 +328,17 @@ const toggleAllPlans = () => {
 
 const toggleGroup = (group: any) => {
   let newIds = [...props.selectedIds];
-  const groupSprints = group.sprints.map((s: any) => s._id);
+  let allGroupIds: string[] = [];
+  group.sprints.forEach((s: any) => {
+    allGroupIds = [...allGroupIds, ...getAllRecursiveIds(s)];
+  });
   
-  if (isGroupFullySelected(group)) {
-    newIds = newIds.filter(id => !groupSprints.includes(id));
+  const isFullySelected = allGroupIds.every(id => newIds.includes(id));
+
+  if (isFullySelected) {
+    newIds = newIds.filter(id => !allGroupIds.includes(id));
   } else {
-    groupSprints.forEach((id: string) => {
+    allGroupIds.forEach((id: string) => {
       if (!newIds.includes(id)) newIds.push(id);
     });
   }
@@ -305,10 +347,32 @@ const toggleGroup = (group: any) => {
 
 const toggleItem = (id: string) => {
   let newIds = [...props.selectedIds];
-  if (newIds.includes(id)) {
-    newIds = newIds.filter(i => i !== id);
+  
+  // Find the item to get its children
+  let targetItem = null;
+  for (const g of props.groups) {
+    targetItem = g.sprints.find((s: any) => s._id === id);
+    if (targetItem) break;
+  }
+
+  if (targetItem) {
+    const recursiveIds = getAllRecursiveIds(targetItem);
+    const isCurrentlySelected = newIds.includes(id);
+
+    if (isCurrentlySelected) {
+      newIds = newIds.filter(i => !recursiveIds.includes(i));
+    } else {
+      recursiveIds.forEach(rid => {
+        if (!newIds.includes(rid)) newIds.push(rid);
+      });
+    }
   } else {
-    newIds.push(id);
+    // Fallback if item not found in top-level of groups
+    if (newIds.includes(id)) {
+      newIds = newIds.filter(i => i !== id);
+    } else {
+      newIds.push(id);
+    }
   }
   updateEmit(newIds);
 };
