@@ -31,7 +31,7 @@
                     <h2 class="text-sm font-semibold flex gap-2 items-center">
                       <input
                         type="checkbox"
-                        class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
+                        class="custom-checkbox bg-bg-card border border-border-input flex-shrink-0"
                         v-model="checkedAll"
                       />
                       Tickets ({{ backlogResp?.cards?.length }}
