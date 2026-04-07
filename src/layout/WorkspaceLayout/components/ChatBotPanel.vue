@@ -1346,6 +1346,7 @@ const sheetNameValue = ref(sheetNameRef.value);
 const sheetIdRef = ref(agentStore.sheetId || "");
 const isDropdownOpen = ref(false);
 const Ref = ref<HTMLElement | null>(null);
+const isMongoId = (val?: string) => !!val && /^[a-f\d]{24}$/i.test(val);
 const pinnedAgentMessages = computed(() => {
   return agentStore.pinnedMessages;
 });
@@ -1537,11 +1538,40 @@ function clearActiveSession() {
   agentStore.chatHistory = [];
 }
 async function startNewChat() {
+  if (!selectedAgentId.value) {
+    toast.error("Please select an agent first");
+    return;
+  }
+
   pendingMessages.value = [];
   agentStore.chatHistory = [];
   activeSessionId.value = "";
   activeSessionTitle.value = "";
   showHistoryPanel.value = false;
+
+  const payload = {
+    agent_id: selectedAgentId.value, 
+    title: "New Chat",
+    module_name:
+      route.path.includes("talent") && agentModuleName.value
+        ? agentModuleName.value
+        : moduleSelected.value || "",
+    module_id:
+      route.path.includes("talent") && agentModuleId.value
+        ? agentModuleId.value
+        : moduleId.value || "",
+    sheet_name:
+      sheetName.value && !isMongoId(sheetName.value)
+        ? sheetName.value
+        : "",
+    sheet_id: sheetId.value || "",
+    lane_id: "Main",
+  };
+
+  console.log("Payload being sent:", payload);
+
+  await agentStore.createSession(workspaceId.value, payload);
+
   localStorage.removeItem("activeSessionId");
   localStorage.removeItem("activeSessionTitle");
 }
@@ -1707,7 +1737,7 @@ function initSocket() {
   });
 }
 
-const isMongoId = (val?: string) => !!val && /^[a-f\d]{24}$/i.test(val);
+
 const fileInput = ref<HTMLInputElement | null>(null);
 
 interface FileWithId extends File {
