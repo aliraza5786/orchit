@@ -20,9 +20,9 @@
           </div>
         </div>
       </div>
-
-      <div class="mt-21 mb-8 flex items-center justify-between">
-        <h2 class="text-xl font-medium">All Workspaces</h2>
+      <div class="overflow-x-auto">
+      <div class="mt-15 sm:mt-21 mb-8 flex items-center justify-between min-w-max">
+        <h2 class="text-xl font-medium me-3">All Workspaces</h2>
         <div class="flex items-center gap-3">
           <!-- Filter Dropdown -->
           <div class="w-48">
@@ -46,6 +46,7 @@
             <i class="fa-solid fa-grid-2"></i>
           </button>
         </div>
+      </div>
       </div>
 
       <!-- table/list view -->

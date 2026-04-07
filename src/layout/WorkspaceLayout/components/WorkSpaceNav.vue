@@ -348,13 +348,26 @@ const switchTo = async (ws: any) => {
   router.push(
     `/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ?? ""}`
   );
-  // await fetchWorkspace(ws._id);
-  localStorage.removeItem("activeSprintKey");
-  localStorage.removeItem("selectedSprintTitle")
-  localStorage.removeItem("activeSprintId")
-  localStorage.removeItem("showActiveSprint")
+  // await fetchWorkspace(ws._id);  
   closeLogoMenu();
+  clearWorkspaceStorage();
 };
+
+const clearWorkspaceStorage = () => {
+  localStorage.removeItem("activeSprintId")
+  localStorage.removeItem('showActiveSprint')
+  localStorage.removeItem('selectedModuleId')
+  localStorage.removeItem('activeSprintKey')
+  localStorage.removeItem('lastSelectedParentId')
+  localStorage.removeItem('selectedSprintTitle')
+  localStorage.removeItem('activeMilestoneId')
+  localStorage.removeItem('activeSheetId')
+  localStorage.removeItem('activeMilestoneLabel')
+  localStorage.removeItem('activePlanIds')
+  localStorage.removeItem('activePlanLabel')
+  localStorage.removeItem('sprintType')
+  localStorage.removeItem('asFirstTime')
+}
 
 const handleClick = () => workspaceStore.toggleSettingPanel();
 const createLaneHandler = () => workspaceStore.toggleCreateLaneModalWithAI();

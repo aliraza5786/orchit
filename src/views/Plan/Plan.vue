@@ -860,7 +860,7 @@ import CreateBacklogTicketWithModuleSelection from "./modals/CreateBacklogTicket
 import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
 import { useTheme } from "../../composables/useTheme";
-import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
+import { useWorkspaceStore } from "../../stores/workspace";
 import { usePermissions } from "../../composables/usePermissions";
 import { useSheets } from "../../queries/useSheets";
 import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
@@ -869,6 +869,7 @@ const SidePanel = defineAsyncComponent(
   () => import("../Product/components/SidePanel.vue"),
 );
 const { isDark } = useTheme();
+const workspaceStore = useWorkspaceStore();
 const selectedCard = ref<any>(null);
 const showTaskModal = ref(false);
 const showSprintDeleteTicket = ref(false);
@@ -908,13 +909,49 @@ const selectedPlanLabel = ref(localStorage.getItem("activePlanLabel") || "Select
 const includeSprintCards = computed(() => selectedPlanIds.value.length > 0);
 const currentPage = ref(1);
 
+const allowedModules = computed(() => {
+  if (!workspaceStore.singleWorkspace?.modules) return [];
+
+  const alwaysAllowed = ["tasks", "pin", "marketing"];
+
+  return workspaceStore.singleWorkspace.modules.filter((m: any) => {
+    const source = m.user_permissions?.source?.toLowerCase();
+
+    // Always allowed modules
+    if (alwaysAllowed.includes(m.variables?.["module-title"]?.toLowerCase()))
+      return true;
+    // Owner can always view
+    else if (source === "owner") return true;
+    // Shared with read permission
+    else if (source === "shared" && m.user_permissions?.can_read) return true;
+
+    return false;
+  });
+});
+
+const visibleModules = computed(() =>
+  allowedModules.value.filter(
+    (m: any) => m?.variables?.["module-title"] !== "Pin",
+  ),
+);
+
+const effectiveModuleFilter = computed(() => {
+  if (selectedFilter.value.length === 0) {
+    return visibleModules.value.map((m: any) => m._id);
+  }
+  // Intersect selected with visible just in case
+  return selectedFilter.value.filter((id) =>
+    visibleModules.value.some((m: any) => m._id === id),
+  );
+});
+
 const { 
   data: backlogResp,   
   isPending: isBacklogRefreshing 
 } = useBacklogList(
   workspaceId,
   ref(""),
-  selectedFilter,
+  effectiveModuleFilter,
   selectedSheetFilter,
   selectedPlanIds,
   includeSprintCards,
@@ -1198,13 +1235,8 @@ function handlePlanSelect(payload: { ids: string[], label: string }) {
 watch([selectedFilter, selectedSheetFilter, selectedPlanIds], () => {
   currentPage.value = 1;
 });
-const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId);
-const visibleModules = computed(
-  () =>
-    workspaceData.value?.modules.filter(
-      (m: any) => m?.variables?.["module-title"] !== "Pin",
-    ) || [],
-);
+// const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId);
+
  
 
 // delete sprint

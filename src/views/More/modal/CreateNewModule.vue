@@ -173,6 +173,7 @@ const { mutate: createModule, isPending: creatingModule } = useCreateModule({
     onSuccess: async () => {
     // keep loader ON
     await queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+    await queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId', workspaceId.value] }) // Ensure single workspace is refreshed
 
     // now everything is refetched
     close()
@@ -254,6 +255,7 @@ const { mutate: generateAI, isPending: isAiPending } = useCreateModuleAI({
     onSuccess: async () => {
           description.value = ''
           await queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+          await queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId', workspaceId.value] }) // Ensure single workspace is refreshed
           close()
           isPending.value = false
         // const result: any = extractJSONFromResponse(data) ?? {}

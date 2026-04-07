@@ -180,6 +180,7 @@ const { data: Lists, isPending } = useModuleLists(moduleId.value, selected_sheet
 const { mutate: useModule, isPending: isusingPending } = useUseModule({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+    queryClient.invalidateQueries({ queryKey: ['workspaces', 'byId', workspaceId.value] }) // Ensure single workspace is refreshed
     router.push(`/workspace/more/${workspaceId?.value}`)
   }
 })
