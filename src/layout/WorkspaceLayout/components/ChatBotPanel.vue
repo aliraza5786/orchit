@@ -552,64 +552,78 @@
       "
       class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
     >
-      <!-- Header -->
       <div
-        class="flex justify-between items-center border-b border-border px-5 py-2 sticky top-0 bg-bg-card z-30 overflow-x-hidden"
-      >
-        <h5 class="text-[16px] font-medium flex items-center gap-2">
-          <i class="fa-solid fa-sparkles text-accent"></i>
-          <Dropdown
-            v-model="selectedAgentId"
-            :options="agentOptions"
-            :custom-title="selectedAgentName"
-            :actions="false"
-            size="md"
-            variant="secondary"
-            class="relative w-60"
-          >
-            <template #more>
-              <div
-                @click="openConfigPanel"
-                class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
-              >
-                <i class="fa-solid fa-plus"></i> Add new
-              </div>
-            </template>
-          </Dropdown>
-          
-          
-        </h5>
-        <div class="flex items-center gap-3 shrink-0">
-          <!-- Expand Icon -->
-          <i
-            v-if="!isExpanded"
-            class="fa-solid cursor-pointer transition-colors fa-expand"
-            @click="expandPanel"
-            title="Expand"
-          ></i>
-
-          <!-- Compress Icon -->
-          <i
-            v-else
-            class="fa-solid cursor-pointer transition-colors fa-compress"
-            @click="compressPanel"
-            title="Compress"
-          ></i>
-
-          <button
-            class="cursor-pointer"
-            @click="openConfigPanel"
-            :title="showConfigPanel ? 'Preview Data' : 'Agent Configuration'"
-          >
-            <i class="fa-regular fa-ellipsis-vertical"></i>
-          </button>
-
-          <i
-            class="cursor-pointer text-text-primary fa-solid fa-close transition-colors"
-            @click="closeHandler"
-          ></i>
+  class="flex items-center border-b border-border px-5 py-2 sticky top-0 bg-bg-card z-30 gap-2"
+>
+  <h5 class="text-[16px] font-medium flex items-center gap-2 min-w-0 flex-1">
+    <i class="fa-solid fa-sparkles text-accent shrink-0"></i>
+    <Dropdown
+      v-model="selectedAgentId"
+      :options="agentOptions"
+      :custom-title="selectedAgentName"
+      :actions="false"
+      size="md"
+      variant="secondary"
+      class="relative min-w-0 max-w-[160px]"
+    >
+      <template #more>
+        <div
+          @click="openConfigPanel"
+          class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
+        >
+          <i class="fa-solid fa-plus"></i> Add new
         </div>
-      </div>
+      </template>
+    </Dropdown>
+  </h5>
+
+  <div class="flex items-center gap-3 shrink-0">
+    <!-- History Button -->
+    <button
+      class="cursor-pointer p-1 rounded hover:bg-bg-surface transition-colors"
+      @click="showHistoryPanel = !showHistoryPanel"
+      title="Chat history"
+    >
+      <i class="fa-regular fa-clock-rotate-left text-text-secondary"></i>
+    </button>
+
+    <!-- New Chat Button -->
+    <button
+      class="cursor-pointer p-1 rounded hover:bg-bg-surface transition-colors"
+      @click="showNewChatConfirm = !showNewChatConfirm"
+      title="New chat"
+    >
+      <i class="fa-regular fa-pen-to-square text-text-secondary"></i>
+    </button>
+
+    <!-- Expand / Compress -->
+    <i
+      v-if="!isExpanded"
+      class="fa-solid cursor-pointer transition-colors fa-expand"
+      @click="expandPanel"
+      title="Expand"
+    ></i>
+    <i
+      v-else
+      class="fa-solid cursor-pointer transition-colors fa-compress"
+      @click="compressPanel"
+      title="Compress"
+    ></i>
+
+    <button
+      class="cursor-pointer"
+      @click="openConfigPanel"
+      :title="showConfigPanel ? 'Preview Data' : 'Agent Configuration'"
+    >
+      <i class="fa-regular fa-ellipsis-vertical"></i>
+    </button>
+
+    <i
+      class="cursor-pointer text-text-primary fa-solid fa-close transition-colors"
+      @click="closeHandler"
+    ></i>
+  </div>
+</div>
       <!-- Chat Area (UNCHANGED) -->
       <div
         ref="messagesContainer"
@@ -727,226 +741,202 @@
           <p class="text-sm">No messages yet. Start a conversation!</p>
         </div>
       </div>
-      <div class="px-4 py-2 border-t border-border bg-bg-card">
-        <div
-          v-if="contextTitle"
-          class="mb-2 flex justify-between items-center gap-1.5"
-        >
-          <nav class="flex items-center text-xs text-text-secondary gap-1">
-            <div
-              class="flex items-center font-medium text-text-primary"
-              v-if="!moduleId"
-            >
-              <span>Workspace</span>
-            </div>
-            <span v-if="!moduleId"
-              ><i class="fa-solid fa-chevron-right text-xs"></i
-            ></span>
-            <div class="flex items-center font-medium text-text-primary">
-              <span>{{ contextTitle }}</span>
-            </div>
-            <span v-if="moduleId"
-              ><i class="fa-solid fa-chevron-right text-xs"></i
-            ></span>
-            <div
-              class="flex items-center font-medium text-text-primary"
-              v-if="moduleId"
-            >
-              <span v-if="route?.path?.includes('peak')"> Peak </span>
-              <span v-else>
-                {{
-                  moduleSelected && moduleSelected?.length > 20
-                    ? moduleSelected?.slice(0, 20) + "..."
-                    : moduleSelected
-                }}
-              </span>
-            </div>
-            <div v-if="moduleId" class="flex">
-              <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
-              <div class="flex items-center gap-1"><span>{{ sheetNameRef }}</span></div>
-            </div>
-          </nav>
-        </div>
-           <div
-  v-if="pinnedEntities.length"
-  class="border-t border-border bg-bg-card rounded-lg"
->
-  <!-- Section Header -->
-  <div
-    class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-bg-body rounded-lg transition-colors"
-    @click="allPinnedExpanded = !allPinnedExpanded"
-  >
-    <div class="flex items-center gap-2">
-      <i class="fa-solid fa-thumbtack text-accent text-xs"></i>
-      <span class="text-xs font-semibold text-text-primary">
-        Pinned Suggestions ({{ pinnedEntities.length }})
-      </span>
-    </div>
-    <i
-      class="fa-solid text-text-secondary text-xs transition-transform duration-200"
-      :class="allPinnedExpanded ? 'fa-chevron-down' : 'fa-chevron-right'"
-    ></i>
+      <div class="px-3 pt-3 pb-1 border-t border-border bg-bg-card mt-1.5">
+
+  <!-- Breadcrumb -->
+  <div v-if="contextTitle" class="mb-3 flex justify-between border-b border-border items-center gap-1.5">
+    <nav class="flex items-center text-xs text-text-secondary gap-1 mb-2">
+      <div class="flex items-center font-medium text-text-primary" v-if="!moduleId">
+        <span>Workspace</span>
+      </div>
+      <span v-if="!moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
+      <div class="flex items-center font-medium text-text-primary">
+        <span>{{ contextTitle }}</span>
+      </div>
+      <span v-if="moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
+      <div class="flex items-center font-medium text-text-primary" v-if="moduleId">
+        <span v-if="route?.path?.includes('peak')">Peak</span>
+        <span v-else>{{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0, 20) + '...' : moduleSelected }}</span>
+      </div>
+      <div v-if="moduleId" class="flex">
+        <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
+        <div class="flex items-center gap-1"><span>{{ sheetNameRef }}</span></div>
+      </div>
+    </nav>
   </div>
 
-  <!-- Groups — only render when expanded -->
+  <!-- New chat confirm banner -->
   <div
-    v-if="allPinnedExpanded"
-    class="max-h-[280px] overflow-y-auto px-3 pb-2 space-y-2"
+    v-if="showNewChatConfirm"
+    class="mb-2.5 flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-accent/25 bg-accent/5"
   >
-    <div
-      v-for="entity in pinnedEntities"
-      :key="entity.id ?? entity._id"
-      class="border border-border rounded-lg bg-bg-body overflow-hidden"
-    >
-      <!-- Group Header -->
-      <div
-        class="flex items-center justify-between px-3 py-2 cursor-pointer hover:bg-bg-surface transition-colors"
-        @click="togglePinnedGroup(entity.id ?? entity._id)"
-      >
-        <div class="flex items-center gap-2 flex-1 min-w-0">
-          <i class="fa-solid fa-layer-group text-accent text-[10px] shrink-0"></i>
-          <span class="text-xs font-medium text-text-primary truncate">
-            {{ getEntityLabel(entity) }}
-          </span>
-          <span
-            class="text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent font-medium shrink-0"
-          >
-            {{ getEntityCards(entity).length }}
-          </span>
-        </div>
-        <i
-          class="fa-solid text-text-secondary text-[10px] shrink-0 ml-2 transition-transform duration-200"
-          :class="expandedPinnedGroups.includes(entity.id ?? entity._id ?? '') ? 'fa-chevron-down' : 'fa-chevron-right'"
-        ></i>
-      </div>
-
-      <!-- Cards -->
-      <div
-        v-if="expandedPinnedGroups.includes(entity.id ?? entity._id ?? '')"
-        class="px-3 pb-2 space-y-1.5 border-t border-border"
-      >
-        <div
-          v-for="card in getEntityCards(entity)"
-          :key="card._id"
-          class="bg-bg-card rounded-md px-3 py-2 border border-border/60 hover:border-accent/30 transition-colors"
-        >
-          <div class="flex items-start justify-between gap-2">
-            <div class="flex-1 min-w-0">
-              <p class="text-xs font-medium text-text-primary leading-tight truncate">
-                {{ card["card-title"] || card.variables?.["card-title"] || "Untitled" }}
-              </p>
-              <p
-                v-if="card['card-description'] || card.variables?.['card-description']"
-                class="text-[10px] text-text-secondary mt-0.5 line-clamp-1"
-              >
-                {{ card["card-description"] || card.variables?.["card-description"] }}
-              </p>
-            </div>
-            <span
-              class="text-[9px] px-1.5 py-0.5 rounded bg-accent/10 text-accent font-medium shrink-0 capitalize whitespace-nowrap"
-            >
-              {{ card["card-status"] || card.variables?.["card-status"] || "—" }}
-            </span>
-          </div>
-        </div>
-
-        <p
-          v-if="!getEntityCards(entity).length"
-          class="text-[10px] text-text-secondary text-center py-2"
-        >
-          No cards
-        </p>
-      </div>
+    <p class="text-xs text-text-secondary">Start a new conversation? Current chat will be saved in history.</p>
+    <div class="flex gap-2 shrink-0">
+      <button
+        @click="startNewChat"
+        class="text-[11px] px-3 py-1 rounded-lg bg-accent text-white cursor-pointer hover:bg-accent-dark transition-colors"
+      >Start</button>
+      <button
+        @click="showNewChatConfirm = false"
+        class="text-[11px] px-3 py-1 rounded-lg border border-border text-text-secondary cursor-pointer hover:bg-bg-body transition-colors"
+      >Cancel</button>
     </div>
   </div>
-</div>
-<!-- ── End Pinned Entities ─────────────────────────────────────────── -->
-       <div class="relative w-full">
-  <!-- Chat Input Box -->
+
+  <!-- Input card -->
   <div
-    class="flex flex-col border border-border rounded-xl mt-2 px-3 py-2 bg-bg-body focus-within:border-accent transition-colors"
+    class="border border-border rounded-2xl bg-bg-body overflow-hidden transition-all duration-200"
+    :class="{ 'border-accent/50': isFocused }"
   >
-    <!-- Uploaded files (thumbnails) -->
-    <div v-if="selectedFiles.length" class="flex flex-wrap gap-2 mb-2">
+    <!-- Uploaded file previews -->
+    <div v-if="selectedFiles.length" class="flex flex-wrap gap-2 px-3 pt-3">
       <template v-for="file in selectedFiles" :key="file.tempId">
-        <div class="relative w-12 h-12 rounded-md overflow-hidden border border-gray-300 bg-gray-50 flex items-center justify-center">
-          <!-- Image preview if it's an image -->
-         <img
-          v-if="file && typeof file.type === 'string' && file.type.startsWith('image/')"
-          :src="createObjectURL(file)"
-          class="w-full h-full object-cover"
-          alt="preview"
-        />
-          <!-- PDF icon for PDFs -->
+        <div class="relative w-11 h-11 rounded-lg overflow-hidden border border-border bg-bg-surface flex items-center justify-center">
+          <img
+            v-if="file && typeof file.type === 'string' && file.type.startsWith('image/')"
+            :src="createObjectURL(file)"
+            class="w-full h-full object-cover"
+            alt="preview"
+          />
           <div
             v-else
-            class="w-full h-full flex items-center justify-center text-xs font-semibold text-gray-700 bg-gray-100"
-          >
-            PDF
-          </div>
-          <!-- Remove button -->
+            class="w-full h-full flex items-center justify-center text-[10px] font-semibold text-text-secondary bg-bg-body"
+          >PDF</div>
           <button
             type="button"
             @click="removeFile(file.tempId!)"
-            class="absolute top-0.5 right-0.5 w-3 h-3 text-white text-xs bg-red-500 rounded-full flex items-center justify-center hover:bg-red-700"
-          >
-            &times;
-          </button>
+            class="absolute top-0.5 right-0.5 w-3.5 h-3.5 text-white text-[8px] bg-red-500 rounded-full flex items-center justify-center hover:bg-red-700"
+          >&times;</button>
         </div>
       </template>
     </div>
 
-    <!-- Textarea + Buttons -->
-    <div class="flex items-center gap-2">
+    <!-- Textarea -->
+    <div class="px-3 pt-3 pb-1">
       <textarea
         v-model="userMessage"
-        placeholder="Ask anything..."
+        placeholder="Ask anything about your workspace…"
         ref="autoTextarea"
-        rows="1"
-        class="flex-1 resize-none bg-transparent outline-none text-sm"
+        rows="2"
+        class="w-full resize-none bg-transparent outline-none text-sm text-text-primary placeholder:text-text-tertiary leading-relaxed"
         :disabled="agentStore.isSending"
         @keydown="handleKeydown"
         @input="autoResize"
+        @focus="isFocused = true"
+        @blur="isFocused = false"
       ></textarea>
+    </div>
 
-      <!-- File Upload Button -->
-      <button
-        type="button"
-        @click="triggerFileInput"
-        class="p-1 text-gray-500 hover:text-accent transition-colors rounded-lg hover:bg-accent/5"
-      >
-        <i class="fa-solid fa-paperclip"></i>
-      </button>
+    <!-- Toolbar row -->
+    <div class="flex items-center justify-between px-2.5 pb-2.5">
+      <div class="flex items-center gap-1.5">
+        <!-- File attach button -->
+        <button
+          type="button"
+          @click="triggerFileInput"
+          class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-border text-[11.5px] text-text-secondary hover:border-accent/40 hover:text-accent transition-all cursor-pointer"
+        >
+          <i class="fa-solid fa-paperclip text-[10px]"></i>
+          Attach
+        </button>
+      </div>
 
-      <!-- Send Button -->
+      <!-- Send button -->
       <button
         @click="sendMessage"
         :disabled="(!userMessage.trim() && !selectedFiles.length) || agentStore.isSending"
-        class="p-1.5 text-accent hover:text-accent-hover transition-colors rounded-lg hover:bg-accent/5 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="w-8 h-8 rounded-full bg-accent flex items-center justify-center hover:bg-accent-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
       >
         <i
-          class="fa-solid"
+          class="fa-solid text-white text-xs"
           :class="agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'"
         ></i>
       </button>
-
-      <!-- Hidden file input -->
-      <input
-        ref="fileInput"
-        type="file"
-        class="hidden"
-        multiple
-        accept="image/*,.pdf"
-        @change="handleFileChange"
-      />
     </div>
   </div>
-</div>
 
-        <p class="text-[13px] text-text-secondary text-center mt-2">
-          AI can make mistakes. Please verify important information.
-        </p>
+  <!-- Hidden file input -->
+  <input
+    ref="fileInput"
+    type="file"
+    class="hidden"
+    multiple
+    accept="image/*,.pdf"
+    @change="handleFileChange"
+  />
+
+  <!-- Pinned prompt chips -->
+  <div v-if="pinnedPrompts.length" class="mt-3">
+    <div class="flex items-center justify-between mb-2">
+      <span class="flex items-center gap-1.5 text-[11px] text-text-tertiary">
+        <i class="fa-solid fa-thumbtack text-accent opacity-70" style="font-size:10px;"></i>
+        Pinned prompts
+      </span>
+      <button
+        @click="unpinAll"
+        :disabled="isUnpinningAll"
+        class="text-[11px] text-text-tertiary hover:text-red-500 transition-colors cursor-pointer disabled:opacity-40"
+      >
+        {{ isUnpinningAll ? 'Clearing…' : 'Clear all' }}
+      </button>
+    </div>
+
+    <div class="flex flex-wrap gap-1.5">
+      <button
+        v-for="pin in pinnedPrompts"
+        :key="pin.id"
+        class="group inline-flex items-center gap-1.5 pl-2 pr-2.5 py-1.5 rounded-full border border-border bg-bg-card text-[12px] text-text-secondary hover:border-accent/50 hover:text-accent transition-all duration-150 cursor-pointer max-w-[200px]"
+        @click="applyPromptToInput(pin.text)"
+      >
+        <span class="w-[18px] h-[18px] rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
+          <i class="fa-solid fa-plus text-accent" style="font-size:7px;"></i>
+        </span>
+        <span class="truncate">{{ pin.label }}</span>
+        <span
+          @click.stop="unpinSinglePrompt(pin.id)"
+          class="w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/10 text-text-tertiary hover:text-red-500 transition-all flex-shrink-0"
+        >
+          <i class="fa-solid fa-xmark" style="font-size:8px;"></i>
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <p class="text-[11px] text-text-tertiary text-center mt-2.5 mb-1">
+    AI can make mistakes. Please verify important information.
+  </p>
+</div>
+      <transition name="slide-fade">
+  <div
+    v-if="showHistoryPanel"
+    class="absolute inset-0 z-30 bg-bg-card flex flex-col rounded-[6px]"
+  >
+    <div class="flex items-center justify-between px-5 py-3 border-b border-border">
+      <h3 class="text-sm font-semibold text-text-primary">Chat history</h3>
+      <i class="fa-solid fa-close cursor-pointer text-text-secondary" @click="showHistoryPanel = false"></i>
+    </div>
+    <div class="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+      <div
+        v-for="session in chatHistory"
+        :key="session._id"
+        class="px-3 py-2.5 rounded-lg border border-border hover:bg-bg-surface cursor-pointer transition-colors"
+      >
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-xs font-medium text-text-primary truncate">{{ session.title || 'Untitled conversation' }}</p>
+        <p class="text-[10px] text-text-secondary mt-0.5">{{ formatTimestamp(session.created_at) }} · {{ session.module_name || 'Workspace' }}</p>
+          </div>
+          <button
+            class="text-text-tertiary hover:text-red-500 cursor-pointer transition-colors"
+          >
+           <i class="fa-solid fa-thumbtack text-accent opacity-70 text-sm"></i>
+          </button>
+        </div>
       </div>
+      <p v-if="!chatHistory?.length" class="text-xs text-text-secondary text-center mt-8">No previous conversations</p>
+    </div>
+  </div>
+</transition>
     </div>
   </div>
 </template>
@@ -1003,7 +993,9 @@ const isSheet = ref(false);
 const selectedAgentId = ref("");
 const selectedRole = ref("");
 const selectJobRole = ref("");
-
+const showHistoryPanel = ref(false)
+const showNewChatConfirm = ref(false)
+const isFocused = ref(false)
 const agentsData = computed(() => {
   return agentStore.agentSettings.agent;
 });
@@ -1141,21 +1133,7 @@ const contextTitle = computed(() => {
   if (routeName.includes("more")) return "More";
   return "Workspace";
 });
-type Entity = {
-  id?: string;
-  _id?: string;
-  type: string;
-  title: string;
-  created_at: string;
-  created_by?: string;
-  module_id?: string;
-  module_name?: string;
-  user_id?: string;
-  lane_id?: string;
-  sheet_id?: string;
-  card_id?: string;
-  ispined?: boolean;
-};
+
 const entities = computed(() => agentStore.createdEntities);
 const orderedMessages = computed(() => {
   const historyMessages = Array.isArray(agentStore.chatHistory)
@@ -1169,39 +1147,45 @@ const orderedMessages = computed(() => {
   );
 });
 // ── Pinned entities state ─────────────────────────────────────────────────────
-const allPinnedExpanded = ref(false);
-const expandedPinnedGroups = ref<string[]>([]);
+const pinnedPrompts = computed(() => {
+  return (entities.value || [])
+    .filter((e: any) => e.ispined)
+    .map((e: any) => {
+      const userMsg = e.agent_chat_message_id?.messages?.find((m: any) => m.type === 'user')
+      const fullText = userMsg?.content || 'Pinned prompt'
+      // truncate for chip label — full text still applied on click
+      const label = fullText.length > 32 ? fullText.slice(0, 32) + '…' : fullText
+      return {
+        id: e.id ?? e._id,
+        text: fullText,
+        label,
+        time: formatTimestamp(e.created_at),
+        context: e.module_name || 'Workspace',
+      }
+    })
+})
+function applyPromptToInput(text: string) {
+  userMessage.value = text
+  nextTick(() => autoResize())
+}
 
-const pinnedEntities = computed<Entity[]>(() =>
-  (entities.value || []).filter((e: Entity) => e.ispined === true)
-);
-const togglePinnedGroup = (id: string | undefined) => {
-  if (!id) return;
-  if (expandedPinnedGroups.value.includes(id)) {
-    expandedPinnedGroups.value = expandedPinnedGroups.value.filter((g) => g !== id);
-  } else {
-    expandedPinnedGroups.value.push(id);
-  }
-};
-// Pull cards from payload.sheets[].items (the actual card objects with titles)
-const getEntityCards = (entity:any) => {
-  return (entity.payload?.sheets || [])
-    .flatMap((sheet:any) => sheet.items || sheet.cards || [])
-    .filter(Boolean);
-};
+function unpinSinglePrompt(id: string) {
+  unpinSingle(id) // reuse existing unpinSingle
+}
 
-// Use the assistant's message as the group label, fallback to module_name + date
-const getEntityLabel = (entity:any) => {
-  const assistantMsg = entity.agent_chat_message_id?.messages?.find(
-    (m:any) => m.type === "assistant"
-  );
-  if (assistantMsg?.content) {
-    const text = assistantMsg.content;
-    return text.length > 50 ? text.slice(0, 50) + "…" : text;
-  }
-  const date = new Date(entity.created_at).toLocaleDateString();
-  return `${entity.module_name || "Tasks"} — ${date}`;
-};
+function startNewChat() {
+  pendingMessages.value = []
+  agentStore.chatHistory = []
+  showNewChatConfirm.value = false
+}
+const chatHistory = computed(() =>
+  (agentStore.chatHistory || []).map((s: any) => ({
+    _id: s._id || s.session_id,
+    title: s.messages?.[0]?.content?.slice(0, 50) || 'Conversation',
+    created_at: s.messages?.[0]?.timestamp,
+    module_name: moduleSelected.value,
+  }))
+)
 
 // Auto resize textarea
 const autoResize = () => {
@@ -1503,10 +1487,18 @@ if (selectedFiles.value.length) {
 async function acceptChanges(payload: any) {
   try {
     await agentStore.acceptEntities(payload);
+
     await queryClient.invalidateQueries({
       queryKey: keys.sheets(moduleId.value, workspaceId.value),
     });
-    await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+    await queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
+    await agentStore.fetchCreatedEntities(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      moduleSelected.value ?? undefined,
+      moduleId.value ?? undefined,
+    );
+
     showAIPreview.value = false;
     toast.success("Entities has been accepted and applied to workspace");
   } catch (error) {
@@ -2402,6 +2394,59 @@ const jobOptions = computed(() => {
   }));
   return roles;
 });
+// ── Unpin state ───────────────────────────────────────────────────────────────
+const isUnpinningAll = ref(false);
+const unpinningId = ref<string | null>(null);
+
+const unpinAll = async () => {
+  isUnpinningAll.value = true;
+  try {
+    await agentStore.unpinStructure({ workspace_id: workspaceId.value });
+    toast.success("All pinned suggestions have been unpinned");
+    await agentStore.fetchCreatedEntities(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      route.path.includes("talent") && agentModuleName.value
+        ? agentModuleName.value
+        : moduleSelected.value ?? undefined,
+      route.path.includes("talent") && agentModuleId.value
+        ? agentModuleId.value
+        : moduleId.value ?? undefined,
+    );
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to unpin all suggestions");
+  } finally {
+    isUnpinningAll.value = false;
+  }
+};
+
+const unpinSingle = async (logId: string) => {
+  unpinningId.value = logId;
+  try {
+    await agentStore.unpinStructure({
+      workspace_id: workspaceId.value,
+      log_id: logId,
+    });
+    toast.success("Suggestion unpinned");
+    await agentStore.fetchCreatedEntities(
+      workspaceId.value,
+      authStore.userId ?? undefined,
+      route.path.includes("talent") && agentModuleName.value
+        ? agentModuleName.value
+        : moduleSelected.value ?? undefined,
+      route.path.includes("talent") && agentModuleId.value
+        ? agentModuleId.value
+        : moduleId.value ?? undefined,
+    );
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to unpin suggestion");
+  } finally {
+    unpinningId.value = null;
+  }
+};
+
 </script>
 <style scoped>
 .typing-dots {
