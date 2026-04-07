@@ -1,6 +1,6 @@
 <template>
   <div
-    class="h-full min-h-0 px-2"
+    class="h-full min-h-0"
   >
     <!-- Sprint Table -->
     <div
@@ -231,10 +231,11 @@ type MoveCardVars = {
 const { mutate: moveCardApi, isPending: isMoving } = useMoveCard({
   onSuccess: async (_data: unknown, vars: MoveCardVars) => {
     const count = vars.payload?.card_ids?.length || 1;
-      queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
-      queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
-      queryClient.invalidateQueries({ queryKey: ["sprint-detail", props.sprintId] });
-      queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
+    queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-detail"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-cards"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
       toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
 
     emit("refresh");

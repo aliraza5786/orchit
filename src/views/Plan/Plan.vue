@@ -14,7 +14,7 @@
     <div v-else class="flex flex-row flex-1 min-h-0">
       <div class="flex flex-col flex-1 min-h-0 min-w-0 -mt-3.5">
         <div class="overflow-x-auto w-full flex-1 min-w-0">
-          <div class="min-w-[800px] h-full flex flex-col">
+          <div class="min-w-[900px] h-full flex flex-col">
             <div
               v-if="!isStartingSprint"
               class="pe-[4px] pt-[14px] w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
@@ -25,13 +25,13 @@
               >
                 <section
                     class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border shrink-0"
-                    :style="{ width: leftWidth + 'px', minWidth: '280px', maxWidth: '50%' }"
+                    :style="{ width: leftWidth + 'px', minWidth: '400px', maxWidth: '50%' }"
                   >
                   <div class="flex items-center justify-between mt-2">
                     <h2 class="text-sm font-semibold flex gap-2 items-center">
                       <input
                         type="checkbox"
-                        class="custom-checkbox bg-bg-body border border-border-input flex-shrink-0"
+                        class="custom-checkbox bg-bg-card border border-border-input flex-shrink-0"
                         v-model="checkedAll"
                       />
                       Tickets ({{ backlogResp?.cards?.length }}
@@ -386,22 +386,22 @@
                       <!-- Milestone Global Tickets -->
                       <div class="mb-2 border border-border rounded-lg overflow-hidden bg-bg-card">
                         <div 
-                          @click="toggleSprintCollapse('milestone-global')"
+                          @click="toggleSprintCollapse('parent-global')"
                           class="flex items-center justify-between p-3 cursor-pointer hover:bg-bg-body transition-colors border-b border-border"
                         >
                           <div class="flex items-center gap-2">
                              <i 
                               class="fas fa-chevron-right transition-transform duration-200 text-text-secondary text-xs"
-                              :class="{ 'rotate-90': expandedSprints['milestone-global'] }"
+                              :class="{ 'rotate-90': expandedSprints['parent-global'] }"
                             ></i>
-                            <span class="font-semibold text-sm text-text-primary">Milestone Tickets</span>
+                            <span class="font-semibold text-sm text-text-primary">{{ formattedLabel }} Tickets</span>
                             <span class="text-xs text-text-secondary bg-bg-body px-2 py-0.5 rounded-full border border-border">
                               {{ firstSprint?.tickets?.length || 0 }} {{ (firstSprint?.tickets?.length || 0) > 1 ? 'Tickets' : 'Ticket' }}
                             </span>
                           </div>
                         </div>
 
-                        <div v-if="expandedSprints['milestone-global']" class="pt-[15px] px-[5px] h-[350px]">
+                        <div v-if="expandedSprints['parent-global']" class="pt-[15px] px-[15px] h-[350px]">
                            <SprintCard
                             :searchQuery="searchQuery"
                             :sprintId="selectedSprintId"
@@ -415,8 +415,8 @@
                         </div>
                       </div>
 
-                      <!-- Sub Sprints -->
-                      <div v-for="sprint in sprintDetailData.sprints" :key="sprint._id" 
+                      <!-- Sub Items (Sprints/Huddles) -->
+                      <div v-for="sprint in allSubItems" :key="sprint._id" 
                            class="mb-2 border border-border rounded-lg bg-bg-card transition-all"
                            :class="{ 'relative z-50': activeSubSprintMenuId === sprint._id }">
                         <!-- Sprint Header -->
@@ -431,7 +431,7 @@
                               :class="{ 'rotate-90': expandedSprints[sprint._id] }"
                             ></i>
                             <span class="font-semibold text-sm text-text-primary">{{ sprint.title }}</span>
-                            <span class="text-xs text-text-secondary bg-bg-body px-2 py-0.5 rounded-full border border-border">
+                            <span  v-if="sprint.status === 'active' || sprint.status === 'planning'" class="text-xs text-text-secondary bg-bg-body px-2 py-0.5 rounded-full border border-border">
                               {{ sprint.cards?.length || 0 }} {{ (sprint.cards?.length || 0) > 1 ? 'Tickets' : 'Ticket' }}
                             </span>
                           </div>
@@ -495,40 +495,135 @@
                                   class="w-full text-left px-4 py-2 text-[12px] text-text-primary hover:bg-bg-body flex items-center gap-2 transition-colors font-medium border-b border-border/50"
                                   :class="sprint.status === 'completed'? 'cursor-not-allowed': 'cursor-pointer'"
                                 >
-                                  <i class="fa-light fa-pen-to-square text-sm"></i> Edit Milestone Sprint
+                                  <i class="fa-light fa-pen-to-square text-sm"></i> Edit {{ sprint.sprintType || 'Sprint' }}
                                 </button>
                                 <button 
                                   @click.stop="handleDeleteSprint(sprint); activeSubSprintMenuId = null"
                                   class="w-full text-left cursor-pointer px-4 py-2 text-[12px] text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors font-medium"
                                 >
-                                  <i class="fa-light fa-trash text-sm"></i> Delete Milestone Sprint
+                                  <i class="fa-light fa-trash text-sm"></i> Delete {{ sprint.sprintType || 'Sprint' }}
                                 </button>
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        <!-- Content Area (SprintCard) -->
-                        <div v-if="expandedSprints[sprint._id]" class=" pt-[15px] px-[5px] h-[350px]">
-                           <SprintCard
-                            :searchQuery="searchQuery"
-                            :sprintId="sprint._id"
-                            :searchedData="[]"
-                            :label="'sprint'"
-                            :checkedSprintAll="false"
-                            :sprint="{
-                              id: sprint._id,
-                              name: sprint.title,
-                              title: sprint.title,
-                              goal: '',
-                              start: '',
-                              end: '',
-                              started: false,
-                              tickets: mapApiCardsToTickets(sprint.cards)
-                            }"
-                            @open-ticket="openTicket"
-                            @refresh="handleRefresh"
-                          />
+                        <!-- Content Area (SprintCard or Nested Huddles) -->
+                        <div v-if="expandedSprints[sprint._id]" class=" pt-[15px] px-[15px]">
+                          <!-- If this sub-item has its own sub-items (Huddles/Sub-Sprints) -->
+                          <template v-if="(sprint.hurdles?.length || 0) > 0 || (sprint.sprints?.length || 0) > 0">
+                            <!-- Tickets of this sprint (collapsible) -->
+                            <div class="mb-2 border border-border rounded-lg overflow-hidden bg-bg-card">
+                              <div 
+                                @click="toggleSprintCollapse(sprint._id + '-global-tickets')"
+                                class="flex items-center justify-between p-3 cursor-pointer hover:bg-bg-body transition-colors border-b border-border"
+                              >
+                                <div class="flex items-center gap-2">
+                                   <i 
+                                    class="fas fa-chevron-right transition-transform duration-200 text-text-secondary text-xs"
+                                    :class="{ 'rotate-90': expandedSprints[sprint._id + '-global-tickets'] }"
+                                  ></i>
+                                  <span class="font-semibold text-sm text-text-primary capitalize">{{ sprint.sprintType || 'Sprint' }} Tickets</span>
+                                  <span class="text-xs text-text-secondary bg-bg-body px-2 py-0.5 rounded-full border border-border">
+                                    {{ sprint.cards?.length || 0 }} {{ (sprint.cards?.length || 0) > 1 ? 'Tickets' : 'Ticket' }}
+                                  </span>
+                                </div>
+                              </div>
+                              <div v-if="expandedSprints[sprint._id + '-global-tickets']" class="h-[350px] pt-[15px] px-[15px]">
+                                 <SprintCard
+                                  :searchQuery="searchQuery"
+                                  :sprintId="sprint._id"
+                                  :searchedData="[]"
+                                  :label="sprint.sprintType || 'sprint'"
+                                  :checkedSprintAll="false"
+                                  :sprint="{
+                                    id: sprint._id,
+                                    name: sprint.title,
+                                    title: sprint.title,
+                                    goal: '',
+                                    start: '',
+                                    end: '',
+                                    started: false,
+                                    tickets: mapApiCardsToTickets(sprint.cards)
+                                  }"
+                                  @open-ticket="openTicket"
+                                  @refresh="handleRefresh"
+                                />
+                              </div>
+                            </div>
+
+                            <!-- Nested Sub-Items Loop -->
+                            <div v-for="huddle in [...(sprint.hurdles || []), ...(sprint.sprints || [])]" :key="huddle._id" 
+                                 class="mb-2 border border-border rounded-lg bg-bg-card transition-all">
+                              <div 
+                                @click="huddle.status !== 'completed' && toggleSprintCollapse(huddle._id)"
+                                class="flex items-center justify-between p-3 hover:bg-bg-body transition-colors border-b rounded-[6px] border-border"
+                                :class="huddle.status === 'completed'? 'cursor-not-allowed': 'cursor-pointer'"
+                              >
+                                <div class="flex items-center gap-2">
+                                   <i 
+                                    class="fas fa-chevron-right transition-transform duration-200 text-text-secondary text-xs"
+                                    :class="{ 'rotate-90': expandedSprints[huddle._id] }"
+                                  ></i>
+                                  <span class="font-semibold text-sm text-text-primary">{{ huddle.title }}</span>
+                                  <span v-if="huddle.status === 'active' || huddle.status === 'planning'" class="text-xs text-text-secondary bg-bg-body px-2 py-0.5 rounded-full border border-border">
+                                    {{ huddle.cards?.length || 0 }} {{ (huddle.cards?.length || 0) > 1 ? 'Tickets' : 'Ticket' }}
+                                  </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                  <Button v-if="huddle.status === 'planning'" size="sm" @click.stop="openStartSprintModal(huddle)" class="border-accent border text-[11px] h-7 px-3" :style="{ backgroundColor: selectedType.dot }" :disabled="!huddle.cards?.length">Start</Button>
+                                  <template v-if="huddle.status === 'active'">
+                                     <button class="cursor-pointer border border-accent text-white flex items-center justify-center gap-1 px-2 py-0.5 rounded-md text-[11px] h-8.5 font-medium" @click.stop="handlePreviewClick(huddle._id, huddle.title)" :style="{ backgroundColor: selectedType.dot }"><i class="fa-regular fa-eye text-[11px]"></i> Preview</button>
+                                     <Button size="sm" @click.stop="handleCompleteSprint(huddle._id)" class="border-accent border text-[11px] h-8.5 px-3" :style="{ backgroundColor: selectedType.dot }">{{ completingSprintId === huddle._id ? "Ending..." : "End" }}</Button>
+                                  </template>
+                                  <span v-if="huddle.status === 'completed'" class="text-[10px] font-semibold text-emerald-500 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Completed</span>
+                                </div>
+                              </div>
+                              <div v-if="expandedSprints[huddle._id]" class="pt-[15px] px-[15px] h-[350px]">
+                                 <SprintCard
+                                  :searchQuery="searchQuery"
+                                  :sprintId="huddle._id"
+                                  :searchedData="[]"
+                                  :label="huddle.sprintType || 'huddle'"
+                                  :checkedSprintAll="false"
+                                  :sprint="{
+                                    id: huddle._id,
+                                    name: huddle.title,
+                                    title: huddle.title,
+                                    goal: '',
+                                    start: '',
+                                    end: '',
+                                    started: false,
+                                    tickets: mapApiCardsToTickets(huddle.cards)
+                                  }"
+                                  @open-ticket="openTicket"
+                                  @refresh="handleRefresh"
+                                />
+                              </div>
+                            </div>
+                          </template>
+                          <!-- Default behavior: just the SprintCard -->
+                          <div v-else class="h-[350px]">
+                             <SprintCard
+                              :searchQuery="searchQuery"
+                              :sprintId="sprint._id"
+                              :searchedData="[]"
+                              :label="sprint.sprintType || 'sprint'"
+                              :checkedSprintAll="false"
+                              :sprint="{
+                                id: sprint._id,
+                                name: sprint.title,
+                                title: sprint.title,
+                                goal: '',
+                                start: '',
+                                end: '',
+                                started: false,
+                                tickets: mapApiCardsToTickets(sprint.cards)
+                              }"
+                              @open-ticket="openTicket"
+                              @refresh="handleRefresh"
+                            />
+                          </div>
                         </div>
                       </div>
                     </template>
@@ -896,7 +991,19 @@ const mapApiCardsToTickets = (cards: any[]) => {
 };
 
 const hasSubSprints = computed(() => {
-  return sprintType.value === 'milestone' && (sprintDetailData.value?.sprints?.length || 0) > 0;
+  const detail = sprintDetailData.value;
+  if (!detail) return false;
+  return (sprintType.value === 'milestone' || sprintType.value === 'sprint') && 
+         ((detail.sprints?.length || 0) > 0 || (detail.hurdles?.length || 0) > 0);
+});
+
+const allSubItems = computed(() => {
+  const detail = sprintDetailData.value;
+  if (!detail) return [];
+  return [
+    ...(detail.sprints || []),
+    ...(detail.hurdles || [])
+  ];
 });
 
 const isStartButtonDisabled = computed(() => {
@@ -904,13 +1011,11 @@ const isStartButtonDisabled = computed(() => {
   if (!detail) return true;
   if (detail.status === 'completed') return true;
   
-  if (!hasSubSprints.value) {
-    // If it's a standalone sprint/huddle, check its direct tickets
-    return !firstSprint.value || firstSprint.value.tickets.length === 0;
-  }
+  // Start button should be enabled if the current item (Milestone/Sprint/Huddle) has tickets itself.
+  // Not looking at child tickets for this logic as per user request.
+  const hasOwnTickets = (firstSprint.value?.tickets?.length || 0) > 0 || (detail.cards?.length || 0) > 0;
   
-  // For milestones with sub-sprints, check if any sub-sprint has cards
-  return !detail.sprints?.some((s: any) => (s.cards?.length ?? 0) > 0);
+  return !hasOwnTickets;
 });
 
 const closeModal = () => {
@@ -1105,7 +1210,7 @@ const visibleModules = computed(
 // delete sprint
 const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+    handleRefresh();
     showSprintDelete.value = false;
   },
 });
@@ -1123,7 +1228,7 @@ const handleDeleteTicket = () => {
  
 const { mutate: startSprint, isPending: isStartingSprint } = useStartSprint({
   onSuccess: () => {
-    refetchSprintDetail();
+    handleRefresh();
   },
 });
 const handleEditFromStart = () => {
@@ -1171,7 +1276,8 @@ const {
 } = useSprintList(workspaceId.value, sprintType);
 
 const {
-  data: groupedSprints 
+  data: groupedSprints,
+  refetch: refetchGroupedSprints
 } = useGroupedSprints(workspaceId);
 const sprintOptions = computed(() => {
   const grouped = groupedSprints.value?.grouped;
@@ -1335,15 +1441,18 @@ const { mutate: removeCardFromSprint, isPending: isRemoving } = useRemoveCardFro
 
 function handleRefresh() {
   queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
-  queryClient.invalidateQueries({ queryKey: ["sprint-detail", selectedSprintId.value] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-detail"] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-cards"] });
   queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
   queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
+  queryClient.invalidateQueries({ queryKey: ["sprint-grouped", workspaceId.value] });
   
   // Also call individual refetches for immediate response if needed
   refetchSprintData();
   refetchSprints();
   refetchBacklog();
   refetchSprintDetail();
+  refetchGroupedSprints();
 }
 
 function handleTicketMovedToBacklog(
@@ -1393,7 +1502,7 @@ const queryClient = useQueryClient();
 const { mutate: createSprint, isPending: creatingSprint } = useCreateSprint({
   onSuccess: (data: any) => {
     saveSprintMeta({ name: data.title });
-    queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
+    handleRefresh();
     sprintModalOpen.value = false;
     if (data && data._id) {
       const modalSprintData = {
@@ -1416,10 +1525,7 @@ const { mutate: createSprint, isPending: creatingSprint } = useCreateSprint({
 const { mutate: updateSprint, isPending: isUpdatingSprint } = useUpdateSprint({
   onSuccess: (data: any) => {
     saveSprintMeta({ name: data.title });
-    queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
-    queryClient.invalidateQueries({
-      queryKey: ["sprint-detail", selectedSprintId.value],
-    });
+    handleRefresh();
 
     // Update store with fresh data so StartSprintModal is reactive
     const modalSprintData = {
@@ -1493,7 +1599,7 @@ const { mutate: completeSprint } =
   useCompleteSprint(selectedSprintId, {
     onSuccess: () => {
        completingSprintId.value = null;
-      refetchSprintDetail();
+      handleRefresh();
     },
      onError: () => {
       completingSprintId.value = null;

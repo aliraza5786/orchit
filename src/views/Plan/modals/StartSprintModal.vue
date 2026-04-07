@@ -41,13 +41,13 @@
     <div class="flex justify-end items-center gap-3 p-6 sticky bottom-0 bg-bg-input border-t border-border">
       <Button variant="secondary" @click="cancel" class="min-w-[80px]">Cancel</Button>
       
-      <button 
+      <Button
         @click="editSprint" 
-        class="text-sm font-medium text-text-secondary hover:text-text-primary flex items-center transition-colors px-3 py-2 rounded-md hover:bg-bg-dropdown-menu-hover"
+        variant="primary" 
       >
         <i class="fa-light fa-pen-to-square mr-2 text-base"></i>
         Edit {{ formattedSprintType }}
-      </button>
+      </Button>
 
       <Button variant="primary" @click="startNow" :disabled="creatingSprint" class="px-6">
         {{ creatingSprint ? "Starting..." : "Start Now" }}

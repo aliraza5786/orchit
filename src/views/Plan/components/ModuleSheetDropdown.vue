@@ -268,9 +268,13 @@ function startNestedFloating(id: string) {
   if (reference && floating) {
     cleanupNested = autoUpdate(reference, floating, () => {
       computePosition(reference, floating, {
-        placement: 'right-start',
+        placement: window.innerWidth < 640 ? 'bottom-start' : 'right-start',
         strategy: 'fixed',
-        middleware: [offset(10), flip(), shift({ padding: 5 })]
+        middleware: [
+          offset(window.innerWidth < 640 ? 5 : 10), 
+          flip({ fallbackPlacements: ['left-start', 'bottom-start', 'top-start'] }), 
+          shift({ padding: 5 })
+        ]
       }).then(({ x, y }) => {
         nestedStyles.value = { position: 'fixed', left: `${x-8}px`, top: `${y}px` };
       });

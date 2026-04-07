@@ -1072,7 +1072,7 @@
         </div>
 
         <!-- Save Theme footer shown only on theme tab with no node selected -->
-        <div
+        <!-- <div
           v-if="!selectedNodeId && activeFormatTab === 'theme'"
           class="fs-footer"
         >
@@ -1080,7 +1080,7 @@
             <i class="fa-solid fa-floppy-disk me-1"></i>
             Save Theme
           </button>
-        </div>
+        </div> -->
       </div>
     </transition>
   </div>
@@ -1467,25 +1467,6 @@ async function applyCustomBg(color: string, persist = true) {
   await persistTheme({ mm_theme_id: "custom", mm_bg: color });
 }
 
-async function saveTheme() {
-  const themePayload: Record<string, any> = {
-    mm_theme_id: activeThemeId.value,
-    mm_bg: activeCanvasBg.value,
-  };
-  if (activeThemeId.value !== "custom") {
-    const found = THEMES.find((t) => t.id === activeThemeId.value);
-    if (found) {
-      themePayload.mm_edge_color = found.edgeColor;
-      themePayload.mm_text_color = found.textColor;
-      themePayload.mm_node_root  = found.nodeColors.root;
-      themePayload.mm_node_sheet = found.nodeColors.sheet;
-      themePayload.mm_node_list  = found.nodeColors.list;
-      themePayload.mm_node_card  = found.nodeColors.card;
-    }
-  }
-  await persistTheme(themePayload);
-  toast.success("Theme saved");
-}
 async function loadSavedTheme() {
   try {
     const type = "pin";
@@ -4343,23 +4324,23 @@ watch(
 
 /* ── Dark mode ──────────────────────────────────────────────────── */
 .pin-mindmap-root[data-dark="true"] .viewport {
-  background: var(--mm-bg, #0f172a);
+  background: #2b2c30;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 .pin-mindmap-root[data-dark="true"] .pm-node--root {
-  background: #27272a;
+  background: #2b2c30;
   color: #c4b8f0;
 }
 .pin-mindmap-root[data-dark="true"] .pm-node--sheet {
-  background: #1e293b;
-  border-color: #334155;
+  background: #2b2c30;
+  border-color: #3e3e42;
 }
 .pin-mindmap-root[data-dark="true"] .pm-node--card {
-  background: #1e293b;
-  border-color: #4a3d8c;
+  background: #2b2c30;
+  border-color: #3e3e42;
 }
 .pin-mindmap-root[data-dark="true"] .sheet-title {
   color: #f1f5f9;
@@ -4397,7 +4378,7 @@ watch(
   color: #c4b8f0;
 }
 .pin-mindmap-root[data-dark="true"] .canvas-controls {
-  background: #1e293b;
+  background: #2b2c30;
   border-color: #334155;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
@@ -4431,7 +4412,7 @@ watch(
   color: #c4b8f0;
 }
 .pin-mindmap-root[data-dark="true"] .format-sidebar {
-  background: #1e293b;
+  background: #3e3e42;
   border-color: #334155;
 }
 .pin-mindmap-root[data-dark="true"] .fs-header {

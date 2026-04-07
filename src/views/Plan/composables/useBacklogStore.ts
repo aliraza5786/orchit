@@ -164,10 +164,10 @@ export function useBacklogStore() {
 
       queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
       queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
-      queryClient.invalidateQueries({
-        queryKey: ["sprint-detail", vars.id],
-      });
+      queryClient.invalidateQueries({ queryKey: ["sprint-detail"] });
+      queryClient.invalidateQueries({ queryKey: ["sprint-cards"] });
       queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
+      queryClient.invalidateQueries({ queryKey: ["sprint-grouped"] });
     },
     onError: (error: any) => {
       toast.error(

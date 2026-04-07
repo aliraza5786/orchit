@@ -383,6 +383,10 @@ function applyDefaultFields(type: string) {
   } else if (lowerLabel === 'milestone') {
     form.duration = 14; // Default 2 weeks
   }
+  
+  if (form.duration && form.duration !== -1 && form.start) {
+    form.end = addDays(form.start, form.duration);
+  }
 }
 
 watch(

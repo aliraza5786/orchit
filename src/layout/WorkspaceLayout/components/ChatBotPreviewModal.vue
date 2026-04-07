@@ -6,7 +6,7 @@
       <div
         class="px-3 py-1.5 border-b border-border flex flex-col justify-between flex-shrink-0"
       >
-        <h3 class="text-sm font-semibold text-text-primary py-2">
+        <h3 class="text-sm font-semibold text-text-primary py-2 -mt-5.5">
           {{ isReadAction ? "Fetched Cards" : "AI Suggested Changes" }}
         </h3>
         <p class="text-xs text-text-secondary" v-if="isReadAction">
@@ -30,7 +30,7 @@
       :key="card.id || card._id"
       class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4
              hover:shadow-md transition-all duration-200
-             w-full md:w-[calc(50%-0.5rem)]"
+             w-full md:w-[calc(33.333%-0.75rem)]"
     >
 
       <!-- Header -->
@@ -227,10 +227,8 @@
                       <input
                         type="checkbox"
                         class="mt-1"
-                        :checked="
-                          selectedCards?.includes(card.variables['_id'])
-                        "
-                        @change.stop="toggleCard(card.variables['_id'])"
+                        :checked="selectedCards?.includes(card._id)"
+                        @change.stop="toggleCard(card._id)"
                       />
 
                       <div class="flex-1 space-y-2">
@@ -263,7 +261,7 @@
               class="w-3 h-3"
             />
 
-            <span class="text-text-secondary">Do you want to preserve the suggestion log?</span>
+            <span class="text-text-secondary">Do you want to pin these suggestions?</span>
            </label>
         </template>
       </div>
@@ -597,18 +595,34 @@ function parseTicketDetailsFromHTML(html) {
 
 const getShareUrl = (card) =>
   `https://www.orchit.ai/workspace/${workspaceId.value}/${moduleId.value}`;
-
 async function nativeShare(card) {
   await agentStore.shareTicketTypes(card.id || card._id);
+  
   const details = parseTicketDetailsFromHTML(agentStore.ogTypesTicket);
   const shareUrl = getShareUrl(card);
-  const message = `📌 ${details["card-code"]}: ${details["card-title"]}\n\n${details["card-description"]}\n\n🟢 Status: ${details["card-status"]}\n🔥 Priority: ${details["priority"]}\n📅 Due: ${details["end-date"]}\n\n🔗 Open Ticket:\n${shareUrl}`;
+
+  const code = details["card-code"] || "";
+  const title = details["card-title"] || "";
+
   if (navigator.share) {
-    await navigator.share({
-      title: `${details["card-code"]}: ${details["card-title"]}`,
-      text: message,
-    });
+    try {
+      await navigator.share({
+        title: `${code}: ${title}`,
+        // ← NO text field, url only
+        // WhatsApp scrapes OG tags from the URL automatically
+        url: shareUrl,
+      });
+    } catch (err) {
+      if (err.name !== "AbortError") console.error("Share failed:", err);
+    }
   } else {
+    // Fallback: clipboard gets the full formatted text
+    const description = details["card-description"] || "";
+    const status = details["card-status"] || "";
+    const priority = details["priority"] || "";
+    const dueDate = details["end-date"] || "";
+
+    const message = `📌 ${code}: ${title}\n\n${description}\n\n🟢 Status: ${status}\n🔥 Priority: ${priority}\n📅 Due: ${dueDate}\n\n🔗 ${shareUrl}`;
     await navigator.clipboard.writeText(message);
   }
 }
