@@ -1467,25 +1467,6 @@ async function applyCustomBg(color: string, persist = true) {
   await persistTheme({ mm_theme_id: "custom", mm_bg: color });
 }
 
-async function saveTheme() {
-  const themePayload: Record<string, any> = {
-    mm_theme_id: activeThemeId.value,
-    mm_bg: activeCanvasBg.value,
-  };
-  if (activeThemeId.value !== "custom") {
-    const found = THEMES.find((t) => t.id === activeThemeId.value);
-    if (found) {
-      themePayload.mm_edge_color = found.edgeColor;
-      themePayload.mm_text_color = found.textColor;
-      themePayload.mm_node_root  = found.nodeColors.root;
-      themePayload.mm_node_sheet = found.nodeColors.sheet;
-      themePayload.mm_node_list  = found.nodeColors.list;
-      themePayload.mm_node_card  = found.nodeColors.card;
-    }
-  }
-  await persistTheme(themePayload);
-  toast.success("Theme saved");
-}
 async function loadSavedTheme() {
   try {
     const type = "pin";
