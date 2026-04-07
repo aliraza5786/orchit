@@ -781,6 +781,7 @@ import {
 import { useLanes, useMoveCard, useDeleteVar, useUpdateVar } from "../../../queries/useSheets";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../../composables/useQueryParams";
+import {useWorkspaceStore} from "../../../stores/workspace";
 import {
   useComments,
   useCreateComment,
@@ -858,7 +859,7 @@ const {
   canViewAttachment,
   canAssignCard,
 } = usePermissions();
-
+const workspaceStore = useWorkspaceStore();
 const { workspaceId } = useRouteIds();
 const queryClient = useQueryClient();
 const props = defineProps({
@@ -883,7 +884,11 @@ const {
   isFetching,
   refetch: refetchCardDetails,
 } = useProductCard(propsID);
-
+onMounted(() => {
+  if (props.showPanel) {
+    workspaceStore.closeChatBotPanel();
+  }
+});
 watch(
   () => props.details._id,
   (newId) => {

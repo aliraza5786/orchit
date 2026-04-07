@@ -1,5 +1,3 @@
-//agentDetails.vue
-
 <template>
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
@@ -18,7 +16,6 @@
         @click="$emit('close')"
       />
     </div>
-
     <!-- Body -->
     <div class="py-4 px-5">
       <SwitchTab v-model="activeTab" class="mb-2" :options="tabOptions" />
@@ -233,196 +230,193 @@
         </div>
       </section>
       <!-- knowledge based -->
-       <div v-if="activeTab === 'knowledge'" class="space-y-6">
-            <!-- Sources -->
-            <div class="space-y-1">
-              <label class="text-sm text-text-primary">Sources</label>
+      <div v-if="activeTab === 'knowledge'" class="space-y-6">
+        <!-- Sources -->
+        <div class="space-y-1">
+          <label class="text-sm text-text-primary">Sources</label>
 
-              <div class="flex flex-col mt-2 gap-2">
-                <div
-                  v-for="source in sourceList"
-                  :key="source.value"
-                  class="relative"
-                  ref="refsMap[source.value]"
-                >
-                  <!-- Dropdown Trigger -->
-                  <button
-                    type="button"
-                    @click="toggleSourceDropdown(source.value)"
-                    class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
-                  >
-                    <span>
-                      {{ source.label }}
-                    </span>
-                    <i
-                      class="fa-regular fa-chevron-down text-text-secondary transition-transform duration-200"
-                      :class="{ 'rotate-180': openDropdowns[source.value] }"
-                    ></i>
-                  </button>
-
-                  <!-- Dropdown Menu -->
-                  <div
-                    v-if="openDropdowns[source.value]"
-                    class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
-                  >
-                    <ul class="py-1 text-sm flex flex-col gap-1">
-                      <label for="permissions" class="px-3 pt-2 font-semibold"
-                        >Permissions</label
-                      >
-                      <li
-                        v-for="perm in permissionsMap[source.value]"
-                        :key="perm.value"
-                        class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover flex items-center gap-2"
-                      >
-                        <input
-                          type="checkbox"
-                          v-model="
-                            knowledgePermissions[
-                              source.value as keyof typeof knowledgePermissions
-                            ][
-                              perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
-                            ]
-                          "
-                          class="h-4 w-4 rounded border-border"
-                        />
-                        <span>{{
-                          getPermissionLabel(
-                            source.value as keyof typeof knowledgePermissions,
-                            perm.value,
-                          )
-                        }}</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Metadata -->
-            <div class="space-y-1">
-              <label class="text-sm text-text-primary">Metadata (JSON)</label>
-              <textarea
-                v-model="knowledgeMetadataString"
-                rows="4"
-                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
-              />
-            </div>
-
-            <!-- Active Checkbox -->
-            <div class="flex items-center gap-3">
-              <input type="checkbox" v-model="knowledgeConfig.is_active" />
-              <span class="text-sm text-text-primary">Active Source</span>
-            </div>
-
-            <!-- Submit Button -->
-            <button
-              @click="submitKnowledge"
-              :disabled="isKnowledgeLoading || !moduleSelected"
-              class="w-full mt-4 px-4 py-2.5 text-sm rounded-lg cursor-pointer text-white bg-accent hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          <div class="flex flex-col mt-2 gap-2">
+            <div
+              v-for="source in sourceList"
+              :key="source.value"
+              class="relative"
+              ref="refsMap[source.value]"
             >
-              <span v-if="isKnowledgeLoading">Saving...</span>
-              <span v-else>Save Knowledge</span>
-            </button>
-          </div>
-        <div v-if="activeTab === 'training'" class="space-y-6">
-            <!-- Training Name -->
-            <div class="space-y-1">
-              <label class="text-sm text-text-primary">Training Name</label>
-              <input
-                v-model="uploadConfig.name"
-                disabled
-                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
-              />
-            </div>
-
-            <!-- Type -->
-            <div class="space-y-1 relative" ref="typeRef">
-              <label class="text-sm text-text-primary">Type</label>
+              <!-- Dropdown Trigger -->
               <button
                 type="button"
-                @click="openType = !openType"
-                class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+                @click="toggleSourceDropdown(source.value)"
+                class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
               >
-                <span>{{ selectedTypeLabel }}</span>
-                <svg
-                  class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                <span>
+                  {{ source.label }}
+                </span>
+                <i
+                  class="fa-regular fa-chevron-down text-text-secondary transition-transform duration-200"
+                  :class="{ 'rotate-180': openDropdowns[source.value] }"
+                ></i>
               </button>
 
+              <!-- Dropdown Menu -->
               <div
-                v-if="openType"
-                class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+                v-if="openDropdowns[source.value]"
+                class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
               >
-                <ul class="py-1 text-sm">
-                  <li
-                    v-for="type in availableUploadTypes"
-                    :key="type.value"
-                    @click="selectType(type.value)"
-                    class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
+                <ul class="py-1 text-sm flex flex-col gap-1">
+                  <label for="permissions" class="px-3 pt-2 font-semibold"
+                    >Permissions</label
                   >
-                    {{ type.label }}
+                  <li
+                    v-for="perm in permissionsMap[source.value]"
+                    :key="perm.value"
+                    class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover flex items-center gap-2"
+                  >
+                    <input
+                      type="checkbox"
+                      v-model="
+                        knowledgePermissions[
+                          source.value as keyof typeof knowledgePermissions
+                        ][
+                          perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
+                        ]
+                      "
+                      class="h-4 w-4 rounded border-border"
+                    />
+                    <span>{{
+                      getPermissionLabel(
+                        source.value as keyof typeof knowledgePermissions,
+                        perm.value,
+                      )
+                    }}</span>
                   </li>
                 </ul>
               </div>
             </div>
-
-            <!-- Training Text -->
-            <div class="space-y-1">
-              <label class="text-sm text-text-primary">Training Text</label>
-              <textarea
-                v-model="uploadConfig.text"
-                rows="4"
-                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
-              />
-            </div>
-
-            <!-- File Upload -->
-            <input
-              type="file"
-              multiple
-              @change="handleUploadFiles"
-              class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm"
-            />
-
-            <!-- Uploaded Files List -->
-            <div
-              v-for="(file, i) in uploadConfig.files"
-              :key="i"
-              class="flex justify-between text-sm border border-border rounded-lg px-3 py-2"
-            >
-              <span>{{ file.name }}</span>
-              <button
-                @click="uploadConfig.files.splice(i, 1)"
-                class="text-red-500"
-              >
-                Remove
-              </button>
-            </div>
-
-            <!-- Save / Upload Button -->
-            <button
-              @click="submitTrainingContent"
-              :disabled="
-                !uploadConfig.name ||
-                (uploadConfig.text === '' && uploadConfig.files.length === 0) ||
-                isUploading
-              "
-              class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span v-if="isUploading">Uploading...</span>
-              <span v-else>Upload Training Content</span>
-            </button>
           </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="space-y-1">
+          <label class="text-sm text-text-primary">Metadata (JSON)</label>
+          <textarea
+            v-model="knowledgeMetadataString"
+            rows="4"
+            class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+          />
+        </div>
+
+        <!-- Active Checkbox -->
+        <div class="flex items-center gap-3">
+          <input type="checkbox" v-model="knowledgeConfig.is_active" />
+          <span class="text-sm text-text-primary">Active Source</span>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          @click="submitKnowledge"
+          :disabled="isKnowledgeLoading || !moduleSelected"
+          class="w-full mt-4 px-4 py-2.5 text-sm rounded-lg cursor-pointer text-white bg-accent hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          <span v-if="isKnowledgeLoading">Saving...</span>
+          <span v-else>Save Knowledge</span>
+        </button>
+      </div>
+      <div v-if="activeTab === 'training'" class="space-y-6">
+        <!-- Training Name -->
+        <div class="space-y-1">
+          <label class="text-sm text-text-primary">Training Name</label>
+          <input
+            v-model="uploadConfig.name"
+            disabled
+            class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+          />
+        </div>
+
+        <!-- Type -->
+        <div class="space-y-1 relative" ref="typeRef">
+          <label class="text-sm text-text-primary">Type</label>
+          <button
+            type="button"
+            @click="openType = !openType"
+            class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+          >
+            <span>{{ selectedTypeLabel }}</span>
+            <svg
+              class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          <div
+            v-if="openType"
+            class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+          >
+            <ul class="py-1 text-sm">
+              <li
+                v-for="type in availableUploadTypes"
+                :key="type.value"
+                @click="selectType(type.value)"
+                class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
+              >
+                {{ type.label }}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Training Text -->
+        <div class="space-y-1">
+          <label class="text-sm text-text-primary">Training Text</label>
+          <textarea
+            v-model="uploadConfig.text"
+            rows="4"
+            class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+          />
+        </div>
+
+        <!-- File Upload -->
+        <input
+          type="file"
+          multiple
+          @change="handleUploadFiles"
+          class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm"
+        />
+
+        <!-- Uploaded Files List -->
+        <div
+          v-for="(file, i) in uploadConfig.files"
+          :key="i"
+          class="flex justify-between text-sm border border-border rounded-lg px-3 py-2"
+        >
+          <span>{{ file.name }}</span>
+          <button @click="uploadConfig.files.splice(i, 1)" class="text-red-500">
+            Remove
+          </button>
+        </div>
+
+        <!-- Save / Upload Button -->
+        <button
+          @click="submitTrainingContent"
+          :disabled="
+            !uploadConfig.name ||
+            (uploadConfig.text === '' && uploadConfig.files.length === 0) ||
+            isUploading
+          "
+          class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span v-if="isUploading">Uploading...</span>
+          <span v-else>Upload Training Content</span>
+        </button>
+      </div>
     </div>
 
     <ConfirmModal
@@ -596,7 +590,7 @@ const emit = defineEmits([
   "update:details",
   "comment:post",
   "priority:change",
-  "persona-updated"
+  "persona-updated",
 ]);
 
 const form = ref<any>({
@@ -655,8 +649,8 @@ watch(
   { immediate: true },
 );
 watch(
-  () => updateAgentData.value,
-  (data) => {
+  [() => updateAgentData.value, roleOptions, jobOptions],
+  ([data]) => {
     if (!data?.agents?.length) return;
 
     const agent = data.agents[0];
@@ -672,12 +666,24 @@ watch(
     agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
     agentConfig.capabilities = [...(agent.capabilities || [])];
 
-    // Match dropdown IDs
-    selectedRole.value = agent.workspace_role_id || null;
-    selectJobRole.value = agent.workspace_access_role_id || null;
+    // Wait until options are loaded before matching
+    if (roleOptions.value.length) {
+      const role = roleOptions.value.find(
+        (r) => r._id === agent.workspace_access_role_id,
+      );
+      selectedRole.value = role?._id ?? "";
+    }
+
+    if (jobOptions.value.length) {
+      const jobRole = jobOptions.value.find(
+        (r) => r._id === agent.workspace_role_id,
+      );
+      selectJobRole.value = jobRole?._id ?? "";
+    }
   },
   { immediate: true },
 );
+
 const { mutate: deleteVarDef, isPending: isDeleting } = useDeletePeopleVarDef();
 
 function confirmDelete() {
@@ -731,7 +737,7 @@ const submitPersona = async () => {
     toast.error("Please fill in required fields!");
     return;
   }
-  
+
   isLoading.value = true;
   try {
     const payload = {
@@ -828,7 +834,11 @@ const updateAgent = async (agent: string) => {
     workspace_role_id: selectJobRole.value,
     workspace_access_role_id: selectedRole.value,
   };
-  await agentStore.updateSelectedAgent(workspaceId.value, currentPayload, agent);
+  await agentStore.updateSelectedAgent(
+    workspaceId.value,
+    currentPayload,
+    agent,
+  );
   await fetchAssignedAgents();
   await loadAgentSettings();
   emit("persona-updated");
