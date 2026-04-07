@@ -969,7 +969,7 @@
           </div>
         </div>
 
-        <div class="fs-footer">
+        <div class="fs-footer" v-if="selectedNodeId">
           <button
             class="fs-save-btn"
             :disabled="isSavingNodeStyle || !selectedNodeId"
@@ -6110,12 +6110,12 @@ onBeforeUnmount(() => {
   border-color: rgba(255, 255, 255, 0.07);
 }
 .mindmap-root[data-dark="true"] .node-card-actions-row {
-  background: var(--mm-node-card-bg, var(--bg-card, #2b2c30));
+  background: #2b2c30;
   border-color: rgba(255, 255, 255, 0.08);
 }
 .mindmap-root[data-dark="true"] .canvas-controls {
-  background: var(--mm-node-card-bg, var(--bg-card, #2b2c30));
-  border-color: var(--border, #3e3e42);
+  background: #2b2c30;
+  border-color: #3e3e42;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
 .mindmap-root[data-dark="true"] .ctrl-btn {

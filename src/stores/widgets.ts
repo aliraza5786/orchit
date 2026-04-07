@@ -102,6 +102,7 @@ export const useWidgetStore = defineStore("widgets", {
         this.pinnedWidgets.map((w: any) => this.fetchWidgetData(w._id))
       );
     },
+
     async updateWidget(widget_id: string, updates: Record<string, any>) {
       this.isSaving = true;
       this.error = null;
@@ -125,7 +126,6 @@ export const useWidgetStore = defineStore("widgets", {
 
     async reorderWidgets(items: { widget_id: string; pin_order: number }[]) {
       this.error = null;
-      // Optimistic update
       items.forEach(({ widget_id, pin_order }) => {
         const idx = this.widgets.findIndex((w) => w._id === widget_id);
         if (idx !== -1) this.widgets[idx].pin_order = pin_order;
@@ -135,11 +135,11 @@ export const useWidgetStore = defineStore("widgets", {
       } catch (err: any) {
         this.error = err?.response?.data?.message ?? "Failed to reorder widgets";
         console.error("reorderWidgets:", err);
-        // Refetch to restore correct order on failure
         const workspace_id = this.widgets[0]?.workspace_id;
         if (workspace_id) await this.fetchWidgets(workspace_id);
       }
     },
+
     async deleteWidget(widget_id: string) {
       this.isDeleting[widget_id] = true;
       this.error = null;
@@ -156,28 +156,90 @@ export const useWidgetStore = defineStore("widgets", {
         this.isDeleting[widget_id] = false;
       }
     },
-    async acceptProposal(workspace_id: string, widget_data: Record<string, any>) {
+
+    // ── CREATE widget via agent-chat endpoint ──────────────────────────────
+    async createWidget(
+      workspace_id: string,
+      widgetFields: {
+        title: string;
+        description?: string | null;
+        icon?: string;
+        color?: string;
+        is_pinned?: boolean;
+        refresh_interval?: number;
+        query: Record<string, any>;
+      }
+    ) {
       this.isSaving = true;
       this.error = null;
       try {
-        const res = await api.post("agent-chat/accept-structure", {
+        const payload = {
           workspace_id,
-          widget_data,
-        });
+          widget_data: {
+            type: "create_widget",
+            title: widgetFields.title,
+            description: widgetFields.description ?? null,
+            icon: widgetFields.icon ?? "📊",
+            color: widgetFields.color ?? "#7D68C8",
+            is_pinned: widgetFields.is_pinned ?? true,
+            refresh_interval: widgetFields.refresh_interval ?? 300,
+            query: widgetFields.query,
+          },
+        };
+
+        const res = await api.post("agent-chat/accept-structure", payload);
         const widget = res.data?.data?.widget;
         if (widget) {
           this.widgets.push(widget);
         }
         this.pendingProposal = null;
-        return widget;
+        return widget ?? null;
       } catch (err: any) {
-        this.error = err?.response?.data?.message ?? "Failed to accept widget proposal";
-        console.error("acceptProposal:", err);
+        this.error = err?.response?.data?.message ?? "Failed to create widget";
+        console.error("createWidget:", err);
         return null;
       } finally {
         this.isSaving = false;
       }
     },
+
+    // ── UPDATE widget via agent-chat endpoint ─────────────────────────────
+    async updateWidgetViaAgent(
+      workspace_id: string,
+      widget_id: string,
+      updates: Record<string, any>
+    ) {
+      this.isSaving = true;
+      this.error = null;
+      try {
+        const payload = {
+          workspace_id,
+          widget_data: {
+            type: "update_widget",
+            widget_id,
+            updates,
+          },
+        };
+
+        const res = await api.post("agent-chat/accept-structure", payload);
+        const updated = res.data?.data?.widget ?? res.data?.data;
+
+        if (updated) {
+          const idx = this.widgets.findIndex((w) => w._id === widget_id);
+          if (idx !== -1) {
+            this.widgets[idx] = updated;
+          }
+        }
+        return updated ?? null;
+      } catch (err: any) {
+        this.error = err?.response?.data?.message ?? "Failed to update widget";
+        console.error("updateWidgetViaAgent:", err);
+        return null;
+      } finally {
+        this.isSaving = false;
+      }
+    },
+
     setPendingProposal(proposal: any) {
       this.pendingProposal = proposal;
     },
@@ -185,9 +247,11 @@ export const useWidgetStore = defineStore("widgets", {
     clearPendingProposal() {
       this.pendingProposal = null;
     },
+
     async refreshWidget(widget_id: string) {
       return this.fetchWidgetData(widget_id);
     },
+
     clearWidgetData(widget_id: string) {
       delete this.widgetDataCache[widget_id];
     },

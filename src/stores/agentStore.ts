@@ -132,6 +132,7 @@ export const useAgentStore = defineStore("agent", {
     agentPassed: null as Agent | null,
     module_id: null as string | null,
     moduleName: null as string | null,
+    isLoading:false
   }),
 
   getters: {
@@ -319,26 +320,27 @@ export const useAgentStore = defineStore("agent", {
       }
     },
     async acceptEntities(payload: any) {
-      this.isAcceptingEntities = true;
-      try {
-        const res = await api.request<{ data: CreatedEntityItem[] }>({
-          url: `${baseUrl}agent-chat/accept-structure`,
-          method: "POST",
-          data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        });
+  this.isAcceptingEntities = true;
+  try {
+    const res = await api.request<{ data: CreatedEntityItem[] }>({
+      url: `${baseUrl}agent-chat/accept-structure`,
+      method: "POST",
+      data: payload,
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
 
-        this.createdEntities = res.data.data ?? [];
-      } catch (err) {
-        console.error("Not accepted", err);
-      } finally {
-        this.isAcceptingEntities = false;
-      }
-    },
+    this.createdEntities = res.data.data ?? [];
+  } catch (err) {
+    console.error("Not accepted", err);
+    throw err; // ← let parent handle toast
+  } finally {
+    this.isAcceptingEntities = false; // ← always clears, success or fail
+  }
+},
     clearChatHistory() {
       this.chatHistory = [];
     },
@@ -717,6 +719,26 @@ export const useAgentStore = defineStore("agent", {
       this.agentPassed = agent;
       this.module_id = module_id;
       this.moduleName = module_name;
-    }
+    },
+    async unpinStructure(payload: { workspace_id: string; log_id?: string }) {
+  this.isLoading = true;
+  try {
+    await api.request({
+      url: `${baseUrl}agent-chat/unpin-structure`,
+      method: "POST",
+      data: payload,
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
+  } catch (err) {
+    console.error("Unpin failed", err);
+    throw err;
+  } finally {
+    this.isLoading = false;
+  }
+},
   },
 });
