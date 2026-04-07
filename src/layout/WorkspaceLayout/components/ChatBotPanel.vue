@@ -14,7 +14,6 @@
       v-if="isExpanded && !showConfigPanel && entities?.length"
       class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
-
       <ChatBotPreviewModal
         @accept="acceptChanges"
         @decline="declineAgentGeneratedEntities"
@@ -127,7 +126,9 @@
                 />
               </div>
               <div class="flex items-center justify-between mb-1">
-                <span class="text-base font-medium text-text-primary block">Select Role</span>
+                <span class="text-base font-medium text-text-primary block"
+                  >Select Role</span
+                >
               </div>
               <BaseSelectField
                 size="md"
@@ -136,7 +137,9 @@
                 placeholder="Select Role"
               />
               <div class="flex items-center justify-between mb-1 mt-2">
-                <span class="text-base font-medium text-text-primary block">Select Job Role</span>
+                <span class="text-base font-medium text-text-primary block"
+                  >Select Job Role</span
+                >
               </div>
               <BaseSelectField
                 size="md"
@@ -152,11 +155,24 @@
                   class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
                 >
                   <span>{{ selectedLevelLabel }}</span>
-                  <svg class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  <svg
+                    class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
-                <div v-if="openLevel" class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg">
+                <div
+                  v-if="openLevel"
+                  class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+                >
                   <ul class="py-1 text-sm">
                     <li
                       v-for="level in availableAgentsLevels"
@@ -169,26 +185,59 @@
                   </ul>
                 </div>
               </div>
-              <TagInput v-model="agentConfig.responsibilities" label="Responsibilities" />
+              <TagInput
+                v-model="agentConfig.responsibilities"
+                label="Responsibilities"
+              />
               <TagInput v-model="agentConfig.skills" label="Skills" />
-              <TagInput v-model="agentConfig.competencies" label="Competencies" />
-              <TagInput v-model="agentConfig.conditions_rules" label="Conditions / Rules" />
+              <TagInput
+                v-model="agentConfig.competencies"
+                label="Competencies"
+              />
+              <TagInput
+                v-model="agentConfig.conditions_rules"
+                label="Conditions / Rules"
+              />
               <div class="flex gap-2" v-if="transformedData?.length">
-                <input type="checkbox" class="h-4 w-4 rounded border-border" v-model="isSheet" />
-                <span class="text-sm text-text-primary">Enable to create the agent for a selected sheet instead of all sheets</span>
+                <input
+                  type="checkbox"
+                  class="h-4 w-4 rounded border-border"
+                  v-model="isSheet"
+                />
+                <span class="text-sm text-text-primary"
+                  >Enable to create the agent for a selected sheet instead of
+                  all sheets</span
+                >
               </div>
-              <div class="space-y-1 relative w-full" ref="sheetRef" v-if="isSheet">
+              <div
+                class="space-y-1 relative w-full"
+                ref="sheetRef"
+                v-if="isSheet"
+              >
                 <button
                   type="button"
                   @click="openSheet = !openSheet"
                   class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
                 >
                   <span>{{ selectedSheetTitle }}</span>
-                  <svg class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  <svg
+                    class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </button>
-                <div v-if="openSheet" class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg">
+                <div
+                  v-if="openSheet"
+                  class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+                >
                   <ul class="py-1 text-sm max-h-60 overflow-auto">
                     <li
                       v-for="sheet in transformedData"
@@ -197,16 +246,32 @@
                       class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
                     >
                       <div class="font-medium">{{ sheet.title }}</div>
-                      <div v-if="sheet.description" class="text-xs text-text-secondary">{{ sheet.description }}</div>
+                      <div
+                        v-if="sheet.description"
+                        class="text-xs text-text-secondary"
+                      >
+                        {{ sheet.description }}
+                      </div>
                     </li>
                   </ul>
                 </div>
               </div>
               <div class="space-y-3">
                 <label class="text-sm text-text-primary">Capabilities</label>
-                <div v-for="capability in availableCapabilities" :key="capability.value" class="flex items-center gap-3 mt-2">
-                  <input type="checkbox" :value="capability.value" v-model="agentConfig.capabilities" class="h-4 w-4 rounded border-border" />
-                  <span class="text-sm text-text-primary">{{ capability.label }}</span>
+                <div
+                  v-for="capability in availableCapabilities"
+                  :key="capability.value"
+                  class="flex items-center gap-3 mt-2"
+                >
+                  <input
+                    type="checkbox"
+                    :value="capability.value"
+                    v-model="agentConfig.capabilities"
+                    class="h-4 w-4 rounded border-border"
+                  />
+                  <span class="text-sm text-text-primary">{{
+                    capability.label
+                  }}</span>
                 </div>
               </div>
               <button
@@ -222,7 +287,11 @@
                 <button
                   @click="deleteAgent(agentConfig.id)"
                   v-if="agentsData && agentConfig?.id"
-                  :disabled="agentStore.isDeletingAgent || !agentConfig.name || !agentConfig.role"
+                  :disabled="
+                    agentStore.isDeletingAgent ||
+                    !agentConfig.name ||
+                    !agentConfig.role
+                  "
                   class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span v-if="isLoading">Deleting...</span>
@@ -231,7 +300,11 @@
                 <button
                   @click="updateAgent(agentConfig.id)"
                   v-if="agentsData && agentConfig?.id"
-                  :disabled="agentStore.isUpdatingAgent || !agentConfig.name || !agentConfig.role"
+                  :disabled="
+                    agentStore.isUpdatingAgent ||
+                    !agentConfig.name ||
+                    !agentConfig.role
+                  "
                   class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span v-if="isLoading">Updating...</span>
@@ -246,7 +319,12 @@
             <div class="space-y-1">
               <label class="text-sm text-text-primary">Sources</label>
               <div class="flex flex-col mt-2 gap-2">
-                <div v-for="source in sourceList" :key="source.value" class="relative" ref="refsMap[source.value]">
+                <div
+                  v-for="source in sourceList"
+                  :key="source.value"
+                  class="relative"
+                  ref="refsMap[source.value]"
+                >
                   <button
                     type="button"
                     @click="toggleSourceDropdown(source.value)"
@@ -258,9 +336,14 @@
                       :class="{ 'rotate-180': openDropdowns[source.value] }"
                     ></i>
                   </button>
-                  <div v-if="openDropdowns[source.value]" class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg">
+                  <div
+                    v-if="openDropdowns[source.value]"
+                    class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+                  >
                     <ul class="py-1 text-sm flex flex-col gap-1">
-                      <label for="permissions" class="px-3 pt-2 font-semibold">Permissions</label>
+                      <label for="permissions" class="px-3 pt-2 font-semibold"
+                        >Permissions</label
+                      >
                       <li
                         v-for="perm in permissionsMap[source.value]"
                         :key="perm.value"
@@ -268,10 +351,21 @@
                       >
                         <input
                           type="checkbox"
-                          v-model="knowledgePermissions[source.value as keyof typeof knowledgePermissions][perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']]"
+                          v-model="
+                            knowledgePermissions[
+                              source.value as keyof typeof knowledgePermissions
+                            ][
+                              perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
+                            ]
+                          "
                           class="h-4 w-4 rounded border-border"
                         />
-                        <span>{{ getPermissionLabel(source.value as keyof typeof knowledgePermissions, perm.value) }}</span>
+                        <span>{{
+                          getPermissionLabel(
+                            source.value as keyof typeof knowledgePermissions,
+                            perm.value,
+                          )
+                        }}</span>
                       </li>
                     </ul>
                   </div>
@@ -280,7 +374,11 @@
             </div>
             <div class="space-y-1">
               <label class="text-sm text-text-primary">Metadata (JSON)</label>
-              <textarea v-model="knowledgeMetadataString" rows="4" class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm" />
+              <textarea
+                v-model="knowledgeMetadataString"
+                rows="4"
+                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+              />
             </div>
             <div class="flex items-center gap-3">
               <input type="checkbox" v-model="knowledgeConfig.is_active" />
@@ -300,7 +398,11 @@
           <div v-if="activeTab === 'upload'" class="space-y-6">
             <div class="space-y-1">
               <label class="text-sm text-text-primary">Training Name</label>
-              <input v-model="uploadConfig.name" disabled class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm" />
+              <input
+                v-model="uploadConfig.name"
+                disabled
+                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+              />
             </div>
             <div class="space-y-1 relative" ref="typeRef">
               <label class="text-sm text-text-primary">Type</label>
@@ -310,11 +412,24 @@
                 class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
               >
                 <span>{{ selectedTypeLabel }}</span>
-                <svg class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                <svg
+                  class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
-              <div v-if="openType" class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg">
+              <div
+                v-if="openType"
+                class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
+              >
                 <ul class="py-1 text-sm">
                   <li
                     v-for="type in availableUploadTypes"
@@ -329,16 +444,38 @@
             </div>
             <div class="space-y-1">
               <label class="text-sm text-text-primary">Training Text</label>
-              <textarea v-model="uploadConfig.text" rows="4" class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm" />
+              <textarea
+                v-model="uploadConfig.text"
+                rows="4"
+                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+              />
             </div>
-            <input type="file" multiple @change="handleUploadFiles" class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm" />
-            <div v-for="(file, i) in uploadConfig.files" :key="i" class="flex justify-between text-sm border border-border rounded-lg px-3 py-2">
+            <input
+              type="file"
+              multiple
+              @change="handleUploadFiles"
+              class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm"
+            />
+            <div
+              v-for="(file, i) in uploadConfig.files"
+              :key="i"
+              class="flex justify-between text-sm border border-border rounded-lg px-3 py-2"
+            >
               <span>{{ file.name }}</span>
-              <button @click="uploadConfig.files.splice(i, 1)" class="text-red-500">Remove</button>
+              <button
+                @click="uploadConfig.files.splice(i, 1)"
+                class="text-red-500"
+              >
+                Remove
+              </button>
             </div>
             <button
               @click="submitTrainingContent"
-              :disabled="!uploadConfig.name || (uploadConfig.text === '' && uploadConfig.files.length === 0) || isUploading"
+              :disabled="
+                !uploadConfig.name ||
+                (uploadConfig.text === '' && uploadConfig.files.length === 0) ||
+                isUploading
+              "
               class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span v-if="isUploading">Uploading...</span>
@@ -351,11 +488,17 @@
 
     <!-- CHAT PANEL WRAPPER -->
     <div
-      :class="isExpanded && (showConfigPanel || entities?.length) ? 'w-1/3' : 'w-full'"
+      :class="
+        isExpanded && (showConfigPanel || entities?.length) ? 'w-1/3' : 'w-full'
+      "
       class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
     >
-      <div class="flex items-center border-b border-border px-5 py-2 sticky top-0 bg-bg-card z-30 gap-2">
-        <h5 class="text-[16px] font-medium flex items-center gap-2 min-w-0 flex-1">
+      <div
+        class="flex items-center border-b border-border px-5 py-2 sticky top-0 bg-bg-card z-30 gap-2"
+      >
+        <h5
+          class="text-[16px] font-medium flex items-center gap-2 min-w-0 flex-1"
+        >
           <i class="fa-solid fa-sparkles text-accent shrink-0"></i>
           <Dropdown
             v-model="selectedAgentId"
@@ -386,19 +529,28 @@
           >
             <i class="fa-regular fa-clock-rotate-left"></i>
           </button>
-
-          <!-- New Chat Button -->
+          <!-- AFTER -->
           <button
             class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
-            @click="showNewChatConfirm = !showNewChatConfirm"
+            @click="startNewChat"
             title="New chat"
           >
             <i class="fa-regular fa-pen-to-square"></i>
           </button>
 
           <!-- Expand / Compress -->
-          <i v-if="!isExpanded" class="fa-solid fa-expand cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent" @click="expandPanel" title="Expand"></i>
-          <i v-else class="fa-solid cursor-pointer transition-colors fa-compress" @click="compressPanel" title="Compress"></i>
+          <i
+            v-if="!isExpanded"
+            class="fa-solid fa-expand cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
+            @click="expandPanel"
+            title="Expand"
+          ></i>
+          <i
+            v-else
+            class="fa-solid cursor-pointer transition-colors fa-compress"
+            @click="compressPanel"
+            title="Compress"
+          ></i>
 
           <button
             class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
@@ -408,76 +560,176 @@
             <i class="fa-regular fa-ellipsis-vertical"></i>
           </button>
 
-          <i class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent fa-solid fa-close " @click="closeHandler"></i>
+          <i
+            class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent fa-solid fa-close"
+            @click="closeHandler"
+          ></i>
         </div>
       </div>
-
       <!-- Chat Area -->
-      <div ref="messagesContainer" class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4">
-        <div v-if="agentStore.isLoadingHistory" class="absolute inset-0 flex items-center justify-center">
+      <div
+        ref="messagesContainer"
+        class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4"
+      >
+        <div
+          v-if="agentStore.isLoadingHistory"
+          class="absolute inset-0 flex items-center justify-center"
+        >
           <div class="flex flex-col items-center gap-3 text-text-secondary">
             <div class="chat-loader"></div>
             <span class="text-xs">Loading conversation...</span>
           </div>
         </div>
 
-        <template v-else-if="orderedMessages.length || isAiThinkingBubbleVisible">
+        <template
+          v-else-if="orderedMessages.length || isAiThinkingBubbleVisible"
+        >
           <div
             v-for="msg in orderedMessages"
             :key="msg._id"
-            class="flex gap-2 relative animate-fade-in"
+            class="flex gap-2 relative animate-fade-in group/msg"
             :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
           >
             <div
               class="w-6 h-6 rounded-full p-1.5 flex items-center justify-center shrink-0"
               :class="msg.type === 'user' ? 'bg-bg-surface' : 'bg-accent/10'"
             >
-              <i v-if="msg.type === 'assistant'" class="fa-solid fa-robot text-accent text-sm"></i>
-              <div v-else-if="msg.type === 'user'" class="text-xs font-semibold text-accent">ME</div>
+              <i
+                v-if="msg.type === 'assistant'"
+                class="fa-solid fa-robot text-accent text-sm"
+              ></i>
+              <div
+                v-else-if="msg.type === 'user'"
+                class="text-xs font-semibold text-accent"
+              >
+                ME
+              </div>
             </div>
-            <div
-              class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border relative"
-              :class="msg.type === 'user' ? 'bg-accent/10 border-accent/20 rounded-tr-none' : 'bg-bg-body border-border rounded-tl-none'"
-            >
-              <p class="whitespace-pre-wrap" v-if="msg.content">{{ msg.content }}</p>
-              <div v-if="msg.attachments && msg.attachments.length" class="flex flex-wrap gap-1.5 mt-1">
-                <div
-                  v-for="(attachment, idx) in msg.attachments"
-                  :key="idx"
-                  class="flex items-center gap-1.5 px-2 py-1 rounded-md border border-accent/20 bg-accent/5 text-xs text-text-primary"
+
+            <!-- Bubble + dropdown wrapper -->
+            <div class="relative max-w-[85%] flex flex-col">
+              <div
+                class="px-3 py-1.5 rounded-lg text-sm leading-relaxed border relative"
+                :class="
+                  msg.type === 'user'
+                    ? 'bg-accent/10 border-accent/20 rounded-tr-none'
+                    : 'bg-bg-body border-border rounded-tl-none'
+                "
+              >
+                <!-- Dropdown trigger — visible on bubble hover -->
+                <button
+                  v-if="activeSessionId && !msg.metadata?.temp"
+                  @click.stop="toggleMsgMenu(msg._id)"
+                  class="absolute top-1 right-1 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded cursor-pointer text-text-tertiary hover:text-text-secondary hover:bg-black/5"
                 >
-                  <i class="fa-solid text-accent" :class="attachment.mimetype === 'application/pdf' ? 'fa-file-pdf' : 'fa-file-image'"></i>
-                  <span class="max-w-[120px] truncate">{{ attachment.filename || attachment.name }}</span>
+                  <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                </button>
+
+                <p class="whitespace-pre-wrap pr-4" v-if="msg.content">
+                  {{ msg.content }}
+                </p>
+
+                <div
+                  v-if="msg.attachments && msg.attachments.length"
+                  class="flex flex-wrap gap-1.5 mt-1"
+                >
+                  <div
+                    v-for="(attachment, idx) in msg.attachments"
+                    :key="idx"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded-md border border-accent/20 bg-accent/5 text-xs text-text-primary"
+                  >
+                    <i
+                      class="fa-solid text-accent"
+                      :class="
+                        attachment.mimetype === 'application/pdf'
+                          ? 'fa-file-pdf'
+                          : 'fa-file-image'
+                      "
+                    ></i>
+                    <span class="max-w-[120px] truncate">{{
+                      attachment.filename || attachment.name
+                    }}</span>
+                  </div>
+                </div>
+
+                <div
+                  class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5"
+                >
+                  <span>{{ formatTimestamp(msg.timestamp) }}</span>
+                  <i
+                    v-if="msg.is_pinned"
+                    class="fa-solid fa-thumbtack text-accent text-[10px]"
+                    title="Pinned message"
+                  ></i>
+                  <span v-if="msg.type === 'user'">
+                    <i
+                      v-if="msg.metadata?.status === 'completed'"
+                      class="fa-solid fa-check-double text-green-500"
+                    ></i>
+                    <i v-else class="fa-solid fa-check text-text-secondary"></i>
+                  </span>
                 </div>
               </div>
-              <div class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5">
-                <span>{{ formatTimestamp(msg.timestamp) }}</span>
-                <span v-if="msg.type === 'user'">
-                  <i v-if="msg.metadata?.status === 'completed'" class="fa-solid fa-check-double text-green-500"></i>
-                  <i v-else class="fa-solid fa-check text-text-secondary"></i>
-                </span>
+
+              <!-- Dropdown menu -->
+              <div
+                v-if="openMsgMenuId === msg._id"
+                class="absolute z-50 top-7 w-40 rounded-lg border border-border bg-white py-1 overflow-hidden"
+                :class="msg.type === 'user' ? 'right-0' : 'left-0'"
+              >
+                <button
+                  @click.stop="
+                    togglePinMessage(msg);
+                    openMsgMenuId = null;
+                  "
+                  class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:text-accent transition-colors cursor-pointer"
+                >
+                  <i
+                    class="text-[11px] w-3"
+                    :class="
+                      (msg as any).is_pinned
+                        ? 'fa-solid fa-thumbtack text-accent'
+                        : 'fa-regular fa-thumbtack text-text-secondary'
+                    "
+                  ></i>
+                  <span>{{
+                    (msg as any).is_pinned ? "Unpin message" : "Pin message"
+                  }}</span>
+                </button>
               </div>
             </div>
           </div>
 
-          <div v-if="isAiThinkingBubbleVisible" class="flex gap-2 relative animate-fade-in">
-            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-accent/10">
+          <div
+            v-if="isAiThinkingBubbleVisible"
+            class="flex gap-2 relative animate-fade-in"
+          >
+            <div
+              class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-accent/10"
+            >
               <i class="fa-solid fa-robot text-accent text-sm"></i>
             </div>
-            <div class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border bg-bg-body border-border rounded-tl-none">
+            <div
+              class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border bg-bg-body border-border rounded-tl-none"
+            >
               <div class="flex items-center gap-1">
                 <div class="typing-dots">
                   <span></span>
                   <span></span>
                   <span></span>
                 </div>
-                <span class="text-xs text-text-secondary ml-2">AI is thinking...</span>
+                <span class="text-xs text-text-secondary ml-2"
+                  >AI is thinking...</span
+                >
               </div>
             </div>
           </div>
         </template>
 
-        <div v-else class="flex flex-col items-center justify-center h-full text-text-secondary">
+        <div
+          v-else
+          class="flex flex-col items-center justify-center h-full text-text-secondary"
+        >
           <i class="fa-solid fa-comments text-4xl mb-2 opacity-50"></i>
           <p class="text-sm">No messages yet. Start a conversation!</p>
         </div>
@@ -485,79 +737,81 @@
 
       <div class="px-3 pt-3 pb-1 border-t border-border bg-bg-card mt-1.5">
         <!-- Breadcrumb -->
-        <div v-if="contextTitle" class="mb-3 flex justify-between border-b border-border items-center gap-1.5">
+        <div
+          v-if="contextTitle"
+          class="mb-3 flex justify-between border-b border-border items-center gap-1.5"
+        >
           <nav class="flex items-center text-xs text-text-secondary gap-1 mb-2">
-            <div class="flex items-center font-medium text-text-primary" v-if="!moduleId">
+            <div
+              class="flex items-center font-medium text-text-primary"
+              v-if="!moduleId"
+            >
               <span>Workspace</span>
             </div>
-            <span v-if="!moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
+            <span v-if="!moduleId"
+              ><i class="fa-solid fa-chevron-right text-xs"></i
+            ></span>
             <div class="flex items-center font-medium text-text-primary">
               <span>{{ contextTitle }}</span>
             </div>
-            <span v-if="moduleId"><i class="fa-solid fa-chevron-right text-xs"></i></span>
-            <div class="flex items-center font-medium text-text-primary" v-if="moduleId">
+            <span v-if="moduleId"
+              ><i class="fa-solid fa-chevron-right text-xs"></i
+            ></span>
+            <div
+              class="flex items-center font-medium text-text-primary"
+              v-if="moduleId"
+            >
               <span v-if="route?.path?.includes('peak')">Peak</span>
-              <span v-else>{{ moduleSelected && moduleSelected?.length > 20 ? moduleSelected?.slice(0, 20) + '...' : moduleSelected }}</span>
+              <span v-else>{{
+                moduleSelected && moduleSelected?.length > 20
+                  ? moduleSelected?.slice(0, 20) + "..."
+                  : moduleSelected
+              }}</span>
             </div>
             <div v-if="moduleId" class="flex">
               <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
-              <div class="flex items-center gap-1"><span>{{ sheetNameRef }}</span></div>
+              <div class="flex items-center gap-1">
+                <span>{{ sheetNameRef }}</span>
+              </div>
             </div>
           </nav>
         </div>
-
-        <!-- Active session indicator -->
-        <div v-if="activeSessionId && activeSessionTitle" class="mb-2 flex items-center gap-1.5 px-2 py-1 rounded-lg bg-accent/5 border border-accent/20">
-          <i class="fa-solid fa-message-lines text-accent text-[10px]"></i>
-          <span class="text-[11px] text-accent font-medium truncate max-w-[200px]">{{ activeSessionTitle }}</span>
-          <button
-            @click="clearActiveSession"
-            class="ml-auto text-[10px] text-text-tertiary hover:text-text-secondary transition-colors cursor-pointer"
-            title="Start new chat"
-          >
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-
-        <!-- New chat confirm banner -->
-        <div
-          v-if="showNewChatConfirm"
-          class="mb-2.5 flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-accent/25 bg-accent/5"
-        >
-          <p class="text-xs text-text-secondary">Start a new conversation? Current chat will be saved in history.</p>
-          <div class="flex gap-2 shrink-0">
-            <button
-              @click="startNewChat"
-              class="text-[11px] px-3 py-1 rounded-lg bg-accent text-white cursor-pointer hover:bg-accent-dark transition-colors"
-            >Start</button>
-            <button
-              @click="showNewChatConfirm = false"
-              class="text-[11px] px-3 py-1 rounded-lg border border-border text-text-secondary cursor-pointer hover:bg-bg-body transition-colors"
-            >Cancel</button>
-          </div>
-        </div>
-
-        <!-- Input card -->
         <div
           class="border border-border rounded-2xl bg-bg-body overflow-hidden transition-all duration-200"
           :class="{ 'border-accent/50': isFocused }"
         >
           <!-- Uploaded file previews -->
-          <div v-if="selectedFiles.length" class="flex flex-wrap gap-2 px-3 pt-3">
+          <div
+            v-if="selectedFiles.length"
+            class="flex flex-wrap gap-2 px-3 pt-3"
+          >
             <template v-for="file in selectedFiles" :key="file.tempId">
-              <div class="relative w-11 h-11 rounded-lg overflow-hidden border border-border bg-bg-surface flex items-center justify-center">
+              <div
+                class="relative w-11 h-11 rounded-lg overflow-hidden border border-border bg-bg-surface flex items-center justify-center"
+              >
                 <img
-                  v-if="file && typeof file.type === 'string' && file.type.startsWith('image/')"
+                  v-if="
+                    file &&
+                    typeof file.type === 'string' &&
+                    file.type.startsWith('image/')
+                  "
                   :src="createObjectURL(file)"
                   class="w-full h-full object-cover"
                   alt="preview"
                 />
-                <div v-else class="w-full h-full flex items-center justify-center text-[10px] font-semibold text-text-secondary bg-bg-body">PDF</div>
+                <div
+                  v-else
+                  class="w-full h-full flex items-center justify-center text-[10px] font-semibold text-text-secondary bg-bg-body"
+                >
+                  PDF
+                </div>
                 <button
                   type="button"
                   @click="removeFile(file.tempId!)"
                   class="absolute top-0.5 right-0.5 w-3.5 h-3.5 text-white text-[8px] bg-red-500 rounded-full flex items-center justify-center hover:bg-red-700"
-                >&times;</button>
+                >
+                  &times;
+                </button>
               </div>
             </template>
           </div>
@@ -592,76 +846,105 @@
             </div>
             <button
               @click="sendMessage"
-              :disabled="(!userMessage.trim() && !selectedFiles.length) || agentStore.isSending"
+              :disabled="
+                (!userMessage.trim() && !selectedFiles.length) ||
+                agentStore.isSending
+              "
               class="w-8 h-8 rounded-full bg-accent flex items-center justify-center hover:bg-accent-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
-              <i class="fa-solid text-white text-xs" :class="agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+              <i
+                class="fa-solid text-white text-xs"
+                :class="
+                  agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'
+                "
+              ></i>
             </button>
           </div>
         </div>
 
         <!-- Hidden file input -->
-        <input ref="fileInput" type="file" class="hidden" multiple accept="image/*,.pdf" @change="handleFileChange" />
+        <input
+          ref="fileInput"
+          type="file"
+          class="hidden"
+          multiple
+          accept="image/*,.pdf"
+          @change="handleFileChange"
+        />
 
         <!-- Pinned prompt chips -->
-        <div v-if="pinnedPrompts.length" class="mt-3 relative flex items-center gap-2">
-  <!-- First two pinned prompts as mini tabs -->
-  <template v-for="pin in pinnedPrompts.slice(0, 2)" :key="pin.id">
-    <button
-      class="truncate max-w-[80px] cursor-pointer px-2 py-1 rounded-full border border-border bg-bg-card text-[12px] text-text-secondary hover:border-accent/50 hover:text-accent transition-all duration-150"
-      @click="applyPromptToInput(pin.text)"
-    >
-      {{ pin.label }}
-    </button>
-  </template>
-
-  <!-- Dropdown trigger button -->
-  <button
-    @click="toggleDropdown"
-    class="flex items-center gap-1.5 cursor-pointer px-3 py-2 rounded-full border border-border bg-bg-card text-[12px] text-text-secondary hover:border-accent/50 hover:text-accent transition-all duration-150"
-  >
-    <i class="fa-solid fa-thumbtack text-accent" style="font-size:10px;"></i>
-    Pinned Prompts
-    <i
-      :class="{'fa-chevron-up': isDropdownOpen, 'fa-chevron-down': !isDropdownOpen}"
-      class="fa-solid ml-1 text-text-tertiary text-[10px] transition-transform"
-    ></i>
-  </button>
-
-  <!-- Dropdown for all pinned prompts -->
-  <div
-    v-if="isDropdownOpen"
-    class="absolute mt-1 w-56 bg-bg-card border border-border rounded-md shadow-lg z-50 overflow-hidden"
-  >
-    <div class="flex justify-between items-center px-3 py-2 border-b border-border">
-      <span class="text-[11px] text-text-tertiary">Pinned prompts</span>
-      <button
-        @click="unpinAll"
-        :disabled="isUnpinningAll"
-        class="text-[11px] text-text-tertiary hover:text-red-500 transition-colors disabled:opacity-40"
-      >
-        {{ isUnpinningAll ? 'Clearing…' : 'Clear all' }}
-      </button>
-    </div>
-
-    <div class="max-h-60 overflow-y-auto">
-      <button
-        v-for="pin in pinnedPrompts"
-        :key="pin.id"
-        class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-accent/10 transition-colors text-[12px]"
-        @click="applyPromptToInput(pin.text)"
-      >
-        <span class="truncate">{{ pin.label }}</span>
-        <span
-          @click.stop="unpinSinglePrompt(pin.id)"
-          class="text-red-500 hover:text-red-700 cursor-pointer ml-2"
+        <div
+          v-if="pinnedPrompts.length"
+          class="mt-3 relative flex items-center gap-2"
+          ref="Ref"
         >
-          <i class="fa-solid fa-xmark text-[10px]"></i>
-        </span>
-      </button>
-    </div>
-  </div>
-</div>
+          <!-- First two pinned prompts as mini tabs -->
+          <template v-for="pin in pinnedPrompts.slice(0, 2)" :key="pin.id">
+            <div class="relative group">
+              <button
+                class="truncate max-w-[80px] pr-5 cursor-pointer px-2 py-1 rounded-full border border-border bg-bg-card text-[12px] text-text-secondary hover:border-accent/50 hover:text-accent transition-all duration-150"
+                @click="applyPromptToInput(pin.text)"
+              >
+                {{ pin.label }}
+              </button>
+              <span
+                @click.stop="unpinSingle(pin)"
+                class="absolute right-1 top-2.5 -translate-y-1/2 text-red-500 hover:text-red-700 cursor-pointer opacity-0 group-hover:opacity-100 transition"
+              >
+                <i
+                  class="fa-sharp fa-regular fa-thumbtack-slash text-[10px]"
+                ></i>
+              </span>
+            </div>
+          </template>
+
+          <!-- Dropdown trigger button -->
+          <button
+            @click="toggleDropdown"
+            class="flex items-center gap-1.5 cursor-pointer px-3 py-2 rounded-full border border-border bg-bg-card text-[12px] text-text-secondary hover:border-accent/50 hover:text-accent transition-all duration-150"
+          >
+            <i
+              class="fa-solid fa-thumbtack text-accent"
+              style="font-size: 10px"
+            ></i>
+            Pinned Prompts
+            <i
+              :class="{
+                'fa-chevron-up': isDropdownOpen,
+                'fa-chevron-down': !isDropdownOpen,
+              }"
+              class="fa-solid ml-1 text-text-tertiary text-[10px] transition-transform"
+            ></i>
+          </button>
+          <div
+            v-if="isDropdownOpen"
+            class="absolute mt-1 w-56 bg-bg-card border border-border rounded-md shadow-lg z-50 overflow-hidden"
+          >
+            <div
+              class="flex justify-between items-center px-3 py-2 border-b border-border"
+            >
+              <span class="text-[11px] text-text-tertiary">Pinned prompts</span>
+            </div>
+
+            <!-- ✅ Scrollable area -->
+            <div class="max-h-60 overflow-y-auto">
+              <button
+                v-for="pin in pinnedPrompts"
+                :key="pin.id"
+                class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-accent/10 transition-colors text-[12px]"
+                @click="applyPromptToInput(pin.text)"
+              >
+                <span class="truncate">{{ pin.label }}</span>
+                <span
+                  @click.stop="unpinSingle(pin)"
+                  class="text-red-500 hover:text-red-700 cursor-pointer ml-2"
+                >
+                  <i class="fa-solid fa-xmark text-[10px]"></i>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
 
         <p class="text-[11px] text-text-tertiary text-center mt-2.5 mb-1">
           AI can make mistakes. Please verify important information.
@@ -669,12 +952,21 @@
       </div>
 
       <transition name="slide-fade">
-        <div v-if="showHistoryPanel" class="absolute inset-0 z-30 bg-bg-card flex flex-col rounded-[6px]">
+        <div
+          v-if="showHistoryPanel"
+          class="absolute inset-0 z-30 bg-bg-card flex flex-col rounded-[6px]"
+        >
           <!-- Header -->
-          <div class="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+          <div
+            class="flex items-center justify-between px-4 py-3 border-b border-border shrink-0"
+          >
             <div class="flex items-center gap-2">
-              <i class="fa-regular fa-clock-rotate-left text-accent text-sm"></i>
-              <h3 class="text-sm font-semibold text-text-primary">Chat History</h3>
+              <i
+                class="fa-regular fa-clock-rotate-left text-accent text-sm"
+              ></i>
+              <h3 class="text-sm font-semibold text-text-primary">
+                Chat History
+              </h3>
             </div>
             <button
               class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-bg-surface transition-colors cursor-pointer"
@@ -687,7 +979,10 @@
           <!-- Session list or session messages view -->
           <div class="flex-1 overflow-y-auto min-h-0">
             <!-- Loading state -->
-            <div v-if="isLoadingSessions" class="flex items-center justify-center h-32">
+            <div
+              v-if="isLoadingSessions"
+              class="flex items-center justify-center h-32"
+            >
               <div class="flex flex-col items-center gap-2 text-text-secondary">
                 <div class="chat-loader"></div>
                 <span class="text-[11px]">Loading sessions...</span>
@@ -697,16 +992,20 @@
             <!-- Active session view (messages preview) -->
             <div v-else-if="historyViewSession" class="flex flex-col h-full">
               <!-- Back + session title bar -->
-              <div class="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0 bg-bg-body">
+              <div
+                class="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0 bg-bg-body"
+              >
                 <button
                   @click="historyViewSession = null"
                   class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-bg-surface transition-colors cursor-pointer shrink-0"
                 >
-                  <i class="fa-solid fa-arrow-left text-text-secondary text-xs"></i>
+                  <i
+                    class="fa-solid fa-arrow-left text-text-secondary text-xs"
+                  ></i>
                 </button>
                 <div v-if="!isRenamingSession" class="flex-1 min-w-0">
                   <p class="text-xs font-medium text-text-primary truncate">
-                    {{ historyViewSession.title || 'Untitled conversation' }}
+                    {{ historyViewSession.title || "Untitled conversation" }}
                   </p>
                 </div>
                 <input
@@ -725,21 +1024,28 @@
                     class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-bg-surface transition-colors cursor-pointer"
                     title="Rename"
                   >
-                    <i class="fa-regular fa-pen text-text-secondary text-[10px]"></i>
+                    <i
+                      class="fa-regular fa-pen text-text-secondary text-[10px]"
+                    ></i>
                   </button>
                   <button
                     @click="confirmDeleteSession(historyViewSession.session_id)"
                     class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-red-500/10 transition-colors cursor-pointer"
                     title="Delete session"
                   >
-                    <i class="fa-regular fa-trash text-text-secondary hover:text-red-500 text-[10px]"></i>
+                    <i
+                      class="fa-regular fa-trash text-text-secondary hover:text-red-500 text-[10px]"
+                    ></i>
                   </button>
                 </div>
               </div>
 
               <!-- Messages preview -->
               <div class="flex-1 overflow-y-auto p-3 space-y-3">
-                <div v-if="isLoadingSessionMessages" class="flex items-center justify-center h-20">
+                <div
+                  v-if="isLoadingSessionMessages"
+                  class="flex items-center justify-center h-20"
+                >
                   <div class="chat-loader"></div>
                 </div>
                 <template v-else-if="historyViewMessages.length">
@@ -751,32 +1057,40 @@
                   >
                     <div
                       class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                      :class="msg.role === 'user' ? 'bg-bg-surface' : 'bg-accent/10'"
+                      :class="
+                        msg.role === 'user' ? 'bg-bg-surface' : 'bg-accent/10'
+                      "
                     >
-                      <i v-if="msg.role === 'assistant'" class="fa-solid fa-robot text-accent text-[9px]"></i>
-                      <span v-else class="text-[8px] font-semibold text-accent">ME</span>
+                      <i
+                        v-if="msg.role === 'assistant'"
+                        class="fa-solid fa-robot text-accent text-[9px]"
+                      ></i>
+                      <span v-else class="text-[8px] font-semibold text-accent"
+                        >ME</span
+                      >
                     </div>
                     <div
                       class="px-2.5 py-1.5 rounded-lg max-w-[85%] text-[11px] leading-relaxed border"
-                      :class="msg.role === 'user' ? 'bg-accent/10 border-accent/20 rounded-tr-none' : 'bg-bg-body border-border rounded-tl-none'"
+                      :class="
+                        msg.role === 'user'
+                          ? 'bg-accent/10 border-accent/20 rounded-tr-none'
+                          : 'bg-bg-body border-border rounded-tl-none'
+                      "
                     >
-                      <p class="whitespace-pre-wrap text-text-primary">{{ msg.content }}</p>
-                      <p class="text-[9px] text-text-tertiary mt-0.5 text-right">{{ formatTimestamp(msg.timestamp) }}</p>
+                      <p class="whitespace-pre-wrap text-text-primary">
+                        {{ msg.content }}
+                      </p>
+                      <p
+                        class="text-[9px] text-text-tertiary mt-0.5 text-right"
+                      >
+                        {{ formatTimestamp(msg.timestamp) }}
+                      </p>
                     </div>
                   </div>
                 </template>
-                <p v-else class="text-xs text-text-secondary text-center mt-8">No messages in this session</p>
-              </div>
-
-              <!-- Continue in this session button -->
-              <div class="px-3 py-3 border-t border-border shrink-0">
-                <button
-                  @click="continueSession(historyViewSession)"
-                  class="w-full px-4 py-2 rounded-lg bg-accent text-white text-xs font-medium hover:bg-accent-dark transition-colors cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <i class="fa-solid fa-reply"></i>
-                  Continue this conversation
-                </button>
+                <p v-else class="text-xs text-text-secondary text-center mt-8">
+                  No messages in this session
+                </p>
               </div>
             </div>
 
@@ -790,26 +1104,39 @@
               >
                 <div class="flex items-start justify-between gap-2">
                   <div class="min-w-0 flex-1">
-                    <p class="text-sm text-text-primary font-medium truncate leading-snug">
-                      {{ session.title || 'Untitled conversation' }}
+                    <p
+                      class="text-sm text-text-primary font-medium truncate leading-snug"
+                    >
+                      {{ session.title || "Untitled conversation" }}
                     </p>
-                    <p v-if="session.last_message?.content" class="text-[10px] text-text-secondary mt-1 truncate opacity-70">
+                    <p
+                      v-if="session.last_message?.content"
+                      class="text-[10px] text-text-secondary mt-1 truncate opacity-70"
+                    >
                       {{ session.last_message.content }}
                     </p>
                   </div>
-                  <div class="relative opacity-0 group-hover:opacity-100 transition-opacity shrink-0" @click.stop>
+                  <div
+                    class="relative opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                    @click.stop
+                  >
                     <button
                       @click.stop="toggleMenu(session.session_id)"
                       class="w-7 h-7 flex items-center justify-center rounded-md cursor-pointer transition-colors"
                     >
-                      <i class="fa-solid fa-ellipsis text-text-tertiary text-xs"></i>
+                      <i
+                        class="fa-solid fa-ellipsis text-text-tertiary text-xs"
+                      ></i>
                     </button>
                     <div
                       v-if="openMenuSessionId === session.session_id"
                       class="absolute right-0 mt-1 w-40 rounded-lg bg-white shadow-lg border border-border z-50 py-1"
                     >
                       <button
-                        @click.stop="startRenameFromList(session); closeMenu()"
+                        @click.stop="
+                          startRenameFromList(session);
+                          closeMenu();
+                        "
                         class="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-gray-100"
                       >
                         <i class="fa-regular fa-pen"></i>
@@ -817,7 +1144,10 @@
                       </button>
                       <div class="my-1 border-t border-gray-200"></div>
                       <button
-                        @click.stop="confirmDeleteSession(session.session_id); closeMenu()"
+                        @click.stop="
+                          confirmDeleteSession(session.session_id);
+                          closeMenu();
+                        "
                         class="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50"
                       >
                         <i class="fa-regular fa-trash"></i>
@@ -828,20 +1158,33 @@
                 </div>
 
                 <!-- Inline rename input (list level) -->
-                <div v-if="renamingSessionId === session.session_id" class="mt-1.5" @click.stop>
+                <div
+                  v-if="renamingSessionId === session.session_id"
+                  class="mt-1.5"
+                  @click.stop
+                >
                   <input
                     v-model="renameValue"
                     @keydown.enter="confirmRenameFromList(session.session_id)"
                     @keydown.escape="renamingSessionId = null"
                     @blur="confirmRenameFromList(session.session_id)"
-                    :ref="el => { if (el) listRenameInputs[session.session_id] = el as HTMLInputElement }"
+                    :ref="
+                      (el) => {
+                        if (el)
+                          listRenameInputs[session.session_id] =
+                            el as HTMLInputElement;
+                      }
+                    "
                     class="w-full text-xs bg-bg-body border border-accent/40 rounded px-2 py-1 outline-none text-text-primary"
                     placeholder="Session name..."
                   />
                 </div>
               </div>
 
-              <p v-if="!sessionsList.length" class="text-xs text-text-secondary text-center mt-8 px-4">
+              <p
+                v-if="!sessionsList.length"
+                class="text-xs text-text-secondary text-center mt-8 px-4"
+              >
                 No previous conversations
               </p>
             </div>
@@ -849,7 +1192,9 @@
 
           <!-- Pagination -->
           <div
-            v-if="!historyViewSession && !isLoadingSessions && totalSessionPages > 1"
+            v-if="
+              !historyViewSession && !isLoadingSessions && totalSessionPages > 1
+            "
             class="flex items-center justify-between px-4 py-2.5 border-t border-border shrink-0"
           >
             <button
@@ -860,7 +1205,9 @@
               <i class="fa-solid fa-chevron-left text-[9px]"></i>
               Prev
             </button>
-            <span class="text-[11px] text-text-secondary">{{ currentSessionPage }} / {{ totalSessionPages }}</span>
+            <span class="text-[11px] text-text-secondary"
+              >{{ currentSessionPage }} / {{ totalSessionPages }}</span
+            >
             <button
               @click="changeSessionPage(currentSessionPage + 1)"
               :disabled="currentSessionPage === totalSessionPages"
@@ -875,22 +1222,50 @@
     </div>
   </div>
 
-  <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+  <div
+    v-if="showDeleteModal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+  >
     <div class="w-full max-w-sm rounded-xl bg-white shadow-xl p-5">
       <div class="flex items-start gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-          <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7v10m6-10v10M10 11h4" />
+        <div
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100"
+        >
+          <svg
+            class="h-5 w-5 text-red-600"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 7h12M9 7v10m6-10v10M10 11h4"
+            />
           </svg>
         </div>
         <div class="flex-1">
           <h3 class="text-sm font-semibold text-gray-900">Delete Session</h3>
-          <p class="mt-1 text-sm text-gray-500">This action cannot be undone. This will permanently delete the session.</p>
+          <p class="mt-1 text-sm text-gray-500">
+            This action cannot be undone. This will permanently delete the
+            session.
+          </p>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
-        <button @click="handleDeleteCancel" class="rounded-md border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-100">Cancel</button>
-        <button @click="handleDeleteConfirmed" class="rounded-md bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700">Delete Session</button>
+        <button
+          @click="handleDeleteCancel"
+          class="rounded-md border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+        >
+          Cancel
+        </button>
+        <button
+          @click="handleDeleteConfirmed"
+          class="rounded-md bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+        >
+          Delete Session
+        </button>
       </div>
     </div>
   </div>
@@ -953,12 +1328,7 @@ const selectedAgentId = ref("");
 const selectedRole = ref("");
 const selectJobRole = ref("");
 const showHistoryPanel = ref(false);
-const showNewChatConfirm = ref(false);
 const isFocused = ref(false);
-
-// ── Session tracking ──────────────────────────────────────────────────────────
-// activeSessionId: the session currently being used for chat (send messages into)
-// activeSessionTitle: display name of the active session
 const activeSessionId = ref<string>("");
 const activeSessionTitle = ref<string>("");
 
@@ -967,13 +1337,18 @@ const agentPassedData = computed(() => agentStore.agentPassed);
 const agentModuleId = computed(() => agentStore.module_id);
 const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => agentStore?.agentSettings?.knowledge);
-const agentsRolesPermissions = computed(() => agentStore.agentsRolesPermissions);
+const agentsRolesPermissions = computed(
+  () => agentStore.agentsRolesPermissions,
+);
 
 const sheetNameRef = computed(() => agentStore.sheetTitle);
 const sheetNameValue = ref(sheetNameRef.value);
 const sheetIdRef = ref(agentStore.sheetId || "");
 const isDropdownOpen = ref(false);
-
+const Ref = ref<HTMLElement | null>(null);
+const pinnedAgentMessages = computed(() => {
+  return agentStore.pinnedMessages;
+});
 function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value;
 }
@@ -1027,7 +1402,6 @@ const sheet_id = computed(() => (data.value ? data.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(
   localStorage.getItem("selected_sheet_id") || sheet_id.value,
 );
-
 watch(
   () => route.fullPath,
   (newPath, oldPath) => {
@@ -1037,6 +1411,13 @@ watch(
         sheetNameValue.value = "";
         closeHandler();
       }
+      // Clear session on route change so a new chat starts
+      activeSessionId.value = "";
+      activeSessionTitle.value = "";
+      agentStore.chatHistory = [];
+      pendingMessages.value = [];
+      localStorage.removeItem("activeSessionId");
+      localStorage.removeItem("activeSessionTitle");
     }
   },
 );
@@ -1082,13 +1463,19 @@ function handleClickOutsideSheet(event: MouseEvent) {
     openSheet.value = false;
   }
 }
-
+function handleClickOutside(event: MouseEvent) {
+  if (Ref.value && !Ref.value.contains(event.target as Node)) {
+    isDropdownOpen.value = false;
+  }
+}
 onMounted(() => {
   document.addEventListener("click", handleClickOutsideSheet);
+  document.addEventListener("click", handleClickOutside);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutsideSheet);
+  document.removeEventListener("click", handleClickOutside);
 });
 
 // Computed
@@ -1107,10 +1494,14 @@ const contextTitle = computed(() => {
 
 const entities = computed(() => agentStore.createdEntities);
 
-// ── orderedMessages: built from store history + pending (for the active session) ──
 const orderedMessages = computed(() => {
   const historyMessages = Array.isArray(agentStore.chatHistory)
     ? agentStore.chatHistory
+        .filter((s) =>
+          activeSessionId.value
+            ? s.session_id === activeSessionId.value
+            : false,
+        )
         .flatMap((s) => s.messages || [])
         .filter((msg) => msg.metadata?.status !== "thinking")
     : [];
@@ -1118,26 +1509,20 @@ const orderedMessages = computed(() => {
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
   );
 });
-
-// ── Pinned entities state ─────────────────────────────────────────────────────
 const pinnedPrompts = computed(() => {
-  return (entities.value || [])
-    .filter((e: any) => e.ispined)
-    .map((e: any) => {
-      const userMsg = e.agent_chat_message_id?.messages?.find(
-        (m: any) => m.type === "user",
-      );
-      const fullText = userMsg?.content || "Pinned prompt";
-      const label =
-        fullText.length > 32 ? fullText.slice(0, 32) + "…" : fullText;
-      return {
-        id: e.id ?? e._id,
-        text: fullText,
-        label,
-        time: formatTimestamp(e.created_at),
-        context: e.module_name || "Workspace",
-      };
-    });
+  return (pinnedAgentMessages.value || []).map((item: any) => {
+    const msg = item.message || {};
+
+    const fullText = msg.content || "Pinned prompt";
+
+    return {
+      id: msg._id,
+      text: fullText,
+      label: fullText.length > 32 ? fullText.slice(0, 32) + "…" : fullText,
+      msg,
+      session_id: item.session_id,
+    };
+  });
 });
 
 function applyPromptToInput(text: string) {
@@ -1145,76 +1530,53 @@ function applyPromptToInput(text: string) {
   nextTick(() => autoResize());
 }
 
-function unpinSinglePrompt(id: string) {
-  unpinSingle(id);
-}
-
-// ── Clear active session (go back to "new chat" mode) ────────────────────────
 function clearActiveSession() {
   activeSessionId.value = "";
   activeSessionTitle.value = "";
   pendingMessages.value = [];
   agentStore.chatHistory = [];
 }
-
-// ── Start new chat: create a fresh session ────────────────────────────────────
 async function startNewChat() {
-  try {
-    pendingMessages.value = [];
-    agentStore.chatHistory = [];
-    const newSession = await agentStore.createSession(workspaceId.value, {
-      agent_id: selectedAgentId.value,
-      module_id: agentStore.module_id ?? undefined,
-      module_name: agentStore.moduleName ?? undefined,
-      sheet_id: agentStore.sheetId ?? undefined,
-      sheet_name: agentStore.sheetTitle ?? undefined,
-    });
-
-    if (newSession) {
-      activeSessionId.value = newSession.session_id;
-      activeSessionTitle.value = newSession.title || "New conversation";
-
-      // Keep sessions list in sync
-      if (sessionsList.value) {
-        sessionsList.value = [newSession, ...sessionsList.value];
-      }
-    }
-
-    showNewChatConfirm.value = false;
-  } catch (err) {
-    console.error("Failed to start new chat:", err);
-  }
+  pendingMessages.value = [];
+  agentStore.chatHistory = [];
+  activeSessionId.value = "";
+  activeSessionTitle.value = "";
+  showHistoryPanel.value = false;
+  localStorage.removeItem("activeSessionId");
+  localStorage.removeItem("activeSessionTitle");
 }
-
-// ── Continue a session from history ──────────────────────────────────────────
 async function continueSession(session: any) {
-  // Set it as the active session for sending messages
   activeSessionId.value = session.session_id;
   activeSessionTitle.value = session.title || "Untitled conversation";
-
-  // Load its messages into the main chat area via store history
   pendingMessages.value = [];
   agentStore.isLoadingHistory = true;
+
   try {
-    const data = await agentStore.getSession(workspaceId.value, session.session_id);
-    // Map history panel message format (role) to chat area format (type)
-    if (data?.messages) {
+    const result = await agentStore.getSession(
+      workspaceId.value,
+      session.session_id,
+    );
+    // API returns { session: { messages: [...] } }
+    const sessionData = result?.session ?? result;
+
+    if (sessionData?.messages?.length) {
       agentStore.chatHistory = [
-  {
-    _id: data._id ?? session._id ?? session.session_id,
-    session_id: session.session_id,
-    context: data.context ?? {
-      module_id: null,
-      sheet_id: null,
-      lane_id: null,
-      card_id: null,
-    },
-    messages: data.messages.map((m: any) => ({
-      ...m,
-      type: m.type ?? (m.role === "user" ? "user" : "assistant"),
-    })),
-  },
-];
+        {
+          _id: sessionData._id ?? session.session_id,
+          session_id: session.session_id,
+          context: sessionData.context ?? {
+            module_id: null,
+            sheet_id: null,
+            lane_id: null,
+            card_id: null,
+          },
+          messages: sessionData.messages.map((m: any) => ({
+            ...m,
+            // normalise: backend uses either 'type' or 'role'
+            type: m.type ?? (m.role === "user" ? "user" : "assistant"),
+          })),
+        },
+      ];
     }
   } catch (err) {
     console.error("Failed to load session messages:", err);
@@ -1222,7 +1584,6 @@ async function continueSession(session: any) {
     agentStore.isLoadingHistory = false;
   }
 
-  // Close history panel
   showHistoryPanel.value = false;
   historyViewSession.value = null;
   scrollToBottom();
@@ -1253,6 +1614,12 @@ function scrollToBottom() {
       if (!el) return;
       el.scrollTop = el.scrollHeight;
     });
+  });
+}
+//fetch pinned messages
+async function fetchPinnedMessages() {
+  await agentStore.fetchPinnedMessages(workspaceId.value, {
+    session_id: activeSessionId.value || undefined,
   });
 }
 
@@ -1319,7 +1686,7 @@ function initSocket() {
           ? sheetName.value
           : undefined,
         undefined,
-        !!activeSessionId.value
+        !!activeSessionId.value,
       );
 
       await agentStore.fetchCreatedEntities(
@@ -1457,7 +1824,9 @@ async function sendMessage() {
 
   // Use existing activeSessionId if we're continuing a session; otherwise let
   // the server assign / create a session (pass the generated id as before).
-  const sessionIdToUse = activeSessionId.value || `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const sessionIdToUse =
+    activeSessionId.value ||
+    `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
   try {
     await agentStore.sendMessage({
@@ -1480,12 +1849,15 @@ async function sendMessage() {
       session_id: sessionIdToUse,
       stream: true,
     });
-
-    // If this was the first message (no prior activeSessionId), track the session
     if (!activeSessionId.value) {
       activeSessionId.value = sessionIdToUse;
-      activeSessionTitle.value = finalMessage.length > 40 ? finalMessage.slice(0, 40) + "…" : finalMessage;
+      activeSessionTitle.value =
+        finalMessage.length > 40
+          ? finalMessage.slice(0, 40) + "…"
+          : finalMessage;
     }
+    localStorage.setItem("activeSessionId", activeSessionId.value);
+    localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
 
     await Promise.all([
       agentStore.fetchChatHistory(
@@ -1493,25 +1865,25 @@ async function sendMessage() {
         authStore.userId ?? undefined,
         route.path.includes("talent") && agentModuleName.value
           ? agentModuleName.value
-          : moduleSelected.value ?? undefined,
+          : (moduleSelected.value ?? undefined),
         route.path.includes("talent") && agentModuleId.value
           ? agentModuleId.value
-          : moduleId.value ?? undefined,
+          : (moduleId.value ?? undefined),
         sheetName.value && !isMongoId(sheetName.value)
           ? sheetName.value
           : undefined,
         sheetId.value,
-        !!activeSessionId.value
+        !!activeSessionId.value,
       ),
       agentStore.fetchCreatedEntities(
         workspaceId.value,
         authStore.userId ?? undefined,
         route.path.includes("talent") && agentModuleName.value
           ? agentModuleName.value
-          : moduleSelected.value ?? undefined,
+          : (moduleSelected.value ?? undefined),
         route.path.includes("talent") && agentModuleId.value
           ? agentModuleId.value
-          : moduleId.value ?? undefined,
+          : (moduleId.value ?? undefined),
       ),
       (isExpanded.value = true),
       (showConfigPanel.value = false),
@@ -1585,20 +1957,61 @@ const formatTimestamp = (ts?: string) => {
 onMounted(() => {
   initSocket();
   if (workspaceId.value && workspaceStore.showChatBotPanel) {
-    // First load: clear history so it starts as a fresh new chat
-    agentStore.chatHistory = [];
-    activeSessionId.value = "";
-    activeSessionTitle.value = "";
+    const savedSessionId = localStorage.getItem("activeSessionId");
+    const savedSessionTitle = localStorage.getItem("activeSessionTitle");
 
+    if (savedSessionId) {
+      activeSessionId.value = savedSessionId;
+      activeSessionTitle.value = savedSessionTitle || "";
+    } else {
+      agentStore.chatHistory = [];
+      activeSessionId.value = "";
+      activeSessionTitle.value = "";
+    }
+    if (savedSessionId) {
+      activeSessionId.value = savedSessionId;
+      activeSessionTitle.value = savedSessionTitle || "";
+
+      // Load messages for the restored session
+      agentStore.isLoadingHistory = true;
+      agentStore
+        .getSession(workspaceId.value, savedSessionId)
+        .then((result) => {
+          const sessionData = result?.session ?? result;
+          if (sessionData?.messages?.length) {
+            agentStore.chatHistory = [
+              {
+                _id: sessionData._id ?? savedSessionId,
+                session_id: savedSessionId,
+                context: sessionData.context ?? {
+                  module_id: null,
+                  sheet_id: null,
+                  lane_id: null,
+                  card_id: null,
+                },
+                messages: sessionData.messages.map((m: any) => ({
+                  ...m,
+                  type: m.type ?? (m.role === "user" ? "user" : "assistant"),
+                })),
+              },
+            ];
+          }
+        })
+        .catch((err) => console.error("Failed to restore session:", err))
+        .finally(() => {
+          agentStore.isLoadingHistory = false;
+          scrollToBottom();
+        });
+    }
     agentStore.fetchCreatedEntities(
       workspaceId.value,
       authStore.userId ?? undefined,
       route.path.includes("talent") && agentModuleName.value
         ? agentModuleName.value
-        : moduleSelected.value ?? undefined,
+        : (moduleSelected.value ?? undefined),
       route.path.includes("talent") && agentModuleId.value
         ? agentModuleId.value
-        : moduleId.value ?? undefined,
+        : (moduleId.value ?? undefined),
     );
 
     if (selectedAgentId.value) {
@@ -1609,7 +2022,6 @@ onMounted(() => {
   }
   scrollToBottom();
 });
-
 watch(
   [
     () => workspaceStore.showChatBotPanel,
@@ -1622,22 +2034,65 @@ watch(
   ) => {
     if (!workspaceId.value || !isOpen) return;
 
-    // Only reload history if we have an active session to restore
-    if (activeSessionId.value) {
+    // Restore session from localStorage when panel opens
+    if (!activeSessionId.value) {
+      const savedSessionId = localStorage.getItem("activeSessionId");
+      const savedSessionTitle = localStorage.getItem("activeSessionTitle");
+
+      if (savedSessionId) {
+        activeSessionId.value = savedSessionId;
+        activeSessionTitle.value = savedSessionTitle || "";
+
+        agentStore.isLoadingHistory = true;
+        try {
+          const result = await agentStore.getSession(
+            workspaceId.value,
+            savedSessionId,
+          );
+          const sessionData = result?.session ?? result;
+          if (sessionData?.messages?.length) {
+            agentStore.chatHistory = [
+              {
+                _id: sessionData._id ?? savedSessionId,
+                session_id: savedSessionId,
+                context: sessionData.context ?? {
+                  module_id: null,
+                  sheet_id: null,
+                  lane_id: null,
+                  card_id: null,
+                },
+                messages: sessionData.messages.map((m: any) => ({
+                  ...m,
+                  type: m.type ?? (m.role === "user" ? "user" : "assistant"),
+                })),
+              },
+            ];
+          }
+        } catch (err) {
+          console.error("Failed to restore session:", err);
+          localStorage.removeItem("activeSessionId");
+          localStorage.removeItem("activeSessionTitle");
+        } finally {
+          agentStore.isLoadingHistory = false;
+          scrollToBottom();
+        }
+      }
+    } else {
+      // Session already active, just reload history normally
       agentStore.fetchChatHistory(
         workspaceId.value,
         authStore.userId ?? undefined,
         route.path.includes("talent") && agentModuleName.value
           ? agentModuleName.value
-          : moduleSelected.value ?? undefined,
+          : (moduleSelected.value ?? undefined),
         route.path.includes("talent") && agentModuleId.value
           ? agentModuleId.value
-          : moduleId.value ?? undefined,
+          : (moduleId.value ?? undefined),
         sheetName.value && !isMongoId(sheetName.value)
           ? sheetName.value
           : undefined,
         sheetId.value,
-        !!activeSessionId.value
+        !!activeSessionId.value,
       );
     }
 
@@ -1646,10 +2101,10 @@ watch(
       authStore.userId ?? undefined,
       route.path.includes("talent") && agentModuleName.value
         ? agentModuleName.value
-        : moduleSelected.value ?? undefined,
+        : (moduleSelected.value ?? undefined),
       route.path.includes("talent") && agentModuleId.value
         ? agentModuleId.value
-        : moduleId.value ?? undefined,
+        : (moduleId.value ?? undefined),
     );
 
     if (newSelectedAgentId !== oldSelectedAgentId) {
@@ -1683,8 +2138,12 @@ const openConfigPanel = () => {
   }
 };
 
-const expandPanel = () => { isExpanded.value = true; };
-const compressPanel = () => { isExpanded.value = false; };
+const expandPanel = () => {
+  isExpanded.value = true;
+};
+const compressPanel = () => {
+  isExpanded.value = false;
+};
 
 const availableCapabilities = [
   { label: "Web Browsing", value: "webBrowsing" },
@@ -2114,6 +2573,7 @@ function handleSourceClickOutside(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener("click", handleSourceClickOutside);
+  fetchPinnedMessages();
 });
 
 onBeforeUnmount(() => {
@@ -2386,64 +2846,41 @@ const jobOptions = computed(() => {
   return roles;
 });
 
-// ── Unpin state ───────────────────────────────────────────────────────────────
-const isUnpinningAll = ref(false);
-const unpinningId = ref<string | null>(null);
+const unpinSingle = async (pin: any) => {
+  const msg = pin.msg;
+  if (!msg?._id) return;
 
-const unpinAll = async () => {
-  isUnpinningAll.value = true;
+  togglingPinId.value = msg._id;
+
   try {
-    await agentStore.unpinStructure({ workspace_id: workspaceId.value });
-    toast.success("All pinned suggestions have been unpinned");
-    await agentStore.fetchCreatedEntities(
+    await agentStore.pinMessage(
       workspaceId.value,
-      authStore.userId ?? undefined,
-      route.path.includes("talent") && agentModuleName.value
-        ? agentModuleName.value
-        : moduleSelected.value ?? undefined,
-      route.path.includes("talent") && agentModuleId.value
-        ? agentModuleId.value
-        : moduleId.value ?? undefined,
+      pin.session_id, // ✅ correct session
+      msg._id,
+      false,
     );
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to unpin all suggestions");
-  } finally {
-    isUnpinningAll.value = false;
-  }
-};
 
-const unpinSingle = async (logId: string) => {
-  unpinningId.value = logId;
-  try {
-    await agentStore.unpinStructure({
-      workspace_id: workspaceId.value,
-      log_id: logId,
+    toast.success("Message unpinned");
+
+    await agentStore.fetchPinnedMessages(workspaceId.value, {
+      agent_id: selectedAgentId.value,
     });
-    toast.success("Suggestion unpinned");
-    await agentStore.fetchCreatedEntities(
-      workspaceId.value,
-      authStore.userId ?? undefined,
-      route.path.includes("talent") && agentModuleName.value
-        ? agentModuleName.value
-        : moduleSelected.value ?? undefined,
-      route.path.includes("talent") && agentModuleId.value
-        ? agentModuleId.value
-        : moduleId.value ?? undefined,
-    );
   } catch (err) {
     console.error(err);
-    toast.error("Failed to unpin suggestion");
+    toast.error("Failed to unpin message");
   } finally {
-    unpinningId.value = null;
+    togglingPinId.value = null;
   }
 };
-
 // ── Sessions state ────────────────────────────────────────────────────────────
 const isLoadingSessions = ref(false);
 const isLoadingSessionMessages = ref(false);
 const sessionsList = ref<any[]>([]);
-const sessionsPagination = ref<{ total: number; limit: number; skip: number } | null>(null);
+const sessionsPagination = ref<{
+  total: number;
+  limit: number;
+  skip: number;
+} | null>(null);
 const currentSessionPage = ref(1);
 
 // historyViewSession: session being previewed inside the history panel (NOT the active chat session)
@@ -2485,17 +2922,8 @@ async function changeSessionPage(page: number) {
   await fetchSessions(page);
 }
 
-// openSession: opens a session in the history panel for preview only
 async function openSession(session: any) {
-  historyViewSession.value = session;
-  isLoadingSessionMessages.value = true;
-  historyViewMessages.value = [];
-  try {
-    const data = await agentStore.getSession(workspaceId.value, session.session_id);
-    historyViewMessages.value = data?.messages ?? [];
-  } finally {
-    isLoadingSessionMessages.value = false;
-  }
+  continueSession(session);
 }
 
 function startRename() {
@@ -2556,7 +2984,9 @@ async function confirmRenameFromList(session_id: string) {
       session_id,
       renameValue.value.trim(),
     );
-    const idx = sessionsList.value.findIndex((s) => s.session_id === session_id);
+    const idx = sessionsList.value.findIndex(
+      (s) => s.session_id === session_id,
+    );
     if (idx !== -1)
       sessionsList.value[idx] = {
         ...sessionsList.value[idx],
@@ -2592,9 +3022,10 @@ async function handleDeleteConfirmed() {
     if (historyViewSession.value?.session_id === sessionToDelete.value) {
       historyViewSession.value = null;
     }
-    // If deleted session was the active chat session, clear it
     if (activeSessionId.value === sessionToDelete.value) {
       clearActiveSession();
+      localStorage.removeItem("activeSessionId");
+      localStorage.removeItem("activeSessionTitle");
     }
     toast.success("Session deleted");
   } catch {
@@ -2632,11 +3063,43 @@ function closeMenu() {
 
 onMounted(() => {
   window.addEventListener("click", closeMenu);
+  document.addEventListener("click", handleMsgMenuClickOutside);
 });
 
 onBeforeUnmount(() => {
   window.removeEventListener("click", closeMenu);
+  document.removeEventListener("click", handleMsgMenuClickOutside);
 });
+const togglingPinId = ref<string | null>(null);
+
+async function togglePinMessage(msg: any) {
+  if (!activeSessionId.value || !msg._id || togglingPinId.value === msg._id)
+    return;
+  const newPinState = !msg.is_pinned;
+  togglingPinId.value = msg._id;
+  try {
+    await agentStore.pinMessage(
+      workspaceId.value,
+      activeSessionId.value,
+      msg._id,
+      newPinState,
+    );
+    toast.success(newPinState ? "Message pinned" : "Message unpinned");
+  } catch {
+    toast.error("Failed to update pin");
+  } finally {
+    togglingPinId.value = null;
+  }
+}
+const openMsgMenuId = ref<string | null>(null);
+function toggleMsgMenu(msgId: string) {
+  openMsgMenuId.value = openMsgMenuId.value === msgId ? null : msgId;
+}
+
+// Close message menu when clicking outside
+function handleMsgMenuClickOutside() {
+  if (openMsgMenuId.value) openMsgMenuId.value = null;
+}
 </script>
 
 <style scoped>
