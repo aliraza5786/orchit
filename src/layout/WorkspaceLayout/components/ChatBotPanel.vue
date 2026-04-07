@@ -1548,6 +1548,8 @@ async function startNewChat() {
 async function continueSession(session: any) {
   activeSessionId.value = session.session_id;
   activeSessionTitle.value = session.title || "Untitled conversation";
+  localStorage.setItem("activeSessionId", session.session_id);
+  localStorage.setItem("activeSessionTitle", session.title || "Untitled conversation");
   pendingMessages.value = [];
   agentStore.isLoadingHistory = true;
 
