@@ -937,11 +937,11 @@ const visibleModules = computed(() =>
 
 const effectiveModuleFilter = computed(() => {
   if (selectedFilter.value.length === 0) {
-    return visibleModules.value.map((m) => m._id);
+    return visibleModules.value.map((m: any) => m._id);
   }
   // Intersect selected with visible just in case
   return selectedFilter.value.filter((id) =>
-    visibleModules.value.some((m) => m._id === id),
+    visibleModules.value.some((m: any) => m._id === id),
   );
 });
 
