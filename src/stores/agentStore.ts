@@ -15,7 +15,7 @@ interface Attachment {
 interface AgentChatPayload {
   workspace_id: string;
   message: string;
-  agent_id:string;
+  agent_id: string;
   module_id?: string;
   module_name?: string;
   user_id?: string;
@@ -23,7 +23,7 @@ interface AgentChatPayload {
   sheet_id?: string;
   card_id?: string;
   session_id?: string;
-  stream?:boolean;
+  stream?: boolean;
   attachments?: Attachment[];
 }
 
@@ -96,8 +96,8 @@ interface UploadConfig {
 }
 
 type Agent = {
-  module_id:string,
-  moduleName:string;
+  module_id: string;
+  moduleName: string;
   _id: string;
   name: string;
   description: string;
@@ -135,12 +135,15 @@ export const useAgentStore = defineStore("agent", {
     isLoadingAgent: false,
     agentsForTalent: {} as Record<string, any>,
     ogTypesTicket: {} as Record<string, any>,
-    isLoadingRoles:false,
-    agentsRolesPermissions:{} as Record<string, any>,
+    isLoadingRoles: false,
+    agentsRolesPermissions: {} as Record<string, any>,
     agentPassed: null as Agent | null,
     module_id: null as string | null,
     moduleName: null as string | null,
-    isLoading:false
+    isLoading: false,
+    pinnedMessages: [] as AgentMessage[],
+    isLoadingPinnedMessages: false,
+    isCreatingDashboard: false,
   }),
 
   getters: {
@@ -179,29 +182,29 @@ export const useAgentStore = defineStore("agent", {
         this.isSending = false;
       }
     },
-  async uploadAssistantFiles(files: File[] | File) {
-  const formData = new FormData();
+    async uploadAssistantFiles(files: File[] | File) {
+      const formData = new FormData();
 
-  const filesArray = Array.isArray(files) ? files : [files];
+      const filesArray = Array.isArray(files) ? files : [files];
 
-  filesArray.forEach((file) => {
-    formData.append("files[]", file); 
-  });
+      filesArray.forEach((file) => {
+        formData.append("files[]", file);
+      });
 
-  try {
-    const res = await api.post(
-      `${baseUrl}agent-chat/message/assistant/upload`,
-      formData,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
+      try {
+        const res = await api.post(
+          `${baseUrl}agent-chat/message/assistant/upload`,
+          formData,
+          {
+            headers: { "Content-Type": "multipart/form-data" },
+          },
+        );
+        return res.data;
+      } catch (err) {
+        console.error("Failed to upload file", err);
+        throw err;
       }
-    );
-    return res.data;
-  } catch (err) {
-    console.error("Failed to upload file", err);
-    throw err;
-  }
-},
+    },
     async fetchChatHistory(
       workspace_id: string,
       user_id?: string,
@@ -328,27 +331,27 @@ export const useAgentStore = defineStore("agent", {
       }
     },
     async acceptEntities(payload: any) {
-  this.isAcceptingEntities = true;
-  try {
-    const res = await api.request<{ data: CreatedEntityItem[] }>({
-      url: `${baseUrl}agent-chat/accept-structure`,
-      method: "POST",
-      data: payload,
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
+      this.isAcceptingEntities = true;
+      try {
+        const res = await api.request<{ data: CreatedEntityItem[] }>({
+          url: `${baseUrl}agent-chat/accept-structure`,
+          method: "POST",
+          data: payload,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
 
-    this.createdEntities = res.data.data ?? [];
-  } catch (err) {
-    console.error("Not accepted", err);
-    throw err; // ← let parent handle toast
-  } finally {
-    this.isAcceptingEntities = false; // ← always clears, success or fail
-  }
-},
+        this.createdEntities = res.data.data ?? [];
+      } catch (err) {
+        console.error("Not accepted", err);
+        throw err; // ← let parent handle toast
+      } finally {
+        this.isAcceptingEntities = false; // ← always clears, success or fail
+      }
+    },
     clearChatHistory() {
       this.chatHistory = [];
     },
@@ -400,8 +403,8 @@ export const useAgentStore = defineStore("agent", {
         competencies?: string[];
         capabilities?: string[];
         conditions_rules?: string[];
-        workspace_role_id?:string;
-        workspace_access_role_id?:string;
+        workspace_role_id?: string;
+        workspace_access_role_id?: string;
       },
     ) {
       if (!workspace_id) return;
@@ -431,7 +434,7 @@ export const useAgentStore = defineStore("agent", {
           err?.response?.data?.message ||
             "Something went wrong while creating Agent.",
         );
-      } 
+      }
     },
     async fetchAgentSettings(
       workspace_id: string,
@@ -523,7 +526,7 @@ export const useAgentStore = defineStore("agent", {
         throw err;
       }
     },
-    async saveSelectedSheetTitle(title: string) {   
+    async saveSelectedSheetTitle(title: string) {
       this.sheetTitle = title;
       localStorage.setItem("selected_sheet_title", title);
     },
@@ -594,7 +597,7 @@ export const useAgentStore = defineStore("agent", {
         this.isUpdatingAgent = false;
         toast.success("Agent configuration has been updated successfully.");
       } catch (err) {
-        toast.error("Failed to update agent Agent configuration")
+        toast.error("Failed to update agent Agent configuration");
         console.error("Failed to update agent settings:", err);
         this.isUpdatingAgent = false;
         throw err;
@@ -683,7 +686,7 @@ export const useAgentStore = defineStore("agent", {
 
         this.ogTypesTicket = res?.data;
         console.log("og types from store", res?.data);
-        
+
         this.isLoadingAgent = false;
       } catch (err) {
         console.error("Failed to fetch agents:", err);
@@ -721,199 +724,345 @@ export const useAgentStore = defineStore("agent", {
         this.isLoadingRoles = false;
       }
     },
-    handleAgentPassed(agent:any, module_id:any, module_name:any){
+    handleAgentPassed(agent: any, module_id: any, module_name: any) {
       console.log("store module name", module_name);
-      
+
       this.agentPassed = agent;
       this.module_id = module_id;
       this.moduleName = module_name;
     },
     async unpinStructure(payload: { workspace_id: string; log_id?: string }) {
-  this.isLoading = true;
-  try {
-    await api.request({
-      url: `${baseUrl}agent-chat/unpin-structure`,
-      method: "POST",
-      data: payload,
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
-  } catch (err) {
-    console.error("Unpin failed", err);
-    throw err;
-  } finally {
-    this.isLoading = false;
-  }
-},
-async fetchAllAgentChatHistory(
-  workspace_id: string,
-  params?: {
-    session_id?: string;
-    agent_id?: string;
-    user_id?: string;
-    module_id?: string;
-    module_name?: string;
-    sheet_id?: string;
-    limit?: number;
-    skip?: number;
-  },
-) {
-  if (!workspace_id) return;
-
-  this.isLoadingHistory = true;
-
-  try {
-    const queryParams = new URLSearchParams();
-
-    const addParam = (key: string, value?: string | number) => {
-      if (value !== undefined && value !== null && String(value).trim() !== "") {
-        queryParams.append(key, String(value));
+      this.isLoading = true;
+      try {
+        await api.request({
+          url: `${baseUrl}agent-chat/unpin-structure`,
+          method: "POST",
+          data: payload,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+      } catch (err) {
+        console.error("Unpin failed", err);
+        throw err;
+      } finally {
+        this.isLoading = false;
       }
-    };
+    },
+    async fetchAllAgentChatHistory(
+      workspace_id: string,
+      params?: {
+        session_id?: string;
+        agent_id?: string;
+        user_id?: string;
+        module_id?: string;
+        module_name?: string;
+        sheet_id?: string;
+        limit?: number;
+        skip?: number;
+      },
+    ) {
+      if (!workspace_id) return;
 
-    addParam("session_id", params?.session_id);
-    addParam("agent_id", params?.agent_id);
-    addParam("user_id", params?.user_id);
-    addParam("module_id", params?.module_id);
-    addParam("module_name", params?.module_name);
-    addParam("sheet_id", params?.sheet_id);
-    addParam("limit", params?.limit);
-    addParam("skip", params?.skip);
+      this.isLoadingHistory = true;
 
-    const query = queryParams.toString();
-    const url = `${baseUrl}agent-chat/${workspace_id}/history${query ? `?${query}` : ""}`;
+      try {
+        const queryParams = new URLSearchParams();
+
+        const addParam = (key: string, value?: string | number) => {
+          if (
+            value !== undefined &&
+            value !== null &&
+            String(value).trim() !== ""
+          ) {
+            queryParams.append(key, String(value));
+          }
+        };
+
+        addParam("session_id", params?.session_id);
+        addParam("agent_id", params?.agent_id);
+        addParam("user_id", params?.user_id);
+        addParam("module_id", params?.module_id);
+        addParam("module_name", params?.module_name);
+        addParam("sheet_id", params?.sheet_id);
+        addParam("limit", params?.limit);
+        addParam("skip", params?.skip);
+
+        const query = queryParams.toString();
+        const url = `${baseUrl}agent-chat/${workspace_id}/history${query ? `?${query}` : ""}`;
+
+        const res = await api.request<{
+          data: { chats: ChatSession[]; pagination: any };
+        }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        return res.data?.data ?? { chats: [], pagination: null };
+      } catch (err) {
+        console.error("❌ Failed to fetch all agent chat history:", err);
+        return { chats: [], pagination: null };
+      } finally {
+        this.isLoadingHistory = false;
+      }
+    },
+    async fetchSessions(
+      workspace_id: string,
+      params?: { agent_id?: string; limit?: number; skip?: number },
+    ) {
+      if (!workspace_id) return;
+      try {
+        const queryParams = new URLSearchParams();
+        if (params?.agent_id) queryParams.append("agent_id", params.agent_id);
+        if (params?.limit != null)
+          queryParams.append("limit", String(params.limit));
+        if (params?.skip != null)
+          queryParams.append("skip", String(params.skip));
+
+        const url = `${baseUrl}agent-chat/${workspace_id}/sessions?${queryParams.toString()}`;
+        const res = await api.request<{
+          data: { sessions: any[]; pagination: any };
+        }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+        return res.data?.data ?? { sessions: [], pagination: null };
+      } catch (err) {
+        console.error("❌ Failed to fetch sessions:", err);
+        return { sessions: [], pagination: null };
+      }
+    },
+
+    async getSession(workspace_id: string, session_id: string) {
+      if (!workspace_id || !session_id) return null;
+      try {
+        const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+        return res.data?.data ?? null;
+      } catch (err) {
+        console.error("❌ Failed to get session:", err);
+        return null;
+      }
+    },
+
+    async renameSession(
+      workspace_id: string,
+      session_id: string,
+      title: string,
+    ) {
+      if (!workspace_id || !session_id) return;
+      try {
+        const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
+        await api.request({
+          url,
+          method: "PATCH",
+          data: { title },
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+      } catch (err) {
+        console.error("❌ Failed to rename session:", err);
+        throw err;
+      }
+    },
+
+    async deleteSession(workspace_id: string, session_id: string) {
+      if (!workspace_id || !session_id) return;
+      try {
+        const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
+        await api.request({
+          url,
+          method: "DELETE",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+      } catch (err) {
+        console.error("❌ Failed to delete session:", err);
+        throw err;
+      }
+    },
+    async createSession(workspace_id: string, payload: CreateSessionPayload) {
+      if (!workspace_id) return null;
+
+      try {
+        const url = `${baseUrl}agent-chat/${workspace_id}/sessions`;
+
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "POST",
+          data: payload,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        const newSession = res.data?.data;
+
+        // Optional: update local list instantly (better UX)
+        if (newSession) {
+          this.chatHistory.unshift(newSession);
+        }
+
+        console.log("New session created");
+        return newSession;
+      } catch (err: any) {
+        console.error("❌ Failed to create session:", err);
+
+        toast.error(err?.response?.data?.message || "Failed to create session");
+
+        return null;
+      }
+    },
+    async pinMessage(
+      workspace_id: string,
+      session_id: string,
+      message_id: string,
+      is_pinned: boolean,
+    ) {
+      if (!workspace_id || !session_id || !message_id) return;
+      try {
+        await api.request({
+          url: `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}/messages/${message_id}/pin`,
+          method: "PATCH",
+          data: { is_pinned },
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        // Optimistically update the local chat history
+        for (const session of this.chatHistory) {
+          const msg = session.messages?.find((m) => m._id === message_id);
+          if (msg) {
+            (msg as any).is_pinned = is_pinned;
+            break;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to pin/unpin message:", err);
+        throw err;
+      }
+    },
+    async fetchPinnedMessages(
+      workspace_id: string,
+      params?: {
+        session_id?: string;
+        agent_id?: string;
+        limit?: number;
+        skip?: number;
+      },
+    ) {
+      if (!workspace_id) return;
+
+      this.isLoadingPinnedMessages = true;
+
+      try {
+        const queryParams = new URLSearchParams();
+
+        const addParam = (key: string, value?: string | number) => {
+          if (
+            value !== undefined &&
+            value !== null &&
+            String(value).trim() !== ""
+          ) {
+            queryParams.append(key, String(value));
+          }
+        };
+
+        addParam("session_id", params?.session_id);
+        addParam("agent_id", params?.agent_id);
+        addParam("limit", params?.limit ?? 50);
+        addParam("skip", params?.skip ?? 0);
+
+        const query = queryParams.toString();
+
+        const url = `${baseUrl}agent-chat/${workspace_id}/pinned-messages${
+          query ? `?${query}` : ""
+        }`;
+        const res = await api.request<{
+          data: { pinned_messages: AgentMessage[] };
+        }>({
+          url,
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        });
+
+        this.pinnedMessages = res.data?.data?.pinned_messages ?? [];
+
+        return this.pinnedMessages;
+      } catch (err) {
+        console.error("❌ Failed to fetch pinned messages:", err);
+        return [];
+      } finally {
+        this.isLoadingPinnedMessages = false;
+      }
+    },
+      async createDashboardWithWidgets(payload: {
+  workspace_id: string;
+  title: string;
+  widgets: { type: string; title: string }[];
+}) {
+  if (!payload?.workspace_id) return;
+
+  this.isCreatingDashboard = true;
+
+  try {
+    const url = `${baseUrl}agent-actions/create-dashboard`;
 
     const res = await api.request<{
-      data: { chats: ChatSession[]; pagination: any };
+      data: any;
     }>({
       url,
-      method: "GET",
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
-
-    return res.data?.data ?? { chats: [], pagination: null };
-  } catch (err) {
-    console.error("❌ Failed to fetch all agent chat history:", err);
-    return { chats: [], pagination: null };
-  } finally {
-    this.isLoadingHistory = false;
-  }
-},
-async fetchSessions(
-  workspace_id: string,
-  params?: { agent_id?: string; limit?: number; skip?: number },
-) {
-  if (!workspace_id) return;
-  try {
-    const queryParams = new URLSearchParams();
-    if (params?.agent_id) queryParams.append("agent_id", params.agent_id);
-    if (params?.limit != null) queryParams.append("limit", String(params.limit));
-    if (params?.skip != null) queryParams.append("skip", String(params.skip));
-
-    const url = `${baseUrl}agent-chat/${workspace_id}/sessions?${queryParams.toString()}`;
-    const res = await api.request<{ data: { sessions: any[]; pagination: any } }>({
-      url,
-      method: "GET",
-      headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache", Expires: "0" },
-    });
-    return res.data?.data ?? { sessions: [], pagination: null };
-  } catch (err) {
-    console.error("❌ Failed to fetch sessions:", err);
-    return { sessions: [], pagination: null };
-  }
-},
-
-async getSession(workspace_id: string, session_id: string) {
-  if (!workspace_id || !session_id) return null;
-  try {
-    const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
-    const res = await api.request<{ data: any }>({
-      url,
-      method: "GET",
-      headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache", Expires: "0" },
-    });
-    return res.data?.data ?? null;
-  } catch (err) {
-    console.error("❌ Failed to get session:", err);
-    return null;
-  }
-},
-
-async renameSession(workspace_id: string, session_id: string, title: string) {
-  if (!workspace_id || !session_id) return;
-  try {
-    const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
-    await api.request({
-      url,
-      method: "PATCH",
-      data: { title },
-      headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache", Expires: "0" },
-    });
-  } catch (err) {
-    console.error("❌ Failed to rename session:", err);
-    throw err;
-  }
-},
-
-async deleteSession(workspace_id: string, session_id: string) {
-  if (!workspace_id || !session_id) return;
-  try {
-    const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
-    await api.request({
-      url,
-      method: "DELETE",
-      headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache", Expires: "0" },
-    });
-  } catch (err) {
-    console.error("❌ Failed to delete session:", err);
-    throw err;
-  }
-},
-async createSession(
-  workspace_id: string,
-  payload: CreateSessionPayload,
-) {
-  if (!workspace_id) return null;
-
-  try {
-    const url = `${baseUrl}agent-chat/${workspace_id}/sessions`;
-
-    const res = await api.request<{ data: any }>({
-      url,
       method: "POST",
-      data: payload,
+      data: {
+        type: "create_dashboard",
+        payload,
+      },
       headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
+        "Cache-Control": "no-cache",
       },
     });
 
-    const newSession = res.data?.data;
-
-    // Optional: update local list instantly (better UX)
-    if (newSession) {
-      this.chatHistory.unshift(newSession);
-    }
-
-    console.log("New session created");
-    return newSession;
-  } catch (err: any) {
-    console.error("❌ Failed to create session:", err);
-
-    toast.error(
-      err?.response?.data?.message ||
-        "Failed to create session",
-    );
-
-    return null;
+    return res.data?.data;
+  } catch (err) {
+    console.error("Failed to create dashboard:", err);
+    throw err;
+  } finally {
+    this.isCreatingDashboard = false;
   }
 }
   },

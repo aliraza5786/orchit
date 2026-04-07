@@ -1,12 +1,10 @@
 <template>
   <div class="w-full h-full flex items-center justify-center">
     <div class="w-full h-[85vh] flex flex-col">
-      <!-- {{ sheetsPreview}}  -->
-      <!-- Header -->
       <div
         class="px-3 py-1.5 border-b border-border flex flex-col justify-between flex-shrink-0"
       >
-        <h3 class="text-sm font-semibold text-text-primary py-2 -mt-5.5">
+        <h3 class="text-sm font-semibold text-text-primary py-3 -mt-5.5">
           {{ isReadAction ? "Fetched Cards" : "AI Suggested Changes" }}
         </h3>
         <p class="text-xs text-text-secondary" v-if="isReadAction">
@@ -17,129 +15,127 @@
           matching your query.
         </p>
       </div>
-      <div
-  class="flex-1 py-5 px-3 space-y-4 overflow-y-auto overflow-x-auto"
->
-
+      <div class="flex-1 py-5 px-3 space-y-4 overflow-y-auto overflow-x-auto">
         <!-- ================= READ ACTION ================= -->
         <template v-if="isReadAction">
-  <div class="flex flex-wrap gap-4">
-    <!-- CARD -->
-    <div
-      v-for="card in fetchedItems"
-      :key="card.id || card._id"
-      class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4
-             hover:shadow-md transition-all duration-200
-             w-full md:w-[calc(33.333%-0.75rem)]"
-    >
+          <div class="flex flex-wrap gap-4">
+            <!-- CARD -->
+            <div
+              v-for="card in fetchedItems"
+              :key="card.id || card._id"
+              class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(33.333%-0.75rem)]"
+            >
+              <!-- Header -->
+              <div class="flex justify-between items-start gap-2 mb-3">
+                <div class="flex gap-2 flex-wrap items-center">
+                  <span
+                    v-if="card['card-status']"
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+                  >
+                    {{ card["card-status"] }}
+                  </span>
 
-      <!-- Header -->
-      <div class="flex justify-between items-start gap-2 mb-3">
-        <div class="flex gap-2 flex-wrap items-center">
+                  <span
+                    v-if="card.priority || card['card-priority']"
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
+                  >
+                    {{ card.priority || card["card-priority"] }}
+                  </span>
+                </div>
+                <button
+                  class="cursor-pointer text-accent hover:text-accent-hover"
+                  @click="nativeShare(card)"
+                  title="Share this Ticket"
+                >
+                  <i class="fa-light fa-share"></i>
+                </button>
+              </div>
 
-          <span
-            v-if="card['card-status']"
-            class="text-[10px] px-2 py-1 h-6 rounded
-                   bg-accent/20 text-accent font-medium capitalize"
-          >
-            {{ card["card-status"] }}
-          </span>
+              <!-- Title -->
+              <h3
+                class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize"
+              >
+                {{ card["card-title"] || card.title }}
+              </h3>
 
-          <span
-            v-if="card.priority || card['card-priority']"
-            class="text-[10px] px-2 py-1 h-6 rounded
-                   bg-orange-500/15 text-orange-500 font-medium capitalize"
-          >
-            {{ card.priority || card["card-priority"] }}
-          </span>
+              <!-- Description -->
+              <div
+                v-if="card['card-description']"
+                class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
+                v-html="card['card-description']"
+              />
 
-        </div>
-        <button class="cursor-pointer text-accent hover:text-accent-hover" @click="nativeShare(card)" title="Share this Ticket">
-          <i class="fa-light fa-share"></i>
-        </button>
-      </div>
-
-      <!-- Title -->
-      <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
-        {{ card["card-title"] || card.title }}
-      </h3>
-
-      <!-- Description -->
-      <div
-        v-if="card['card-description']"
-        class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
-        v-html="card['card-description']"
-      />
-
-      <!-- Footer -->
-      <div
-        v-if="card['start-date'] || card['end-date'] || canAssignCard || canViewCard"
-        class="flex justify-between items-center mt-3 pt-3 border-t border-border/50 text-xs text-text-secondary"
-      >
-
-        <!-- Left Section -->
-        <div class="flex items-center flex-1">
-          <div @click.stop>
-            <AssigmentDropdown
-              :users="members"
-              :assigneeId="card.seat_id"
-              @assign="assignHandle(card)"
-            />
-          </div>
-
-          <div class="flex items-center gap-3">
-             <div @click.stop
-                    class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary">
-                    <DatePicker
-                      placeholder="end date"
-                      :model-value="card['end-date']"
-                      theme="dark"
-                      emit-as="ymd"
-                      @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
+              <!-- Footer -->
+              <div
+                v-if="
+                  card['start-date'] ||
+                  card['end-date'] ||
+                  canAssignCard ||
+                  canViewCard
+                "
+                class="flex justify-between items-center mt-3 pt-3 border-t border-border/50 text-xs text-text-secondary"
+              >
+                <!-- Left Section -->
+                <div class="flex items-center flex-1">
+                  <div @click.stop>
+                    <AssigmentDropdown
+                      :users="members"
+                      :assigneeId="card.seat_id"
+                      @assign="assignHandle(card)"
                     />
+                  </div>
 
+                  <div class="flex items-center gap-3">
+                    <div
+                      @click.stop
+                      class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary"
+                    >
+                      <DatePicker
+                        placeholder="end date"
+                        :model-value="card['end-date']"
+                        theme="dark"
+                        emit-as="ymd"
+                        @update:modelValue="
+                          (date) => setDueDate(date, card?.id || card?._id)
+                        "
+                      />
+                    </div>
+                  </div>
                 </div>
 
+                <!-- Right Section -->
+                <div
+                  v-if="card?.comments_count || card?.attachments?.length"
+                  class="flex items-center gap-3"
+                >
+                  <div
+                    v-if="card?.comments_count"
+                    class="flex items-center gap-1"
+                  >
+                    <i class="fa-regular fa-message text-[10px]"></i>
+                    <span>{{ card?.comments_count }}</span>
+                  </div>
+
+                  <div
+                    v-if="card?.attachments?.length"
+                    class="flex items-center gap-1"
+                  >
+                    <i class="fa-regular fa-file text-[10px]"></i>
+                    <span>{{ card?.attachments?.length }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div
+              v-if="!fetchedItems.length"
+              class="w-full text-center py-10 text-text-secondary"
+            >
+              No cards found
+            </div>
           </div>
-        </div>
-
-        <!-- Right Section -->
-        <div
-          v-if="card?.comments_count || card?.attachments?.length"
-          class="flex items-center gap-3"
-        >
-
-          <div
-            v-if="card?.comments_count"
-            class="flex items-center gap-1"
-          >
-            <i class="fa-regular fa-message text-[10px]"></i>
-            <span>{{ card?.comments_count }}</span>
-          </div>
-
-          <div
-            v-if="card?.attachments?.length"
-            class="flex items-center gap-1"
-          >
-            <i class="fa-regular fa-file text-[10px]"></i>
-            <span>{{ card?.attachments?.length }}</span>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div
-      v-if="!fetchedItems.length"
-      class="w-full text-center py-10 text-text-secondary"
-    >
-      No cards found
-    </div>
-
-  </div>
-</template>
-
+        </template>
 
         <!-- ================= CREATE ACTION ================= -->
         <template v-else>
@@ -154,8 +150,6 @@
             @change="toggleSelectAll"
           />
           <div class="space-y-4 mt-4" v-if="sheetsPreview?.length">
-            <!-- SHEET -->
-             <!-- {{ sheetsPreview}} -->
             <div
               v-for="sheet in sheetsPreview"
               :key="sheet.variables['sheet-title']"
@@ -175,12 +169,13 @@
                   class="w-10 h-10 flex items-center justify-center rounded-md bg-bg-surface border border-border"
                 >
                   <i
-                  :class="[
-                    'fa-solid',
-                    sheet.variables['sheet-icon'],
-                    'text-accent'
-                  ]"
-                />
+                    :class="[
+                      sheet.variables['sheet-icon']
+                        ? `${sheet.variables['sheet-icon'].prefix} ${sheet.variables['sheet-icon'].iconName}`
+                        : 'fa-solid fa-file',
+                      'text-accent',
+                    ]"
+                  />
                 </div>
 
                 <div class="flex-1">
@@ -215,10 +210,12 @@
                     v-for="card in groupedCards[sheet.variables['sheet-title']]"
                     :key="card.variables['card-code']"
                     class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[32%]"
-                    :class="{ 'ring-2 ring-accent': selectedCards?.includes(card._id) }"
-                      @click="toggleCard(card._id)"
-                      :checked="selectedCards?.includes(card._id)"
-                      @change.stop="toggleCard(card._id)"
+                    :class="{
+                      'ring-2 ring-accent': selectedCards?.includes(card._id),
+                    }"
+                    @click="toggleCard(card._id)"
+                    :checked="selectedCards?.includes(card._id)"
+                    @change.stop="toggleCard(card._id)"
                   >
                     <div
                       class="flex justify-between items-start gap-3 cursor-pointer"
@@ -254,19 +251,10 @@
               </div>
             </div>
           </div>
-             <label class="flex items-center ms-1 gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              v-model="preserveLog"
-              class="w-3 h-3"
-            />
-
-            <span class="text-text-secondary">Do you want to pin these suggestions?</span>
-           </label>
         </template>
       </div>
-<div
-  class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
+      <div
+        class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
         v-if="!isReadAction"
       >
         <button
@@ -277,32 +265,32 @@
         </button>
 
         <button
-  class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
-  :disabled="
-    agentStore.isAcceptingEntities ||
-    (isReadAction
-      ? !selectedReadCards.length
-      : !selectedItems.length && !selectedCards.length)
-  "
-  @click="acceptChanges"
->
-  <!-- Spinner -->
-  <span
-    v-if="agentStore.isAcceptingEntities"
-    class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
-  ></span>
+          class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
+          :disabled="
+            agentStore.isAcceptingEntities ||
+            (isReadAction
+              ? !selectedReadCards.length
+              : !selectedItems.length && !selectedCards.length)
+          "
+          @click="acceptChanges"
+        >
+          <!-- Spinner -->
+          <span
+            v-if="agentStore.isAcceptingEntities"
+            class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+          ></span>
 
-  <!-- Text -->
-  <span>
-    {{
-      agentStore.isAcceptingEntities
-        ? "Processing..."
-        : isReadAction
-        ? "Add Selected Cards"
-        : "Accept Changes"
-    }}
-  </span>
-</button>
+          <!-- Text -->
+          <span>
+            {{
+              agentStore.isAcceptingEntities
+                ? "Processing..."
+                : isReadAction
+                  ? "Add Selected Cards"
+                  : "Accept Changes"
+            }}
+          </span>
+        </button>
       </div>
     </div>
   </div>
@@ -340,7 +328,7 @@ const moveCard = useMoveCard({
     queryClient.invalidateQueries({
       predicate: (query) =>
         ["people-lists", "get-sheets", "sheet-list", "cards", "lanes"].includes(
-          query.queryKey[0]
+          query.queryKey[0],
         ),
     });
   },
@@ -365,7 +353,7 @@ const selectedReadCards = ref([]);
 const selectAllRead = computed(
   () =>
     fetchedItems.value.length > 0 &&
-    selectedReadCards.value.length === fetchedItems.value.length
+    selectedReadCards.value.length === fetchedItems.value.length,
 );
 
 const toggleSelectAllRead = () => {
@@ -387,18 +375,19 @@ const toggleReadCard = (id) => {
 const sheetsPreview = computed(() => {
   if (isReadAction.value) return [];
   return (Array.isArray(props.data) ? props.data : [])
-    .flatMap((item) => item.payload?.sheets || [])
+    .flatMap((item) => item.result?.sheets || [])
     .filter((sheet) => sheet?.variables?.["sheet-title"]); // guard here
 });
-
 
 // ALL cards flat, each card has root-level _id and sheet_id
 const allCards = computed(() => {
   if (isReadAction.value) return [];
-  return (Array.isArray(props.data) ? props.data : [])
-    .flatMap((item) =>
-      item.payload?.sheets?.flatMap((sheet) => sheet.items || sheet.cards || []) ?? []
-    );
+  return (Array.isArray(props.data) ? props.data : []).flatMap(
+    (item) =>
+      item.result?.sheets?.flatMap(
+        (sheet) => sheet.items || sheet.cards || [],
+      ) ?? [],
+  );
 });
 
 // Group cards by sheet using sheet_id — NOT index math
@@ -406,7 +395,7 @@ const groupedCards = computed(() => {
   const result = {};
   for (const sheet of sheetsPreview.value) {
     result[sheet.variables["sheet-title"]] = allCards.value.filter(
-      (c) => c.sheet_id === sheet._id
+      (c) => c.sheet_id === sheet._id,
     );
   }
   return result;
@@ -419,7 +408,7 @@ const selectedCards = ref([]); // stores root-level card._id strings
 // Returns root _id list for cards belonging to a sheet
 const getSheetCardIds = (sheetTitle) => {
   const sheet = sheetsPreview.value.find(
-    (s) => s.variables["sheet-title"] === sheetTitle
+    (s) => s.variables["sheet-title"] === sheetTitle,
   );
   if (!sheet) return [];
   return allCards.value
@@ -443,7 +432,7 @@ const toggleSelectAll = () => {
     selectedCards.value = [];
   } else {
     selectedItems.value = sheetsPreview.value.map(
-      (s) => s.variables["sheet-title"]
+      (s) => s.variables["sheet-title"],
     );
     // KEY FIX: use root _id, not variables["_id"]
     selectedCards.value = allCards.value.map((c) => c._id);
@@ -455,7 +444,7 @@ const toggleItem = (sheetTitle) => {
   if (selectedItems.value.includes(sheetTitle)) {
     selectedItems.value = selectedItems.value.filter((s) => s !== sheetTitle);
     selectedCards.value = selectedCards.value.filter(
-      (id) => !sheetCardIds.includes(id)
+      (id) => !sheetCardIds.includes(id),
     );
   } else {
     selectedItems.value.push(sheetTitle);
@@ -478,7 +467,7 @@ const acceptChanges = () => {
   if (isReadAction.value) {
     const workspace_id = props.data?.[0]?.workspace_id || null;
     const selected = fetchedItems.value.filter((card) =>
-      selectedReadCards.value.includes(card.id || card._id)
+      selectedReadCards.value.includes(card.id || card._id),
     );
     emit("accept", { action: "read", workspace_id, cards: selected });
     return;
@@ -503,13 +492,14 @@ const acceptChanges = () => {
   const sheets = selectedItems.value
     .map((sheetTitle) => {
       const sheetObj = sheetsPreview.value.find(
-        (s) => s.variables["sheet-title"] === sheetTitle
+        (s) => s.variables["sheet-title"] === sheetTitle,
       );
       if (!sheetObj) return null;
 
       // Cards for this sheet that the user selected
       const cardsForSheet = allCards.value.filter(
-        (c) => c.sheet_id === sheetObj._id && selectedCards.value.includes(c._id)
+        (c) =>
+          c.sheet_id === sheetObj._id && selectedCards.value.includes(c._id),
       );
 
       const items = cardsForSheet.map((card) => ({
@@ -517,8 +507,7 @@ const acceptChanges = () => {
         workspace_lane_id: card.workspace_lane_id || null,
         variables: {
           // API contract uses "title" not "card-title"
-          title:
-            card["card-title"] || card.variables?.["card-title"] || "",
+          title: card["card-title"] || card.variables?.["card-title"] || "",
           description:
             card["card-description"] ||
             card.variables?.["card-description"] ||
@@ -529,15 +518,16 @@ const acceptChanges = () => {
             card["card-status"] || card.variables?.["card-status"] || "To Do",
           "story-points":
             card["story-points"] || card.variables?.["story-points"] || 0,
-            "end-date":
+          "end-date":
             card["end-date"] ||
             card.variables?.["end-date"] ||
             new Date().toISOString().split("T")[0],
         },
         assigned_to: card.assigned_to || [],
-        seat_id: Array.isArray(card.seat_id) && card.seat_id.length
-          ? card.seat_id
-          : [],
+        seat_id:
+          Array.isArray(card.seat_id) && card.seat_id.length
+            ? card.seat_id
+            : [],
       }));
 
       return {
@@ -569,16 +559,25 @@ useHead({
     ogData.value
       ? [
           { property: "og:title", content: ogData.value.title || "" },
-          { property: "og:description", content: ogData.value.description || "" },
-          { property: "og:url", content: ogData.value.url || window.location.href },
+          {
+            property: "og:description",
+            content: ogData.value.description || "",
+          },
+          {
+            property: "og:url",
+            content: ogData.value.url || window.location.href,
+          },
           { property: "og:type", content: "website" },
           { property: "og:image", content: ogData.value.image || "" },
           { name: "twitter:card", content: "summary_large_image" },
           { name: "twitter:title", content: ogData.value.title || "" },
-          { name: "twitter:description", content: ogData.value.description || "" },
+          {
+            name: "twitter:description",
+            content: ogData.value.description || "",
+          },
           { name: "twitter:image", content: ogData.value.image || "" },
         ]
-      : []
+      : [],
   ),
 });
 
@@ -597,7 +596,7 @@ const getShareUrl = (card) =>
   `https://www.orchit.ai/workspace/${workspaceId.value}/${moduleId.value}`;
 async function nativeShare(card) {
   await agentStore.shareTicketTypes(card.id || card._id);
-  
+
   const details = parseTicketDetailsFromHTML(agentStore.ogTypesTicket);
   const shareUrl = getShareUrl(card);
 

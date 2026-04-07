@@ -230,6 +230,9 @@ export const useWorkspaceStore = defineStore("workspace", {
         this.showChatBotPanel = !this.showChatBotPanel;
       }, 200);
     },
+    closeChatBotPanel() {
+  this.showChatBotPanel = false;
+},
     toggleFilter() {
       this.showFilter = !this.showFilter;
     },
