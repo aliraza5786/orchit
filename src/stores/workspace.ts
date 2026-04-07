@@ -131,6 +131,19 @@ export const useWorkspaceStore = defineStore("workspace", {
            this.workspace.lanes = newWsLanes;
         }
       }
+
+      // 3. Update singleWorkspace.lanes array
+      if (this.singleWorkspace && Array.isArray(this.singleWorkspace.lanes)) {
+        const swsIndex = this.singleWorkspace.lanes.findIndex(
+          (l: any) => l.id === laneId || l._id === laneId
+        );
+        if (swsIndex !== -1) {
+          const updatedSwLane = mergeLaneData(this.singleWorkspace.lanes[swsIndex], updatedData);
+          const newSwLanes = [...this.singleWorkspace.lanes];
+          newSwLanes[swsIndex] = updatedSwLane;
+          this.singleWorkspace.lanes = newSwLanes;
+        }
+      }
     },
 
     // ---- Local lane delete ----
@@ -147,6 +160,13 @@ export const useWorkspaceStore = defineStore("workspace", {
         );
       }
 
+      // 3. Update singleWorkspace.lanes if applicable
+      if (this.singleWorkspace && Array.isArray(this.singleWorkspace.lanes)) {
+        this.singleWorkspace.lanes = this.singleWorkspace.lanes.filter(
+          (l: any) => l.id !== laneId && l._id !== laneId
+        );
+      }
+
       // Also remove from selectedLaneIds if selected
       const selectedIndex = this.selectedLaneIds.indexOf(laneId);
       if (selectedIndex !== -1) {
@@ -159,7 +179,11 @@ export const useWorkspaceStore = defineStore("workspace", {
      // Also update workspace.lanes if your components rely on it
      if (this.workspace && Array.isArray(this.workspace.lanes)) {
       this.workspace.lanes = [...this.workspace.lanes, lane];
-     } 
+     }
+     // 3. Update singleWorkspace.lanes
+     if (this.singleWorkspace && Array.isArray(this.singleWorkspace.lanes)) {
+      this.singleWorkspace.lanes = [...this.singleWorkspace.lanes, lane];
+     }
     },
     toggleSettingPanel() {
       this.showProfilePanel = false;

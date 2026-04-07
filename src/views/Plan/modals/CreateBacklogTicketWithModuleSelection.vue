@@ -172,7 +172,7 @@ import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import DatePicker from '../../Product/components/DatePicker.vue'
 import AssigmentDropdown from '../../Product/components/AssigmentDropdown.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useSingleWorkspace } from '../../../queries/useWorkspace'
+import { useWorkspaceStore } from '../../../stores/workspace'
 import { useSidePanelStore } from '../../../stores/sidePanelStore'
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
@@ -195,8 +195,9 @@ const currentStep = ref(1)
 const selectedModuleId = ref<string | null>(null)
 const selectedSheetId = ref<string | null>(null)
 const moduleIdForQuery = ref<string>('')
-const { data: workspaceData, isLoading: loadingModules } = useSingleWorkspace(workspaceId.value)
-const modules = computed(() => workspaceData.value?.modules || [])
+const workspaceStore = useWorkspaceStore()
+const loadingModules = computed(() => !workspaceStore.singleWorkspace)
+const modules = computed(() => workspaceStore.singleWorkspace?.modules || [])
 const sidePanelStore = useSidePanelStore();
 const { data: sheetsData, isFetching: loadingSheets, refetch: refetchSheet } = useSheets(
   {

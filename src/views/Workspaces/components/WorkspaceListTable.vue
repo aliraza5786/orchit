@@ -229,9 +229,12 @@ const isLoading = computed(() => isPending.value || isFetching.value)
 const items = computed(() => data.value?.workspaces ?? [])
 const totalCount = ref(0)
 
+watch(() => props.filter, () => {
+    page.value = 1
+})
+
 watch(data, (newVal) => {
-    if (newVal?.pagination?.totalCount !== undefined)
-        totalCount.value = newVal.pagination.totalCount;
+    totalCount.value = newVal?.pagination?.totalCount ?? 0
 }, { immediate: true })
 </script>
 
