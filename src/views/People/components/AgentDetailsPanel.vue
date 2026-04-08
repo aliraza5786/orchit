@@ -20,6 +20,7 @@
     <div class="py-4 px-5">
       <SwitchTab v-model="activeTab" class="mb-2" :options="tabOptions" />
       <!-- Title -->
+       <!-- {{ updateAgentData }} -->
       <section v-if="activeTab == 'configure'">
         <div class="space-y-6">
           <!-- Agent Name -->
@@ -47,9 +48,13 @@
           </div>
           <BaseSelectField
             size="md"
-            v-model="selectedRole"
+            :model-value="selectedRole"
             :options="roleOptions"
             placeholder="Select Role"
+            @click.stop="handleRoleClick"
+            @update:modelValue="handleRoleChange"
+            :disabled="!canEditUser" 
+            :loading="agentStore.isLoadingRoles || !newCompanyId"
           />
           <div class="flex items-center justify-between mb-1 mt-2">
             <span class="text-base font-medium text-text-primary block"
@@ -429,6 +434,13 @@
       :loading="isDeleting"
       @confirm="confirmDelete"
     />
+     <AddCustomRoleModal
+      v-if="showAddRoleModal"
+      :show="showAddRoleModal"
+      :workspaceId="workspaceId"
+      :companyId="newCompanyId"
+      @close="showAddRoleModal = false"
+    />
   </div>
 </template>
 
@@ -437,6 +449,9 @@ import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useAgentStore } from "../../../stores/agentStore";
 import { useDeletePeopleVarDef } from "../../../queries/usePeople";
+import AddCustomRoleModal from "../modals/AddCustomRoleModal.vue";
+import { usePermissions } from "../../../composables/usePermissions";
+import { useAssignRole } from "../../../queries/usePeople";
 const SwitchTab = defineAsyncComponent(
   () => import("../../../components/ui/SwitchTab.vue"),
 );
@@ -454,6 +469,7 @@ import { useRouteIds } from "../../../composables/useQueryParams";
 import { useSheets } from "../../../queries/useSheets";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import { useRoute } from "vue-router";
+import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
 const { workspaceId, moduleId } = useRouteIds();
 const workspaceStore = useWorkspaceStore();
 const sidePanelStore = useSidePanelStore();
@@ -467,7 +483,9 @@ const isSheet = ref(false);
 const openSheet = ref(false);
 const route = useRoute();
 const activeTab = ref<"configure" | "knowledge" | "training">("configure");
+const showAddRoleModal = ref(false);
 const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
+const { canEditUser} = usePermissions();
 const updateAgentData = computed(() => {
   return sidePanelStore.selectedCardPeople;
 });
@@ -524,6 +542,10 @@ const availableCapabilities = [
 const props = defineProps({
   showAgentPanel: { type: Boolean, required: true },
 });
+const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
+  enabled: computed(() => !!workspaceId.value), //reactive
+});
+const newCompanyId = computed(() => workspaceData.value?.company_id ?? null);
 const isEditMode = computed(() => !!agentConfig.id);
 watch(
   () => updateAgentData.value,
@@ -563,7 +585,6 @@ const selectedLevelLabel = computed(() => {
   );
 });
 const description = ref(cardDetails.value?.description ?? "");
-console.log("card details data", cardDetails.value);
 
 watch(
   () => cardDetails.value,
@@ -571,7 +592,11 @@ watch(
     description.value = cardDetails.value?.description ?? "";
   },
 );
-
+function handleRoleClick() {
+  if (!canEditUser) {
+    toast.error("You have no permission to edit user details");
+  }
+}
 watch(
   () => cardDetails.value,
   () => {
@@ -608,7 +633,12 @@ watch(startDate, (newVal) => {
 
 const queryClient = useQueryClient();
 const selectedRole = ref(cardDetails.value?.workspace_access_role_id ?? "");
-
+const { mutate: assignRole } = useAssignRole({
+  onSuccess: () => {
+    console.log("Role assigned successfully!");
+  },
+  onError: (err: any) => console.error(err), 
+});
 async function fetchAgentsRolesPermissions() {
   await agentStore.fetchAgentsRolesPermissions(workspaceId.value);
 }
@@ -619,6 +649,16 @@ const roleOptions = computed(() => {
     _id: r._id,
     title: r.title,
   }));
+
+  // Add the "Add New Role" option at the end
+  roles.push({
+    _id: "ADD_NEW_ROLE",
+    title: "➕ Add New Role",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
+  });
+
   return roles;
 });
 // update agent
@@ -635,6 +675,27 @@ const selectLevel = (value: string) => {
   agentConfig.level = value as any;
   openLevel.value = false;
 };
+function handleRoleChange(newRole: any) {
+  if (!canEditUser) {
+    toast.error("You have no permission to edit user details");
+    return;
+  }
+
+  if (newRole === 'ADD_NEW_ROLE') {
+    showAddRoleModal.value = true;
+    return;
+  }
+
+  selectedRole.value = newRole;
+
+  // Optimistic update
+  sidePanelStore.updatePeopleRoleOptimistic(newRole);
+
+  assignRole({
+    id: cardDetails.value?._id!,
+    workspace_access_role_id: newRole,
+  });
+}
 watch(
   () => cardDetails.value?.workspace_access_role_id,
   (newRoleId) => {
@@ -649,41 +710,22 @@ watch(
   { immediate: true },
 );
 watch(
-  [() => updateAgentData.value, roleOptions, jobOptions],
-  ([data]) => {
-    if (!data?.agents?.length) return;
-
-    const agent = data.agents[0];
-
+  () => updateAgentData.value,
+  (agent) => {
+    if (!agent) return;
     agentConfig.id = agent._id;
     agentConfig.name = agent.name;
     agentConfig.description = agent.description;
+    agentConfig.system_prompt = agent.system_prompt;
     agentConfig.level = agent.level;
-
     agentConfig.responsibilities = [...(agent.responsibilities || [])];
     agentConfig.skills = [...(agent.skills || [])];
     agentConfig.competencies = [...(agent.competencies || [])];
-    agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
     agentConfig.capabilities = [...(agent.capabilities || [])];
-
-    // Wait until options are loaded before matching
-    if (roleOptions.value.length) {
-      const role = roleOptions.value.find(
-        (r) => r._id === agent.workspace_access_role_id,
-      );
-      selectedRole.value = role?._id ?? "";
-    }
-
-    if (jobOptions.value.length) {
-      const jobRole = jobOptions.value.find(
-        (r) => r._id === agent.workspace_role_id,
-      );
-      selectJobRole.value = jobRole?._id ?? "";
-    }
+    agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
   },
-  { immediate: true },
+  { immediate: true }
 );
-
 const { mutate: deleteVarDef, isPending: isDeleting } = useDeletePeopleVarDef();
 
 function confirmDelete() {

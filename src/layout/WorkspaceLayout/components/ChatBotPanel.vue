@@ -12,7 +12,7 @@
   >
     <div
       v-if="isExpanded && !showConfigPanel && entities?.length"
-      class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-[75%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
         @accept="acceptChanges"
@@ -24,7 +24,7 @@
     <!-- CONFIG PANEL -->
     <div
       v-if="isExpanded && showConfigPanel"
-      class="w-[77%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-[75%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <!-- HEADER -->
       <div class="px-6 py-2.5 bg-bg-card border-b border-border">
@@ -488,14 +488,14 @@
 
     <!-- CHAT PANEL WRAPPER -->
     <div
-:class="isExpanded && (showConfigPanel || entities?.length > 0) ? 'max-w-[390px]' : 'w-full'"
+:class="isExpanded && (showConfigPanel || entities?.length > 0) ? 'w-[24%]' : 'w-full'"
       class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
     >
       <div
-        class="flex items-center border-b border-border px-5 py-2 sticky top-0 bg-bg-card z-30 gap-2"
+        class="flex items-center border-b border-border px-3 py-2 sticky top-0 bg-bg-card z-30 gap-2"
       >
         <h5
-          class="text-[16px] font-medium flex items-center gap-2 min-w-0 flex-1"
+          class="text-[16px] font-medium flex items-center gap-1.5 min-w-0 flex-1"
         >
           <i class="fa-solid fa-sparkles text-accent shrink-0"></i>
           <Dropdown
@@ -505,7 +505,7 @@
             :actions="false"
             size="md"
             variant="secondary"
-            class="relative min-w-0 max-w-[160px]"
+            class="relative min-w-0 max-w-[150px]"
           >
             <template #more>
               <div
@@ -518,7 +518,7 @@
           </Dropdown>
         </h5>
 
-        <div class="flex items-center gap-3 shrink-0">
+        <div class="flex items-center gap-1.5 shrink-0">
           <!-- History Button -->
           <button
             class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
@@ -2266,15 +2266,21 @@ const agentOptions = computed(() => {
   }
   return base;
 });
-
 const selectedAgentName = computed(() => {
   if (isTalentRoute.value && agentPassedData.value?.name) {
-    return agentPassedData.value.name;
+    const name = agentPassedData.value.name;
+    return name.length > 20 ? name.slice(0, 20) + '...' : name;
   }
+
   const agent = agentsCreated.value?.data?.agents?.find(
     (a: any) => a._id === selectedAgentId.value,
   );
-  return agent?.name || "Select Agent";
+
+  if (!agent?.name) return "Select Agent";
+
+  return agent.name.length > 20
+    ? agent.name.slice(0, 20) + '...'
+    : agent.name;
 });
 
 watch(
