@@ -631,6 +631,7 @@ const {
 } = useSheets({ workspace_id: workspaceId, workspace_module_id: moduleId });
 
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
+const sheetTitle = computed(() => (data.value ? data.value[0]?.variables?.["sheet-title"] : ""));
 const selected_sheet_id = ref<any>(
   localStorage.getItem("selected_sheet_id") || sheetId.value,
 );
@@ -876,6 +877,10 @@ watch(
       agentStore.saveSelectedSheetTitle(selectedSheet.title);
       agentStore.saveSelectedSheetId(newId);
       sheetName.value = selectedSheet.title || "";
+    }else {
+      agentStore.saveSelectedSheetTitle(sheetTitle.value);
+      agentStore.saveSelectedSheetId(sheetId.value);
+      sheetName.value = "";
     }
   },
   { immediate: true },
