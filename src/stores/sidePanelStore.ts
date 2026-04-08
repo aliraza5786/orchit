@@ -55,7 +55,7 @@ export const useSidePanelStore = defineStore("sidePanel", {
   })
     },
    selectCard(card:any) {
-      this.selectedCardPeople = card;
+      this.selectedCardPeople = { ...card };
     },
     clearCard() {
       this.selectedCardPeople= null;
