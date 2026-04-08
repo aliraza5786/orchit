@@ -177,7 +177,7 @@
                     <div
                       v-for="agent in group.agents"
                       :key="agent._id"
-                      @click="handleClickAgent(group)"
+                      @click="handleClickAgent(agent)"
                       class="bg-bg-card border border-border rounded-lg px-4 py-3 flex flex-col gap-3"
                     >
                       <div class="flex justify-between items-start">
@@ -552,7 +552,6 @@ const currentView = ref("kanban");
 const selectedCard = ref<any>();
 const showModal = ref(false);
 const modalColumn = ref({ email: [], cards: [], title: "", _id: "" });
-const isPendingSeat = ref(false);
 const closeModal = () => {
   showModal.value = false;
 };
