@@ -90,6 +90,7 @@ import { useCompanyId } from '../../../services/user'
 import { getInitials } from '../../../utilities'
 import { avatarColor } from '../../../utilities/avatarColor'
 import { usePermissions } from '../../../composables/usePermissions'
+import { toast } from 'vue-sonner';
 const {   canInviteUser,  canEditUser, canDeleteUser} = usePermissions()
 const showAddMembers = ref(false);
 const emit = defineEmits()
@@ -183,8 +184,11 @@ const assignHandle = () => {
 }
 const { mutate: deleleSeat, isPending: deletingTicket } = useDeleteSeat({
     onSuccess: () => {
-
+        toast.success("Seat deleted successfully!");
         queryClient.invalidateQueries({ queryKey: ['people-lists'] })
+    },
+    onError: (err: any) => {
+        toast.error(err.message || "Failed to delete seat.");
     }
 })
 
@@ -195,9 +199,13 @@ const handleDeleteTicket = () => {
 
 const { mutate: invitePeople, isPending: inviting } = useAssignTeam({
     onSuccess: () => {
+        toast.success("Seat assigned successfully!");
         showAddMembers.value = false;
         queryClient.invalidateQueries({ queryKey: ['people-lists'] })
         emit("assigned")
+    },
+    onError: (err: any) => {
+        toast.error(err.message || "Failed to assign seat.");
     }
 })
 function extractNameFromEmail(email: string) {
@@ -209,10 +217,13 @@ function extractNameFromEmail(email: string) {
 const { mutate: unassign } = useUnAssignTeam(
     {
         onSuccess: () => {
-
+            toast.success("Seat unassigned successfully!");
             showAddMembers.value = false;
             queryClient.invalidateQueries({ queryKey: ['people-lists'] })
             emit("unAssigned")
+        },
+        onError: (err: any) => {
+            toast.error(err.message || "Failed to unassign seat.");
         }
     }
 );

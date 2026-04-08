@@ -248,7 +248,7 @@
         <template v-else>
           <div class="flex flex-1 overflow-x-auto gap-3 custom_scroll_bar py-4">
             <KanbanBoard
-              :plusIcon="true"
+              :plusIcon="selected_view_id === 'team' && canCreateCard"
               v-if="filteredBoard?.length > 0"
               @onPlus="(e) => handlePLus(e)"
               @delete:column="(e: any) => handleDelete(e)"
@@ -272,8 +272,9 @@
                 />
               </template>
               <template #column-footer="{ column }: any">
-                <div
-                  v-if="!column.showADDNEW"
+                <template v-if="selected_view_id === 'team' && canCreateCard">
+                  <div
+                    v-if="!column.showADDNEW"
                   @click="toggleAddNewColumn(column)"
                   :disabled="!canInviteUser"
                   :class="
@@ -306,6 +307,7 @@
                     @click="toggleAddNewColumn('')"
                   ></i>
                 </div>
+                </template>
               </template>
             </KanbanBoard>
             <BaseModal v-model="showModal" size="md" title="Add Seat">
@@ -512,7 +514,7 @@ import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { usePeopleStore } from "../../stores/peopleStore";
 import { useAgentStore } from "../../stores/agentStore";
 import { useMediaQuery } from "@vueuse/core";
-const { canCreateVariable, canInviteUser } = usePermissions();
+const { canCreateVariable, canInviteUser, canCreateCard } = usePermissions();
 const sidePanelStore = useSidePanelStore();
 const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
@@ -699,9 +701,13 @@ const handleBoardUpdate = (_: any) => {};
 // ─── Add list ─────────────────────────────────────────────────────────────────
 const { mutate: addList, isPending: addingList } = useCreateTeam({
   onSuccess: (data: any) => {
+    toast.success("Team added successfully!");
     localList.value = [...(localList.value || []), data];
     newColumn.value = "";
     activeAddList.value = false;
+  },
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to add team.");
   },
 });
 
@@ -731,7 +737,11 @@ const handleAddColumn = (name: any) => {
 // ─── Update / delete list ─────────────────────────────────────────────────────
 const updateList = useUpdateInvitedWorkspace({
   onSuccess: () => {
+    toast.success("Team updated successfully!");
     queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+  },
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to update team.");
   },
 });
 
@@ -748,10 +758,14 @@ const handleUpdateColumn = (newTitle: any) => {
 
 const { mutate: deleteList, isPending: isDeletingList } = useDeleteTeam({
   onSuccess: (data: any) => {
+    toast.success("Team deleted successfully!");
     showDelete.value = false;
     localList.value = localList.value.filter(
       (e: any) => e._id !== data.deletedRole?._id,
     );
+  },
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to delete team.");
   },
 });
 
@@ -796,10 +810,11 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
     if (context?.previous) {
       localList.value = context.previous;
     }
-    toast.error("Failed to add seat. Please try again.");
+    toast.error(_err.message || "Failed to add seat. Please try again.");
   },
 
   onSuccess: (res: any, variables: any) => {
+    toast.success("Seat added successfully!");
     const data = res?.data ?? res;
     const { id } = variables;
 
