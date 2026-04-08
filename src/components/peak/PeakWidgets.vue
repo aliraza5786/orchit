@@ -12,8 +12,16 @@
         </div>
       </div>
       <div class="peak-header-actions">
-        <button class="btn-ghost" @click="fetchAllPinnedWidgetData" :disabled="store.isLoadingWidgets" title="Refresh all">
-          <i class="fa-solid fa-rotate" :class="{ 'fa-spin': store.isLoadingWidgets }"></i>
+        <button
+          class="btn-ghost"
+          @click="fetchAllPinnedWidgetData"
+          :disabled="store.isLoadingWidgets"
+          title="Refresh all"
+        >
+          <i
+            class="fa-solid fa-rotate"
+            :class="{ 'fa-spin': store.isLoadingWidgets }"
+          ></i>
         </button>
         <button class="btn-primary" @click="openAddModal">
           <i class="fa-solid fa-plus"></i>
@@ -23,12 +31,21 @@
     </div>
 
     <!-- Empty state -->
-    <div v-if="!store.isLoadingWidgets && store.pinnedWidgets.length === 0 && !store.pendingProposal" class="empty-state">
+    <div
+      v-if="
+        !store.isLoadingWidgets &&
+        store.pinnedWidgets.length === 0 &&
+        !store.pendingProposal
+      "
+      class="empty-state"
+    >
       <div class="empty-icon">
         <i class="fa-solid fa-chart-pie"></i>
       </div>
       <h3 class="empty-title">No widgets yet</h3>
-      <p class="empty-desc">Add widgets to track your workspace metrics in real time.</p>
+      <p class="empty-desc">
+        Add widgets to track your workspace metrics in real time.
+      </p>
       <button class="btn-primary" @click="openAddModal">
         <i class="fa-solid fa-plus"></i> Add your first widget
       </button>
@@ -46,8 +63,14 @@
         </div>
       </div>
       <div class="proposal-actions">
-        <button class="btn-ghost-sm" @click="store.clearPendingProposal()">Dismiss</button>
-        <button class="btn-accent-sm" @click="acceptProposal" :disabled="store.isSaving">
+        <button class="btn-ghost-sm" @click="store.clearPendingProposal()">
+          Dismiss
+        </button>
+        <button
+          class="btn-accent-sm"
+          @click="acceptProposal"
+          :disabled="store.isSaving"
+        >
           <i class="fa-solid fa-thumbtack"></i> Pin to Peak
         </button>
       </div>
@@ -68,22 +91,28 @@
         v-for="widget in store.pinnedWidgets"
         :key="widget._id"
         class="widget-card"
-        :class="{ 'widget-card--loading': store.isWidgetDataLoading(widget._id) }"
+        :class="{
+          'widget-card--loading': store.isWidgetDataLoading(widget._id),
+        }"
       >
         <!-- Card header -->
         <div class="widget-card-header">
           <div
             class="widget-icon-wrap"
             :style="{
-              background: widget.color ? widget.color + '18' : 'var(--bg-lavender)',
+              background: widget.color
+                ? widget.color + '18'
+                : 'var(--bg-lavender)',
               color: widget.color || 'var(--accent)',
             }"
           >
-            <span class="widget-icon-emoji">{{ widget.icon || '📊' }}</span>
+            <span class="widget-icon-emoji">{{ widget.icon || "📊" }}</span>
           </div>
           <div class="widget-meta">
             <p class="widget-title">{{ widget.title }}</p>
-            <p class="widget-entity">{{ widget.query?.entity }} · {{ widget.query?.result_type }}</p>
+            <p class="widget-entity">
+              {{ widget.query?.entity }} · {{ widget.query?.result_type }}
+            </p>
           </div>
           <div class="widget-actions">
             <button
@@ -92,9 +121,16 @@
               title="Refresh"
               :disabled="store.isWidgetDataLoading(widget._id)"
             >
-              <i class="fa-solid fa-rotate" :class="{ 'fa-spin': store.isWidgetDataLoading(widget._id) }"></i>
+              <i
+                class="fa-solid fa-rotate"
+                :class="{ 'fa-spin': store.isWidgetDataLoading(widget._id) }"
+              ></i>
             </button>
-            <button class="icon-btn" @click="openEditModal(widget)" title="Edit">
+            <button
+              class="icon-btn"
+              @click="openEditModal(widget)"
+              title="Edit"
+            >
               <i class="fa-solid fa-pen"></i>
             </button>
             <button
@@ -128,21 +164,39 @@
                 </div>
                 <ul class="list-items">
                   <li
-                    v-for="(item, idx) in (store.getWidgetData(widget._id)?.data?.items ?? []).slice(0, 5)"
+                    v-for="(item, idx) in (
+                      store.getWidgetData(widget._id)?.data?.items ?? []
+                    ).slice(0, 5)"
                     :key="idx"
                     class="list-item"
                   >
-                    <span class="list-item-dot" :style="{ background: widget.color || 'var(--accent)' }"></span>
+                    <span
+                      class="list-item-dot"
+                      :style="{ background: widget.color || 'var(--accent)' }"
+                    ></span>
                     <span class="list-item-text">
-                      {{ item?.variables?.['card-title'] || item?.title || 'Untitled' }}
+                      {{
+                        item?.variables?.["card-title"] ||
+                        item?.title ||
+                        "Untitled"
+                      }}
                     </span>
-                    <span v-if="item?.variables?.['card-status']" class="list-item-status">
-                      {{ item.variables['card-status'] }}
+                    <span
+                      v-if="item?.variables?.['card-status']"
+                      class="list-item-status"
+                    >
+                      {{ item.variables["card-status"] }}
                     </span>
                   </li>
                 </ul>
-                <p v-if="(store.getWidgetData(widget._id)?.data?.total ?? 0) > 5" class="list-more">
-                  +{{ (store.getWidgetData(widget._id)?.data?.total ?? 0) - 5 }} more
+                <p
+                  v-if="(store.getWidgetData(widget._id)?.data?.total ?? 0) > 5"
+                  class="list-more"
+                >
+                  +{{
+                    (store.getWidgetData(widget._id)?.data?.total ?? 0) - 5
+                  }}
+                  more
                 </p>
               </div>
             </template>
@@ -150,11 +204,21 @@
             <!-- COUNT -->
             <template v-else-if="widget.query?.result_type === 'count'">
               <div class="count-result">
-                <p class="count-value" :style="{ color: widget.color || 'var(--accent)' }">
-                  {{ (store.getWidgetData(widget._id)?.data?.value ?? 0).toLocaleString() }}
+                <p
+                  class="count-value"
+                  :style="{ color: widget.color || 'var(--accent)' }"
+                >
+                  {{
+                    (
+                      store.getWidgetData(widget._id)?.data?.value ?? 0
+                    ).toLocaleString()
+                  }}
                 </p>
                 <p class="count-label">
-                  {{ store.getWidgetData(widget._id)?.data?.label || widget.description }}
+                  {{
+                    store.getWidgetData(widget._id)?.data?.label ||
+                    widget.description
+                  }}
                 </p>
               </div>
             </template>
@@ -163,14 +227,23 @@
             <template v-else-if="widget.query?.result_type === 'computed'">
               <div class="computed-result">
                 <div class="computed-main">
-                  <p class="computed-value" :style="{ color: widget.color || 'var(--accent)' }">
+                  <p
+                    class="computed-value"
+                    :style="{ color: widget.color || 'var(--accent)' }"
+                  >
                     {{ store.getWidgetData(widget._id)?.data?.value ?? 0 }}
                   </p>
-                  <p class="computed-unit">{{ store.getWidgetData(widget._id)?.data?.unit }}</p>
+                  <p class="computed-unit">
+                    {{ store.getWidgetData(widget._id)?.data?.unit }}
+                  </p>
                 </div>
-                <p class="computed-label">{{ store.getWidgetData(widget._id)?.data?.label }}</p>
+                <p class="computed-label">
+                  {{ store.getWidgetData(widget._id)?.data?.label }}
+                </p>
                 <div
-                  v-if="store.getWidgetData(widget._id)?.data?.completed != null"
+                  v-if="
+                    store.getWidgetData(widget._id)?.data?.completed != null
+                  "
                   class="computed-progress-wrap"
                 >
                   <div class="computed-progress-bar">
@@ -181,7 +254,7 @@
                           Math.round(
                             (store.getWidgetData(widget._id)?.data?.completed /
                               store.getWidgetData(widget._id)?.data?.total) *
-                              100
+                              100,
                           ) + '%',
                         background: widget.color || 'var(--accent)',
                       }"
@@ -207,24 +280,26 @@
                 </div>
                 <div class="chart-bars">
                   <div
-                    v-for="(series, idx) in store.getWidgetData(widget._id)?.data?.series ?? []"
+                    v-for="(series, idx) in store.getWidgetData(widget._id)
+                      ?.data?.series ?? []"
                     :key="idx"
                     class="chart-bar-item"
                   >
                     <div class="chart-bar-label">{{ series.label }}</div>
                     <div class="chart-bar-track">
                       <div
-  class="chart-bar-fill"
-  :style="{
-    width:
-      Math.round(
-        (Number(series.value) /
-          (store.getWidgetData(widget._id)?.data?.total || 1)) *
-          100
-      ) + '%',
-    background: widget.color || getChartColor(idx),
-  }"
-></div>
+                        class="chart-bar-fill"
+                        :style="{
+                          width:
+                            Math.round(
+                              (Number(series.value) /
+                                (store.getWidgetData(widget._id)?.data?.total ||
+                                  1)) *
+                                100,
+                            ) + '%',
+                          background: widget.color || getChartColor(idx),
+                        }"
+                      ></div>
                     </div>
                     <div class="chart-bar-val">{{ series.value }}</div>
                   </div>
@@ -244,271 +319,410 @@
 
         <!-- Card footer -->
         <div class="widget-card-footer">
-          <span class="widget-resolved-at" v-if="store.getWidgetData(widget._id)?.resolved_at">
+          <span
+            class="widget-resolved-at"
+            v-if="store.getWidgetData(widget._id)?.resolved_at"
+          >
             <i class="fa-regular fa-clock"></i>
             {{ formatTime(store.getWidgetData(widget._id)?.resolved_at) }}
           </span>
-          <span class="widget-refresh-interval" v-if="widget.refresh_interval > 0">
+          <span
+            class="widget-refresh-interval"
+            v-if="widget.refresh_interval > 0"
+          >
             Auto {{ widget.refresh_interval }}s
           </span>
         </div>
       </div>
     </div>
 
-    <!-- ── Add / Edit Modal ── -->
-    <Teleport to="body">
-      <transition name="modal-fade">
-        <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
-          <div class="modal-card">
-            <div class="modal-header">
-              <h2 class="modal-title">{{ editingWidget ? 'Edit Widget' : 'Add Widget' }}</h2>
-              <button class="icon-btn" @click="closeModal">
+<Teleport to="body">
+  <transition name="modal-fade">
+    <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 class="modal-title">
+            {{ editingWidget ? "Edit Widget" : "Add Widget" }}
+          </h2>
+          <button class="icon-btn" @click="closeModal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <!-- TABS -->
+        <div class="flex justify-center border-b border-border px-6">
+          <button
+            @click="widgetTab = 'custom'"
+            :class="[
+              'px-4 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px',
+              widgetTab === 'custom'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
+            ]"
+          >
+            <i class="fa-solid fa-sliders mr-2"></i>
+            Custom Widget
+          </button>
+          <button
+            @click="widgetTab = 'ai'"
+            :class="[
+              'px-4 py-3 text-sm font-semibold transition-colors border-b-2 -mb-px',
+              widgetTab === 'ai'
+                ? 'border-accent text-accent'
+                : 'border-transparent text-text-secondary hover:text-text-primary'
+            ]"
+          >
+            <i class="fa-solid fa-sparkles mr-2"></i>
+            Create Using AI
+          </button>
+        </div>
+
+        <!-- CUSTOM TAB BODY -->
+        <div v-if="widgetTab === 'custom'" class="modal-body">
+          <!-- Basic Info -->
+          <div class="form-section-label">Basic Info</div>
+
+          <div class="form-group">
+            <label>Title <span class="required">*</span></label>
+            <input
+              v-model="form.title"
+              type="text"
+              placeholder="e.g. My Today Tasks"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+            <input
+              v-model="form.description"
+              type="text"
+              placeholder="Optional description"
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Icon (emoji)</label>
+              <input
+                v-model="form.icon"
+                type="text"
+                placeholder="📋"
+                maxlength="2"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>Accent color</label>
+              <div class="color-row">
+                <input v-model="form.color" type="color" class="form-color" />
+                <input
+                  v-model="form.color"
+                  type="text"
+                  placeholder="#7D68C8"
+                  class="form-input"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Query -->
+          <div class="form-section-label">Query</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Entity</label>
+              <select v-model="form.query.entity" class="form-select">
+                <option value="cards">Cards</option>
+                <option value="sprints">Sprints</option>
+                <option value="sprint_backlog">Sprint Backlog</option>
+                <option value="token_usage">Token Usage</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Result type</label>
+              <select v-model="form.query.result_type" class="form-select">
+                <option value="list">List</option>
+                <option value="count">Count</option>
+                <option value="computed">Computed</option>
+                <option value="chart">Chart</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" v-if="form.query.result_type === 'chart'">
+            <div class="form-group">
+              <label>Chart type</label>
+              <select v-model="form.query.chart_type" class="form-select">
+                <option value="bar">Bar</option>
+                <option value="pie">Pie</option>
+                <option value="donut">Donut</option>
+                <option value="line">Line</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Group by field</label>
+              <input
+                v-model="form.query.group_by"
+                type="text"
+                placeholder="variables.card-status"
+                class="form-input"
+              />
+            </div>
+          </div>
+
+          <div
+            class="form-group"
+            v-if="
+              form.query.result_type === 'computed' &&
+              form.query.entity === 'sprints'
+            "
+          >
+            <label>Formula</label>
+            <select v-model="form.query.formula" class="form-select">
+              <option value="days_until_end">Days until end</option>
+              <option value="days_since_start">Days since start</option>
+              <option value="completion_percentage">Completion %</option>
+            </select>
+          </div>
+
+          <!-- Filters -->
+          <div class="form-section-label">Filters</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Assigned to</label>
+              <select
+                v-model="form.query.filters.assigned_to"
+                class="form-select"
+              >
+                <option value="">Anyone</option>
+                <option value="$ME">Me ($ME)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date filter</label>
+              <select
+                v-model="form.query.filters.date_filter.value"
+                class="form-select"
+              >
+                <option value="">None</option>
+                <option value="today">Today</option>
+                <option value="this_week">This week</option>
+                <option value="this_month">This month</option>
+                <option value="next_7_days">Next 7 days</option>
+                <option value="overdue">Overdue</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row" v-if="form.query.entity === 'cards'">
+            <div class="form-group">
+              <label>Status</label>
+              <input
+                v-model="form.query.filters.status"
+                type="text"
+                placeholder="In Progress"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>Priority</label>
+              <select
+                v-model="form.query.filters.priority"
+                class="form-select"
+              >
+                <option value="">Any</option>
+                <option value="highest">Highest</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+                <option value="lowest">Lowest</option>
+              </select>
+            </div>
+          </div>
+
+          <div
+            class="form-row"
+            v-if="
+              form.query.entity === 'sprints' ||
+              form.query.entity === 'sprint_backlog'
+            "
+          >
+            <div class="form-group">
+              <label>Sprint status</label>
+              <select
+                v-model="form.query.filters.sprint_status"
+                class="form-select"
+              >
+                <option value="">Any</option>
+                <option value="planning">Planning</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Display -->
+          <div class="form-section-label">Display</div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Limit (list)</label>
+              <input
+                v-model.number="form.query.limit"
+                type="number"
+                min="1"
+                max="100"
+                placeholder="20"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>Auto-refresh (seconds)</label>
+              <input
+                v-model.number="form.refresh_interval"
+                type="number"
+                min="0"
+                placeholder="300"
+                class="form-input"
+              />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Sort by</label>
+              <input
+                v-model="form.query.sort_by"
+                type="text"
+                placeholder="created_at"
+                class="form-input"
+              />
+            </div>
+            <div class="form-group">
+              <label>Sort order</label>
+              <select v-model="form.query.sort_order" class="form-select">
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                v-model="form.is_pinned"
+                class="form-checkbox"
+              />
+              Pin widget to dashboard
+            </label>
+          </div>
+        </div>
+
+        <!-- AI TAB BODY -->
+        <div v-else-if="widgetTab === 'ai'" class="modal-body">
+          <div class="flex flex-col items-center text-center pt-4 pb-2">
+            <div class="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-3">
+              <i class="fa-solid fa-sparkles text-accent text-lg"></i>
+            </div>
+            <h3 class="text-base font-semibold text-text-primary mb-1">
+              Describe your widget
+            </h3>
+            <p class="text-sm text-text-secondary max-w-sm">
+              Tell the AI what you want to track or visualize and it will configure the widget for you.
+            </p>
+          </div>
+
+          <div class="form-group mt-4">
+            <label>What do you want to track?</label>
+            <textarea
+              v-model="aiPrompt"
+              rows="4"
+              placeholder="e.g. Show me all high priority cards assigned to me that are due this week, grouped by status as a bar chart"
+              class="form-input resize-none"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Widget title (optional)</label>
+            <input
+              v-model="aiWidgetTitle"
+              type="text"
+              placeholder="AI will generate one if left empty"
+              class="form-input"
+            />
+          </div>
+
+          <!-- Suggestions -->
+          <div class="form-section-label">Try these prompts</div>
+          <div class="flex flex-wrap gap-2 mt-1">
+            <button
+              v-for="suggestion in aiSuggestions"
+              :key="suggestion"
+              @click="aiPrompt = suggestion"
+              class="px-3 py-1.5 rounded-full border border-border text-xs text-text-secondary hover:border-accent hover:text-accent transition-all"
+            >
+              {{ suggestion }}
+            </button>
+          </div>
+
+          <!-- AI Result preview (shown after generation) -->
+          <div
+            v-if="aiGeneratedConfig"
+            class="mt-5 rounded-lg border border-border bg-bg-body p-4 space-y-2"
+          >
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-semibold text-text-primary">Generated config preview</span>
+              <button
+                @click="aiGeneratedConfig = null"
+                class="text-text-secondary hover:text-text-primary text-xs"
+              >
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
-
-            <div class="modal-body">
-              <!-- Basic Info -->
-              <div class="form-section-label">Basic Info</div>
-
-              <div class="form-group">
-                <label>Title <span class="required">*</span></label>
-                <input
-                  v-model="form.title"
-                  type="text"
-                  placeholder="e.g. My Today Tasks"
-                  class="form-input"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>Description</label>
-                <input
-                  v-model="form.description"
-                  type="text"
-                  placeholder="Optional description"
-                  class="form-input"
-                />
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Icon (emoji)</label>
-                  <input
-                    v-model="form.icon"
-                    type="text"
-                    placeholder="📋"
-                    maxlength="2"
-                    class="form-input"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>Accent color</label>
-                  <div class="color-row">
-                    <input v-model="form.color" type="color" class="form-color" />
-                    <input
-                      v-model="form.color"
-                      type="text"
-                      placeholder="#7D68C8"
-                      class="form-input"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <!-- Query -->
-              <div class="form-section-label">Query</div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Entity</label>
-                  <select v-model="form.query.entity" class="form-select">
-                    <option value="cards">Cards</option>
-                    <option value="sprints">Sprints</option>
-                    <option value="sprint_backlog">Sprint Backlog</option>
-                    <option value="token_usage">Token Usage</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Result type</label>
-                  <select v-model="form.query.result_type" class="form-select">
-                    <option value="list">List</option>
-                    <option value="count">Count</option>
-                    <option value="computed">Computed</option>
-                    <option value="chart">Chart</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Chart-specific fields -->
-              <div class="form-row" v-if="form.query.result_type === 'chart'">
-                <div class="form-group">
-                  <label>Chart type</label>
-                  <select v-model="form.query.chart_type" class="form-select">
-                    <option value="bar">Bar</option>
-                    <option value="pie">Pie</option>
-                    <option value="donut">Donut</option>
-                    <option value="line">Line</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Group by field</label>
-                  <input
-                    v-model="form.query.group_by"
-                    type="text"
-                    placeholder="variables.card-status"
-                    class="form-input"
-                  />
-                </div>
-              </div>
-
-              <!-- Computed formula -->
-              <div
-                class="form-group"
-                v-if="form.query.result_type === 'computed' && form.query.entity === 'sprints'"
-              >
-                <label>Formula</label>
-                <select v-model="form.query.formula" class="form-select">
-                  <option value="days_until_end">Days until end</option>
-                  <option value="days_since_start">Days since start</option>
-                  <option value="completion_percentage">Completion %</option>
-                </select>
-              </div>
-
-              <!-- Filters -->
-              <div class="form-section-label">Filters</div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Assigned to</label>
-                  <select v-model="form.query.filters.assigned_to" class="form-select">
-                    <option value="">Anyone</option>
-                    <option value="$ME">Me ($ME)</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Date filter</label>
-                  <select v-model="form.query.filters.date_filter.value" class="form-select">
-                    <option value="">None</option>
-                    <option value="today">Today</option>
-                    <option value="this_week">This week</option>
-                    <option value="this_month">This month</option>
-                    <option value="next_7_days">Next 7 days</option>
-                    <option value="overdue">Overdue</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Cards-specific filters -->
-              <div class="form-row" v-if="form.query.entity === 'cards'">
-                <div class="form-group">
-                  <label>Status</label>
-                  <input
-                    v-model="form.query.filters.status"
-                    type="text"
-                    placeholder="In Progress"
-                    class="form-input"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>Priority</label>
-                  <select v-model="form.query.filters.priority" class="form-select">
-                    <option value="">Any</option>
-                    <option value="highest">Highest</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                    <option value="lowest">Lowest</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Sprint-specific filters -->
-              <div
-                class="form-row"
-                v-if="form.query.entity === 'sprints' || form.query.entity === 'sprint_backlog'"
-              >
-                <div class="form-group">
-                  <label>Sprint status</label>
-                  <select v-model="form.query.filters.sprint_status" class="form-select">
-                    <option value="">Any</option>
-                    <option value="planning">Planning</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Display -->
-              <div class="form-section-label">Display</div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Limit (list)</label>
-                  <input
-                    v-model.number="form.query.limit"
-                    type="number"
-                    min="1"
-                    max="100"
-                    placeholder="20"
-                    class="form-input"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>Auto-refresh (seconds)</label>
-                  <input
-                    v-model.number="form.refresh_interval"
-                    type="number"
-                    min="0"
-                    placeholder="300"
-                    class="form-input"
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Sort by</label>
-                  <input
-                    v-model="form.query.sort_by"
-                    type="text"
-                    placeholder="created_at"
-                    class="form-input"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>Sort order</label>
-                  <select v-model="form.query.sort_order" class="form-select">
-                    <option value="desc">Descending</option>
-                    <option value="asc">Ascending</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="form.is_pinned" class="form-checkbox" />
-                  Pin widget to dashboard
-                </label>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button class="btn-ghost" @click="closeModal">Cancel</button>
-              <button
-                class="btn-primary"
-                @click="saveWidget"
-                :disabled="store.isSaving || !form.title.trim()"
-              >
-                <i v-if="store.isSaving" class="fa-solid fa-spinner fa-spin"></i>
-                <span>{{ editingWidget ? 'Save changes' : 'Create widget' }}</span>
-              </button>
-            </div>
+            <pre class="text-xs text-text-secondary overflow-auto max-h-40">{{ JSON.stringify(aiGeneratedConfig, null, 2) }}</pre>
+            <button
+              @click="applyAiConfig"
+              class="w-full mt-2 px-4 py-2 rounded-lg bg-accent text-white text-sm hover:bg-accent-dark transition-colors"
+            >
+              <i class="fa-solid fa-check mr-2"></i> Apply & switch to custom to review
+            </button>
           </div>
         </div>
-      </transition>
-    </Teleport>
+
+        <!-- FOOTER -->
+        <div class="modal-footer">
+          <button class="btn-ghost" @click="closeModal">Cancel</button>
+
+          <button
+            v-if="widgetTab === 'custom'"
+            class="btn-primary"
+            @click="saveWidget"
+            :disabled="store.isSaving || !form.title.trim()"
+          >
+            <i v-if="store.isSaving" class="fa-solid fa-spinner fa-spin"></i>
+            <span>{{ editingWidget ? "Save changes" : "Create widget" }}</span>
+          </button>
+
+          <button
+            v-else
+            class="btn-primary"
+            @click="generateWithAi"
+            :disabled="isAiGenerating || !aiPrompt.trim()"
+          >
+            <i v-if="isAiGenerating" class="fa-solid fa-spinner fa-spin"></i>
+            <i v-else class="fa-solid fa-sparkles"></i>
+            <span>{{ isAiGenerating ? "Generating..." : "Generate widget" }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </transition>
+</Teleport>
 
     <!-- Delete confirm modal -->
     <Teleport to="body">
@@ -528,18 +742,26 @@
             <div class="modal-body">
               <p class="delete-confirm-text">
                 Are you sure you want to delete
-                <strong>{{ widgetToDelete?.title }}</strong>? This cannot be undone.
+                <strong>{{ widgetToDelete?.title }}</strong
+                >? This cannot be undone.
               </p>
             </div>
             <div class="modal-footer">
-              <button class="btn-ghost" @click="showDeleteModal = false">Cancel</button>
+              <button class="btn-ghost" @click="showDeleteModal = false">
+                Cancel
+              </button>
               <button
                 class="btn-danger"
                 @click="deleteWidget"
-                :disabled="!!widgetToDelete && store.isWidgetDeleting(widgetToDelete._id)"
+                :disabled="
+                  !!widgetToDelete && store.isWidgetDeleting(widgetToDelete._id)
+                "
               >
                 <i
-                  v-if="!!widgetToDelete && store.isWidgetDeleting(widgetToDelete._id)"
+                  v-if="
+                    !!widgetToDelete &&
+                    store.isWidgetDeleting(widgetToDelete._id)
+                  "
                   class="fa-solid fa-spinner fa-spin"
                 ></i>
                 Delete
@@ -553,221 +775,233 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { useWidgetStore } from '../../stores/widgets'
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { useWidgetStore } from "../../stores/widgets";
 
 // ── Types ──────────────────────────────────────────────────────────────────
-type Entity = 'cards' | 'sprints' | 'sprint_backlog' | 'token_usage'
-type ResultType = 'list' | 'count' | 'computed' | 'chart'
-type ChartType = 'bar' | 'pie' | 'donut' | 'line'
-type SortOrder = 'asc' | 'desc'
-type Priority = '' | 'highest' | 'high' | 'medium' | 'low' | 'lowest'
-type SprintStatus = '' | 'planning' | 'active' | 'completed' | 'cancelled'
-type DateFilterValue = '' | 'today' | 'this_week' | 'this_month' | 'next_7_days' | 'overdue'
-type Formula = 'days_until_end' | 'days_since_start' | 'completion_percentage'
+type Entity = "cards" | "sprints" | "sprint_backlog" | "token_usage";
+type ResultType = "list" | "count" | "computed" | "chart";
+type ChartType = "bar" | "pie" | "donut" | "line";
+type SortOrder = "asc" | "desc";
+type Priority = "" | "highest" | "high" | "medium" | "low" | "lowest";
+type SprintStatus = "" | "planning" | "active" | "completed" | "cancelled";
+type DateFilterValue =
+  | ""
+  | "today"
+  | "this_week"
+  | "this_month"
+  | "next_7_days"
+  | "overdue";
+type Formula = "days_until_end" | "days_since_start" | "completion_percentage";
 
 interface WidgetForm {
-  title: string
-  description: string
-  icon: string
-  color: string
-  is_pinned: boolean
-  refresh_interval: number
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  is_pinned: boolean;
+  refresh_interval: number;
   query: {
-    entity: Entity
-    result_type: ResultType
-    chart_type: ChartType
-    formula: Formula
-    group_by: string
-    sort_by: string
-    sort_order: SortOrder
-    limit: number
+    entity: Entity;
+    result_type: ResultType;
+    chart_type: ChartType;
+    formula: Formula;
+    group_by: string;
+    sort_by: string;
+    sort_order: SortOrder;
+    limit: number;
     filters: {
-      assigned_to: string
-      status: string
-      priority: Priority
-      sprint_status: SprintStatus
+      assigned_to: string;
+      status: string;
+      priority: Priority;
+      sprint_status: SprintStatus;
       date_filter: {
-        type: 'relative'
-        value: DateFilterValue
-      }
-    }
-  }
+        type: "relative";
+        value: DateFilterValue;
+      };
+    };
+  };
 }
 
 interface Widget {
-  _id: string
-  title: string
-  description?: string
-  icon?: string
-  color?: string
-  is_pinned: boolean
-  is_preview?: boolean
-  pin_order?: number
-  refresh_interval: number
+  _id: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  is_pinned: boolean;
+  is_preview?: boolean;
+  pin_order?: number;
+  refresh_interval: number;
   query?: {
-    entity?: string
-    result_type?: string
-    chart_type?: string
-    formula?: string
-    group_by?: string
-    sort_by?: string
-    sort_order?: string
-    limit?: number
-    aggregation?: string
+    entity?: string;
+    result_type?: string;
+    chart_type?: string;
+    formula?: string;
+    group_by?: string;
+    sort_by?: string;
+    sort_order?: string;
+    limit?: number;
+    aggregation?: string;
     filters?: {
-      assigned_to?: string
-      status?: string
-      priority?: string
-      sprint_status?: string
+      assigned_to?: string;
+      status?: string;
+      priority?: string;
+      sprint_status?: string;
       date_filter?: {
-        type?: string
-        value?: string
-      }
-    }
-  }
+        type?: string;
+        value?: string;
+      };
+    };
+  };
 }
 
 // ── Props & store ──────────────────────────────────────────────────────────
-const props = defineProps<{ workspaceId: string }>()
-const store = useWidgetStore()
+const props = defineProps<{ workspaceId: string }>();
+const store = useWidgetStore();
 
 // ── Modal state ────────────────────────────────────────────────────────────
-const showModal = ref(false)
-const showDeleteModal = ref(false)
-const editingWidget = ref<Widget | null>(null)
-const widgetToDelete = ref<Widget | null>(null)
+const showModal = ref(false);
+const showDeleteModal = ref(false);
+const editingWidget = ref<Widget | null>(null);
+const widgetToDelete = ref<Widget | null>(null);
 
 // ── Form — use ref instead of reactive to avoid deep-merge pitfalls ────────
 const defaultForm = (): WidgetForm => ({
-  title: '',
-  description: '',
-  icon: '📊',
-  color: '#7D68C8',
+  title: "",
+  description: "",
+  icon: "📊",
+  color: "#7D68C8",
   is_pinned: true,
   refresh_interval: 300,
   query: {
-    entity: 'cards',
-    result_type: 'list',
-    chart_type: 'bar',
-    formula: 'days_until_end',
-    group_by: '',
-    sort_by: 'created_at',
-    sort_order: 'desc',
+    entity: "cards",
+    result_type: "list",
+    chart_type: "bar",
+    formula: "days_until_end",
+    group_by: "",
+    sort_by: "created_at",
+    sort_order: "desc",
     limit: 20,
     filters: {
-      assigned_to: '$ME',
-      status: '',
-      priority: '',
-      sprint_status: '',
+      assigned_to: "$ME",
+      status: "",
+      priority: "",
+      sprint_status: "",
       date_filter: {
-        type: 'relative',
-        value: 'today',
+        type: "relative",
+        value: "today",
       },
     },
   },
-})
+});
 
 // Use ref<WidgetForm> so reassignment fully replaces the object — no
 // Object.assign shallow-merge issues with nested reactive objects.
-const form = ref<WidgetForm>(defaultForm())
+const form = ref<WidgetForm>(defaultForm());
 
 // ── Auto-refresh timers ────────────────────────────────────────────────────
-const refreshTimers = ref<Record<string, ReturnType<typeof setInterval>>>({})
+const refreshTimers = ref<Record<string, ReturnType<typeof setInterval>>>({});
 
 function setupAutoRefresh(widget: Widget): void {
-  if (!widget.refresh_interval || widget.refresh_interval <= 0) return
-  clearWidgetTimer(widget._id)
+  if (!widget.refresh_interval || widget.refresh_interval <= 0) return;
+  clearWidgetTimer(widget._id);
   refreshTimers.value[widget._id] = setInterval(() => {
-    store.fetchWidgetData(widget._id)
-  }, widget.refresh_interval * 1000)
+    store.fetchWidgetData(widget._id);
+  }, widget.refresh_interval * 1000);
 }
 
 function clearWidgetTimer(id: string): void {
   if (refreshTimers.value[id]) {
-    clearInterval(refreshTimers.value[id])
-    delete refreshTimers.value[id]
+    clearInterval(refreshTimers.value[id]);
+    delete refreshTimers.value[id];
   }
 }
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(async () => {
-  await store.fetchWidgets(props.workspaceId)
-  await store.fetchAllPinnedWidgetData()
-  store.pinnedWidgets.forEach((w: Widget) => setupAutoRefresh(w))
-})
+  await store.fetchWidgets(props.workspaceId);
+  await store.fetchAllPinnedWidgetData();
+  store.pinnedWidgets.forEach((w: Widget) => setupAutoRefresh(w));
+});
 
 onBeforeUnmount(() => {
-  Object.keys(refreshTimers.value).forEach(clearWidgetTimer)
-})
+  Object.keys(refreshTimers.value).forEach(clearWidgetTimer);
+});
 
 // ── Actions ────────────────────────────────────────────────────────────────
 async function fetchAllPinnedWidgetData(): Promise<void> {
-  await store.fetchAllPinnedWidgetData()
+  await store.fetchAllPinnedWidgetData();
 }
 
 async function refreshWidget(id: string): Promise<void> {
-  await store.refreshWidget(id)
+  await store.refreshWidget(id);
 }
 
 function openAddModal(): void {
-  editingWidget.value = null
-  form.value = defaultForm()
-  showModal.value = true
+  editingWidget.value = null;
+  form.value = defaultForm();
+  showModal.value = true;
 }
 
 function openEditModal(widget: Widget): void {
-  editingWidget.value = widget
+  editingWidget.value = widget;
   form.value = {
     title: widget.title,
-    description: widget.description ?? '',
-    icon: widget.icon ?? '📊',
-    color: widget.color ?? '#7D68C8',
+    description: widget.description ?? "",
+    icon: widget.icon ?? "📊",
+    color: widget.color ?? "#7D68C8",
     is_pinned: widget.is_pinned,
     refresh_interval: widget.refresh_interval ?? 300,
     query: {
-      entity: (widget.query?.entity as Entity) ?? 'cards',
-      result_type: (widget.query?.result_type as ResultType) ?? 'list',
-      chart_type: (widget.query?.chart_type as ChartType) ?? 'bar',
-      formula: (widget.query?.formula as Formula) ?? 'days_until_end',
-      group_by: widget.query?.group_by ?? '',
-      sort_by: widget.query?.sort_by ?? 'created_at',
-      sort_order: (widget.query?.sort_order as SortOrder) ?? 'desc',
+      entity: (widget.query?.entity as Entity) ?? "cards",
+      result_type: (widget.query?.result_type as ResultType) ?? "list",
+      chart_type: (widget.query?.chart_type as ChartType) ?? "bar",
+      formula: (widget.query?.formula as Formula) ?? "days_until_end",
+      group_by: widget.query?.group_by ?? "",
+      sort_by: widget.query?.sort_by ?? "created_at",
+      sort_order: (widget.query?.sort_order as SortOrder) ?? "desc",
       limit: widget.query?.limit ?? 20,
       filters: {
-        assigned_to: widget.query?.filters?.assigned_to ?? '$ME',
-        status: widget.query?.filters?.status ?? '',
-        priority: (widget.query?.filters?.priority as Priority) ?? '',
-        sprint_status: (widget.query?.filters?.sprint_status as SprintStatus) ?? '',
+        assigned_to: widget.query?.filters?.assigned_to ?? "$ME",
+        status: widget.query?.filters?.status ?? "",
+        priority: (widget.query?.filters?.priority as Priority) ?? "",
+        sprint_status:
+          (widget.query?.filters?.sprint_status as SprintStatus) ?? "",
         date_filter: {
-          type: 'relative',
-          value: (widget.query?.filters?.date_filter?.value as DateFilterValue) ?? 'today',
+          type: "relative",
+          value:
+            (widget.query?.filters?.date_filter?.value as DateFilterValue) ??
+            "today",
         },
       },
     },
-  }
-  showModal.value = true
+  };
+  showModal.value = true;
 }
 
 function closeModal(): void {
-  showModal.value = false
-  editingWidget.value = null
+  showModal.value = false;
+  editingWidget.value = null;
 }
 
 function buildQueryPayload(): Record<string, unknown> {
-  const f = form.value
-  const cleanFilters: Record<string, unknown> = {}
+  const f = form.value;
+  const cleanFilters: Record<string, unknown> = {};
 
-  if (f.query.filters.assigned_to) cleanFilters.assigned_to = f.query.filters.assigned_to
-  if (f.query.filters.status) cleanFilters.status = f.query.filters.status
-  if (f.query.filters.priority) cleanFilters.priority = f.query.filters.priority
-  if (f.query.filters.sprint_status) cleanFilters.sprint_status = f.query.filters.sprint_status
+  if (f.query.filters.assigned_to)
+    cleanFilters.assigned_to = f.query.filters.assigned_to;
+  if (f.query.filters.status) cleanFilters.status = f.query.filters.status;
+  if (f.query.filters.priority)
+    cleanFilters.priority = f.query.filters.priority;
+  if (f.query.filters.sprint_status)
+    cleanFilters.sprint_status = f.query.filters.sprint_status;
   if (f.query.filters.date_filter.value) {
-    cleanFilters.date_field = 'variables.start-date'
+    cleanFilters.date_field = "variables.start-date";
     cleanFilters.date_filter = {
-      type: 'relative',
+      type: "relative",
       value: f.query.filters.date_filter.value,
-    }
+    };
   }
 
   const query: Record<string, unknown> = {
@@ -777,24 +1011,24 @@ function buildQueryPayload(): Record<string, unknown> {
     sort_by: f.query.sort_by || undefined,
     sort_order: f.query.sort_order || undefined,
     limit: f.query.limit || 20,
+  };
+
+  if (f.query.result_type === "chart") {
+    query.chart_type = f.query.chart_type;
+    query.group_by = f.query.group_by;
+    query.aggregation = "count";
   }
 
-  if (f.query.result_type === 'chart') {
-    query.chart_type = f.query.chart_type
-    query.group_by = f.query.group_by
-    query.aggregation = 'count'
+  if (f.query.result_type === "computed") {
+    query.formula = f.query.formula;
   }
 
-  if (f.query.result_type === 'computed') {
-    query.formula = f.query.formula
-  }
-
-  return query
+  return query;
 }
 
 async function saveWidget(): Promise<void> {
-  const f = form.value
-  const queryPayload = buildQueryPayload()
+  const f = form.value;
+  const queryPayload = buildQueryPayload();
 
   if (editingWidget.value) {
     const updates: Record<string, unknown> = {
@@ -805,18 +1039,18 @@ async function saveWidget(): Promise<void> {
       is_pinned: f.is_pinned,
       refresh_interval: f.refresh_interval,
       query: queryPayload,
-    }
+    };
 
     const updated: Widget | null = await store.updateWidgetViaAgent(
       props.workspaceId,
       editingWidget.value._id,
       updates,
-    )
+    );
 
     if (updated) {
-      clearWidgetTimer(editingWidget.value._id)
-      setupAutoRefresh(updated)
-      await store.fetchWidgetData(updated._id)
+      clearWidgetTimer(editingWidget.value._id);
+      setupAutoRefresh(updated);
+      await store.fetchWidgetData(updated._id);
     }
   } else {
     const created: Widget | null = await store.createWidget(props.workspaceId, {
@@ -827,60 +1061,108 @@ async function saveWidget(): Promise<void> {
       is_pinned: f.is_pinned,
       refresh_interval: f.refresh_interval,
       query: queryPayload,
-    })
+    });
 
     if (created) {
-      setupAutoRefresh(created)
-      await store.fetchWidgetData(created._id)
+      setupAutoRefresh(created);
+      await store.fetchWidgetData(created._id);
     }
   }
 
-  closeModal()
+  closeModal();
 }
 
 async function acceptProposal(): Promise<void> {
-  const proposal = store.pendingProposal
-  if (!proposal) return
+  const proposal = store.pendingProposal;
+  if (!proposal) return;
 
   const created: Widget | null = await store.createWidget(props.workspaceId, {
-    title: proposal.title ?? 'Agent Widget',
+    title: proposal.title ?? "Agent Widget",
     description: proposal.description ?? null,
-    icon: proposal.icon ?? '📊',
-    color: proposal.color ?? '#7D68C8',
+    icon: proposal.icon ?? "📊",
+    color: proposal.color ?? "#7D68C8",
     is_pinned: true,
     refresh_interval: proposal.refresh_interval ?? 300,
     query: proposal.query ?? {},
-  })
+  });
 
   if (created) {
-    setupAutoRefresh(created)
-    await store.fetchWidgetData(created._id)
+    setupAutoRefresh(created);
+    await store.fetchWidgetData(created._id);
   }
 }
 
 function confirmDelete(widget: Widget): void {
-  widgetToDelete.value = widget
-  showDeleteModal.value = true
+  widgetToDelete.value = widget;
+  showDeleteModal.value = true;
 }
 
 async function deleteWidget(): Promise<void> {
-  if (!widgetToDelete.value) return
-  clearWidgetTimer(widgetToDelete.value._id)
-  await store.deleteWidget(widgetToDelete.value._id)
-  showDeleteModal.value = false
-  widgetToDelete.value = null
+  if (!widgetToDelete.value) return;
+  clearWidgetTimer(widgetToDelete.value._id);
+  await store.deleteWidget(widgetToDelete.value._id);
+  showDeleteModal.value = false;
+  widgetToDelete.value = null;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
-const CHART_COLORS = ['#7D68C8', '#6e3b96', '#9356c5', '#a78bfa', '#c4b5fd']
+const CHART_COLORS = ["#7D68C8", "#6e3b96", "#9356c5", "#a78bfa", "#c4b5fd"];
 
 function getChartColor(idx: string | number): string {
-  return CHART_COLORS[Number(idx) % CHART_COLORS.length]
+  return CHART_COLORS[Number(idx) % CHART_COLORS.length];
 }
 
 function formatTime(iso?: string): string {
-  if (!iso) return ''
-  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+const widgetTab = ref<'custom' | 'ai'>('custom')
+
+const aiPrompt = ref('')
+const aiWidgetTitle = ref('')
+const aiGeneratedConfig = ref<any>(null)
+const isAiGenerating = ref(false)
+
+const aiSuggestions = [
+  'My high priority cards due this week',
+  'Active sprint completion percentage',
+  'Cards assigned to me grouped by status',
+  'Overdue tasks this month as a pie chart',
+]
+
+// Reset tab when modal opens/closes
+watch(showModal, (val) => {
+  if (!val) {
+    widgetTab.value = 'custom'
+    aiPrompt.value = ''
+    aiWidgetTitle.value = ''
+    aiGeneratedConfig.value = null
+  }
+})
+
+async function generateWithAi() {
+  if (!aiPrompt.value.trim()) return
+  isAiGenerating.value = true
+  try {
+    // Call your AI endpoint here, passing aiPrompt and aiWidgetTitle
+    // const result = await yourStore.generateWidget({ prompt: aiPrompt.value, title: aiWidgetTitle.value })
+    // aiGeneratedConfig.value = result
+  } catch (err) {
+    console.error(err)
+  } finally {
+    isAiGenerating.value = false
+  }
+}
+
+function applyAiConfig() {
+  if (!aiGeneratedConfig.value) return
+  // Merge AI result into form
+  Object.assign(form, aiGeneratedConfig.value)
+  widgetTab.value = 'custom'
+  aiGeneratedConfig.value = null
 }
 </script>
 
@@ -949,8 +1231,13 @@ function formatTime(iso?: string): string {
   transition: background 0.15s;
   white-space: nowrap;
 }
-.btn-primary:hover:not(:disabled) { background: var(--accent-hover, #6e3b96); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover, #6e3b96);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .btn-ghost {
   display: inline-flex;
@@ -965,8 +1252,13 @@ function formatTime(iso?: string): string {
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-ghost:hover:not(:disabled) { background: var(--bg-surface, #dedfe3); }
-.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-surface, #dedfe3);
+}
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .btn-ghost-sm {
   padding: 5px 10px;
@@ -978,7 +1270,9 @@ function formatTime(iso?: string): string {
   cursor: pointer;
   transition: background 0.12s;
 }
-.btn-ghost-sm:hover { background: var(--bg-surface, #dedfe3); }
+.btn-ghost-sm:hover {
+  background: var(--bg-surface, #dedfe3);
+}
 
 .btn-accent-sm {
   display: inline-flex;
@@ -994,8 +1288,13 @@ function formatTime(iso?: string): string {
   cursor: pointer;
   transition: background 0.12s;
 }
-.btn-accent-sm:hover:not(:disabled) { background: var(--accent-hover, #6e3b96); }
-.btn-accent-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-accent-sm:hover:not(:disabled) {
+  background: var(--accent-hover, #6e3b96);
+}
+.btn-accent-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .btn-danger {
   display: inline-flex;
@@ -1011,8 +1310,13 @@ function formatTime(iso?: string): string {
   cursor: pointer;
   transition: background 0.15s;
 }
-.btn-danger:hover:not(:disabled) { background: #dc2626; }
-.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .icon-btn {
   width: 28px;
@@ -1026,11 +1330,22 @@ function formatTime(iso?: string): string {
   font-size: 11px;
   color: var(--text-secondary, #6b6b6e);
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
-.icon-btn:hover { background: var(--bg-surface, #dedfe3); color: var(--text-primary, #2b2c30); }
-.icon-btn--danger:hover { background: #fef2f2; color: #ef4444; }
-.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.icon-btn:hover {
+  background: var(--bg-surface, #dedfe3);
+  color: var(--text-primary, #2b2c30);
+}
+.icon-btn--danger:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+.icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 /* ── Empty state ────────────────────────────────────────────────────────── */
 .empty-state {
@@ -1129,14 +1444,18 @@ function formatTime(iso?: string): string {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: box-shadow 0.15s, border-color 0.15s;
+  transition:
+    box-shadow 0.15s,
+    border-color 0.15s;
   position: relative;
 }
 .widget-card:hover {
   border-color: rgba(125, 104, 200, 0.35);
   box-shadow: 0 4px 16px rgba(125, 104, 200, 0.1);
 }
-.widget-card--loading { opacity: 0.85; }
+.widget-card--loading {
+  opacity: 0.85;
+}
 
 .widget-card-header {
   display: flex;
@@ -1154,8 +1473,14 @@ function formatTime(iso?: string): string {
   justify-content: center;
   flex-shrink: 0;
 }
-.widget-icon-emoji { font-size: 16px; line-height: 1; }
-.widget-meta { flex: 1; min-width: 0; }
+.widget-icon-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+.widget-meta {
+  flex: 1;
+  min-width: 0;
+}
 .widget-title {
   font-size: 13px;
   font-weight: 700;
@@ -1178,9 +1503,14 @@ function formatTime(iso?: string): string {
   opacity: 0;
   transition: opacity 0.15s;
 }
-.widget-card:hover .widget-actions { opacity: 1; }
+.widget-card:hover .widget-actions {
+  opacity: 1;
+}
 
-.widget-card-body { flex: 1; padding: 14px; }
+.widget-card-body {
+  flex: 1;
+  padding: 14px;
+}
 
 .data-loading {
   display: flex;
@@ -1211,10 +1541,33 @@ function formatTime(iso?: string): string {
   border-radius: 20px;
   margin-bottom: 8px;
 }
-.list-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-.list-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-primary, #2b2c30); }
-.list-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.list-item-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-primary, #2b2c30);
+}
+.list-item-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.list-item-text {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .list-item-status {
   font-size: 10px;
   padding: 1px 6px;
@@ -1223,34 +1576,142 @@ function formatTime(iso?: string): string {
   color: var(--text-secondary, #6b6b6e);
   flex-shrink: 0;
 }
-.list-more { font-size: 11px; color: var(--text-secondary, #6b6b6e); margin: 6px 0 0; padding-left: 13px; }
+.list-more {
+  font-size: 11px;
+  color: var(--text-secondary, #6b6b6e);
+  margin: 6px 0 0;
+  padding-left: 13px;
+}
 
 /* count */
-.count-result { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 0; gap: 4px; }
-.count-value { font-size: 40px; font-weight: 700; line-height: 1; margin: 0; }
-.count-label { font-size: 12px; color: var(--text-secondary, #6b6b6e); margin: 0; text-align: center; }
+.count-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
+  gap: 4px;
+}
+.count-value {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0;
+}
+.count-label {
+  font-size: 12px;
+  color: var(--text-secondary, #6b6b6e);
+  margin: 0;
+  text-align: center;
+}
 
 /* computed */
-.computed-result { display: flex; flex-direction: column; gap: 6px; }
-.computed-main { display: flex; align-items: baseline; gap: 6px; }
-.computed-value { font-size: 36px; font-weight: 700; line-height: 1; margin: 0; }
-.computed-unit { font-size: 14px; color: var(--text-secondary, #6b6b6e); margin: 0; }
-.computed-label { font-size: 12px; color: var(--text-secondary, #6b6b6e); margin: 0; }
-.computed-progress-wrap { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-.computed-progress-bar { flex: 1; height: 6px; background: var(--bg-surface, #dedfe3); border-radius: 20px; overflow: hidden; }
-.computed-progress-fill { height: 100%; border-radius: 20px; transition: width 0.4s ease; }
-.computed-progress-text { font-size: 11px; color: var(--text-secondary, #6b6b6e); white-space: nowrap; }
+.computed-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.computed-main {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.computed-value {
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0;
+}
+.computed-unit {
+  font-size: 14px;
+  color: var(--text-secondary, #6b6b6e);
+  margin: 0;
+}
+.computed-label {
+  font-size: 12px;
+  color: var(--text-secondary, #6b6b6e);
+  margin: 0;
+}
+.computed-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.computed-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-surface, #dedfe3);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.computed-progress-fill {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 0.4s ease;
+}
+.computed-progress-text {
+  font-size: 11px;
+  color: var(--text-secondary, #6b6b6e);
+  white-space: nowrap;
+}
 
 /* chart */
-.chart-total { display: flex; align-items: baseline; gap: 5px; margin-bottom: 10px; }
-.chart-total-value { font-size: 22px; font-weight: 700; color: var(--text-primary, #2b2c30); }
-.chart-total-label { font-size: 12px; color: var(--text-secondary, #6b6b6e); }
-.chart-bars { display: flex; flex-direction: column; gap: 7px; }
-.chart-bar-item { display: flex; align-items: center; gap: 8px; }
-.chart-bar-label { font-size: 11px; color: var(--text-secondary, #6b6b6e); width: 72px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chart-bar-track { flex: 1; height: 8px; background: var(--bg-surface, #dedfe3); border-radius: 20px; overflow: hidden; }
-.chart-bar-fill { height: 100%; border-radius: 20px; transition: width 0.4s ease; min-width: 4px; }
-.chart-bar-val { font-size: 11px; font-weight: 600; color: var(--text-primary, #2b2c30); width: 24px; text-align: right; flex-shrink: 0; }
+.chart-total {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+.chart-total-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #2b2c30);
+}
+.chart-total-label {
+  font-size: 12px;
+  color: var(--text-secondary, #6b6b6e);
+}
+.chart-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.chart-bar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chart-bar-label {
+  font-size: 11px;
+  color: var(--text-secondary, #6b6b6e);
+  width: 72px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.chart-bar-track {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-surface, #dedfe3);
+  border-radius: 20px;
+  overflow: hidden;
+}
+.chart-bar-fill {
+  height: 100%;
+  border-radius: 20px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+.chart-bar-val {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary, #2b2c30);
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
 
 /* footer */
 .widget-card-footer {
@@ -1271,14 +1732,40 @@ function formatTime(iso?: string): string {
 }
 
 /* ── Skeleton ───────────────────────────────────────────────────────────── */
-.widget-skeleton { pointer-events: none; padding: 14px; gap: 10px; display: flex; flex-direction: column; }
-.skeleton-line { height: 12px; background: var(--bg-surface, #dedfe3); border-radius: 6px; animation: pulse 1.4s ease-in-out infinite; }
-.skeleton-line.short { width: 40%; }
-.skeleton-line.long { width: 80%; }
-.skeleton-value { height: 48px; background: var(--bg-surface, #dedfe3); border-radius: 8px; margin-top: 4px; animation: pulse 1.4s ease-in-out infinite; }
+.widget-skeleton {
+  pointer-events: none;
+  padding: 14px;
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.skeleton-line {
+  height: 12px;
+  background: var(--bg-surface, #dedfe3);
+  border-radius: 6px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+.skeleton-line.short {
+  width: 40%;
+}
+.skeleton-line.long {
+  width: 80%;
+}
+.skeleton-value {
+  height: 48px;
+  background: var(--bg-surface, #dedfe3);
+  border-radius: 8px;
+  margin-top: 4px;
+  animation: pulse 1.4s ease-in-out infinite;
+}
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* ── Modal ──────────────────────────────────────────────────────────────── */
@@ -1304,7 +1791,9 @@ function formatTime(iso?: string): string {
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
-.modal-card--sm { max-width: 380px; }
+.modal-card--sm {
+  max-width: 380px;
+}
 .modal-header {
   display: flex;
   align-items: center;
@@ -1313,9 +1802,28 @@ function formatTime(iso?: string): string {
   border-bottom: 1px solid var(--border, #d9d9d9);
   flex-shrink: 0;
 }
-.modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary, #2b2c30); margin: 0; }
-.modal-body { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border, #d9d9d9); flex-shrink: 0; }
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #2b2c30);
+  margin: 0;
+}
+.modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border, #d9d9d9);
+  flex-shrink: 0;
+}
 
 /* ── Form ───────────────────────────────────────────────────────────────── */
 .form-section-label {
@@ -1328,7 +1836,13 @@ function formatTime(iso?: string): string {
   border-bottom: 1px solid var(--border, #d9d9d9);
   margin-top: 4px;
 }
-.form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
 .form-group label {
   font-size: 11px;
   font-weight: 600;
@@ -1336,9 +1850,18 @@ function formatTime(iso?: string): string {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-.required { color: #ef4444; margin-left: 2px; }
-.form-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.form-row .form-group { min-width: 140px; }
+.required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.form-row .form-group {
+  min-width: 140px;
+}
 .form-input {
   padding: 7px 10px;
   background: var(--bg-input, #fff);
@@ -1351,7 +1874,10 @@ function formatTime(iso?: string): string {
   width: 100%;
   box-sizing: border-box;
 }
-.form-input:focus { border-color: var(--accent, #7d68c8); box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.15); }
+.form-input:focus {
+  border-color: var(--accent, #7d68c8);
+  box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.15);
+}
 .form-select {
   padding: 7px 10px;
   background: var(--bg-input, #fff);
@@ -1364,8 +1890,14 @@ function formatTime(iso?: string): string {
   width: 100%;
   cursor: pointer;
 }
-.form-select:focus { border-color: var(--accent, #7d68c8); }
-.color-row { display: flex; align-items: center; gap: 8px; }
+.form-select:focus {
+  border-color: var(--accent, #7d68c8);
+}
+.color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .form-color {
   width: 36px;
   height: 36px;
@@ -1387,20 +1919,52 @@ function formatTime(iso?: string): string {
   letter-spacing: 0;
   font-weight: 400;
 }
-.form-checkbox { width: 16px; height: 16px; accent-color: var(--accent, #7d68c8); cursor: pointer; }
-.delete-confirm-text { font-size: 13px; color: var(--text-primary, #2b2c30); line-height: 1.6; margin: 0; }
+.form-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent, #7d68c8);
+  cursor: pointer;
+}
+.delete-confirm-text {
+  font-size: 13px;
+  color: var(--text-primary, #2b2c30);
+  line-height: 1.6;
+  margin: 0;
+}
 
 /* ── Transitions ────────────────────────────────────────────────────────── */
-.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.18s, transform 0.18s; }
-.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; transform: scale(0.97); }
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition:
+    opacity 0.18s,
+    transform 0.18s;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.97);
+}
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .peak-root { padding: 14px 12px; }
-  .widgets-grid { grid-template-columns: 1fr; }
-  .peak-title { font-size: 16px; }
-  .modal-body { padding: 14px; }
-  .form-row { flex-direction: column; }
-  .proposal-banner { flex-direction: column; align-items: flex-start; }
+  .peak-root {
+    padding: 14px 12px;
+  }
+  .widgets-grid {
+    grid-template-columns: 1fr;
+  }
+  .peak-title {
+    font-size: 16px;
+  }
+  .modal-body {
+    padding: 14px;
+  }
+  .form-row {
+    flex-direction: column;
+  }
+  .proposal-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 </style>
