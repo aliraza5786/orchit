@@ -422,6 +422,56 @@
           <span v-else>Upload Training Content</span>
         </button>
       </div>
+      <div class="flex flex-col" style="height: calc(100vh - 130px);" v-if="activeTab === 'prompt'">
+  <div class="flex-1 overflow-y-auto p-4 space-y-3">
+
+    <!-- Select All -->
+    <div class="flex items-center gap-3 px-2 py-2">
+      <input
+        type="checkbox"
+        id="select-all"
+        :checked="allSelected"
+        @change="toggleSelectAll"
+        class="h-4 w-4 rounded border-border cursor-pointer"
+      />
+      <label for="select-all" class="text-sm font-medium text-text-primary cursor-pointer">
+        Select All
+      </label>
+    </div>
+
+    <div
+      v-for="action in updateAgentData.actions"
+      :key="action._id"
+      class="flex items-start gap-3 px-2 py-3 rounded-lg border border-border bg-bg-body"
+    >
+      <input
+        type="checkbox"
+        :id="action._id"
+        v-model="action.is_selected"
+        class="h-4 w-4 mt-0.5 rounded border-border cursor-pointer"
+      />
+      <div class="flex flex-col gap-1">
+        <label :for="action._id" class="text-sm font-medium text-text-primary cursor-pointer">
+          {{ action.title }}
+        </label>
+        <p v-if="action.prompt" class="text-xs text-text-secondary leading-relaxed">
+          {{ action.prompt }}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="p-4 bg-bg-card border-t border-border shrink-0">
+    <button
+      @click="savePromptActions"
+      :disabled="isSavingPrompt"
+      class="w-full px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      <span v-if="isSavingPrompt">Saving...</span>
+      <span v-else>Save Prompt</span>
+    </button>
+  </div>
+</div>
     </div>
 
     <ConfirmModal
@@ -441,11 +491,18 @@
       :companyId="newCompanyId"
       @close="showAddRoleModal = false"
     />
+    <ManagePermissionsModal
+      v-if="showManagePermissionsModal"
+      :show="showManagePermissionsModal"
+      :companyId="newCompanyId"
+      :initialRoleId="selectedRole"
+      @close="showManagePermissionsModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
+import { computed, reactive, ref, watch, defineAsyncComponent, onMounted, nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useAgentStore } from "../../../stores/agentStore";
 import { useDeletePeopleVarDef } from "../../../queries/usePeople";
@@ -470,6 +527,7 @@ import { useSheets } from "../../../queries/useSheets";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import { useRoute } from "vue-router";
 import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
+import ManagePermissionsModal from "../modals/ManagePermissionsModal.vue";
 const { workspaceId, moduleId } = useRouteIds();
 const workspaceStore = useWorkspaceStore();
 const sidePanelStore = useSidePanelStore();
@@ -482,10 +540,11 @@ const openLevel = ref(false);
 const isSheet = ref(false);
 const openSheet = ref(false);
 const route = useRoute();
-const activeTab = ref<"configure" | "knowledge" | "training">("configure");
+const activeTab = ref<"configure" | "knowledge" | "training" | "prompt">("configure");
 const showAddRoleModal = ref(false);
 const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
 const { canEditUser} = usePermissions();
+const showManagePermissionsModal = ref(false);
 const updateAgentData = computed(() => {
   return sidePanelStore.selectedCardPeople;
 });
@@ -494,6 +553,7 @@ const tabOptions = [
   { label: "Agent Configure", value: "configure" },
   { label: "Knowledge Based", value: "knowledge" },
   { label: "Training", value: "training" },
+  { label: "Prompt Flows", value: "prompt" },
 ];
 interface AgentConfig {
   id: string;
@@ -506,6 +566,7 @@ interface AgentConfig {
   competencies: string[];
   capabilities: string[];
   conditions_rules: string[];
+  actions: string[];
 }
 
 const agentConfig = reactive<AgentConfig>({
@@ -519,6 +580,7 @@ const agentConfig = reactive<AgentConfig>({
   competencies: [],
   capabilities: [],
   conditions_rules: [],
+  actions: [],
 });
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
@@ -633,12 +695,7 @@ watch(startDate, (newVal) => {
 
 const queryClient = useQueryClient();
 const selectedRole = ref(cardDetails.value?.workspace_access_role_id ?? "");
-const { mutate: assignRole } = useAssignRole({
-  onSuccess: () => {
-    console.log("Role assigned successfully!");
-  },
-  onError: (err: any) => console.error(err), 
-});
+
 async function fetchAgentsRolesPermissions() {
   await agentStore.fetchAgentsRolesPermissions(workspaceId.value);
 }
@@ -657,7 +714,15 @@ const roleOptions = computed(() => {
     customClass:
       "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
     isAction: true,
-  });
+  },
+  {
+    _id: "MANAGE_PERMISSIONS",
+    title: "🛠 Manage Permissions",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
+  },
+);
 
   return roles;
 });
@@ -675,26 +740,54 @@ const selectLevel = (value: string) => {
   agentConfig.level = value as any;
   openLevel.value = false;
 };
+const isRoleChangedByUser = ref(false);
+const isMounted = ref(false);
+
+onMounted(() => {
+  nextTick(() => {
+    isMounted.value = true;
+  });
+});
 function handleRoleChange(newRole: any) {
+  if (!isMounted.value) return;
   if (!canEditUser) {
     toast.error("You have no permission to edit user details");
     return;
   }
-
+const { mutate: assignRole } = useAssignRole({
+  onSuccess: () => {
+    console.log("Role assigned successfully!");
+  },
+  onError: (err: any) => console.error(err), 
+});
   if (newRole === 'ADD_NEW_ROLE') {
     showAddRoleModal.value = true;
     return;
   }
 
-  selectedRole.value = newRole;
+  if (newRole === 'MANAGE_PERMISSIONS') {
+    showManagePermissionsModal.value = true;
+    return;
+  }
 
-  // Optimistic update
+  isRoleChangedByUser.value = true;
+  selectedRole.value = newRole;
   sidePanelStore.updatePeopleRoleOptimistic(newRole);
 
-  assignRole({
-    id: cardDetails.value?._id!,
-    workspace_access_role_id: newRole,
-  });
+  assignRole(
+    {
+      id: cardDetails.value?._id!,
+      workspace_access_role_id: newRole,
+    },
+    {
+      onSuccess: () => {
+        isRoleChangedByUser.value = false;
+      },
+      onError: () => {
+        isRoleChangedByUser.value = false;
+      },
+    }
+  );
 }
 watch(
   () => cardDetails.value?.workspace_access_role_id,
@@ -702,6 +795,8 @@ watch(
     selectedRole.value = newRoleId ?? "";
   },
 );
+
+// Watcher 2
 watch(
   () => cardDetails.value?._id,
   () => {
@@ -875,6 +970,7 @@ const updateAgent = async (agent: string) => {
     conditions_rules: agentConfig.conditions_rules,
     workspace_role_id: selectJobRole.value,
     workspace_access_role_id: selectedRole.value,
+    actions: agentConfig.actions,
   };
   await agentStore.updateSelectedAgent(
     workspaceId.value,
@@ -1157,6 +1253,37 @@ const submitTrainingContent = async () => {
   } finally {
     isUploading.value = false;
     loadAgentSettings();
+  }
+};
+
+const allSelected = computed(() =>
+  updateAgentData.value?.actions?.every((a: any) => a.is_selected) ?? false
+);
+
+const toggleSelectAll = () => {
+  const val = !allSelected.value;
+  updateAgentData.value?.actions?.forEach((a: any) => {
+    a.is_selected = val;
+  });
+};
+const isSavingPrompt = ref(false);
+const savePromptActions = async () => {
+  if (!workspaceId.value) return;
+  isSavingPrompt.value = true;
+  try {
+    const slugs = updateAgentData.value?.actions
+      ?.filter((a: any) => a.is_selected)
+      .map((a: any) => a.slug);
+
+    agentConfig.actions = slugs; // array of slugs
+
+    await updateAgent(agentConfig.id);
+    toast.success("Prompt actions saved successfully!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to save prompt actions");
+  } finally {
+    isSavingPrompt.value = false;
   }
 };
 </script>
