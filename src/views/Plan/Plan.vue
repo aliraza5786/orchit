@@ -11,13 +11,13 @@
         @go-back="handleGoBack"
       />
     </template>
-    <div v-else class="flex flex-row flex-1 min-h-0">
+    <div v-else class="flex flex-row flex-1 min-h-0 gap-[10px]">
       <div class="flex flex-col flex-1 min-h-0 min-w-0 -mt-3.5">
         <div class="overflow-x-auto w-full flex-1 min-w-0">
-          <div class="min-w-[900px] h-full flex flex-col">
+          <div class="min-w-[850px] h-full flex flex-col">
             <div
               v-if="!isStartingSprint"
-              class="pe-[4px] pt-[14px] w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
+              class="pt-[14px] w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
             >
               <div
                 ref="containerRef"

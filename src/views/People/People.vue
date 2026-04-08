@@ -133,7 +133,7 @@
               item-key="title"
               group="agent-groups"
               :animation="180"
-              class="flex gap-4 my-4 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
+              class="flex gap-4 mt-4 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
               direction="horizontal"
               @end="onAgentGroupsEnd"
               :disabled="isMobile"
@@ -246,7 +246,7 @@
 
         <!-- TALENT KANBAN -->
         <template v-else>
-          <div class="flex flex-1 overflow-x-auto gap-3 custom_scroll_bar py-4">
+          <div class="flex flex-1 overflow-x-auto gap-3 custom_scroll_bar py-4 overflow-y-hidden">
             <KanbanBoard
               :plusIcon="selected_view_id === 'team' && canCreateCard"
               v-if="filteredBoard?.length > 0"
@@ -424,7 +424,7 @@
     </div>
   </div>
   <!-- ── Modals ─────────────────────────────────────────────────────────── -->
-  <ConfirmDeleteModal
+  <ConfirmDeleteModal 
     @click.stop=""
     v-model="showDelete"
     title="Delete List"
@@ -443,11 +443,12 @@
     "
   />
 
-  <DetailPanel @close="selectCardHandler(null)" :showPanel="showPanel" />
+  <DetailPanel v-if="showPanel" @close="selectCardHandler(null)" :showPanel="showPanel" />
   <AgentsDetailPanel
     @close="selectAgentHandler(null)"
     @persona-updated="handlePersonaUpdated"
     :showAgentPanel="showAgentPanel"
+    v-if="showAgentPanel"
   />
 </template>
 
