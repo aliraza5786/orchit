@@ -185,7 +185,7 @@ const assignHandle = () => {
 const { mutate: deleleSeat, isPending: deletingTicket } = useDeleteSeat({
     onSuccess: () => {
         toast.success("Seat deleted successfully!");
-        queryClient.invalidateQueries({ queryKey: ['people-lists'] })
+        emit("deleted", props.ticket._id);
     },
     onError: (err: any) => {
         toast.error(err.message || "Failed to delete seat.");
@@ -198,11 +198,10 @@ const handleDeleteTicket = () => {
 }
 
 const { mutate: invitePeople, isPending: inviting } = useAssignTeam({
-    onSuccess: () => {
+    onSuccess: (res: any) => {
         toast.success("Seat assigned successfully!");
         showAddMembers.value = false;
-        queryClient.invalidateQueries({ queryKey: ['people-lists'] })
-        emit("assigned")
+        emit("assigned", res?.data ?? res)
     },
     onError: (err: any) => {
         toast.error(err.message || "Failed to assign seat.");
@@ -219,7 +218,6 @@ const { mutate: unassign } = useUnAssignTeam(
         onSuccess: () => {
             toast.success("Seat unassigned successfully!");
             showAddMembers.value = false;
-            queryClient.invalidateQueries({ queryKey: ['people-lists'] })
             emit("unAssigned")
         },
         onError: (err: any) => {

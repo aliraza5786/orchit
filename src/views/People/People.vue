@@ -265,10 +265,9 @@
                 <KanbanCard
                   @click="handleClickTicket(ticket)"
                   :ticket="ticket"
-                  @deleted="fetchPeople()"
-                  ,
-                  @assigned="fetchPeople"
-                  @unAssigned="fetchPeople"
+                  @deleted="handleSeatDeleted(ticket._id)"
+                  @assigned="(res) => handleSeatUpdated(ticket._id, res)"
+                  @unAssigned="() => handleSeatUpdated(ticket._id, { email: null, name: null, status: 'unassigned' })"
                 />
               </template>
               <template #column-footer="{ column }: any">
@@ -551,7 +550,7 @@ const newColumn = ref("");
 const currentView = ref("kanban");
 const selectedCard = ref<any>();
 const showModal = ref(false);
-const modalColumn = ref({ email: [], cards: [], title: "", _id: "" });
+const modalColumn = ref({ email: [], cards: [], title: "", _id: "" }); 
 const closeModal = () => {
   showModal.value = false;
 };
@@ -610,12 +609,34 @@ const { data: workspaceRoles } = useWorkspaceRoles(
 // ─── Fetch people ─────────────────────────────────────────────────────────────
 const controller = new AbortController();
 
-const fetchPeople = async () => {
+const fetchPeople = async (silent = false) => {
   peopleStore.fetchPeopleList(
     workspaceId.value,
     selected_view_id.value,
     controller.signal,
+    silent
   );
+};
+
+const handleSeatDeleted = (seatId: string) => {
+  localList.value = localList.value.map((col: any) => ({
+    ...col,
+    cards: (col.cards || []).filter((c: any) => c._id !== seatId),
+  }));
+  fetchPeople(true);
+};
+
+const handleSeatUpdated = (seatId: string, updatedSeat: any) => {
+  localList.value = localList.value.map((col: any) => ({
+    ...col,
+    cards: (col.cards || []).map((c: any) => {
+      if (c._id !== seatId) return c;
+      const merged = { ...c, ...updatedSeat };
+      // If we got a full object from backend, use it
+      return merged;
+    }),
+  }));
+  fetchPeople(true);
 };
 
 watch(
@@ -814,6 +835,7 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
 
   onSuccess: (res: any, variables: any) => {
     toast.success("Seat added successfully!");
+    fetchPeople(true)
     const data = res?.data ?? res;
     const { id } = variables;
 
