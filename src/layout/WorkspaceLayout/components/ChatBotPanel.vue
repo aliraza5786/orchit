@@ -24,7 +24,7 @@
     <!-- CONFIG PANEL -->
     <div
       v-if="isExpanded && showConfigPanel"
-      class="w-2/3 border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-[77%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <!-- HEADER -->
       <div class="px-6 py-2.5 bg-bg-card border-b border-border">
@@ -488,9 +488,7 @@
 
     <!-- CHAT PANEL WRAPPER -->
     <div
-      :class="
-        isExpanded && (showConfigPanel || entities?.length) ? 'w-1/3' : 'w-full'
-      "
+:class="isExpanded && (showConfigPanel || entities?.length > 0) ? 'max-w-[390px]' : 'w-full'"
       class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
     >
       <div
@@ -1310,9 +1308,12 @@ const activeTab = ref<"persona" | "knowledge" | "upload">("persona");
 const queryClient = useQueryClient();
 
 // Refs
-const isExpanded = ref(false);
+const isManuallyExpanded = ref(false)
+
+const isExpanded = computed(() => {
+  return isManuallyExpanded.value || showConfigPanel.value || (entities.value?.length > 0)
+})
 const showConfigPanel = ref(false);
-const showFetchedData = ref(false);
 const showAIPreview = ref(false);
 const userMessage = ref("");
 const socket = ref<Socket | null>(null);
@@ -1880,6 +1881,7 @@ async function sendMessage() {
       card_id: route.params.card_id as string,
       session_id: sessionIdToUse,
       stream: true,
+      route_path: route.path,
     });
     if (!activeSessionId.value) {
       activeSessionId.value = sessionIdToUse;
@@ -1891,36 +1893,34 @@ async function sendMessage() {
     localStorage.setItem("activeSessionId", activeSessionId.value);
     localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
 
-    await Promise.all([
-      agentStore.fetchChatHistory(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        route.path.includes("talent") && agentModuleName.value
-          ? agentModuleName.value
-          : (moduleSelected.value ?? undefined),
-        route.path.includes("talent") && agentModuleId.value
-          ? agentModuleId.value
-          : (moduleId.value ?? undefined),
-        sheetName.value && !isMongoId(sheetName.value)
-          ? sheetName.value
-          : undefined,
-        sheetId.value,
-        !!activeSessionId.value,
-      ),
-      agentStore.fetchCreatedEntities(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        route.path.includes("talent") && agentModuleName.value
-          ? agentModuleName.value
-          : (moduleSelected.value ?? undefined),
-        route.path.includes("talent") && agentModuleId.value
-          ? agentModuleId.value
-          : (moduleId.value ?? undefined),
-      ),
-      (isExpanded.value = true),
-      (showConfigPanel.value = false),
-    ]);
-
+   await Promise.all([
+  agentStore.fetchChatHistory(
+    workspaceId.value,
+    authStore.userId ?? undefined,
+    route.path.includes("talent") && agentModuleName.value
+      ? agentModuleName.value
+      : (moduleSelected.value ?? undefined),
+    route.path.includes("talent") && agentModuleId.value
+      ? agentModuleId.value
+      : (moduleId.value ?? undefined),
+    sheetName.value && !isMongoId(sheetName.value)
+      ? sheetName.value
+      : undefined,
+    sheetId.value,
+    !!activeSessionId.value,
+  ),
+  agentStore.fetchCreatedEntities(
+    workspaceId.value,
+    authStore.userId ?? undefined,
+    route.path.includes("talent") && agentModuleName.value
+      ? agentModuleName.value
+      : (moduleSelected.value ?? undefined),
+    route.path.includes("talent") && agentModuleId.value
+      ? agentModuleId.value
+      : (moduleId.value ?? undefined),
+  ),
+]);
+showConfigPanel.value = false;
     pendingMessages.value = [];
     scrollToBottom();
     isAiThinkingBubbleVisible.value = false;
@@ -2157,25 +2157,22 @@ onBeforeUnmount(() => {
   socket.value?.disconnect();
 });
 
-// Config panel functions
 const openConfigPanel = () => {
-  if (!isExpanded.value) {
-    isExpanded.value = true;
-    showConfigPanel.value = true;
-    resetAgentConfig();
-  } else if (isExpanded.value) {
-    showConfigPanel.value = !showConfigPanel.value;
-    showFetchedData.value = true;
-    resetAgentConfig();
+  showConfigPanel.value = !showConfigPanel.value
+  if (showConfigPanel.value) {
+    resetAgentConfig()
   }
-};
+}
 
 const expandPanel = () => {
-  isExpanded.value = true;
-};
+  isManuallyExpanded.value = true
+}
+
 const compressPanel = () => {
-  isExpanded.value = false;
-};
+  isManuallyExpanded.value = false
+  // also close config panel on compress
+  showConfigPanel.value = false
+}
 
 const availableCapabilities = [
   { label: "Web Browsing", value: "webBrowsing" },
