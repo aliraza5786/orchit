@@ -266,7 +266,7 @@
                   @click="handleClickTicket(ticket)"
                   :ticket="ticket"
                   @deleted="handleSeatDeleted(ticket._id)"
-                  @assigned="(res) => handleSeatUpdated(ticket._id, res)"
+                  @assigned="(res:any) => handleSeatUpdated(ticket._id, res)"
                   @unAssigned="() => handleSeatUpdated(ticket._id, { email: null, name: null, status: 'unassigned' })"
                 />
               </template>
