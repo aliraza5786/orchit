@@ -392,6 +392,7 @@ import TableView from "../../components/feature/TableView/TableView.vue";
 import CalendarView from "../../components/feature/CalendarView.vue";
 import GanttChartView from "../../components/feature/GanttChartView.vue";
 import TimelineView from "../../components/feature/TimelineView.vue";
+import { useAgentStore } from "../../stores/agentStore";
 const TableSearchCell = defineAsyncComponent(
   () => import("../../components/feature/TableView/TableSearchCell.vue"),
 );
@@ -439,14 +440,15 @@ const workspaceStore = useWorkspaceStore();
 const queryClient = useQueryClient();
 const selectedTicketId = ref("")
 const isDeletingTicket = ref(false);
-
+const agentStore = useAgentStore();
 // Variables & Sheets
 // Sheets Data
 const { data, refetch: refetchSheets } = useSheets(
   { workspace_id: workspaceId, workspace_module_id: moduleId },
   { onSuccess: () => refetchList() },
 );
-
+const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
+const sheetTitle = computed(() => (data.value ? data.value[0]?.variables?.["sheet-title"] : ""));
 const authStore = useAuthStore();
 const pendingCreations = ref(new Set<string | number>());
 const localTableOrder = ref<any[]>([]);
@@ -804,7 +806,7 @@ function toggleCreateSheet() {
 function toggleAddList() {
   activeAddList.value = !activeAddList.value;
 }
-
+const sheetName = ref("");
 // Dropdown Transformation
 const transformedData = computed(() =>
   (data.value || []).map((item: any) => ({
@@ -814,7 +816,25 @@ const transformedData = computed(() =>
     icon: item.icon,
   })),
 );
-
+watch(
+  selected_sheet_id,
+  (newId) => {
+    if (!newId) return;
+    const selectedSheet = transformedData.value.find(
+      (item :any) => item._id === newId,
+    );
+    if (selectedSheet) {
+      agentStore.saveSelectedSheetTitle(selectedSheet.title);
+      agentStore.saveSelectedSheetId(newId);
+      sheetName.value = selectedSheet.title || "";
+    }else {
+      agentStore.saveSelectedSheetTitle(sheetTitle.value);
+      agentStore.saveSelectedSheetId(sheetId.value);
+      sheetName.value = "";
+    }
+  },
+  { immediate: true },
+);
 const showDeleteModal = ref(false);
 const selectedSheettoAction = ref<any>();
 const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({

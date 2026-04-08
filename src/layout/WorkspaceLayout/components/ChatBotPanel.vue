@@ -12,7 +12,7 @@
   >
     <div
       v-if="isExpanded && !showConfigPanel && entities?.length"
-      class="w-[75%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-[76%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
         @accept="acceptChanges"
@@ -24,7 +24,7 @@
     <!-- CONFIG PANEL -->
     <div
       v-if="isExpanded && showConfigPanel"
-      class="w-[75%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-[76%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <!-- HEADER -->
       <div class="px-6 py-2.5 bg-bg-card border-b border-border">
@@ -570,7 +570,7 @@
         class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4"
       >
         <div
-          v-if="agentStore.isLoadingHistory"
+          v-if="agentStore.isLoadingHistory && isFirstLoad"
           class="absolute inset-0 flex items-center justify-center"
         >
           <div class="flex flex-col items-center gap-3 text-text-secondary">
@@ -1332,7 +1332,7 @@ const showHistoryPanel = ref(false);
 const isFocused = ref(false);
 const activeSessionId = ref<string>("");
 const activeSessionTitle = ref<string>("");
-
+const isFirstLoad = ref(true);
 const agentsData = computed(() => agentStore.agentSettings.agent);
 const agentPassedData = computed(() => agentStore.agentPassed);
 const agentModuleId = computed(() => agentStore.module_id);
@@ -1378,7 +1378,14 @@ watch(
   },
   { immediate: true },
 );
-
+watch(
+  () => agentStore.isLoadingHistory,
+  (loading) => {
+    if (!loading && isFirstLoad.value) {
+      isFirstLoad.value = false;
+    }
+  }
+);
 const sheetId = computed(() => {
   if (
     route.path.includes("peak") ||
@@ -2169,10 +2176,10 @@ const expandPanel = () => {
 }
 
 const compressPanel = () => {
-  isManuallyExpanded.value = false
-  // also close config panel on compress
-  showConfigPanel.value = false
-}
+  isManuallyExpanded.value = false;
+  showConfigPanel.value = false;
+  agentStore.createdEntities = []; 
+};
 
 const availableCapabilities = [
   { label: "Web Browsing", value: "webBrowsing" },

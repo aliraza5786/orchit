@@ -748,18 +748,19 @@ onMounted(() => {
     isMounted.value = true;
   });
 });
-function handleRoleChange(newRole: any) {
-  if (!isMounted.value) return;
-  if (!canEditUser) {
-    toast.error("You have no permission to edit user details");
-    return;
-  }
 const { mutate: assignRole } = useAssignRole({
   onSuccess: () => {
     console.log("Role assigned successfully!");
   },
   onError: (err: any) => console.error(err), 
 });
+function handleRoleChange(newRole: any) {
+  if (!isMounted.value) return;
+  if (!canEditUser) {
+    toast.error("You have no permission to edit user details");
+    return;
+  }
+
   if (newRole === 'ADD_NEW_ROLE') {
     showAddRoleModal.value = true;
     return;
@@ -789,13 +790,14 @@ const { mutate: assignRole } = useAssignRole({
     }
   );
 }
-watch(
-  () => cardDetails.value?.workspace_access_role_id,
-  (newRoleId) => {
-    selectedRole.value = newRoleId ?? "";
-  },
-);
 
+watch(
+  () => cardDetails.value?._id,
+  () => {
+    selectJobRole.value = cardDetails.value?.workspace_role_id ?? "";
+  },
+  { immediate: true },
+);
 // Watcher 2
 watch(
   () => cardDetails.value?._id,
