@@ -1193,6 +1193,7 @@ const { mutate: deleteSprintCard, isPending: isDeletingSprintTicket } =
       // Reset modal state
       resetDeleteState();
     },
+
   });
 
 const title = ref("");
@@ -1242,8 +1243,22 @@ watch([selectedFilter, selectedSheetFilter, selectedPlanIds], () => {
 // delete sprint
 const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
   onSuccess: () => {
+    const deletedId = selectedSprint.value?._id;
+
+    // If the deleted sprint was the currently selected one, clear the selection
+    if (deletedId && selectedSprintId.value === deletedId) {
+      selectedSprintId.value = "";
+      localStorage.removeItem("activeSprintKey");
+      localStorage.removeItem("selectedSprintTitle");
+    }
+
+    toast.success(`"${selectedSprint.value?.title || sprintType.value}" deleted successfully`);
+    selectedSprint.value = null;
     handleRefresh();
     showSprintDelete.value = false;
+  },
+  onError: (error: any) => {
+    toast.error(error?.message || `Failed to delete ${sprintType.value}. Please try again.`);
   },
 });
 const selectedSprint = ref<any>(null);
