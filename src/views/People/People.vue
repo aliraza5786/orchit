@@ -296,7 +296,7 @@
                     v-model="column.email"
                   />
                   <p class="text-sm text-text-secondary">
-                    You can assign user later
+                    You can assign user later 
                   </p>
                   <Button size="md" @click="addSeatToColumn(column)">{{
                     isPending ? "Adding..." : "Add Seat"
@@ -308,35 +308,27 @@
                 </div>
               </template>
             </KanbanBoard>
-            <div
-              v-if="showModal"
-              class="fixed inset-0 flex items-center justify-center bg-black/50 bg-opacity-70 z-50"
-            >
-              <div class="bg-bg-surface p-4 rounded-md w-80 space-y-2 relative">
-                <p class="text-sm text-text-primary">
-                  {{ modalColumn.title }} {{ modalColumn.cards.length + 1 }}
+            <BaseModal v-model="showModal" size="md" title="Add Seat">
+              <div class="px-6 py-4 space-y-4">
+                <p class="text-sm text-text-secondary">
+                  {{ modalColumn.title }} &middot; Seat {{ (modalColumn.cards?.length ?? 0) + 1 }}
                 </p>
-
                 <BaseEmailChip
                   :maxEmails="1"
                   placeholder="team member email"
                   v-model="modalColumn.email"
                 />
-
                 <p class="text-sm text-text-secondary">
-                  You can assign user later
+                  You can assign a user later
                 </p>
-
-                <Button size="md" @click="addSeatToColumn(modalColumn)">
-                  {{ isPendingSeat ? "Adding..." : "Add Seat" }}
-                </Button>
-
-                <i
-                  class="fa-solid fa-close cursor-pointer absolute top-2 right-2"
-                  @click="closeModal"
-                />
               </div>
-            </div>
+              <div class="flex justify-end gap-3 px-6 py-4 border-t border-border">
+                <Button variant="secondary" @click="closeModal">Cancel</Button>
+                <Button variant="primary" @click="addSeatToColumn(modalColumn)">
+                  {{ isPending ? "Adding..." : "Add Seat" }}
+                </Button>
+              </div>
+            </BaseModal>
             <!-- Add Column -->
             <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
               <form
@@ -486,6 +478,9 @@ const BaseTextField = defineAsyncComponent(
 );
 const ConfirmDeleteModal = defineAsyncComponent(
   () => import("../Product/modals/ConfirmDeleteModal.vue"),
+);
+const BaseModal = defineAsyncComponent(
+  () => import("../../components/ui/BaseModal.vue"),
 );
 const Button = defineAsyncComponent(
   () => import("../../components/ui/Button.vue"),
@@ -771,12 +766,11 @@ const handleDelete = (e: any) => {
 // ─── Add seat ─────────────────────────────────────────────────────────────────
 const { mutate: createTeam, isPending } = useCreateTeamMember({
   onMutate: async (variables: any) => {
-    await queryClient.cancelQueries({ queryKey: ["people-lists"] });
-
-    const previous = queryClient.getQueryData(["people-lists"]);
-
     const { id, payload } = variables ?? {};
-    if (!id || !payload) return { previous };
+    if (!id || !payload) return {};
+
+    // Snapshot for rollback
+    const previous = JSON.parse(JSON.stringify(localList.value));
 
     const optimisticSeat = {
       _id: `temp-${Date.now()}`,
@@ -788,30 +782,20 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
       assigned_cards_count: 0,
     };
 
-    queryClient.setQueryData(["people-lists"], (old: any) => {
-      if (!old) return old;
-
-      return old.map((col: any) => {
-        if (col._id !== id) return col;
-
-        return {
-          ...col,
-          cards: [...(col.cards ?? []), optimisticSeat],
-        };
-      });
+    // Push temp seat directly into localList
+    localList.value = (localList.value ?? []).map((col: any) => {
+      if (col._id !== id) return col;
+      return { ...col, cards: [...(col.cards ?? []), optimisticSeat] };
     });
-
-    localList.value = queryClient.getQueryData(["people-lists"]) as any;
 
     return { previous };
   },
 
   onError: (_err: any, _variables: any, context: any) => {
+    // Roll back to snapshot
     if (context?.previous) {
-      queryClient.setQueryData(["people-lists"], context.previous);
       localList.value = context.previous;
     }
-
     toast.error("Failed to add seat. Please try again.");
   },
 
@@ -819,29 +803,25 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
     const data = res?.data ?? res;
     const { id } = variables;
 
-    queryClient.setQueryData(["people-lists"], (old: any) => {
-      if (!old) return old;
-
-      return old.map((col: any) => {
-        if (col._id !== id) return col;
-
-        const filteredCards = (col.cards ?? []).filter(
-          (c: any) => !String(c._id).startsWith("temp-"),
-        );
-
-        return {
-          ...col,
-          cards: [...filteredCards, data.assigned_seat],
-        };
-      });
+    // Replace temp seat with real server response — no refetch
+    localList.value = (localList.value ?? []).map((col: any) => {
+      if (col._id !== id) return col;
+      const filteredCards = (col.cards ?? []).filter(
+        (c: any) => !String(c._id).startsWith("temp-"),
+      );
+      return { ...col, cards: [...filteredCards, data.assigned_seat] };
     });
-
-    queryClient.invalidateQueries({ queryKey: ["people-lists"] });
-    localList.value = queryClient.getQueryData(["people-lists"]) as any;
   },
 });
 
+// Opens the modal — does NOT create the seat directly
 const handlePLus = (column: any) => {
+  modalColumn.value = { ...column, email: [] };
+  showModal.value = true;
+};
+
+// Actual seat creation (called from modal & inline footer)
+const createSeat = (column: any) => {
   localColumn.value = column;
   createTeam({
     id: column._id,
@@ -871,7 +851,8 @@ const toggleAddNewColumn = (column: any) => {
 };
 
 const addSeatToColumn = (column: any) => {
-  handlePLus(column);
+  createSeat(column);
+  column.showADDNEW = false;
   showModal.value = false;
 };
 
