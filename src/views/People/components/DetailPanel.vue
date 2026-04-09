@@ -31,15 +31,16 @@
 
         <div
           v-else
-          class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full"
+          class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full text-white text-sm font-semibold"
           :style="{
-            backgroundColor: cardDetails?.name
+            backgroundColor: (cardDetails?.name || cardDetails?.email)
               ? avatarColor({ email: cardDetails?.email })
               : '',
           }"
         >
-          {{ getInitials(cardDetails?.name) }}
-          <i v-if="!cardDetails?.name" class="fa-solid fa-user text-white"></i>
+          <template v-if="cardDetails?.name">{{ getInitials(cardDetails.name) }}</template>
+          <template v-else-if="cardDetails?.email">{{ getEmailInitials(cardDetails.email) }}</template>
+          <i v-else class="fa-solid fa-user text-white"></i>
         </div>
         <div>
           <h1 class="text-base font-medium text-text-primary cursor-pointer">
@@ -451,7 +452,12 @@ const ManagePermissionsModal = defineAsyncComponent(() =>
   import("../modals/ManagePermissionsModal.vue")
 );
 import { getInitials } from "../../../utilities";
-import { avatarColor } from "../../../utilities/avatarColor"; 
+import { avatarColor } from "../../../utilities/avatarColor";
+
+function getEmailInitials(email: string): string {
+  const local = email.split('@')[0] || ''
+  return local.slice(0, 2).toUpperCase()
+}
 import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
 
 // workspace roles

@@ -1,3 +1,4 @@
+ 
 
 interface Permission {
   _id: string;
@@ -26,6 +27,7 @@ export function formatPermissionsPayload(
   const permissionIds: string[] = [];
   const modulePermissionsMap = new Map<string, ModulePermission>();
 
+  console.log(selectedIds, "module Id")
   selectedIds.forEach((id) => {
     const perm = allPermissions.find((p) => p._id === id);
     if (!perm) return;
@@ -48,6 +50,7 @@ export function formatPermissionsPayload(
 
       const modulePerm = modulePermissionsMap.get(moduleId)!;
       const action = (perm.action || perm.slug || "").toLowerCase();
+      console.log("ID:", id, "action:", action, "modulePerm before:", modulePerm);
 
       if (action.includes("create")) modulePerm.can_create = true;
       if (action.includes("view") || action.includes("read")) modulePerm.can_view = true;

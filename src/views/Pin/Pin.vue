@@ -12,6 +12,7 @@
           v-bind="dropdownListeners"
           :canEdit="canEditSheet"
           :canDelete="canDeleteSheet"
+          ref="sheetDropdownRef"
         >
           <template #more>
             <div
@@ -441,6 +442,8 @@ const queryClient = useQueryClient();
 const selectedTicketId = ref("")
 const isDeletingTicket = ref(false);
 const agentStore = useAgentStore();
+
+const sheetDropdownRef = ref<any>(null);
 // Variables & Sheets
 // Sheets Data
 const { data, refetch: refetchSheets } = useSheets(
