@@ -120,6 +120,10 @@
             v-model="agentConfig.conditions_rules"
             label="Conditions / Rules"
           />
+          <TagInput
+            v-model="agentConfig.modules"
+            label="Modules/Permissions"
+          />
           <div class="flex gap-2" v-if="transformedData?.length">
             <input
               type="checkbox"
@@ -422,55 +426,100 @@
           <span v-else>Upload Training Content</span>
         </button>
       </div>
-      <div class="flex flex-col" style="height: calc(100vh - 130px);" v-if="activeTab === 'prompt'">
+      <div class="flex flex-col" style="height: calc(87vh - 100px);" v-if="activeTab === 'prompt'">
+
   <div class="flex-1 overflow-y-auto p-4 space-y-3">
 
-    <!-- Select All -->
-    <div class="flex items-center gap-3 px-2 py-2">
-      <input
-        type="checkbox"
-        id="select-all"
-        :checked="allSelected"
-        @change="toggleSelectAll"
-        class="h-4 w-4 rounded border-border cursor-pointer"
-      />
-      <label for="select-all" class="text-sm font-medium text-text-primary cursor-pointer">
-        Select All
-      </label>
-    </div>
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-3 px-2 py-2">
+      <div class="flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="select-all"
+          :checked="allSelected"
+          @change="toggleSelectAll"
+          class="h-4 w-4 rounded border-border cursor-pointer"
+        />
+        <label for="select-all" class="text-sm font-medium">
+          Select All
+        </label>
+      </div>
 
-    <div
-      v-for="action in updateAgentData.actions"
-      :key="action._id"
-      class="flex items-start gap-3 px-2 py-3 rounded-lg border border-border bg-bg-body"
-    >
       <input
-        type="checkbox"
-        :id="action._id"
-        v-model="action.is_selected"
-        class="h-4 w-4 mt-0.5 rounded border-border cursor-pointer"
+        v-model="searchQuery"
+        type="text"
+        placeholder="Filter prompts..."
+        class="px-3 py-1 text-sm border border-border rounded-lg"
       />
-      <div class="flex flex-col gap-1">
-        <label :for="action._id" class="text-sm font-medium text-text-primary cursor-pointer">
+    </div>
+      <div
+  v-for="module in filteredModules"
+  :key="module.module_title"
+  class="border border-border rounded-lg overflow-hidden bg-bg-surface/30"
+>
+  <!-- Header -->
+  <button
+    @click="toggleModule(module.module_title)"
+    class="w-full px-3 py-2 flex justify-between items-center hover:bg-bg-surface transition"
+  >
+    <span class="text-sm font-medium text-text-primary">
+      {{ module.module_title }}
+    </span>
+
+    <i
+      :class="[
+        'fa-solid fa-chevron-down text-xs text-text-secondary transition-transform',
+        openModules[module.module_title] ? 'rotate-180' : ''
+      ]"
+    ></i>
+  </button>
+
+  <!-- Content -->
+  <div
+    v-show="openModules[module.module_title]"
+    class="py-2 space-y-1 border-t border-border bg-bg-input"
+  >
+    <div
+      v-for="action in module.granted_actions"
+      :key="action._id"
+      class="flex items-start gap-2 hover:bg-bg-body px-3 py-2"
+    >
+      <div class="flex items-center h-5">
+        <input
+          type="checkbox"
+          v-model="action.is_selected"
+          :id="action._id"
+          class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+        />
+      </div>
+
+      <div class="ml-2 text-sm">
+        <label
+          :for="action._id"
+          class="font-medium text-text-primary cursor-pointer select-none"
+        >
           {{ action.title }}
         </label>
-        <p v-if="action.prompt" class="text-xs text-text-secondary leading-relaxed">
+
+        <!-- <p v-if="action.prompt" class="text-xs text-text-secondary">
           {{ action.prompt }}
-        </p>
+        </p> -->
       </div>
     </div>
   </div>
+</div>
 
-  <div class="p-4 bg-bg-card border-t border-border shrink-0">
-    <button
-      @click="savePromptActions"
-      :disabled="isSavingPrompt"
-      class="w-full px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      <span v-if="isSavingPrompt">Saving...</span>
-      <span v-else>Save Prompt</span>
-    </button>
   </div>
+  <div class="p-4 bg-bg-card border-t border-border shrink-0">
+  <button
+    @click="savePromptActions"
+    :disabled="isSavingPrompt"
+    class="w-full px-4 py-2.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition disabled:opacity-50"
+  >
+    <span v-if="isSavingPrompt">Saving...</span>
+    <span v-else>Save Prompt</span>
+  </button>
+</div>
 </div>
     </div>
 
@@ -545,16 +594,62 @@ const showAddRoleModal = ref(false);
 const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
 const { canEditUser} = usePermissions();
 const showManagePermissionsModal = ref(false);
+const searchQuery = ref('')
+type Action = {
+  _id: string
+  title: string
+  slug: string
+  prompt?: string
+  is_selected: boolean
+}
+
+type Module = {
+  module_id: string | null
+  module_title: string
+  module_type: string
+  granted_actions: Action[]
+}
+
 const updateAgentData = computed(() => {
   return sidePanelStore.selectedCardPeople;
 });
+const openModules = ref<Record<string, boolean>>({})
+const toggleModule = (title: string) => {
+  openModules.value[title] = !openModules.value[title]
+}
+const filteredModules = computed(() => {
+  if (!searchQuery.value) return moduleActions.value
 
+  const query = searchQuery.value.toLowerCase()
+
+  return moduleActions.value
+    .map(module => {
+      const filteredActions = module.granted_actions.filter(action =>
+        action.title.toLowerCase().includes(query) ||
+        (action.prompt && action.prompt.toLowerCase().includes(query))
+      )
+
+      return {
+        ...module,
+        granted_actions: filteredActions
+      }
+    })
+    .filter(module => module.granted_actions.length > 0)
+})
 const tabOptions = [
   { label: "Agent Configure", value: "configure" },
   { label: "Knowledge Based", value: "knowledge" },
   { label: "Training", value: "training" },
   { label: "Prompt Flows", value: "prompt" },
 ];
+
+interface ModuleAction {
+  module_id: string | null;
+  module_title: string;
+  module_type: string;
+  granted_actions: string[]; // only slugs when saving to backend
+}
+
 interface AgentConfig {
   id: string;
   name: string;
@@ -567,6 +662,8 @@ interface AgentConfig {
   capabilities: string[];
   conditions_rules: string[];
   actions: string[];
+  modules: string[];
+  module_actions: ModuleAction[]; // <-- added for modules
 }
 
 const agentConfig = reactive<AgentConfig>({
@@ -581,6 +678,8 @@ const agentConfig = reactive<AgentConfig>({
   capabilities: [],
   conditions_rules: [],
   actions: [],
+  modules:[],
+   module_actions: []
 });
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
@@ -958,30 +1057,42 @@ async function fetchAssignedAgents() {
     // moduleId.value,
   );
 }
-const updateAgent = async (agent: string) => {
-  if (!agent) return;
+const updateAgent = async (agentId: string) => {
+  if (!agentId) return;
 
-  const currentPayload = {
-    name: agentConfig.name,
-    description: agentConfig.description,
-    level: agentConfig.level,
-    responsibilities: agentConfig.responsibilities,
-    skills: agentConfig.skills,
-    competencies: agentConfig.competencies,
-    capabilities: agentConfig.capabilities,
-    conditions_rules: agentConfig.conditions_rules,
-    workspace_role_id: selectJobRole.value,
-    workspace_access_role_id: selectedRole.value,
-    actions: agentConfig.actions,
-  };
-  await agentStore.updateSelectedAgent(
-    workspaceId.value,
-    currentPayload,
-    agent,
-  );
-  await fetchAssignedAgents();
-  await loadAgentSettings();
-  emit("persona-updated");
+  try {
+    // Build payload with all agent data, including module actions
+    const currentPayload = {
+      name: agentConfig.name,
+      description: agentConfig.description,
+      system_prompt: agentConfig.system_prompt,
+      level: agentConfig.level,
+      responsibilities: agentConfig.responsibilities,
+      skills: agentConfig.skills,
+      competencies: agentConfig.competencies,
+      capabilities: agentConfig.capabilities,
+      conditions_rules: agentConfig.conditions_rules,
+      actions: agentConfig.actions,               // flat selected actions
+      module_actions: agentConfig.module_actions, // selected module actions
+      modules: agentConfig.modules,
+      workspace_role_id: selectJobRole.value,
+      workspace_access_role_id: selectedRole.value,
+    };
+
+    // Call store to update agent
+    await agentStore.updateSelectedAgent(workspaceId.value, currentPayload, agentId);
+
+    // Refresh data after update
+    await fetchAssignedAgents();
+    await loadAgentSettings();
+
+    // Notify parent/component
+    emit("persona-updated");
+
+  } catch (err) {
+    console.error("Failed to update agent:", err);
+    toast.error("Failed to update agent");
+  }
 };
 const deleteAgent = async (agent: string) => {
   await agentStore.deleteSelectedAgent(workspaceId.value, agent);
@@ -1258,29 +1369,66 @@ const submitTrainingContent = async () => {
   }
 };
 
-const allSelected = computed(() =>
-  updateAgentData.value?.actions?.every((a: any) => a.is_selected) ?? false
-);
+const moduleActions = ref<Module[]>([])
 
+const allSelected = computed(() => {
+  return moduleActions.value.length > 0 &&
+    moduleActions.value.every(module =>
+      module.granted_actions.every(action => action.is_selected)
+    )
+})
+import { toRaw } from 'vue'
+
+watch(
+  () => updateAgentData.value.module_actions,
+  (val) => {
+    moduleActions.value = val
+      ? structuredClone(toRaw(val))
+      : []
+  },
+  { immediate: true }
+)
 const toggleSelectAll = () => {
-  const val = !allSelected.value;
-  updateAgentData.value?.actions?.forEach((a: any) => {
-    a.is_selected = val;
-  });
-};
+  const value = !allSelected.value
+
+  moduleActions.value.forEach(module => {
+    module.granted_actions.forEach(action => {
+      action.is_selected = value
+    })
+  })
+}
+
 const isSavingPrompt = ref(false);
 const savePromptActions = async () => {
   if (!workspaceId.value) return;
-  isSavingPrompt.value = true;
-  try {
-    const slugs = updateAgentData.value?.actions
-      ?.filter((a: any) => a.is_selected)
-      .map((a: any) => a.slug);
 
-    agentConfig.actions = slugs; // array of slugs
+  isSavingPrompt.value = true;
+
+  try {
+    // Convert moduleActions.value to simple structure for backend
+    const modulesToSave: ModuleAction[] = moduleActions.value.map(module => ({
+      module_id: module.module_id,
+      module_title: module.module_title,
+      module_type: module.module_type,
+      granted_actions: module.granted_actions
+        .filter(action => action.is_selected)
+        .map(action => action.slug) // only slugs
+    }));
+
+    agentConfig.module_actions = modulesToSave;
+
+    // Also flatten all selected actions if needed
+    agentConfig.actions = moduleActions.value
+      .flatMap(module => module.granted_actions)
+      .filter(action => action.is_selected)
+      .map(action => action.slug);
 
     await updateAgent(agentConfig.id);
-    toast.success("Prompt actions saved successfully!");
+
+    emit("persona-updated");
+
+    if (searchQuery.value) searchQuery.value = "";
+
   } catch (err) {
     console.error(err);
     toast.error("Failed to save prompt actions");
