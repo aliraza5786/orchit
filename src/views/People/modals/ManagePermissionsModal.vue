@@ -385,15 +385,15 @@ function toggleModule(moduleId: string) {
   openModules.value[moduleId] = !openModules.value[moduleId];
 }
 
-function actionLabel(action: string): string {
-  const map: Record<string, string> = {
-    view: 'View',
-    create: 'Create',
-    update: 'Edit',
-    delete: 'Delete',
-  };
-  return map[action] ?? action;
-}
+// function actionLabel(action: string): string {
+//   const map: Record<string, string> = {
+//     view: 'View',
+//     create: 'Create',
+//     update: 'Edit',
+//     delete: 'Delete',
+//   };
+//   return map[action] ?? action;
+// }
 
 function countModuleEnabled(row: ModuleRow): number {
   return (['view', 'create', 'update', 'delete'] as const).filter(

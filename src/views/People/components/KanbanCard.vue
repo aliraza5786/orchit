@@ -75,7 +75,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
+// import { useQueryClient } from '@tanstack/vue-query'
 import { defineAsyncComponent } from "vue";
 const DropMenu = defineAsyncComponent(() =>
   import("../../../components/ui/DropMenu.vue")
@@ -123,7 +123,7 @@ const { data: people } = usePeople(workspaceId.value, companyId);
 
 const members = ref([]);
 const showDelete = ref(false)
-const queryClient = useQueryClient()
+// const queryClient = useQueryClient()
 function getMenuItems() {
   const isOwner = Boolean(props.ticket?.is_owner)
   const hasUser = Boolean(props.ticket?.email
