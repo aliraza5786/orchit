@@ -13,14 +13,14 @@
       style="max-height:calc(100dvh - 55px);">
         <Sidebar v-if="localWorkspace"   :isLoading="isPending || isLoading"
        :expanded="sidebarExpanded" @toggle-sidebar="toggleSidebar" />
-       <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex  pb-2 sm:gap-1 sm:max-w-[calc(100vw - 100px)] transition-all duration-200"  
+       <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex pb-3 sm:max-w-[calc(100vw - 100px)] transition-all duration-200 pe-[12px] gap-[10px]"  
         :style="dashboardContentStyle"
         >
-        <router-view  />
-        <ProfilePanel />
-        <FilterDrawer v-model="filters" :open="isDrawerOpen" />
-        <SettingPanel :workspace="getWorkspace" />
-        <ChatBotPanel />
+        <router-view  /> 
+          <ProfilePanel v-if="workspaceStore.showProfilePanel" />
+          <FilterDrawer v-if="workspaceStore.showFilter" v-model="filters" :open="isDrawerOpen" />
+          <SettingPanel v-if="workspaceStore.showSettingPanel" :workspace="getWorkspace" />
+          <ChatBotPanel v-if="workspaceStore.showChatBotPanel" /> 
       </div>
     </div>
   </div>

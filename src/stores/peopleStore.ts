@@ -12,8 +12,8 @@ export const usePeopleStore = defineStore("people", {
   getters: {},
 
   actions: {
-    async fetchPeopleList(workspace_id:any, viewID:any, signal?: AbortSignal) {
-        this.isFetchingPeople = true;
+    async fetchPeopleList(workspace_id:any, viewID:any, signal?: AbortSignal, silent = false) {
+        if (!silent) this.isFetchingPeople = true;
       try {
         const res = await axios.get(
           `${baseUrl}workspace/teams/${workspace_id}/people-grouped`,
@@ -30,7 +30,7 @@ export const usePeopleStore = defineStore("people", {
 
         if (res.status === 200) {
           this.peopleData = res?.data?.data;
-        this.isFetchingPeople = false;
+          this.isFetchingPeople = false;
         } else {
           console.error(res?.data?.message || "Failed to fetch people list");
           this.isFetchingPeople = false;

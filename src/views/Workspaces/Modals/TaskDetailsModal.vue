@@ -70,7 +70,7 @@
                 class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2">
                   <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
-                   <BaseSelectField size="sm" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
+                   <BaseSelectField size="md" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
                      :model-value="lane" @update:modelValue="setLane" :loading="isLanesLoading" />
                 </div>
                 <div class="space-y-2">
@@ -81,18 +81,18 @@
                 <template v-if="!pin">
                   <div class="space-y-2">
                     <div class="text-xs uppercase tracking-wider text-text-secondary">Start Date</div>
-                    <div class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10">
+                    <div class="px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10">
                       <i class="fa-regular fa-calendar"></i>
-                      <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate"
+                      <DatePicker size="md" placeholder="Set start date" class="w-full" :model-value="form.startDate"
                         emit-as="ymd" @update:modelValue="setStartDate" :min-date="today" />
                     </div>
                   </div>
                   <div class="space-y-2">
                     <div class="text-xs uppercase tracking-wider text-text-secondary">Target End</div>
-                    <div class="h-8 px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
+                    <div class="px-3 flex items-center gap-2 rounded-lg bg-bg-input border transition-colors"
                       :class="endDateError ? 'border-red-500' : 'border-orchit-white/10'">
                       <i class="fa-regular fa-calendar"></i>
-                      <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
+                      <DatePicker  size="md" placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
                         @update:modelValue="setEndDate" :min-date="form.startDate || today" />
                     </div>
                     <p v-if="endDateError" class="text-xs text-red-400 mt-1">{{ endDateError }}</p>
@@ -112,7 +112,7 @@
                     </div>
 
                     <BaseSelectField
-                      size="sm"
+                      size="md"
                       :options="
                         item?.data
                           .filter((e: string) => e !== 'process' && e !== 'ok' && e !== 'resources')

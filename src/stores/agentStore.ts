@@ -25,6 +25,7 @@ interface AgentChatPayload {
   session_id?: string;
   stream?: boolean;
   attachments?: Attachment[];
+  route_path?: string; 
 }
 
 interface AgentChatResponse {
@@ -164,24 +165,56 @@ export const useAgentStore = defineStore("agent", {
 
   actions: {
     async sendMessage(
-      payload: AgentChatPayload,
-    ): Promise<AgentChatResponse | null> {
-      if (!payload.workspace_id) return null;
-      this.isSending = true;
-      try {
-        const response = await api.request<AgentChatResponse>({
-          url: `${baseUrl}agent-chat/message/assistant`,
-          method: "POST",
-          data: payload,
-        });
-        return response;
-      } catch (err) {
-        console.error("❌ Failed to send message:", err);
-        return null;
-      } finally {
-        this.isSending = false;
-      }
-    },
+  payload: AgentChatPayload,
+): Promise<AgentChatResponse | null> {
+  if (!payload.workspace_id) return null;
+  this.isSending = true;
+  try {
+    const { route_path, ...basePayload } = payload;
+
+    let finalPayload: Omit<AgentChatPayload, 'route_path'> = { ...basePayload };
+
+    if (route_path?.includes('peak')) {
+      // Dashboard/widget creation context — include dashboard-relevant fields only
+      finalPayload = {
+        workspace_id: payload.workspace_id,
+        agent_id: payload.agent_id,
+        message: payload.message,
+        session_id: payload.session_id,
+        stream: payload.stream,
+        module_id: payload.module_id,
+        module_name: payload.module_name,
+        attachments: payload.attachments,
+      };
+    } else if (route_path?.includes('plan')) {
+      // Sprint creation/update context — include sprint-relevant fields only
+      finalPayload = {
+        workspace_id: payload.workspace_id,
+        agent_id: payload.agent_id,
+        message: payload.message,
+        session_id: payload.session_id,
+        stream: payload.stream,
+        module_id: payload.module_id,
+        module_name: payload.module_name,
+        sheet_id: payload.sheet_id,
+        attachments: payload.attachments,
+      };
+    }
+    // else: finalPayload stays as full basePayload (all fields) for other routes
+
+    const response = await api.request<AgentChatResponse>({
+      url: `${baseUrl}agent-chat/message/assistant`,
+      method: "POST",
+      data: finalPayload,
+    });
+    return response;
+  } catch (err) {
+    console.error("❌ Failed to send message:", err);
+    return null;
+  } finally {
+    this.isSending = false;
+  }
+},
     async uploadAssistantFiles(files: File[] | File) {
       const formData = new FormData();
 

@@ -1,21 +1,26 @@
 <template>
-  <div class="peak-root bg-bg-card rounded-lg border border-border">
+  <div class="bg-[var(--bg-card)] rounded-lg border border-[var(--border)] p-5 px-6">
     <!-- Header -->
-    <div class="peak-header">
-      <div class="peak-header-left">
-        <div class="peak-header-icon">
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-[10px] bg-[var(--bg-lavender)] flex items-center justify-center text-[var(--accent)] text-base flex-shrink-0">
           <i class="fa-solid fa-chart-line"></i>
         </div>
         <div>
-          <h1 class="peak-title">Peak</h1>
-          <p class="peak-subtitle">Live workspace insights</p>
+          <h1 class="text-lg font-bold text-[var(--text-primary)] m-0 leading-tight">Peak</h1>
+          <p class="text-xs text-[var(--text-secondary)] m-0">Live workspace insights</p>
         </div>
       </div>
-      <div class="peak-header-actions">
-        <button class="btn-ghost" @click="fetchAllPinnedWidgetData" :disabled="store.isLoadingWidgets" title="Refresh all">
+      <div class="flex items-center gap-2">
+        <button
+          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
+          @click="fetchAllPinnedWidgetData"
+          :disabled="store.isLoadingWidgets"
+          title="Refresh all"
+        >
           <i class="fa-solid fa-rotate" :class="{ 'fa-spin': store.isLoadingWidgets }"></i>
         </button>
-        <button class="btn-primary" @click="openAddModal">
+        <button class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--accent)] text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap" @click="openAddModal">
           <i class="fa-solid fa-plus"></i>
           <span>Add Widget</span>
         </button>
@@ -23,98 +28,85 @@
     </div>
 
     <!-- Empty state -->
-    <div v-if="!store.isLoadingWidgets && store.pinnedWidgets.length === 0 && !store.pendingProposal" class="empty-state">
-      <div class="empty-icon">
+    <div
+      v-if="!store.isLoadingWidgets && store.pinnedWidgets.length === 0 && !store.pendingProposal"
+      class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3"
+    >
+      <div class="w-14 h-14 bg-[var(--bg-lavender)] rounded-2xl flex items-center justify-center text-[22px] text-[var(--accent)] mb-1">
         <i class="fa-solid fa-chart-pie"></i>
       </div>
-      <h3 class="empty-title">No widgets yet</h3>
-      <p class="empty-desc">Add widgets to track your workspace metrics in real time.</p>
-      <button class="btn-primary" @click="openAddModal">
+      <h3 class="text-base font-bold text-[var(--text-primary)] m-0">No widgets yet</h3>
+      <p class="text-[13px] text-[var(--text-secondary)] m-0 max-w-[300px]">Add widgets to track your workspace metrics in real time.</p>
+      <button class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--accent)] text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--accent-hover)]" @click="openAddModal">
         <i class="fa-solid fa-plus"></i> Add your first widget
       </button>
     </div>
 
     <!-- Pending agent proposal banner -->
-    <div v-if="store.pendingProposal" class="proposal-banner">
-      <div class="proposal-banner-left">
-        <div class="proposal-badge">
+    <div v-if="store.pendingProposal" class="flex items-center justify-between flex-wrap gap-3 bg-[var(--bg-lavender)] border border-[rgba(125,104,200,0.25)] rounded-[10px] p-3 px-4 mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-[34px] h-[34px] rounded-lg bg-[var(--accent)] text-white flex items-center justify-center text-sm flex-shrink-0">
           <i class="fa-solid fa-robot"></i>
         </div>
         <div>
-          <p class="proposal-title">Agent suggested a widget</p>
-          <p class="proposal-name">{{ store.pendingProposal?.title }}</p>
+          <p class="text-[11px] text-[var(--text-secondary)] m-0">Agent suggested a widget</p>
+          <p class="text-[13px] font-semibold text-[var(--text-primary)] m-0">{{ store.pendingProposal?.title }}</p>
         </div>
       </div>
-      <div class="proposal-actions">
-        <button class="btn-ghost-sm" @click="store.clearPendingProposal()">Dismiss</button>
-        <button class="btn-accent-sm" @click="acceptProposal" :disabled="store.isSaving">
+      <div class="flex gap-2 items-center">
+        <button class="px-2.5 py-[5px] bg-transparent text-[var(--text-secondary)] border border-[var(--border)] rounded-md text-xs cursor-pointer transition-colors hover:bg-[var(--bg-surface)]" @click="store.clearPendingProposal()">Dismiss</button>
+        <button class="inline-flex items-center gap-1.5 px-3 py-[5px] bg-[var(--accent)] text-white border-none rounded-md text-xs font-semibold cursor-pointer transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed" @click="acceptProposal" :disabled="store.isSaving">
           <i class="fa-solid fa-thumbtack"></i> Pin to Peak
         </button>
       </div>
     </div>
 
     <!-- Loading skeletons -->
-    <div v-if="store.isLoadingWidgets" class="widgets-grid">
-      <div v-for="i in 4" :key="i" class="widget-card widget-skeleton">
-        <div class="skeleton-line short"></div>
-        <div class="skeleton-line long"></div>
-        <div class="skeleton-value"></div>
+    <div v-if="store.isLoadingWidgets" class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
+      <div v-for="i in 4" :key="i" class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3.5 flex flex-col gap-2.5 pointer-events-none">
+        <div class="h-3 bg-[var(--bg-surface)] rounded-md w-2/5 animate-pulse"></div>
+        <div class="h-3 bg-[var(--bg-surface)] rounded-md w-4/5 animate-pulse"></div>
+        <div class="h-12 bg-[var(--bg-surface)] rounded-lg mt-1 animate-pulse"></div>
       </div>
     </div>
 
     <!-- Widgets grid -->
-    <div v-else-if="store.pinnedWidgets.length > 0" class="widgets-grid">
+    <div v-else-if="store.pinnedWidgets.length > 0" class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
       <div
         v-for="widget in store.pinnedWidgets"
         :key="widget._id"
-        class="widget-card"
-        :class="{ 'widget-card--loading': store.isWidgetDataLoading(widget._id) }"
+        class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl flex flex-col overflow-hidden transition-all duration-150 relative group hover:border-[rgba(125,104,200,0.35)] hover:shadow-[0_4px_16px_rgba(125,104,200,0.1)]"
+        :class="{ 'opacity-85': store.isWidgetDataLoading(widget._id) }"
       >
         <!-- Card header -->
-        <div class="widget-card-header">
+        <div class="flex items-start gap-2.5 p-3.5 pb-2.5 border-b border-[var(--border)]">
           <div
-            class="widget-icon-wrap"
-            :style="{
-              background: widget.color ? widget.color + '18' : 'var(--bg-lavender)',
-              color: widget.color || 'var(--accent)',
-            }"
+            class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+            :style="{ background: widget.color ? widget.color + '18' : 'var(--bg-lavender)', color: widget.color || 'var(--accent)' }"
           >
-            <span class="widget-icon-emoji">{{ widget.icon || '📊' }}</span>
+            <span class="text-base leading-none">{{ widget.icon || "📊" }}</span>
           </div>
-          <div class="widget-meta">
-            <p class="widget-title">{{ widget.title }}</p>
-            <p class="widget-entity">{{ widget.query?.entity }} · {{ widget.query?.result_type }}</p>
+          <div class="flex-1 min-w-0">
+            <p class="text-[13px] font-bold text-[var(--text-primary)] m-0 truncate">{{ widget.title }}</p>
+            <p class="text-[10px] text-[var(--text-secondary)] mt-0.5 m-0 capitalize">{{ widget.query?.entity }} · {{ widget.query?.result_type }}</p>
           </div>
-          <div class="widget-actions">
-            <button
-              class="icon-btn"
-              @click="refreshWidget(widget._id)"
-              title="Refresh"
-              :disabled="store.isWidgetDataLoading(widget._id)"
-            >
+          <div class="flex gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            <button class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-md text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed" @click="refreshWidget(widget._id)" title="Refresh" :disabled="store.isWidgetDataLoading(widget._id)">
               <i class="fa-solid fa-rotate" :class="{ 'fa-spin': store.isWidgetDataLoading(widget._id) }"></i>
             </button>
-            <button class="icon-btn" @click="openEditModal(widget)" title="Edit">
+            <button class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-md text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]" @click="openEditModal(widget)" title="Edit">
               <i class="fa-solid fa-pen"></i>
             </button>
-            <button
-              class="icon-btn icon-btn--danger"
-              @click="confirmDelete(widget)"
-              title="Delete"
-              :disabled="store.isWidgetDeleting(widget._id)"
-            >
-              <i
-                class="fa-solid fa-trash"
-                :class="{ 'fa-spin': store.isWidgetDeleting(widget._id) }"
-              ></i>
+            <button class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-md text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-red-50 hover:text-red-500 disabled:opacity-40 disabled:cursor-not-allowed" @click="confirmDelete(widget)" title="Delete" :disabled="store.isWidgetDeleting(widget._id)">
+              <i class="fa-solid fa-trash" :class="{ 'fa-spin': store.isWidgetDeleting(widget._id) }"></i>
             </button>
           </div>
         </div>
 
         <!-- Card body -->
-        <div class="widget-card-body">
+        <div class="flex-1 p-3.5">
           <template v-if="store.isWidgetDataLoading(widget._id)">
-            <div class="data-loading">
+            <div class="flex items-center justify-center h-20 text-[var(--text-secondary)] text-lg">
               <i class="fa-solid fa-circle-notch fa-spin"></i>
             </div>
           </template>
@@ -122,26 +114,18 @@
           <template v-else-if="store.getWidgetData(widget._id)">
             <!-- LIST -->
             <template v-if="widget.query?.result_type === 'list'">
-              <div class="list-result">
-                <div class="list-count-badge">
+              <div>
+                <div class="inline-block text-[10px] font-semibold px-2 py-0.5 bg-[var(--bg-lavender)] text-[var(--accent)] rounded-full mb-2">
                   {{ store.getWidgetData(widget._id)?.data?.total ?? 0 }} items
                 </div>
-                <ul class="list-items">
-                  <li
-                    v-for="(item, idx) in (store.getWidgetData(widget._id)?.data?.items ?? []).slice(0, 5)"
-                    :key="idx"
-                    class="list-item"
-                  >
-                    <span class="list-item-dot" :style="{ background: widget.color || 'var(--accent)' }"></span>
-                    <span class="list-item-text">
-                      {{ item?.variables?.['card-title'] || item?.title || 'Untitled' }}
-                    </span>
-                    <span v-if="item?.variables?.['card-status']" class="list-item-status">
-                      {{ item.variables['card-status'] }}
-                    </span>
+                <ul class="list-none m-0 p-0 flex flex-col gap-[5px]">
+                  <li v-for="(item, idx) in (store.getWidgetData(widget._id)?.data?.items ?? []).slice(0, 5)" :key="idx" class="flex items-center gap-[7px] text-xs text-[var(--text-primary)]">
+                    <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" :style="{ background: widget.color || 'var(--accent)' }"></span>
+                    <span class="flex-1 truncate">{{ item?.variables?.["card-title"] || item?.title || "Untitled" }}</span>
+                    <span v-if="item?.variables?.['card-status']" class="text-[10px] px-1.5 py-0.5 bg-[var(--bg-surface)] rounded text-[var(--text-secondary)] flex-shrink-0">{{ item.variables["card-status"] }}</span>
                   </li>
                 </ul>
-                <p v-if="(store.getWidgetData(widget._id)?.data?.total ?? 0) > 5" class="list-more">
+                <p v-if="(store.getWidgetData(widget._id)?.data?.total ?? 0) > 5" class="text-[11px] text-[var(--text-secondary)] mt-1.5 mb-0 pl-3">
                   +{{ (store.getWidgetData(widget._id)?.data?.total ?? 0) - 5 }} more
                 </p>
               </div>
@@ -149,84 +133,45 @@
 
             <!-- COUNT -->
             <template v-else-if="widget.query?.result_type === 'count'">
-              <div class="count-result">
-                <p class="count-value" :style="{ color: widget.color || 'var(--accent)' }">
+              <div class="flex flex-col items-center justify-center py-3 gap-1">
+                <p class="text-[40px] font-bold leading-none m-0" :style="{ color: widget.color || 'var(--accent)' }">
                   {{ (store.getWidgetData(widget._id)?.data?.value ?? 0).toLocaleString() }}
                 </p>
-                <p class="count-label">
-                  {{ store.getWidgetData(widget._id)?.data?.label || widget.description }}
-                </p>
+                <p class="text-xs text-[var(--text-secondary)] m-0 text-center">{{ store.getWidgetData(widget._id)?.data?.label || widget.description }}</p>
               </div>
             </template>
 
             <!-- COMPUTED -->
             <template v-else-if="widget.query?.result_type === 'computed'">
-              <div class="computed-result">
-                <div class="computed-main">
-                  <p class="computed-value" :style="{ color: widget.color || 'var(--accent)' }">
-                    {{ store.getWidgetData(widget._id)?.data?.value ?? 0 }}
-                  </p>
-                  <p class="computed-unit">{{ store.getWidgetData(widget._id)?.data?.unit }}</p>
+              <div class="flex flex-col gap-1.5">
+                <div class="flex items-baseline gap-1.5">
+                  <p class="text-[36px] font-bold leading-none m-0" :style="{ color: widget.color || 'var(--accent)' }">{{ store.getWidgetData(widget._id)?.data?.value ?? 0 }}</p>
+                  <p class="text-sm text-[var(--text-secondary)] m-0">{{ store.getWidgetData(widget._id)?.data?.unit }}</p>
                 </div>
-                <p class="computed-label">{{ store.getWidgetData(widget._id)?.data?.label }}</p>
-                <div
-                  v-if="store.getWidgetData(widget._id)?.data?.completed != null"
-                  class="computed-progress-wrap"
-                >
-                  <div class="computed-progress-bar">
-                    <div
-                      class="computed-progress-fill"
-                      :style="{
-                        width:
-                          Math.round(
-                            (store.getWidgetData(widget._id)?.data?.completed /
-                              store.getWidgetData(widget._id)?.data?.total) *
-                              100
-                          ) + '%',
-                        background: widget.color || 'var(--accent)',
-                      }"
-                    ></div>
+                <p class="text-xs text-[var(--text-secondary)] m-0">{{ store.getWidgetData(widget._id)?.data?.label }}</p>
+                <div v-if="store.getWidgetData(widget._id)?.data?.completed != null" class="flex items-center gap-2 mt-1">
+                  <div class="flex-1 h-1.5 bg-[var(--bg-surface)] rounded-full overflow-hidden">
+                    <div class="h-full rounded-full transition-all duration-300" :style="{ width: Math.round((store.getWidgetData(widget._id)?.data?.completed / store.getWidgetData(widget._id)?.data?.total) * 100) + '%', background: widget.color || 'var(--accent)' }"></div>
                   </div>
-                  <span class="computed-progress-text">
-                    {{ store.getWidgetData(widget._id)?.data?.completed }}/{{
-                      store.getWidgetData(widget._id)?.data?.total
-                    }}
-                  </span>
+                  <span class="text-[11px] text-[var(--text-secondary)] whitespace-nowrap">{{ store.getWidgetData(widget._id)?.data?.completed }}/{{ store.getWidgetData(widget._id)?.data?.total }}</span>
                 </div>
               </div>
             </template>
 
             <!-- CHART -->
             <template v-else-if="widget.query?.result_type === 'chart'">
-              <div class="chart-result">
-                <div class="chart-total">
-                  <span class="chart-total-value">
-                    {{ store.getWidgetData(widget._id)?.data?.total ?? 0 }}
-                  </span>
-                  <span class="chart-total-label">total</span>
+              <div>
+                <div class="flex items-baseline gap-[5px] mb-2.5">
+                  <span class="text-[22px] font-bold text-[var(--text-primary)]">{{ store.getWidgetData(widget._id)?.data?.total ?? 0 }}</span>
+                  <span class="text-xs text-[var(--text-secondary)]">total</span>
                 </div>
-                <div class="chart-bars">
-                  <div
-                    v-for="(series, idx) in store.getWidgetData(widget._id)?.data?.series ?? []"
-                    :key="idx"
-                    class="chart-bar-item"
-                  >
-                    <div class="chart-bar-label">{{ series.label }}</div>
-                    <div class="chart-bar-track">
-                      <div
-  class="chart-bar-fill"
-  :style="{
-    width:
-      Math.round(
-        (Number(series.value) /
-          (store.getWidgetData(widget._id)?.data?.total || 1)) *
-          100
-      ) + '%',
-    background: widget.color || getChartColor(idx),
-  }"
-></div>
+                <div class="flex flex-col gap-[7px]">
+                  <div v-for="(series, idx) in store.getWidgetData(widget._id)?.data?.series ?? []" :key="idx" class="flex items-center gap-2">
+                    <div class="text-[11px] text-[var(--text-secondary)] w-[72px] flex-shrink-0 truncate">{{ series.label }}</div>
+                    <div class="flex-1 h-2 bg-[var(--bg-surface)] rounded-full overflow-hidden">
+                      <div class="h-full rounded-full transition-all duration-300 min-w-1" :style="{ width: Math.round((Number(series.value) / (store.getWidgetData(widget._id)?.data?.total || 1)) * 100) + '%', background: widget.color || getChartColor(idx) }"></div>
                     </div>
-                    <div class="chart-bar-val">{{ series.value }}</div>
+                    <div class="text-[11px] font-semibold text-[var(--text-primary)] w-6 text-right flex-shrink-0">{{ series.value }}</div>
                   </div>
                 </div>
               </div>
@@ -235,7 +180,7 @@
 
           <!-- No data -->
           <template v-else>
-            <div class="no-data">
+            <div class="flex items-center justify-center gap-1.5 h-20 text-xs text-[var(--text-secondary)]">
               <i class="fa-solid fa-circle-info"></i>
               <span>No data — click refresh</span>
             </div>
@@ -243,268 +188,293 @@
         </div>
 
         <!-- Card footer -->
-        <div class="widget-card-footer">
-          <span class="widget-resolved-at" v-if="store.getWidgetData(widget._id)?.resolved_at">
+        <div class="flex items-center justify-between px-3.5 py-2 border-t border-[var(--border)] bg-[var(--bg-surface)]">
+          <span v-if="store.getWidgetData(widget._id)?.resolved_at" class="text-[10px] text-[var(--text-secondary)] flex items-center gap-1">
             <i class="fa-regular fa-clock"></i>
             {{ formatTime(store.getWidgetData(widget._id)?.resolved_at) }}
           </span>
-          <span class="widget-refresh-interval" v-if="widget.refresh_interval > 0">
-            Auto {{ widget.refresh_interval }}s
-          </span>
+          <span v-if="widget.refresh_interval > 0" class="text-[10px] text-[var(--text-secondary)]">Auto {{ widget.refresh_interval }}s</span>
         </div>
       </div>
     </div>
 
-    <!-- ── Add / Edit Modal ── -->
+    <!-- ── Add/Edit Widget Modal ── -->
     <Teleport to="body">
       <transition name="modal-fade">
-        <div v-if="showModal" class="modal-backdrop" @click.self="closeModal">
-          <div class="modal-card">
-            <div class="modal-header">
-              <h2 class="modal-title">{{ editingWidget ? 'Edit Widget' : 'Add Widget' }}</h2>
-              <button class="icon-btn" @click="closeModal">
+        <div v-if="showModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[9999] p-4" @click.self="closeModal">
+          <div class="bg-[var(--bg-card)] rounded-2xl w-full max-w-[700px] max-h-[90vh] flex flex-col overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+
+            <!-- Modal header -->
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+              <h2 class="text-[15px] font-bold text-[var(--text-primary)] m-0">
+                {{ editingWidget ? "Edit Widget" : "Add Widget" }}
+              </h2>
+              <button class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-md text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]" @click="closeModal">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
 
-            <div class="modal-body">
-              <!-- Basic Info -->
-              <div class="form-section-label">Basic Info</div>
+            <!-- ── AI FIRST VIEW (shown when not in manual mode) ── -->
+            <template v-if="!showManualForm">
+              <div class="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
 
-              <div class="form-group">
-                <label>Title <span class="required">*</span></label>
-                <input
-                  v-model="form.title"
-                  type="text"
-                  placeholder="e.g. My Today Tasks"
-                  class="form-input"
-                />
-              </div>
-
-              <div class="form-group">
-                <label>Description</label>
-                <input
-                  v-model="form.description"
-                  type="text"
-                  placeholder="Optional description"
-                  class="form-input"
-                />
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Icon (emoji)</label>
-                  <input
-                    v-model="form.icon"
-                    type="text"
-                    placeholder="📋"
-                    maxlength="2"
-                    class="form-input"
+                <!-- AI Textarea -->
+                <div class="bg-white border border-[var(--border)] rounded-xl p-4 shadow-sm relative">
+                  <textarea
+                    v-model="aiPrompt"
+                    rows="4"
+                    placeholder="Ask Orchit AI to create a widget..."
+                    class="w-full resize-none border-none outline-none text-[14px] text-[var(--text-primary)] placeholder-[var(--text-secondary)] bg-transparent leading-relaxed"
+                    style="font-family: inherit;"
                   />
-                </div>
-                <div class="form-group">
-                  <label>Accent color</label>
-                  <div class="color-row">
-                    <input v-model="form.color" type="color" class="form-color" />
-                    <input
-                      v-model="form.color"
-                      type="text"
-                      placeholder="#7D68C8"
-                      class="form-input"
-                    />
+                  <div class="flex justify-end mt-2">
+                    <button
+                      class="w-9 h-9 rounded-lg bg-[var(--accent)] text-white flex items-center justify-center cursor-pointer border-none transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+                      @click="generateWithAi"
+                      :disabled="isAiGenerating || !aiPrompt.trim()"
+                    >
+                      <i v-if="isAiGenerating" class="fa-solid fa-spinner fa-spin text-sm"></i>
+                      <i v-else class="fa-solid fa-microphone text-sm"></i>
+                    </button>
                   </div>
                 </div>
+
+                <!-- Suggestions -->
+                <div>
+                  <p class="text-[13px] text-[var(--text-secondary)] text-center mb-3">Or try these examples:</p>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <button
+                      v-for="suggestion in aiSuggestions"
+                      :key="suggestion"
+                      @click="aiPrompt = suggestion"
+                      class="text-left px-3 py-3 rounded-xl border border-[var(--border)] text-[12px] text-[var(--text-secondary)] bg-[var(--bg-card)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer leading-snug"
+                    >
+                      {{ suggestion }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Divider with OR -->
+                <div class="flex items-center gap-3">
+                  <div class="flex-1 h-px bg-[var(--border)]"></div>
+                  <span class="text-[12px] text-[var(--text-secondary)] font-medium">OR</span>
+                  <div class="flex-1 h-px bg-[var(--border)]"></div>
+                </div>
+
+                <!-- Create Manually button -->
+                <button
+                  @click="showManualForm = true"
+                  class="w-full py-3 rounded-xl bg-[var(--accent)] text-white text-[14px] font-semibold border-none cursor-pointer transition-colors hover:bg-[var(--accent-hover)]"
+                >
+                  Create Widget Manually
+                </button>
               </div>
 
-              <!-- Query -->
-              <div class="form-section-label">Query</div>
+              <!-- Footer for AI view -->
+              <div class="flex justify-end gap-2 px-5 py-3.5 border-t border-[var(--border)] flex-shrink-0">
+                <button class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)]" @click="closeModal">Cancel</button>
+                <button
+                  class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--accent)] text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  @click="generateWithAi"
+                  :disabled="isAiGenerating || !aiPrompt.trim()"
+                >
+                  <i v-if="isAiGenerating" class="fa-solid fa-spinner fa-spin"></i>
+                  <i v-else class="fa-solid fa-sparkles"></i>
+                  <span>{{ isAiGenerating ? "Generating..." : "Generate widget" }}</span>
+                </button>
+              </div>
+            </template>
 
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Entity</label>
-                  <select v-model="form.query.entity" class="form-select">
-                    <option value="cards">Cards</option>
-                    <option value="sprints">Sprints</option>
-                    <option value="sprint_backlog">Sprint Backlog</option>
-                    <option value="token_usage">Token Usage</option>
+            <!-- ── MANUAL FORM VIEW ── -->
+            <template v-else>
+              <!-- Back button row -->
+              <div class="px-5 pt-3 flex-shrink-0" v-if="!editingWidget">
+                <button @click="showManualForm = false" class="inline-flex items-center gap-1.5 text-[12px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-transparent border-none cursor-pointer transition-colors p-0">
+                  <i class="fa-solid fa-arrow-left text-[11px]"></i> Back
+                </button>
+              </div>
+
+              <div class="px-5 py-4 overflow-y-auto flex-1 flex flex-col gap-3">
+                <!-- Basic Info -->
+                <div class="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--accent)] pb-0.5 border-b border-[var(--border)] mt-1">Basic Info</div>
+
+                <div class="flex flex-col gap-[5px]">
+                  <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Title <span class="text-red-500 ml-0.5">*</span></label>
+                  <input v-model="form.title" type="text" placeholder="e.g. My Today Tasks" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--accent)] focus:shadow-[0_0_0_2px_rgba(125,104,200,0.15)]" />
+                </div>
+
+                <div class="flex flex-col gap-[5px]">
+                  <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Description</label>
+                  <input v-model="form.description" type="text" placeholder="Optional description" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--accent)] focus:shadow-[0_0_0_2px_rgba(125,104,200,0.15)]" />
+                </div>
+
+                <div class="flex gap-3 flex-wrap">
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Icon (emoji)</label>
+                    <input v-model="form.icon" type="text" placeholder="📋" maxlength="2" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--accent)]" />
+                  </div>
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Accent color</label>
+                    <div class="flex items-center gap-2">
+                      <input v-model="form.color" type="color" class="w-9 h-9 border border-[var(--border)] rounded-[7px] cursor-pointer p-0.5 bg-[var(--bg-input,#fff)] flex-shrink-0" />
+                      <input v-model="form.color" type="text" placeholder="#7D68C8" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all flex-1 box-border focus:border-[var(--accent)]" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Query -->
+                <div class="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--accent)] pb-0.5 border-b border-[var(--border)] mt-1">Query</div>
+
+                <div class="flex gap-3 flex-wrap">
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Entity</label>
+                    <select v-model="form.query.entity" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                      <option value="cards">Cards</option>
+                      <option value="sprints">Sprints</option>
+                      <option value="sprint_backlog">Sprint Backlog</option>
+                      <option value="token_usage">Token Usage</option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Result type</label>
+                    <select v-model="form.query.result_type" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                      <option value="list">List</option>
+                      <option value="count">Count</option>
+                      <option value="computed">Computed</option>
+                      <option value="chart">Chart</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="flex gap-3 flex-wrap" v-if="form.query.result_type === 'chart'">
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Chart type</label>
+                    <select v-model="form.query.chart_type" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                      <option value="bar">Bar</option>
+                      <option value="pie">Pie</option>
+                      <option value="donut">Donut</option>
+                      <option value="line">Line</option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Group by field</label>
+                    <input v-model="form.query.group_by" type="text" placeholder="variables.card-status" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--accent)]" />
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-[5px]" v-if="form.query.result_type === 'computed' && form.query.entity === 'sprints'">
+                  <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Formula</label>
+                  <select v-model="form.query.formula" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                    <option value="days_until_end">Days until end</option>
+                    <option value="days_since_start">Days since start</option>
+                    <option value="completion_percentage">Completion %</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label>Result type</label>
-                  <select v-model="form.query.result_type" class="form-select">
-                    <option value="list">List</option>
-                    <option value="count">Count</option>
-                    <option value="computed">Computed</option>
-                    <option value="chart">Chart</option>
-                  </select>
+
+                <!-- Filters -->
+                <div class="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--accent)] pb-0.5 border-b border-[var(--border)] mt-1">Filters</div>
+
+                <div class="flex gap-3 flex-wrap">
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Assigned to</label>
+                    <select v-model="form.query.filters.assigned_to" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                      <option value="">Anyone</option>
+                      <option value="$ME">Me ($ME)</option>
+                    </select>
+                  </div>
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Date filter</label>
+                    <select v-model="form.query.filters.date_filter.value" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                      <option value="">None</option>
+                      <option value="today">Today</option>
+                      <option value="this_week">This week</option>
+                      <option value="this_month">This month</option>
+                      <option value="next_7_days">Next 7 days</option>
+                      <option value="overdue">Overdue</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="flex gap-3 flex-wrap" v-if="form.query.entity === 'cards'">
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Status</label>
+                    <input v-model="form.query.filters.status" type="text" placeholder="In Progress" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--accent)]" />
+                  </div>
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Priority</label>
+                    <select v-model="form.query.filters.priority" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                      <option value="">Any</option>
+                      <option value="highest">Highest</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                      <option value="lowest">Lowest</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="flex gap-3 flex-wrap" v-if="form.query.entity === 'sprints' || form.query.entity === 'sprint_backlog'">
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Sprint status</label>
+                    <select v-model="form.query.filters.sprint_status" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                      <option value="">Any</option>
+                      <option value="planning">Planning</option>
+                      <option value="active">Active</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Display -->
+                <div class="text-[11px] font-bold uppercase tracking-[0.06em] text-[var(--accent)] pb-0.5 border-b border-[var(--border)] mt-1">Display</div>
+
+                <div class="flex gap-3 flex-wrap">
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Limit (list)</label>
+                    <input v-model.number="form.query.limit" type="number" min="1" max="100" placeholder="20" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--accent)]" />
+                  </div>
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Auto-refresh (seconds)</label>
+                    <input v-model.number="form.refresh_interval" type="number" min="0" placeholder="300" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--accent)]" />
+                  </div>
+                </div>
+
+                <div class="flex gap-3 flex-wrap">
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Sort by</label>
+                    <input v-model="form.query.sort_by" type="text" placeholder="created_at" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full box-border focus:border-[var(--accent)]" />
+                  </div>
+                  <div class="flex flex-col gap-[5px] flex-1 min-w-[140px]">
+                    <label class="text-[11px] font-semibold text-[var(--text-secondary)] uppercase tracking-[0.04em]">Sort order</label>
+                    <select v-model="form.query.sort_order" class="px-2.5 py-[7px] bg-[var(--bg-input,#fff)] border border-[var(--border-input,#d9d9d9)] rounded-[7px] text-[13px] text-[var(--text-primary)] outline-none transition-all w-full cursor-pointer focus:border-[var(--accent)]">
+                      <option value="desc">Descending</option>
+                      <option value="asc">Ascending</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-[5px]">
+                  <label class="flex items-center gap-2 text-[13px] text-[var(--text-primary)] cursor-pointer font-normal">
+                    <input type="checkbox" v-model="form.is_pinned" class="w-4 h-4 accent-[var(--accent)] cursor-pointer" />
+                    Pin widget to dashboard
+                  </label>
                 </div>
               </div>
 
-              <!-- Chart-specific fields -->
-              <div class="form-row" v-if="form.query.result_type === 'chart'">
-                <div class="form-group">
-                  <label>Chart type</label>
-                  <select v-model="form.query.chart_type" class="form-select">
-                    <option value="bar">Bar</option>
-                    <option value="pie">Pie</option>
-                    <option value="donut">Donut</option>
-                    <option value="line">Line</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Group by field</label>
-                  <input
-                    v-model="form.query.group_by"
-                    type="text"
-                    placeholder="variables.card-status"
-                    class="form-input"
-                  />
-                </div>
+              <!-- Manual form footer -->
+              <div class="flex justify-end gap-2 px-5 py-3.5 border-t border-[var(--border)] flex-shrink-0">
+                <button class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)]" @click="closeModal">Cancel</button>
+                <button
+                  class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--accent)] text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  @click="saveWidget"
+                  :disabled="store.isSaving || !form.title.trim()"
+                >
+                  <i v-if="store.isSaving" class="fa-solid fa-spinner fa-spin"></i>
+                  <span>{{ editingWidget ? "Save changes" : "Create widget" }}</span>
+                </button>
               </div>
-
-              <!-- Computed formula -->
-              <div
-                class="form-group"
-                v-if="form.query.result_type === 'computed' && form.query.entity === 'sprints'"
-              >
-                <label>Formula</label>
-                <select v-model="form.query.formula" class="form-select">
-                  <option value="days_until_end">Days until end</option>
-                  <option value="days_since_start">Days since start</option>
-                  <option value="completion_percentage">Completion %</option>
-                </select>
-              </div>
-
-              <!-- Filters -->
-              <div class="form-section-label">Filters</div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Assigned to</label>
-                  <select v-model="form.query.filters.assigned_to" class="form-select">
-                    <option value="">Anyone</option>
-                    <option value="$ME">Me ($ME)</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Date filter</label>
-                  <select v-model="form.query.filters.date_filter.value" class="form-select">
-                    <option value="">None</option>
-                    <option value="today">Today</option>
-                    <option value="this_week">This week</option>
-                    <option value="this_month">This month</option>
-                    <option value="next_7_days">Next 7 days</option>
-                    <option value="overdue">Overdue</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Cards-specific filters -->
-              <div class="form-row" v-if="form.query.entity === 'cards'">
-                <div class="form-group">
-                  <label>Status</label>
-                  <input
-                    v-model="form.query.filters.status"
-                    type="text"
-                    placeholder="In Progress"
-                    class="form-input"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>Priority</label>
-                  <select v-model="form.query.filters.priority" class="form-select">
-                    <option value="">Any</option>
-                    <option value="highest">Highest</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                    <option value="lowest">Lowest</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Sprint-specific filters -->
-              <div
-                class="form-row"
-                v-if="form.query.entity === 'sprints' || form.query.entity === 'sprint_backlog'"
-              >
-                <div class="form-group">
-                  <label>Sprint status</label>
-                  <select v-model="form.query.filters.sprint_status" class="form-select">
-                    <option value="">Any</option>
-                    <option value="planning">Planning</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="cancelled">Cancelled</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Display -->
-              <div class="form-section-label">Display</div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Limit (list)</label>
-                  <input
-                    v-model.number="form.query.limit"
-                    type="number"
-                    min="1"
-                    max="100"
-                    placeholder="20"
-                    class="form-input"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>Auto-refresh (seconds)</label>
-                  <input
-                    v-model.number="form.refresh_interval"
-                    type="number"
-                    min="0"
-                    placeholder="300"
-                    class="form-input"
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Sort by</label>
-                  <input
-                    v-model="form.query.sort_by"
-                    type="text"
-                    placeholder="created_at"
-                    class="form-input"
-                  />
-                </div>
-                <div class="form-group">
-                  <label>Sort order</label>
-                  <select v-model="form.query.sort_order" class="form-select">
-                    <option value="desc">Descending</option>
-                    <option value="asc">Ascending</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="form-group">
-                <label class="checkbox-label">
-                  <input type="checkbox" v-model="form.is_pinned" class="form-checkbox" />
-                  Pin widget to dashboard
-                </label>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <button class="btn-ghost" @click="closeModal">Cancel</button>
-              <button
-                class="btn-primary"
-                @click="saveWidget"
-                :disabled="store.isSaving || !form.title.trim()"
-              >
-                <i v-if="store.isSaving" class="fa-solid fa-spinner fa-spin"></i>
-                <span>{{ editingWidget ? 'Save changes' : 'Create widget' }}</span>
-              </button>
-            </div>
+            </template>
           </div>
         </div>
       </transition>
@@ -513,35 +483,27 @@
     <!-- Delete confirm modal -->
     <Teleport to="body">
       <transition name="modal-fade">
-        <div
-          v-if="showDeleteModal"
-          class="modal-backdrop"
-          @click.self="showDeleteModal = false"
-        >
-          <div class="modal-card modal-card--sm">
-            <div class="modal-header">
-              <h2 class="modal-title">Delete widget</h2>
-              <button class="icon-btn" @click="showDeleteModal = false">
+        <div v-if="showDeleteModal" class="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-[9999] p-4" @click.self="showDeleteModal = false">
+          <div class="bg-[var(--bg-card)] rounded-2xl w-full max-w-[380px] max-h-[90vh] flex flex-col overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.15)]">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-[var(--border)] flex-shrink-0">
+              <h2 class="text-[15px] font-bold text-[var(--text-primary)] m-0">Delete widget</h2>
+              <button class="w-7 h-7 flex items-center justify-center bg-transparent border-none rounded-md text-[11px] text-[var(--text-secondary)] cursor-pointer transition-all hover:bg-[var(--bg-surface)] hover:text-[var(--text-primary)]" @click="showDeleteModal = false">
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
-            <div class="modal-body">
-              <p class="delete-confirm-text">
-                Are you sure you want to delete
-                <strong>{{ widgetToDelete?.title }}</strong>? This cannot be undone.
+            <div class="px-5 py-4 overflow-y-auto flex-1">
+              <p class="text-[13px] text-[var(--text-primary)] leading-relaxed m-0">
+                Are you sure you want to delete <strong>{{ widgetToDelete?.title }}</strong>? This cannot be undone.
               </p>
             </div>
-            <div class="modal-footer">
-              <button class="btn-ghost" @click="showDeleteModal = false">Cancel</button>
+            <div class="flex justify-end gap-2 px-5 py-3.5 border-t border-[var(--border)] flex-shrink-0">
+              <button class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)]" @click="showDeleteModal = false">Cancel</button>
               <button
-                class="btn-danger"
+                class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-red-500 text-white border-none rounded-[7px] text-[13px] font-semibold cursor-pointer transition-colors hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 @click="deleteWidget"
                 :disabled="!!widgetToDelete && store.isWidgetDeleting(widgetToDelete._id)"
               >
-                <i
-                  v-if="!!widgetToDelete && store.isWidgetDeleting(widgetToDelete._id)"
-                  class="fa-solid fa-spinner fa-spin"
-                ></i>
+                <i v-if="!!widgetToDelete && store.isWidgetDeleting(widgetToDelete._id)" class="fa-solid fa-spinner fa-spin"></i>
                 Delete
               </button>
             </div>
@@ -553,854 +515,234 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { useWidgetStore } from '../../stores/widgets'
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { useWidgetStore } from "../../stores/widgets";
 
-// ── Types ──────────────────────────────────────────────────────────────────
-type Entity = 'cards' | 'sprints' | 'sprint_backlog' | 'token_usage'
-type ResultType = 'list' | 'count' | 'computed' | 'chart'
-type ChartType = 'bar' | 'pie' | 'donut' | 'line'
-type SortOrder = 'asc' | 'desc'
-type Priority = '' | 'highest' | 'high' | 'medium' | 'low' | 'lowest'
-type SprintStatus = '' | 'planning' | 'active' | 'completed' | 'cancelled'
-type DateFilterValue = '' | 'today' | 'this_week' | 'this_month' | 'next_7_days' | 'overdue'
-type Formula = 'days_until_end' | 'days_since_start' | 'completion_percentage'
+type Entity = "cards" | "sprints" | "sprint_backlog" | "token_usage";
+type ResultType = "list" | "count" | "computed" | "chart";
+type ChartType = "bar" | "pie" | "donut" | "line";
+type SortOrder = "asc" | "desc";
+type Priority = "" | "highest" | "high" | "medium" | "low" | "lowest";
+type SprintStatus = "" | "planning" | "active" | "completed" | "cancelled";
+type DateFilterValue = "" | "today" | "this_week" | "this_month" | "next_7_days" | "overdue";
+type Formula = "days_until_end" | "days_since_start" | "completion_percentage";
 
 interface WidgetForm {
-  title: string
-  description: string
-  icon: string
-  color: string
-  is_pinned: boolean
-  refresh_interval: number
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  is_pinned: boolean;
+  refresh_interval: number;
   query: {
-    entity: Entity
-    result_type: ResultType
-    chart_type: ChartType
-    formula: Formula
-    group_by: string
-    sort_by: string
-    sort_order: SortOrder
-    limit: number
+    entity: Entity;
+    result_type: ResultType;
+    chart_type: ChartType;
+    formula: Formula;
+    group_by: string;
+    sort_by: string;
+    sort_order: SortOrder;
+    limit: number;
     filters: {
-      assigned_to: string
-      status: string
-      priority: Priority
-      sprint_status: SprintStatus
-      date_filter: {
-        type: 'relative'
-        value: DateFilterValue
-      }
-    }
-  }
+      assigned_to: string;
+      status: string;
+      priority: Priority;
+      sprint_status: SprintStatus;
+      date_filter: { type: "relative"; value: DateFilterValue };
+    };
+  };
 }
 
 interface Widget {
-  _id: string
-  title: string
-  description?: string
-  icon?: string
-  color?: string
-  is_pinned: boolean
-  is_preview?: boolean
-  pin_order?: number
-  refresh_interval: number
+  _id: string;
+  title: string;
+  description?: string;
+  icon?: string;
+  color?: string;
+  is_pinned: boolean;
+  is_preview?: boolean;
+  pin_order?: number;
+  refresh_interval: number;
   query?: {
-    entity?: string
-    result_type?: string
-    chart_type?: string
-    formula?: string
-    group_by?: string
-    sort_by?: string
-    sort_order?: string
-    limit?: number
-    aggregation?: string
-    filters?: {
-      assigned_to?: string
-      status?: string
-      priority?: string
-      sprint_status?: string
-      date_filter?: {
-        type?: string
-        value?: string
-      }
-    }
-  }
+    entity?: string; result_type?: string; chart_type?: string; formula?: string;
+    group_by?: string; sort_by?: string; sort_order?: string; limit?: number;
+    aggregation?: string;
+    filters?: { assigned_to?: string; status?: string; priority?: string; sprint_status?: string; date_filter?: { type?: string; value?: string } };
+  };
 }
 
-// ── Props & store ──────────────────────────────────────────────────────────
-const props = defineProps<{ workspaceId: string }>()
-const store = useWidgetStore()
+const props = defineProps<{ workspaceId: string }>();
+const store = useWidgetStore();
 
-// ── Modal state ────────────────────────────────────────────────────────────
-const showModal = ref(false)
-const showDeleteModal = ref(false)
-const editingWidget = ref<Widget | null>(null)
-const widgetToDelete = ref<Widget | null>(null)
+const showModal = ref(false);
+const showDeleteModal = ref(false);
+const showManualForm = ref(false);
+const editingWidget = ref<Widget | null>(null);
+const widgetToDelete = ref<Widget | null>(null);
 
-// ── Form — use ref instead of reactive to avoid deep-merge pitfalls ────────
+const aiPrompt = ref('');
+const isAiGenerating = ref(false);
+
+const aiSuggestions = [
+  'A widget where all tasks and projects start...',
+  'A widget for tasks that are actively being worked on...',
+  'A widget where finished tasks and projects are...',
+  'This is a new widget used for the purpose of the...',
+  'High priority cards assigned to me this week',
+  'Active sprint completion percentage',
+];
+
 const defaultForm = (): WidgetForm => ({
-  title: '',
-  description: '',
-  icon: '📊',
-  color: '#7D68C8',
-  is_pinned: true,
-  refresh_interval: 300,
+  title: "", description: "", icon: "📊", color: "#7D68C8", is_pinned: true, refresh_interval: 300,
   query: {
-    entity: 'cards',
-    result_type: 'list',
-    chart_type: 'bar',
-    formula: 'days_until_end',
-    group_by: '',
-    sort_by: 'created_at',
-    sort_order: 'desc',
-    limit: 20,
-    filters: {
-      assigned_to: '$ME',
-      status: '',
-      priority: '',
-      sprint_status: '',
-      date_filter: {
-        type: 'relative',
-        value: 'today',
-      },
-    },
+    entity: "cards", result_type: "list", chart_type: "bar", formula: "days_until_end",
+    group_by: "", sort_by: "created_at", sort_order: "desc", limit: 20,
+    filters: { assigned_to: "$ME", status: "", priority: "", sprint_status: "", date_filter: { type: "relative", value: "today" } },
   },
-})
+});
 
-// Use ref<WidgetForm> so reassignment fully replaces the object — no
-// Object.assign shallow-merge issues with nested reactive objects.
-const form = ref<WidgetForm>(defaultForm())
-
-// ── Auto-refresh timers ────────────────────────────────────────────────────
-const refreshTimers = ref<Record<string, ReturnType<typeof setInterval>>>({})
+const form = ref<WidgetForm>(defaultForm());
+const refreshTimers = ref<Record<string, ReturnType<typeof setInterval>>>({});
 
 function setupAutoRefresh(widget: Widget): void {
-  if (!widget.refresh_interval || widget.refresh_interval <= 0) return
-  clearWidgetTimer(widget._id)
-  refreshTimers.value[widget._id] = setInterval(() => {
-    store.fetchWidgetData(widget._id)
-  }, widget.refresh_interval * 1000)
+  if (!widget.refresh_interval || widget.refresh_interval <= 0) return;
+  clearWidgetTimer(widget._id);
+  refreshTimers.value[widget._id] = setInterval(() => { store.fetchWidgetData(widget._id); }, widget.refresh_interval * 1000);
 }
-
 function clearWidgetTimer(id: string): void {
-  if (refreshTimers.value[id]) {
-    clearInterval(refreshTimers.value[id])
-    delete refreshTimers.value[id]
-  }
+  if (refreshTimers.value[id]) { clearInterval(refreshTimers.value[id]); delete refreshTimers.value[id]; }
 }
 
-// ── Lifecycle ──────────────────────────────────────────────────────────────
 onMounted(async () => {
-  await store.fetchWidgets(props.workspaceId)
-  await store.fetchAllPinnedWidgetData()
-  store.pinnedWidgets.forEach((w: Widget) => setupAutoRefresh(w))
-})
+  await store.fetchWidgets(props.workspaceId);
+  await store.fetchAllPinnedWidgetData();
+  store.pinnedWidgets.forEach((w: Widget) => setupAutoRefresh(w));
+});
+onBeforeUnmount(() => { Object.keys(refreshTimers.value).forEach(clearWidgetTimer); });
 
-onBeforeUnmount(() => {
-  Object.keys(refreshTimers.value).forEach(clearWidgetTimer)
-})
-
-// ── Actions ────────────────────────────────────────────────────────────────
-async function fetchAllPinnedWidgetData(): Promise<void> {
-  await store.fetchAllPinnedWidgetData()
-}
-
-async function refreshWidget(id: string): Promise<void> {
-  await store.refreshWidget(id)
-}
+async function fetchAllPinnedWidgetData(): Promise<void> { await store.fetchAllPinnedWidgetData(); }
+async function refreshWidget(id: string): Promise<void> { await store.refreshWidget(id); }
 
 function openAddModal(): void {
-  editingWidget.value = null
-  form.value = defaultForm()
-  showModal.value = true
+  editingWidget.value = null;
+  form.value = defaultForm();
+  showManualForm.value = false;
+  aiPrompt.value = '';
+  showModal.value = true;
 }
 
 function openEditModal(widget: Widget): void {
-  editingWidget.value = widget
+  editingWidget.value = widget;
+  showManualForm.value = true; // edit always goes straight to form
   form.value = {
-    title: widget.title,
-    description: widget.description ?? '',
-    icon: widget.icon ?? '📊',
-    color: widget.color ?? '#7D68C8',
-    is_pinned: widget.is_pinned,
-    refresh_interval: widget.refresh_interval ?? 300,
+    title: widget.title, description: widget.description ?? "", icon: widget.icon ?? "📊",
+    color: widget.color ?? "#7D68C8", is_pinned: widget.is_pinned, refresh_interval: widget.refresh_interval ?? 300,
     query: {
-      entity: (widget.query?.entity as Entity) ?? 'cards',
-      result_type: (widget.query?.result_type as ResultType) ?? 'list',
-      chart_type: (widget.query?.chart_type as ChartType) ?? 'bar',
-      formula: (widget.query?.formula as Formula) ?? 'days_until_end',
-      group_by: widget.query?.group_by ?? '',
-      sort_by: widget.query?.sort_by ?? 'created_at',
-      sort_order: (widget.query?.sort_order as SortOrder) ?? 'desc',
-      limit: widget.query?.limit ?? 20,
+      entity: (widget.query?.entity as Entity) ?? "cards", result_type: (widget.query?.result_type as ResultType) ?? "list",
+      chart_type: (widget.query?.chart_type as ChartType) ?? "bar", formula: (widget.query?.formula as Formula) ?? "days_until_end",
+      group_by: widget.query?.group_by ?? "", sort_by: widget.query?.sort_by ?? "created_at",
+      sort_order: (widget.query?.sort_order as SortOrder) ?? "desc", limit: widget.query?.limit ?? 20,
       filters: {
-        assigned_to: widget.query?.filters?.assigned_to ?? '$ME',
-        status: widget.query?.filters?.status ?? '',
-        priority: (widget.query?.filters?.priority as Priority) ?? '',
-        sprint_status: (widget.query?.filters?.sprint_status as SprintStatus) ?? '',
-        date_filter: {
-          type: 'relative',
-          value: (widget.query?.filters?.date_filter?.value as DateFilterValue) ?? 'today',
-        },
+        assigned_to: widget.query?.filters?.assigned_to ?? "$ME", status: widget.query?.filters?.status ?? "",
+        priority: (widget.query?.filters?.priority as Priority) ?? "",
+        sprint_status: (widget.query?.filters?.sprint_status as SprintStatus) ?? "",
+        date_filter: { type: "relative", value: (widget.query?.filters?.date_filter?.value as DateFilterValue) ?? "today" },
       },
     },
-  }
-  showModal.value = true
+  };
+  showModal.value = true;
 }
 
-function closeModal(): void {
-  showModal.value = false
-  editingWidget.value = null
-}
+function closeModal(): void { showModal.value = false; editingWidget.value = null; }
+
+watch(showModal, (val) => { if (!val) { showManualForm.value = false; aiPrompt.value = ''; } });
 
 function buildQueryPayload(): Record<string, unknown> {
-  const f = form.value
-  const cleanFilters: Record<string, unknown> = {}
-
-  if (f.query.filters.assigned_to) cleanFilters.assigned_to = f.query.filters.assigned_to
-  if (f.query.filters.status) cleanFilters.status = f.query.filters.status
-  if (f.query.filters.priority) cleanFilters.priority = f.query.filters.priority
-  if (f.query.filters.sprint_status) cleanFilters.sprint_status = f.query.filters.sprint_status
+  const f = form.value;
+  const cleanFilters: Record<string, unknown> = {};
+  if (f.query.filters.assigned_to) cleanFilters.assigned_to = f.query.filters.assigned_to;
+  if (f.query.filters.status) cleanFilters.status = f.query.filters.status;
+  if (f.query.filters.priority) cleanFilters.priority = f.query.filters.priority;
+  if (f.query.filters.sprint_status) cleanFilters.sprint_status = f.query.filters.sprint_status;
   if (f.query.filters.date_filter.value) {
-    cleanFilters.date_field = 'variables.start-date'
-    cleanFilters.date_filter = {
-      type: 'relative',
-      value: f.query.filters.date_filter.value,
-    }
+    cleanFilters.date_field = "variables.start-date";
+    cleanFilters.date_filter = { type: "relative", value: f.query.filters.date_filter.value };
   }
-
   const query: Record<string, unknown> = {
-    entity: f.query.entity,
-    result_type: f.query.result_type,
-    filters: cleanFilters,
-    sort_by: f.query.sort_by || undefined,
-    sort_order: f.query.sort_order || undefined,
-    limit: f.query.limit || 20,
-  }
-
-  if (f.query.result_type === 'chart') {
-    query.chart_type = f.query.chart_type
-    query.group_by = f.query.group_by
-    query.aggregation = 'count'
-  }
-
-  if (f.query.result_type === 'computed') {
-    query.formula = f.query.formula
-  }
-
-  return query
+    entity: f.query.entity, result_type: f.query.result_type, filters: cleanFilters,
+    sort_by: f.query.sort_by || undefined, sort_order: f.query.sort_order || undefined, limit: f.query.limit || 20,
+  };
+  if (f.query.result_type === "chart") { query.chart_type = f.query.chart_type; query.group_by = f.query.group_by; query.aggregation = "count"; }
+  if (f.query.result_type === "computed") { query.formula = f.query.formula; }
+  return query;
 }
 
 async function saveWidget(): Promise<void> {
-  const f = form.value
-  const queryPayload = buildQueryPayload()
-
+  const f = form.value;
+  const queryPayload = buildQueryPayload();
   if (editingWidget.value) {
-    const updates: Record<string, unknown> = {
-      title: f.title,
-      description: f.description || null,
-      icon: f.icon,
-      color: f.color,
-      is_pinned: f.is_pinned,
-      refresh_interval: f.refresh_interval,
-      query: queryPayload,
-    }
-
-    const updated: Widget | null = await store.updateWidgetViaAgent(
-      props.workspaceId,
-      editingWidget.value._id,
-      updates,
-    )
-
-    if (updated) {
-      clearWidgetTimer(editingWidget.value._id)
-      setupAutoRefresh(updated)
-      await store.fetchWidgetData(updated._id)
-    }
+    const updates: Record<string, unknown> = { title: f.title, description: f.description || null, icon: f.icon, color: f.color, is_pinned: f.is_pinned, refresh_interval: f.refresh_interval, query: queryPayload };
+    const updated: Widget | null = await store.updateWidgetViaAgent(props.workspaceId, editingWidget.value._id, updates);
+    if (updated) { clearWidgetTimer(editingWidget.value._id); setupAutoRefresh(updated); await store.fetchWidgetData(updated._id); }
   } else {
-    const created: Widget | null = await store.createWidget(props.workspaceId, {
-      title: f.title,
-      description: f.description || null,
-      icon: f.icon,
-      color: f.color,
-      is_pinned: f.is_pinned,
-      refresh_interval: f.refresh_interval,
-      query: queryPayload,
-    })
-
-    if (created) {
-      setupAutoRefresh(created)
-      await store.fetchWidgetData(created._id)
-    }
+    const created: Widget | null = await store.createWidget(props.workspaceId, { title: f.title, description: f.description || null, icon: f.icon, color: f.color, is_pinned: f.is_pinned, refresh_interval: f.refresh_interval, query: queryPayload });
+    if (created) { setupAutoRefresh(created); await store.fetchWidgetData(created._id); }
   }
-
-  closeModal()
+  closeModal();
 }
 
 async function acceptProposal(): Promise<void> {
-  const proposal = store.pendingProposal
-  if (!proposal) return
+  const proposal = store.pendingProposal;
+  if (!proposal) return;
+  const created: Widget | null = await store.createWidget(props.workspaceId, { title: proposal.title ?? "Agent Widget", description: proposal.description ?? null, icon: proposal.icon ?? "📊", color: proposal.color ?? "#7D68C8", is_pinned: true, refresh_interval: proposal.refresh_interval ?? 300, query: proposal.query ?? {} });
+  if (created) { setupAutoRefresh(created); await store.fetchWidgetData(created._id); }
+}
 
-  const created: Widget | null = await store.createWidget(props.workspaceId, {
-    title: proposal.title ?? 'Agent Widget',
-    description: proposal.description ?? null,
-    icon: proposal.icon ?? '📊',
-    color: proposal.color ?? '#7D68C8',
-    is_pinned: true,
-    refresh_interval: proposal.refresh_interval ?? 300,
-    query: proposal.query ?? {},
-  })
+function confirmDelete(widget: Widget): void { widgetToDelete.value = widget; showDeleteModal.value = true; }
+async function deleteWidget(): Promise<void> {
+  if (!widgetToDelete.value) return;
+  clearWidgetTimer(widgetToDelete.value._id);
+  await store.deleteWidget(widgetToDelete.value._id);
+  showDeleteModal.value = false;
+  widgetToDelete.value = null;
+}
 
-  if (created) {
-    setupAutoRefresh(created)
-    await store.fetchWidgetData(created._id)
+async function generateWithAi(): Promise<void> {
+  if (!aiPrompt.value.trim()) return;
+  isAiGenerating.value = true;
+  try {
+    // Call your AI endpoint here
+    // const result = await store.generateWidget({ prompt: aiPrompt.value })
+    // apply result to form and switch to manual
+  } catch (err) {
+    console.error(err);
+  } finally {
+    isAiGenerating.value = false;
   }
 }
 
-function confirmDelete(widget: Widget): void {
-  widgetToDelete.value = widget
-  showDeleteModal.value = true
-}
-
-async function deleteWidget(): Promise<void> {
-  if (!widgetToDelete.value) return
-  clearWidgetTimer(widgetToDelete.value._id)
-  await store.deleteWidget(widgetToDelete.value._id)
-  showDeleteModal.value = false
-  widgetToDelete.value = null
-}
-
-// ── Helpers ────────────────────────────────────────────────────────────────
-const CHART_COLORS = ['#7D68C8', '#6e3b96', '#9356c5', '#a78bfa', '#c4b5fd']
-
-function getChartColor(idx: string | number): string {
-  return CHART_COLORS[Number(idx) % CHART_COLORS.length]
-}
-
+const CHART_COLORS = ["#7D68C8", "#6e3b96", "#9356c5", "#a78bfa", "#c4b5fd"];
+function getChartColor(idx: string | number): string { return CHART_COLORS[Number(idx) % CHART_COLORS.length]; }
 function formatTime(iso?: string): string {
-  if (!iso) return ''
-  return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  if (!iso) return "";
+  return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 </script>
 
 <style scoped>
-.peak-root {
-  padding: 20px 24px;
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.18s, transform 0.18s;
 }
-
-/* ── Header ─────────────────────────────────────────────────────────────── */
-.peak-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-.peak-header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.peak-header-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--bg-lavender, rgba(241, 238, 255, 1));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent, #7d68c8);
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.peak-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary, #2b2c30);
-  margin: 0;
-  line-height: 1.2;
-}
-.peak-subtitle {
-  font-size: 12px;
-  color: var(--text-secondary, #6b6b6e);
-  margin: 0;
-}
-.peak-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ── Buttons ────────────────────────────────────────────────────────────── */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  background: var(--accent, #7d68c8);
-  color: #fff;
-  border: none;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-  white-space: nowrap;
-}
-.btn-primary:hover:not(:disabled) { background: var(--accent-hover, #6e3b96); }
-.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  background: var(--bg-card, #fff);
-  color: var(--text-primary, #2b2c30);
-  border: 1px solid var(--border, #d9d9d9);
-  border-radius: 7px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-ghost:hover:not(:disabled) { background: var(--bg-surface, #dedfe3); }
-.btn-ghost:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.btn-ghost-sm {
-  padding: 5px 10px;
-  background: transparent;
-  color: var(--text-secondary, #6b6b6e);
-  border: 1px solid var(--border, #d9d9d9);
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: background 0.12s;
-}
-.btn-ghost-sm:hover { background: var(--bg-surface, #dedfe3); }
-
-.btn-accent-sm {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  background: var(--accent, #7d68c8);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.12s;
-}
-.btn-accent-sm:hover:not(:disabled) { background: var(--accent-hover, #6e3b96); }
-.btn-accent-sm:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.btn-danger {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  background: #ef4444;
-  color: #fff;
-  border: none;
-  border-radius: 7px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.btn-danger:hover:not(:disabled) { background: #dc2626; }
-.btn-danger:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.icon-btn {
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: none;
-  border-radius: 6px;
-  font-size: 11px;
-  color: var(--text-secondary, #6b6b6e);
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-.icon-btn:hover { background: var(--bg-surface, #dedfe3); color: var(--text-primary, #2b2c30); }
-.icon-btn--danger:hover { background: #fef2f2; color: #ef4444; }
-.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-/* ── Empty state ────────────────────────────────────────────────────────── */
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 24px;
-  text-align: center;
-  gap: 12px;
-}
-.empty-icon {
-  width: 56px;
-  height: 56px;
-  background: var(--bg-lavender, rgba(241, 238, 255, 1));
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: var(--accent, #7d68c8);
-  margin-bottom: 4px;
-}
-.empty-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary, #2b2c30);
-  margin: 0;
-}
-.empty-desc {
-  font-size: 13px;
-  color: var(--text-secondary, #6b6b6e);
-  margin: 0;
-  max-width: 300px;
-}
-
-/* ── Proposal banner ────────────────────────────────────────────────────── */
-.proposal-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  background: var(--bg-lavender, rgba(241, 238, 255, 1));
-  border: 1px solid rgba(125, 104, 200, 0.25);
-  border-radius: 10px;
-  padding: 12px 16px;
-  margin-bottom: 20px;
-}
-.proposal-banner-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.proposal-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  background: var(--accent, #7d68c8);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.proposal-title {
-  font-size: 11px;
-  color: var(--text-secondary, #6b6b6e);
-  margin: 0;
-}
-.proposal-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary, #2b2c30);
-  margin: 0;
-}
-.proposal-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-/* ── Grid ───────────────────────────────────────────────────────────────── */
-.widgets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-/* ── Widget card ────────────────────────────────────────────────────────── */
-.widget-card {
-  background: var(--bg-card, #fff);
-  border: 1px solid var(--border, #d9d9d9);
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transition: box-shadow 0.15s, border-color 0.15s;
-  position: relative;
-}
-.widget-card:hover {
-  border-color: rgba(125, 104, 200, 0.35);
-  box-shadow: 0 4px 16px rgba(125, 104, 200, 0.1);
-}
-.widget-card--loading { opacity: 0.85; }
-
-.widget-card-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 14px 14px 10px;
-  border-bottom: 1px solid var(--border, #d9d9d9);
-}
-.widget-icon-wrap {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.widget-icon-emoji { font-size: 16px; line-height: 1; }
-.widget-meta { flex: 1; min-width: 0; }
-.widget-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-primary, #2b2c30);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.widget-entity {
-  font-size: 10px;
-  color: var(--text-secondary, #6b6b6e);
-  margin: 2px 0 0;
-  text-transform: capitalize;
-}
-.widget-actions {
-  display: flex;
-  gap: 2px;
-  flex-shrink: 0;
+.modal-fade-enter-from,
+.modal-fade-leave-to {
   opacity: 0;
-  transition: opacity 0.15s;
-}
-.widget-card:hover .widget-actions { opacity: 1; }
-
-.widget-card-body { flex: 1; padding: 14px; }
-
-.data-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 80px;
-  color: var(--text-secondary, #6b6b6e);
-  font-size: 18px;
-}
-.no-data {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 80px;
-  font-size: 12px;
-  color: var(--text-secondary, #6b6b6e);
+  transform: scale(0.97);
 }
 
-/* list */
-.list-count-badge {
-  display: inline-block;
-  font-size: 10px;
-  font-weight: 600;
-  padding: 2px 8px;
-  background: var(--bg-lavender, rgba(241, 238, 255, 1));
-  color: var(--accent, #7d68c8);
-  border-radius: 20px;
-  margin-bottom: 8px;
-}
-.list-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 5px; }
-.list-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--text-primary, #2b2c30); }
-.list-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.list-item-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.list-item-status {
-  font-size: 10px;
-  padding: 1px 6px;
-  background: var(--bg-surface, #dedfe3);
-  border-radius: 4px;
-  color: var(--text-secondary, #6b6b6e);
-  flex-shrink: 0;
-}
-.list-more { font-size: 11px; color: var(--text-secondary, #6b6b6e); margin: 6px 0 0; padding-left: 13px; }
-
-/* count */
-.count-result { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 0; gap: 4px; }
-.count-value { font-size: 40px; font-weight: 700; line-height: 1; margin: 0; }
-.count-label { font-size: 12px; color: var(--text-secondary, #6b6b6e); margin: 0; text-align: center; }
-
-/* computed */
-.computed-result { display: flex; flex-direction: column; gap: 6px; }
-.computed-main { display: flex; align-items: baseline; gap: 6px; }
-.computed-value { font-size: 36px; font-weight: 700; line-height: 1; margin: 0; }
-.computed-unit { font-size: 14px; color: var(--text-secondary, #6b6b6e); margin: 0; }
-.computed-label { font-size: 12px; color: var(--text-secondary, #6b6b6e); margin: 0; }
-.computed-progress-wrap { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-.computed-progress-bar { flex: 1; height: 6px; background: var(--bg-surface, #dedfe3); border-radius: 20px; overflow: hidden; }
-.computed-progress-fill { height: 100%; border-radius: 20px; transition: width 0.4s ease; }
-.computed-progress-text { font-size: 11px; color: var(--text-secondary, #6b6b6e); white-space: nowrap; }
-
-/* chart */
-.chart-total { display: flex; align-items: baseline; gap: 5px; margin-bottom: 10px; }
-.chart-total-value { font-size: 22px; font-weight: 700; color: var(--text-primary, #2b2c30); }
-.chart-total-label { font-size: 12px; color: var(--text-secondary, #6b6b6e); }
-.chart-bars { display: flex; flex-direction: column; gap: 7px; }
-.chart-bar-item { display: flex; align-items: center; gap: 8px; }
-.chart-bar-label { font-size: 11px; color: var(--text-secondary, #6b6b6e); width: 72px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.chart-bar-track { flex: 1; height: 8px; background: var(--bg-surface, #dedfe3); border-radius: 20px; overflow: hidden; }
-.chart-bar-fill { height: 100%; border-radius: 20px; transition: width 0.4s ease; min-width: 4px; }
-.chart-bar-val { font-size: 11px; font-weight: 600; color: var(--text-primary, #2b2c30); width: 24px; text-align: right; flex-shrink: 0; }
-
-/* footer */
-.widget-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 14px;
-  border-top: 1px solid var(--border, #d9d9d9);
-  background: var(--bg-surface, #dedfe3);
-}
-.widget-resolved-at,
-.widget-refresh-interval {
-  font-size: 10px;
-  color: var(--text-secondary, #6b6b6e);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* ── Skeleton ───────────────────────────────────────────────────────────── */
-.widget-skeleton { pointer-events: none; padding: 14px; gap: 10px; display: flex; flex-direction: column; }
-.skeleton-line { height: 12px; background: var(--bg-surface, #dedfe3); border-radius: 6px; animation: pulse 1.4s ease-in-out infinite; }
-.skeleton-line.short { width: 40%; }
-.skeleton-line.long { width: 80%; }
-.skeleton-value { height: 48px; background: var(--bg-surface, #dedfe3); border-radius: 8px; margin-top: 4px; animation: pulse 1.4s ease-in-out infinite; }
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-/* ── Modal ──────────────────────────────────────────────────────────────── */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  padding: 16px;
-}
-.modal-card {
-  background: var(--bg-card, #fff);
-  border-radius: 14px;
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-}
-.modal-card--sm { max-width: 380px; }
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border, #d9d9d9);
-  flex-shrink: 0;
-}
-.modal-title { font-size: 15px; font-weight: 700; color: var(--text-primary, #2b2c30); margin: 0; }
-.modal-body { padding: 20px; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; }
-.modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--border, #d9d9d9); flex-shrink: 0; }
-
-/* ── Form ───────────────────────────────────────────────────────────────── */
-.form-section-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--accent, #7d68c8);
-  padding: 4px 0 2px;
-  border-bottom: 1px solid var(--border, #d9d9d9);
-  margin-top: 4px;
-}
-.form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 0; }
-.form-group label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary, #6b6b6e);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.required { color: #ef4444; margin-left: 2px; }
-.form-row { display: flex; gap: 12px; flex-wrap: wrap; }
-.form-row .form-group { min-width: 140px; }
-.form-input {
-  padding: 7px 10px;
-  background: var(--bg-input, #fff);
-  border: 1px solid var(--border-input, #d9d9d9);
-  border-radius: 7px;
-  font-size: 13px;
-  color: var(--text-primary, #2b2c30);
-  outline: none;
-  transition: border-color 0.12s;
-  width: 100%;
-  box-sizing: border-box;
-}
-.form-input:focus { border-color: var(--accent, #7d68c8); box-shadow: 0 0 0 2px rgba(125, 104, 200, 0.15); }
-.form-select {
-  padding: 7px 10px;
-  background: var(--bg-input, #fff);
-  border: 1px solid var(--border-input, #d9d9d9);
-  border-radius: 7px;
-  font-size: 13px;
-  color: var(--text-primary, #2b2c30);
-  outline: none;
-  transition: border-color 0.12s;
-  width: 100%;
-  cursor: pointer;
-}
-.form-select:focus { border-color: var(--accent, #7d68c8); }
-.color-row { display: flex; align-items: center; gap: 8px; }
-.form-color {
-  width: 36px;
-  height: 36px;
-  border: 1px solid var(--border, #d9d9d9);
-  border-radius: 7px;
-  cursor: pointer;
-  padding: 2px;
-  background: var(--bg-input, #fff);
-  flex-shrink: 0;
-}
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-primary, #2b2c30);
-  cursor: pointer;
-  text-transform: none;
-  letter-spacing: 0;
-  font-weight: 400;
-}
-.form-checkbox { width: 16px; height: 16px; accent-color: var(--accent, #7d68c8); cursor: pointer; }
-.delete-confirm-text { font-size: 13px; color: var(--text-primary, #2b2c30); line-height: 1.6; margin: 0; }
-
-/* ── Transitions ────────────────────────────────────────────────────────── */
-.modal-fade-enter-active, .modal-fade-leave-active { transition: opacity 0.18s, transform 0.18s; }
-.modal-fade-enter-from, .modal-fade-leave-to { opacity: 0; transform: scale(0.97); }
-
-/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .peak-root { padding: 14px 12px; }
-  .widgets-grid { grid-template-columns: 1fr; }
-  .peak-title { font-size: 16px; }
-  .modal-body { padding: 14px; }
-  .form-row { flex-direction: column; }
-  .proposal-banner { flex-direction: column; align-items: flex-start; }
+  .peak-root {
+    padding: 14px 12px;
+  }
 }
 </style>

@@ -11,13 +11,13 @@
         @go-back="handleGoBack"
       />
     </template>
-    <div v-else class="flex flex-row flex-1 min-h-0">
+    <div v-else class="flex flex-row flex-1 min-h-0 gap-[10px]">
       <div class="flex flex-col flex-1 min-h-0 min-w-0 -mt-3.5">
         <div class="overflow-x-auto w-full flex-1 min-w-0">
-          <div class="min-w-[900px] h-full flex flex-col">
+          <div class="min-w-[850px] h-full flex flex-col">
             <div
               v-if="!isStartingSprint"
-              class="pe-[4px] pt-[14px] w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
+              class="pt-[14px] w-full min-w-0 flex flex-col min-h-0 overflow-x-auto h-full"
             >
               <div
                 ref="containerRef"
@@ -1193,6 +1193,7 @@ const { mutate: deleteSprintCard, isPending: isDeletingSprintTicket } =
       // Reset modal state
       resetDeleteState();
     },
+
   });
 
 const title = ref("");
@@ -1242,8 +1243,22 @@ watch([selectedFilter, selectedSheetFilter, selectedPlanIds], () => {
 // delete sprint
 const { mutate: deleteSprint, isPending: isDeleting } = useDeleteSprint({
   onSuccess: () => {
+    const deletedId = selectedSprint.value?._id;
+
+    // If the deleted sprint was the currently selected one, clear the selection
+    if (deletedId && selectedSprintId.value === deletedId) {
+      selectedSprintId.value = "";
+      localStorage.removeItem("activeSprintKey");
+      localStorage.removeItem("selectedSprintTitle");
+    }
+
+    toast.success(`"${selectedSprint.value?.title || sprintType.value}" deleted successfully`);
+    selectedSprint.value = null;
     handleRefresh();
     showSprintDelete.value = false;
+  },
+  onError: (error: any) => {
+    toast.error(error?.message || `Failed to delete ${sprintType.value}. Please try again.`);
   },
 });
 const selectedSprint = ref<any>(null);

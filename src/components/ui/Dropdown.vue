@@ -27,21 +27,16 @@
             : 'file'
         } ${faIconSizeClass}`"
       ></i>
+<span :class="labelSizeClass">
+  <span v-if="prefix" class="font-bold">{{ prefix }}:</span>
 
-      <span :class="labelSizeClass">
-        <span v-if="prefix" class="font-bold">{{ prefix }}:</span>
-        <span class="text-nowrap" v-if="selectedOption?.title">
-          {{ selectedOption?.title }}
-          <template
-            v-if="
-              selectedNested && selectedNested.parentId === selectedOption?._id
-            "
-          >
-            ({{ selectedNested.option.title }})
-          </template>
-        </span>
-        <span v-else>{{ customTitle }}</span>
-      </span>
+  <span class="text-nowrap">
+    {{ displayTitle }}
+    <template v-if="displayNestedTitle">
+      ({{ displayNestedTitle }})
+    </template>
+  </span>
+</span>
 
       <!-- Chevron -->
       <svg
@@ -337,7 +332,24 @@ function startFloating() {
     );
   }
 }
+const truncate = (text:any, limit = 12) =>
+  text?.length > limit ? text.slice(0, limit) + '...' : text;
+  const displayTitle = computed(() => {
+  if (selectedOption?.value?.title) {
+    return truncate(selectedOption.value.title);
+  }
+  return truncate(props.customTitle);
+});
 
+const displayNestedTitle = computed(() => {
+  if (
+    selectedNested.value &&
+    selectedNested.value.parentId === selectedOption.value?._id
+  ) {
+    return truncate(selectedNested.value?.option?.title);
+  }
+  return null;
+});
 function updatePosition() {
   if (!triggerRef.value || !menuRef.value) return;
 

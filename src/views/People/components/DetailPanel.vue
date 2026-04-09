@@ -31,15 +31,16 @@
 
         <div
           v-else
-          class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full"
+          class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full text-white text-sm font-semibold"
           :style="{
-            backgroundColor: cardDetails?.name
+            backgroundColor: (cardDetails?.name || cardDetails?.email)
               ? avatarColor({ email: cardDetails?.email })
               : '',
           }"
         >
-          {{ getInitials(cardDetails?.name) }}
-          <i v-if="!cardDetails?.name" class="fa-solid fa-user text-white"></i>
+          <template v-if="cardDetails?.name">{{ getInitials(cardDetails.name) }}</template>
+          <template v-else-if="cardDetails?.email">{{ getEmailInitials(cardDetails.email) }}</template>
+          <i v-else class="fa-solid fa-user text-white"></i>
         </div>
         <div>
           <h1 class="text-base font-medium text-text-primary cursor-pointer">
@@ -451,7 +452,12 @@ const ManagePermissionsModal = defineAsyncComponent(() =>
   import("../modals/ManagePermissionsModal.vue")
 );
 import { getInitials } from "../../../utilities";
-import { avatarColor } from "../../../utilities/avatarColor"; 
+import { avatarColor } from "../../../utilities/avatarColor";
+
+function getEmailInitials(email: string): string {
+  const local = email.split('@')[0] || ''
+  return local.slice(0, 2).toUpperCase()
+}
 import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
 
 // workspace roles
@@ -482,7 +488,11 @@ const tabOptions = [
 const { data: peopleVar } = usePeopleVar(workspaceId.value);
 const { mutate: UpdateVar } = useUpdateVar({
   onSuccess: () => {
+    toast.success("Field updated successfully!");
     queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+  },
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to update field.");
   },
 });
 const props = defineProps({
@@ -649,12 +659,14 @@ const selectedRole = ref(cardDetails.value?.workspace_access_role_id ?? "");
 // Mutation
 const { mutate: assignRole } = useAssignRole({
   onSuccess: () => {
-    console.log("Role assigned successfully!");
+    toast.success("Role assigned successfully!");
     // Optionally refetch people or roles 
     queryClient.invalidateQueries({ queryKey: ["people-lists"]});  
     queryClient.invalidateQueries({ queryKey: ["people"]});  
   },
-  onError: (err: any) => console.error(err), 
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to assign role.");
+  }, 
 });
 
 async function fetchAgentsRolesPermissions() {
@@ -817,8 +829,8 @@ function confirmDelete() {
       showDeleteModal.value = false;
       refetchCardDetails();
     },
-    onError: () => {
-      toast.error("Failed to delete variable");
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to delete variable");
     }
   });
 }
@@ -834,8 +846,8 @@ function handleVariableDefinitionUpdate({ id, payload }: any) {
       toast.success("Field updated successfully");
       refetchCardDetails();
     },
-    onError: () => {
-      toast.error("Failed to update field");
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update field");
     }
   });
 }

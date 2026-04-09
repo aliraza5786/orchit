@@ -8,9 +8,11 @@
                 <img v-if="ticket?.avatar" :src="ticket?.avatar" class="min-w-10 w-10 h-10 rounded-full object-cover"
                     alt="avartar">
                 <div v-else
-                    class="w-10 min-w-10 overflow-hidden overflow-ellipsis aspect-square bg-bg-surface flex justify-center items-center rounded-full "
-                    :style="{ backgroundColor: ticket?.name ? avatarColor({ email: ticket?.email, }) : '' }">
-                    {{ getInitials(ticket?.name) }} <i v-if="!ticket?.name" class="fa-solid fa-user text-white"></i>
+                    class="w-10 min-w-10 overflow-hidden overflow-ellipsis aspect-square bg-bg-surface flex justify-center items-center rounded-full text-white text-sm font-semibold"
+                    :style="{ backgroundColor: (ticket?.name || ticket?.email) ? avatarColor({ email: ticket?.email, name: ticket?.name }) : '' }">
+                    <template v-if="ticket?.name">{{ getInitials(ticket.name) }}</template>
+                    <template v-else-if="ticket?.email">{{ getEmailInitials(ticket.email) }}</template>
+                    <i v-else class="fa-solid fa-user text-white"></i>
                 </div>
                  <div class=" max-w-[90%]">
                     
@@ -73,7 +75,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQueryClient } from '@tanstack/vue-query'
+// import { useQueryClient } from '@tanstack/vue-query'
 import { defineAsyncComponent } from "vue";
 const DropMenu = defineAsyncComponent(() =>
   import("../../../components/ui/DropMenu.vue")
@@ -90,6 +92,7 @@ import { useCompanyId } from '../../../services/user'
 import { getInitials } from '../../../utilities'
 import { avatarColor } from '../../../utilities/avatarColor'
 import { usePermissions } from '../../../composables/usePermissions'
+import { toast } from 'vue-sonner';
 const {   canInviteUser,  canEditUser, canDeleteUser} = usePermissions()
 const showAddMembers = ref(false);
 const emit = defineEmits()
@@ -120,7 +123,7 @@ const { data: people } = usePeople(workspaceId.value, companyId);
 
 const members = ref([]);
 const showDelete = ref(false)
-const queryClient = useQueryClient()
+// const queryClient = useQueryClient()
 function getMenuItems() {
   const isOwner = Boolean(props.ticket?.is_owner)
   const hasUser = Boolean(props.ticket?.email
@@ -183,8 +186,11 @@ const assignHandle = () => {
 }
 const { mutate: deleleSeat, isPending: deletingTicket } = useDeleteSeat({
     onSuccess: () => {
-
-        queryClient.invalidateQueries({ queryKey: ['people-lists'] })
+        toast.success("Seat deleted successfully!");
+        emit("deleted", props.ticket._id);
+    },
+    onError: (err: any) => {
+        toast.error(err.message || "Failed to delete seat.");
     }
 })
 
@@ -194,12 +200,20 @@ const handleDeleteTicket = () => {
 }
 
 const { mutate: invitePeople, isPending: inviting } = useAssignTeam({
-    onSuccess: () => {
+    onSuccess: (res: any) => {
+        toast.success("Seat assigned successfully!");
         showAddMembers.value = false;
-        queryClient.invalidateQueries({ queryKey: ['people-lists'] })
-        emit("assigned")
+        emit("assigned", res?.data ?? res)
+    },
+    onError: (err: any) => {
+        toast.error(err.message || "Failed to assign seat.");
     }
 })
+function getEmailInitials(email: string): string {
+    const local = email.split('@')[0] || ''
+    return local.slice(0, 2).toUpperCase()
+}
+
 function extractNameFromEmail(email: string) {
     const local = (email.split('@')[0] || '').split('+')[0]
     const parts = local.split(/[^a-zA-Z]+/).filter(Boolean)
@@ -209,10 +223,12 @@ function extractNameFromEmail(email: string) {
 const { mutate: unassign } = useUnAssignTeam(
     {
         onSuccess: () => {
-
+            toast.success("Seat unassigned successfully!");
             showAddMembers.value = false;
-            queryClient.invalidateQueries({ queryKey: ['people-lists'] })
             emit("unAssigned")
+        },
+        onError: (err: any) => {
+            toast.error(err.message || "Failed to unassign seat.");
         }
     }
 );

@@ -20,6 +20,7 @@
     <div class="py-4 px-5">
       <SwitchTab v-model="activeTab" class="mb-2" :options="tabOptions" />
       <!-- Title -->
+       <!-- {{ updateAgentData }} -->
       <section v-if="activeTab == 'configure'">
         <div class="space-y-6">
           <!-- Agent Name -->
@@ -47,9 +48,13 @@
           </div>
           <BaseSelectField
             size="md"
-            v-model="selectedRole"
+            :model-value="selectedRole"
             :options="roleOptions"
             placeholder="Select Role"
+            @click.stop="handleRoleClick"
+            @update:modelValue="handleRoleChange"
+            :disabled="!canEditUser" 
+            :loading="agentStore.isLoadingRoles || !newCompanyId"
           />
           <div class="flex items-center justify-between mb-1 mt-2">
             <span class="text-base font-medium text-text-primary block"
@@ -114,6 +119,10 @@
           <TagInput
             v-model="agentConfig.conditions_rules"
             label="Conditions / Rules"
+          />
+          <TagInput
+            v-model="agentConfig.modules"
+            label="Modules/Permissions"
           />
           <div class="flex gap-2" v-if="transformedData?.length">
             <input
@@ -417,6 +426,101 @@
           <span v-else>Upload Training Content</span>
         </button>
       </div>
+      <div class="flex flex-col" style="height: calc(87vh - 100px);" v-if="activeTab === 'prompt'">
+
+  <div class="flex-1 overflow-y-auto p-4 space-y-3">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-3 px-2 py-2">
+      <div class="flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="select-all"
+          :checked="allSelected"
+          @change="toggleSelectAll"
+          class="h-4 w-4 rounded border-border cursor-pointer"
+        />
+        <label for="select-all" class="text-sm font-medium">
+          Select All
+        </label>
+      </div>
+
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Filter prompts..."
+        class="px-3 py-1 text-sm border border-border rounded-lg"
+      />
+    </div>
+      <div
+  v-for="module in filteredModules"
+  :key="module.module_title"
+  class="border border-border rounded-lg overflow-hidden bg-bg-surface/30"
+>
+  <!-- Header -->
+  <button
+    @click="toggleModule(module.module_title)"
+    class="w-full px-3 py-2 flex justify-between items-center hover:bg-bg-surface transition"
+  >
+    <span class="text-sm font-medium text-text-primary">
+      {{ module.module_title }}
+    </span>
+
+    <i
+      :class="[
+        'fa-solid fa-chevron-down text-xs text-text-secondary transition-transform',
+        openModules[module.module_title] ? 'rotate-180' : ''
+      ]"
+    ></i>
+  </button>
+
+  <!-- Content -->
+  <div
+    v-show="openModules[module.module_title]"
+    class="py-2 space-y-1 border-t border-border bg-bg-input"
+  >
+    <div
+      v-for="action in module.granted_actions"
+      :key="action._id"
+      class="flex items-start gap-2 hover:bg-bg-body px-3 py-2"
+    >
+      <div class="flex items-center h-5">
+        <input
+          type="checkbox"
+          v-model="action.is_selected"
+          :id="action._id"
+          class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+        />
+      </div>
+
+      <div class="ml-2 text-sm">
+        <label
+          :for="action._id"
+          class="font-medium text-text-primary cursor-pointer select-none"
+        >
+          {{ action.title }}
+        </label>
+
+        <!-- <p v-if="action.prompt" class="text-xs text-text-secondary">
+          {{ action.prompt }}
+        </p> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div>
+  <div class="p-4 bg-bg-card border-t border-border shrink-0">
+  <button
+    @click="savePromptActions"
+    :disabled="isSavingPrompt"
+    class="w-full px-4 py-2.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition disabled:opacity-50"
+  >
+    <span v-if="isSavingPrompt">Saving...</span>
+    <span v-else>Save Prompt</span>
+  </button>
+</div>
+</div>
     </div>
 
     <ConfirmModal
@@ -429,14 +533,31 @@
       :loading="isDeleting"
       @confirm="confirmDelete"
     />
+     <AddCustomRoleModal
+      v-if="showAddRoleModal"
+      :show="showAddRoleModal"
+      :workspaceId="workspaceId"
+      :companyId="newCompanyId"
+      @close="showAddRoleModal = false"
+    />
+    <ManagePermissionsModal
+      v-if="showManagePermissionsModal"
+      :show="showManagePermissionsModal"
+      :companyId="newCompanyId"
+      :initialRoleId="selectedRole"
+      @close="showManagePermissionsModal = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch, defineAsyncComponent } from "vue";
+import { computed, reactive, ref, watch, defineAsyncComponent, onMounted, nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useAgentStore } from "../../../stores/agentStore";
 import { useDeletePeopleVarDef } from "../../../queries/usePeople";
+import AddCustomRoleModal from "../modals/AddCustomRoleModal.vue";
+import { usePermissions } from "../../../composables/usePermissions";
+import { useAssignRole } from "../../../queries/usePeople";
 const SwitchTab = defineAsyncComponent(
   () => import("../../../components/ui/SwitchTab.vue"),
 );
@@ -454,6 +575,8 @@ import { useRouteIds } from "../../../composables/useQueryParams";
 import { useSheets } from "../../../queries/useSheets";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import { useRoute } from "vue-router";
+import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
+import ManagePermissionsModal from "../modals/ManagePermissionsModal.vue";
 const { workspaceId, moduleId } = useRouteIds();
 const workspaceStore = useWorkspaceStore();
 const sidePanelStore = useSidePanelStore();
@@ -466,17 +589,67 @@ const openLevel = ref(false);
 const isSheet = ref(false);
 const openSheet = ref(false);
 const route = useRoute();
-const activeTab = ref<"configure" | "knowledge" | "training">("configure");
+const activeTab = ref<"configure" | "knowledge" | "training" | "prompt">("configure");
+const showAddRoleModal = ref(false);
 const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
+const { canEditUser} = usePermissions();
+const showManagePermissionsModal = ref(false);
+const searchQuery = ref('')
+type Action = {
+  _id: string
+  title: string
+  slug: string
+  prompt?: string
+  is_selected: boolean
+}
+
+type Module = {
+  module_id: string | null
+  module_title: string
+  module_type: string
+  granted_actions: Action[]
+}
+
 const updateAgentData = computed(() => {
   return sidePanelStore.selectedCardPeople;
 });
+const openModules = ref<Record<string, boolean>>({})
+const toggleModule = (title: string) => {
+  openModules.value[title] = !openModules.value[title]
+}
+const filteredModules = computed(() => {
+  if (!searchQuery.value) return moduleActions.value
 
+  const query = searchQuery.value.toLowerCase()
+
+  return moduleActions.value
+    .map(module => {
+      const filteredActions = module.granted_actions.filter(action =>
+        action.title.toLowerCase().includes(query) ||
+        (action.prompt && action.prompt.toLowerCase().includes(query))
+      )
+
+      return {
+        ...module,
+        granted_actions: filteredActions
+      }
+    })
+    .filter(module => module.granted_actions.length > 0)
+})
 const tabOptions = [
   { label: "Agent Configure", value: "configure" },
   { label: "Knowledge Based", value: "knowledge" },
   { label: "Training", value: "training" },
+  { label: "Prompt Flows", value: "prompt" },
 ];
+
+interface ModuleAction {
+  module_id: string | null;
+  module_title: string;
+  module_type: string;
+  granted_actions: string[]; // only slugs when saving to backend
+}
+
 interface AgentConfig {
   id: string;
   name: string;
@@ -488,6 +661,9 @@ interface AgentConfig {
   competencies: string[];
   capabilities: string[];
   conditions_rules: string[];
+  actions: string[];
+  modules: string[];
+  module_actions: ModuleAction[]; // <-- added for modules
 }
 
 const agentConfig = reactive<AgentConfig>({
@@ -501,6 +677,9 @@ const agentConfig = reactive<AgentConfig>({
   competencies: [],
   capabilities: [],
   conditions_rules: [],
+  actions: [],
+  modules:[],
+   module_actions: []
 });
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
@@ -524,6 +703,10 @@ const availableCapabilities = [
 const props = defineProps({
   showAgentPanel: { type: Boolean, required: true },
 });
+const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
+  enabled: computed(() => !!workspaceId.value), //reactive
+});
+const newCompanyId = computed(() => workspaceData.value?.company_id ?? null);
 const isEditMode = computed(() => !!agentConfig.id);
 watch(
   () => updateAgentData.value,
@@ -563,7 +746,6 @@ const selectedLevelLabel = computed(() => {
   );
 });
 const description = ref(cardDetails.value?.description ?? "");
-console.log("card details data", cardDetails.value);
 
 watch(
   () => cardDetails.value,
@@ -571,7 +753,11 @@ watch(
     description.value = cardDetails.value?.description ?? "";
   },
 );
-
+function handleRoleClick() {
+  if (!canEditUser) {
+    toast.error("You have no permission to edit user details");
+  }
+}
 watch(
   () => cardDetails.value,
   () => {
@@ -619,6 +805,24 @@ const roleOptions = computed(() => {
     _id: r._id,
     title: r.title,
   }));
+
+  // Add the "Add New Role" option at the end
+  roles.push({
+    _id: "ADD_NEW_ROLE",
+    title: "➕ Add New Role",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
+  },
+  {
+    _id: "MANAGE_PERMISSIONS",
+    title: "🛠 Manage Permissions",
+    customClass:
+      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+    isAction: true,
+  },
+);
+
   return roles;
 });
 // update agent
@@ -635,12 +839,65 @@ const selectLevel = (value: string) => {
   agentConfig.level = value as any;
   openLevel.value = false;
 };
-watch(
-  () => cardDetails.value?.workspace_access_role_id,
-  (newRoleId) => {
-    selectedRole.value = newRoleId ?? "";
+const isRoleChangedByUser = ref(false);
+const isMounted = ref(false);
+
+onMounted(() => {
+  nextTick(() => {
+    isMounted.value = true;
+  });
+});
+const { mutate: assignRole } = useAssignRole({
+  onSuccess: () => {
+    console.log("Role assigned successfully!");
   },
+  onError: (err: any) => console.error(err), 
+});
+function handleRoleChange(newRole: any) {
+  if (!isMounted.value) return;
+  if (!canEditUser) {
+    toast.error("You have no permission to edit user details");
+    return;
+  }
+
+  if (newRole === 'ADD_NEW_ROLE') {
+    showAddRoleModal.value = true;
+    return;
+  }
+
+  if (newRole === 'MANAGE_PERMISSIONS') {
+    showManagePermissionsModal.value = true;
+    return;
+  }
+
+  isRoleChangedByUser.value = true;
+  selectedRole.value = newRole;
+  sidePanelStore.updatePeopleRoleOptimistic(newRole);
+
+  assignRole(
+    {
+      id: cardDetails.value?._id!,
+      workspace_access_role_id: newRole,
+    },
+    {
+      onSuccess: () => {
+        isRoleChangedByUser.value = false;
+      },
+      onError: () => {
+        isRoleChangedByUser.value = false;
+      },
+    }
+  );
+}
+
+watch(
+  () => cardDetails.value?._id,
+  () => {
+    selectJobRole.value = cardDetails.value?.workspace_role_id ?? "";
+  },
+  { immediate: true },
 );
+// Watcher 2
 watch(
   () => cardDetails.value?._id,
   () => {
@@ -649,41 +906,22 @@ watch(
   { immediate: true },
 );
 watch(
-  [() => updateAgentData.value, roleOptions, jobOptions],
-  ([data]) => {
-    if (!data?.agents?.length) return;
-
-    const agent = data.agents[0];
-
+  () => updateAgentData.value,
+  (agent) => {
+    if (!agent) return;
     agentConfig.id = agent._id;
     agentConfig.name = agent.name;
     agentConfig.description = agent.description;
+    agentConfig.system_prompt = agent.system_prompt;
     agentConfig.level = agent.level;
-
     agentConfig.responsibilities = [...(agent.responsibilities || [])];
     agentConfig.skills = [...(agent.skills || [])];
     agentConfig.competencies = [...(agent.competencies || [])];
-    agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
     agentConfig.capabilities = [...(agent.capabilities || [])];
-
-    // Wait until options are loaded before matching
-    if (roleOptions.value.length) {
-      const role = roleOptions.value.find(
-        (r) => r._id === agent.workspace_access_role_id,
-      );
-      selectedRole.value = role?._id ?? "";
-    }
-
-    if (jobOptions.value.length) {
-      const jobRole = jobOptions.value.find(
-        (r) => r._id === agent.workspace_role_id,
-      );
-      selectJobRole.value = jobRole?._id ?? "";
-    }
+    agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
   },
-  { immediate: true },
+  { immediate: true }
 );
-
 const { mutate: deleteVarDef, isPending: isDeleting } = useDeletePeopleVarDef();
 
 function confirmDelete() {
@@ -819,29 +1057,42 @@ async function fetchAssignedAgents() {
     // moduleId.value,
   );
 }
-const updateAgent = async (agent: string) => {
-  if (!agent) return;
+const updateAgent = async (agentId: string) => {
+  if (!agentId) return;
 
-  const currentPayload = {
-    name: agentConfig.name,
-    description: agentConfig.description,
-    level: agentConfig.level,
-    responsibilities: agentConfig.responsibilities,
-    skills: agentConfig.skills,
-    competencies: agentConfig.competencies,
-    capabilities: agentConfig.capabilities,
-    conditions_rules: agentConfig.conditions_rules,
-    workspace_role_id: selectJobRole.value,
-    workspace_access_role_id: selectedRole.value,
-  };
-  await agentStore.updateSelectedAgent(
-    workspaceId.value,
-    currentPayload,
-    agent,
-  );
-  await fetchAssignedAgents();
-  await loadAgentSettings();
-  emit("persona-updated");
+  try {
+    // Build payload with all agent data, including module actions
+    const currentPayload = {
+      name: agentConfig.name,
+      description: agentConfig.description,
+      system_prompt: agentConfig.system_prompt,
+      level: agentConfig.level,
+      responsibilities: agentConfig.responsibilities,
+      skills: agentConfig.skills,
+      competencies: agentConfig.competencies,
+      capabilities: agentConfig.capabilities,
+      conditions_rules: agentConfig.conditions_rules,
+      actions: agentConfig.actions,               // flat selected actions
+      module_actions: agentConfig.module_actions, // selected module actions
+      modules: agentConfig.modules,
+      workspace_role_id: selectJobRole.value,
+      workspace_access_role_id: selectedRole.value,
+    };
+
+    // Call store to update agent
+    await agentStore.updateSelectedAgent(workspaceId.value, currentPayload, agentId);
+
+    // Refresh data after update
+    await fetchAssignedAgents();
+    await loadAgentSettings();
+
+    // Notify parent/component
+    emit("persona-updated");
+
+  } catch (err) {
+    console.error("Failed to update agent:", err);
+    toast.error("Failed to update agent");
+  }
 };
 const deleteAgent = async (agent: string) => {
   await agentStore.deleteSelectedAgent(workspaceId.value, agent);
@@ -1115,6 +1366,74 @@ const submitTrainingContent = async () => {
   } finally {
     isUploading.value = false;
     loadAgentSettings();
+  }
+};
+
+const moduleActions = ref<Module[]>([])
+
+const allSelected = computed(() => {
+  return moduleActions.value.length > 0 &&
+    moduleActions.value.every(module =>
+      module.granted_actions.every(action => action.is_selected)
+    )
+})
+import { toRaw } from 'vue'
+
+watch(
+  () => updateAgentData.value.module_actions,
+  (val) => {
+    moduleActions.value = val
+      ? structuredClone(toRaw(val))
+      : []
+  },
+  { immediate: true }
+)
+const toggleSelectAll = () => {
+  const value = !allSelected.value
+
+  moduleActions.value.forEach(module => {
+    module.granted_actions.forEach(action => {
+      action.is_selected = value
+    })
+  })
+}
+
+const isSavingPrompt = ref(false);
+const savePromptActions = async () => {
+  if (!workspaceId.value) return;
+
+  isSavingPrompt.value = true;
+
+  try {
+    // Convert moduleActions.value to simple structure for backend
+    const modulesToSave: ModuleAction[] = moduleActions.value.map(module => ({
+      module_id: module.module_id,
+      module_title: module.module_title,
+      module_type: module.module_type,
+      granted_actions: module.granted_actions
+        .filter(action => action.is_selected)
+        .map(action => action.slug) // only slugs
+    }));
+
+    agentConfig.module_actions = modulesToSave;
+
+    // Also flatten all selected actions if needed
+    agentConfig.actions = moduleActions.value
+      .flatMap(module => module.granted_actions)
+      .filter(action => action.is_selected)
+      .map(action => action.slug);
+
+    await updateAgent(agentConfig.id);
+
+    emit("persona-updated");
+
+    if (searchQuery.value) searchQuery.value = "";
+
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to save prompt actions");
+  } finally {
+    isSavingPrompt.value = false;
   }
 };
 </script>
