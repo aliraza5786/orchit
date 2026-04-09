@@ -69,6 +69,16 @@
           >
             Training Content
           </button>
+           <button
+            @click="activeTab = 'prompt'"
+            :class="
+              activeTab === 'prompt'
+                ? 'pt-3 border-b-2 border-accent text-accent font-bold'
+                : 'pt-3 text-text-primary font-bold'
+            "
+          >
+            Prompt Flows
+          </button>
         </div>
       </div>
       <!-- BODY -->
@@ -482,6 +492,101 @@
               <span v-else>Upload Training Content</span>
             </button>
           </div>
+          <div class="flex flex-col" style="height: calc(87vh - 100px);" v-if="activeTab === 'prompt'">
+
+  <div class="flex-1 overflow-y-auto p-4 space-y-3">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-3 px-2 py-2">
+      <div class="flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="select-all"
+          :checked="allSelected"
+          @change="toggleSelectAll"
+          class="h-4 w-4 rounded border-border cursor-pointer"
+        />
+        <label for="select-all" class="text-sm font-medium">
+          Select All
+        </label>
+      </div>
+
+      <input
+        v-model="searchQuery"
+        type="text"
+        placeholder="Filter prompts..."
+        class="px-3 py-1 text-sm border border-border rounded-lg"
+      />
+    </div>
+      <div
+  v-for="module in filteredModules"
+  :key="module.module_title"
+  class="border border-border rounded-lg overflow-hidden bg-bg-surface/30"
+>
+  <!-- Header -->
+  <button
+    @click="toggleModule(module.module_title)"
+    class="w-full px-3 py-2 flex justify-between items-center hover:bg-bg-surface transition"
+  >
+    <span class="text-sm font-medium text-text-primary">
+      {{ module.module_title }}
+    </span>
+
+    <i
+      :class="[
+        'fa-solid fa-chevron-down text-xs text-text-secondary transition-transform',
+        openModules[module.module_title] ? 'rotate-180' : ''
+      ]"
+    ></i>
+  </button>
+
+  <!-- Content -->
+  <div
+    v-show="openModules[module.module_title]"
+    class="py-2 space-y-1 border-t border-border bg-bg-input"
+  >
+    <div
+      v-for="action in module.granted_actions"
+      :key="action._id"
+      class="flex items-start gap-2 hover:bg-bg-body px-3 py-2"
+    >
+      <div class="flex items-center h-5">
+        <input
+          type="checkbox"
+          v-model="action.is_selected"
+          :id="action._id"
+          class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+        />
+      </div>
+
+      <div class="ml-2 text-sm">
+        <label
+          :for="action._id"
+          class="font-medium text-text-primary cursor-pointer select-none"
+        >
+          {{ action.title }}
+        </label>
+
+        <!-- <p v-if="action.prompt" class="text-xs text-text-secondary">
+          {{ action.prompt }}
+        </p> -->
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div>
+  <div class="p-4 bg-bg-card border-t border-border shrink-0">
+  <button
+    @click="savePromptActions"
+    :disabled="isSavingPrompt"
+    class="w-full px-4 py-2.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition disabled:opacity-50"
+  >
+    <span v-if="isSavingPrompt">Saving...</span>
+    <span v-else>Save Prompt</span>
+  </button>
+</div>
+</div>
         </div>
       </div>
     </div>
@@ -1128,25 +1233,25 @@
                     </button>
                     <div
                       v-if="openMenuSessionId === session.session_id"
-                      class="absolute right-0 mt-1 w-40 rounded-lg bg-white shadow-lg border border-border z-50 py-1"
+                      class="absolute right-0 mt-1 w-40 rounded-lg bg-card shadow-lg border border-border z-50 py-1"
                     >
                       <button
                         @click.stop="
                           startRenameFromList(session);
                           closeMenu();
                         "
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-gray-100"
+                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:text-accent"
                       >
                         <i class="fa-regular fa-pen"></i>
                         Rename
                       </button>
-                      <div class="my-1 border-t border-gray-200"></div>
+                      <div class="my-1 border-t border-border"></div>
                       <button
                         @click.stop="
                           confirmDeleteSession(session.session_id);
                           closeMenu();
                         "
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50"
+                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:text-red-400"
                       >
                         <i class="fa-regular fa-trash"></i>
                         Delete
@@ -1278,6 +1383,7 @@ import {
   nextTick,
   onMounted,
   reactive,
+  toRaw
 } from "vue";
 import type { Ref } from "vue";
 import { useRoute } from "vue-router";
@@ -1304,7 +1410,7 @@ const authStore = useAuthStore();
 // Route
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
-const activeTab = ref<"persona" | "knowledge" | "upload">("persona");
+const activeTab = ref<"persona" | "knowledge" | "upload" | "prompt">("persona");
 const queryClient = useQueryClient();
 
 // Refs
@@ -2167,7 +2273,13 @@ onBeforeUnmount(() => {
 const openConfigPanel = () => {
   showConfigPanel.value = !showConfigPanel.value
   if (showConfigPanel.value) {
-    resetAgentConfig()
+    // Only reset if no agent is selected (creating new)
+    if (!selectedAgentId.value) {
+      resetAgentConfig()
+    } else {
+      // Re-load settings to repopulate the form
+      loadAgentSettings()
+    }
   }
 }
 
@@ -2206,6 +2318,8 @@ interface AgentConfig {
   competencies: string[];
   capabilities: string[];
   conditions_rules: string[];
+  actions:string[];
+  module_actions: ModuleAction[];
 }
 
 const agentConfig = reactive<AgentConfig>({
@@ -2220,6 +2334,8 @@ const agentConfig = reactive<AgentConfig>({
   competencies: [],
   capabilities: [],
   conditions_rules: [],
+  actions:[],
+  module_actions: []
 });
 
 const openLevel = ref(false);
@@ -2293,8 +2409,18 @@ const selectedAgentName = computed(() => {
 watch(
   () => agentsCreated.value?.data?.agents,
   (agents) => {
-    if (agents?.length && !selectedAgentId.value) {
+    if (!agents?.length) return;
+    // Always pre-select first agent unless we're on talent route
+    // (talent route sets selectedAgentId via the agentPassedData watch)
+    if (!isTalentRoute.value && !selectedAgentId.value) {
       selectedAgentId.value = agents[0]._id;
+    }
+    // If selectedAgentId is set but no longer in the list, reset to first
+    if (!isTalentRoute.value && selectedAgentId.value) {
+      const stillExists = agents.some((a: any) => a._id === selectedAgentId.value);
+      if (!stillExists) {
+        selectedAgentId.value = agents[0]._id;
+      }
     }
   },
   { immediate: true },
@@ -2321,40 +2447,56 @@ const selectLevel = (value: string) => {
 };
 
 const originalAgentConfig = ref<Partial<AgentConfig> | null>(null);
-
 watch(
-  [() => agentsData.value, () => moduleSelected.value],
-  ([agent]) => {
-    if (agent) {
-      agentConfig.name = agent.name || "Peak Agent";
-      agentConfig.id = agent?._id || "";
-      agentConfig.description = agent.description || "";
-      agentConfig.role = agent.role || "";
-      agentConfig.system_prompt = agent.system_prompt || "";
-      agentConfig.level = agent.level || "MID";
-      agentConfig.responsibilities = [...(agent.responsibilities || [])];
-      agentConfig.skills = [...(agent.skills || [])];
-      agentConfig.competencies = [...(agent.competencies || [])];
-      agentConfig.capabilities = [...(agent.capabilities || [])];
-      agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
-      originalAgentConfig.value = JSON.parse(
-        JSON.stringify({
-          name: agentConfig.name,
-          description: agentConfig.description,
-          role: agentConfig.role,
-          level: agentConfig.level,
-          responsibilities: agentConfig.responsibilities,
-          skills: agentConfig.skills,
-          competencies: agentConfig.competencies,
-          capabilities: agentConfig.capabilities,
-          conditions_rules: agentConfig.conditions_rules,
-        }),
-      );
+  () => agentsData.value,
+  (agent) => {
+    if (!agent) return;
+
+    agentConfig.name = agent.name || "";
+    agentConfig.id = agent._id || "";
+    agentConfig.description = agent.description || "";
+    agentConfig.role = agent.role || "";
+    agentConfig.system_prompt = agent.system_prompt || "";
+    agentConfig.level = agent.level || "MID";
+    agentConfig.responsibilities = [...(agent.responsibilities || [])];
+    agentConfig.skills = [...(agent.skills || [])];
+    agentConfig.competencies = [...(agent.competencies || [])];
+    agentConfig.capabilities = [...(agent.capabilities || [])];
+    agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
+
+    // Also populate the role selects
+    if (agent.workspace_access_role_id) {
+      selectedRole.value = agent.workspace_access_role_id;
+    }
+    if (agent.workspace_role_id) {
+      selectJobRole.value = agent.workspace_role_id;
+    }
+
+    originalAgentConfig.value = JSON.parse(JSON.stringify({
+      name: agentConfig.name,
+      description: agentConfig.description,
+      role: agentConfig.role,
+      level: agentConfig.level,
+      responsibilities: agentConfig.responsibilities,
+      skills: agentConfig.skills,
+      competencies: agentConfig.competencies,
+      capabilities: agentConfig.capabilities,
+      conditions_rules: agentConfig.conditions_rules,
+      workspace_role_id: selectJobRole.value,
+      workspace_access_role_id: selectedRole.value,
+    }));
+  },
+  { immediate: true }
+);
+watch(
+  () => selectedAgentId.value,
+  async (newId, oldId) => {
+    if (newId && workspaceId.value && newId !== oldId) {
+      await loadAgentSettings();
     }
   },
-  { immediate: true },
+  { immediate: false } 
 );
-
 interface KnowledgeConfig {
   module_id: string;
   module_name: string;
@@ -2825,6 +2967,7 @@ const updateAgent = async (agent: string) => {
     conditions_rules: agentConfig.conditions_rules,
     workspace_role_id: selectJobRole.value,
     workspace_access_role_id: selectedRole.value,
+    module_actions: agentConfig.module_actions,
   };
   const payload = getChangedFields(originalAgentConfig.value, currentPayload);
   if (!Object.keys(payload).length) return;
@@ -2863,6 +3006,11 @@ async function fetchAssignedAgents() {
     moduleId.value,
     selectedModule.value,
   );
+  // Guarantee first agent is pre-selected after data arrives
+  const agents = agentStore.agentsCreated?.data?.agents;
+  if (agents?.length && !isTalentRoute.value && !selectedAgentId.value) {
+    selectedAgentId.value = agents[0]._id;
+  }
 }
 
 async function fetchAgentsRolesPermissions() {
@@ -3142,6 +3290,116 @@ function toggleMsgMenu(msgId: string) {
 function handleMsgMenuClickOutside() {
   if (openMsgMenuId.value) openMsgMenuId.value = null;
 }
+type Action = {
+  _id: string
+  title: string
+  slug: string
+  prompt?: string
+  is_selected: boolean
+}
+
+type Module = {
+  module_id: string | null
+  module_title: string
+  module_type: string
+  granted_actions: Action[]
+}
+const openModules = ref<Record<string, boolean>>({})
+const toggleModule = (title: string) => {
+  openModules.value[title] = !openModules.value[title]
+}
+const filteredModules = computed(() => {
+  if (!searchQuery.value) return moduleActions.value
+
+  const query = searchQuery.value.toLowerCase()
+
+  return moduleActions.value
+    .map(module => {
+      const filteredActions = module.granted_actions.filter(action =>
+        action.title.toLowerCase().includes(query) ||
+        (action.prompt && action.prompt.toLowerCase().includes(query))
+      )
+
+      return {
+        ...module,
+        granted_actions: filteredActions
+      }
+    })
+    .filter(module => module.granted_actions.length > 0)
+})
+
+interface ModuleAction {
+  module_id: string | null;
+  module_title: string;
+  module_type: string;
+  granted_actions: string[]; // only slugs when saving to backend
+}
+
+const moduleActions = ref<Module[]>([])
+const searchQuery = ref("")
+
+const allSelected = computed(() => {
+  return moduleActions.value.length > 0 &&
+    moduleActions.value.every(module =>
+      module.granted_actions.every(action => action.is_selected)
+    )
+})
+
+watch(
+  () => agentsData.value?.module_actions,
+  (val) => {
+    moduleActions.value = val
+      ? structuredClone(toRaw(val))
+      : []
+  },
+  { immediate: true }
+)
+const toggleSelectAll = () => {
+  const value = !allSelected.value
+
+  moduleActions.value.forEach(module => {
+    module.granted_actions.forEach(action => {
+      action.is_selected = value
+    })
+  })
+}
+
+const isSavingPrompt = ref(false);
+const savePromptActions = async () => {
+  if (!workspaceId.value) return;
+
+  isSavingPrompt.value = true;
+
+  try {
+    // Convert moduleActions.value to simple structure for backend
+    const modulesToSave: ModuleAction[] = moduleActions.value.map(module => ({
+      module_id: module.module_id,
+      module_title: module.module_title,
+      module_type: module.module_type,
+      granted_actions: module.granted_actions
+        .filter(action => action.is_selected)
+        .map(action => action.slug) // only slugs
+    }));
+
+    agentConfig.module_actions = modulesToSave;
+
+    // Also flatten all selected actions if needed
+    agentConfig.actions = moduleActions.value
+      .flatMap(module => module.granted_actions)
+      .filter(action => action.is_selected)
+      .map(action => action.slug);
+
+    await updateAgent(agentConfig.id);
+
+    if (searchQuery.value) searchQuery.value = "";
+
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to save prompt actions");
+  } finally {
+    isSavingPrompt.value = false;
+  }
+};
 </script>
 
 <style scoped>
