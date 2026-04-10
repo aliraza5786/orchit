@@ -1105,6 +1105,18 @@ function handleChatWithAgent(agent: any, module_id: any, module_name: any) {
   agentStore.handleAgentPassed(agent, module_id, module_name);
   workspaceStore.toggleChatBotPanel();
 }
+
+
+// handle close panel
+watch(currentTab, (tab) => {
+  if (tab === 'agents') {
+    // Close People Detail Panel
+    selectCardHandler(null); // or showPanel.value = false
+  } else if (tab === 'talent') {
+    // Close Agents Detail Panel
+    selectAgentHandler(null); // or showAgentPanel.value = false
+  }
+});
 </script>
 
 <style scoped>

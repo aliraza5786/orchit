@@ -4,10 +4,11 @@
       ref="triggerRef"
       @click="toggle"
       type="button"
-      class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-[6px] font-medium cursor-pointer transition bg-bg-surface"
+        class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
+     
       :class="[
-        buttonSizeClass,
-        variant === 'secondary' ? '!bg-bg-body border-0' : 'border-border',
+        buttonSizeClass, 
+        open ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'
       ]"
     >
       <!-- prefix (image or component) -->
@@ -40,10 +41,12 @@
 
       <!-- Chevron -->
       <svg
-        :class="[chevronSizeClass, 'text-text-secondary mt-1']"
+        class="transition-transform duration-200"
+        :class="[chevronSizeClass, 'text-text-secondary mt-1', open? 'rotate-180': '' ]"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
+        
       >
         <path
           stroke-linecap="round"
@@ -167,7 +170,7 @@
 
                 <!-- Existing actions logic (only if NOT nested, to avoid conflict or visual clutter, though user didn't say remove actions) -->
                 <div
-                  v-else-if="actions && canEdit && canDelete"
+                 v-else-if="actions && (canEdit || canDelete)"
                   class="pl-2 flex items-center relative"
                 >
                   <button
@@ -202,9 +205,10 @@
                         <i class="fa-regular fa-edit"></i> Edit
                       </button>
                       <button
-                        v-if="canDelete"
+                        v-if="canDelete && !option.disableDelete"
                         class="px-3 py-1.5 text-left text-red-600 cursor-pointer"
-                        @click.stop="onDelete(option)"
+                        :disabled="option.disableDelete" 
+                        @click.stop="!option.disableDelete && onDelete(option)"
                       >
                         <i class="fa-regular fa-trash"></i> Delete
                       </button>
@@ -247,6 +251,7 @@ interface Option {
   status?: string;
   slug?: string;
   nested?: Option[];
+  disableDelete?: boolean;
 }
 
 const props = withDefaults(
@@ -520,7 +525,7 @@ function startNestedFloating(id: string) {
         strategy: 'fixed',
         middleware: [offset(10), flip(), shift()]
       }).then(({ x, y }) => {
-        nestedStyles.value = { position: 'fixed', left: `${x}px`, top: `${y}px` };
+        nestedStyles.value = { position: 'fixed', left: `${x+10}px`, top: `${y}px` };
       });
     });
   }
@@ -563,7 +568,7 @@ function startActionFloating(id: string) {
         strategy: 'fixed',
         middleware: [offset(5), flip(), shift()]
       }).then(({ x, y }) => {
-        actionStyles.value = { position: 'fixed', left: `${x+155}px`, top: `${y}px` };
+        actionStyles.value = { position: 'fixed', left: `${x+165}px`, top: `${y}px` };
       });
     });
   }
