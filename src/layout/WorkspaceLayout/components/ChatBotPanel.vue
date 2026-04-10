@@ -2,17 +2,23 @@
   <div
     v-if="workspaceStore.showChatBotPanel"
     :class="[
-      'flex h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] border border-border overflow-x-hidden transition-all duration-300 ease-in-out',
+      'flex h-full overflow-y-auto rounded-xl border border-border/60 overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
       isExpanded
         ? 'min-w-full max-w-full'
-        : 'min-w-full max-w-[380px] sm:min-w-[380px]',
+        : 'min-w-full max-w-[400px] sm:min-w-[400px]',
     ]"
+    :style="{
+      background:
+        'linear-gradient(180deg, var(--bg-card, #fff) 0%, color-mix(in srgb, var(--bg-card, #fff) 96%, var(--accent, #7c3aed)) 100%)',
+      backdropFilter: 'blur(20px)',
+    }"
     role="complementary"
     aria-label="Details panel"
   >
+    <!-- ==================== LEFT: PREVIEW MODAL ==================== -->
     <div
       v-if="isExpanded && !showConfigPanel && entities?.length"
-      class="w-[76%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
         @accept="acceptChanges"
@@ -21,180 +27,176 @@
         :data="entities"
       />
     </div>
-    <!-- CONFIG PANEL -->
+
+    <!-- ==================== LEFT: CONFIG PANEL ==================== -->
     <div
       v-if="isExpanded && showConfigPanel"
-      class="w-[76%] border-r border-border bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      class="w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
     >
       <!-- HEADER -->
-      <div class="px-6 py-2.5 bg-bg-card border-b border-border">
-        <h3 class="text-lg text-text-primary font-semibold">
-          Agent Setup & Controls
-        </h3>
-        <p class="text-text-secondary text-[13px]">
-          Configure agent modules, data sources, capabilities, and execution
-          rules within your workspace.
-        </p>
-        <!-- TABS -->
-        <div class="px-6 flex justify-center gap-6 text-sm pb-2">
-          <button
-            @click="activeTab = 'persona'"
-            :class="
-              activeTab === 'persona'
-                ? 'pt-3 border-b-2 border-accent text-accent font-bold'
-                : 'pt-3 text-text-primary font-bold'
-            "
+      <div
+        class="px-6 py-4 bg-gradient-to-b from-bg-card to-bg-card/80 border-b border-border/40"
+      >
+        <div class="flex items-center gap-2.5 mb-1">
+          <div
+            class="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center"
           >
-            Configure Agent
-          </button>
+            <i class="fa-solid fa-sliders text-accent text-sm"></i>
+          </div>
+          <div>
+            <h3
+              class="text-base text-text-primary font-semibold tracking-tight"
+            >
+              Agent Setup & Controls
+            </h3>
+            <p class="text-text-secondary text-[12px] leading-snug">
+              Configure modules, data sources & execution rules.
+            </p>
+          </div>
+        </div>
 
+        <!-- TABS — pill style -->
+        <div
+          class="mt-4 flex gap-1 bg-bg-body/60 rounded-lg p-1 overflow-x-auto"
+        >
           <button
-            @click="activeTab = 'knowledge'"
-            :class="
-              activeTab === 'knowledge'
-                ? 'pt-3 border-b-2 border-accent text-accent font-bold'
-                : 'pt-3 text-text-primary font-bold'
-            "
+            v-for="tab in configTabs"
+            :key="tab.key"
+            @click="activeTab = tab.key"
+            :class="[
+              'flex-1 min-w-0 px-3 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200 whitespace-nowrap',
+              activeTab === tab.key
+                ? 'bg-accent text-white shadow-sm shadow-accent/25'
+                : 'text-text-secondary hover:text-text-primary hover:bg-bg-body',
+            ]"
           >
-            Knowledge Sources
-          </button>
-
-          <button
-            @click="activeTab = 'upload'"
-            :class="
-              activeTab === 'upload'
-                ? 'pt-3 border-b-2 border-accent text-accent font-bold'
-                : 'pt-3 text-text-primary font-bold'
-            "
-          >
-            Training Content
-          </button>
-           <button
-            @click="activeTab = 'prompt'"
-            :class="
-              activeTab === 'prompt'
-                ? 'pt-3 border-b-2 border-accent text-accent font-bold'
-                : 'pt-3 text-text-primary font-bold'
-            "
-          >
-            Prompt Flows
+            <i :class="[tab.icon, 'mr-1 text-[10px]']"></i>
+            {{ tab.label }}
           </button>
         </div>
       </div>
+
       <!-- BODY -->
       <div class="flex-1 overflow-y-auto flex flex-col">
         <div class="p-6 space-y-8">
           <!-- ================= PERSONA TAB ================= -->
-          <div v-if="activeTab === 'persona'" class="space-y-6">
+          <div v-if="activeTab === 'persona'" class="space-y-5">
             <!-- Skeleton Loader -->
             <div v-if="isLoadingSettings" class="space-y-4">
-              <div class="animate-pulse space-y-2">
-                <div class="h-5 w-1/3 bg-card rounded"></div>
-                <div class="h-10 w-full bg-card rounded"></div>
+              <div
+                class="animate-pulse space-y-2"
+                v-for="n in 4"
+                :key="'skel-' + n"
+              >
+                <div class="h-4 w-1/3 bg-bg-body rounded-md"></div>
+                <div class="h-10 w-full bg-bg-body rounded-lg"></div>
               </div>
-              <div class="animate-pulse space-y-2">
-                <div class="h-5 w-1/4 bg-card rounded"></div>
-                <div class="h-24 w-full bg-card rounded"></div>
+              <div
+                class="animate-pulse space-y-2 mt-2"
+                v-for="n in 3"
+                :key="'cap-skel-' + n"
+              >
+                <div class="h-4 w-2/5 bg-bg-body rounded-md"></div>
               </div>
-              <div class="animate-pulse space-y-2">
-                <div class="h-5 w-1/5 bg-card rounded"></div>
-                <div class="h-10 w-full bg-card rounded"></div>
-              </div>
-              <div class="animate-pulse space-y-2 relative">
-                <div class="h-5 w-1/6 bg-card rounded"></div>
-                <div class="h-10 w-full bg-card rounded"></div>
-              </div>
-              <div v-for="n in 3" :key="'array-skel-' + n" class="space-y-2">
-                <div class="h-5 w-1/6 bg-card rounded"></div>
-                <div class="h-10 w-full bg-card rounded"></div>
-              </div>
-              <div class="space-y-2">
-                <div
-                  v-for="n in 3"
-                  :key="'cap-skel-' + n"
-                  class="h-4 w-2/5 bg-card rounded"
-                ></div>
-              </div>
-              <div class="h-10 w-full bg-card rounded mt-4"></div>
+              <div
+                class="h-11 w-full bg-bg-body rounded-lg mt-4 animate-pulse"
+              ></div>
             </div>
 
             <!-- Full Form -->
-            <div v-else class="space-y-6">
-              <div class="space-y-1">
-                <label class="text-sm text-text-primary">Agent Name</label>
+            <div v-else class="space-y-5">
+              <!-- Agent Name -->
+              <div class="space-y-1.5">
+                <label
+                  class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                  >Agent Name</label
+                >
                 <input
                   v-model="agentConfig.name"
-                  class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+                  class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+                  placeholder="Enter agent name..."
                 />
               </div>
-              <div class="space-y-1">
-                <label class="text-sm text-text-primary">Description</label>
+
+              <!-- Description -->
+              <div class="space-y-1.5">
+                <label
+                  class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                  >Description</label
+                >
                 <textarea
                   v-model="agentConfig.description"
-                  rows="4"
-                  class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+                  rows="3"
+                  class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
+                  placeholder="Describe what this agent does..."
                 />
               </div>
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-base font-medium text-text-primary block"
-                  >Select Role</span
+
+              <!-- Role Select -->
+              <div class="space-y-1.5">
+                <label
+                  class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                  >Select Role</label
                 >
+                <BaseSelectField
+                  size="md"
+                  v-model="selectedRole"
+                  :options="roleOptions"
+                  placeholder="Select Role"
+                />
               </div>
-              <BaseSelectField
-                size="md"
-                v-model="selectedRole"
-                :options="roleOptions"
-                placeholder="Select Role"
-              />
-              <div class="flex items-center justify-between mb-1 mt-2">
-                <span class="text-base font-medium text-text-primary block"
-                  >Select Job Role</span
+
+              <!-- Job Role Select -->
+              <div class="space-y-1.5">
+                <label
+                  class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                  >Select Job Role</label
                 >
+                <BaseSelectField
+                  size="md"
+                  v-model="selectJobRole"
+                  :options="jobOptions"
+                  placeholder="Select Job Role"
+                />
               </div>
-              <BaseSelectField
-                size="md"
-                v-model="selectJobRole"
-                :options="jobOptions"
-                placeholder="Select Job Role"
-              />
-              <div class="space-y-1 relative" ref="levelRef">
-                <label class="text-sm text-text-primary">Level</label>
+
+              <!-- Level -->
+              <div class="space-y-1.5 relative" ref="levelRef">
+                <label
+                  class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                  >Level</label
+                >
                 <button
                   type="button"
                   @click="openLevel = !openLevel"
-                  class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+                  class="w-full flex justify-between items-center border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-accent/40 transition-colors"
                 >
                   <span>{{ selectedLevelLabel }}</span>
-                  <svg
-                    class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                  <i
+                    class="fa-solid fa-chevron-down text-[10px] text-text-secondary transition-transform duration-200"
+                    :class="{ 'rotate-180': openLevel }"
+                  ></i>
                 </button>
-                <div
-                  v-if="openLevel"
-                  class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
-                >
-                  <ul class="py-1 text-sm">
-                    <li
-                      v-for="level in availableAgentsLevels"
-                      :key="level.value"
-                      @click="selectLevel(level.value)"
-                      class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
-                    >
-                      {{ level.title }}
-                    </li>
-                  </ul>
-                </div>
+                <transition name="dropdown">
+                  <div
+                    v-if="openLevel"
+                    class="absolute z-50 mt-1 w-full rounded-xl border border-border/60 bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                  >
+                    <ul class="py-1 text-sm">
+                      <li
+                        v-for="level in availableAgentsLevels"
+                        :key="level.value"
+                        @click="selectLevel(level.value)"
+                        class="px-4 py-2.5 cursor-pointer hover:bg-accent/8 transition-colors text-text-primary"
+                      >
+                        {{ level.title }}
+                      </li>
+                    </ul>
+                  </div>
+                </transition>
               </div>
+
+              <!-- Tag Inputs -->
               <TagInput
                 v-model="agentConfig.responsibilities"
                 label="Responsibilities"
@@ -208,126 +210,160 @@
                 v-model="agentConfig.conditions_rules"
                 label="Conditions / Rules"
               />
-              <div class="flex gap-2" v-if="transformedData?.length">
+
+              <!-- Sheet selection -->
+              <div
+                class="flex gap-2.5 items-start"
+                v-if="transformedData?.length"
+              >
                 <input
                   type="checkbox"
-                  class="h-4 w-4 rounded border-border"
+                  class="h-4 w-4 rounded border-border accent-accent mt-0.5"
                   v-model="isSheet"
                 />
-                <span class="text-sm text-text-primary"
-                  >Enable to create the agent for a selected sheet instead of
-                  all sheets</span
-                >
+                <span class="text-sm text-text-primary leading-snug">
+                  Enable to create the agent for a selected sheet instead of all
+                  sheets
+                </span>
               </div>
+
               <div
-                class="space-y-1 relative w-full"
+                class="space-y-1.5 relative w-full"
                 ref="sheetRef"
                 v-if="isSheet"
               >
                 <button
                   type="button"
                   @click="openSheet = !openSheet"
-                  class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+                  class="w-full flex justify-between items-center border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-accent/40 transition-colors"
                 >
                   <span>{{ selectedSheetTitle }}</span>
-                  <svg
-                    class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
+                  <i
+                    class="fa-solid fa-chevron-down text-[10px] text-text-secondary transition-transform duration-200"
+                    :class="{ 'rotate-180': openSheet }"
+                  ></i>
                 </button>
-                <div
-                  v-if="openSheet"
-                  class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
-                >
-                  <ul class="py-1 text-sm max-h-60 overflow-auto">
-                    <li
-                      v-for="sheet in transformedData"
-                      :key="sheet._id"
-                      @click="selectSheet(sheet._id)"
-                      class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
-                    >
-                      <div class="font-medium">{{ sheet.title }}</div>
-                      <div
-                        v-if="sheet.description"
-                        class="text-xs text-text-secondary"
+                <transition name="dropdown">
+                  <div
+                    v-if="openSheet"
+                    class="absolute z-50 mt-1 w-full rounded-xl border border-border/60 bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                  >
+                    <ul class="py-1 text-sm max-h-60 overflow-auto">
+                      <li
+                        v-for="sheet in transformedData"
+                        :key="sheet._id"
+                        @click="selectSheet(sheet._id)"
+                        class="px-4 py-2.5 cursor-pointer hover:bg-accent/8 transition-colors"
                       >
-                        {{ sheet.description }}
-                      </div>
-                    </li>
-                  </ul>
-                </div>
+                        <div class="font-medium text-text-primary">
+                          {{ sheet.title }}
+                        </div>
+                        <div
+                          v-if="sheet.description"
+                          class="text-xs text-text-secondary mt-0.5"
+                        >
+                          {{ sheet.description }}
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </transition>
               </div>
+
+              <!-- Capabilities -->
               <div class="space-y-3">
-                <label class="text-sm text-text-primary">Capabilities</label>
-                <div
-                  v-for="capability in availableCapabilities"
-                  :key="capability.value"
-                  class="flex items-center gap-3 mt-2"
+                <label
+                  class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                  >Capabilities</label
                 >
-                  <input
-                    type="checkbox"
-                    :value="capability.value"
-                    v-model="agentConfig.capabilities"
-                    class="h-4 w-4 rounded border-border"
-                  />
-                  <span class="text-sm text-text-primary">{{
-                    capability.label
-                  }}</span>
+                <div class="grid gap-2">
+                  <label
+                    v-for="capability in availableCapabilities"
+                    :key="capability.value"
+                    class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border/40 hover:border-accent/30 hover:bg-accent/4 transition-all cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      :value="capability.value"
+                      v-model="agentConfig.capabilities"
+                      class="h-4 w-4 rounded border-border accent-accent"
+                    />
+                    <span class="text-sm text-text-primary">{{
+                      capability.label
+                    }}</span>
+                  </label>
                 </div>
               </div>
+
+              <!-- Action Buttons -->
               <button
                 @click="submitPersona"
                 v-if="!agentsData || !agentConfig?.id"
                 :disabled="isLoading || !agentConfig.name || !agentConfig.role"
-                class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full mt-2 px-4 py-2.5 cursor-pointer text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-accent/20"
               >
-                <span v-if="isLoading">Saving...</span>
+                <span
+                  v-if="isLoading"
+                  class="flex items-center justify-center gap-2"
+                >
+                  <i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...
+                </span>
                 <span v-else>Save Agent</span>
               </button>
-              <div class="flex gap-4">
+
+              <div class="flex gap-3" v-if="agentsData && agentConfig?.id">
                 <button
                   @click="deleteAgent(agentConfig.id)"
-                  v-if="agentsData && agentConfig?.id"
                   :disabled="
                     agentStore.isDeletingAgent ||
                     !agentConfig.name ||
                     !agentConfig.role
                   "
-                  class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-red-600 text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="flex-1 px-4 py-2.5 cursor-pointer text-sm font-medium bg-red-500/10 text-red-600 border border-red-500/20 rounded-lg hover:bg-red-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <span v-if="isLoading">Deleting...</span>
-                  <span v-else>Delete Agent</span>
+                  <span
+                    v-if="agentStore.isDeletingAgent"
+                    class="flex items-center justify-center gap-2"
+                  >
+                    <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+                    Deleting...
+                  </span>
+                  <span v-else
+                    ><i class="fa-regular fa-trash mr-1.5"></i>Delete</span
+                  >
                 </button>
                 <button
                   @click="updateAgent(agentConfig.id)"
-                  v-if="agentsData && agentConfig?.id"
                   :disabled="
                     agentStore.isUpdatingAgent ||
                     !agentConfig.name ||
                     !agentConfig.role
                   "
-                  class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="flex-1 px-4 py-2.5 cursor-pointer text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-accent/20"
                 >
-                  <span v-if="isLoading">Updating...</span>
-                  <span v-else>Update Agent</span>
+                  <span
+                    v-if="agentStore.isUpdatingAgent"
+                    class="flex items-center justify-center gap-2"
+                  >
+                    <i class="fa-solid fa-spinner fa-spin text-xs"></i>
+                    Updating...
+                  </span>
+                  <span v-else
+                    ><i class="fa-regular fa-floppy-disk mr-1.5"></i
+                    >Update</span
+                  >
                 </button>
               </div>
             </div>
           </div>
 
           <!-- ================= KNOWLEDGE TAB ================= -->
-          <div v-if="activeTab === 'knowledge'" class="space-y-6">
-            <div class="space-y-1">
-              <label class="text-sm text-text-primary">Sources</label>
+          <div v-if="activeTab === 'knowledge'" class="space-y-5">
+            <div class="space-y-1.5">
+              <label
+                class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                >Sources</label
+              >
               <div class="flex flex-col mt-2 gap-2">
                 <div
                   v-for="source in sourceList"
@@ -338,147 +374,201 @@
                   <button
                     type="button"
                     @click="toggleSourceDropdown(source.value)"
-                    class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+                    class="w-full flex justify-between items-center border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-accent/40 transition-colors"
                   >
-                    <span>{{ source.label }}</span>
+                    <span class="text-text-primary">{{ source.label }}</span>
                     <i
-                      class="fa-regular fa-chevron-down text-text-secondary transition-transform duration-200"
+                      class="fa-regular fa-chevron-down text-text-secondary transition-transform duration-200 text-[10px]"
                       :class="{ 'rotate-180': openDropdowns[source.value] }"
                     ></i>
                   </button>
-                  <div
-                    v-if="openDropdowns[source.value]"
-                    class="absolute z-[999] mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
-                  >
-                    <ul class="py-1 text-sm flex flex-col gap-1">
-                      <label for="permissions" class="px-3 pt-2 font-semibold"
-                        >Permissions</label
-                      >
-                      <li
-                        v-for="perm in permissionsMap[source.value]"
-                        :key="perm.value"
-                        class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover flex items-center gap-2"
-                      >
-                        <input
-                          type="checkbox"
-                          v-model="
-                            knowledgePermissions[
-                              source.value as keyof typeof knowledgePermissions
-                            ][
-                              perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
-                            ]
-                          "
-                          class="h-4 w-4 rounded border-border"
-                        />
-                        <span>{{
-                          getPermissionLabel(
-                            source.value as keyof typeof knowledgePermissions,
-                            perm.value,
-                          )
-                        }}</span>
-                      </li>
-                    </ul>
-                  </div>
+                  <transition name="dropdown">
+                    <div
+                      v-if="openDropdowns[source.value]"
+                      class="absolute z-[999] mt-1 w-full rounded-xl border border-border/60 bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                    >
+                      <ul class="py-1 text-sm flex flex-col gap-0.5">
+                        <li class="px-4 pt-2 pb-1">
+                          <span
+                            class="text-[10px] font-bold text-text-secondary uppercase tracking-wider"
+                            >Permissions</span
+                          >
+                        </li>
+                        <li
+                          v-for="perm in permissionsMap[source.value]"
+                          :key="perm.value"
+                          class="px-4 py-2 cursor-pointer hover:bg-accent/6 flex items-center gap-2.5 transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            v-model="
+                              knowledgePermissions[
+                                source.value as keyof typeof knowledgePermissions
+                              ][
+                                perm.value as keyof (typeof knowledgePermissions)['INTERNAL_TICKET']
+                              ]
+                            "
+                            class="h-4 w-4 rounded border-border accent-accent"
+                          />
+                          <span class="text-text-primary">{{
+                            getPermissionLabel(
+                              source.value as keyof typeof knowledgePermissions,
+                              perm.value,
+                            )
+                          }}</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </transition>
                 </div>
               </div>
             </div>
-            <div class="space-y-1">
-              <label class="text-sm text-text-primary">Metadata (JSON)</label>
+
+            <div class="space-y-1.5">
+              <label
+                class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                >Metadata (JSON)</label
+              >
               <textarea
                 v-model="knowledgeMetadataString"
                 rows="4"
-                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+                class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm font-mono text-[12px] focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all resize-none"
               />
             </div>
-            <div class="flex items-center gap-3">
-              <input type="checkbox" v-model="knowledgeConfig.is_active" />
+
+            <label
+              class="flex items-center gap-3 px-3 py-2 rounded-lg border border-border/40 hover:border-accent/30 hover:bg-accent/4 transition-all cursor-pointer"
+            >
+              <input
+                type="checkbox"
+                v-model="knowledgeConfig.is_active"
+                class="h-4 w-4 rounded border-border accent-accent"
+              />
               <span class="text-sm text-text-primary">Active Source</span>
-            </div>
+            </label>
+
             <button
               @click="submitKnowledge"
               :disabled="isKnowledgeLoading || !moduleId || !moduleSelected"
-              class="w-full mt-4 px-4 py-2.5 text-sm rounded-lg cursor-pointer text-white bg-accent hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              class="w-full mt-2 px-4 py-2.5 text-sm font-medium rounded-lg cursor-pointer text-white bg-accent hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm shadow-accent/20"
             >
+              <i
+                v-if="isKnowledgeLoading"
+                class="fa-solid fa-spinner fa-spin text-xs"
+              ></i>
               <span v-if="isKnowledgeLoading">Saving...</span>
               <span v-else>Save Knowledge</span>
             </button>
           </div>
 
           <!-- ================= TRAINING CONTENT TAB ================= -->
-          <div v-if="activeTab === 'upload'" class="space-y-6">
-            <div class="space-y-1">
-              <label class="text-sm text-text-primary">Training Name</label>
+          <div v-if="activeTab === 'upload'" class="space-y-5">
+            <div class="space-y-1.5">
+              <label
+                class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                >Training Name</label
+              >
               <input
                 v-model="uploadConfig.name"
                 disabled
-                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+                class="w-full border border-border/60 bg-bg-body/50 rounded-lg px-4 py-2.5 text-sm opacity-70 cursor-not-allowed"
               />
             </div>
-            <div class="space-y-1 relative" ref="typeRef">
-              <label class="text-sm text-text-primary">Type</label>
+
+            <div class="space-y-1.5 relative" ref="typeRef">
+              <label
+                class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                >Type</label
+              >
               <button
                 type="button"
                 @click="openType = !openType"
-                class="w-full flex justify-between items-center border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm mt-2"
+                class="w-full flex justify-between items-center border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm hover:border-accent/40 transition-colors"
               >
                 <span>{{ selectedTypeLabel }}</span>
-                <svg
-                  class="w-4 h-4 ml-3 flex-shrink-0 text-text-secondary"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 9l-7 7-7-7"
-                  />
-                </svg>
+                <i
+                  class="fa-solid fa-chevron-down text-[10px] text-text-secondary transition-transform duration-200"
+                  :class="{ 'rotate-180': openType }"
+                ></i>
               </button>
-              <div
-                v-if="openType"
-                class="absolute z-50 mt-1 w-full rounded-lg border border-border bg-bg-dropdown shadow-lg"
-              >
-                <ul class="py-1 text-sm">
-                  <li
-                    v-for="type in availableUploadTypes"
-                    :key="type.value"
-                    @click="selectType(type.value)"
-                    class="px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover"
-                  >
-                    {{ type.label }}
-                  </li>
-                </ul>
-              </div>
+              <transition name="dropdown">
+                <div
+                  v-if="openType"
+                  class="absolute z-50 mt-1 w-full rounded-xl border border-border/60 bg-bg-dropdown shadow-lg shadow-black/8 overflow-hidden"
+                >
+                  <ul class="py-1 text-sm">
+                    <li
+                      v-for="type in availableUploadTypes"
+                      :key="type.value"
+                      @click="selectType(type.value)"
+                      class="px-4 py-2.5 cursor-pointer hover:bg-accent/8 transition-colors text-text-primary"
+                    >
+                      {{ type.label }}
+                    </li>
+                  </ul>
+                </div>
+              </transition>
             </div>
-            <div class="space-y-1">
-              <label class="text-sm text-text-primary">Training Text</label>
+
+            <div class="space-y-1.5">
+              <label
+                class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                >Training Text</label
+              >
               <textarea
                 v-model="uploadConfig.text"
                 rows="4"
-                class="w-full border border-border bg-bg-body rounded-lg px-4 py-2.5 text-sm"
+                class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
+                placeholder="Paste training content here..."
               />
             </div>
-            <input
-              type="file"
-              multiple
-              @change="handleUploadFiles"
-              class="w-full border-2 border-dashed border-border bg-bg-body rounded-lg px-4 py-3 text-sm"
-            />
+
+            <!-- File Upload Zone -->
             <div
-              v-for="(file, i) in uploadConfig.files"
-              :key="i"
-              class="flex justify-between text-sm border border-border rounded-lg px-3 py-2"
+              class="relative border-2 border-dashed border-border/60 bg-bg-body/40 rounded-xl px-4 py-6 text-center hover:border-accent/40 hover:bg-accent/4 transition-all cursor-pointer"
+              @click="triggerFileInput"
             >
-              <span>{{ file.name }}</span>
-              <button
-                @click="uploadConfig.files.splice(i, 1)"
-                class="text-red-500"
-              >
-                Remove
-              </button>
+              <i
+                class="fa-solid fa-cloud-arrow-up text-2xl text-text-tertiary mb-2"
+              ></i>
+              <p class="text-sm text-text-secondary">
+                Drag & drop files or
+                <span class="text-accent font-medium">browse</span>
+              </p>
+              <p class="text-[11px] text-text-tertiary mt-1">
+                Supports documents, text files, PDFs
+              </p>
+              <input
+                ref="trainingFileInput"
+                type="file"
+                multiple
+                @change="handleUploadFiles"
+                class="absolute inset-0 opacity-0 cursor-pointer"
+              />
             </div>
+
+            <!-- Uploaded files list -->
+            <div v-if="uploadConfig.files.length" class="space-y-1.5">
+              <div
+                v-for="(file, i) in uploadConfig.files"
+                :key="i"
+                class="flex justify-between items-center text-sm border border-border/40 rounded-lg px-3 py-2 bg-bg-body/40 group"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <i class="fa-solid fa-file text-accent/60 text-xs"></i>
+                  <span class="truncate text-text-primary">{{
+                    file.name
+                  }}</span>
+                </div>
+                <button
+                  @click="uploadConfig.files.splice(i, 1)"
+                  class="text-text-tertiary hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 ml-2"
+                >
+                  <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+              </div>
+            </div>
+
             <button
               @click="submitTrainingContent"
               :disabled="
@@ -486,194 +576,355 @@
                 (uploadConfig.text === '' && uploadConfig.files.length === 0) ||
                 isUploading
               "
-              class="w-full mt-4 px-4 py-2.5 cursor-pointer text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full mt-2 px-4 py-2.5 cursor-pointer text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-accent/20"
             >
-              <span v-if="isUploading">Uploading...</span>
-              <span v-else>Upload Training Content</span>
+              <span
+                v-if="isUploading"
+                class="flex items-center justify-center gap-2"
+              >
+                <i class="fa-solid fa-spinner fa-spin text-xs"></i> Uploading...
+              </span>
+              <span v-else
+                ><i class="fa-solid fa-upload mr-1.5"></i>Upload Training
+                Content</span
+              >
             </button>
           </div>
-          <div class="flex flex-col" style="height: calc(87vh - 100px);" v-if="activeTab === 'prompt'">
 
-  <div class="flex-1 overflow-y-auto p-4 space-y-3">
+          <!-- ================= PROMPT FLOWS TAB ================= -->
+          <div
+            class="flex flex-col"
+            style="height: calc(87vh - 100px)"
+            v-if="activeTab === 'prompt'"
+          >
+            <div class="flex-1 overflow-y-auto space-y-2.5">
+              <!-- Header -->
+              <div class="flex items-center justify-between gap-3 px-1 py-1">
+                <label class="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="select-all"
+                    :checked="allSelected"
+                    @change="toggleSelectAll"
+                    class="h-4 w-4 rounded border-border cursor-pointer accent-accent"
+                  />
+                  <span
+                    class="text-xs font-semibold text-text-primary uppercase tracking-wider"
+                    >Select All</span
+                  >
+                </label>
 
-    <!-- Header -->
-    <div class="flex items-center justify-between gap-3 px-2 py-2">
-      <div class="flex items-center gap-3">
-        <input
-          type="checkbox"
-          id="select-all"
-          :checked="allSelected"
-          @change="toggleSelectAll"
-          class="h-4 w-4 rounded border-border cursor-pointer"
-        />
-        <label for="select-all" class="text-sm font-medium">
-          Select All
-        </label>
-      </div>
+                <div class="relative">
+                  <i
+                    class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary text-[10px]"
+                  ></i>
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Filter prompts..."
+                    class="pl-7 pr-3 py-1.5 text-xs border border-border/60 rounded-lg bg-bg-body/80 focus:border-accent/40 focus:ring-1 focus:ring-accent/10 outline-none transition-all w-40"
+                  />
+                </div>
+              </div>
 
-      <input
-        v-model="searchQuery"
-        type="text"
-        placeholder="Filter prompts..."
-        class="px-3 py-1 text-sm border border-border rounded-lg"
-      />
-    </div>
-      <div
-  v-for="module in filteredModules"
-  :key="module.module_title"
-  class="border border-border rounded-lg overflow-hidden bg-bg-surface/30"
->
-  <!-- Header -->
-  <button
-    @click="toggleModule(module.module_title)"
-    class="w-full px-3 py-2 flex justify-between items-center hover:bg-bg-surface transition"
-  >
-    <span class="text-sm font-medium text-text-primary">
-      {{ module.module_title }}
-    </span>
+              <!-- Module accordions -->
+              <div
+                v-for="module in filteredModules"
+                :key="module.module_title"
+                class="border border-border/40 rounded-xl overflow-hidden bg-bg-body/20"
+              >
+                <button
+                  @click="toggleModule(module.module_title)"
+                  class="w-full px-4 py-2.5 flex justify-between items-center hover:bg-bg-body/60 transition-colors"
+                >
+                  <span class="text-sm font-medium text-text-primary">
+                    {{ module.module_title }}
+                  </span>
+                  <i
+                    :class="[
+                      'fa-solid fa-chevron-down text-[10px] text-text-secondary transition-transform duration-200',
+                      openModules[module.module_title] ? 'rotate-180' : '',
+                    ]"
+                  ></i>
+                </button>
 
-    <i
-      :class="[
-        'fa-solid fa-chevron-down text-xs text-text-secondary transition-transform',
-        openModules[module.module_title] ? 'rotate-180' : ''
-      ]"
-    ></i>
-  </button>
+                <div
+                  v-show="openModules[module.module_title]"
+                  class="border-t border-border/30 bg-bg-body/30"
+                >
+                  <label
+                    v-for="action in module.granted_actions"
+                    :key="action._id"
+                    class="flex items-start gap-2.5 hover:bg-accent/4 px-4 py-2.5 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      v-model="action.is_selected"
+                      :id="action._id"
+                      class="h-4 w-4 rounded border-border accent-accent mt-0.5"
+                    />
+                    <span class="text-sm text-text-primary select-none">{{
+                      action.title
+                    }}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
 
-  <!-- Content -->
-  <div
-    v-show="openModules[module.module_title]"
-    class="py-2 space-y-1 border-t border-border bg-bg-input"
-  >
-    <div
-      v-for="action in module.granted_actions"
-      :key="action._id"
-      class="flex items-start gap-2 hover:bg-bg-body px-3 py-2"
-    >
-      <div class="flex items-center h-5">
-        <input
-          type="checkbox"
-          v-model="action.is_selected"
-          :id="action._id"
-          class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
-        />
-      </div>
+            <div class="pt-4 shrink-0">
+              <button
+                @click="savePromptActions"
+                :disabled="isSavingPrompt"
+                class="w-full px-4 py-2.5 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm shadow-accent/20"
+              >
+                <span
+                  v-if="isSavingPrompt"
+                  class="flex items-center justify-center gap-2"
+                >
+                  <i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...
+                </span>
+                <span v-else>Save Prompt</span>
+              </button>
+            </div>
+          </div>
 
-      <div class="ml-2 text-sm">
-        <label
-          :for="action._id"
-          class="font-medium text-text-primary cursor-pointer select-none"
-        >
-          {{ action.title }}
-        </label>
+          <!-- ================= SUGGESTED PROMPTS TAB ================= -->
+          <div v-if="activeTab === 'suggested'" class="space-y-5">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-sm font-semibold text-text-primary">
+                  Suggested Prompts
+                </h4>
+                <p class="text-[11px] text-text-secondary mt-0.5">
+                  Pre-configured prompts shown to users as quick actions.
+                </p>
+              </div>
+              <button
+                @click="addSuggestedPrompt"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-accent/30 bg-accent/8 text-accent text-xs font-medium hover:bg-accent/15 transition-all cursor-pointer"
+              >
+                <i class="fa-solid fa-plus text-[10px]"></i>
+                Add
+              </button>
+            </div>
 
-        <!-- <p v-if="action.prompt" class="text-xs text-text-secondary">
-          {{ action.prompt }}
-        </p> -->
-      </div>
-    </div>
-  </div>
-</div>
+            <!-- Empty state -->
+            <div
+              v-if="!suggestedPrompts.length"
+              class="flex flex-col items-center justify-center py-12 text-center"
+            >
+              <div
+                class="w-14 h-14 rounded-2xl bg-accent/8 flex items-center justify-center mb-3"
+              >
+                <i class="fa-solid fa-lightbulb text-accent text-xl"></i>
+              </div>
+              <p class="text-sm font-semibold text-text-primary">
+                Welcome back! Ask me anything
+                <span v-if="selectedSource === 'all'">
+                  about
+                  <span class="text-accent">{{ contextTitle }}</span></span
+                >
+                <span v-else>
+                  using
+                  <span class="text-accent">{{
+                    activeSource.label
+                  }}</span></span
+                >.
+              </p>
+              <p class="text-[12px] text-text-tertiary">
+                <span v-if="selectedSource === 'web'"
+                  >Web search is active — I'll search the internet for
+                  answers.</span
+                >
+                <span v-else-if="selectedSource === 'all'"
+                  >Searching across your workspace, tasks, docs and more.</span
+                >
+                <span v-else
+                  >Focused on {{ activeSource.label }} —
+                  {{ activeSource.description?.toLowerCase() }}.</span
+                >
+              </p>
+            </div>
 
-  </div>
-  <div class="p-4 bg-bg-card border-t border-border shrink-0">
-  <button
-    @click="savePromptActions"
-    :disabled="isSavingPrompt"
-    class="w-full px-4 py-2.5 text-sm bg-accent text-white rounded-lg hover:bg-accent-dark transition disabled:opacity-50"
-  >
-    <span v-if="isSavingPrompt">Saving...</span>
-    <span v-else>Save Prompt</span>
-  </button>
-</div>
-</div>
+            <!-- Prompt cards -->
+            <div v-else class="space-y-2.5">
+              <div
+                v-for="(prompt, index) in suggestedPrompts"
+                :key="index"
+                class="group relative border border-border/40 rounded-xl p-3.5 bg-bg-body/30 hover:border-accent/25 hover:shadow-sm transition-all"
+              >
+                <!-- Category badge -->
+                <div class="flex items-center gap-2 mb-2.5">
+                  <div class="relative flex-1">
+                    <i
+                      class="fa-solid fa-tag absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary text-[10px]"
+                    ></i>
+                    <input
+                      v-model="prompt.category"
+                      placeholder="Category (e.g. Analysis, Report)"
+                      class="w-full pl-7 pr-3 py-1.5 text-[11px] border border-border/40 rounded-md bg-bg-body/60 focus:border-accent/40 outline-none transition-all font-medium"
+                    />
+                  </div>
+                  <button
+                    @click="removeSuggestedPrompt(index)"
+                    class="w-6 h-6 flex items-center justify-center rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/8 transition-all opacity-0 group-hover:opacity-100"
+                  >
+                    <i class="fa-solid fa-trash text-[10px]"></i>
+                  </button>
+                </div>
+
+                <!-- Label -->
+                <input
+                  v-model="prompt.label"
+                  placeholder="Button label (e.g. Summarize data)"
+                  class="w-full border border-border/40 bg-bg-body/60 rounded-lg px-3 py-2 text-sm focus:border-accent/40 outline-none transition-all mb-2 placeholder:text-text-tertiary"
+                />
+
+                <!-- Prompt text -->
+                <textarea
+                  v-model="prompt.text"
+                  rows="2"
+                  placeholder="Full prompt text that will be sent..."
+                  class="w-full border border-border/40 bg-bg-body/60 rounded-lg px-3 py-2 text-sm focus:border-accent/40 outline-none transition-all resize-none placeholder:text-text-tertiary"
+                />
+
+                <!-- Toggle active -->
+                <div
+                  class="flex items-center justify-between mt-2.5 pt-2.5 border-t border-border/20"
+                >
+                  <span class="text-[11px] text-text-secondary">Active</span>
+                  <label
+                    class="relative inline-flex items-center cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      v-model="prompt.is_active"
+                      class="sr-only peer"
+                    />
+                    <div
+                      class="w-8 h-[18px] bg-bg-body rounded-full peer peer-checked:bg-accent transition-colors after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-[14px] after:w-[14px] after:transition-all peer-checked:after:translate-x-[14px] after:shadow-sm"
+                    ></div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Save button -->
+            <button
+              @click="saveSuggestedPrompts"
+              :disabled="isSavingSuggested"
+              class="w-full mt-2 px-4 py-2.5 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-accent/20"
+            >
+              <span
+                v-if="isSavingSuggested"
+                class="flex items-center justify-center gap-2"
+              >
+                <i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...
+              </span>
+              <span v-else
+                ><i class="fa-regular fa-floppy-disk mr-1.5"></i>Save Suggested
+                Prompts</span
+              >
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- CHAT PANEL WRAPPER -->
+    <!-- ==================== RIGHT: CHAT PANEL ==================== -->
     <div
-:class="isExpanded && (showConfigPanel || entities?.length > 0) ? 'w-[24%]' : 'w-full'"
-      class="border-r border-border bg-bg-card h-full min-h-0 flex flex-col py-2 overflow-x-hidden"
+      :class="
+        isExpanded && (showConfigPanel || entities?.length > 0)
+          ? 'w-[24%]'
+          : 'w-full'
+      "
+      class="border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden"
     >
+      <!-- Chat Header -->
       <div
-        class="flex items-center border-b border-border px-3 py-2 sticky top-0 bg-bg-card z-30 gap-2"
+        class="flex items-center border-b border-border/40 px-3.5 py-2.5 sticky top-0 bg-bg-card/95 backdrop-blur-sm z-30 gap-2"
       >
         <h5
-          class="text-[16px] font-medium flex items-center gap-1.5 min-w-0 flex-1"
+          class="text-sm font-semibold flex items-center gap-2 min-w-0 flex-1"
         >
-          <i class="fa-solid fa-sparkles text-accent shrink-0"></i>
+          <div
+            class="w-6 h-6 rounded-lg bg-gradient-to-br from-accent/20 to-accent/5 flex items-center justify-center"
+          >
+            <i class="fa-solid fa-sparkles text-accent text-[10px]"></i>
+          </div>
           <Dropdown
             v-model="selectedAgentId"
             :options="agentOptions"
             :custom-title="selectedAgentName"
             :actions="false"
-            size="md"
+            size="sm"
             variant="secondary"
             class="relative min-w-0 max-w-[130px]"
           >
             <template #more>
               <div
                 @click="openConfigPanel"
-                class="capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap"
+                class="capitalize border-t border-border px-4 py-2.5 hover:bg-accent/8 cursor-pointer flex items-center gap-2 overflow-hidden overflow-ellipsis text-nowrap text-sm transition-colors"
               >
-                <i class="fa-solid fa-plus"></i> Add new
+                <i class="fa-solid fa-plus text-accent text-[10px]"></i> Add new
               </div>
             </template>
           </Dropdown>
         </h5>
 
-        <div class="flex items-center shrink-0">
-          <!-- History Button -->
+        <div class="flex items-center gap-0.5 shrink-0">
           <button
-            class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
+            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
             @click="showHistoryPanel = !showHistoryPanel"
             title="Chat history"
           >
-            <i class="fa-regular fa-clock-rotate-left"></i>
+            <i class="fa-regular fa-clock-rotate-left text-[12px]"></i>
           </button>
-          <!-- AFTER -->
           <button
-            class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
+            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
             @click="startNewChat"
             title="New chat"
           >
-            <i class="fa-regular fa-pen-to-square"></i>
+            <i class="fa-regular fa-pen-to-square text-[12px]"></i>
           </button>
-
-          <!-- Expand / Compress -->
-          <i
+          <button
             v-if="!isExpanded"
-            class="fa-solid fa-expand cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
+            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
             @click="expandPanel"
             title="Expand"
-          ></i>
-          <i
+          >
+            <i class="fa-solid fa-expand text-[12px]"></i>
+          </button>
+          <button
             v-else
-            class="fa-solid cursor-pointer transition-colors fa-compress"
+            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
             @click="compressPanel"
             title="Compress"
-          ></i>
-
+          >
+            <i class="fa-solid fa-compress text-[12px]"></i>
+          </button>
           <button
-            class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
+            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-accent/10 hover:text-accent text-text-secondary"
             @click="openConfigPanel"
             :title="showConfigPanel ? 'Preview Data' : 'Agent Configuration'"
           >
-            <i class="fa-regular fa-ellipsis-vertical"></i>
+            <i class="fa-regular fa-gear text-[12px]"></i>
           </button>
-
-          <i
-            class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent fa-solid fa-close"
+          <button
+            class="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-150 hover:bg-red-500/10 hover:text-red-500 text-text-secondary"
             @click="closeHandler"
-          ></i>
+          >
+            <i class="fa-solid fa-xmark text-[12px]"></i>
+          </button>
         </div>
       </div>
-      <!-- Chat Area -->
+
+      <!-- Chat Messages Area -->
       <div
         ref="messagesContainer"
-        class="flex-1 overflow-y-auto min-h-0 p-4 space-y-4"
+        class="flex-1 overflow-y-auto min-h-0 p-4 space-y-3"
       >
+        <!-- Loading state -->
         <div
           v-if="agentStore.isLoadingHistory && isFirstLoad"
           class="absolute inset-0 flex items-center justify-center"
@@ -684,182 +935,321 @@
           </div>
         </div>
 
+        <!-- Messages -->
         <template
           v-else-if="orderedMessages.length || isAiThinkingBubbleVisible"
         >
           <div
             v-for="msg in orderedMessages"
             :key="msg._id"
-            class="flex gap-2 relative animate-fade-in group/msg"
+            class="flex gap-2.5 relative animate-fade-in group/msg"
             :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
           >
+            <!-- Avatar -->
             <div
-              class="w-6 h-6 rounded-full p-1.5 flex items-center justify-center shrink-0"
-              :class="msg.type === 'user' ? 'bg-bg-surface' : 'bg-accent/10'"
+              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm"
+              :class="
+                msg.type === 'user'
+                  ? 'bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20'
+                  : 'bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15'
+              "
             >
               <i
                 v-if="msg.type === 'assistant'"
-                class="fa-solid fa-robot text-accent text-sm"
+                class="fa-solid fa-robot text-accent text-[11px]"
               ></i>
-              <div
+              <span
                 v-else-if="msg.type === 'user'"
-                class="text-xs font-semibold text-accent"
+                class="text-[9px] font-bold text-accent"
+                >ME</span
               >
-                ME
-              </div>
             </div>
 
-            <!-- Bubble + dropdown wrapper -->
-            <div class="relative max-w-[85%] flex flex-col">
+            <!-- Bubble -->
+            <div class="relative max-w-[82%] flex flex-col">
               <div
-                class="px-3 py-1.5 rounded-lg text-sm leading-relaxed border relative"
+                class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative"
                 :class="
                   msg.type === 'user'
-                    ? 'bg-accent/10 border-accent/20 rounded-tr-none'
-                    : 'bg-bg-body border-border rounded-tl-none'
+                    ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15'
+                    : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
                 "
               >
-                <!-- Dropdown trigger — visible on bubble hover -->
+                <!-- Message menu trigger -->
                 <button
                   v-if="activeSessionId && !msg.metadata?.temp"
                   @click.stop="toggleMsgMenu(msg._id)"
-                  class="absolute top-1 right-1 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded cursor-pointer text-text-tertiary hover:text-text-secondary hover:bg-black/5"
+                  class="absolute top-1.5 right-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded-md cursor-pointer"
+                  :class="
+                    msg.type === 'user'
+                      ? 'text-white/70 hover:text-white hover:bg-white/10'
+                      : 'text-text-tertiary hover:text-text-secondary hover:bg-black/5'
+                  "
                 >
-                  <i class="fa-solid fa-chevron-down text-[9px]"></i>
+                  <i class="fa-solid fa-ellipsis text-[9px]"></i>
                 </button>
 
                 <p class="whitespace-pre-wrap pr-4" v-if="msg.content">
                   {{ msg.content }}
                 </p>
 
+                <!-- Attachments -->
                 <div
                   v-if="msg.attachments && msg.attachments.length"
-                  class="flex flex-wrap gap-1.5 mt-1"
+                  class="flex flex-wrap gap-1.5 mt-1.5"
                 >
                   <div
                     v-for="(attachment, idx) in msg.attachments"
                     :key="idx"
-                    class="flex items-center gap-1.5 px-2 py-1 rounded-md border border-accent/20 bg-accent/5 text-xs text-text-primary"
+                    class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]"
+                    :class="
+                      msg.type === 'user'
+                        ? 'bg-white/15 text-white/90'
+                        : 'border border-accent/20 bg-accent/5 text-text-primary'
+                    "
                   >
                     <i
-                      class="fa-solid text-accent"
-                      :class="
+                      class="fa-solid"
+                      :class="[
                         attachment.mimetype === 'application/pdf'
                           ? 'fa-file-pdf'
-                          : 'fa-file-image'
-                      "
+                          : 'fa-file-image',
+                        msg.type === 'user' ? 'text-white/80' : 'text-accent',
+                      ]"
                     ></i>
-                    <span class="max-w-[120px] truncate">{{
+                    <span class="max-w-[100px] truncate">{{
                       attachment.filename || attachment.name
                     }}</span>
                   </div>
                 </div>
 
+                <!-- Timestamp -->
                 <div
-                  class="flex justify-end items-center gap-1 text-[10px] text-text-secondary mt-0.5"
+                  class="flex justify-end items-center gap-1.5 text-[10px] mt-1"
+                  :class="
+                    msg.type === 'user' ? 'text-white/60' : 'text-text-tertiary'
+                  "
                 >
                   <span>{{ formatTimestamp(msg.timestamp) }}</span>
                   <i
                     v-if="msg.is_pinned"
-                    class="fa-solid fa-thumbtack text-accent text-[10px]"
+                    class="fa-solid fa-thumbtack text-[9px]"
+                    :class="
+                      msg.type === 'user' ? 'text-white/70' : 'text-accent'
+                    "
                     title="Pinned message"
                   ></i>
                   <span v-if="msg.type === 'user'">
                     <i
                       v-if="msg.metadata?.status === 'completed'"
-                      class="fa-solid fa-check-double text-green-500"
+                      class="fa-solid fa-check-double text-green-300"
                     ></i>
-                    <i v-else class="fa-solid fa-check text-text-secondary"></i>
+                    <i v-else class="fa-solid fa-check text-white/50"></i>
                   </span>
                 </div>
               </div>
 
-              <!-- Dropdown menu -->
-              <div
-                v-if="openMsgMenuId === msg._id"
-                class="absolute z-50 top-7 w-40 rounded-lg border border-border bg-white py-1 overflow-hidden"
-                :class="msg.type === 'user' ? 'right-0' : 'left-0'"
-              >
-                <button
-                  @click.stop="
-                    togglePinMessage(msg);
-                    openMsgMenuId = null;
-                  "
-                  class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:text-accent transition-colors cursor-pointer"
+              <!-- Message dropdown menu -->
+              <transition name="dropdown">
+                <div
+                  v-if="openMsgMenuId === msg._id"
+                  class="absolute z-50 top-8 w-40 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 py-1 overflow-hidden"
+                  :class="msg.type === 'user' ? 'right-0' : 'left-0'"
                 >
-                  <i
-                    class="text-[11px] w-3"
-                    :class="
-                      (msg as any).is_pinned
-                        ? 'fa-solid fa-thumbtack text-accent'
-                        : 'fa-regular fa-thumbtack text-text-secondary'
+                  <button
+                    @click.stop="
+                      togglePinMessage(msg);
+                      openMsgMenuId = null;
                     "
-                  ></i>
-                  <span>{{
-                    (msg as any).is_pinned ? "Unpin message" : "Pin message"
-                  }}</span>
-                </button>
-              </div>
+                    class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:bg-accent/8 hover:text-accent transition-colors cursor-pointer"
+                  >
+                    <i
+                      class="text-[11px] w-3"
+                      :class="
+                        (msg as any).is_pinned
+                          ? 'fa-solid fa-thumbtack text-accent'
+                          : 'fa-regular fa-thumbtack text-text-secondary'
+                      "
+                    ></i>
+                    <span>{{
+                      (msg as any).is_pinned ? "Unpin message" : "Pin message"
+                    }}</span>
+                  </button>
+                </div>
+              </transition>
             </div>
           </div>
 
+          <!-- AI Thinking bubble -->
           <div
             v-if="isAiThinkingBubbleVisible"
-            class="flex gap-2 relative animate-fade-in"
+            class="flex gap-2.5 relative animate-fade-in"
           >
             <div
-              class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 bg-accent/10"
+              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm"
             >
-              <i class="fa-solid fa-robot text-accent text-sm"></i>
+              <i class="fa-solid fa-robot text-accent text-[11px]"></i>
             </div>
             <div
-              class="px-3 py-1.5 rounded-lg max-w-[85%] text-sm leading-relaxed border bg-bg-body border-border rounded-tl-none"
+              class="px-3.5 py-2 rounded-2xl rounded-tl-md max-w-[82%] text-sm leading-relaxed border border-border/40 bg-bg-body"
             >
-              <div class="flex items-center gap-1">
+              <div class="flex items-center gap-1.5">
                 <div class="typing-dots">
                   <span></span>
                   <span></span>
                   <span></span>
                 </div>
-                <span class="text-xs text-text-secondary ml-2"
-                  >AI is thinking...</span
+                <span class="text-[11px] text-text-secondary ml-1"
+                  >Thinking...</span
                 >
               </div>
             </div>
           </div>
         </template>
 
+        <!-- Empty state -->
+        <!-- Empty state — rich suggestions like ClickUp AI -->
         <div
           v-else
-          class="flex flex-col items-center justify-center h-full text-text-secondary"
+          class="flex flex-col h-full overflow-y-auto px-1 py-3 space-y-5"
         >
-          <i class="fa-solid fa-comments text-4xl mb-2 opacity-50"></i>
-          <p class="text-sm">No messages yet. Start a conversation!</p>
+          <!-- Greeting -->
+          <div class="space-y-0.5 px-1">
+            <p class="text-sm font-semibold text-text-primary">
+              Welcome back! Ask me anything about
+              <span class="text-accent">{{ contextTitle }}</span
+              >.
+            </p>
+            <p class="text-[12px] text-text-tertiary">
+              How can I help you today?
+            </p>
+          </div>
+
+          <!-- Quick question prompts -->
+          <div class="space-y-2" v-if="emptyStateQuickPrompts.length">
+            <p
+              class="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider px-1"
+            >
+              Ask about your workspace
+            </p>
+            <div class="space-y-1">
+              <button
+                v-for="prompt in emptyStateQuickPrompts"
+                :key="prompt"
+                @click="applyPromptAndSend(prompt)"
+                class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-accent/6 hover:text-accent transition-all group cursor-pointer"
+              >
+                <i
+                  class="fa-solid fa-arrow-right text-[10px] text-text-tertiary group-hover:text-accent transition-colors shrink-0"
+                ></i>
+                <span
+                  class="text-[13px] text-text-primary group-hover:text-accent transition-colors leading-snug"
+                  >{{ prompt }}</span
+                >
+              </button>
+            </div>
+          </div>
+
+          <!-- Divider -->
+          <div class="border-t border-border/30"></div>
+
+          <!-- Feature cards -->
+          <div class="space-y-2" v-if="emptyStateFeatureCards.length">
+            <p
+              class="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider px-1"
+            >
+              Features
+            </p>
+            <div class="space-y-2">
+              <button
+                v-for="card in emptyStateFeatureCards"
+                :key="card.title"
+                @click="applyPromptAndSend(card.prompt)"
+                class="w-full text-left flex items-center gap-3 p-3 rounded-xl border border-border/40 hover:border-accent/30 hover:bg-accent/4 transition-all group cursor-pointer"
+              >
+                <!-- Icon box -->
+                <div
+                  class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-all"
+                  :class="card.iconBg"
+                >
+                  <i :class="[card.icon, card.iconColor, 'text-sm']"></i>
+                </div>
+
+                <!-- Text -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="text-[13px] font-medium text-text-primary group-hover:text-accent transition-colors leading-snug"
+                    >
+                      {{ card.title }}
+                    </span>
+                    <span
+                      v-if="card.isNew"
+                      class="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 shrink-0"
+                    >
+                      New
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-text-tertiary mt-0.5 leading-snug">
+                    {{ card.description }}
+                  </p>
+                </div>
+
+                <!-- Arrow -->
+                <i
+                  class="fa-solid fa-chevron-right text-[10px] text-text-tertiary group-hover:text-accent transition-colors shrink-0"
+                ></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Suggested prompts from agent config (if any) -->
+          <div class="space-y-2" v-if="activeSuggestedPrompts.length">
+            <p
+              class="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider px-1"
+            >
+              Agent prompts
+            </p>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="sp in activeSuggestedPrompts"
+                :key="sp.label"
+                @click="applyPromptAndSend(sp.text)"
+                class="px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-[11px] text-accent font-medium hover:bg-accent/12 hover:border-accent/35 transition-all cursor-pointer"
+              >
+                <i class="fa-solid fa-sparkles text-[9px] mr-1 opacity-70"></i>
+                {{ sp.label }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="px-3 pt-3 pb-1 border-t border-border bg-bg-card mt-1.5">
+      <!-- Input Area -->
+      <div class="px-3 pt-3 pb-1.5 border-t border-border/40 bg-bg-card">
         <!-- Breadcrumb -->
         <div
           v-if="contextTitle"
-          class="mb-3 flex justify-between border-b border-border items-center gap-1.5"
+          class="mb-2.5 flex justify-between border-b border-border/30 items-center gap-1.5 pb-2"
         >
-          <nav class="flex items-center text-xs text-text-secondary gap-1 mb-2">
+          <nav class="flex items-center text-[11px] text-text-secondary gap-1">
             <div
               class="flex items-center font-medium text-text-primary"
               v-if="!moduleId"
             >
               <span>Workspace</span>
             </div>
-            <span v-if="!moduleId"
-              ><i class="fa-solid fa-chevron-right text-xs"></i
-            ></span>
+            <i
+              v-if="!moduleId"
+              class="fa-solid fa-chevron-right text-[8px] text-text-tertiary"
+            ></i>
             <div class="flex items-center font-medium text-text-primary">
               <span>{{ contextTitle }}</span>
             </div>
-            <span v-if="moduleId"
-              ><i class="fa-solid fa-chevron-right text-xs"></i
-            ></span>
+            <i
+              v-if="moduleId"
+              class="fa-solid fa-chevron-right text-[8px] text-text-tertiary"
+            ></i>
             <div
               class="flex items-center font-medium text-text-primary"
               v-if="moduleId"
@@ -871,100 +1261,337 @@
                   : moduleSelected
               }}</span>
             </div>
-            <div v-if="moduleId" class="flex">
-              <span><i class="fa-solid fa-chevron-right text-xs"></i></span>
-              <div class="flex items-center gap-1">
-                <span>{{ sheetNameRef }}</span>
-              </div>
+            <div v-if="moduleId" class="flex items-center gap-1">
+              <i
+                class="fa-solid fa-chevron-right text-[8px] text-text-tertiary"
+              ></i>
+              <span>{{ sheetNameRef }}</span>
             </div>
           </nav>
         </div>
+
+        <!-- Suggested quick prompts (from new tab data) -->
         <div
-          class="border border-border rounded-2xl bg-bg-body overflow-hidden transition-all duration-200"
-          :class="{ 'border-accent/50': isFocused }"
+          v-if="activeSuggestedPrompts.length && !orderedMessages.length"
+          class="mb-3 flex flex-wrap gap-1.5"
         >
-          <!-- Uploaded file previews -->
-          <div
-            v-if="selectedFiles.length"
-            class="flex flex-wrap gap-2 px-3 pt-3"
+          <button
+            v-for="sp in activeSuggestedPrompts.slice(0, 4)"
+            :key="sp.label"
+            @click="applyPromptToInput(sp.text)"
+            class="px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-[11px] text-accent font-medium hover:bg-accent/12 hover:border-accent/35 transition-all cursor-pointer"
           >
-            <template v-for="file in selectedFiles" :key="file.tempId">
-              <div
-                class="relative w-11 h-11 rounded-lg overflow-hidden border border-border bg-bg-surface flex items-center justify-center"
-              >
-                <img
-                  v-if="
-                    file &&
-                    typeof file.type === 'string' &&
-                    file.type.startsWith('image/')
-                  "
-                  :src="createObjectURL(file)"
-                  class="w-full h-full object-cover"
-                  alt="preview"
-                />
-                <div
-                  v-else
-                  class="w-full h-full flex items-center justify-center text-[10px] font-semibold text-text-secondary bg-bg-body"
-                >
-                  PDF
-                </div>
-                <button
-                  type="button"
-                  @click="removeFile(file.tempId!)"
-                  class="absolute top-0.5 right-0.5 w-3.5 h-3.5 text-white text-[8px] bg-red-500 rounded-full flex items-center justify-center hover:bg-red-700"
-                >
-                  &times;
-                </button>
-              </div>
-            </template>
-          </div>
-
-          <!-- Textarea -->
-          <div class="px-3 pt-3 pb-1">
-            <textarea
-              v-model="userMessage"
-              placeholder="Ask anything about your workspace…"
-              ref="autoTextarea"
-              rows="2"
-              class="w-full resize-none bg-transparent outline-none text-sm text-text-primary placeholder:text-text-tertiary leading-relaxed"
-              :disabled="agentStore.isSending"
-              @keydown="handleKeydown"
-              @input="autoResize"
-              @focus="isFocused = true"
-              @blur="isFocused = false"
-            ></textarea>
-          </div>
-
-          <!-- Toolbar row -->
-          <div class="flex items-center justify-between px-2.5 pb-2.5">
-            <div class="flex items-center gap-1.5">
-              <button
-                type="button"
-                @click="triggerFileInput"
-                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-border text-[11.5px] text-text-secondary hover:border-accent/40 hover:text-accent transition-all cursor-pointer"
-              >
-                <i class="fa-solid fa-paperclip text-[10px]"></i>
-                Attach
-              </button>
-            </div>
+            <i class="fa-solid fa-lightbulb mr-1 text-[9px] opacity-70"></i>
+            {{ sp.label }}
+          </button>
+        </div>
+        <!-- Chat Input Area -->
+        <div class="flex flex-col gap-2.5">
+          <!-- Active suggested prompts (only when no messages yet) -->
+          <div
+            class="flex flex-wrap gap-1.5 px-1"
+            v-if="activeSuggestedPrompts?.length && !orderedMessages.length"
+          >
             <button
-              @click="sendMessage"
-              :disabled="
-                (!userMessage.trim() && !selectedFiles.length) ||
-                agentStore.isSending
-              "
-              class="w-8 h-8 rounded-full bg-accent flex items-center justify-center hover:bg-accent-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              v-for="sp in activeSuggestedPrompts.slice(0, 4)"
+              :key="sp.label"
+              @click="applyPromptToInput(sp.text)"
+              class="px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-[11px] text-accent font-medium hover:bg-accent/12 hover:border-accent/35 transition-all cursor-pointer"
             >
-              <i
-                class="fa-solid text-white text-xs"
-                :class="
-                  agentStore.isSending ? 'fa-spinner fa-spin' : 'fa-paper-plane'
-                "
-              ></i>
+              <i class="fa-solid fa-sparkles text-[9px] mr-1"></i>
+              {{ sp.label }}
             </button>
           </div>
-        </div>
 
+          <!-- Main input container -->
+          <div
+            class="relative rounded-2xl border bg-bg-card transition-all duration-200"
+            :class="
+              isFocused
+                ? 'border-accent/40 shadow-[0_0_0_3px_rgba(125,104,200,0.12)]'
+                : 'border-border'
+            "
+          >
+            <!-- Top row: source + web search toggle -->
+            <div
+              class="flex items-center gap-1.5 pb-0.5"
+              :class="selectedFiles.length ? 'pt-1.5' : 'pt-2.5'"
+            >
+              <!-- Top row: source selector + web search toggle -->
+              <div class="flex items-center gap-1.5 pt-1 px-1.5 pb-0.5">
+                <!-- Source selector -->
+                <div class="relative" ref="sourceDropdownRef">
+                  <button
+                    @click="showSourceDropdown = !showSourceDropdown"
+                    class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] transition-all cursor-pointer"
+                    :class="
+                      selectedSource !== 'all'
+                        ? 'text-accent bg-accent/8 border border-accent/20'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
+                    "
+                  >
+                    <i :class="[activeSource.icon, 'text-[10px]']"></i>
+                    <span class="max-w-[90px] truncate">{{
+                      activeSource.label
+                    }}</span>
+                    <i
+                      class="fa-solid fa-chevron-down text-[7px] ml-0.5 transition-transform duration-200"
+                      :class="showSourceDropdown ? 'rotate-180' : ''"
+                    ></i>
+                  </button>
+
+                  <!-- Dropdown -->
+                  <transition name="dropdown">
+                    <div
+                      v-if="showSourceDropdown"
+                      class="absolute bottom-full mb-2 left-0 w-64 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
+                    >
+                      <!-- Search inside dropdown -->
+                      <div class="px-3 pt-3 pb-2">
+                        <div class="relative">
+                          <i
+                            class="fa-solid fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-text-tertiary text-[10px]"
+                          ></i>
+                          <input
+                            type="text"
+                            placeholder="Search sources..."
+                            v-model="sourceSearch"
+                            class="w-full pl-7 pr-3 py-1.5 text-xs border border-border/60 rounded-lg bg-bg-body/80 focus:border-accent/40 outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <div class="max-h-72 overflow-y-auto pb-1">
+                        <div
+                          v-for="source in filteredSources"
+                          :key="source.id"
+                          @click="selectSource(source.id)"
+                          class="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-accent/6 transition-colors group"
+                          :class="
+                            selectedSource === source.id ? 'bg-accent/8' : ''
+                          "
+                        >
+                          <!-- Icon -->
+                          <div
+                            class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                            :class="source.iconBg"
+                          >
+                            <i
+                              :class="[
+                                source.icon,
+                                source.iconColor,
+                                'text-[13px]',
+                              ]"
+                            ></i>
+                          </div>
+
+                          <!-- Label + description -->
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-1.5">
+                              <span
+                                class="text-[13px] font-medium text-text-primary leading-none"
+                              >
+                                {{ source.label }}
+                              </span>
+                              <span
+                                v-if="source.badge"
+                                class="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-accent/10 text-accent"
+                              >
+                                {{ source.badge }}
+                              </span>
+                            </div>
+                            <p
+                              class="text-[11px] text-text-tertiary mt-0.5 truncate"
+                            >
+                              {{ source.description }}
+                            </p>
+                          </div>
+
+                          <!-- Check -->
+                          <i
+                            v-if="selectedSource === source.id"
+                            class="fa-solid fa-check text-accent text-[11px] shrink-0"
+                          ></i>
+                        </div>
+                      </div>
+                    </div>
+                  </transition>
+                </div>
+
+                <!-- Web search active indicator -->
+                <button
+                  @click="webSearch = !webSearch"
+                  class="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] transition-all cursor-pointer"
+                  :class="
+                    webSearch
+                      ? 'text-accent bg-accent/10 border border-accent/20'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
+                  "
+                  title="Toggle web search"
+                >
+                  <i class="fa-solid fa-globe text-[10px]"></i>
+                </button>
+              </div>
+            </div>
+            <!-- FILE PREVIEWS — shown inside the box, above textarea -->
+            <div
+              v-if="selectedFiles.length"
+              class="flex flex-wrap gap-2 px-3 pt-2.5 pb-1"
+            >
+              <div
+                v-for="file in selectedFiles"
+                :key="file.tempId"
+                class="relative group shrink-0"
+              >
+                <!-- Image preview -->
+                <div
+                  v-if="file.type.startsWith('image/')"
+                  class="w-16 h-16 rounded-xl border border-border/60 overflow-hidden bg-bg-body"
+                >
+                  <img
+                    :src="createObjectURL(file)"
+                    class="w-full h-full object-cover"
+                    alt="preview"
+                  />
+                </div>
+                <!-- PDF / other file preview -->
+                <div
+                  v-else
+                  class="h-12 px-3 rounded-xl border border-border/60 bg-bg-body/80 flex items-center gap-2 max-w-[140px]"
+                >
+                  <i
+                    class="fa-solid fa-file-pdf text-red-400 text-sm shrink-0"
+                  ></i>
+                  <span class="text-[11px] text-text-primary truncate">{{
+                    file.name
+                  }}</span>
+                </div>
+
+                <!-- Remove button -->
+                <button
+                  @click="removeFile(file.tempId!)"
+                  class="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-sm z-10"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+            <!-- Textarea -->
+            <div class="px-4 py-1">
+              <textarea
+                v-model="userMessage"
+                ref="textareaRef"
+                rows="1"
+                placeholder="Ask, create, search"
+                class="w-full bg-transparent text-sm text-text-primary placeholder:text-text-secondary/60 resize-none outline-none leading-relaxed max-h-40"
+                @keydown="handleKeydown"
+                @input="autoResize"
+                @focus="isFocused = true"
+                @blur="isFocused = false"
+              ></textarea>
+            </div>
+
+            <!-- Bottom toolbar -->
+            <div class="flex items-center justify-between px-3 pb-2.5 pt-0.5">
+              <div class="flex items-center gap-0.5">
+                <!-- Attach any file -->
+                <button
+                  @click="fileInput?.click()"
+                  class="w-8 h-8 rounded-xl flex items-center justify-center text-text-secondary hover:text-accent hover:bg-accent/6 transition-all cursor-pointer"
+                  title="Attach file (image or PDF)"
+                >
+                  <i class="fa-solid fa-paperclip text-xs"></i>
+                </button>
+
+                <!-- Image only -->
+                <button
+                  @click="imageInput?.click()"
+                  class="w-8 h-8 rounded-xl flex items-center justify-center text-text-secondary hover:text-accent hover:bg-accent/6 transition-all cursor-pointer"
+                  title="Attach image"
+                >
+                  <i class="fa-solid fa-image text-xs"></i>
+                </button>
+
+                <!-- Voice -->
+                <button
+                  @click="toggleRecording"
+                  class="w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer"
+                  :class="
+                    isRecording
+                      ? 'text-red-500 bg-red-500/10 animate-pulse'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
+                  "
+                  :title="isRecording ? 'Stop recording' : 'Voice input'"
+                >
+                  <i
+                    class="fa-solid text-xs"
+                    :class="
+                      isRecording ? 'fa-microphone-slash' : 'fa-microphone'
+                    "
+                  ></i>
+                </button>
+
+                <!-- Web search shortcut icon -->
+                <!-- <button
+          @click="webSearch = !webSearch"
+          class="w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer"
+          :class="webSearch ? 'text-accent bg-accent/10' : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'"
+          title="Toggle web search"
+        >
+          <i class="fa-solid fa-magnifying-glass-globe text-xs"></i>
+        </button> -->
+              </div>
+
+              <!-- File count badge + send -->
+              <div class="flex items-center gap-2">
+                <span
+                  v-if="selectedFiles.length"
+                  class="text-[11px] text-accent font-medium bg-accent/8 px-2 py-0.5 rounded-full border border-accent/15"
+                >
+                  {{ selectedFiles.length }} file{{
+                    selectedFiles.length > 1 ? "s" : ""
+                  }}
+                </span>
+
+                <button
+                  @click="sendMessage"
+                  :disabled="
+                    (!userMessage.trim() && !selectedFiles.length) ||
+                    agentStore.isSending
+                  "
+                  class="w-9 h-9 rounded-full bg-accent flex items-center justify-center hover:bg-accent-hover active:scale-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm shadow-accent/25"
+                >
+                  <i
+                    class="fa-solid text-accent-text text-[11px]"
+                    :class="
+                      agentStore.isSending
+                        ? 'fa-spinner fa-spin'
+                        : 'fa-paper-plane'
+                    "
+                  ></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden inputs -->
+          <input
+            ref="fileInput"
+            type="file"
+            class="hidden"
+            multiple
+            accept="image/*,.pdf"
+            @change="handleFileChange"
+          />
+          <input
+            ref="imageInput"
+            type="file"
+            class="hidden"
+            multiple
+            accept="image/*"
+            @change="handleFileChange"
+          />
+        </div>
         <!-- Hidden file input -->
         <input
           ref="fileInput"
@@ -978,14 +1605,13 @@
         <!-- Pinned prompt chips -->
         <div
           v-if="pinnedPrompts.length"
-          class="mt-3 relative flex items-center gap-2"
+          class="mt-2.5 relative flex items-center gap-1.5 flex-wrap"
           ref="Ref"
         >
-          <!-- First two pinned prompts as mini tabs -->
           <template v-for="pin in pinnedPrompts.slice(0, 2)" :key="pin.id">
             <div class="relative group">
               <button
-                class="truncate max-w-[80px] pr-5 cursor-pointer px-2 py-1 rounded-full border border-border bg-bg-card text-[12px] text-text-secondary hover:border-accent/50 hover:text-accent transition-all duration-150"
+                class="truncate max-w-[90px] pr-5 cursor-pointer px-2.5 py-1 rounded-full border border-border/40 bg-bg-body/80 text-[11px] text-text-secondary hover:border-accent/30 hover:text-accent transition-all duration-150"
                 @click="applyPromptToInput(pin.text)"
               >
                 {{ pin.label }}
@@ -1001,87 +1627,98 @@
             </div>
           </template>
 
-          <!-- Dropdown trigger button -->
           <button
             @click="toggleDropdown"
-            class="flex items-center gap-1.5 cursor-pointer px-3 py-2 rounded-full border border-border bg-bg-card text-[12px] text-text-secondary hover:border-accent/50 hover:text-accent transition-all duration-150"
+            class="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-full border border-border/40 bg-bg-body/80 text-[11px] text-text-secondary hover:border-accent/30 hover:text-accent transition-all duration-150"
           >
             <i
               class="fa-solid fa-thumbtack text-accent"
-              style="font-size: 10px"
+              style="font-size: 9px"
             ></i>
-            Pinned Prompts
+            Pinned
             <i
               :class="{
                 'fa-chevron-up': isDropdownOpen,
                 'fa-chevron-down': !isDropdownOpen,
               }"
-              class="fa-solid ml-1 text-text-tertiary text-[10px] transition-transform"
+              class="fa-solid ml-0.5 text-text-tertiary text-[9px] transition-transform"
             ></i>
           </button>
-          <div
-            v-if="isDropdownOpen"
-            class="absolute mt-1 w-56 bg-bg-card border border-border rounded-md shadow-lg z-50 overflow-hidden"
-          >
-            <div
-              class="flex justify-between items-center px-3 py-2 border-b border-border"
-            >
-              <span class="text-[11px] text-text-tertiary">Pinned prompts</span>
-            </div>
 
-            <!-- ✅ Scrollable area -->
-            <div class="max-h-60 overflow-y-auto">
-              <button
-                v-for="pin in pinnedPrompts"
-                :key="pin.id"
-                class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-accent/10 transition-colors text-[12px]"
-                @click="applyPromptToInput(pin.text)"
+          <transition name="dropdown">
+            <div
+              v-if="isDropdownOpen"
+              class="absolute bottom-full mb-1 left-0 w-56 bg-bg-card border border-border/60 rounded-xl shadow-lg shadow-black/8 z-50 overflow-hidden"
+            >
+              <div
+                class="flex justify-between items-center px-3 py-2 border-b border-border/30"
               >
-                <span class="truncate">{{ pin.label }}</span>
                 <span
-                  @click.stop="unpinSingle(pin)"
-                  class="text-red-500 hover:text-red-700 cursor-pointer ml-2"
+                  class="text-[10px] font-bold text-text-tertiary uppercase tracking-wider"
+                  >Pinned prompts</span
                 >
-                  <i class="fa-solid fa-xmark text-[10px]"></i>
-                </span>
-              </button>
+              </div>
+              <div class="max-h-60 overflow-y-auto">
+                <button
+                  v-for="pin in pinnedPrompts"
+                  :key="pin.id"
+                  class="w-full text-left px-3 py-2 flex items-center justify-between hover:bg-accent/8 transition-colors text-[12px]"
+                  @click="applyPromptToInput(pin.text)"
+                >
+                  <span class="truncate text-text-primary">{{
+                    pin.label
+                  }}</span>
+                  <span
+                    @click.stop="unpinSingle(pin)"
+                    class="text-text-tertiary hover:text-red-500 cursor-pointer ml-2 transition-colors"
+                  >
+                    <i class="fa-solid fa-xmark text-[10px]"></i>
+                  </span>
+                </button>
+              </div>
             </div>
-          </div>
+          </transition>
         </div>
 
-        <p class="text-[11px] text-text-tertiary text-center mt-2.5 mb-1">
+        <p
+          class="text-[10px] text-text-tertiary text-center mt-2 mb-0.5 opacity-60"
+        >
           AI can make mistakes. Please verify important information.
         </p>
       </div>
 
+      <!-- ===== HISTORY PANEL OVERLAY ===== -->
       <transition name="slide-fade">
         <div
           v-if="showHistoryPanel"
-          class="absolute inset-0 z-30 bg-bg-card flex flex-col rounded-[6px]"
+          class="absolute inset-0 z-30 bg-bg-card flex flex-col rounded-xl"
         >
           <!-- Header -->
           <div
-            class="flex items-center justify-between px-4 py-3 border-b border-border shrink-0"
+            class="flex items-center justify-between px-4 py-3 border-b border-border/40 shrink-0 bg-bg-card/95 backdrop-blur-sm"
           >
-            <div class="flex items-center gap-2">
-              <i
-                class="fa-regular fa-clock-rotate-left text-accent text-sm"
-              ></i>
+            <div class="flex items-center gap-2.5">
+              <div
+                class="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center"
+              >
+                <i
+                  class="fa-regular fa-clock-rotate-left text-accent text-[11px]"
+                ></i>
+              </div>
               <h3 class="text-sm font-semibold text-text-primary">
                 Chat History
               </h3>
             </div>
             <button
-              class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-bg-surface transition-colors cursor-pointer"
+              class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-bg-body transition-colors cursor-pointer"
               @click="showHistoryPanel = false"
             >
-              <i class="fa-solid fa-close text-text-secondary text-xs"></i>
+              <i class="fa-solid fa-xmark text-text-secondary text-xs"></i>
             </button>
           </div>
 
-          <!-- Session list or session messages view -->
           <div class="flex-1 overflow-y-auto min-h-0">
-            <!-- Loading state -->
+            <!-- Loading -->
             <div
               v-if="isLoadingSessions"
               class="flex items-center justify-center h-32"
@@ -1092,15 +1729,14 @@
               </div>
             </div>
 
-            <!-- Active session view (messages preview) -->
+            <!-- Session detail view -->
             <div v-else-if="historyViewSession" class="flex flex-col h-full">
-              <!-- Back + session title bar -->
               <div
-                class="flex items-center gap-2 px-3 py-2.5 border-b border-border shrink-0 bg-bg-body"
+                class="flex items-center gap-2 px-3 py-2.5 border-b border-border/40 shrink-0 bg-bg-body/50"
               >
                 <button
                   @click="historyViewSession = null"
-                  class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-bg-surface transition-colors cursor-pointer shrink-0"
+                  class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-bg-body transition-colors cursor-pointer shrink-0"
                 >
                   <i
                     class="fa-solid fa-arrow-left text-text-secondary text-xs"
@@ -1117,13 +1753,13 @@
                   @keydown.enter="confirmRename"
                   @keydown.escape="isRenamingSession = false"
                   ref="renameInput"
-                  class="flex-1 text-xs bg-bg-body border border-accent/40 rounded px-2 py-0.5 outline-none text-text-primary min-w-0"
+                  class="flex-1 text-xs bg-bg-body border border-accent/40 rounded-lg px-2.5 py-1 outline-none text-text-primary min-w-0 focus:ring-1 focus:ring-accent/15"
                   placeholder="Session name..."
                 />
-                <div class="flex items-center gap-1 shrink-0">
+                <div class="flex items-center gap-0.5 shrink-0">
                   <button
                     @click="startRename"
-                    class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-bg-surface transition-colors cursor-pointer"
+                    class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-accent/10 transition-colors cursor-pointer"
                     title="Rename"
                   >
                     <i
@@ -1132,7 +1768,7 @@
                   </button>
                   <button
                     @click="confirmDeleteSession(historyViewSession.session_id)"
-                    class="w-6 h-6 flex items-center justify-center rounded-md hover:bg-red-500/10 transition-colors cursor-pointer"
+                    class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer"
                     title="Delete session"
                   >
                     <i
@@ -1142,7 +1778,6 @@
                 </div>
               </div>
 
-              <!-- Messages preview -->
               <div class="flex-1 overflow-y-auto p-3 space-y-3">
                 <div
                   v-if="isLoadingSessionMessages"
@@ -1160,30 +1795,33 @@
                     <div
                       class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
                       :class="
-                        msg.role === 'user' ? 'bg-bg-surface' : 'bg-accent/10'
+                        msg.role === 'user' ? 'bg-accent/10' : 'bg-accent/10'
                       "
                     >
                       <i
                         v-if="msg.role === 'assistant'"
-                        class="fa-solid fa-robot text-accent text-[9px]"
+                        class="fa-solid fa-robot text-accent text-[8px]"
                       ></i>
-                      <span v-else class="text-[8px] font-semibold text-accent"
+                      <span v-else class="text-[7px] font-bold text-accent"
                         >ME</span
                       >
                     </div>
                     <div
-                      class="px-2.5 py-1.5 rounded-lg max-w-[85%] text-[11px] leading-relaxed border"
+                      class="px-2.5 py-1.5 rounded-xl max-w-[85%] text-[11px] leading-relaxed"
                       :class="
                         msg.role === 'user'
-                          ? 'bg-accent/10 border-accent/20 rounded-tr-none'
-                          : 'bg-bg-body border-border rounded-tl-none'
+                          ? 'bg-accent text-white rounded-tr-md'
+                          : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
                       "
                     >
-                      <p class="whitespace-pre-wrap text-text-primary">
-                        {{ msg.content }}
-                      </p>
+                      <p class="whitespace-pre-wrap">{{ msg.content }}</p>
                       <p
-                        class="text-[9px] text-text-tertiary mt-0.5 text-right"
+                        class="text-[9px] mt-0.5 text-right"
+                        :class="
+                          msg.role === 'user'
+                            ? 'text-white/50'
+                            : 'text-text-tertiary'
+                        "
                       >
                         {{ formatTimestamp(msg.timestamp) }}
                       </p>
@@ -1197,11 +1835,11 @@
             </div>
 
             <!-- Sessions list -->
-            <div v-else class="p-2 flex flex-col gap-1">
+            <div v-else class="p-2 flex flex-col gap-0.5">
               <div
                 v-for="session in sessionsList"
                 :key="session.session_id"
-                class="group relative px-3 py-2 rounded-lg border border-transparent hover:border-border hover:bg-bg-surface cursor-pointer transition-all duration-150"
+                class="group relative px-3 py-2.5 rounded-xl border border-transparent hover:border-border/40 hover:bg-bg-body/60 cursor-pointer transition-all duration-150"
                 @click="openSession(session)"
               >
                 <div class="flex items-start justify-between gap-2">
@@ -1213,7 +1851,7 @@
                     </p>
                     <p
                       v-if="session.last_message?.content"
-                      class="text-[10px] text-text-secondary mt-1 truncate opacity-70"
+                      class="text-[10px] text-text-tertiary mt-1 truncate"
                     >
                       {{ session.last_message.content }}
                     </p>
@@ -1224,42 +1862,43 @@
                   >
                     <button
                       @click.stop="toggleMenu(session.session_id)"
-                      class="w-7 h-7 flex items-center justify-center rounded-md cursor-pointer transition-colors"
+                      class="w-7 h-7 flex items-center justify-center rounded-lg cursor-pointer hover:bg-bg-body transition-colors"
                     >
                       <i
                         class="fa-solid fa-ellipsis text-text-tertiary text-xs"
                       ></i>
                     </button>
-                    <div
-                      v-if="openMenuSessionId === session.session_id"
-                      class="absolute right-0 mt-1 w-40 rounded-lg bg-card shadow-lg border border-border z-50 py-1"
-                    >
-                      <button
-                        @click.stop="
-                          startRenameFromList(session);
-                          closeMenu();
-                        "
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:text-accent"
+                    <transition name="dropdown">
+                      <div
+                        v-if="openMenuSessionId === session.session_id"
+                        class="absolute right-0 mt-1 w-40 rounded-xl bg-bg-card shadow-lg shadow-black/8 border border-border/60 z-50 py-1 overflow-hidden"
                       >
-                        <i class="fa-regular fa-pen"></i>
-                        Rename
-                      </button>
-                      <div class="my-1 border-t border-border"></div>
-                      <button
-                        @click.stop="
-                          confirmDeleteSession(session.session_id);
-                          closeMenu();
-                        "
-                        class="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:text-red-400"
-                      >
-                        <i class="fa-regular fa-trash"></i>
-                        Delete
-                      </button>
-                    </div>
+                        <button
+                          @click.stop="
+                            startRenameFromList(session);
+                            closeMenu();
+                          "
+                          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-primary hover:bg-accent/8 hover:text-accent transition-colors"
+                        >
+                          <i class="fa-regular fa-pen text-[10px]"></i>
+                          Rename
+                        </button>
+                        <div class="my-0.5 border-t border-border/30"></div>
+                        <button
+                          @click.stop="
+                            confirmDeleteSession(session.session_id);
+                            closeMenu();
+                          "
+                          class="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-500/8 transition-colors"
+                        >
+                          <i class="fa-regular fa-trash text-[10px]"></i>
+                          Delete
+                        </button>
+                      </div>
+                    </transition>
                   </div>
                 </div>
 
-                <!-- Inline rename input (list level) -->
                 <div
                   v-if="renamingSessionId === session.session_id"
                   class="mt-1.5"
@@ -1277,7 +1916,7 @@
                             el as HTMLInputElement;
                       }
                     "
-                    class="w-full text-xs bg-bg-body border border-accent/40 rounded px-2 py-1 outline-none text-text-primary"
+                    class="w-full text-xs bg-bg-body border border-accent/40 rounded-lg px-2.5 py-1.5 outline-none text-text-primary focus:ring-1 focus:ring-accent/15"
                     placeholder="Session name..."
                   />
                 </div>
@@ -1297,23 +1936,23 @@
             v-if="
               !historyViewSession && !isLoadingSessions && totalSessionPages > 1
             "
-            class="flex items-center justify-between px-4 py-2.5 border-t border-border shrink-0"
+            class="flex items-center justify-between px-4 py-2.5 border-t border-border/40 shrink-0"
           >
             <button
               @click="changeSessionPage(currentSessionPage - 1)"
               :disabled="currentSessionPage === 1"
-              class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               <i class="fa-solid fa-chevron-left text-[9px]"></i>
               Prev
             </button>
-            <span class="text-[11px] text-text-secondary"
+            <span class="text-[11px] text-text-tertiary"
               >{{ currentSessionPage }} / {{ totalSessionPages }}</span
             >
             <button
               @click="changeSessionPage(currentSessionPage + 1)"
               :disabled="currentSessionPage === totalSessionPages"
-              class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+              class="flex items-center gap-1.5 text-[11px] text-text-secondary hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
             >
               Next
               <i class="fa-solid fa-chevron-right text-[9px]"></i>
@@ -1324,35 +1963,40 @@
     </div>
   </div>
 
+  <!-- ===== DELETE CONFIRMATION MODAL ===== -->
   <div
     v-if="showDeleteModal"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
   >
-    <div class="w-full max-w-sm rounded-xl bg-bg-card shadow-xl p-5">
-      <div class="flex items-start gap-3">
+    <div
+      class="w-full max-w-sm rounded-2xl bg-bg-card shadow-2xl p-6 border border-border/40"
+    >
+      <div class="flex items-start gap-3.5">
         <div
-          class="flex h-10 w-10 items-center justify-center rounded-full bg-red-200"
+          class="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 shrink-0"
         >
-         <i class="fa-regular fa-trash text-red-500"></i>
+          <i class="fa-regular fa-trash text-red-500"></i>
         </div>
         <div class="flex-1">
-          <h3 class="text-sm font-semibold">Delete Session</h3>
-          <p class="mt-1 text-sm text-gray-500">
+          <h3 class="text-sm font-semibold text-text-primary">
+            Delete Session
+          </h3>
+          <p class="mt-1 text-sm text-text-secondary leading-snug">
             This action cannot be undone. This will permanently delete the
-            session.
+            session and all messages.
           </p>
         </div>
       </div>
       <div class="mt-5 flex justify-end gap-2">
         <button
           @click="handleDeleteCancel"
-          class="rounded-md border border-gray-300 px-4 py-1.5 text-sm"
+          class="rounded-lg border border-border/60 px-4 py-2 text-sm text-text-primary hover:bg-bg-body transition-colors"
         >
           Cancel
         </button>
         <button
           @click="handleDeleteConfirmed"
-          class="rounded-md bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+          class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 active:scale-[0.98] transition-all shadow-sm shadow-red-600/20"
         >
           Delete Session
         </button>
@@ -1370,7 +2014,7 @@ import {
   nextTick,
   onMounted,
   reactive,
-  toRaw
+  toRaw,
 } from "vue";
 import type { Ref } from "vue";
 import { useRoute } from "vue-router";
@@ -1397,15 +2041,42 @@ const authStore = useAuthStore();
 // Route
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
-const activeTab = ref<"persona" | "knowledge" | "upload" | "prompt">("persona");
+const activeTab = ref<
+  "persona" | "knowledge" | "upload" | "prompt" | "suggested"
+>("persona");
 const queryClient = useQueryClient();
 
+// Config tabs definition
+const configTabs = [
+  { key: "persona" as const, label: "Agent", icon: "fa-solid fa-robot" },
+  {
+    key: "knowledge" as const,
+    label: "Knowledge",
+    icon: "fa-solid fa-database",
+  },
+  {
+    key: "upload" as const,
+    label: "Training",
+    icon: "fa-solid fa-graduation-cap",
+  },
+  { key: "prompt" as const, label: "Prompts", icon: "fa-solid fa-terminal" },
+  {
+    key: "suggested" as const,
+    label: "Suggested",
+    icon: "fa-solid fa-lightbulb",
+  },
+];
+
 // Refs
-const isManuallyExpanded = ref(false)
+const isManuallyExpanded = ref(false);
 
 const isExpanded = computed(() => {
-  return isManuallyExpanded.value || showConfigPanel.value || (entities.value?.length > 0)
-})
+  return (
+    isManuallyExpanded.value ||
+    showConfigPanel.value ||
+    entities.value?.length > 0
+  );
+});
 const showConfigPanel = ref(false);
 const showAIPreview = ref(false);
 const userMessage = ref("");
@@ -1431,10 +2102,30 @@ const agentPassedData = computed(() => agentStore.agentPassed);
 const agentModuleId = computed(() => agentStore.module_id);
 const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => agentStore?.agentSettings?.knowledge);
+const trainingFileInput = ref<HTMLInputElement | null>(null);
+const webSearch = ref(false);
+const isRecording = ref(false);
+const sourceSearch = ref("");
+
+const filteredSources = computed(() => {
+  if (!sourceSearch.value.trim()) return availableSources.value;
+  const q = sourceSearch.value.toLowerCase();
+  return availableSources.value.filter(
+    (s) =>
+      s.label.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q),
+  );
+});
+const imageInput = ref<HTMLInputElement | null>(null);
+const toggleRecording = () => {
+  isRecording.value = !isRecording.value;
+};
 const agentsRolesPermissions = computed(
   () => agentStore.agentsRolesPermissions,
 );
-
+const triggerFileInput = () => {
+  trainingFileInput.value?.click();
+};
 const sheetNameRef = computed(() => agentStore.sheetTitle);
 const sheetNameValue = ref(sheetNameRef.value);
 const sheetIdRef = ref(agentStore.sheetId || "");
@@ -1477,7 +2168,7 @@ watch(
     if (!loading && isFirstLoad.value) {
       isFirstLoad.value = false;
     }
-  }
+  },
 );
 const sheetId = computed(() => {
   if (
@@ -1513,7 +2204,6 @@ watch(
         sheetNameValue.value = "";
         closeHandler();
       }
-      // Clear session on route change so a new chat starts
       activeSessionId.value = "";
       activeSessionTitle.value = "";
       agentStore.chatHistory = [];
@@ -1614,9 +2304,7 @@ const orderedMessages = computed(() => {
 const pinnedPrompts = computed(() => {
   return (pinnedAgentMessages.value || []).map((item: any) => {
     const msg = item.message || {};
-
     const fullText = msg.content || "Pinned prompt";
-
     return {
       id: msg._id,
       text: fullText,
@@ -1651,7 +2339,7 @@ async function startNewChat() {
   showHistoryPanel.value = false;
 
   const payload = {
-    agent_id: selectedAgentId.value, 
+    agent_id: selectedAgentId.value,
     title: "New Chat",
     module_name:
       route.path.includes("talent") && agentModuleName.value
@@ -1662,9 +2350,7 @@ async function startNewChat() {
         ? agentModuleId.value
         : moduleId.value || "",
     sheet_name:
-      sheetName.value && !isMongoId(sheetName.value)
-        ? sheetName.value
-        : "",
+      sheetName.value && !isMongoId(sheetName.value) ? sheetName.value : "",
     sheet_id: sheetId.value || "",
     lane_id: "Main",
   };
@@ -1680,7 +2366,10 @@ async function continueSession(session: any) {
   activeSessionId.value = session.session_id;
   activeSessionTitle.value = session.title || "Untitled conversation";
   localStorage.setItem("activeSessionId", session.session_id);
-  localStorage.setItem("activeSessionTitle", session.title || "Untitled conversation");
+  localStorage.setItem(
+    "activeSessionTitle",
+    session.title || "Untitled conversation",
+  );
   pendingMessages.value = [];
   agentStore.isLoadingHistory = true;
 
@@ -1689,7 +2378,6 @@ async function continueSession(session: any) {
       workspaceId.value,
       session.session_id,
     );
-    // API returns { session: { messages: [...] } }
     const sessionData = result?.session ?? result;
 
     if (sessionData?.messages?.length) {
@@ -1705,7 +2393,6 @@ async function continueSession(session: any) {
           },
           messages: sessionData.messages.map((m: any) => ({
             ...m,
-            // normalise: backend uses either 'type' or 'role'
             type: m.type ?? (m.role === "user" ? "user" : "assistant"),
           })),
         },
@@ -1749,7 +2436,7 @@ function scrollToBottom() {
     });
   });
 }
-//fetch pinned messages
+
 async function fetchPinnedMessages() {
   await agentStore.fetchPinnedMessages(workspaceId.value, {
     session_id: activeSessionId.value || undefined,
@@ -1838,7 +2525,6 @@ function initSocket() {
   });
 }
 
-
 const fileInput = ref<HTMLInputElement | null>(null);
 
 interface FileWithId extends File {
@@ -1852,10 +2538,6 @@ const createObjectURL = (file: FileWithId): string => file.objectUrl || "";
 
 const MAX_IMAGES = 5;
 
-const triggerFileInput = () => {
-  fileInput.value?.click();
-};
-
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const files = Array.from(target.files || []);
@@ -1865,32 +2547,30 @@ const handleFileChange = (event: Event) => {
   const pdfs = files.filter((f) => f.type === "application/pdf");
 
   if (pdfs.length > 1) {
-    alert("Only one PDF is allowed");
+    toast.error("Only one PDF is allowed");
     return;
   }
   if (images.length > MAX_IMAGES) {
-    alert(`You can upload up to ${MAX_IMAGES} images`);
+    toast.error(`Max ${MAX_IMAGES} images`);
     return;
   }
   if (pdfs.length === 1 && images.length > 0) {
-    alert("You can upload either images or a single PDF, not both");
+    toast.error("Images or PDF, not both");
     return;
   }
 
   const filesWithId: FileWithId[] = files.map((f) => {
-    const fileWithId = f as FileWithId;
-    fileWithId.tempId =
-      "temp-" + Date.now() + Math.random().toString(36).substr(2, 5);
-    fileWithId.objectUrl = f.type.startsWith("image/")
-      ? URL.createObjectURL(f)
-      : "";
-    return fileWithId;
+    const fw = f as FileWithId;
+    fw.tempId = "temp-" + Date.now() + Math.random().toString(36).substr(2, 5);
+    // Generate objectUrl for ALL files so preview works
+    fw.objectUrl = URL.createObjectURL(f);
+    return fw;
   });
 
   selectedFiles.value = [...selectedFiles.value, ...filesWithId];
   if (fileInput.value) fileInput.value.value = "";
+  if ((imageInput as any).value) (imageInput as any).value.value = "";
 };
-
 const removeFile = (tempId: string) => {
   const fileToRemove = selectedFiles.value.find((f) => f.tempId === tempId);
   if (fileToRemove?.objectUrl) URL.revokeObjectURL(fileToRemove.objectUrl);
@@ -1908,7 +2588,6 @@ const uploadFiles = async (): Promise<any[]> => {
   }
 };
 
-// ── Send message — uses activeSessionId if set, otherwise generates a new one ──
 async function sendMessage() {
   const message = userMessage.value?.trim();
   if (
@@ -1918,12 +2597,14 @@ async function sendMessage() {
   )
     return;
 
+  // Capture snapshot BEFORE any async ops clear the array
+  const filesToSend = [...selectedFiles.value];
   let attachments: any[] = [];
 
-  if (selectedFiles.value.length) {
+  if (filesToSend.length) {
     attachments = await uploadFiles();
-    selectedFiles.value.forEach((f) => {
-      if ((f as any).previewUrl) URL.revokeObjectURL((f as any).previewUrl);
+    filesToSend.forEach((f) => {
+      if (f.objectUrl) URL.revokeObjectURL(f.objectUrl);
     });
     selectedFiles.value = [];
   }
@@ -1936,27 +2617,20 @@ async function sendMessage() {
   scrollToBottom();
 
   const tempId = "temp-" + Date.now();
+  const previewAttachments = filesToSend.map((f) => ({
+    filename: f.name,
+    mimetype: f.type,
+    url: f.objectUrl, // already set in handleFileChange
+  }));
   pendingMessages.value.push({
     _id: tempId,
     type: "user",
     content: finalMessage,
     timestamp: new Date().toISOString(),
     metadata: { status: "sending", temp: true },
-    attachments: attachments.length
-      ? attachments.map((f: any) => ({
-          filename: f.filename || f.name,
-          mimetype: f.mimetype || f.type,
-          url: f.url || f.objectUrl,
-        }))
-      : selectedFiles.value.map((f) => ({
-          filename: f.name,
-          mimetype: f.type,
-          url: f.objectUrl,
-        })),
+    attachments: previewAttachments,
   });
 
-  // Use existing activeSessionId if we're continuing a session; otherwise let
-  // the server assign / create a session (pass the generated id as before).
   const sessionIdToUse =
     activeSessionId.value ||
     `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1993,34 +2667,34 @@ async function sendMessage() {
     localStorage.setItem("activeSessionId", activeSessionId.value);
     localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
 
-   await Promise.all([
-  agentStore.fetchChatHistory(
-    workspaceId.value,
-    authStore.userId ?? undefined,
-    route.path.includes("talent") && agentModuleName.value
-      ? agentModuleName.value
-      : (moduleSelected.value ?? undefined),
-    route.path.includes("talent") && agentModuleId.value
-      ? agentModuleId.value
-      : (moduleId.value ?? undefined),
-    sheetName.value && !isMongoId(sheetName.value)
-      ? sheetName.value
-      : undefined,
-    sheetId.value,
-    !!activeSessionId.value,
-  ),
-  agentStore.fetchCreatedEntities(
-    workspaceId.value,
-    authStore.userId ?? undefined,
-    route.path.includes("talent") && agentModuleName.value
-      ? agentModuleName.value
-      : (moduleSelected.value ?? undefined),
-    route.path.includes("talent") && agentModuleId.value
-      ? agentModuleId.value
-      : (moduleId.value ?? undefined),
-  ),
-]);
-showConfigPanel.value = false;
+    await Promise.all([
+      agentStore.fetchChatHistory(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        route.path.includes("talent") && agentModuleName.value
+          ? agentModuleName.value
+          : (moduleSelected.value ?? undefined),
+        route.path.includes("talent") && agentModuleId.value
+          ? agentModuleId.value
+          : (moduleId.value ?? undefined),
+        sheetName.value && !isMongoId(sheetName.value)
+          ? sheetName.value
+          : undefined,
+        sheetId.value,
+        !!activeSessionId.value,
+      ),
+      agentStore.fetchCreatedEntities(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        route.path.includes("talent") && agentModuleName.value
+          ? agentModuleName.value
+          : (moduleSelected.value ?? undefined),
+        route.path.includes("talent") && agentModuleId.value
+          ? agentModuleId.value
+          : (moduleId.value ?? undefined),
+      ),
+    ]);
+    showConfigPanel.value = false;
     pendingMessages.value = [];
     scrollToBottom();
     isAiThinkingBubbleVisible.value = false;
@@ -2104,7 +2778,6 @@ onMounted(() => {
       activeSessionId.value = savedSessionId;
       activeSessionTitle.value = savedSessionTitle || "";
 
-      // Load messages for the restored session
       agentStore.isLoadingHistory = true;
       agentStore
         .getSession(workspaceId.value, savedSessionId)
@@ -2166,7 +2839,6 @@ watch(
   ) => {
     if (!workspaceId.value || !isOpen) return;
 
-    // Restore session from localStorage when panel opens
     if (!activeSessionId.value) {
       const savedSessionId = localStorage.getItem("activeSessionId");
       const savedSessionTitle = localStorage.getItem("activeSessionTitle");
@@ -2210,7 +2882,6 @@ watch(
         }
       }
     } else {
-      // Session already active, just reload history normally
       agentStore.fetchChatHistory(
         workspaceId.value,
         authStore.userId ?? undefined,
@@ -2258,26 +2929,24 @@ onBeforeUnmount(() => {
 });
 
 const openConfigPanel = () => {
-  showConfigPanel.value = !showConfigPanel.value
+  showConfigPanel.value = !showConfigPanel.value;
   if (showConfigPanel.value) {
-    // Only reset if no agent is selected (creating new)
     if (!selectedAgentId.value) {
-      resetAgentConfig()
+      resetAgentConfig();
     } else {
-      // Re-load settings to repopulate the form
-      loadAgentSettings()
+      loadAgentSettings();
     }
   }
-}
+};
 
 const expandPanel = () => {
-  isManuallyExpanded.value = true
-}
+  isManuallyExpanded.value = true;
+};
 
 const compressPanel = () => {
   isManuallyExpanded.value = false;
   showConfigPanel.value = false;
-  agentStore.createdEntities = []; 
+  agentStore.createdEntities = [];
 };
 
 const availableCapabilities = [
@@ -2305,7 +2974,7 @@ interface AgentConfig {
   competencies: string[];
   capabilities: string[];
   conditions_rules: string[];
-  actions:string[];
+  actions: string[];
   module_actions: ModuleAction[];
 }
 
@@ -2321,8 +2990,8 @@ const agentConfig = reactive<AgentConfig>({
   competencies: [],
   capabilities: [],
   conditions_rules: [],
-  actions:[],
-  module_actions: []
+  actions: [],
+  module_actions: [],
 });
 
 const openLevel = ref(false);
@@ -2379,7 +3048,7 @@ const agentOptions = computed(() => {
 const selectedAgentName = computed(() => {
   if (isTalentRoute.value && agentPassedData.value?.name) {
     const name = agentPassedData.value.name;
-    return name.length > 20 ? name.slice(0, 20) + '...' : name;
+    return name.length > 20 ? name.slice(0, 20) + "..." : name;
   }
 
   const agent = agentsCreated.value?.data?.agents?.find(
@@ -2388,23 +3057,20 @@ const selectedAgentName = computed(() => {
 
   if (!agent?.name) return "Select Agent";
 
-  return agent.name.length > 20
-    ? agent.name.slice(0, 20) + '...'
-    : agent.name;
+  return agent.name.length > 20 ? agent.name.slice(0, 20) + "..." : agent.name;
 });
 
 watch(
   () => agentsCreated.value?.data?.agents,
   (agents) => {
     if (!agents?.length) return;
-    // Always pre-select first agent unless we're on talent route
-    // (talent route sets selectedAgentId via the agentPassedData watch)
     if (!isTalentRoute.value && !selectedAgentId.value) {
       selectedAgentId.value = agents[0]._id;
     }
-    // If selectedAgentId is set but no longer in the list, reset to first
     if (!isTalentRoute.value && selectedAgentId.value) {
-      const stillExists = agents.some((a: any) => a._id === selectedAgentId.value);
+      const stillExists = agents.some(
+        (a: any) => a._id === selectedAgentId.value,
+      );
       if (!stillExists) {
         selectedAgentId.value = agents[0]._id;
       }
@@ -2451,7 +3117,6 @@ watch(
     agentConfig.capabilities = [...(agent.capabilities || [])];
     agentConfig.conditions_rules = [...(agent.conditions_rules || [])];
 
-    // Also populate the role selects
     if (agent.workspace_access_role_id) {
       selectedRole.value = agent.workspace_access_role_id;
     }
@@ -2459,21 +3124,33 @@ watch(
       selectJobRole.value = agent.workspace_role_id;
     }
 
-    originalAgentConfig.value = JSON.parse(JSON.stringify({
-      name: agentConfig.name,
-      description: agentConfig.description,
-      role: agentConfig.role,
-      level: agentConfig.level,
-      responsibilities: agentConfig.responsibilities,
-      skills: agentConfig.skills,
-      competencies: agentConfig.competencies,
-      capabilities: agentConfig.capabilities,
-      conditions_rules: agentConfig.conditions_rules,
-      workspace_role_id: selectJobRole.value,
-      workspace_access_role_id: selectedRole.value,
-    }));
+    // Load suggested prompts from agent data
+    if (agent.suggested_prompts?.length) {
+      suggestedPrompts.value = agent.suggested_prompts.map((p: any) => ({
+        label: p.label || "",
+        text: p.text || "",
+        category: p.category || "",
+        is_active: p.is_active !== false,
+      }));
+    }
+
+    originalAgentConfig.value = JSON.parse(
+      JSON.stringify({
+        name: agentConfig.name,
+        description: agentConfig.description,
+        role: agentConfig.role,
+        level: agentConfig.level,
+        responsibilities: agentConfig.responsibilities,
+        skills: agentConfig.skills,
+        competencies: agentConfig.competencies,
+        capabilities: agentConfig.capabilities,
+        conditions_rules: agentConfig.conditions_rules,
+        workspace_role_id: selectJobRole.value,
+        workspace_access_role_id: selectedRole.value,
+      }),
+    );
   },
-  { immediate: true }
+  { immediate: true },
 );
 watch(
   () => selectedAgentId.value,
@@ -2482,7 +3159,7 @@ watch(
       await loadAgentSettings();
     }
   },
-  { immediate: false } 
+  { immediate: false },
 );
 interface KnowledgeConfig {
   module_id: string;
@@ -2993,7 +3670,6 @@ async function fetchAssignedAgents() {
     moduleId.value,
     selectedModule.value,
   );
-  // Guarantee first agent is pre-selected after data arrives
   const agents = agentStore.agentsCreated?.data?.agents;
   if (agents?.length && !isTalentRoute.value && !selectedAgentId.value) {
     selectedAgentId.value = agents[0]._id;
@@ -3032,7 +3708,7 @@ const unpinSingle = async (pin: any) => {
   try {
     await agentStore.pinMessage(
       workspaceId.value,
-      pin.session_id, // ✅ correct session
+      pin.session_id,
       msg._id,
       false,
     );
@@ -3049,6 +3725,7 @@ const unpinSingle = async (pin: any) => {
     togglingPinId.value = null;
   }
 };
+
 // ── Sessions state ────────────────────────────────────────────────────────────
 const isLoadingSessions = ref(false);
 const isLoadingSessionMessages = ref(false);
@@ -3060,7 +3737,6 @@ const sessionsPagination = ref<{
 } | null>(null);
 const currentSessionPage = ref(1);
 
-// historyViewSession: session being previewed inside the history panel (NOT the active chat session)
 const historyViewSession = ref<any>(null);
 const historyViewMessages = ref<any[]>([]);
 
@@ -3132,7 +3808,6 @@ async function confirmRename() {
         ...sessionsList.value[idx],
         title: renameValue.value.trim(),
       };
-    // Update active session title if it's the same session
     if (activeSessionId.value === historyViewSession.value.session_id) {
       activeSessionTitle.value = renameValue.value.trim();
     }
@@ -3169,7 +3844,6 @@ async function confirmRenameFromList(session_id: string) {
         ...sessionsList.value[idx],
         title: renameValue.value.trim(),
       };
-    // Update active session title if it's the same session
     if (activeSessionId.value === session_id) {
       activeSessionTitle.value = renameValue.value.trim();
     }
@@ -3273,83 +3947,83 @@ function toggleMsgMenu(msgId: string) {
   openMsgMenuId.value = openMsgMenuId.value === msgId ? null : msgId;
 }
 
-// Close message menu when clicking outside
 function handleMsgMenuClickOutside() {
   if (openMsgMenuId.value) openMsgMenuId.value = null;
 }
 type Action = {
-  _id: string
-  title: string
-  slug: string
-  prompt?: string
-  is_selected: boolean
-}
+  _id: string;
+  title: string;
+  slug: string;
+  prompt?: string;
+  is_selected: boolean;
+};
 
 type Module = {
-  module_id: string | null
-  module_title: string
-  module_type: string
-  granted_actions: Action[]
-}
-const openModules = ref<Record<string, boolean>>({})
+  module_id: string | null;
+  module_title: string;
+  module_type: string;
+  granted_actions: Action[];
+};
+const openModules = ref<Record<string, boolean>>({});
 const toggleModule = (title: string) => {
-  openModules.value[title] = !openModules.value[title]
-}
+  openModules.value[title] = !openModules.value[title];
+};
 const filteredModules = computed(() => {
-  if (!searchQuery.value) return moduleActions.value
+  if (!searchQuery.value) return moduleActions.value;
 
-  const query = searchQuery.value.toLowerCase()
+  const query = searchQuery.value.toLowerCase();
 
   return moduleActions.value
-    .map(module => {
-      const filteredActions = module.granted_actions.filter(action =>
-        action.title.toLowerCase().includes(query) ||
-        (action.prompt && action.prompt.toLowerCase().includes(query))
-      )
+    .map((module) => {
+      const filteredActions = module.granted_actions.filter(
+        (action) =>
+          action.title.toLowerCase().includes(query) ||
+          (action.prompt && action.prompt.toLowerCase().includes(query)),
+      );
 
       return {
         ...module,
-        granted_actions: filteredActions
-      }
+        granted_actions: filteredActions,
+      };
     })
-    .filter(module => module.granted_actions.length > 0)
-})
+    .filter((module) => module.granted_actions.length > 0);
+});
 
 interface ModuleAction {
   module_id: string | null;
   module_title: string;
   module_type: string;
-  granted_actions: string[]; // only slugs when saving to backend
+  granted_actions: string[];
 }
 
-const moduleActions = ref<Module[]>([])
-const searchQuery = ref("")
+const moduleActions = ref<Module[]>([]);
+const searchQuery = ref("");
 
 const allSelected = computed(() => {
-  return moduleActions.value.length > 0 &&
-    moduleActions.value.every(module =>
-      module.granted_actions.every(action => action.is_selected)
+  return (
+    moduleActions.value.length > 0 &&
+    moduleActions.value.every((module) =>
+      module.granted_actions.every((action) => action.is_selected),
     )
-})
+  );
+});
 
 watch(
   () => agentsData.value?.module_actions,
   (val) => {
-    moduleActions.value = val
-      ? structuredClone(toRaw(val))
-      : []
+    moduleActions.value = val ? structuredClone(toRaw(val)) : [];
   },
-  { immediate: true }
-)
+  { immediate: true },
+);
 const toggleSelectAll = () => {
-  const value = !allSelected.value
+  const value = !allSelected.value;
 
-  moduleActions.value.forEach(module => {
-    module.granted_actions.forEach(action => {
-      action.is_selected = value
-    })
-  })
-}
+  moduleActions.value.forEach((module) => {
+    module.granted_actions.forEach((action) => {
+      action.is_selected = value;
+    });
+  });
+};
 
 const isSavingPrompt = ref(false);
 const savePromptActions = async () => {
@@ -3358,28 +4032,25 @@ const savePromptActions = async () => {
   isSavingPrompt.value = true;
 
   try {
-    // Convert moduleActions.value to simple structure for backend
-    const modulesToSave: ModuleAction[] = moduleActions.value.map(module => ({
+    const modulesToSave: ModuleAction[] = moduleActions.value.map((module) => ({
       module_id: module.module_id,
       module_title: module.module_title,
       module_type: module.module_type,
       granted_actions: module.granted_actions
-        .filter(action => action.is_selected)
-        .map(action => action.slug) // only slugs
+        .filter((action) => action.is_selected)
+        .map((action) => action.slug),
     }));
 
     agentConfig.module_actions = modulesToSave;
 
-    // Also flatten all selected actions if needed
     agentConfig.actions = moduleActions.value
-      .flatMap(module => module.granted_actions)
-      .filter(action => action.is_selected)
-      .map(action => action.slug);
+      .flatMap((module) => module.granted_actions)
+      .filter((action) => action.is_selected)
+      .map((action) => action.slug);
 
     await updateAgent(agentConfig.id);
 
     if (searchQuery.value) searchQuery.value = "";
-
   } catch (err) {
     console.error(err);
     toast.error("Failed to save prompt actions");
@@ -3387,6 +4058,299 @@ const savePromptActions = async () => {
     isSavingPrompt.value = false;
   }
 };
+
+// ── Suggested Prompts Tab ─────────────────────────────────────────────────────
+interface SuggestedPrompt {
+  label: string;
+  text: string;
+  category: string;
+  is_active: boolean;
+}
+
+const suggestedPrompts = ref<SuggestedPrompt[]>([]);
+const isSavingSuggested = ref(false);
+
+const activeSuggestedPrompts = computed(() => {
+  return suggestedPrompts.value.filter((p) => p.is_active && p.label && p.text);
+});
+
+function addSuggestedPrompt() {
+  suggestedPrompts.value.push({
+    label: "",
+    text: "",
+    category: "",
+    is_active: true,
+  });
+}
+
+function removeSuggestedPrompt(index: number) {
+  suggestedPrompts.value.splice(index, 1);
+}
+
+const saveSuggestedPrompts = async () => {
+  if (!workspaceId.value || !agentConfig.id) {
+    toast.error("No agent selected");
+    return;
+  }
+
+  isSavingSuggested.value = true;
+
+  try {
+    const payload = {
+      suggested_prompts: suggestedPrompts.value.filter(
+        (p) => p.label && p.text,
+      ),
+    };
+
+    await agentStore.updateSelectedAgent(
+      workspaceId.value,
+      payload,
+      agentConfig.id,
+    );
+    toast.success("Suggested prompts saved!");
+    await loadAgentSettings();
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to save suggested prompts");
+  } finally {
+    isSavingSuggested.value = false;
+  }
+};
+// empty state
+// ── Source selector ───────────────────────────────────────────────────────────
+const showSourceDropdown = ref(false);
+const sourceDropdownRef = ref<HTMLElement | null>(null);
+const selectedSource = ref<string>("all");
+
+const availableSources = computed(() => [
+  {
+    id: "all",
+    label: "All sources",
+    icon: "fa-solid fa-layer-group",
+    iconBg: "bg-accent/10",
+    iconColor: "text-accent",
+    description: "Search across everything",
+  },
+  {
+    id: "workspace",
+    label: moduleSelected.value || "Workspace",
+    sublabel: contextTitle.value,
+    icon: "fa-solid fa-building",
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-500",
+    description: "Current workspace data",
+    badge: "Current",
+  },
+  {
+    id: "sheets",
+    label: "Sheets",
+    icon: "fa-solid fa-table",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-500",
+    description: "Rows, columns, sheet data",
+  },
+  {
+    id: "tickets",
+    label: "Tasks & Tickets",
+    icon: "fa-solid fa-ticket",
+    iconBg: "bg-purple-50",
+    iconColor: "text-purple-500",
+    description: "All tasks, issues, requests",
+  },
+  {
+    id: "docs",
+    label: "Docs",
+    icon: "fa-solid fa-file-lines",
+    iconBg: "bg-orange-50",
+    iconColor: "text-orange-500",
+    description: "Documents and notes",
+  },
+  {
+    id: "web",
+    label: "Web search",
+    icon: "fa-solid fa-globe",
+    iconBg: "bg-sky-50",
+    iconColor: "text-sky-500",
+    description: "Search the internet live",
+  },
+  {
+    id: "training",
+    label: "Training data",
+    icon: "fa-solid fa-graduation-cap",
+    iconBg: "bg-pink-50",
+    iconColor: "text-pink-500",
+    description: "Uploaded knowledge & prompts",
+  },
+]);
+
+const activeSource = computed(
+  () =>
+    availableSources.value.find((s) => s.id === selectedSource.value) ??
+    availableSources.value[0],
+);
+
+function selectSource(id: string) {
+  selectedSource.value = id;
+  showSourceDropdown.value = false;
+  // Enable web search toggle automatically if web source picked
+  if (id === "web") webSearch.value = true;
+  else if (webSearch.value && id !== "all") webSearch.value = false;
+}
+
+onClickOutside(sourceDropdownRef, () => {
+  showSourceDropdown.value = false;
+});
+
+const emptyStateQuickPrompts = computed(() => {
+  const ctx = contextTitle.value;
+  const mod = moduleSelected.value || ctx;
+  const src = selectedSource.value;
+
+  const map: Record<string, string[]> = {
+    all: [
+      `Summarize the current status of ${mod}`,
+      `What tasks are overdue in ${mod}?`,
+      `What is assigned to me?`,
+      `Which items have the highest priority?`,
+    ],
+    workspace: [
+      `What's the latest update in ${mod}?`,
+      `Show me all open items in ${mod}`,
+      `Who is working on what in ${mod}?`,
+      `Give me a progress report for ${mod}`,
+    ],
+    sheets: [
+      `Summarize the data in my sheets`,
+      `Find any anomalies or outliers in my sheet data`,
+      `What are the top entries by value?`,
+      `Show me rows that haven't been updated recently`,
+    ],
+    tickets: [
+      `What tasks are overdue?`,
+      `Which tickets are assigned to me?`,
+      `Show me the highest priority open tickets`,
+      `Find tasks with no assignee`,
+    ],
+    docs: [
+      `Summarize my recent documents`,
+      `Find docs related to ${mod}`,
+      `Which docs haven't been updated in a while?`,
+      `What decisions are documented?`,
+    ],
+    web: [
+      `What are the latest trends in project management?`,
+      `Search for best practices in ${mod}`,
+      `Find recent news about my industry`,
+      `Look up tools similar to what we use`,
+    ],
+    training: [
+      `What have I trained this agent on?`,
+      `Summarize the agent's knowledge base`,
+      `What prompts are configured for this agent?`,
+      `Show me what this agent knows about ${mod}`,
+    ],
+  };
+
+  return (map[src] ?? map["all"]).slice(0, 4);
+});
+
+const emptyStateFeatureCards = computed(() => {
+  const ctx = contextTitle.value;
+  const src = selectedSource.value;
+
+  const all = [
+    {
+      title: "Executive summary",
+      description: "Generate a concise overview from your workspace data.",
+      prompt: `Create an executive summary for ${ctx}`,
+      icon: "fa-solid fa-chart-line",
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-500",
+      isNew: true,
+      sources: ["all", "workspace", "sheets"],
+    },
+    {
+      title: "Project update",
+      description: "Time-based status update across active items.",
+      prompt: `Give me a project update for ${ctx} this week`,
+      icon: "fa-solid fa-calendar-check",
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-500",
+      isNew: true,
+      sources: ["all", "workspace", "tickets"],
+    },
+    {
+      title: "Find duplicate tasks",
+      description: "Identify and surface overlapping or redundant work.",
+      prompt: `Find any duplicate or overlapping tasks in ${ctx}`,
+      icon: "fa-solid fa-copy",
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-500",
+      isNew: true,
+      sources: ["all", "tickets"],
+    },
+    {
+      title: "Find stuck tasks",
+      description: "Locate items with no recent progress or updates.",
+      prompt: `Which tasks in ${ctx} are stuck or stagnant?`,
+      icon: "fa-solid fa-triangle-exclamation",
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-500",
+      isNew: false,
+      sources: ["all", "tickets", "workspace"],
+    },
+    {
+      title: "Summarize documents",
+      description: "Get a quick digest of your recent docs.",
+      prompt: `Summarize the key points from my recent documents in ${ctx}`,
+      icon: "fa-solid fa-file-lines",
+      iconBg: "bg-orange-50",
+      iconColor: "text-orange-500",
+      isNew: false,
+      sources: ["all", "docs"],
+    },
+    {
+      title: "Web research",
+      description: "Find external context and latest information.",
+      prompt: `Search the web for insights relevant to ${ctx}`,
+      icon: "fa-solid fa-globe",
+      iconBg: "bg-sky-50",
+      iconColor: "text-sky-500",
+      isNew: true,
+      sources: ["all", "web"],
+    },
+    {
+      title: "Analyze sheet data",
+      description: "Surface patterns and insights from your sheets.",
+      prompt: `Analyze the data in my sheets and highlight key trends`,
+      icon: "fa-solid fa-chart-bar",
+      iconBg: "bg-teal-50",
+      iconColor: "text-teal-500",
+      isNew: false,
+      sources: ["all", "sheets"],
+    },
+    {
+      title: "Agent knowledge summary",
+      description: "See what this agent has been trained on.",
+      prompt: `Summarize what this agent knows and what it can help me with`,
+      icon: "fa-solid fa-brain",
+      iconBg: "bg-pink-50",
+      iconColor: "text-pink-500",
+      isNew: false,
+      sources: ["all", "training"],
+    },
+  ];
+
+  return all.filter((c) => c.sources.includes(src)).slice(0, 4);
+});
+
+// Clicks a suggestion, fills input AND immediately sends
+async function applyPromptAndSend(text: string) {
+  userMessage.value = text;
+  await nextTick();
+  autoResize();
+  await sendMessage();
+}
 </script>
 
 <style scoped>
@@ -3398,7 +4362,7 @@ const savePromptActions = async () => {
 .typing-dots span {
   width: 6px;
   height: 6px;
-  background-color: #7d68c8;
+  background-color: var(--accent, #7c3aed);
   border-radius: 50%;
   opacity: 0.4;
   animation: typing-bounce 1.4s infinite ease-in-out;
@@ -3414,8 +4378,8 @@ const savePromptActions = async () => {
   height: 28px;
   padding: 5px;
   border-radius: 9999px;
-  border: 3px solid #d9d9d9;
-  border-top-color: #7d68c8;
+  border: 3px solid #e5e7eb;
+  border-top-color: var(--accent, #7c3aed);
   animation: chat-spin 0.8s linear infinite;
 }
 
@@ -3439,7 +4403,7 @@ const savePromptActions = async () => {
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -3447,6 +4411,33 @@ const savePromptActions = async () => {
   }
 }
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out;
+  animation: fade-in 0.25s ease-out;
+}
+
+/* Dropdown transition */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.15s ease;
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* Slide-fade transition for history panel */
+.slide-fade-enter-active {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateX(100%);
+}
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateX(100%);
 }
 </style>

@@ -639,10 +639,12 @@ watch([sheetId, sheetTitle], ([id, title]) => {
   if (id) {
     localStorage.setItem("selected_sheet_id", id);
     selected_sheet_id.value = id;
+    agentStore.saveSelectedSheetId(id);
   }
 
   if (title) {
     localStorage.setItem("selected_sheet_title", title);
+     agentStore.saveSelectedSheetTitle(title);
   }
 }, { immediate: true });
 const { data: variables, isPending: isVariablesPending } = useVariables(

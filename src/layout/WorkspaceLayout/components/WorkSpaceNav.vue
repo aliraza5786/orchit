@@ -367,6 +367,9 @@ const clearWorkspaceStorage = () => {
   localStorage.removeItem('activePlanLabel')
   localStorage.removeItem('sprintType')
   localStorage.removeItem('asFirstTime')
+  localStorage.removeItem('activeSessionId');
+  localStorage.removeItem('activeSessionTitle');
+  localStorage.removeItem('selected_sheet_id');
 }
 
 const handleClick = () => workspaceStore.toggleSettingPanel();
