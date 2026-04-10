@@ -610,7 +610,7 @@
             :actions="false"
             size="md"
             variant="secondary"
-            class="relative min-w-0 max-w-[150px]"
+            class="relative min-w-0 max-w-[130px]"
           >
             <template #more>
               <div
@@ -623,7 +623,7 @@
           </Dropdown>
         </h5>
 
-        <div class="flex items-center gap-1.5 shrink-0">
+        <div class="flex items-center shrink-0">
           <!-- History Button -->
           <button
             class="cursor-pointer p-1 rounded backdrop-blur-2xl transition-all duration-75 hover:text-accent"
@@ -1116,7 +1116,6 @@
                   v-model="renameValue"
                   @keydown.enter="confirmRename"
                   @keydown.escape="isRenamingSession = false"
-                  @blur="confirmRename"
                   ref="renameInput"
                   class="flex-1 text-xs bg-bg-body border border-accent/40 rounded px-2 py-0.5 outline-none text-text-primary min-w-0"
                   placeholder="Session name..."
@@ -1329,27 +1328,15 @@
     v-if="showDeleteModal"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
   >
-    <div class="w-full max-w-sm rounded-xl bg-white shadow-xl p-5">
+    <div class="w-full max-w-sm rounded-xl bg-bg-card shadow-xl p-5">
       <div class="flex items-start gap-3">
         <div
-          class="flex h-10 w-10 items-center justify-center rounded-full bg-red-100"
+          class="flex h-10 w-10 items-center justify-center rounded-full bg-red-200"
         >
-          <svg
-            class="h-5 w-5 text-red-600"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 7h12M9 7v10m6-10v10M10 11h4"
-            />
-          </svg>
+         <i class="fa-regular fa-trash text-red-500"></i>
         </div>
         <div class="flex-1">
-          <h3 class="text-sm font-semibold text-gray-900">Delete Session</h3>
+          <h3 class="text-sm font-semibold">Delete Session</h3>
           <p class="mt-1 text-sm text-gray-500">
             This action cannot be undone. This will permanently delete the
             session.
@@ -1359,7 +1346,7 @@
       <div class="mt-5 flex justify-end gap-2">
         <button
           @click="handleDeleteCancel"
-          class="rounded-md border border-gray-300 px-4 py-1.5 text-sm text-gray-700 hover:bg-gray-100"
+          class="rounded-md border border-gray-300 px-4 py-1.5 text-sm"
         >
           Cancel
         </button>
@@ -3149,9 +3136,9 @@ async function confirmRename() {
     if (activeSessionId.value === historyViewSession.value.session_id) {
       activeSessionTitle.value = renameValue.value.trim();
     }
-    toast.success("Session renamed");
+    toast.success("Chat renamed successfully");
   } catch {
-    toast.error("Failed to rename session");
+    toast.error("Failed to rename chat");
   } finally {
     isRenamingSession.value = false;
   }
@@ -3186,9 +3173,9 @@ async function confirmRenameFromList(session_id: string) {
     if (activeSessionId.value === session_id) {
       activeSessionTitle.value = renameValue.value.trim();
     }
-    toast.success("Session renamed");
+    toast.success("Chat renamed successfully");
   } catch {
-    toast.error("Failed to rename session");
+    toast.error("Failed to rename chat");
   } finally {
     renamingSessionId.value = null;
   }
@@ -3217,9 +3204,9 @@ async function handleDeleteConfirmed() {
       localStorage.removeItem("activeSessionId");
       localStorage.removeItem("activeSessionTitle");
     }
-    toast.success("Session deleted");
+    toast.success("Chat deleted successfully");
   } catch {
-    toast.error("Failed to delete session");
+    toast.error("Failed to delete chat");
   } finally {
     showDeleteModal.value = false;
     sessionToDelete.value = null;
