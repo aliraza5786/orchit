@@ -52,6 +52,9 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('activeSprintKey')
       localStorage.removeItem('selectedSprintTitle')
       localStorage.removeItem('selected_sheet_title')
+      localStorage.removeItem('activeSessionId');
+      localStorage.removeItem('activeSessionTitle');
+      localStorage.removeItem('selected_sheet_id');
     },
   },
 })
