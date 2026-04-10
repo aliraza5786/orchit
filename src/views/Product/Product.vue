@@ -635,7 +635,16 @@ const sheetTitle = computed(() => (data.value ? data.value[0]?.variables?.["shee
 const selected_sheet_id = ref<any>(
   localStorage.getItem("selected_sheet_id") || sheetId.value,
 );
+watch([sheetId, sheetTitle], ([id, title]) => {
+  if (id) {
+    localStorage.setItem("selected_sheet_id", id);
+    selected_sheet_id.value = id;
+  }
 
+  if (title) {
+    localStorage.setItem("selected_sheet_title", title);
+  }
+}, { immediate: true });
 const { data: variables, isPending: isVariablesPending } = useVariables(
   workspaceId,
   moduleId,

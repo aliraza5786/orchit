@@ -490,6 +490,7 @@ const { mutate: UpdateVar } = useUpdateVar({
   onSuccess: () => {
     toast.success("Field updated successfully!");
     queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+    emit("refetch-people");
   },
   onError: (err: any) => {
     toast.error(err.message || "Failed to update field.");
@@ -542,6 +543,8 @@ const emit = defineEmits([
   "update:details",
   "comment:post",
   "priority:change",
+  "role-assigned",
+  "refetch-people",
 ]);
 
 const titleInput = ref<HTMLInputElement | null>(null);
@@ -663,6 +666,7 @@ const { mutate: assignRole } = useAssignRole({
     // Optionally refetch people or roles 
     queryClient.invalidateQueries({ queryKey: ["people-lists"]});  
     queryClient.invalidateQueries({ queryKey: ["people"]});  
+    emit("role-assigned");
   },
   onError: (err: any) => {
     toast.error(err.message || "Failed to assign role.");
@@ -727,14 +731,6 @@ const jobOptions = computed(() => {
   return roles;
 });
 
-watch(selectedRole, (newRole) => {
-  if (newRole === 'ADD_NEW_ROLE') return;
-  
-  assignRole({
-    id: cardDetails.value?._id!,
-    workspace_access_role_id: newRole,
-  });
-});
 
 watch(
   () => cardDetails.value?.workspace_access_role_id,

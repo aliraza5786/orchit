@@ -54,7 +54,7 @@
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
             :disabled="!canEditUser" 
-            :loading="agentStore.isLoadingRoles || !newCompanyId"
+            :loading="agentStore.isLoadingRoles"
           />
           <div class="flex items-center justify-between mb-1 mt-2">
             <span class="text-base font-medium text-text-primary block"

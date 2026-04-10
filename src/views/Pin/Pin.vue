@@ -802,6 +802,7 @@ function handleMindmapUpdateCard(payload: any) {
   moveCard.mutate(payload);
 }
 function toggleCreateSheet() {
+  sheetDropdownRef.value?.closeDropdown();
   selectedSheettoAction.value = {};
   isCreateSheetModal.value = !isCreateSheetModal.value;
 }
@@ -817,6 +818,7 @@ const transformedData = computed(() =>
     title: item.variables["sheet-title"],
     description: item.variables["sheet-description"],
     icon: item.icon,
+    disableDelete: item.variables["sheet-title"]?.toLowerCase() === "general",
   })),
 );
 watch(
@@ -848,6 +850,7 @@ const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
   },
 });
 function handleDeleteSheetModal(opt: any) {
+  
   showDeleteModal.value = true;
   selectedSheettoAction.value = opt;
 }
