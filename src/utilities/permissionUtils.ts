@@ -27,17 +27,14 @@ export function formatPermissionsPayload(
   const permissionIds: string[] = [];
   const modulePermissionsMap = new Map<string, ModulePermission>();
 
-  console.log(selectedIds, "module Id")
-  selectedIds.forEach((id) => {
-    const perm = allPermissions.find((p) => p._id === id);
-    if (!perm) return;
+  // Step 1: Initialize all module IDs with all actions false
+  allPermissions.forEach((perm) => {
+    if (!perm._id) return;
 
-    const parts = id.split('_');
+    const parts = perm._id.split('_');
     const isModulePermission = parts.length === 2 && parts[1].length === 24;
-
     if (isModulePermission) {
       const moduleId = parts[1];
-      
       if (!modulePermissionsMap.has(moduleId)) {
         modulePermissionsMap.set(moduleId, {
           module_id: moduleId,
@@ -47,16 +44,28 @@ export function formatPermissionsPayload(
           can_delete: false,
         });
       }
+    }
+  });
 
+  // Step 2: Process selected IDs to update the module actions
+  selectedIds.forEach((id) => {
+    const perm = allPermissions.find((p) => p._id === id);
+    if (!perm) return;
+
+    const parts = id.split('_');
+    const isModulePermission = parts.length === 2 && parts[1].length === 24;
+
+    if (isModulePermission) {
+      const moduleId = parts[1];
       const modulePerm = modulePermissionsMap.get(moduleId)!;
       const action = (perm.action || perm.slug || "").toLowerCase();
-      console.log("ID:", id, "action:", action, "modulePerm before:", modulePerm);
 
       if (action.includes("create")) modulePerm.can_create = true;
       if (action.includes("view") || action.includes("read")) modulePerm.can_view = true;
       if (action.includes("update") || action.includes("edit")) modulePerm.can_update = true;
       if (action.includes("delete") || action.includes("remove")) modulePerm.can_delete = true;
     } else {
+      // Non-module permissions
       permissionIds.push(id);
     }
   });

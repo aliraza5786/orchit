@@ -443,7 +443,13 @@
     "
   />
 
-  <DetailPanel v-if="showPanel" @close="selectCardHandler(null)" :showPanel="showPanel" />
+  <DetailPanel
+    v-if="showPanel"
+    @close="selectCardHandler(null)"
+    @role-assigned="() => fetchPeople(true)"
+    @refetch-people="() => fetchPeople(true)"
+    :showPanel="showPanel"
+  />
   <AgentsDetailPanel
     @close="selectAgentHandler(null)"
     @persona-updated="handlePersonaUpdated"

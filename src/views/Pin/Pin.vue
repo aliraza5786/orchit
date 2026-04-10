@@ -802,6 +802,7 @@ function handleMindmapUpdateCard(payload: any) {
   moveCard.mutate(payload);
 }
 function toggleCreateSheet() {
+  sheetDropdownRef.value?.closeDropdown();
   selectedSheettoAction.value = {};
   isCreateSheetModal.value = !isCreateSheetModal.value;
 }
