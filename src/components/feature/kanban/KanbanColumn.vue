@@ -22,7 +22,7 @@
       </div>
       <i class="cursor-pointer fa-solid fa-plus" v-if="plusIcon" @click="emit('onPlus', column)" />
 
-      <DropMenu v-if="showActions() && (canEditVariable || canDeleteVariable)" :items="getMenuItems()">
+      <DropMenu v-if="showActions() && getMenuItems().length > 0 && (canEditVariable || canDeleteVariable)" :items="getMenuItems()">
         <template #trigger>
           <i class="fa-solid fa-ellipsis cursor-pointer"></i>
         </template>

@@ -45,17 +45,17 @@
                         v-if="backlogResp?.cards?.length"
                         v-model="backlogSearchQuery"
                         placeholder="Search ticket by title...." 
-                        buttonClass="w-8 h-8 rounded border border-accent text-white hover:opacity-90"
-                        :buttonStyle="{ backgroundColor: selectedType.dot }"
+                        buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-accent hover:opacity-90"
+
                       >
                         <template #icon>
-                          <i class="fa-solid fa-magnifying-glass text-[12px] text-white"></i>
+                          <i class="fa-solid fa-magnifying-glass text-primary"></i>
                         </template>
                       </ExpandableSearch>
                       <!-- Add Card Button -->
                       <button
                         v-if="canCreateCard"
-                        class="w-8 h-8 rounded cursor-pointer text-sm hover:bg-bg-body flex items-center justify-center border border-border"
+                        class="w-8.5 h-8.5 rounded cursor-pointer text-sm flex items-center justify-center border border-border hover:border-accent-hover"
                         @click="openCreateBacklogTicket"
                       >
                         <i class="text-text-primary fa-regular fa-plus"></i>
@@ -272,14 +272,14 @@
                         </Teleport>
                       </div>
 
-                      <!-- Add Sprint Button -->
-                      <button
+                      <!-- Add Sprint Button --> 
+                       <button
+                        v-if="canCreateCard"
+                        class="w-8.5 h-8.5 rounded cursor-pointer text-sm flex items-center justify-center border border-border hover:border-accent-hover"
                         @click="openSprintModal(sprintsList?.sprints)"
-                        class="w-8.5 h-8.5 flex items-center justify-center rounded-[6px] border text-white transition-colors shrink-0 hover:opacity-90"
-                        :style="{ backgroundColor: selectedType.dot, borderColor: selectedType.dot }"
                         title="Add new"
                       >
-                        <i class="fa-solid fa-plus text-xs"></i>
+                        <i class="text-text-primary fa-regular fa-plus"></i>
                       </button>
                     </div>
                     </div>
@@ -290,11 +290,11 @@
                           v-if="sprintDetailData?.cards?.length"
                           v-model="searchQuery"
                           placeholder="Search ticket by title...."
-                          buttonClass="w-8.5 h-8.5 rounded-[6px] border border-accent text-white hover:opacity-90"
-                          :buttonStyle="selectedSprintId ? { backgroundColor: selectedType.dot } : {}"
+                          buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-accent hover:opacity-90"
+            
                         >
                           <template #icon>
-                            <i class="fa-solid fa-magnifying-glass text-[13px] text-white"></i>
+                            <i class="fa-solid fa-magnifying-glass text-[13px text-primary"></i>
                           </template>
                         </ExpandableSearch>
                         <div
@@ -305,7 +305,7 @@
                         @click="toggleTooltip"
                       >
                         <span
-                          class="flex bg-emerald-500 text-white w-8.5 h-8.5 rounded-[6px] justify-center items-center cursor-pointer"
+                          class="flex bg-green-600/10 text-green-600 w-8.5 h-8.5 rounded-[6px] justify-center items-center cursor-pointer"
                         >
                           <i class="fa-solid fa-check"></i>
                         </span>
@@ -326,26 +326,17 @@
                           class="flex gap-2"
                         >
                           <Button
-                            size="sm"
-                            @click="handleCompleteSprint"
-                            :variant="isDark ? 'primary' : 'primary'"
-                            class="border-accent border"
-                            :style="
-                              selectedSprintId
-                                ? { backgroundColor: selectedType.dot }
-                                : {}
-                            "
+                          @click="handleCompleteSprint" 
+                           size="sm"
+                            class="bg-red-400 hover:bg-red-500 !text-white transition-colors"
+                            title="End Sprint"
+                             
                           >
                             {{ completingSprintId === 'parent' ? "Ending..." : "End" }}
                           </Button>
                           <button
-                            class="cursor-pointer border border-accent text-white flex items-center justify-end gap-1 px-2 py-1 rounded-md text-sm font-medium"
+                            class="cursor-pointer bg-cyan-500 hover:bg-cyan-600 text-white flex items-center justify-end gap-1 px-2 py-1 rounded-md text-sm font-medium transition-colors"
                             @click="handlePreviewClick"
-                            :style="
-                              selectedSprintId
-                                ? { backgroundColor: selectedType.dot }
-                                : {}
-                            "
                           >
                             <i class="fa-regular fa-eye text-sm"></i> Preview
                           </button>
@@ -356,11 +347,9 @@
                           <Button
                             v-if="sprintDetailData?.status !== 'completed'"
                             size="sm"
-                            :variant="isDark ? 'primary' : 'primary'"
-                            class="border-accent border"
+                            class="  !text-white bg-emerald-500 hover:bg-emerald-600 transition-colors"
                             @click="openStartSprintModal"
                             :disabled="isStartButtonDisabled"
-                            :style="{ backgroundColor: selectedType.dot }"
                           > 
                             Start {{ selectedType.label }} 
                           </Button> 
@@ -443,8 +432,7 @@
                               v-if="sprint.status === 'planning'"
                               size="sm"
                               @click.stop="openStartSprintModal(sprint)"
-                              class="border-accent border text-[11px] h-7 px-3"
-                              :style="{ backgroundColor: selectedType.dot }"
+                              class="bg-emerald-500 hover:bg-emerald-600   !text-white    text-[11px] h-7 px-3 transition-colors"
                               :disabled="!sprint.cards?.length"
                             >
                               Start
@@ -453,17 +441,16 @@
                             <!-- Active Sprint Buttons -->
                             <template v-if="sprint.status === 'active'">
                                <button
-                                class="cursor-pointer border border-accent text-white flex items-center justify-center gap-1 px-2 py-0.5 rounded-md text-[11px] h-8.5 font-medium"
+                                class="cursor-pointer bg-cyan-500 hover:bg-cyan-600  text-white  flex items-center justify-center gap-1 px-2 py-0.5 rounded-md text-[11px] h-8.5 font-medium transition-colors"
                                 @click.stop="handlePreviewClick(sprint._id, sprint.title)"
-                                :style="{ backgroundColor: selectedType.dot }"
                               >
                                 <i class="fa-regular fa-eye text-[11px]"></i> Preview
                               </button>
                                <Button
                                 size="sm"
-                                @click.stop="handleCompleteSprint(sprint._id)"
-                                class="border-accent border text-[11px] h-8.5 px-3"
-                                :style="{ backgroundColor: selectedType.dot }"
+                                @click.stop="handleCompleteSprint(sprint._id)"   
+                                class="bg-red-400 hover:bg-red-500 !text-white text-[11px] h-8.5 px-3 transition-colors"
+                                title="End Sprint"
                               >
                                  {{ completingSprintId === sprint._id ? "Ending..." : "End" }}
                               </Button>
@@ -472,7 +459,7 @@
                             <!-- Completed Badge -->
                             <span 
                               v-if="sprint.status === 'completed'" 
-                              class="text-[10px] font-semibold text-emerald-500 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full"
+                              class="text-[10px] font-semibold bg-green-600/10 text-green-600 px-2.5 py-1.5 rounded-full"
                             >
                               Completed
                             </span>
@@ -571,12 +558,12 @@
                                   </span>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                  <Button v-if="huddle.status === 'planning'" size="sm" @click.stop="openStartSprintModal(huddle)" class="border-accent border text-[11px] h-7 px-3" :style="{ backgroundColor: selectedType.dot }" :disabled="!huddle.cards?.length">Start</Button>
+                                  <Button v-if="huddle.status === 'planning'" size="sm" @click.stop="openStartSprintModal(huddle)" class="!border-blue-500 !bg-blue-500 !text-white hover:!bg-blue-600 hover:!border-blue-600 text-[11px] h-7 px-3 transition-colors" :disabled="!huddle.cards?.length">Start</Button>
                                   <template v-if="huddle.status === 'active'">
-                                     <button class="cursor-pointer border border-accent text-white flex items-center justify-center gap-1 px-2 py-0.5 rounded-md text-[11px] h-8.5 font-medium" @click.stop="handlePreviewClick(huddle._id, huddle.title)" :style="{ backgroundColor: selectedType.dot }"><i class="fa-regular fa-eye text-[11px]"></i> Preview</button>
-                                     <Button size="sm" @click.stop="handleCompleteSprint(huddle._id)" class="border-accent border text-[11px] h-8.5 px-3" :style="{ backgroundColor: selectedType.dot }">{{ completingSprintId === huddle._id ? "Ending..." : "End" }}</Button>
+                                     <button class="cursor-pointer bg-cyan-500 hover:bg-cyan-600 text-white  flex items-center justify-center gap-1 px-2 py-0.5 rounded-md text-[11px] h-8.5 font-medium transition-colors" @click.stop="handlePreviewClick(huddle._id, huddle.title)"><i class="fa-regular fa-eye text-[11px]"></i> Preview</button>
+                                     <Button size="sm" @click.stop="handleCompleteSprint(huddle._id)" class="bg-red-400 hover:bg-red-500 !text-white  text-[11px] h-8.5 px-3 transition-colors">{{ completingSprintId === huddle._id ? "Ending..." : "End" }}</Button>
                                   </template>
-                                  <span v-if="huddle.status === 'completed'" class="text-[10px] font-semibold text-emerald-500 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">Completed</span>
+                                  <span v-if="huddle.status === 'completed'" class="text-[10px] font-semibold  bg-green-600/10 text-green-600 px-2.5 py-1.5 rounded-full">Completed</span>
                                 </div>
                               </div>
                               <div v-if="expandedSprints[huddle._id]" class="pt-[15px] px-[15px] h-[350px]">
@@ -859,7 +846,7 @@ import StartSprintModal from "./modals/StartSprintModal.vue";
 import CreateBacklogTicketWithModuleSelection from "./modals/CreateBacklogTicketWithModuleSelection.vue";
 import ActiveSprint from "./components/ActiveSprint.vue";
 import TaskDetailsModal from "../Workspaces/Modals/TaskDetailsModal.vue";
-import { useTheme } from "../../composables/useTheme";
+// import { useTheme } from "../../composables/useTheme";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { usePermissions } from "../../composables/usePermissions";
 import { useSheets } from "../../queries/useSheets";
@@ -868,7 +855,7 @@ import type { CSSProperties } from 'vue';
 const SidePanel = defineAsyncComponent(
   () => import("../Product/components/SidePanel.vue"),
 );
-const { isDark } = useTheme();
+// const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 const selectedCard = ref<any>(null);
 const showTaskModal = ref(false);
