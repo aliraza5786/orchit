@@ -17,7 +17,7 @@
   >
     <!-- ==================== LEFT: PREVIEW MODAL ==================== -->
     <div
-      v-if="isExpanded && !showConfigPanel && entities?.length"
+     v-if="isExpanded && !showConfigPanel"
       class="w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
@@ -833,13 +833,9 @@
 
     <!-- ==================== RIGHT: CHAT PANEL ==================== -->
     <div
-      :class="
-        isExpanded && (showConfigPanel || entities?.length > 0)
-          ? 'w-[24%]'
-          : 'w-full'
-      "
-      class="border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden"
-    >
+  :class="isExpanded ? 'w-[24%]' : 'w-full'"
+  class="border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden"
+>
       <!-- Chat Header -->
       <div
         class="flex items-center border-b border-border/40 px-3.5 py-2.5 sticky top-0 bg-bg-card/95 backdrop-blur-sm z-30 gap-2"
@@ -859,12 +855,12 @@
             :actions="false"
             size="sm"
             variant="secondary"
-            class="relative min-w-0 max-w-[130px]"
+            class="relative min-w-0 max-w-[150px]"
           >
             <template #more>
               <div
                 @click="openConfigPanel"
-                class="capitalize border-t border-border px-4 py-2.5 hover:bg-accent/8 cursor-pointer flex items-center gap-2 overflow-hidden overflow-ellipsis text-nowrap text-sm transition-colors"
+                class="capitalize border-t border-border px-4 py-2.5 hover:bg-accent/8 cursor-pointer flex items-center gap-2 overflow-hidden overflow-ellipsis text-nowrap text-xs transition-colors"
               >
                 <i class="fa-solid fa-plus text-accent text-[10px]"></i> Add new
               </div>
@@ -1421,11 +1417,11 @@
                 <!-- Web search active indicator -->
                 <button
                   @click="webSearch = !webSearch"
-                  class="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] transition-all cursor-pointer"
+                  class="flex items-center gap-1 px-1.5 py-1.5 rounded-full text-[11px] transition-all cursor-pointer"
                   :class="
                     webSearch
-                      ? 'text-accent bg-accent/10 border border-accent/20'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
+                      ? 'text-accent bg-accent/20 border border-accent/20'
+                      : 'text-text-secondary hover:text-accent hover:bg-bg-accent/20'
                   "
                   title="Toggle web search"
                 >
@@ -1476,14 +1472,77 @@
                 </button>
               </div>
             </div>
+            <!-- Saved Prompts Quick Bar -->
+<transition name="dropdown">
+  <div
+    v-if="showSavedPromptsBar && pinnedPrompts.length"
+    class="rounded-xl border border-border/50 bg-bg-body/60 overflow-hidden mb-1"
+  >
+    <!-- Header -->
+    <div class="flex items-center justify-between px-3 py-2 border-b border-border/30">
+      <span class="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Saved Prompts</span>
+      <button
+        @click="showSavedPromptsBar = false"
+        class="w-5 h-5 flex items-center justify-center text-text-tertiary hover:text-text-primary rounded transition-colors cursor-pointer"
+      >
+        <i class="fa-solid fa-xmark text-[10px]"></i>
+      </button>
+    </div>
+
+    <!-- Recently used -->
+    <div v-if="pinnedPrompts.length">
+      <p class="px-3 pt-2 pb-1 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Recently used</p>
+      <div
+        v-for="pin in pinnedPrompts.slice(0, 2)"
+        :key="'bar-recent-' + pin.id"
+        @click="applySavedPrompt(pin.text)"
+        class="flex items-center gap-2.5 px-3 py-2 hover:bg-accent/6 cursor-pointer transition-colors"
+      >
+        <i class="fa-regular fa-file-lines text-text-tertiary text-[11px] shrink-0"></i>
+        <span class="text-[13px] text-text-primary truncate flex-1">{{ pin.label }}</span>
+      </div>
+    </div>
+
+    <!-- Private to me -->
+    <div v-if="pinnedPrompts.length" class="border-t border-border/20">
+      <p class="px-3 pt-2 pb-1 text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Private to me</p>
+      <div
+        v-for="pin in pinnedPrompts"
+        :key="'bar-private-' + pin.id"
+        @click="applySavedPrompt(pin.text)"
+        class="flex items-center gap-2.5 px-3 py-2 hover:bg-accent/6 cursor-pointer transition-colors"
+      >
+        <i class="fa-regular fa-file-lines text-text-tertiary text-[11px] shrink-0"></i>
+        <span class="text-[13px] text-text-primary truncate flex-1">{{ pin.label }}</span>
+      </div>
+    </div>
+
+    <!-- Add new prompt -->
+    <div class="border-t border-border/30">
+      <button
+        @click="openNewPromptModal()"
+        class="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-bg-surface transition-colors text-left cursor-pointer"
+      >
+        <i class="fa-solid fa-circle-plus text-text-tertiary text-[13px]"></i>
+        <span class="text-[13px] text-text-primary">Add new prompt</span>
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <div class="border-t border-border/30 px-3 py-2">
+      <p class="text-[11px] text-text-tertiary">Tell AI what to do next</p>
+    </div>
+  </div>
+</transition>
             <!-- Textarea -->
             <div class="px-4 py-1">
               <textarea
                 v-model="userMessage"
-                ref="textareaRef"
+                ref="autoTextarea"
                 rows="1"
+                autofocus
                 placeholder="Ask, create, search"
-                class="w-full bg-transparent text-sm text-text-primary placeholder:text-text-secondary/60 resize-none outline-none leading-relaxed max-h-40"
+                class="w-full bg-transparent text-sm text-text-primary placeholder:text-text-secondary/60 resize-none outline-none leading-relaxed"
                 @keydown="handleKeydown"
                 @input="autoResize"
                 @focus="isFocused = true"
@@ -1493,55 +1552,154 @@
 
             <!-- Bottom toolbar -->
             <div class="flex items-center justify-between px-3 pb-2.5 pt-0.5">
-              <div class="flex items-center gap-0.5">
-                <!-- Attach any file -->
-                <button
-                  @click="fileInput?.click()"
-                  class="w-8 h-8 rounded-xl flex items-center justify-center text-text-secondary hover:text-accent hover:bg-accent/6 transition-all cursor-pointer"
-                  title="Attach file (image or PDF)"
-                >
-                  <i class="fa-solid fa-paperclip text-xs"></i>
-                </button>
+               <div class="relative" ref="plusDropdownRef">
+  <!-- Plus button -->
+  <button
+    @click="showPlusMenu = !showPlusMenu; showSavedPromptsMenu = false"
+    class="w-8 h-8 rounded-full flex items-center justify-center text-text-secondary bg-accent/7 hover:text-accent hover:bg-accent/6 transition-all cursor-pointer"
+  >
+    <i class="fa-regular fa-plus"></i>
+  </button>
 
-                <!-- Image only -->
-                <button
-                  @click="imageInput?.click()"
-                  class="w-8 h-8 rounded-xl flex items-center justify-center text-text-secondary hover:text-accent hover:bg-accent/6 transition-all cursor-pointer"
-                  title="Attach image"
-                >
-                  <i class="fa-solid fa-image text-xs"></i>
-                </button>
-
-                <!-- Voice -->
-                <button
-                  @click="toggleRecording"
-                  class="w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer"
-                  :class="
-                    isRecording
-                      ? 'text-red-500 bg-red-500/10 animate-pulse'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
-                  "
-                  :title="isRecording ? 'Stop recording' : 'Voice input'"
-                >
-                  <i
-                    class="fa-solid text-xs"
-                    :class="
-                      isRecording ? 'fa-microphone-slash' : 'fa-microphone'
-                    "
-                  ></i>
-                </button>
-
-                <!-- Web search shortcut icon -->
-                <!-- <button
-          @click="webSearch = !webSearch"
-          class="w-8 h-8 rounded-xl flex items-center justify-center transition-all cursor-pointer"
-          :class="webSearch ? 'text-accent bg-accent/10' : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'"
-          title="Toggle web search"
+  <!-- Main plus dropdown -->
+  <transition name="dropdown">
+    <div
+      v-if="showPlusMenu && !showSavedPromptsMenu"
+      class="absolute bottom-full mb-2 left-0 w-52 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
+    >
+      <div class="p-1">
+        <button
+          @click="imageInput?.click(); showPlusMenu = false"
+          class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-bg-surface transition-colors text-left"
         >
-          <i class="fa-solid fa-magnifying-glass-globe text-xs"></i>
-        </button> -->
-              </div>
+          <span class="w-7 h-7 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-image text-blue-500 text-[11px]"></i>
+          </span>
+          <div>
+            <div class="text-[13px] font-medium text-text-primary leading-tight">Upload image</div>
+            <div class="text-[11px] text-text-secondary mt-0.5">PNG, JPG, GIF, WEBP</div>
+          </div>
+        </button>
 
+        <button
+          @click="fileInput?.click(); showPlusMenu = false"
+          class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-bg-surface transition-colors text-left"
+        >
+          <span class="w-7 h-7 rounded-lg bg-bg-surface border border-border/60 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-paperclip text-text-secondary text-[11px]"></i>
+          </span>
+          <div>
+            <div class="text-[13px] font-medium text-text-primary leading-tight">Attach file</div>
+            <div class="text-[11px] text-text-secondary mt-0.5">PDF, DOCX, TXT...</div>
+          </div>
+        </button>
+
+        <div class="h-px bg-border/40 mx-2.5 my-1"></div>
+
+        <button
+          @click="insertMention(); showPlusMenu = false"
+          class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-bg-surface transition-colors text-left"
+        >
+          <span class="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-at text-accent text-[11px]"></i>
+          </span>
+          <div>
+            <div class="text-[13px] font-medium text-text-primary leading-tight">Mention</div>
+            <div class="text-[11px] text-text-secondary mt-0.5">Tag a team member or task</div>
+          </div>
+        </button>
+
+        <button
+          @click="showSavedPromptsMenu = true"
+          class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-bg-surface transition-colors text-left"
+        >
+          <span class="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-star text-amber-500 text-[11px]"></i>
+          </span>
+          <div class="flex-1">
+            <div class="text-[13px] font-medium text-text-primary leading-tight">Saved prompts</div>
+            <div class="text-[11px] text-text-secondary mt-0.5">Insert a pinned prompt</div>
+          </div>
+          <i class="fa-solid fa-chevron-right text-[9px] text-text-tertiary"></i>
+        </button>
+      </div>
+    </div>
+  </transition>
+
+  <!-- Saved prompts panel (replaces main dropdown) -->
+  <transition name="dropdown">
+    <div
+      v-if="showSavedPromptsMenu"
+      class="absolute bottom-full mb-2 left-0 w-56 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 z-50 overflow-hidden"
+    >
+      <!-- Header -->
+      <div class="flex items-center gap-2 px-3 pt-2.5 pb-2 border-b border-border/30">
+        <button
+          @click="showSavedPromptsMenu = false"
+          class="w-5 h-5 flex items-center justify-center text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
+        >
+          <i class="fa-solid fa-arrow-left text-[10px]"></i>
+        </button>
+        <span class="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Saved prompts</span>
+      </div>
+
+      <div class="max-h-64 overflow-y-auto">
+        <!-- Recently used section -->
+        <div v-if="pinnedPrompts.length">
+          <div class="px-3 pt-2.5 pb-1">
+            <span class="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Recently used</span>
+          </div>
+          <div
+            v-for="pin in pinnedPrompts.slice(0, 2)"
+            :key="'recent-' + pin.id"
+            @click="applySavedPrompt(pin.text)"
+            class="flex items-center gap-2.5 px-3 py-2 hover:bg-bg-surface cursor-pointer transition-colors"
+          >
+            <i class="fa-regular fa-file-lines text-text-tertiary text-[11px] shrink-0"></i>
+            <span class="text-[13px] text-text-primary truncate">{{ pin.label }}</span>
+          </div>
+        </div>
+
+        <!-- Private to me section -->
+        <div v-if="pinnedPrompts.length">
+          <div class="px-3 pt-2.5 pb-1">
+            <span class="text-[10px] font-semibold text-text-tertiary uppercase tracking-wider">Private to me</span>
+          </div>
+          <div
+            v-for="pin in pinnedPrompts"
+            :key="'private-' + pin.id"
+            @click="applySavedPrompt(pin.text)"
+            class="flex items-center gap-2.5 px-3 py-2 hover:bg-bg-surface cursor-pointer transition-colors"
+          >
+            <i class="fa-regular fa-file-lines text-text-tertiary text-[11px] shrink-0"></i>
+            <span class="text-[13px] text-text-primary truncate">{{ pin.label }}</span>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div v-if="!pinnedPrompts.length" class="px-3 py-4 text-center">
+          <p class="text-[12px] text-text-tertiary">No saved prompts yet</p>
+        </div>
+      </div>
+
+      <!-- Add new prompt -->
+      <div class="border-t border-border/30">
+        <button
+          @click="showSavedPromptsMenu = true; showNewPromptModal = true"
+          class="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-bg-surface transition-colors text-left cursor-pointer"
+        >
+          <i class="fa-solid fa-circle-plus text-text-tertiary text-[13px]"></i>
+          <span class="text-[13px] text-text-primary">Add new prompt</span>
+        </button>
+      </div>
+
+      <!-- Footer hint -->
+      <div class="border-t border-border/30 px-3 py-2">
+        <p class="text-[11px] text-text-tertiary">Tell AI what to do next</p>
+      </div>
+    </div>
+  </transition>
+</div>
               <!-- File count badge + send -->
               <div class="flex items-center gap-2">
                 <span
@@ -2003,6 +2161,121 @@
       </div>
     </div>
   </div>
+  <!-- ===== NEW PROMPT MODAL ===== -->
+<transition name="fade">
+  <div
+    v-if="showNewPromptModal"
+    class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm"
+    @click.self="closeNewPromptModal"
+  >
+    <div class="w-full max-w-xl rounded-2xl bg-bg-card shadow-2xl border border-border/40 overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-border/40">
+        <h3 class="text-sm font-semibold text-text-primary">New Prompt</h3>
+        <button
+          @click="closeNewPromptModal"
+          class="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-bg-body transition-colors cursor-pointer text-text-secondary"
+        >
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-5 py-5 space-y-4">
+        <!-- Title -->
+        <div class="space-y-1.5">
+          <label class="text-[13px] font-medium text-text-primary">
+            Title <span class="text-red-500">*</span>
+          </label>
+          <input
+            v-model="newPromptForm.title"
+            placeholder="Enter prompt title"
+            class="w-full border border-border/60 bg-bg-body/60 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+          />
+        </div>
+
+        <!-- Prompt text -->
+        <div class="space-y-1.5">
+          <label class="text-[13px] font-medium text-text-primary">
+            Prompt <span class="text-red-500">*</span>
+          </label>
+          <textarea
+            v-model="newPromptForm.text"
+            rows="4"
+            placeholder="Write a prompt that you would like to save"
+            class="w-full border border-border/60 bg-bg-body/60 rounded-lg px-3.5 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all resize-none placeholder:text-text-tertiary"
+          />
+        </div>
+
+        <!-- Share with -->
+        <div class="space-y-2">
+          <label class="text-[13px] font-medium text-text-primary">Share with:</label>
+          <div class="space-y-2">
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="radio"
+                value="only_me"
+                v-model="newPromptForm.shareWith"
+                class="accent-accent w-4 h-4"
+              />
+              <span class="text-sm text-text-primary">Only Me</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="radio"
+                value="everyone"
+                v-model="newPromptForm.shareWith"
+                class="accent-accent w-4 h-4"
+              />
+              <span class="text-sm text-text-primary">Everyone</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="radio"
+                value="admins"
+                v-model="newPromptForm.shareWith"
+                class="accent-accent w-4 h-4"
+              />
+              <span class="text-sm text-text-primary">Admins</span>
+            </label>
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="radio"
+                value="select_people"
+                v-model="newPromptForm.shareWith"
+                class="accent-accent w-4 h-4"
+              />
+              <span class="text-sm text-text-primary">Select people:</span>
+              <div
+                v-if="newPromptForm.shareWith === 'select_people'"
+                class="w-7 h-7 rounded-full border-2 border-dashed border-border flex items-center justify-center hover:border-accent/40 cursor-pointer transition-colors ml-1"
+              >
+                <i class="fa-solid fa-plus text-text-tertiary text-[10px]"></i>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-border/40 bg-bg-body/40">
+        <button
+          @click="closeNewPromptModal"
+          class="px-4 py-2 rounded-lg border border-border/60 text-sm text-text-primary hover:bg-bg-body transition-colors cursor-pointer"
+        >
+          Close
+        </button>
+        <button
+          @click="createNewPrompt"
+          :disabled="!newPromptForm.title.trim() || !newPromptForm.text.trim()"
+          class="px-5 py-2 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shadow-sm shadow-accent/20"
+        >
+          Create
+        </button>
+      </div>
+    </div>
+  </div>
+</transition>
 </template>
 
 <script setup lang="ts">
@@ -2074,7 +2347,7 @@ const isExpanded = computed(() => {
   return (
     isManuallyExpanded.value ||
     showConfigPanel.value ||
-    entities.value?.length > 0
+    entities.value?.[0]?.response?.items?.length
   );
 });
 const showConfigPanel = ref(false);
@@ -2104,7 +2377,7 @@ const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => agentStore?.agentSettings?.knowledge);
 const trainingFileInput = ref<HTMLInputElement | null>(null);
 const webSearch = ref(false);
-const isRecording = ref(false);
+// const isRecording = ref(false);
 const sourceSearch = ref("");
 
 const filteredSources = computed(() => {
@@ -2117,9 +2390,9 @@ const filteredSources = computed(() => {
   );
 });
 const imageInput = ref<HTMLInputElement | null>(null);
-const toggleRecording = () => {
-  isRecording.value = !isRecording.value;
-};
+// const toggleRecording = () => {
+//   isRecording.value = !isRecording.value;
+// };
 const agentsRolesPermissions = computed(
   () => agentStore.agentsRolesPermissions,
 );
@@ -2283,8 +2556,14 @@ const contextTitle = computed(() => {
   if (routeName.includes("more")) return "More";
   return "Workspace";
 });
+type BaseEntity = typeof agentStore.createdEntities[number];
+type EntityWithResponse = BaseEntity & {
+  response?: {
+    items?: unknown[];
+  };
+};
 
-const entities = computed(() => agentStore.createdEntities);
+const entities = computed<EntityWithResponse[]>(() => agentStore.createdEntities);
 
 const orderedMessages = computed(() => {
   const historyMessages = Array.isArray(agentStore.chatHistory)
@@ -2418,7 +2697,9 @@ const autoResize = () => {
   el.style.height = Math.min(el.scrollHeight, maxHeight) + "px";
   el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
 };
-
+onMounted(() => {
+  nextTick(() => autoResize());
+});
 const handleKeydown = (e: KeyboardEvent) => {
   if (e.key === "Enter" && e.shiftKey) return;
   if (e.key === "Enter") {
@@ -4351,6 +4632,70 @@ async function applyPromptAndSend(text: string) {
   autoResize();
   await sendMessage();
 }
+const showPlusMenu = ref(false);
+const plusDropdownRef = ref<HTMLElement | null>(null);
+const showSavedPromptsMenu = ref(false);
+onClickOutside(plusDropdownRef, () => {
+  showPlusMenu.value = false;
+});
+const insertMention = () => {
+  userMessage.value += '@';
+  nextTick(() => {
+    autoTextarea.value?.focus();
+  });
+};
+const applySavedPrompt = (text: string) => {
+  userMessage.value = text;
+  showSavedPromptsMenu.value = false;
+  showPlusMenu.value = false;
+  showSavedPromptsBar.value = false;  // hide bar after selecting
+  nextTick(() => {
+    autoTextarea.value?.focus();
+    autoResize();
+  });
+};
+onMounted(() => {
+  document.addEventListener('mousedown', (e: MouseEvent) => {
+    if (plusDropdownRef.value && !plusDropdownRef.value.contains(e.target as Node)) {
+      showPlusMenu.value = false;
+      showSavedPromptsMenu.value = false;
+    }
+  });
+});
+// Add these refs near showPlusMenu
+const showNewPromptModal = ref(false);
+const newPromptForm = ref({
+  title: '',
+  text: '',
+  shareWith: 'only_me' as 'only_me' | 'everyone' | 'admins' | 'select_people',
+});
+
+const openNewPromptModal = () => {
+  newPromptForm.value = { title: '', text: '', shareWith: 'only_me' };
+  showNewPromptModal.value = true;
+  showSavedPromptsMenu.value = false;
+  showPlusMenu.value = false;
+};
+
+const closeNewPromptModal = () => {
+  showNewPromptModal.value = false;
+};
+
+const createNewPrompt = () => {
+  if (!newPromptForm.value.title.trim() || !newPromptForm.value.text.trim()) return;
+  // Add to pinnedPrompts locally or call API
+  // For now push to suggestedPrompts as dummy
+  suggestedPrompts.value.push({
+    label: newPromptForm.value.title,
+    text: newPromptForm.value.text,
+    category: newPromptForm.value.shareWith,
+    is_active: true,
+  });
+  closeNewPromptModal();
+};
+
+// Show saved prompts bar above textarea
+const showSavedPromptsBar = ref(false);
 </script>
 
 <style scoped>
@@ -4440,4 +4785,6 @@ async function applyPromptAndSend(text: string) {
   opacity: 0;
   transform: translateX(100%);
 }
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

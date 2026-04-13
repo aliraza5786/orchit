@@ -213,7 +213,7 @@
                 <i class="fa-solid fa-xmark"></i>
               </button>
             </div>
-
+               
             <!-- ── AI FIRST VIEW (shown when not in manual mode) ── -->
             <template v-if="!showManualForm">
               <div class="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
@@ -515,9 +515,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import { useWidgetStore } from "../../stores/widgets";
-
+import { useAgentStore } from "../../stores/agentStore";
+import { useAuthStore } from "../../stores/auth";
+import { useRouteIds } from "../../composables/useQueryParams";
+const { workspaceId } = useRouteIds();
 type Entity = "cards" | "sprints" | "sprint_backlog" | "token_usage";
 type ResultType = "list" | "count" | "computed" | "chart";
 type ChartType = "bar" | "pie" | "donut" | "line";
@@ -579,10 +582,11 @@ const showDeleteModal = ref(false);
 const showManualForm = ref(false);
 const editingWidget = ref<Widget | null>(null);
 const widgetToDelete = ref<Widget | null>(null);
-
+const authStore = useAuthStore()
 const aiPrompt = ref('');
 const isAiGenerating = ref(false);
-
+const agentStore = useAgentStore();
+const agentsCreated = computed(() => agentStore.agentsCreated);
 const aiSuggestions = [
   'A widget where all tasks and projects start...',
   'A widget for tasks that are actively being worked on...',
@@ -613,9 +617,17 @@ function clearWidgetTimer(id: string): void {
   if (refreshTimers.value[id]) { clearInterval(refreshTimers.value[id]); delete refreshTimers.value[id]; }
 }
 
+async function fetchAssignedAgents() {
+  await agentStore.fetchSavedAgents(
+    workspaceId.value,
+    "peak",
+  );
+}
 onMounted(async () => {
   await store.fetchWidgets(props.workspaceId);
   await store.fetchAllPinnedWidgetData();
+  await fetchAssignedAgents();
+  
   store.pinnedWidgets.forEach((w: Widget) => setupAutoRefresh(w));
 });
 onBeforeUnmount(() => { Object.keys(refreshTimers.value).forEach(clearWidgetTimer); });
@@ -709,11 +721,38 @@ async function deleteWidget(): Promise<void> {
 
 async function generateWithAi(): Promise<void> {
   if (!aiPrompt.value.trim()) return;
+
   isAiGenerating.value = true;
+
   try {
-    // Call your AI endpoint here
-    // const result = await store.generateWidget({ prompt: aiPrompt.value })
-    // apply result to form and switch to manual
+    const sessionIdToUse = `session_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
+    await agentStore.sendMessage({
+      workspace_id: props.workspaceId,
+      user_id: authStore.userId as string,
+      message: aiPrompt.value,
+      agent_id:  agentsCreated.value?.data?.agents[0]?._id as string,
+      module_name:"peak",
+      session_id: sessionIdToUse,
+      stream: true,
+    });
+
+    // optionally refresh widgets after AI response
+    await store.fetchAllPinnedWidgetData();
+    agentStore.fetchChatHistory(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        "peak"
+      ),
+      agentStore.fetchCreatedEntities(
+        workspaceId.value,
+        authStore.userId ?? undefined,
+        "peak"
+      ),
+    // reset UI
+    aiPrompt.value = "";
   } catch (err) {
     console.error(err);
   } finally {
