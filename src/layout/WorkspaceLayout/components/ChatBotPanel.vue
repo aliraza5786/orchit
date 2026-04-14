@@ -2305,6 +2305,7 @@ import { useAuthStore } from "../../../stores/auth";
 import { useSheets, keys } from "../../../queries/useSheets";
 import { useQueryClient } from "@tanstack/vue-query";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
+import { useWidgetStore } from "../../../stores/widgets";
 
 // Stores
 const workspaceStore = useWorkspaceStore();
@@ -2314,6 +2315,7 @@ const authStore = useAuthStore();
 // Route
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
+const widgetStore = useWidgetStore()
 const activeTab = ref<
   "persona" | "knowledge" | "upload" | "prompt" | "suggested"
 >("persona");
@@ -2347,7 +2349,7 @@ const isExpanded = computed(() => {
   return (
     isManuallyExpanded.value ||
     showConfigPanel.value ||
-    entities.value?.[0]?.response?.items?.length
+    entities.value?.length
   );
 });
 const showConfigPanel = ref(false);
@@ -3006,6 +3008,9 @@ async function acceptChanges(payload: any) {
       moduleSelected.value ?? undefined,
       moduleId.value ?? undefined,
     );
+    if(route.path?.includes("peak")){
+      await widgetStore.fetchWidgets(workspaceId.value);
+    }
     showAIPreview.value = false;
     toast.success("Entities has been accepted and applied to workspace");
   } catch (error) {
