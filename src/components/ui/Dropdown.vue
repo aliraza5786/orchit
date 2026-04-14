@@ -22,6 +22,7 @@
       </span>
 
       <i
+        class="text-[14px]"
         :class="`${selectedOption?.icon?.prefix} ${
           selectedOption?.icon?.iconName
             ? selectedOption?.icon?.iconName
@@ -106,6 +107,7 @@
                   </span>
 
                   <i
+                    class="text-[16px]"
                     :class="`${option.icon?.prefix} ${
                       option.icon?.iconName ? option.icon?.iconName : 'file'
                     } ${faIconSizeClass}`"

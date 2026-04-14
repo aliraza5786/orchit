@@ -779,8 +779,8 @@ const createSheet = () => {
   selectedSheettoAction.value = {};
   isCreateSheetModal.value = !isCreateSheetModal.value;
 };
-const handleCreateSheetFromModal = () => {
-  createSheet();
+const handleCreateSheetFromModal = async () => {
+  await createSheet();
 };
 
 // ─── Reorder ──────────────────────────────────────────────────────────────────
@@ -846,7 +846,7 @@ const transformedData = computed<DropdownOption[]>(() => {
     _id: item._id,
     title: item?.variables["sheet-title"],
     description: item?.variables["sheet-description"],
-    icon: item["icon"],
+    icon: item["icon"]? item["icon"] : {prefix: 'fa-solid', iconName:'fa-file'},
     status: item?.generation_status,
   }));
 });
@@ -897,8 +897,15 @@ watch(
   { immediate: true },
 );
 
-watch(data, (newSheetId) => {
-  if (newSheetId?.length > 0) selected_sheet_id.value = newSheetId[0]?._id;
+watch(data, (newData, oldData) => {
+  if (!newData?.length) return;
+  // If a brand-new sheet was added, select it
+  const oldIds = new Set((oldData || []).map((s: any) => s._id));
+  const brandNew = newData.find((s: any) => !oldIds.has(s._id));
+  if (brandNew) {
+    selected_sheet_id.value = brandNew._id;
+    localStorage.setItem(storageKey.value, brandNew._id);
+  }
 });
 
 watch(
@@ -1775,9 +1782,14 @@ const toggleVisibilityHandler = (key: any, visible: any) => {
 
 // ─── MindMap event handlers (bridge from MindMapView to parent data) ──────────
 const { mutateAsync: createNewSheet } = useCreateWorkspaceSheet({
-  onSuccess: () => {
+  onSuccess: (newSheet: any) => {
     queryClient.invalidateQueries({ queryKey: ["sheets"] });
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    const newId = newSheet?._id;
+    if (newId) {
+      selected_sheet_id.value = newId;
+      localStorage.setItem(storageKey.value, newId);
+    }
   },
 });
 
