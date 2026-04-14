@@ -42,7 +42,8 @@
       <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
         <span
-        class="capitalize"
+          v-if="!isOpen"
+          class="capitalize"
           :class="
             selected
               ? ' line-clamp-1 overflow-ellipsis '
@@ -51,6 +52,14 @@
         >
           {{ selected?.title || placeholder }}
         </span>
+        <input
+          v-else
+          ref="searchInputRef"
+          v-model="searchQuery"
+          class="bg-transparent border-none outline-none w-full p-0 text-inherit capitalize placeholder:text-text-secondary"
+          :placeholder="selected?.title || placeholder"
+          @click.stop
+        />
       </div>
       <svg
         class="w-4 h-4 text-text-secondary"
@@ -86,12 +95,12 @@
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
            </svg>
         </div>
-        <div v-else-if="!options || options.length === 0" class="px-4 py-2 text-sm text-text-secondary text-center">
-            No options found
+        <div v-else-if="!filteredOptions || filteredOptions.length === 0" class="px-4 py-2 text-sm text-text-secondary text-center">
+            {{ searchQuery ? 'No results found' : 'No options found' }}
         </div>
         <template v-else>
           <div
-            v-for="(option, index) in options"
+            v-for="(option, index) in filteredOptions"
             :key="option._id ?? index"
             @click="selectOption(option)"
             class="px-4 py-2 text-sm flex items-center gap-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-all duration-150"
@@ -121,7 +130,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, computed } from "vue"; 
+import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from "vue"; 
 import { useTheme } from '../../composables/useTheme';
 import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
 
@@ -172,6 +181,16 @@ const triggerRef = ref<HTMLElement | null>(null);
 const dropdownRef = ref<HTMLElement | null>(null);
 const dropdownStyles = ref<CSSProperties>({ top: "-9999px", left: "-9999px", width: "100%", position: 'fixed' });
 const selected = ref<Option | null>(null);
+const searchQuery = ref("");
+const searchInputRef = ref<HTMLInputElement | null>(null);
+
+const filteredOptions = computed(() => {
+  if (!searchQuery.value) return props.options || [];
+  const q = searchQuery.value.toLowerCase();
+  return (props.options || []).filter((opt: Option) => 
+    String(opt.title || "").toLowerCase().includes(q)
+  );
+});
 
 const isDarkTheme = computed(() => {
   return props.theme === 'dark' || (props.theme === 'system' && isDark.value);
@@ -206,6 +225,7 @@ onBeforeUnmount(() => {
 
 function closeDropdown() {
   isOpen.value = false;
+  searchQuery.value = "";
   removeOutsideListener();
   if (cleanupFloating) {
     cleanupFloating();
@@ -255,6 +275,11 @@ function toggleDropdown() {
                 updatePosition
             );
             addOutsideListener();
+            
+            // Focus the search input
+            nextTick(() => {
+              searchInputRef.value?.focus();
+            });
         }
     }, 0);
   }

@@ -22,7 +22,7 @@
       </span>
 
       <i
-        class="text-[14px]"
+        class="text-[14px] text-accent"
         :class="`${selectedOption?.icon?.prefix} ${
           selectedOption?.icon?.iconName
             ? selectedOption?.icon?.iconName

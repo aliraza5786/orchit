@@ -64,7 +64,7 @@
                   </div>
                   <!-- filters -->
                   <div class="mt-3">
-                    <div class="flex flex-wrap gap-2 mb-3">
+                    <div class="flex flex-wrap gap-2 mb-[8px]">
                       <ModuleSheetDropdown 
                         :modules="visibleModules" 
                         :selectedIds="selectedFilter" 

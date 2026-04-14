@@ -236,7 +236,8 @@ const { mutate: moveCardApi, isPending: isMoving } = useMoveCard({
     queryClient.invalidateQueries({ queryKey: ["sprint-detail"] });
     queryClient.invalidateQueries({ queryKey: ["sprint-cards"] });
     queryClient.invalidateQueries({ queryKey: ["sprint-kanban"], refetchType: 'all' });
-      toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
+    const targetLabel = props.label?.toLowerCase() || 'sprint';
+    toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to ${targetLabel}`);
 
     emit("refresh");
   },
