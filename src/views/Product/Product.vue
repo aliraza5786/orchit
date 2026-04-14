@@ -2,10 +2,10 @@
   <div
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto flex-col flex scrollbar-visible w-full"
   >
-    <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card">
-      <div
-        class="header py-3 px-4 border-b border-border flex items-center justify-between gap-1 min-w-max h-full"
-      >
+    <div class="relative">
+      <div class="header py-3 px-4  border-b border-border flex items-center justify-between gap-3  overflow-x-auto h-full">
+        <div class="flex gap-3">
+        <!-- ... Sheet Dropdown ... -->
         <Dropdown
           @edit-option="openEditSprintModal"
           v-model="selected_sheet_id"
@@ -28,12 +28,51 @@
             </div>
           </template>
         </Dropdown>
+        <!-- filters -->
+        <div class="relative flex items-center gap-3">
+            <button
+              ref="filterTriggerRef"
+              @click="showFilterBar = !showFilterBar"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              :class="showFilterBar ? 'border-accent' : 'border-border'"
+            >
+              <i class="fa-solid fa-filter text-accent text-[14px]"></i>
+              <span>Filter</span>
+              <span 
+                v-if="activeFilterCount" 
+                class="bg-accent text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
+              >
+                {{ activeFilterCount }}
+              </span>
+            </button>
+            
+            <button 
+              v-if="hasActiveFilters"
+              @click="handleClearFilters"
+              class="text-[11px] font-medium text-text-secondary hover:text-accent transition-colors whitespace-nowrap"
+            >
+              Clear filters
+            </button>
+
+            <!-- Floating Filter Dropdown -->
+            <ProductFilters
+              v-if="showFilterBar"
+              :triggerRef="filterTriggerRef"
+              :sheets="data || []"
+              :variables="variables"
+              :workspaceId="workspaceId"
+              :moduleId="moduleId"
+              :activeFilters="activeFilters"
+              @apply="(f) => { handleApplyFilters(f); showFilterBar = false; }"
+              @clear="handleClearFilters"
+              @close="showFilterBar = false"
+            />
+        </div>
+        </div>
 
         <div
           class="flex gap-3 items-center"
-          :class="{
-            'opacity-60 pointer-events-none': !transformedData?.length,
-          }"
+          :class="{ 'opacity-60 pointer-events-none': !transformedData?.length }"
         >
           <Dropdown
             v-if="view == 'kanban' || 'mindmap'"
@@ -45,6 +84,7 @@
             customClasses="fixed w-auto"
             @nested-select="handleProcessNestedSelection"
           >
+            <!-- ... more slot ... -->
             <template #more>
               <div
                 v-if="canCreateVariable"
@@ -62,24 +102,17 @@
           </Dropdown>
 
           <Searchbar
-            @onChange="
-              (e) => {
-                searchQuery = e;
-              }
-            "
+            @onChange="(e) => searchQuery = e"
             placeholder="Search in Orchit AI space"
           />
 
-          <div
-            class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
-          >
+          
+
+          <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
+            <!-- View Buttons ... -->
             <button
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'kanban'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
+              :class="view === 'kanban' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
               title="Kanban view"
               @click="view = 'kanban'"
             >
@@ -89,25 +122,16 @@
             <button
               @click="view = 'table'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'table'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
+              :class="view === 'table' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
               title="List view"
             >
               <i class="fa-solid fa-align-left"></i>
             </button>
 
-            <!-- MindMap Button (kept here, view logic delegated to MindMapView component) -->
             <button
               @click="view = 'mindmap'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'mindmap'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
+              :class="view === 'mindmap' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
               title="MindMap view"
             >
               <i class="fa-solid fa-chart-diagram"></i>
@@ -116,11 +140,7 @@
             <button
               @click="view = 'calendar'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="
-                view === 'calendar'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
+              :class="view === 'calendar' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
               title="Calendar view"
             >
               <i class="fa-regular fa-calendar"></i>
@@ -129,52 +149,23 @@
             <button
               @click="view = 'gantt'"
               class="aspect-square cursor-pointer rounded-sm p-0"
-              :class="
-                view === 'gantt'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
+              :class="view === 'gantt' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
               title="Gantt Chart view"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
               </svg>
             </button>
 
             <button
               @click="view = 'timeline'"
               class="aspect-square cursor-pointer rounded-sm p-0"
-              :class="
-                view === 'timeline'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
-              "
+              :class="view === 'timeline' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
               title="Timeline view"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path
-                  d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
-                  opacity="0"
-                />
-                <path
-                  d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" opacity="0" />
+                <path d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
           </div>
@@ -182,6 +173,7 @@
       </div>
     </div>
 
+    
     <!-- ── Kanban View ─────────────────────────────────────────────────────── -->
     <template v-if="view == 'kanban'">
       <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
@@ -569,6 +561,9 @@ const KanbanBoard = defineAsyncComponent(
 const MindMapView = defineAsyncComponent(
   () => import("../../components/feature/MindmapView.vue"),
 );
+const ProductFilters = defineAsyncComponent(
+  () => import("./components/ProductFilters.vue"),
+);
 
 // ─── Permissions ──────────────────────────────────────────────────────────────
 const {
@@ -605,6 +600,9 @@ const localTableOrder = ref<any[]>([]);
 const selectedProcessMeta = ref<any>(null);
 const showBgPicker = ref(false);
 const showTextColorPicker = ref(false);
+const showFilterBar = ref(false);
+const activeFilters = ref<any>({});
+const filterTriggerRef = ref<HTMLElement | null>(null);
 
 watch(showBgPicker, (v) => {
   if (v) showTextColorPicker.value = false;
@@ -731,6 +729,49 @@ const selectedViewByVariable = computed(() => {
   return variables.value?.find((v: any) => v._id === selected_view_by.value);
 });
 
+const formattedExtraParams = computed(() => {
+  const f = activeFilters.value;
+  const toLower = (val: any) =>
+  typeof val === "string" ? val.toLowerCase() : val;
+  return {
+    ...listProcessPayload.value,
+    ...(f.sheet_ids?.length ? { sheet_ids: f.sheet_ids.join(",") } : {}),
+    ...(f.seat_ids?.length ? { seat_ids: f.seat_ids.join(",") } : {}),
+    priority: toLower(f.priority),
+    status: toLower(f.status),
+    card_type: toLower(f.card_type),
+    sprint_id: f.sprint_id,
+    milestone_id: f.milestone_id,
+    huddle_id: f.huddle_id,
+    start_date_from: f.start_date_from,
+    start_date_to: f.start_date_to,
+    end_date_from: f.end_date_from,
+    end_date_to: f.end_date_to,
+    created_at_from: f.created_at_from,
+    created_at_to: f.created_at_to,
+  };
+});
+
+const handleApplyFilters = (filters: any) => {
+  activeFilters.value = filters;
+};
+
+const handleClearFilters = () => {
+  activeFilters.value = {};
+};
+
+const activeFilterCount = computed(() => {
+  const f = activeFilters.value;
+  let count = 0;
+  Object.keys(f).forEach((key) => {
+    if (Array.isArray(f[key])) count += f[key].length;
+    else if (f[key]) count += 1;
+  });
+  return count;
+});
+
+const hasActiveFilters = computed(() => activeFilterCount.value > 0);
+
 const workspaceStore = useWorkspaceStore();
 const {
   data: Lists,
@@ -741,7 +782,7 @@ const {
   selected_sheet_id,
   computed(() => [...workspaceStore.selectedLaneIds]),
   selected_view_by,
-  listProcessPayload,
+  formattedExtraParams,
 );
 
 // ─── Route card open ──────────────────────────────────────────────────────────
