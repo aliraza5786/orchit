@@ -176,112 +176,228 @@
             </div>
           </div>
         </template>
+        <template v-else-if="isReadAction && !isPlanModule">
+          
+  <div class="flex flex-wrap gap-4">
+     
+    <div
+      v-for="card in fetchedItems"
+      :key="card.id || card._id"
+      @click="selectedCard = card"
+      class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
+      :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
+    >
+      <!-- Top row: badges + share -->
+      <div class="flex justify-between gap-2 items-start mb-3">
+        <div class="flex gap-2 flex-wrap items-center">
+          <!-- Card type badge -->
+          <span
+            v-if="card['card-type']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
+          >
+            {{ card['card-type'] || 'General' }}
+          </span>
+          <!-- Status badge -->
+          <span
+            v-if="card['card-status']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+          >
+            {{ card['card-status'] }}
+          </span>
+          <!-- Priority badge -->
+          <span
+            v-if="card.priority || card['card-priority']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
+          >
+            {{ card.priority || card['card-priority'] }}
+          </span>
+        </div>
 
-        <!-- ================= READ ACTION ================= -->
-        <template v-else-if="isReadAction">
-          <div class="flex flex-wrap gap-4">
-            <div
-              v-for="card in fetchedItems"
-              :key="card.id || card._id"
-              class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(33.333%-0.75rem)]"
-            >
-              <div class="flex justify-between items-start gap-2 mb-3">
-                <div class="flex gap-2 flex-wrap items-center">
-                  <span
-                    v-if="card['card-status']"
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
-                  >
-                    {{ card["card-status"] }}
-                  </span>
-                  <span
-                    v-if="card.priority || card['card-priority']"
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
-                  >
-                    {{ card.priority || card["card-priority"] }}
-                  </span>
-                </div>
-                <button
-                  class="cursor-pointer text-accent hover:text-accent-hover"
-                  @click="nativeShare(card)"
-                  title="Share this Ticket"
-                >
-                  <i class="fa-light fa-share"></i>
-                </button>
-              </div>
-              <h3
-                class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize"
-              >
-                {{ card["card-title"] || card.title }}
-              </h3>
-              <div
-                v-if="card['card-description']"
-                class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
-                v-html="card['card-description']"
-              />
-              <div
-                v-if="
-                  card['start-date'] ||
-                  card['end-date'] ||
-                  canAssignCard ||
-                  canViewCard
-                "
-                class="flex justify-between items-center mt-3 pt-3 border-t border-border/50 text-xs text-text-secondary"
-              >
-                <div class="flex items-center flex-1">
-                  <div @click.stop>
-                    <AssigmentDropdown
-                      :users="members"
-                      :assigneeId="card.seat_id"
-                      @assign="assignHandle(card)"
-                    />
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div
-                      @click.stop
-                      class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary"
-                    >
-                      <DatePicker
-                        placeholder="end date"
-                        :model-value="card['end-date']"
-                        theme="dark"
-                        emit-as="ymd"
-                        @update:modelValue="
-                          (date) => setDueDate(date, card?.id || card?._id)
-                        "
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div
-                  v-if="card?.comments_count || card?.attachments?.length"
-                  class="flex items-center gap-3"
-                >
-                  <div
-                    v-if="card?.comments_count"
-                    class="flex items-center gap-1"
-                  >
-                    <i class="fa-regular fa-message text-[10px]"></i>
-                    <span>{{ card?.comments_count }}</span>
-                  </div>
-                  <div
-                    v-if="card?.attachments?.length"
-                    class="flex items-center gap-1"
-                  >
-                    <i class="fa-regular fa-file text-[10px]"></i>
-                    <span>{{ card?.attachments?.length }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div
-              v-if="!fetchedItems.length"
-              class="w-full text-center py-10 text-text-secondary"
-            >
-              No cards found
-            </div>
+        <button
+          class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
+          @click="nativeShare(card)"
+          title="Share this Ticket"
+        >
+          <i class="fa-light fa-share text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Title -->
+      <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+        {{ card['card-title'] || card.title }}
+      </h3>
+
+      <!-- Description -->
+      <div
+        v-if="card['card-description']"
+        class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
+        v-html="card['card-description']"
+      />
+
+      <!-- Footer -->
+      <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
+        <div class="flex items-center gap-2 flex-1">
+          <!-- Assignee -->
+          <div @click.stop v-if="canAssignCard || canViewCard">
+            <AssigmentDropdown
+              :users="members"
+              :assigneeId="card.seat_id"
+              @assign="assignHandle(card)"
+            />
           </div>
-        </template>
+          <!-- Due date -->
+          <div @click.stop class="flex items-center text-nowrap overflow-ellipsis">
+            <DatePicker
+              placeholder="end date"
+              :model-value="card['end-date']"
+              theme="dark"
+              emit-as="ymd"
+              @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
+            />
+          </div>
+        </div>
 
+        <!-- Comments + Attachments -->
+        <div class="flex items-center gap-3">
+          <div v-if="card?.comments_count" class="flex items-center gap-1">
+            <i class="fa-regular fa-message text-[10px]"></i>
+            <span>{{ card.comments_count }}</span>
+          </div>
+          <div v-if="card?.attachments?.length" class="flex items-center gap-1">
+            <i class="fa-regular fa-file text-[10px]"></i>
+            <span>{{ card.attachments.length }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div
+      v-if="!fetchedItems.length"
+      class="w-full text-center py-10 text-text-secondary"
+    >
+      No cards found
+    </div>
+  </div>
+</template>
+<template v-else-if="isReadAction && isPlanModule">
+          <Checkbox
+            v-if="isPlanModule"
+            :checked="planSelectAll"
+            label="Select All"
+            @change="togglePlanSelectAll"
+          />
+  <div class="flex flex-wrap gap-4">
+     
+    <div
+      v-for="card in fetchedItems"
+      :key="card.id || card._id"
+      class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
+      :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
+    >
+    
+      <!-- Top row: badges + share -->
+      <div class="flex justify-between gap-2 items-start mb-3">
+        <div class="flex gap-2">
+          <input
+            v-if="isPlanModule"
+            type="checkbox"
+            class="mt-1"
+            :checked="selectedSprintCards?.includes(card._id)"
+            @change.stop="togglePlanCard(card._id)"
+          />
+        <div class="flex gap-2 flex-wrap items-center">
+          <!-- Card type badge -->
+          <span
+            v-if="card['card-type']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
+          >
+            {{ card['card-type'] || 'General' }}
+          </span>
+          <!-- Status badge -->
+          <span
+            v-if="card['card-status']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+          >
+            {{ card['card-status'] }}
+          </span>
+          <!-- Priority badge -->
+          <span
+            v-if="card.priority || card['card-priority']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
+          >
+            {{ card.priority || card['card-priority'] }}
+          </span>
+        </div>
+        </div>
+
+        <button
+          class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
+          @click="nativeShare(card)"
+          title="Share this Ticket"
+        >
+          <i class="fa-light fa-share text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Title -->
+      <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+        {{ card['card-title'] || card.title }}
+      </h3>
+
+      <!-- Description -->
+      <div
+        v-if="card['card-description']"
+        class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
+        v-html="card['card-description']"
+      />
+
+      <!-- Footer -->
+      <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
+        <div class="flex items-center gap-2 flex-1">
+          <!-- Assignee -->
+          <div @click.stop v-if="canAssignCard || canViewCard">
+            <AssigmentDropdown
+              :users="members"
+              :assigneeId="card.seat_id"
+              @assign="assignHandle(card)"
+            />
+          </div>
+          <!-- Due date -->
+          <div @click.stop class="flex items-center text-nowrap overflow-ellipsis">
+            <DatePicker
+              placeholder="end date"
+              :model-value="card['end-date']"
+              theme="dark"
+              emit-as="ymd"
+              @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
+            />
+          </div>
+        </div>
+
+        <!-- Comments + Attachments -->
+        <div class="flex items-center gap-3">
+          <div v-if="card?.comments_count" class="flex items-center gap-1">
+            <i class="fa-regular fa-message text-[10px]"></i>
+            <span>{{ card.comments_count }}</span>
+          </div>
+          <div v-if="card?.attachments?.length" class="flex items-center gap-1">
+            <i class="fa-regular fa-file text-[10px]"></i>
+            <span>{{ card.attachments.length }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div
+      v-if="!fetchedItems.length"
+      class="w-full text-center py-10 text-text-secondary"
+    >
+      No cards found
+    </div>
+  </div>
+</template>
         <!-- ================= CREATE ACTION ================= -->
         <template v-else>
           <p class="text-sm text-text-secondary overflow-y-auto">
@@ -343,11 +459,12 @@
                 <p class="text-xs font-semibold text-text-secondary mb-2">
                   Cards to be created
                 </p>
-                <div class="flex flex-wrap gap-3">
+                <div class="flex sm:flex-wrap flex-nowrap gap-3">
                   <div
                     v-for="card in groupedCards[sheet.variables['sheet-title']]"
                     :key="card.variables['card-code']"
-                    class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[32%]"
+                    
+                    class="relative bg-bg-card rounded-lg p-3 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[24%]"
                     :class="{
                       'ring-2 ring-accent': selectedCards?.includes(card._id),
                     }"
@@ -364,11 +481,14 @@
                         :checked="selectedCards?.includes(card._id)"
                         @change.stop="toggleCard(card._id)"
                       />
+                      
                       <div class="flex-1 space-y-2">
-                        <span
+                       <div class="flex justify-between">
+                         <span
                           class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
                           >{{ card.variables["card-status"] }}</span
                         >
+                       </div>
                         <h3
                           class="text-sm font-medium text-card-foreground leading-tight capitalize mt-1.5"
                         >
@@ -386,7 +506,6 @@
           </div>
         </template>
       </div>
-
       <!-- FOOTER -->
       <div
         class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
@@ -423,8 +542,56 @@
           </span>
         </button>
       </div>
+      <div
+        class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
+        v-if="isReadAction && isPlanModule"
+      >
+        <button
+          class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
+          @click="emit('decline')"
+        >
+          {{ isPeakWidget ? "Dismiss" : "Decline" }}
+        </button>
+        <button
+          class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
+          :disabled="!selectedSprintCards"
+          @click="acceptChanges"
+        >
+          <span
+            v-if="agentStore.isAcceptingEntities || agentStore.isAcceptingEntities"
+            class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+          ></span>
+          <span>
+            {{
+              agentStore.isAcceptingEntities
+                ? "Processing..."
+                : isPeakWidget
+                  ? "Pin to Peak"
+                  : isReadAction
+                    ? "Add Selected Cards"
+                    : "Accept Changes"
+            }}
+          </span>
+        </button>
+      </div>
     </div>
   </div>
+  <div v-if="selectedCard" class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black/30" @click="selectedCard = null"></div>
+
+  <div class="relative w-[900px] max-h-[85vh] overflow-y-auto bg-bg-card rounded-xl">
+  <CardPreviewModal
+  v-if="selectedCard"
+  :details="selectedCard"
+  :moduleId="moduleId"
+  :showPanel="!!selectedCard"
+  @close="() => selectedCard = null"
+  @closeSidePanel="closeSidePanel"
+  @comment:post="incrementCommentCount"
+  :sheetID="selected_sheet_id"
+/>
+ </div>
+</div>
 </template>
 
 <script setup>
@@ -440,7 +607,7 @@ import DatePicker from "../../../views/Product/components/DatePicker.vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useHead } from "@vueuse/head";
 import { useAgentStore } from "../../../stores/agentStore";
-
+import CardPreviewModal from "./CardView.vue"
 const { canDeleteCard, canAssignCard, canViewCard } = usePermissions();
 
 const props = defineProps({
@@ -448,14 +615,25 @@ const props = defineProps({
   title: String,
   data: Array,
 });
+const selectedCard = ref(null);
+const showPreview = ref(false);
 
+const openCardView = (card) => {
+  console.log(card, "card is");
+  
+  selectedCard.value = card;
+  showPreview.value = true;
+};
 const route = useRoute();
 const queryClient = useQueryClient();
 const preserveLog = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
 const agentStore = useAgentStore();
 const emit = defineEmits(["update:modelValue", "accept", "decline"]);
-
+const isPlanModule = computed(() => {
+  if (isPeakWidget.value) return false;
+  return props?.data?.[0]?.module_name=== "Plan";
+});
 const moveCard = useMoveCard({
   onSuccess: () => {
     queryClient.invalidateQueries({
@@ -736,14 +914,14 @@ const acceptChanges = () => {
     return;
   }
 
-  if (isReadAction.value) {
-    const workspace_id = props.data?.[0]?.workspace_id || null;
-    const selected = fetchedItems.value.filter((card) =>
-      selectedReadCards.value.includes(card.id || card._id),
-    );
-    emit("accept", { action: "read", workspace_id, cards: selected });
-    return;
-  }
+  if (isReadAction.value && isPlanModule.value) {
+  const workspace_id = props.data?.[0]?.workspace_id || null;
+  const selected = fetchedItems.value.filter((card) =>
+    selectedSprintCards.value.includes(card._id || card.id)
+  );
+  emit("accept", { action: "read", workspace_id, cards: selected });
+  return;
+}
 
   const workspace_id =
     workspaceId.value || props.data?.[0]?.workspace_id || null;
@@ -880,6 +1058,42 @@ async function nativeShare(card) {
     const dueDate = details["end-date"] || "";
     const message = `📌 ${code}: ${title}\n\n${description}\n\n🟢 Status: ${status}\n🔥 Priority: ${priority}\n📅 Due: ${dueDate}\n\n🔗 ${shareUrl}`;
     await navigator.clipboard.writeText(message);
+  }
+}
+function getPriorityColor(priority) {
+  const map = {
+    highest: '#ef4444',
+    high: '#f97316',
+    medium: '#eab308',
+    low: '#22c55e',
+    lowest: '#6b7280',
+  };
+
+  return map[(priority || '').toLowerCase()] || 'var(--accent)';
+}
+// toggle sprint select cards
+const selectedSprintCards = ref([])
+
+const planSelectAll = computed(() =>
+  fetchedItems.value.length > 0 &&
+  fetchedItems.value.every((card) =>
+    selectedSprintCards.value.includes(card._id || card.id)
+  )
+)
+
+const togglePlanSelectAll = () => {
+  if (planSelectAll.value) {
+    selectedSprintCards.value = []
+  } else {
+    selectedSprintCards.value = fetchedItems.value.map((card) => card._id || card.id)
+  }
+}
+
+const togglePlanCard = (id) => {
+  if (selectedSprintCards.value.includes(id)) {
+    selectedSprintCards.value = selectedSprintCards.value.filter((c) => c !== id)
+  } else {
+    selectedSprintCards.value = [...selectedSprintCards.value, id]
   }
 }
 </script>
