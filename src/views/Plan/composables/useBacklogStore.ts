@@ -160,7 +160,8 @@ export function useBacklogStore() {
   const { mutate: moveCard, isPending: isMoving } = useMoveCard({
     onSuccess: (_: any, vars: any) => {
       const count = vars.payload?.card_ids?.length || 1;
-      toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to sprint`);
+      const targetLabel = (vars.label || 'sprint').toLowerCase();
+      toast.success(`${count} ticket${count > 1 ? "s" : ""} moved to ${targetLabel}`);
 
       queryClient.invalidateQueries({ queryKey: ["backlog-list"] });
       queryClient.invalidateQueries({ queryKey: ["sprint-list"] });

@@ -302,6 +302,7 @@ import { useRouteIds } from '../../../composables/useQueryParams'
 import { usePrivateUploadFile } from '../../../queries/useCommon'
 import ConfirmDeleteModal from '../../../views/Product/modals/ConfirmDeleteModal.vue'
 import { useRouter } from 'vue-router'
+import { lightColors, darkColors, hexToRgba } from '../../../utilities/themeUtils'
 const queryClient = useQueryClient()
 const router = useRouter()
 const { workspaceId } = useRouteIds();
@@ -323,33 +324,6 @@ const { mutate: invitePeople } = useInvitePeople()
 
 /* ----- UI State ----- */
 const switchState = ref<'details' | 'active-logs'>('details')
-const lightColors = [
-  { color: '#EDEEF0', value: '#EDEEF0' },
-  { color: '#3CBAFB', value: '#D4F0FF80' },
-  { color: '#266FD4', value: '#B0BFD3' },
-  { color: '#EEA832', value: '#EEA8321A' },
-  { color: '#E82368', value: '#D7B0BE' },
-  { color: '#202123ff', value: '#B1B2B2' },
-  { color: '#4026D4', value: '#B6B0D3' },
-  { color: '#0DDAB1', value: '#ABD4CC' },
-  { color: '#1EA0DC', value: '#AFC9D5' },
-  { color: '#2587BC', value: '#B0C4CE' }
-]
-
-const darkColors = [
-  { color: '#c1c1c9ff', value: '#1b1b1b' }, 
-  { color: '#3CBAFB', value: '#D4F0FF80' },
-  { color: '#266FD4', value: '#B0BFD3' },
-  { color: '#EEA832', value: '#EEA8321A' },
-  { color: '#E82368', value: '#D7B0BE' },
-  { color: '#202123ff', value: '#B1B2B2' },
-  { color: '#4026D4', value: '#B6B0D3' },
-  { color: '#0DDAB1', value: '#ABD4CC' },
-  { color: '#1EA0DC', value: '#AFC9D5' },
-  { color: '#2587BC', value: '#B0C4CE' }
-]
- 
-
 const colors = computed(() => isDark.value ? darkColors : lightColors)
 
 const selectedColor = ref<string>(props.workspace?.variables.color || colors.value[0].value)
@@ -656,27 +630,7 @@ watch(() => props.workspace?.People, seedRolesFromProps, { deep: true, immediate
 //     }
 //   )
 // }
-function hexToRgba(hex: string, alpha = 0.3) {
-  let h = hex.trim();
-  if (!h.startsWith('#')) h = `#${h}`;
-  // Expand #RGB -> #RRGGBB
-  if (/^#([0-9a-f]{3})$/i.test(h)) {
-    h = '#' + h.slice(1).split('').map(c => c + c).join('');
-  }
-  // Strip any existing alpha (#RRGGBBAA -> #RRGGBB)
-  if (/^#([0-9a-f]{8})$/i.test(h)) {
-    h = '#' + h.slice(1, 7);
-  }
-  if (!/^#([0-9a-f]{6})$/i.test(h)) {
-    // Fallback: if not hex, just return the input (or you could handle rgb/hsl here)
-    return hex;
-  }
 
-  const r = parseInt(h.slice(1, 3), 16);
-  const g = parseInt(h.slice(3, 5), 16);
-  const b = parseInt(h.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
 
 /* ----- Simple helpers for palette / theme / menu ----- */
 /* ----- Simple helpers for palette / theme / menu ----- */

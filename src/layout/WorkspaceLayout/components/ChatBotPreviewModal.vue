@@ -1,149 +1,409 @@
 <template>
   <div class="w-full h-full flex items-center justify-center">
     <div class="w-full h-[85vh] flex flex-col">
+      <!-- HEADER -->
       <div
         class="px-3 py-1.5 border-b border-border flex flex-col justify-between flex-shrink-0"
       >
         <h3 class="text-sm font-semibold text-text-primary py-3 -mt-5.5">
-          {{ isReadAction ? "Fetched Cards" : "AI Suggested Changes" }}
+          {{
+            isPeakWidget
+              ? "AI Generated Widget"
+              : isReadAction
+                ? "Fetched Cards"
+                : "AI Suggested Changes"
+          }}
         </h3>
-        <p class="text-xs text-text-secondary" v-if="isReadAction">
+        <p
+          class="text-xs text-text-secondary"
+          v-if="isReadAction && !isPeakWidget"
+        >
           Found {{ fetchedItems.length }} card<span
             v-if="fetchedItems?.length > 1"
             >s</span
           >
           matching your query.
         </p>
+        <p class="text-xs text-text-secondary" v-if="isPeakWidget">
+          Preview the widget{{ allPeakWidgets.length > 1 ? "s" : "" }} below.
+          Accept to pin to your Peak module.
+        </p>
       </div>
+
+      <!-- BODY -->
       <div class="flex-1 py-5 px-3 space-y-4 overflow-y-auto overflow-x-auto">
-        <!-- ================= READ ACTION ================= -->
-        <template v-if="isReadAction">
-          <div class="flex flex-wrap gap-4">
-            <!-- CARD -->
+        <!-- ================= PEAK WIDGET HTML PREVIEW ================= -->
+        <template v-if="isPeakWidget">
+          <div class="space-y-6">
             <div
-              v-for="card in fetchedItems"
-              :key="card.id || card._id"
-              class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(33.333%-0.75rem)]"
+              v-if="
+                peakWidgetItem?.payload?.type === 'create_widget' ||  peakWidgetItem?.payload?.type === 'create_dashboard' || peakWidgetItem?.payload?.type === 'update_widget' ||
+                ('create_widget' && peakWidgetItem?.payload?.dashboard_title)
+              "
+              class="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border/60 bg-bg-body/60"
             >
-              <!-- Header -->
-              <div class="flex justify-between items-start gap-2 mb-3">
-                <div class="flex gap-2 flex-wrap items-center">
-                  <span
-                    v-if="card['card-status']"
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
-                  >
-                    {{ card["card-status"] }}
-                  </span>
-
-                  <span
-                    v-if="card.priority || card['card-priority']"
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
-                  >
-                    {{ card.priority || card["card-priority"] }}
-                  </span>
-                </div>
-                <button
-                  class="cursor-pointer text-accent hover:text-accent-hover"
-                  @click="nativeShare(card)"
-                  title="Share this Ticket"
-                >
-                  <i class="fa-light fa-share"></i>
-                </button>
+              <div
+                class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                :style="{
+                  background:
+                    (peakWidgetItem.payload.dashboard_color ?? '#6366f1') +
+                    '20',
+                }"
+              >
+                <i
+                  class="fa-solid fa-table-columns text-sm"
+                  :style="{
+                    color: peakWidgetItem.payload.dashboard_color ?? '#6366f1',
+                  }"
+                ></i>
               </div>
-
-              <!-- Title -->
-              <h3
-                class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize"
-              >
-                {{ card["card-title"] || card.title }}
-              </h3>
-
-              <!-- Description -->
-              <div
-                v-if="card['card-description']"
-                class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
-                v-html="card['card-description']"
-              />
-
-              <!-- Footer -->
-              <div
-                v-if="
-                  card['start-date'] ||
-                  card['end-date'] ||
-                  canAssignCard ||
-                  canViewCard
-                "
-                class="flex justify-between items-center mt-3 pt-3 border-t border-border/50 text-xs text-text-secondary"
-              >
-                <!-- Left Section -->
-                <div class="flex items-center flex-1">
-                  <div @click.stop>
-                    <AssigmentDropdown
-                      :users="members"
-                      :assigneeId="card.seat_id"
-                      @assign="assignHandle(card)"
-                    />
-                  </div>
-
-                  <div class="flex items-center gap-3">
-                    <div
-                      @click.stop
-                      class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary"
-                    >
-                      <DatePicker
-                        placeholder="end date"
-                        :model-value="card['end-date']"
-                        theme="dark"
-                        emit-as="ymd"
-                        @update:modelValue="
-                          (date) => setDueDate(date, card?.id || card?._id)
-                        "
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Right Section -->
-                <div
-                  v-if="card?.comments_count || card?.attachments?.length"
-                  class="flex items-center gap-3"
-                >
-                  <div
-                    v-if="card?.comments_count"
-                    class="flex items-center gap-1"
-                  >
-                    <i class="fa-regular fa-message text-[10px]"></i>
-                    <span>{{ card?.comments_count }}</span>
-                  </div>
-
-                  <div
-                    v-if="card?.attachments?.length"
-                    class="flex items-center gap-1"
-                  >
-                    <i class="fa-regular fa-file text-[10px]"></i>
-                    <span>{{ card?.attachments?.length }}</span>
-                  </div>
-                </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-text-primary">
+                  {{ peakWidgetItem.payload.dashboard_title }}
+                </p>
+                <p class="text-xs text-text-secondary mt-0.5">
+                  {{ allPeakWidgets.length }} widget{{
+                    allPeakWidgets.length > 1 ? "s" : ""
+                  }}
+                  in this dashboard
+                </p>
               </div>
             </div>
 
-            <!-- Empty State -->
+            <!-- Loop over every widget -->
             <div
-              v-if="!fetchedItems.length"
-              class="w-full text-center py-10 text-text-secondary"
+              v-for="(widget, idx) in allPeakWidgets"
+              :key="idx"
+              class="space-y-3"
             >
-              No cards found
+              <!-- Widget meta row -->
+              <div
+                class="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-bg-body/60"
+              >
+                <div
+                  class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+                  :style="{ background: (widget.color ?? '#6366f1') + '18' }"
+                >
+                  <i
+                    :class="
+                      chartIcon(
+                        widget.data?.chart_type ?? widget.query?.chart_type,
+                      )
+                    "
+                    class="text-sm"
+                    :style="{ color: widget.color ?? '#6366f1' }"
+                  ></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-text-primary truncate">
+                    {{ widget.title }}
+                  </p>
+                  <p class="text-xs text-text-secondary mt-0.5 truncate">
+                    {{ widget.description }}
+                  </p>
+                </div>
+                <div class="flex flex-col items-end gap-1 shrink-0">
+                  <span
+                    class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 capitalize"
+                  >
+                    {{
+                      widget.data?.chart_type ??
+                      widget.query?.chart_type ??
+                      "chart"
+                    }}
+                  </span>
+                  <span class="text-[10px] text-text-tertiary"
+                    >{{ widget.data?.total ?? 0 }} total</span
+                  >
+                </div>
+              </div>
+
+              <!-- iframe chart -->
+              <div
+                class="rounded-xl border border-border/60 overflow-hidden shadow-sm"
+              >
+                <div
+                  class="px-3 py-2 border-b border-border/40 bg-bg-body/40 flex items-center gap-2"
+                >
+                  <div class="flex gap-1">
+                    <div class="w-2.5 h-2.5 rounded-full bg-red-400/60"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-amber-400/60"></div>
+                    <div class="w-2.5 h-2.5 rounded-full bg-green-400/60"></div>
+                  </div>
+                  <span class="text-[11px] text-text-tertiary ml-1"
+                    >{{ widget.title }} — Preview</span
+                  >
+                </div>
+                <iframe
+                  :srcdoc="widget._wrappedHtml"
+                  class="w-full border-0 block"
+                  style="height: 400px"
+                  sandbox="allow-scripts"
+                  :title="widget.title"
+                ></iframe>
+              </div>
+
+              <!-- Series breakdown -->
+              <div v-if="widget.data?.series?.length" class="space-y-1.5">
+                <p
+                  class="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider px-1"
+                >
+                  Data breakdown
+                </p>
+                <div
+                  v-for="(s, si) in widget.data.series"
+                  :key="si"
+                  class="flex items-center gap-3 px-3 py-2 rounded-lg bg-bg-body/60 border border-border/40"
+                >
+                  <div
+                    class="w-2.5 h-2.5 rounded-sm shrink-0"
+                    :style="{ background: seriesColor(widget, si) }"
+                  ></div>
+                  <span class="text-sm text-text-primary flex-1">{{
+                    s.label
+                  }}</span>
+                  <span class="text-sm font-semibold text-text-primary">{{
+                    s.value
+                  }}</span>
+                </div>
+              </div>
+
+              <!-- divider between widgets -->
+              <div
+                v-if="idx < allPeakWidgets.length - 1"
+                class="border-t border-border/30 pt-2"
+              ></div>
             </div>
           </div>
         </template>
+        <template v-else-if="isReadAction && !isPlanModule">
+          
+  <div class="flex flex-wrap gap-4">
+     
+    <div
+      v-for="card in fetchedItems"
+      :key="card.id || card._id"
+      @click="selectedCard = card"
+      class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
+      :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
+    >
+      <!-- Top row: badges + share -->
+      <div class="flex justify-between gap-2 items-start mb-3">
+        <div class="flex gap-2 flex-wrap items-center">
+          <!-- Card type badge -->
+          <span
+            v-if="card['card-type']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
+          >
+            {{ card['card-type'] || 'General' }}
+          </span>
+          <!-- Status badge -->
+          <span
+            v-if="card['card-status']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+          >
+            {{ card['card-status'] }}
+          </span>
+          <!-- Priority badge -->
+          <span
+            v-if="card.priority || card['card-priority']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
+          >
+            {{ card.priority || card['card-priority'] }}
+          </span>
+        </div>
 
+        <button
+          class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
+          @click="nativeShare(card)"
+          title="Share this Ticket"
+        >
+          <i class="fa-light fa-share text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Title -->
+      <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+        {{ card['card-title'] || card.title }}
+      </h3>
+
+      <!-- Description -->
+      <div
+        v-if="card['card-description']"
+        class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
+        v-html="card['card-description']"
+      />
+
+      <!-- Footer -->
+      <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
+        <div class="flex items-center gap-2 flex-1">
+          <!-- Assignee -->
+          <div @click.stop v-if="canAssignCard || canViewCard">
+            <AssigmentDropdown
+              :users="members"
+              :assigneeId="card.seat_id"
+              @assign="assignHandle(card)"
+            />
+          </div>
+          <!-- Due date -->
+          <div @click.stop class="flex items-center text-nowrap overflow-ellipsis">
+            <DatePicker
+              placeholder="end date"
+              :model-value="card['end-date']"
+              theme="dark"
+              emit-as="ymd"
+              @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
+            />
+          </div>
+        </div>
+
+        <!-- Comments + Attachments -->
+        <div class="flex items-center gap-3">
+          <div v-if="card?.comments_count" class="flex items-center gap-1">
+            <i class="fa-regular fa-message text-[10px]"></i>
+            <span>{{ card.comments_count }}</span>
+          </div>
+          <div v-if="card?.attachments?.length" class="flex items-center gap-1">
+            <i class="fa-regular fa-file text-[10px]"></i>
+            <span>{{ card.attachments.length }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div
+      v-if="!fetchedItems.length"
+      class="w-full text-center py-10 text-text-secondary"
+    >
+      No cards found
+    </div>
+  </div>
+</template>
+<template v-else-if="isReadAction && isPlanModule">
+          <Checkbox
+            v-if="isPlanModule"
+            :checked="planSelectAll"
+            label="Select All"
+            @change="togglePlanSelectAll"
+          />
+  <div class="flex flex-wrap gap-4">
+     
+    <div
+      v-for="card in fetchedItems"
+      :key="card.id || card._id"
+      class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
+      :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
+    >
+    
+      <!-- Top row: badges + share -->
+      <div class="flex justify-between gap-2 items-start mb-3">
+        <div class="flex gap-2">
+          <input
+            v-if="isPlanModule"
+            type="checkbox"
+            class="mt-1"
+            :checked="selectedSprintCards?.includes(card._id)"
+            @change.stop="togglePlanCard(card._id)"
+          />
+        <div class="flex gap-2 flex-wrap items-center">
+          <!-- Card type badge -->
+          <span
+            v-if="card['card-type']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
+          >
+            {{ card['card-type'] || 'General' }}
+          </span>
+          <!-- Status badge -->
+          <span
+            v-if="card['card-status']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+          >
+            {{ card['card-status'] }}
+          </span>
+          <!-- Priority badge -->
+          <span
+            v-if="card.priority || card['card-priority']"
+            class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
+          >
+            {{ card.priority || card['card-priority'] }}
+          </span>
+        </div>
+        </div>
+
+        <button
+          class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
+          @click="nativeShare(card)"
+          title="Share this Ticket"
+        >
+          <i class="fa-light fa-share text-xs"></i>
+        </button>
+      </div>
+
+      <!-- Title -->
+      <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+        {{ card['card-title'] || card.title }}
+      </h3>
+
+      <!-- Description -->
+      <div
+        v-if="card['card-description']"
+        class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
+        v-html="card['card-description']"
+      />
+
+      <!-- Footer -->
+      <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
+        <div class="flex items-center gap-2 flex-1">
+          <!-- Assignee -->
+          <div @click.stop v-if="canAssignCard || canViewCard">
+            <AssigmentDropdown
+              :users="members"
+              :assigneeId="card.seat_id"
+              @assign="assignHandle(card)"
+            />
+          </div>
+          <!-- Due date -->
+          <div @click.stop class="flex items-center text-nowrap overflow-ellipsis">
+            <DatePicker
+              placeholder="end date"
+              :model-value="card['end-date']"
+              theme="dark"
+              emit-as="ymd"
+              @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
+            />
+          </div>
+        </div>
+
+        <!-- Comments + Attachments -->
+        <div class="flex items-center gap-3">
+          <div v-if="card?.comments_count" class="flex items-center gap-1">
+            <i class="fa-regular fa-message text-[10px]"></i>
+            <span>{{ card.comments_count }}</span>
+          </div>
+          <div v-if="card?.attachments?.length" class="flex items-center gap-1">
+            <i class="fa-regular fa-file text-[10px]"></i>
+            <span>{{ card.attachments.length }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div
+      v-if="!fetchedItems.length"
+      class="w-full text-center py-10 text-text-secondary"
+    >
+      No cards found
+    </div>
+  </div>
+</template>
         <!-- ================= CREATE ACTION ================= -->
         <template v-else>
           <p class="text-sm text-text-secondary overflow-y-auto">
             The AI suggests the following changes. Please review before
             applying.
           </p>
-
           <Checkbox
             :checked="selectAll"
             label="Select All"
@@ -155,7 +415,6 @@
               :key="sheet.variables['sheet-title']"
               class="bg-bg-body rounded-lg border border-border p-4"
             >
-              <!-- Sheet Header -->
               <div
                 class="flex items-start gap-3 cursor-pointer transition-all duration-150"
                 @click="toggleItem(sheet.variables['sheet-title'])"
@@ -177,7 +436,6 @@
                     ]"
                   />
                 </div>
-
                 <div class="flex-1">
                   <h4 class="text-sm font-semibold text-card-foreground">
                     {{ sheet.variables["sheet-title"] }}
@@ -186,7 +444,6 @@
                     {{ sheet.variables["sheet-description"] }}
                   </p>
                 </div>
-
                 <input
                   type="checkbox"
                   :checked="
@@ -195,8 +452,6 @@
                   @change.stop="toggleItem(sheet.variables['sheet-title'])"
                 />
               </div>
-
-              <!-- CARDS PREVIEW -->
               <div
                 v-if="groupedCards[sheet.variables['sheet-title']]?.length"
                 class="mt-4"
@@ -204,17 +459,16 @@
                 <p class="text-xs font-semibold text-text-secondary mb-2">
                   Cards to be created
                 </p>
-
-                <div class="flex flex-wrap gap-3">
+                <div class="flex sm:flex-wrap flex-nowrap gap-3">
                   <div
                     v-for="card in groupedCards[sheet.variables['sheet-title']]"
                     :key="card.variables['card-code']"
-                    class="relative bg-bg-card rounded-lg p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[32%]"
+                    
+                    class="relative bg-bg-card rounded-lg p-3 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[24%]"
                     :class="{
                       'ring-2 ring-accent': selectedCards?.includes(card._id),
                     }"
                     @click="toggleCard(card._id)"
-                    :checked="selectedCards?.includes(card._id)"
                     @change.stop="toggleCard(card._id)"
                   >
                     <div
@@ -227,20 +481,19 @@
                         :checked="selectedCards?.includes(card._id)"
                         @change.stop="toggleCard(card._id)"
                       />
-
+                      
                       <div class="flex-1 space-y-2">
-                        <span
+                       <div class="flex justify-between">
+                         <span
                           class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+                          >{{ card.variables["card-status"] }}</span
                         >
-                          {{ card.variables["card-status"] }}
-                        </span>
-
+                       </div>
                         <h3
                           class="text-sm font-medium text-card-foreground leading-tight capitalize mt-1.5"
                         >
                           {{ card.variables["card-title"] }}
                         </h3>
-
                         <p class="text-xs text-text-secondary line-clamp-2">
                           {{ card.variables["card-description"] }}
                         </p>
@@ -253,51 +506,97 @@
           </div>
         </template>
       </div>
+      <!-- FOOTER -->
       <div
         class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
-        v-if="!isReadAction"
+        v-if="!isReadAction || isPeakWidget"
       >
         <button
           class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
           @click="emit('decline')"
         >
-          {{ isReadAction ? "Cancel" : "Decline" }}
+          {{ isPeakWidget ? "Dismiss" : "Decline" }}
         </button>
-
         <button
           class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
           :disabled="
             agentStore.isAcceptingEntities ||
-            (isReadAction
-              ? !selectedReadCards.length
-              : !selectedItems.length && !selectedCards.length)
+            (!isPeakWidget && !selectedItems.length && !selectedCards.length)
           "
           @click="acceptChanges"
         >
-          <!-- Spinner -->
           <span
             v-if="agentStore.isAcceptingEntities"
             class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
           ></span>
-
-          <!-- Text -->
           <span>
             {{
               agentStore.isAcceptingEntities
                 ? "Processing..."
-                : isReadAction
-                  ? "Add Selected Cards"
-                  : "Accept Changes"
+                : isPeakWidget
+                  ? "Pin to Peak"
+                  : isReadAction
+                    ? "Add Selected Cards"
+                    : "Accept Changes"
+            }}
+          </span>
+        </button>
+      </div>
+      <div
+        class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
+        v-if="isReadAction && isPlanModule"
+      >
+        <button
+          class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
+          @click="emit('decline')"
+        >
+          {{ isPeakWidget ? "Dismiss" : "Decline" }}
+        </button>
+        <button
+          class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
+          :disabled="!selectedSprintCards"
+          @click="acceptChanges"
+        >
+          <span
+            v-if="agentStore.isAcceptingEntities || agentStore.isAcceptingEntities"
+            class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+          ></span>
+          <span>
+            {{
+              agentStore.isAcceptingEntities
+                ? "Processing..."
+                : isPeakWidget
+                  ? "Pin to Peak"
+                  : isReadAction
+                    ? "Add Selected Cards"
+                    : "Accept Changes"
             }}
           </span>
         </button>
       </div>
     </div>
   </div>
+  <div v-if="selectedCard" class="fixed inset-0 z-50 flex items-center justify-center">
+  <div class="absolute inset-0 bg-black/30" @click="selectedCard = null"></div>
+
+  <div class="relative w-[900px] max-h-[85vh] overflow-y-auto bg-bg-card rounded-xl">
+  <CardPreviewModal
+  v-if="selectedCard"
+  :details="selectedCard"
+  :moduleId="moduleId"
+  :showPanel="!!selectedCard"
+  @close="() => selectedCard = null"
+  @closeSidePanel="closeSidePanel"
+  @comment:post="incrementCommentCount"
+  :sheetID="selected_sheet_id"
+/>
+ </div>
+</div>
 </template>
 
 <script setup>
 import { ref, computed } from "vue";
+import { useRoute } from "vue-router";
 import Checkbox from "@/components/ui/Checkbox.vue";
 import AssigmentDropdown from "../../../views/Product/components/AssigmentDropdown.vue";
 import { useWorkspacesRoles } from "../../../queries/useWorkspace";
@@ -308,7 +607,7 @@ import DatePicker from "../../../views/Product/components/DatePicker.vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useHead } from "@vueuse/head";
 import { useAgentStore } from "../../../stores/agentStore";
-
+import CardPreviewModal from "./CardView.vue"
 const { canDeleteCard, canAssignCard, canViewCard } = usePermissions();
 
 const props = defineProps({
@@ -316,13 +615,25 @@ const props = defineProps({
   title: String,
   data: Array,
 });
+const selectedCard = ref(null);
+const showPreview = ref(false);
 
+const openCardView = (card) => {
+  console.log(card, "card is");
+  
+  selectedCard.value = card;
+  showPreview.value = true;
+};
+const route = useRoute();
 const queryClient = useQueryClient();
 const preserveLog = ref(false);
 const { workspaceId, moduleId } = useRouteIds();
 const agentStore = useAgentStore();
 const emit = defineEmits(["update:modelValue", "accept", "decline"]);
-
+const isPlanModule = computed(() => {
+  if (isPeakWidget.value) return false;
+  return props?.data?.[0]?.module_name=== "Plan";
+});
 const moveCard = useMoveCard({
   onSuccess: () => {
     queryClient.invalidateQueries({
@@ -338,7 +649,141 @@ const setDueDate = (date, id) => {
   moveCard.mutate({ card_id: id, variables: { "end-date": date } });
 };
 
-const isReadAction = computed(() => props?.data?.[0]?.action === "read");
+const isOnPeakRoute = computed(() =>
+  route?.path?.toLowerCase().includes("peak"),
+);
+
+const peakWidgetItem = computed(() => {
+  if (!isOnPeakRoute.value) return null;
+  if (!Array.isArray(props.data)) return null;
+
+  return (
+    props.data.find((item) => {
+      if (item?.entity_type !== "widget") return false;
+      const payload = item?.payload ?? {};
+      // Shape A: payload.html exists directly
+      if (payload.html?.trim()) return true;
+      // Shape B: payload.widgets[] array with at least one html entry
+      if (
+        Array.isArray(payload.widgets) &&
+        payload.widgets.some((w) => w?.html?.trim())
+      )
+        return true;
+      return false;
+    }) ?? null
+  );
+});
+
+const isPeakWidget = computed(() => !!peakWidgetItem.value);
+
+function seriesColor(widget, idx) {
+  // Use the widget's own color for single-series charts (bar),
+  // cycle through palette for multi-series (pie / doughnut)
+  const type = widget.data?.chart_type ?? widget.query?.chart_type ?? "";
+  if (["pie", "doughnut"].includes(type))
+    return CHART_COLORS[idx % CHART_COLORS.length];
+  return widget.color ?? CHART_COLORS[0];
+}
+
+function chartIcon(type) {
+  const map = {
+    pie: "fa-solid fa-chart-pie",
+    doughnut: "fa-solid fa-chart-pie",
+    bar: "fa-solid fa-chart-bar",
+    line: "fa-solid fa-chart-line",
+    area: "fa-solid fa-chart-area",
+  };
+  return map[type] ?? "fa-solid fa-chart-bar";
+}
+
+const CHART_COLORS = [
+  "#6366f1",
+  "#f59e0b",
+  "#10b981",
+  "#ef4444",
+  "#3b82f6",
+  "#8b5cf6",
+  "#ec4899",
+  "#14b8a6",
+  "#f97316",
+  "#06b6d4",
+  "#84cc16",
+  "#e11d48",
+  "#7c3aed",
+  "#0ea5e9",
+  "#d946ef",
+];
+
+function injectSeriesData(html, series = [], color = "#6366f1") {
+  if (!series.length) return html;
+
+  const labels = JSON.stringify(series.map((s) => s.label ?? s.name ?? ""));
+  const values = JSON.stringify(series.map((s) => s.value ?? s.count ?? 0));
+  const colors = JSON.stringify(
+    series.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
+  );
+
+  return (
+    html
+      // Replace empty labels array
+      .replace(/labels\s*:\s*\[\s*\]/, `labels: ${labels}`)
+      // Replace empty data array inside datasets
+      .replace(/data\s*:\s*\[\s*\]/, `data: ${values}`)
+      // Replace empty backgroundColor array inside datasets
+      .replace(/backgroundColor\s*:\s*\[\s*\]/, `backgroundColor: ${colors}`)
+  );
+}
+
+function wrapHtml(html) {
+  if (
+    html.trim().toLowerCase().startsWith("<!doctype") ||
+    html.trim().toLowerCase().startsWith("<html")
+  ) {
+    return html;
+  }
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#fff;padding:16px}</style>
+</head><body>${html}</body></html>`;
+}
+
+// ── computed ──────────────────────────────────────────────────────────
+
+const allPeakWidgets = computed(() => {
+  const item = peakWidgetItem.value;
+  if (!item) return [];
+  const payload = item.payload ?? {};
+
+  // Shape B: payload.widgets[]
+  if (Array.isArray(payload.widgets) && payload.widgets.length) {
+    return payload.widgets
+      .filter((w) => w?.html?.trim())
+      .map((w) => {
+        const enriched = injectSeriesData(
+          w.html,
+          w.data?.series ?? [],
+          w.color,
+        );
+        return { ...w, _wrappedHtml: wrapHtml(enriched) };
+      });
+  }
+
+  // Shape A: payload.html directly  ← your current case
+  if (payload.html?.trim()) {
+    const enriched = injectSeriesData(
+      payload.html,
+      payload.data?.series ?? [],
+      payload.color,
+    );
+    return [{ ...payload, _wrappedHtml: wrapHtml(enriched) }];
+  }
+
+  return [];
+});
+const isReadAction = computed(() => {
+  if (isPeakWidget.value) return false;
+  return props?.data?.[0]?.action === "read";
+});
+
 const ogData = computed(() => agentStore.ogTypesTicket);
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 
@@ -372,16 +817,16 @@ const toggleReadCard = (id) => {
   }
 };
 
+// ── SHEETS / CARDS ────────────────────────────────────────────────────
 const sheetsPreview = computed(() => {
-  if (isReadAction.value) return [];
+  if (isReadAction.value || isPeakWidget.value) return [];
   return (Array.isArray(props.data) ? props.data : [])
     .flatMap((item) => item.result?.sheets || [])
-    .filter((sheet) => sheet?.variables?.["sheet-title"]); // guard here
+    .filter((sheet) => sheet?.variables?.["sheet-title"]);
 });
 
-// ALL cards flat, each card has root-level _id and sheet_id
 const allCards = computed(() => {
-  if (isReadAction.value) return [];
+  if (isReadAction.value || isPeakWidget.value) return [];
   return (Array.isArray(props.data) ? props.data : []).flatMap(
     (item) =>
       item.result?.sheets?.flatMap(
@@ -390,7 +835,6 @@ const allCards = computed(() => {
   );
 });
 
-// Group cards by sheet using sheet_id — NOT index math
 const groupedCards = computed(() => {
   const result = {};
   for (const sheet of sheetsPreview.value) {
@@ -403,9 +847,8 @@ const groupedCards = computed(() => {
 
 // ── Selection state ───────────────────────────────────────────────────
 const selectedItems = ref([]);
-const selectedCards = ref([]); // stores root-level card._id strings
+const selectedCards = ref([]);
 
-// Returns root _id list for cards belonging to a sheet
 const getSheetCardIds = (sheetTitle) => {
   const sheet = sheetsPreview.value.find(
     (s) => s.variables["sheet-title"] === sheetTitle,
@@ -418,12 +861,11 @@ const getSheetCardIds = (sheetTitle) => {
 
 const selectAll = computed(() => {
   if (!sheetsPreview.value.length) return false;
-  const allSheetsSelected =
-    selectedItems.value.length === sheetsPreview.value.length;
-  const allCardsSelected =
-    allCards.value.length === 0 ||
-    selectedCards.value.length === allCards.value.length;
-  return allSheetsSelected && allCardsSelected;
+  return (
+    selectedItems.value.length === sheetsPreview.value.length &&
+    (allCards.value.length === 0 ||
+      selectedCards.value.length === allCards.value.length)
+  );
 });
 
 const toggleSelectAll = () => {
@@ -434,7 +876,6 @@ const toggleSelectAll = () => {
     selectedItems.value = sheetsPreview.value.map(
       (s) => s.variables["sheet-title"],
     );
-    // KEY FIX: use root _id, not variables["_id"]
     selectedCards.value = allCards.value.map((c) => c._id);
   }
 };
@@ -464,18 +905,26 @@ const toggleCard = (id) => {
 
 // ── Accept ────────────────────────────────────────────────────────────
 const acceptChanges = () => {
-  if (isReadAction.value) {
-    const workspace_id = props.data?.[0]?.workspace_id || null;
-    const selected = fetchedItems.value.filter((card) =>
-      selectedReadCards.value.includes(card.id || card._id),
-    );
-    emit("accept", { action: "read", workspace_id, cards: selected });
+  if (isPeakWidget.value) {
+    emit("accept", {
+      action: "widget",
+      workspace_id: peakWidgetItem.value?.workspace_id ?? null,
+      widget: peakWidgetItem.value,
+    });
     return;
   }
 
+  if (isReadAction.value && isPlanModule.value) {
+  const workspace_id = props.data?.[0]?.workspace_id || null;
+  const selected = fetchedItems.value.filter((card) =>
+    selectedSprintCards.value.includes(card._id || card.id)
+  );
+  emit("accept", { action: "read", workspace_id, cards: selected });
+  return;
+}
+
   const workspace_id =
     workspaceId.value || props.data?.[0]?.workspace_id || null;
-
   const module = {
     _id:
       props.data?.[0]?.module_id ||
@@ -495,18 +944,14 @@ const acceptChanges = () => {
         (s) => s.variables["sheet-title"] === sheetTitle,
       );
       if (!sheetObj) return null;
-
-      // Cards for this sheet that the user selected
       const cardsForSheet = allCards.value.filter(
         (c) =>
           c.sheet_id === sheetObj._id && selectedCards.value.includes(c._id),
       );
-
       const items = cardsForSheet.map((card) => ({
         _id: card._id || null,
         workspace_lane_id: card.workspace_lane_id || null,
         variables: {
-          // API contract uses "title" not "card-title"
           title: card["card-title"] || card.variables?.["card-title"] || "",
           description:
             card["card-description"] ||
@@ -529,7 +974,6 @@ const acceptChanges = () => {
             ? card.seat_id
             : [],
       }));
-
       return {
         _id: sheetObj._id || null,
         variables: {
@@ -537,7 +981,7 @@ const acceptChanges = () => {
           "sheet-description": sheetObj.variables["sheet-description"] || "",
           "sheet-icon": sheetObj.variables["sheet-icon"] || null,
         },
-        items, // ← API expects "items" not "cards"
+        items,
       };
     })
     .filter(Boolean);
@@ -545,7 +989,7 @@ const acceptChanges = () => {
   emit("accept", { workspace_id, module, sheets, ispined: preserveLog.value });
 };
 
-// ── Assign / share helpers (unchanged) ───────────────────────────────
+// ── Assign / share helpers ────────────────────────────────────────────
 const assignHandle = (card) => {
   moveCard.mutate({
     card_id: card?._id,
@@ -594,35 +1038,62 @@ function parseTicketDetailsFromHTML(html) {
 
 const getShareUrl = (card) =>
   `https://www.orchit.ai/workspace/${workspaceId.value}/${moduleId.value}`;
+
 async function nativeShare(card) {
   await agentStore.shareTicketTypes(card.id || card._id);
-
   const details = parseTicketDetailsFromHTML(agentStore.ogTypesTicket);
   const shareUrl = getShareUrl(card);
-
   const code = details["card-code"] || "";
   const title = details["card-title"] || "";
-
   if (navigator.share) {
     try {
-      await navigator.share({
-        title: `${code}: ${title}`,
-        // ← NO text field, url only
-        // WhatsApp scrapes OG tags from the URL automatically
-        url: shareUrl,
-      });
+      await navigator.share({ title: `${code}: ${title}`, url: shareUrl });
     } catch (err) {
       if (err.name !== "AbortError") console.error("Share failed:", err);
     }
   } else {
-    // Fallback: clipboard gets the full formatted text
     const description = details["card-description"] || "";
     const status = details["card-status"] || "";
     const priority = details["priority"] || "";
     const dueDate = details["end-date"] || "";
-
     const message = `📌 ${code}: ${title}\n\n${description}\n\n🟢 Status: ${status}\n🔥 Priority: ${priority}\n📅 Due: ${dueDate}\n\n🔗 ${shareUrl}`;
     await navigator.clipboard.writeText(message);
+  }
+}
+function getPriorityColor(priority) {
+  const map = {
+    highest: '#ef4444',
+    high: '#f97316',
+    medium: '#eab308',
+    low: '#22c55e',
+    lowest: '#6b7280',
+  };
+
+  return map[(priority || '').toLowerCase()] || 'var(--accent)';
+}
+// toggle sprint select cards
+const selectedSprintCards = ref([])
+
+const planSelectAll = computed(() =>
+  fetchedItems.value.length > 0 &&
+  fetchedItems.value.every((card) =>
+    selectedSprintCards.value.includes(card._id || card.id)
+  )
+)
+
+const togglePlanSelectAll = () => {
+  if (planSelectAll.value) {
+    selectedSprintCards.value = []
+  } else {
+    selectedSprintCards.value = fetchedItems.value.map((card) => card._id || card.id)
+  }
+}
+
+const togglePlanCard = (id) => {
+  if (selectedSprintCards.value.includes(id)) {
+    selectedSprintCards.value = selectedSprintCards.value.filter((c) => c !== id)
+  } else {
+    selectedSprintCards.value = [...selectedSprintCards.value, id]
   }
 }
 </script>
@@ -641,20 +1112,16 @@ async function nativeShare(card) {
   width: 3px;
   height: 3px;
 }
-
 .custom_scroll_bar::-webkit-scrollbar-thumb {
   background-color: rgba(150, 150, 150, 0.4);
   border-radius: 10px;
 }
-
 .custom_scroll_bar::-webkit-scrollbar-thumb:hover {
   background-color: #555;
 }
-
 .custom_scroll_bar::-webkit-scrollbar-track {
   background: transparent;
 }
-
 .custom_scroll_bar {
   scrollbar-width: thin;
   scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;

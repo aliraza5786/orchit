@@ -116,6 +116,7 @@ export const useCompleteSprint = (sprint_id: any, options = {}) =>
           url: `sprints/${id}/complete`,
           method: "POST",
           data: vars.payload,
+          extract: (res) => res.data,
         });
       },
       ...(options as any),

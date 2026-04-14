@@ -45,6 +45,9 @@ import UpdateLaneModal from './modals/UpdateLaneModal.vue';
 import { useSingleWorkspace } from '../../queries/useWorkspace';
 import Loader from '../../components/ui/Loader.vue'; 
 import { useRouteIds } from '../../composables/useQueryParams'; 
+import { useTheme } from '../../composables/useTheme';
+import { getWorkspaceBackground } from '../../utilities/themeUtils';
+const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 const { workspaceId } = useRouteIds(); // Use the shared composable
 
@@ -53,8 +56,8 @@ const { workspaceId } = useRouteIds(); // Use the shared composable
 const { data: getWorkspace, isPending, isLoading } = useSingleWorkspace(workspaceId);
 const localWorkspace = ref<any>(null); 
 watch(
-  getWorkspace,
-  (newWorkspace) => {
+  [getWorkspace, isDark],
+  ([newWorkspace, dark]) => {
     if (!newWorkspace) return;
 
     // shallow clone so local edits don’t mutate query cache
@@ -63,31 +66,13 @@ watch(
     workspaceStore.setSingleWorkspace(wsClone);
     workspaceStore.setLanes(wsClone?.lanes);
 
-    // Initialize background from workspace variables
-    const { theme, color } = wsClone?.variables || {};
-    if (theme) {
-      workspaceStore.setBackground(`url(${theme})`);
-    } else if (color) { 
-      workspaceStore.setBackground(hexToRgba(color, 0.3));
-    }
+    // Initialize background from workspace variables with fallback
+    workspaceStore.setBackground(getWorkspaceBackground(wsClone?.variables, dark));
   },
   { immediate: true }
 );
 
-function hexToRgba(hex: string, alpha = 0.3) {
-  if (!hex || typeof hex !== 'string') return hex;
-  let h = hex.trim();
-  if (!h.startsWith('#')) return h;
-  if (/^#([0-9a-f]{3})$/i.test(h)) {
-    h = '#' + h.slice(1).split('').map(c => c + c).join('');
-  }
-  if (/^#([0-9a-f]{8})$/i.test(h)) h = '#' + h.slice(1, 7);
-  if (!/^#([0-9a-f]{6})$/i.test(h)) return hex;
-  const r = parseInt(h.slice(1, 3), 16);
-  const g = parseInt(h.slice(3, 5), 16);
-  const b = parseInt(h.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
+
  
 
 const workspaceNavRef = ref<any>(null);

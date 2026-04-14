@@ -64,7 +64,7 @@
                   </div>
                   <!-- filters -->
                   <div class="mt-3">
-                    <div class="flex flex-wrap gap-2 mb-3">
+                    <div class="flex flex-wrap gap-2 mb-[8px]">
                       <ModuleSheetDropdown 
                         :modules="visibleModules" 
                         :selectedIds="selectedFilter" 
@@ -287,7 +287,7 @@
                     <div class="flex justify-end items-center">
                       <div class="me-2" >
                         <ExpandableSearch
-                          v-if="sprintDetailData?.cards?.length"
+                          v-if="sprintDetailData?.cards?.length && sprintDetailData?.status !== 'completed'"
                           v-model="searchQuery"
                           placeholder="Search ticket by title...."
                           buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-accent hover:opacity-90"
@@ -1631,12 +1631,20 @@ function handleDeleteSprint(e: any) {
 const completingSprintId = ref<string | null>(null);
 const { mutate: completeSprint } =
   useCompleteSprint(selectedSprintId, {
-    onSuccess: () => {
-       completingSprintId.value = null;
-      handleRefresh();
-    },
-     onError: () => {
+     onSuccess: (data: any) => {
+        completingSprintId.value = null;
+        handleRefresh();
+        const message = data?.message || data?.data?.message || "Sprint completed successfully";
+         toast.success(message);
+     },
+     onError: (error: any) => {
       completingSprintId.value = null;
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong";
+
+      toast.error(message)
     },
   });
 
