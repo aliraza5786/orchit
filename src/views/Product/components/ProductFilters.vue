@@ -308,7 +308,7 @@ const currentOptions = computed(() => {
 const filteredOptions = computed(() => {
   if (!searchQuery.value) return currentOptions.value;
   const q = searchQuery.value.toLowerCase();
-  return currentOptions.value.filter(o => 
+  return currentOptions.value.filter((o: any) => 
     o.title.toLowerCase().includes(q) || (o.description?.toLowerCase().includes(q))
   );
 });

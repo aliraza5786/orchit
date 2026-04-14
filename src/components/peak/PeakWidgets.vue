@@ -300,7 +300,7 @@
                     <!-- FIX: buildPieSegments called with radius=48 — now matches updated 3-param signature -->
                     <svg width="130" height="130" viewBox="0 0 130 130" class="flex-shrink-0">
                       <circle cx="65" cy="65" r="48" fill="none" stroke="var(--bg-surface)" stroke-width="22"/>
-                      <template v-for="(seg, si) in buildPieSegments(resolveWidgetData(widget)?.data?.series, resolveWidgetData(widget)?.data?.total, 48)" :key="si">
+                      <template v-for="(seg, _si) in buildPieSegments(resolveWidgetData(widget)?.data?.series, resolveWidgetData(widget)?.data?.total, 48)" :key="_si">
                         <circle
                           cx="65" cy="65" r="48"
                           fill="none"
