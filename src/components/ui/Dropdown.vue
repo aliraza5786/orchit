@@ -4,7 +4,7 @@
       ref="triggerRef"
       @click="toggle"
       type="button"
-        class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
+        class="text-nowrap inline-flex justify-between items-center gap-2 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
      
       :class="[
         buttonSizeClass, 
@@ -22,10 +22,10 @@
       </span>
 
       <i
-  class="text-accent"
+  class="text-accent "
   :class="[
     `${selectedOption?.icon?.prefix} ${selectedOption?.icon?.iconName ?? 'file'}`,
-    isAgent ? 'text-[6px]' : faIconSizeClass
+    isAgent ? 'text-[6px]' : 'text-[14px]'
   ]"
 ></i>
 <span :class="labelSizeClass">
@@ -107,8 +107,8 @@
                       <i
                         class="text-accent"
                         :class="[
-                          `${selectedOption?.icon?.prefix} ${selectedOption?.icon?.iconName ?? 'file'}`,
-                          isAgent ? 'text-[6px]' : faIconSizeClass
+                          `${option.icon?.prefix} ${option.icon?.iconName ?? 'file'}`,
+                          isAgent ? 'text-[6px]' : 'text-[16px]'
                         ]"
                       ></i>
 

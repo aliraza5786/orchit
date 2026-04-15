@@ -68,6 +68,27 @@
               @close="showFilterBar = false"
             />
         </div>
+
+        <!-- Group button for Table View -->
+        <div v-if="view === 'table'" class="relative flex items-center gap-3">
+            <button
+                ref="groupTriggerRef"
+                @click="showGroupDropdown = !showGroupDropdown"
+                class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+                :class="showGroupDropdown ? 'border-accent text-accent' : 'border-border text-text-primary'"
+            >
+                <i class="fa-solid fa-layer-group text-[14px]" :class="showGroupDropdown ? 'text-accent' : 'text-accent'"></i>
+                <span>Group: {{ selectedGroupLabel }}</span>
+            </button>
+
+            <!-- Table Group Dropdown -->
+            <TableGroupDropdown
+                v-if="showGroupDropdown"
+                :triggerRef="groupTriggerRef"
+                v-model="selectedGroup"
+                @close="showGroupDropdown = false"
+            />
+        </div>
         </div>
 
         <div
@@ -564,6 +585,9 @@ const MindMapView = defineAsyncComponent(
 const ProductFilters = defineAsyncComponent(
   () => import("./components/ProductFilters.vue"),
 );
+const TableGroupDropdown = defineAsyncComponent(
+  () => import("./components/TableGroupDropdown.vue"),
+);
 
 // ─── Permissions ──────────────────────────────────────────────────────────────
 const {
@@ -603,6 +627,20 @@ const showTextColorPicker = ref(false);
 const showFilterBar = ref(false);
 const activeFilters = ref<any>({});
 const filterTriggerRef = ref<HTMLElement | null>(null);
+const showGroupDropdown = ref(false);
+const selectedGroup = ref('priority');
+const groupTriggerRef = ref<HTMLElement | null>(null);
+
+const selectedGroupLabel = computed(() => {
+  const options: Record<string, string> = {
+    'priority': 'Priority',
+    'status': 'Status',
+    'assignee': 'Assignee',
+    'owner': 'Owner/Reporter',
+    'card_type': 'Card Type'
+  };
+  return options[selectedGroup.value] || 'None';
+});
 
 watch(showBgPicker, (v) => {
   if (v) showTextColorPicker.value = false;
@@ -883,13 +921,22 @@ interface DropdownOption {
 }
 
 const transformedData = computed<DropdownOption[]>(() => {
-  return (data.value || []).map((item: any) => ({
-    _id: item._id,
-    title: item?.variables["sheet-title"],
-    description: item?.variables["sheet-description"],
-    icon: item["icon"]? item["icon"] : {prefix: 'fa-solid', iconName:'fa-file'},
-    status: item?.generation_status,
-  }));
+  console.log(data.value, "format data options");
+
+  return (data.value || []).map((item: any) => {
+   const icon =
+  item?.icon ??
+  item?.variables?.["sheet-icon"] ??
+  { prefix: "fa-solid", iconName: "fa-file" };
+
+    return {
+      _id: item._id,
+      title: item?.variables?.["sheet-title"],
+      description: item?.variables?.["sheet-description"],
+      icon,
+      status: item?.generation_status,
+    };
+  });
 });
 
 watch(
