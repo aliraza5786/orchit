@@ -479,6 +479,7 @@ const chevronSizeClass = computed(() =>
 const menuBorderClass = computed(
   () => "dark:border-light-black border-border-gray",
 );
+console.log(faIconSizeClass);
 
 // Positioning State
 const itemRefs = ref<Record<string, any>>({});
