@@ -306,3 +306,103 @@ body:not(.home-page) * {
 .animate-pulse-ring {
   animation: pulse-ring 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
+
+/* -------- Toast Styles (vue-sonner) -------- */
+[data-sonner-toaster] {
+  --toast-bg: var(--bg-card);
+  --toast-border: var(--border);
+  --toast-text: var(--text-primary);
+}
+
+[data-sonner-toast] {
+  backdrop-filter: blur(12px) !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+  padding: 14px 44px 14px 18px !important; /* Increased right padding for cross icon */
+  font-family: var(--font-lato) !important;
+  color: var(--text-primary) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+[data-theme="dark"] [data-sonner-toast] {
+  background: #1e1e20 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  color: #f5f5f5 !important;
+}
+
+/* Success Toast */
+[data-sonner-toast][data-type="success"] {
+  border-left: 4px solid #22c55e !important;
+  box-shadow: 0 10px 40px -10px rgba(34, 197, 94, 0.5) !important;
+}
+[data-sonner-toast][data-type="success"] [data-icon] {
+  color: #22c55e !important;
+}
+
+/* Error Toast */
+[data-sonner-toast][data-type="error"] {
+  border-left: 4px solid #ef4444 !important;
+  box-shadow: 0 10px 40px -10px rgba(239, 68, 68, 0.5) !important;
+}
+[data-sonner-toast][data-type="error"] [data-icon] {
+  color: #ef4444 !important;
+}
+
+/* Info Toast */
+[data-sonner-toast][data-type="info"] {
+  border-left: 4px solid var(--accent) !important;
+  box-shadow: 0 10px 40px -10px rgba(125, 104, 200, 0.5) !important;
+}
+[data-sonner-toast][data-type="info"] [data-icon] {
+  color: var(--accent) !important;
+}
+
+/* Close Button Styling */
+[data-sonner-toast] [data-close-button] {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: var(--text-secondary) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  left: auto !important;
+  width: 24px !important;
+  height: 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+  opacity: 0.6 !important;
+  visibility: visible !important;
+  z-index: 50 !important;
+}
+
+[data-sonner-toast] [data-close-button]:hover {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: var(--text-primary) !important;
+  opacity: 1 !important;
+  transform: translateY(-50%) scale(1.1) !important;
+}
+
+[data-theme="dark"] [data-sonner-toast] [data-close-button] {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] [data-sonner-toast] [data-close-button]:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Ensure the cross icon (SVG) is visible */
+[data-sonner-toast] [data-close-button] svg {
+  width: 12px !important;
+  height: 12px !important;
+  stroke-width: 3 !important;
+}

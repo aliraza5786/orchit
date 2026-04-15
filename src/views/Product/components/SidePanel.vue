@@ -562,14 +562,14 @@
                   <div v-if="isMine(c)" class="flex items-center gap-2">
                     <button
                       v-if="editingId !== c._id"
-                      :disabled="!canEditComment"
+                      :disabled="!canEditComment || isUpdatingComment || isDeletingComment"
                       class="text-xs text-accent hover:underline"
                       @click="beginEdit(c)"
                     >
                       Edit
                     </button>
                     <button
-                      :disabled="!canDeleteComment"
+                      :disabled="!canDeleteComment || isDeletingComment || isUpdatingComment"
                       class="text-xs text-red-400 hover:underline"
                       @click="removeComment(c)"
                     >
@@ -1140,13 +1140,13 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
   
   // Cancel queries
   await queryClient.cancelQueries({
-    queryKey: ["product-comments", cardId],
+    queryKey: ["comments", cardId],
   });
   await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
   
   // Save previous state
   const previousComments = queryClient.getQueryData([
-    "product-comments",
+    "comments",
     cardId,
   ]);
   const previousLists = queryClient.getQueriesData({ queryKey: ["sheet-list"] });
@@ -1161,7 +1161,7 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
   };
   
   // Update comments list
-  queryClient.setQueryData(["product-comments", cardId], (old: any) => {
+  queryClient.setQueryData(["comments", cardId], (old: any) => {
     return {
       ...old,
       comments: [...(old?.comments || []), optimisticComment],
@@ -1193,9 +1193,10 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
     onError: (err: any, variables: any, context: any) => {
       if (context?.previousComments)
         queryClient.setQueryData(
-          ["product-comments", props.details._id],
+          ["comments", props.details._id],
           context.previousComments,
         );
+      toast.error("Failed to post comment");
       if (context?.previousLists)
         queryClient.setQueriesData(
           { queryKey: ["sheet-list"] },
@@ -1205,10 +1206,13 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
     },
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: ["product-comments", props.details._id],
+        queryKey: ["comments", props.details._id],
       });
       queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
+    },
+    onSuccess: () => {
+      toast.success("Comment posted successfully");
     },
   },
 );
@@ -1244,10 +1248,76 @@ const { mutate: updateComment, isPending: isUpdatingComment } =
       editingId.value = null;
       editText.value = "";
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
+      queryClient.invalidateQueries({ queryKey: ["comments", props.details._id] });
+      toast.success("Comment updated");
+    },
+    onError: () => {
+      toast.error("Failed to update comment");
     },
   });
 
-const { mutate: deleteComment } = useDeleteComment();
+const { mutate: deleteComment, isPending: isDeletingComment } = useDeleteComment({
+  onMutate: async (variables: any) => {
+    const cardId = props.details._id;
+    const commentId = variables.id;
+
+    // Cancel outgoing queries
+    await queryClient.cancelQueries({ queryKey: ["comments", cardId] });
+    await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
+
+    // Snapshot current state
+    const previousLists = queryClient.getQueriesData({ queryKey: ["sheet-list"] });
+    const previousComments = queryClient.getQueryData(["comments", cardId]);
+
+    // Optimistically remove comment from comments list
+    queryClient.setQueryData(["comments", cardId], (old: any) => {
+      if (!old?.comments) return old;
+      return {
+        ...old,
+        comments: old.comments.filter((c: any) => c._id !== commentId),
+      };
+    });
+
+    // Optimistically update comment count in sheet-list
+    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+      if (!old?.data || !Array.isArray(old.data)) return old;
+
+      return {
+        ...old,
+        data: old.data.map((column: any) => ({
+          ...column,
+          cards: column.cards?.map((card: any) =>
+            card._id === cardId
+              ? {
+                  ...card,
+                  comment_count: Math.max(0, (card.comment_count || 0) - 1),
+                }
+              : card,
+          ),
+        })),
+      };
+    });
+
+    return { previousLists, previousComments };
+  },
+  onError: (_err: any, _variables: any, context: any) => {
+    if (context?.previousLists) {
+      queryClient.setQueriesData(
+        { queryKey: ["sheet-list"] },
+        context.previousLists,
+      );
+    }
+    if (context?.previousComments) {
+      queryClient.setQueryData(["comments", props.details._id], context.previousComments);
+    }
+    toast.error("Failed to delete comment");
+  },
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ["comments", props.details._id] });
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["product-card"] });
+  },
+});
 
 function beginEdit(c: any) {
   editingId.value = c._id;
@@ -1288,6 +1358,13 @@ function removeComment(c: any) {
     {
       onError: () => {
         if (prev) comments.value.splice(idx, 0, prev);
+        toast.error("Failed to delete comment");
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+          queryKey: ["comments", props.details._id],
+        });
+        toast.success("Comment deleted");
       },
     },
   );

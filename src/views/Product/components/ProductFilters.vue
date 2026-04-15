@@ -43,7 +43,7 @@
           <!-- Right Pane: Options -->
           <div class="flex-1 flex flex-col bg-bg-dropdown">
             <!-- Search within category -->
-            <div class="p-4 border-b border-border">
+            <div v-if="activeCategory !== 'dates'" class="p-4 border-b border-border">
               <div class="relative">
                 <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
                 <input 
@@ -58,17 +58,69 @@
 
             <!-- Options list -->
             <div class="flex-1 overflow-y-auto p-2">
-              <div v-if="activeCategory === 'dates'" class="p-2 space-y-4">
-                <div v-for="dateType in dateCategories" :key="dateType.id" class="space-y-2">
-                  <label class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">{{ dateType.label }}</label>
-                  <div class="flex gap-2">
-                    <DatePicker v-model="localFilters[dateType.from]" placeholder="From" class="flex-1" />
-                    <DatePicker v-model="localFilters[dateType.to]" placeholder="To" class="flex-1" />
+              <div v-if="activeCategory === 'dates'" class="p-4 space-y-6">
+                <div v-for="dateType in dateCategories" :key="dateType.id" class="space-y-3">
+                  <div class="flex items-center gap-2 px-1">
+                    <div class="w-1.5 h-1.5 rounded-full bg-accent/60"></div>
+                    <label class="text-[10px] font-bold text-text-secondary uppercase tracking-[0.1em]">{{ dateType.label }}</label>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <!-- From Wrapper -->
+                    <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all focus-0">
+                      <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-accent transition-colors"></i>
+                      <DatePicker v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
+                    </div>
+                    
+                    <div class="w-2.5 h-[1px] bg-border shrink-0"></div>
+                    
+                    <!-- To Wrapper -->
+                    <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all">
+                      <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-accent transition-colors"></i>
+                      <DatePicker v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
+                    </div>
                   </div>
                 </div>
               </div>
               
-              <template v-else>
+              <div v-if="activeCategory === 'plan'" class="flex flex-col h-[400px]">
+                <!-- Type Selection Tabs -->
+                <div class="px-2 pt-1">
+                  <SwitchTab 
+                    v-model="selectedPlanType"
+                    :options="planTypeOptions"
+                    size="sm"
+                  />
+                </div>
+
+                <!-- List of Items -->
+                <div class="flex-1 overflow-y-auto p-2 min-h-0">
+                  <div 
+                    v-for="option in currentPlanOptionsFiltered" 
+                    :key="option._id"
+                    @click="togglePlanOption(option)"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                  >
+                    <div 
+                      class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
+                      :class="isPlanSelected(option) ? 'bg-accent border-accent text-white' : 'border-border group-hover:border-accent/50'"
+                    >
+                      <i v-if="isPlanSelected(option)" class="fa-solid fa-check text-[10px]"></i>
+                    </div>
+
+                    <div class="flex flex-col min-w-0">
+                      <span class="text-xs font-medium text-text-primary truncate">{{ option.title }}</span>
+                      <span v-if="option.description" class="text-[10px] text-text-secondary truncate">{{ option.description }}</span>
+                    </div>
+                  </div>
+                  
+                  <div v-if="currentPlanOptionsFiltered.length === 0" class="flex flex-col items-center justify-center h-full opacity-40 py-10">
+                    <i class="fa-solid fa-calendar-xmark text-3xl mb-2"></i>
+                    <span class="text-xs">No {{ selectedPlanType }}s found</span>
+                  </div>
+                </div>
+              </div>
+
+              <template v-else-if="activeCategory !== 'dates'">
                 <div 
                   v-for="option in filteredOptions" 
                   :key="option._id"
@@ -76,11 +128,21 @@
                   class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
                 >
                   <div 
-                    class="w-4 h-4 border rounded flex items-center justify-center transition-colors"
+                    class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
                     :class="isSelected(option._id) ? 'bg-accent border-accent text-white' : 'border-border group-hover:border-accent/50'"
                   >
                     <i v-if="isSelected(option._id)" class="fa-solid fa-check text-[10px]"></i>
                   </div>
+
+                  <!-- Avatar (only for assignees) -->
+                  <template v-if="activeCategory === 'assignees'">
+                      <img v-if="option.avatar" :src="option.avatar" class="w-6 h-6 rounded-full object-cover shrink-0" alt="" />
+                      <div v-else class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                          :style="{ backgroundColor: avatarColor({ name: option.title, email: option.description, _id: option._id }) }">
+                          {{ getInitials(option.title) }}
+                      </div>
+                  </template>
+
                   <div class="flex flex-col min-w-0">
                     <span class="text-xs font-medium text-text-primary truncate">{{ option.title }}</span>
                     <span v-if="option.description" class="text-[10px] text-text-secondary truncate">{{ option.description }}</span>
@@ -152,6 +214,9 @@ import DatePicker from "./DatePicker.vue";
 import Button from "../../../components/ui/Button.vue";
 import { useWorkspacesRoles } from "../../../queries/useWorkspace";
 import { useGroupedSprints } from "../../../queries/usePlan";
+import { avatarColor } from "../../../utilities/avatarColor";
+import { getInitials } from "../../../utilities";
+import SwitchTab from "../../../components/ui/SwitchTab.vue";
 
 const props = defineProps<{
   triggerRef: HTMLElement | null;
@@ -180,11 +245,11 @@ const dropdownStyles = ref<CSSProperties>({
 let cleanupFloating: (() => void) | null = null;
 
 const categories = [
-  { id: 'sheets', label: 'Parent Sheets', icon: 'fa-solid fa-layer-group' },
+  { id: 'sheets', label: 'Module Sheets', icon: 'fa-solid fa-layer-group' },
   { id: 'assignees', label: 'Assignees', icon: 'fa-solid fa-user-group' },
   { id: 'priority', label: 'Priority', icon: 'fa-solid fa-arrow-up-wide-short' },
   { id: 'status', label: 'Status', icon: 'fa-solid fa-circle-check' },
-  { id: 'type', label: 'Work Type', icon: 'fa-solid fa-briefcase' },
+  { id: 'type', label: 'Card Type', icon: 'fa-solid fa-briefcase' },
   { id: 'plan', label: 'Plan Items', icon: 'fa-solid fa-map-location-dot' },
   { id: 'dates', label: 'Date Ranges', icon: 'fa-solid fa-calendar-days' },
 ];
@@ -211,6 +276,50 @@ const localFilters = ref<any>({
   created_at_from: "",
   created_at_to: ""
 });
+
+const selectedPlanType = ref('milestone');
+const planTypes = [
+  { id: 'milestone', label: 'Milestones', icon: 'fas fa-flag' },
+  { id: 'sprint', label: 'Sprints', icon: 'fas fa-sync' },
+  { id: 'huddle', label: 'Huddles', icon: 'fas fa-users' },
+];
+
+const planTypeOptions = computed(() => planTypes.map(t => ({ label: t.label, value: t.id })));
+
+function getRecursivePlanIds(item: any, rootType?: string) {
+  let milestone_ids: string[] = [];
+  let sprint_ids: string[] = [];
+  let huddle_ids: string[] = [];
+
+  function traverse(node: any, currentType: string) {
+    if (!node._id) return;
+    
+    if (currentType === 'milestone') {
+       milestone_ids.push(node._id);
+       (node.sprints || []).forEach((child: any) => traverse(child, 'sprint'));
+       (node.hurdles || []).forEach((child: any) => traverse(child, 'huddle'));
+    } else if (currentType === 'sprint') {
+       sprint_ids.push(node._id);
+    } else if (currentType === 'huddle') {
+       huddle_ids.push(node._id);
+    }
+  }
+
+  traverse(item, rootType || selectedPlanType.value);
+  return { milestone_ids, sprint_ids, huddle_ids };
+}
+
+function getParentMilestoneId(childId: string): string | null {
+  const milestones = groupedPlanPoints.value?.grouped?.milestone || [];
+  for (const m of milestones) {
+    const hasSprint = (m.sprints || []).some((s: any) => s._id === childId);
+    const hasHuddle = (m.hurdles || []).some((h: any) => h._id === childId);
+    if (hasSprint || hasHuddle) {
+      return m._id;
+    }
+  }
+  return null;
+}
 
 function updatePosition() {
   if (!props.triggerRef || !dropdownRef.value) return;
@@ -283,7 +392,8 @@ const currentOptions = computed(() => {
       return (roles.value || []).map((r: any) => ({
         _id: r._id,
         title: r.name || r.title || 'Unknown',
-        description: r.email
+        description: r.email,
+        avatar: r.user?.avatar
       }));
     case 'priority':
       return getVariableOptions('priority');
@@ -292,23 +402,50 @@ const currentOptions = computed(() => {
     case 'type':
       return getVariableOptions('card-type') || getVariableOptions('type');
     case 'plan':
-      const options: any[] = [];
-      if (groupedPlanPoints.value?.grouped) {
-        const { sprint, milestone, hurdle } = groupedPlanPoints.value.grouped;
-        if (sprint) sprint.forEach((s: any) => options.push({ _id: `sprint:${s._id}`, title: s.title, description: 'Sprint' }));
-        if (milestone) milestone.forEach((m: any) => options.push({ _id: `milestone:${m._id}`, title: m.title, description: 'Milestone' }));
-        if (hurdle) hurdle.forEach((h: any) => options.push({ _id: `huddle:${h._id}`, title: h.title, description: 'Huddle' }));
+      const grouped = groupedPlanPoints.value?.grouped;
+      if (!grouped) return [];
+      
+      if (selectedPlanType.value === 'milestone') {
+        return (grouped.milestone || []).map((m: any) => ({
+          ...m,
+          _id: m._id,
+          title: m.title,
+          description: `${(m.sprints?.length || 0) + (m.hurdles?.length || 0)} items`
+        }));
+      } else if (selectedPlanType.value === 'sprint') {
+        return (grouped.sprint || []).map((s: any) => ({
+          ...s,
+          _id: s._id,
+          title: s.title,
+          description: 'Sprint'
+        }));
+      } else {
+        return (grouped.hurdle || []).map((h: any) => ({
+          ...h,
+          _id: h._id,
+          title: h.title,
+          description: 'Huddle'
+        }));
       }
-      return options;
     default:
       return [];
   }
 });
 
 const filteredOptions = computed(() => {
+  if (activeCategory.value === 'plan') return currentPlanOptionsFiltered.value;
   if (!searchQuery.value) return currentOptions.value;
   const q = searchQuery.value.toLowerCase();
   return currentOptions.value.filter((o: any) => 
+    o.title.toLowerCase().includes(q) || (o.description?.toLowerCase().includes(q))
+  );
+});
+
+const currentPlanOptionsFiltered = computed(() => {
+  const options = currentOptions.value;
+  if (!searchQuery.value) return options;
+  const q = searchQuery.value.toLowerCase();
+  return options.filter((o: any) => 
     o.title.toLowerCase().includes(q) || (o.description?.toLowerCase().includes(q))
   );
 });
@@ -323,29 +460,48 @@ function getVariableOptions(slug: string) {
 
 function isSelected(id: any) {
   const cat = activeCategory.value;
-  if (cat === 'plan') {
-    const [type, actualId] = String(id).split(':');
-    if (type === 'sprint') return localFilters.value.sprint_id.includes(actualId);
-    if (type === 'milestone') return localFilters.value.milestone_id.includes(actualId);
-    if (type === 'huddle') return localFilters.value.huddle_id.includes(actualId);
-  }
-  
   const key = getFilterKey(cat);
   return Array.isArray(localFilters.value[key]) && localFilters.value[key].includes(id);
 }
 
+function isPlanSelected(option: any) {
+  const type = selectedPlanType.value;
+  if (type === 'milestone') return localFilters.value.milestone_id.includes(option._id);
+  if (type === 'sprint') return localFilters.value.sprint_id.includes(option._id);
+  if (type === 'huddle') return localFilters.value.huddle_id.includes(option._id);
+  return false;
+}
+
+function togglePlanOption(option: any) {
+  const { milestone_ids, sprint_ids, huddle_ids } = getRecursivePlanIds(option, selectedPlanType.value);
+  const isCurrentlySelected = isPlanSelected(option);
+
+  const updateArray = (filterKey: string, ids: string[]) => {
+    const arr = [...localFilters.value[filterKey]];
+    if (isCurrentlySelected) {
+      localFilters.value[filterKey] = arr.filter(id => !ids.includes(id));
+    } else {
+      ids.forEach(id => {
+        if (!arr.includes(id)) arr.push(id);
+      });
+      localFilters.value[filterKey] = arr;
+    }
+  };
+
+  updateArray('milestone_id', milestone_ids);
+  updateArray('sprint_id', sprint_ids);
+  updateArray('huddle_id', huddle_ids);
+
+  if (isCurrentlySelected && (selectedPlanType.value === 'sprint' || selectedPlanType.value === 'huddle')) {
+    const parentId = getParentMilestoneId(option._id);
+    if (parentId) {
+      localFilters.value.milestone_id = localFilters.value.milestone_id.filter((id: string) => id !== parentId);
+    }
+  }
+}
+
 function toggleOption(id: any) {
   const cat = activeCategory.value;
-  if (cat === 'plan') {
-    const [type, actualId] = String(id).split(':');
-    const key = `${type}_id`;
-    const arr = localFilters.value[key];
-    const idx = arr.indexOf(actualId);
-    if (idx > -1) arr.splice(idx, 1);
-    else arr.push(actualId);
-    return;
-  }
-
   const key = getFilterKey(cat);
   const arr = localFilters.value[key];
   const idx = arr.indexOf(id);

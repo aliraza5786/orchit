@@ -2,7 +2,7 @@
   <div class="border border-border rounded-lg bg-bg-card">
 
     <!-- ✅ FULL CARD LOADING STATE -->
-    <div v-if="isLoading" class="p-6 animate-pulse space-y-6">
+    <div v-if="isLoading" class="p-6 animate-pulse space-y-6 rounded-full">
 
       <!-- Header Skeleton -->
       <div class="space-y-2">
@@ -12,7 +12,7 @@
 
       <!-- Chart Skeleton -->
       <div class="flex flex-col items-center">
-        <div class="w-full max-w-xl h-64 sm:h-80 md:h-96 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+        <div class="md:w-96 md:h-96 w-72 h-72 rounded-full bg-slate-200 dark:bg-slate-700"></div>
 
         <!-- Legend Skeleton -->
         <div class="flex flex-wrap gap-4 mt-6 justify-center w-full">

@@ -146,6 +146,63 @@ const editor = new Editor({
     ],
     onUpdate: ({ editor }) => emit('update:modelValue', editor.getHTML()),
     onBlur: () => emit('focusOut', filePreviews.value),
+    editorProps: {
+        handlePaste(_view, event) {
+            const items = Array.from(event.clipboardData?.items || [])
+            const imageItems = items.filter(item => item.type.startsWith('image'))
+            if (imageItems.length > 0) {
+                event.preventDefault()
+                imageItems.forEach(item => {
+                    const file = item.getAsFile()
+                    if (file) {
+                        const fd = new FormData()
+                        fd.append('file', file)
+                        uploadFile(fd, {
+                            onSuccess: (resp: any) => {
+                                const url = resp?.data?.url
+                                const name = resp?.data?.name
+                                if (url) {
+                                    editor.chain().focus().insertContent(`<img src="${url}" alt="${name}" />`).run()
+                                    filePreviews.value = [...filePreviews.value, { name, url }]
+                                }
+                            }
+                        })
+                    }
+                })
+                return true
+            }
+            return false
+        },
+        handleDrop(view, event) {
+            const files = Array.from(event.dataTransfer?.files || [])
+            const imageFiles = files.filter(file => file.type.startsWith('image'))
+            if (imageFiles.length > 0) {
+                event.preventDefault()
+                imageFiles.forEach(file => {
+                    const fd = new FormData()
+                    fd.append('file', file)
+                    uploadFile(fd, {
+                        onSuccess: (resp: any) => {
+                            const url = resp?.data?.url
+                            const name = resp?.data?.name
+                            if (url) {
+                                // Try to insert at the drop position
+                                const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY })
+                                if (coordinates) {
+                                    editor.chain().setTextSelection(coordinates.pos).insertContent(`<img src="${url}" alt="${name}" />`).run()
+                                } else {
+                                    editor.chain().focus().insertContent(`<img src="${url}" alt="${name}" />`).run()
+                                }
+                                filePreviews.value = [...filePreviews.value, { name, url }]
+                            }
+                        }
+                    })
+                })
+                return true
+            }
+            return false
+        }
+    }
 })
 
 const textType = ref<'paragraph' | 'heading1' | 'heading2'>('paragraph')
@@ -155,58 +212,29 @@ function setTextType() {
     else editor.chain().focus().setParagraph().run()
 }
 
-const { mutate: uploadFile } = usePrivateUploadFile({
-    onSuccess: (resp: any) => {
-        console.log(resp, '???');
-
-        const uploadedFileUrl = resp?.data?.url as string
-        const fileName = resp.data.name as string
-
-        if (/\.(png|jpe?g|gif|webp|svg)$/i.test(uploadedFileUrl)) {
-            editor.chain().focus().insertContent(`<img src="${uploadedFileUrl}" alt="${fileName}" />`).run()
-            filePreviews.value = [...filePreviews.value, { name: fileName, url: uploadedFileUrl }]
-
-        } else {
-            filePreviews.value = [...filePreviews.value, { name: fileName, url: uploadedFileUrl }]
-        }
-    },
-})
+const { mutate: uploadFile } = usePrivateUploadFile();
 
 function handleImageUpload(e: Event) {
     const files = (e.target as HTMLInputElement).files
     if (!files) return
 
-    // Gather all upload promises for images
-    const uploadPromises = Array.from(files).map((file) => {
+    Array.from(files).forEach(file => {
         const fd = new FormData()
         fd.append('file', file)
-        return uploadFile(fd)
+        uploadFile(fd, {
+            onSuccess: (resp: any) => {
+                const url = resp?.data?.url
+                const name = resp?.data?.name
+                if (url) {
+                    // Move the cursor to the end of the editor
+                    const { doc } = editor.state
+                    const endPos = doc.content.size
+                    editor.chain().setTextSelection(endPos).insertContent(`<img src="${url}" alt="${name}" />`).run()
+                    filePreviews.value = [...filePreviews.value, { name, url }]
+                }
+            }
+        })
     })
-
-    // Wait for all uploads to complete
-    Promise.all(uploadPromises)
-        .then((responses) => {
-            console.log(responses, '> response');
-
-            // For each uploaded image, insert it into the editor
-            responses.forEach((resp: any) => {
-                console.log(resp, '>>>> second ');
-
-                const uploadedFileUrl = resp?.data.url as string
-                const fileName = resp.data.name as string
-
-                // Move the cursor to the end of the editor
-                const { doc } = editor.state
-                const endPos = doc.content.size // Get the current end position of the content
-                editor.commands.setTextSelection(endPos) // Set cursor position to the end
-
-                // Insert image at the current cursor position (now at the end)
-                editor.commands.insertContent(`<img src="${uploadedFileUrl}" alt="${fileName}" />`)
-            })
-        })
-        .catch((error) => {
-            console.error('Error uploading images:', error)
-        })
 }
 
 
@@ -216,7 +244,15 @@ function handleFileUpload(e: Event) {
     Array.from(files).forEach(file => {
         const fd = new FormData()
         fd.append('file', file)
-        uploadFile(fd)
+        uploadFile(fd, {
+            onSuccess: (resp: any) => {
+                 const url = resp?.data?.url
+                 const name = resp?.data?.name
+                 if (url) {
+                    filePreviews.value = [...filePreviews.value, { name, url }]
+                 }
+            }
+        })
     })
 }
 
@@ -364,6 +400,44 @@ function fanStyle(i: number, n: number) {
 :deep(.ProseMirror),
 :deep(.ProseMirror:focus) {
     outline: none !important;
+    min-height: 150px;
+    padding-bottom: 50px; /* Space to click below content */
+}
+
+:deep(.ProseMirror img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0.5rem 0;
+    transition: box-shadow 0.2s;
+    cursor: default;
+}
+
+:deep(.ProseMirror img.ProseMirror-selectednode) {
+    outline: 2px solid #5a2d7f;
+    box-shadow: 0 0 0 4px rgba(90, 45, 127, 0.1);
+}
+
+/* Gapcursor styling - allows placing cursor between blocks or at start/end */
+:deep(.ProseMirror-gapcursor) {
+    display: none;
+    pointer-events: none;
+    position: absolute;
+}
+:deep(.ProseMirror-gapcursor:after) {
+    content: "";
+    display: block;
+    position: absolute;
+    top: -2px;
+    width: 20px;
+    border-top: 1px solid currentColor;
+    animation: ProseMirror-cursor-blink 1.1s steps(2, start) infinite;
+}
+@keyframes ProseMirror-cursor-blink {
+    to { visibility: hidden; }
+}
+:deep(.ProseMirror-focused .ProseMirror-gapcursor) {
+    display: block;
 }
 
 .ProseMirror-focused {
@@ -405,6 +479,4 @@ function fanStyle(i: number, n: number) {
     /* optional: subtle stacking so they don't visually merge */
     box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
 }
-
-/* (Your existing outline resets remain) */
 </style>
