@@ -1,0 +1,1 @@
+import{_ as o}from"./AddCustomRoleModal.vue_vue_type_script_setup_true_lang-DRXZlHXw.js";import"./index-BseF2hpA.js";import"./BaseTextAreaField.vue_vue_type_script_setup_true_lang-8IT74Xus.js";import"./BaseSpinner.vue_vue_type_script_setup_true_lang-Bxva8hlt.js";import"./usePeople-DR8vF3AT.js";import"./permissionUtils-DTPUF_JQ.js";export{o as default};

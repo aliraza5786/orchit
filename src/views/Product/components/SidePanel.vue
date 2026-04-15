@@ -1300,7 +1300,7 @@ const { mutate: deleteComment, isPending: isDeletingComment } = useDeleteComment
 
     return { previousLists, previousComments };
   },
-  onError: (err: any, variables: any, context: any) => {
+  onError: (_err: any, _variables: any, context: any) => {
     if (context?.previousLists) {
       queryClient.setQueriesData(
         { queryKey: ["sheet-list"] },

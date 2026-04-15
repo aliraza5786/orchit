@@ -147,7 +147,7 @@ const editor = new Editor({
     onUpdate: ({ editor }) => emit('update:modelValue', editor.getHTML()),
     onBlur: () => emit('focusOut', filePreviews.value),
     editorProps: {
-        handlePaste(view, event) {
+        handlePaste(_view, event) {
             const items = Array.from(event.clipboardData?.items || [])
             const imageItems = items.filter(item => item.type.startsWith('image'))
             if (imageItems.length > 0) {
