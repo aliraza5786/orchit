@@ -22,13 +22,12 @@
       </span>
 
       <i
-        class="text-[14px] text-accent"
-        :class="`${selectedOption?.icon?.prefix} ${
-          selectedOption?.icon?.iconName
-            ? selectedOption?.icon?.iconName
-            : 'file'
-        } ${faIconSizeClass}`"
-      ></i>
+  class="text-accent"
+  :class="[
+    `${selectedOption?.icon?.prefix} ${selectedOption?.icon?.iconName ?? 'file'}`,
+    isAgent ? 'text-[6px]' : faIconSizeClass
+  ]"
+></i>
 <span :class="labelSizeClass">
   <span v-if="prefix" class="font-bold">{{ prefix }}:</span>
 
@@ -105,13 +104,13 @@
                       :class="['text-text-primary', iconSizeClass]"
                     />
                   </span>
-
-                  <i
-                    class="text-[16px]"
-                    :class="`${option.icon?.prefix} ${
-                      option.icon?.iconName ? option.icon?.iconName : 'file'
-                    } ${faIconSizeClass}`"
-                  ></i>
+                      <i
+                        class="text-accent"
+                        :class="[
+                          `${selectedOption?.icon?.prefix} ${selectedOption?.icon?.iconName ?? 'file'}`,
+                          isAgent ? 'text-[6px]' : faIconSizeClass
+                        ]"
+                      ></i>
 
                   <div class="flex flex-col gap-1 max-w-40">
                     <span
@@ -269,6 +268,7 @@ const props = withDefaults(
     canDelete?: boolean;
     customClasses?: string;
     customTitle?: string;
+    isAgent?:boolean;
   }>(),
   {
     options: () => [],

@@ -855,12 +855,13 @@
             :actions="false"
             size="sm"
             variant="secondary"
+            :isAgent="true"
             class="relative min-w-0 max-w-[150px]"
           >
             <template #more>
               <div
                 @click="openConfigPanel"
-                class="capitalize border-t border-border px-4 py-2.5 hover:bg-accent/8 cursor-pointer flex items-center gap-2 overflow-hidden overflow-ellipsis text-nowrap text-xs transition-colors"
+                class="capitalize border-t border-border px-4 py-1.5 hover:bg-accent/8 cursor-pointer flex items-center gap-2 overflow-hidden overflow-ellipsis text-nowrap text-xs transition-colors"
               >
                 <i class="fa-solid fa-plus text-accent text-[10px]"></i> Add new
               </div>
