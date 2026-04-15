@@ -583,15 +583,29 @@
                     v-if="editingId !== c._id"
                     :key="`c-view-${c._id}`"
                     class="text-[15px] leading-6"
+                    v-html="formatComment(c.comment_text)"
                   >
-                    {{ c.comment_text }}
                   </p>
                   <div v-else :key="`c-edit-${c._id}`" class="space-y-2">
-                    <textarea
-                      v-model="editText"
-                      rows="3"
-                      class="w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none"
-                    />
+                    <div class="relative w-full">
+                      <!-- overlay -->
+                      <div 
+                        :ref="el => { if (el) overlays[c._id] = el as HTMLElement }"
+                        class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal" 
+                        aria-hidden="true" 
+                        v-html="formatOverlay(editText)"
+                      ></div>
+                      <textarea
+                        :ref="el => { if (el) editCommentTextareas[c._id] = el }"
+                        v-model="editText"
+                        rows="3"
+                        @scroll="(e) => syncScroll(e, c._id)"
+                        @input="(e) => handleCommentInput(e, c._id)"
+                        @keydown="(e) => handleCommentKeydown(e, c._id)"
+                        @blur="handleCommentBlur"
+                        class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-text-primary"
+                      />
+                    </div>
                     <div class="flex items-center gap-2 justify-end">
                       <Button variant="secondary" size="sm" @click="cancelEdit"
                         >Cancel</Button
@@ -633,18 +647,30 @@
 
               <!-- New comment -->
               <div
-                class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden"
+                class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden relative"
               >
+                <!-- overlay -->
+                <div 
+                  :ref="el => { if (el) overlays['new'] = el as HTMLElement }"
+                  class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal" 
+                  aria-hidden="true" 
+                  v-html="formatOverlay(newComment)"
+                ></div>
                 <textarea
+                  ref="commentTextarea"
                   :disabled="!canCreateComment || !canEditComment"
                   v-model="newComment"
                   rows="3"
+                  @scroll="(e) => syncScroll(e, 'new')"
+                  @input="(e) => handleCommentInput(e, 'new')"
+                  @keydown="(e) => handleCommentKeydown(e, 'new')"
+                  @blur="handleCommentBlur"
                   :class="
                     canCreateComment || canEditComment
                       ? 'cursor-text'
                       : 'cursor-not-allowed'
                   "
-                  class="w-full p-3 bg-transparent outline-none text-sm"
+                  class="relative z-0 w-full p-3 bg-transparent outline-none text-sm leading-normal resize-none"
                   placeholder="Write a comment"
                 />
                 <div
@@ -765,6 +791,57 @@
   :loading="isDeleting"
   @confirm="confirmDelete"
 />
+
+  <teleport to="body">
+    <div v-if="mentionContext.active"
+         ref="mentionMenuRef"
+         class="z-[9999] absolute rounded-md border border-border bg-bg-dropdown shadow-xl w-60 py-1"
+         :style="mentionStyles"
+         @mousedown.prevent>
+      <ul class="max-h-60 overflow-auto">
+        <li v-for="(u, idx) in filteredMentionUsers" :key="u._id || idx"
+          @mousedown.prevent="insertMention(u)"
+          @mouseenter="mentionContext.selectedIndex = Number(idx)"
+          :class="[
+            'flex items-center gap-3 px-4 py-2 cursor-pointer transition min-w-0',
+            mentionContext.selectedIndex === Number(idx) ? 'bg-bg-dropdown-menu-hover' : 'hover:bg-bg-dropdown-menu-hover'
+          ]">
+              <img v-if="u?.avatar?.src || u?.u_profile_image || u?.user?.avatar" :src="u?.avatar?.src ?? u?.u_profile_image ?? u?.user?.avatar" class="w-6 h-6 rounded-full object-cover border border-border" alt="" />
+              <div v-else-if="(u.name || u.title || u.u_full_name) && u._id"
+                class="w-6 min-w-[24px] aspect-square border-border border rounded-full text-[10px] font-semibold text-text-primary flex items-center justify-center pt-[1px]"
+                :style="{ backgroundColor: avatarColor({ name: u.name || u.title || u.u_full_name, email: u.email, _id: u?._id }) }">
+                {{ initials(u.name || u.title || u.u_full_name) }}
+              </div>
+              <div v-else
+                class="w-6 min-w-[24px] h-6 bg-bg-body border border-border rounded-full flex justify-center items-center">
+                <i class="fa-regular fa-user text-xs"></i>
+              </div>
+           <div class="text-xs font-medium truncate flex-1">{{ u.name || u.title || u.u_full_name }}</div>
+        </li>
+        <li 
+          @mousedown.prevent="handleInviteClick"
+          @mouseenter="mentionContext.selectedIndex = filteredMentionUsers.length"
+          :class="[
+            'flex items-center gap-3 px-4 py-3 cursor-pointer transition border-t border-border mt-1',
+            mentionContext.selectedIndex === filteredMentionUsers.length ? 'bg-bg-dropdown-menu-hover' : 'hover:bg-bg-dropdown-menu-hover'
+          ]">
+          <div class="h-6 w-6 rounded-full bg-accent/15 text-accent flex items-center justify-center">
+            <i class="fa-solid fa-user-plus text-[10px]"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-xs font-medium text-text-primary">Invite to workspace</span>
+            <span v-if="mentionContext.query" class="text-[10px] text-text-secondary">Invite "{{ mentionContext.query }}"</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </teleport>
+
+  <InviteUsersWithPermissions
+    v-model="showInviteModal"
+    v-if="showInviteModal"
+    :defaultWorkspaceId="workspaceId"
+  />
 </template>
 
 <script setup lang="ts">
@@ -778,9 +855,18 @@ import {
   onBeforeUnmount,
   defineAsyncComponent, 
 } from "vue";
+import {
+  computePosition,
+  autoUpdate,
+  flip,
+  shift,
+  offset,
+} from "@floating-ui/dom";
 import { useLanes, useMoveCard, useDeleteVar, useUpdateVar } from "../../../queries/useSheets";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../../composables/useQueryParams";
+import { useWorkspacesRoles } from "../../../queries/useWorkspace";
+import { avatarColor } from "../../../utilities/avatarColor";
 import {useWorkspaceStore} from "../../../stores/workspace";
 import {
   useComments,
@@ -808,6 +894,9 @@ const DatePicker = defineAsyncComponent(() => import("./DatePicker.vue"));
 const TimePicker = defineAsyncComponent(() => import("./TimePicker.vue"));
 const AssigmentDropdown = defineAsyncComponent(
   () => import("./AssigmentDropdown.vue"),
+);
+const InviteUsersWithPermissions = defineAsyncComponent(
+  () => import("../../Workspaces/Modals/InviteUsersWithPermissions.vue"),
 );
 const Button = defineAsyncComponent(
   () => import("../../../components/ui/Button.vue"),
@@ -838,6 +927,7 @@ const BaseMultiSelect = defineAsyncComponent(
 );
 
 const  ConfirmModal = defineAsyncComponent(()=> import ("../modals/ConfirmDeleteModal.vue"))
+
 
 import CreateVariableModal from "../modals/CreateVariableModal.vue";
 import EditVariableModal from "../modals/EditVariableModal.vue";
@@ -1217,6 +1307,336 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
   },
 );
 const newComment = ref("");
+const showInviteModal = ref(false);
+
+// --- Mention Logic ---
+const { data: workspaceRoles } = useWorkspacesRoles(workspaceId);
+const commentTextarea = ref<HTMLTextAreaElement | null>(null);
+const editCommentTextareas = ref<{ [key: string]: any }>({});
+const overlays = ref<{ [key: string]: HTMLElement }>({});
+
+function syncScroll(e: Event, type: string) {
+  const target = e.target as HTMLTextAreaElement;
+  const overlay = overlays.value[type];
+  if (overlay) {
+    overlay.scrollTop = target.scrollTop;
+    overlay.scrollLeft = target.scrollLeft;
+  }
+}
+
+const mentionMenuRef = ref<HTMLElement | null>(null);
+const mentionStyles = ref<any>({
+  position: "fixed",
+  top: "-999px",
+  left: "-999px",
+});
+let cleanupMention: (() => void) | null = null;
+
+const mentionContext = ref<{
+  active: boolean;
+  query: string;
+  coords: { top: number; left: number };
+  selectedIndex: number;
+  startIndex: number;
+  targetType: string;
+}>({
+  active: false,
+  query: "",
+  coords: { top: 0, left: 0 },
+  selectedIndex: 0,
+  startIndex: -1,
+  targetType: "new",
+});
+
+const filteredMentionUsers = computed(() => {
+  if (!workspaceRoles.value) return [];
+  const q = mentionContext.value.query.toLowerCase().trim();
+  if (!q) return workspaceRoles.value;
+  return workspaceRoles.value.filter((u: any) => {
+    const name = u.title || u.name || u.u_full_name || '';
+    const email = u.email || '';
+    return name.toLowerCase().includes(q) || email.toLowerCase().includes(q);
+  });
+});
+
+function handleCommentInput(e: Event, type: string) {
+  const target = e.target as HTMLTextAreaElement;
+  const val = target.value;
+  const cursor = target.selectionStart;
+
+  const textBeforeCursor = val.slice(0, cursor);
+  const atIndex = textBeforeCursor.lastIndexOf('@');
+  
+  if (atIndex !== -1) {
+    const textAfterAt = textBeforeCursor.slice(atIndex + 1);
+    
+    // Logic: Only show if there's no space/newline after @, 
+    // and @ is at start or preceded by white space.
+    if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+      const charBeforeAt = atIndex > 0 ? textBeforeCursor[atIndex - 1] : null;
+      if (atIndex === 0 || charBeforeAt === ' ' || charBeforeAt === '\n') {
+        mentionContext.value.active = true;
+        mentionContext.value.query = textAfterAt;
+        mentionContext.value.startIndex = atIndex;
+        mentionContext.value.targetType = type;
+        mentionContext.value.selectedIndex = 0;
+        updateMentionPosition(target);
+        return;
+      }
+    }
+  }
+  mentionContext.value.active = false;
+}
+
+function updateMentionPosition(textarea: HTMLTextAreaElement) {
+  if (cleanupMention) {
+    cleanupMention();
+    cleanupMention = null;
+  }
+
+  const virtualElement = {
+    getBoundingClientRect() {
+      const rect = textarea.getBoundingClientRect();
+      const div = document.createElement('div');
+      const computedStyle = window.getComputedStyle(textarea);
+      for (const prop of Array.from(computedStyle)) {
+        div.style.setProperty(prop, computedStyle.getPropertyValue(prop));
+      }
+      div.style.position = 'absolute';
+      div.style.visibility = 'hidden';
+      div.style.whiteSpace = 'pre-wrap';
+      div.style.wordWrap = 'break-word';
+      div.style.width = computedStyle.width;
+      div.style.height = computedStyle.height;
+      
+      const textBeforeCursor = textarea.value.substring(0, textarea.selectionStart);
+      div.textContent = textBeforeCursor;
+      const span = document.createElement('span');
+      span.textContent = '.';
+      div.appendChild(span);
+      document.body.appendChild(div);
+      
+      const spanTop = span.offsetTop;
+      const spanLeft = span.offsetLeft;
+      document.body.removeChild(div);
+
+      // Return the precise coordinate of the cursor
+      const top = rect.top + spanTop - textarea.scrollTop;
+      const left = rect.left + spanLeft - textarea.scrollLeft;
+
+      return {
+        width: 0,
+        height: 18, // approximate line height
+        top,
+        left,
+        right: left,
+        bottom: top + 18,
+        x: left,
+        y: top,
+      } as DOMRect;
+    },
+  };
+
+  nextTick(() => {
+    if (mentionMenuRef.value) {
+      cleanupMention = autoUpdate(virtualElement, mentionMenuRef.value, () => {
+        if (!mentionMenuRef.value) return;
+        computePosition(virtualElement, mentionMenuRef.value, {
+          placement: "bottom-start",
+          strategy: "fixed",
+          middleware: [
+            offset(6), // Professional tight gap
+            flip(),
+            shift({ padding: 10 }),
+          ],
+        }).then(({ x, y }) => {
+          mentionStyles.value = {
+            position: "fixed",
+            left: `${x}px`,
+            top: `${y}px`,
+          };
+        });
+      });
+    }
+  });
+}
+
+// Ensure cleanup when mention active state changes or component unmounts
+watch(() => mentionContext.value.active, (val) => {
+  if (!val && cleanupMention) {
+    cleanupMention();
+    cleanupMention = null;
+  }
+});
+
+onBeforeUnmount(() => {
+  if (cleanupMention) cleanupMention();
+});
+
+function handleCommentKeydown(e: KeyboardEvent, type: string) {
+  if (!mentionContext.value.active) {
+    // Atomic deletion logic for Backspace/Delete
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      const textarea = e.target as HTMLTextAreaElement;
+      const cursor = textarea.selectionStart;
+      
+      if (cursor !== textarea.selectionEnd) return; // Ignore if text is highlighted
+      
+      const val = type === 'new' ? newComment.value : editText.value;
+      const users = workspaceRoles.value || [];
+      const userNames = users.flatMap((u: any) => [u.u_full_name, u.name, u.title]).filter(Boolean);
+      userNames.sort((a: string, b: string) => b.length - a.length);
+
+      for (const name of userNames) {
+        const mention = `@${name}`;
+        let startIndex = 0;
+        let index;
+        while ((index = val.indexOf(mention, startIndex)) > -1) {
+          const endIndex = index + mention.length;
+          
+          // Trigger atomic deletion if cursor is inside or IMMEDIATELY after the mention
+          const isIntersectingBackspace = e.key === 'Backspace' && cursor > index && cursor <= endIndex;
+          const isIntersectingDelete = e.key === 'Delete' && cursor >= index && cursor < endIndex;
+
+          if (isIntersectingBackspace || isIntersectingDelete) {
+            e.preventDefault();
+            const newVal = val.slice(0, index) + val.slice(endIndex);
+            
+            if (type === 'new') newComment.value = newVal;
+            else editText.value = newVal;
+
+            // Use direct manipulation if nextTick is too slow to feel "atomic"
+            textarea.value = newVal; 
+            textarea.setSelectionRange(index, index);
+            
+            // Sync with reactive refs
+            if (type === 'new') newComment.value = newVal;
+            else editText.value = newVal;
+            
+            return;
+          }
+          startIndex = endIndex;
+        }
+      }
+    }
+    return;
+  }
+  
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    mentionContext.value.selectedIndex = (mentionContext.value.selectedIndex + 1) % ((filteredMentionUsers.value.length || 0) + 1);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    mentionContext.value.selectedIndex = (mentionContext.value.selectedIndex - 1 + ((filteredMentionUsers.value.length || 0) + 1)) % ((filteredMentionUsers.value.length || 0) + 1);
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (mentionContext.value.selectedIndex === filteredMentionUsers.value.length) {
+      handleInviteClick();
+    } else {
+      const selected = filteredMentionUsers.value[mentionContext.value.selectedIndex];
+      if (selected) insertMention(selected);
+    }
+  } else if (e.key === 'Escape') {
+    mentionContext.value.active = false;
+  }
+}
+
+function handleCommentBlur() {
+  setTimeout(() => {
+     mentionContext.value.active = false;
+  }, 150);
+}
+
+function insertMention(user: any) {
+  const name = user.u_full_name || user.name || user.title;
+  let currentVal = "";
+  let targetElement: HTMLTextAreaElement | null = null;
+  
+  if (mentionContext.value.targetType === 'new') {
+    currentVal = newComment.value;
+    targetElement = commentTextarea.value;
+  } else {
+    currentVal = editText.value;
+    targetElement = editCommentTextareas.value[mentionContext.value.targetType] as HTMLTextAreaElement;
+  }
+  
+  if (!targetElement) return;
+
+  const before = currentVal.slice(0, mentionContext.value.startIndex);
+  const after = currentVal.slice(targetElement.selectionStart);
+  
+  const newVal = `${before}@${name} ${after}`;
+  if (mentionContext.value.targetType === 'new') {
+    newComment.value = newVal;
+  } else {
+    editText.value = newVal;
+  }
+  
+  mentionContext.value.active = false;
+  const newPos = before.length + name.length + 2;
+  
+  nextTick(() => {
+    if (targetElement) {
+      targetElement.focus();
+      targetElement.setSelectionRange(newPos, newPos);
+    }
+  });
+}
+
+function handleInviteClick() {
+  mentionContext.value.active = false;
+  showInviteModal.value = true;
+}
+
+function formatComment(text: string) {
+  if (!text) return "";
+  
+  const users = workspaceRoles.value || [];
+  // AFTER — cast to string[] after filter
+  const userNames = users.flatMap((u: any) => [u.u_full_name, u.name, u.title]).filter(Boolean) as string[];
+
+  
+  if (userNames.length === 0) {
+    return text.replace(/@([a-zA-Z0-9_.-]+)/g, (match) => {
+      return `<span class="bg-accent text-orchit-white text-[14px] px-1.5 py-[1px] rounded-full font-medium shadow-sm hover:opacity-90 cursor-pointer relative z-10 mr-[2px]">${match}</span>`;
+    });
+  }
+
+  // Sort by length to match the longest full name first
+  userNames.sort((a, b) => b.length - a.length);
+
+  // Escape regex special chars and add generic word fallback
+  const escapedNames = [...new Set(userNames)].map((n: string) => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+  const regex = new RegExp(`@(${escapedNames.join('|')}|[a-zA-Z0-9_.-]+)(?=\\s|[.,!?]|$)`, 'gi');
+  
+  return text.replace(regex, (match) => {
+    return `<span class="bg-accent text-[14px] text-orchit-white px-[4px] -mx-[1px] py-[1px] rounded-full font-normal shadow-sm hover:opacity-90 cursor-pointer relative z-10">${match}</span>`;
+  });
+}
+
+function formatOverlay(text: string) {
+  if (!text) return "";
+  const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  
+  const users = workspaceRoles.value || []; 
+  const userNames = users.flatMap((u: any) => [u.u_full_name, u.name, u.title]).filter(Boolean) as string[];
+  
+  if (userNames.length === 0) {
+    return `<span class="text-transparent">${escapedText.replace(/@([a-zA-Z0-9_.-]+)/g, '<strong class="bg-accent text-[14px] text-orchit-white px-[4px] -mx-[4px] py-[1px] rounded-full font-normal">@$1</strong>')}</span>`;
+  }
+
+  userNames.sort((a, b) => b.length - a.length);
+  const escapedNames = [...new Set(userNames)].map((n: string) => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
+  const regex = new RegExp(`@(${escapedNames.join('|')}|[a-zA-Z0-9_.-]+)(?=\\s|[.,!?]|$)`, 'gi');
+  
+  const formatted = escapedText.replace(regex, (match) => {
+    return `<strong class="bg-accent text-orchit-white px-[4px] -mx-[4px] py-[1px] text-[14px] rounded-full font-medium">${match}</strong>`;
+  });
+  
+  return `<span class="text-transparent">${formatted}</span>`;
+}
+// ----------------------
+
 const initials = (n?: string) =>
   (n ?? "")
     .split(" ")
