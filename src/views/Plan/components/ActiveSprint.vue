@@ -264,6 +264,7 @@
             :selectedVariable="selected_view_by"
             :listId="localColumnData?.title"
             :sheet_id="selected_sheet_id"
+            :sprint_id="sprintId"
             v-if="createTeamModal"
             key="createTaskModalKey"
             v-model="createTeamModal"
@@ -582,8 +583,8 @@ watch(
 );
 
 const fuse = computed(() => {
-  const allCards = (Lists.value ?? []).flatMap((col: any) =>
-    col.cards.map((card: any) => ({ ...card, columnId: col.title })),
+  const allCards = (Lists.value?.groups ?? []).flatMap((col: any) =>
+    (col.cards ?? []).map((card: any) => ({ ...card, columnId: col.title })),
   );
   return new Fuse(allCards, { 
     keys: ["card-title", "card-description", "title", "name"], 
@@ -593,7 +594,9 @@ const fuse = computed(() => {
 
 const normalizedTableData = computed(() => {
   let array: any = [];
-  (Lists.value ?? []).forEach((col: any) => { array = [...array, ...col?.cards]; });
+  (Lists.value?.groups ?? []).forEach((col: any) => { 
+    array = [...array, ...(col?.cards ?? [])]; 
+  });
   return array;
 });
 
@@ -653,14 +656,14 @@ const { mutate: addTicket } = useAddTicket({
 });
 
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
-  if (!Lists.value) return;
-  const listIndex = Lists.value.findIndex((l: any) => l.cards.some((c: any) => c._id === cardId));
+  if (!Lists.value?.groups) return;
+  const listIndex = Lists.value.groups.findIndex((l: any) => (l.cards ?? []).some((c: any) => c._id === cardId));
   if (listIndex !== -1) {
-    const cardIndex = Lists.value[listIndex].cards.findIndex((c: any) => c._id === cardId);
+    const cardIndex = Lists.value.groups[listIndex].cards.findIndex((c: any) => c._id === cardId);
     if (cardIndex !== -1) {
-      const newCard = { ...Lists.value[listIndex].cards[cardIndex] };
+      const newCard = { ...Lists.value.groups[listIndex].cards[cardIndex] };
       updater(newCard);
-      Lists.value[listIndex].cards[cardIndex] = newCard;
+      Lists.value.groups[listIndex].cards[cardIndex] = newCard;
       triggerRef(Lists);
     }
   }
@@ -714,10 +717,10 @@ function handleCreateTicket(title: any) {
 }
 
 const setStartDate = (card_id: any, e: any) => {
-  const listIndex = Lists.value.findIndex((l: any) => l.cards.some((c: any) => c._id === card_id));
-  if (listIndex !== -1) {
-    const cardIndex = Lists.value[listIndex].cards.findIndex((c: any) => c._id === card_id);
-    if (cardIndex !== -1) Lists.value[listIndex].cards[cardIndex]["end-date"] = e;
+  const listIndex = Lists.value?.groups?.findIndex((l: any) => (l.cards ?? []).some((c: any) => c._id === card_id));
+  if (listIndex !== -1 && listIndex !== undefined) {
+    const cardIndex = Lists.value.groups[listIndex].cards.findIndex((c: any) => c._id === card_id);
+    if (cardIndex !== -1) Lists.value.groups[listIndex].cards[cardIndex]["end-date"] = e;
   }
   moveCard.mutate({ card_id, variables: { "start-date": e } });
 };
@@ -929,6 +932,10 @@ const handleSaveTheme = (e: any) => {
     }
   );
 };
+
+const sprintId = computed(() => {
+  return props.sprint_id || localStorage.getItem("activeSprintKey");
+})
 </script>
 
 <style scoped>
