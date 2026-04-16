@@ -121,6 +121,9 @@ export const useAgentStore = defineStore("agent", {
     chatHistory: [] as ChatSession[],
     createdEntities: [] as CreatedEntityItem[],
     isSending: false,
+    assistantStreamedChunks: [] as any[],
+    currentStreamText: "",
+    currentPhase: "",
     isAiTyping: false,
     isLoadingHistory: false,
     isLoadingEntities: false,
@@ -145,6 +148,9 @@ export const useAgentStore = defineStore("agent", {
     pinnedMessages: [] as AgentMessage[],
     isLoadingPinnedMessages: false,
     isCreatingDashboard: false,
+    isUpdatingAgentSettings:false,
+    settings: null as null | Record<string, any>,
+    isLoadingWebSettings: false,
   }),
 
   getters: {
@@ -214,6 +220,36 @@ export const useAgentStore = defineStore("agent", {
   } finally {
     this.isSending = false;
   }
+},
+handleIncomingChunk(raw: string) {
+  try {
+    const cleaned = raw.replace(/^data:\s*/, "");
+    const parsed = JSON.parse(cleaned);
+
+    this.assistantStreamedChunks.push(parsed);
+
+    // 🔥 derive state immediately (no computed needed)
+    if (parsed.type === "chunk") {
+      this.currentStreamText += parsed.content;
+    }
+
+    if (parsed.type === "phase") {
+      this.currentPhase = parsed.phase;
+    }
+
+    if (parsed.type === "done") {
+      this.isAiTyping = false;
+    }
+
+  } catch (err) {
+    console.error("Chunk parse failed:", raw);
+  }
+},
+resetStream() {
+  this.assistantStreamedChunks = [];
+  this.currentStreamText = "";
+  this.currentPhase = "";
+  this.isAiTyping = true;
 },
     async uploadAssistantFiles(files: File[] | File) {
       const formData = new FormData();
@@ -1097,6 +1133,55 @@ export const useAgentStore = defineStore("agent", {
   } finally {
     this.isCreatingDashboard = false;
   }
-}
+},
+async updateAgentWebBrowsing(
+  workspace_id: string,
+  agent_id: string,
+  payload?: {
+    web_browsing_enabled?: boolean;
+  }
+) {
+  if (!workspace_id || !agent_id) return;
+
+  this.isUpdatingAgentSettings = true;
+
+  try {
+    const url = `${baseUrl}agent-chat/${workspace_id}/agent/${agent_id}`;
+
+    const res = await api.request<{
+      data: {
+        web_browsing_enabled: boolean;
+      };
+    }>({
+      url,
+      method: "PUT",
+      data: {
+        web_browsing_enabled: payload?.web_browsing_enabled ?? true,
+      },
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
+
+    // Optional: update local state if you track agent settings
+    this.agentSettings = {
+      ...this.agentSettings,
+      [agent_id]: {
+        ...this.agentSettings?.[agent_id],
+        web_browsing_enabled:
+          res.data?.data?.web_browsing_enabled ?? payload?.web_browsing_enabled,
+      },
+    };
+
+    return res.data?.data;
+  } catch (err) {
+    console.error("❌ Failed to update agent web browsing:", err);
+    return null;
+  } finally {
+    this.isUpdatingAgentSettings = false;
+  }
+},
   },
 });
