@@ -617,7 +617,7 @@ const agentStore = useAgentStore();
 const emit = defineEmits(["update:modelValue", "accept", "decline"]);
 const isPlanModule = computed(() => {
   if (isPeakWidget.value) return false;
-  return props?.data?.[0]?.module_name=== "Plan";
+  return props?.data?.[0]?.module_name=== "Plan" || props?.data?.[0]?.module_name=== "peak";
 });
 const moveCard = useMoveCard({
   onSuccess: () => {

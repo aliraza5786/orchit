@@ -5,7 +5,7 @@
       'flex h-full overflow-y-auto rounded-xl border border-border/60 overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
       isExpanded
         ? 'min-w-full max-w-full'
-        : 'min-w-full max-w-[400px] sm:min-w-[400px]',
+        : 'min-w-full max-w-[24%] sm:min-w-[400px]',
     ]"
     :style="{
       background:
@@ -17,7 +17,7 @@
   >
     <!-- ==================== LEFT: PREVIEW MODAL ==================== -->
     <div
-      v-if="isExpanded && !showConfigPanel"
+      v-if="isExpanded && !showConfigPanel && entities?.length > 0"
       class="w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
@@ -30,7 +30,7 @@
 
     <!-- ==================== LEFT: CONFIG PANEL ==================== -->
     <div
-      v-if="isExpanded && showConfigPanel"
+      v-if="isExpanded && (showConfigPanel || !entities?.length)"
       class="w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
     >
       <!-- HEADER -->
@@ -833,7 +833,7 @@
 
     <!-- ==================== RIGHT: CHAT PANEL ==================== -->
     <div
-      :class="isExpanded ? 'w-[24%]' : 'w-full'"
+      :class="isExpanded ? 'w-[38%]' : 'w-full'"
       class="border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden"
     >
       <!-- Chat Header -->
