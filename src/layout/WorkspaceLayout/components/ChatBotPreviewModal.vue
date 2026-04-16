@@ -9,9 +9,11 @@
           {{
             isPeakWidget
               ? "AI Generated Widget"
-              : isReadAction
-                ? "Fetched Cards"
-                : "AI Suggested Changes"
+              : isSprintCreate
+                ? "AI Suggested Sprint"
+                : isReadAction
+                  ? "Fetched Cards"
+                  : "AI Suggested Changes"
           }}
         </h3>
         <p
@@ -23,6 +25,9 @@
             >s</span
           >
           matching your query.
+        </p>
+        <p class="text-xs text-text-secondary" v-if="isSprintCreate">
+          Review the AI-suggested {{ sprintCreatePayload.sprintType || 'sprint' }} and its cards before accepting.
         </p>
         <p class="text-xs text-text-secondary" v-if="isPeakWidget">
           Preview the widget{{ allPeakWidgets.length > 1 ? "s" : "" }} below.
@@ -37,24 +42,20 @@
           <div class="space-y-6">
             <div
               v-if="
-                peakWidgetItem?.payload?.type === 'create_widget' ||  peakWidgetItem?.payload?.type === 'create_dashboard' || peakWidgetItem?.payload?.type === 'update_widget' ||
+                peakWidgetItem?.payload?.type === 'create_widget' ||
+                peakWidgetItem?.payload?.type === 'create_dashboard' ||
+                peakWidgetItem?.payload?.type === 'update_widget' ||
                 ('create_widget' && peakWidgetItem?.payload?.dashboard_title)
               "
               class="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-border/60 bg-bg-body/60"
             >
               <div
                 class="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                :style="{
-                  background:
-                    (peakWidgetItem.payload.dashboard_color ?? '#6366f1') +
-                    '20',
-                }"
+                :style="{ background: (peakWidgetItem.payload.dashboard_color ?? '#6366f1') + '20' }"
               >
                 <i
                   class="fa-solid fa-table-columns text-sm"
-                  :style="{
-                    color: peakWidgetItem.payload.dashboard_color ?? '#6366f1',
-                  }"
+                  :style="{ color: peakWidgetItem.payload.dashboard_color ?? '#6366f1' }"
                 ></i>
               </div>
               <div class="flex-1 min-w-0">
@@ -85,11 +86,7 @@
                   :style="{ background: (widget.color ?? '#6366f1') + '18' }"
                 >
                   <i
-                    :class="
-                      chartIcon(
-                        widget.data?.chart_type ?? widget.query?.chart_type,
-                      )
-                    "
+                    :class="chartIcon(widget.data?.chart_type ?? widget.query?.chart_type)"
                     class="text-sm"
                     :style="{ color: widget.color ?? '#6366f1' }"
                   ></i>
@@ -106,22 +103,14 @@
                   <span
                     class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 capitalize"
                   >
-                    {{
-                      widget.data?.chart_type ??
-                      widget.query?.chart_type ??
-                      "chart"
-                    }}
+                    {{ widget.data?.chart_type ?? widget.query?.chart_type ?? "chart" }}
                   </span>
-                  <span class="text-[10px] text-text-tertiary"
-                    >{{ widget.data?.total ?? 0 }} total</span
-                  >
+                  <span class="text-[10px] text-text-tertiary">{{ widget.data?.total ?? 0 }} total</span>
                 </div>
               </div>
 
               <!-- iframe chart -->
-              <div
-                class="rounded-xl border border-border/60 overflow-hidden shadow-sm"
-              >
+              <div class="rounded-xl border border-border/60 overflow-hidden shadow-sm">
                 <div
                   class="px-3 py-2 border-b border-border/40 bg-bg-body/40 flex items-center gap-2"
                 >
@@ -130,9 +119,7 @@
                     <div class="w-2.5 h-2.5 rounded-full bg-amber-400/60"></div>
                     <div class="w-2.5 h-2.5 rounded-full bg-green-400/60"></div>
                   </div>
-                  <span class="text-[11px] text-text-tertiary ml-1"
-                    >{{ widget.title }} — Preview</span
-                  >
+                  <span class="text-[11px] text-text-tertiary ml-1">{{ widget.title }} — Preview</span>
                 </div>
                 <iframe
                   :srcdoc="widget._wrappedHtml"
@@ -145,9 +132,7 @@
 
               <!-- Series breakdown -->
               <div v-if="widget.data?.series?.length" class="space-y-1.5">
-                <p
-                  class="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider px-1"
-                >
+                <p class="text-[11px] font-semibold text-text-tertiary uppercase tracking-wider px-1">
                   Data breakdown
                 </p>
                 <div
@@ -159,12 +144,8 @@
                     class="w-2.5 h-2.5 rounded-sm shrink-0"
                     :style="{ background: seriesColor(widget, si) }"
                   ></div>
-                  <span class="text-sm text-text-primary flex-1">{{
-                    s.label
-                  }}</span>
-                  <span class="text-sm font-semibold text-text-primary">{{
-                    s.value
-                  }}</span>
+                  <span class="text-sm text-text-primary flex-1">{{ s.label }}</span>
+                  <span class="text-sm font-semibold text-text-primary">{{ s.value }}</span>
                 </div>
               </div>
 
@@ -176,233 +157,222 @@
             </div>
           </div>
         </template>
+
+        <!-- ================= SPRINT CREATE PREVIEW ================= -->
+        <template v-else-if="isSprintCreate">
+          <div class="bg-bg-body rounded-xl border border-border p-4 space-y-3">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0 bg-accent/10">
+                <i class="fa-solid fa-flag-checkered text-accent text-sm"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-text-primary truncate">
+                  {{ sprintCreatePayload.title }}
+                </p>
+                <p class="text-xs text-text-secondary mt-0.5 capitalize">
+                  {{ sprintCreatePayload.sprintType || 'sprint' }}
+                </p>
+              </div>
+              <span class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 capitalize">
+                {{ sprintCreatePayload.status || 'planning' }}
+              </span>
+            </div>
+            <p v-if="sprintCreatePayload.description" class="text-xs text-text-secondary leading-relaxed">
+              {{ sprintCreatePayload.description }}
+            </p>
+            <p v-if="sprintCreatePayload.goal" class="text-xs text-text-secondary italic border-l-2 border-accent/40 pl-2">
+              🎯 {{ sprintCreatePayload.goal }}
+            </p>
+            <div class="flex flex-wrap gap-3 text-xs text-text-secondary">
+              <span v-if="sprintCreatePayload.start_date" class="flex items-center gap-1">
+                <i class="fa-regular fa-calendar text-[10px]"></i>
+                {{ sprintCreatePayload.start_date }}
+              </span>
+              <span v-if="sprintCreatePayload.end_date" class="flex items-center gap-1">
+                <i class="fa-regular fa-calendar-check text-[10px]"></i>
+                {{ sprintCreatePayload.end_date }}
+              </span>
+              <span v-if="sprintCreatePayload.duration" class="flex items-center gap-1">
+                <i class="fa-regular fa-clock text-[10px]"></i>
+                {{ sprintCreatePayload.duration }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Cards section -->
+          <div v-if="sprintCreateCards.length" class="space-y-3">
+            <div class="flex items-center justify-between px-1">
+              <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                Cards ({{ sprintCreateCards.length }})
+              </p>
+              <Checkbox
+                :checked="sprintCreateSelectAll"
+                label="Select All"
+                @change="toggleSprintCreateSelectAll"
+              />
+            </div>
+            <div class="flex flex-wrap gap-4">
+              <div
+                v-for="card in sprintCreateCards"
+                :key="card._id || card.id || card.card_id"
+                class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
+                :class="{ 'ring-2 ring-accent': selectedSprintCreateCards.includes(card._id || card.id || card.card_id) }"
+                :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
+                @click="toggleSprintCreateCard(card._id || card.id || card.card_id)"
+              >
+                <!-- Top row -->
+                <div class="flex justify-between gap-2 items-start mb-3">
+                  <div class="flex gap-2 flex-wrap items-center">
+                    <input
+                      type="checkbox"
+                      class="mt-1"
+                      :checked="selectedSprintCreateCards.includes(card._id || card.id || card.card_id)"
+                      @change.stop="toggleSprintCreateCard(card._id || card.id || card.card_id)"
+                    />
+                    <span
+                      v-if="card['card-type'] || card.card_type"
+                      class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
+                    >
+                      {{ card['card-type'] || card.card_type || 'General' }}
+                    </span>
+                    <span
+                      v-if="card['card-status'] || card.status"
+                      class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+                    >
+                      {{ card['card-status'] || card.card_status }}
+                    </span>
+                    <span
+                      v-if="card.priority || card['card-priority']"
+                      class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
+                    >
+                      {{ card.priority || card['card-priority'] }}
+                    </span>
+                  </div>
+                </div>
+                <!-- Title -->
+                <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+                  {{ card['card-title'] || card.card_title }}
+                </h3>
+                <!-- Description -->
+                <div
+                  v-if="card['card-description'] || card.description"
+                  class="text-xs text-text-secondary mb-3 line-clamp-2"
+                  v-html="card['card-description'] || card.description"
+                />
+                <!-- Footer meta -->
+                <div class="flex items-center gap-3 mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
+                  <span v-if="card['story-points'] || card.story_points" class="flex items-center gap-1">
+                    <i class="fa-solid fa-star-half-stroke text-[10px]"></i>
+                    {{ card['story-points'] || card.story_points }} pts
+                  </span>
+                  <span v-if="card['end-date'] || card.end_date" class="flex items-center gap-1">
+                    <i class="fa-regular fa-calendar text-[10px]"></i>
+                    {{ card['end-date'] || card.end_date }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty cards state -->
+          <div v-else class="w-full text-center py-8 text-text-secondary text-xs">
+            No cards attached to this {{ sprintCreatePayload.sprintType }}.
+          </div>
+        </template>
+
+        <!-- ================= READ ACTION (non-plan) ================= -->
         <template v-else-if="isReadAction && !isPlanModule">
-          
-  <div class="flex flex-wrap gap-4">
-     
-    <div
-      v-for="card in fetchedItems"
-      :key="card.id || card._id"
-      @click="selectedCard = card"
-      class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
-      :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
-    >
-      <!-- Top row: badges + share -->
-      <div class="flex justify-between gap-2 items-start mb-3">
-        <div class="flex gap-2 flex-wrap items-center">
-          <!-- Card type badge -->
-          <span
-            v-if="card['card-type']"
-            class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
+          <div
+            v-for="card in fetchedItems"
+            :key="card.id || card._id"
+            @click="selectedCard = card"
+            class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
+            :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
           >
-            {{ card['card-type'] || 'General' }}
-          </span>
-          <!-- Status badge -->
-          <span
-            v-if="card['card-status']"
-            class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
-          >
-            {{ card['card-status'] }}
-          </span>
-          <!-- Priority badge -->
-          <span
-            v-if="card.priority || card['card-priority']"
-            class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
-          >
-            {{ card.priority || card['card-priority'] }}
-          </span>
-        </div>
+            <!-- Top row: badges + share -->
+            <div class="flex justify-between gap-2 items-start mb-3">
+              <div class="flex gap-2 flex-wrap items-center">
+                <span
+                  v-if="card['card-type']"
+                  class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
+                >
+                  {{ card['card-type'] || 'General' }}
+                </span>
+                <span
+                  v-if="card['card-status']"
+                  class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+                >
+                  {{ card['card-status'] }}
+                </span>
+                <span
+                  v-if="card.priority || card['card-priority']"
+                  class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
+                >
+                  {{ card.priority || card['card-priority'] }}
+                </span>
+              </div>
+              <button
+                class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
+                @click="nativeShare(card)"
+                title="Share this Ticket"
+              >
+                <i class="fa-light fa-share text-xs"></i>
+              </button>
+            </div>
 
-        <button
-          class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
-          @click="nativeShare(card)"
-          title="Share this Ticket"
-        >
-          <i class="fa-light fa-share text-xs"></i>
-        </button>
-      </div>
+            <!-- Title -->
+            <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+              {{ card['card-title'] || card.title }}
+            </h3>
 
-      <!-- Title -->
-      <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
-        {{ card['card-title'] || card.title }}
-      </h3>
-
-      <!-- Description -->
-      <div
-        v-if="card['card-description']"
-        class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
-        v-html="card['card-description']"
-      />
-
-      <!-- Footer -->
-      <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
-        <div class="flex items-center gap-2 flex-1">
-          <!-- Assignee -->
-          <div @click.stop v-if="canAssignCard || canViewCard">
-            <AssigmentDropdown
-              :users="members"
-              :assigneeId="card.seat_id"
-              @assign="assignHandle(card)"
+            <!-- Description -->
+            <div
+              v-if="card['card-description']"
+              class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
+              v-html="card['card-description']"
             />
-          </div>
-          <!-- Due date -->
-          <div @click.stop class="flex items-center text-nowrap overflow-ellipsis">
-            <DatePicker
-              placeholder="end date"
-              :model-value="card['end-date']"
-              theme="dark"
-              emit-as="ymd"
-              @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
-            />
-          </div>
-        </div>
 
-        <!-- Comments + Attachments -->
-        <div class="flex items-center gap-3">
-          <div v-if="card?.comments_count" class="flex items-center gap-1">
-            <i class="fa-regular fa-message text-[10px]"></i>
-            <span>{{ card.comments_count }}</span>
+            <!-- Footer -->
+            <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
+              <div class="flex items-center gap-2 flex-1">
+                <div @click.stop v-if="canAssignCard || canViewCard">
+                  <AssigmentDropdown
+                    :users="members"
+                    :assigneeId="card.seat_id"
+                    @assign="assignHandle(card)"
+                  />
+                </div>
+                <div @click.stop class="flex items-center text-nowrap overflow-ellipsis">
+                  <DatePicker
+                    placeholder="end date"
+                    :model-value="card['end-date']"
+                    theme="dark"
+                    emit-as="ymd"
+                    @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
+                  />
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div v-if="card?.comments_count" class="flex items-center gap-1">
+                  <i class="fa-regular fa-message text-[10px]"></i>
+                  <span>{{ card.comments_count }}</span>
+                </div>
+                <div v-if="card?.attachments?.length" class="flex items-center gap-1">
+                  <i class="fa-regular fa-file text-[10px]"></i>
+                  <span>{{ card.attachments.length }}</span>
+                </div>
+              </div>
+            </div>
           </div>
-          <div v-if="card?.attachments?.length" class="flex items-center gap-1">
-            <i class="fa-regular fa-file text-[10px]"></i>
-            <span>{{ card.attachments.length }}</span>
+
+          <!-- Empty state -->
+          <div v-if="!fetchedItems.length" class="w-full text-center py-10 text-text-secondary">
+            No cards found
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty state -->
-    <div
-      v-if="!fetchedItems.length"
-      class="w-full text-center py-10 text-text-secondary"
-    >
-      No cards found
-    </div>
-  </div>
-</template>
-<template v-else-if="isReadAction && isPlanModule">
-          <Checkbox
-            v-if="isPlanModule"
-            :checked="planSelectAll"
-            label="Select All"
-            @change="togglePlanSelectAll"
-          />
-  <div class="flex flex-wrap gap-4">
-     
-    <div
-      v-for="card in fetchedItems"
-      :key="card.id || card._id"
-      class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
-      :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
-    >
-    
-      <!-- Top row: badges + share -->
-      <div class="flex justify-between gap-2 items-start mb-3">
-        <div class="flex gap-2">
-          <input
-            v-if="isPlanModule"
-            type="checkbox"
-            class="mt-1"
-            :checked="selectedSprintCards?.includes(card._id)"
-            @change.stop="togglePlanCard(card._id)"
-          />
-        <div class="flex gap-2 flex-wrap items-center">
-          <!-- Card type badge -->
-          <span
-            v-if="card['card-type']"
-            class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
-          >
-            {{ card['card-type'] || 'General' }}
-          </span>
-          <!-- Status badge -->
-          <span
-            v-if="card['card-status']"
-            class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
-          >
-            {{ card['card-status'] }}
-          </span>
-          <!-- Priority badge -->
-          <span
-            v-if="card.priority || card['card-priority']"
-            class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
-          >
-            {{ card.priority || card['card-priority'] }}
-          </span>
-        </div>
-        </div>
-
-        <button
-          class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
-          @click="nativeShare(card)"
-          title="Share this Ticket"
-        >
-          <i class="fa-light fa-share text-xs"></i>
-        </button>
-      </div>
-
-      <!-- Title -->
-      <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
-        {{ card['card-title'] || card.title }}
-      </h3>
-
-      <!-- Description -->
-      <div
-        v-if="card['card-description']"
-        class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
-        v-html="card['card-description']"
-      />
-
-      <!-- Footer -->
-      <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
-        <div class="flex items-center gap-2 flex-1">
-          <!-- Assignee -->
-          <div @click.stop v-if="canAssignCard || canViewCard">
-            <AssigmentDropdown
-              :users="members"
-              :assigneeId="card.seat_id"
-              @assign="assignHandle(card)"
-            />
-          </div>
-          <!-- Due date -->
-          <div @click.stop class="flex items-center text-nowrap overflow-ellipsis">
-            <DatePicker
-              placeholder="end date"
-              :model-value="card['end-date']"
-              theme="dark"
-              emit-as="ymd"
-              @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
-            />
-          </div>
-        </div>
-
-        <!-- Comments + Attachments -->
-        <div class="flex items-center gap-3">
-          <div v-if="card?.comments_count" class="flex items-center gap-1">
-            <i class="fa-regular fa-message text-[10px]"></i>
-            <span>{{ card.comments_count }}</span>
-          </div>
-          <div v-if="card?.attachments?.length" class="flex items-center gap-1">
-            <i class="fa-regular fa-file text-[10px]"></i>
-            <span>{{ card.attachments.length }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Empty state -->
-    <div
-      v-if="!fetchedItems.length"
-      class="w-full text-center py-10 text-text-secondary"
-    >
-      No cards found
-    </div>
-  </div>
-</template>
-        <!-- ================= CREATE ACTION ================= -->
+        </template>
         <template v-else>
           <p class="text-sm text-text-secondary overflow-y-auto">
-            The AI suggests the following changes. Please review before
-            applying.
+            The AI suggests the following changes. Please review before applying.
           </p>
           <Checkbox
             :checked="selectAll"
@@ -419,14 +389,10 @@
                 class="flex items-start gap-3 cursor-pointer transition-all duration-150"
                 @click="toggleItem(sheet.variables['sheet-title'])"
                 :class="{
-                  'ring-2 ring-accent rounded-md p-3': selectedItems.includes(
-                    sheet.variables['sheet-title'],
-                  ),
+                  'ring-2 ring-accent rounded-md p-3': selectedItems.includes(sheet.variables['sheet-title']),
                 }"
               >
-                <div
-                  class="w-10 h-10 flex items-center justify-center rounded-md bg-bg-surface border border-border"
-                >
+                <div class="w-10 h-10 flex items-center justify-center rounded-md bg-bg-surface border border-border">
                   <i
                     :class="[
                       sheet.variables['sheet-icon']
@@ -446,28 +412,18 @@
                 </div>
                 <input
                   type="checkbox"
-                  :checked="
-                    selectedItems.includes(sheet.variables['sheet-title'])
-                  "
+                  :checked="selectedItems.includes(sheet.variables['sheet-title'])"
                   @change.stop="toggleItem(sheet.variables['sheet-title'])"
                 />
               </div>
-              <div
-                v-if="groupedCards[sheet.variables['sheet-title']]?.length"
-                class="mt-4"
-              >
-                <p class="text-xs font-semibold text-text-secondary mb-2">
-                  Cards to be created
-                </p>
+              <div v-if="groupedCards[sheet.variables['sheet-title']]?.length" class="mt-4">
+                <p class="text-xs font-semibold text-text-secondary mb-2">Cards to be created</p>
                 <div class="flex sm:flex-wrap flex-nowrap gap-3">
                   <div
                     v-for="card in groupedCards[sheet.variables['sheet-title']]"
                     :key="card.variables['card-code']"
-                    
                     class="relative bg-bg-card rounded-lg p-3 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full mt-3 md:w-[24%]"
-                    :class="{
-                      'ring-2 ring-accent': selectedCards?.includes(card._id),
-                    }"
+                    :class="{ 'ring-2 ring-accent': selectedCards?.includes(card._id) }"
                     @click="toggleCard(card._id)"
                     @change.stop="toggleCard(card._id)"
                   >
@@ -481,17 +437,13 @@
                         :checked="selectedCards?.includes(card._id)"
                         @change.stop="toggleCard(card._id)"
                       />
-                      
                       <div class="flex-1 space-y-2">
-                       <div class="flex justify-between">
-                         <span
-                          class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
-                          >{{ card.variables["card-status"] }}</span
-                        >
-                       </div>
-                        <h3
-                          class="text-sm font-medium text-card-foreground leading-tight capitalize mt-1.5"
-                        >
+                        <div class="flex justify-between">
+                          <span class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize">
+                            {{ card.variables["card-status"] }}
+                          </span>
+                        </div>
+                        <h3 class="text-sm font-medium text-card-foreground leading-tight capitalize mt-1.5">
                           {{ card.variables["card-title"] }}
                         </h3>
                         <p class="text-xs text-text-secondary line-clamp-2">
@@ -506,10 +458,12 @@
           </div>
         </template>
       </div>
-      <!-- FOOTER -->
+      <!-- ✅ BODY closes here — was misplaced before -->
+
+      <!-- FOOTER: default (create action + peak widget) -->
       <div
         class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
-        v-if="!isReadAction || isPeakWidget"
+        v-if="(!isReadAction && !isSprintCreate) || isPeakWidget"
       >
         <button
           class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
@@ -519,10 +473,7 @@
         </button>
         <button
           class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
-          :disabled="
-            agentStore.isAcceptingEntities ||
-            (!isPeakWidget && !selectedItems.length && !selectedCards.length)
-          "
+          :disabled="agentStore.isAcceptingEntities || (!isPeakWidget && !selectedItems.length && !selectedCards.length)"
           @click="acceptChanges"
         >
           <span
@@ -542,6 +493,43 @@
           </span>
         </button>
       </div>
+
+      <!-- FOOTER: Sprint Create -->
+      <div
+        class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
+        v-if="isSprintCreate"
+      >
+        <button
+          class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
+          @click="emit('decline')"
+        >
+          Decline
+        </button>
+        <button
+          class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
+          :disabled="agentStore.isAcceptingEntities"
+          @click="acceptChanges"
+        >
+          <span
+            v-if="agentStore.isAcceptingEntities"
+            class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+          ></span>
+          <span>
+              {{
+                agentStore.isAcceptingEntities
+                  ? "Processing..."
+                  : `Create ${
+                      sprintCreatePayload.sprintType
+                        ? sprintCreatePayload.sprintType.charAt(0).toUpperCase() +
+                          sprintCreatePayload.sprintType.slice(1)
+                        : "Sprint"
+                    }`
+              }}
+            </span>
+        </button>
+      </div>
+
+      <!-- FOOTER: Plan module read action -->
       <div
         class="px-5 py-4 border-t border-border flex justify-end gap-3 bg-bg-card flex-shrink-0"
         v-if="isReadAction && isPlanModule"
@@ -550,7 +538,7 @@
           class="px-4 py-2 text-sm rounded-md cursor-pointer border border-border text-text-primary hover:bg-bg-body transition"
           @click="emit('decline')"
         >
-          {{ isPeakWidget ? "Dismiss" : "Decline" }}
+          Decline
         </button>
         <button
           class="px-4 py-2 text-sm rounded-md bg-accent cursor-pointer text-white hover:bg-accent-hover transition disabled:opacity-50 flex items-center gap-2 justify-center"
@@ -558,44 +546,40 @@
           @click="acceptChanges"
         >
           <span
-            v-if="agentStore.isAcceptingEntities || agentStore.isAcceptingEntities"
+            v-if="agentStore.isAcceptingEntities"
             class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
           ></span>
           <span>
             {{
               agentStore.isAcceptingEntities
                 ? "Processing..."
-                : isPeakWidget
-                  ? "Pin to Peak"
-                  : isReadAction
-                    ? "Add Selected Cards"
-                    : "Accept Changes"
+                : "Add Selected Cards"
             }}
           </span>
         </button>
       </div>
     </div>
-  </div>
-  <div v-if="selectedCard" class="fixed inset-0 z-50 flex items-center justify-center">
-  <div class="absolute inset-0 bg-black/30" @click="selectedCard = null"></div>
 
-  <div class="relative w-[900px] max-h-[85vh] overflow-y-auto bg-bg-card rounded-xl">
-  <CardPreviewModal
-  v-if="selectedCard"
-  :details="selectedCard"
-  :moduleId="moduleId"
-  :showPanel="!!selectedCard"
-  @close="() => selectedCard = null"
-  @closeSidePanel="closeSidePanel"
-  @comment:post="incrementCommentCount"
-  :sheetID="selected_sheet_id"
-/>
- </div>
-</div>
+    <!-- CARD PREVIEW MODAL — inside root div ✅ -->
+    <div v-if="selectedCard" class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-black/30" @click="selectedCard = null"></div>
+      <div class="relative w-[900px] max-h-[85vh] overflow-y-auto bg-bg-card rounded-xl">
+        <CardPreviewModal
+          :details="selectedCard"
+          :moduleId="moduleId"
+          :showPanel="!!selectedCard"
+          @close="() => selectedCard = null"
+          @closeSidePanel="closeSidePanel"
+          @comment:post="incrementCommentCount"
+          :sheetID="selected_sheet_id"
+        />
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed,watch } from "vue";
 import { useRoute } from "vue-router";
 import Checkbox from "@/components/ui/Checkbox.vue";
 import AssigmentDropdown from "../../../views/Product/components/AssigmentDropdown.vue";
@@ -617,6 +601,7 @@ const props = defineProps({
 });
 const selectedCard = ref(null);
 const showPreview = ref(false);
+const globalSelectAllSprintCards = ref(false)
 
 const openCardView = (card) => {
   console.log(card, "card is");
@@ -784,6 +769,44 @@ const isReadAction = computed(() => {
   return props?.data?.[0]?.action === "read";
 });
 
+// ── SPRINT CREATE ─────────────────────────────────────────────────────
+const isSprintCreate = computed(() => {
+  if (isPeakWidget.value) return false;
+  const d = props?.data?.[0];
+  return d?.action === "create" && d?.entity_type === "sprint";
+});
+
+const sprintCreatePayload = computed(() => props?.data?.[0]?.payload ?? {});
+
+const sprintCreateCards = computed(() => sprintCreatePayload.value?.cards ?? []);
+
+const selectedSprintCreateCards = ref([]);
+
+const sprintCreateSelectAll = computed(() =>
+  sprintCreateCards.value.length > 0 &&
+  sprintCreateCards.value.every((card) =>
+    selectedSprintCreateCards.value.includes(card._id || card.id || card.card_id)
+  )
+);
+
+const toggleSprintCreateSelectAll = () => {
+  if (sprintCreateSelectAll.value) {
+    selectedSprintCreateCards.value = [];
+  } else {
+    selectedSprintCreateCards.value = sprintCreateCards.value.map(
+      (card) => card._id || card.id || card.card_id
+    );
+  }
+};
+
+const toggleSprintCreateCard = (id) => {
+  if (selectedSprintCreateCards.value.includes(id)) {
+    selectedSprintCreateCards.value = selectedSprintCreateCards.value.filter((c) => c !== id);
+  } else {
+    selectedSprintCreateCards.value = [...selectedSprintCreateCards.value, id];
+  }
+};
+
 const ogData = computed(() => agentStore.ogTypesTicket);
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 
@@ -914,14 +937,78 @@ const acceptChanges = () => {
     return;
   }
 
+  // ── Sprint Create branch ──────────────────────────────────────────
+  if (isSprintCreate.value) {
+    const p = sprintCreatePayload.value;
+    const selectedCards = sprintCreateCards.value.filter((card) =>
+      selectedSprintCreateCards.value.includes(card._id || card.id || card.card_id)
+    );
+    emit("accept", {
+      action: "create",
+      workspace_id: p.workspace_id || props.data?.[0]?.workspace_id || null,
+      sprint: {
+        type: p.type || "create_sprint",
+        title: p.title || "",
+        description: p.description || "",
+        goal: p.goal || "",
+        sprintType: p.sprintType || "sprint",
+        status: p.status || "planning",
+        start_date: p.start_date || null,
+        end_date: p.end_date || null,
+        duration: p.duration || null,
+        capacity: p.capacity || 0,
+        tags: p.tags || [],
+        workspace_module_id: p.workspace_module_id || null,
+        parent_sprint_id: p.parent_sprint_id || null,
+        cards: selectedCards.map((card) => ({
+          card_id: card._id || card.id || card.card_id,
+          priority: card.priority || card["card-priority"] || "medium",
+          story_points: card["story-points"] || card.story_points || 0,
+          estimated_hours: card.estimated_hours || 0,
+          labels: card.labels || [],
+        })),
+      },
+    });
+    return;
+  }
+
   if (isReadAction.value && isPlanModule.value) {
-  const workspace_id = props.data?.[0]?.workspace_id || null;
-  const selected = fetchedItems.value.filter((card) =>
-    selectedSprintCards.value.includes(card._id || card.id)
-  );
-  emit("accept", { action: "read", workspace_id, cards: selected });
-  return;
-}
+    const workspace_id = props.data?.[0]?.workspace_id || null;
+    const selected = fetchedItems.value.filter((card) =>
+      selectedSprintCards.value.includes(card._id || card.id)
+    );
+
+    if (route.path?.toLowerCase().includes("plan")) {
+      const sprintMeta = props.data?.[0]?.sprint || {};
+      emit("accept", {
+        action: "read",
+        workspace_id,
+        sprint: {
+          type: "create_sprint",
+          title: sprintMeta.title || "Sprint 1",
+          description: sprintMeta.description || "",
+          goal: sprintMeta.goal || "",
+          sprintType: sprintMeta.sprintType || "sprint",
+          status: sprintMeta.status || "planning",
+          start_date: sprintMeta.start_date || new Date().toISOString(),
+          end_date: sprintMeta.end_date || null,
+          duration: sprintMeta.duration || null,
+          workspace_module_id: sprintMeta.workspace_module_id || props.data?.[0]?.module_id || null,
+          parent_sprint_id: sprintMeta.parent_sprint_id || null,
+          cards: selected.map((card) => ({
+            card_id: card._id || card.id,
+            priority: card.priority || card["card-priority"] || "medium",
+            story_points: card["story-points"] || card.story_points || 0,
+            estimated_hours: card.estimated_hours || 0,
+            labels: card.labels || [],
+          })),
+        },
+      });
+    } else {
+      emit("accept", { action: "read", workspace_id, cards: selected });
+    }
+    return;
+  }
 
   const workspace_id =
     workspaceId.value || props.data?.[0]?.workspace_id || null;
@@ -1096,6 +1183,27 @@ const togglePlanCard = (id) => {
     selectedSprintCards.value = [...selectedSprintCards.value, id]
   }
 }
+// select all sprint cards
+function toggleGlobalSprintCards() {
+  if (globalSelectAllSprintCards.value) {
+    // unselect all
+    selectedSprintCreateCards.value = []
+    globalSelectAllSprintCards.value = false
+  } else {
+    // select all
+    selectedSprintCreateCards.value = sprintCreateCards.value.map(
+      (card) => card._id || card.id || card.card_id
+    )
+    globalSelectAllSprintCards.value = true
+  }
+}
+watch(
+  () => selectedSprintCreateCards.value.length,
+  (len) => {
+    globalSelectAllSprintCards.value =
+      len === sprintCreateCards.value.length && len > 0
+  }
+)
 </script>
 
 <style scoped>

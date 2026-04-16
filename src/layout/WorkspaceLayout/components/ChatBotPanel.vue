@@ -1076,32 +1076,77 @@
               </transition>
             </div>
           </div>
+                <!-- AI Thinking bubble -->
+<div
+  v-if="isAiThinkingBubbleVisible"
+  class="flex gap-2.5 relative animate-fade-in"
+>
+  <div
+    class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm"
+  >
+    <i class="fa-solid fa-robot text-accent text-[11px]"></i>
+  </div>
+  <div
+    class="px-3.5 py-2 rounded-2xl rounded-tl-md max-w-[82%] text-sm leading-relaxed border border-border/40 bg-bg-body"
+  >
+    <div class="flex items-center gap-1.5">
+      <div class="typing-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <span class="text-[11px] text-text-secondary ml-1">
+        {{ streamingPhase === "thinking" ? "Thinking..." : "Working on it..." }}
+      </span>
+    </div>
+  </div>
+</div>
+<!-- AI Streaming response bubble -->
+<div
+  v-if="streamingContent && streamingPhase !== 'completed'"
+  class="flex gap-2.5 relative animate-fade-in"
+>
+  <div
+    class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm"
+  >
+    <i class="fa-solid fa-robot text-accent text-[11px]"></i>
+  </div>
+  <div
+    class="px-3.5 py-2 rounded-2xl rounded-tl-md max-w-[82%] text-sm leading-relaxed border border-accent/20 bg-bg-body shadow-sm"
+  >
+    <!-- Phase indicator -->
+    <div
+      v-if="streamingPhase === 'generating' && streamingThinkMs !== null"
+      class="flex items-center gap-1.5 mb-1.5"
+    >
+      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
+        <i class="fa-solid fa-brain text-accent text-[8px]"></i>
+        Thought for {{ (streamingThinkMs / 1000).toFixed(1) }}s
+      </span>
+    </div>
 
-          <!-- AI Thinking bubble -->
-          <div
-            v-if="isAiThinkingBubbleVisible"
-            class="flex gap-2.5 relative animate-fade-in"
-          >
-            <div
-              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm"
-            >
-              <i class="fa-solid fa-robot text-accent text-[11px]"></i>
-            </div>
-            <div
-              class="px-3.5 py-2 rounded-2xl rounded-tl-md max-w-[82%] text-sm leading-relaxed border border-border/40 bg-bg-body"
-            >
-              <div class="flex items-center gap-1.5">
-                <div class="typing-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-                <span class="text-[11px] text-text-secondary ml-1"
-                  >Thinking...</span
-                >
-              </div>
-            </div>
-          </div>
+    <!-- Animated text -->
+    <p class="whitespace-pre-wrap text-text-primary">{{ displayedContent }}<span
+      v-if="displayedContent.length < streamingContent.length || streamingPhase === 'generating'"
+      class="inline-block w-[2px] h-[13px] bg-accent ml-0.5 align-middle animate-pulse rounded-sm"
+    ></span></p>
+
+    <!-- Timing pills — shown once timing arrives -->
+    <div
+      v-if="streamingThinkMs !== null && streamingTotalMs !== null"
+      class="flex items-center gap-2 mt-1.5 flex-wrap"
+    >
+      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
+        <i class="fa-solid fa-brain text-accent text-[8px]"></i>
+        Thought {{ (streamingThinkMs / 1000).toFixed(1) }}s
+      </span>
+      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
+        <i class="fa-regular fa-clock text-accent text-[8px]"></i>
+        {{ (streamingTotalMs / 1000).toFixed(1) }}s total
+      </span>
+    </div>
+  </div>
+</div>
         </template>
 
         <!-- Empty state -->
@@ -1221,7 +1266,7 @@
           </div>
         </div>
       </div>
-
+        
       <!-- Input Area -->
       <div class="px-3 pt-3 pb-1.5 border-t border-border/40 bg-bg-card">
         <!-- Breadcrumb -->
@@ -1417,7 +1462,7 @@
 
                 <!-- Web search active indicator -->
                 <button
-                  @click="webSearch = !webSearch"
+                  @click="toggleWebSearch"
                   class="flex items-center gap-1 px-1.5 py-1.5 rounded-full text-[11px] transition-all cursor-pointer"
                   :class="
                     webSearch
@@ -2508,6 +2553,13 @@ const agentModuleId = computed(() => agentStore.module_id);
 const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => agentStore?.agentSettings?.knowledge);
 const trainingFileInput = ref<HTMLInputElement | null>(null);
+  // After: const isAiThinkingBubbleVisible = ref(false);
+const streamingContent = ref("");
+const streamingPhase = ref<"thinking" | "generating" | "completed" | "">("");
+const streamingThinkMs = ref<number | null>(null);
+const streamingTotalMs = ref<number | null>(null);
+const displayedContent = ref("");
+const animationFrameId = ref<number | null>(null);
 const webSearch = ref(false);
 // const isRecording = ref(false);
 const sourceSearch = ref("");
@@ -2744,12 +2796,15 @@ async function startNewChat() {
     toast.error("Please select an agent first");
     return;
   }
-
-  pendingMessages.value = [];
-  agentStore.chatHistory = [];
-  activeSessionId.value = "";
-  activeSessionTitle.value = "";
-  showHistoryPanel.value = false;
+    pendingMessages.value = [];
+    agentStore.chatHistory = [];
+    activeSessionId.value = "";
+    activeSessionTitle.value = "";
+    showHistoryPanel.value = false;
+    streamingContent.value = "";
+    streamingPhase.value = "";
+    streamingThinkMs.value = null;
+    streamingTotalMs.value = null;
 
   const payload = {
     agent_id: selectedAgentId.value,
@@ -3025,11 +3080,16 @@ async function sendMessage() {
   }
 
   const finalMessage = message || "";
-  userMessage.value = "";
-  isAiThinkingBubbleVisible.value = true;
-  agentStore.isSending = true;
-  agentStore.isAiTyping = true;
-  scrollToBottom();
+    userMessage.value = "";
+    isAiThinkingBubbleVisible.value = true;
+    streamingContent.value = "";
+    displayedContent.value = "";
+    streamingPhase.value = "thinking";
+    streamingThinkMs.value = null;
+    streamingTotalMs.value = null;
+    agentStore.isSending = true;
+    agentStore.isAiTyping = true;
+    scrollToBottom();
 
   const tempId = "temp-" + Date.now();
   const previewAttachments = filesToSend.map((f) => ({
@@ -3114,6 +3174,10 @@ async function sendMessage() {
     scrollToBottom();
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
+    streamingContent.value = "";
+    streamingPhase.value = "completed";
+    streamingThinkMs.value = null;
+    streamingTotalMs.value = null;
   } catch (err) {
     console.error("Error sending message:", err);
     pendingMessages.value = pendingMessages.value.filter(
@@ -3123,6 +3187,9 @@ async function sendMessage() {
     agentStore.isAiTyping = false;
   } finally {
     agentStore.isSending = false;
+    streamingContent.value = "";
+    displayedContent.value = "";
+    streamingPhase.value = "completed";
   }
 }
 
@@ -3142,6 +3209,9 @@ async function acceptChanges(payload: any) {
     );
     if (route.path?.includes("peak")) {
       await widgetStore.fetchWidgets(workspaceId.value);
+    }
+    if (route.path?.includes("plan")) {
+     queryClient.invalidateQueries({ queryKey: ["sprint-list"] });
     }
     showAIPreview.value = false;
     toast.success("Entities has been accepted and applied to workspace");
@@ -3345,7 +3415,15 @@ onBeforeUnmount(() => {
   socket.value?.removeAllListeners();
   socket.value?.disconnect();
 });
-
+onBeforeUnmount(() => {
+  if (animationFrameId.value !== null) {
+    cancelAnimationFrame(animationFrameId.value);
+  }
+  streamingContent.value = "";
+displayedContent.value = "";
+streamingThinkMs.value = null;
+streamingTotalMs.value = null;
+});
 const openConfigPanel = () => {
   showConfigPanel.value = !showConfigPanel.value;
   if (showConfigPanel.value) {
@@ -4084,6 +4162,8 @@ const loadAgentSettings = async () => {
     selectedAgentId.value,
   );
   isLoadingSettings.value = false;
+  webSearch.value =
+    agentsData.value?.web_browsing_enabled ?? false;
 };
 
 async function fetchAssignedAgents() {
@@ -4841,6 +4921,135 @@ const createNewPrompt = () => {
 
 // Show saved prompts bar above textarea
 const showSavedPromptsBar = ref(false);
+//toggle web search
+const toggleWebSearch = async () => {
+  if (!workspaceId.value || !selectedAgentId.value) return;
+  const newValue = !webSearch.value;
+  try {
+    await agentStore.updateAgentWebBrowsing(
+      workspaceId.value,
+      selectedAgentId.value,
+      { web_browsing_enabled: newValue }
+    );
+    await loadAgentSettings();
+
+  } catch (err) {
+    console.error("Toggle web search failed:", err);
+  }
+};
+watch(
+  () => agentStore.assistantStreamedChunks,
+  (raw) => {
+    const rawStr: string =
+      typeof raw === "string"
+        ? raw
+        : typeof raw === "object" && raw !== null
+          ? JSON.stringify(raw)
+          : String(raw ?? "");
+
+    if (!rawStr) return;
+
+    const lines = rawStr
+      .split("\n")
+      .filter((l) => l.trim().startsWith("data: "));
+
+    let accumulatedContent = "";
+    let latestPhase: typeof streamingPhase.value = "";
+    let latestThinkMs: number | null = null;
+    let latestTotalMs: number | null = null;
+    let isDone = false;
+
+    for (const line of lines) {
+      try {
+        const json = JSON.parse(line.replace(/^data:\s*/, "").trim());
+
+        if (json.type === "phase") {
+          latestPhase = json.phase;
+
+          if (json.phase === "thinking") {
+            isAiThinkingBubbleVisible.value = true;
+            accumulatedContent = "";
+          }
+
+          if (json.phase === "generating") {
+            isAiThinkingBubbleVisible.value = false;
+          }
+        }
+
+        if (json.type === "chunk") {
+          accumulatedContent += json.content ?? "";
+          isAiThinkingBubbleVisible.value = false;
+          // Don't set streamingContent here — let the animator handle display
+        }
+
+        if (json.type === "timing") {
+          latestThinkMs = json.think_time_ms ?? null;
+          latestTotalMs = json.total_time_ms ?? null;
+        }
+
+        if (json.type === "done") {
+          isDone = true;
+        }
+      } catch {
+        // skip malformed lines
+      }
+    }
+
+    // Update phase and timing state
+    if (latestPhase) streamingPhase.value = latestPhase;
+    if (latestThinkMs !== null) streamingThinkMs.value = latestThinkMs;
+    if (latestTotalMs !== null) streamingTotalMs.value = latestTotalMs;
+
+    // Set the full target content and kick off letter-by-letter animation
+    if (accumulatedContent) {
+      streamingContent.value = accumulatedContent; // full text (used as animation target)
+      animateStreamingContent(accumulatedContent); // drives displayedContent char by char
+    }
+
+    if (isDone) {
+      isAiThinkingBubbleVisible.value = false;
+      agentStore.isAiTyping = false;
+      // displayedContent will finish animating on its own via requestAnimationFrame
+    }
+
+    scrollToBottom();
+  },
+  { immediate: false },
+);
+
+function animateStreamingContent(targetText: string) {
+  // Cancel any ongoing animation before starting a new one
+  if (animationFrameId.value !== null) {
+    cancelAnimationFrame(animationFrameId.value);
+    animationFrameId.value = null;
+  }
+
+  const totalChars = targetText.length;
+  let currentIndex = displayedContent.value.length; // Resume from current position
+
+  // If target is shorter than what's displayed (reset happened), start fresh
+  if (currentIndex > totalChars) {
+    currentIndex = 0;
+    displayedContent.value = "";
+  }
+
+  const CHARS_PER_FRAME = 3; // Increase for faster, decrease for slower
+
+  function step() {
+    if (currentIndex >= totalChars) {
+      displayedContent.value = targetText;
+      animationFrameId.value = null;
+      return;
+    }
+
+    currentIndex = Math.min(currentIndex + CHARS_PER_FRAME, totalChars);
+    displayedContent.value = targetText.slice(0, currentIndex);
+    scrollToBottom();
+    animationFrameId.value = requestAnimationFrame(step);
+  }
+
+  animationFrameId.value = requestAnimationFrame(step);
+}
 </script>
 
 <style scoped>
