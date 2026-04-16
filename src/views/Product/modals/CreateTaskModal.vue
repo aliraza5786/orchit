@@ -166,9 +166,11 @@ const props = withDefaults(
     selectedVariable: any;
     pin?: Boolean;
     size?: string;
+    sprint_id?: string;
   }>(),
   { modelValue: false, size: "lg" }
 );
+
 const queryClient = useQueryClient();
 const { workspaceId, moduleId } = useRouteIds();
 const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
@@ -186,7 +188,9 @@ const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
 });
 const isPlanRoute = computed(() => route.path.includes("plan"));
 
-const sprintId = localStorage.getItem("activeSprintId") || "";
+const sprintId = computed(() => {
+  return props.sprint_id;
+})
 
 const { refetch: refetchSheetLists } = isPlanRoute.value
   ? useSprintKanban(sprintId, [], { enabled: false })
@@ -471,7 +475,7 @@ const payload = {
   seat_id: Array.isArray(form.assignees)
   ? form.assignees.map(u => u?._id || u?.id).filter(Boolean)
   : [],
-  sprint_id: localStorage.getItem("activeSprintId") || localStorage.getItem("activeSprintKey") || null,
+  sprint_id: sprintId.value || null,
   createdAt: new Date().toISOString(),
 };
 

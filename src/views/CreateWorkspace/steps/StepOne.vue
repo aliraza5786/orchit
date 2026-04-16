@@ -18,9 +18,9 @@
       </template>
     </BaseTextField>
 
-    <BaseSelectField v-model="form['workspace-type']" :options="workspaceTypeOptions" label="Workspace Type" size="lg"
+    <BaseSelectField class="" v-model="form['workspace-type']" :options="workspaceTypeOptions" label="Workspace Type" size="lg"
       :allowCustom="true" :message="ai ? 'AI suggested this name based on your description' : ''"
-      placeholder="e.g. for team" >
+      placeholder="e.g. For Team" >
       <template #msgIcon>
         <img src="../../../assets/icons/stars.svg" alt="" />
       </template>
@@ -222,4 +222,6 @@ input[type='radio'].peer {
   opacity: 0;
   pointer-events: none;
 }
+
+ 
 </style>

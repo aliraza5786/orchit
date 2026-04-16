@@ -172,8 +172,7 @@ import BaseRichTextEditor from '../../../components/ui/BaseRichTextEditor.vue'
 import DatePicker from '../../Product/components/DatePicker.vue'
 import AssigmentDropdown from '../../Product/components/AssigmentDropdown.vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useWorkspaceStore } from '../../../stores/workspace'
-import { useSidePanelStore } from '../../../stores/sidePanelStore'
+import { useWorkspaceStore } from '../../../stores/workspace' 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: boolean): void
   (e: 'created', payload: any): void
@@ -197,8 +196,7 @@ const selectedSheetId = ref<string | null>(null)
 const moduleIdForQuery = ref<string>('')
 const workspaceStore = useWorkspaceStore()
 const loadingModules = computed(() => !workspaceStore.singleWorkspace)
-const modules = computed(() => workspaceStore.singleWorkspace?.modules || [])
-const sidePanelStore = useSidePanelStore();
+const modules = computed(() => workspaceStore.singleWorkspace?.modules || []) 
 const { data: sheetsData, isFetching: loadingSheets, refetch: refetchSheet } = useSheets(
   {
     workspace_module_id: moduleIdForQuery,
@@ -447,8 +445,7 @@ function create() {
       ['start-date']: form.startDate,
       ['end-date']: form.endDate,
     },
-    seat_id: form.assignees.map((u: any) => u?._id || u?.id).filter(Boolean),
-    sprint_id: sidePanelStore.selectedMilestoneId || localStorage.getItem("activeMilestoneId") || null,
+    seat_id: form.assignees.map((u: any) => u?._id || u?.id).filter(Boolean), 
     createdAt: new Date().toISOString()
   }
 

@@ -42,8 +42,7 @@
       <div class="flex items-center gap-2 max-w-full overflow-hidden">
         <img v-if="selected?.icon" :src="selected.icon" class="w-4 h-4" />
         <span
-          v-if="!isOpen"
-          class="capitalize"
+          v-if="!isOpen" 
           :class="
             selected
               ? ' line-clamp-1 overflow-ellipsis '
@@ -56,7 +55,7 @@
           v-else
           ref="searchInputRef"
           v-model="searchQuery"
-          class="bg-transparent border-none outline-none w-full p-0 text-inherit capitalize placeholder:text-text-secondary"
+          class="bg-transparent border-none outline-none w-full p-0 text-inherit placeholder:text-text-secondary"
           :placeholder="selected?.title || placeholder"
           @click.stop
         />
