@@ -1,5 +1,5 @@
 <template>
-  <div class=" flex flex-col gap-4 h-full overflow-x-auto w-full flex-auto">
+  <div class="flex flex-col gap-4 h-full overflow-x-auto w-full flex-auto" ref="rootRef">
     <!-- Header / Overview -->
     <div class="p-5 rounded-[6px] bg-bg-card space-y-6 border border-border">
       <div class="flex items-center justify-between">
@@ -48,7 +48,7 @@
     </div>
 
     <!-- Right Column: Team Workload & Recent Activity -->
-<div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 items-stretch">    
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 items-stretch" :ref="el => registerSection(el as any)">    
 <ProjectPortfolio :data="projectPortfolio" :isLoading="isLoadingPortfolio" />
       <!-- Recent Activity -->
    <div class="bg-bg-card w-full p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
@@ -73,7 +73,7 @@
 
 
   <!-- Activity List -->
-  <div class="space-y-4 overflow-y-auto flex-1">
+  <div class="space-y-4 overflow-y-auto flex-1"  ref="activityItems">
     <!-- Loading State -->
     <template v-if="isLoadingActivities">
       <div
@@ -210,6 +210,7 @@
 
   <!-- Responsive Pagination -->
   <div
+  ref="paginationRef"
     v-if="pagination && pagination?.totalPages > 1"
     class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-4 border-t border-border"
   >
@@ -653,9 +654,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch, nextTick } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
+import gsap from 'gsap'
 import ProjectCard from '../components/feature/ProjectCard.vue'
 import { toParamString } from '../composables/useQueryParams'
 import { useDashboardActivities, useDashboardTeams, useProjectPortfolio, useUpcomingDeadlines } from '../queries/usePeople' 
@@ -670,12 +672,10 @@ import ProjectUpcomingDeadlines from '../components/peak/UpcomingDeadlines.vue'
 import PeakWidgets from '../components/peak/PeakWidgets.vue'
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
-
 const route = useRoute()
 const workspaceId = computed<string>(() => toParamString(route?.params?.id))
 const jobId = computed<string>(() => toParamString(route?.params?.job_id))
 const showAllActivities = ref(false)
-/** Types */
 interface LaneProgressRow {
   lane_title: string
   progress?: number
@@ -715,31 +715,60 @@ interface GroupedActivities {
   yesterday: Activity[]
   older: Activity[]
 }
-
-/** Current page for activities pagination */
+const sections = ref<HTMLElement[]>([])
+const registerSection = (el: Element | null) => {
+  if (el && el instanceof HTMLElement) {
+    sections.value.push(el)
+  }
+}
 const currentPage = ref(1)
-
-/** Pagination helper */
 const getPaginationRange = (): number[] => {
   if (!pagination.value) return []
-  
   const total = pagination.value.totalPages
   const current = currentPage.value
   const range: number[] = []
-
-  // Show pages around current page
-  // On mobile: show current and ±1 page
-  // On desktop: show current and ±2 pages
   const delta = window.innerWidth < 640 ? 1 : 2
-
   for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
     range.push(i)
   }
-
   return range
 }
+onMounted(async () => {
+  isStopped = false
+  connect()
+  sections.value = []
+  await nextTick()
 
-/** Group activities by date */
+  sections.value?.forEach((section) => {
+    gsap.fromTo(section,
+      {
+        opacity: 0,
+        y: 60,
+        scale: 0.96
+      },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.6,
+        ease: 'power3.out',
+
+        scrollTrigger: {
+          trigger: section,
+          start: 'top 85%',
+          end: 'top 30%',
+          toggleActions: 'play reverse play reverse',
+          // 👆 THIS enables scroll up = reverse animation
+        }
+      }
+    )
+  })
+})
+
+onUnmounted(() => {
+  isStopped = true
+  disconnect()
+})
 const groupedActivities = computed<GroupedActivities>(() => {
   if (!dashboardActiviesData.value?.activities?.length) {
     return { today: [], yesterday: [], older: [] }

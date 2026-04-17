@@ -30,22 +30,25 @@
 
         <!-- Options Container -->
         <div class="max-h-[300px] overflow-y-auto py-1">
-          <!-- Recently Used Section -->
-          <div v-if="!searchQuery" class="px-3 py-1.5">
-            <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Recently used</span>
-          </div>
-          <div 
-            v-if="!searchQuery"
-            @click="selectOption('priority')"
-            class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group"
-            :class="modelValue === 'priority' ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
-          >
-            <span class="text-xs">Priority</span>
-            <i v-if="modelValue === 'priority'" class="fa-solid fa-check text-[10px]"></i>
-          </div>
+          <!-- Watch and Track Section -->
+          <template v-if="!searchQuery && lastSelectedOption">
+            <div class="px-3 py-1.5">
+              <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Recent used</span>
+            </div>
+            <div 
+              @click="selectOption(lastSelectedOption.id)"
+              class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group"
+              :class="modelValue === lastSelectedOption.id ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
+            >
+              <div class="flex items-center gap-2">
+                 <span class="text-xs">{{ lastSelectedOption.label }}</span>
+              </div>
+              <i v-if="modelValue === lastSelectedOption.id" class="fa-solid fa-check text-[10px]"></i>
+            </div>
+          </template>
 
           <!-- All Fields Section -->
-          <div class="px-3 py-1.5 mt-1 border-t border-border/40">
+          <div v-if="filteredOptions.length > 0" class="px-3 py-1.5 mt-1 border-t border-border/40">
             <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">All fields</span>
           </div>
           
@@ -107,12 +110,26 @@ const allOptions = [
   { id: 'card_type', label: 'Card Type' },
 ];
 
+const lastSelectedGroup = ref(localStorage.getItem('last_selected_group') || '');
+
+const lastSelectedOption = computed(() => {
+  if (!lastSelectedGroup.value) return null;
+  return allOptions.find(o => o.id === lastSelectedGroup.value);
+});
+
 const filteredOptions = computed(() => {
   const q = searchQuery.value.toLowerCase();
-  return allOptions.filter(o => o.label.toLowerCase().includes(q));
+  return allOptions.filter(o => 
+    o.label.toLowerCase().includes(q) && 
+    o.id !== lastSelectedGroup.value
+  );
 });
 
 function selectOption(id: string) {
+  if (id !== props.modelValue && props.modelValue) {
+    localStorage.setItem('last_selected_group', props.modelValue);
+    lastSelectedGroup.value = props.modelValue;
+  }
   emit('update:modelValue', id);
   emit('close');
 }

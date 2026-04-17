@@ -158,7 +158,7 @@ import type { MaybeRef } from '@vueuse/core'
 
 export function useSheetList(
   module_id: MaybeRef<string | null | undefined>,
-  sheet_id: MaybeRef<string | null | undefined>,
+  sheet_ids: MaybeRef<string | null | undefined>,
   laneIds: MaybeRef<string[] | string | null | undefined>,
   view_by: MaybeRef<string | null | undefined>,
   extraParams?: MaybeRef<Record<string, any> | undefined>,
@@ -182,14 +182,14 @@ export function useSheetList(
   const queryKey = computed(() => [
     "sheet-list",
     unref(module_id),
-    unref(sheet_id),
+    unref(sheet_ids),
     unref(laneIdsParam),
     unref(view_by),
     unref(extraParams),
   ]);
 
   const enabled = computed(() =>
-    Boolean(unref(module_id) && unref(sheet_id) && unref(view_by))
+    Boolean(unref(module_id) && unref(sheet_ids))
   );
 
   return useQuery({
@@ -198,15 +198,25 @@ export function useSheetList(
     retry: 0,
 
     queryFn: async () => {
-      const params = {
+      const sId = unref(sheet_ids);
+      const formattedSheetId = Array.isArray(sId) ? sId.join(",") : sId;
+
+      const params: any = {
         module_id: unref(module_id),
-        sheet_id: unref(sheet_id),
-        variable_id: unref(view_by),
         ...(unref(laneIdsParam)
           ? { lane_ids: unref(laneIdsParam) }
           : {}),
         ...(unref(extraParams) || {}),
       };
+      
+      const viewByVal = unref(view_by);
+      if (viewByVal) {
+        params.variable_id = viewByVal;
+      }
+
+      if (formattedSheetId && formattedSheetId !== 'all') {
+        params.sheet_ids = formattedSheetId;
+      }
 
       return request({
         url: "/workspace/cards/grouped",
@@ -215,6 +225,72 @@ export function useSheetList(
       });
     },
 
+    ...options,
+  });
+}
+
+/**
+ * Dedicated flat cards query for Table View.
+ * Never passes variable_id — always returns ungrouped flat data.
+ * Used as the default data source for table view rows.
+ */
+export function useTableCards(
+  module_id: MaybeRef<string | null | undefined>,
+  sheet_ids: MaybeRef<string | null | undefined>,
+  laneIds: MaybeRef<string[] | string | null | undefined>,
+  extraParams?: MaybeRef<Record<string, any> | undefined>,
+  options: Omit<UseQueryOptions<any, any, any, any>, "queryKey" | "queryFn"> = {}
+) {
+  const laneIdsParam = computed<string | undefined>(() => {
+    const v = unref(laneIds);
+    if (v == null) return undefined;
+    if (Array.isArray(v)) {
+      const s = Array.from(
+        new Set(v.map((x) => String(x).trim()).filter(Boolean))
+      ).join(",");
+      return s || undefined;
+    }
+    const one = String(v).trim();
+    return one || undefined;
+  });
+
+  const queryKey = computed(() => [
+    "table-cards-flat",
+    unref(module_id),
+    unref(sheet_ids),
+    unref(laneIdsParam),
+    unref(extraParams),
+  ]);
+
+  const enabled = computed(() =>
+    Boolean(unref(module_id) && unref(sheet_ids))
+  );
+
+  return useQuery({
+    queryKey,
+    enabled,
+    retry: 0,
+    queryFn: async () => {
+      const sId = unref(sheet_ids);
+      const formattedSheetId = Array.isArray(sId) ? sId.join(",") : sId;
+
+      // NOTE: variable_id is intentionally NOT passed here
+      const params: any = {
+        module_id: unref(module_id),
+        ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam) } : {}),
+        ...(unref(extraParams) || {}),
+      };
+
+      if (formattedSheetId && formattedSheetId !== 'all') {
+        params.sheet_ids = formattedSheetId;
+      }
+
+      return request({
+        url: "/workspace/cards/grouped",
+        method: "GET",
+        params,
+      });
+    },
     ...options,
   });
 }
@@ -235,10 +311,12 @@ export const useVariables = (
     staleTime: 5 * 60 * 1000,
     queryFn: async ({ signal }) => {
       const resolvedModuleId = unref(module_id);
+      const sId = unref(sheetId);
+      const sheetIdParam = (sId && sId !== 'all') ? `?sheet_ids=${sId}` : '';
 
       const [variables, typesData] = await Promise.all([
         request({
-          url: `/workspace/catalog/${unref(workspace_id)}/card-variables/${resolvedModuleId}?sheet_id=${unref(sheetId)}`,
+          url: `/workspace/catalog/${unref(workspace_id)}/card-variables/${resolvedModuleId}${sheetIdParam}`,
           method: "GET",
           signal,
         }),

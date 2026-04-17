@@ -1202,6 +1202,7 @@ const props = defineProps<{
   selectedSheetId: string;
   selectedViewBy: string;
   workspaceId: string;
+  selectedSheetTitle?:string;
   moduleId: string;
   addingList: boolean;
   activeAddList: boolean;
@@ -3130,7 +3131,8 @@ function buildTree(sheets: any[]): MindNode {
 
   sheets.forEach((sheet) => {
     const title =
-      sheet.variables?.["sheet-title"] ||
+      props.selectedSheetTitle ||
+      localStorage.getItem("selected_sheet_title") ||
       localStorage.getItem("selectedSprintTitle") ||
       "Sheet";
 

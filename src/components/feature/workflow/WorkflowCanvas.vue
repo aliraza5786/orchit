@@ -545,8 +545,8 @@ function handleZoomEvent(e: Event) {
 
     <VueFlow
   v-else
-  v-model:nodes="nodes"
-  v-model:edges="edges"
+  v-model:nodes="(nodes as any)"
+  v-model:edges="(edges as any)"
   :default-edge-options="defaultEdgeOptions"
   :nodes-draggable="canEdit"
   :nodes-connectable="canEdit"

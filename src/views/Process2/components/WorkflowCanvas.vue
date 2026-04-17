@@ -513,12 +513,12 @@ watch(
   [nodes, () => props.canEdit],
   ([newNodes, canEdit]) => {
     // If editing is disabled, ensure the add button is removed
-    if (!canEdit) {
-       const btn = newNodes.find(n => n.id === 'add-button-node')
-       if (btn) removeEdges(btn.id) // wait, removeNodes
-       setNodes(newNodes.filter(n => n.id !== 'add-button-node'))
-       return;
-    }
+     if (!canEdit) {
+        const btn = newNodes.find(n => n.id === 'add-button-node')
+        if (btn) removeEdges(btn.id) // wait, removeNodes
+        setNodes(newNodes.filter(n => n.id !== 'add-button-node') as any)
+        return;
+     }
 
     // Filter out the add button itself to find the real last node
     const realNodes = newNodes.filter((n) => n.type !== 'custom-add-icon');
@@ -575,8 +575,8 @@ function triggerAddStatus() {
     <!-- <Loader v-if="isProcessPending || isProcessFetching" /> -->
 
     <VueFlow
-  v-model:nodes="nodes"
-  v-model:edges="edges"
+  v-model:nodes="(nodes as any)"
+  v-model:edges="(edges as any)"
   :default-edge-options="defaultEdgeOptions"
   :nodes-draggable="canEdit"
   :nodes-connectable="canEdit"

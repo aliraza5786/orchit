@@ -209,6 +209,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick, type CSSProperties } from 'vue';
+import { onClickOutside } from "@vueuse/core";
 import { computePosition, autoUpdate, flip, shift, offset } from "@floating-ui/dom";
 import DatePicker from "./DatePicker.vue";
 import Button from "../../../components/ui/Button.vue";
@@ -220,7 +221,6 @@ import SwitchTab from "../../../components/ui/SwitchTab.vue";
 
 const props = defineProps<{
   triggerRef: HTMLElement | null;
-  sheets: any[];
   variables: any[];
   workspaceId: string;
   moduleId: string;
@@ -230,7 +230,7 @@ const props = defineProps<{
 const emit = defineEmits(['apply', 'clear', 'close']);
 
 const dropdownRef = ref<HTMLElement | null>(null);
-const activeCategory = ref('sheets');
+const activeCategory = ref('assignees');
 const searchQuery = ref('');
 const searchInput = ref<HTMLInputElement | null>(null);
 const isVisible = ref(false);
@@ -245,7 +245,6 @@ const dropdownStyles = ref<CSSProperties>({
 let cleanupFloating: (() => void) | null = null;
 
 const categories = [
-  { id: 'sheets', label: 'Module Sheets', icon: 'fa-solid fa-layer-group' },
   { id: 'assignees', label: 'Assignees', icon: 'fa-solid fa-user-group' },
   { id: 'priority', label: 'Priority', icon: 'fa-solid fa-arrow-up-wide-short' },
   { id: 'status', label: 'Status', icon: 'fa-solid fa-circle-check' },
@@ -261,7 +260,6 @@ const dateCategories = [
 ];
 
 const localFilters = ref<any>({
-  sheet_ids: [],
   seat_ids: [],
   priority: [],
   status: [],
@@ -374,6 +372,11 @@ watch(activeCategory, () => {
   nextTick(() => searchInput.value?.focus());
 });
 
+onClickOutside(dropdownRef, (e) => {
+  if (props.triggerRef?.contains(e.target as Node)) return;
+  emit('close');
+}, { ignore: ['.dp__menu', '.dp__outer_menu_wrap'] });
+
 const { data: roles } = useWorkspacesRoles(computed(() => props.workspaceId));
 const { data: groupedPlanPoints } = useGroupedSprints(computed(() => props.workspaceId));
 
@@ -383,11 +386,6 @@ const currentCategoryLabel = computed(() => {
 
 const currentOptions = computed(() => {
   switch (activeCategory.value) {
-    case 'sheets':
-      return props.sheets.map(s => ({ 
-        _id: s._id, 
-        title: s.title || s.variables?.['sheet-title'] || 'Unnamed Sheet' 
-      }));
     case 'assignees':
       return (roles.value || []).map((r: any) => ({
         _id: r._id,
@@ -511,7 +509,6 @@ function toggleOption(id: any) {
 
 function getFilterKey(cat: string) {
   switch (cat) {
-    case 'sheets': return 'sheet_ids';
     case 'assignees': return 'seat_ids';
     case 'priority': return 'priority';
     case 'status': return 'status';

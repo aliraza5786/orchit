@@ -92,6 +92,10 @@
               >
                 <!-- Left: icon/prefix -->
                 <div class="flex items-center gap-2 min-w-0 flex-1">
+                  <!-- Checkbox for multi-select -->
+                  <div v-if="multiple" class="flex-shrink-0 pointer-events-none">
+                    <Checkbox :checked="isOptionSelected(option)" />
+                  </div>
                   <span v-if="option.prefix" :class="iconWrapSizeClass">
                     <img
                       v-if="typeof option.prefix === 'string'"
@@ -229,6 +233,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount, nextTick } from "vue";
+import Checkbox from "./Checkbox.vue";
 import { onClickOutside } from "@vueuse/core";
 import {
   computePosition,
@@ -259,7 +264,7 @@ const props = withDefaults(
   defineProps<{
     prefix?: string;
     options: Option[];
-    modelValue: string;
+    modelValue: string | string[];
     variant?: "secondary" | "primary";
     icon?: IconData;
     size?: "sm" | "md";
@@ -269,6 +274,7 @@ const props = withDefaults(
     customClasses?: string;
     customTitle?: string;
     isAgent?:boolean;
+    multiple?: boolean;
   }>(),
   {
     options: () => [],
@@ -279,6 +285,7 @@ const props = withDefaults(
     canEdit: true,
     canDelete: true,
     customClasses: "",
+    multiple: false,
   },
 );
 
@@ -287,6 +294,8 @@ const emit = defineEmits([
   "edit-option",
   "delete-option",
   "nested-select",
+  "open",
+  "close"
 ] as const);
 
 const open = ref(false);
@@ -307,13 +316,27 @@ const selected = computed({
 });
 
 const selectedOption = computed(
-  () => props.options.find((opt) => opt._id === selected.value) ?? null,
+  () => {
+    if (props.multiple && Array.isArray(selected.value)) {
+      // For multi-select, we might just return the first selected or handle specialized display
+      return props.options.find((opt) => opt._id === (selected.value as string[])[0]) ?? null;
+    }
+    return props.options.find((opt) => opt._id === selected.value) ?? null;
+  }
 );
+
+function isOptionSelected(option: Option) {
+  if (props.multiple && Array.isArray(selected.value)) {
+    return selected.value.includes(option._id);
+  }
+  return selected.value === option._id;
+}
 
 function toggle() {
   if (open.value) {
     closeDropdown();
   } else {
+    emit("open");
     open.value = true;
     nextTick(() => {
       startFloating();
@@ -322,6 +345,7 @@ function toggle() {
 }
 
 function closeDropdown() {
+  if (open.value) emit("close");
   open.value = false;
   openNestedId.value = null;
   if (cleanupFloating) {
@@ -342,6 +366,14 @@ function startFloating() {
 const truncate = (text:any, limit = 12) =>
   text?.length > limit ? text.slice(0, limit) + '...' : text;
   const displayTitle = computed(() => {
+  if (props.multiple && Array.isArray(selected.value)) {
+    if (selected.value.length === 0) return truncate(props.customTitle);
+    if (selected.value.length === 1) {
+      const opt = props.options.find(o => o._id === (selected.value as string[])[0]);
+      return truncate(opt?.title || props.customTitle);
+    }
+    return `${selected.value.length} selected`;
+  }
   if (selectedOption?.value?.title) {
     return truncate(selectedOption.value.title);
   }
@@ -379,13 +411,23 @@ function updatePosition() {
 
 /** Keep menu open for actions; only close on outside click or explicit toggle */
 function select(option: Option) {
-  selected.value = option._id;
-  // clear stale nested value
-  if (!option.nested?.length) {
-    selectedNested.value = null;
+  if (props.multiple) {
+    const currentSelected = Array.isArray(selected.value) ? [...selected.value] : (selected.value ? [selected.value] : []);
+    const index = currentSelected.indexOf(option._id);
+    if (index > -1) {
+      currentSelected.splice(index, 1);
+    } else {
+      currentSelected.push(option._id);
+    }
+    selected.value = currentSelected;
+  } else {
+    selected.value = option._id;
+    // clear stale nested value
+    if (!option.nested?.length) {
+      selectedNested.value = null;
+    }
+    closeDropdown();
   }
-
-  closeDropdown();
 }
 
 /* ------- Nested & Actions state ------- */
