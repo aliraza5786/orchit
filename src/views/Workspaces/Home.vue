@@ -61,18 +61,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import Button from '../../components/ui/Button.vue'
 import ProjectGallery from '../../components/ui/ProjectGallery.vue'
 import WorkspaceListTable from './components/WorkspaceListTable.vue'
 import { useWorkspaces } from '../../queries/useWorkspace'
 import { useWorkspaceStore } from '../../stores/workspace'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import BaseSelectField from '../../components/ui/BaseSelectField.vue'
-
+ // @ts-ignore
+import confetti from 'canvas-confetti'
 const router = useRouter()
 const workspaceStore = useWorkspaceStore()
-
+const route = useRoute()
 // pagination + sort + filter state
 const page = ref(1)
 type View = 'list' | 'gallery'
@@ -94,6 +95,43 @@ const filterOptions = [
 const { data: workspaces, isPending, isFetching } = useWorkspaces(page, pageSize, filter)
 
 const isLoading = computed(() => isPending.value || isFetching.value)
+function launchConfetti() {
+  const duration = 2000
+  const end = Date.now() + duration
 
+  const colors = ['#7c5cfc', '#22c55e', '#f59e0b', '#ef4444']
+
+  const frame = () => {
+    confetti({
+      particleCount: 6,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0 },
+      colors
+    })
+
+    confetti({
+      particleCount: 6,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1 },
+      colors
+    })
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame)
+    }
+  }
+
+  frame()
+}
+onMounted(() => {
+  if (route.query.welcome === '1') {
+    launchConfetti()
+
+    // clean URL so it doesn't repeat on refresh
+    router.replace({ path: '/dashboard' })
+  }
+})
 // const isEmpty = computed(() => !workspaces.value?.workspaces?.length)
 </script>
