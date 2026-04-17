@@ -158,7 +158,7 @@ import type { MaybeRef } from '@vueuse/core'
 
 export function useSheetList(
   module_id: MaybeRef<string | null | undefined>,
-  sheet_id: MaybeRef<string | null | undefined>,
+  sheet_ids: MaybeRef<string | null | undefined>,
   laneIds: MaybeRef<string[] | string | null | undefined>,
   view_by: MaybeRef<string | null | undefined>,
   extraParams?: MaybeRef<Record<string, any> | undefined>,
@@ -182,14 +182,14 @@ export function useSheetList(
   const queryKey = computed(() => [
     "sheet-list",
     unref(module_id),
-    unref(sheet_id),
+    unref(sheet_ids),
     unref(laneIdsParam),
     unref(view_by),
     unref(extraParams),
   ]);
 
   const enabled = computed(() =>
-    Boolean(unref(module_id) && unref(sheet_id) && unref(view_by))
+    Boolean(unref(module_id) && unref(view_by) && unref(sheet_ids))
   );
 
   return useQuery({
@@ -198,15 +198,21 @@ export function useSheetList(
     retry: 0,
 
     queryFn: async () => {
-      const params = {
+      const sId = unref(sheet_ids);
+      const formattedSheetId = Array.isArray(sId) ? sId.join(",") : sId;
+
+      const params: any = {
         module_id: unref(module_id),
-        sheet_id: unref(sheet_id),
         variable_id: unref(view_by),
         ...(unref(laneIdsParam)
           ? { lane_ids: unref(laneIdsParam) }
           : {}),
         ...(unref(extraParams) || {}),
       };
+
+      if (formattedSheetId && formattedSheetId !== 'all') {
+        params.sheet_ids = formattedSheetId;
+      }
 
       return request({
         url: "/workspace/cards/grouped",
@@ -235,10 +241,12 @@ export const useVariables = (
     staleTime: 5 * 60 * 1000,
     queryFn: async ({ signal }) => {
       const resolvedModuleId = unref(module_id);
+      const sId = unref(sheetId);
+      const sheetIdParam = (sId && sId !== 'all') ? `?sheet_ids=${sId}` : '';
 
       const [variables, typesData] = await Promise.all([
         request({
-          url: `/workspace/catalog/${unref(workspace_id)}/card-variables/${resolvedModuleId}?sheet_id=${unref(sheetId)}`,
+          url: `/workspace/catalog/${unref(workspace_id)}/card-variables/${resolvedModuleId}${sheetIdParam}`,
           method: "GET",
           signal,
         }),

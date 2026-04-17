@@ -7,6 +7,8 @@
         <div class="flex gap-3">
         <!-- ... Sheet Dropdown ... -->
         <Dropdown
+          ref="sheetDropdownRef"
+          @open="closeAllDropdowns('sheet')"
           @edit-option="openEditSprintModal"
           v-model="selected_sheet_id"
           :canEdit="canEditSheet"
@@ -15,8 +17,8 @@
           :options="transformedData"
           variant="secondary"
           customClasses="fixed w-auto"
-          ref="sheetDropdownRef"
           custom-title="Create Sheet"
+          :multiple="true"
         >
           <template #more>
             <div
@@ -32,7 +34,7 @@
         <div class="relative flex items-center gap-3">
             <button
               ref="filterTriggerRef"
-              @click="showFilterBar = !showFilterBar"
+              @click="toggleFilters"
               class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
               :class="showFilterBar ? 'border-accent' : 'border-border'"
             >
@@ -58,7 +60,6 @@
             <ProductFilters
               v-if="showFilterBar"
               :triggerRef="filterTriggerRef"
-              :sheets="data || []"
               :variables="variables"
               :workspaceId="workspaceId"
               :moduleId="moduleId"
@@ -73,7 +74,7 @@
         <div v-if="view === 'table'" class="relative flex items-center gap-3">
             <button
                 ref="groupTriggerRef"
-                @click="showGroupDropdown = !showGroupDropdown"
+                @click="toggleGroupDropdown"
                 class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
                 :class="showGroupDropdown ? 'border-accent text-accent' : 'border-border text-text-primary'"
             >
@@ -96,8 +97,9 @@
           :class="{ 'opacity-60 pointer-events-none': !transformedData?.length }"
         >
           <Dropdown
-            v-if="view == 'kanban' || 'mindmap'"
             ref="variableDropdownRef"
+            @open="closeAllDropdowns('variable')"
+            v-if="view == 'kanban' || 'mindmap'"
             :actions="false"
             v-model="selected_view_by"
             :options="variables"
@@ -311,7 +313,7 @@
     <!-- ── MindMap View ────────────────────────────────────────────────────── -->
     <template v-if="view === 'mindmap'">
       <MindMapView
-        :listsData="Lists?.data ?? []"
+        :listsData="Lists?.sheets[0]?.sheet_lists ?? []"
         :selectedSheetId="selected_sheet_id"
         :selectedViewBy="selected_view_by"
         :workspaceId="workspaceId"
@@ -408,7 +410,7 @@
   <CreateTaskModal
     :selectedVariable="selected_view_by"
     :listId="localColumnData?.title"
-    :sheet_id="selected_sheet_id"
+    :sheet_id="selected_sheet_id === 'all' ? sheetId : selected_sheet_id"
     v-if="createTeamModal"
     key="createTaskModalKey"
     v-model="createTeamModal"
@@ -427,7 +429,7 @@
     @closeSidePanel="closeSidePanel"
     @comment:post="incrementCommentCount"
     :showPanel="selectedCard?._id ? true : false"
-    :sheetID="selected_sheet_id"
+    :sheetID="selected_sheet_id === 'all' ? sheetId : selected_sheet_id"
   />
 
   <CreateSheetModal
@@ -439,7 +441,7 @@
   <CreateVariableModal
     v-model="isCreateVar"
     v-if="isCreateVar"
-    :sheetID="selected_sheet_id"
+    :sheetID="selected_sheet_id === 'all' ? sheetId : selected_sheet_id"
   />
 
   <ConfirmDeleteModal
@@ -773,7 +775,6 @@ const formattedExtraParams = computed(() => {
   typeof val === "string" ? val.toLowerCase() : val;
   return {
     ...listProcessPayload.value,
-    ...(f.sheet_ids?.length ? { sheet_ids: f.sheet_ids.join(",") } : {}),
     ...(f.seat_ids?.length ? { seat_ids: f.seat_ids.join(",") } : {}),
     priority: toLower(f.priority),
     status: toLower(f.status),
@@ -807,6 +808,25 @@ const activeFilterCount = computed(() => {
   });
   return count;
 });
+
+const closeAllDropdowns = (except?: string) => {
+  if (except !== 'filter') showFilterBar.value = false;
+  if (except !== 'group') showGroupDropdown.value = false;
+  if (except !== 'sheet') sheetDropdownRef.value?.closeDropdown();
+  if (except !== 'variable') variableDropdownRef.value?.closeDropdown();
+};
+
+const toggleFilters = () => {
+  const willShow = !showFilterBar.value;
+  if (willShow) closeAllDropdowns('filter');
+  showFilterBar.value = willShow;
+};
+
+const toggleGroupDropdown = () => {
+  const willShow = !showGroupDropdown.value;
+  if (willShow) closeAllDropdowns('group');
+  showGroupDropdown.value = willShow;
+};
 
 const hasActiveFilters = computed(() => activeFilterCount.value > 0);
 
@@ -894,7 +914,7 @@ function onReorder(a: any) {
           group_value: a.meta.fromColumnId,
           group_variable_id: selected_view_by.value,
           new_index: a.meta.newIndex,
-          sheet_id: selected_sheet_id.value,
+          sheet_id: selected_sheet_id.value === 'all' ? (a.meta.moved.sheet_id || sheetId.value) : selected_sheet_id.value,
         },
       },
       {
@@ -921,13 +941,11 @@ interface DropdownOption {
 }
 
 const transformedData = computed<DropdownOption[]>(() => {
-  console.log(data.value, "format data options");
-
-  return (data.value || []).map((item: any) => {
-   const icon =
-  item?.icon ??
-  item?.variables?.["sheet-icon"] ??
-  { prefix: "fa-solid", iconName: "fa-file" };
+  const options = (data.value || []).map((item: any) => {
+    const icon =
+      item?.icon ??
+      item?.variables?.["sheet-icon"] ??
+      { prefix: "fa-solid", iconName: "fa-file" };
 
     return {
       _id: item._id,
@@ -935,8 +953,17 @@ const transformedData = computed<DropdownOption[]>(() => {
       description: item?.variables?.["sheet-description"],
       icon,
       status: item?.generation_status,
-    };
+    } as any;
   });
+
+  if (options.length > 0) {
+    options.unshift({
+      _id: "all",
+      title: "All sheet",
+      icon: { prefix: "fa-solid", iconName: "fa-layer-group" },
+    } as any);
+  }
+  return options;
 });
 
 watch(
@@ -967,16 +994,52 @@ watch(
 
 watch(
   selected_sheet_id,
-  (newId) => {
-    if (!newId) return;
+  (newVal, oldVal) => {
+    if (!newVal) return;
+    
+    // Handle "All sheet" logic: mutual exclusivity
+    if (Array.isArray(newVal)) {
+      const hadAll = oldVal === 'all' || (Array.isArray(oldVal) && oldVal.includes('all'));
+      const hasAll = newVal.includes('all');
+      
+      let finalVal = [...newVal];
+      
+      if (hasAll && !hadAll) {
+        // If "All" was just selected, unselect everything else
+        finalVal = ['all'];
+      } else if (hasAll && newVal.length > 1) {
+        // If "All" was already selected and a new sheet was selected, unselect "All"
+        finalVal = newVal.filter(id => id !== 'all');
+      }
+      
+      // Ensure specific output format: string if single, array if multiple
+      if (finalVal.length === 1) {
+        const singleId = finalVal[0];
+        if (selected_sheet_id.value !== singleId) {
+          selected_sheet_id.value = singleId;
+          return;
+        }
+      } else if (finalVal.length > 1) {
+        if (JSON.stringify(selected_sheet_id.value) !== JSON.stringify(finalVal)) {
+          selected_sheet_id.value = finalVal;
+          return;
+        }
+      }
+    }
+
+    const currentId = Array.isArray(newVal) ? newVal[0] : newVal;
     const selectedSheet = transformedData.value.find(
-      (item) => item._id === newId,
+      (item) => item._id === currentId,
     );
     if (selectedSheet) {
       agentStore.saveSelectedSheetTitle(selectedSheet.title);
-      agentStore.saveSelectedSheetId(newId);
+      agentStore.saveSelectedSheetId(currentId);
       sheetName.value = selectedSheet.title || "";
-    }else {
+    } else if (currentId === 'all') {
+      agentStore.saveSelectedSheetTitle("All sheet");
+      agentStore.saveSelectedSheetId("all");
+      sheetName.value = "All sheet";
+    } else {
       agentStore.saveSelectedSheetTitle(sheetTitle.value);
       agentStore.saveSelectedSheetId(sheetId.value);
       sheetName.value = "";
@@ -1097,7 +1160,7 @@ watch(
 );
 
 const fuse = computed(() => {
-  const lists = Lists.value?.data || [];
+  const lists = Lists.value?.sheets?.[0]?.sheet_lists || [];
   const allCards = lists.flatMap((col: any) =>
     (col.cards || []).map((card: any) => {
       const descVar = Array.isArray(card.variables)
@@ -1117,20 +1180,20 @@ const fuse = computed(() => {
 });
 
 const filteredBoard = computed(() => {
+  const query = debouncedQuery.value?.trim();
   if (view.value === "kanban") {
-    if (!searchQuery.value) return Lists.value?.data;
+    if (!query) return Lists.value?.sheets[0]?.sheet_lists;
     const results = fuse.value
-      .search(searchQuery.value)
+      .search(query)
       .map((r: any) => r.item);
-    return Lists.value?.data?.map((col: any) => ({
+    return Lists.value?.sheets[0]?.sheet_lists?.map((col: any) => ({
       ...col,
       cards: results.filter((c: any) => c.columnId === col.title),
     }));
   } else {
-    const query = searchQuery.value?.trim();
     if (!query) {
       let array: any = [];
-      (Lists.value?.data ?? []).forEach((col: any) => {
+      (Lists.value?.sheets[0]?.sheet_lists ?? []).forEach((col: any) => {
         array = [...array, ...col?.cards];
       });
 
@@ -1321,7 +1384,7 @@ const assignHandle = (row: any, users: any[]) => {
 
 const normalizedTableData = computed(() => {
   let array: any = [];
-  (Lists.value?.data ?? []).forEach((col: any) => {
+  (Lists.value?.sheets[0]?.sheet_lists ?? []).forEach((col: any) => {
     array = [...array, ...col?.cards];
   });
   return array;
@@ -1332,9 +1395,9 @@ const getOptions = (options: any) =>
 
 // ─── Optimistic Updates ───────────────────────────────────────────────────────
 const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
-  if (!Lists.value?.data) return false;
+  if (!Lists.value?.sheets[0]?.sheet_lists) return false;
   let found = false;
-  const newLists = Lists.value?.data?.map((column: any) => {
+  const newLists = Lists.value?.sheets[0]?.sheet_lists?.map((column: any) => {
     const newCards = (column.cards || []).map((card: any) => {
       if (card._id !== cardId) return card;
       found = true;
@@ -1634,7 +1697,7 @@ function incrementCommentCount({ cardId }: { cardId: string }) {
 }
 
 const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
-  const cols = Lists.value?.data || [];
+  const cols = Lists.value?.sheets[0]?.sheet_lists || [];
   if (!Array.isArray(cols)) return;
   for (const column of cols) {
     if (!column.cards) continue;
