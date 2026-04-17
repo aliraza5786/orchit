@@ -620,7 +620,6 @@ const selectedDeleteId = ref<string | null>(null);
 const isDeletingTicket = ref(false);
 const view = ref("kanban");
 const isCreateVar = ref(false);
-const variableDropdownRef = ref<any>(null);
 const sheetDropdownRef = ref<any>(null);
 const route = useRoute();
 const { workspaceId, moduleId } = useRouteIds();
@@ -1592,11 +1591,6 @@ const assignHandle = (row: any, users: any[]) => {
     checkAndCreateTicket(row);
   }
 };
-
-const normalizedTableData = computed(() => {
-  // Flatten all cards from the flat-table API response (sheets structure)
-  return flattenSheetListCards(FlatTableData.value);
-});
 
 const getOptions = (options: any) =>
   options.map((el: any) => ({ _id: el.value ?? el, title: el.value ?? el }));

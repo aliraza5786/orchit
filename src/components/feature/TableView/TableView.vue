@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col h-[calc(100vh-140px)] relative rounded-[6px] mt-4 overflow-hidden border border-border/60">
+  <div class="flex flex-col h-[calc(100vh-160px)] relative rounded-[6px] mt-4 overflow-hidden border border-border/60">
     <div ref="tableViewport" class="kanban-table flex-1 overflow-y-auto overflow-x-auto rounded-[6px]">
       <table class="w-full table-fixed border-collapse shadow-sm 
                bg-bg-body/20 text-sm">
@@ -640,31 +640,9 @@ const finishEdit = (ticket: Row) => {
   stopEditing()
   emit('update:rows', tickets.slice())
   emit('create', ticket)
-}
+} 
+ 
 
-import { useAuthStore } from '../../../stores/auth';
-const authStore = useAuthStore();
-
-const insertEmptyRow = (index: number) => {
-  const newRow: Row = { id: Date.now() }
-  const currentUser = authStore.user?.data;
-
-  props.columns.forEach(col => {
-    if (col.key === 'created_by' && currentUser) {
-      newRow[col.key] = {
-        u_full_name: currentUser.u_full_name,
-        u_profile_image: currentUser.u_profile_image,
-        u_email: currentUser.u_email
-      }
-    } else {
-      newRow[col.key] = ''
-    }
-  })
-  tickets.splice(index, 0, newRow)
-  editField(newRow, props.columns[0]?.key || '')
-  hoverIndex.value = null
-  emit('update:rows', tickets.slice())
-}
 function getByPath(obj: any, path: string): any {
   if (!obj || !path) return undefined
   if (!path.includes('.')) return obj[path]
