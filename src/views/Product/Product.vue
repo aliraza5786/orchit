@@ -320,6 +320,7 @@
         :moduleId="moduleId"
         :addingList="!!addingList"
         :activeAddList="activeAddList"
+        :selectedSheetTitle="sheetTitle"
         :newColumn="newColumn"
         :canCreateCard="canCreateCard"
         :canEditCard="canEditCard"

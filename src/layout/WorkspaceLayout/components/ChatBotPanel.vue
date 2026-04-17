@@ -5,7 +5,7 @@
       'flex h-full overflow-y-auto rounded-xl border border-border/60 overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
       isExpanded
         ? 'min-w-full max-w-full'
-        : 'min-w-full max-w-[24%] sm:min-w-[400px]',
+        : 'min-w-full max-w-[37%] sm:min-w-[400px]',
     ]"
     :style="{
       background:
@@ -17,8 +17,8 @@
   >
     <!-- ==================== LEFT: PREVIEW MODAL ==================== -->
     <div
-      v-if="isExpanded && !showConfigPanel && entities?.length > 0"
-      class="w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
+      v-if="isExpanded && !showConfigPanel"
+      class="xl:w-[80%] lg:w-[76%] md:w-[60%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
         @accept="acceptChanges"
@@ -30,8 +30,8 @@
 
     <!-- ==================== LEFT: CONFIG PANEL ==================== -->
     <div
-      v-if="isExpanded && (showConfigPanel || !entities?.length)"
-      class="w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
+      v-if="isExpanded && (showConfigPanel)"
+      class="md:w-[55%] lg:w-[70%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
     >
       <!-- HEADER -->
       <div
@@ -833,7 +833,7 @@
 
     <!-- ==================== RIGHT: CHAT PANEL ==================== -->
     <div
-      :class="isExpanded ? 'w-[38%]' : 'w-full'"
+      :class="isExpanded ? 'w-[40%]' : 'w-full'"
       class="border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden"
     >
       <!-- Chat Header -->
@@ -965,6 +965,12 @@
             <!-- Bubble -->
             <div class="relative max-w-[82%] flex flex-col">
               <div
+    v-if="msg.type === 'assistant' && !msg.content"
+    class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md"
+  >
+    Unable to generate a response. Please try again.
+  </div>
+              <div v-else
                 class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative"
                 :class="
                   msg.type === 'user'
@@ -2500,7 +2506,7 @@ const isManuallyExpanded = ref(false);
 
 const isExpanded = computed(() => {
   return (
-    isManuallyExpanded.value || showConfigPanel.value || entities.value?.length
+    isManuallyExpanded.value || showConfigPanel.value || (entities.value[0] as any)?.payload?.workspace_id
   );
 });
 const showConfigPanel = ref(false);
