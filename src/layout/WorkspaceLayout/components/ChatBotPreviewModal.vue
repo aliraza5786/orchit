@@ -282,89 +282,95 @@
 
         <!-- ================= READ ACTION (non-plan) ================= -->
         <template v-else-if="isReadAction && !isPlanModule">
-          <div
-            v-for="card in fetchedItems"
-            :key="card.id || card._id"
-            @click="selectedCard = card"
-            class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 w-full md:w-[calc(25%-0.75rem)] flex flex-col"
-            :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
-          >
-            <!-- Top row: badges + share -->
-            <div class="flex justify-between gap-2 items-start mb-3">
-              <div class="flex gap-2 flex-wrap items-center">
-                <span
-                  v-if="card['card-type']"
-                  class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
-                >
-                  {{ card['card-type'] || 'General' }}
-                </span>
-                <span
-                  v-if="card['card-status']"
-                  class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
-                >
-                  {{ card['card-status'] }}
-                </span>
-                <span
-                  v-if="card.priority || card['card-priority']"
-                  class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
-                >
-                  {{ card.priority || card['card-priority'] }}
-                </span>
-              </div>
-              <button
-                class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
-                @click="nativeShare(card)"
-                title="Share this Ticket"
-              >
-                <i class="fa-light fa-share text-xs"></i>
-              </button>
-            </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+  <div
+    v-for="card in fetchedItems"
+    :key="card.id || card._id"
+    @click="selectedCard = card"
+    class="relative bg-bg-card rounded-lg cursor-pointer p-4 shadow-sm border-t-4 hover:shadow-md transition-all duration-200 flex flex-col"
+    :style="{ borderTopColor: getPriorityColor(card.priority || card['card-priority']) }"
+  >
+    <!-- Top row -->
+    <div class="flex justify-between gap-2 items-start mb-3">
+      <div class="flex gap-2 flex-wrap items-center">
+        <span
+          v-if="card['card-type']"
+          class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium capitalize"
+        >
+          {{ card['card-type'] || 'General' }}
+        </span>
 
-            <!-- Title -->
-            <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
-              {{ card['card-title'] || card.title }}
-            </h3>
+        <span
+          v-if="card['card-status']"
+          class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize"
+        >
+          {{ card['card-status'] }}
+        </span>
 
-            <!-- Description -->
-            <div
-              v-if="card['card-description']"
-              class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
-              v-html="card['card-description']"
-            />
+        <span
+          v-if="card.priority || card['card-priority']"
+          class="text-[10px] px-2 py-1 h-6 rounded bg-orange-500/15 text-orange-500 font-medium capitalize"
+        >
+          {{ card.priority || card['card-priority'] }}
+        </span>
+      </div>
 
-            <!-- Footer -->
-            <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
-              <div class="flex items-center gap-2 flex-1">
-                <div @click.stop v-if="canAssignCard || canViewCard">
-                  <AssigmentDropdown
-                    :users="members"
-                    :assigneeId="card.seat_id"
-                    @assign="assignHandle(card)"
-                  />
-                </div>
-                <div @click.stop class="flex items-center text-nowrap overflow-ellipsis">
-                  <DatePicker
-                    placeholder="end date"
-                    :model-value="card['end-date']"
-                    theme="dark"
-                    emit-as="ymd"
-                    @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
-                  />
-                </div>
-              </div>
-              <div class="flex items-center gap-3">
-                <div v-if="card?.comments_count" class="flex items-center gap-1">
-                  <i class="fa-regular fa-message text-[10px]"></i>
-                  <span>{{ card.comments_count }}</span>
-                </div>
-                <div v-if="card?.attachments?.length" class="flex items-center gap-1">
-                  <i class="fa-regular fa-file text-[10px]"></i>
-                  <span>{{ card.attachments.length }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+      <button
+        class="cursor-pointer text-text-secondary hover:text-accent transition-colors flex-shrink-0"
+        @click="nativeShare(card)"
+      >
+        <i class="fa-light fa-share text-xs"></i>
+      </button>
+    </div>
 
+    <!-- Title -->
+    <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+      {{ card['card-title'] || card.title }}
+    </h3>
+
+    <!-- Description -->
+    <div
+      v-if="card['card-description']"
+      class="text-xs text-text-secondary mb-3 line-clamp-2 max-h-20"
+      v-html="card['card-description']"
+    />
+
+    <!-- Footer -->
+    <div class="flex justify-between items-center mt-auto pt-1.5 border-t border-border/50 text-xs text-text-secondary">
+      <div class="flex items-center gap-2 flex-1">
+        <div @click.stop v-if="canAssignCard || canViewCard">
+          <AssigmentDropdown
+            :users="members"
+            :assigneeId="card.seat_id"
+            @assign="assignHandle(card)"
+          />
+        </div>
+
+        <div @click.stop>
+          <DatePicker
+            placeholder="end date"
+            :model-value="card['end-date']"
+            theme="dark"
+            emit-as="ymd"
+            @update:modelValue="(date) => setDueDate(date, card?.id || card?._id)"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div v-if="card?.comments_count" class="flex items-center gap-1">
+          <i class="fa-regular fa-message text-[10px]"></i>
+          <span>{{ card.comments_count }}</span>
+        </div>
+
+        <div v-if="card?.attachments?.length" class="flex items-center gap-1">
+          <i class="fa-regular fa-file text-[10px]"></i>
+          <span>{{ card.attachments.length }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
           <!-- Empty state -->
           <div v-if="!fetchedItems.length" class="w-full text-center py-10 text-text-secondary">
             No cards found
