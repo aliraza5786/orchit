@@ -1,5 +1,5 @@
 <template>
-  <div class=" flex flex-col gap-4 h-full overflow-x-auto w-full flex-auto">
+  <div class="flex flex-col gap-4 h-full overflow-x-auto w-full flex-auto" ref="rootRef">
     <!-- Header / Overview -->
     <div class="p-5 rounded-[6px] bg-bg-card space-y-6 border border-border">
       <div class="flex items-center justify-between">
@@ -48,7 +48,7 @@
     </div>
 
     <!-- Right Column: Team Workload & Recent Activity -->
-<div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 items-stretch">    
+<div class="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4 items-stretch" ref="sections">    
 <ProjectPortfolio :data="projectPortfolio" :isLoading="isLoadingPortfolio" />
       <!-- Recent Activity -->
    <div class="bg-bg-card w-full p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
@@ -73,7 +73,7 @@
 
 
   <!-- Activity List -->
-  <div class="space-y-4 overflow-y-auto flex-1">
+  <div class="space-y-4 overflow-y-auto flex-1"  ref="activityItems">
     <!-- Loading State -->
     <template v-if="isLoadingActivities">
       <div
@@ -210,6 +210,7 @@
 
   <!-- Responsive Pagination -->
   <div
+  ref="paginationRef"
     v-if="pagination && pagination?.totalPages > 1"
     class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 mt-4 border-t border-border"
   >
@@ -653,7 +654,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, defineComponent, h, watch, nextTick } from 'vue'
 import { useQueryClient } from '@tanstack/vue-query'
 import { useRoute } from 'vue-router'
 import ProjectCard from '../components/feature/ProjectCard.vue'
@@ -715,7 +716,7 @@ interface GroupedActivities {
   yesterday: Activity[]
   older: Activity[]
 }
-
+const sections = ref<HTMLElement[]>([])
 /** Current page for activities pagination */
 const currentPage = ref(1)
 
@@ -738,7 +739,42 @@ const getPaginationRange = (): number[] => {
 
   return range
 }
+onMounted(async () => {
+  isStopped = false
+  connect()
 
+  await nextTick()
+
+  sections.value.forEach((section) => {
+    gsap.fromTo(section,
+      {
+        opacity: 0,
+        y: 60,
+        scale: 0.96
+      },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.6,
+        ease: 'power3.out',
+
+        scrollTrigger: {
+          trigger: section,
+          start: 'top 85%',
+          end: 'top 30%',
+          toggleActions: 'play reverse play reverse',
+          // 👆 THIS enables scroll up = reverse animation
+        }
+      }
+    )
+  })
+})
+
+onUnmounted(() => {
+  isStopped = true
+  disconnect()
+})
 /** Group activities by date */
 const groupedActivities = computed<GroupedActivities>(() => {
   if (!dashboardActiviesData.value?.activities?.length) {

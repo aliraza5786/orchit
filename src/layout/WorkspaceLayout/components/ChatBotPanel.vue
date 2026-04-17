@@ -1704,30 +1704,6 @@
                       <div class="h-px bg-border/40 mx-2.5 my-1"></div>
 
                       <button
-                        @click="
-                          insertMention();
-                          showPlusMenu = false;
-                        "
-                        class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-bg-surface transition-colors text-left"
-                      >
-                        <span
-                          class="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center shrink-0"
-                        >
-                          <i class="fa-solid fa-at text-accent text-[11px]"></i>
-                        </span>
-                        <div>
-                          <div
-                            class="text-[13px] font-medium text-text-primary leading-tight"
-                          >
-                            Mention
-                          </div>
-                          <div class="text-[11px] text-text-secondary mt-0.5">
-                            Tag a team member or task
-                          </div>
-                        </div>
-                      </button>
-
-                      <button
                         @click="showSavedPromptsMenu = true"
                         class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-bg-surface transition-colors text-left"
                       >
@@ -4859,12 +4835,6 @@ const showSavedPromptsMenu = ref(false);
 onClickOutside(plusDropdownRef, () => {
   showPlusMenu.value = false;
 });
-const insertMention = () => {
-  userMessage.value += "@";
-  nextTick(() => {
-    autoTextarea.value?.focus();
-  });
-};
 const applySavedPrompt = (text: string) => {
   userMessage.value = text;
   showSavedPromptsMenu.value = false;
