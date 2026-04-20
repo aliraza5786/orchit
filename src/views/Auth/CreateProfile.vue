@@ -1,5 +1,9 @@
 <template>
-  <AuthLayout :steps="['Purpose', 'About Company', 'Invite Team']" :activeStep="activeStep">
+  <AuthLayout
+  :steps="stepLabels"
+  :activeStep="displayStep"
+  :showSteps="activeStep !== 6"
+>
     <template #form>
       <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
         <!-- Step 1 -->
@@ -40,8 +44,51 @@
         </div>
 
         <div class="space-y-6" v-show="activeStep === 2 && selected === 'team'">
-          <BaseTextField v-model="team" label="Company Name" placeholder="Company name" size="lg" :error="!!errors.team"
-            :message="errors.team" />
+          <div class="space-y-1.5">
+  <BaseTextField
+    v-model="team"
+    label="Company Name"
+    placeholder="Company name"
+    size="lg"
+    :error="!!errors.team"
+    :message="errors.team"
+  />
+
+  <!-- availability feedback -->
+  <div v-if="team.trim()" class="flex items-center gap-2 h-5">
+
+    <!-- checking -->
+    <template v-if="isCheckingTenant">
+      <span class="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin border-accent flex-shrink-0" />
+      <span class="text-xs text-text-secondary">Checking availability...</span>
+    </template>
+
+    <!-- available -->
+    <template v-else-if="isTenantAvailable === true">
+      <span class="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0" style="background:#1d9e75;">
+        <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
+          <path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="text-xs text-green-600">
+        <span class="font-medium">{{ tenantSlug }}</span>.orchit.ai is available
+      </span>
+    </template>
+
+    <!-- taken -->
+    <template v-else-if="isTenantAvailable === false">
+      <span class="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0" style="background:#e55050;">
+        <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
+          <path d="M3 3l4 4M7 3l-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="text-xs text-red-500">
+        <span class="font-medium">{{ tenantSlug }}</span>.orchit.ai is already taken
+      </span>
+    </template>
+
+  </div>
+</div>
 
           <BaseSelectField v-model="role" label="What role do you perform in your company?" :options="rolesList || []"
             placeholder="Select Role" size="lg" :error="!!errors.role" :message="errors.role" />
@@ -177,7 +224,7 @@
   </div>
 
 </div>
-<div v-show="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-10">
+<div v-if="activeStep === 5 && selected === 'team'" class="flex items-center justify-center w-full min-h-full py-10">
 
   <div class="w-full max-w-[460px]">
 
@@ -482,7 +529,7 @@
                 Skip
               </button> -->
               </router-link>
-            <Button :disabled="creatingProfile || invitingPeople" size="md" type="submit" @click="continueHandler">
+            <Button :disabled="creatingProfile || invitingPeople || (activeStep === 2 && selected === 'team' && isCheckingTenant)" size="md" type="submit" @click="continueHandler">
                Continue 
             </Button>
           </div>
@@ -536,6 +583,19 @@ const fieldOfStudy = ref('')
 const schoolUseCase = ref('')
 const selectedModules = ref<string[]>([])
 const isProvisioning = ref(false)
+// --- State ---
+const selected = ref<'team' | 'personal' | 'school'>('team')
+const activeStep = ref<1 | 2 | 3 | 4 |5 | 6 | 7 | 8 | 9| any>(1)
+const role = ref('')
+const team = ref('')
+const companySize = ref('')
+const emailList = ref<string[]>([])
+const workType = ref('')
+const siteName = ref('')
+const siteSlug = ref('')
+const isCheckingSlug = ref(false)
+const isSlugAvailable = ref<boolean | null>(null)
+const referralSources = ref<string[]>([])
 const moduleOptionsMap = {
   team: [
     { id: 'tasks', label: 'Tasks' },
@@ -577,13 +637,43 @@ function toggleModule(id: string) {
 function validateCompanyStep() {
   const next: { team?: string; role?: string; companySize?: string } = {}
   if (!team.value.trim()) next.team = 'Please enter your company name.'
+  else if (isTenantAvailable.value === false) next.team = 'This company name is already taken.'
+  else if (isTenantAvailable.value === null && isCheckingTenant.value) next.team = 'Please wait while we check availability.'
   if (!role.value) next.role = 'Please select your role.'
   if (!companySize.value) next.companySize = 'Please select your company size.'
   errors.value = next
   return Object.keys(next).length === 0
 }
-
 const companyID = ref()
+// --- Tenant availability check ---
+const tenantSlug = computed(() =>
+  team.value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+)
+const isTenantAvailable = ref<boolean | null>(null)
+const isCheckingTenant = ref(false)
+
+watch(tenantSlug, async (slug) => {
+  if (!slug) {
+    isTenantAvailable.value = null
+    return
+  }
+
+  isCheckingTenant.value = true
+  try {
+    const result = await workspaceStore.fetchTitleSlug(slug)
+    isTenantAvailable.value = result?.available ?? null
+  } catch {
+    isTenantAvailable.value = null
+  } finally {
+    isCheckingTenant.value = false
+  }
+}, { immediate: false })
+
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   onSuccess: (data: any) => {
     activeStep.value = (activeStep.value + 1)
@@ -660,19 +750,7 @@ function validatePersonalStep() {
   errors.value = { ...errors.value, ...next }
   return Object.keys(next).length === 0
 }
-// --- State ---
-const selected = ref<'team' | 'personal' | 'school'>('team')
-const activeStep = ref<1 | 2 | 3 | 4 |5 | 6 | 7 | 8 | 9| any>(1)
-const role = ref('')
-const team = ref('')
-const companySize = ref('')
-const emailList = ref<string[]>([])
-const workType = ref('')
-const siteName = ref('')
-const siteSlug = ref('')
-const isCheckingSlug = ref(false)
-const isSlugAvailable = ref<boolean | null>(null)
-const referralSources = ref<string[]>([])
+
 const referralOptions = [
   { id: 'google', label: 'Google Search' },
   { id: 'social', label: 'Social Media' },
@@ -862,8 +940,11 @@ if (activeStep.value === 3) {
     errors.value.selectedModules = 'Please select at least one option.'
     return
   }
-
-  activeStep.value = 4
+    createProfile({
+    payload: {
+      like_to_manage: selectedModules.value
+    }
+  })
   return
 }
   if (activeStep.value === 4) {
@@ -872,7 +953,11 @@ if (activeStep.value === 3) {
       errors.value.role = 'Please select what kind of work you do.'
       return
     }
-    activeStep.value = 5
+     createProfile({
+    payload: {
+      work_to_do: workType.value
+    }
+  })
   return
   }
 if (activeStep.value === 5) {
@@ -955,6 +1040,29 @@ onMounted(() => {
     yoyo: true,
     duration: 0.5
   })
+})
+// active steps
+const stepLabels = computed(() => {
+  if (selected.value === 'personal') {
+    return ['Purpose', 'About You', 'Modules', 'Work Type', 'Hearing About Us', 'Invite Team']
+  }
+  if (selected.value === 'school') {
+    return ['Purpose', 'About School', 'Modules', 'Work Type', 'Hearing About Us', 'Invite Team']
+  }
+  // team (default)
+  return ['Purpose', 'About Company', 'Modules', 'Work Type', 'Create Site', 'Hearing About Us', 'Invite Team']
+})
+const displayStep = computed(() => {
+  if (selected.value === 'personal' || selected.value === 'school') {
+    if (activeStep.value <= 4) return activeStep.value
+    if (activeStep.value === 7) return 5
+    if (activeStep.value === 8) return 6
+  }
+  // team: all steps 1-8, skip loading (6)
+  if (activeStep.value <= 5) return activeStep.value
+  if (activeStep.value === 7) return 6
+  if (activeStep.value === 8) return 7
+  return activeStep.value
 })
 </script>
 

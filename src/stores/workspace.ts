@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-
+import api from "../libs/api";
 // Define types for state
 interface WorkspaceState {
   workspace: any;
@@ -260,6 +260,19 @@ export const useWorkspaceStore = defineStore("workspace", {
   if (saved) {
     this.selectedAgent = saved;
   }
-}
+},
+async fetchTitleSlug(slug: string) {
+      try {
+        const res = await api.get(`tenant/available/${slug}`);
+        const data = res.data?.data;
+        return data;
+      } catch (err: any) {
+        console.error("fetchWidgetData:", err);
+        return null;
+      } finally {
+       console.log("completed");
+       
+      }
+    },
   },
 });

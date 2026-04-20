@@ -149,40 +149,46 @@ function focusIdx(i: number) {
     }
   }
   
- 
-  function handleKey(index: number, e: KeyboardEvent) {
-    const { key } = e
-    if (/^[0-9]$/.test(key)) {
-      code.value[index] = key
-      otpError.value && (otpError.value = '')
-      e.preventDefault()
-      if (index < DIGITS - 1) focusIdx(index + 1)
-    } else if (key === 'Backspace') {
-      if (code.value[index]) {
-        code.value[index] = ''
-        otpError.value && (otpError.value = '')
-      } else if (index > 0) {
-        focusIdx(index - 1)
-      }
-    } else if (key === 'ArrowLeft' && index > 0) {
-      focusIdx(index - 1)
-    } else if (key === 'ArrowRight' && index < DIGITS - 1) {
+   function handleKey(index: number, e: KeyboardEvent) {
+  const { key } = e
+  if (/^[0-9]$/.test(key)) {
+    code.value[index] = key
+    otpError.value && (otpError.value = '')
+    e.preventDefault()
+    if (index < DIGITS - 1) {
       focusIdx(index + 1)
+    } else {
+      setTimeout(() => verifyCode(), 100)
     }
+  } else if (key === 'Backspace') {
+    if (code.value[index]) {
+      code.value[index] = ''
+      otpError.value && (otpError.value = '')
+    } else if (index > 0) {
+      focusIdx(index - 1)
+    }
+  } else if (key === 'ArrowLeft' && index > 0) {
+    focusIdx(index - 1)
+  } else if (key === 'ArrowRight' && index < DIGITS - 1) {
+    focusIdx(index + 1)
   }
+}
   
   function distribute(value: string, startIndex = 0) {
-    const digits = value.replace(/\D/g, '').slice(0, DIGITS - startIndex)
-    if (!digits) return
-    for (let i = 0; i < digits.length; i++) code.value[startIndex + i] = digits[i]
-    const next = Math.min(startIndex + digits.length, DIGITS - 1)
-    focusIdx(next)
-    otpError.value && (otpError.value = '')
+  const digits = value.replace(/\D/g, '').slice(0, DIGITS - startIndex)
+  if (!digits) return
+  for (let i = 0; i < digits.length; i++) code.value[startIndex + i] = digits[i]
+  const next = Math.min(startIndex + digits.length, DIGITS - 1)
+  focusIdx(next)
+  otpError.value && (otpError.value = '')
+}
+function handlePaste(index: number, e: ClipboardEvent) {
+  distribute(e.clipboardData?.getData('text') ?? '', index)
+  const pasted = (e.clipboardData?.getData('text') ?? '').replace(/\D/g, '')
+  if (pasted.length >= DIGITS) {
+    setTimeout(() => verifyCode(), 100)
   }
-  
-  function handlePaste(index: number, e: ClipboardEvent) {
-    distribute(e.clipboardData?.getData('text') ?? '', index)
-  }
+}
   
   function handleInput(index: number, e: Event) {
     const el = e.target as HTMLInputElement
