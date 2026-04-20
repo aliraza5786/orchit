@@ -130,7 +130,9 @@
     </button>
 
   </div>
-
+    <p v-if="errors.selectedModules" class="text-xs text-red-500">
+    {{ errors.selectedModules }}
+  </p>
 </div>
 <!-- Step 4 Modal -->
 <div v-if="activeStep === 4">
@@ -351,52 +353,8 @@
   </div>
 
 </div> 
-<div v-if="activeStep === 6" class=" flex items-center mx-auto">
-
-  <div class="w-full max-w-[700px] bg-card rounded-2xl p-8 space-y-6 text-center">
-<div class="flex justify-center">
-  <div class="rocket-loader">
-    <div class="rocket">🚀</div>
-    <div class="flame"></div>
-    <div class="smoke"></div>
-  </div>
-</div>
-
-    <!-- Title -->
-    <h2 class="text-xl font-semibold text-text-primary">
-      Setting up your workspace
-    </h2>
-
-    <p class="text-sm text-text-secondary">
-      Please wait while we prepare everything for you.
-    </p>
-
-    <!-- Steps -->
-    <div class="space-y-3 text-left">
-
-      <div
-        v-for="(step, index) in provisionSteps"
-        :key="step"
-        class="flex items-center gap-3 transition-all duration-300"
-        :class="['flex items-center gap-3', `provision-step-${index}`]"
-      >
-
-        <!-- Dot -->
-        <div class="w-2.5 h-2.5 rounded-full"
-             :class="index <= provisionStep ? 'bg-accent' : 'bg-gray-300'">
-        </div>
-
-        <!-- Text -->
-        <span class="text-sm text-text-primary">
-          {{ step }}
-        </span>
-
-      </div>
-
-    </div>
-
-  </div>
-
+<div v-if="activeStep === 6" class="flex items-center justify-center mx-auto">
+  <LoadingCreateProfile :active="activeStep === 6" @complete="activeStep = 7" />
 </div>
 <div v-show="activeStep === 7" class="flex items-center justify-center min-h-full">
 
@@ -447,54 +405,60 @@
 </div>
 <div v-show="activeStep === 8" class="flex items-center justify-center min-h-full">
 
-  <div class="w-full max-w-[520px] space-y-8">
+  <div class="w-full max-w-[480px] space-y-7">
 
     <!-- header -->
-    <div class="text-center space-y-2">
-      <h2 class="text-[28px] font-semibold text-text-primary">
-        Your workspace is ready 🎉
+    <div class="space-y-2">
+      <h2 class="text-[26px] font-semibold text-text-primary">
+        Better when used together
       </h2>
-
-      <p class="text-text-secondary text-sm">
-        Invite your team or share your workspace link.
+      <p class="text-text-secondary text-sm leading-relaxed">
+        Orchit AI works better with your team onboard. Invite a teammate to try it out with you.
       </p>
     </div>
 
-    <!-- workspace url -->
-    <div class="border rounded-xl p-4 flex items-center justify-between">
-
-      <span class="text-sm text-text-primary">
-        https://{{ siteSlug }}.orchit.ai
-      </span>
-
-      <button
-        class="text-sm text-accent font-medium"
-        @click="copySiteUrl"
-      >
-        Copy
-      </button>
-
+    <!-- share via link -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-medium text-text-primary">Share via link</label>
+      <div class="flex items-center gap-2">
+        <div class="flex-1 border border-border rounded-lg px-3 py-2 bg-surface overflow-hidden">
+          <span class="text-sm text-text-secondary truncate block">
+            https://{{ siteSlug }}.orchit.ai
+          </span>
+        </div>
+        <Button variant="secondary" size="md" @click="copySiteUrl">
+  <div class="flex items-center gap-1.5 transition-all duration-200">
+    <FontAwesomeIcon
+      :icon="['fas', isCopied ? 'check' : 'link']"
+      :class="isCopied ? 'text-green-500' : ''"
+      class="transition-all duration-200"
+    />
+    <span :class="isCopied ? 'text-green-500' : ''" class="transition-colors duration-200">
+      {{ isCopied ? 'Copied!' : 'Copy link' }}
+    </span>
+  </div>
+</Button>
+      </div>
     </div>
 
-    <!-- invite -->
-  <BaseEmailChip v-model="emailList" :error="!!errors.emailList" :message="errors.emailList" />
+    <!-- invite via email -->
+    <div class="space-y-1.5">
+      <label class="text-sm font-medium text-text-primary">Invite via email</label>
+      <BaseEmailChip
+        v-model="emailList"
+        :error="!!errors.emailList"
+        :message="errors.emailList"
+      />
+    </div>
 
     <!-- actions -->
-    <div class="flex justify-between gap-3">
-        <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
-            :disabled="activeStep === 1">
-            <div class="flex items-center gap-1">
-              <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
-            </div>
-          </Button>
+    <div class="flex items-center justify-between pt-2">
       <Button variant="secondary" size="md" @click="router.push('/dashboard')">
-        Skip
+        Do this later
       </Button>
-
       <Button size="md" @click="sendInvites">
-        Invite & Continue
+        Go to Orchit
       </Button>
-
     </div>
 
   </div>
@@ -512,10 +476,14 @@
           <div class="flex gap-4 items-center ml-auto">
             <router-link
             v-if="activeStep==3"
-              :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`"><button
-                class="text-text-primary text-sm px-3 cursor-pointer">Skip</button></router-link>
+              :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`">
+              <!-- <button
+                class="text-text-primary text-sm px-3 cursor-pointer">
+                Skip
+              </button> -->
+              </router-link>
             <Button :disabled="creatingProfile || invitingPeople" size="md" type="submit" @click="continueHandler">
-              {{ creatingProfile || invitingPeople ? 'Continuing...' : activeStep == 3 ? 'Invite' : 'Continue' }}
+               Continue 
             </Button>
           </div>
 
@@ -528,7 +496,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, nextTick, onMounted } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import teamIcon from '../../assets/platform/team.svg'
 import personalIcon from '../../assets/platform/personal-use.svg'
@@ -542,6 +510,7 @@ import { useCreateCompany, useInviteCompany } from '../../services/auth'
 import { useRolesList } from '../../queries/useCommon'
 import { useWorkspaceStore } from '../../stores/workspace'
 import { useAuthStore } from '../../stores/auth'
+import LoadingCreateProfile from '../../components/LoadingCreateProfile.vue'
 import gsap from 'gsap'
 defineOptions({ name: 'OnboardingFlow' })
 const workspaceStore = useWorkspaceStore()
@@ -557,6 +526,7 @@ const errors = ref<{
   fieldOfStudy?: string
   schoolUseCase?: string
   siteName?:string;
+  selectedModules?: string
 }>({})
 const authStore = useAuthStore()
 const personalRole = ref('')
@@ -566,14 +536,6 @@ const fieldOfStudy = ref('')
 const schoolUseCase = ref('')
 const selectedModules = ref<string[]>([])
 const isProvisioning = ref(false)
-const provisionStep = ref(0)
-const provisionSteps = [
-  'Creating your workspace',
-  'Setting up modules',
-  'Preparing your dashboard',
-  'Configuring personalization',
-  'Almost ready...'
-]
 const moduleOptionsMap = {
   team: [
     { id: 'tasks', label: 'Tasks' },
@@ -624,7 +586,7 @@ function validateCompanyStep() {
 const companyID = ref()
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   onSuccess: (data: any) => {
-    activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4 | 5 | 6;
+    activeStep.value = (activeStep.value + 1)
     companyID.value = data?._id
   }
 });
@@ -722,7 +684,7 @@ const referralOptions = [
   { id: 'blog', label: 'Blog / Article' },
   { id: 'other', label: 'Other' }
 ]
-const inviteEmails = ref<string[]>([])
+// const inviteEmails = ref<string[]>([])
 function toggleReferral(id: string) {
   if (referralSources.value.includes(id)) {
     referralSources.value = referralSources.value.filter(i => i !== id)
@@ -772,10 +734,15 @@ function validateSiteStep() {
 
   return true
 }
+const isCopied = ref(false)
+
 function copySiteUrl() {
   globalThis.navigator.clipboard.writeText(
     `https://${siteSlug.value}.orchit.ai`
-  )
+  ).then(() => {
+    isCopied.value = true
+    setTimeout(() => isCopied.value = false, 2000)
+  })
 }
 const educationOptions = Object.freeze([
   { title: 'School', _id: 'school' },
@@ -833,45 +800,15 @@ const workTypeOptions = [
     icon: 'headphones'
   }
 ]
-// --- UI helpers ---
-function validateInviteStep() {
-  const next: { emailList?: string } = {}
-
-  // check if there is at least one non-empty email
-  if (!emailList.value.length || !emailList.value.some(e => e && e.trim() !== '')) {
-    next.emailList = 'Please add at least one email to invite.'
-  }
-
-  errors.value = { ...errors.value, ...next }
-  return Object.keys(next).length === 0
-}
-
 
 function optionClass(id: string) {
   return id === selected.value ? 'bg-accent/30 border-accent' : 'border-border'
 }
 
-// --- Actions ---
-// function copyToClipboard() {
-//   navigator.clipboard
-//     .writeText(inviteLink.value)
-//     .then(() => {
-//       toast.success('Copied!')
-//     })
-//     .catch((err) => {
-//       console.error('Copy failed:', err)
-//       toast.error('Copy failed')
-//     })
-// }
-
 function goBack() {
   activeStep.value = Math.max(1, (activeStep.value - 1) as 1 | 2 | 3)
 }
 function continueHandler() {
-
-  // =========================
-  // STEP 2: ACCOUNT TYPE SETUP
-  // =========================
   if (activeStep.value === 2) {
 
     // 👉 TEAM FLOW
@@ -886,8 +823,6 @@ function continueHandler() {
       }
 
       createProfile({ payload })
-
-      activeStep.value = 3
       return
     }
 
@@ -901,8 +836,6 @@ function continueHandler() {
       }
 
       createProfile({ payload })
-
-      activeStep.value = 3
       return
     }
 
@@ -919,41 +852,20 @@ function continueHandler() {
       }
 
       createProfile({ payload })
-
-      activeStep.value = 3
       return
     }
   }
 
+if (activeStep.value === 3) {
 
-  // =========================
-  // STEP 3: MODULE SELECTION
-  // =========================
-  if (activeStep.value === 3) {
-
-    // personal users can skip invites/modules if needed
-    if (selected.value === 'personal') {
-      activeStep.value = 4
-      return
-    }
-
-    if (!validateInviteStep()) return
-
-    invitePeople({
-      payload: {
-        company_id: companyID.value,
-        emails: [...emailList.value]
-      }
-    })
-
-    activeStep.value = 4
+  if (selectedModules.value.length === 0) {
+    errors.value.selectedModules = 'Please select at least one option.'
     return
   }
 
-
-  // =========================
-  // STEP 4: WORK TYPE (JIRA STYLE)
-  // =========================
+  activeStep.value = 4
+  return
+}
   if (activeStep.value === 4) {
 
     if (!workType.value) {
@@ -962,16 +874,6 @@ function continueHandler() {
     }
     activeStep.value = 5
   return
-    // createProfile({
-    //   payload: {
-    //     company_id: companyID.value,
-    //     work_type: workType.value,
-    //     selected_modules: selectedModules.value
-    //   }
-    // })
-
-    // router.push('/finish-profile')
-    return
   }
 if (activeStep.value === 5) {
 
@@ -1015,49 +917,26 @@ async function continueSiteHandler() {
     isCreating.value = false
     activeStep.value = 6
     isProvisioning.value = true
-  startProvisioningFlow()
   }
 }
-
-function startProvisioningFlow() {
-  provisionStep.value = 0
-
-  const interval = setInterval(() => {
-    provisionStep.value++
-
-    if (provisionStep.value >= provisionSteps.length - 1) {
-      clearInterval(interval)
-
-      setTimeout(() => {
-        finishProvisioning()
-      }, 800)
-    }
-  }, 1200)
-}
-function finishProvisioning() {
-  isProvisioning.value = false
-  activeStep.value = 7
-}
-watch(provisionStep, (newVal) => {
-  nextTick(() => {
-    gsap.fromTo(
-      `.provision-step-${newVal}`,
-      { opacity: 0, x: -10 },
-      { opacity: 1, x: 0, duration: 0.4 }
-    )
-  })
-})
 function sendInvites() {
   invitePeople({
     payload: {
       company_id: companyID.value,
-      emails: [...inviteEmails.value]
+      emails: [...emailList.value]
     }
   })
-router.push({
-  path: '/dashboard',
-  query: { welcome: '1' }
-})
+
+  const slug = siteSlug.value
+
+  if (import.meta.env.PROD) {
+    window.location.href = `https://${slug}.orchit.ai/dashboard?welcome=1`
+  } else {
+    router.push({
+      path: '/dashboard',
+      query: { welcome: '1', workspace: slug }
+    })
+  }
 }
 onMounted(() => {
   gsap.to(".rocket", {

@@ -104,27 +104,31 @@
                  </div>
             </td>
 
-            <td v-for="(col,i) in visibleColumns" :key="col?.key" class=" border-r border-border overflow-visible relative h-8"
-              :style="{ width: columnWidths[col.key] + 'px' }"
-              :colspan="i === visibleColumns.length - 1 ? 2 : 1"
-              >
-              
-              <!-- Editable input -->
-              <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
-                @blur="finishEdit(ticket)" class=" min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body  text-[12px] h-8"
-                :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
+          <td v-for="(col, i) in visibleColumns" :key="col?.key" class="border-r border-border overflow-visible relative h-8"
+  :style="{ width: columnWidths[col.key] + 'px' }"
+  :colspan="i === visibleColumns.length - 1 ? 2 : 1"
+>
+  <!-- Editable input -->
+  <input
+    v-if="editing?.id === ticket?.id && editing?.field === col?.key"
+    v-model="ticket[col?.key]"
+    @blur="finishEdit(ticket)"
+    class="min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8"
+    :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)"
+  />
 
-              <!-- Display value -->
-              <span v-else class="cursor-text hover:underline text-text-primary truncate block"
-                @click="editField(ticket, col?.key)">
-                {{ ticket[col?.key] || 'Click to edit' }}
-              </span>
-
-              <!-- Slot Renderer -->
-              <slot v-else :name="col.key" :row="ticket" :column="col" :index="`r-${ticket._id}`">
-                <component :is="RenderCell" :row="ticket" :column="col" :index="ticket._id" />
-              </slot>
-            </td>
+  <!-- Slot renderer or plain display -->
+  <template v-else>
+    <slot :name="col.key" :row="ticket" :column="col" :index="`r-${ticket._id}`">
+      <span
+        class="cursor-text hover:underline text-text-primary truncate block"
+        @click="editField(ticket, col?.key)"
+      >
+        {{ ticket[col?.key] || 'Click to edit' }}
+      </span>
+    </slot>
+  </template>
+</td>
           </tr>
         </template>
 
@@ -195,7 +199,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, nextTick, computed, watch, h, onUnmounted } from 'vue'
+import { reactive, ref, nextTick, computed, watch, onUnmounted } from 'vue'
 import { useRoute } from "vue-router";
 import CreateTaskModal from '../../../views/Product/modals/CreateTaskModal.vue';
 import { useRouteIds } from '../../../composables/useQueryParams';
@@ -319,19 +323,19 @@ const insertEmptyRow = (index: number) => {
   hoverIndex.value = null
   emit('update:rows', tickets.slice())
 }
-function getByPath(obj: any, path: string): any {
-  if (!obj || !path) return undefined
-  if (!path.includes('.')) return obj[path]
-  return path.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), obj)
-}
-function cellValue(row: Row, col: any) {
-  return col?.accessor ? col.accessor(row) : getByPath(row, col.key)
-}
-const RenderCell = (p: { row: Row; column: any; index: number }) => {
-  const val = cellValue(p.row, p.column)
-  if (p.column?.render) return p.column.render({ row: p?.row, column: p?.column, value: val, index: p?.index })
-  return h('span', String(val ?? ''))
-}
+// function getByPath(obj: any, path: string): any {
+//   if (!obj || !path) return undefined
+//   if (!path.includes('.')) return obj[path]
+//   return path.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), obj)
+// }
+// function cellValue(row: Row, col: any) {
+//   return col?.accessor ? col.accessor(row) : getByPath(row, col.key)
+// }
+// const RenderCell = (p: { row: Row; column: any; index: number }) => {
+//   const val = cellValue(p.row, p.column)
+//   if (p.column?.render) return p.column.render({ row: p?.row, column: p?.column, value: val, index: p?.index })
+//   return h('span', String(val ?? ''))
+// }
 
 // resize control 
 // Track column widths
