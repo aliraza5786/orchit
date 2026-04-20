@@ -305,6 +305,7 @@
                      </div>
                  </div>
             </td>
+<<<<<<< HEAD
             <td v-for="(col,i) in visibleColumns" :key="col?.key" class="border-r border-border overflow-visible relative h-8"
               :style="{ width: columnWidths[col.key] + 'px' }"
               :colspan="i === visibleColumns.length - 1 ? 2 : 1">
@@ -319,6 +320,34 @@
                 <component :is="RenderCell" :row="ticket" :column="col" :index="ticket._id" />
               </slot>
             </td>
+=======
+
+          <td v-for="(col, i) in visibleColumns" :key="col?.key" class="border-r border-border overflow-visible relative h-8"
+  :style="{ width: columnWidths[col.key] + 'px' }"
+  :colspan="i === visibleColumns.length - 1 ? 2 : 1"
+>
+  <!-- Editable input -->
+  <input
+    v-if="editing?.id === ticket?.id && editing?.field === col?.key"
+    v-model="ticket[col?.key]"
+    @blur="finishEdit(ticket)"
+    class="min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8"
+    :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)"
+  />
+
+  <!-- Slot renderer or plain display -->
+  <template v-else>
+    <slot :name="col.key" :row="ticket" :column="col" :index="`r-${ticket._id}`">
+      <span
+        class="cursor-text hover:underline text-text-primary truncate block"
+        @click="editField(ticket, col?.key)"
+      >
+        {{ ticket[col?.key] || 'Click to edit' }}
+      </span>
+    </slot>
+  </template>
+</td>
+>>>>>>> staging
           </tr>
 
 
@@ -442,7 +471,11 @@
 </template>
 
 <script lang="ts" setup>
+<<<<<<< HEAD
 import { reactive, ref, nextTick, computed, watch, h, onUnmounted, watchEffect } from 'vue'
+=======
+import { reactive, ref, nextTick, computed, watch, onUnmounted } from 'vue'
+>>>>>>> staging
 import { useRoute } from "vue-router";
 import CreateTaskModal from '../../../views/Product/modals/CreateTaskModal.vue';
 import { useRouteIds } from '../../../composables/useQueryParams';
@@ -643,6 +676,7 @@ const finishEdit = (ticket: Row) => {
 } 
  
 
+<<<<<<< HEAD
 function getByPath(obj: any, path: string): any {
   if (!obj || !path) return undefined
   if (!path.includes('.')) return obj[path]
@@ -656,6 +690,44 @@ const RenderCell = (p: { row: Row; column: any; index: number }) => {
   if (p.column?.render) return p.column.render({ row: p?.row, column: p?.column, value: val, index: p?.index })
   return h('span', String(val ?? ''))
 }
+=======
+import { useAuthStore } from '../../../stores/auth';
+const authStore = useAuthStore();
+
+const insertEmptyRow = (index: number) => {
+  const newRow: Row = { id: Date.now() }
+  const currentUser = authStore.user?.data;
+
+  props.columns.forEach(col => {
+    if (col.key === 'created_by' && currentUser) {
+      newRow[col.key] = {
+        u_full_name: currentUser.u_full_name,
+        u_profile_image: currentUser.u_profile_image,
+        u_email: currentUser.u_email
+      }
+    } else {
+      newRow[col.key] = ''
+    }
+  })
+  tickets.splice(index, 0, newRow)
+  editField(newRow, props.columns[0]?.key || '')
+  hoverIndex.value = null
+  emit('update:rows', tickets.slice())
+}
+// function getByPath(obj: any, path: string): any {
+//   if (!obj || !path) return undefined
+//   if (!path.includes('.')) return obj[path]
+//   return path.split('.').reduce((acc, k) => (acc == null ? acc : acc[k]), obj)
+// }
+// function cellValue(row: Row, col: any) {
+//   return col?.accessor ? col.accessor(row) : getByPath(row, col.key)
+// }
+// const RenderCell = (p: { row: Row; column: any; index: number }) => {
+//   const val = cellValue(p.row, p.column)
+//   if (p.column?.render) return p.column.render({ row: p?.row, column: p?.column, value: val, index: p?.index })
+//   return h('span', String(val ?? ''))
+// }
+>>>>>>> staging
 
 // resize control 
 // Track column widths

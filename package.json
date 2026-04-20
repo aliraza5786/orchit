@@ -47,7 +47,7 @@
     "localforage": "^1.10.0",
     "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
-    "motion-v": "^2.2.1",
+    "motion-v": "^1.10.0",
     "openai": "^5.10.2",
     "pinia": "^3.0.3",
     "socket.io-client": "^4.8.1",
@@ -61,6 +61,7 @@
     "vuedraggable": "^4.1.0"
   },
   "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
     "@types/lodash": "^4.17.20",
     "@types/node": "^22.15.29",
     "@vitejs/plugin-vue": "^5.2.3",
