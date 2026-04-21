@@ -11,13 +11,25 @@ export const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: { "Content-Type": "application/json" },
 });
-
-/** Auth token injector */
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+  const localToken = localStorage.getItem('token')
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1] ?? null
+
+  const token = localToken ?? cookieToken
+
+  if (token) {
+    // Sync to localStorage if it came from cookie
+    if (!localToken && cookieToken) {
+      localStorage.setItem('token', cookieToken)
+    }
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
+})
 
 /** Response / error interceptor */
 api.interceptors.response.use(

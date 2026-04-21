@@ -22,16 +22,17 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async bootstrap() {
-      const token = localStorage.getItem('token') ?? getTokenFromCookie()
-      if (!token) {
-        this.initialized = true
-        return
-      }
+      const localToken = localStorage.getItem('token')
+  const cookieToken = getTokenFromCookie()
+  const token = localToken ?? cookieToken
 
-      // If token came from cookie, sync it to localStorage
-      if (!localStorage.getItem('token') && token) {
-        localStorage.setItem('token', token)
-      }
+  if (!token) {
+    this.initialized = true
+    return
+  }
+  if (!localToken && cookieToken) {
+    localStorage.setItem('token', cookieToken)
+  }
 
       try {
         const res = await api.get('/profile')
