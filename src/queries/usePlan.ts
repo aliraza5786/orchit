@@ -68,18 +68,21 @@ export const useSprintCard = (id: any, options: any = {}) => {
 export const useSprintKanban = (
   sprint_id: any,
   lane_ids: any,
+  extraParams?: any,
   options = {}
 ) => {
   return useQuery({
-    queryKey: ["sprint-kanban", unref(sprint_id), unref(lane_ids)],
+    queryKey: computed(() => ["sprint-kanban", unref(sprint_id), unref(lane_ids), unref(extraParams)]),
     queryFn: ({ signal }) => {
       const resolvedLaneIds = unref(lane_ids);
+      const params = unref(extraParams) || {};
       
       return request<any>({
         url: `workspace/cards/sprintgrouped`,
         method: "GET",
         signal,
         params: {
+          ...params,
           sprint_id: unref(sprint_id),
           variable_id: "68b6c96e0a95eef7d14e6981",
           // only include lane_ids if array is non-empty
@@ -89,8 +92,12 @@ export const useSprintKanban = (
           paramsSerializer: (params: Record<string, any>) => {
             const searchParams = new URLSearchParams();
             Object.entries(params).forEach(([key, value]) => {
+              if (value === null || value === undefined || value === "") return;
+              
               if (Array.isArray(value)) {
-                value.forEach((v) => searchParams.append(key, v));
+                if (value.length > 0) {
+                  searchParams.append(key, value.join(","));
+                }
               } else {
                 searchParams.append(key, value as string);
               }

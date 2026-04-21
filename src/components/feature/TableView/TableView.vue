@@ -82,6 +82,7 @@
                   
                   <!-- Group Header Quick Create '+' -->
                   <button 
+                    v-if="selectedGroup !== 'owner'"
                     class="ml-2 w-5 h-5 flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-accent hover:text-accent opacity-0 group-hover/header:opacity-100 transition-all text-[10px]"
                     @click.stop="startInlineQuickCreate(0, group.title, group)"
                     title="Quick create in this group"
@@ -190,7 +191,7 @@
                     @mouseleave="handleLeave"
                     :class="[
                       'border-b border-border transition-colors relative group/row',
-                      hoverIndex === index && hoverGroupTitle === group.title && 'hover-active-row',
+                      hoverIndex === index && hoverGroupTitle === group.title && selectedGroup !== 'owner' && 'hover-active-row',
                       'hover:bg-bg-surface/40'
                     ]">
 
@@ -370,7 +371,7 @@
             <!-- Left Icon -->
             <div class="flex items-center gap-1 text-accent/80 cursor-pointer hover:text-accent transition-colors">
               <i class="fa-solid fa-sparkles text-sm"></i>
-              <i class="fa-solid fa-chevron-down text-[10px]"></i>
+              <!-- <i class="fa-solid fa-chevron-down text-[10px]"></i> -->
             </div>
 
             <!-- Input -->
@@ -420,7 +421,7 @@
  <!-- insert row icon -->
   <Teleport to="body">
   <div
-    v-if="hoverIndex !== null && hoverRowRect && !hasActiveEmptyRow && !isTalent"
+    v-if="hoverIndex !== null && hoverRowRect && !hasActiveEmptyRow && !isTalent && selectedGroup !== 'owner'"
     class="fixed z-[9999]"
     :style="{
       top: hoverRowRect.top - 12 + 'px',
@@ -442,7 +443,7 @@
 </template>
 
 <script lang="ts" setup>
-import { reactive, ref, nextTick, computed, watch, h, onUnmounted, watchEffect } from 'vue'
+import { reactive, ref, nextTick, computed, watch, h, onUnmounted } from 'vue'
 import { useRoute } from "vue-router";
 import CreateTaskModal from '../../../views/Product/modals/CreateTaskModal.vue';
 import { useRouteIds } from '../../../composables/useQueryParams';
@@ -473,6 +474,7 @@ const props = withDefaults(defineProps<{
   isTalent?:boolean
   groups?: any[]
   isGrouped?: boolean
+  selectedGroup?: string
   totalCount?: number
   totalTotal?: number
   isCreating?: boolean
@@ -533,9 +535,7 @@ const emit = defineEmits<{
 }>()
 
 const tickets = reactive<Row[]>(props.rows || [])
-watchEffect(()=>{
-  console.log(props.rows, "all rows")
-})
+ 
 watch(() => props.rows, newRows => {
   if (newRows) tickets.splice(0, tickets.length, ...newRows)
 })
@@ -668,6 +668,7 @@ watch(() => props.columns, cols => {
     else if (!columnWidths[col.key]) columnWidths[col.key] = 150 // default width
   })
 }, { immediate: true })
+
 
 let resizingCol: string | null = null
 let startX = 0
@@ -806,7 +807,7 @@ const cancelLeave = () => {
 
 <style scoped>
 .hover-active-row td {
-  box-shadow: inset 0 2px 0 0 var(--accent) !important;
+  border-top: 0.5px solid var(--accent) !important;
   position: relative;
   z-index: 40; /* Above sticky columns which are usually 20-30 */
 }

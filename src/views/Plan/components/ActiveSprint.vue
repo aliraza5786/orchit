@@ -28,6 +28,47 @@
 
           <!-- VIEW SWITCHER -->
           <div class="flex gap-3 items-center">
+            <!-- filters -->
+            <div class="relative flex items-center gap-3">
+                <button
+                  ref="filterTriggerRef"
+                  @click="toggleFilters"
+                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+                  :class="showFilterBar ? 'border-accent' : 'border-border'"
+                >
+                  <i class="fa-solid fa-filter text-accent text-[14px]"></i>
+                  <span>Filter</span>
+                  <span 
+                    v-if="activeFilterCount" 
+                    class="bg-accent text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
+                  >
+                    {{ activeFilterCount }}
+                  </span>
+                </button>
+                
+                <button 
+                  v-if="hasActiveFilters"
+                  @click="handleClearFilters"
+                  class="text-[11px] font-medium text-text-secondary hover:text-accent transition-colors whitespace-nowrap"
+                >
+                  Clear filters
+                </button>
+
+                <!-- Floating Filter Dropdown -->
+                <ProductFilters
+                  v-if="showFilterBar"
+                  :triggerRef="filterTriggerRef"
+                  :variables="variables"
+                  :workspaceId="workspaceId"
+                  :moduleId="moduleId"
+                  :activeFilters="activeFilters"
+                  :hidePlanItems="true"
+                  @apply="(f: any) => { handleApplyFilters(f); showFilterBar = false; }"
+                  @clear="handleClearFilters"
+                  @close="showFilterBar = false"
+                />
+            </div>
+
             <SearchBar
             @onChange="(e: string) => { search = e; }"
             placeholder="Search in Orchit AI space"
@@ -341,6 +382,9 @@ const TimelineView = defineAsyncComponent(() => import("../../../components/feat
 const MindMapView = defineAsyncComponent(
   () => import("../../../components/feature/MindmapView.vue"),
 );
+const ProductFilters = defineAsyncComponent(
+  () => import("../../Product/components/ProductFilters.vue"),
+);
 const props = defineProps<{
   sprint_id: any;
   searchQuery: string;
@@ -425,7 +469,57 @@ watch(() => props.sprint_id, (newId) => {
     selected_sprint_id.value = newId;
   }
 });
-const { data: Lists, isPending, refetch: refetchSheetLists } = useSprintKanban(selected_sprint_id, laneIds);
+
+const showFilterBar = ref(false);
+const activeFilters = ref<any>({});
+const filterTriggerRef = ref<HTMLElement | null>(null);
+
+const formattedExtraParams = computed(() => {
+  const f = activeFilters.value;
+  const toLower = (val: any) =>
+    typeof val === "string" ? val.toLowerCase() : val;
+  return {
+    ...(f.seat_ids?.length ? { seat_ids: f.seat_ids.join(",") } : {}),
+    priority: toLower(f.priority),
+    status: toLower(f.status),
+    card_type: toLower(f.card_type),
+    sprint_id: f.sprint_id,
+    milestone_id: f.milestone_id,
+    huddle_id: f.huddle_id,
+    start_date_from: f.start_date_from,
+    start_date_to: f.start_date_to,
+    end_date_from: f.end_date_from,
+    end_date_to: f.end_date_to,
+    created_at_from: f.created_at_from,
+    created_at_to: f.created_at_to,
+  };
+});
+
+const handleApplyFilters = (filters: any) => {
+  activeFilters.value = filters;
+};
+
+const handleClearFilters = () => {
+  activeFilters.value = {};
+};
+
+const activeFilterCount = computed(() => {
+  const f = activeFilters.value;
+  let count = 0;
+  Object.keys(f).forEach((key) => {
+    if (Array.isArray(f[key])) count += f[key].length;
+    else if (f[key]) count += 1;
+  });
+  return count;
+});
+
+const toggleFilters = () => {
+  showFilterBar.value = !showFilterBar.value;
+};
+
+const hasActiveFilters = computed(() => activeFilterCount.value > 0);
+
+const { data: Lists, isPending, refetch: refetchSheetLists } = useSprintKanban(selected_sprint_id, laneIds, formattedExtraParams);
 watch(selected_sprint_id, () => {
   refetchSheetLists();
 });

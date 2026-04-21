@@ -9,18 +9,19 @@
                 <span v-if="ticket['card-type'] || ticket['card-type']=== null && selectedVarSlug[0]?.slug != 'card-type'"
                     class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium captalize">
                     {{ ticket['card-type'] && ticket['card-type'] !== '' ? ticket['card-type'] : 'General' }}
-
                 </span>
-                <span v-if="ticket['card-status'] && selectedVarSlug[0]?.slug != 'card-status'"
+                <span v-if="localStatus && selectedVarSlug[0]?.slug != 'card-status'"
                     class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize">
-                    {{ ticket['card-status'] }}
+                    {{ localStatus }}
                 </span>
             </div>
 
             <div
-                v-if="canDeleteCard"
-                class="product-menu-icon transition-all w-6 py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md">
-                <DropMenu @click.stop="" :items="getMenuItems()">
+                v-if="canDeleteCard || canEditCard"
+                class="product-menu-icon transition-all w-6 py-1 px-2 h-6 flex justify-center items-center duration-100 ease-in-out bg-bg-surface/40 rounded-md"
+                :class="{ 'menu-open': isMenuOpen }"
+            >
+                <DropMenu @click.stop="" :items="getMenuItems()" @open-change="(v) => isMenuOpen = v">
                     <template #trigger>
                         <i class="cursor-pointer text-sm fa-solid fa-ellipsis"></i>
                     </template>
@@ -74,6 +75,17 @@
 </template>
 
 <script setup lang="ts">
+/**
+ * KanbanTicket Component
+ *
+ * Renders an individual card within the Kanban board.
+ * 
+ * Features:
+ * - Dynamic priority borders and lane coloring.
+ * - Context menu for managing the ticket (e.g., Change Status, Delete).
+ * - "Optimistic UI" updates for status changes: moving a card visually updates
+ *   the board and ticket badge instantly before the API request completes, rolling back on failure.
+ */
 import { computed, ref, watch } from 'vue'
 import { useDeleteTicket, useMoveCard, useVariables } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
@@ -85,7 +97,7 @@ import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
 
 import { usePermissions } from '../../../composables/usePermissions'
-const { canDeleteCard,  canAssignCard, canViewCard } = usePermissions()
+const { canDeleteCard,  canAssignCard, canViewCard, canEditCard } = usePermissions()
 
 const { workspaceId, moduleId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
@@ -123,10 +135,15 @@ const priorityBorderClass = computed(
     () => priorityBorderMap[props.ticket.priority] ?? 'border-l-gray-300'
 )
 const showDelete = ref(false)
+const isMenuOpen = ref(false)
 const dueDate = ref<string | null>(props.ticket['end-date'] ?? null)
 const startDate = ref<string | null>(props.ticket['start-date'] ?? null)
+// Optimistic status — updates instantly without waiting for API
+const localStatus = ref<string | null>(props.ticket['card-status'] ?? null)
 watch(() => props.ticket?.['end-date'], v => { dueDate.value = v ?? null })
 watch(() => props.ticket?.['start-date'], v => { startDate.value = v ?? null })
+// Keep localStatus in sync if ticket is refreshed from the server
+watch(() => props.ticket?.['card-status'], v => { localStatus.value = v ?? null })
 const queryClient = useQueryClient()
 const moveCard = useMoveCard({
     onSuccess: () => {
@@ -159,22 +176,36 @@ const { mutate: deleteCard, isPending: deletingTicket } = useDeleteTicket(props.
 //     })
 // }
 
-function getMenuItems(): { label: string; danger: boolean; action: () => void }[] {
-  return [
-    canDeleteCard.value
-      ? {
-          label: "Delete",
-          danger: true,
-          action: () => {
-            showDelete.value = true;
-          },
-        }
-      : null,
-  ].filter(
-    (item): item is { label: string; danger: boolean; action: () => void } =>
-      item !== null
-  );
+function getMenuItems() {
+  const items: any[] = []
+
+  // Change status submenu
+  if (statusOptions.value.length) {
+    items.push({
+      label: 'Change status',
+      danger: false,
+      children: statusOptions.value.map((s: string) => ({
+        label: s,
+        danger: false,
+        action: () => changeStatus(s),
+      })),
+    })
+  }
+
+  // Delete
+  if (canDeleteCard.value) {
+    items.push({
+      label: 'Delete',
+      danger: true,
+      action: () => {
+        showDelete.value = true
+      },
+    })
+  }
+
+  return items
 }
+
 const handleDeleteTicket = () => {
     deleteCard({})
 }
@@ -202,7 +233,122 @@ const setDueDate = (date: string | null) => {
 
 const { data: variables } = useVariables(workspaceId, moduleId, ref(""))
 const selectedVarSlug = computed(() => (variables?.value ?? []).filter((e: any) => e._id == props.selectedVar))
- 
+
+// Derive status options from the card-status variable's data values
+const statusOptions = computed<string[]>(() => {
+  const statusVar = (variables?.value ?? []).find(
+    (v: any) => v.slug === 'card-status' || v.slug === 'status' || v.title?.toLowerCase() === 'status'
+  )
+  if (!statusVar?.data) return []
+  return (statusVar.data as any[]).map((d: any) => String(d.value ?? d)).filter(Boolean)
+})
+
+/**
+ * Updates the ticket's status optimistically.
+ * It immediately updates the local UI badge and moves the card within the 
+ * TanStack query cache so the Kanban board reflects the change instantly.
+ * If the API call fails, the changes are rolled back.
+ * 
+ * @param {string} newStatus - The new status to apply to the card.
+ */
+function changeStatus(newStatus: string) {
+  // ── 1. Optimistic local badge ──────────────────────────────────────────────
+  localStatus.value = newStatus
+
+  // ── 2. Snapshot current cache for rollback ────────────────────────────────
+  const snapshots: { queryKey: any; data: any }[] = []
+
+  // ── 3. Optimistically move the card in the board cache ────────────────────
+  // The sheet-list query returns: { sheets: [{ sheet_lists: [{ title, cards: [] }] }] }
+  queryClient.setQueriesData(
+    { queryKey: ['sheet-list'], exact: false },
+    (oldData: any) => {
+      if (!oldData?.sheets) return oldData
+
+      // snapshot before mutation
+      snapshots.push({ queryKey: ['sheet-list'], data: oldData })
+
+      return {
+        ...oldData,
+        sheets: oldData.sheets.map((sheet: any) => ({
+          ...sheet,
+          sheet_lists: moveBetweenColumns(
+            sheet.sheet_lists ?? [],
+            String(props.ticket._id),
+            newStatus
+          ),
+        })),
+      }
+    }
+  )
+
+  // ── 4. Fire the API ────────────────────────────────────────────────────────
+  moveCard.mutate(
+    {
+      card_id: props.ticket._id,
+      variables: { 'card-status': newStatus },
+    },
+    {
+      onSuccess: () => {
+        // Let the normal invalidation in moveCard's onSuccess handle the refetch
+      },
+      onError: () => {
+        // ── Rollback cache + badge ───────────────────────────────────────────
+        localStatus.value = props.ticket['card-status'] ?? null
+        snapshots.forEach(({ queryKey, data }) => {
+          queryClient.setQueryData(queryKey, data)
+        })
+        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+      },
+    }
+  )
+}
+
+/**
+ * Moves a card identified by cardId to the column whose title matches newStatus.
+ * If the target column doesn't exist, the card just gets its card-status field updated in-place.
+ */
+function moveBetweenColumns(sheetLists: any[], cardId: string, newStatus: string): any[] {
+  let cardToMove: any = null
+
+  // Remove card from wherever it currently lives
+  const listsWithout = sheetLists.map((col: any) => {
+    const idx = (col.cards ?? []).findIndex(
+      (c: any) => String(c._id) === cardId || String(c.id) === cardId
+    )
+    if (idx !== -1) {
+      cardToMove = { ...(col.cards[idx]), 'card-status': newStatus }
+      return { ...col, cards: col.cards.filter((_: any, i: number) => i !== idx) }
+    }
+    return col
+  })
+
+  if (!cardToMove) return sheetLists
+
+  // Insert into target column
+  const targetIdx = listsWithout.findIndex(
+    (col: any) => col.title?.toLowerCase() === newStatus?.toLowerCase()
+  )
+
+  if (targetIdx !== -1) {
+    // Add to the top of the target column so it's immediately visible
+    return listsWithout.map((col: any, i: number) =>
+      i === targetIdx
+        ? { ...col, cards: [cardToMove, ...col.cards] }
+        : col
+    )
+  }
+
+  // Target column not found (status not in board) — just update the field in-place
+  return sheetLists.map((col: any) => ({
+    ...col,
+    cards: (col.cards ?? []).map((c: any) =>
+      String(c._id) === cardId || String(c.id) === cardId
+        ? { ...c, 'card-status': newStatus }
+        : c
+    ),
+  }))
+}
 
 const emit = defineEmits(['select'])
 </script>
@@ -211,7 +357,8 @@ const emit = defineEmits(['select'])
     visibility: hidden;
 }
 
-.product-ticket:hover .product-menu-icon {
+.product-ticket:hover .product-menu-icon,
+.product-menu-icon.menu-open {
     visibility: visible;
 }
 </style>

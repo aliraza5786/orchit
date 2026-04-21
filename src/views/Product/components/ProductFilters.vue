@@ -15,9 +15,9 @@
         :style="dropdownStyles"
         @click.stop
       >
-        <div class="flex flex-1 min-h-[60vh] max-w-[860px] max-h-[60vh] md:w-[650px] w-[95vw]">
-          <!-- Left Sidebar: Categories -->
-          <div class="w-1/3 border-r border-border bg-bg-dropdown flex flex-col">
+        <div class="flex flex-1 md:min-h-[60vh] md:max-h-[60vh] max-h-[80vh] max-w-[860px] md:w-[650px] w-[95vw]">
+          <!-- Left Sidebar: Categories (Desktop) -->
+          <div class="hidden md:flex w-1/3 border-r border-border bg-bg-dropdown flex-col">
             <div class="flex-1 py-2 overflow-y-auto flex flex-col gap-[4px]">
               <button
                 v-for="cat in categories"
@@ -40,8 +40,8 @@
             </div>
           </div>
 
-          <!-- Right Pane: Options -->
-          <div class="flex-1 flex flex-col bg-bg-dropdown">
+          <!-- Right Pane: Options (Desktop) -->
+          <div class="hidden md:flex flex-1 flex-col bg-bg-dropdown">
             <!-- Search within category -->
             <div v-if="activeCategory !== 'dates'" class="p-4 border-b border-border">
               <div class="relative">
@@ -169,8 +169,144 @@
               </button>
             </div>
           </div>
-        </div>
 
+          <!-- Mobile Accordion View -->
+          <div class="flex md:hidden flex-1 flex-col bg-bg-dropdown overflow-y-auto w-full">
+            <div v-for="cat in categories" :key="cat.id" class="border-b border-border flex flex-col">
+              <!-- Accordion Header -->
+              <button
+                @click="activeCategory = activeCategory === cat.id ? '' : cat.id"
+                class="w-full px-4 py-3 flex items-center justify-between transition-colors hover:bg-bg-body sticky top-0 bg-bg-dropdown z-10"
+              >
+                <div class="flex items-center gap-3">
+                  <i :class="[cat.icon, 'text-sm', activeCategory === cat.id ? 'text-accent' : 'text-text-secondary']"></i>
+                  <span class="text-xs font-medium">{{ cat.label }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span 
+                    v-if="getSelectionCount(cat.id)"
+                    class="bg-accent/10 text-accent text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+                  >
+                    {{ getSelectionCount(cat.id) }}
+                  </span>
+                  <i class="fa-solid fa-chevron-down text-[10px] transition-transform"
+                     :class="activeCategory === cat.id ? 'rotate-180 text-accent' : 'text-text-secondary'"></i>
+                </div>
+              </button>
+
+              <!-- Accordion Body -->
+              <div v-if="activeCategory === cat.id" class="bg-bg-surface/30 flex flex-col border-t border-border" style="max-height: 400px;">
+                <!-- Search within category -->
+                <div v-if="activeCategory !== 'dates'" class="p-4 border-b border-border shrink-0">
+                  <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-xs"></i>
+                    <input 
+                      v-model="searchQuery"
+                      type="text" 
+                      :placeholder="`Search ${currentCategoryLabel.toLowerCase()}`"
+                      class="w-full bg-bg-input border border-border rounded-lg pl-9 pr-4 py-2 text-xs focus:ring-1 focus:ring-accent outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                <!-- Options list -->
+                <div class="flex-1 overflow-y-auto p-2">
+                  <div v-if="activeCategory === 'dates'" class="p-4 space-y-6">
+                    <div v-for="dateType in dateCategories" :key="dateType.id" class="space-y-3">
+                      <div class="flex items-center gap-2 px-1">
+                        <div class="w-1.5 h-1.5 rounded-full bg-accent/60"></div>
+                        <label class="text-[10px] font-bold text-text-secondary uppercase tracking-[0.1em]">{{ dateType.label }}</label>
+                      </div>
+                      <div class="flex flex-col gap-3">
+                        <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all focus-0">
+                          <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-accent transition-colors"></i>
+                          <DatePicker v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
+                        </div>
+                        <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all">
+                          <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-accent transition-colors"></i>
+                          <DatePicker v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div v-if="activeCategory === 'plan'" class="flex flex-col h-[300px]">
+                    <div class="px-2 pt-1 pb-2 shrink-0">
+                      <SwitchTab v-model="selectedPlanType" :options="planTypeOptions" size="sm" />
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-2 min-h-0">
+                      <div 
+                        v-for="option in currentPlanOptionsFiltered" 
+                        :key="option._id"
+                        @click="togglePlanOption(option)"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                      >
+                        <div 
+                          class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
+                          :class="isPlanSelected(option) ? 'bg-accent border-accent text-white' : 'border-border group-hover:border-accent/50'"
+                        >
+                          <i v-if="isPlanSelected(option)" class="fa-solid fa-check text-[10px]"></i>
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                          <span class="text-xs font-medium text-text-primary truncate">{{ option.title }}</span>
+                          <span v-if="option.description" class="text-[10px] text-text-secondary truncate">{{ option.description }}</span>
+                        </div>
+                      </div>
+                      <div v-if="currentPlanOptionsFiltered.length === 0" class="flex flex-col items-center justify-center h-full opacity-40 py-10">
+                        <i class="fa-solid fa-calendar-xmark text-3xl mb-2"></i>
+                        <span class="text-xs">No {{ selectedPlanType }}s found</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <template v-else-if="activeCategory !== 'dates'">
+                    <div 
+                      v-for="option in filteredOptions" 
+                      :key="option._id"
+                      @click="toggleOption(option._id)"
+                      class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer hover:bg-bg-body transition-colors group"
+                    >
+                      <div 
+                        class="w-4 h-4 border rounded flex items-center justify-center transition-colors shrink-0"
+                        :class="isSelected(option._id) ? 'bg-accent border-accent text-white' : 'border-border group-hover:border-accent/50'"
+                      >
+                        <i v-if="isSelected(option._id)" class="fa-solid fa-check text-[10px]"></i>
+                      </div>
+                      <template v-if="activeCategory === 'assignees'">
+                          <img v-if="option.avatar" :src="option.avatar" class="w-6 h-6 rounded-full object-cover shrink-0" alt="" />
+                          <div v-else class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                              :style="{ backgroundColor: avatarColor({ name: option.title, email: option.description, _id: option._id }) }">
+                              {{ getInitials(option.title) }}
+                          </div>
+                      </template>
+                      <div class="flex flex-col min-w-0">
+                        <span class="text-xs font-medium text-text-primary truncate">{{ option.title }}</span>
+                        <span v-if="option.description" class="text-[10px] text-text-secondary truncate">{{ option.description }}</span>
+                      </div>
+                    </div>
+                    <div v-if="filteredOptions.length === 0" class="flex flex-col items-center justify-center h-full opacity-40 py-10">
+                      <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
+                      <span class="text-xs">No matches found</span>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Footer actions for Mobile Pane -->
+                <div class="p-3 bg-bg-surface/20 flex justify-between items-center border-t border-border shrink-0">
+                  <span class="text-[10px] text-text-secondary">
+                    {{ getSelectionCount(activeCategory) }} selected
+                  </span>
+                  <button 
+                    @click.stop="clearCurrentCategory"
+                    class="text-[10px] font-medium text-accent hover:underline"
+                  >
+                    Clear {{ currentCategoryLabel.toLowerCase() }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- Bottom Footer (Global Actions) -->
         <div class="p-4 bg-bg-surface/50 border-t border-border flex items-center justify-between">
           <div class="flex items-center gap-4 text-text-secondary">
@@ -225,12 +361,14 @@ const props = defineProps<{
   workspaceId: string;
   moduleId: string;
   activeFilters: any;
+  hidePlanItems?: boolean;
 }>();
 
 const emit = defineEmits(['apply', 'clear', 'close']);
 
 const dropdownRef = ref<HTMLElement | null>(null);
-const activeCategory = ref('assignees');
+const isMobile = typeof window !== 'undefined' ? window.innerWidth < 768 : false;
+const activeCategory = ref(isMobile ? '' : 'assignees');
 const searchQuery = ref('');
 const searchInput = ref<HTMLInputElement | null>(null);
 const isVisible = ref(false);
@@ -244,14 +382,17 @@ const dropdownStyles = ref<CSSProperties>({
 
 let cleanupFloating: (() => void) | null = null;
 
-const categories = [
-  { id: 'assignees', label: 'Assignees', icon: 'fa-solid fa-user-group' },
-  { id: 'priority', label: 'Priority', icon: 'fa-solid fa-arrow-up-wide-short' },
-  { id: 'status', label: 'Status', icon: 'fa-solid fa-circle-check' },
-  { id: 'type', label: 'Card Type', icon: 'fa-solid fa-briefcase' },
-  { id: 'plan', label: 'Plan Items', icon: 'fa-solid fa-map-location-dot' },
-  { id: 'dates', label: 'Date Ranges', icon: 'fa-solid fa-calendar-days' },
-];
+const categories = computed(() => {
+  const base = [
+    { id: 'assignees', label: 'Assignees', icon: 'fa-solid fa-user-group' },
+    { id: 'priority', label: 'Priority', icon: 'fa-solid fa-arrow-up-wide-short' },
+    { id: 'status', label: 'Status', icon: 'fa-solid fa-circle-check' },
+    { id: 'type', label: 'Card Type', icon: 'fa-solid fa-briefcase' },
+    { id: 'plan', label: 'Plan Items', icon: 'fa-solid fa-map-location-dot' },
+    { id: 'dates', label: 'Date Ranges', icon: 'fa-solid fa-calendar-days' },
+  ];
+  return props.hidePlanItems ? base.filter(c => c.id !== 'plan') : base;
+});
 
 const dateCategories = [
   { id: 'start', label: 'Start Date', from: 'start_date_from', to: 'start_date_to' },
@@ -375,13 +516,13 @@ watch(activeCategory, () => {
 onClickOutside(dropdownRef, (e) => {
   if (props.triggerRef?.contains(e.target as Node)) return;
   emit('close');
-}, { ignore: ['.dp__menu', '.dp__outer_menu_wrap'] });
+}, { ignore: ['.dp__menu', '.dp__outer_menu_wrap', '.datepicker-popover'] });
 
 const { data: roles } = useWorkspacesRoles(computed(() => props.workspaceId));
 const { data: groupedPlanPoints } = useGroupedSprints(computed(() => props.workspaceId));
 
 const currentCategoryLabel = computed(() => {
-  return categories.find(c => c.id === activeCategory.value)?.label || '';
+  return categories.value.find(c => c.id === activeCategory.value)?.label || '';
 });
 
 const currentOptions = computed(() => {

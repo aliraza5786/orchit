@@ -294,6 +294,7 @@
         :rows="filteredBoard"
         :groups="tableGroups"
         :isGrouped="!!selectedGroup"
+        :selectedGroup="selectedGroup"
         :canCreate="canCreateCard"
         :canCreateVariable="canCreateVariable"
         :canDelete="canDeleteCard"
@@ -1391,10 +1392,11 @@ function handleQuickCreate(title: string, group: any) {
   let cardAssignee = '';
   let cardReporter = '';
 
+  
   const label = selectedGroupLabel.value?.toLowerCase();
-
+  
   if (label === 'priority') {
-    cardPriority = group.title;
+    cardPriority = group.title; 
   }
 
   if (label === 'status') {
@@ -1406,8 +1408,7 @@ function handleQuickCreate(title: string, group: any) {
   }
 
   if (label === 'assignee') {
-    cardAssignee = group.title;
-    console.log(cardAssignee)
+    cardAssignee = group?.cards[0]?.seat?._id; 
   }
 
   if (label === 'owner/reporter') {
@@ -1421,13 +1422,14 @@ function handleQuickCreate(title: string, group: any) {
     "card-title": title,
     "card-status": cardStatus,
     "card-type": cardType,
-    "card-priority": cardPriority,
+    "priority": cardPriority,
+    "seat_id": cardAssignee,
     workspace_lane_id: laneId,
     variables: {
       "card-title": title,
       "card-status": cardStatus || 'General',
       "card-type": cardType,
-      "card-priority": cardPriority
+      "priority": cardPriority
     }
   };
 
@@ -2006,6 +2008,7 @@ function checkAndCreateTicket(row: any) {
   const laneId = row.lane?._id || row.workspace_lane_id;
   let status = row["card-status"];
   let type = row["card-type"];
+  let priority = row["priority"]; 
 
   if (Array.isArray(row.variables)) {
     const sVar = row.variables.find((v: any) => v.slug === "card-status");
@@ -2027,6 +2030,7 @@ function checkAndCreateTicket(row: any) {
     payloadVariables["card-title"] = title.trim();
     payloadVariables["card-status"] = status;
     payloadVariables["card-type"] = type;
+    payloadVariables["priority"] = priority;
 
     Object.keys(row).forEach((key) => {
       if (payloadVariables.hasOwnProperty(key))
