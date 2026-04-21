@@ -302,7 +302,7 @@
         style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);">
         <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent); opacity: 0.7;" />
         <span class="text-[13px] font-semibold break-all" style="color: var(--accent);">
-          https://{{ siteSlug }}.orchit.ai
+          {{ domainLink }}
         </span>
       </div>
 
@@ -739,7 +739,7 @@ function generateSlug(value: string) {
 
 const isCopied = ref(false)
 function copySiteUrl() {
-  const url = domainLink.value || `https://${siteSlug.value}.orchit.ai`
+  const url = domainLink.value || `https://${siteSlug.value}.stagging.streamed.space/`
   globalThis.navigator.clipboard.writeText(url).then(() => {
     isCopied.value = true
     setTimeout(() => isCopied.value = false, 2000)
