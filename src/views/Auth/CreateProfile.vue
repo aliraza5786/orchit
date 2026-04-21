@@ -5,10 +5,10 @@
   :showSteps="activeStep !== 6"
 >
     <template #form>
-      <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
+      <div class="max-w-125 mx-auto w-full min-h-full py-5 flex flex-col justify-center">
         <!-- Step 1 -->
         <div class="mb-6 md:mb-12 space-y-2" v-show="activeStep === 1">
-          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-once>
+          <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-once>
             How will you use Orchit AI?</h2>
           <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
             This will help us personalize your experience in Orchit AI.
@@ -29,13 +29,13 @@
         </div>
         <!-- Step 2 -->
         <div class="space-y-2 mb-6 md:mb-12" v-show="activeStep === 2">
-          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-if="selected ==='team'">
+          <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-if="selected ==='team'">
            Tell us about your company
           </h2>
-         <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-if="selected ==='personal'">
+         <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-if="selected ==='personal'">
            Tell us about yourself
           </h2>
-          <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary" v-if="selected ==='school'">
+          <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary" v-if="selected ==='school'">
            Tell us about your School
           </h2>
           <p class="text-[14px] md:text-base sm:text-nowrap font-medium text-text-secondary" v-once>
@@ -53,41 +53,6 @@
     :error="!!errors.team"
     :message="errors.team"
   />
-
-  <!-- availability feedback -->
-  <div v-if="team.trim()" class="flex items-center gap-2 h-5">
-
-    <!-- checking -->
-    <template v-if="isCheckingTenant">
-      <span class="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin border-accent flex-shrink-0" />
-      <span class="text-xs text-text-secondary">Checking availability...</span>
-    </template>
-
-    <!-- available -->
-    <template v-else-if="isTenantAvailable === true">
-      <span class="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0" style="background:#1d9e75;">
-        <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
-          <path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </span>
-      <span class="text-xs text-green-600">
-        <span class="font-medium">{{ tenantSlug }}</span>.orchit.ai is available
-      </span>
-    </template>
-
-    <!-- taken -->
-    <template v-else-if="isTenantAvailable === false">
-      <span class="flex items-center justify-center w-4 h-4 rounded-full flex-shrink-0" style="background:#e55050;">
-        <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
-          <path d="M3 3l4 4M7 3l-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-      </span>
-      <span class="text-xs text-red-500">
-        <span class="font-medium">{{ tenantSlug }}</span>.orchit.ai is already taken
-      </span>
-    </template>
-
-  </div>
 </div>
 
           <BaseSelectField v-model="role" label="What role do you perform in your company?" :options="rolesList || []"
@@ -151,7 +116,7 @@
 
   <!-- Heading -->
   <div class="space-y-2">
-    <h2 class="text-[24px] lg:text-[32px] leading-[32px] lg:leading-[44px] font-medium text-text-primary">
+    <h2 class="text-[24px] lg:text-[32px] leading-8 lg:leading-11 font-medium text-text-primary">
       What would you like to manage?
     </h2>
 
@@ -226,7 +191,7 @@
 </div>
 <div v-if="activeStep === 5 && selected === 'team'" class="flex items-center justify-center w-full min-h-full py-10">
 
-  <div class="w-full max-w-[460px]">
+  <div class="w-full max-w-115">
 
     <!-- CARD -->
     <div class="rounded-2xl border p-10 space-y-6" style="background: var(--bg-card); border-color: var(--border);">
@@ -235,7 +200,7 @@
       <div class="text-center space-y-3">
 
         <!-- Icon -->
-        <div class="w-[56px] h-[56px] rounded-[14px] border flex items-center justify-center mx-auto"
+        <div class="w-14 h-14 rounded-[14px] border flex items-center justify-center mx-auto"
           style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.2);">
              <img src="/src/assets/global/favicon.png"  alt="logo">
         </div>
@@ -243,7 +208,7 @@
         <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">
           Create your site
         </h2>
-        <p class="text-sm leading-relaxed max-w-[300px] mx-auto" style="color: var(--text-secondary);">
+        <p class="text-sm leading-relaxed max-w-75 mx-auto" style="color: var(--text-secondary);">
           Sites are the shared space where your team organizes work, projects, and goals.
         </p>
 
@@ -260,7 +225,7 @@
         <div
           class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-all duration-200"
           :class="{
-            'ring-[3px] ring-[var(--accent)]/[0.14]': isFocused && isSlugAvailable !== false,
+            'ring-[3px] ring-(--accent)/[0.14]': isFocused && isSlugAvailable !== false,
             'ring-[3px] ring-red-500/10':             isFocused && isSlugAvailable === false,
           }"
           :style="{
@@ -274,7 +239,7 @@
             v-model="siteName"
             type="text"
             placeholder="e.g. acme, my-team"
-            class="flex-1 min-w-0 px-3.5 py-[11px] text-[15px] outline-none bg-transparent"
+            class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
             style="color: var(--text-primary); font-family: 'Lato', sans-serif;"
             @focus="isFocused = true"
             @blur="isFocused = false"
@@ -288,7 +253,7 @@
 
             <!-- checking -->
             <span v-if="isCheckingSlug"
-              class="w-[14px] h-[14px] rounded-full border-2 border-t-transparent animate-spin flex-shrink-0"
+              class="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0"
               style="border-color: var(--border); border-top-color: var(--accent);" />
 
             <!-- available -->
@@ -301,14 +266,14 @@
               leave-to-class="opacity-0 scale-50"
             >
               <span v-if="isSlugAvailable === true && !isCheckingSlug"
-                class="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0"
+                class="flex items-center justify-center w-5 h-5 rounded-full shrink-0"
                 style="background: #1d9e75;">
                 <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
                   <path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
               <span v-else-if="isSlugAvailable === false && !isCheckingSlug"
-                class="flex items-center justify-center w-5 h-5 rounded-full flex-shrink-0"
+                class="flex items-center justify-center w-5 h-5 rounded-full shrink-0"
                 style="background: #e55050;">
                 <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
                   <path d="M3 3l4 4M7 3l-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round"/>
@@ -317,15 +282,17 @@
             </Transition>
           </div>
         </div>
-
-        <!-- Error message -->
-        <p v-if="isSlugAvailable === false && !isCheckingSlug"
-          class="text-xs" style="color: #e55050;">
-          This site name is already taken. Please choose another.
-        </p>
-        <p v-else class="text-xs" style="color: var(--text-secondary);">
-          This is just a suggestion — feel free to change it to something your team will recognize.
-        </p>
+          <p v-if="isSlugAvailable === false && !isCheckingSlug"
+            class="text-xs" style="color: #e55050;">
+            This site name is already taken. Please choose another.
+          </p>
+          <p v-else-if="isSlugAvailable === true && !isCheckingSlug"
+            class="text-xs" style="color: #1d9e75;">
+            <span class="font-medium">{{ siteSlug }}</span>.orchit.ai is available
+          </p>
+          <p v-else class="text-xs" style="color: var(--text-secondary);">
+            This is just a suggestion — feel free to change it to something your team will recognize.
+          </p>
 
       </div>
 
@@ -333,7 +300,7 @@
       <div v-if="siteSlug"
         class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
         style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);">
-        <div class="w-2 h-2 rounded-full flex-shrink-0" style="background: var(--accent); opacity: 0.7;" />
+        <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent); opacity: 0.7;" />
         <span class="text-[13px] font-semibold break-all" style="color: var(--accent);">
           https://{{ siteSlug }}.orchit.ai
         </span>
@@ -368,7 +335,7 @@
       <button
         type="button"
         :disabled="!siteName || isCheckingSlug || isCreating"
-        class="w-full flex items-center justify-center gap-2 py-[13px] rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+        class="w-full flex items-center justify-center gap-2 py-3.25 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
         style="background: var(--accent); color: var(--accent-text);"
         :style="!isCreating ? 'box-shadow: 0 2px 0 rgba(0,0,0,0.15)' : ''"
         @mouseenter="(e) => !isCreating && ((e.target as HTMLButtonElement).style.background = 'var(--accent-hover)')"
@@ -405,7 +372,7 @@
 </div>
 <div v-show="activeStep === 7" class="flex items-center justify-center min-h-full">
 
-  <div class="w-full max-w-[520px] space-y-8">
+  <div class="w-full max-w-130 space-y-8">
 
     <div class="space-y-2 text-center">
       <h2 class="text-[28px] font-semibold text-text-primary">
@@ -442,9 +409,9 @@
             </div>
           </Button>
     <!-- continue -->
-    <Button size="md" @click="activeStep = 8">
-      Continue
-    </Button>
+<Button size="md" @click="continueHandler">
+  Continue
+</Button>
     </div>
 
   </div>
@@ -452,7 +419,7 @@
 </div>
 <div v-show="activeStep === 8" class="flex items-center justify-center min-h-full">
 
-  <div class="w-full max-w-[480px] space-y-7">
+  <div class="w-full max-w-120 space-y-7">
 
     <!-- header -->
     <div class="space-y-2">
@@ -469,10 +436,10 @@
       <label class="text-sm font-medium text-text-primary">Share via link</label>
       <div class="flex items-center gap-2">
         <div class="flex-1 border border-border rounded-lg px-3 py-2 bg-surface overflow-hidden">
-          <span class="text-sm text-text-secondary truncate block">
-            https://{{ siteSlug }}.orchit.ai
-          </span>
-        </div>
+  <span class="text-sm text-text-secondary truncate block">
+    {{ domainLink || `https://${siteSlug}.orchit.ai` }}
+  </span>
+</div>
         <Button variant="secondary" size="md" @click="copySiteUrl">
   <div class="flex items-center gap-1.5 transition-all duration-200">
     <FontAwesomeIcon
@@ -512,7 +479,7 @@
 
 </div>
         <!-- Nav -->
-        <div class="flex justify-between  items-center mt-[40px] md:mt-[60px]  lg:mt-[132px]" v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
+        <div class="flex justify-between  items-center mt-10 md:mt-15  lg:mt-33" v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
           <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
             :disabled="activeStep === 1">
             <div class="flex items-center gap-1">
@@ -529,7 +496,7 @@
                 Skip
               </button> -->
               </router-link>
-            <Button :disabled="creatingProfile || invitingPeople || (activeStep === 2 && selected === 'team' && isCheckingTenant)" size="md" type="submit" @click="continueHandler">
+            <Button :disabled="creatingProfile || invitingPeople" size="md" type="submit" @click="continueHandler">
                Continue 
             </Button>
           </div>
@@ -537,7 +504,7 @@
         </div>
       </div>
 
-      <div class="max-w-[500px] md:mx-auto w-full space-y-6"></div>
+      <div class="max-w-125 md:mx-auto w-full space-y-6"></div>
     </template>
   </AuthLayout>
 </template>
@@ -596,6 +563,8 @@ const siteSlug = ref('')
 const isCheckingSlug = ref(false)
 const isSlugAvailable = ref<boolean | null>(null)
 const referralSources = ref<string[]>([])
+const joinLink = ref('')
+const domainLink = ref('')
 const moduleOptionsMap = {
   team: [
     { id: 'tasks', label: 'Tasks' },
@@ -637,47 +606,36 @@ function toggleModule(id: string) {
 function validateCompanyStep() {
   const next: { team?: string; role?: string; companySize?: string } = {}
   if (!team.value.trim()) next.team = 'Please enter your company name.'
-  else if (isTenantAvailable.value === false) next.team = 'This company name is already taken.'
-  else if (isTenantAvailable.value === null && isCheckingTenant.value) next.team = 'Please wait while we check availability.'
   if (!role.value) next.role = 'Please select your role.'
   if (!companySize.value) next.companySize = 'Please select your company size.'
   errors.value = next
   return Object.keys(next).length === 0
 }
 const companyID = ref()
-// --- Tenant availability check ---
-const tenantSlug = computed(() =>
-  team.value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-)
-const isTenantAvailable = ref<boolean | null>(null)
-const isCheckingTenant = ref(false)
+watch(siteName, async (val) => {
+  siteSlug.value = generateSlug(val)
 
-watch(tenantSlug, async (slug) => {
-  if (!slug) {
-    isTenantAvailable.value = null
+  if (!siteSlug.value) {
+    isSlugAvailable.value = null
     return
   }
 
-  isCheckingTenant.value = true
+  isCheckingSlug.value = true
   try {
-    const result = await workspaceStore.fetchTitleSlug(slug)
-    isTenantAvailable.value = result?.available ?? null
+    const result = await workspaceStore.fetchTitleSlug(siteSlug.value)
+    isSlugAvailable.value = result?.available ?? null
   } catch {
-    isTenantAvailable.value = null
+    isSlugAvailable.value = null
   } finally {
-    isCheckingTenant.value = false
+    isCheckingSlug.value = false
   }
-}, { immediate: false })
-
+})
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   onSuccess: (data: any) => {
     activeStep.value = (activeStep.value + 1)
     companyID.value = data?._id
+    joinLink.value = data?.join_link ?? ''
+    domainLink.value = data?.domain_link ?? ''
   }
 });
 const { mutate: invitePeople, isPending: invitingPeople } = useInviteCompany({
@@ -778,46 +736,11 @@ function generateSlug(value: string) {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 }
-async function checkSlugAvailability() {
-  if (!siteSlug.value) return
 
-  isCheckingSlug.value = true
-
-  try {
-    // replace with real API call
-    const res = await fetch(`/api/site/check?slug=${siteSlug.value}`)
-    const data = await res.json()
-
-    isSlugAvailable.value = data.available
-  } catch (err) {
-    isSlugAvailable.value = false
-  } finally {
-    isCheckingSlug.value = false
-  }
-}
-watch(siteName, (val) => {
-  siteSlug.value = generateSlug(val)
-  checkSlugAvailability()
-})
-function validateSiteStep() {
-  if (!siteName.value.trim()) {
-    errors.value.siteName = 'Please enter a site name.'
-    return false
-  }
-
-  if (isSlugAvailable.value === false) {
-    errors.value.siteName = 'This site name is already taken.'
-    return false
-  }
-
-  return true
-}
 const isCopied = ref(false)
-
 function copySiteUrl() {
-  globalThis.navigator.clipboard.writeText(
-    `https://${siteSlug.value}.orchit.ai`
-  ).then(() => {
+  const url = domainLink.value || `https://${siteSlug.value}.orchit.ai`
+  globalThis.navigator.clipboard.writeText(url).then(() => {
     isCopied.value = true
     setTimeout(() => isCopied.value = false, 2000)
   })
@@ -892,93 +815,81 @@ function continueHandler() {
     // 👉 TEAM FLOW
     if (selected.value === 'team') {
       if (!validateCompanyStep()) return
-
-      const payload = {
-        title: team.value,
-        type: selected.value,
-        role_id: role.value,
-        company_size: companySize.value,
-      }
-
-      createProfile({ payload })
+      activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
       return
     }
 
     // 👉 PERSONAL FLOW
     if (selected.value === 'personal') {
       if (!validatePersonalStep()) return
-
-      const payload = {
-        type: 'personal',
-        role: personalRole.value
-      }
-
-      createProfile({ payload })
+      activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
       return
     }
 
     // 👉 SCHOOL FLOW
     if (selected.value === 'school') {
       if (!validateSchoolStep()) return
-
-      const payload = {
-        type: 'school',
-        institution: schoolName.value,
-        education_level: educationLevel.value,
-        field_of_study: fieldOfStudy.value,
-        primary_use: schoolUseCase.value
-      }
-
-      createProfile({ payload })
+      activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
       return
     }
   }
 
-if (activeStep.value === 3) {
-
-  if (selectedModules.value.length === 0) {
-    errors.value.selectedModules = 'Please select at least one option.'
+  if (activeStep.value === 3) {
+    if (selectedModules.value.length === 0) {
+      errors.value.selectedModules = 'Please select at least one option.'
+      return
+    }
+    activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
     return
   }
-    createProfile({
-    payload: {
-      like_to_manage: selectedModules.value
-    }
-  })
-  return
-}
-  if (activeStep.value === 4) {
 
+  if (activeStep.value === 4) {
     if (!workType.value) {
       errors.value.role = 'Please select what kind of work you do.'
       return
     }
-     createProfile({
-    payload: {
-      work_to_do: workType.value
-    }
-  })
-  return
+    activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
+    return
   }
-if (activeStep.value === 5) {
 
-  if (!validateSiteStep()) return
-
-  createProfile({
-    payload: {
-      site_name: siteName.value,
-      site_slug: siteSlug.value,
-      domain: `${siteSlug.value}.orchit.ai`
+  if (activeStep.value === 7) {
+    // Build full payload from all steps + heard_about_us
+    let payload: Record<string, any> = {
+      work_to_do: workType.value,
+      like_to_manage: selectedModules.value,
+      heard_about_us: referralSources.value,
     }
-  })
 
-  // router.push('/dashboard')
-  return
-}
+    if (selected.value === 'team') {
+      payload = {
+        ...payload,
+        title: team.value,
+        type: selected.value,
+        role_id: role.value,
+        company_size: companySize.value,
+      }
+    } else if (selected.value === 'personal') {
+      payload = {
+        ...payload,
+        type: 'personal',
+        role: personalRole.value,
+      }
+    } else if (selected.value === 'school') {
+      payload = {
+        ...payload,
+        type: 'school',
+        institution: schoolName.value,
+        education_level: educationLevel.value,
+        field_of_study: fieldOfStudy.value,
+        primary_use: schoolUseCase.value,
+      }
+    }
 
-  // =========================
+    createProfile({ payload })
+    return
+  }
+
   // DEFAULT STEP ADVANCE
-  // =========================
   activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
 }
 
@@ -1005,22 +916,36 @@ async function continueSiteHandler() {
   }
 }
 function sendInvites() {
-  invitePeople({
-    payload: {
-      company_id: companyID.value,
-      emails: [...emailList.value]
-    }
-  })
-
-  const slug = siteSlug.value
-
-  if (import.meta.env.PROD) {
-    window.location.href = `https://${slug}.orchit.ai/dashboard?welcome=1`
+  if (emailList.value.length > 0) {
+    invitePeople(
+      {
+        payload: {
+          company_id: companyID.value,
+          emails: [...emailList.value]
+        }
+      },
+      {
+        onSuccess: () => {
+          if (import.meta.env.PROD && domainLink.value) {
+            window.location.href = `${domainLink.value}/dashboard?welcome=1`
+          } else {
+            router.push({
+              path: '/dashboard',
+              query: { welcome: '1', workspace: siteSlug.value }
+            })
+          }
+        }
+      }
+    )
   } else {
-    router.push({
-      path: '/dashboard',
-      query: { welcome: '1', workspace: slug }
-    })
+    if (import.meta.env.PROD && domainLink.value) {
+      window.location.href = `${domainLink.value}/dashboard?welcome=1`
+    } else {
+      router.push({
+        path: '/dashboard',
+        query: { welcome: '1', workspace: siteSlug.value }
+      })
+    }
   }
 }
 onMounted(() => {
