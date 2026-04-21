@@ -248,7 +248,7 @@
           <div class="flex items-center gap-2 px-3.5 border-l"
             style="background: var(--bg-surface); border-color: var(--border);">
             <span class="text-[13px] font-semibold whitespace-nowrap" style="color: var(--text-secondary);">
-              .orchit.ai
+              .stagging.streamed.space
             </span>
 
             <!-- checking -->
@@ -288,7 +288,7 @@
           </p>
           <p v-else-if="isSlugAvailable === true && !isCheckingSlug"
             class="text-xs" style="color: #1d9e75;">
-            <span class="font-medium">{{ siteSlug }}</span>.orchit.ai is available
+            <span class="font-medium">{{ siteSlug }}</span>.stagging.streamed.space is available
           </p>
           <p v-else class="text-xs" style="color: var(--text-secondary);">
             This is just a suggestion — feel free to change it to something your team will recognize.
@@ -302,7 +302,7 @@
         style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);">
         <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent); opacity: 0.7;" />
         <span class="text-[13px] font-semibold break-all" style="color: var(--accent);">
-          {{ domainLink }}
+          https://{{ siteSlug }}.stagging.streamed.space
         </span>
       </div>
 
@@ -437,7 +437,7 @@
       <div class="flex items-center gap-2">
         <div class="flex-1 border border-border rounded-lg px-3 py-2 bg-surface overflow-hidden">
   <span class="text-sm text-text-secondary truncate block">
-    {{ domainLink || `https://${siteSlug}.orchit.ai` }}
+    {{ domainLink || `https://${siteSlug}.stagging.streamed.space` }}
   </span>
 </div>
         <Button variant="secondary" size="md" @click="copySiteUrl">
