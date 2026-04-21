@@ -303,11 +303,21 @@ router.beforeEach(async (to, _from, next) => {
     (record) => record.meta.requiresAuth === true
   );
 
-  if (requiresAuth && !auth.isAuthenticated) {
+  // Check token from any source
+  const localToken = localStorage.getItem('token')
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1] ?? null
+  const hasToken = !!(localToken ?? cookieToken)
+
+  const isAuthenticated = auth.isAuthenticated || hasToken
+
+  if (requiresAuth && !isAuthenticated) {
     return next({ name: "Login" });
   }
 
-  if (!requiresAuth && auth.isAuthenticated && to.name === "Login") {
+  if (!requiresAuth && isAuthenticated && to.name === "Login") {
     return next({ name: "Home" });
   }
 
