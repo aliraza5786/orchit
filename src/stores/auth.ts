@@ -2,12 +2,6 @@
 import { defineStore } from 'pinia'
 import api from '../libs/api'
 
-function getTokenFromCookie(): string | null {
-  const match = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('auth_token='))
-  return match ? match.split('=')[1] : null
-}
 function clearAuthCookie() {
   document.cookie = `auth_token=; domain=.streamed.space; path=/; max-age=0`
 }
@@ -21,34 +15,45 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (s) => !!s.user,
   },
   actions: {
-    async bootstrap() {
-      const localToken = localStorage.getItem('token')
-  const cookieToken = getTokenFromCookie()
+   async bootstrap() {
+  const localToken = localStorage.getItem('token')
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1] ?? null
+
+  console.log('bootstrap:', { localToken, cookieToken })
+
   const token = localToken ?? cookieToken
 
   if (!token) {
+    console.log('no token found, skipping bootstrap')
     this.initialized = true
     return
   }
+
   if (!localToken && cookieToken) {
+    console.log('syncing cookie token to localStorage')
     localStorage.setItem('token', cookieToken)
   }
 
-      try {
-        const res = await api.get('/profile')
-        this.user = res.data
-        this.userId = res?.data?.data?._id ?? null
-        if (res?.data) {
-          localStorage.setItem('user_id', res?.data?.data?._id)
-        }
-      } catch {
-        localStorage.removeItem('token')
-        clearAuthCookie()
-        this.user = null
-      } finally {
-        this.initialized = true
-      }
-    },
+  try {
+    const res = await api.get('/profile')
+    console.log('profile success:', res.data)
+    this.user = res.data
+    this.userId = res?.data?.data?._id ?? null
+    if (res?.data) {
+      localStorage.setItem('user_id', res?.data?.data?._id)
+    }
+  } catch (e) {
+    console.log('profile failed:', e)
+    localStorage.removeItem('token')
+    clearAuthCookie()
+    this.user = null
+  } finally {
+    this.initialized = true
+  }
+},
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
