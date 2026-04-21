@@ -417,6 +417,7 @@
     :selectedVariable="selected_view_by"
     :listId="localColumnData?.title"
     :sheet_id="selected_sheet_id === 'all' ? sheetId : selected_sheet_id"
+    :sheetVariables="variables"
     v-if="createTeamModal"
     key="createTaskModalKey"
     v-model="createTeamModal"
@@ -1984,8 +1985,10 @@ const { mutate: addTicket } = useAddTicket({
     },
   );
 
-  localPendingTickets.value = [];
-  localTableOrder.value = [];
+    toast.success("Ticket created successfully");
+    tableViewRef.value?.closeQuickCreate();
+    localPendingTickets.value = [];
+    localTableOrder.value = [];
 },
 });
 
@@ -1997,6 +2000,7 @@ const { mutate: addTableTicket, isPending: isAddingTableTicket } = useAddTicket(
     localTableOrder.value = []
     // Auto-close the quick create UI in TableView
     tableViewRef.value?.closeQuickCreate();
+    toast.success("Ticket created successfully");
     // Invalidate both the grouped lists AND the flat table data so the new card appears immediately
     queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
     queryClient.invalidateQueries({ queryKey: ['table-cards-flat'] })

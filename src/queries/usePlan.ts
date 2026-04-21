@@ -84,7 +84,53 @@ export const useSprintKanban = (
         params: {
           ...params,
           sprint_id: unref(sprint_id),
-          variable_id: "68b6c96e0a95eef7d14e6981",
+          variable_id: params.variable_slug ? "" : (params.variable_id || "68b6c96e0a95eef7d14e6981"),
+          // only include lane_ids if array is non-empty
+          ...(resolvedLaneIds?.length ? { lane_ids: resolvedLaneIds } : {}),
+        },
+        config: {
+          paramsSerializer: (params: Record<string, any>) => {
+            const searchParams = new URLSearchParams();
+            Object.entries(params).forEach(([key, value]) => {
+              if (value === null || value === undefined || value === "") return;
+              
+              if (Array.isArray(value)) {
+                if (value.length > 0) {
+                  searchParams.append(key, value.join(","));
+                }
+              } else {
+                searchParams.append(key, value as string);
+              }
+            });
+            return searchParams.toString();
+          },
+        },
+      });
+    },
+    ...options,
+  });
+};
+
+export const useSprintTable = (
+  sprint_id: any,
+  lane_ids: any,
+  extraParams?: any,
+  options = {}
+) => {
+  return useQuery({
+    queryKey: computed(() => ["sprint-table-flat", unref(sprint_id), unref(lane_ids), unref(extraParams)]),
+    queryFn: ({ signal }) => {
+      const resolvedLaneIds = unref(lane_ids);
+      const params = unref(extraParams) || {};
+      
+      // NOTE: Unlike useSprintKanban, this does NOT pass a default variable_id
+      return request<any>({
+        url: `workspace/cards/sprintgrouped`,
+        method: "GET",
+        signal,
+        params: {
+          ...params,
+          sprint_id: unref(sprint_id),
           // only include lane_ids if array is non-empty
           ...(resolvedLaneIds?.length ? { lane_ids: resolvedLaneIds } : {}),
         },

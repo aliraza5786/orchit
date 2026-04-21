@@ -97,6 +97,7 @@ import { useWorkspacesRoles } from '../../../queries/useWorkspace'
 import { useRouteIds } from '../../../composables/useQueryParams'
 
 import { usePermissions } from '../../../composables/usePermissions'
+import { toast } from 'vue-sonner'
 const { canDeleteCard,  canAssignCard, canViewCard, canEditCard } = usePermissions()
 
 const { workspaceId, moduleId } = useRouteIds();
@@ -162,11 +163,13 @@ const moveCard = useMoveCard({
     }
 })
 const { mutate: deleteCard, isPending: deletingTicket } = useDeleteTicket(props.ticket._id, {
-    onSuccess: () => {
-        queryClient.invalidateQueries({
-            queryKey: ['sheet-list']
-        })
-        showDelete.value = false
+    onSuccess: async() => {
+       await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+       await queryClient.invalidateQueries({ queryKey: ['sprint-kanban'] })
+       await queryClient.invalidateQueries({ queryKey: ['table-cards-flat'] })
+       await queryClient.invalidateQueries({ queryKey: ['sprint-table-flat'] })
+       showDelete.value = false
+       toast.success("Ticket deleted successfully");
     }
 })
 // const handleSelect = (val: any) => {
@@ -258,26 +261,35 @@ function changeStatus(newStatus: string) {
   // ── 2. Snapshot current cache for rollback ────────────────────────────────
   const snapshots: { queryKey: any; data: any }[] = []
 
-  // ── 3. Optimistically move the card in the board cache ────────────────────
-  // The sheet-list query returns: { sheets: [{ sheet_lists: [{ title, cards: [] }] }] }
+  // ── 3. Optimistically move the card in the board caches ───────────────────
+  
+  // A. Product/Sheet View (Key: sheet-list)
+  // Structure: { sheets: [{ sheet_lists: [{ title, cards: [] }] }] }
   queryClient.setQueriesData(
     { queryKey: ['sheet-list'], exact: false },
     (oldData: any) => {
       if (!oldData?.sheets) return oldData
-
-      // snapshot before mutation
       snapshots.push({ queryKey: ['sheet-list'], data: oldData })
-
       return {
         ...oldData,
         sheets: oldData.sheets.map((sheet: any) => ({
           ...sheet,
-          sheet_lists: moveBetweenColumns(
-            sheet.sheet_lists ?? [],
-            String(props.ticket._id),
-            newStatus
-          ),
+          sheet_lists: moveBetweenColumns(sheet.sheet_lists ?? [], String(props.ticket._id), newStatus),
         })),
+      }
+    }
+  )
+
+  // B. Sprint/Plan View (Key: sprint-kanban)
+  // Structure: { groups: [{ title, cards: [] }] }
+  queryClient.setQueriesData(
+    { queryKey: ['sprint-kanban'], exact: false },
+    (oldData: any) => {
+      if (!oldData?.groups) return oldData
+      snapshots.push({ queryKey: ['sprint-kanban'], data: oldData })
+      return {
+        ...oldData,
+        groups: moveBetweenColumns(oldData.groups ?? [], String(props.ticket._id), newStatus),
       }
     }
   )
@@ -290,7 +302,7 @@ function changeStatus(newStatus: string) {
     },
     {
       onSuccess: () => {
-        // Let the normal invalidation in moveCard's onSuccess handle the refetch
+        // Let the normal invalidation logic handle any further refreshes
       },
       onError: () => {
         // ── Rollback cache + badge ───────────────────────────────────────────
@@ -298,7 +310,6 @@ function changeStatus(newStatus: string) {
         snapshots.forEach(({ queryKey, data }) => {
           queryClient.setQueryData(queryKey, data)
         })
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
       },
     }
   )
