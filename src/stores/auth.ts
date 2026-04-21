@@ -15,48 +15,45 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (s) => !!s.user,
   },
   actions: {
-  async bootstrap() {
+ async bootstrap() {
   const urlParams = new URLSearchParams(window.location.search)
   const encodedToken = urlParams.get('_auth')
-  
-  console.log('=== BOOTSTRAP ===')
-  console.log('encodedToken from URL:', encodedToken ? 'EXISTS' : 'NULL')
-  console.log('raw search:', window.location.search)
 
+  // ✅ STEP 1: decode FIRST
   if (encodedToken) {
     try {
-      function decodeToken(encoded: string) {
-  const base64 = encoded
-    .replace(/-/g, '+')
-    .replace(/_/g, '/')
-    .replace(/\./g, '=')
+      const base64 = encodedToken
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .replace(/\./g, '=')
 
-  return atob(base64)
-}
+      const token = atob(base64)
 
-const token = decodeToken(encodedToken)
-document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${60 * 60 * 24 * 30}; Secure`
+      // ✅ Save immediately
       localStorage.setItem('token', token)
-      console.log('saved to localStorage, verify:', localStorage.getItem('token')?.slice(0, 20))
-    } catch(e) {
+
+      document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${60 * 60 * 24 * 30}; Secure`
+
+    } catch (e) {
       console.log('decode failed:', e)
-    } finally {
-      // Clean URL AFTER saving
-      urlParams.delete('_auth')
-      const newUrl = window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : '')
-      window.history.replaceState({}, '', newUrl)
-      console.log('URL cleaned')
     }
+
+    // ✅ REMOVE PARAM AFTER SAVING
+    urlParams.delete('_auth')
+    const newUrl =
+      window.location.pathname +
+      (urlParams.toString() ? '?' + urlParams.toString() : '')
+
+    window.history.replaceState({}, '', newUrl)
   }
 
-  const localToken = localStorage.getItem('token')
-  console.log('localToken after sync:', localToken ? 'EXISTS' : 'NULL')
-
-  // ... rest of bootstrap
+  // ✅ STEP 2: now read tokens
   const cookieToken = document.cookie
     .split('; ')
     .find(row => row.startsWith('auth_token='))
     ?.split('=')[1] ?? null
+
+  const localToken = localStorage.getItem('token')
 
   const token = cookieToken || localToken
 
@@ -64,20 +61,18 @@ document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=
     this.initialized = true
     return
   }
-if (cookieToken && localStorage.getItem('token') !== cookieToken) {
-  localStorage.setItem('token', cookieToken)
-}
+
+  // ✅ sync
+  if (cookieToken && localStorage.getItem('token') !== cookieToken) {
+    localStorage.setItem('token', cookieToken)
+  }
+
   try {
     const res = await api.get('/profile')
     this.user = res.data
-    this.userId = res?.data?.data?._id ?? null
-    if (res?.data) {
-      localStorage.setItem('user_id', res?.data?.data?._id)
-    }
-  } catch (e: any) {
-    console.log('profile failed:', e?.response?.status)
+  } catch (e) {
     localStorage.removeItem('token')
-    clearAuthCookie()
+    document.cookie = `auth_token=; domain=.streamed.space; path=/; max-age=0`
     this.user = null
   } finally {
     this.initialized = true

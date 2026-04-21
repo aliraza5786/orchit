@@ -295,6 +295,7 @@ api.interceptors.response.use(
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore();
 
+  // ALWAYS run bootstrap first
   if (!auth.initialized) {
     await auth.bootstrap();
   }
@@ -303,25 +304,20 @@ router.beforeEach(async (to, _from, next) => {
     (record) => record.meta.requiresAuth === true
   );
 
-  // Check token from any source
+  // AFTER bootstrap, re-check token
   const localToken = localStorage.getItem('token')
   const cookieToken = document.cookie
     .split('; ')
     .find(row => row.startsWith('auth_token='))
     ?.split('=')[1] ?? null
-  const hasToken = !!(localToken ?? cookieToken)
 
-  const isAuthenticated = auth.isAuthenticated || hasToken
+  const hasToken = !!(cookieToken || localToken)
 
-  if (requiresAuth && !isAuthenticated) {
+  // 🔥 IMPORTANT: allow access if token exists but user not yet fetched
+  if (requiresAuth && !hasToken) {
     return next({ name: "Login" });
-  }
-
-  if (!requiresAuth && isAuthenticated && to.name === "Login") {
-    return next({ name: "Home" });
   }
 
   next();
 });
-
 export default router;

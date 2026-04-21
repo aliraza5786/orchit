@@ -409,8 +409,18 @@
             </div>
           </Button>
     <!-- continue -->
-<Button size="md" @click="continueHandler">
-  Continue
+<Button 
+  size="md" 
+  @click="continueHandler"
+  :disabled="creatingProfile"
+>
+  <div class="flex items-center gap-2">
+    <span
+      v-if="creatingProfile"
+      class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
+    />
+    <span>Continue</span>
+  </div>
 </Button>
     </div>
 
