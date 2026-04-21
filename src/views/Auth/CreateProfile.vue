@@ -927,7 +927,7 @@ function sendInvites() {
       {
         onSuccess: () => {
           if (import.meta.env.PROD && domainLink.value) {
-            window.location.href = `${domainLink.value}/dashboard?welcome=1`
+            window.location.href = `https://stagging.streamed.space/dashboard?welcome=1`
           } else {
             router.push({
               path: '/dashboard',
