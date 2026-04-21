@@ -915,7 +915,17 @@ async function continueSiteHandler() {
     isProvisioning.value = true
   }
 }
+function setAuthCookie(token: string) {
+  const isProduction = import.meta.env.PROD
+  const domain = isProduction ? '.orchit.ai' : 'localhost'
+  const maxAge = 60 * 60 * 24 * 30 // 30 days
+  document.cookie = `auth_token=${token}; domain=${domain}; path=/; max-age=${maxAge}; SameSite=Lax${isProduction ? '; Secure' : ''}`
+}
+
 function sendInvites() {
+  const token = localStorage.getItem('token')
+  if (token) setAuthCookie(token)
+
   if (emailList.value.length > 0) {
     invitePeople(
       {
