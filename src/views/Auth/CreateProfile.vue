@@ -467,7 +467,7 @@
 
     <!-- actions -->
     <div class="flex items-center justify-between pt-2">
-      <Button variant="secondary" size="md" @click="router.push('/dashboard')">
+      <Button variant="secondary" size="md" @click="router.push('https://stagging.streamed.space/dashboard?welcome=1')">
         Do this later
       </Button>
       <Button size="md" @click="sendInvites">
@@ -479,7 +479,7 @@
 
 </div>
         <!-- Nav -->
-        <div class="flex justify-between  items-center mt-10 md:mt-15  lg:mt-33" v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
+        <div class="flex justify-between  items-center mt-10 md:mt-15" v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
           <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
             :disabled="activeStep === 1">
             <div class="flex items-center gap-1">
@@ -939,7 +939,7 @@ function sendInvites() {
     )
   } else {
     if (import.meta.env.PROD && domainLink.value) {
-      window.location.href = `${domainLink.value}/dashboard?welcome=1`
+      window.location.href = `https://stagging.streamed.space/dashboard?welcome=1`
     } else {
       router.push({
         path: '/dashboard',
