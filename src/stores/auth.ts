@@ -25,8 +25,17 @@ export const useAuthStore = defineStore('auth', {
 
   if (encodedToken) {
     try {
-      const token = atob(encodedToken)
-      console.log('decoded token:', token?.slice(0, 20))
+      function decodeToken(encoded: string) {
+  const base64 = encoded
+    .replace(/-/g, '+')
+    .replace(/_/g, '/')
+    .replace(/\./g, '=')
+
+  return atob(base64)
+}
+
+const token = decodeToken(encodedToken)
+document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${60 * 60 * 24 * 30}; Secure`
       localStorage.setItem('token', token)
       console.log('saved to localStorage, verify:', localStorage.getItem('token')?.slice(0, 20))
     } catch(e) {
@@ -49,17 +58,15 @@ export const useAuthStore = defineStore('auth', {
     .find(row => row.startsWith('auth_token='))
     ?.split('=')[1] ?? null
 
-  const token = localToken ?? cookieToken
+  const token = cookieToken || localToken
 
   if (!token) {
     this.initialized = true
     return
   }
-
-  if (!localToken && cookieToken) {
-    localStorage.setItem('token', cookieToken)
-  }
-
+if (cookieToken && localStorage.getItem('token') !== cookieToken) {
+  localStorage.setItem('token', cookieToken)
+}
   try {
     const res = await api.get('/profile')
     this.user = res.data

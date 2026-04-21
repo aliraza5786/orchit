@@ -925,10 +925,7 @@ function setAuthCookie(token: string) {
     // localhost — no domain, no Secure
     document.cookie = cookieString
   } else {
-    // Extract root domain: stagging.streamed.space → .streamed.space
-    const parts = hostname.split('.')
-    const rootDomain = '.' + parts.slice(-2).join('.')
-    cookieString += `; domain=${rootDomain}; Secure`
+   cookieString += `; domain=.streamed.space; Secure`
     document.cookie = cookieString
   }
 
@@ -939,7 +936,11 @@ function sendInvites() {
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)
 
-  const encodedToken = token ? btoa(token) : ''
+  const encodedToken = token
+    ? btoa(token).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
+    : ''
+
+  const isLocalhost = window.location.hostname === 'localhost'
 
   const buildUrl = (base: string) => `${base}/dashboard?welcome=1&_auth=${encodedToken}`
 
@@ -953,7 +954,10 @@ function sendInvites() {
       },
       {
         onSuccess: () => {
-          if (domainLink.value) {
+          if (isLocalhost) {
+            // For local testing — open in same localhost at different path
+            router.push({ path: '/dashboard', query: { welcome: '1', _auth: encodedToken } })
+          } else if (domainLink.value) {
             window.location.href = buildUrl(domainLink.value)
           } else {
             router.push({ path: '/dashboard', query: { welcome: '1' } })
@@ -962,7 +966,9 @@ function sendInvites() {
       }
     )
   } else {
-    if (domainLink.value) {
+    if (isLocalhost) {
+      router.push({ path: '/dashboard', query: { welcome: '1', _auth: encodedToken } })
+    } else if (domainLink.value) {
       window.location.href = buildUrl(domainLink.value)
     } else {
       router.push({ path: '/dashboard', query: { welcome: '1' } })
