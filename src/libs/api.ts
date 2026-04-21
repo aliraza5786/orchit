@@ -18,13 +18,12 @@ api.interceptors.request.use((config) => {
     .find(row => row.startsWith('auth_token='))
     ?.split('=')[1] ?? null
 
-  const token = localToken ?? cookieToken
+  const token = localToken || cookieToken
 
   if (token) {
-    // Sync to localStorage if it came from cookie
-    if (!localToken && cookieToken) {
-      localStorage.setItem('token', cookieToken)
-    }
+if (cookieToken && localStorage.getItem('token') !== cookieToken) {
+  localStorage.setItem('token', cookieToken)
+}
     config.headers.Authorization = `Bearer ${token}`
   }
 

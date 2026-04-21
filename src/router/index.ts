@@ -291,20 +291,24 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-// Guard: check any matched record (works with nested routes)
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore();
 
-  // ALWAYS run bootstrap first
-  if (!auth.initialized) {
-    await auth.bootstrap();
+  const hasAuthParam = new URLSearchParams(window.location.search).has('_auth')
+
+  // 🔥 Always process _auth first
+  if (hasAuthParam) {
+    await auth.bootstrap()
+    return next()
   }
+
+  // Normal bootstrap
+  await auth.bootstrap()
 
   const requiresAuth = to.matched.some(
     (record) => record.meta.requiresAuth === true
   );
 
-  // AFTER bootstrap, re-check token
   const localToken = localStorage.getItem('token')
   const cookieToken = document.cookie
     .split('; ')
@@ -313,9 +317,12 @@ router.beforeEach(async (to, _from, next) => {
 
   const hasToken = !!(cookieToken || localToken)
 
-  // 🔥 IMPORTANT: allow access if token exists but user not yet fetched
   if (requiresAuth && !hasToken) {
     return next({ name: "Login" });
+  }
+
+  if (to.name === "Login" && hasToken) {
+    return next({ name: "Home" });
   }
 
   next();
