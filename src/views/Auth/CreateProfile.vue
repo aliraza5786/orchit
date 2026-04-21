@@ -248,7 +248,7 @@
           <div class="flex items-center gap-2 px-3.5 border-l"
             style="background: var(--bg-surface); border-color: var(--border);">
             <span class="text-[13px] font-semibold whitespace-nowrap" style="color: var(--text-secondary);">
-              .stagging.streamed.space
+              .streamed.space
             </span>
 
             <!-- checking -->
@@ -288,7 +288,7 @@
           </p>
           <p v-else-if="isSlugAvailable === true && !isCheckingSlug"
             class="text-xs" style="color: #1d9e75;">
-            <span class="font-medium">{{ siteSlug }}</span>.stagging.streamed.space is available
+            <span class="font-medium">{{ siteSlug }}</span>.streamed.space is available
           </p>
           <p v-else class="text-xs" style="color: var(--text-secondary);">
             This is just a suggestion — feel free to change it to something your team will recognize.
@@ -302,7 +302,7 @@
         style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);">
         <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent); opacity: 0.7;" />
         <span class="text-[13px] font-semibold break-all" style="color: var(--accent);">
-          https://{{ siteSlug }}.stagging.streamed.space
+          https://{{ siteSlug }}.streamed.space
         </span>
       </div>
 
@@ -437,7 +437,7 @@
       <div class="flex items-center gap-2">
         <div class="flex-1 border border-border rounded-lg px-3 py-2 bg-surface overflow-hidden">
   <span class="text-sm text-text-secondary truncate block">
-    {{ domainLink || `https://${siteSlug}.stagging.streamed.space` }}
+    {{ domainLink || `https://${siteSlug}.streamed.space/` }}
   </span>
 </div>
         <Button variant="secondary" size="md" @click="copySiteUrl">
@@ -467,7 +467,7 @@
 
     <!-- actions -->
     <div class="flex items-center justify-between pt-2">
-      <Button variant="secondary" size="md" @click="router.push('https://stagging.streamed.space/dashboard?welcome=1')">
+      <Button variant="secondary" size="md" @click="router.push('/dashboard')">
         Do this later
       </Button>
       <Button size="md" @click="sendInvites">
@@ -739,7 +739,7 @@ function generateSlug(value: string) {
 
 const isCopied = ref(false)
 function copySiteUrl() {
-  const url = domainLink.value || `https://${siteSlug.value}.stagging.streamed.space/`
+  const url = domainLink.value || `https://${siteSlug.value}.streamed.space/`
   globalThis.navigator.clipboard.writeText(url).then(() => {
     isCopied.value = true
     setTimeout(() => isCopied.value = false, 2000)
@@ -927,7 +927,7 @@ function sendInvites() {
       {
         onSuccess: () => {
           if (import.meta.env.PROD && domainLink.value) {
-            window.location.href = `https://stagging.streamed.space/dashboard?welcome=1`
+            window.location.href = `${domainLink.value}/dashboard?welcome=1`
           } else {
             router.push({
               path: '/dashboard',
@@ -939,7 +939,7 @@ function sendInvites() {
     )
   } else {
     if (import.meta.env.PROD && domainLink.value) {
-      window.location.href = `https://stagging.streamed.space/dashboard?welcome=1`
+      window.location.href = `${domainLink.value}/dashboard?welcome=1`
     } else {
       router.push({
         path: '/dashboard',
