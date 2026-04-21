@@ -916,17 +916,31 @@ async function continueSiteHandler() {
   }
 }
 function setAuthCookie(token: string) {
-  const isProduction = import.meta.env.PROD
-  const domain = isProduction ? '.streamed.space' : '.streamed.space' // same for staging
   const maxAge = 60 * 60 * 24 * 30 // 30 days
-  document.cookie = `auth_token=${token}; domain=${domain}; path=/; max-age=${maxAge}; SameSite=Lax${isProduction ? '; Secure' : ''}`
+  const hostname = window.location.hostname
+
+  let cookieString = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`
+
+  if (hostname === 'localhost') {
+    // localhost — no domain, no Secure
+    document.cookie = cookieString
+  } else {
+    // Extract root domain: stagging.streamed.space → .streamed.space
+    const parts = hostname.split('.')
+    const rootDomain = '.' + parts.slice(-2).join('.')
+    cookieString += `; domain=${rootDomain}; Secure`
+    document.cookie = cookieString
+  }
+
+  console.log('cookie set for:', hostname, '→', cookieString)
 }
 
 function sendInvites() {
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)
-
+   
   if (emailList.value.length > 0) {
+    console.log("token is", token);
     invitePeople(
       {
         payload: {
@@ -934,27 +948,31 @@ function sendInvites() {
           emails: [...emailList.value]
         }
       },
-      {
-        onSuccess: () => {
-          if (import.meta.env.PROD && domainLink.value) {
-            window.location.href = `${domainLink.value}/dashboard?welcome=1`
-          } else {
-            router.push({
-              path: '/dashboard',
-              query: { welcome: '1', workspace: siteSlug.value }
-            })
-          }
-        }
-      }
+      
+      
+      // {
+      //   onSuccess: () => {
+      //     if (domainLink.value) {
+      //       window.location.href = `${domainLink.value}/dashboard?welcome=1`
+      //     } else {
+      //       router.push({
+      //         path: '/dashboard',
+      //         query: { welcome: '1', workspace: siteSlug.value }
+      //       })
+      //     }
+      //   }
+      // }
     )
   } else {
-    if (import.meta.env.PROD && domainLink.value) {
-      window.location.href = `${domainLink.value}/dashboard?welcome=1`
+    if (domainLink.value) {
+      console.log("token is", token);
+      // window.location.href = `${domainLink.value}/dashboard?welcome=1`
     } else {
-      router.push({
-        path: '/dashboard',
-        query: { welcome: '1', workspace: siteSlug.value }
-      })
+      // router.push({
+      //   path: '/dashboard',
+      //   query: { welcome: '1', workspace: siteSlug.value }
+      // })
+      console.log("token is", token);
     }
   }
 }

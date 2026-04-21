@@ -16,13 +16,14 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
    async bootstrap() {
+    console.log("Called")
   const localToken = localStorage.getItem('token')
   const cookieToken = document.cookie
     .split('; ')
     .find(row => row.startsWith('auth_token='))
     ?.split('=')[1] ?? null
 
-  console.log('bootstrap:', { localToken, cookieToken })
+  console.log('bootstrap auth token:', { localToken, cookieToken })
 
   const token = localToken ?? cookieToken
 

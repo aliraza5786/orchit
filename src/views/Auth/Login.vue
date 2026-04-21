@@ -11,7 +11,7 @@
         >
           Sign in to Orchit AI
         </h2>
-
+          {{ cookieToken }}
         <form @submit.prevent="handleLogin" class="space-y-4 w-full">
           <BaseTextField
             v-model="email"
@@ -146,7 +146,10 @@ const authStore = useAuthStore()
 const email = ref("");
 const password = ref("");
 const errorMessage = ref("");
-
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1] ?? null
 const touched = {
   email: false,
   password: false,
