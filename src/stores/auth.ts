@@ -8,13 +8,9 @@ function getTokenFromCookie(): string | null {
     .find(row => row.startsWith('auth_token='))
   return match ? match.split('=')[1] : null
 }
-
 function clearAuthCookie() {
-  const isProduction = import.meta.env.PROD
-  const domain = isProduction ? '.orchit.ai' : 'localhost'
-  document.cookie = `auth_token=; domain=${domain}; path=/; max-age=0`
+  document.cookie = `auth_token=; domain=.streamed.space; path=/; max-age=0`
 }
-
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as any,

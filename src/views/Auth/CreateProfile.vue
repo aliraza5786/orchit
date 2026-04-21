@@ -917,7 +917,7 @@ async function continueSiteHandler() {
 }
 function setAuthCookie(token: string) {
   const isProduction = import.meta.env.PROD
-  const domain = isProduction ? '.orchit.ai' : 'localhost'
+  const domain = isProduction ? '.streamed.space' : '.streamed.space' // same for staging
   const maxAge = 60 * 60 * 24 * 30 // 30 days
   document.cookie = `auth_token=${token}; domain=${domain}; path=/; max-age=${maxAge}; SameSite=Lax${isProduction ? '; Secure' : ''}`
 }
