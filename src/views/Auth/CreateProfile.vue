@@ -938,9 +938,12 @@ function setAuthCookie(token: string) {
 function sendInvites() {
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)
-   
+
+  const encodedToken = token ? btoa(token) : ''
+
+  const buildUrl = (base: string) => `${base}/dashboard?welcome=1&_auth=${encodedToken}`
+
   if (emailList.value.length > 0) {
-    console.log("token is", token);
     invitePeople(
       {
         payload: {
@@ -948,31 +951,21 @@ function sendInvites() {
           emails: [...emailList.value]
         }
       },
-      
-      
-      // {
-      //   onSuccess: () => {
-      //     if (domainLink.value) {
-      //       window.location.href = `${domainLink.value}/dashboard?welcome=1`
-      //     } else {
-      //       router.push({
-      //         path: '/dashboard',
-      //         query: { welcome: '1', workspace: siteSlug.value }
-      //       })
-      //     }
-      //   }
-      // }
+      {
+        onSuccess: () => {
+          if (domainLink.value) {
+            window.location.href = buildUrl(domainLink.value)
+          } else {
+            router.push({ path: '/dashboard', query: { welcome: '1' } })
+          }
+        }
+      }
     )
   } else {
     if (domainLink.value) {
-      console.log("token is", token);
-      // window.location.href = `${domainLink.value}/dashboard?welcome=1`
+      window.location.href = buildUrl(domainLink.value)
     } else {
-      // router.push({
-      //   path: '/dashboard',
-      //   query: { welcome: '1', workspace: siteSlug.value }
-      // })
-      console.log("token is", token);
+      router.push({ path: '/dashboard', query: { welcome: '1' } })
     }
   }
 }
