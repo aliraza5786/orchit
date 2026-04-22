@@ -274,5 +274,15 @@ async fetchTitleSlug(slug: string) {
        
       }
     },
+    async fetchWorkspaceBySlug(slug: string) {
+      try {
+        const res = await api.get(`tenant/workspace/${slug}`);
+        const data = res.data?.data;
+        return data;
+      } catch (err: any) {
+        console.error("fetchWorkspaceBySlug:", err);
+        return null;
+      }
+    },
   },
 });

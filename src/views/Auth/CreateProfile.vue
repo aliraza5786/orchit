@@ -852,15 +852,19 @@ function continueHandler() {
     activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
     return
   }
-
-  if (activeStep.value === 4) {
-    if (!workType.value) {
-      errors.value.role = 'Please select what kind of work you do.'
-      return
-    }
-    activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
+if (activeStep.value === 4) {
+  if (!workType.value) {
+    errors.value.role = 'Please select what kind of work you do.'
     return
   }
+  // Skip site creation (step 5) for personal and school
+  if (selected.value === 'personal' || selected.value === 'school') {
+    activeStep.value = 6
+  } else {
+    activeStep.value = 5
+  }
+  return
+}
 
   if (activeStep.value === 7) {
     // Build full payload from all steps + heard_about_us
@@ -982,11 +986,14 @@ function sendInvites() {
             const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
             console.log('🌐 Navigating to custom subdomain:', subdomainUrl)
             console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
+            localStorage.setItem('subdomainUrl', subdomainUrl)
             window.location.href = subdomainUrl
           } else if (domainLink.value) {
             console.log('🌐 Navigating to production subdomain:', domainLink.value)
             console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
-            window.location.href = buildUrl(domainLink.value)
+            const subdomainUrl = buildUrl(domainLink.value)
+            localStorage.setItem('subdomainUrl', subdomainUrl)
+            window.location.href = subdomainUrl
           } else {
             router.push({ path: '/dashboard', query: { welcome: '1' } })
           }
@@ -1000,11 +1007,14 @@ function sendInvites() {
       const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
       console.log('🌐 Navigating to custom subdomain (no emails):', subdomainUrl)
       console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
+      localStorage.setItem('subdomainUrl', subdomainUrl)
       window.location.href = subdomainUrl
     } else if (domainLink.value) {
       console.log('🌐 Navigating to production subdomain (no emails):', domainLink.value)
       console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
-      window.location.href = buildUrl(domainLink.value)
+      const subdomainUrl = buildUrl(domainLink.value)
+      localStorage.setItem('subdomainUrl', subdomainUrl)
+      window.location.href = subdomainUrl
     } else {
       router.push({ path: '/dashboard', query: { welcome: '1' } })
     }

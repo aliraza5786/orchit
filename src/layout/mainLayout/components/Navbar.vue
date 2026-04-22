@@ -78,93 +78,266 @@
             @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu" type="button">
             {{ initials }}
           </button>
-
-        
-
-          <!-- Dropdown -->
-          <Transition enter-active-class="transition duration-150 ease-out"
-            enter-from-class="opacity-0 -translate-y-1 scale-95" enter-to-class="opacity-100 translate-y-0 scale-100"
-            leave-active-class="transition duration-120 ease-in" leave-from-class="opacity-100 translate-y-0 scale-100"
-            leave-to-class="opacity-0 -translate-y-1 scale-95">
-            <div v-if="menuOpen" id="user-menu"
-              class="absolute right-0 mt-2 w-80 origin-top-right rounded-2xl bg-bg-dropdown p-1.5 text-sm shadow-xl ring-1 ring-black/5"
-              role="menu" @keydown.esc.stop.prevent="closeMenu">
-              <!-- Header -->
-              <div class="flex items-center gap-3 rounded-xl p-3">
-                <img v-if="profileData?.u_profile_image" class=" w-10 h-10 object-cover rounded-full"
-                  :src="profileData?.u_profile_image" alt="profile_img">
-                <div v-else
-                  class="grid h-11 w-11 place-items-center rounded-full bg-orange-500 text-base font-bold text-text-primary">
-                  {{ initials }}
+<Transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0 -translate-y-1 scale-95"
+      enter-to-class="opacity-100 translate-y-0 scale-100"
+      leave-active-class="transition duration-120 ease-in"
+      leave-from-class="opacity-100 translate-y-0 scale-100"
+      leave-to-class="opacity-0 -translate-y-1 scale-95"
+    >
+      <div
+        v-if="menuOpen"
+        id="user-menu"
+        class="absolute right-0 mt-2 w-80 origin-top-right rounded-2xl bg-bg-dropdown p-1.5 text-sm shadow-xl ring-1 ring-black/5"
+        role="menu"
+        @keydown.esc.stop.prevent="menuOpen = false"
+      >
+        <!-- Header -->
+        <div class="flex items-center gap-3 rounded-xl p-3">
+          <div
+            class="grid h-11 w-11 place-items-center rounded-full bg-orange-500 text-base font-bold text-white"
+          >
+            {{ getInitials(currentAccount.name) }}
+          </div>
+          <div class="min-w-0">
+            <p class="truncate font-semibold leading-5">{{ currentAccount.name }}</p>
+            <p class="truncate text-xs text-text-secondary">{{ currentAccount.email }}</p>
+            <!-- Active account type badge -->
+            <span
+              class="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              :class="
+                currentAccount.type === 'company'
+                  ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                  : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'
+              "
+            >
+              <i
+                :class="currentAccount.type === 'company' ? 'fa-solid fa-building' : 'fa-solid fa-user'"
+                class="text-[9px]"
+              ></i>
+              {{ currentAccount.type === 'company' ? 'Company' : 'Personal' }}
+            </span>
+          </div>
+        </div>
+        <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
+ 
+        <!-- ── ACCOUNT SWITCHER ── -->
+        <div class="px-1 pt-2 pb-1">
+          <p class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-secondary/60">
+            Switch Account
+          </p>
+ 
+          <Transition
+            enter-active-class="transition duration-150 ease-out"
+            enter-from-class="opacity-0 scale-95"
+            enter-to-class="opacity-100 scale-100"
+            leave-active-class="transition duration-100 ease-in"
+            leave-from-class="opacity-100 scale-100"
+            leave-to-class="opacity-0 scale-95"
+            mode="out-in"
+          >
+            <!-- Confirm panel -->
+            <div
+              v-if="pendingAccount"
+              key="confirm"
+              class="rounded-xl ring-1 ring-black/5 bg-bg-dropdown overflow-hidden mb-1"
+            >
+              <!-- From → To chips -->
+              <div class="flex items-center gap-2 bg-bg-dropdown-menu-hover/40 px-3 py-2.5">
+                <div class="flex-1 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center">
+                  <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">From</p>
+                  <p class="mt-0.5 truncate text-xs font-semibold">{{ currentAccount.name }}</p>
+                  <p class="truncate text-[10px] text-orange-500">{{ currentAccount.domain }}</p>
                 </div>
-                <div class="min-w-0">
-                  <p class="truncate font-semibold leading-5">{{ profileData?.u_full_name || '—' }}</p>
-                  <p class="truncate text-xs text-text-secondary">{{ profileData?.u_email || '—' }}</p>
+                <i class="fa-solid fa-arrow-right text-text-secondary/40 text-xs flex-shrink-0"></i>
+                <div class="flex-1 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center">
+                  <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">To</p>
+                  <p class="mt-0.5 truncate text-xs font-semibold">{{ pendingAccount.name }}</p>
+                  <p class="truncate text-[10px] text-orange-500">{{ pendingAccount.domain }}</p>
                 </div>
               </div>
-              <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
-
-              <!-- Items -->
-              <ul class="p-1">
-
-                <li>
-                  <button
-                    class=" cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                    role="menuitem" type="button"  @click="openAccountSettings">
-                    <i class="fa-regular fa-gear"></i>
-                    <span>Account settings</span>
-                  </button>
-                </li>
-
-                <!-- Theme submenu -->
-                <li class="relative cursor-pointer" @mouseenter="openTheme()" @mouseleave="closeTheme()">
-                  <button ref="themeTriggerRef"
-                    class="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                    role="menuitem" aria-haspopup="menu" :aria-expanded="themeOpen ? 'true' : 'false'"
-                    @keydown.right.prevent="openTheme()" @keydown.left.prevent="closeTheme()" type="button">
-                    <span class="flex items-center gap-3">
-                      <i class="fa-regular fa-circle"></i>
-                      Theme
-                    </span>
-                    <i class="fa-solid fa-chevron-right"></i>
-                  </button>
-
-                  <Transition enter-active-class="transition duration-150 ease-out cursor-pointer"
-                    enter-from-class="opacity-0 translate-x-1 scale-95"
-                    enter-to-class="opacity-100 translate-x-0 scale-100"
-                    leave-active-class="transition duration-120 ease-in"
-                    leave-from-class="opacity-100 translate-x-0 scale-100"
-                    leave-to-class="opacity-0 translate-x-1 scale-95">
-                    <div v-if="themeOpen" ref="themeMenuRef"
-                      class="absolute top-[37px] sm:top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
-                      role="menu" :class="themeFlipLeft ? 'right-[-17px] sm:right-full mr-2' : 'left-full ml-2'">
-                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('system'); closeMenu()" type="button">
-                        <i class="fa-solid fa-desktop"></i> System
-                      </button>
-                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('light'); closeMenu()" type="button">
-                        <i class="fa-regular fa-sun-cloud"></i> Light
-                      </button>
-                      <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                        @click="setTheme('dark'); closeMenu()" type="button">
-                        <i class="fa-regular fa-clouds-moon"></i> Dark
-                      </button>
-                    </div>
-                  </Transition>
-                </li>
-
-
-                <li>
-                  <button class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                    role="menuitem" type="button" @click="handleLogout">
-                    <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
-                    <span>Log out</span>
-                  </button>
-                </li>
-              </ul>
+ 
+              <!-- Warning -->
+              <div
+                class="flex gap-2 px-3 py-2 text-[11px] leading-relaxed"
+                :class="
+                  pendingAccount.type === 'company'
+                    ? 'bg-amber-50/80 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+                    : 'bg-green-50/80 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+                "
+              >
+                <i
+                  :class="pendingAccount.type === 'company' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-info'"
+                  class="mt-0.5 flex-shrink-0 text-xs"
+                ></i>
+                <span v-if="pendingAccount.type === 'company'">
+                  You'll be redirected to <strong>{{ pendingAccount.domain }}</strong>. Unsaved changes may be lost.
+                </span>
+                <span v-else>
+                  Returning to your personal account at <strong>{{ pendingAccount.domain }}</strong>.
+                </span>
+              </div>
+ 
+              <!-- Actions -->
+              <div class="flex gap-2 px-3 py-2.5">
+                <button
+                  type="button"
+                  class="flex-1 cursor-pointer rounded-lg border border-black/10 bg-bg-dropdown px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition"
+                  @click="pendingAccount = null"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  class="flex-[1.5] cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60"
+                  :disabled="isSwitching"
+                  @click="confirmSwitch"
+                >
+                  <i v-if="isSwitching" class="fa-solid fa-circle-notch animate-spin text-[11px]"></i>
+                  <span>{{ isSwitching ? 'Switching…' : 'Confirm Switch' }}</span>
+                </button>
+              </div>
             </div>
+ 
+            <!-- Account list -->
+            <ul v-else key="list" class="space-y-0.5">
+              <li v-for="acc in accounts" :key="acc.id">
+                <button
+                  type="button"
+                  class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
+                  :class="acc.id === currentAccount.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
+                  @click="acc.id !== currentAccount.id && (pendingAccount = acc)"
+                >
+                  <!-- Avatar -->
+                  <div
+                    class="grid h-8 w-8 flex-shrink-0 place-items-center text-xs font-bold"
+                    :class="
+                      acc.type === 'company'
+                        ? 'rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300'
+                        : 'rounded-full bg-orange-500 text-white'
+                    "
+                  >
+                    {{ getInitials(acc.name) }}
+                  </div>
+ 
+                  <!-- Info -->
+                  <div class="min-w-0 flex-1 text-left">
+                    <p class="truncate text-xs font-medium leading-tight">{{ acc.name }}</p>
+                    <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ acc.domain }}</p>
+                  </div>
+ 
+                  <!-- Right: checkmark if active, "Switch" pill on hover -->
+                  <div class="flex-shrink-0">
+                    <span
+                      v-if="acc.id === currentAccount.id"
+                      class="grid h-5 w-5 place-items-center rounded-full bg-orange-500 text-[10px] text-white"
+                    >
+                      <i class="fa-solid fa-check"></i>
+                    </span>
+                    <span
+                      v-else
+                      class="hidden rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600 group-hover:block dark:bg-orange-900/30 dark:text-orange-400"
+                    >
+                      Switch
+                    </span>
+                  </div>
+                </button>
+              </li>
+            </ul>
           </Transition>
+        </div>
+        <!-- ── END ACCOUNT SWITCHER ── -->
+ 
+        <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
+ 
+        <!-- Items (UNCHANGED) -->
+        <ul class="p-1">
+          <li>
+            <button
+              class="cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+              role="menuitem"
+              type="button"
+              @click="openAccountSettings"
+            >
+              <i class="fa-regular fa-gear"></i>
+              <span>Account settings</span>
+            </button>
+          </li>
+ 
+          <!-- Theme submenu -->
+          <li class="relative cursor-pointer" @mouseenter="openTheme()" @mouseleave="closeTheme()">
+            <button
+              ref="themeTriggerRef"
+              class="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+              role="menuitem"
+              aria-haspopup="menu"
+              :aria-expanded="themeOpen ? 'true' : 'false'"
+              @keydown.right.prevent="openTheme()"
+              @keydown.left.prevent="closeTheme()"
+              type="button"
+            >
+              <span class="flex items-center gap-3">
+                <i class="fa-regular fa-circle"></i>
+                Theme
+              </span>
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+ 
+            <Transition
+              enter-active-class="transition duration-150 ease-out cursor-pointer"
+              enter-from-class="opacity-0 translate-x-1 scale-95"
+              enter-to-class="opacity-100 translate-x-0 scale-100"
+              leave-active-class="transition duration-120 ease-in"
+              leave-from-class="opacity-100 translate-x-0 scale-100"
+              leave-to-class="opacity-0 translate-x-1 scale-95"
+            >
+              <div
+                v-if="themeOpen"
+                ref="themeMenuRef"
+                class="absolute top-[37px] sm:top-0 z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
+                role="menu"
+                :class="themeFlipLeft ? 'right-[-17px] sm:right-full mr-2' : 'left-full ml-2'"
+              >
+                <button
+                  class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                  @click="setTheme('system'); closeMenu()"
+                  type="button"
+                >
+                  <i class="fa-solid fa-desktop"></i> System
+                </button>
+                <button
+                  class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                  @click="setTheme('light'); closeMenu()"
+                  type="button"
+                >
+                  <i class="fa-regular fa-sun-cloud"></i> Light
+                </button>
+                <button
+                  class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
+                  @click="setTheme('dark'); closeMenu()"
+                  type="button"
+                >
+                  <i class="fa-regular fa-clouds-moon"></i> Dark
+                </button>
+              </div>
+            </Transition>
+          </li>
+ 
+          <li>
+            <button
+              class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+              role="menuitem"
+              type="button"
+              @click="handleLogout"
+            >
+              <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
+              <span>Log out</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </Transition>
         </div>
       </div>
     </div>
@@ -415,6 +588,44 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', onResizeIndicator)
   if (rAF2) cancelAnimationFrame(rAF2)
 })
+// ── Static test accounts ──────────────────────────────────────
+const accounts = [
+  {
+    id: 'u1',
+    name: 'Tanveer Hassan',
+    email: 'tanveerhassan4445+9@gmail.com',
+    domain: 'app.orchit.ai',
+    type: 'individual',
+  },
+  {
+    id: 'c1',
+    name: 'Nexus Solutions',
+    email: 'admin@nexussolutions.com',
+    domain: 'nexussolutions.orchit.ai',
+    type: 'company',
+  },
+]
+ 
+const currentAccount = ref(accounts[0])
+const pendingAccount = ref<typeof accounts[0] | null>(null)
+const isSwitching    = ref(false)
+ 
+function confirmSwitch() {
+  isSwitching.value = true
+  // Simulates a 1.2s async call — replace with real API later
+  setTimeout(() => {
+    if (pendingAccount.value) {
+  currentAccount.value = pendingAccount.value
+}
+    pendingAccount.value  = null
+    isSwitching.value     = false
+    menuOpen.value        = false
+  }, 1200)
+}
+ 
+function getInitials(name:string) {
+  return name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+}
 </script>
 
 <style scoped>

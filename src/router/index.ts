@@ -5,6 +5,7 @@ import {
   type RouteRecordRaw,
 } from "vue-router";
 import { useAuthStore } from "../stores/auth";
+import { useWorkspaceStore } from "../stores/workspace";
 import Task from "../views/Workspaces/Task.vue";
 import Users from "../views/Workspaces/Users.vue";
 import api from "../libs/api";
@@ -304,6 +305,45 @@ router.beforeEach(async (to, _from, next) => {
 
   // Normal bootstrap
   await auth.bootstrap()
+
+  // Check for subdomain and redirect to workspace if on dashboard
+  const hostname = window.location.hostname
+  console.log('Hostname:', hostname)
+  let subdomain = null
+  if (hostname.endsWith('.streamed.space')) {
+    subdomain = hostname.replace('.streamed.space', '')
+  } else if (hostname.endsWith('.orchit.ai')) {
+    subdomain = hostname.replace('.orchit.ai', '')
+  } else if (hostname.endsWith('.localhost')) {
+    subdomain = hostname.replace('.localhost', '')
+  }
+  console.log('Subdomain:', subdomain)
+
+  if (subdomain && subdomain !== 'www' && subdomain !== '') {
+    console.log('On subdomain:', subdomain)
+    // We're on a subdomain
+    if (to.path === '/dashboard') {
+      console.log('Accessing /dashboard on subdomain')
+      // Try to fetch workspace by subdomain
+      const workspaceStore = useWorkspaceStore()
+      try {
+        const workspace = await workspaceStore.fetchWorkspaceBySlug(subdomain)
+        console.log('Workspace found:', workspace)
+        if (workspace) {
+          // Redirect to workspace route
+          return next(`/workspace/${workspace._id}`)
+        } else {
+          console.log('No workspace found, redirecting to not-found')
+          // Invalid subdomain, show not-found page
+          return next('/not-found')
+        }
+      } catch (error) {
+        console.error('Error fetching workspace:', error)
+        // On error, also show not-found
+        return next('/not-found')
+      }
+    }
+  }
 
   const requiresAuth = to.matched.some(
     (record) => record.meta.requiresAuth === true
