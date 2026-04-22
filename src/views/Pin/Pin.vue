@@ -475,10 +475,7 @@ const VariableViewDropdown = defineAsyncComponent(
   () => import("../Product/components/VariableViewDropdown.vue"),
 );
 import { 
-    updateCardInStructure, 
-    updateCardOptimistically, 
-    moveBetweenColumns,
-    removeFromCacheStructure
+    updateCardInStructure,  
 } from "../../utilities/cacheSync";
 
 import { usePermissions } from "../../composables/usePermissions";
@@ -683,15 +680,15 @@ function handleAddColumn(value: string) {
     value,
   });
 }
-const dropdownListeners = computed(() => {
-  const listeners: Record<string, Function> = {};
+// const dropdownListeners = computed(() => {
+//   const listeners: Record<string, Function> = {};
 
-  if (canEditSheet.value) listeners["onEdit-option"] = openEditSprintModal;
-  if (canDeleteSheet.value)
-    listeners["onDelete-option"] = handleDeleteSheetModal;
+//   if (canEditSheet.value) listeners["onEdit-option"] = openEditSprintModal;
+//   if (canDeleteSheet.value)
+//     listeners["onDelete-option"] = handleDeleteSheetModal;
 
-  return listeners;
-});
+//   return listeners;
+// });
 
 function emitAddColumn() {
   const trimmed = newColumn.value.trim();

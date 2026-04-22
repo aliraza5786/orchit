@@ -100,7 +100,7 @@ import { usePermissions } from '../../../composables/usePermissions'
 import { toast } from 'vue-sonner'
 const { canDeleteCard,  canAssignCard, canViewCard, canEditCard } = usePermissions()
 
-const { workspaceId, moduleId } = useRouteIds();
+const { workspaceId } = useRouteIds();
 const { data: members } = useWorkspacesRoles(workspaceId.value);
 
 

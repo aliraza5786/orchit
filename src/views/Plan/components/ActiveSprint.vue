@@ -1309,9 +1309,9 @@ const columns = computed(() => {
   ];
 });
 
-interface Card { _id: string; }
-interface SheetList { cards: Card[]; }
-interface Sheet { sheet_lists: SheetList[]; }
+// interface Card { _id: string; }
+// interface SheetList { cards: Card[]; }
+// interface Sheet { sheet_lists: SheetList[]; }
 
 const removeCardFromState = (cardId: string) => {
   if (!Lists.value?.groups) return;
