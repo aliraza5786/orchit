@@ -38,18 +38,19 @@ const edges = ref<VFEdge[]>([])
  * Tracks the flow diagram and generates status objects for Kanban statuses.
  */
 const statusObjects = computed(() => {
-  const filtered = nodes.value.filter(node => node.data?.label)
+  const filtered = (nodes.value as VFNode[]).filter((node: VFNode) => node.data?.label)
   return filtered.map((node, index) => {
-    const outgoingEdges = edges.value.filter(e => e.source === node.id)
-    const incomingEdges = edges.value.filter(e => e.target === node.id)
+    const outgoingEdges = (edges.value as VFEdge[]).filter((e: VFEdge) => e.source === node.id)
+const incomingEdges = (edges.value as VFEdge[]).filter((e: VFEdge) => e.target === node.id)
 
     const forwardMoves = [...new Set(outgoingEdges.map(e => {
-      const targetNode = nodes.value.find(n => n.id === e.target)
+      const targetNode = (nodes.value as VFNode[]).find((n: VFNode) => n.id === e.target)
+
       return targetNode?.data?.label
     }).filter(Boolean))]
 
     const backwardMoves = [...new Set(incomingEdges.map(e => {
-      const sourceNode = nodes.value.find(n => n.id === e.source)
+      const sourceNode = (nodes.value as VFNode[]).find((n: VFNode) => n.id === e.source)
       return sourceNode?.data?.label
     }).filter(Boolean))]
 
@@ -434,16 +435,19 @@ function reverseSelectedEdge() {
   )
 }
 
-// delete status node
 function deleteStatus(nodeId: string) {
-  // Remove the node itself
-  nodes.value = nodes.value.filter(n => n.id !== nodeId)
-
-  // Remove all edges connected to this node
-  edges.value = edges.value.filter(
-    e => e.source !== nodeId && e.target !== nodeId
+  const nextNodes = (nodes.value as { id: string }[]).filter(
+    (n) => n.id !== nodeId
   )
-   // clear selection if needed
+
+  const nextEdges = (edges.value as { source: string; target: string }[]).filter(
+    (e) => e.source !== nodeId && e.target !== nodeId
+  )
+
+  // ✅ cast ONLY at assignment (not during filter)
+  nodes.value = nextNodes as unknown as VFNode[]
+  edges.value = nextEdges as unknown as VFEdge[]
+
   selectedEdgeId.value = null
 }
 function confirmDeleteNode(nodeId: string) {
@@ -512,43 +516,41 @@ function handleZoomEvent(e: Event) {
 watch(
   [nodes, () => props.canEdit],
   ([newNodes, canEdit]) => {
-    // If editing is disabled, ensure the add button is removed
-     if (!canEdit) {
-        const btn = newNodes.find(n => n.id === 'add-button-node')
-        if (btn) removeEdges(btn.id) // wait, removeNodes
-        setNodes(newNodes.filter(n => n.id !== 'add-button-node') as any)
-        return;
-     }
+    const nodeList = newNodes as { id: string; type?: string; position: { x: number; y: number } }[]
 
-    // Filter out the add button itself to find the real last node
-    const realNodes = newNodes.filter((n) => n.type !== 'custom-add-icon');
-    
-    // Default position if no nodes exist
-    let targetX = 50;
-    let targetY = 150;
-
-    if (realNodes.length > 0) {
-        // Find the right-most node (max X)
-        const lastNode = realNodes.reduce((prev, current) => {
-          const prevX = prev.position.x;
-          const currX = current.position.x;
-          return currX > prevX ? current : prev;
-        }, realNodes[0]);
-
-        const PADDING_X = 200; 
-        targetX = lastNode.position.x + PADDING_X;
-        targetY = lastNode.position.y; // Keep same Y level
+    if (!canEdit) {
+      const btn = nodeList.find(n => n.id === 'add-button-node')
+      if (btn) setNodes(nodeList.filter(n => n.id !== 'add-button-node') as any)
+      setNodes(nodeList.filter(n => n.id !== 'add-button-node') as any)
+      return
     }
 
-    const addButtonNodeId = 'add-button-node';
-    const existingNode = newNodes.find((n) => n.id === addButtonNodeId);
+    const realNodes = nodeList.filter(n => n.type !== 'custom-add-icon')
+
+    let targetX = 50
+    let targetY = 150
+
+    if (realNodes.length > 0) {
+      const lastNode = realNodes.reduce((prev, current) => {
+        return current.position.x > prev.position.x ? current : prev
+      })
+
+      const PADDING_X = 200
+      targetX = lastNode.position.x + PADDING_X
+      targetY = lastNode.position.y
+    }
+
+    const addButtonNodeId = 'add-button-node'
+    const existingNode = nodeList.find(n => n.id === addButtonNodeId)
 
     if (existingNode) {
       if (
         Math.abs(existingNode.position.x - targetX) > 5 ||
         Math.abs(existingNode.position.y - targetY) > 5
       ) {
-         updateNode(addButtonNodeId, { position: { x: targetX, y: targetY } })
+        updateNode(addButtonNodeId, {
+          position: { x: targetX, y: targetY }
+        })
       }
     } else {
       addNodes({
@@ -556,13 +558,13 @@ watch(
         type: 'custom-add-icon',
         position: { x: targetX, y: targetY },
         data: {},
-        draggable: false, 
-        selectable: false,
+        draggable: false,
+        selectable: false
       })
     }
   },
   { deep: true, immediate: true }
-);
+)
 
 function triggerAddStatus() { 
   emit('add:status');

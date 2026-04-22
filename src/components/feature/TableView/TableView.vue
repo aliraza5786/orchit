@@ -187,7 +187,7 @@
                   <td :colspan="footerColspan - 1" class="p-0 border-none"></td>
                 </tr>
 
-                <tr @mouseenter="(e) => { cancelLeave(); setHoverRow(e, index, group.title, group) }"
+                <tr @mouseenter="(e) => { cancelLeave(); setHoverRow(e, Number(index), group.title, group) }"
                     @mouseleave="handleLeave"
                     :class="[
                       'border-b border-border transition-colors relative group/row',
@@ -212,20 +212,53 @@
                            </div>
                        </div>
                   </td>
-                  <td v-for="(col,i) in visibleColumns" :key="col?.key" class="border-r border-border overflow-visible relative h-8"
-                    :style="{ width: columnWidths[col.key] + 'px' }"
-                    :colspan="i === visibleColumns.length - 1 ? 2 : 1">
-                    <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
-                      @blur="finishEdit(ticket)" class="min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8"
-                      :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
-                    <span v-else class="cursor-text hover:underline text-text-primary truncate block"
-                      @click="editField(ticket, col?.key)">
-                      {{ ticket[col?.key] || 'Click to edit' }}
-                    </span>
-                    <slot v-else :name="col.key" :row="ticket" :column="col" :index="`r-${ticket._id}`">
-                      <component :is="RenderCell" :row="ticket" :column="col" :index="ticket._id" />
-                    </slot>
-                  </td>
+                 <td
+  v-for="(col, i) in visibleColumns"
+  :key="col?.key"
+  class="border-r border-border overflow-visible relative h-8"
+  :style="{ width: columnWidths[col.key] + 'px' }"
+  :colspan="i === visibleColumns.length - 1 ? 2 : 1"
+>
+  <!-- EDIT MODE -->
+  <input
+    v-if="editing?.id === ticket?.id && editing?.field === col?.key"
+    v-model="ticket[col?.key]"
+    @blur="finishEdit(ticket)"
+    class="min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8"
+    :ref="(el: any) =>
+      el &&
+      editing?.id === ticket?.id &&
+      editing?.field === col?.key &&
+      (titleInput = el)"
+  />
+
+  <!-- VIEW MODE -->
+  <template v-else>
+    <!-- SLOT FIRST (override system) -->
+    <slot
+      :name="col.key"
+      :row="ticket"
+      :column="col"
+      :index="`r-${ticket._id}`"
+    >
+      <!-- DEFAULT CELL -->
+      <span
+        class="cursor-text hover:underline text-text-primary truncate block"
+        @click="editField(ticket, col?.key)"
+      >
+        {{ ticket[col?.key] || 'Click to edit' }}
+      </span>
+
+      <!-- FALLBACK COMPONENT -->
+      <component
+        :is="RenderCell"
+        :row="ticket"
+        :column="col"
+        :index="ticket._id"
+      />
+    </slot>
+  </template>
+</td>
                 </tr>
 
 
@@ -306,20 +339,48 @@
                      </div>
                  </div>
             </td>
-            <td v-for="(col,i) in visibleColumns" :key="col?.key" class="border-r border-border overflow-visible relative h-8"
-              :style="{ width: columnWidths[col.key] + 'px' }"
-              :colspan="i === visibleColumns.length - 1 ? 2 : 1">
-              <input v-if="editing?.id === ticket?.id && editing?.field === col?.key" v-model="ticket[col?.key]"
-                @blur="finishEdit(ticket)" class="min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8"
-                :ref="(el: any) => el && editing?.id === ticket?.id && editing?.field === col?.key && (titleInput = el)" />
-              <span v-else class="cursor-text hover:underline text-text-primary truncate block"
-                @click="editField(ticket, col?.key)">
-                {{ ticket[col?.key] || 'Click to edit' }}
-              </span>
-              <slot v-else :name="col.key" :row="ticket" :column="col" :index="`r-${ticket._id}`">
-                <component :is="RenderCell" :row="ticket" :column="col" :index="ticket._id" />
-              </slot>
-            </td>
+            <td
+  v-for="(col, i) in visibleColumns"
+  :key="col?.key"
+  class="border-r border-border overflow-visible relative h-8"
+  :style="{ width: columnWidths[col.key] + 'px' }"
+  :colspan="i === visibleColumns.length - 1 ? 2 : 1"
+>
+  <!-- EDIT MODE -->
+  <input
+    v-if="editing?.id === ticket?.id && editing?.field === col?.key"
+    v-model="ticket[col?.key]"
+    @blur="finishEdit(ticket)"
+    class="min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body text-[12px] h-8"
+  />
+
+  <!-- VIEW MODE -->
+  <template v-else>
+    <!-- SLOT OVERRIDE -->
+    <slot
+      :name="col.key"
+      :row="ticket"
+      :column="col"
+      :index="`r-${ticket._id}`"
+    >
+      <!-- DEFAULT DISPLAY -->
+      <span
+        class="cursor-text hover:underline text-text-primary truncate block"
+        @click="editField(ticket, col?.key)"
+      >
+        {{ ticket[col?.key] || 'Click to edit' }}
+      </span>
+
+      <!-- FALLBACK COMPONENT -->
+      <component
+        :is="RenderCell"
+        :row="ticket"
+        :column="col"
+        :index="ticket._id"
+      />
+    </slot>
+  </template>
+</td>
           </tr>
 
 
