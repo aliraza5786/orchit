@@ -249,6 +249,9 @@
                       <KanbanTicket
                         :selectedVar="selected_view_by"
                         :ticket="ticket"
+                        :invalidateKeys="['sprint-kanban', 'sprint-table-flat']"
+                        :workspaceId="workspaceId"
+                        :moduleId="selected_module_id"
                         @select="() => selectCardHandler(ticket)"
                       />
                     </div>
@@ -260,7 +263,7 @@
 
           <!-- ── Table View ──────────────────────────────────────── -->
           <template v-if="view === 'table'">
-            <div class="flex-1 overflow-auto pb-12">
+            <div class="flex-1 overflow-auto ps-4 pe-4">
               <TableView
                 ref="tableViewRef"
                 @toggleVisibility="toggleVisibilityHandler"
@@ -580,6 +583,16 @@ watch(() => props.sprint_id, (newId) => {
   }
 });
 
+// Clear nested process selection when the main grouping variable changes
+// We use a flag to skip clearing when the change comes from a nested selection
+let lastSelectionWasNested = false;
+watch(selected_view_by, () => {
+    if (!lastSelectionWasNested) {
+        selectedProcessMeta.value = null;
+    }
+    lastSelectionWasNested = false;
+});
+
 const showFilterBar = ref(false);
 const activeFilters = ref<any>({});
 const filterTriggerRef = ref<HTMLElement | null>(null);
@@ -592,9 +605,23 @@ const showVariableDropdown = ref(false);
 const variableTriggerRef = ref<HTMLElement | null>(null);
 const selectedProcessMeta = ref<any>(null);
 
-const handleProcessNestedSelection = (item: any, rootOpt: any) => {
+const handleProcessNestedSelection = (item: any, _rootOpt: any) => {
+  lastSelectionWasNested = true;
   selectedProcessMeta.value = item;
 };
+
+const listProcessPayload = computed(() => {
+  if (
+    selectedViewByVariable.value?.title === "Process" &&
+    selectedProcessMeta.value
+  ) {
+    return {
+      variable_slug: "card-type",
+      type_value: selectedProcessMeta.value.title,
+    };
+  }
+  return {};
+});
 
 const selectedViewByVariable = computed(() => {
   return variables.value?.find((v: any) => v._id === selected_view_by.value);
@@ -653,6 +680,7 @@ const formattedExtraParams = computed(() => {
     typeof val === "string" ? val.toLowerCase() : val;
 
   const result: any = {
+    ...listProcessPayload.value,
     ...(f.seat_ids?.length ? { seat_ids: f.seat_ids.join(",") } : {}),
     priority: toLower(f.priority),
     status: toLower(f.status),
@@ -670,6 +698,11 @@ const formattedExtraParams = computed(() => {
 
   return result;
 });
+
+const kanbanExtraParams = computed(() => ({
+  ...formattedExtraParams.value,
+  variable_id: selected_view_by.value
+}));
 
 const handleApplyFilters = (filters: any) => {
   activeFilters.value = filters;
@@ -697,7 +730,7 @@ const {
   data: Lists,
   isPending,
   refetch: refetchSheetLists,
-} = useSprintKanban(selected_sprint_id, laneIds, formattedExtraParams);
+} = useSprintKanban(selected_sprint_id, laneIds, kanbanExtraParams);
 
 // Dedicated flat Table View data (no variable_id passed = no grouping)
 const {
@@ -898,6 +931,7 @@ const handleAddColumn = (v: any) => {
     module_id: moduleId.value,
     variable_id: selected_view_by.value,
     value: v,
+    ...listProcessPayload.value,
   });
 };
 
@@ -912,6 +946,7 @@ const handleUpdateColumn = (newTitle: any) => {
     new_value: newTitle.title,
     value: newTitle.oldTitle,
     variable_id: selected_view_by.value,
+    ...listProcessPayload.value,
   });
 };
 
@@ -923,6 +958,7 @@ const handleDeleteColumn = () => {
     newValue: localColumnData.value.title,
     variable_id: selected_view_by.value,
     is_trash: true,
+    ...listProcessPayload.value,
   });
 };
 
@@ -1001,6 +1037,7 @@ const { data: lanes } = useLanes(workspaceId);
 
 const laneOptions = computed<any[]>(() =>
   (lanes?.value ?? []).map((el: any) => ({
+    ...el,
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
   })),

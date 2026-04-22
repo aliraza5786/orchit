@@ -105,28 +105,27 @@ const { data: members } = useWorkspacesRoles(workspaceId.value);
 
 
 
-type Priority = any
-export interface Ticket {
-    _id: string | number
-    title: string
-    description?: string
-    priority: Priority
-    color_code: string
-    card_type_id: any
-    card_status_id: any
-    priority_id: any
-    card_code: string
-    start_date: string
-    end_date: string
-}
+import { 
+    removeFromCacheStructure, 
+    moveBetweenColumns,  
+    updateCardOptimistically
+} from '../../../utilities/cacheSync'
 
 const props = defineProps<{
     ticket: any
     selectedVar?: any
-    footer?:boolean 
-}>() 
+    footer?: boolean
+    invalidateKeys?: string[]
+    workspaceId?: any
+    moduleId?: any
+}>()
 
-const priorityBorderMap: Record<Priority, string> = {
+const invalidateKeys = computed(() => props.invalidateKeys || ['sheet-list'])
+const detailKey = computed(() => ['cardDetail', String(props.ticket._id)])
+ 
+// type Priority = 'low' | 'medium' | 'high' | 'critical';
+
+const priorityBorderMap: Record<string, string> = {
     critical: 'border-l-priority-critical',
     high: 'border-l-priority-high',
     medium: 'border-l-priority-medium',
@@ -146,38 +145,64 @@ watch(() => props.ticket?.['start-date'], v => { startDate.value = v ?? null })
 // Keep localStatus in sync if ticket is refreshed from the server
 watch(() => props.ticket?.['card-status'], v => { localStatus.value = v ?? null })
 const queryClient = useQueryClient()
+
 const moveCard = useMoveCard({
     onSuccess: () => {
-        queryClient.invalidateQueries({
-            queryKey: ['people-lists']
+        const allKeys = [...invalidateKeys.value, 'sheet-list', 'get-sheets', 'roles', 'people-lists'];
+        [...new Set(allKeys)].forEach(key => {
+            queryClient.invalidateQueries({ queryKey: [key] })
         })
-        queryClient.invalidateQueries({
-            queryKey: ['get-sheets']
-        })
-        queryClient.invalidateQueries({
-            queryKey: ['sheet-list']
-        })
-        queryClient.invalidateQueries({
-            queryKey: ['roles']
-        })
+        queryClient.invalidateQueries({ queryKey: detailKey.value })
     }
 })
+
 const { mutate: deleteCard, isPending: deletingTicket } = useDeleteTicket(props.ticket._id, {
-    onSuccess: async() => {
-       await queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-       await queryClient.invalidateQueries({ queryKey: ['sprint-kanban'] })
-       await queryClient.invalidateQueries({ queryKey: ['table-cards-flat'] })
-       await queryClient.invalidateQueries({ queryKey: ['sprint-table-flat'] })
-       showDelete.value = false
-       toast.success("Ticket deleted successfully");
+    onSuccess: async () => {
+        invalidateKeys.value.forEach(key => {
+            queryClient.invalidateQueries({ queryKey: [key] })
+        })
+        queryClient.invalidateQueries({ queryKey: detailKey.value })
+        showDelete.value = false
+        toast.success("Ticket deleted successfully")
     }
 })
-// const handleSelect = (val: any) => {
-//     moveCard.mutate({
-//         card_id: props.ticket._id,
-//         variables: val,
-//     })
-// }
+
+const handleDeleteTicket = async () => {
+    const cardId = String(props.ticket._id)
+    const snapshots: { queryKey: any; data: any }[] = []
+
+    // ── 1. Optimistically remove from all provided caches ────────────────────
+    const allCacheKeys = [...invalidateKeys.value, 'sheet-list', 'sprint-kanban', 'table-cards-flat', 'sprint-table-flat']
+    
+    // Board Caches
+    allCacheKeys.forEach(key => {
+        queryCacheUpdater([key], (data) => removeFromCacheStructure(data, cardId), snapshots)
+    })
+
+    // Detail Cache (SidePanel)
+    queryCacheUpdater(detailKey.value, () => null, snapshots)
+
+    deleteCard({}, {
+        onError: () => rollbackSnapshots(snapshots)
+    })
+}
+
+/**
+ * Helper to update query cache with snapshotting
+ */
+function queryCacheUpdater(key: any[], updater: (data: any) => any, snapshots: any[]) {
+    queryClient.setQueriesData({ queryKey: key, exact: false }, (oldData: any) => {
+        if (!oldData) return oldData
+        snapshots.push({ queryKey: key, data: oldData })
+        return updater(oldData)
+    })
+}
+
+function rollbackSnapshots(snapshots: any[]) {
+    snapshots.forEach(({ queryKey, data }) => {
+        queryClient.setQueryData(queryKey, data)
+    })
+}
 
 function getMenuItems() {
   const items: any[] = []
@@ -209,9 +234,6 @@ function getMenuItems() {
   return items
 }
 
-const handleDeleteTicket = () => {
-    deleteCard({})
-}
 const assignHandle = (users: any[]) => {
     const payload = {
         card_id: props.ticket._id,
@@ -220,13 +242,6 @@ const assignHandle = (users: any[]) => {
     moveCard.mutate(payload);
 }
 
-// const setStartDate = (date: string | null) => {
-//     moveCard.mutate({
-//         card_id: props.ticket._id,
-//         variables: { 'start-date': date }
-//     })
-// }
-
 const setDueDate = (date: string | null) => {
     moveCard.mutate({
         card_id: props.ticket._id,
@@ -234,10 +249,13 @@ const setDueDate = (date: string | null) => {
     })
 }
 
-const { data: variables } = useVariables(workspaceId, moduleId, ref(""))
+const { workspaceId: routeWorkspaceId, moduleId: routeModuleId } = useRouteIds();
+const effectiveWorkspaceId = computed(() => props.workspaceId || routeWorkspaceId.value);
+const effectiveModuleId = computed(() => props.moduleId || routeModuleId.value);
+
+const { data: variables } = useVariables(effectiveWorkspaceId, effectiveModuleId, ref(""))
 const selectedVarSlug = computed(() => (variables?.value ?? []).filter((e: any) => e._id == props.selectedVar))
 
-// Derive status options from the card-status variable's data values
 const statusOptions = computed<string[]>(() => {
   const statusVar = (variables?.value ?? []).find(
     (v: any) => v.slug === 'card-status' || v.slug === 'status' || v.title?.toLowerCase() === 'status'
@@ -246,119 +264,36 @@ const statusOptions = computed<string[]>(() => {
   return (statusVar.data as any[]).map((d: any) => String(d.value ?? d)).filter(Boolean)
 })
 
-/**
- * Updates the ticket's status optimistically.
- * It immediately updates the local UI badge and moves the card within the 
- * TanStack query cache so the Kanban board reflects the change instantly.
- * If the API call fails, the changes are rolled back.
- * 
- * @param {string} newStatus - The new status to apply to the card.
- */
 function changeStatus(newStatus: string) {
-  // ── 1. Optimistic local badge ──────────────────────────────────────────────
-  localStatus.value = newStatus
+    localStatus.value = newStatus
+    const cardId = String(props.ticket._id)
+    const snapshots: { queryKey: any; data: any }[] = []
 
-  // ── 2. Snapshot current cache for rollback ────────────────────────────────
-  const snapshots: { queryKey: any; data: any }[] = []
+    // 1. Board Updates
+    invalidateKeys.value.forEach(key => {
+        queryCacheUpdater([key], (oldData) => {
+            if (Array.isArray(oldData.sheets)) {
+                return { ...oldData, sheets: oldData.sheets.map((sheet: any) => ({
+                    ...sheet, sheet_lists: moveBetweenColumns(sheet.sheet_lists ?? [], cardId, newStatus)
+                }))}
+            }
+            if (Array.isArray(oldData.groups)) {
+                return { ...oldData, groups: moveBetweenColumns(oldData.groups ?? [], cardId, newStatus) }
+            }
+            return oldData
+        }, snapshots)
+    })
 
-  // ── 3. Optimistically move the card in the board caches ───────────────────
-  
-  // A. Product/Sheet View (Key: sheet-list)
-  // Structure: { sheets: [{ sheet_lists: [{ title, cards: [] }] }] }
-  queryClient.setQueriesData(
-    { queryKey: ['sheet-list'], exact: false },
-    (oldData: any) => {
-      if (!oldData?.sheets) return oldData
-      snapshots.push({ queryKey: ['sheet-list'], data: oldData })
-      return {
-        ...oldData,
-        sheets: oldData.sheets.map((sheet: any) => ({
-          ...sheet,
-          sheet_lists: moveBetweenColumns(sheet.sheet_lists ?? [], String(props.ticket._id), newStatus),
-        })),
-      }
-    }
-  )
+    // 2. Detail Update (SidePanel)
+    queryCacheUpdater(detailKey.value, (old) => updateCardOptimistically(old, cardId, { 'card-status': newStatus }), snapshots)
 
-  // B. Sprint/Plan View (Key: sprint-kanban)
-  // Structure: { groups: [{ title, cards: [] }] }
-  queryClient.setQueriesData(
-    { queryKey: ['sprint-kanban'], exact: false },
-    (oldData: any) => {
-      if (!oldData?.groups) return oldData
-      snapshots.push({ queryKey: ['sprint-kanban'], data: oldData })
-      return {
-        ...oldData,
-        groups: moveBetweenColumns(oldData.groups ?? [], String(props.ticket._id), newStatus),
-      }
-    }
-  )
-
-  // ── 4. Fire the API ────────────────────────────────────────────────────────
-  moveCard.mutate(
-    {
-      card_id: props.ticket._id,
-      variables: { 'card-status': newStatus },
-    },
-    {
-      onSuccess: () => {
-        // Let the normal invalidation logic handle any further refreshes
-      },
-      onError: () => {
-        // ── Rollback cache + badge ───────────────────────────────────────────
-        localStatus.value = props.ticket['card-status'] ?? null
-        snapshots.forEach(({ queryKey, data }) => {
-          queryClient.setQueryData(queryKey, data)
-        })
-      },
-    }
-  )
-}
-
-/**
- * Moves a card identified by cardId to the column whose title matches newStatus.
- * If the target column doesn't exist, the card just gets its card-status field updated in-place.
- */
-function moveBetweenColumns(sheetLists: any[], cardId: string, newStatus: string): any[] {
-  let cardToMove: any = null
-
-  // Remove card from wherever it currently lives
-  const listsWithout = sheetLists.map((col: any) => {
-    const idx = (col.cards ?? []).findIndex(
-      (c: any) => String(c._id) === cardId || String(c.id) === cardId
+    moveCard.mutate(
+        { card_id: props.ticket._id, variables: { 'card-status': newStatus } },
+        { onError: () => {
+            localStatus.value = props.ticket['card-status'] ?? null
+            rollbackSnapshots(snapshots)
+        }}
     )
-    if (idx !== -1) {
-      cardToMove = { ...(col.cards[idx]), 'card-status': newStatus }
-      return { ...col, cards: col.cards.filter((_: any, i: number) => i !== idx) }
-    }
-    return col
-  })
-
-  if (!cardToMove) return sheetLists
-
-  // Insert into target column
-  const targetIdx = listsWithout.findIndex(
-    (col: any) => col.title?.toLowerCase() === newStatus?.toLowerCase()
-  )
-
-  if (targetIdx !== -1) {
-    // Add to the top of the target column so it's immediately visible
-    return listsWithout.map((col: any, i: number) =>
-      i === targetIdx
-        ? { ...col, cards: [cardToMove, ...col.cards] }
-        : col
-    )
-  }
-
-  // Target column not found (status not in board) — just update the field in-place
-  return sheetLists.map((col: any) => ({
-    ...col,
-    cards: (col.cards ?? []).map((c: any) =>
-      String(c._id) === cardId || String(c.id) === cardId
-        ? { ...c, 'card-status': newStatus }
-        : c
-    ),
-  }))
 }
 
 const emit = defineEmits(['select'])

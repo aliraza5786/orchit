@@ -137,7 +137,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, watch, ref, onMounted } from "vue";
+import { reactive, computed, watch, ref, onMounted, watchEffect } from "vue";
 import BaseModal from "../../../components/ui/BaseModal.vue";
 import BaseTextField from "../../../components/ui/BaseTextField.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
@@ -175,6 +175,10 @@ const props = withDefaults(
   }>(),
   { modelValue: false, size: "lg",  sheetVariables: () => [], sheets: () => []  }
 );
+
+watchEffect(()=>{
+  console.log(props.sheetVariables, "sheet varaibles")
+})
 
 const queryClient = useQueryClient();
 const { workspaceId } = useRouteIds();

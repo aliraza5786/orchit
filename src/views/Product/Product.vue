@@ -231,6 +231,7 @@
             <template #ticket="{ ticket }">
               <KanbanTicket
                 :selectedVar="selected_view_by"
+                :invalidateKeys="['sheet-list', 'table-cards-flat']"
                 @select="
                   () => {
                     selectCardHandler(ticket);
@@ -1441,6 +1442,7 @@ function handleQuickCreate(title: string, group: any) {
 const { data: lanes } = useLanes(workspaceId);
 const laneOptions = computed<any[]>(() =>
   (lanes?.value ?? []).map((el: any) => ({
+    ...el,
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
   })),

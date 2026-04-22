@@ -69,9 +69,12 @@ import { useDeleteTicket, useMoveCard } from '../../../queries/useSheets'
 import { useQueryClient } from '@tanstack/vue-query'
 import DropMenu from '../../../components/ui/DropMenu.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
+import { usePermissions } from '../../../composables/usePermissions';
+import { useRouteIds } from "../../../composables/useQueryParams";
+import { useVariables } from "../../../queries/useSheets";
+import { updateCardOptimistically, moveBetweenColumns } from "../../../utilities/cacheSync";
 // import DatePicker from '../../../views/Product/components/DatePicker.vue'
 
-import { usePermissions } from '../../../composables/usePermissions';
 const { canViewCard, canDeleteCard } = usePermissions();
 
 type Priority = any
@@ -91,7 +94,9 @@ export interface Ticket {
 
 const props = defineProps<{
     ticket: any
-
+    workspaceId?: any
+    moduleId?: any
+    invalidateKeys?: string[]
 }>()
 
 const priorityBorderMap: Record<Priority, string> = {
@@ -111,6 +116,66 @@ const ed = computed(() => props.ticket['end-date'])
 const startDate = ref<string | null>(props.ticket['start-date'] ?? null)
 watch(sd, () => startDate.value = sd.value)
 watch(ed, () => dueDate.value = ed.value)
+
+const { workspaceId: routeWorkspaceId, moduleId: routeModuleId } = useRouteIds();
+const effectiveWorkspaceId = computed(() => props.workspaceId || routeWorkspaceId.value);
+const effectiveModuleId = computed(() => props.moduleId || routeModuleId.value);
+
+const { data: variables } = useVariables(effectiveWorkspaceId, effectiveModuleId, ref(""));
+
+const statusOptions = computed<string[]>(() => {
+    const statusVar = (variables?.value ?? []).find(
+        (v: any) => v.slug === 'card-status' || v.slug === 'status' || v.title?.toLowerCase() === 'status'
+    );
+    if (!statusVar?.data) return [];
+    return (statusVar.data as any[]).map((d: any) => String(d.value ?? d)).filter(Boolean);
+});
+
+const localStatus = ref<string | null>(props.ticket['card-status'] ?? null);
+watch(() => props.ticket?.['card-status'], v => { localStatus.value = v ?? null });
+
+const invalidateKeys = computed(() => props.invalidateKeys || ['sheet-list']);
+
+function changeStatus(newStatus: string) {
+    localStatus.value = newStatus;
+    const cardId = String(props.ticket._id);
+    const snapshots: { queryKey: any; data: any }[] = [];
+
+    const updater = (oldData: any) => {
+        if (!oldData) return oldData;
+        if (Array.isArray(oldData.data)) {
+             return { ...oldData, data: oldData.data.map((sheet: any) => ({
+                ...sheet, sheet_lists: moveBetweenColumns(sheet.sheet_lists ?? [], cardId, newStatus)
+            }))};
+        }
+        if (Array.isArray(oldData)) {
+            return moveBetweenColumns(oldData, cardId, newStatus);
+        }
+        return oldData;
+    };
+
+    invalidateKeys.value.forEach(key => {
+        queryClient.setQueriesData({ queryKey: [key], exact: false }, (old: any) => {
+            if (!old) return old;
+            snapshots.push({ queryKey: [key], data: old });
+            return updater(old);
+        });
+    });
+
+    queryClient.setQueriesData({ queryKey: ['cardDetail', cardId], exact: false }, (old: any) => {
+        if (!old) return old;
+        snapshots.push({ queryKey: ['cardDetail', cardId], data: old });
+        return updateCardOptimistically(old, cardId, { 'card-status': newStatus });
+    });
+
+    moveCard.mutate(
+        { card_id: props.ticket._id, variables: { 'card-status': newStatus } },
+        { onError: () => {
+            localStatus.value = props.ticket['card-status'] ?? null;
+            snapshots.forEach(({ queryKey, data }) => queryClient.setQueryData(queryKey, data));
+        }}
+    );
+}
 
 const queryClient = useQueryClient()
 const moveCard = useMoveCard({
@@ -163,7 +228,17 @@ function getMenuItems(): { label: string; icon?: any; action?: () => void }[] {
           icon: { prefix: 'fa-regular', iconName: 'fa-trash' },
         }
       : null,
-  ].filter(Boolean) as { label: string; icon?: any; action?: () => void }[]
+    statusOptions.value.length
+      ? {
+          label: 'Change status',
+          icon: { prefix: 'fa-regular', iconName: 'fa-rotate' },
+          children: statusOptions.value.map((s: string) => ({
+            label: s,
+            action: () => changeStatus(s),
+          })),
+        }
+      : null,
+  ].filter(Boolean) as any[]
 }
 
 const handleDeleteTicket = () => {
