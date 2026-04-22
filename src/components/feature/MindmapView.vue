@@ -3131,8 +3131,8 @@ function buildTree(sheets: any[]): MindNode {
 
   sheets.forEach((sheet) => {
     const title =
+    localStorage.getItem("selected_sheet_title") ||
       props.selectedSheetTitle ||
-      localStorage.getItem("selected_sheet_title") ||
       localStorage.getItem("selectedSprintTitle") ||
       "Sheet";
 

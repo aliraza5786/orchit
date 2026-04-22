@@ -1334,7 +1334,7 @@
           </button>
         </div>
         <!-- Chat Input Area -->
-        <div class="flex flex-col gap-2.5">
+        <div class="flex flex-col gap-2.5" :class="{ 'neon-flow-border-chatbot': isSendingAnimation }">
           <!-- Active suggested prompts (only when no messages yet) -->
           <div
             class="flex flex-wrap gap-1.5 px-1"
@@ -1619,7 +1619,7 @@
               </div>
             </transition>
             <!-- Textarea -->
-            <div class="px-4 py-1">
+            <div class="px-4 py-1 relative">
               <textarea
                 v-model="userMessage"
                 ref="autoTextarea"
@@ -1631,6 +1631,7 @@
                 @input="autoResize"
                 @focus="isFocused = true"
                 @blur="isFocused = false"
+                @paste="handlePaste"
               ></textarea>
             </div>
 
@@ -2894,19 +2895,9 @@ async function fetchPinnedMessages() {
     session_id: activeSessionId.value || undefined,
   });
 }
-
-// Watchers
 watch(
   () => orderedMessages.value.length,
-  (newLength, oldLength) => {
-    if (newLength > oldLength && isAiThinkingBubbleVisible.value) {
-      const lastMessage =
-        orderedMessages.value[orderedMessages.value.length - 1];
-      if (lastMessage?.type === "assistant") {
-        isAiThinkingBubbleVisible.value = false;
-        agentStore.isAiTyping = false;
-      }
-    }
+  () => {
     scrollToBottom();
   },
 );
@@ -2985,6 +2976,7 @@ interface FileWithId extends File {
 }
 
 const selectedFiles = ref<FileWithId[]>([]);
+const isSendingAnimation = ref(false);
 
 const createObjectURL = (file: FileWithId): string => file.objectUrl || "";
 
@@ -3029,6 +3021,53 @@ const removeFile = (tempId: string) => {
   selectedFiles.value = selectedFiles.value.filter((f) => f.tempId !== tempId);
 };
 
+const handlePaste = async (event: ClipboardEvent) => {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+
+  const files: File[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.kind === 'file') {
+      const file = item.getAsFile();
+      if (file) {
+        files.push(file);
+      }
+    }
+  }
+
+  if (files.length > 0) {
+    event.preventDefault(); // Prevent default paste behavior
+
+    // Filter files based on type (same logic as handleFileChange)
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    const pdfs = files.filter((f) => f.type === "application/pdf");
+
+    if (pdfs.length > 1) {
+      toast.error("Only one PDF is allowed");
+      return;
+    }
+    if (images.length > MAX_IMAGES) {
+      toast.error(`Max ${MAX_IMAGES} images`);
+      return;
+    }
+    if (pdfs.length === 1 && images.length > 0) {
+      toast.error("Images or PDF, not both");
+      return;
+    }
+
+    const filesWithId: FileWithId[] = files.map((f) => {
+      const fw = f as FileWithId;
+      fw.tempId = "temp-" + Date.now() + Math.random().toString(36).substr(2, 5);
+      fw.objectUrl = URL.createObjectURL(f);
+      return fw;
+    });
+
+    selectedFiles.value = [...selectedFiles.value, ...filesWithId];
+    toast.success(`${files.length} file${files.length > 1 ? 's' : ''} pasted from clipboard`);
+  }
+};
+
 const uploadFiles = async (): Promise<any[]> => {
   if (!selectedFiles.value.length) return [];
   try {
@@ -3039,7 +3078,6 @@ const uploadFiles = async (): Promise<any[]> => {
     return [];
   }
 };
-
 async function sendMessage() {
   const message = userMessage.value?.trim();
   if (
@@ -3049,7 +3087,8 @@ async function sendMessage() {
   )
     return;
 
-  // Capture snapshot BEFORE any async ops clear the array
+  isSendingAnimation.value = true;
+
   const filesToSend = [...selectedFiles.value];
   let attachments: any[] = [];
 
@@ -3062,22 +3101,24 @@ async function sendMessage() {
   }
 
   const finalMessage = message || "";
-    userMessage.value = "";
-    isAiThinkingBubbleVisible.value = true;
-    streamingContent.value = "";
-    displayedContent.value = "";
-    streamingPhase.value = "thinking";
-    streamingThinkMs.value = null;
-    streamingTotalMs.value = null;
-    agentStore.isSending = true;
-    agentStore.isAiTyping = true;
-    scrollToBottom();
+  userMessage.value = "";
 
+  // Reset all streaming state before starting
+  streamingContent.value = "";
+  displayedContent.value = "";
+  streamingPhase.value = "thinking";
+  streamingThinkMs.value = null;
+  streamingTotalMs.value = null;
+  isAiThinkingBubbleVisible.value = true;
+  agentStore.isAiTyping = true;
+  scrollToBottom();
+
+  // Add optimistic user message
   const tempId = "temp-" + Date.now();
   const previewAttachments = filesToSend.map((f) => ({
     filename: f.name,
     mimetype: f.type,
-    url: f.objectUrl, // already set in handleFileChange
+    url: f.objectUrl,
   }));
   pendingMessages.value.push({
     _id: tempId,
@@ -3092,14 +3133,26 @@ async function sendMessage() {
     activeSessionId.value ||
     `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+  // Set session optimistically
+  if (!activeSessionId.value) {
+    activeSessionId.value = sessionIdToUse;
+    activeSessionTitle.value =
+      finalMessage.length > 40
+        ? finalMessage.slice(0, 40) + "…"
+        : finalMessage;
+    localStorage.setItem("activeSessionId", activeSessionId.value);
+    localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
+  }
+
   try {
+    // Await the full stream
     await agentStore.sendMessage({
       workspace_id: workspaceId.value,
       user_id: authStore.userId as string,
       message: finalMessage,
       agent_id: selectedAgentId.value as string,
       sheet_id: sheetIdRef.value as string,
-      attachments: attachments,
+      attachments,
       module_id:
         route.path.includes("talent") && agentModuleId.value
           ? agentModuleId.value
@@ -3114,16 +3167,36 @@ async function sendMessage() {
       stream: true,
       route_path: route.path,
     });
-    if (!activeSessionId.value) {
-      activeSessionId.value = sessionIdToUse;
-      activeSessionTitle.value =
-        finalMessage.length > 40
-          ? finalMessage.slice(0, 40) + "…"
-          : finalMessage;
-    }
+
+    // Wait for the typewriter animation to fully catch up to the
+    // streamed text before we do anything else — prevents a jump
+    // where history loads before animation finishes
+    await new Promise<void>((resolve) => {
+      const fullText = agentStore.currentStreamText;
+      if (!fullText || displayedContent.value.length >= fullText.length) {
+        resolve();
+        return;
+      }
+      const check = setInterval(() => {
+        if (displayedContent.value.length >= fullText.length) {
+          clearInterval(check);
+          resolve();
+        }
+      }, 16);
+      // Safety timeout — max 6s
+      setTimeout(() => {
+        clearInterval(check);
+        resolve();
+      }, 6000);
+    });
+
     localStorage.setItem("activeSessionId", activeSessionId.value);
     localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
 
+    // Clear pending optimistic messages before fetching real history
+    pendingMessages.value = [];
+
+    // Fetch history + entities — streaming bubble stays visible during this
     await Promise.all([
       agentStore.fetchChatHistory(
         workspaceId.value,
@@ -3151,15 +3224,39 @@ async function sendMessage() {
           : (moduleId.value ?? undefined),
       ),
     ]);
-    showConfigPanel.value = false;
-    pendingMessages.value = [];
-    scrollToBottom();
-    isAiThinkingBubbleVisible.value = false;
-    agentStore.isAiTyping = false;
+
+    // Wait for Vue to flush the new history messages into the DOM
+    await nextTick();
+    await nextTick();
+
+    // Verify the assistant reply is actually present in orderedMessages
+    // before we clear the streaming bubble — poll up to 2s just in case
+    // Vue hasn't finished reactivity propagation yet
+    await new Promise<void>((resolve) => {
+      const MAX_WAIT = 2000;
+      const start = Date.now();
+      const check = () => {
+        const hasAssistantReply = orderedMessages.value.some(
+          (m) => m.type === "assistant" || m.role === "assistant",
+        );
+        if (hasAssistantReply || Date.now() - start > MAX_WAIT) {
+          resolve();
+        } else {
+          requestAnimationFrame(check);
+        }
+      };
+      requestAnimationFrame(check);
+    });
+
+    // History message is now painted in the DOM — atomically clear the
+    // streaming bubble in the same synchronous tick so there is NEVER
+    // a single frame where both streaming AND history message are absent
     streamingContent.value = "";
+    displayedContent.value = "";
     streamingPhase.value = "completed";
     streamingThinkMs.value = null;
     streamingTotalMs.value = null;
+
   } catch (err) {
     console.error("Error sending message:", err);
     pendingMessages.value = pendingMessages.value.filter(
@@ -3167,14 +3264,21 @@ async function sendMessage() {
     );
     isAiThinkingBubbleVisible.value = false;
     agentStore.isAiTyping = false;
-  } finally {
-    agentStore.isSending = false;
     streamingContent.value = "";
     displayedContent.value = "";
-    streamingPhase.value = "completed";
+    streamingPhase.value = "";
+    streamingThinkMs.value = null;
+    streamingTotalMs.value = null;
+  } finally {
+    pendingMessages.value = [];
+    showConfigPanel.value = false;
+    isAiThinkingBubbleVisible.value = false;
+    agentStore.isAiTyping = false;
+    agentStore.isSending = false;
+    isSendingAnimation.value = false;
+    scrollToBottom();
   }
 }
-
 // Accept / Decline
 async function acceptChanges(payload: any) {
   try {
@@ -4914,84 +5018,44 @@ const toggleWebSearch = async () => {
   }
 };
 watch(
-  () => agentStore.assistantStreamedChunks,
-  (raw) => {
-    const rawStr: string =
-      typeof raw === "string"
-        ? raw
-        : typeof raw === "object" && raw !== null
-          ? JSON.stringify(raw)
-          : String(raw ?? "");
+  () => agentStore.currentStreamText,
+  (newText) => {
+    if (!newText) return;
+    // As soon as first chunk arrives, kill thinking bubble immediately
+    isAiThinkingBubbleVisible.value = false;
+    streamingContent.value = newText;
+    animateStreamingContent(newText);
+    scrollToBottom();
+  }
+);
 
-    if (!rawStr) return;
+watch(
+  () => agentStore.currentPhase,
+  (phase) => {
+    if (!phase) return;
 
-    const lines = rawStr
-      .split("\n")
-      .filter((l) => l.trim().startsWith("data: "));
-
-    let accumulatedContent = "";
-    let latestPhase: typeof streamingPhase.value = "";
-    let latestThinkMs: number | null = null;
-    let latestTotalMs: number | null = null;
-    let isDone = false;
-
-    for (const line of lines) {
-      try {
-        const json = JSON.parse(line.replace(/^data:\s*/, "").trim());
-
-        if (json.type === "phase") {
-          latestPhase = json.phase;
-
-          if (json.phase === "thinking") {
-            isAiThinkingBubbleVisible.value = true;
-            accumulatedContent = "";
-          }
-
-          if (json.phase === "generating") {
-            isAiThinkingBubbleVisible.value = false;
-          }
-        }
-
-        if (json.type === "chunk") {
-          accumulatedContent += json.content ?? "";
-          isAiThinkingBubbleVisible.value = false;
-          // Don't set streamingContent here — let the animator handle display
-        }
-
-        if (json.type === "timing") {
-          latestThinkMs = json.think_time_ms ?? null;
-          latestTotalMs = json.total_time_ms ?? null;
-        }
-
-        if (json.type === "done") {
-          isDone = true;
-        }
-      } catch {
-        // skip malformed lines
-      }
+    if (phase === "thinking") {
+      isAiThinkingBubbleVisible.value = true;
+      streamingContent.value = "";
+      displayedContent.value = "";
+      streamingPhase.value = "thinking";
     }
 
-    // Update phase and timing state
-    if (latestPhase) streamingPhase.value = latestPhase;
-    if (latestThinkMs !== null) streamingThinkMs.value = latestThinkMs;
-    if (latestTotalMs !== null) streamingTotalMs.value = latestTotalMs;
-
-    // Set the full target content and kick off letter-by-letter animation
-    if (accumulatedContent) {
-      streamingContent.value = accumulatedContent; // full text (used as animation target)
-      animateStreamingContent(accumulatedContent); // drives displayedContent char by char
+    if (phase === "generating") {
+      // Switch from thinking bubble to streaming bubble
+      isAiThinkingBubbleVisible.value = false;
+      streamingPhase.value = "generating";
     }
 
-    if (isDone) {
+    if (phase === "completed") {
       isAiThinkingBubbleVisible.value = false;
       agentStore.isAiTyping = false;
-      // displayedContent will finish animating on its own via requestAnimationFrame
+      streamingPhase.value = "completed";
+      scrollToBottom();
     }
-
-    scrollToBottom();
-  },
-  { immediate: false },
+  }
 );
+
 
 function animateStreamingContent(targetText: string) {
   // Cancel any ongoing animation before starting a new one
@@ -5061,6 +5125,40 @@ function animateStreamingContent(targetText: string) {
   transform: translateX(-100%);
   opacity: 0;
 }
+ .neon-flow-border-chatbot {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .neon-flow-border-chatbot::after {
+    /* Crisp neon arc passing over the cut-out */
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: 20px;
+    background: conic-gradient(
+      from 45deg,
+      transparent 0deg,
+      transparent calc(var(--sweep) - 24deg),
+      hsl(var(--glow-brand)) calc(var(--sweep) - 24deg),
+      hsl(var(--glow-2)) calc(var(--sweep) - 12deg),
+      hsl(var(--glow-3)) var(--sweep),
+      hsl(var(--glow-2)) calc(var(--sweep) + 12deg),
+      hsl(var(--glow-brand)) calc(var(--sweep) + 24deg),
+      transparent calc(var(--sweep) + 24deg) 360deg
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    /* mix-blend-mode: screen; */
+    animation: sweep var(--neon-speed, 4s) linear infinite;
+    pointer-events: none;
+    z-index: 2;
+  }
 @keyframes chat-spin {
   to {
     transform: rotate(360deg);
