@@ -931,15 +931,20 @@ function setAuthCookie(token: string) {
 
   let cookieString = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`
 
-  if (hostname === 'localhost') {
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     // localhost — no domain, no Secure
     document.cookie = cookieString
-  } else {
-   cookieString += `; domain=.streamed.space; Secure`
+  } else if (hostname.endsWith('.streamed.space') || hostname === 'streamed.space') {
+    // streamed.space subdomains
+    cookieString += `; domain=.streamed.space; Secure`
+    document.cookie = cookieString
+  } else if (hostname.endsWith('.orchit.ai') || hostname === 'orchit.ai') {
+    // orchit.ai subdomains
+    cookieString += `; domain=.orchit.ai; Secure`
     document.cookie = cookieString
   }
 
-  console.log('cookie set for:', hostname, '→', cookieString)
+  console.log('🍪 cookie set for:', hostname, '→', cookieString)
 }
 
 function sendInvites() {
@@ -951,6 +956,13 @@ function sendInvites() {
     : ''
 
   const isLocalhost = window.location.hostname === 'localhost'
+  console.log('🔍 sendInvites DEBUG:', {
+    isLocalhost,
+    siteSlug: siteSlug.value,
+    hostname: window.location.hostname,
+    port: window.location.port,
+    token: token ? 'EXISTS' : 'MISSING'
+  })
 
   const buildUrl = (base: string) => `${base}/dashboard?welcome=1&_auth=${encodedToken}`
 
@@ -965,9 +977,15 @@ function sendInvites() {
       {
         onSuccess: () => {
           if (isLocalhost) {
-            // For local testing — open in same localhost at different path
-            router.push({ path: '/dashboard', query: { welcome: '1', _auth: encodedToken } })
+            // For local testing — navigate to custom.localhost to test cross-subdomain localStorage
+            const port = window.location.port ? `:${window.location.port}` : ''
+            const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
+            console.log('🌐 Navigating to custom subdomain:', subdomainUrl)
+            console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
+            window.location.href = subdomainUrl
           } else if (domainLink.value) {
+            console.log('🌐 Navigating to production subdomain:', domainLink.value)
+            console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
             window.location.href = buildUrl(domainLink.value)
           } else {
             router.push({ path: '/dashboard', query: { welcome: '1' } })
@@ -977,8 +995,15 @@ function sendInvites() {
     )
   } else {
     if (isLocalhost) {
-      router.push({ path: '/dashboard', query: { welcome: '1', _auth: encodedToken } })
+      // For local testing — navigate to custom.localhost to test cross-subdomain localStorage
+      const port = window.location.port ? `:${window.location.port}` : ''
+      const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
+      console.log('🌐 Navigating to custom subdomain (no emails):', subdomainUrl)
+      console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
+      window.location.href = subdomainUrl
     } else if (domainLink.value) {
+      console.log('🌐 Navigating to production subdomain (no emails):', domainLink.value)
+      console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
       window.location.href = buildUrl(domainLink.value)
     } else {
       router.push({ path: '/dashboard', query: { welcome: '1' } })
