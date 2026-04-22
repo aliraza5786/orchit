@@ -170,18 +170,19 @@ export const useAgentStore = defineStore("agent", {
   },
 
   actions: {
-    async sendMessage(
+   async sendMessage(
   payload: AgentChatPayload,
 ): Promise<AgentChatResponse | null> {
   if (!payload.workspace_id) return null;
   this.isSending = true;
+  this.resetStream(); // clear previous stream state
+
   try {
     const { route_path, ...basePayload } = payload;
 
     let finalPayload: Omit<AgentChatPayload, 'route_path'> = { ...basePayload };
 
     if (route_path?.includes('peak')) {
-      // Dashboard/widget creation context — include dashboard-relevant fields only
       finalPayload = {
         workspace_id: payload.workspace_id,
         agent_id: payload.agent_id,
@@ -193,7 +194,6 @@ export const useAgentStore = defineStore("agent", {
         attachments: payload.attachments,
       };
     } else if (route_path?.includes('plan')) {
-      // Sprint creation/update context — include sprint-relevant fields only
       finalPayload = {
         workspace_id: payload.workspace_id,
         agent_id: payload.agent_id,
@@ -206,16 +206,55 @@ export const useAgentStore = defineStore("agent", {
         attachments: payload.attachments,
       };
     }
-    // else: finalPayload stays as full basePayload (all fields) for other routes
 
-    const response = await api.request<AgentChatResponse>({
-      url: `${baseUrl}agent-chat/message/assistant`,
-      method: "POST",
-      data: finalPayload,
+    const token = localStorage.getItem('token');
+    const url = `${baseUrl}agent-chat/message/assistant`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(finalPayload),
     });
-    return response;
+
+    if (!response.ok || !response.body) {
+      console.error('Stream response failed:', response.status);
+      return null;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Split on newlines — SSE lines end with \n
+      const lines = buffer.split('\n');
+
+      // Keep the last incomplete line in buffer
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || !trimmed.startsWith('data:')) continue;
+        this.handleIncomingChunk(trimmed); // 🔥 fires reactively per chunk
+      }
+    }
+
+    // Flush any remaining buffer content
+    if (buffer.trim().startsWith('data:')) {
+      this.handleIncomingChunk(buffer.trim());
+    }
+
+    return null;
   } catch (err) {
-    console.error("❌ Failed to send message:", err);
+    console.error('❌ Failed to send message:', err);
     return null;
   } finally {
     this.isSending = false;
@@ -599,9 +638,10 @@ resetStream() {
       this.sheetTitle = title;
       localStorage.setItem("selected_sheet_title", title);
     },
-    async saveSelectedSheetId(id: string) {
-      this.sheetId = id;
-      localStorage.setItem("selected_sheet_id", id);
+    async saveSelectedSheetId(id: string | string[]) {
+      const idStr = Array.isArray(id) ? id.join(',') : id;
+      this.sheetId = idStr;
+      localStorage.setItem("selected_sheet_id", idStr);
     },
     async fetchSavedAgents(
       workspace_id: string,

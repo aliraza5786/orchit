@@ -396,7 +396,6 @@
 
   <!-- ── Modals ──────────────────────────────────────────────────────────── -->
   <ConfirmDeleteModal
-    @click.stop=""
     v-model="showDelete"
     title="Delete List"
     itemLabel="list"
@@ -602,6 +601,22 @@ const TableGroupDropdown = defineAsyncComponent(
 const VariableViewDropdown = defineAsyncComponent(
   () => import("./components/VariableViewDropdown.vue"),
 );
+
+// Helper function to convert numbers to words for sheet count
+function numberToWords(num: number): string {
+  const words: { [key: number]: string } = {
+    2: 'Two',
+    3: 'Three',
+    4: 'Four',
+    5: 'Five',
+    6: 'Six',
+    7: 'Seven',
+    8: 'Eight',
+    9: 'Nine',
+    10: 'Ten'
+  };
+  return words[num] || num.toString();
+}
 
 // ─── Permissions ──────────────────────────────────────────────────────────────
 const {
@@ -1131,6 +1146,19 @@ watch(
       }
     }
 
+    // Handle multiple selected sheets
+    if (Array.isArray(newVal) && newVal.length > 1) {
+      const count = newVal.length;
+      const countWord = numberToWords(count);
+      const titleText = `${countWord} sheets selected`;
+      agentStore.saveSelectedSheetTitle(titleText);
+      agentStore.saveSelectedSheetId(newVal);
+      sheetName.value = titleText;
+      localStorage.setItem("selected_sheet_title", titleText);
+      localStorage.setItem("selected_sheet_id", JSON.stringify(newVal));
+      return;
+    }
+
     const currentId = Array.isArray(newVal) ? newVal[0] : newVal;
     const selectedSheet = transformedData.value.find(
       (item) => item._id === currentId,
@@ -1139,10 +1167,14 @@ watch(
       agentStore.saveSelectedSheetTitle(selectedSheet.title);
       agentStore.saveSelectedSheetId(currentId);
       sheetName.value = selectedSheet.title || "";
+      localStorage.setItem("selected_sheet_title", selectedSheet.title);
+      localStorage.setItem("selected_sheet_id", currentId);
     } else if (currentId === 'all') {
       agentStore.saveSelectedSheetTitle("All sheet");
       agentStore.saveSelectedSheetId("all");
       sheetName.value = "All sheet";
+      localStorage.setItem("selected_sheet_title", "All sheet");
+      localStorage.setItem("selected_sheet_id", "all");
     } else {
       agentStore.saveSelectedSheetTitle(sheetTitle.value);
       agentStore.saveSelectedSheetId(sheetId.value);
