@@ -293,12 +293,14 @@ api.interceptors.response.use(
   }
 );
 router.beforeEach(async (to, _from, next) => {
-  const auth = useAuthStore();
-  await auth.bootstrap()
+  const auth = useAuthStore()
 
-  // Check for subdomain and redirect to workspace if on dashboard
+  // ✅ Bootstrap only once — prevents double call on redirects
+  if (!auth.initialized) {
+    await auth.bootstrap()
+  }
+
   const hostname = window.location.hostname
-  console.log('Hostname:', hostname)
   let subdomain = null
   if (hostname.endsWith('.streamed.space')) {
     subdomain = hostname.replace('.streamed.space', '')
@@ -307,29 +309,18 @@ router.beforeEach(async (to, _from, next) => {
   } else if (hostname.endsWith('.localhost')) {
     subdomain = hostname.replace('.localhost', '')
   }
-  console.log('Subdomain:', subdomain)
 
   if (subdomain && subdomain !== 'www' && subdomain !== '') {
-    console.log('On subdomain:', subdomain)
-    // We're on a subdomain
     if (to.path === '/dashboard') {
-      console.log('Accessing /dashboard on subdomain')
-      // Try to fetch workspace by subdomain
       const workspaceStore = useWorkspaceStore()
       try {
         const workspace = await workspaceStore.fetchWorkspaceBySlug(subdomain)
-        console.log('Workspace found:', workspace)
         if (workspace) {
-          // Redirect to workspace route
           return next(`/workspace/${workspace._id}`)
         } else {
-          console.log('No workspace found, redirecting to not-found')
-          // Invalid subdomain, show not-found page
           return next('/not-found')
         }
       } catch (error) {
-        console.error('Error fetching workspace:', error)
-        // On error, also show not-found
         return next('/not-found')
       }
     }
@@ -337,7 +328,7 @@ router.beforeEach(async (to, _from, next) => {
 
   const requiresAuth = to.matched.some(
     (record) => record.meta.requiresAuth === true
-  );
+  )
 
   const localToken = localStorage.getItem('token')
   const cookieToken = document.cookie
@@ -348,13 +339,13 @@ router.beforeEach(async (to, _from, next) => {
   const hasToken = !!(cookieToken || localToken)
 
   if (requiresAuth && !hasToken) {
-    return next({ name: "Login" });
+    return next({ name: 'Login' })
   }
 
-  if (to.name === "Login" && hasToken) {
-    return next({ name: "Home" });
+  if (to.name === 'Login' && hasToken) {
+    return next({ name: 'Home' })
   }
 
-  next();
-});
+  next()
+})
 export default router;
