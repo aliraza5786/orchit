@@ -393,6 +393,12 @@
             "
           />
 
+          <CreateVariableModal
+            v-model="isCreateVar"
+            v-if="isCreateVar"
+            :sheetID="selected_sheet_id || sheetId"
+          />
+
         </div>
       </div>
     </div>
@@ -472,6 +478,9 @@ const TableGroupDropdown = defineAsyncComponent(
 );
 const VariableViewDropdown = defineAsyncComponent(
   () => import("../../Product/components/VariableViewDropdown.vue"),
+);
+const CreateVariableModal = defineAsyncComponent(
+  () => import("../../Product/modals/CreateVariableModal.vue"),
 );
 const props = defineProps<{
   sprint_id: any;

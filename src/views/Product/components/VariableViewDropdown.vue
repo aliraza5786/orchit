@@ -132,6 +132,7 @@ interface Option {
   title: string;
   icon?: IconData;
   nested?: Option[];
+  is_checkbox_table?: boolean;
 }
 
 const props = defineProps<{
@@ -173,9 +174,15 @@ const recentOption = computed(() => {
 
 const filteredOptions = computed(() => {
   const q = searchQuery.value.toLowerCase();
-  return props.options.filter(o => 
-    o.title.toLowerCase().includes(q)
-  );
+
+  return props.options.filter(o => {
+    const matchesSearch = o.title.toLowerCase().includes(q);
+
+    // ❌  hide if is_checkbox_table === true
+    const isHidden = o.is_checkbox_table === true;
+
+    return matchesSearch && !isHidden;
+  });
 });
 
 function selectOption(option: Option) {

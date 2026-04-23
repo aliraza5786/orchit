@@ -387,6 +387,7 @@
       v-if="isCreateVar"
       v-model="isCreateVar"
       :sheetID="selected_sheet_id"
+      :tableView="view === 'table'"
     />
     <ConfirmDeleteModal
       @click.stop=""
@@ -1177,20 +1178,20 @@ const columns = computed(() => {
           h("span", { class: "text-[12px]" }, value ? value?.u_full_name : ""),
         ]),
     },
-    {
-      key: "seat",
-      label: "Assignee",
-      render: ({ row, value }: any) =>
-        h(TableAssigneeCell, {
-          class: "capitalize flex items-center gap-2",
-          onAssign: (users: any[]) => assignHandle(row, users),
-          assigneeId: row.seats || row.seat_id || value,
-          seat: row.seats || row.seat || value,
-          name: true,
-          disabled: !canAssignCard.value,
-          emptyText: "Assignee",
-        }),
-    },
+    // {
+    //   key: "seat",
+    //   label: "Assignee",
+    //   render: ({ row, value }: any) =>
+    //     h(TableAssigneeCell, {
+    //       class: "capitalize flex items-center gap-2",
+    //       onAssign: (users: any[]) => assignHandle(row, users),
+    //       assigneeId: row.seats || row.seat_id || value,
+    //       seat: row.seats || row.seat || value,
+    //       name: true,
+    //       disabled: !canAssignCard.value,
+    //       emptyText: "Assignee",
+    //     }),
+    // },
     ...(variableList
       ?.filter((e: any) => e?.type?.title === "Select")
       .map((e: any) => ({
@@ -1251,19 +1252,19 @@ function setLane(row: any, laneId: string) {
   }
 }
 
-const assignHandle = (row: any, users: any[]) => {
-  const userIds = (users || [])
-    .filter((u) => u && (u._id || u.id))
-    .map((u) => u._id || u.id);
-  if (row._id) {
-    moveCard.mutate({ card_id: row._id, seat_id: userIds, optimisticUser: users });
-  } else {
-    row.seat = users;
-    row.seats = users;
-    row.seat_id = userIds;
-    checkAndCreateTicket(row);
-  }
-};
+// const assignHandle = (row: any, users: any[]) => {
+//   const userIds = (users || [])
+//     .filter((u) => u && (u._id || u.id))
+//     .map((u) => u._id || u.id);
+//   if (row._id) {
+//     moveCard.mutate({ card_id: row._id, seat_id: userIds, optimisticUser: users });
+//   } else {
+//     row.seat = users;
+//     row.seats = users;
+//     row.seat_id = userIds;
+//     checkAndCreateTicket(row);
+//   }
+// };
 
 function handleChangeTicket(row: any, key: any, value: any) {
   if (row._id) {

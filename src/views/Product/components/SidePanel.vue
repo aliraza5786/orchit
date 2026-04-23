@@ -583,7 +583,8 @@
                     v-if="editingId !== c._id"
                     :key="`c-view-${c._id}`"
                     class="text-[15px] leading-6"
-                    v-html="formatComment(c.comment_text)"
+                    v-html="renderMentions(c.comment_text)"
+                    @click="handleCommentClick"
                   >
                   </p>
                   <div v-else :key="`c-edit-${c._id}`" class="space-y-2">
@@ -591,8 +592,9 @@
                       <!-- overlay -->
                       <div 
                         :ref="el => { if (el) overlays[c._id] = el as HTMLElement }"
-                        class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal" 
+                        class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal font-sans" 
                         aria-hidden="true" 
+                        style="font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.5; letter-spacing: normal; font-weight: 400; -webkit-font-smoothing: antialiased;"
                         v-html="formatOverlay(editText)"
                       ></div>
                       <textarea
@@ -603,7 +605,8 @@
                         @input="(e) => handleCommentInput(e, c._id)"
                         @keydown="(e) => handleCommentKeydown(e, c._id)"
                         @blur="handleCommentBlur"
-                        class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-text-primary"
+                        class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                        style="font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.5; letter-spacing: normal; font-weight: 400; -webkit-font-smoothing: antialiased;"
                       />
                     </div>
                     <div class="flex items-center gap-2 justify-end">
@@ -649,11 +652,11 @@
               <div
                 class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden relative"
               >
-                <!-- overlay -->
                 <div 
                   :ref="el => { if (el) overlays['new'] = el as HTMLElement }"
-                  class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal" 
+                  class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal font-sans" 
                   aria-hidden="true" 
+                  style="font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.5; letter-spacing: normal; font-weight: 400; -webkit-font-smoothing: antialiased;"
                   v-html="formatOverlay(newComment)"
                 ></div>
                 <textarea
@@ -670,7 +673,8 @@
                       ? 'cursor-text'
                       : 'cursor-not-allowed'
                   "
-                  class="relative z-0 w-full p-3 bg-transparent outline-none text-sm leading-normal resize-none"
+                  class="relative z-0 w-full p-3 bg-transparent outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                  style="font-family: Inter, system-ui, -apple-system, sans-serif; line-height: 1.5; letter-spacing: normal; font-weight: 400; -webkit-font-smoothing: antialiased;"
                   placeholder="Write a comment"
                 />
                 <div
@@ -842,6 +846,13 @@
     v-if="showInviteModal"
     :defaultWorkspaceId="workspaceId"
   />
+
+  <MentionProfileCard
+    v-if="userPopover.show && userPopover.user && userPopover.target"
+    :user="userPopover.user"
+    :target="userPopover.target"
+    @close="closeUserPopover"
+  />
 </template>
 
 <script setup lang="ts">
@@ -931,6 +942,7 @@ const BaseMultiSelect = defineAsyncComponent(
 );
 
 const  ConfirmModal = defineAsyncComponent(()=> import ("../modals/ConfirmDeleteModal.vue"))
+const MentionProfileCard = defineAsyncComponent(() => import("./MentionProfileCard.vue"));
 
 
 import CreateVariableModal from "../modals/CreateVariableModal.vue";
@@ -1396,6 +1408,38 @@ function handleCommentInput(e: Event, type: string) {
   mentionContext.value.active = false;
 }
 
+const currentMentions = ref<any[]>([]);
+
+const userPopover = ref<{
+  show: boolean;
+  user: any;
+  target: HTMLElement | null;
+}>({
+  show: false,
+  user: null,
+  target: null
+});
+
+function handleCommentClick(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (target.classList.contains('mention-highlight')) {
+    const userId = target.getAttribute('data-user-id');
+    if (!userId) return;
+
+    const user = workspaceRoles.value?.find((u: any) => u?._id === userId || u?.id === userId);
+    if (!user) return;
+
+    userPopover.value.user = user;
+    userPopover.value.target = target;
+    userPopover.value.show = true;
+  }
+}
+
+function closeUserPopover() {
+  userPopover.value.show = false;
+  userPopover.value.target = null;
+}
+
 function updateMentionPosition(textarea: HTMLTextAreaElement) {
   if (cleanupMention) {
     cleanupMention();
@@ -1474,7 +1518,7 @@ watch(() => mentionContext.value.active, (val) => {
   if (!val && cleanupMention) {
     cleanupMention();
     cleanupMention = null;
-  }
+}
 });
 
 onBeforeUnmount(() => {
@@ -1483,12 +1527,10 @@ onBeforeUnmount(() => {
 
 function handleCommentKeydown(e: KeyboardEvent, type: string) {
   if (!mentionContext.value.active) {
-    // Atomic deletion logic for Backspace/Delete
     if (e.key === 'Backspace' || e.key === 'Delete') {
       const textarea = e.target as HTMLTextAreaElement;
       const cursor = textarea.selectionStart;
-      
-      if (cursor !== textarea.selectionEnd) return; // Ignore if text is highlighted
+      if (cursor !== textarea.selectionEnd) return;
       
       const val = type === 'new' ? newComment.value : editText.value;
       const users = workspaceRoles.value || [];
@@ -1497,33 +1539,16 @@ function handleCommentKeydown(e: KeyboardEvent, type: string) {
 
       for (const name of userNames) {
         const mention = `@${name}`;
-        let startIndex = 0;
-        let index;
-        while ((index = val.indexOf(mention, startIndex)) > -1) {
-          const endIndex = index + mention.length;
-          
-          // Trigger atomic deletion if cursor is inside or IMMEDIATELY after the mention
-          const isIntersectingBackspace = e.key === 'Backspace' && cursor > index && cursor <= endIndex;
-          const isIntersectingDelete = e.key === 'Delete' && cursor >= index && cursor < endIndex;
-
-          if (isIntersectingBackspace || isIntersectingDelete) {
-            e.preventDefault();
-            const newVal = val.slice(0, index) + val.slice(endIndex);
-            
-            if (type === 'new') newComment.value = newVal;
-            else editText.value = newVal;
-
-            // Use direct manipulation if nextTick is too slow to feel "atomic"
-            textarea.value = newVal; 
-            textarea.setSelectionRange(index, index);
-            
-            // Sync with reactive refs
-            if (type === 'new') newComment.value = newVal;
-            else editText.value = newVal;
-            
-            return;
-          }
-          startIndex = endIndex;
+        const index = val.lastIndexOf(mention, cursor - 1);
+        
+        if (index !== -1 && index + mention.length >= cursor) {
+          e.preventDefault();
+          const newVal = val.slice(0, index) + val.slice(index + mention.length);
+          if (type === 'new') newComment.value = newVal;
+          else editText.value = newVal;
+          textarea.value = newVal;
+          textarea.setSelectionRange(index, index);
+          return;
         }
       }
     }
@@ -1580,8 +1605,11 @@ function insertMention(user: any) {
     editText.value = newVal;
   }
   
+  // Track this mention metadata
+  currentMentions.value.push({ name, id: user._id, email: user.email });
+  
   mentionContext.value.active = false;
-  const newPos = before.length + name.length + 2;
+  const newPos = before.length + name.length + 1;
   
   nextTick(() => {
     if (targetElement) {
@@ -1596,30 +1624,12 @@ function handleInviteClick() {
   showInviteModal.value = true;
 }
 
-function formatComment(text: string) {
+function renderMentions(text: string) {
   if (!text) return "";
-  
-  const users = workspaceRoles.value || [];
-  // AFTER — cast to string[] after filter
-  const userNames = users.flatMap((u: any) => [u.u_full_name, u.name, u.title]).filter(Boolean) as string[];
-
-  
-  if (userNames.length === 0) {
-    return text.replace(/@([a-zA-Z0-9_.-]+)/g, (match) => {
-      return `<span class="bg-accent text-orchit-white text-[14px] px-1.5 py-[1px] rounded-full font-medium shadow-sm hover:opacity-90 cursor-pointer relative z-10 mr-[2px]">${match}</span>`;
-    });
-  }
-
-  // Sort by length to match the longest full name first
-  userNames.sort((a, b) => b.length - a.length);
-
-  // Escape regex special chars and add generic word fallback
-  const escapedNames = [...new Set(userNames)].map((n: string) => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-  const regex = new RegExp(`@(${escapedNames.join('|')}|[a-zA-Z0-9_.-]+)(?=\\s|[.,!?]|$)`, 'gi');
-  
-  return text.replace(regex, (match) => {
-    return `<span class="bg-accent text-[14px] text-orchit-white px-[4px] -mx-[1px] py-[1px] rounded-full font-normal shadow-sm hover:opacity-90 cursor-pointer relative z-10">${match}</span>`;
-  });
+  return text.replace(
+    /@\[([^\]]+)\]\(([^)]+)\)/g,
+    '<span class="mention-highlight cursor-pointer hover:underline" data-user-id="$2">@$1</span>'
+  );
 }
 
 function formatOverlay(text: string) {
@@ -1630,7 +1640,7 @@ function formatOverlay(text: string) {
   const userNames = users.flatMap((u: any) => [u.u_full_name, u.name, u.title]).filter(Boolean) as string[];
   
   if (userNames.length === 0) {
-    return `<span class="text-transparent">${escapedText.replace(/@([a-zA-Z0-9_.-]+)/g, '<strong class="bg-accent text-[14px] text-orchit-white px-[4px] -mx-[4px] py-[1px] rounded-full font-normal">@$1</strong>')}</span>`;
+    return `<div class="text-text-primary whitespace-pre-wrap break-words">${escapedText.replace(/@([a-zA-Z0-9_.-]+)/g, '<strong class="mention-highlight">@$1</strong>')}</div>`;
   }
 
   userNames.sort((a, b) => b.length - a.length);
@@ -1638,10 +1648,10 @@ function formatOverlay(text: string) {
   const regex = new RegExp(`@(${escapedNames.join('|')}|[a-zA-Z0-9_.-]+)(?=\\s|[.,!?]|$)`, 'gi');
   
   const formatted = escapedText.replace(regex, (match) => {
-    return `<strong class="bg-accent text-orchit-white px-[4px] -mx-[4px] py-[1px] text-[14px] rounded-full font-medium">${match}</strong>`;
+    return `<strong class="mention-highlight">${match}</strong>`;
   });
   
-  return `<span class="text-transparent">${formatted}</span>`;
+  return `<div class="text-text-primary whitespace-pre-wrap break-words">${formatted}</div>`;
 }
 // ----------------------
 
@@ -1757,14 +1767,26 @@ function cancelEdit() {
   editingTitle.value = false;
 }
 function saveEdit(c: any) {
-  const text = editText.value.trim();
+  let text = editText.value.trim();
   if (!text) return;
+
+  // Convert @Name to @[Name](ID) for payload
+  const mentions: any[] = [];
+  currentMentions.value.forEach(m => {
+    const mentionToken = `@${m.name}`;
+    if (text.includes(mentionToken)) {
+      text = text.replace(mentionToken, `@[${m.name}](${m.id})`);
+      mentions.push({ id: m.id, name: m.name, email: m.email, type: 'user' });
+    }
+  });
+
   const idx = comments.value.findIndex((x: any) => x._id === c._id);
   const prev = idx > -1 ? { ...comments.value[idx] } : null;
   if (idx > -1)
     comments.value[idx] = { ...comments.value[idx], comment_text: text };
+  
   updateComment(
-    { id: c._id, payload: { comment_text: text } },
+    { id: c._id, payload: { comment_text: text, mentions } },
     {
       onError: () => {
         if (idx > -1 && prev) comments.value[idx] = prev;
@@ -1772,6 +1794,7 @@ function saveEdit(c: any) {
       onSuccess: (server: any) => {
         if (idx > -1) comments.value[idx] = server ?? comments.value[idx];
         cancelEdit();
+        currentMentions.value = [];
         queryClient.invalidateQueries({ queryKey: ["product-card"] });
       },
     },
@@ -1897,16 +1920,27 @@ function handleFileChange(event: any) {
   });
 }
 function postComment() {
-  const comment_text = newComment.value.trim();
+  let comment_text = newComment.value.trim();
   if (!comment_text && !commentAttachments.value.length) return;
 
   const cardId = props.details._id;
   
-  // Call the mutation (onMutate will handle optimistic updates)
+  // Convert @Name to @[Name](ID) for payload
+  const mentions: any[] = [];
+  currentMentions.value.forEach(m => {
+    const mentionToken = `@${m.name}`;
+    if (comment_text.includes(mentionToken)) {
+      comment_text = comment_text.replace(mentionToken, `@[${m.name}](${m.id})`);
+      mentions.push({ id: m.id, name: m.name, email: m.email, type: 'user' });
+    }
+  });
+
+  // Call the mutation
   createComment({
     id: cardId,
     payload: {
-      comment_text,
+      comment_text: comment_text,
+      mentions,
       attachments: commentAttachments.value.map((file: any) => ({
         name: file.data.name,
         url: file.data.url,
@@ -1914,9 +1948,10 @@ function postComment() {
     },
   });
 
-  // Clear input immediately for better UX
+  // Clear input
   newComment.value = "";
   commentAttachments.value = [];
+  currentMentions.value = [];
 }
 const localVarValues = reactive<Record<string, any>>({});
 const initLocalVars = () => {
@@ -2160,5 +2195,15 @@ function handleEditVar(item: any) {
 
 :global(.rich-scroll)::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.14);
+}
+/* Mentions */
+:global(.mention-highlight) {
+  background-color: rgba(var(--accent-rgb, 99, 102, 241), 0.15);
+  color: var(--accent, #6366f1);
+  padding: 1px 0;
+  border-radius: 4px;
+  font-weight: 400; /* Must match textarea exactly to prevent width drift */
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb, 99, 102, 241), 0.2);
+  display: inline;
 }
 </style>

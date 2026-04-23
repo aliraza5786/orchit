@@ -335,7 +335,7 @@
         >
           <li
             class="p-2"
-            v-for="(item, index) in cardDetails?.assignment_history"
+            v-for="(item, index) in cardDetails?.assignment_history?.history"
             :key="index"
           >
             <h1 class="text-sm text-text-primary">{{ item?.title }}</h1>

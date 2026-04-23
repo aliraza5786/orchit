@@ -66,14 +66,14 @@
           </Button>
         </div>
   
-        <!-- Filterable toggle -->
+        <!-- Group Filterable toggle -->
         <label class="flex items-center gap-2 select-none"  v-if="['Checkbox','Radio','Select','Multi Select'].includes(selectedTypeTitle)">
           <Checkbox
             :checked="isFilterable"
-            label="Show this in filters"
+            label="Show this in Group filters"
             @change="handleFilterChange"
           />
-        </label>
+        </label>  
   
         <!-- List of Added Options (Only for types that need options) -->
         <ul
@@ -131,7 +131,7 @@
   const target = event.target as HTMLInputElement
   isFilterable.value = target.checked
 }
-  const props = withDefaults(defineProps<{ modelValue: boolean, sheetID: string }>(), { modelValue: false })
+  const props = withDefaults(defineProps<{ modelValue: boolean, sheetID: string, tableView?: boolean }>(), { modelValue: false, tableView: false })
   
   /** Modal open proxy */
   const isOpen = computed({
@@ -270,6 +270,9 @@ const isValid = computed(() => {
       // Refresh all related views regardless of success/fail to maintain consistency
       queryClient.invalidateQueries({ queryKey: ['all-module-variables'] })
       queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
+      queryClient.invalidateQueries({ queryKey: ['table-cards-flat'] })
+      queryClient.invalidateQueries({ queryKey: ['sprint-kanban'] })
+      queryClient.invalidateQueries({ queryKey: ['sprint-table-flat'] })
       queryClient.invalidateQueries({ queryKey: ['product-card'] })
       queryClient.invalidateQueries({ queryKey: ['cardDetail'] })
     }
@@ -291,6 +294,7 @@ const isValid = computed(() => {
       visible_on_card: false,
       type_id: selectedVariableType.value,
       sheet_id: props.sheetID,
+      is_checkbox_table : !!props.tableView
     } 
   
     if (typeof createVariable !== 'function') { 
