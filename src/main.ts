@@ -15,7 +15,6 @@ import { createHead } from '@vueuse/head';
 // ✅ Decode and save _auth, _cid from URL params BEFORE app initialization
 const urlParams = new URLSearchParams(window.location.search)
 const encodedToken = urlParams.get('_auth')
-const encodedCompanyId = urlParams.get('_cid')
 
 if (encodedToken) {
   try {
@@ -26,17 +25,6 @@ if (encodedToken) {
     console.error('❌ Token decode failed:', e)
   }
 }
-
-if (encodedCompanyId) {
-  try {
-    const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
-    localStorage.setItem('company_id', companyId)
-    console.log('✅ Company ID saved before app init')
-  } catch (e) {
-    console.error('❌ Company ID decode failed:', e)
-  }
-}
-
 // Set document.domain for cross-subdomain localStorage sharing
 if (window.location.hostname === 'streamed.space' || window.location.hostname.endsWith('.streamed.space')) {
   document.domain = 'streamed.space'
