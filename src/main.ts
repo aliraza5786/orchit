@@ -13,9 +13,23 @@ import { initThemeImmediately } from './composables/useTheme'
 import { createHead } from '@vueuse/head'
 import vue3GoogleLogin from 'vue3-google-login'
 
-// ✅ ONLY handle VERY EARLY token persistence (optional but safe)
+// ✅ STEP 1: Set document.domain FIRST before anything else
+if (window.location.hostname === 'streamed.space' || window.location.hostname.endsWith('.streamed.space')) {
+  document.domain = 'streamed.space'
+  console.log('🌍 document.domain set to streamed.space')
+} else if (window.location.hostname.endsWith('.localhost')) {
+  try {
+    document.domain = 'localhost'
+    console.log('🌍 document.domain set to localhost')
+  } catch (e) {
+    console.log('⚠️ Could not set document.domain to localhost:', e)
+  }
+}
+
+// ✅ STEP 2: Decode and save _auth from URL
 const urlParams = new URLSearchParams(window.location.search)
 const encodedToken = urlParams.get('_auth')
+const encodedCompanyId = urlParams.get('_cid')
 
 if (encodedToken) {
   try {
@@ -26,18 +40,15 @@ if (encodedToken) {
         .replace(/\./g, '=')
     )
 
-    // Save in BOTH (cookie + localStorage)
     localStorage.setItem('token', token)
 
     const maxAge = 60 * 60 * 24 * 30
     const hostname = window.location.hostname
 
     if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-      document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}`
+      document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`
     } else if (hostname.endsWith('.streamed.space')) {
       document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-    } else if (hostname.endsWith('.orchit.ai')) {
-      document.cookie = `auth_token=${token}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
     }
 
     console.log('✅ main.ts: Token stored early')
@@ -45,13 +56,43 @@ if (encodedToken) {
     console.error('❌ Token decode failed:', e)
   }
 }
+
+// ✅ STEP 3: Decode and save _cid from URL
+if (encodedCompanyId) {
+  try {
+    const companyId = atob(
+      encodedCompanyId
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .replace(/\./g, '=')
+    )
+
+    localStorage.setItem('company_id', companyId)
+
+    const maxAge = 60 * 60 * 24 * 30
+    const hostname = window.location.hostname
+
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+      document.cookie = `company_id=${companyId}; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else if (hostname.endsWith('.streamed.space')) {
+      document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    }
+
+    console.log('✅ main.ts: Company ID stored early:', companyId)
+  } catch (e) {
+    console.error('❌ Company ID decode failed:', e)
+  }
+}
+
+// ✅ STEP 4: Sync company_id from cookie → localStorage (for subdomain page loads)
 const cookieCompanyId = document.cookie
   .split('; ')
   .find(row => row.startsWith('company_id='))
   ?.split('=')[1]
 
-if (cookieCompanyId && !localStorage.getItem('company_id')) {
+if (cookieCompanyId) {
   localStorage.setItem('company_id', cookieCompanyId)
+  console.log('🔄 main.ts: Synced company_id from cookie → localStorage:', cookieCompanyId)
 }
 
 const head = createHead()
