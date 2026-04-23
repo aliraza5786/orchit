@@ -41,7 +41,7 @@ function register() {
 
   if (encodedCompanyId) {
     const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
-    localStorage.setItem('company_id', companyId)
+    document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=2592000; Secure; SameSite=Lax`
   }
 
   const isLocalhost = window.location.hostname === 'localhost'
