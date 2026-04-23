@@ -83,8 +83,7 @@ if (encodedCompanyId) {
     console.error('❌ Company ID decode failed:', e)
   }
 }
-
-// ✅ STEP 4: Sync company_id from cookie → localStorage (for subdomain page loads)
+// ✅ STEP 4: Always sync cookie → localStorage
 const cookieCompanyId = document.cookie
   .split('; ')
   .find(row => row.startsWith('company_id='))
@@ -93,6 +92,8 @@ const cookieCompanyId = document.cookie
 if (cookieCompanyId) {
   localStorage.setItem('company_id', cookieCompanyId)
   console.log('🔄 main.ts: Synced company_id from cookie → localStorage:', cookieCompanyId)
+} else {
+  console.log('❌ main.ts: No company_id cookie found')
 }
 
 const head = createHead()

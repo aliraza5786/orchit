@@ -85,18 +85,17 @@ async bootstrap() {
     window.location.pathname +
     (urlParams.toString() ? '?' + urlParams.toString() : '')
   window.history.replaceState({}, '', newUrl)
+const cookieCompanyId = getCookie('company_id')
 
-  // ✅ STEP 4: Sync company_id from cookie → localStorage
-  const cookieCompanyId = getCookie('company_id')
-  const localCompanyId = localStorage.getItem('company_id')
+console.log('🍪 cookie company_id:', cookieCompanyId)
+console.log('📦 localStorage company_id before sync:', localStorage.getItem('company_id'))
 
-  console.log('🍪 cookie company_id:', cookieCompanyId)
-  console.log('📦 localStorage company_id:', localCompanyId)
-
-  if (cookieCompanyId && !localCompanyId) {
-    localStorage.setItem('company_id', cookieCompanyId)
-    console.log('🔄 Synced company_id from cookie → localStorage:', cookieCompanyId)
-  }
+if (cookieCompanyId) {
+  localStorage.setItem('company_id', cookieCompanyId)
+  console.log('🔄 Synced company_id from cookie → localStorage:', cookieCompanyId)
+} else {
+  console.log('❌ No company_id cookie found on this domain')
+}
 
   // ✅ STEP 5: Read token
   const cookieToken = document.cookie
