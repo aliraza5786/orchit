@@ -643,13 +643,19 @@ watch(siteName, async (val) => {
 })
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   onSuccess: (data: any) => {
-    companyID.value = data?._id
-    joinLink.value = data?.join_link ?? ''
-    domainLink.value = data?.domain_link ?? ''
+    const id = data?.company_id ?? data?._id
+    const join = data?.join_link ?? ''
+    const domain = data?.domain_link ?? ''
 
-    // Save company_id or user_id to localStorage based on type
+    console.log('🏢 resolved company_id:', id)
+    console.log('🌐 resolved domainLink:', domain)
+
+    companyID.value = id
+    joinLink.value = join
+    domainLink.value = domain
+
     if (selected.value === 'team') {
-      localStorage.setItem('company_id', data?._id ?? '')
+      localStorage.setItem('company_id', id ?? '')
     } else {
       const userId = authStore.user?._id ?? ''
       localStorage.setItem('user_id', userId)
@@ -664,7 +670,6 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
     activeStep.value = 5
   }
 })
-
 const { mutate: updateProfile, isPending: updatingProfile } = useUpdateCompany({
   onSuccess: async () => {
     // For team: move to step 8 (invite team)
