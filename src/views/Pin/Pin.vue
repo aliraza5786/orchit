@@ -194,7 +194,7 @@
       </div>
     </div>
     <!-- Kanban Skeleton -->
-    <KanbanSkeleton v-show="isListPending" />
+    <KanbanSkeleton v-show="isListPending && view === 'kanban'" />
 
     <!-- Kanban Board -->
     <div
@@ -276,7 +276,9 @@
     <template v-if="view == 'table'">
         <div class="ps-4 pe-4 overflow-auto">
         <TableView 
+        ref="tableViewRef"
         :columns="columns"
+        :isCreating="isAddingTicket"
         :isPending="isListPending || isFlatTablePending || (!!selectedGroup && isTablePending)"
         @addVar="
           () => {
@@ -290,8 +292,11 @@
         :canCreate="canCreateCard"
         :canCreateVariable="canCreateVariable"
         :canDelete="canDeleteCard"
+        :totalCount="totalTableCount"
+        :totalTotal="totalTableTotal"
         @create="handleCreateTicket"
         @quickCreate="handleQuickCreate"
+        @refresh="refreshTable"
         @update:rows="handleTableRowsUpdate"
         @delete="handleTableDelete"
       />
@@ -633,6 +638,21 @@ const {
   tableGroupExtraParams,  // uses variable_slug for assignee/owner, falls back to regular extra params
 );
 
+// ─── View & Grouping Synchronization ──────────────────────────────────────────
+// Sync Table grouping selection to Kanban view for consistency
+watch(selectedGroup, (newGroup: any) => {
+  if (newGroup?._id && selected_view_by.value !== newGroup._id) {
+    selected_view_by.value = newGroup._id;
+  }
+});
+
+const refreshTable = () => {
+  queryClient.invalidateQueries({ queryKey: ["sheets"] });
+  queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+  queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+  toast.success("Data refreshed");
+};
+
 watch(Lists, (newLists) => {
   localList.value = Array.isArray(newLists)
     ? JSON.parse(JSON.stringify(newLists))
@@ -679,16 +699,7 @@ function handleAddColumn(value: string) {
     variable_id: selected_view_by.value,
     value,
   });
-}
-// const dropdownListeners = computed(() => {
-//   const listeners: Record<string, Function> = {};
-
-//   if (canEditSheet.value) listeners["onEdit-option"] = openEditSprintModal;
-//   if (canDeleteSheet.value)
-//     listeners["onDelete-option"] = handleDeleteSheetModal;
-
-//   return listeners;
-// });
+} 
 
 function emitAddColumn() {
   const trimmed = newColumn.value.trim();
@@ -926,15 +937,58 @@ const fuse = computed(() => {
 
 const filteredBoard = computed(() => {
   const target = Lists.value?.data || Lists.value || {};
-  const lists = target.sheets?.[0]?.sheet_lists || [];
+  const sheets = target.sheets || [];
+  
+  if (!sheets.length) return [];
 
-  if (!debouncedQuery.value) {
-    return lists;
+  // Merge columns by title across all sheets to support multi-sheet Kanban
+  const columnMap = new Map<string, any>();
+  
+  sheets.forEach((sheet: any) => {
+    (sheet.sheet_lists || []).forEach((list: any) => {
+      if (!columnMap.has(list.title)) {
+        columnMap.set(list.title, { 
+          ...list, 
+          cards: [...(list.cards || [])] 
+        });
+      } else {
+        const existing = columnMap.get(list.title);
+        // Merge cards, avoiding duplicates if any
+        const existingIds = new Set(existing.cards.map((c: any) => c._id));
+        (list.cards || []).forEach((c: any) => {
+          if (!existingIds.has(c._id)) {
+            existing.cards.push(c);
+            existingIds.add(c._id);
+          }
+        });
+      }
+    });
+  });
+
+  const mergedLists = Array.from(columnMap.values());
+
+  // Include local pending tickets in their respective columns
+  if (localPendingTickets.value.length > 0) {
+    localPendingTickets.value.forEach(pending => {
+      // Logic for where to put pending tickets in Kanban:
+      // In Pin module, we often use 'General' or the first column
+      const targetCol = mergedLists.find(l => l.title === 'General') || mergedLists[0];
+      if (targetCol) {
+        if (!targetCol.cards.some((c: any) => c.id === pending.id || c._id === pending.id)) {
+           targetCol.cards.unshift(pending);
+        }
+      }
+    });
   }
 
-  const results = fuse.value.search(debouncedQuery.value).map((r: any) => r.item);
+  const query = debouncedQuery.value?.trim();
+  if (!query) {
+    return mergedLists;
+  }
 
-  return lists.map((col: any) => {
+  const results = fuse.value.search(query).map((r: any) => r.item);
+
+  return mergedLists.map((col: any) => {
     const filteredCards = results.filter((c: any) => c.columnId === col.title);
     return { ...col, cards: filteredCards };
   });
@@ -978,20 +1032,62 @@ const tableRows = computed(() => {
 const tableGroups = computed(() => {
   // Only populate when a group is actively selected
   if (!selectedGroup.value) return [];
+  
+  const target = TableGroupedLists.value?.data || TableGroupedLists.value || {};
+  const sheets = target.sheets || [];
+  
+  if (!sheets.length) return [];
+
+  // Merge columns across sheets for multi-sheet Table grouping
+  const columnMap = new Map<string, any>();
+  sheets.forEach((sheet: any) => {
+    (sheet.sheet_lists || []).forEach((list: any) => {
+      if (!columnMap.has(list.title)) {
+        columnMap.set(list.title, { 
+          ...list, 
+          cards: [...(list.cards || [])] 
+        });
+      } else {
+        const existing = columnMap.get(list.title);
+        const existingIds = new Set(existing.cards.map((c: any) => c._id));
+        (list.cards || []).forEach((c: any) => {
+          if (!existingIds.has(c._id)) {
+            existing.cards.push(c);
+            existingIds.add(c._id);
+          }
+        });
+      }
+    });
+  });
+  
+  const mergedGroups = Array.from(columnMap.values());
   const query = debouncedQuery.value?.trim();
-  // Use TableGroupedLists (has variable_id) for grouped UI
-  const sourceLists = TableGroupedLists.value?.sheets?.[0]?.sheet_lists ?? [];
-  if (!query) return sourceLists;
+  
+  if (!query) return mergedGroups;
   
   const fuseTable = new Fuse(
-    sourceLists.flatMap((col: any) => (col.cards || []).map((c: any) => ({...c, columnId: col.title}))), 
+    mergedGroups.flatMap((col: any) => (col.cards || []).map((c: any) => ({...c, columnId: col.title}))), 
     { keys: ["card-title", "card-description"], threshold: 0.3 }
   );
   const results = fuseTable.search(query).map((r: any) => r.item);
-  return sourceLists.map((col: any) => ({
+  
+  return mergedGroups.map((col: any) => ({
     ...col,
     cards: results.filter((c: any) => c.columnId === col.title),
   }));
+});
+
+const totalTableCount = computed(() => {
+  if (selectedGroup.value) {
+    return tableGroups.value.reduce((acc: number, group: any) => acc + (group.cards?.length || 0), 0);
+  }
+  return tableRows.value.length;
+});
+
+const totalTableTotal = computed(() => {
+  const currentData = selectedGroup.value ? TableGroupedLists.value : FlatTableData.value;
+  const cards = flattenSheetListCards(currentData);
+  return cards.length + localPendingTickets.value.length;
 });
 
 const columns = computed(() => {
@@ -1267,6 +1363,7 @@ const handleDeleteCard = async () => {
     toast.success("Ticket deleted successfully");
 
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
     await refetchSheets();
     refetchList();
   } catch (err) {
@@ -1278,33 +1375,30 @@ const handleDeleteCard = async () => {
     selectedDeleteId.value = null;
   }
 };
+const tableViewRef = ref<any>(null);
 const localPendingTickets = ref<any[]>([]);
-const { mutate: addTicket } = useAddTicket({
-  onMutate: () => {
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+const { mutate: addTicket, isPending: isAddingTicket } = useAddTicket({
+  onMutate: (variables: any) => {
+    const tempId = variables.temp_row_id;
+    if (tempId) {
+      // Optimistically add to localPendingTickets if not already there
+      const exists = localPendingTickets.value.some(t => t._id === tempId || t.id === tempId);
+      if (!exists) {
+        localPendingTickets.value.push({
+          _id: tempId,
+          "card-title": variables.variables?.["card-title"] || "New Ticket",
+          columnId: "General", 
+          ...variables.variables
+        });
+      }
+    }
   },
   onSuccess: (newCard: any, variables: any) => {
     const tempId = variables.temp_row_id;
     pendingCreations.value.delete(tempId);
-
-    queryClient.setQueriesData(
-      { queryKey: ["sheet-list"], exact: false },
-      (oldData: any) => {
-        if (!oldData) return oldData;
-        const isArray = Array.isArray(oldData);
-        const sheets = isArray ? oldData : oldData?.data ?? oldData?.sheets ?? [];
-        if (!Array.isArray(sheets)) return oldData;
-
-        const updatedSheets = sheets.map((sheet: any) => {
-          if (sheet._id !== newCard?.sheet_id) return sheet;
-          const existingCards = sheet.cards ?? [];
-          if (existingCards.some((c: any) => c._id === newCard._id)) return sheet;
-          return { ...sheet, cards: [...existingCards, newCard] };
-        });
-
-        return isArray ? updatedSheets : { ...oldData, data: updatedSheets };
-      },
-    );
+    
+    tableViewRef.value?.closeQuickCreate();
+    toast.success("Ticket created successfully");
 
     if (tempId) {
       localPendingTickets.value = localPendingTickets.value.filter(
@@ -1315,8 +1409,19 @@ const { mutate: addTicket } = useAddTicket({
       );
     }
   },
+  onSettled: () => {
+    // Background refetch to sync with server without UI flicker
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+  },
   onError: (_err: any, variables: any) => {
-    pendingCreations.value.delete(variables.temp_row_id);
+    const tempId = variables.temp_row_id;
+    pendingCreations.value.delete(tempId);
+    if (tempId) {
+      localPendingTickets.value = localPendingTickets.value.filter(
+        (t) => t._id !== tempId && t.id !== tempId,
+      );
+    }
     toast.error("Failed to create ticket");
   },
 });
@@ -1335,51 +1440,41 @@ function handleCreateTicket(newRow: any) {
 
 function handleQuickCreate(title: string, group: any) { 
   if (!title?.trim()) return;   
-  let cardPriority = '';
-  let cardStatus = '';
-  let cardType = '';
-  let cardAssignee = '';
-  let cardReporter = '';
 
+  const variableKey = selectedGroup.value?.slug;
   const label = selectedGroupLabel.value?.toLowerCase();
+  const laneId = laneOptions.value?.[0]?._id || ""; 
   
-  if (label === 'priority') {
-    cardPriority = group.title; 
-  }
-
-  if (label === 'status') {
-    cardStatus = group.title;
-  }
-
-  if (label === 'card type') {
-    cardType = group.title;
-  }
-
-  if (label === 'assignee') {
-    cardAssignee = group?.cards[0]?.seat?._id; 
-  }
-
-  if (label === 'owner/reporter') {
-    cardReporter = group.title;
-    console.log(cardReporter)
-  }
-
-  const laneId = laneOptions.value[0]?._id || ""; 
-
-  const payload = {
-    "card-title": title,
-    "card-status": cardStatus,
-    "card-type": cardType,
-    "priority": cardPriority,
-    "seat_id": cardAssignee,
-    workspace_lane_id: laneId,
-    variables: {
-      "card-title": title,
-      "card-status": cardStatus || 'General',
-      "card-type": cardType,
-      "priority": cardPriority
-    }
+  // Build variables object dynamically
+  const variablesObj: Record<string, any> = {
+    ["card-title"]: title.trim(),
+    // Auto-detect variable from group and set its value
+    ...(variableKey ? { [variableKey]: group.title } : {}),
   };
+ 
+
+  const payload: any = {
+    "card-title": title,
+    workspace_lane_id: laneId,
+    variables: variablesObj
+  };
+
+  // Set default status if not grouped by 
+  if(!selectedGroup.value) {
+    payload["pin-list"] =  "General";
+  }  
+  
+
+  // Special handling for assignee grouping
+  if (label === 'assignee') {
+    const cards = group?.cards || [];
+    const firstCard = cards[0];
+    const cardAssignee = firstCard?.seat_id || firstCard?.seat?.map((u: any) => u._id || u.id) || firstCard?.seat?._id;
+    
+    if (cardAssignee) {
+      payload.seat_id = Array.isArray(cardAssignee) ? cardAssignee : [cardAssignee];
+    }
+  }
 
   handleCreateTicket(payload);
 }

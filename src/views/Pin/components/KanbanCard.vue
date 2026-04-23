@@ -22,17 +22,7 @@
         </div>
         <p v-html="ticket['card-description']" v-once
             class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
-        </p>
-      
-
-        <!-- Bottom Info -->
-        <!-- <div @click.stop class="flex gap-2 text-xs text-text-secondary mt-2">
-            <DatePicker placeholder="set start date" :model-value="startDate" theme="dark" emit-as="ymd"
-                @update:modelValue="setStartDate" /> 
-                <div class="mt-3 font-bold">-</div>
-            <DatePicker placeholder="set end date" :model-value="dueDate" theme="dark" emit-as="ymd"
-                @update:modelValue="setDueDate" />
-        </div> -->
+        </p> 
         <div class="flex justify-between">
             <div class="flex justify-start text-sm text-text-secondary mt-2">
             {{ formatDate(ticket?.created_at) }}
@@ -57,7 +47,6 @@
             size="md" :loading="deletingTicket" @confirm="handleDeleteTicket" @cancel="() => {
                 showDelete = false
             }">
-
         </ConfirmDeleteModal>
     </div>
 </template>
@@ -243,21 +232,7 @@ function getMenuItems(): { label: string; icon?: any; action?: () => void }[] {
 
 const handleDeleteTicket = () => {
     deleteCard({})
-}
-
-// const setStartDate = (date: string | null) => {
-//     moveCard.mutate({
-//         card_id: props.ticket._id,
-//         variables: { 'start-date': date }
-//     })
-// }
-
-// const setDueDate = (date: string | null) => {
-//     moveCard.mutate({
-//         card_id: props.ticket._id,
-//         variables: { 'end-date': date }
-//     })
-// }
+} 
 const formatDate = (dateString?: string) => {
   if (!dateString) return "";
 

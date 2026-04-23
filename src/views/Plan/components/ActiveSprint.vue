@@ -736,7 +736,6 @@ const {
 const {
   data: FlatTableData,
   isPending: isFlatTablePending,
-  refetch: refetchFlatTable,
 } = useSprintTable(selected_sprint_id, laneIds, formattedExtraParams);
 
 const tableActiveVariableId = computed(() => {
@@ -782,8 +781,14 @@ const tableGroupExtraParams = computed(() => {
 const {
   data: TableGroupedLists,
   isPending: isTablePending,
-  refetch: refetchGroupedTable,
 } = useSprintKanban(selected_sprint_id, laneIds, tableGroupExtraParams);
+
+const refreshTable = () => {
+  queryClient.invalidateQueries({ queryKey: ["sheets"] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });
+  toast.success("Data refreshed");
+};
 
 // Helper to extract cards from both Flat and Grouped sprint responses
 const flattenSprintCards = (apiData: any): any[] => {
@@ -799,9 +804,10 @@ const flattenSprintCards = (apiData: any): any[] => {
 };
 
 const totalTableCount = computed(() => {
-  const currentData = selectedGroup.value ? TableGroupedLists.value : FlatTableData.value;
-  const cards = flattenSprintCards(currentData);
-  return cards.length;
+  if (selectedGroup.value) {
+    return tableGroups.value.reduce((acc: number, group: any) => acc + (group.cards?.length || 0), 0);
+  }
+  return filteredBoard.value.length;
 });
 
 const totalTableTotal = computed(() => {
@@ -809,15 +815,6 @@ const totalTableTotal = computed(() => {
   const cards = flattenSprintCards(currentData);
   return cards.length + localPendingTickets.value.length;
 });
-
-const refreshTable = async () => {
-  await Promise.all([
-    refetchSheetLists(),
-    refetchFlatTable(),
-    refetchGroupedTable(),
-    refetchSheets()
-  ]);
-};
 
 watch(selected_sprint_id, () => {
   refetchSheetLists();
@@ -1055,11 +1052,34 @@ const moveCard = useMoveCard({
 });
 
 const { mutate: addTicket } = useAddTicket({
-  onSuccess: () => {
+  onMutate: (variables: any) => {
+    const tempId = variables.temp_row_id;
+    if (tempId) {
+      const exists = localPendingTickets.value.some(t => t._id === tempId || t.id === tempId);
+      if (!exists) {
+        localPendingTickets.value.push({
+          _id: tempId,
+          "card-title": variables.variables?.["card-title"] || "New Ticket",
+          ...variables.variables
+        });
+      }
+    }
+  },
+  onSuccess: (newCard: any, variables: any) => {
+    const tempId = variables.temp_row_id;
     toast.success("Ticket created successfully");
     tableViewRef.value?.closeQuickCreate();
-    localPendingTickets.value = [];
-    localTableOrder.value = [];
+    
+    if (tempId) {
+      localPendingTickets.value = localPendingTickets.value.filter(
+        (t) => t._id !== tempId && t.id !== tempId,
+      );
+      localTableOrder.value = localTableOrder.value.map((id) =>
+        id === tempId ? newCard._id : id,
+      );
+    }
+  },
+  onSettled: () => {
     queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
     queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });
   },
@@ -1141,7 +1161,7 @@ function handleQuickCreate(title: string, group: any) {
   let cardAssignee = '';
 
   const label = selectedGroupLabel.value?.toLowerCase();
-
+  
   if (label === 'status') {
     cardStatus = group.title;
   } else if (label === 'priority') {

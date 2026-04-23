@@ -528,6 +528,7 @@ import {
 } from "../../queries/useSheets";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
+import { removeFromCacheStructure } from "../../utilities/cacheSync";
 
 // ─── Lazy-loaded components ───────────────────────────────────────────────────
 const Dropdown = defineAsyncComponent(
@@ -961,6 +962,14 @@ const {
   tableActiveVariableId,
   tableGroupExtraParams,  // uses variable_slug for assignee/owner, falls back to regular extra params
 );
+
+// ─── Refresh Logic ────────────────────────────────────────────────────────────
+const refreshTable = () => {
+  queryClient.invalidateQueries({ queryKey: ["sheets"] });
+  queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+  queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+  toast.success("Data refreshed");
+};
 
 // ─── Route card open ──────────────────────────────────────────────────────────
 onMounted(() => {
@@ -1411,12 +1420,7 @@ const totalTableTotal = computed(() => {
   return flatCards.length + localPendingTickets.value.length;
 });
 
-const refreshTable = async () => {
-  await Promise.all([
-    refetchSheetLists(),
-    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] })
-  ]);
-};
+
 
 function handleQuickCreate(title: string, group: any) { 
   if (!title?.trim()) return;   
@@ -1970,24 +1974,40 @@ const removeCardFromState = (cardId: string) => {
 
 const deleteTicket = async () => {
   if (!selectedDeleteId.value) return;
+  const deletedId = selectedDeleteId.value;
   try {
     isDeletingTicket.value = true;
-    await request({
-      url: `workspace/card/${selectedDeleteId.value}`,
-      method: "DELETE",
-    });
-    removeCardFromState(selectedDeleteId.value);
+
+    // ─── Optimistic Updates ───────────────────────────────────────────────────────
     showTicketDelete.value = false;
     ticketToDelete.value = null;
+    removeCardFromState(deletedId);
+
+    const processRemoval = (oldData: any) => {
+      if (!oldData) return oldData;
+      if (oldData.data) {
+        return { ...oldData, data: removeFromCacheStructure(oldData.data, deletedId) };
+      }
+      return removeFromCacheStructure(oldData, deletedId);
+    };
+
+    queryClient.setQueriesData({ queryKey: ["table-cards-flat"] }, processRemoval);
+    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, processRemoval);
+
+    await request({
+      url: `workspace/card/${deletedId}`,
+      method: "DELETE",
+    });
+
     toast.success("Ticket deleted successfully");
-    await refetchSheets();
-    await refetchSheetLists();
-    // Also refetch flat table data so the deleted card disappears immediately
-    queryClient.invalidateQueries({ queryKey: ['table-cards-flat'] });
   } catch (err) {
     toast.error(toApiMessage(err));
+    // Rollback changes on error
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
   } finally {
     isDeletingTicket.value = false;
+    selectedDeleteId.value = null;
   }
 };
 
@@ -1995,51 +2015,76 @@ const handleDeleteTicket = async () => {
   await deleteTicket();
 };
 
+// ─── Ticket Creation ──────────────────────────────────────────────────────────
 const { mutate: addTicket } = useAddTicket({
-  onSuccess: (newCard:any) => {
-  queryClient.setQueriesData(
-    { queryKey: ["sheet-list"], exact: false },
-    (oldData: any) => {
-      if (!oldData) return oldData;
-
-      const isList = Array.isArray(oldData);
-      const sheets: any[] = isList ? oldData : (oldData?.data ?? oldData?.sheets ?? []);
-
-      const updatedSheets = sheets.map((sheet: any) => {
-        if (sheet._id !== newCard?.sheet_id) return sheet;
-
-        const existingCards: any[] = sheet.cards ?? [];
-        const alreadyExists = existingCards.some((c) => c._id === newCard._id);
-        if (alreadyExists) return sheet;
-
-        return { ...sheet, cards: [...existingCards, newCard] };
-      });
-
-      return isList ? updatedSheets : { ...oldData, data: updatedSheets };
-    },
-  );
-
+  onMutate: (variables: any) => {
+    const tempId = variables.temp_row_id;
+    if (tempId) {
+      const exists = localPendingTickets.value.some(t => t._id === tempId || t.id === tempId);
+      if (!exists) {
+        localPendingTickets.value.push({
+          _id: tempId,
+          "card-title": variables.variables?.["card-title"] || "New Ticket",
+          ...variables.variables
+        });
+      }
+    }
+  },
+  onSuccess: (newCard: any, variables: any) => {
+    const tempId = variables.temp_row_id;
     toast.success("Ticket created successfully");
     tableViewRef.value?.closeQuickCreate();
-    localPendingTickets.value = [];
-    localTableOrder.value = [];
-},
+    
+    if (tempId) {
+      localPendingTickets.value = localPendingTickets.value.filter(
+        (t) => t._id !== tempId && t.id !== tempId,
+      );
+      localTableOrder.value = localTableOrder.value.map((id) =>
+        id === tempId ? newCard._id : id,
+      );
+    }
+  },
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+  }
 });
 
 const tableViewRef = ref<any>(null);
 
 const { mutate: addTableTicket, isPending: isAddingTableTicket } = useAddTicket({
-  onSuccess: () => {
-    localPendingTickets.value = []
-    localTableOrder.value = []
-    // Auto-close the quick create UI in TableView
-    tableViewRef.value?.closeQuickCreate();
+  onMutate: (variables: any) => {
+    const tempId = variables.temp_row_id;
+    if (tempId) {
+      const exists = localPendingTickets.value.some(t => t._id === tempId || t.id === tempId);
+      if (!exists) {
+        localPendingTickets.value.push({
+          _id: tempId,
+          "card-title": variables.variables?.["card-title"] || "New Ticket",
+          ...variables.variables
+        });
+      }
+    }
+  },
+  onSuccess: (newCard: any, variables: any) => {
+    const tempId = variables.temp_row_id;
     toast.success("Ticket created successfully");
-    // Invalidate both the grouped lists AND the flat table data so the new card appears immediately
-    queryClient.invalidateQueries({ queryKey: ['sheet-list'] })
-    queryClient.invalidateQueries({ queryKey: ['table-cards-flat'] })
+    tableViewRef.value?.closeQuickCreate();
+    
+    if (tempId) {
+      localPendingTickets.value = localPendingTickets.value.filter(
+        (t) => t._id !== tempId && t.id !== tempId,
+      );
+      localTableOrder.value = localTableOrder.value.map((id) =>
+        id === tempId ? newCard._id : id,
+      );
+    }
+  },
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
   }
-})
+});
 
 function checkAndCreateTicket(row: any) {
   const title = row["card-title"];
@@ -2106,6 +2151,7 @@ function checkAndCreateTicket(row: any) {
   }
 }
 
+// ─── Ticket Changes ───────────────────────────────────────────────────────────
 function handleChangeTicket(row: any, key: any, value: any) {
   const id = row?._id;
   const cleanValue = typeof value === "string" ? value.trim() : value;
@@ -2176,6 +2222,7 @@ function setLane(row: any, v: any) {
   }
 }
 
+// ─── Column Visibility ──────────────────────────────────────────────────────────
 const { mutate: toggleVisibility } = useVarVisibilty();
 const toggleVisibilityHandler = (key: any, visible: any) => {
   toggleVisibility({
