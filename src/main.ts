@@ -1,16 +1,41 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import './style.css'
-import   './styles/theme.css'
+import './styles/theme.css'
 import App from './App.vue'
 import router from "./router";
-import { VueQueryPlugin,  } from "@tanstack/vue-query"
+import { VueQueryPlugin } from "@tanstack/vue-query"
 import { Toaster } from 'vue-sonner'
 import '@/assets/fontawesome/css/fontawesome.min.css';
 import '@/assets/fontawesome/css/regular.min.css';
 import { queryClient } from './libs/queryClient'
 import { initThemeImmediately } from './composables/useTheme'
 import { createHead } from '@vueuse/head';
+
+// ✅ Decode and save _auth, _cid from URL params BEFORE app initialization
+const urlParams = new URLSearchParams(window.location.search)
+const encodedToken = urlParams.get('_auth')
+const encodedCompanyId = urlParams.get('_cid')
+
+if (encodedToken) {
+  try {
+    const token = atob(encodedToken.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    localStorage.setItem('token', token)
+    console.log('✅ Token saved before app init')
+  } catch (e) {
+    console.error('❌ Token decode failed:', e)
+  }
+}
+
+if (encodedCompanyId) {
+  try {
+    const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    localStorage.setItem('company_id', companyId)
+    console.log('✅ Company ID saved before app init')
+  } catch (e) {
+    console.error('❌ Company ID decode failed:', e)
+  }
+}
 
 // Set document.domain for cross-subdomain localStorage sharing
 if (window.location.hostname === 'streamed.space' || window.location.hostname.endsWith('.streamed.space')) {
@@ -20,7 +45,6 @@ if (window.location.hostname === 'streamed.space' || window.location.hostname.en
   document.domain = 'orchit.ai'
   console.log('🌍 document.domain set to orchit.ai')
 } else if (window.location.hostname.endsWith('.localhost')) {
-  // For localhost subdomains: try to set document.domain to .localhost (if supported)
   try {
     document.domain = 'localhost'
     console.log('🌍 document.domain set to localhost')
