@@ -1042,19 +1042,30 @@ function sendInvites() {
     ? btoa(token).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
     : ''
 
-  const companyIdRaw = localStorage.getItem('company_id') ?? ''
-  const userIdRaw = localStorage.getItem('user_id') ?? ''
+  // ✅ Use companyID ref directly — already set in createProfile onSuccess
+  const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
+  const encodedCompanyId = companyIdRaw
+    ? btoa(companyIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
+    : ''
 
-  const encodedCompanyId = companyIdRaw ? btoa(companyIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.') : ''
-  const encodedUserId = userIdRaw ? btoa(userIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.') : ''
-const query = {
-  _auth: encodedToken,
-  siteSlug: siteSlug.value,
-  domainLink: domainLink.value,
-  type: 'team',
-  ...(encodedCompanyId ? { _cid: encodedCompanyId } : {}),
-  ...(encodedUserId ? { _uid: encodedUserId } : {}),
-}
+  // ✅ Use domainLink ref directly — already set in createProfile onSuccess  
+  const domain = domainLink.value ?? ''
+
+  console.log('📦 companyID ref:', companyID.value)
+  console.log('📦 domainLink ref:', domain)
+  console.log('🔐 encodedToken:', encodedToken ? 'EXISTS' : 'MISSING')
+  console.log('🔐 encodedCompanyId:', encodedCompanyId ? 'EXISTS' : 'MISSING')
+
+  const query: Record<string, string> = {
+    siteSlug: siteSlug.value,
+    domainLink: domain,
+    type: 'team',
+  }
+
+  if (encodedToken) query._auth = encodedToken
+  if (encodedCompanyId) query._cid = encodedCompanyId
+
+  console.log('📋 Final query going to /finish-profile:', query)
 
   if (emailList.value.length > 0) {
     invitePeople(
