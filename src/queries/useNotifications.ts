@@ -27,17 +27,13 @@ export interface Notification {
 // DUMMY FALLBACK DATA
 // -----------------------------
 const dummyNotifications : Notification[] = [];
-
-// -----------------------------
-// API HANDLERS
-// -----------------------------
 export const fetchNotifications = async () => {
   try {
-    const { data } = await api.get("/notifications");
+    const companyId = localStorage.getItem('company_id')
+    const { data } = await api.get(`/notifications${companyId ? `?company_id=${companyId}` : ''}`)
     const notifications = data?.data?.notifications || [];
 
-    // 🧠 Transform API data → dummy-like structure
-    const mappedNotifications = notifications.map((item: any):Notification => ({
+    const mappedNotifications = notifications.map((item: any): Notification => ({
       id: item._id,
       actor_name: item.triggered_by?.user_email || "Unknown User",
       title: item.title || "Untitled Notification",
@@ -45,12 +41,11 @@ export const fetchNotifications = async () => {
       created_at: item.createdAt,
       url: item.action_url || "#",
       read: item.is_read || false,
-      workspace_id:item.workspace_id || null,
+      workspace_id: item.workspace_id || null,
       module_id: item.module_id || null,
-      metaData:item.metadata
+      metaData: item.metadata
     }));
 
-    //  If API gives empty array, use dummy fallback
     return mappedNotifications.length ? mappedNotifications : dummyNotifications;
   } catch (err) {
     console.warn("⚠️ Notifications API failed, using dummy data");
@@ -58,10 +53,10 @@ export const fetchNotifications = async () => {
   }
 };
 
-
 export const fetchUnreadCount = async () => {
   try {
-    const { data } = await api.get("/notifications/unread-count");
+    const companyId = localStorage.getItem('company_id')
+    const { data } = await api.get(`/notifications/unread-count${companyId ? `?company_id=${companyId}` : ''}`);
     return data.data.count || 0;
   } catch (err) {
     console.warn("⚠️ Unread count API failed, returning 0");

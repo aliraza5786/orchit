@@ -93,8 +93,9 @@ export const useWorkspacesPrompt = () =>
     url: "/common/prompts-byname/workspace",
     method: "GET",
   });
-
 export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
+  const companyId = localStorage.getItem('company_id')
+
   return useQuery({
     queryKey: computed(() => [
       "workspaces",
@@ -104,7 +105,7 @@ export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Re
     ]),
     queryFn: () =>
       request({
-        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}&filter=${unref(filter) || "all"}`,
+        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}&filter=${unref(filter) || "all"}${companyId ? `&company_id=${companyId}` : ''}`,
         method: "GET",
       }),
 

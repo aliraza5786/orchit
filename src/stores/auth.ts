@@ -102,7 +102,9 @@ export const useAuthStore = defineStore('auth', {
     console.log('📡 Making API call to /profile...')
     const res = await api.get('/profile')
     console.log('✅ API call successful, user loaded')
-    this.user = res.data
+    this.user = res.data;
+    console.log("response profile is", res?.data?.data?.active_company_id);
+    localStorage.setItem('company_id',  res?.data?.data?.active_company_id)
   } catch (e) {
     console.log('⚠️ API call failed:', (e as any)?.response?.status, (e as any)?.message)
   } finally {
@@ -112,6 +114,7 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
+      localStorage.removeItem('company_id')
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
       localStorage.removeItem('mannualWorkspace')

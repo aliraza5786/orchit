@@ -4,11 +4,12 @@ import { useApiMutation, useApiQuery } from "../libs/vq";
 import { useQuery } from "@tanstack/vue-query";
 import { unref } from "vue";
 import api from "../libs/api";
-
 export const useCurrentPackage = () => {
+  const companyId = localStorage.getItem('company_id')
+  
   return useApiQuery({
-    key: ["current-package"],
-    url: `/auth/subscription-stats`,
+    key: ["current-package", companyId],
+    url: `/auth/subscription-stats${companyId ? `?company_id=${companyId}` : ''}`,
     method: "GET",
   });
 };
