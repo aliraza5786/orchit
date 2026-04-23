@@ -18,12 +18,59 @@
 <script setup lang="ts">
 import AuthLayout from '../layout/AuthLayout/AuthLayout.vue';
 import Button from '../components/ui/Button.vue';
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
+const route = useRoute()
 function register() {
-    router.push('/dashboard')
+  const type = route.query.type as string
+
+  // Personal — straight to dashboard, no subdomain
+  if (type === 'personal') {
+    router.push({ path: '/dashboard', query: { welcome: '1' } })
+    return
+  }
+
+  // Team — subdomain flow
+  const encodedToken = route.query._auth as string
+  const domainLink = route.query.domainLink as string
+  const encodedCompanyId = route.query._cid as string
+  const encodedUserId = route.query._uid as string
+
+  if (encodedCompanyId) {
+    const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    localStorage.setItem('company_id', companyId)
+  }
+  if (encodedUserId) {
+    const userId = atob(encodedUserId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    localStorage.setItem('user_id', userId)
+  }
+
+  const isLocalhost = window.location.hostname === 'localhost'
+  const buildUrl = (base: string) => `${base}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}&_uid=${encodedUserId}`
+
+  if (isLocalhost) {
+    const port = window.location.port ? `:${window.location.port}` : ''
+    const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}&_uid=${encodedUserId}`
+    localStorage.setItem('subdomainUrl', subdomainUrl)
+    window.location.href = subdomainUrl
+  } else if (domainLink) {
+    const subdomainUrl = buildUrl(domainLink)
+    localStorage.setItem('subdomainUrl', subdomainUrl)
+    window.location.href = subdomainUrl
+  } else {
+    router.push({ path: '/dashboard', query: { welcome: '1' } })
+  }
 }
 function createWS() {
-    router.push('/create-workspace')
+  const encodedToken = route.query._auth as string
+  const domainLink = route.query.domainLink as string
+  const encodedCompanyId = route.query._cid as string
+  const encodedUserId = route.query._uid as string
+  const type = route.query.type as string
+
+  router.push({ 
+    path: '/create-workspace', 
+    query: { _auth: encodedToken, domainLink, _cid: encodedCompanyId, _uid: encodedUserId, type } 
+  })
 }
 </script>

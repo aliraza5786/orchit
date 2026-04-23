@@ -46,10 +46,10 @@
 
       <!-- Title -->
       <p class="text-[15px] font-medium text-text-primary mb-1 text-center">
-        Setting up your workspace
+        Creating your profile
       </p>
       <p class="text-[13px] text-text-secondary mb-5 text-center">
-        Please wait while we prepare everything for you.
+        Please wait while we set up your account.
       </p>
 
       <!-- Progress Bar -->
@@ -143,12 +143,12 @@ const props = defineProps({
 })
 const emit = defineEmits(['complete'])
 const provisionSteps = [
-  { label: 'Initializing your environment',    ms: 1800 },
-  { label: 'Configuring cloud infrastructure', ms: 2200 },
-  { label: 'Installing dependencies',          ms: 2600 },
-  { label: 'Applying workspace settings',      ms: 1600 },
-  { label: 'Running security checks',          ms: 2000 },
-  { label: 'Finalizing and launching',         ms: 1400 },
+  { label: 'Creating your profile',           ms: 1800 },
+  { label: 'Validating your information',     ms: 2200 },
+  { label: 'Setting up your preferences',     ms: 2600 },
+  { label: 'Initializing your account',       ms: 1600 },
+  { label: 'Securing your data',              ms: 2000 },
+  { label: 'Finalizing setup',                ms: 1400 },
 ]
 
 const provisionStep = ref(0)

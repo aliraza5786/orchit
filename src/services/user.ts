@@ -50,14 +50,18 @@ export function useUserId() {
 }
 
 export const updateProfile = (payload: {
-    u_full_name?: string;
-    u_job_title?: string;
-    u_department?: string;
-    u_organization?: string;
-    u_location?: string;
-    u_profile_image?: string;
-  }) => {
-    return api.put('/profile', payload).then(res => res.data);
-  };
+  u_full_name?: string;
+  u_job_title?: string;
+  u_department?: string;
+  u_organization?: string;
+  u_location?: string;
+  u_profile_image?: string;
+  u_work_to_do?: string;
+  work_to_do?: string;
+  like_to_manage?: string[];
+  heard_about_us?: string[];
+}) => {
+  return api.put('/profile', payload).then(res => res.data);
+};
 
 

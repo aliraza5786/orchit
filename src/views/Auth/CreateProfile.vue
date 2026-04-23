@@ -412,11 +412,11 @@
 <Button 
   size="md" 
   @click="continueHandler"
-  :disabled="creatingProfile"
+  :disabled="creatingProfile || updatingProfile || invitingPeople"
 >
   <div class="flex items-center gap-2">
     <span
-      v-if="creatingProfile"
+      v-if="creatingProfile || updatingProfile"
       class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
     />
     <span>Continue</span>
@@ -427,7 +427,7 @@
   </div>
 
 </div>
-<div v-show="activeStep === 8" class="flex items-center justify-center min-h-full">
+<div v-show="activeStep === 8" v-if="selected === 'team'" class="flex items-center justify-center min-h-full">
 
   <div class="w-full max-w-120 space-y-7">
 
@@ -477,11 +477,11 @@
 
     <!-- actions -->
     <div class="flex items-center justify-between pt-2">
-      <Button variant="secondary" size="md" @click="router.push('/dashboard')">
+      <Button variant="secondary" size="md" @click="sendInvites">
         Do this later
       </Button>
       <Button size="md" @click="sendInvites">
-        Go to Orchit
+        Invite
       </Button>
     </div>
 
@@ -506,7 +506,7 @@
                 Skip
               </button> -->
               </router-link>
-            <Button :disabled="creatingProfile || invitingPeople" size="md" type="submit" @click="continueHandler">
+            <Button :disabled="creatingProfile || updatingProfile || invitingPeople" size="md" type="submit" @click="continueHandler">
                Continue 
             </Button>
           </div>
@@ -530,7 +530,8 @@ import BaseSelectField from '../../components/ui/BaseSelectField.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
 import { useRouter } from 'vue-router'
 import BaseEmailChip from '../../components/ui/BaseEmailChip.vue'
-import { useCreateCompany, useInviteCompany } from '../../services/auth'
+import { useCreateCompany, useUpdateCompany, useInviteCompany } from '../../services/auth'
+import { updateProfile as updateUserProfile } from '../../services/user'
 import { useRolesList } from '../../queries/useCommon'
 import { useWorkspaceStore } from '../../stores/workspace'
 import { useAuthStore } from '../../stores/auth'
@@ -642,10 +643,50 @@ watch(siteName, async (val) => {
 })
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
   onSuccess: (data: any) => {
-    activeStep.value = (activeStep.value + 1)
     companyID.value = data?._id
     joinLink.value = data?.join_link ?? ''
     domainLink.value = data?.domain_link ?? ''
+
+    // Save company_id or user_id to localStorage based on type
+    if (selected.value === 'team') {
+      localStorage.setItem('company_id', data?._id ?? '')
+    } else {
+      const userId = authStore.user?._id ?? ''
+      localStorage.setItem('user_id', userId)
+    }
+
+    if (selected.value === 'personal' || selected.value === 'school') {
+      activeStep.value = 6
+      isProvisioning.value = true
+    }
+  },
+  onError: () => {
+    activeStep.value = 5
+  }
+})
+
+const { mutate: updateProfile, isPending: updatingProfile } = useUpdateCompany({
+  onSuccess: async () => {
+    // For team: move to step 8 (invite team)
+    if (selected.value === 'team') {
+      activeStep.value = 8
+      return
+    }
+    // For personal and school: proceed to next steps
+    if (workspaceStore.pricing) {
+      await authStore.bootstrap();
+      router.push(`/dashboard?stripePayment=${true}`)
+    } else if (workspaceStore.workspace) {
+       await authStore.bootstrap();
+      router.push('/create-workspace')
+    } else {
+      await authStore.bootstrap();
+      router.push('/finish-profile');
+    }
+  },
+  onError: () => {
+    // If error on step 7, go back to step 5
+    activeStep.value = 5
   }
 });
 const { mutate: invitePeople, isPending: invitingPeople } = useInviteCompany({
@@ -816,10 +857,56 @@ function optionClass(id: string) {
   return id === selected.value ? 'bg-accent/30 border-accent' : 'border-border'
 }
 
+function buildProfilePayload() {
+  const basePayload: Record<string, any> = {
+    work_to_do: workType.value,
+    like_to_manage: selectedModules.value,
+    heard_about_us: referralSources.value,
+  }
+
+  if (selected.value === 'team') {
+    return {
+      ...basePayload,
+      title: team.value,
+      type: selected.value,
+      role_id: role.value,
+      company_size: companySize.value,
+    }
+  } else if (selected.value === 'personal') {
+    return {
+      ...basePayload,
+      type: 'personal',
+     u_work_to_do: personalRole.value,
+    }
+  } else if (selected.value === 'school') {
+    return {
+      ...basePayload,
+      type: 'school',
+      institution: schoolName.value,
+      education_level: educationLevel.value,
+      field_of_study: fieldOfStudy.value,
+      primary_use: schoolUseCase.value,
+    }
+  }
+
+  return basePayload
+}
+
 function goBack() {
+  // From step 7, go back to step 5 (skip loading phase at step 6)
+  if (activeStep.value === 7) {
+    activeStep.value = 5
+    return
+  }
+  // From step 8, go back to step 7
+  if (activeStep.value === 8) {
+    activeStep.value = 7
+    return
+  }
+  // Default: go back one step, but not below 1
   activeStep.value = Math.max(1, (activeStep.value - 1) as 1 | 2 | 3)
 }
-function continueHandler() {
+async function continueHandler() {
   if (activeStep.value === 2) {
 
     // 👉 TEAM FLOW
@@ -852,57 +939,50 @@ function continueHandler() {
     activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
     return
   }
-if (activeStep.value === 4) {
-  if (!workType.value) {
-    errors.value.role = 'Please select what kind of work you do.'
-    return
-  }
-  // Skip site creation (step 5) for personal and school
-  if (selected.value === 'personal' || selected.value === 'school') {
-    activeStep.value = 6
-  } else {
-    activeStep.value = 5
-  }
+
+  if (activeStep.value === 4) {
+    if (!workType.value) {
+      errors.value.role = 'Please select what kind of work you do.'
+      return
+    }
+    if (selected.value === 'school') {
+  const payload = buildProfilePayload()
+  createProfile({ payload })
   return
 }
-
-  if (activeStep.value === 7) {
-    // Build full payload from all steps + heard_about_us
-    let payload: Record<string, any> = {
+if (selected.value === 'personal') {
+  await updateUserProfile({
+    u_work_to_do: personalRole.value,
+    work_to_do: workType.value,
+    like_to_manage: selectedModules.value,
+    heard_about_us: referralSources.value,
+  })
+  activeStep.value = 6
+  return
+}
+    
+    // For team: continue to step 5 (site creation)
+    activeStep.value = 5
+    return
+  }
+if (activeStep.value === 7) {
+  const payload = buildProfilePayload()
+  
+  if (selected.value === 'personal') {
+    await updateUserProfile({
+      u_work_to_do: personalRole.value,
       work_to_do: workType.value,
       like_to_manage: selectedModules.value,
       heard_about_us: referralSources.value,
-    }
-
-    if (selected.value === 'team') {
-      payload = {
-        ...payload,
-        title: team.value,
-        type: selected.value,
-        role_id: role.value,
-        company_size: companySize.value,
-      }
-    } else if (selected.value === 'personal') {
-      payload = {
-        ...payload,
-        type: 'personal',
-        role: personalRole.value,
-      }
-    } else if (selected.value === 'school') {
-      payload = {
-        ...payload,
-        type: 'school',
-        institution: schoolName.value,
-        education_level: educationLevel.value,
-        field_of_study: fieldOfStudy.value,
-        primary_use: schoolUseCase.value,
-      }
-    }
-
-    createProfile({ payload })
-    return
+    })
+    router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal' } })
+  } else if (selected.value === 'team') {
+    updateProfile({ payload })
+  } else {
+    updateProfile({ payload })
   }
-
+  return
+}
   // DEFAULT STEP ADVANCE
   activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
 }
@@ -923,10 +1003,14 @@ async function continueSiteHandler() {
   isCreating.value = true
   try {
     await createSite()
-  } finally {
-    isCreating.value = false
+    // After site creation, create profile for team
+    const payload = buildProfilePayload()
+    createProfile({ payload })
+    // Directly move to step 6 (loading)
     activeStep.value = 6
     isProvisioning.value = true
+  } finally {
+    isCreating.value = false
   }
 }
 function setAuthCookie(token: string) {
@@ -950,7 +1034,6 @@ function setAuthCookie(token: string) {
 
   console.log('🍪 cookie set for:', hostname, '→', cookieString)
 }
-
 function sendInvites() {
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)
@@ -959,16 +1042,19 @@ function sendInvites() {
     ? btoa(token).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
     : ''
 
-  const isLocalhost = window.location.hostname === 'localhost'
-  console.log('🔍 sendInvites DEBUG:', {
-    isLocalhost,
-    siteSlug: siteSlug.value,
-    hostname: window.location.hostname,
-    port: window.location.port,
-    token: token ? 'EXISTS' : 'MISSING'
-  })
+  const companyIdRaw = localStorage.getItem('company_id') ?? ''
+  const userIdRaw = localStorage.getItem('user_id') ?? ''
 
-  const buildUrl = (base: string) => `${base}/dashboard?welcome=1&_auth=${encodedToken}`
+  const encodedCompanyId = companyIdRaw ? btoa(companyIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.') : ''
+  const encodedUserId = userIdRaw ? btoa(userIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.') : ''
+const query = {
+  _auth: encodedToken,
+  siteSlug: siteSlug.value,
+  domainLink: domainLink.value,
+  type: 'team',
+  ...(encodedCompanyId ? { _cid: encodedCompanyId } : {}),
+  ...(encodedUserId ? { _uid: encodedUserId } : {}),
+}
 
   if (emailList.value.length > 0) {
     invitePeople(
@@ -980,44 +1066,12 @@ function sendInvites() {
       },
       {
         onSuccess: () => {
-          if (isLocalhost) {
-            // For local testing — navigate to custom.localhost to test cross-subdomain localStorage
-            const port = window.location.port ? `:${window.location.port}` : ''
-            const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
-            console.log('🌐 Navigating to custom subdomain:', subdomainUrl)
-            console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
-            localStorage.setItem('subdomainUrl', subdomainUrl)
-            window.location.href = subdomainUrl
-          } else if (domainLink.value) {
-            console.log('🌐 Navigating to production subdomain:', domainLink.value)
-            console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
-            const subdomainUrl = buildUrl(domainLink.value)
-            localStorage.setItem('subdomainUrl', subdomainUrl)
-            window.location.href = subdomainUrl
-          } else {
-            router.push({ path: '/dashboard', query: { welcome: '1' } })
-          }
+          router.push({ path: '/finish-profile', query })
         }
       }
     )
   } else {
-    if (isLocalhost) {
-      // For local testing — navigate to custom.localhost to test cross-subdomain localStorage
-      const port = window.location.port ? `:${window.location.port}` : ''
-      const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
-      console.log('🌐 Navigating to custom subdomain (no emails):', subdomainUrl)
-      console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
-      localStorage.setItem('subdomainUrl', subdomainUrl)
-      window.location.href = subdomainUrl
-    } else if (domainLink.value) {
-      console.log('🌐 Navigating to production subdomain (no emails):', domainLink.value)
-      console.log('📦 localStorage token:', token ? 'PRESENT ✓' : 'MISSING ✗')
-      const subdomainUrl = buildUrl(domainLink.value)
-      localStorage.setItem('subdomainUrl', subdomainUrl)
-      window.location.href = subdomainUrl
-    } else {
-      router.push({ path: '/dashboard', query: { welcome: '1' } })
-    }
+    router.push({ path: '/finish-profile', query })
   }
 }
 onMounted(() => {

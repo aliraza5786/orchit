@@ -23,6 +23,7 @@ export const socialLogin = (payload: {
   u_social_id?: string;
   u_social_type?: string;
   u_full_name?: string;
+  
 }) => api.post("/auth/social-login", payload).then((res) => res.data);
 
 type createCompany = { payload: any };
@@ -36,6 +37,22 @@ export const useCreateCompany = (options = {}) =>
         request({
           url: `/workspace/company`,
           method: "POST",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
+
+export const useUpdateCompany = (options = {}) =>
+  useApiMutation<any, createCompany>(
+    {
+      key: ["update-company"],
+    } as any,
+    {
+      mutationFn: (vars: createCompany) =>
+        request({
+          url: `/workspace/company`,
+          method: "PUT",
           data: vars.payload,
         }),
       ...(options as any),
