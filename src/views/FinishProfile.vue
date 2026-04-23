@@ -37,7 +37,18 @@ function register() {
   // Team — subdomain flow
   const encodedToken = route.query._auth as string
   const domainLink = route.query.domainLink as string
-  const encodedCompanyId = route.query._cid as string
+
+  // ✅ Get _cid from URL or fallback to localStorage
+  const rawCid = route.query._cid as string
+  const companyIdFromStorage = localStorage.getItem('company_id') ?? ''
+  const encodedCompanyId = rawCid || 
+    (companyIdFromStorage 
+      ? btoa(companyIdFromStorage).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.') 
+      : '')
+   
+  console.log('🏢 _cid from URL:', rawCid)
+  console.log('🏢 company_id from localStorage:', companyIdFromStorage)
+  console.log('🔐 encodedCompanyId used:', encodedCompanyId)
 
   if (encodedCompanyId) {
     const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
@@ -60,6 +71,11 @@ function register() {
     router.push({ path: '/dashboard', query: { welcome: '1' } })
   }
 }
+const cookieCompanyId = document.cookie
+  .split('; ')
+  .find(row => row.startsWith('company_id='))
+  ?.split('=')[1]
+    console.log("company id from cookie", cookieCompanyId)
 function createWS() {
   const encodedToken = route.query._auth as string
   const domainLink = route.query.domainLink as string
