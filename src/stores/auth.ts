@@ -97,19 +97,30 @@ export const useAuthStore = defineStore('auth', {
     localStorage.setItem('token', cookieToken)
     console.log('🔄 Synced token from cookie to localStorage')
   }
+try {
+  console.log('📡 Making API call to /profile...')
+  const res = await api.get('/profile')
+  console.log('✅ API call successful, user loaded')
+  this.user = res.data
 
-  try {
-    console.log('📡 Making API call to /profile...')
-    const res = await api.get('/profile')
-    console.log('✅ API call successful, user loaded')
-    this.user = res.data;
-    console.log("response profile is", res?.data?.data?.active_company_id);
-    localStorage.setItem('company_id',  res?.data?.data?.active_company_id)
-  } catch (e) {
-    console.log('⚠️ API call failed:', (e as any)?.response?.status, (e as any)?.message)
-  } finally {
-    this.initialized = true
+  const activeCompanyId = res?.data?.data?.active_company_id
+  const existingCompanyId = localStorage.getItem('company_id')
+
+  console.log('🏢 active_company_id from profile:', activeCompanyId)
+  console.log('📦 existing company_id in localStorage:', existingCompanyId)
+
+  // Only save from profile if not already saved from _cid param
+  if (activeCompanyId) {
+    localStorage.setItem('company_id', activeCompanyId)
+    console.log('✅ Company ID saved from profile:', activeCompanyId)
+  } else if (!existingCompanyId) {
+    console.log('❌ No company_id anywhere — neither from _cid param nor profile response')
   }
+} catch (e) {
+  console.log('⚠️ API call failed:', (e as any)?.response?.status, (e as any)?.message)
+} finally {
+  this.initialized = true
+}
 },
     logout() {
       localStorage.removeItem('token')
