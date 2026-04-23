@@ -26,33 +26,20 @@ async bootstrap() {
   const cleanBase64 = (str: string) =>
     str.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=')
 
-  const hostname = window.location.hostname
-  const maxAge = 60 * 60 * 24 * 30
-
-  const setCookie = (name: string, value: string) => {
-    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-      document.cookie = `${name}=${value}; path=/; max-age=${maxAge}`
-    } else if (hostname.endsWith('.streamed.space')) {
-      document.cookie = `${name}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-    } else if (hostname.endsWith('.orchit.ai')) {
-      document.cookie = `${name}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-    }
-  }
-
-  // ✅ STEP 1: Save from URL
+  // ✅ STEP 1: Handle URL params
   if (encodedToken || encodedCompanyId) {
     if (encodedToken) {
       const token = atob(cleanBase64(encodedToken))
       localStorage.setItem('token', token)
-      setCookie('auth_token', token)
+      // cookie already handled in your code
     }
 
     if (encodedCompanyId) {
       const companyId = atob(cleanBase64(encodedCompanyId))
-      setCookie('company_id', companyId) // ✅ IMPORTANT: cookie, not localStorage
+      document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${60 * 60 * 24 * 30}; Secure; SameSite=Lax`
     }
 
-    // ✅ Clean URL AFTER saving
+    // clean URL
     setTimeout(() => {
       urlParams.delete('_auth')
       urlParams.delete('_cid')
@@ -65,35 +52,39 @@ async bootstrap() {
     }, 0)
   }
 
-  // ✅ STEP 2: Get token
-  const localToken = localStorage.getItem('token')
-  const cookieToken = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('auth_token='))
-    ?.split('=')[1] ?? null
+  // 🟢 ✅ ADD YOUR SYNC CODE RIGHT HERE
 
-  const token = cookieToken || localToken
+  const getCookie = (name: string) => {
+    return document.cookie
+      .split('; ')
+      .find(row => row.startsWith(name + '=')) // 👈 this line you asked about
+      ?.split('=')[1] ?? null
+  }
 
+  const cookieCompanyId = getCookie('company_id')
+  const localCompanyId = localStorage.getItem('company_id')
+
+  if (cookieCompanyId && !localCompanyId) {
+    localStorage.setItem('company_id', cookieCompanyId)
+    console.log('🔄 Synced company_id from cookie → localStorage')
+  }
+
+  // 🔵 Continue normal flow
+
+  const token = localStorage.getItem('token')
   if (!token) {
     this.initialized = true
     return
   }
 
-  // ✅ STEP 3: Fetch profile
   try {
     const res = await api.get('/profile')
     this.user = res.data
 
-    const activeCompanyId = res?.data?.data?.active_company_id
+    const existingCid = getCookie('company_id')
 
-    const existingCompanyId = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('company_id='))
-      ?.split('=')[1] ?? null
-
-    // ✅ Only set if missing
-    if (!existingCompanyId && activeCompanyId) {
-      setCookie('company_id', activeCompanyId)
+    if (!existingCid && res.data?.data?.active_company_id) {
+      document.cookie = `company_id=${res.data.data.active_company_id}; domain=.streamed.space; path=/; max-age=${60 * 60 * 24 * 30}; Secure; SameSite=Lax`
     }
   } catch (e) {
     console.error("Profile fetch failed", e)
