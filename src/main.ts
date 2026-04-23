@@ -45,9 +45,14 @@ if (encodedToken) {
     console.error('❌ Token decode failed:', e)
   }
 }
+const cookieCompanyId = document.cookie
+  .split('; ')
+  .find(row => row.startsWith('company_id='))
+  ?.split('=')[1]
 
-// ❌ DO NOT handle company_id here anymore
-// ❌ DO NOT use document.domain
+if (cookieCompanyId && !localStorage.getItem('company_id')) {
+  localStorage.setItem('company_id', cookieCompanyId)
+}
 
 const head = createHead()
 const app = createApp(App)

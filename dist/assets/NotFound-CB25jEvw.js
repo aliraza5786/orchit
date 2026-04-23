@@ -1,0 +1,1 @@
+import{I as t,o,k as n,f as s}from"./index-BJh3n9ph.js";const r={},c={class:"p-8 text-center text-red-500"};function a(d,e){return o(),n("div",c,[...e[0]||(e[0]=[s("h2",null,"404 | Page Not Found",-1)])])}const f=t(r,[["render",a]]);export{f as default};

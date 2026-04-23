@@ -5,14 +5,21 @@ import { useQuery } from "@tanstack/vue-query";
 import { unref } from "vue";
 import api from "../libs/api";
 export const useCurrentPackage = () => {
-  const companyId = localStorage.getItem('company_id')
-  
+  const getCookie = (name: string) => {
+    return document.cookie
+      .split('; ')
+      .find(row => row.startsWith(name + '='))
+      ?.split('=')[1] ?? null
+  }
+  const companyId =
+    localStorage.getItem('company_id') || getCookie('company_id')
+
   return useApiQuery({
     key: ["current-package", companyId],
     url: `/auth/subscription-stats${companyId ? `?company_id=${companyId}` : ''}`,
     method: "GET",
-  });
-};
+  })
+}
 
 export const useUpgradePackage = (options = {}) =>
   useApiMutation<any, any>(
