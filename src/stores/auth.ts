@@ -21,13 +21,8 @@ export const useAuthStore = defineStore('auth', {
  async bootstrap() {
   const urlParams = new URLSearchParams(window.location.search)
   const encodedToken = urlParams.get('_auth')
-  
-  console.log('🔍 Bootstrap starting...')
-  console.log('📍 Hostname:', window.location.hostname)
-  console.log('🔑 _auth param found:', !!encodedToken)
-  console.log('📦 localStorage token before:', localStorage.getItem('token') ? 'EXISTS' : 'EMPTY')
+  const encodedCompanyId = urlParams.get('_cid')
 
-  // ✅ STEP 1: decode FIRST
   if (encodedToken) {
     try {
       const base64 = encodedToken
@@ -36,27 +31,17 @@ export const useAuthStore = defineStore('auth', {
         .replace(/\./g, '=')
 
       const token = atob(base64)
-      console.log('✅ Token decoded successfully')
-
-      // ✅ Save immediately to localStorage
       localStorage.setItem('token', token)
-      console.log('✅ Token saved to localStorage')
-      console.log('📦 localStorage token after save:', localStorage.getItem('token') ? 'EXISTS ✓' : 'STILL EMPTY ✗')
-
-      // ✅ Set cookie with appropriate domain
       const hostname = window.location.hostname
       const maxAge = 60 * 60 * 24 * 30 // 30 days
       
       if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-        // For localhost: no domain, no Secure flag
         document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`
         console.log('🍪 Cookie set for localhost (no domain flag)')
       } else if (hostname.endsWith('.streamed.space')) {
-        // For streamed.space subdomains: set cross-domain cookie
         document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
         console.log('🍪 Cookie set for .streamed.space')
       } else if (hostname.endsWith('.orchit.ai')) {
-        // For orchit.ai subdomains: set cross-domain cookie
         document.cookie = `auth_token=${token}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
         console.log('🍪 Cookie set for .orchit.ai')
       }
@@ -65,14 +50,31 @@ export const useAuthStore = defineStore('auth', {
       console.log('❌ Token decode failed:', e)
     }
 
-    // ✅ REMOVE PARAM AFTER SAVING
     urlParams.delete('_auth')
-    const newUrl =
-      window.location.pathname +
-      (urlParams.toString() ? '?' + urlParams.toString() : '')
-
-    window.history.replaceState({}, '', newUrl)
   }
+
+  if (encodedCompanyId) {
+    try {
+      const companyId = atob(
+        encodedCompanyId
+          .replace(/-/g, '+')
+          .replace(/_/g, '/')
+          .replace(/\./g, '=')
+      )
+      localStorage.setItem('company_id', companyId)
+      console.log('✅ Company ID saved to localStorage')
+    } catch (e) {
+      console.log('❌ Company ID decode failed:', e)
+    }
+
+    urlParams.delete('_cid')
+  }
+
+  // Clean up URL after saving all params
+  const newUrl =
+    window.location.pathname +
+    (urlParams.toString() ? '?' + urlParams.toString() : '')
+  window.history.replaceState({}, '', newUrl)
 
   // ✅ STEP 2: now read tokens
   const cookieToken = document.cookie
@@ -81,7 +83,6 @@ export const useAuthStore = defineStore('auth', {
     ?.split('=')[1] ?? null
 
   const localToken = localStorage.getItem('token')
-
   const token = cookieToken || localToken
   
   console.log('🔎 Token check - Local:', !!localToken, 'Cookie:', !!cookieToken, 'Final:', !!token)
@@ -92,7 +93,6 @@ export const useAuthStore = defineStore('auth', {
     return
   }
 
-  // ✅ sync
   if (cookieToken && localStorage.getItem('token') !== cookieToken) {
     localStorage.setItem('token', cookieToken)
     console.log('🔄 Synced token from cookie to localStorage')
@@ -105,9 +105,6 @@ export const useAuthStore = defineStore('auth', {
     this.user = res.data
   } catch (e) {
     console.log('⚠️ API call failed:', (e as any)?.response?.status, (e as any)?.message)
-    // Don't clear token on API failure - user might be on a subdomain
-    // localStorage.removeItem('token')
-    // this.user = null
   } finally {
     this.initialized = true
   }
