@@ -148,7 +148,7 @@ async bootstrap() {
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
-      localStorage.removeItem('company_id')
+      // localStorage.removeItem('company_id')
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
       localStorage.removeItem('mannualWorkspace')
