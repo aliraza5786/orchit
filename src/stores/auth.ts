@@ -13,6 +13,7 @@ export const useAuthStore = defineStore('auth', {
     user: null as any,
     initialized: false,
     userId: localStorage.getItem('user_id') as string | null,
+    company_id: localStorage.getItem('company_id') as string | null,
   }),
   getters: {
     isAuthenticated: (s) => !!s.user,
@@ -82,7 +83,8 @@ async bootstrap() {
     this.user = res.data
 
     const existingCid = getCookie('company_id')
-
+    const c_id = res.data?.data?.active_company_id;
+    this.company_id = c_id;
     if (!existingCid && res.data?.data?.active_company_id) {
       document.cookie = `company_id=${res.data.data.active_company_id}; domain=.streamed.space; path=/; max-age=${60 * 60 * 24 * 30}; Secure; SameSite=Lax`
     }
