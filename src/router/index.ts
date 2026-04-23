@@ -294,16 +294,6 @@ api.interceptors.response.use(
 );
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore();
-
-  const hasAuthParam = new URLSearchParams(window.location.search).has('_auth')
-
-  // 🔥 Always process _auth first
-  if (hasAuthParam) {
-    await auth.bootstrap()
-    return next()
-  }
-
-  // Normal bootstrap
   await auth.bootstrap()
 
   // Check for subdomain and redirect to workspace if on dashboard

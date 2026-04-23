@@ -54,6 +54,8 @@ export const useAuthStore = defineStore('auth', {
   }
 
   if (encodedCompanyId) {
+    console.log("encoded company id", encodedCompanyId);
+    
     try {
       const companyId = atob(
         encodedCompanyId
