@@ -2,7 +2,15 @@ import api from "../libs/api";
 import { useQuery } from '@tanstack/vue-query'
 import { useAuthStore } from '../stores/auth'
 import { watch } from 'vue'
-export const getProfile = () => api.get('/profile').then(r => r.data)
+export const getProfile = () => 
+  api.get('/profile').then(r => {
+    const activeCompanyId = r.data?.data?.active_company_id
+    if (activeCompanyId) {
+      localStorage.setItem('company_id', activeCompanyId)
+      console.log('✅ company_id saved from getProfile:', activeCompanyId)
+    }
+    return r.data
+  })
 
 export function useProfile() {
   const auth = useAuthStore()
