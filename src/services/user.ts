@@ -4,6 +4,8 @@ import { useAuthStore } from '../stores/auth'
 import { watch } from 'vue'
 export const getProfile = () => 
   api.get('/profile').then(r => {
+    console.log("company new", r);
+    
     const activeCompanyId = r.data?.data?.active_company_id
     if (activeCompanyId) {
       localStorage.setItem('company_id', activeCompanyId)

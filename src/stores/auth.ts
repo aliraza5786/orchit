@@ -74,7 +74,22 @@ export const useAuthStore = defineStore('auth', {
   // ✅ Fetch profile (ONLY source of company_id)
   try {
     const res = await api.get('/profile')
-    this.user = res.data
+this.user = res.data
+console.log('✅ API call successful, user loaded')
+
+// ADD THESE:
+console.log('📦 Full profile data:', res.data)
+console.log('🏢 active_company_id:', res.data?.data?.active_company_id)
+console.log('📦 localStorage company_id before save:', localStorage.getItem('company_id'))
+
+const activeCompanyId = res.data?.data?.active_company_id
+if (activeCompanyId) {
+  localStorage.setItem('company_id', activeCompanyId)
+  this.company_id = activeCompanyId
+  console.log('✅ company_id saved:', activeCompanyId)
+} else {
+  console.log('❌ active_company_id is null/undefined in profile response')
+}
 } catch (e) {
     console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
   } finally {

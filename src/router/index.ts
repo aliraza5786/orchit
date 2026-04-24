@@ -158,12 +158,7 @@ api.interceptors.response.use(
 )
 // Add this check before route transitions
 router.beforeEach(async (to, _from, next) => {
-  const auth = useAuthStore()
-
-  if (!auth.initialized) {
-    await auth.bootstrap()
-  }
-
+  // const auth = useAuthStore()
   const hostname = window.location.hostname
   let subdomain: string | null = null
 
@@ -207,7 +202,8 @@ router.beforeEach(async (to, _from, next) => {
 })// Add this check before route transitions
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
-
+  console.log(auth);
+  
   if (!auth.initialized) {
     await auth.bootstrap()
   }
