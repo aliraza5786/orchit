@@ -27,12 +27,16 @@ export interface Notification {
 // DUMMY FALLBACK DATA
 // -----------------------------
 const dummyNotifications : Notification[] = [];
+import { useAuthStore } from '../stores/auth'
+
 export const fetchNotifications = async () => {
   try {
-    const companyId = localStorage.getItem('company_id')
+    const authStore = useAuthStore()
+    const companyId = authStore.company_id || localStorage.getItem('company_id')
+    console.log('🏢 fetchNotifications company_id:', companyId)
+    
     const { data } = await api.get(`/notifications${companyId ? `?company_id=${companyId}` : ''}`)
-    const notifications = data?.data?.notifications || [];
-
+    const notifications = data?.data?.notifications || []
     const mappedNotifications = notifications.map((item: any): Notification => ({
       id: item._id,
       actor_name: item.triggered_by?.user_email || "Unknown User",
@@ -44,26 +48,27 @@ export const fetchNotifications = async () => {
       workspace_id: item.workspace_id || null,
       module_id: item.module_id || null,
       metaData: item.metadata
-    }));
-
-    return mappedNotifications.length ? mappedNotifications : dummyNotifications;
+    }))
+    return mappedNotifications.length ? mappedNotifications : dummyNotifications
   } catch (err) {
-    console.warn("⚠️ Notifications API failed, using dummy data");
-    return dummyNotifications;
+    console.warn("⚠️ Notifications API failed, using dummy data")
+    return dummyNotifications
   }
-};
+}
 
 export const fetchUnreadCount = async () => {
   try {
-    const companyId = localStorage.getItem('company_id')
-    const { data } = await api.get(`/notifications/unread-count${companyId ? `?company_id=${companyId}` : ''}`);
-    return data.data.count || 0;
-  } catch (err) {
-    console.warn("⚠️ Unread count API failed, returning 0");
-    return 0;
-  }
-};
+    const authStore = useAuthStore()
+    const companyId = authStore.company_id || localStorage.getItem('company_id')
+    console.log('🏢 fetchUnreadCount company_id:', companyId)
 
+    const { data } = await api.get(`/notifications/unread-count${companyId ? `?company_id=${companyId}` : ''}`)
+    return data.data.count || 0
+  } catch (err) {
+    console.warn("⚠️ Unread count API failed, returning 0")
+    return 0
+  }
+}
 export const markNotificationsRead = async (ids: string[]) => {
   const { data } = await api.patch("/notifications/read", {
     notification_ids: ids,
