@@ -408,6 +408,8 @@
       v-if="selectedCard?._id"
       class="shrink-0 h-full"
       :details="selectedCard"
+      :moduleId="selected_sprint_id"
+      moduleName="plan"
       @close="() => selectCardHandler({ variables: {} })"
       :showPanel="!!selectedCard?._id"
     />
@@ -423,6 +425,7 @@ import {
   h,
   triggerRef,
   watchEffect,
+  onMounted,
 } from "vue";
 import { toast } from "vue-sonner";
 import { usePermissions } from "../../../composables/usePermissions";
@@ -442,7 +445,7 @@ import {
   useVarVisibilty,
   useAddTicket,
 } from "../../../queries/useSheets";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import KanbanSkeleton from "../../../components/skeletons/KanbanSkeleton.vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../../composables/useQueryParams";
@@ -498,7 +501,24 @@ const {
 const view = ref("kanban");
 const search = ref("");
 const route = useRoute();
+const router = useRouter();
 const { workspaceId, moduleId } = useRouteIds();
+
+onMounted(() => {
+  openPanelFromRoute();
+});
+
+watch(
+  () => route.query.card_id,
+  () => openPanelFromRoute(),
+);
+ 
+
+async function openPanelFromRoute() {
+  const cardId = route.query.card_id as string;
+  if (!cardId) return;
+  selectCardHandler({ _id: cardId, id: cardId });
+}
 const queryClient = useQueryClient();
 const workspaceStore = useWorkspaceStore();
 const isCreateVar = ref(false);
@@ -873,6 +893,13 @@ const selectCardHandler = (card: any) => {
   if (!card._id) card._id = card.id;
   selectedCard.value = card;
   sidePanelStore.selectTaskCard(card);
+
+  // Clean up card_id query param if present
+  if (route.query.card_id) {
+    const query = { ...route.query };
+    delete query.card_id;
+    router.replace({ query });
+  }
 };
 (window as any).selectCardHandler = selectCardHandler;
 

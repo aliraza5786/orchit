@@ -106,15 +106,6 @@
 
    <KanbanSkeleton v-if="isLoading && currentView !== 'mindmap' && currentView !== 'table'" />
    <div
-  v-else-if="isLoading && currentView === 'table'"
-  class="flex flex-1 items-center justify-center"
->
-  <div class="flex flex-col items-center gap-3 text-text-secondary">
-    <i class="fa-solid fa-align-left text-2xl animate-pulse text-accent"></i>
-    <span class="text-sm animate-pulse">Loading table...</span>
-  </div>
-</div>
-   <div
   v-else-if="isLoading && currentView === 'mindmap'"
   class="flex flex-1 items-center justify-center"
 >
@@ -309,27 +300,7 @@
                 </template>
               </template>
             </KanbanBoard>
-            <BaseModal v-model="showModal" size="md" title="Add Seat">
-              <div class="px-6 py-4 space-y-4">
-                <p class="text-sm text-text-secondary">
-                  {{ modalColumn.title }} &middot; Seat {{ (modalColumn.cards?.length ?? 0) + 1 }}
-                </p>
-                <BaseEmailChip
-                  :maxEmails="1"
-                  placeholder="team member email"
-                  v-model="modalColumn.email"
-                />
-                <p class="text-sm text-text-secondary">
-                  You can assign a user later
-                </p>
-              </div>
-              <div class="flex justify-end gap-3 px-6 py-4 border-t border-border">
-                <Button variant="secondary" @click="closeModal">Cancel</Button>
-                <Button variant="primary" @click="addSeatToColumn(modalColumn)">
-                  {{ isPending ? "Adding..." : "Add Seat" }}
-                </Button>
-              </div>
-            </BaseModal>
+            
             <!-- Add Column -->
             <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
               <form
@@ -383,11 +354,19 @@
         v-else-if="currentView === 'table'"
         class=""
       >
-        <TableView
+        <PeopleTableView
           :columns="tableColumns"
-          :rows="tableRows"
-          :isPending="false"
-          :isTalent="true"
+          :groups="currentTab === 'talent' ? filteredBoard : filteredAgentGroups"
+          :isPending="isLoading"
+          :isTalent="currentTab === 'talent'"
+          :isTeamView="currentTab === 'talent' && selected_view_id === 'team'"
+          :workspaceRoles="workspaceRoles || []"
+          @select:ticket="handleMindmapSelectTicket"
+          @deleted="handleSeatDeleted"
+          @assigned="(res: any) => handleSeatUpdated(res._id || res.id, res)"
+          @unAssigned="() => fetchPeople(true)"
+          @addVar="isCreateVar = true"
+          @add-seat="handlePLus"
         />
       </div>
 
@@ -456,6 +435,35 @@
     :showAgentPanel="showAgentPanel"
     v-if="showAgentPanel"
   />
+
+  <BaseModal v-model="showModal" size="md" title="Add Seat">
+    <div class="px-6 py-4 space-y-4">
+      <p class="text-sm text-text-secondary">
+        {{ modalColumn.title }} &middot; Seat {{ (modalColumn.cards?.length ?? 0) + 1 }}
+      </p>
+      <BaseEmailChip
+        :maxEmails="1"
+        placeholder="team member email"
+        v-model="modalColumn.email"
+      />
+      <p class="text-sm text-text-secondary">
+        You can assign a user later
+      </p>
+    </div>
+    <div class="flex justify-end gap-3 px-6 py-4 border-t border-border">
+      <Button variant="secondary" @click="closeModal">Cancel</Button>
+      <Button variant="primary" @click="addSeatToColumn(modalColumn)">
+        {{ isPending ? "Adding..." : "Add Seat" }}
+      </Button>
+    </div>
+  </BaseModal>
+
+  <CreateVariableModal
+    v-model="isCreateVar"
+    v-if="isCreateVar"
+    @refetchCardDetails="refetchCardDetails"
+    :sheetID="workspaceId"
+  />
 </template>
 
 <script setup lang="ts">
@@ -475,8 +483,9 @@ import { useWorkspaceStore } from "../../stores/workspace";
 import Fuse from "fuse.js";
 import { debounce } from "lodash";
 import { useQueryClient } from "@tanstack/vue-query";
-import TableView from "../../components/feature/TableView/TableView.vue";
+import PeopleTableView from "./components/PeopleTableView.vue";
 import MindmapView from "../../components/feature/MindmapView.vue";
+import { useVariables } from "../../queries/useSheets";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 const KanbanSkeleton = defineAsyncComponent(
   () => import("../../components/skeletons/KanbanSkeleton.vue"),
@@ -486,6 +495,9 @@ const BaseTextField = defineAsyncComponent(
 );
 const ConfirmDeleteModal = defineAsyncComponent(
   () => import("../Product/modals/ConfirmDeleteModal.vue"),
+);
+const CreateVariableModal = defineAsyncComponent(
+  () => import("./modals/PeopleCreateVariableModal.vue"),
 );
 const BaseModal = defineAsyncComponent(
   () => import("../../components/ui/BaseModal.vue"),
@@ -524,10 +536,15 @@ const { canCreateVariable, canInviteUser, canCreateCard } = usePermissions();
 const sidePanelStore = useSidePanelStore();
 const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
-const { workspaceId } = useRouteIds();
-const queryClient = useQueryClient();
+const { workspaceId } = useRouteIds(); 
 const workspaceStore = useWorkspaceStore();
 const currentTab = ref("talent");
+const peopleModuleId = ref("people");
+const { data: peopleVariables } = useVariables(
+  workspaceId,
+  peopleModuleId,
+  ref("")
+);
 const isMobile = useMediaQuery("(max-width: 650px)");
 const viewData = [
   { title: "Role", _id: "role" },
@@ -556,7 +573,15 @@ const activeAddList = ref(false);
 const newColumn = ref("");
 const currentView = ref("kanban");
 const selectedCard = ref<any>();
+const queryClient = useQueryClient();
+
+function refetchCardDetails() {
+  queryClient.invalidateQueries({ queryKey: ["people-var"] });
+  queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+}
+
 const showModal = ref(false);
+const isCreateVar = ref(false);
 const modalColumn = ref({ email: [], cards: [], title: "", _id: "" }); 
 const closeModal = () => {
   showModal.value = false;
@@ -1068,25 +1093,35 @@ const tableRows = computed(() => {
   return [];
 });
 const tableColumns = computed(() => {
+  let cols: any[] = [];
   if (currentTab.value === "talent") {
-    return [
-      { key: "title", label: "Title" },
-      { key: "column", label: "Team" },
+    cols = [
+      { key: "title", label: "Seat" },
       { key: "role", label: "Access Role" },
-      { key: "seat_number", label: "Seat" },
       { key: "status", label: "Status" },
-      { key: "assigned_cards_count", label: "Cards" },
+      { key: "assigned_cards_count", label: "Assigned Cards" },
+    ];
+  } else {
+    cols = [
+      { key: "title", label: "Agent" },
+      { key: "role", label: "Role" },
+      { key: "model", label: "Model" },
+      { key: "level", label: "Level" },
+      { key: "status", label: "Status" },
     ];
   }
 
-  return [
-    { key: "title", label: "Agent" },
-    { key: "column", label: "Group" },
-    { key: "role", label: "Role" },
-    { key: "model", label: "Model" },
-    { key: "level", label: "Level" },
-    { key: "status", label: "Status" },
-  ];
+  // Add dynamic variables for people
+  if (peopleVariables.value && Array.isArray(peopleVariables.value)) {
+    peopleVariables.value.forEach((v: any) => {
+      // Avoid duplicate keys if any
+      if (!cols.find(c => c.key === v._id)) {
+        cols.push({ key: v._id, label: v.title });
+      }
+    });
+  }
+
+  return cols;
 });
 
 function levelClass(level: string): string {

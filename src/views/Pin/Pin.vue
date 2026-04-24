@@ -413,13 +413,15 @@
     :details="selectedCard"
     :showPanel="!!selectedCard?._id"
     :pin="true"
+    :moduleId="moduleId"
+    moduleName="pin"
     @close="() => selectCardHandler({ variables: {} })"
   />
 </template>
 
 <script setup lang="ts">
 import { ref, computed, defineAsyncComponent, onMounted, watch, h} from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useWorkspaceStore } from "../../stores/workspace";
 import {
@@ -520,6 +522,7 @@ const localList = ref<any>([]);
 const view = ref("kanban");
 // Routing & Stores
 const route = useRoute();
+const router = useRouter();
 const { workspaceId, moduleId } = useRouteIds();
 const workspaceStore = useWorkspaceStore();
 const queryClient = useQueryClient();
@@ -664,7 +667,19 @@ onMounted(() => {
   localList.value = Array.isArray(Lists.value)
     ? JSON.parse(JSON.stringify(Lists.value))
     : [];
+  openPanelFromRoute();
 });
+
+watch(
+  () => route.query.card_id,
+  () => openPanelFromRoute(),
+);
+
+async function openPanelFromRoute() {
+  const cardId = route.query.card_id as string;
+  if (!cardId) return;
+  handleClickTicket({ _id: cardId });
+}
 
 const { data: lanes } = useLanes(workspaceId);
 const laneOptions = computed<any[]>(() =>
@@ -767,15 +782,26 @@ function onReorder(a: any) {
 function handleBoardUpdate(_: any) {}
 
 function selectCardHandler(card: any) {
-  console.log(card, "card data");
-  
   selectedCard.value = card;
+  
+  // Clean up card_id query param if present
+  if (route.query.card_id) {
+    const query = { ...route.query };
+    delete query.card_id;
+    router.replace({ query });
+  }
 }
 
 function handleClickTicket(ticket: any) {
-  console.log("selected card", ticket);
   selectedTicketId.value = ticket?._id;
   selectedCard.value = ticket;
+
+  // Clean up card_id query param if present
+  if (route.query.card_id) {
+    const query = { ...route.query };
+    delete query.card_id;
+    router.replace({ query });
+  }
 }
 
 function plusHandler(e: any) {

@@ -230,9 +230,13 @@
                           v-if="activeMenuId === (ticket._id || ticket.id)" 
                           class="absolute left-6 top-6 bg-bg-dropdown border border-border rounded shadow-md z-50 min-w-[120px] text-left overflow-hidden row-action-menu"
                         >
-                          <div 
-                            v-if="canDelete" 
+                          <div  
                             @click.stop="() => { emit('delete', ticket); activeMenuId = null; }"
+                            disabled="!canDelete" 
+                            :class="[
+                              'px-3 py-2 text-xs flex items-center gap-2 text-red-500',
+                              canDelete ? ' hover:bg-bg-dropdown-menu-hover cursor-pointer' : ' cursor-not-allowed'
+                            ]"
                             class="px-3 py-2 text-xs text-red-500 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-2"
                           >
                             <i class="fa-solid fa-trash"></i> Delete

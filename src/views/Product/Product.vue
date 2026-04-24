@@ -428,6 +428,7 @@
     v-if="selectedCard?._id"
     :details="selectedCard"
     :moduleId="moduleId"
+    moduleName="task"
     @close="
       () => {
         selectCardHandler({ variables: {} });
@@ -501,7 +502,7 @@ import {
   onMounted,
 } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Fuse from "fuse.js";
@@ -641,6 +642,7 @@ const view = ref("kanban");
 const isCreateVar = ref(false);
 const sheetDropdownRef = ref<any>(null);
 const route = useRoute();
+const router = useRouter();
 const { workspaceId, moduleId } = useRouteIds();
 const queryClient = useQueryClient();
 const createTeamModal = ref(false);
@@ -981,7 +983,7 @@ watch(
 );
 
 async function openPanelFromRoute() {
-  const cardId = route.params.card_id as string;
+  const cardId = (route.params.card_id || route.query.card_id) as string;
   if (!cardId) return;
   sidePanelStore.saveLocalId(cardId);
   selectCardHandler({ _id: cardId, id: cardId });
@@ -991,6 +993,13 @@ const selectCardHandler = (card: any) => {
   if (!card._id) card._id = card.id;
   selectedCard.value = card;
   sidePanelStore.selectTaskCard(card);
+
+  // Clean up card_id query param if present
+  if (route.query.card_id) {
+    const query = { ...route.query };
+    delete query.card_id;
+    router.replace({ query });
+  }
 };
 (window as any).selectCardHandler = selectCardHandler;
 

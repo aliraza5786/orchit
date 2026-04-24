@@ -739,6 +739,8 @@
        <SidePanel
         v-if="selectedCard?._id"
         :details="selectedCard"
+        :moduleId="module_id"
+        moduleName="plan"
        @close="closeSidePanel"
        @closeSidePanel="closeSidePanel"
       :showPanel="!!selectedCard?._id"

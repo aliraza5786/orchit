@@ -304,7 +304,7 @@ router.beforeEach(async (to, _from, next) => {
   );
 
   if (requiresAuth && !auth.isAuthenticated) {
-    return next({ name: "Login" });
+    return next({ name: "Login", query: { redirect: to.fullPath } });
   }
 
   if (!requiresAuth && auth.isAuthenticated && to.name === "Login") {

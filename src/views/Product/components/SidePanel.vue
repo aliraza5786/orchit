@@ -973,7 +973,8 @@ const props = defineProps({
   showPanel: { type: Boolean, default: true },
   details: { type: Object as () => any, default: () => ({}) },
   sheetID: { type: String, required: false }, 
-  moduleId:{type: String, required: false}
+  moduleId: { type: String, required: false },
+  moduleName: { type: String, required: false }
 });
 const emit = defineEmits([
   "close",
@@ -1786,7 +1787,12 @@ function saveEdit(c: any) {
     comments.value[idx] = { ...comments.value[idx], comment_text: text };
   
   updateComment(
-    { id: c._id, payload: { comment_text: text, mentions } },
+    { id: c._id, payload: { 
+      comment_text: text, 
+      mentions,
+      module_name: props.moduleName,
+      module_id: props.moduleId
+    } },
     {
       onError: () => {
         if (idx > -1 && prev) comments.value[idx] = prev;
@@ -1941,6 +1947,8 @@ function postComment() {
     payload: {
       comment_text: comment_text,
       mentions,
+      module_name: props.moduleName,
+      module_id: props.moduleId,
       attachments: commentAttachments.value.map((file: any) => ({
         name: file.data.name,
         url: file.data.url,
