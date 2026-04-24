@@ -4,8 +4,6 @@ import api, { request } from "../libs/api.ts"; // for dynamic-URL mutations
 import { computed, unref, type Ref } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import { useAuthStore } from "../stores/auth.ts";
-const authStore = useAuthStore()
-const companyId = authStore.company_id
 export const keys = {
   description: (id: string | number) => ["description", id] as const,
   suggestions: (category: string) => ["suggestions", category] as const,
@@ -93,35 +91,58 @@ export const useWorkspacesPrompt = () =>
     method: "GET",
   });
 export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
-  const company_Id = companyId || localStorage.getItem('company_id')
+  const authStore = useAuthStore();
 
   return useQuery({
-    queryKey: computed(() => [
-      "workspaces",
-      unref(page),
-      unref(limit),
-      unref(filter) || "all",
-    ]),
-    queryFn: () =>
-      request({
-        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}&filter=${unref(filter) || "all"}${company_Id ? `&company_id=${company_Id}` : ''}`,
-        method: "GET",
-      }),
+    queryKey: computed(() => {
+      // ✅ Safely handle all values
+      const pageVal = unref(page) ?? 1;
+      const limitVal = unref(limit) ?? 10;
+      const filterVal = unref(filter) ?? "all";
+      const companyId = authStore.company_id ?? "";
 
+      console.log("📋 Query Key:", { pageVal, limitVal, filterVal, companyId });
+      
+      return ["workspaces", pageVal, limitVal, filterVal, companyId];
+    }),
+    queryFn: async () => {
+      const companyId = authStore.company_id;
+
+      if (!companyId) {
+        console.warn("⚠️ useWorkspaces: No company_id available");
+        return { workspaces: [] };
+      }
+
+      const url = `/workspace/all?page=${unref(page)}&limit=${unref(
+        limit
+      )}&filter=${unref(filter) || "all"}`;
+
+      console.log("📡 Fetching:", url, "with company_id:", companyId);
+
+      return request({
+        url,
+        method: "GET",
+      });
+    },
     staleTime: 0,
     refetchOnMount: "always",
+    enabled: computed(() => !!authStore.company_id),
   });
 };
 
-export const useWorkspacesTitles = () =>
-  useApiQuery({
-    key: keys.workspacesTitles,
+export const useWorkspacesTitles = () => {
+  const authStore = useAuthStore();
+
+  return useApiQuery({
+    key: computed(() => {
+      const companyId = authStore.company_id ?? "";
+      return ["workspaces", "titles", companyId];
+    }),
     url: "/workspace/titles",
     method: "GET",
+    enabled: computed(() => !!authStore.company_id),
   });
-
-
-
+};
 type WorkspaceId = string | number | undefined;
 type MaybeRef<T> = T | Ref<T>;
 
@@ -164,20 +185,24 @@ type IdLike =
   | undefined;
 
 export const useWorkspacesRoles = (id: IdLike) => {
+  const authStore = useAuthStore();
   const idRef = computed(() => unref(id));
+
   return useQuery({
-    queryKey: computed(() => ["workspaceRoles", idRef.value] as const),
-    enabled: computed(() => !!idRef.value),
+    queryKey: computed(() => {
+      const wid = idRef.value ?? "";
+      const companyId = authStore.company_id ?? "";
+      return ["workspaceRoles", wid, companyId];
+    }),
+    enabled: computed(() => !!idRef.value && !!authStore.company_id),
     queryFn: async () => {
       const wid = idRef.value;
       if (!wid && wid !== 0) return [];
       return await api.get(`/workspace/teams/${wid}`).then((r) => r.data.data);
     },
-    staleTime: 3 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 15_000,
   });
 };
-
 export const useWorkspacesVariables = () =>
   useApiQuery({
     key: keys.workspaceVariables,
