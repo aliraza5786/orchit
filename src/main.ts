@@ -26,11 +26,15 @@ if (window.location.hostname === 'streamed.space' || window.location.hostname.en
   }
 }
 
-// ✅ STEP 2: Decode and save _auth from URL
+// ✅ STEP 2: Read URL params
 const urlParams = new URLSearchParams(window.location.search)
 const encodedToken = urlParams.get('_auth')
 const encodedCompanyId = urlParams.get('_cid')
 
+const hostname = window.location.hostname
+const maxAge = 60 * 60 * 24 * 30
+
+// ✅ STEP 3: Decode and save token from URL
 if (encodedToken) {
   try {
     const token = atob(
@@ -41,9 +45,6 @@ if (encodedToken) {
     )
 
     localStorage.setItem('token', token)
-
-    const maxAge = 60 * 60 * 24 * 30
-    const hostname = window.location.hostname
 
     if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
       document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`
@@ -57,17 +58,17 @@ if (encodedToken) {
   }
 }
 
-// ✅ STEP 3: Decode and save _cid from URL — HIGHEST PRIORITY
+// ✅ STEP 4: Decode and save company_id from URL — HIGHEST PRIORITY
 if (encodedCompanyId) {
   try {
     const companyId = atob(
-      encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=')
+      encodedCompanyId
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .replace(/\./g, '=')
     )
 
     localStorage.setItem('company_id', companyId)
-
-    const maxAge = 60 * 60 * 24 * 30
-    const hostname = window.location.hostname
 
     if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
       document.cookie = `company_id=${companyId}; path=/; max-age=${maxAge}; SameSite=Lax`
@@ -79,11 +80,9 @@ if (encodedCompanyId) {
   } catch (e) {
     console.error('❌ Company ID decode failed:', e)
   }
-}
-
-// ✅ STEP 4: Only sync cookie → localStorage if _cid was NOT in the URL
-// Prevents stale cookie from overwriting a freshly decoded company_id
-if (!encodedCompanyId) {
+} else {
+  // ✅ STEP 5: Only sync cookie → localStorage if _cid was NOT in URL
+  // Prevents stale cookie from overwriting a freshly decoded company_id
   const cookieCompanyId = document.cookie
     .split('; ')
     .find(row => row.startsWith('company_id='))
@@ -95,18 +94,6 @@ if (!encodedCompanyId) {
   } else {
     console.log('❌ main.ts: No company_id cookie found')
   }
-}
-// ✅ STEP 4: Always sync cookie → localStorage
-const cookieCompanyId = document.cookie
-  .split('; ')
-  .find(row => row.startsWith('company_id='))
-  ?.split('=')[1]
-
-if (cookieCompanyId) {
-  localStorage.setItem('company_id', cookieCompanyId)
-  console.log('🔄 main.ts: Synced company_id from cookie → localStorage:', cookieCompanyId)
-} else {
-  console.log('❌ main.ts: No company_id cookie found')
 }
 
 const head = createHead()
