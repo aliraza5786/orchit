@@ -164,6 +164,26 @@ router.beforeEach(async (to, _from, next) => {
     await auth.bootstrap()
   }
 
+  const hostname = window.location.hostname
+  let subdomain: string | null = null
+
+  if (hostname.endsWith('.streamed.space')) {
+    const sub = hostname.replace('.streamed.space', '')
+    if (sub && sub !== 'www' && sub !== 'stagging') {
+      subdomain = sub
+    }
+  } else if (hostname.endsWith('.localhost')) {
+    const sub = hostname.replace('.localhost', '')
+    if (sub && sub !== 'www') {
+      subdomain = sub
+    }
+  }
+
+  // ✅ On subdomain, unknown paths or not-found → go to dashboard
+  if (subdomain && to.name === 'NotFound') {
+    return next('/dashboard')
+  }
+
   const requiresAuth = to.matched.some(
     (record) => record.meta.requiresAuth === true
   )
