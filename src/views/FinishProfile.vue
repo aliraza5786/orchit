@@ -47,17 +47,14 @@ function register() {
   // ✅ Get _cid from URL or fallback to localStorage
   const rawCid = route.query._cid as string
   const companyIdFromStorage = localStorage.getItem('company_id') || cookieCompanyId || ''
-  const encodedCompanyId = rawCid || 
-    (companyIdFromStorage 
-      ? btoa(companyIdFromStorage).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.') 
-      : '')
+  const encodedCompanyId = rawCid || companyIdFromStorage || ''
    
   console.log('🏢 _cid from URL:', rawCid)
   console.log('🏢 company_id from localStorage:', companyIdFromStorage)
   console.log('🔐 encodedCompanyId used:', encodedCompanyId)
 
   if (encodedCompanyId) {
-    const companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    const companyId = encodedCompanyId
     document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=2592000; Secure; SameSite=Lax`
   }
 
