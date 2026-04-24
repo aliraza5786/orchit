@@ -63,15 +63,12 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('company_id', companyId)
         this.company_id = companyId
         setCompanyIdCookie(companyId)
-        console.log('✅ company_id saved from URL:', companyId)
-        urlParams.delete('company_id')
       }
+const newUrl =
+  window.location.pathname +
+  (urlParams.toString() ? '?' + urlParams.toString() : '')
 
-      // ✅ STEP 3: Clean URL
-      const newUrl =
-        window.location.pathname +
-        (urlParams.toString() ? '?' + urlParams.toString() : '')
-      window.history.replaceState({}, '', newUrl)
+window.history.replaceState({}, '', newUrl)
 
       // ✅ STEP 4: Read token
       const cookieToken = document.cookie
