@@ -48,12 +48,24 @@ function register() {
     console.error('❌ No _cid found in finish-profile URL')
     return
   }
+let token = encodedToken
 
-  if (!encodedToken) {
-    console.error('❌ No _auth token found in finish-profile URL')
-    return
-  }
+if (!token) {
+  // 🔁 fallback to cookie
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1]
 
+  const localToken = localStorage.getItem('token')
+
+  token = cookieToken || localToken || ''
+}
+
+if (!token) {
+  console.error('❌ No auth token available anywhere')
+  return
+}
   // ✅ Decode company_id — pass plain ID in URL
   let companyId = ''
   try {
