@@ -160,6 +160,8 @@ try {
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
+      console.log('🚨 LOGOUT CALLED — stack trace:')
+      console.trace()
       // localStorage.removeItem('company_id')
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
