@@ -75,6 +75,9 @@ export const useAuthStore = defineStore('auth', {
         this.company_id = companyId
         setCompanyIdCookie(companyId)
         console.log('✅ Company ID saved from _cid:', companyId)
+
+        // Mark that we explicitly forced a company_id from the URL in this session
+        sessionStorage.setItem('forced_company_id', 'true')
       }
 
       // ✅ STEP 3: Clean URL
@@ -137,11 +140,17 @@ try {
     setCompanyIdCookie(activeCompanyId)
     console.log('✅ Company ID saved from profile:', activeCompanyId)
   } else if (activeCompanyId && existingCompanyId && existingCompanyId !== activeCompanyId) {
-    // ✅ Mismatch — profile's active_company_id wins (source of truth)
-    localStorage.setItem('company_id', activeCompanyId)
-    this.company_id = activeCompanyId
-    setCompanyIdCookie(activeCompanyId)
-    console.log('🔄 Company ID updated from profile (was mismatched):', activeCompanyId)
+    // ✅ Mismatch
+    if (sessionStorage.getItem('forced_company_id') === 'true') {
+      // If we just got _cid from the URL, it wins over the profile's active_company_id!
+      console.log('⏭️ Keeping existing company_id (Forced from URL):', existingCompanyId)
+    } else {
+      // Otherwise profile's active_company_id wins (source of truth)
+      localStorage.setItem('company_id', activeCompanyId)
+      this.company_id = activeCompanyId
+      setCompanyIdCookie(activeCompanyId)
+      console.log('🔄 Company ID updated from profile (was mismatched):', activeCompanyId)
+    }
   } else {
     console.log('⏭️ Keeping existing company_id:', existingCompanyId)
   }
