@@ -54,7 +54,12 @@ function register() {
   console.log('🔐 encodedCompanyId used:', encodedCompanyId)
 
   if (encodedCompanyId) {
-    const companyId = encodedCompanyId
+    let companyId = encodedCompanyId
+    try {
+      companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    } catch (e) {
+      console.warn('⚠️ company_id decode failed in FinishProfile, using raw')
+    }
     document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=2592000; Secure; SameSite=Lax`
   }
 

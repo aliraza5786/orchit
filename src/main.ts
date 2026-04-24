@@ -58,9 +58,20 @@ if (encodedToken) {
   }
 }
 
-// ✅ STEP 3.5: Save company_id from URL early (without decoding)
+// ✅ STEP 3.5: Decode and save company_id from URL early
 if (encodedCompanyId) {
-  const companyId = encodedCompanyId;
+  let companyId = encodedCompanyId
+  try {
+    companyId = atob(
+      encodedCompanyId
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .replace(/\./g, '=')
+    )
+    console.log('✅ main.ts: Decoded company_id:', companyId)
+  } catch (e) {
+    console.warn('⚠️ main.ts: company_id decode failed, using raw value:', encodedCompanyId)
+  }
 
   localStorage.setItem('company_id', companyId)
 

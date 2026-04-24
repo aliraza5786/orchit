@@ -69,7 +69,13 @@ export const useAuthStore = defineStore('auth', {
 
       // ✅ STEP 2: Save company_id from URL — highest priority
       if (encodedCompanyId) {
-        const companyId = encodedCompanyId;
+        let companyId = encodedCompanyId
+        try {
+          companyId = atob(cleanBase64(encodedCompanyId))
+          console.log('✅ Company ID decoded from _cid:', companyId)
+        } catch (e) {
+          console.warn('⚠️ Company ID decode failed, using raw value:', encodedCompanyId)
+        }
         
         localStorage.setItem('company_id', companyId)
         this.company_id = companyId
@@ -77,6 +83,7 @@ export const useAuthStore = defineStore('auth', {
         console.log('✅ Company ID saved from _cid:', companyId)
 
         // Mark that we explicitly forced a company_id from the URL in this session
+        // This prevents the profile's active_company_id from overwriting it
         sessionStorage.setItem('forced_company_id', 'true')
       }
 
