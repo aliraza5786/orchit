@@ -148,11 +148,15 @@ onMounted(() => {
 
   if (route.query.welcome === '1') {
     launchConfetti()
+  }
 
-    // Only remove the welcome param, keep _cid and all other params intact
-    const query = { ...route.query }
-    delete query.welcome
-    router.replace({ path: '/dashboard', query })
+  // ✅ Clean URL: remove welcome and _cid (already saved), keep any other params
+  if (route.query.welcome || route.query._cid) {
+    const params = new URLSearchParams(window.location.search)
+    params.delete('welcome')
+    // params.delete('_cid')
+    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '')
+    window.history.replaceState({}, '', newUrl)
   }
 })
 // const isEmpty = computed(() => !workspaces.value?.workspaces?.length)

@@ -140,26 +140,42 @@ try {
   console.log('🏢 active_company_id from profile:', activeCompanyId)
   console.log('📦 existing company_id in localStorage:', existingCompanyId)
 
-  if (activeCompanyId && !existingCompanyId) {
-    // ✅ No company_id anywhere — use profile's active_company_id
-    localStorage.setItem('company_id', activeCompanyId)
-    this.company_id = activeCompanyId
-    setCompanyIdCookie(activeCompanyId)
-    console.log('✅ Company ID saved from profile:', activeCompanyId)
-  } else if (activeCompanyId && existingCompanyId && existingCompanyId !== activeCompanyId) {
-    // ✅ Mismatch
-    if (sessionStorage.getItem('forced_company_id') === 'true') {
-      // If we just got _cid from the URL, it wins over the profile's active_company_id!
-      console.log('⏭️ Keeping existing company_id (Forced from URL):', existingCompanyId)
-    } else {
-      // Otherwise profile's active_company_id wins (source of truth)
+  // ✅ On a company subdomain, NEVER let the profile overwrite company_id.
+  // The correct company_id for this subdomain always comes from _cid in URL or the cookie.
+  const currentHostname = window.location.hostname
+  const isOnSubdomain = currentHostname.endsWith('.streamed.space') &&
+    !['stagging', 'www'].includes(currentHostname.replace('.streamed.space', ''))
+
+  if (isOnSubdomain) {
+    // On subdomain: if we have a company_id (from URL or cookie), keep it. Never overwrite.
+    if (!existingCompanyId && activeCompanyId) {
+      // Only use profile's value as absolute last resort (nothing else set it)
       localStorage.setItem('company_id', activeCompanyId)
       this.company_id = activeCompanyId
       setCompanyIdCookie(activeCompanyId)
-      console.log('🔄 Company ID updated from profile (was mismatched):', activeCompanyId)
+      console.log('✅ Subdomain: Company ID set from profile (last resort):', activeCompanyId)
+    } else {
+      console.log('⏭️ Subdomain: Keeping existing company_id:', existingCompanyId)
     }
   } else {
-    console.log('⏭️ Keeping existing company_id:', existingCompanyId)
+    // On main domain: profile's active_company_id is source of truth
+    if (activeCompanyId && !existingCompanyId) {
+      localStorage.setItem('company_id', activeCompanyId)
+      this.company_id = activeCompanyId
+      setCompanyIdCookie(activeCompanyId)
+      console.log('✅ Main domain: Company ID saved from profile:', activeCompanyId)
+    } else if (activeCompanyId && existingCompanyId && existingCompanyId !== activeCompanyId) {
+      if (sessionStorage.getItem('forced_company_id') === 'true') {
+        console.log('⏭️ Main domain: Keeping forced company_id from URL:', existingCompanyId)
+      } else {
+        localStorage.setItem('company_id', activeCompanyId)
+        this.company_id = activeCompanyId
+        setCompanyIdCookie(activeCompanyId)
+        console.log('🔄 Main domain: Company ID updated from profile:', activeCompanyId)
+      }
+    } else {
+      console.log('⏭️ Main domain: Keeping existing company_id:', existingCompanyId)
+    }
   }
 
 } catch (e) {
