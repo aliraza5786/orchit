@@ -126,11 +126,33 @@ function launchConfetti() {
   frame()
 }
 onMounted(() => {
+  // ✅ Safety net: if _cid is in the URL, save company_id immediately
+  const cidParam = route.query._cid as string
+  if (cidParam) {
+    let companyId = cidParam
+    try {
+      companyId = atob(cidParam.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    } catch (e) {
+      console.warn('⚠️ Home.vue: _cid decode failed, using raw value')
+    }
+    localStorage.setItem('company_id', companyId)
+    const hostname = window.location.hostname
+    const maxAge = 60 * 60 * 24 * 30
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+      document.cookie = `company_id=${companyId}; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else if (hostname.endsWith('.streamed.space')) {
+      document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    }
+    console.log('✅ Home.vue: company_id saved from _cid:', companyId)
+  }
+
   if (route.query.welcome === '1') {
     launchConfetti()
 
-    // clean URL so it doesn't repeat on refresh
-    router.replace({ path: '/dashboard' })
+    // Only remove the welcome param, keep _cid and all other params intact
+    const query = { ...route.query }
+    delete query.welcome
+    router.replace({ path: '/dashboard', query })
   }
 })
 // const isEmpty = computed(() => !workspaces.value?.workspaces?.length)
