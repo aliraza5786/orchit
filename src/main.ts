@@ -13,6 +13,21 @@ import { initThemeImmediately } from './composables/useTheme'
 import { createHead } from '@vueuse/head'
 import vue3GoogleLogin from 'vue3-google-login'
 
+const COOKIE_KEY = 'auth_session'
+
+function getAuthCookie(): { token?: string, company_id?: string } | null {
+  try {
+    const raw = document.cookie
+      .split('; ')
+      .find(row => row.startsWith(COOKIE_KEY + '='))
+      ?.split('=')[1]
+    if (!raw) return null
+    return JSON.parse(decodeURIComponent(raw))
+  } catch {
+    return null
+  }
+}
+
 // ✅ STEP 1: Set document.domain FIRST
 if (window.location.hostname === 'streamed.space' || window.location.hostname.endsWith('.streamed.space')) {
   document.domain = 'streamed.space'
@@ -31,14 +46,18 @@ const maxAge = 60 * 60 * 24 * 30
 const urlParams = new URLSearchParams(window.location.search)
 const encodedToken = urlParams.get('_auth')
 
+// ✅ STEP 2: Save token from URL early
 if (encodedToken) {
   try {
-    const token = atob(
-      encodedToken
-        .replace(/-/g, '+')
-        .replace(/_/g, '/')
-        .replace(/\./g, '=')
-    )
+    let token = encodedToken
+    if (!encodedToken.startsWith('eyJ')) {
+      token = atob(
+        encodedToken
+          .replace(/-/g, '+')
+          .replace(/_/g, '/')
+          .replace(/\./g, '=')
+      )
+    }
 
     localStorage.setItem('token', token)
 
@@ -48,10 +67,21 @@ if (encodedToken) {
       document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
     }
 
-    console.log('✅ Token stored early')
+    console.log('✅ main.ts: Token stored early')
   } catch (e) {
-    console.error('Token decode failed:', e)
+    console.error('❌ main.ts: Token decode failed:', e)
   }
+}
+
+// ✅ STEP 3: Read auth_session cookie → sync company_id to localStorage early
+const session = getAuthCookie()
+console.log('🍪 main.ts: auth_session cookie:', session)
+
+if (session?.company_id) {
+  localStorage.setItem('company_id', session.company_id)
+  console.log('✅ main.ts: company_id synced from cookie:', session.company_id)
+} else {
+  console.log('❌ main.ts: No company_id in auth_session cookie')
 }
 
 const head = createHead()

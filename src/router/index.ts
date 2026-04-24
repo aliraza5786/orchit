@@ -54,8 +54,8 @@ const routes: RouteRecordRaw[] = [
         name: "new-homepage",
         component: NewHomepage,
         beforeEnter: (to, from, next) => {
-          console.log(to, from);
-          
+          console.log("to", to);
+          console.log("from", from);
           const authStore = useAuthStore()
           if (authStore.isAuthenticated) {
             next('/dashboard')
@@ -149,61 +149,19 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      const auth = useAuthStore();
-      auth.logout();
-      router.replace({ name: "Login" });
+      const auth = useAuthStore()
+      auth.logout()
+      router.replace({ name: 'Login' })
     }
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
 )
-// Add this check before route transitions
-router.beforeEach(async (to, _from, next) => {
-  // const auth = useAuthStore()
-  const hostname = window.location.hostname
-  let subdomain: string | null = null
 
-  if (hostname.endsWith('.streamed.space')) {
-    const sub = hostname.replace('.streamed.space', '')
-    if (sub && sub !== 'www' && sub !== 'stagging') {
-      subdomain = sub
-    }
-  } else if (hostname.endsWith('.localhost')) {
-    const sub = hostname.replace('.localhost', '')
-    if (sub && sub !== 'www') {
-      subdomain = sub
-    }
-  }
-
-  // ✅ On subdomain, unknown paths or not-found → go to dashboard
-  if (subdomain && to.name === 'NotFound') {
-    return next('/dashboard')
-  }
-
-  const requiresAuth = to.matched.some(
-    (record) => record.meta.requiresAuth === true
-  )
-
-  const localToken = localStorage.getItem('token')
-  const cookieToken = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('auth_token='))
-    ?.split('=')[1] ?? null
-
-  const hasToken = !!(cookieToken || localToken)
-
-  if (requiresAuth && !hasToken) {
-    return next({ name: 'Login' })
-  }
-
-  if (to.name === 'Login' && hasToken) {
-    return next({ name: 'Home' })
-  }
-  next()
-})// Add this check before route transitions
+// ✅ Single beforeEach — merged both into one
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
-  console.log(auth);
-  
+
+  // ✅ Bootstrap only once
   if (!auth.initialized) {
     await auth.bootstrap()
   }
@@ -223,7 +181,7 @@ router.beforeEach(async (to, _from, next) => {
     }
   }
 
-  // ✅ On subdomain, unknown paths or not-found → go to dashboard
+  // ✅ On subdomain, unknown paths → go to dashboard
   if (subdomain && to.name === 'NotFound') {
     return next('/dashboard')
   }
@@ -232,13 +190,19 @@ router.beforeEach(async (to, _from, next) => {
     (record) => record.meta.requiresAuth === true
   )
 
-  const localToken = localStorage.getItem('token')
-  const cookieToken = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('auth_token='))
-    ?.split('=')[1] ?? null
+  // ✅ Check token from auth_session cookie object first
+  const session = (() => {
+    try {
+      const raw = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_session='))
+        ?.split('=')[1]
+      if (!raw) return null
+      return JSON.parse(decodeURIComponent(raw))
+    } catch { return null }
+  })()
 
-  const hasToken = !!(cookieToken || localToken)
+  const hasToken = !!(session?.token ?? localStorage.getItem('token'))
 
   if (requiresAuth && !hasToken) {
     return next({ name: 'Login' })

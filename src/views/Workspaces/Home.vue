@@ -74,7 +74,6 @@ import ProjectGallery from '../../components/ui/ProjectGallery.vue'
 import WorkspaceListTable from './components/WorkspaceListTable.vue'
 import { useWorkspaces } from '../../queries/useWorkspace'
 import { useWorkspaceStore } from '../../stores/workspace'
-import { useAuthStore } from '../../stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import BaseSelectField from '../../components/ui/BaseSelectField.vue'
 // @ts-ignore
@@ -83,7 +82,6 @@ import confetti from 'canvas-confetti'
 const router = useRouter()
 const route = useRoute()
 const workspaceStore = useWorkspaceStore()
-const authStore = useAuthStore()
 
 // Pagination + sort + filter state
 const page = ref(1)
@@ -148,22 +146,9 @@ function handleCreateWorkspace() {
 }
 
 onMounted(async () => {
-  console.log('🏠 Home.vue mounted')
-
-  // ✅ STEP 1: Ensure auth store is initialized
-  if (!authStore.initialized) {
-    console.log('⏳ Waiting for auth store to initialize...')
-    await authStore.bootstrap()
-  }
   await nextTick()
   if (route.query.welcome === '1') {
-    console.log('🎉 Launching confetti welcome!')
     launchConfetti()
   }
-  console.log('✅ Home.vue ready:', {
-    companyId: authStore.company_id,
-    userId: authStore.userId,
-    authenticated: authStore.isAuthenticated,
-  })
 })
 </script>
