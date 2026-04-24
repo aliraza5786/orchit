@@ -4,7 +4,6 @@ import { useAuthStore } from '../stores/auth'
 import { watch } from 'vue'
 export const getProfile = () => api.get('/profile').then(r => r.data)
 
-
 export function useProfile() {
   const auth = useAuthStore()
 
@@ -16,6 +15,7 @@ export function useProfile() {
     retry: false,
   })
 
+  // ✅ Logout on error
   watch(
     () => query.error.value,
     (err) => {
@@ -25,9 +25,26 @@ export function useProfile() {
     }
   )
 
+  // ✅ Save company_id from API → localStorage + state
+  watch(
+    () => query.data.value?.data?.active_company_id,
+    (activeCompanyId) => {
+      if (!activeCompanyId) return
+
+      const stored = localStorage.getItem('company_id')
+
+      if (stored !== activeCompanyId) {
+        localStorage.setItem('company_id', activeCompanyId)
+        auth.company_id = activeCompanyId
+
+        console.log('✅ company_id saved from useProfile:', activeCompanyId)
+      }
+    },
+    { immediate: true }
+  )
+
   return query
 }
-
 export function useCompanyId() {
   return useQuery({
     queryKey: ['me'],

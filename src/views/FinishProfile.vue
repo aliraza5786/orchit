@@ -21,12 +21,6 @@ import Button from '../components/ui/Button.vue';
 import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
-
-const cookieCompanyId = document.cookie
-  .split('; ')
-  .find(row => row.startsWith('company_id='))
-  ?.split('=')[1]
-console.log("company id from cookie:", cookieCompanyId)
 function register() {
   const type = route.query.type as string
 
@@ -42,50 +36,36 @@ function register() {
 
   const encodedToken = route.query._auth as string
   const domainLink = route.query.domainLink as string
-  const rawCid = route.query._cid as string
 
-  if (!rawCid) {
-    console.error('❌ No _cid found in finish-profile URL')
-    return
+  // ✅ Resolve token (URL → cookie → localStorage)
+  let token = encodedToken
+
+  if (!token) {
+    const cookieToken = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_token='))
+      ?.split('=')[1]
+
+    const localToken = localStorage.getItem('token')
+
+    token = cookieToken || localToken || ''
   }
-let token = encodedToken
 
-if (!token) {
-  // 🔁 fallback to cookie
-  const cookieToken = document.cookie
-    .split('; ')
-    .find(row => row.startsWith('auth_token='))
-    ?.split('=')[1]
-
-  const localToken = localStorage.getItem('token')
-
-  token = cookieToken || localToken || ''
-}
-
-if (!token) {
-  console.error('❌ No auth token available anywhere')
-  return
-}
-  // ✅ Decode company_id — pass plain ID in URL
-  let companyId = ''
-  try {
-    companyId = atob(rawCid.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
-    console.log('✅ company_id decoded:', companyId)
-  } catch (e) {
-    console.error('❌ Failed to decode _cid:', e)
+  if (!token) {
+    console.error('❌ No auth token available anywhere')
     return
   }
 
   const buildUrl = (base: string) => {
     const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base
-    return `${cleanBase}/dashboard?welcome=1&_auth=${encodedToken}&company_id=${companyId}`
+    return `${cleanBase}/dashboard?welcome=1&_auth=${encodedToken}`
   }
 
   const isLocalhost = window.location.hostname === 'localhost'
 
   if (isLocalhost) {
     const port = window.location.port ? `:${window.location.port}` : ''
-    window.location.href = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}&company_id=${companyId}`
+    window.location.href = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}`
   } else if (domainLink) {
     window.location.href = buildUrl(domainLink)
   } else {
@@ -95,13 +75,12 @@ if (!token) {
 function createWS() {
   const encodedToken = route.query._auth as string
   const domainLink = route.query.domainLink as string
-  const encodedCompanyId = route.query._cid as string
   const encodedUserId = route.query._uid as string
   const type = route.query.type as string
 
   router.push({ 
     path: '/create-workspace', 
-    query: { _auth: encodedToken, domainLink, _cid: encodedCompanyId, _uid: encodedUserId, type } 
+    query: { _auth: encodedToken, domainLink, _uid: encodedUserId, type } 
   })
 }
 </script>

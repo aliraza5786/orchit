@@ -414,14 +414,20 @@ const { data: profile, isPending } = useQuery({
 })
 
 const profileData = computed(() => profile.value?.data ?? null)
-// Add this watch right after profileData computed
-watch(() => profileData.value?.active_company_id, (activeCompanyId) => {
-  if (activeCompanyId) {
-    localStorage.setItem('company_id', activeCompanyId)
-    authStore.company_id = activeCompanyId
-    console.log('✅ company_id saved from profileData watch:', activeCompanyId)
-  }
-}, { immediate: true })
+watch(
+  () => profileData.value?.active_company_id,
+  (activeCompanyId) => {
+    if (!activeCompanyId) return
+    const stored = localStorage.getItem('company_id')
+    if (stored !== activeCompanyId) {
+      localStorage.setItem('company_id', activeCompanyId)
+      authStore.company_id = activeCompanyId
+
+      console.log('company_id saved from profileData watch:', activeCompanyId)
+    }
+  },
+  { immediate: true }
+)
 /* Limits Sync */
 const { data: currentPackage } = useCurrentPackage()
 watch(() => currentPackage.value, (pkg) => {

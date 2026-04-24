@@ -26,15 +26,11 @@ if (window.location.hostname === 'streamed.space' || window.location.hostname.en
   }
 }
 
-// ✅ STEP 2: Read URL params
-const urlParams = new URLSearchParams(window.location.search)
-const encodedToken = urlParams.get('_auth')
-const companyId = urlParams.get('company_id') // ✅ plain, no encoding
-
 const hostname = window.location.hostname
 const maxAge = 60 * 60 * 24 * 30
+const urlParams = new URLSearchParams(window.location.search)
+const encodedToken = urlParams.get('_auth')
 
-// ✅ STEP 3: Decode and save token from URL
 if (encodedToken) {
   try {
     const token = atob(
@@ -52,23 +48,10 @@ if (encodedToken) {
       document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
     }
 
-    console.log('✅ main.ts: Token stored early')
+    console.log('✅ Token stored early')
   } catch (e) {
-    console.error('❌ Token decode failed:', e)
+    console.error('Token decode failed:', e)
   }
-}
-
-// ✅ STEP 4: Save plain company_id from URL
-if (companyId) {
-  localStorage.setItem('company_id', companyId)
-
-  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-    document.cookie = `company_id=${companyId}; path=/; max-age=${maxAge}; SameSite=Lax`
-  } else if (hostname.endsWith('.streamed.space')) {
-    document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-  }
-
-  console.log('✅ main.ts: company_id stored:', companyId)
 }
 
 const head = createHead()
