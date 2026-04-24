@@ -60,26 +60,27 @@ if (encodedToken) {
 
 // ✅ STEP 3.5: Decode and save company_id from URL early
 if (encodedCompanyId) {
+  let companyId = encodedCompanyId;
   try {
-    const companyId = atob(
+    companyId = atob(
       encodedCompanyId
         .replace(/-/g, '+')
         .replace(/_/g, '/')
         .replace(/\./g, '=')
     )
-
-    localStorage.setItem('company_id', companyId)
-
-    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-      document.cookie = `company_id=${companyId}; path=/; max-age=${maxAge}; SameSite=Lax`
-    } else if (hostname.endsWith('.streamed.space')) {
-      document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-    }
-
-    console.log('✅ main.ts: Company ID stored early')
   } catch (e) {
-    console.error('❌ Company ID decode failed:', e)
+    console.log('⚠️ Company ID decode failed, using raw value:', e)
   }
+
+  localStorage.setItem('company_id', companyId)
+
+  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+    document.cookie = `company_id=${companyId}; path=/; max-age=${maxAge}; SameSite=Lax`
+  } else if (hostname.endsWith('.streamed.space')) {
+    document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+  }
+
+  console.log('✅ main.ts: Company ID stored early')
 }
 
 const head = createHead()

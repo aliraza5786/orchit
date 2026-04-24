@@ -69,15 +69,18 @@ export const useAuthStore = defineStore('auth', {
 
       // ✅ STEP 2: Save company_id from URL — highest priority
       if (encodedCompanyId) {
+        let companyId = encodedCompanyId;
         try {
-          const companyId = atob(cleanBase64(encodedCompanyId))
-          localStorage.setItem('company_id', companyId)
-          this.company_id = companyId
-          setCompanyIdCookie(companyId)
-          console.log('✅ Company ID saved from _cid:', companyId)
+          companyId = atob(cleanBase64(encodedCompanyId))
         } catch (e) {
-          console.log('❌ Company ID decode failed:', e)
+          console.log('⚠️ Company ID decode failed, using raw value:', e)
         }
+        
+        localStorage.setItem('company_id', companyId)
+        this.company_id = companyId
+        setCompanyIdCookie(companyId)
+        console.log('✅ Company ID saved from _cid:', companyId)
+
         urlParams.delete('_cid')
       }
 
