@@ -464,9 +464,6 @@ import { useAgentStore } from "../../stores/agentStore";
 const TableSearchCell = defineAsyncComponent(
   () => import("../../components/feature/TableView/TableSearchCell.vue"),
 );
-const TableAssigneeCell = defineAsyncComponent(
-  () => import("../../components/feature/TableView/TableAssigneeCell.vue"),
-);
 const ConfirmDeleteModal = defineAsyncComponent(
   () => import("../Product/modals/ConfirmDeleteModal.vue"),
 );

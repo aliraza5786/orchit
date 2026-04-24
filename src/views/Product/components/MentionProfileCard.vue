@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { computePosition, autoUpdate, flip, shift, offset } from '@floating-ui/dom';
 
 const props = defineProps({

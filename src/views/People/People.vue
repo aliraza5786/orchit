@@ -1052,46 +1052,46 @@ const handleMindmapSelectTicket = (node: any) => {
     showAgentPanel.value = true;
   }
 };
-const roleMap = computed(() => {
-  const map: Record<string, string> = {};
+// const roleMap = computed(() => {
+//   const map: Record<string, string> = {};
 
-  (workspaceRoles.value || []).forEach((r: any) => {
-    map[r._id] = r.title;
-  });
+//   (workspaceRoles.value || []).forEach((r: any) => {
+//     map[r._id] = r.title;
+//   });
 
-  return map;
-});
-const tableRows = computed(() => {
-  if (currentTab.value === "talent") {
-    return filteredBoard.value.flatMap((col: any) =>
-      col.cards.map((card: any) => ({
-        id: card._id,
-        title: card.title || card.name || "Untitled",
-        column: col.title,
-        role: roleMap.value[card.workspace_access_role_id] ?? "-",
-        seat_number: card.seat_number ?? "-",
-        status: card.status ?? "-",
-        assigned_cards_count: card.assigned_cards_count ?? 0,
-      })),
-    );
-  }
+//   return map;
+// });
+// const tableRows = computed(() => {
+//   if (currentTab.value === "talent") {
+//     return filteredBoard.value.flatMap((col: any) =>
+//       col.cards.map((card: any) => ({
+//         id: card._id,
+//         title: card.title || card.name || "Untitled",
+//         column: col.title,
+//         role: roleMap.value[card.workspace_access_role_id] ?? "-",
+//         seat_number: card.seat_number ?? "-",
+//         status: card.status ?? "-",
+//         assigned_cards_count: card.assigned_cards_count ?? 0,
+//       })),
+//     );
+//   }
 
-  if (currentTab.value === "agents") {
-    return filteredAgentGroups.value.flatMap((group: any) =>
-      group.agents.map((agent: any) => ({
-        id: agent._id,
-        title: agent.name || "Unnamed Agent",
-        column: group.title,
-        role: agent.role || "-",
-        model: agent.model || "-",
-        level: agent.level || "-",
-        status: agent.is_active ? "Active" : "Inactive",
-      })),
-    );
-  }
+//   if (currentTab.value === "agents") {
+//     return filteredAgentGroups.value.flatMap((group: any) =>
+//       group.agents.map((agent: any) => ({
+//         id: agent._id,
+//         title: agent.name || "Unnamed Agent",
+//         column: group.title,
+//         role: agent.role || "-",
+//         model: agent.model || "-",
+//         level: agent.level || "-",
+//         status: agent.is_active ? "Active" : "Inactive",
+//       })),
+//     );
+//   }
 
-  return [];
-});
+//   return [];
+// });
 const tableColumns = computed(() => {
   let cols: any[] = [];
   if (currentTab.value === "talent") {
