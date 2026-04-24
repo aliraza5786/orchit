@@ -7,15 +7,17 @@ function clearAuthCookie() {
   document.cookie = `auth_token=; path=/; max-age=0`
 }
 
+const COMPANY_ID_KEY = 'company_id'
+const FORCED_COMPANY_ID_KEY = 'forced_company_id'
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     user: null as any,
     initialized: false,
     userId: localStorage.getItem('user_id') as string | null,
-    // ✅ Cookie first, localStorage as fallback
     company_id: (
       document.cookie.split('; ').find(r => r.startsWith('company_id='))?.split('=')[1]
-    ) ?? localStorage.getItem('company_id') as string | null,
+    ) ?? localStorage.getItem(COMPANY_ID_KEY) as string | null,
   }),
 
   getters: {
@@ -46,8 +48,10 @@ export const useAuthStore = defineStore('auth', {
           document.cookie = `company_id=${id}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
         }
       }
-
-      // ✅ STEP 1: Save token from URL
+if (encodedCompanyId) {
+  sessionStorage.setItem(FORCED_COMPANY_ID_KEY, 'true')
+}
+      // ✅ STEP 2: Save token from URL
       if (encodedToken) {
         try {
           const token = atob(cleanBase64(encodedToken))
@@ -60,14 +64,14 @@ export const useAuthStore = defineStore('auth', {
           } else if (hostname.endsWith('.streamed.space')) {
             document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
           }
-          console.log('✅ Token saved')
+          console.log('✅ Token saved from URL')
         } catch (e) {
           console.log('❌ Token decode failed:', e)
         }
         urlParams.delete('_auth')
       }
 
-      // ✅ STEP 2: Save company_id from URL — highest priority
+      // ✅ STEP 3: Save company_id from URL — HIGHEST PRIORITY
       if (encodedCompanyId) {
         let companyId = encodedCompanyId
         try {
@@ -76,39 +80,38 @@ export const useAuthStore = defineStore('auth', {
         } catch (e) {
           console.warn('⚠️ Company ID decode failed, using raw value:', encodedCompanyId)
         }
-        
-        localStorage.setItem('company_id', companyId)
+
+        localStorage.setItem(COMPANY_ID_KEY, companyId)
         this.company_id = companyId
         setCompanyIdCookie(companyId)
         console.log('✅ Company ID saved from _cid:', companyId)
-
-        // Mark that we explicitly forced a company_id from the URL in this session
-        // This prevents the profile's active_company_id from overwriting it
-        sessionStorage.setItem('forced_company_id', 'true')
       }
 
-      // ✅ STEP 3: Clean URL
+      // ✅ STEP 4: Clean URL
       const newUrl =
         window.location.pathname +
         (urlParams.toString() ? '?' + urlParams.toString() : '')
       window.history.replaceState({}, '', newUrl)
 
-      // ✅ STEP 4: Only sync cookie → localStorage if _cid was NOT in URL
+      // ✅ STEP 5: Only sync cookie → localStorage if _cid was NOT in URL
       if (!encodedCompanyId) {
-        const cookieCompanyId = getCookie('company_id')
-        console.log('🍪 cookie company_id:', cookieCompanyId)
-        console.log('📦 localStorage company_id:', localStorage.getItem('company_id'))
+        const cookieCompanyId = getCookie(COMPANY_ID_KEY)
+        const localCompanyId = localStorage.getItem(COMPANY_ID_KEY)
 
-        if (cookieCompanyId) {
-          localStorage.setItem('company_id', cookieCompanyId)
+        console.log('🍪 cookie company_id:', cookieCompanyId)
+        console.log('📦 localStorage company_id:', localCompanyId)
+
+        if (cookieCompanyId && cookieCompanyId !== localCompanyId) {
+          localStorage.setItem(COMPANY_ID_KEY, cookieCompanyId)
           this.company_id = cookieCompanyId
           console.log('🔄 Synced company_id from cookie → localStorage:', cookieCompanyId)
-        } else {
-          console.log('❌ No company_id cookie found on this domain')
+        } else if (localCompanyId) {
+          this.company_id = localCompanyId
+          console.log('✅ Using existing localStorage company_id:', localCompanyId)
         }
       }
 
-      // ✅ STEP 5: Read token
+      // ✅ STEP 6: Read token
       const cookieToken = document.cookie
         .split('; ')
         .find(row => row.startsWith('auth_token='))
@@ -127,70 +130,69 @@ export const useAuthStore = defineStore('auth', {
       if (cookieToken && localStorage.getItem('token') !== cookieToken) {
         localStorage.setItem('token', cookieToken)
       }
-// ✅ STEP 6: Fetch profile
-try {
-  console.log('📡 Fetching profile...')
-  const res = await api.get('/profile')
-  this.user = res.data
-  console.log('✅ Profile loaded')
 
-  const activeCompanyId = res.data?.data?.active_company_id
-  const existingCompanyId = localStorage.getItem('company_id')
+      // ✅ STEP 7: Fetch profile
+      try {
+        console.log('📡 Fetching profile...')
+        const res = await api.get('/profile')
+        this.user = res.data
+        console.log('✅ Profile loaded')
 
-  console.log('🏢 active_company_id from profile:', activeCompanyId)
-  console.log('📦 existing company_id in localStorage:', existingCompanyId)
+        const activeCompanyId = res.data?.data?.active_company_id
+        const existingCompanyId = localStorage.getItem(COMPANY_ID_KEY)
+        const wasForced = sessionStorage.getItem(FORCED_COMPANY_ID_KEY) === 'true'
 
-  // ✅ On a company subdomain, NEVER let the profile overwrite company_id.
-  // The correct company_id for this subdomain always comes from _cid in URL or the cookie.
-  const currentHostname = window.location.hostname
-  const isOnSubdomain = currentHostname.endsWith('.streamed.space') &&
-    !['stagging', 'www'].includes(currentHostname.replace('.streamed.space', ''))
+        console.log('🏢 active_company_id from profile:', activeCompanyId)
+        console.log('📦 existing company_id in localStorage:', existingCompanyId)
+        console.log('🔒 forced_company_id from URL:', wasForced)
 
-  if (isOnSubdomain) {
-    // On subdomain: if we have a company_id (from URL or cookie), keep it. Never overwrite.
-    if (!existingCompanyId && activeCompanyId) {
-      // Only use profile's value as absolute last resort (nothing else set it)
-      localStorage.setItem('company_id', activeCompanyId)
-      this.company_id = activeCompanyId
-      setCompanyIdCookie(activeCompanyId)
-      console.log('✅ Subdomain: Company ID set from profile (last resort):', activeCompanyId)
-    } else {
-      console.log('⏭️ Subdomain: Keeping existing company_id:', existingCompanyId)
-    }
-  } else {
-    // On main domain: profile's active_company_id is source of truth
-    if (activeCompanyId && !existingCompanyId) {
-      localStorage.setItem('company_id', activeCompanyId)
-      this.company_id = activeCompanyId
-      setCompanyIdCookie(activeCompanyId)
-      console.log('✅ Main domain: Company ID saved from profile:', activeCompanyId)
-    } else if (activeCompanyId && existingCompanyId && existingCompanyId !== activeCompanyId) {
-      if (sessionStorage.getItem('forced_company_id') === 'true') {
-        console.log('⏭️ Main domain: Keeping forced company_id from URL:', existingCompanyId)
-      } else {
-        localStorage.setItem('company_id', activeCompanyId)
-        this.company_id = activeCompanyId
-        setCompanyIdCookie(activeCompanyId)
-        console.log('🔄 Main domain: Company ID updated from profile:', activeCompanyId)
+        const currentHostname = window.location.hostname
+        const isOnSubdomain = currentHostname.endsWith('.streamed.space') &&
+          !['stagging', 'www'].includes(currentHostname.replace('.streamed.space', ''))
+
+        if (isOnSubdomain) {
+          // ✅ On subdomain: NEVER overwrite company_id if it was forced from URL
+          if (wasForced && existingCompanyId) {
+            console.log('🔒 Subdomain: Keeping forced company_id from URL:', existingCompanyId)
+            // Ensure it's set in state
+            this.company_id = existingCompanyId
+          } else if (!existingCompanyId && activeCompanyId) {
+            localStorage.setItem(COMPANY_ID_KEY, activeCompanyId)
+            this.company_id = activeCompanyId
+            setCompanyIdCookie(activeCompanyId)
+            console.log('✅ Subdomain: Company ID set from profile (last resort):', activeCompanyId)
+          }
+        } else {
+          // On main domain: respect profile's active_company_id but don't overwrite if forced
+          if (wasForced && existingCompanyId) {
+            console.log('⏭️ Main domain: Keeping forced company_id:', existingCompanyId)
+          } else if (activeCompanyId) {
+            if (existingCompanyId && existingCompanyId !== activeCompanyId) {
+              console.log('🔄 Main domain: Updating company_id from profile:', activeCompanyId)
+            }
+            localStorage.setItem(COMPANY_ID_KEY, activeCompanyId)
+            this.company_id = activeCompanyId
+            setCompanyIdCookie(activeCompanyId)
+          }
+        }
+
+        // ✅ Clear the forced flag after profile load to allow future updates
+        sessionStorage.removeItem(FORCED_COMPANY_ID_KEY)
+
+      } catch (e) {
+        console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
+      } finally {
+        this.initialized = true
       }
-    } else {
-      console.log('⏭️ Main domain: Keeping existing company_id:', existingCompanyId)
-    }
-  }
-
-} catch (e) {
-  console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
-} finally {
-  this.initialized = true
-}
     },
 
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
+      // ✅ IMPORTANT: Do NOT remove company_id on logout
+      // The user may still need it for subdomain context
       console.log('🚨 LOGOUT CALLED — stack trace:')
       console.trace()
-      // localStorage.removeItem('company_id')
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
       localStorage.removeItem('mannualWorkspace')

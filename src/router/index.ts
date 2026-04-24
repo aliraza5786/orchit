@@ -156,7 +156,7 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 )
-
+// Add this check before route transitions
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
@@ -202,6 +202,69 @@ router.beforeEach(async (to, _from, next) => {
 
   if (to.name === 'Login' && hasToken) {
     return next({ name: 'Home' })
+  }
+
+  // ✅ Ensure company_id persists across route changes
+  const storedCompanyId = localStorage.getItem('company_id')
+  if (storedCompanyId && auth.company_id !== storedCompanyId) {
+    auth.company_id = storedCompanyId
+    console.log('🔄 Restored company_id from localStorage:', storedCompanyId)
+  }
+
+  next()
+})// Add this check before route transitions
+router.beforeEach(async (to, _from, next) => {
+  const auth = useAuthStore()
+
+  if (!auth.initialized) {
+    await auth.bootstrap()
+  }
+
+  const hostname = window.location.hostname
+  let subdomain: string | null = null
+
+  if (hostname.endsWith('.streamed.space')) {
+    const sub = hostname.replace('.streamed.space', '')
+    if (sub && sub !== 'www' && sub !== 'stagging') {
+      subdomain = sub
+    }
+  } else if (hostname.endsWith('.localhost')) {
+    const sub = hostname.replace('.localhost', '')
+    if (sub && sub !== 'www') {
+      subdomain = sub
+    }
+  }
+
+  // ✅ On subdomain, unknown paths or not-found → go to dashboard
+  if (subdomain && to.name === 'NotFound') {
+    return next('/dashboard')
+  }
+
+  const requiresAuth = to.matched.some(
+    (record) => record.meta.requiresAuth === true
+  )
+
+  const localToken = localStorage.getItem('token')
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1] ?? null
+
+  const hasToken = !!(cookieToken || localToken)
+
+  if (requiresAuth && !hasToken) {
+    return next({ name: 'Login' })
+  }
+
+  if (to.name === 'Login' && hasToken) {
+    return next({ name: 'Home' })
+  }
+
+  // ✅ Ensure company_id persists across route changes
+  const storedCompanyId = localStorage.getItem('company_id')
+  if (storedCompanyId && auth.company_id !== storedCompanyId) {
+    auth.company_id = storedCompanyId
+    console.log('🔄 Restored company_id from localStorage:', storedCompanyId)
   }
 
   next()

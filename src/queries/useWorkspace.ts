@@ -3,10 +3,9 @@ import { useApiQuery, useApiMutation } from "../libs/vq.ts";
 import api, { request } from "../libs/api.ts"; // for dynamic-URL mutations
 import { computed, unref, type Ref } from "vue";
 import { useQuery } from "@tanstack/vue-query";
-
-/** ---------------------------------
- * Query Keys (stable & parameterized)
- * -------------------------------- */
+import { useAuthStore } from "../stores/auth.ts";
+const authStore = useAuthStore()
+const companyId = authStore.company_id
 export const keys = {
   description: (id: string | number) => ["description", id] as const,
   suggestions: (category: string) => ["suggestions", category] as const,
@@ -94,7 +93,7 @@ export const useWorkspacesPrompt = () =>
     method: "GET",
   });
 export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
-  const companyId = localStorage.getItem('company_id')
+  const company_Id = companyId || localStorage.getItem('company_id')
 
   return useQuery({
     queryKey: computed(() => [
@@ -105,7 +104,7 @@ export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Re
     ]),
     queryFn: () =>
       request({
-        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}&filter=${unref(filter) || "all"}${companyId ? `&company_id=${companyId}` : ''}`,
+        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}&filter=${unref(filter) || "all"}${company_Id ? `&company_id=${company_Id}` : ''}`,
         method: "GET",
       }),
 

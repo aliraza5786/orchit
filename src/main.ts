@@ -13,6 +13,9 @@ import { initThemeImmediately } from './composables/useTheme'
 import { createHead } from '@vueuse/head'
 import vue3GoogleLogin from 'vue3-google-login'
 
+// ✅ STEP 0: Initialize early flag
+const FORCED_COMPANY_ID_KEY = 'forced_company_id'
+
 // ✅ STEP 1: Set document.domain FIRST before anything else
 if (window.location.hostname === 'streamed.space' || window.location.hostname.endsWith('.streamed.space')) {
   document.domain = 'streamed.space'
@@ -33,6 +36,12 @@ const encodedCompanyId = urlParams.get('_cid')
 
 const hostname = window.location.hostname
 const maxAge = 60 * 60 * 24 * 30
+
+// ✅ STEP 2.5: Mark forced company_id early if present in URL
+if (encodedCompanyId) {
+  sessionStorage.setItem(FORCED_COMPANY_ID_KEY, 'true')
+  console.log('🔒 Marking company_id as forced from URL')
+}
 
 // ✅ STEP 3: Decode and save token from URL
 if (encodedToken) {
@@ -81,7 +90,7 @@ if (encodedCompanyId) {
     document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
   }
 
-  console.log('✅ main.ts: Company ID stored early')
+  console.log('✅ main.ts: Company ID stored early and marked as forced')
 }
 
 const head = createHead()
