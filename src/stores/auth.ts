@@ -121,40 +121,46 @@ export const useAuthStore = defineStore('auth', {
       if (cookieToken && localStorage.getItem('token') !== cookieToken) {
         localStorage.setItem('token', cookieToken)
       }
+// ✅ STEP 6: Fetch profile
+try {
+  console.log('📡 Fetching profile...')
+  const res = await api.get('/profile')
+  this.user = res.data
+  console.log('✅ Profile loaded')
 
-      // ✅ STEP 6: Fetch profile
-      try {
-        console.log('📡 Fetching profile...')
-        const res = await api.get('/profile')
-        this.user = res.data
-        console.log('✅ Profile loaded')
+  const activeCompanyId = res.data?.data?.active_company_id
+  const existingCompanyId = localStorage.getItem('company_id')
 
-        const activeCompanyId = res.data?.data?.active_company_id
-        const existingCompanyId = localStorage.getItem('company_id')
+  console.log('🏢 active_company_id from profile:', activeCompanyId)
+  console.log('📦 existing company_id in localStorage:', existingCompanyId)
 
-        console.log('🏢 active_company_id from profile:', activeCompanyId)
-        console.log('📦 existing company_id in localStorage:', existingCompanyId)
+  if (activeCompanyId && !existingCompanyId) {
+    // ✅ No company_id anywhere — use profile's active_company_id
+    localStorage.setItem('company_id', activeCompanyId)
+    this.company_id = activeCompanyId
+    setCompanyIdCookie(activeCompanyId)
+    console.log('✅ Company ID saved from profile:', activeCompanyId)
+  } else if (activeCompanyId && existingCompanyId && existingCompanyId !== activeCompanyId) {
+    // ✅ Mismatch — profile's active_company_id wins (source of truth)
+    localStorage.setItem('company_id', activeCompanyId)
+    this.company_id = activeCompanyId
+    setCompanyIdCookie(activeCompanyId)
+    console.log('🔄 Company ID updated from profile (was mismatched):', activeCompanyId)
+  } else {
+    console.log('⏭️ Keeping existing company_id:', existingCompanyId)
+  }
 
-        // ✅ Only save from profile if nothing already set
-        if (!existingCompanyId && activeCompanyId) {
-          localStorage.setItem('company_id', activeCompanyId)
-          this.company_id = activeCompanyId
-          setCompanyIdCookie(activeCompanyId)
-          console.log('✅ Company ID saved from profile:', activeCompanyId)
-        } else {
-          console.log('⏭️ Keeping existing company_id:', existingCompanyId)
-        }
-      } catch (e) {
-        console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
-      } finally {
-        this.initialized = true
-      }
+} catch (e) {
+  console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
+} finally {
+  this.initialized = true
+}
     },
 
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
-      localStorage.removeItem('company_id')
+      // localStorage.removeItem('company_id')
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
       localStorage.removeItem('mannualWorkspace')
