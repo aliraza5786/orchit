@@ -60,7 +60,6 @@
 
           <!-- notificaion icon -->
            <NotificationBell/>
-
         <!-- Avatar + Menu -->
         <div class="relative" ref="menuRef">
           <button v-if="profileData?.u_profile_image" aria-haspopup="menu" :aria-expanded="menuOpen ? 'true' : 'false'"
@@ -415,7 +414,14 @@ const { data: profile, isPending } = useQuery({
 })
 
 const profileData = computed(() => profile.value?.data ?? null)
-
+// Add this watch right after profileData computed
+watch(() => profileData.value?.active_company_id, (activeCompanyId) => {
+  if (activeCompanyId) {
+    localStorage.setItem('company_id', activeCompanyId)
+    authStore.company_id = activeCompanyId
+    console.log('✅ company_id saved from profileData watch:', activeCompanyId)
+  }
+}, { immediate: true })
 /* Limits Sync */
 const { data: currentPackage } = useCurrentPackage()
 watch(() => currentPackage.value, (pkg) => {
