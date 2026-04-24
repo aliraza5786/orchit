@@ -57,14 +57,11 @@ if (encodedToken) {
   }
 }
 
-// ✅ STEP 3: Decode and save _cid from URL
+// ✅ STEP 3: Decode and save _cid from URL — HIGHEST PRIORITY
 if (encodedCompanyId) {
   try {
     const companyId = atob(
-      encodedCompanyId
-        .replace(/-/g, '+')
-        .replace(/_/g, '/')
-        .replace(/\./g, '=')
+      encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=')
     )
 
     localStorage.setItem('company_id', companyId)
@@ -81,6 +78,22 @@ if (encodedCompanyId) {
     console.log('✅ main.ts: Company ID stored early:', companyId)
   } catch (e) {
     console.error('❌ Company ID decode failed:', e)
+  }
+}
+
+// ✅ STEP 4: Only sync cookie → localStorage if _cid was NOT in the URL
+// Prevents stale cookie from overwriting a freshly decoded company_id
+if (!encodedCompanyId) {
+  const cookieCompanyId = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('company_id='))
+    ?.split('=')[1]
+
+  if (cookieCompanyId) {
+    localStorage.setItem('company_id', cookieCompanyId)
+    console.log('🔄 main.ts: Synced company_id from cookie → localStorage:', cookieCompanyId)
+  } else {
+    console.log('❌ main.ts: No company_id cookie found')
   }
 }
 // ✅ STEP 4: Always sync cookie → localStorage

@@ -66,19 +66,33 @@ async bootstrap() {
     }
     urlParams.delete('_auth')
   }
-
-  // ✅ STEP 2: Save company_id from URL — highest priority
-  if (encodedCompanyId) {
-    try {
-      const companyId = atob(cleanBase64(encodedCompanyId))
-      localStorage.setItem('company_id', companyId)
-      setCompanyIdCookie(companyId)
-      console.log('✅ Company ID saved from _cid:', companyId)
-    } catch (e) {
-      console.log('❌ Company ID decode failed:', e)
-    }
-    urlParams.delete('_cid')
+// ✅ STEP 2: Save company_id from URL — highest priority
+if (encodedCompanyId) {
+  try {
+    const companyId = atob(cleanBase64(encodedCompanyId))
+    localStorage.setItem('company_id', companyId)
+    setCompanyIdCookie(companyId)
+    console.log('✅ Company ID saved from _cid:', companyId)
+  } catch (e) {
+    console.log('❌ Company ID decode failed:', e)
   }
+  urlParams.delete('_cid')
+}
+
+// ... Step 3: clean URL ...
+
+// ✅ Only sync cookie → localStorage if _cid was NOT in URL
+if (!encodedCompanyId) {
+  const cookieCompanyId = getCookie('company_id')
+  console.log('🍪 cookie company_id:', cookieCompanyId)
+
+  if (cookieCompanyId) {
+    localStorage.setItem('company_id', cookieCompanyId)
+    console.log('🔄 Synced company_id from cookie → localStorage:', cookieCompanyId)
+  } else {
+    console.log('❌ No company_id cookie found on this domain')
+  }
+}
 
   // ✅ STEP 3: Clean URL
   const newUrl =
