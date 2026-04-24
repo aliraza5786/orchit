@@ -68,7 +68,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch, nextTick } from 'vue'
+import { computed, ref, onMounted, nextTick } from 'vue'
 import Button from '../../components/ui/Button.vue'
 import ProjectGallery from '../../components/ui/ProjectGallery.vue'
 import WorkspaceListTable from './components/WorkspaceListTable.vue'
@@ -147,61 +147,6 @@ function handleCreateWorkspace() {
   }
 }
 
-// ✅ IMPROVED: Early URL param handling (but still safe)
-function ensureCompanyIdFromUrl() {
-  const cidParam = route.query._cid as string
-  
-  if (!cidParam) {
-    console.log('ℹ️ No _cid in URL, using existing company_id from store')
-    return
-  }
-
-  let companyId = cidParam
-  try {
-    companyId = atob(cidParam.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
-    console.log('✅ Home.vue: Decoded _cid:', companyId)
-  } catch (e) {
-    console.warn('⚠️ Home.vue: _cid decode failed, using raw value:', cidParam)
-  }
-
-  // ✅ Update auth store directly (will sync to localStorage)
-  authStore.company_id = companyId
-  localStorage.setItem('company_id', companyId)
-
-  // ✅ Update cookies
-  const hostname = window.location.hostname
-  const maxAge = 60 * 60 * 24 * 30
-  if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-    document.cookie = `company_id=${companyId}; path=/; max-age=${maxAge}; SameSite=Lax`
-  } else if (hostname.endsWith('.streamed.space')) {
-    document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-  }
-
-  console.log('✅ Home.vue: company_id ensured:', companyId)
-}
-
-// ✅ IMPROVED: Clean URL properly (remove _cid AND welcome)
-function cleanUrlParams() {
-  const params = new URLSearchParams(window.location.search)
-  let shouldClean = false
-
-  if (params.has('welcome')) {
-    params.delete('welcome')
-    shouldClean = true
-  }
-
-  if (params.has('_cid')) {
-    params.delete('_cid')
-    shouldClean = true
-  }
-
-  if (shouldClean) {
-    const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '')
-    window.history.replaceState({}, '', newUrl)
-    console.log('🧹 URL cleaned')
-  }
-}
-
 onMounted(async () => {
   console.log('🏠 Home.vue mounted')
 
@@ -210,36 +155,15 @@ onMounted(async () => {
     console.log('⏳ Waiting for auth store to initialize...')
     await authStore.bootstrap()
   }
-
-  // ✅ STEP 2: Ensure company_id from URL if present
-  ensureCompanyIdFromUrl()
-
-  // ✅ STEP 3: Launch confetti if welcome
   await nextTick()
   if (route.query.welcome === '1') {
     console.log('🎉 Launching confetti welcome!')
     launchConfetti()
   }
-
-  // ✅ STEP 4: Clean URL
-  cleanUrlParams()
-
-  // ✅ STEP 5: Log final state
   console.log('✅ Home.vue ready:', {
     companyId: authStore.company_id,
     userId: authStore.userId,
     authenticated: authStore.isAuthenticated,
   })
 })
-
-// ✅ NEW: Watch company_id to ensure consistency
-watch(
-  () => authStore.company_id,
-  (newValue) => {
-    if (newValue) {
-      console.log('🔄 Auth store company_id updated:', newValue)
-      localStorage.setItem('company_id', newValue)
-    }
-  }
-)
 </script>

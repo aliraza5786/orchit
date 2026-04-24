@@ -13,10 +13,7 @@ import { initThemeImmediately } from './composables/useTheme'
 import { createHead } from '@vueuse/head'
 import vue3GoogleLogin from 'vue3-google-login'
 
-// ✅ STEP 0: Initialize early flag
-const FORCED_COMPANY_ID_KEY = 'forced_company_id'
-
-// ✅ STEP 1: Set document.domain FIRST before anything else
+// ✅ STEP 1: Set document.domain FIRST
 if (window.location.hostname === 'streamed.space' || window.location.hostname.endsWith('.streamed.space')) {
   document.domain = 'streamed.space'
   console.log('🌍 document.domain set to streamed.space')
@@ -32,16 +29,10 @@ if (window.location.hostname === 'streamed.space' || window.location.hostname.en
 // ✅ STEP 2: Read URL params
 const urlParams = new URLSearchParams(window.location.search)
 const encodedToken = urlParams.get('_auth')
-const encodedCompanyId = urlParams.get('_cid')
+const companyId = urlParams.get('company_id') // ✅ plain, no encoding
 
 const hostname = window.location.hostname
 const maxAge = 60 * 60 * 24 * 30
-
-// ✅ STEP 2.5: Mark forced company_id early if present in URL
-if (encodedCompanyId) {
-  sessionStorage.setItem(FORCED_COMPANY_ID_KEY, 'true')
-  console.log('🔒 Marking company_id as forced from URL')
-}
 
 // ✅ STEP 3: Decode and save token from URL
 if (encodedToken) {
@@ -67,21 +58,8 @@ if (encodedToken) {
   }
 }
 
-// ✅ STEP 3.5: Decode and save company_id from URL early
-if (encodedCompanyId) {
-  let companyId = encodedCompanyId
-  try {
-    companyId = atob(
-      encodedCompanyId
-        .replace(/-/g, '+')
-        .replace(/_/g, '/')
-        .replace(/\./g, '=')
-    )
-    console.log('✅ main.ts: Decoded company_id:', companyId)
-  } catch (e) {
-    console.warn('⚠️ main.ts: company_id decode failed, using raw value:', encodedCompanyId)
-  }
-
+// ✅ STEP 4: Save plain company_id from URL
+if (companyId) {
   localStorage.setItem('company_id', companyId)
 
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
@@ -90,7 +68,7 @@ if (encodedCompanyId) {
     document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
   }
 
-  console.log('✅ main.ts: Company ID stored early and marked as forced')
+  console.log('✅ main.ts: company_id stored:', companyId)
 }
 
 const head = createHead()

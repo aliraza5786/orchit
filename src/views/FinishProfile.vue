@@ -40,44 +40,42 @@ function register() {
     return
   }
 
-  // Team — subdomain flow
   const encodedToken = route.query._auth as string
   const domainLink = route.query.domainLink as string
-
-  // ✅ Get _cid from URL or fallback to localStorage
   const rawCid = route.query._cid as string
-  const companyIdFromStorage = localStorage.getItem('company_id') || cookieCompanyId || ''
-  const encodedCompanyId = rawCid || companyIdFromStorage || ''
-   
-  console.log('🏢 _cid from URL:', rawCid)
-  console.log('🏢 company_id from localStorage:', companyIdFromStorage)
-  console.log('🔐 encodedCompanyId used:', encodedCompanyId)
 
-  if (encodedCompanyId) {
-    let companyId = encodedCompanyId
-    try {
-      companyId = atob(encodedCompanyId.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
-    } catch (e) {
-      console.warn('⚠️ company_id decode failed in FinishProfile, using raw')
-    }
-    document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=2592000; Secure; SameSite=Lax`
+  if (!rawCid) {
+    console.error('❌ No _cid found in finish-profile URL')
+    return
+  }
+
+  if (!encodedToken) {
+    console.error('❌ No _auth token found in finish-profile URL')
+    return
+  }
+
+  // ✅ Decode company_id — pass plain ID in URL
+  let companyId = ''
+  try {
+    companyId = atob(rawCid.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
+    console.log('✅ company_id decoded:', companyId)
+  } catch (e) {
+    console.error('❌ Failed to decode _cid:', e)
+    return
+  }
+
+  const buildUrl = (base: string) => {
+    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base
+    return `${cleanBase}/dashboard?welcome=1&_auth=${encodedToken}&company_id=${companyId}`
   }
 
   const isLocalhost = window.location.hostname === 'localhost'
-  const buildUrl = (base: string) => {
-    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
-    return `${cleanBase}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}`;
-  }
 
   if (isLocalhost) {
     const port = window.location.port ? `:${window.location.port}` : ''
-    const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}`
-    localStorage.setItem('subdomainUrl', subdomainUrl)
-    window.location.href = subdomainUrl
+    window.location.href = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}&company_id=${companyId}`
   } else if (domainLink) {
-    const subdomainUrl = buildUrl(domainLink)
-    localStorage.setItem('subdomainUrl', subdomainUrl)
-    window.location.href = subdomainUrl
+    window.location.href = buildUrl(domainLink)
   } else {
     router.push({ path: '/dashboard', query: { welcome: '1' } })
   }
