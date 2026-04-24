@@ -203,14 +203,6 @@ router.beforeEach(async (to, _from, next) => {
   if (to.name === 'Login' && hasToken) {
     return next({ name: 'Home' })
   }
-
-  // ✅ Ensure company_id persists across route changes
-  const storedCompanyId = localStorage.getItem('company_id')
-  if (storedCompanyId && auth.company_id !== storedCompanyId) {
-    auth.company_id = storedCompanyId
-    console.log('🔄 Restored company_id from localStorage:', storedCompanyId)
-  }
-
   next()
 })// Add this check before route transitions
 router.beforeEach(async (to, _from, next) => {
@@ -258,13 +250,6 @@ router.beforeEach(async (to, _from, next) => {
 
   if (to.name === 'Login' && hasToken) {
     return next({ name: 'Home' })
-  }
-
-  // ✅ Ensure company_id persists across route changes
-  const storedCompanyId = localStorage.getItem('company_id')
-  if (storedCompanyId && auth.company_id !== storedCompanyId) {
-    auth.company_id = storedCompanyId
-    console.log('🔄 Restored company_id from localStorage:', storedCompanyId)
   }
 
   next()

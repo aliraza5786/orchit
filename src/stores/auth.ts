@@ -75,24 +75,7 @@ export const useAuthStore = defineStore('auth', {
   try {
     const res = await api.get('/profile')
     this.user = res.data
-const activeCompanyId = res.data?.data?.active_company_id
-
-if (activeCompanyId) {
-  this.company_id = activeCompanyId
-  localStorage.setItem('company_id', activeCompanyId)
-  console.log('✅ company_id from API:', activeCompanyId)
-} else {
-  console.log('⚠️ No active_company_id in profile')
-
-  // fallback (optional but useful)
-  const stored = localStorage.getItem('company_id')
-  if (stored) {
-    this.company_id = stored
-    console.log('♻️ Restored company_id from localStorage:', stored)
-  }
-}
-
-  } catch (e) {
+} catch (e) {
     console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
   } finally {
     this.initialized = true
@@ -102,7 +85,7 @@ if (activeCompanyId) {
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
-      localStorage.removeItem('company_id')
+      // localStorage.removeItem('company_id')
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
       localStorage.removeItem('mannualWorkspace')
