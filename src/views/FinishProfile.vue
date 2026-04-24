@@ -21,6 +21,12 @@ import Button from '../components/ui/Button.vue';
 import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
+
+const cookieCompanyId = document.cookie
+  .split('; ')
+  .find(row => row.startsWith('company_id='))
+  ?.split('=')[1]
+console.log("company id from cookie:", cookieCompanyId)
 function register() {
   const type = route.query.type as string
 
@@ -40,7 +46,7 @@ function register() {
 
   // ✅ Get _cid from URL or fallback to localStorage
   const rawCid = route.query._cid as string
-  const companyIdFromStorage = localStorage.getItem('company_id') ?? ''
+  const companyIdFromStorage = localStorage.getItem('company_id') || cookieCompanyId || ''
   const encodedCompanyId = rawCid || 
     (companyIdFromStorage 
       ? btoa(companyIdFromStorage).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.') 
@@ -56,7 +62,10 @@ function register() {
   }
 
   const isLocalhost = window.location.hostname === 'localhost'
-  const buildUrl = (base: string) => `${base}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}`
+  const buildUrl = (base: string) => {
+    const cleanBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    return `${cleanBase}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}`;
+  }
 
   if (isLocalhost) {
     const port = window.location.port ? `:${window.location.port}` : ''
@@ -71,11 +80,6 @@ function register() {
     router.push({ path: '/dashboard', query: { welcome: '1' } })
   }
 }
-const cookieCompanyId = document.cookie
-  .split('; ')
-  .find(row => row.startsWith('company_id='))
-  ?.split('=')[1]
-    console.log("company id from cookie", cookieCompanyId)
 function createWS() {
   const encodedToken = route.query._auth as string
   const domainLink = route.query.domainLink as string

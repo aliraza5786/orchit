@@ -29,6 +29,7 @@ if (window.location.hostname === 'streamed.space' || window.location.hostname.en
 // ✅ STEP 2: Read URL params
 const urlParams = new URLSearchParams(window.location.search)
 const encodedToken = urlParams.get('_auth')
+const encodedCompanyId = urlParams.get('_cid')
 
 const hostname = window.location.hostname
 const maxAge = 60 * 60 * 24 * 30
@@ -54,6 +55,30 @@ if (encodedToken) {
     console.log('✅ main.ts: Token stored early')
   } catch (e) {
     console.error('❌ Token decode failed:', e)
+  }
+}
+
+// ✅ STEP 3.5: Decode and save company_id from URL early
+if (encodedCompanyId) {
+  try {
+    const companyId = atob(
+      encodedCompanyId
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .replace(/\./g, '=')
+    )
+
+    localStorage.setItem('company_id', companyId)
+
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+      document.cookie = `company_id=${companyId}; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else if (hostname.endsWith('.streamed.space')) {
+      document.cookie = `company_id=${companyId}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    }
+
+    console.log('✅ main.ts: Company ID stored early')
+  } catch (e) {
+    console.error('❌ Company ID decode failed:', e)
   }
 }
 
