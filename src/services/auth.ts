@@ -27,22 +27,32 @@ export const socialLogin = (payload: {
 }) => api.post("/auth/social-login", payload).then((res) => res.data);
 
 type createCompany = { payload: any };
+
 export const useCreateCompany = (options = {}) =>
   useApiMutation<any, createCompany>(
     {
       key: ["create-company"],
     } as any,
     {
-      mutationFn: (vars: createCompany) =>
-        request({
+      mutationFn: async (vars: createCompany) => {
+        const data = await request({
           url: `/workspace/company`,
           method: "POST",
           data: vars.payload,
-        }),
+        })
+
+        // ✅ Treat API-level failures as thrown errors
+        if (data?.status === false) {
+          const err = new Error(data?.message ?? 'Request failed')
+          ;(err as any).response = { data }
+          throw err
+        }
+
+        return data
+      },
       ...(options as any),
     } as any
   );
-
 export const useUpdateCompany = (options = {}) =>
   useApiMutation<any, createCompany>(
     {

@@ -63,89 +63,80 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     async bootstrap() {
-      console.log('🔍 Bootstrap starting... initialized:', this.initialized)
 
-      if (this.initialized) {
-        console.log('⏭️ Already initialized, skipping')
-        return
+  if (this.initialized) {
+    console.log('⏭️ Already initialized, skipping')
+    return
+  }
+
+  const urlParams = new URLSearchParams(window.location.search)
+  const encodedToken = urlParams.get('_auth')
+
+  const cleanBase64 = (str: string) =>
+    str.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=')
+
+  // ✅ STEP 1: Save token from URL
+  if (encodedToken) {
+    try {
+      let token = encodedToken
+      if (!encodedToken.startsWith('eyJ')) {
+        token = atob(cleanBase64(encodedToken))
       }
+      localStorage.setItem('token', token)
+      setAuthCookie({ token })
+      console.log('✅ Token saved from URL')
+    } catch (e) {
+      console.log('❌ Token decode failed, using existing token')
+    }
+  }
 
-      const urlParams = new URLSearchParams(window.location.search)
-      const encodedToken = urlParams.get('_auth')
+  // ✅ STEP 2: Clean URL — strip all transient auth/welcome params
+  const transientParams = ['_auth', 'welcome']
+  transientParams.forEach(p => urlParams.delete(p))
 
-      const cleanBase64 = (str: string) =>
-        str.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=')
+  const newUrl =
+    window.location.pathname +
+    (urlParams.toString() ? '?' + urlParams.toString() : '')
+  window.history.replaceState({}, '', newUrl)
 
-      // ✅ STEP 1: Save token from URL
-      if (encodedToken) {
-        try {
-          let token = encodedToken
-          if (!encodedToken.startsWith('eyJ')) {
-            token = atob(cleanBase64(encodedToken))
-          }
-          localStorage.setItem('token', token)
-          setAuthCookie({ token })
-          console.log('✅ Token saved from URL')
-        } catch (e) {
-          console.log('❌ Token decode failed, using existing token')
-        }
-        urlParams.delete('_auth')
-      }
+  // ✅ STEP 3: Read token — cookie first, then localStorage
+  const session = getAuthCookie()
+  const token = session?.token ?? localStorage.getItem('token')
+  if (!token) {
+    this.initialized = true
+    return
+  }
 
-      // ✅ STEP 2: Clean URL
-      const newUrl =
-        window.location.pathname +
-        (urlParams.toString() ? '?' + urlParams.toString() : '')
-      window.history.replaceState({}, '', newUrl)
+  // ✅ STEP 4: Sync company_id from cookie → localStorage + state
+  if (session?.company_id) {
+    localStorage.setItem('company_id', session.company_id)
+    this.company_id = session.company_id
+    console.log('✅ company_id synced from cookie:', session.company_id)
+  }
 
-      // ✅ STEP 3: Read token — cookie object first, then localStorage
-      const session = getAuthCookie()
-      const token = session?.token ?? localStorage.getItem('token')
+  // ✅ STEP 5: Fetch profile
+  try {
+    console.log('📡 Fetching profile...')
+    const res = await api.get('/profile')
+    this.user = res.data
+    const activeCompanyId = res.data?.data?.active_company_id
+    if (activeCompanyId && !this.company_id) {
+      localStorage.setItem('company_id', activeCompanyId)
+      this.company_id = activeCompanyId
+      setAuthCookie({ company_id: activeCompanyId })
+      console.log('✅ company_id saved from profile (fallback):', activeCompanyId)
+    } else if (this.company_id) {
+      console.log('⏭️ Keeping existing company_id:', this.company_id)
+    } else {
+      console.log('❌ No company_id found anywhere')
+    }
 
-      console.log('🔎 Token found:', !!token)
-      console.log('🍪 auth_session cookie:', session)
-
-      if (!token) {
-        this.initialized = true
-        return
-      }
-
-      // ✅ STEP 4: Sync company_id from cookie → localStorage + state
-      if (session?.company_id) {
-        localStorage.setItem('company_id', session.company_id)
-        this.company_id = session.company_id
-        console.log('✅ company_id synced from cookie:', session.company_id)
-      }
-
-      // ✅ STEP 5: Fetch profile
-      try {
-        console.log('📡 Fetching profile...')
-        const res = await api.get('/profile')
-        this.user = res.data
-        console.log('✅ Profile loaded')
-
-        const activeCompanyId = res.data?.data?.active_company_id
-        console.log('🏢 active_company_id from profile:', activeCompanyId)
-        console.log('📦 existing company_id:', this.company_id)
-
-        if (activeCompanyId && !this.company_id) {
-          // ✅ No company_id anywhere — use profile as fallback
-          localStorage.setItem('company_id', activeCompanyId)
-          this.company_id = activeCompanyId
-          setAuthCookie({ company_id: activeCompanyId })
-          console.log('✅ company_id saved from profile (fallback):', activeCompanyId)
-        } else if (this.company_id) {
-          console.log('⏭️ Keeping existing company_id:', this.company_id)
-        } else {
-          console.log('❌ No company_id found anywhere')
-        }
-
-      } catch (e) {
-        console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
-      } finally {
-        this.initialized = true
-      }
-    },
+  } catch (e) {
+    console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
+  } finally {
+    this.initialized = true
+  }
+},
 
     logout() {
       localStorage.removeItem('token')

@@ -136,10 +136,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 const props = defineProps({
   active: { type: Boolean, required: true },
+  abort: { type: Boolean, default: false }, 
+})
+// Add this watch inside the component script
+watch(() => props.abort, (shouldAbort) => {
+  if (shouldAbort) {
+    clearInterval(particleInterval)
+    clearTimeout(stepTimeout)
+  }
 })
 const emit = defineEmits(['complete'])
 const provisionSteps = [

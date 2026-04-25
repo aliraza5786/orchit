@@ -333,21 +333,21 @@
 
       <!-- CTA -->
       <button
-        type="button"
-        :disabled="!siteName || isCheckingSlug || isCreating"
-        class="w-full flex items-center justify-center gap-2 py-3.25 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
-        style="background: var(--accent); color: var(--accent-text);"
-        :style="!isCreating ? 'box-shadow: 0 2px 0 rgba(0,0,0,0.15)' : ''"
-        @mouseenter="(e) => !isCreating && ((e.target as HTMLButtonElement).style.background = 'var(--accent-hover)')"
-        @mouseleave="(e) => ((e.target as HTMLButtonElement).style.background = 'var(--accent)')"
-        @click="continueSiteHandler"
-      >
-        <span
-          v-if="isCreating"
-          class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
-        />
-        <span v-else>Create site</span>
-      </button>
+  type="button"
+  :disabled="!siteName || isCheckingSlug || isCreating || creatingProfile"
+  class="w-full flex items-center justify-center gap-2 py-3.25 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+  style="background: var(--accent); color: var(--accent-text);"
+  :style="(!isCreating && !creatingProfile) ? 'box-shadow: 0 2px 0 rgba(0,0,0,0.15)' : ''"
+  @mouseenter="(e) => (!isCreating && !creatingProfile) && ((e.target as HTMLButtonElement).style.background = 'var(--accent-hover)')"
+  @mouseleave="(e) => ((e.target as HTMLButtonElement).style.background = 'var(--accent)')"
+  @click="continueSiteHandler"
+>
+  <span
+    v-if="isCreating || creatingProfile"
+    class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
+  />
+  <span v-else>Create site</span>
+</button>
 
       <!-- DIVIDER + FOOTNOTE -->
       <div class="space-y-4">
@@ -368,7 +368,7 @@
 
 </div> 
 <div v-if="activeStep === 6" class="flex items-center justify-center mx-auto">
-  <LoadingCreateProfile :active="activeStep === 6" @complete="activeStep = 7" />
+  <LoadingCreateProfile :active="activeStep === 6" :abort="!!companySlugError" @complete="activeStep = 7" />
 </div>
 <div v-show="activeStep === 7" class="flex items-center justify-center min-h-full">
 
@@ -409,19 +409,20 @@
             </div>
           </Button>
     <!-- continue -->
-<Button 
-  size="md" 
-  @click="continueHandler"
-  :disabled="creatingProfile || updatingProfile || invitingPeople"
->
-  <div class="flex items-center gap-2">
-    <span
-      v-if="creatingProfile || updatingProfile"
-      class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
-    />
-    <span>Continue</span>
-  </div>
-</Button>
+            <Button
+              :disabled="creatingProfile || updatingProfile || invitingPeople || isUpdatingProfile"
+              size="md"
+              type="submit"
+              @click="continueHandler"
+            >
+              <div class="flex items-center gap-2">
+                <span
+                  v-if="creatingProfile || updatingProfile || isUpdatingProfile"
+                  class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
+                />
+                <span>Continue</span>
+              </div>
+            </Button>
     </div>
 
   </div>
@@ -515,7 +516,58 @@
       </div>
 
       <div class="max-w-125 md:mx-auto w-full space-y-6"></div>
+       <!-- Company slug conflict error modal -->
+<Transition
+  enter-active-class="transition duration-150 ease-out"
+  enter-from-class="opacity-0 scale-95"
+  enter-to-class="opacity-100 scale-100"
+  leave-active-class="transition duration-100 ease-in"
+  leave-from-class="opacity-100 scale-100"
+  leave-to-class="opacity-0 scale-95"
+>
+  <div
+    v-if="companySlugError"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4"
+    @click.self="companySlugError = null"
+  >
+    <div class="w-full max-w-md rounded-2xl bg-bg-dropdown p-6 shadow-xl ring-1 ring-black/5">
+      <!-- Icon -->
+      <div class="mb-4 flex h-13 w-13 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+        <i class="fa-solid fa-triangle-exclamation text-red-500 text-lg"></i>
+      </div>
+
+      <!-- Title -->
+      <h3 class="text-md font-semibold text-text-primary mb-1">
+        Company name already taken
+      </h3>
+
+      <!-- Message -->
+      <p class="text-sm text-text-secondary leading-relaxed mb-5">
+        {{ companySlugError }}
+      </p>
+
+      <!-- Actions -->
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer"
+          @click="companySlugError = null"
+        >
+          Dismiss
+        </button>
+        <button
+          type="button"
+          class="flex-[1.5] rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover transition cursor-pointer"
+          @click="() => { companySlugError = null; activeStep = 2 }"
+        >
+          Change company name
+        </button>
+      </div>
+    </div>
+  </div>
+</Transition>
     </template>
+   
   </AuthLayout>
 </template>
 
@@ -641,34 +693,55 @@ watch(siteName, async (val) => {
     isCheckingSlug.value = false
   }
 })
+// Add this ref at the top with your other refs
+const companySlugError = ref<string | null>(null)
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
-  onSuccess: (data: any) => {
-    const id = data?.company_id ?? data?._id
-    const join = data?.join_link ?? ''
-    const domain = data?.domain_link ?? ''
+onSuccess: (data: any) => {
+  const payload = data?.data ?? data
 
-    console.log('🏢 resolved company_id:', id)
-    console.log('🌐 resolved domainLink:', domain)
+  if (!payload || payload?.status === false) {
+    const serverMessage = payload?.message ?? ''
+    const isSlugConflict =
+      serverMessage.toLowerCase().includes('slug') ||
+      serverMessage.toLowerCase().includes('already exists') ||
+      serverMessage.toLowerCase().includes('company name')
 
-    companyID.value = id
-    joinLink.value = join
-    domainLink.value = domain
-
-    if (selected.value === 'team') {
-      localStorage.setItem('company_id', id ?? '')
-    } else {
-      const userId = authStore.user?._id ?? ''
-      localStorage.setItem('user_id', userId)
-    }
-
-    if (selected.value === 'personal' || selected.value === 'school') {
-      activeStep.value = 6
-      isProvisioning.value = true
-    }
-  },
-  onError: () => {
-    activeStep.value = 5
+    companySlugError.value = isSlugConflict
+      ? 'A company with a similar name already exists. Please go back and try a different company name.'
+      : 'Something went wrong while creating your company. Please try again.'
+    return
   }
+
+  const id = payload?.company_id ?? payload?._id
+  const join = payload?.join_link ?? ''
+  const domain = payload?.domain_link ?? ''
+
+  companyID.value = id
+  joinLink.value = join
+  domainLink.value = domain
+
+  if (selected.value === 'team') {
+    localStorage.setItem('company_id', id ?? '')
+    // ✅ Move to loading step directly
+    activeStep.value = 6
+    isProvisioning.value = true
+  } else {
+    const userId = authStore.user?._id ?? ''
+    localStorage.setItem('user_id', userId)
+    activeStep.value = 6
+    isProvisioning.value = true
+  }
+},
+  onError: (error: any) => {
+    const serverMessage = error?.response?.data?.message ?? error?.message ?? ''
+    const isSlugConflict =
+      serverMessage.toLowerCase().includes('slug') ||
+      serverMessage.toLowerCase().includes('already exists')
+
+    companySlugError.value = isSlugConflict
+      ? 'A company with a similar name already exists. Please go back and try a different company name.'
+      : 'Something went wrong while creating your company. Please try again.'
+  },
 })
 const { mutate: updateProfile, isPending: updatingProfile } = useUpdateCompany({
   onSuccess: async () => {
@@ -911,6 +984,7 @@ function goBack() {
   // Default: go back one step, but not below 1
   activeStep.value = Math.max(1, (activeStep.value - 1) as 1 | 2 | 3)
 }
+const isUpdatingProfile = ref(false)
 async function continueHandler() {
   if (activeStep.value === 2) {
 
@@ -944,32 +1018,38 @@ async function continueHandler() {
     activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
     return
   }
-
-  if (activeStep.value === 4) {
-    if (!workType.value) {
-      errors.value.role = 'Please select what kind of work you do.'
-      return
-    }
-    if (selected.value === 'school') {
-  const payload = buildProfilePayload()
-  createProfile({ payload })
-  return
-}
-if (selected.value === 'personal') {
-  await updateUserProfile({
-    u_work_to_do: personalRole.value,
-    work_to_do: workType.value,
-    like_to_manage: selectedModules.value,
-    heard_about_us: referralSources.value,
-  })
-  activeStep.value = 6
-  return
-}
-    
-    // For team: continue to step 5 (site creation)
-    activeStep.value = 5
+if (activeStep.value === 4) {
+  if (!workType.value) {
+    errors.value.role = 'Please select what kind of work you do.'
     return
   }
+
+  if (selected.value === 'school') {
+    const payload = buildProfilePayload()
+    createProfile({ payload })
+    return
+  }
+
+  if (selected.value === 'personal') {
+    isUpdatingProfile.value = true
+    try {
+      await updateUserProfile({
+        u_work_to_do: personalRole.value,
+        work_to_do: workType.value,
+        like_to_manage: selectedModules.value,
+        heard_about_us: referralSources.value,
+      })
+      activeStep.value = 6
+    } finally {
+      isUpdatingProfile.value = false
+    }
+    return
+  }
+
+  // For team: continue to step 5 (site creation)
+  activeStep.value = 5
+  return
+}
 if (activeStep.value === 7) {
   const payload = buildProfilePayload()
   
@@ -1000,20 +1080,11 @@ watch(emailList, (v) => {
     errors.value.emailList = undefined
   }
 })
-function createSite(){
-  console.log("abc");
-  
-}
 async function continueSiteHandler() {
   isCreating.value = true
   try {
-    await createSite()
-    // After site creation, create profile for team
     const payload = buildProfilePayload()
     createProfile({ payload })
-    // Directly move to step 6 (loading)
-    activeStep.value = 6
-    isProvisioning.value = true
   } finally {
     isCreating.value = false
   }
@@ -1052,15 +1123,7 @@ function sendInvites() {
   const encodedCompanyId = companyIdRaw
     ? btoa(companyIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
     : ''
-
-  // ✅ Use domainLink ref directly — already set in createProfile onSuccess  
   const domain = domainLink.value ?? ''
-
-  console.log('📦 companyID ref:', companyID.value)
-  console.log('📦 domainLink ref:', domain)
-  console.log('🔐 encodedToken:', encodedToken ? 'EXISTS' : 'MISSING')
-  console.log('🔐 encodedCompanyId:', encodedCompanyId ? 'EXISTS' : 'MISSING')
-
   const query: Record<string, string> = {
     siteSlug: siteSlug.value,
     domainLink: domain,
@@ -1069,9 +1132,6 @@ function sendInvites() {
 
   if (encodedToken) query._auth = encodedToken
   if (encodedCompanyId) query._cid = encodedCompanyId
-
-  console.log('📋 Final query going to /finish-profile:', query)
-
   if (emailList.value.length > 0) {
     invitePeople(
       {
