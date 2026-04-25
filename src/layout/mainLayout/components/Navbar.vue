@@ -122,130 +122,195 @@
         <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
  
         <!-- ── ACCOUNT SWITCHER ── -->
-        <div class="px-1 pt-2 pb-1">
-          <p class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-secondary/60">
-            Switch Account
-          </p>
- 
-          <Transition
-            enter-active-class="transition duration-150 ease-out"
-            enter-from-class="opacity-0 scale-95"
-            enter-to-class="opacity-100 scale-100"
-            leave-active-class="transition duration-100 ease-in"
-            leave-from-class="opacity-100 scale-100"
-            leave-to-class="opacity-0 scale-95"
-            mode="out-in"
-          >
-            <!-- Confirm panel -->
-            <div
-              v-if="pendingAccount"
-              key="confirm"
-              class="rounded-xl ring-1 ring-black/5 bg-bg-dropdown overflow-hidden mb-1"
-            >
-              <!-- From → To chips -->
-              <div class="flex items-center gap-2 bg-bg-dropdown-menu-hover/40 px-3 py-2.5">
-                <div class="flex-1 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center">
-                  <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">From</p>
-                  <p class="mt-0.5 truncate text-xs font-semibold">{{ currentAccount.name }}</p>
-                  <p class="truncate text-[10px] text-orange-500">{{ currentAccount.domain }}</p>
-                </div>
-                <i class="fa-solid fa-arrow-right text-text-secondary/40 text-xs flex-shrink-0"></i>
-                <div class="flex-1 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center">
-                  <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">To</p>
-                  <p class="mt-0.5 truncate text-xs font-semibold">{{ pendingAccount.name }}</p>
-                  <p class="truncate text-[10px] text-orange-500">{{ pendingAccount.domain }}</p>
-                </div>
-              </div>
- 
-              <!-- Warning -->
-              <div
-                class="flex gap-2 px-3 py-2 text-[11px] leading-relaxed"
-                :class="
-                  pendingAccount.type === 'company'
-                    ? 'bg-amber-50/80 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
-                    : 'bg-green-50/80 text-green-800 dark:bg-green-900/20 dark:text-green-300'
-                "
-              >
-                <i
-                  :class="pendingAccount.type === 'company' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-info'"
-                  class="mt-0.5 flex-shrink-0 text-xs"
-                ></i>
-                <span v-if="pendingAccount.type === 'company'">
-                  You'll be redirected to <strong>{{ pendingAccount.domain }}</strong>. Unsaved changes may be lost.
-                </span>
-                <span v-else>
-                  Returning to your personal account at <strong>{{ pendingAccount.domain }}</strong>.
-                </span>
-              </div>
- 
-              <!-- Actions -->
-              <div class="flex gap-2 px-3 py-2.5">
-                <button
-                  type="button"
-                  class="flex-1 cursor-pointer rounded-lg border border-black/10 bg-bg-dropdown px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition"
-                  @click="pendingAccount = null"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  class="flex-[1.5] cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60"
-                  :disabled="isSwitching"
-                  @click="confirmSwitch"
-                >
-                  <i v-if="isSwitching" class="fa-solid fa-circle-notch animate-spin text-[11px]"></i>
-                  <span>{{ isSwitching ? 'Switching…' : 'Confirm Switch' }}</span>
-                </button>
-              </div>
-            </div>
- 
-            <!-- Account list -->
-            <ul v-else key="list" class="space-y-0.5">
-              <li v-for="acc in accounts" :key="acc.id">
-                <button
-                  type="button"
-                  class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
-                  :class="acc.id === currentAccount.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
-                  @click="acc.id !== currentAccount.id && (pendingAccount = acc)"
-                >
-                  <!-- Avatar -->
-                  <div
-                    class="grid h-8 w-8 flex-shrink-0 place-items-center text-xs font-bold"
-                    :class="
-                      acc.type === 'company'
-                        ? 'rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300'
-                        : 'rounded-full bg-orange-500 text-white'
-                    "
-                  >
-                    {{ getInitials(acc.name) }}
-                  </div>
- 
-                  <!-- Info -->
-                  <div class="min-w-0 flex-1 text-left">
-                    <p class="truncate text-xs font-medium leading-tight">{{ acc.name }}</p>
-                    <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ acc.domain }}</p>
-                  </div>
- 
-                  <!-- Right: checkmark if active, "Switch" pill on hover -->
-                  <div class="flex-shrink-0">
-                    <span
-                      v-if="acc.id === currentAccount.id"
-                      class="grid h-5 w-5 place-items-center rounded-full bg-orange-500 text-[10px] text-white"
-                    >
-                      <i class="fa-solid fa-check"></i>
-                    </span>
-                    <span
-                      v-else
-                      class="hidden rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600 group-hover:block dark:bg-orange-900/30 dark:text-orange-400"
-                    >
-                      Switch
-                    </span>
-                  </div>
-                </button>
-              </li>
-            </ul>
-          </Transition>
+<!-- ── ACCOUNT SWITCHER ── -->
+<div class="px-1 pt-2 pb-1">
+  <p class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-secondary/60">
+    Switch Account
+  </p>
+
+  <Transition
+    enter-active-class="transition duration-150 ease-out"
+    enter-from-class="opacity-0 scale-95"
+    enter-to-class="opacity-100 scale-100"
+    leave-active-class="transition duration-100 ease-in"
+    leave-from-class="opacity-100 scale-100"
+    leave-to-class="opacity-0 scale-95"
+    mode="out-in"
+  >
+    <!-- ── Confirm panel ── -->
+    <div
+      v-if="pendingAccount"
+      key="confirm"
+      class="rounded-xl ring-1 ring-black/5 bg-bg-dropdown overflow-hidden mb-1"
+    >
+      <div class="flex items-center gap-2 bg-bg-dropdown-menu-hover/40 px-3 py-2.5">
+        <div class="flex-1 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center">
+          <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">From</p>
+          <p class="mt-0.5 truncate text-xs font-semibold">{{ currentAccount.name }}</p>
+          <p class="truncate text-[10px] text-orange-500">{{ currentAccount.domain }}</p>
         </div>
+        <i class="fa-solid fa-arrow-right text-text-secondary/40 text-xs flex-shrink-0"></i>
+        <div class="flex-1 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center">
+          <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">To</p>
+          <p class="mt-0.5 truncate text-xs font-semibold">{{ pendingAccount.name }}</p>
+          <p class="truncate text-[10px] text-orange-500">{{ pendingAccount.domain }}</p>
+        </div>
+      </div>
+
+      <div
+        class="flex gap-2 px-3 py-2 text-[11px] leading-relaxed"
+        :class="
+          pendingAccount.type === 'company'
+            ? 'bg-amber-50/80 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+            : 'bg-green-50/80 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+        "
+      >
+        <i
+          :class="pendingAccount.type === 'company' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-info'"
+          class="mt-0.5 flex-shrink-0 text-xs"
+        ></i>
+        <span v-if="pendingAccount.type === 'company'">
+          You'll be redirected to <strong>{{ pendingAccount.domain }}</strong>. Unsaved changes may be lost.
+        </span>
+        <span v-else>
+          Returning to your personal account at <strong>{{ pendingAccount.domain }}</strong>.
+        </span>
+      </div>
+
+      <div class="flex gap-2 px-3 py-2.5">
+        <button
+          type="button"
+          class="flex-1 cursor-pointer rounded-lg border border-black/10 bg-bg-dropdown px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition"
+          @click="pendingAccount = null"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="flex-[1.5] cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60"
+          :disabled="isSwitching"
+          @click="confirmSwitch"
+        >
+          <i v-if="isSwitching" class="fa-solid fa-circle-notch animate-spin text-[11px]"></i>
+          <span>{{ isSwitching ? 'Switching…' : 'Confirm Switch' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Account list ── -->
+    <div v-else key="list" class="flex flex-col gap-1">
+
+      <!-- Search — only shows when user has more than 4 companies -->
+      <div v-if="companyAccounts.length > 4" class="px-1 pb-1">
+        <div class="flex items-center gap-2 rounded-lg bg-bg-dropdown-menu-hover/50 px-2.5 py-1.5">
+          <i class="fa-regular fa-magnifying-glass text-text-secondary/50 text-xs flex-shrink-0"></i>
+          <input
+            v-model="accountSearch"
+            type="text"
+            placeholder="Search companies…"
+            class="flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-secondary/40 outline-none"
+          />
+          <button
+            v-if="accountSearch"
+            type="button"
+            @click="accountSearch = ''"
+            class="text-text-secondary/40 hover:text-text-secondary transition"
+          >
+            <i class="fa-solid fa-xmark text-[10px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pinned: Personal account -->
+      <div class="px-1">
+        <p class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary/40">
+          Personal
+        </p>
+        <button
+          type="button"
+          class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
+          :class="currentAccount.id === personalAccount.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
+          @click="currentAccount.id !== personalAccount.id && (pendingAccount = personalAccount)"
+        >
+          <div class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-xs font-bold text-white">
+            {{ getInitials(personalAccount.name) }}
+          </div>
+          <div class="min-w-0 flex-1 text-left">
+            <p class="truncate text-xs font-medium leading-tight">{{ personalAccount.name }}</p>
+            <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ personalAccount.domain }}</p>
+          </div>
+          <span
+            v-if="currentAccount.id === personalAccount.id"
+            class="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white"
+          >
+            <i class="fa-solid fa-check"></i>
+          </span>
+          <span
+            v-else
+            class="hidden flex-shrink-0 rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600 group-hover:block dark:bg-orange-900/30 dark:text-orange-400"
+          >
+            Switch
+          </span>
+        </button>
+      </div>
+
+      <div class="h-px w-full bg-bg-dropdown-menu-hover/40 my-0.5"></div>
+
+      <!-- Companies list — scrollable -->
+      <div class="px-1">
+        <p class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary/40">
+          Companies
+          <span class="ml-1 font-normal normal-case tracking-normal text-text-secondary/30">
+            ({{ filteredCompanyAccounts.length }})
+          </span>
+        </p>
+
+        <!-- Scrollable container -->
+        <ul class="max-h-[220px] overflow-y-auto overscroll-contain space-y-0.5 pr-0.5
+                   scrollbar-thin scrollbar-thumb-bg-dropdown-menu-hover scrollbar-track-transparent">
+
+          <!-- Empty state -->
+          <li v-if="filteredCompanyAccounts.length === 0" class="py-4 text-center text-xs text-text-secondary/50">
+            No companies match "<span class="font-medium">{{ accountSearch }}</span>"
+          </li>
+
+          <li v-for="acc in filteredCompanyAccounts" :key="acc.id">
+            <button
+              type="button"
+              class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
+              :class="acc.id === currentAccount.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
+              @click="acc.id !== currentAccount.id && (pendingAccount = acc)"
+            >
+              <!-- Company avatar: first 2 letters -->
+              <div class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-purple-100 text-xs font-bold text-purple-600 dark:bg-purple-900/40 dark:text-purple-300">
+                {{ getInitials(acc.name) }}
+              </div>
+
+              <div class="min-w-0 flex-1 text-left">
+                <p class="truncate text-xs font-medium leading-tight">{{ acc.name }}</p>
+                <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ acc.domain }}</p>
+              </div>
+
+              <span
+                v-if="acc.id === currentAccount.id"
+                class="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white"
+              >
+                <i class="fa-solid fa-check"></i>
+              </span>
+              <span
+                v-else
+                class="hidden flex-shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-600 group-hover:block dark:bg-purple-900/30 dark:text-purple-400"
+              >
+                Switch
+              </span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </Transition>
+</div>
+<!-- ── END ACCOUNT SWITCHER ── -->
         <!-- ── END ACCOUNT SWITCHER ── -->
  
         <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
@@ -394,26 +459,47 @@ import NotificationBell from './NotificationBell.vue'
 import LimitExceededModal from '../modals/LimitExceededModal.vue'
 import { useAuthStore } from '../../../stores/auth'
 import { useCurrentPackage } from '../../../queries/usePackages'
-const workspaceStore = useWorkspaceStore();
-/* Theme */
-const { setTheme, isDark } = useTheme()
+
+// ── Types ─────────────────────────────────────────────────────
+interface Account {
+  id: string
+  name: string
+  email: string
+  domain: string
+  type: 'individual' | 'company'
+}
+
+interface Company {
+  _id: string
+  title: string
+  domain_link: string
+  membership_role: string
+}
+
+// ── Stores & composables ───────────────────────────────────────
+const workspaceStore = useWorkspaceStore()
 const authStore = useAuthStore()
-/* Account Settings Modal */
+const { setTheme, isDark } = useTheme()
+const router = useRouter()
+const route = useRoute()
+const queryClient = useQueryClient()
+
+// ── Upgrade handler ────────────────────────────────────────────
 function handleUgrade() {
   router.push(`/settings?tab=billing&stripePayment=${true}`)
   workspaceStore.setLimitExccedModal(false)
 }
-/* Router */
-const router = useRouter()
 
-/* Data */
+// ── Profile query ──────────────────────────────────────────────
 const { data: profile, isPending } = useQuery({
   queryKey: ['profile'],
   queryFn: getProfile,
-  staleTime: 1000 * 60 * 5, // cache for 5 minutes
+  staleTime: 1000 * 60 * 5,
 })
 
 const profileData = computed(() => profile.value?.data ?? null)
+
+// ── Sync active_company_id → localStorage + authStore ─────────
 watch(
   () => profileData.value?.active_company_id,
   (activeCompanyId) => {
@@ -422,20 +508,22 @@ watch(
     if (stored !== activeCompanyId) {
       localStorage.setItem('company_id', activeCompanyId)
       authStore.company_id = activeCompanyId
-
-      console.log('company_id saved from profileData watch:', activeCompanyId)
     }
   },
   { immediate: true }
 )
-/* Limits Sync */
-const { data: currentPackage } = useCurrentPackage()
-watch(() => currentPackage.value, (pkg) => {
-  if (pkg) {
-    workspaceStore.setLimit(pkg)
-  }
-}, { immediate: true })
 
+// ── Package limits sync ────────────────────────────────────────
+const { data: currentPackage } = useCurrentPackage()
+watch(
+  () => currentPackage.value,
+  (pkg) => {
+    if (pkg) workspaceStore.setLimit(pkg)
+  },
+  { immediate: true }
+)
+
+// ── Navbar initials (top-right avatar) ────────────────────────
 const initials = computed(() => {
   const name = profileData.value?.u_full_name?.trim() || ''
   if (!name) return 'U'
@@ -443,7 +531,76 @@ const initials = computed(() => {
   return parts.map((n: string) => n[0]).join('').toUpperCase()
 })
 
-/* Menu state */
+// ── Dynamic account switcher ───────────────────────────────────
+const personalAccount = computed<Account>(() => ({
+  id: profileData.value?._id ?? 'personal',
+  name: profileData.value?.u_full_name ?? 'My Account',
+  email: profileData.value?.u_email ?? '',
+  domain: 'app.orchit.ai',
+  type: 'individual',
+}))
+
+const companyAccounts = computed<Account[]>(() =>
+  (profileData.value?.companies_list ?? []).map((c: Company) => ({
+    id: c._id,
+    name: c.title,
+    email: profileData.value?.u_email ?? '',
+    domain: c.domain_link.replace('https://', ''),
+    type: 'company',
+  }))
+)
+
+// Active account = matched company or fallback to personal
+const currentAccount = computed<Account>(() => {
+  const activeId = profileData.value?.active_company_id
+  if (!activeId) return personalAccount.value
+  return (
+    companyAccounts.value.find((c) => c.id === activeId) ??
+    personalAccount.value
+  )
+})
+
+const pendingAccount = ref<Account | null>(null)
+const isSwitching = ref(false)
+
+async function confirmSwitch() {
+  if (!pendingAccount.value) return
+  isSwitching.value = true
+  try {
+    // 🔁 Replace with real switch API call when available:
+    // await switchCompany(pendingAccount.value.id)
+    await new Promise((res) => setTimeout(res, 1200))
+
+    const isCompany = pendingAccount.value.type === 'company'
+    if (isCompany) {
+      authStore.company_id = pendingAccount.value.id
+      localStorage.setItem('company_id', pendingAccount.value.id)
+    } else {
+      authStore.company_id = null
+      localStorage.removeItem('company_id')
+    }
+
+    // Invalidate profile so active_company_id recomputes reactively
+    await queryClient.invalidateQueries({ queryKey: ['profile'] })
+
+    pendingAccount.value = null
+    menuOpen.value = false
+  } finally {
+    isSwitching.value = false
+  }
+}
+
+function getInitials(name: string) {
+  return name
+    .trim()
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+// ── Menu state ─────────────────────────────────────────────────
 const menuOpen = ref(false)
 const themeOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
@@ -455,19 +612,18 @@ function toggleMenu() {
   menuOpen.value = !menuOpen.value
   if (!menuOpen.value) themeOpen.value = false
 }
+
 function closeMenu() {
   menuOpen.value = false
   themeOpen.value = false
 }
 
-/* Submenu placement */
+// ── Theme submenu placement ────────────────────────────────────
 function computeThemePlacement() {
   const trigger = themeTriggerRef.value
   if (!trigger) return
   const rect = trigger.getBoundingClientRect()
-  const needed = 200 // ~w-48 + margin
-  const spaceRight = window.innerWidth - rect.right
-  themeFlipLeft.value = spaceRight < needed
+  themeFlipLeft.value = window.innerWidth - rect.right < 200
 }
 
 function openTheme() {
@@ -476,12 +632,14 @@ function openTheme() {
     nextTick(() => computeThemePlacement())
   }
 }
+
 function closeTheme() {
   themeOpen.value = false
 }
 
-/* Click outside + resize (rAF throttled) */
+// ── Click outside + resize (rAF throttled) ────────────────────
 let rAF: number | null = null
+
 function onResize() {
   if (!menuOpen.value || !themeOpen.value) return
   if (rAF) cancelAnimationFrame(rAF)
@@ -490,27 +648,14 @@ function onResize() {
     rAF = null
   })
 }
+
 function onClickOutside(e: MouseEvent) {
   const root = menuRef.value
   if (!root) return
   if (!root.contains(e.target as Node)) closeMenu()
 }
-const route = useRoute()
-onMounted(() => {
-  if (route.query.stripePayment) {
-    router.push({ path: "/settings", query: { ...route.query, tab: "billing" } })
-  }
-  document.addEventListener('click', onClickOutside)
-  window.addEventListener('resize', onResize)
-})
 
-onBeforeUnmount(() => {
-  document.removeEventListener('click', onClickOutside)
-  window.removeEventListener('resize', onResize)
-  if (rAF) cancelAnimationFrame(rAF)
-})
-const queryClient = useQueryClient();
-/* Actions */
+// ── Auth actions ───────────────────────────────────────────────
 async function handleLogout() {
   try {
     closeMenu()
@@ -518,9 +663,7 @@ async function handleLogout() {
     authStore.logout()
     await queryClient.cancelQueries()
     queryClient.clear()
-
     router.push('/login')
-
   } catch (e) {
     console.error('Logout failed', e)
   }
@@ -531,13 +674,14 @@ function openAccountSettings() {
   router.push('/settings')
 }
 
-/* --- Sliding underline indicator logic --- */
+// ── Nav links ──────────────────────────────────────────────────
 const links = [
   { label: 'Workspaces', to: '/dashboard', exact: true },
   { label: 'My Tasks', to: '/dashboard/task' },
   { label: 'Users', to: '/dashboard/users' },
 ]
 
+// ── Sliding underline indicator ────────────────────────────────
 const linksContainerRef = ref<HTMLElement | null>(null)
 const linkRefs = new Map<string, HTMLElement>()
 const indicatorLeft = ref(0)
@@ -559,12 +703,15 @@ function positionIndicatorForEl(el: HTMLElement | null) {
 
 function syncIndicatorToRoute() {
   const path = router.currentRoute.value.path
-  // choose the best match (exact first, else startsWith)
   let target: HTMLElement | undefined
-  if (linkRefs.has(path)) target = linkRefs.get(path)!
-  else {
+  if (linkRefs.has(path)) {
+    target = linkRefs.get(path)!
+  } else {
     for (const [key, el] of linkRefs.entries()) {
-      if (path.startsWith(key) && key !== '/') { target = el; break }
+      if (path.startsWith(key) && key !== '/') {
+        target = el
+        break
+      }
     }
     if (!target) target = linkRefs.get('/')
   }
@@ -572,17 +719,20 @@ function syncIndicatorToRoute() {
 }
 
 function previewIndicator(path: string) {
-  const el = linkRefs.get(path) || null
-  positionIndicatorForEl(el)
+  positionIndicatorForEl(linkRefs.get(path) || null)
 }
 
-watch(() => router.currentRoute.value.path, async () => {
-  await nextTick()
-  syncIndicatorToRoute()
-})
+watch(
+  () => router.currentRoute.value.path,
+  async () => {
+    await nextTick()
+    syncIndicatorToRoute()
+  }
+)
 
-// Resize handling (rAF throttled)
+// Resize handling for indicator (rAF throttled)
 let rAF2: number | null = null
+
 function onResizeIndicator() {
   if (rAF2) cancelAnimationFrame(rAF2)
   rAF2 = requestAnimationFrame(() => {
@@ -591,53 +741,41 @@ function onResizeIndicator() {
   })
 }
 
+// ── Lifecycle ──────────────────────────────────────────────────
 onMounted(() => {
+  if (route.query.stripePayment) {
+    router.push({ path: '/settings', query: { ...route.query, tab: 'billing' } })
+  }
+  document.addEventListener('click', onClickOutside)
+  window.addEventListener('resize', onResize)
   window.addEventListener('resize', onResizeIndicator)
   nextTick(syncIndicatorToRoute)
 })
 
 onBeforeUnmount(() => {
+  document.removeEventListener('click', onClickOutside)
+  window.removeEventListener('resize', onResize)
   window.removeEventListener('resize', onResizeIndicator)
+  if (rAF) cancelAnimationFrame(rAF)
   if (rAF2) cancelAnimationFrame(rAF2)
 })
-// ── Static test accounts ──────────────────────────────────────
-const accounts = [
-  {
-    id: 'u1',
-    name: 'Tanveer Hassan',
-    email: 'tanveerhassan4445+9@gmail.com',
-    domain: 'app.orchit.ai',
-    type: 'individual',
-  },
-  {
-    id: 'c1',
-    name: 'Nexus Solutions',
-    email: 'admin@nexussolutions.com',
-    domain: 'nexussolutions.orchit.ai',
-    type: 'company',
-  },
-]
- 
-const currentAccount = ref(accounts[0])
-const pendingAccount = ref<typeof accounts[0] | null>(null)
-const isSwitching    = ref(false)
- 
-function confirmSwitch() {
-  isSwitching.value = true
-  // Simulates a 1.2s async call — replace with real API later
-  setTimeout(() => {
-    if (pendingAccount.value) {
-  currentAccount.value = pendingAccount.value
-}
-    pendingAccount.value  = null
-    isSwitching.value     = false
-    menuOpen.value        = false
-  }, 1200)
-}
- 
-function getInitials(name:string) {
-  return name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
-}
+// ── Account search ─────────────────────────────────────────────
+const accountSearch = ref('')
+
+const filteredCompanyAccounts = computed(() => {
+  const q = accountSearch.value.trim().toLowerCase()
+  if (!q) return companyAccounts.value
+  return companyAccounts.value.filter(
+    (c) =>
+      c.name.toLowerCase().includes(q) ||
+      c.domain.toLowerCase().includes(q)
+  )
+})
+
+// Clear search when dropdown closes
+watch(menuOpen, (open) => {
+  if (!open) accountSearch.value = ''
+})
 </script>
 
 <style scoped>

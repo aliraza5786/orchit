@@ -1,7 +1,7 @@
 // src/features/workspaces/queries.ts
 import { useApiQuery, useApiMutation } from "../libs/vq.ts";
 import api, { request } from "../libs/api.ts"; // for dynamic-URL mutations
-import { computed, unref, type Ref } from "vue";
+import { computed, unref, type Ref, ref } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import { useAuthStore } from "../stores/auth.ts";
 export const keys = {
@@ -93,18 +93,10 @@ export const useWorkspacesPrompt = () =>
 export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
   const authStore = useAuthStore();
 
-  return useQuery({
-    queryKey: computed(() => {
-      // ✅ Safely handle all values
-      const pageVal = unref(page) ?? 1;
-      const limitVal = unref(limit) ?? 10;
-      const filterVal = unref(filter) ?? "all";
-      const companyId = authStore.company_id ?? "";
+  const companyId = computed(() => authStore.company_id ?? "");
 
-      console.log("📋 Query Key:", { pageVal, limitVal, filterVal, companyId });
-      
-      return ["workspaces", pageVal, limitVal, filterVal, companyId];
-    }),
+  return useQuery({
+    queryKey: ["workspaces", page, limit, filter ?? ref("all"), companyId],
     queryFn: async () => {
       const companyId = authStore.company_id;
 
@@ -113,19 +105,21 @@ export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Re
         return { workspaces: [] };
       }
 
-      const url = `/workspace/all?page=${unref(page)}&limit=${unref(
-        limit
-      )}&filter=${unref(filter) || "all"}`;
+      const pageVal = unref(page);
+      const limitVal = unref(limit);
+      const filterVal = unref(filter) || "all";
 
-      console.log("📡 Fetching:", url, "with company_id:", companyId);
+      const url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}&company_id=${companyId}`;
+
+      console.log("📡 Fetching:", url);
 
       return request({
         url,
         method: "GET",
       });
     },
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 1000 * 60 * 5, // 5 minutes — avoids refetch on every mount
+    refetchOnMount: true,      // only refetch if data is stale, not always
     enabled: computed(() => !!authStore.company_id),
   });
 };
