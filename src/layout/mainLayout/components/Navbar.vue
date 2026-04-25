@@ -447,20 +447,16 @@ watch(
   (activeCompanyId) => {
     if (!activeCompanyId) return
 
-    // ✅ Only save if this ID belongs to a real company account
-    const isRealCompany = companyAccounts.value.some(c => c.id === activeCompanyId)
-    if (!isRealCompany) {
-      // It's the user's own _id leaking in — clear it
-      localStorage.removeItem('company_id')
-      authStore.company_id = null
-      return
-    }
+    // Only run on initial load (when localStorage has nothing yet)
+    const alreadyStored = localStorage.getItem('company_id')
+    if (alreadyStored !== undefined && alreadyStored !== null) return  // user already made a choice, don't overwrite
 
-    const stored = localStorage.getItem('company_id')
-    if (stored !== activeCompanyId) {
-      localStorage.setItem('company_id', activeCompanyId)
-      authStore.company_id = activeCompanyId
-    }
+    // First-ever load: check it's a real company before saving
+    const isRealCompany = companyAccounts.value.some(c => c.id === activeCompanyId)
+    if (!isRealCompany) return
+
+    localStorage.setItem('company_id', activeCompanyId)
+    authStore.company_id = activeCompanyId
   },
   { immediate: true }
 )
@@ -514,28 +510,21 @@ const currentAccount = computed<Account>(() => {
 
 const pendingAccount = ref<Account | null>(null)
 const isSwitching = ref(false)
-
 async function confirmSwitch() {
   if (!pendingAccount.value) return
-
   isSwitching.value = true
 
   try {
     await new Promise((res) => setTimeout(res, 1200))
 
-    const isCompany = pendingAccount.value.type === 'company'
-
-    if (isCompany) {
-      // ✅ Set both reactive + storage
+    if (pendingAccount.value.type === 'company') {
       authStore.company_id = pendingAccount.value.id
       localStorage.setItem('company_id', pendingAccount.value.id)
     } else {
-      // ✅ Clear both
       authStore.company_id = null
-      localStorage.removeItem('company_id')
+      localStorage.removeItem('company_id')  // ✅ watcher won't overwrite because alreadyStored check returns early
     }
 
-    // 🔥 IMPORTANT: invalidate ALL queries depending on company
     await queryClient.invalidateQueries({
       predicate: (query) =>
         query.queryKey.includes('current-package') ||
@@ -549,7 +538,6 @@ async function confirmSwitch() {
     isSwitching.value = false
   }
 }
-
 function getInitials(name: string) {
   return name
     .trim()
@@ -621,6 +609,8 @@ async function handleLogout() {
     closeMenu()
     workspaceStore.setWorkspace(null)
     authStore.logout()
+    localStorage.removeItem('account_mode')
+    localStorage.removeItem('company_id')
     await queryClient.cancelQueries()
     queryClient.clear()
     router.push('/login')
