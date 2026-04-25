@@ -44,21 +44,7 @@
 
       <!-- Right controls -->
       <div class="flex items-center gap-4">
-        <!-- Icons -->
-        <!-- <button
-          class="grid h-9 w-9 place-items-center rounded-xl border border-transparent text-text-secondary transition-[transform,background,box-shadow]
-                   hover:scale-105 hover:bg-bg-dropdown-menu-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
-          aria-label="Notifications" type="button">
-          <i class="fa-regular fa-bell"></i>
-        </button>
-        <button
-          class="grid h-9 w-9 place-items-center rounded-xl border border-transparent text-text-secondary transition-[transform,background,box-shadow]
-                   hover:scale-105 hover:bg-bg-dropdown-menu-hover hover:text-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
-          aria-label="Help" type="button">
-          <i class="fa-regular fa-circle-question"></i>
-        </button> -->
-
-          <!-- notificaion icon -->
+           <!-- notification icon -->
            <NotificationBell/>
         <!-- Avatar + Menu -->
         <div class="relative" ref="menuRef">
@@ -77,280 +63,283 @@
             @keydown.space.prevent="toggleMenu" @keydown.esc.prevent="closeMenu" type="button">
             {{ initials }}
           </button>
-<Transition
-      enter-active-class="transition duration-150 ease-out"
-      enter-from-class="opacity-0 -translate-y-1 scale-95"
-      enter-to-class="opacity-100 translate-y-0 scale-100"
-      leave-active-class="transition duration-120 ease-in"
-      leave-from-class="opacity-100 translate-y-0 scale-100"
-      leave-to-class="opacity-0 -translate-y-1 scale-95"
-    >
-    <div
-  v-if="menuOpen"
-  id="user-menu"
-  class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown p-1.5 text-sm shadow-xl ring-1 ring-black/5
-         w-[min(300px,calc(100vw-24px))]
-         max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)]
-         flex flex-col max-h-[calc(100vh-80px)]"
-  role="menu"
-  @keydown.esc.stop.prevent="menuOpen = false"
->
-  <!-- Header — fixed -->
-  <div class="flex items-center gap-2.5 rounded-xl p-2.5 flex-shrink-0">
-    <div class="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white">
-      {{ getInitials(currentAccount.name) }}
-    </div>
-    <div class="min-w-0 flex-1">
-      <p class="truncate text-sm font-semibold leading-5">{{ currentAccount.name }}</p>
-      <p class="truncate text-[11px] text-text-secondary">{{ currentAccount.email }}</p>
-      <span
-        class="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-        :class="currentAccount.type === 'company'
-          ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
-          : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'"
-      >
-        <i :class="currentAccount.type === 'company' ? 'fa-solid fa-building' : 'fa-solid fa-user'" class="text-[9px]"></i>
-        {{ currentAccount.type === 'company' ? 'Company' : 'Personal' }}
-      </span>
-    </div>
-  </div>
 
-  <div class="h-px w-full bg-bg-dropdown-menu-hover/50 flex-shrink-0"></div>
-
-  <!-- Scrollable middle section (account switcher only) -->
-  <div class="flex-1 overflow-y-auto overscroll-contain min-h-0">
-    <!-- ── ACCOUNT SWITCHER ── -->
-    <div class="px-1 pt-2 pb-1">
-      <p class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-secondary/60">
-        Switch Account
-      </p>
-
-      <Transition
-        enter-active-class="transition duration-150 ease-out"
-        enter-from-class="opacity-0 scale-95"
-        enter-to-class="opacity-100 scale-100"
-        leave-active-class="transition duration-100 ease-in"
-        leave-from-class="opacity-100 scale-100"
-        leave-to-class="opacity-0 scale-95"
-        mode="out-in"
-      >
-        <!-- Confirm panel -->
-        <div v-if="pendingAccount" key="confirm" class="rounded-xl ring-1 ring-black/5 bg-bg-dropdown overflow-hidden mb-1">
-         <div class="flex items-center gap-2 bg-bg-dropdown-menu-hover/40 px-3 py-2.5">
-  <!-- From chip -->
-  <div class="flex-1 min-w-0 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center overflow-hidden">
-    <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">From</p>
-    <p class="mt-0.5 truncate text-xs font-semibold text-text-primary">{{ currentAccount.name }}</p>
-    <p class="truncate text-[10px] text-accent">{{ currentAccount.domain }}</p>
-  </div>
-
-  <!-- Arrow -->
-  <i class="fa-solid fa-arrow-right text-text-secondary/40 text-xs flex-shrink-0"></i>
-
-  <!-- To chip -->
-  <div class="flex-1 min-w-0 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center overflow-hidden">
-    <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">To</p>
-    <p class="mt-0.5 truncate text-xs font-semibold text-text-primary">{{ pendingAccount.name }}</p>
-    <p class="truncate text-[10px] text-accent">{{ pendingAccount.domain }}</p>
-  </div>
-</div>
-          <div
-            class="flex gap-2 px-3 py-2 text-[11px] leading-relaxed"
-            :class="pendingAccount.type === 'company'
-              ? 'bg-amber-50/80 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
-              : 'bg-green-50/80 text-green-800 dark:bg-green-900/20 dark:text-green-300'"
+          <Transition
+            enter-active-class="transition duration-150 ease-out"
+            enter-from-class="opacity-0 -translate-y-1 scale-95"
+            enter-to-class="opacity-100 translate-y-0 scale-100"
+            leave-active-class="transition duration-120 ease-in"
+            leave-from-class="opacity-100 translate-y-0 scale-100"
+            leave-to-class="opacity-0 -translate-y-1 scale-95"
           >
-            <i :class="pendingAccount.type === 'company' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-info'" class="mt-0.5 flex-shrink-0 text-xs"></i>
-            <span v-if="pendingAccount.type === 'company'">
-              You'll be redirected to <strong>{{ pendingAccount.domain }}</strong>. Unsaved changes may be lost.
-            </span>
-            <span v-else>
-              Returning to your personal account at <strong>{{ pendingAccount.domain }}</strong>.
-            </span>
-          </div>
-          <div class="flex gap-2 px-3 py-2.5">
-            <button
-              type="button"
-              class="flex-1 cursor-pointer rounded-lg border border-black/10 bg-bg-dropdown px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition"
-              @click="pendingAccount = null"
-            >Cancel</button>
-            <button
-              type="button"
-              class="flex-[1.5] cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60"
-              :disabled="isSwitching"
-              @click="confirmSwitch"
+            <div
+              v-if="menuOpen"
+              id="user-menu"
+              class="absolute right-0 mt-2 origin-top-right rounded-2xl bg-bg-dropdown p-1.5 text-sm shadow-xl ring-1 ring-black/5
+                     w-[min(300px,calc(100vw-24px))]
+                     max-md:fixed max-md:left-1/2 max-md:-translate-x-1/2 max-md:right-auto max-md:top-[60px] max-md:w-[calc(100vw-32px)]
+                     flex flex-col max-h-[calc(100vh-80px)]"
+              role="menu"
+              @keydown.esc.stop.prevent="menuOpen = false"
             >
-              <i v-if="isSwitching" class="fa-solid fa-circle-notch animate-spin text-[11px]"></i>
-              <span>{{ isSwitching ? 'Switching…' : 'Confirm Switch' }}</span>
-            </button>
-          </div>
-        </div>
+              <!-- Header — fixed -->
+              <div class="flex items-center gap-2.5 rounded-xl p-2.5 flex-shrink-0">
+                <div class="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white">
+                  {{ getInitials(currentAccount.name) }}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-semibold leading-5">{{ currentAccount.name }}</p>
+                  <p class="truncate text-[11px] text-text-secondary">{{ currentAccount.email }}</p>
+                  <span
+                    class="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                    :class="currentAccount.type === 'company'
+                      ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                      : 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400'"
+                  >
+                    <i :class="currentAccount.type === 'company' ? 'fa-solid fa-building' : 'fa-solid fa-user'" class="text-[9px]"></i>
+                    {{ currentAccount.type === 'company' ? 'Company' : 'Personal' }}
+                  </span>
+                </div>
+              </div>
 
-        <!-- Account list -->
-        <div v-else key="list" class="flex flex-col gap-1">
-          <!-- Search -->
-          <div v-if="companyAccounts.length > 4" class="px-1 pb-1">
-            <div class="flex items-center gap-2 rounded-lg bg-bg-dropdown-menu-hover/50 px-2.5 py-1.5">
-              <i class="fa-regular fa-magnifying-glass text-text-secondary/50 text-xs flex-shrink-0"></i>
-              <input
-                v-model="accountSearch"
-                type="text"
-                placeholder="Search companies…"
-                class="flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-secondary/40 outline-none"
-              />
-              <button v-if="accountSearch" type="button" @click="accountSearch = ''" class="text-text-secondary/40 hover:text-text-secondary transition">
-                <i class="fa-solid fa-xmark text-[10px]"></i>
-              </button>
+              <div class="h-px w-full bg-bg-dropdown-menu-hover/50 flex-shrink-0"></div>
+
+              <!-- Scrollable middle section (account switcher only) -->
+              <div class="flex-1 overflow-y-auto overscroll-contain min-h-0">
+                <!-- ── ACCOUNT SWITCHER ── -->
+                <div class="px-1 pt-2 pb-1">
+                  <p class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-secondary/60">
+                    Switch Account
+                  </p>
+
+                  <Transition
+                    enter-active-class="transition duration-150 ease-out"
+                    enter-from-class="opacity-0 scale-95"
+                    enter-to-class="opacity-100 scale-100"
+                    leave-active-class="transition duration-100 ease-in"
+                    leave-from-class="opacity-100 scale-100"
+                    leave-to-class="opacity-0 scale-95"
+                    mode="out-in"
+                  >
+                    <!-- Confirm panel -->
+                    <div v-if="pendingAccount" key="confirm" class="rounded-xl ring-1 ring-black/5 bg-bg-dropdown overflow-hidden mb-1">
+                      <div class="flex items-center gap-2 bg-bg-dropdown-menu-hover/40 px-3 py-2.5">
+                        <!-- From chip -->
+                        <div class="flex-1 min-w-0 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center overflow-hidden">
+                          <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">From</p>
+                          <p class="mt-0.5 truncate text-xs font-semibold text-text-primary">{{ currentAccount.name }}</p>
+                          <p class="truncate text-[10px] text-accent">{{ currentAccount.domain }}</p>
+                        </div>
+
+                        <!-- Arrow -->
+                        <i class="fa-solid fa-arrow-right text-text-secondary/40 text-xs flex-shrink-0"></i>
+
+                        <!-- To chip -->
+                        <div class="flex-1 min-w-0 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center overflow-hidden">
+                          <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">To</p>
+                          <p class="mt-0.5 truncate text-xs font-semibold text-text-primary">{{ pendingAccount.name }}</p>
+                          <p class="truncate text-[10px] text-accent">{{ pendingAccount.domain }}</p>
+                        </div>
+                      </div>
+
+                      <div
+                        class="flex gap-2 px-3 py-2 text-[11px] leading-relaxed"
+                        :class="pendingAccount.type === 'company'
+                          ? 'bg-amber-50/80 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300'
+                          : 'bg-green-50/80 text-green-800 dark:bg-green-900/20 dark:text-green-300'"
+                      >
+                        <i :class="pendingAccount.type === 'company' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-info'" class="mt-0.5 flex-shrink-0 text-xs"></i>
+                        <span v-if="pendingAccount.type === 'company'">
+                          You'll be redirected to <strong>{{ pendingAccount.domain }}</strong>. Unsaved changes may be lost.
+                        </span>
+                        <span v-else>
+                          Returning to your personal account at <strong>{{ pendingAccount.domain }}</strong>.
+                        </span>
+                      </div>
+
+                      <div class="flex gap-2 px-3 py-2.5">
+                        <button
+                          type="button"
+                          class="flex-1 cursor-pointer rounded-lg border border-black/10 bg-bg-dropdown px-3 py-1.5 text-xs font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition"
+                          @click="pendingAccount = null"
+                        >Cancel</button>
+                        <button
+                          type="button"
+                          class="flex-[1.5] cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60"
+                          :disabled="isSwitching"
+                          @click="confirmSwitch"
+                        >
+                          <i v-if="isSwitching" class="fa-solid fa-circle-notch animate-spin text-[11px]"></i>
+                          <span>{{ isSwitching ? 'Switching…' : 'Confirm Switch' }}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Account list -->
+                    <div v-else key="list" class="flex flex-col gap-1">
+                      <!-- Search -->
+                      <div v-if="companyAccounts.length > 4" class="px-1 pb-1">
+                        <div class="flex items-center gap-2 rounded-lg bg-bg-dropdown-menu-hover/50 px-2.5 py-1.5">
+                          <i class="fa-regular fa-magnifying-glass text-text-secondary/50 text-xs flex-shrink-0"></i>
+                          <input
+                            v-model="accountSearch"
+                            type="text"
+                            placeholder="Search companies…"
+                            class="flex-1 bg-transparent text-xs text-text-primary placeholder:text-text-secondary/40 outline-none"
+                          />
+                          <button v-if="accountSearch" type="button" @click="accountSearch = ''" class="text-text-secondary/40 hover:text-text-secondary transition">
+                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Personal -->
+                      <div class="px-1">
+                        <p class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary/40">Personal</p>
+                        <button
+                          type="button"
+                          class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
+                          :class="currentAccount.id === personalAccount.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
+                          @click="currentAccount.id !== personalAccount.id && (pendingAccount = personalAccount)"
+                        >
+                          <div class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-xs font-bold text-white">
+                            {{ getInitials(personalAccount.name) }}
+                          </div>
+                          <div class="min-w-0 flex-1 text-left">
+                            <p class="truncate text-xs font-medium leading-tight">{{ personalAccount.name }}</p>
+                            <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ personalAccount.domain }}</p>
+                          </div>
+                          <span v-if="currentAccount.id === personalAccount.id" class="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white">
+                            <i class="fa-solid fa-check"></i>
+                          </span>
+                          <span v-else class="hidden flex-shrink-0 rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600 group-hover:block dark:bg-orange-900/30 dark:text-orange-400">
+                            Switch
+                          </span>
+                        </button>
+                      </div>
+
+                      <div class="h-px w-full bg-bg-dropdown-menu-hover/40 my-0.5"></div>
+
+                      <!-- Companies — capped height so footer stays visible -->
+                      <div class="px-1">
+                        <p class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary/40">
+                          Companies
+                          <span class="ml-1 font-normal normal-case tracking-normal text-text-secondary/30">({{ filteredCompanyAccounts.length }})</span>
+                        </p>
+                        <ul class="max-h-[180px] overflow-y-auto overscroll-contain space-y-0.5 pr-0.5 scrollbar-thin scrollbar-thumb-bg-dropdown-menu-hover scrollbar-track-transparent">
+                          <li v-if="filteredCompanyAccounts.length === 0" class="py-4 text-center text-xs text-text-secondary/50">
+                            No companies match "<span class="font-medium">{{ accountSearch }}</span>"
+                          </li>
+                          <li v-for="acc in filteredCompanyAccounts" :key="acc.id">
+                            <button
+                              type="button"
+                              class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
+                              :class="acc.id === currentAccount.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
+                              @click="acc.id !== currentAccount.id && (pendingAccount = acc)"
+                            >
+                              <div class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-purple-100 text-xs font-bold text-purple-600 dark:bg-purple-900/40 dark:text-purple-300">
+                                {{ getInitials(acc.name) }}
+                              </div>
+                              <div class="min-w-0 flex-1 text-left">
+                                <p class="truncate text-xs font-medium leading-tight">{{ acc.name }}</p>
+                                <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ acc.domain }}</p>
+                              </div>
+                              <span v-if="acc.id === currentAccount.id" class="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white">
+                                <i class="fa-solid fa-check"></i>
+                              </span>
+                              <span v-else class="hidden flex-shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-600 group-hover:block dark:bg-purple-900/30 dark:text-purple-400">
+                                Switch
+                              </span>
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                  </Transition>
+                </div>
+              </div>
+
+              <!-- Footer — always visible, never scrolls away -->
+              <div class="flex-shrink-0">
+                <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
+                <ul class="p-1">
+                  <li>
+                    <button
+                      class="cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                      role="menuitem" type="button" @click="openAccountSettings"
+                    >
+                      <i class="fa-regular fa-gear"></i>
+                      <span>Account settings</span>
+                    </button>
+                  </li>
+
+                  <!-- Theme submenu -->
+                  <li class="relative cursor-pointer" @mouseenter="openTheme()" @mouseleave="closeTheme()">
+                    <button
+                      ref="themeTriggerRef"
+                      class="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                      role="menuitem" aria-haspopup="menu"
+                      :aria-expanded="themeOpen ? 'true' : 'false'"
+                      @keydown.right.prevent="openTheme()"
+                      @keydown.left.prevent="closeTheme()"
+                      type="button"
+                    >
+                      <span class="flex items-center gap-3">
+                        <i class="fa-regular fa-circle"></i>
+                        Theme
+                      </span>
+                      <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+
+                    <Transition
+                      enter-active-class="transition duration-150 ease-out"
+                      enter-from-class="opacity-0 translate-x-1 scale-95"
+                      enter-to-class="opacity-100 translate-x-0 scale-100"
+                      leave-active-class="transition duration-120 ease-in"
+                      leave-from-class="opacity-100 translate-x-0 scale-100"
+                      leave-to-class="opacity-0 translate-x-1 scale-95"
+                    >
+                      <div
+                        v-if="themeOpen"
+                        ref="themeMenuRef"
+                        class="absolute z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
+                        role="menu"
+                        :class="[
+                          themeFlipLeft ? 'right-[-17px] sm:right-full sm:mr-2' : 'left-full ml-2',
+                          'bottom-0 sm:bottom-auto sm:top-0'
+                        ]"
+                      >
+                        <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover" @click="setTheme('system'); closeMenu()" type="button">
+                          <i class="fa-solid fa-desktop"></i> System
+                        </button>
+                        <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover" @click="setTheme('light'); closeMenu()" type="button">
+                          <i class="fa-regular fa-sun-cloud"></i> Light
+                        </button>
+                        <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover" @click="setTheme('dark'); closeMenu()" type="button">
+                          <i class="fa-regular fa-clouds-moon"></i> Dark
+                        </button>
+                      </div>
+                    </Transition>
+                  </li>
+
+                  <li>
+                    <button
+                      class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                      role="menuitem" type="button" @click="handleLogout"
+                    >
+                      <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
+                      <span>Log out</span>
+                    </button>
+                  </li>
+                </ul>
+              </div>
             </div>
-          </div>
-
-          <!-- Personal -->
-          <div class="px-1">
-            <p class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary/40">Personal</p>
-            <button
-              type="button"
-              class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
-              :class="currentAccount.id === personalAccount.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
-              @click="currentAccount.id !== personalAccount.id && (pendingAccount = personalAccount)"
-            >
-              <div class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-xs font-bold text-white">
-                {{ getInitials(personalAccount.name) }}
-              </div>
-              <div class="min-w-0 flex-1 text-left">
-                <p class="truncate text-xs font-medium leading-tight">{{ personalAccount.name }}</p>
-                <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ personalAccount.domain }}</p>
-              </div>
-              <span v-if="currentAccount.id === personalAccount.id" class="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white">
-                <i class="fa-solid fa-check"></i>
-              </span>
-              <span v-else class="hidden flex-shrink-0 rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600 group-hover:block dark:bg-orange-900/30 dark:text-orange-400">
-                Switch
-              </span>
-            </button>
-          </div>
-
-          <div class="h-px w-full bg-bg-dropdown-menu-hover/40 my-0.5"></div>
-
-          <!-- Companies — capped height so footer stays visible -->
-          <div class="px-1">
-            <p class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary/40">
-              Companies
-              <span class="ml-1 font-normal normal-case tracking-normal text-text-secondary/30">({{ filteredCompanyAccounts.length }})</span>
-            </p>
-            <ul class="max-h-[180px] overflow-y-auto overscroll-contain space-y-0.5 pr-0.5 scrollbar-thin scrollbar-thumb-bg-dropdown-menu-hover scrollbar-track-transparent">
-              <li v-if="filteredCompanyAccounts.length === 0" class="py-4 text-center text-xs text-text-secondary/50">
-                No companies match "<span class="font-medium">{{ accountSearch }}</span>"
-              </li>
-              <li v-for="acc in filteredCompanyAccounts" :key="acc.id">
-                <button
-                  type="button"
-                  class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
-                  :class="acc.id === currentAccount.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
-                  @click="acc.id !== currentAccount.id && (pendingAccount = acc)"
-                >
-                  <div class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-purple-100 text-xs font-bold text-purple-600 dark:bg-purple-900/40 dark:text-purple-300">
-                    {{ getInitials(acc.name) }}
-                  </div>
-                  <div class="min-w-0 flex-1 text-left">
-                    <p class="truncate text-xs font-medium leading-tight">{{ acc.name }}</p>
-                    <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ acc.domain }}</p>
-                  </div>
-                  <span v-if="acc.id === currentAccount.id" class="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white">
-                    <i class="fa-solid fa-check"></i>
-                  </span>
-                  <span v-else class="hidden flex-shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-600 group-hover:block dark:bg-purple-900/30 dark:text-purple-400">
-                    Switch
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </Transition>
-    </div>
-  </div>
-
-  <!-- Footer — always visible, never scrolls away -->
-  <div class="flex-shrink-0">
-    <div class="h-px w-full bg-bg-dropdown-menu-hover/50"></div>
-    <ul class="p-1">
-      <li>
-        <button
-          class="cursor-pointer flex w-full items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-          role="menuitem" type="button" @click="openAccountSettings"
-        >
-          <i class="fa-regular fa-gear"></i>
-          <span>Account settings</span>
-        </button>
-      </li>
-
-      <!-- Theme submenu -->
-      <li class="relative cursor-pointer" @mouseenter="openTheme()" @mouseleave="closeTheme()">
-        <button
-          ref="themeTriggerRef"
-          class="flex w-full items-center justify-between rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-          role="menuitem" aria-haspopup="menu"
-          :aria-expanded="themeOpen ? 'true' : 'false'"
-          @keydown.right.prevent="openTheme()"
-          @keydown.left.prevent="closeTheme()"
-          type="button"
-        >
-          <span class="flex items-center gap-3">
-            <i class="fa-regular fa-circle"></i>
-            Theme
-          </span>
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
-
-        <Transition
-          enter-active-class="transition duration-150 ease-out"
-          enter-from-class="opacity-0 translate-x-1 scale-95"
-          enter-to-class="opacity-100 translate-x-0 scale-100"
-          leave-active-class="transition duration-120 ease-in"
-          leave-from-class="opacity-100 translate-x-0 scale-100"
-          leave-to-class="opacity-0 translate-x-1 scale-95"
-        >
-          <div
-            v-if="themeOpen"
-            ref="themeMenuRef"
-            class="absolute z-10 w-48 origin-top-left rounded-xl bg-bg-dropdown p-1 shadow-lg ring-1 ring-black/5"
-            role="menu"
-            :class="[
-              themeFlipLeft ? 'right-[-17px] sm:right-full sm:mr-2' : 'left-full ml-2',
-              'bottom-0 sm:bottom-auto sm:top-0'
-            ]"
-          >
-            <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover" @click="setTheme('system'); closeMenu()" type="button">
-              <i class="fa-solid fa-desktop"></i> System
-            </button>
-            <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover" @click="setTheme('light'); closeMenu()" type="button">
-              <i class="fa-regular fa-sun-cloud"></i> Light
-            </button>
-            <button class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover" @click="setTheme('dark'); closeMenu()" type="button">
-              <i class="fa-regular fa-clouds-moon"></i> Dark
-            </button>
-          </div>
-        </Transition>
-      </li>
-
-      <li>
-        <button
-          class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-          role="menuitem" type="button" @click="handleLogout"
-        >
-          <i class="fa-solid fa-arrow-right-from-bracket rotate-180"></i>
-          <span>Log out</span>
-        </button>
-      </li>
-    </ul>
-  </div>
-</div>
-    </Transition>
+          </Transition>
         </div>
       </div>
     </div>
-
   </nav>
+
   <LimitExceededModal @upgrade="handleUgrade" />
 
   <!-- Mobile Sidebar -->
@@ -404,7 +393,7 @@ import LimitExceededModal from '../modals/LimitExceededModal.vue'
 import { useAuthStore } from '../../../stores/auth'
 import { useCurrentPackage } from '../../../queries/usePackages'
 
-// ── Types ─────────────────────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────────
 interface Account {
   id: string
   name: string
@@ -442,24 +431,6 @@ const { data: profile, isPending } = useQuery({
 })
 
 const profileData = computed(() => profile.value?.data ?? null)
-watch(
-  () => profileData.value?.active_company_id,
-  (activeCompanyId) => {
-    if (!activeCompanyId) return
-
-    // Only run on initial load (when localStorage has nothing yet)
-    const alreadyStored = localStorage.getItem('company_id')
-    if (alreadyStored !== undefined && alreadyStored !== null) return  // user already made a choice, don't overwrite
-
-    // First-ever load: check it's a real company before saving
-    const isRealCompany = companyAccounts.value.some(c => c.id === activeCompanyId)
-    if (!isRealCompany) return
-
-    localStorage.setItem('company_id', activeCompanyId)
-    authStore.company_id = activeCompanyId
-  },
-  { immediate: true }
-)
 
 // ── Package limits sync ────────────────────────────────────────
 const { data: currentPackage } = useCurrentPackage()
@@ -498,9 +469,11 @@ const companyAccounts = computed<Account[]>(() =>
   }))
 )
 
-// Active account = matched company or fallback to personal
+// ── currentAccount reads from authStore (localStorage) ONLY ───
+// The server's active_company_id is IGNORED because it always
+// returns a company ID even when the user is on personal mode.
 const currentAccount = computed<Account>(() => {
-  const activeId = profileData.value?.active_company_id
+  const activeId = authStore.company_id  // ✅ driven by localStorage via authStore
   if (!activeId) return personalAccount.value
   return (
     companyAccounts.value.find((c) => c.id === activeId) ??
@@ -508,8 +481,10 @@ const currentAccount = computed<Account>(() => {
   )
 })
 
+// ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null)
 const isSwitching = ref(false)
+
 async function confirmSwitch() {
   if (!pendingAccount.value) return
   isSwitching.value = true
@@ -518,11 +493,14 @@ async function confirmSwitch() {
     await new Promise((res) => setTimeout(res, 1200))
 
     if (pendingAccount.value.type === 'company') {
+      // ✅ Switching to company: save to localStorage + authStore
       authStore.company_id = pendingAccount.value.id
       localStorage.setItem('company_id', pendingAccount.value.id)
     } else {
+      // ✅ Switching to personal: clear both — nothing will re-save
+      // because we no longer watch active_company_id from the server
       authStore.company_id = null
-      localStorage.removeItem('company_id')  // ✅ watcher won't overwrite because alreadyStored check returns early
+      localStorage.removeItem('company_id')
     }
 
     await queryClient.invalidateQueries({
@@ -538,6 +516,7 @@ async function confirmSwitch() {
     isSwitching.value = false
   }
 }
+
 function getInitials(name: string) {
   return name
     .trim()
@@ -609,7 +588,7 @@ async function handleLogout() {
     closeMenu()
     workspaceStore.setWorkspace(null)
     authStore.logout()
-    localStorage.removeItem('account_mode')
+    // ✅ Always wipe company_id on logout so next login starts clean
     localStorage.removeItem('company_id')
     await queryClient.cancelQueries()
     queryClient.clear()
@@ -696,6 +675,13 @@ onMounted(() => {
   if (route.query.stripePayment) {
     router.push({ path: '/settings', query: { ...route.query, tab: 'billing' } })
   }
+
+  // ✅ Seed authStore from localStorage on every page load.
+  // We do NOT use the server's active_company_id because the server
+  // always returns a company ID regardless of the user's chosen mode.
+  const storedCompanyId = localStorage.getItem('company_id')
+  authStore.company_id = storedCompanyId ?? null
+
   document.addEventListener('click', onClickOutside)
   window.addEventListener('resize', onResize)
   window.addEventListener('resize', onResizeIndicator)
@@ -709,6 +695,7 @@ onBeforeUnmount(() => {
   if (rAF) cancelAnimationFrame(rAF)
   if (rAF2) cancelAnimationFrame(rAF2)
 })
+
 // ── Account search ─────────────────────────────────────────────
 const accountSearch = ref('')
 
