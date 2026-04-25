@@ -80,37 +80,61 @@ const onConfirmDelete = () => {
     isDeleting.value = true
     deleteWorkspace({ id: workspaceToAction.value._id })
 }
-
 const renderActions = ({ row }: any) => {
-    if (props.filter === 'deleted') return h('div', { class: 'h-8' })
-    if(!row?.has_permission_to_manage_user) return
+  if (props.filter === 'deleted') return h('div', { class: 'h-8' })
+  if (!row?.has_permission_to_manage_user) return
 
-    const isArchived = props.filter === 'archived'
-    const archiveIcon = isArchived ? 'fa-regular fa-folder-open' : 'fa-regular fa-folder-closed'
-    const archiveTitle = isArchived ? 'Unarchive' : 'Archive'
+  const isArchived = props.filter === 'archived'
+  const archiveIcon = isArchived ? 'fa-regular fa-folder-open' : 'fa-regular fa-folder-closed'
+  const archiveTitle = isArchived ? 'Unarchive' : 'Archive'
 
-    return h('div', { class: 'flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity' }, [
-        h('button', {
-            class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary group/action',
-            onClick: (e: Event) => {
-                e.stopPropagation()
-                handleArchive(row)
-            },
-            title: archiveTitle
-        }, [
-            h('i', { class: `${archiveIcon} text-sm` })
-        ]),
-        h('button', {
-            class: 'p-2 hover:bg-red-500/10 rounded-md transition-colors text-red-500 hover:text-red-600 group/action',
-            onClick: (e: Event) => {
-                e.stopPropagation()
-                openDeleteConfirm(row)
-            },
-            title: 'Delete'
-        }, [
-            h('i', { class: 'fa-regular fa-trash-can text-sm' })
-        ])
-    ])
+  return h(
+    'div',
+    { class: 'flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity' },
+    [
+      // 👁️ View button (NEW)
+      h(
+        'button',
+        {
+          class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary',
+          onClick: (e: Event) => {
+            e.stopPropagation()
+            handleClick({ row }) // same behavior as project click
+          },
+          title: 'View'
+        },
+        [h('i', { class: 'fa-regular fa-eye text-sm' })]
+      ),
+
+      // 📁 Archive / Unarchive
+      h(
+        'button',
+        {
+          class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary group/action',
+          onClick: (e: Event) => {
+            e.stopPropagation()
+            handleArchive(row)
+          },
+          title: archiveTitle
+        },
+        [h('i', { class: `${archiveIcon} text-sm` })]
+      ),
+
+      // 🗑 Delete
+      h(
+        'button',
+        {
+          class: 'p-2 hover:bg-red-500/10 rounded-md transition-colors text-red-500 hover:text-red-600 group/action',
+          onClick: (e: Event) => {
+            e.stopPropagation()
+            openDeleteConfirm(row)
+          },
+          title: 'Delete'
+        },
+        [h('i', { class: 'fa-regular fa-trash-can text-sm' })]
+      )
+    ]
+  )
 }
 
 const renderProject = ({ row, value }: any) =>
@@ -132,7 +156,27 @@ const renderProject = ({ row, value }: any) =>
             }
         }, value?.title || 'Untitled'),
     ])
+const renderCompanyPercentage = ({ row }: any) => {
+  const percentage = row?.task_stats?.total_percentage ?? 0
 
+  return h('div', { class: 'flex items-center gap-2 w-full' }, [
+    // Progress bar background
+    h('div', {
+      class: 'flex-1 h-2 rounded-full bg-bg-dropdown-menu-hover overflow-hidden'
+    }, [
+      // Progress fill
+      h('div', {
+        class: 'h-full rounded-full bg-orange-500 transition-all duration-300',
+        style: { width: `${percentage}%` }
+      })
+    ]),
+
+    // Percentage text
+    h('span', {
+      class: 'text-xs text-text-secondary w-10 text-right'
+    }, `${percentage}%`)
+  ])
+}
 const renderProjectType = ({ value }: any) =>
     h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-')
 
@@ -205,6 +249,7 @@ const columns = [
     { key: 'People', label: 'People', render: renderPeople, width: '120px' },
     { key: 'created_at', label: 'Start Date', render: renderStartDate, width: '150px' },
     { key: 'admin', label: 'Workspace Owner', render:  renderCompanyAdmin, width: '200px' },
+    { key: 'percentage', label: 'Percentage', render:  renderCompanyPercentage, width: '200px' },
     { key: 'actions', label: '', render: renderActions, align: 'right' as const, width: '50px' },
 ]
 

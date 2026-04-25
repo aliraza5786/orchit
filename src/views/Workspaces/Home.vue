@@ -144,9 +144,22 @@ function handleCreateWorkspace() {
     router.push('/create-workspace')
   }
 }
-
 onMounted(async () => {
   await nextTick()
+  const paramsToRemove = ['welcome', '_auth', '_cid']
+  const query = { ...route.query }
+  let dirty = false
+
+  paramsToRemove.forEach((param) => {
+    if (param in query) {
+      delete query[param]
+      dirty = true
+    }
+  })
+
+  if (dirty) {
+    router.replace({ path: route.path, query })
+  }
   if (route.query.welcome === '1') {
     launchConfetti()
   }

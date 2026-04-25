@@ -136,19 +136,24 @@
       >
         <!-- Confirm panel -->
         <div v-if="pendingAccount" key="confirm" class="rounded-xl ring-1 ring-black/5 bg-bg-dropdown overflow-hidden mb-1">
-          <div class="flex items-center gap-2 bg-bg-dropdown-menu-hover/40 px-3 py-2.5">
-            <div class="flex-1 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center">
-              <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">From</p>
-              <p class="mt-0.5 truncate text-xs font-semibold">{{ currentAccount.name }}</p>
-              <p class="truncate text-[10px] text-orange-500">{{ currentAccount.domain }}</p>
-            </div>
-            <i class="fa-solid fa-arrow-right text-text-secondary/40 text-xs flex-shrink-0"></i>
-            <div class="flex-1 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center">
-              <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">To</p>
-              <p class="mt-0.5 truncate text-xs font-semibold">{{ pendingAccount.name }}</p>
-              <p class="truncate text-[10px] text-orange-500">{{ pendingAccount.domain }}</p>
-            </div>
-          </div>
+         <div class="flex items-center gap-2 bg-bg-dropdown-menu-hover/40 px-3 py-2.5">
+  <!-- From chip -->
+  <div class="flex-1 min-w-0 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center overflow-hidden">
+    <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">From</p>
+    <p class="mt-0.5 truncate text-xs font-semibold text-text-primary">{{ currentAccount.name }}</p>
+    <p class="truncate text-[10px] text-accent">{{ currentAccount.domain }}</p>
+  </div>
+
+  <!-- Arrow -->
+  <i class="fa-solid fa-arrow-right text-text-secondary/40 text-xs flex-shrink-0"></i>
+
+  <!-- To chip -->
+  <div class="flex-1 min-w-0 rounded-lg border border-black/5 bg-bg-dropdown px-2 py-1.5 text-center overflow-hidden">
+    <p class="text-[9px] uppercase tracking-wider text-text-secondary/60 font-semibold">To</p>
+    <p class="mt-0.5 truncate text-xs font-semibold text-text-primary">{{ pendingAccount.name }}</p>
+    <p class="truncate text-[10px] text-accent">{{ pendingAccount.domain }}</p>
+  </div>
+</div>
           <div
             class="flex gap-2 px-3 py-2 text-[11px] leading-relaxed"
             :class="pendingAccount.type === 'company'
@@ -504,23 +509,31 @@ const isSwitching = ref(false)
 
 async function confirmSwitch() {
   if (!pendingAccount.value) return
+
   isSwitching.value = true
+
   try {
-    // 🔁 Replace with real switch API call when available:
-    // await switchCompany(pendingAccount.value.id)
     await new Promise((res) => setTimeout(res, 1200))
 
     const isCompany = pendingAccount.value.type === 'company'
+
     if (isCompany) {
+      // ✅ Set both reactive + storage
       authStore.company_id = pendingAccount.value.id
       localStorage.setItem('company_id', pendingAccount.value.id)
     } else {
+      // ✅ Clear both
       authStore.company_id = null
       localStorage.removeItem('company_id')
     }
 
-    // Invalidate profile so active_company_id recomputes reactively
-    await queryClient.invalidateQueries({ queryKey: ['profile'] })
+    // 🔥 IMPORTANT: invalidate ALL queries depending on company
+    await queryClient.invalidateQueries({
+      predicate: (query) =>
+        query.queryKey.includes('current-package') ||
+        query.queryKey.includes('subscription') ||
+        query.queryKey.includes('profile'),
+    })
 
     pendingAccount.value = null
     menuOpen.value = false

@@ -4,16 +4,33 @@ import { useApiMutation, useApiQuery } from "../libs/vq";
 import { useQuery } from "@tanstack/vue-query";
 import { unref } from "vue";
 import api from "../libs/api";
+import { ref, computed } from "vue"
+const companyId = ref(localStorage.getItem("company_id"))
+export const useCompany = () => {
+  const setCompanyId = (id: string) => {
+    localStorage.setItem("company_id", id)
+    companyId.value = id
+  }
+
+  return { companyId, setCompanyId }
+}
+
 export const useCurrentPackage = () => {
-  const companyId = localStorage.getItem('company_id')
+  const { companyId } = useCompany()
+
+  const url = computed(() =>
+    `/auth/subscription-stats${
+      companyId.value ? `?company_id=${companyId.value}` : ""
+    }`
+  )
 
   return useApiQuery({
     key: ["current-package", companyId],
-    url: `/auth/subscription-stats${companyId ? `?company_id=${companyId}` : ''}`,
+    url,
     method: "GET",
+    enabled: computed(() => !!companyId.value),
   })
 }
-
 export const useUpgradePackage = (options = {}) =>
   useApiMutation<any, any>(
     {
