@@ -442,12 +442,20 @@ const { data: profile, isPending } = useQuery({
 })
 
 const profileData = computed(() => profile.value?.data ?? null)
-
-// ── Sync active_company_id → localStorage + authStore ─────────
 watch(
   () => profileData.value?.active_company_id,
   (activeCompanyId) => {
     if (!activeCompanyId) return
+
+    // ✅ Only save if this ID belongs to a real company account
+    const isRealCompany = companyAccounts.value.some(c => c.id === activeCompanyId)
+    if (!isRealCompany) {
+      // It's the user's own _id leaking in — clear it
+      localStorage.removeItem('company_id')
+      authStore.company_id = null
+      return
+    }
+
     const stored = localStorage.getItem('company_id')
     if (stored !== activeCompanyId) {
       localStorage.setItem('company_id', activeCompanyId)
