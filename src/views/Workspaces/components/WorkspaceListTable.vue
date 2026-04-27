@@ -162,11 +162,11 @@ const renderCompanyPercentage = ({ row }: any) => {
   return h('div', { class: 'flex items-center gap-2 w-full' }, [
     // Progress bar background
     h('div', {
-      class: 'flex-1 h-2 rounded-full bg-bg-secondary overflow-hidden'
+      class: 'flex-1 h-2 rounded-full bg-bg-body border border-border overflow-hidden'
     }, [
       // Progress fill
       h('div', {
-        class: 'h-full rounded-full bg-bg-accent transition-all duration-300',
+        class: 'h-full rounded-full bg-accent transition-all duration-300',
         style: { width: `${percentage}%` }
       })
     ]),
@@ -249,8 +249,8 @@ const columns = [
     { key: 'People', label: 'People', render: renderPeople, width: '120px' },
     { key: 'created_at', label: 'Start Date', render: renderStartDate, width: '150px' },
     { key: 'admin', label: 'Workspace Owner', render:  renderCompanyAdmin, width: '200px' },
-    { key: 'percentage', label: 'Percentage', render:  renderCompanyPercentage, width: '200px' },
-    { key: 'actions', label: '', render: renderActions, align: 'right' as const, width: '50px' },
+    { key: 'percentage', label: 'Percentage', render:  renderCompanyPercentage, width: '150px' },
+    { key: 'actions', label: 'Actions', render: renderActions, align: 'right' as const, width: '50px' },
 ]
 
 const props = defineProps({
