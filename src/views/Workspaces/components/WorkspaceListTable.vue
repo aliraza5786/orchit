@@ -266,10 +266,8 @@ const pageSize = ref(10)
 
 /* ------------ Data fetching (server mode) ------------ */
 /** useWorkspaces must accept reactive { page, pageSize, sort } and refetch when they change */
-const { data, isPending, isFetching } = useWorkspaces(page, pageSize, computed(() => props.filter))
-
-const isLoading = computed(() => isPending.value || isFetching.value)
-
+const { data, isPending } = useWorkspaces(page, pageSize, computed(() => props.filter))
+const isLoading = computed(() => isPending.value)
 /** Unwrap API shape: { workspaces: any[]; pagination: { totalCount: number } } */
 const items = computed(() => data.value?.workspaces ?? [])
 const totalCount = ref(0)
@@ -281,12 +279,27 @@ watch(() => props.filter, () => {
 watch(data, (newVal) => {
     totalCount.value = newVal?.pagination?.totalCount ?? 0
 }, { immediate: true })
+const emptyMessage = computed(() => {
+  switch (props.filter) {
+    case 'archived': return 'No archived workspaces'
+    case 'deleted': return 'No deleted workspaces'
+    case 'private': return 'No private workspaces'
+    case 'shared': return 'No shared workspaces'
+    default: return 'No workspaces yet — create your first one'
+  }
+})
 </script>
-
 <template>
-    <Table :columns="columns" :rows="items" :loading="isLoading" :total="totalCount" v-model:page="page"
-        v-model:pageSize="pageSize" :pageSizes="[10, 20, 50, 100]" :rowClass="() => 'group'">
-        <!-- Optional slots you were using -->
+    <Table 
+      :columns="columns" 
+      :rows="items" 
+      :loading="isLoading" 
+      :total="totalCount" 
+      v-model:page="page"
+      v-model:pageSize="pageSize" 
+      :pageSizes="[10, 20, 50, 100]" 
+      :rowClass="() => 'group'"
+    >
         <template #status="{ row }">
             <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
                 'bg-blue-100 text-blue-600': row.status === 'In progress',
@@ -306,6 +319,23 @@ watch(data, (newVal) => {
             </div>
         </template>
     </Table>
+
+    <!-- ✅ Empty state — shows after loading completes with no data -->
+    <div
+      v-if="!isLoading && !items.length"
+      class="flex flex-col items-center justify-center gap-3 py-20 text-center"
+    >
+      <div class="grid h-14 w-14 place-items-center rounded-2xl bg-bg-card border border-border/70">
+        <i class="fa-regular fa-folder-open text-xl text-text-secondary"></i>
+      </div>
+      <div class="flex flex-col gap-1">
+        <p class="text-sm font-medium text-text-primary">{{ emptyMessage }}</p>
+        <p class="text-xs text-text-secondary">
+          {{ props.filter === 'all' ? 'Get started by creating your first workspace.' : 'Try switching to a different filter.' }}
+        </p>
+      </div>
+    </div>
+
     <InviteUsersWithPermissions v-model="showInviteModal" :defaultWorkspaceId="selectedInvitingWorkspaceId" />
     
     <ConfirmDeleteModal 
