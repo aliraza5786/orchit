@@ -719,7 +719,7 @@ const personalAccount = computed<Account>(() => ({
   id: profileData.value?._id ?? "personal",
   name: profileData.value?.u_full_name ?? "My Account",
   email: profileData.value?.u_email ?? "",
-  domain: "app.orchit.ai",
+  domain: "stagging.streamed.space",
   type: "individual",
 }));
 
@@ -733,9 +733,6 @@ const companyAccounts = computed<Account[]>(() =>
   })),
 );
 
-// ── currentAccount reads from authStore (localStorage) ONLY ───
-// The server's active_company_id is IGNORED because it always
-// returns a company ID even when the user is on personal mode.
 const currentAccount = computed<Account>(() => {
   const activeId = authStore.company_id; // ✅ driven by localStorage via authStore
   if (!activeId) return personalAccount.value;

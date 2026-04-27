@@ -2,9 +2,7 @@ import { defineStore } from 'pinia'
 import api from '../libs/api'
 
 const COOKIE_KEY = 'auth_session'
-const PERSONAL_MODE_KEY = 'personal_mode'
-
-function getAuthCookie(): { token?: string; company_id?: string } | null {
+function getAuthCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
   try {
     const raw = document.cookie
       .split('; ')
@@ -17,13 +15,17 @@ function getAuthCookie(): { token?: string; company_id?: string } | null {
   }
 }
 
-function setAuthCookie(data: { token?: string; company_id?: string | null }) {
+function setAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
   try {
     const existing = getAuthCookie() || {}
     const merged = { ...existing, ...data }
 
     if (data.company_id === null) {
       delete merged.company_id
+    }
+
+    if (data.personal_mode === null) {
+      delete merged.personal_mode
     }
 
     const value = encodeURIComponent(JSON.stringify(merged))
@@ -50,6 +52,15 @@ function clearAuthCookie() {
 export const useAuthStore = defineStore('auth', {
   state: () => {
     const session = getAuthCookie()
+    // If personal_mode is in cookie, ignore company_id entirely
+    if (session?.personal_mode) {
+      return {
+        user: null as any,
+        initialized: false,
+        userId: localStorage.getItem('user_id') as string | null,
+        company_id: null as string | null,
+      }
+    }
     return {
       user: null as any,
       initialized: false,
@@ -66,16 +77,16 @@ export const useAuthStore = defineStore('auth', {
     setCompany(id: string) {
       this.company_id = id
       localStorage.setItem('company_id', id)
-      localStorage.removeItem(PERSONAL_MODE_KEY)
-      setAuthCookie({ company_id: id })
+      localStorage.removeItem('personal_mode')
+      setAuthCookie({ company_id: id, personal_mode: null })
     },
 
     clearCompany() {
       this.company_id = null
       localStorage.removeItem('company_id')
-      // ✅ Set personal mode flag so bootstrap() never restores company_id from server
-      localStorage.setItem(PERSONAL_MODE_KEY, 'true')
-      setAuthCookie({ company_id: null })
+      localStorage.setItem('personal_mode', 'true')
+      // Store personal_mode in cookie so ALL subdomains see it on next load
+      setAuthCookie({ company_id: null, personal_mode: true })
     },
 
     async bootstrap() {
@@ -114,7 +125,11 @@ export const useAuthStore = defineStore('auth', {
         return
       }
 
-      if (session?.company_id && localStorage.getItem('company_id')) {
+      // If personal_mode is in cookie, clear company from this subdomain's localStorage too
+      if (session?.personal_mode) {
+        localStorage.removeItem('company_id')
+        this.company_id = null
+      } else if (session?.company_id && localStorage.getItem('company_id')) {
         localStorage.setItem('company_id', session.company_id)
         this.company_id = session.company_id
       }
@@ -123,10 +138,9 @@ export const useAuthStore = defineStore('auth', {
         const res = await api.get('/profile')
         this.user = res.data
         const activeCompanyId = res.data?.data?.active_company_id
-        const isPersonalMode = localStorage.getItem(PERSONAL_MODE_KEY) === 'true'
 
-        // ✅ Only restore from server if NOT in personal mode
-        if (activeCompanyId && !this.company_id && !isPersonalMode) {
+        // Never restore from server if personal_mode is active in cookie
+        if (activeCompanyId && !this.company_id && !session?.personal_mode) {
           localStorage.setItem('company_id', activeCompanyId)
           this.company_id = activeCompanyId
           setAuthCookie({ company_id: activeCompanyId })
@@ -142,7 +156,7 @@ export const useAuthStore = defineStore('auth', {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
       localStorage.removeItem('company_id')
-      localStorage.removeItem(PERSONAL_MODE_KEY)
+      localStorage.removeItem('personal_mode')
       localStorage.removeItem('currentName')
       localStorage.removeItem('jobId')
       localStorage.removeItem('mannualWorkspace')
