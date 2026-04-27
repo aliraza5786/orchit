@@ -132,10 +132,10 @@
             >
               <!-- Header — fixed -->
               <div
-                class="flex items-center gap-2.5 rounded-xl p-2.5 flex-shrink-0"
+                class="flex items-center gap-2.5 rounded-xl p-2.5 shrink-0"
               >
                 <div
-                  class="grid h-9 w-9 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
+                  class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
                 >
                   {{ getInitials(currentAccount.name) }}
                 </div>
@@ -170,7 +170,7 @@
               </div>
 
               <div
-                class="h-px w-full bg-bg-dropdown-menu-hover/50 flex-shrink-0"
+                class="h-px w-full bg-bg-dropdown-menu-hover/50 shrink-0"
               ></div>
 
               <!-- Scrollable middle section (account switcher only) -->
@@ -178,7 +178,7 @@
                 <!-- ── ACCOUNT SWITCHER ── -->
                 <div class="px-1 pt-2 pb-1">
                   <p
-                    class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-secondary/60"
+                    class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-primary"
                   >
                     Switch Account
                   </p>
@@ -222,7 +222,7 @@
 
                         <!-- Arrow -->
                         <i
-                          class="fa-solid fa-arrow-right text-text-secondary/40 text-xs flex-shrink-0"
+                          class="fa-solid fa-arrow-right text-text-secondary/40 text-xs shrink-0"
                         ></i>
 
                         <!-- To chip -->
@@ -259,7 +259,7 @@
                               ? 'fa-solid fa-triangle-exclamation'
                               : 'fa-solid fa-circle-info'
                           "
-                          class="mt-0.5 flex-shrink-0 text-xs"
+                          class="mt-0.5 shrink-0 text-xs"
                         ></i>
                         <span v-if="pendingAccount.type === 'company'">
                           You'll be redirected to
@@ -283,7 +283,7 @@
                         </button>
                         <button
                           type="button"
-                          class="flex-[1.5] cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-orange-600 disabled:opacity-60"
+                          class="flex-[1.5] cursor-pointer flex items-center justify-center gap-2 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover disabled:opacity-60"
                           :disabled="isSwitching"
                           @click="confirmSwitch"
                         >
@@ -306,7 +306,7 @@
                           class="flex items-center gap-2 rounded-lg bg-bg-dropdown-menu-hover/50 px-2.5 py-1.5"
                         >
                           <i
-                            class="fa-regular fa-magnifying-glass text-text-secondary/50 text-xs flex-shrink-0"
+                            class="fa-regular fa-magnifying-glass text-text-secondary/50 text-xs shrink-0"
                           ></i>
                           <input
                             v-model="accountSearch"
@@ -328,13 +328,13 @@
                       <!-- Personal -->
                       <div class="px-1">
                         <p
-                          class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary/40"
+                          class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary"
                         >
                           Personal
                         </p>
                         <button
                           type="button"
-                          class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
+                          class="group flex w-full cursor-pointer items-center gap-2.5 mt-1 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
                           :class="
                             currentAccount.id === personalAccount.id
                               ? 'bg-bg-dropdown-menu-hover/60'
@@ -346,7 +346,7 @@
                           "
                         >
                           <div
-                            class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-xs font-bold text-white"
+                            class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-orange-500 text-xs font-bold text-white"
                           >
                             {{ getInitials(personalAccount.name) }}
                           </div>
@@ -364,13 +364,13 @@
                           </div>
                           <span
                             v-if="currentAccount.id === personalAccount.id"
-                            class="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white"
+                            class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white"
                           >
                             <i class="fa-solid fa-check"></i>
                           </span>
                           <span
                             v-else
-                            class="hidden flex-shrink-0 rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600 group-hover:block dark:bg-orange-900/30 dark:text-orange-400"
+                            class="hidden shrink-0 rounded-md bg-orange-100 px-2 py-0.5 text-[10px] font-semibold text-orange-600 group-hover:block dark:bg-orange-900/30 dark:text-orange-400"
                           >
                             Switch
                           </span>
@@ -384,11 +384,11 @@
                       <!-- Companies — capped height so footer stays visible -->
                       <div class="px-1">
                         <p
-                          class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary/40"
+                          class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary"
                         >
-                          Companies
+                          Company
                           <span
-                            class="ml-1 font-normal normal-case tracking-normal text-text-secondary/30"
+                            class="ml-1 font-normal normal-case tracking-normal text-text-secondary/70"
                             >({{ filteredCompanyAccounts.length }})</span
                           >
                         </p>
@@ -747,33 +747,24 @@ const currentAccount = computed<Account>(() => {
 // ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
-
 async function confirmSwitch() {
-  if (!pendingAccount.value) return;
-  isSwitching.value = true;
+  if (!pendingAccount.value) return
+  isSwitching.value = true
 
   try {
-    await new Promise((res) => setTimeout(res, 1200));
+    await new Promise((res) => setTimeout(res, 1200))
 
-    if (pendingAccount.value.type === "company") {
-      // ✅ setCompany handles state + localStorage + cookie together
-      authStore.setCompany(pendingAccount.value.id);
+    if (pendingAccount.value.type === 'company') {
+      authStore.setCompany(pendingAccount.value.id)
+      const targetUrl = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
+      window.location.href = targetUrl
     } else {
-      // ✅ clearCompany handles state + localStorage + cookie together
-      authStore.clearCompany();
+      authStore.clearCompany()
+      const targetUrl = `${window.location.protocol}//stagging.streamed.space/dashboard`
+      window.location.href = targetUrl
     }
-
-    await queryClient.invalidateQueries({
-      predicate: (query) =>
-        query.queryKey.includes("current-package") ||
-        query.queryKey.includes("subscription") ||
-        query.queryKey.includes("profile"),
-    });
-
-    pendingAccount.value = null;
-    menuOpen.value = false;
-  } finally {
-    isSwitching.value = false;
+  } catch (e) {
+    isSwitching.value = false
   }
 }
 function getInitials(name: string) {
