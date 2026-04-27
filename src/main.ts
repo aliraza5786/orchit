@@ -64,13 +64,24 @@ if (encodedToken) {
   }
 }
 const session = getAuthCookie()
-const localCompanyId = localStorage.getItem('company_id')
 const isPersonalMode = localStorage.getItem('personal_mode') === 'true'
 
-if (session?.company_id && localCompanyId && !isPersonalMode) {
-  localStorage.setItem('company_id', session.company_id)
-} else if (isPersonalMode) {
+if (isPersonalMode) {
+  // Wipe company_id from cookie immediately on page load
+  if (session?.company_id) {
+    const cleaned = { ...session }
+    delete cleaned.company_id
+    const value = encodeURIComponent(JSON.stringify(cleaned))
+    const maxAge = 60 * 60 * 24 * 30
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else if (hostname.endsWith('.streamed.space')) {
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    }
+  }
   localStorage.removeItem('company_id')
+} else if (session?.company_id && localStorage.getItem('company_id')) {
+  localStorage.setItem('company_id', session.company_id)
 } else {
   console.log("❌ main.ts: No company_id in auth_session cookie");
 }
