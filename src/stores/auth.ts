@@ -13,29 +13,28 @@ function getAuthCookie(): { token?: string; company_id?: string } | null {
     return null;
   }
 }
-
 function setAuthCookie(data: { token?: string; company_id?: string | null }) {
   try {
-    const existing = getAuthCookie() || {};
-    const merged = { ...existing, ...data };
+    const existing = getAuthCookie() || {}
+    const merged = { ...existing, ...data }
+
     if (data.company_id === null) {
-      delete merged.company_id;
+      delete merged.company_id
     }
 
-    const value = encodeURIComponent(JSON.stringify(merged));
-    const maxAge = 60 * 60 * 24 * 30;
-    const hostname = window.location.hostname;
+    const value = encodeURIComponent(JSON.stringify(merged))
+    const maxAge = 60 * 60 * 24 * 30
+    const hostname = window.location.hostname
 
-    if (hostname === "localhost" || hostname.endsWith(".localhost")) {
-      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".streamed.space")) {
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else if (hostname.endsWith('.streamed.space')) {
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
     }
   } catch (e) {
-    console.error("❌ Failed to set auth cookie:", e);
+    console.error('❌ Failed to set auth cookie:', e)
   }
 }
-
 function clearAuthCookie() {
   document.cookie = `${COOKIE_KEY}=; domain=.streamed.space; path=/; max-age=0`;
   document.cookie = `${COOKIE_KEY}=; path=/; max-age=0`;
