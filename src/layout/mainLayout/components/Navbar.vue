@@ -756,10 +756,10 @@ async function confirmSwitch() {
 
     if (pendingAccount.value.type === 'company') {
       authStore.setCompany(pendingAccount.value.id)
+      await new Promise((res) => setTimeout(res, 100))
       window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
     } else {
       authStore.clearCompany()
-      // Wait a tick to ensure cookie is written before redirect
       await new Promise((res) => setTimeout(res, 100))
       window.location.href = `${window.location.protocol}//stagging.streamed.space/dashboard`
     }

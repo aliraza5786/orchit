@@ -63,14 +63,14 @@ if (encodedToken) {
     console.error("❌ main.ts: Token decode failed:", e);
   }
 }
-const session = getAuthCookie();
-const localCompanyId = localStorage.getItem("company_id");
-if (session?.company_id && localCompanyId) {
-  localStorage.setItem("company_id", session.company_id);
-} else if (session?.company_id && !localCompanyId) {
-  console.log(
-    "main.ts: cookie has company_id but localStorage is clear — personal mode, skipping restore",
-  );
+const session = getAuthCookie()
+const localCompanyId = localStorage.getItem('company_id')
+const isPersonalMode = localStorage.getItem('personal_mode') === 'true'
+
+if (session?.company_id && localCompanyId && !isPersonalMode) {
+  localStorage.setItem('company_id', session.company_id)
+} else if (isPersonalMode) {
+  localStorage.removeItem('company_id')
 } else {
   console.log("❌ main.ts: No company_id in auth_session cookie");
 }
