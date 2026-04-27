@@ -142,7 +142,7 @@ const isUrgent = (daysUntil: number) => daysUntil <= 3
 const isPast = (daysUntil: number) => daysUntil < 0
 const getDeadlineClass = (daysUntil: number) => {
   if (daysUntil < 0) return 'border border-border bg-slate-50 dark:bg-slate-800'
-  if (isUrgent(daysUntil)) return 'border-red-200 dark:border-red-800 bg-card'
+  if (isUrgent(daysUntil)) return 'border-red-200 dark:border-red-800 bg-bg-card'
   return 'border border-border'
 }
 const getPriorityColor = (priority: string) => {

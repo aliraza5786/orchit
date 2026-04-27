@@ -1,5 +1,5 @@
 <template>
-  <Loader v-if="isLoading" />
+  <LoaderPeak v-if="isLoading" />
   <div v-else
     :class="`h-[100dvh] bg-blend-multiply  text-text-primary  overflow-x-hidden flex flex-col bg-cover bg-no-repeat`"
     :style="{
@@ -43,7 +43,7 @@ import CreateLaneModal from './modals/CreateLaneModal.vue';
 import CreateLaneWithAI from './modals/CreateLaneWithAI.vue';
 import UpdateLaneModal from './modals/UpdateLaneModal.vue';
 import { useSingleWorkspace } from '../../queries/useWorkspace';
-import Loader from '../../components/ui/Loader.vue'; 
+import LoaderPeak from '../../components/ui/LoaderPeak.vue';
 import { useRouteIds } from '../../composables/useQueryParams'; 
 import { useTheme } from '../../composables/useTheme';
 import { getWorkspaceBackground } from '../../utilities/themeUtils';
