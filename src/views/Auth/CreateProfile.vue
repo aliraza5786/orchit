@@ -91,25 +91,8 @@
     :error="!!errors.educationLevel"
     :message="errors.educationLevel"
   />
-
-  <BaseTextField
-    v-model="fieldOfStudy"
-    label="Field of Study"
-    placeholder="e.g. Computer Science, Business, Arts"
-    size="lg"
-    :error="!!errors.fieldOfStudy"
-    :message="errors.fieldOfStudy"
-  />
-
-  <BaseSelectField
-    v-model="schoolUseCase"
-    label="Primary Use"
-    :options="schoolUseOptions"
-    placeholder="How will you use Orchit AI?"
-    size="lg"
-    :error="!!errors.schoolUseCase"
-    :message="errors.schoolUseCase"
-  />
+<BaseSelectField v-model="role" label="What is your role in school?" :options="rolesList || []"
+            placeholder="Select Role" size="lg" :error="!!errors.role" :message="errors.role" />
 
 </div>
 <div v-show="activeStep === 3" class="space-y-6">
@@ -189,7 +172,7 @@
   </div>
 
 </div>
-<div v-if="activeStep === 5 && selected === 'team'" class="flex items-center justify-center w-full min-h-full py-10">
+<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-10">
 
   <div class="w-full max-w-115">
 
@@ -600,8 +583,6 @@ const errors = ref<{
 
   schoolName?: string
   educationLevel?: string
-  fieldOfStudy?: string
-  schoolUseCase?: string
   siteName?:string;
   selectedModules?: string
 }>({})
@@ -609,8 +590,6 @@ const authStore = useAuthStore()
 const personalRole = ref('')
 const schoolName = ref('')
 const educationLevel = ref('')
-const fieldOfStudy = ref('')
-const schoolUseCase = ref('')
 const selectedModules = ref<string[]>([])
 const isProvisioning = ref(false)
 // --- State ---
@@ -648,13 +627,21 @@ const moduleOptionsMap = {
     { id: 'planning', label: 'Daily Planning' },
     { id: 'journaling', label: 'Journaling' }
   ],
-
-  school: [
-    { id: 'notes', label: 'Notes' },
-    { id: 'assignments', label: 'Assignments' },
-    { id: 'research', label: 'Research' },
-    { id: 'exams', label: 'Exam Prep' }
-  ]
+school: [
+  { id: 'notes', label: 'Notes' },
+  { id: 'assignments', label: 'Assignments' },
+  { id: 'group_projects', label: 'Group Projects' },
+  { id: 'research', label: 'Research' },
+  { id: 'exam_prep', label: 'Exam Prep' },
+  { id: 'class_management', label: 'Class Management' },
+  { id: 'lecture_planning', label: 'Lecture Planning' },
+  { id: 'homework_tracking', label: 'Homework Tracking' },
+  { id: 'project_tracking', label: 'Project Tracking' },
+  { id: 'study_planning', label: 'Study Planning' },
+  { id: 'revision_schedule', label: 'Revision Schedule' },
+  { id: 'collaboration', label: 'Student Collaboration' },
+  { id: 'task_management', label: 'Task Management' }
+]
 } as const
 const activeModules = computed(() => {
   return moduleOptionsMap[selected.value as keyof typeof moduleOptionsMap] || []
@@ -792,14 +779,6 @@ function validateSchoolStep() {
     next.educationLevel = 'Please select your education level.'
   }
 
-  if (!fieldOfStudy.value.trim()) {
-    next.fieldOfStudy = 'Please enter your field of study.'
-  }
-
-  if (!schoolUseCase.value) {
-    next.schoolUseCase = 'Please select how you will use Orchit AI.'
-  }
-
   errors.value = { ...errors.value, ...next }
 
   return Object.keys(next).length === 0
@@ -881,56 +860,39 @@ const educationOptions = Object.freeze([
   { title: 'Postgraduate', _id: 'postgraduate' }
 ])
 
-const schoolUseOptions = Object.freeze([
-  { title: 'Notes & Lectures', _id: 'notes' },
-  { title: 'Assignments', _id: 'assignments' },
-  { title: 'Research', _id: 'research' },
-  { title: 'Exam Preparation', _id: 'exams' },
-  { title: 'All of the above', _id: 'all' }
-])
-const workTypeOptions = [
-  {
-    id: 'software_development',
-    label: 'Software Development',
-    icon: 'code'
-  },
-  {
-    id: 'product_management',
-    label: 'Product Management',
-    icon: 'layers'
-  },
-  {
-    id: 'marketing',
-    label: 'Marketing',
-    icon: 'megaphone'
-  },
-  {
-    id: 'design',
-    label: 'Design',
-    icon: 'palette'
-  },
-  {
-    id: 'sales',
-    label: 'Sales',
-    icon: 'trending-up'
-  },
-  {
-    id: 'operations',
-    label: 'Operations',
-    icon: 'cog'
-  },
-  {
-    id: 'hr',
-    label: 'Human Resources',
-    icon: 'users'
-  },
-  {
-    id: 'support',
-    label: 'Customer Support',
-    icon: 'headphones'
-  }
-]
+const workTypeOptionsMap = {
+  team: [
+    { id: 'software_development', label: 'Software Development', icon: 'code' },
+    { id: 'product_management', label: 'Product Management', icon: 'layer-group' },
+    { id: 'marketing', label: 'Marketing', icon: 'bullhorn' },
+    { id: 'design', label: 'Design', icon: 'palette' },
+    { id: 'sales', label: 'Sales', icon: 'chart-line' },
+    { id: 'operations', label: 'Operations', icon: 'cog' },
+    { id: 'hr', label: 'Human Resources', icon: 'users' },
+    { id: 'support', label: 'Customer Support', icon: 'headset' }
+  ],
 
+  school: [
+    { id: 'study', label: 'Study & Learning', icon: 'book' },
+    { id: 'assignments', label: 'Assignments', icon: 'file-lines' },
+    { id: 'group_projects', label: 'Group Projects', icon: 'users' },
+    { id: 'research', label: 'Research', icon: 'magnifying-glass' },
+    { id: 'exam_prep', label: 'Exam Prep', icon: 'pen' },
+    { id: 'class_management', label: 'Class Management', icon: 'chalkboard' },
+    { id: 'teaching', label: 'Teaching', icon: 'person-chalkboard' },
+    { id: 'notes', label: 'Notes', icon: 'clipboard' }
+  ],
+
+  personal: [
+    { id: 'task_management', label: 'Task Management', icon: 'check-square' },
+    { id: 'learning', label: 'Learning', icon: 'book' },
+    { id: 'goal_tracking', label: 'Goal Tracking', icon: 'bullseye' },
+    { id: 'daily_planning', label: 'Daily Planning', icon: 'calendar' }
+  ]
+};
+const workTypeOptions = computed(() => {
+  return workTypeOptionsMap[selected.value] || [];
+});
 function optionClass(id: string) {
   return id === selected.value ? 'bg-accent/30 border-accent' : 'border-border'
 }
@@ -960,10 +922,9 @@ function buildProfilePayload() {
     return {
       ...basePayload,
       type: 'school',
-      institution: schoolName.value,
+      title: schoolName.value,
       education_level: educationLevel.value,
-      field_of_study: fieldOfStudy.value,
-      primary_use: schoolUseCase.value,
+       role_id: role.value,
     }
   }
 
@@ -1025,8 +986,7 @@ if (activeStep.value === 4) {
   }
 
   if (selected.value === 'school') {
-    const payload = buildProfilePayload()
-    createProfile({ payload })
+    activeStep.value = (activeStep.value + 1) as 1 | 2 | 3 | 4
     return
   }
 
