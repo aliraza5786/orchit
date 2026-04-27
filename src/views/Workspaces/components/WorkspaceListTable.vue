@@ -162,18 +162,18 @@ const renderCompanyPercentage = ({ row }: any) => {
   return h('div', { class: 'flex items-center gap-2 w-full' }, [
     // Progress bar background
     h('div', {
-      class: 'flex-1 h-2 rounded-full bg-bg-dropdown-menu-hover overflow-hidden'
+      class: 'flex-1 h-2 rounded-full bg-bg-secondary overflow-hidden'
     }, [
       // Progress fill
       h('div', {
-        class: 'h-full rounded-full bg-orange-500 transition-all duration-300',
+        class: 'h-full rounded-full bg-bg-accent transition-all duration-300',
         style: { width: `${percentage}%` }
       })
     ]),
 
     // Percentage text
     h('span', {
-      class: 'text-xs text-text-secondary w-10 text-right'
+      class: 'text-xs text-text-secondary w-7 text-right'
     }, `${percentage}%`)
   ])
 }
