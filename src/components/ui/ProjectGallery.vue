@@ -1,128 +1,181 @@
 <template>
-  <!-- Cards -->
-  <section
-    v-if="!loading && projects?.length"
-    class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
-    :aria-busy="loading ? 'true' : 'false'"
-    aria-live="polite"
-  >
-    <article
-      v-for="(project, index) in projects"
-      :key="project._id ?? index"
-      class="group relative overflow-hidden rounded-xl cursor-pointer border border-border/70 bg-bg-card shadow-sm outline-none transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 focus-within:ring-2 focus-within:ring-orange-300"
+  <AnimatePresence mode="wait">
+
+    <Motion
+      v-if="!loading && projects?.length"
+      :key="'gallery-' + projects.length"
+      :initial="{ opacity: 0 }"
+      :animate="{ opacity: 1 }"
+      :exit="{ opacity: 0 }"
+      :transition="{ duration: 0.2 }"
+      as="section"
+      class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+      :aria-busy="loading ? 'true' : 'false'"
+      aria-live="polite"
     >
-      <!-- Click surface -->
-      <button
-        type="button"
-        class="absolute inset-0 z-10"
-        @click="onClick(project)"
-        :aria-label="`Open project ${displayTitle(project)}`"
-      />
-
-      <!-- Top banner -->
-      <div
-        class="relative flex h-36 items-center justify-center overflow-hidden"
-        :style="{ background: bannerBackground(project) }"
+      <Motion
+        v-for="(project, index) in projects"
+        :key="project._id ?? index"
+        as="article"
+        :initial="{ opacity: 0, y: 20, scale: 0.97 }"
+        :animate="{ opacity: 1, y: 0, scale: 1 }"
+        :transition="{ duration: 0.35, delay: index * 0.055, ease: 'easeOut' }"
+        :while-hover="{ y: -3, transition: { duration: 0.18 } }"
+        class="group relative overflow-hidden rounded-xl cursor-pointer border border-border/70 bg-bg-card transition-colors duration-200 hover:border-border focus-within:ring-2 focus-within:ring-accent/40"
       >
-        <img
-          :src="project.logo"
-          class="aspect-square h-12 w-12 rounded-xl object-cover shadow-lg ring-2 ring-white/20"
-          alt=""
-          loading="lazy"
-          decoding="async"
+        <button
+          type="button"
+          class="absolute inset-0 z-10"
+          @click="onClick(project)"
+          :aria-label="`Open project ${displayTitle(project)}`"
         />
-      </div>
 
-      <!-- Meta -->
-      <div class="flex flex-col gap-3 border-t border-border bg-bg-card p-3.5">
+        <!-- Banner -->
+        <div
+          class="relative flex h-20 items-end justify-between px-3 pb-2.5 overflow-hidden"
+          :style="{ background: bannerBackground(project) }"
+        >
+          <Motion
+            :initial="{ opacity: 0, x: -10 }"
+            :animate="{ opacity: 1, x: 0 }"
+            :transition="{ duration: 0.3, delay: index * 0.055 + 0.15 }"
+          >
+            <span class="rounded-md bg-black/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/90">
+              {{ project.variables?.['workspace-type'] ?? 'Project' }}
+            </span>
+          </Motion>
 
-        <!-- Row 1: logo + title + owner -->
-        <div class="flex items-center justify-between gap-2">
-          <div class="flex items-center gap-2 min-w-0">
+          <Motion
+            :initial="{ opacity: 0, scale: 0.65 }"
+            :animate="{ opacity: 1, scale: 1 }"
+            :transition="{ duration: 0.3, delay: index * 0.055 + 0.2, ease: 'easeOut' }"
+          >
             <img
               :src="project.logo"
-              class="h-7 w-7 flex-shrink-0 rounded-md object-cover"
+              class="h-8 w-8 rounded-lg object-cover ring-1 ring-white/20"
               alt=""
               loading="lazy"
               decoding="async"
             />
-            <div class="min-w-0">
-              <h3 class="truncate text-sm font-semibold text-text-primary leading-tight">
-                {{ displayTitle(project) }}
-              </h3>
-              <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">
-                {{ formatWhen(project.created_at) }}
-              </p>
-            </div>
-          </div>
+          </Motion>
+        </div>
 
-          <div class="flex-shrink-0 text-right">
-            <p class="truncate text-xs font-medium text-text-primary max-w-[90px]">
-              {{ project.owner?.name }}
+        <!-- Body -->
+        <div class="flex flex-col gap-2.5 p-3">
+
+          <Motion
+            :initial="{ opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="{ duration: 0.3, delay: index * 0.055 + 0.18 }"
+            class="min-w-0"
+          >
+            <h3 class="truncate text-[13px] font-semibold text-text-primary leading-snug">
+              {{ displayTitle(project) }}
+            </h3>
+            <p class="mt-0.5 text-[11px] text-text-secondary">
+              {{ formatWhen(project.created_at) }}
             </p>
-            <p class="text-[11px] text-text-secondary">Owner</p>
-          </div>
-        </div>
+          </Motion>
 
-        <!-- Row 2: Progress bar -->
-        <div class="flex items-center gap-2">
-          <div class="flex-1 h-1.5 rounded-full bg-bg-secondary overflow-hidden">
+          <div class="h-px w-full bg-border/60" />
+
+          <Motion
+            :initial="{ opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="{ duration: 0.3, delay: index * 0.055 + 0.22 }"
+            class="flex items-center gap-2"
+          >
             <div
-              class="h-full rounded-full bg-orange-500 transition-all duration-500"
-              :style="{ width: `${project.task_stats?.total_percentage ?? 0}%` }"
-            />
-          </div>
-          <span class="flex-shrink-0 text-[11px] font-medium text-text-secondary w-8 text-right">
-            {{ project.task_stats?.total_percentage ?? 0 }}%
-          </span>
+              class="grid h-[22px] w-[22px] flex-shrink-0 place-items-center rounded-full text-[9px] font-medium text-white"
+              :style="{ backgroundColor: avatarColor(project.owner?.name ?? '') }"
+            >
+              {{ getInitials(project.owner?.name ?? '') }}
+            </div>
+            <span class="flex-1 truncate text-[12px] text-text-primary font-semibold">
+              {{ project.owner?.name ?? '—' }}
+            </span>
+            <span class="flex-shrink-0 text-[12px] font-semibold text-text-secondary">Owner</span>
+          </Motion>
+
+          <Motion
+            :initial="{ opacity: 0, y: 8 }"
+            :animate="{ opacity: 1, y: 0 }"
+            :transition="{ duration: 0.3, delay: index * 0.055 + 0.26 }"
+            class="flex items-center gap-2"
+          >
+            <div class="flex-1 h-[5px] rounded-full bg-bg-body overflow-hidden">
+              <Motion
+                :initial="{ width: '0%' }"
+                :animate="{ width: `${project.task_stats?.total_percentage ?? 0}%` }"
+                :transition="{ duration: 0.7, delay: index * 0.055 + 0.4, ease: 'easeOut' }"
+                class="h-full rounded-full bg-accent"
+              />
+            </div>
+            <span class="flex-shrink-0 text-[11px] font-medium text-text-secondary tabular-nums w-7 text-right">
+              {{ project.task_stats?.total_percentage ?? 0 }}%
+            </span>
+          </Motion>
+
         </div>
+      </Motion>
+    </Motion>
 
-      </div>
-    </article>
-  </section>
-
-  <!-- Skeletons -->
-  <section
-    v-else-if="loading"
-    class="grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
-  >
-    <div
-      v-for="n in resolvedSkeletonCount"
-      :key="'sk-' + n"
-      class="overflow-hidden rounded-xl border border-border/70 bg-bg-card shadow-sm"
-      role="status"
-      aria-label="Loading project"
+    <!-- Skeletons -->
+    <Motion
+      v-else-if="loading"
+      key="skeletons"
+      :initial="{ opacity: 0 }"
+      :animate="{ opacity: 1 }"
+      :exit="{ opacity: 0 }"
+      :transition="{ duration: 0.2 }"
+      as="section"
+      class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
     >
-      <div
-        class="h-36 bg-[linear-gradient(90deg,theme(colors.slate.200/20),theme(colors.slate.200/40),theme(colors.slate.200/20))] bg-[length:200%_100%] animate-[shimmer_1.1s_ease_infinite]"
-      />
-      <div class="flex flex-col gap-3 border-t border-border p-3.5">
-        <div class="flex items-center gap-2.5">
-          <div class="h-7 w-7 flex-shrink-0 rounded-md bg-surface"></div>
-          <div class="flex flex-col gap-1.5 flex-1">
-            <div class="h-3 w-28 rounded bg-surface"></div>
-            <div class="h-2 w-20 rounded bg-surface"></div>
+      <Motion
+        v-for="n in resolvedSkeletonCount"
+        :key="'sk-' + n"
+        as="div"
+        :initial="{ opacity: 0, y: 12 }"
+        :animate="{ opacity: 1, y: 0 }"
+        :transition="{ duration: 0.25, delay: n * 0.04 }"
+        class="overflow-hidden rounded-xl border border-border/70 bg-bg-card"
+        role="status"
+        aria-label="Loading project"
+      >
+        <div class="h-20 bg-[linear-gradient(90deg,theme(colors.slate.200/20),theme(colors.slate.200/40),theme(colors.slate.200/20))] bg-[length:200%_100%] animate-[shimmer_1.1s_ease_infinite]" />
+        <div class="flex flex-col gap-2.5 p-3">
+          <div class="flex flex-col gap-1.5">
+            <div class="h-3 w-28 rounded bg-surface" />
+            <div class="h-2 w-20 rounded bg-surface" />
           </div>
-          <div class="flex flex-col gap-1.5 items-end">
-            <div class="h-3 w-16 rounded bg-surface"></div>
-            <div class="h-2 w-10 rounded bg-surface"></div>
+          <div class="h-px w-full bg-border/60" />
+          <div class="flex items-center gap-2">
+            <div class="h-[22px] w-[22px] rounded-full bg-surface flex-shrink-0" />
+            <div class="h-2.5 flex-1 rounded bg-surface" />
+            <div class="h-2 w-8 rounded bg-surface" />
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="h-[5px] flex-1 rounded-full bg-surface" />
+            <div class="h-2 w-6 rounded bg-surface" />
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <div class="h-1.5 flex-1 rounded-full bg-surface"></div>
-          <div class="h-2 w-6 rounded bg-surface"></div>
-        </div>
-      </div>
-    </div>
-  </section>
+      </Motion>
+    </Motion>
 
-  <!-- Empty state -->
-  <div
-    v-else
-    class="col-span-full flex items-center justify-center py-10 text-sm text-text-secondary"
-  >
-    No projects yet
-  </div>
+    <!-- Empty -->
+    <Motion
+      v-else
+      key="empty"
+      :initial="{ opacity: 0, y: 10 }"
+      :animate="{ opacity: 1, y: 0 }"
+      :exit="{ opacity: 0, y: -10 }"
+      :transition="{ duration: 0.3 }"
+      class="col-span-full flex items-center justify-center py-10 text-sm text-text-secondary"
+    >
+      No projects yet
+    </Motion>
+
+  </AnimatePresence>
 </template>
 
 <style scoped>
@@ -135,10 +188,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { Motion, AnimatePresence } from 'motion-v'
 
 interface Project {
   _id: string
-  variables?: { title?: string }
+  variables?: { title?: string; 'workspace-type'?: string }
   title?: string
   logo: string
   created_at?: string
@@ -168,11 +222,21 @@ function hashedColor(seed: string): string {
   let h = 0
   for (let i = 0; i < (seed?.length || 0); i++) h = (h * 31 + seed.charCodeAt(i)) | 0
   const hue = Math.abs(h) % 360
-  return `linear-gradient(135deg, hsl(${hue} 55% 55%), hsl(${hue} 60% 48%))`
+  return `linear-gradient(135deg, hsl(${hue} 55% 50%), hsl(${hue} 60% 43%))`
 }
 
 function bannerBackground(p: Project) {
   return hashedColor(displayTitle(p))
+}
+
+function avatarColor(name: string): string {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0
+  return `hsl(${Math.abs(h) % 360} 55% 48%)`
+}
+
+function getInitials(name: string): string {
+  return name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'
 }
 
 function onClick(p: Project) {
