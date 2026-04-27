@@ -1,11 +1,11 @@
 <template>
-  <div class="w-full h-full flex items-center justify-center">
+  <div class="w-full h-full flex items-center justify-center" v-if="data">
     <div class="w-full h-[85vh] flex flex-col">
       <!-- HEADER -->
       <div
-        class="px-3 py-1.5 border-b border-border flex flex-col justify-between flex-shrink-0"
+        class="px-3 py-[5.5px] border-b border-border flex flex-col justify-between flex-shrink-0"
       >
-        <h3 class="text-sm font-semibold text-text-primary py-3 -mt-5.5">
+        <h3 class="text-sm font-semibold text-text-primary py-2 -mt-5.5">
           {{
             isPeakWidget
               ? "AI Generated Widget"
