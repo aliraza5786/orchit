@@ -32,6 +32,7 @@ const More = () => import("../views/More/More.vue");
 const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
+const companyJoin = () =>import("../views/Invites/JoinPage.vue")
 const LandingPageLayout = () => import("../layout/LandingPageLayout/LandingPageLayout.vue");
 const requestDelete = () => import("../views/request_delete.vue");
 const NewHomepage = () => import("../views/homenew.vue");
@@ -95,7 +96,7 @@ const routes: RouteRecordRaw[] = [
   { path: "/finish-profile", name: "finishProfile", component: FinishProfile, meta: { requiresAuth: true } },
   { path: "/workspace-invite/:token", name: "workspaceInvite", component: WorkspaceInvite, meta: { requiresAuth: false } },
   { path: "/space-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
-
+  { path: "/company-join/:token", name: "companyjoin", component: companyJoin, meta: { requiresAuth: false } },
   {
     path: "/dashboard",
     component: LandingLayout,

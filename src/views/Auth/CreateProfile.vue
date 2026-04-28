@@ -411,27 +411,36 @@
   </div>
 
 </div>
-<div v-show="activeStep === 8" v-if="selected === 'team'" class="flex items-center justify-center min-h-full">
+<div v-show="activeStep === 8" v-if="selected === 'team' || selected === 'school'" class="flex items-center justify-center min-h-full">
 
   <div class="w-full max-w-120 space-y-7">
 
     <!-- header -->
-    <div class="space-y-2">
-      <h2 class="text-[26px] font-semibold text-text-primary">
-        Better when used together
-      </h2>
-      <p class="text-text-secondary text-sm leading-relaxed">
-        Orchit AI works better with your team onboard. Invite a teammate to try it out with you.
-      </p>
-    </div>
+   <div class="space-y-2">
+  <h2 class="text-[26px] font-semibold text-text-primary">
+    {{ selected === 'school' ? 'Better when studied together' : 'Better when used together' }}
+  </h2>
+  <p class="text-text-secondary text-sm leading-relaxed">
+    {{ selected === 'school' 
+      ? 'Orchit AI works better with your classmates onboard. Invite someone to try it with you.'
+      : 'Orchit AI works better with your team onboard. Invite a teammate to try it out with you.'
+    }}
+  </p>
+</div>
 
     <!-- share via link -->
     <div class="space-y-1.5">
       <label class="text-sm font-medium text-text-primary">Share via link</label>
+      <p class="text-xs text-text-secondary mb-1">
+    {{ selected === 'school' 
+      ? 'Invite classmates or teachers to join your school workspace.' 
+      : 'Invite teammates to join your company workspace.' 
+    }}
+  </p>
       <div class="flex items-center gap-2">
         <div class="flex-1 border border-border rounded-lg px-3 py-2 bg-surface overflow-hidden">
   <span class="text-sm text-text-secondary truncate block">
-    {{ domainLink || `https://${siteSlug}.streamed.space/` }}
+    {{ joinLink }}
   </span>
 </div>
         <Button variant="secondary" size="md" @click="copySiteUrl">
@@ -733,7 +742,7 @@ onSuccess: (data: any) => {
 const { mutate: updateProfile, isPending: updatingProfile } = useUpdateCompany({
   onSuccess: async () => {
     // For team: move to step 8 (invite team)
-    if (selected.value === 'team') {
+    if (selected.value === 'team' || selected.value === 'school') {
       activeStep.value = 8
       return
     }
@@ -847,7 +856,7 @@ function generateSlug(value: string) {
 
 const isCopied = ref(false)
 function copySiteUrl() {
-  const url = domainLink.value || `https://${siteSlug.value}.streamed.space/`
+  const url = joinLink.value;
   globalThis.navigator.clipboard.writeText(url).then(() => {
     isCopied.value = true
     setTimeout(() => isCopied.value = false, 2000)
@@ -923,7 +932,7 @@ function buildProfilePayload() {
       ...basePayload,
       type: 'school',
       title: schoolName.value,
-      education_level: educationLevel.value,
+      company_size: educationLevel.value,
        role_id: role.value,
     }
   }
@@ -1021,7 +1030,7 @@ if (activeStep.value === 7) {
       heard_about_us: referralSources.value,
     })
     router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal' } })
-  } else if (selected.value === 'team') {
+  } else if (selected.value === 'team' || selected.value === 'school') {
     updateProfile({ payload })
   } else {
     updateProfile({ payload })
