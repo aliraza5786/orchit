@@ -95,6 +95,6 @@ export const resetPassword = (payload: { token: string; new_password: string; co
   api.post("/auth/reset-password", payload).then((res) => res.data);
 
 export async function joinCompany(token: string) {
-  const response = await api.post('/company/join', { token })
+  const response = await api.post('/company-join', { token })
   return response.data
 }
