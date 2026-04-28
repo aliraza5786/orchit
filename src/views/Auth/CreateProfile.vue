@@ -384,29 +384,6 @@
       </button>
 
     </div>
-    <div class="flex justify-between">
-       <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
-            :disabled="activeStep === 1">
-            <div class="flex items-center gap-1">
-              <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
-            </div>
-          </Button>
-    <!-- continue -->
-            <Button
-              :disabled="creatingProfile || updatingProfile || invitingPeople || isUpdatingProfile"
-              size="md"
-              type="submit"
-              @click="continueHandler"
-            >
-              <div class="flex items-center gap-2">
-                <span
-                  v-if="creatingProfile || updatingProfile || isUpdatingProfile"
-                  class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
-                />
-                <span>Continue</span>
-              </div>
-            </Button>
-    </div>
 
   </div>
 
@@ -481,30 +458,33 @@
   </div>
 
 </div>
-        <!-- Nav -->
-        <div class="flex justify-between  items-center mt-10 md:mt-15" v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
-          <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
-            :disabled="activeStep === 1">
-            <div class="flex items-center gap-1">
-              <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
-            </div>
-          </Button>
+<!-- ✅ KEEP THIS ONE — the original at the bottom -->
+<div class="flex justify-between items-center mt-10 md:mt-15" 
+  v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
+  
+  <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
+    :disabled="activeStep === 1">
+    <div class="flex items-center gap-1">
+      <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
+    </div>
+  </Button>
 
-          <div class="flex gap-4 items-center ml-auto">
-            <router-link
-            v-if="activeStep==3"
-              :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`">
-              <!-- <button
-                class="text-text-primary text-sm px-3 cursor-pointer">
-                Skip
-              </button> -->
-              </router-link>
-            <Button :disabled="creatingProfile || updatingProfile || invitingPeople" size="md" type="submit" @click="continueHandler">
-               Continue 
-            </Button>
-          </div>
+  <div class="flex gap-4 items-center ml-auto">
+    <router-link
+      v-if="activeStep == 3"
+      :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`">
+    </router-link>
+    <Button 
+      :disabled="isSiteStepBlocked || creatingProfile || updatingProfile || invitingPeople" 
+      size="md" 
+      type="submit" 
+      @click="continueHandler"
+    >
+      Continue 
+    </Button>
+  </div>
 
-        </div>
+</div>
       </div>
 
       <div class="max-w-125 md:mx-auto w-full space-y-6"></div>
@@ -1159,6 +1139,13 @@ const displayStep = computed(() => {
   if (activeStep.value === 7) return 6
   if (activeStep.value === 8) return 7
   return activeStep.value
+})
+// ✅ Block Continue on step 5 for team/school until site is created
+const isSiteStepBlocked = computed(() => {
+  if (activeStep.value !== 5) return false
+  if (selected.value !== 'team' && selected.value !== 'school') return false
+  // companyID is only set after createProfile onSuccess
+  return !companyID.value
 })
 </script>
 
