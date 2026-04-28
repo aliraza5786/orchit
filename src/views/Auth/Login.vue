@@ -243,45 +243,46 @@ async function loginWithApple() {
     }
   }
 }
-
- 
-
 async function handleLoginSuccess(data: any) {
-    localStorage.setItem("token", data?.data?.token);
-    await authStore.bootstrap();
+  localStorage.setItem("token", data?.data?.token);
+  await authStore.bootstrap();
 
-    const intentStr = localStorage.getItem('post_auth_intent');
-    if (intentStr) {
-      try {
-        const intent = JSON.parse(intentStr);
-        localStorage.removeItem('post_auth_intent');
-        
-        if (intent.aiResponse) {
-          workspaceStore.setWorkspace(intent.aiResponse);
-        }
-        
-        router.push(intent.path || "/dashboard");
-        return;
-      } catch (e) {
-        console.error("Failed to parse post_auth_intent", e);
-        localStorage.removeItem('post_auth_intent');
+  // ✅ Check post_auth_intent first (existing - untouched)
+  const intentStr = localStorage.getItem('post_auth_intent');
+  if (intentStr) {
+    try {
+      const intent = JSON.parse(intentStr);
+      localStorage.removeItem('post_auth_intent');
+      if (intent.aiResponse) {
+        workspaceStore.setWorkspace(intent.aiResponse);
       }
-    }
-
-    console.log(data?.data?.isNewUser, "new user")
-    
-    if (data?.data?.isNewUser) {
-      router.push("/create-profile");
+      router.push(intent.path || "/dashboard");
       return;
+    } catch (e) {
+      console.error("Failed to parse post_auth_intent", e);
+      localStorage.removeItem('post_auth_intent');
     }
+  }
 
-    if (workspaceStore.pricing) {
-      router.push(`/dashboard?stripePayment=true`);
-    } else {
-      router.push("/dashboard");
-    }
+  // ✅ Check pending invite → skip everything, go join workspace
+  const pendingToken = localStorage.getItem('pending_invite_token');
+  if (pendingToken) {
+    router.push(`/company-join/${pendingToken}`);
+    return;
+  }
+
+  // ✅ Normal login flow — completely untouched below
+  if (data?.data?.isNewUser) {
+    router.push("/create-profile");
+    return;
+  }
+
+  if (workspaceStore.pricing) {
+    router.push(`/dashboard?stripePayment=true`);
+  } else {
+    router.push("/dashboard");
+  }
 }
-
 async function handleLogin() {
   errorMessage.value = "";
   touched.email = true;
