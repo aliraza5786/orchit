@@ -115,8 +115,6 @@
               <tr 
                 v-for="(person, index) in group.cards" 
                 :key="person._id || index"
-                @mouseenter="hoverIndex = Number(index)"
-                @mouseleave="hoverIndex = null"
                 class="border-b border-border transition-colors relative group/row hover:bg-bg-surface/40"
               >
                 <td @click.stop class="w-8 group text-center align-middle border-r border-border/40 sticky left-0 z-20 bg-bg-surface">
@@ -151,140 +149,43 @@
                   v-for="(col, i) in visibleColumns"
                   :key="col.key"
                   class="border-r border-border overflow-visible relative h-8 px-3 py-1.5"
-                  :style="{ width: columnWidths[col.key] + 'px' }"
+                  :style="{ width: columnWidths[col.key] ? columnWidths[col.key] + 'px' : (i === 0 ? '250px' : '200px') }"
                   :colspan="i === visibleColumns.length - 1 ? 2 : 1"
                 >
-                    <!-- Special Renderers -->
-                    
-                    <!-- Title/Name -->
-                    <div v-if="col.key === 'title'" class="flex items-center gap-2 overflow-hidden h-full">
-                       <div 
-                        class="w-8 h-8 min-w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 bg-bg-surface"
-                        :style="{ backgroundColor: (person.name || person.user_info?.name || person.email) ? avatarColor({ email: person.email || person.user_info?.email, name: person.name || person.user_info?.name }) : '' }"
-                      >
-                        <img v-if="person.user_info?.avatar" :src="person.user_info.avatar" class="w-full h-full rounded-full object-cover" />
-                        <template v-else-if="person.name || person.user_info?.name">{{ getInitials(person.name || person.user_info?.name || '') }}</template>
-                        <template v-else-if="person.email">{{ getEmailInitials(person.email) }}</template>
-                        <i v-else class="fa-solid fa-user text-white"></i>
-                      </div>
-                      <div class="flex flex-col justify-center min-w-0">
-                        <span class="truncate font-medium text-[13px] text-text-primary leading-tight">
-                          {{ person.name || person.user_info?.name || person.title || 'Team Member ' }}
-                        </span>
-                        <span 
-                          v-if="person.email || person.user_info?.email"
-                          class="truncate text-[11px] text-text-secondary leading-tight mt-0.5"
-                        >
-                          {{ person.email || person.user_info?.email }}
-                        </span>
-                      </div>
-                    </div>
+                    <!-- Render Function if provided -->
+                    <component
+                      v-if="col.render"
+                      :is="RenderCell"
+                      :row="person"
+                      :column="col"
+                      :index="person._id"
+                    />
 
-                    <!-- Status -->
-                    <div v-else-if="col.key === 'status'">
-                      <span 
-                        class="px-2 py-0.5 rounded-md text-[11px] font-medium capitalize"
-                        :class="getStatusClass(person.status ?? (person.is_active ? 'Active' : 'Inactive'))"
-                      >
-                        {{ person.status ?? (person.is_active ? 'Active' : 'Inactive') }}
-                      </span>
-                    </div>
-
-                    <!-- Role / Access Role -->
-                    <div v-else-if="col.key === 'role'" class="w-full">
-                      <TableSearchCell
-                        :modelValue="person.workspace_access_role_id"
-                        :options="workspaceRoles"
-                        placeholder="Assign Access Role"
-                        emptyText="Access Role"
-                        @change="(val: any) => handleRoleChange(person, val)"
-                      >
-                        <template #display>
-                          <span v-if="getRoleTitle(person.workspace_access_role_id)" class="text-[12px] font-medium text-text-primary truncate">
-                            {{ getRoleTitle(person.workspace_access_role_id) }}
-                          </span>
-                        </template>
-                      </TableSearchCell>
-                    </div>
-
-                    <!-- Level -->
-                    <div v-else-if="col.key === 'level'">
-                      <span 
-                        class="px-2 py-0.5 rounded-full text-[10px] font-medium border uppercase"
-                        :class="getLevelClass(person.level)"
-                      >
-                        {{ person.level || '-' }}
-                      </span>
-                    </div>
-
-                    <!-- Model -->
-                    <div v-else-if="col.key === 'model'" class="flex items-center gap-1.5">
-                      <i class="fa-solid fa-microchip text-[10px] text-text-secondary/70"></i>
-                      <span class="text-[12px]">{{ person.model || '-' }}</span>
-                    </div>
-
-                    <!-- Assigned Cards -->
-                    <div v-else-if="col.key === 'assigned_cards_count'" class="text-[12px] text-text-secondary">
-                       <div class="flex items-center gap-1.5">
-                          <i class="fa-regular fa-clone opacity-50"></i>
-                          <span>{{ person.assigned_cards_count || '-' }}</span>
+                    <!-- Generic Slot fallback -->
+                    <slot 
+                      v-else 
+                      :name="col.key" 
+                      :row="person" 
+                      :column="col" 
+                      :index="person._id"
+                    >
+                       <div class="text-[12px] text-text-secondary truncate">
+                          {{ person[col.key] || getVariableValue(person, col.key) || '-' }}
                        </div>
-                    </div>
-
-                    <!-- Variable / Generic -->
-                    <div v-else class="text-[12px] text-text-secondary truncate">
-                       {{ person[col.key] || getVariableValue(person, col.key) || '-' }}
-                    </div>
+                    </slot>
                 </td>
-
-                <!-- Removed the extra sticky column to let colspan=2 take over -->
               </tr>
             </template>
           </template>
         </tbody>
       </table>
     </div>
-
-    <!-- Modals -->
-    <div @click.stop>
-      <ConfirmDeleteModal 
-        v-model="showDelete" 
-        title="Delete Team seat" 
-        itemLabel="Seat"
-        :itemName="activePerson?.title || activePerson?.name || 'Seat'" 
-        :requireMatchText="activePerson?.title || activePerson?.name || 'Seat'" 
-        confirmText="Delete Seat" 
-        cancelText="Cancel"
-        size="md" 
-        :loading="deletingTicket" 
-        @confirm="handleDeletePerson" 
-        @cancel="() => { showDelete = false; activePerson = null; }"
-      />
-      <AssignmentModal
-        :isSubmitting="inviting"
-        v-model="showAddMembers"
-        :members="people?.people"
-        :directory="people?.people"
-        @submit="handleAssignSubmit"
-      />
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive, watch, ref, defineAsyncComponent, onMounted, onUnmounted, computed } from 'vue';
-import { avatarColor } from '../../../utilities/avatarColor';
-import { getInitials } from '../../../utilities';
+import { reactive, watch, ref, onMounted, onUnmounted, computed, h } from 'vue';
 import { usePermissions } from '../../../composables/usePermissions';
-import { useAssignRole, useAssignTeam, useDeleteSeat, usePeople, useUnAssignTeam } from '../../../queries/usePeople';
-import { useWorkspaceId } from '../../../composables/useQueryParams';
-import { useCompanyId } from '../../../services/user';
-import { toast } from 'vue-sonner';
-import { useQueryClient } from '@tanstack/vue-query';
-
-const AssignmentModal = defineAsyncComponent(() => import("../modals/AssignmentModal.vue"));
-const ConfirmDeleteModal = defineAsyncComponent(() => import("../../Product/modals/ConfirmDeleteModal.vue"));
-const TableSearchCell = defineAsyncComponent(() => import("../../../components/feature/TableView/TableSearchCell.vue"));
 
 const props = defineProps<{
   columns: any[];
@@ -295,18 +196,10 @@ const props = defineProps<{
   workspaceRoles?: any[];
 }>();
 
-const emit = defineEmits(['select:ticket', 'deleted', 'assigned', 'unAssigned', 'add-seat', 'addVar']);
+const emit = defineEmits(['select:ticket', 'deleted', 'assigned', 'unAssigned', 'add-seat', 'addVar', 'invite', 'unassign', 'delete-seat']);
 
 const { canInviteUser, canEditUser, canDeleteUser, canCreateVariable } = usePermissions();
-const { workspaceId } = useWorkspaceId();
-const { data: companyId } = useCompanyId();
-const { data: people } = usePeople(workspaceId.value, companyId);
 
-const queryClient = useQueryClient();
-const hoverIndex = ref<number | null>(null);
-const activePerson = ref<any>(null);
-const showAddMembers = ref(false);
-const showDelete = ref(false);
 const activeMenuId = ref<string | number | null>(null);
 
 const visibleColumnKeys = ref<string[]>(props.columns.map((c: any) => c.key));
@@ -375,63 +268,25 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
 });
 
-// Mutations
-const { mutate: deleteSeat, isPending: deletingTicket } = useDeleteSeat({
-    onSuccess: () => {
-        toast.success("Seat deleted successfully!");
-        emit("deleted", activePerson.value?._id);
-        showDelete.value = false;
-        activePerson.value = null;
-    },
-    onError: (err: any) => {
-        toast.error(err.message || "Failed to delete seat.");
-    }
-});
+// Cell Rendering Logic
+const getVariableValue = (person: any, colKey: string) => {
+  if (!person.variables || !Array.isArray(person.variables)) return null;
+  const v = person.variables.find((v: any) => v._id === colKey || v.variable_id === colKey);
+  return v?.value || null;
+};
 
-const { mutate: invitePeople, isPending: inviting } = useAssignTeam({
-    onSuccess: (res: any) => {
-        toast.success("Seat assigned successfully!");
-        showAddMembers.value = false;
-        emit("assigned", res?.data ?? res);
-        activePerson.value = null;
-    },
-    onError: (err: any) => {
-        toast.error(err.message || "Failed to assign seat.");
-    }
-});
-
-const { mutate: unassign } = useUnAssignTeam({
-    onSuccess: () => {
-        toast.success("Seat unassigned successfully!");
-        emit("unAssigned");
-        activePerson.value = null;
-    },
-    onError: (err: any) => {
-        toast.error(err.message || "Failed to unassign seat.");
-    }
-});
-
-const { mutate: assignRole } = useAssignRole({
-  onSuccess: () => {
-    toast.success("Access role updated!");
-    queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+const RenderCell = (p: { row: any; column: any; index: any }) => {
+  if (p.column?.render) {
+    return p.column.render({ 
+      row: p.row, 
+      column: p.column, 
+      value: p.row[p.column.key] || getVariableValue(p.row, p.column.key), 
+      index: p.index 
+    });
   }
-});
-
-const handleRoleChange = (person: any, roleId: string) => {
-  assignRole({
-    id: person._id,
-    workspace_access_role_id: roleId
-  });
+  return h('span', String(p.row[p.column.key] || getVariableValue(p.row, p.column.key) || '-'));
 };
 
-const getRoleTitle = (id: string) => {
-  if (!id) return "";
-  const role = props.workspaceRoles?.find(r => r._id === id);
-  return role?.title || id;
-};
-
-// Group collapse state
 const expandedGroups = reactive<Record<string, boolean>>({});
 
 watch(() => props.groups, (newGroups) => {
@@ -467,10 +322,7 @@ function getMenuItems(person: any) {
   if (canInviteUser.value && !hasUser) {
     items.push({
       label: 'Assign User',
-      action: () => {
-        activePerson.value = person;
-        showAddMembers.value = true;
-      },
+      action: () => emit('invite', person),
       icon: { prefix: 'fa-regular', iconName: 'fa-user-plus' }
     });
   }
@@ -479,7 +331,7 @@ function getMenuItems(person: any) {
     items.push({
       label: 'UnAssign User',
       danger: true,
-      action: () => unassignHandler(person),
+      action: () => emit('unassign', person),
       icon: { prefix: 'fa-regular', iconName: 'fa-user-minus' }
     });
   }
@@ -488,74 +340,13 @@ function getMenuItems(person: any) {
     items.push({
       label: 'Delete Seat',
       danger: true,
-      action: () => {
-        activePerson.value = person;
-        showDelete.value = true;
-      },
+      action: () => emit('delete-seat', person),
       icon: { prefix: 'fa-regular', iconName: 'fa-trash' }
     });
   }
 
   return items as { label: string; icon?: any; action?: () => void; danger?: boolean }[];
 }
-
-function handleAssignSubmit(payload: { invite: any }) {
-  if (!activePerson.value) return;
-  invitePeople({
-      id: activePerson.value._id,
-      payload: {
-          name: extractNameFromEmail(payload.invite.email),
-          email: payload.invite.email
-      }
-  });
-}
-
-function handleDeletePerson() { 
-    if (!activePerson.value) return;
-    deleteSeat({ id: activePerson.value._id });
-}
-
-function unassignHandler(person: any) {
-    unassign({ id: person._id });
-}
-
-function extractNameFromEmail(email: string) {
-    const local = (email.split('@')[0] || '').split('+')[0]
-    const parts = local.split(/[^a-zA-Z]+/).filter(Boolean)
-    if (!parts.length) return email
-    return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ')
-}
-
-function getEmailInitials(email: string): string {
-    const local = email.split('@')[0] || ''
-    return local.slice(0, 2).toUpperCase()
-}
-
-const getStatusClass = (status: string) => {
-  const s = status?.toLowerCase();
-  if (s === 'accepted' || s === 'active') return 'bg-green-600/10 text-green-600';
-  if (s === 'pending') return 'bg-amber-600/10 text-amber-600';
-  if (s === 'rejected' || s === 'inactive') return 'bg-red-600/10 text-red-600';
-  if (s === 'unassigned') return 'bg-bg-surface/60 text-text-secondary';
-  return 'bg-bg-surface/60 text-text-secondary';
-};
-
-const getLevelClass = (level: string) => {
-  const map: Record<string, string> = {
-    EXPERT: "bg-purple-100 text-purple-700 border border-purple-200",
-    LEAD: "bg-blue-100   text-blue-700   border border-blue-200",
-    SENIOR: "bg-green-100  text-green-700  border border-green-200",
-    MID: "bg-yellow-100 text-yellow-700 border border-yellow-200",
-    JUNIOR: "bg-gray-100   text-gray-600   border border-gray-200",
-  };
-  return map[level] ?? "bg-gray-100 text-gray-600 border border-gray-200";
-};
-
-const getVariableValue = (person: any, colKey: string) => {
-  if (!person.variables || !Array.isArray(person.variables)) return null;
-  const v = person.variables.find((v: any) => v._id === colKey || v.variable_id === colKey);
-  return v?.value || null;
-};
 </script>
 
 <style scoped>

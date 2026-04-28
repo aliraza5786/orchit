@@ -1165,7 +1165,7 @@ const columns = computed(() => {
     },
     {
       key: "lane",
-      label: "Lane",
+      label: "Tab",
       render: ({ row, value }: any) =>
         h(TableSearchCell, {
           options: laneOptions.value ?? [],

@@ -367,6 +367,9 @@
           @unAssigned="() => fetchPeople(true)"
           @addVar="isCreateVar = true"
           @add-seat="handlePLus"
+          @invite="(person: any) => { activePerson = person; showAddMembers = true; }"
+          @unassign="unassignHandler"
+          @delete-seat="(person: any) => { activePerson = person; showDeleteSeat = true; }"
         />
       </div>
 
@@ -422,6 +425,29 @@
     "
   />
 
+  <ConfirmDeleteModal 
+    v-model="showDeleteSeat"
+    title="Delete Team seat" 
+    itemLabel="Seat"
+    :itemName="activePerson?.title || activePerson?.name || 'Seat'" 
+    :requireMatchText="activePerson?.title || activePerson?.name || 'Seat'" 
+    confirmText="Delete Seat" 
+    cancelText="Cancel"
+    size="md" 
+    :loading="deletingSeat" 
+    @confirm="handleDeletePerson" 
+    @cancel="() => { showDeleteSeat = false; activePerson = null; }"
+  />
+
+  <AssignmentModal
+    v-if="showAddMembers"
+    :isSubmitting="inviting"
+    v-model="showAddMembers"
+    :members="peopleDirectory?.people"
+    :directory="peopleDirectory?.people"
+    @submit="handleAssignSubmit"
+  />
+
   <DetailPanel
     v-if="showPanel"
     @close="selectCardHandler(null)"
@@ -467,7 +493,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineAsyncComponent, ref, watch, onMounted, computed } from "vue";
+import { h, defineAsyncComponent, ref, watch, onMounted, computed, unref } from "vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
 import { useWorkspaceRoles } from "../../queries/usePeople";
@@ -477,6 +503,11 @@ import {
   useCreateTeam,
   useCreateTeamMember,
   useDeleteTeam,
+  useAssignRole,
+  useAssignTeam,
+  useDeleteSeat,
+  useUnAssignTeam,
+  usePeople,
 } from "../../queries/usePeople";
 import { useUpdateInvitedWorkspace } from "../../queries/useWorkspace";
 import { useWorkspaceStore } from "../../stores/workspace";
@@ -487,6 +518,9 @@ import PeopleTableView from "./components/PeopleTableView.vue";
 import MindmapView from "../../components/feature/MindmapView.vue";
 import { useVariables } from "../../queries/useSheets";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
+import { avatarColor } from "../../utilities/avatarColor";
+import { getInitials } from "../../utilities";
+import { useCompanyId } from "../../services/user";
 const KanbanSkeleton = defineAsyncComponent(
   () => import("../../components/skeletons/KanbanSkeleton.vue"),
 );
@@ -526,13 +560,19 @@ const KanbanBoard = defineAsyncComponent(
 const KanbanCard = defineAsyncComponent(
   () => import("./components/KanbanCard.vue"),
 );
+const TableSearchCell = defineAsyncComponent(
+  () => import("../../components/feature/TableView/TableSearchCell.vue"),
+);
+const AssignmentModal = defineAsyncComponent(
+  () => import("./modals/AssignmentModal.vue"),
+);
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { usePeopleStore } from "../../stores/peopleStore";
 import { useAgentStore } from "../../stores/agentStore";
 import { useMediaQuery } from "@vueuse/core";
-const { canCreateVariable, canInviteUser, canCreateCard } = usePermissions();
+const { canCreateVariable, canInviteUser, canCreateCard, canEditUser, canDeleteUser } = usePermissions();
 const sidePanelStore = useSidePanelStore();
 const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
@@ -583,6 +623,13 @@ function refetchCardDetails() {
 const showModal = ref(false);
 const isCreateVar = ref(false);
 const modalColumn = ref({ email: [], cards: [], title: "", _id: "" }); 
+
+const showAddMembers = ref(false);
+const showDeleteSeat = ref(false);
+const activePerson = ref<any>(null);
+
+const { data: companyId } = useCompanyId();
+const { data: peopleDirectory } = usePeople(workspaceId, companyId);
 const closeModal = () => {
   showModal.value = false;
 };
@@ -828,6 +875,117 @@ const handleDelete = (e: any) => {
   showDelete.value = true;
   localColumn.value = e;
 };
+
+// ─── Seat Actions (Table View) ────────────────────────────────────────────────
+const { mutate: deleteSeatAction, isPending: deletingSeat } = useDeleteSeat({
+  onSuccess: () => {
+    toast.success("Seat deleted successfully!");
+    if (activePerson.value) {
+      handleSeatDeleted(activePerson.value._id);
+    }
+    showDeleteSeat.value = false;
+    activePerson.value = null;
+  },
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to delete seat.");
+  }
+});
+
+const { mutate: invitePeopleAction, isPending: inviting } = useAssignTeam({
+  onSuccess: (res: any) => {
+    toast.success("Seat assigned successfully!");
+    showAddMembers.value = false;
+    handleSeatUpdated(activePerson.value?._id, res?.data ?? res);
+    activePerson.value = null;
+  },
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to assign seat.");
+  }
+});
+
+const { mutate: unassignSeatAction } = useUnAssignTeam({
+  onSuccess: () => {
+    toast.success("Seat unassigned successfully!");
+    fetchPeople(true);
+    activePerson.value = null;
+  },
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to unassign seat.");
+  }
+});
+
+const { mutate: assignRoleAction } = useAssignRole({
+  onSuccess: () => {
+    toast.success("Access role updated!");
+    queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+  }
+});
+
+const handleRoleChange = (person: any, roleId: string) => {
+  assignRoleAction({
+    id: person._id,
+    workspace_access_role_id: roleId
+  });
+};
+
+const handleAssignSubmit = (payload: { invite: any }) => {
+  if (!activePerson.value) return;
+  invitePeopleAction({
+    id: activePerson.value._id,
+    payload: {
+      name: extractNameFromEmail(payload.invite.email),
+      email: payload.invite.email
+    }
+  });
+};
+
+function handleDeletePerson() { 
+  if (!activePerson.value) return;
+  deleteSeatAction({ id: activePerson.value._id });
+}
+
+function unassignHandler(person: any) {
+  unassignSeatAction({ id: person._id });
+}
+
+function getStatusClass(status: string) {
+  const s = status?.toLowerCase();
+  if (s === 'accepted' || s === 'active') return 'bg-green-600/10 text-green-600';
+  if (s === 'pending') return 'bg-amber-600/10 text-amber-600';
+  if (s === 'rejected' || s === 'inactive') return 'bg-red-600/10 text-red-600';
+  if (s === 'unassigned') return 'bg-bg-surface/60 text-text-secondary';
+  return 'bg-bg-surface/60 text-text-secondary';
+}
+
+function getLevelClass(level: string) {
+  const map: Record<string, string> = {
+    EXPERT: "bg-purple-100 text-purple-700 border border-purple-200",
+    LEAD: "bg-blue-100   text-blue-700   border border-blue-200",
+    SENIOR: "bg-green-100  text-green-700  border border-green-200",
+    MID: "bg-yellow-100 text-yellow-700 border border-yellow-200",
+    JUNIOR: "bg-gray-100   text-gray-600   border border-gray-200",
+  };
+  return map[level] ?? "bg-gray-100 text-gray-600 border border-gray-200";
+}
+
+function getEmailInitials(email: string): string {
+  const local = email?.split('@')[0] || '';
+  return local.slice(0, 2).toUpperCase();
+}
+
+const getVariableValue = (person: any, colKey: string) => {
+  if (!person.variables || !Array.isArray(person.variables)) return null;
+  const v = person.variables.find((v: any) => v._id === colKey || v.variable_id === colKey);
+  return v?.value || null;
+}
+
+const getRoleTitle = (id: string) => {
+  if (!id) return "";
+  const role = (workspaceRoles.value || []).find((r: any) => r._id === id);
+  return role?.title || id;
+};
+
+
 
 // ─── Add seat ─────────────────────────────────────────────────────────────────
 const { mutate: createTeam, isPending } = useCreateTeamMember({
@@ -1093,35 +1251,120 @@ const handleMindmapSelectTicket = (node: any) => {
 //   return [];
 // });
 const tableColumns = computed(() => {
-  let cols: any[] = [];
   if (currentTab.value === "talent") {
-    cols = [
-      { key: "title", label: "Seat" },
-      { key: "role", label: "Access Role" },
-      { key: "status", label: "Status" },
-      { key: "assigned_cards_count", label: "Assigned Cards" },
+    return [
+      { 
+        key: "title", 
+        label: "Seat",
+        render: ({ row: person }: any) => h("div", { class: "flex items-center gap-2 overflow-hidden h-full" }, [
+          h("div", { 
+            class: "w-8 h-8 min-w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 bg-bg-surface",
+            style: { backgroundColor: (person.name || person.user_info?.name || person.email) ? avatarColor({ email: person.email || person.user_info?.email, name: person.name || person.user_info?.name }) : '' }
+          }, [
+            person.user_info?.avatar 
+              ? h("img", { src: person.user_info.avatar, class: "w-full h-full rounded-full object-cover" })
+              : (person.name || person.user_info?.name) ? getInitials(person.name || person.user_info?.name || '') : (person.email ? getEmailInitials(person.email) : h("i", { class: "fa-solid fa-user text-white" }))
+          ]),
+          h("div", { class: "flex flex-col justify-center min-w-0" }, [
+            h("span", { class: "truncate font-medium text-[13px] text-text-primary leading-tight" }, person.name || person.user_info?.name || person.title || 'Team Member '),
+            (person.email || person.user_info?.email) ? h("span", { class: "truncate text-[11px] text-text-secondary leading-tight mt-0.5" }, person.email || person.user_info?.email) : null
+          ])
+        ])
+      },
+      { 
+        key: "role", 
+        label: "Access Role",
+        render: ({ row: person }: any) => h("div", { class: "w-full" }, [
+          h(TableSearchCell, {
+            modelValue: person.workspace_access_role_id,
+            options: workspaceRoles.value || [],
+            placeholder: "Assign Access Role",
+            emptyText: "Access Role",
+            onChange: (val: any) => handleRoleChange(person, val)
+          }, {
+            display: () => getRoleTitle(person.workspace_access_role_id) ? h("span", { class: "text-[12px] font-medium text-text-primary truncate" }, getRoleTitle(person.workspace_access_role_id)) : null
+          })
+        ])
+      },
+      { 
+        key: "status", 
+        label: "Status",
+        render: ({ row: person }: any) => h("div", {}, [
+          h("span", { 
+            class: ["px-2 py-0.5 rounded-md text-[11px] font-medium capitalize", getStatusClass(person.status ?? (person.is_active ? 'Active' : 'Inactive'))]
+          }, person.status ?? (person.is_active ? 'Active' : 'Inactive'))
+        ])
+      },
+      { 
+        key: "assigned_cards_count", 
+        label: "Assigned Cards",
+        render: ({ row: person }: any) => h("div", { class: "text-[12px] text-text-secondary" }, [
+          h("div", { class: "flex items-center gap-1.5" }, [
+            h("i", { class: "fa-regular fa-clone opacity-50" }),
+            h("span", {}, person.assigned_cards_count || '-')
+          ])
+        ])
+      },
+      ...((peopleVariables.value && Array.isArray(peopleVariables.value)) ? peopleVariables.value.map((v: any) => ({
+        key: v._id,
+        label: v.title,
+        render: ({ row: person }: any) => h("div", { class: "text-[12px] text-text-secondary truncate" }, person[v._id] || getVariableValue(person, v._id) || '-')
+      })) : [])
     ];
   } else {
-    cols = [
-      { key: "title", label: "Agent" },
-      { key: "role", label: "Role" },
-      { key: "model", label: "Model" },
-      { key: "level", label: "Level" },
-      { key: "status", label: "Status" },
+    return [
+      { 
+        key: "title", 
+        label: "Agent",
+        render: ({ row: agent }: any) => h("div", { class: "flex items-center gap-2 overflow-hidden h-full" }, [
+          h("div", { 
+            class: "w-8 h-8 min-w-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 bg-bg-surface",
+            style: { backgroundColor: avatarColor({ name: agent.name }) }
+          }, getInitials(agent.name || '')),
+          h("div", { class: "flex flex-col justify-center min-w-0" }, [
+            h("span", { class: "truncate font-medium text-[13px] text-text-primary leading-tight" }, agent.name || 'Unnamed Agent'),
+            h("span", { class: "truncate text-[11px] text-text-secondary leading-tight mt-0.5" }, agent.role || '')
+          ])
+        ])
+      },
+      { 
+        key: "role", 
+        label: "Role",
+        render: ({ row: agent }: any) => h("div", { class: "text-[12px] text-text-secondary truncate" }, agent.role || '-')
+      },
+      { 
+        key: "model", 
+        label: "Model",
+        render: ({ row: agent }: any) => h("div", { class: "flex items-center gap-1.5" }, [
+          h("i", { class: "fa-solid fa-microchip text-[10px] text-text-secondary/70" }),
+          h("span", { class: "text-[12px]" }, agent.model || '-')
+        ])
+      },
+      { 
+        key: "level", 
+        label: "Level",
+        render: ({ row: agent }: any) => h("div", {}, [
+          h("span", { 
+            class: ["px-2 py-0.5 rounded-full text-[10px] font-medium border uppercase", getLevelClass(agent.level)]
+          }, agent.level || '-')
+        ])
+      },
+      { 
+        key: "status", 
+        label: "Status",
+        render: ({ row: agent }: any) => h("div", {}, [
+          h("span", { 
+            class: ["px-2 py-0.5 rounded-md text-[11px] font-medium capitalize", getStatusClass(agent.is_active ? 'Active' : 'Inactive')]
+          }, agent.is_active ? "Active" : "Inactive")
+        ])
+      },
+      ...((peopleVariables.value && Array.isArray(peopleVariables.value)) ? peopleVariables.value.map((v: any) => ({
+        key: v._id,
+        label: v.title,
+        render: ({ row: person }: any) => h("div", { class: "text-[12px] text-text-secondary truncate" }, person[v._id] || getVariableValue(person, v._id) || '-')
+      })) : [])
     ];
   }
-
-  // Add dynamic variables for people
-  if (peopleVariables.value && Array.isArray(peopleVariables.value)) {
-    peopleVariables.value.forEach((v: any) => {
-      // Avoid duplicate keys if any
-      if (!cols.find(c => c.key === v._id)) {
-        cols.push({ key: v._id, label: v.title });
-      }
-    });
-  }
-
-  return cols;
 });
 
 function levelClass(level: string): string {
