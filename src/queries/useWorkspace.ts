@@ -118,8 +118,7 @@ export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Re
         method: "GET",
       });
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes — avoids refetch on every mount
-    refetchOnMount: true,      // only refetch if data is stale, not always
+    refetchOnMount: true,
     enabled: computed(() => !!authStore.company_id),
   });
 };

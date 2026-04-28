@@ -58,26 +58,27 @@
       <StepFour v-if="currentStep === 4" :ai="isAI" ref="stepFourRef" @back="startOver" />
     </div>
     <div v-if="currentStep !== 0"
-      class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t items-center border-border h-[80px]">
-      <Button variant="secondary" size="md" @click="goBack" v-if="currentStep !== 4">
-        <div class="flex items-center gap-2">
-          <i class="text-base fa-solid fa-arrow-left"></i> Back
-        </div>
-      </Button>
-
-      <div class="flex items-center gap-2">
-        <Button v-if="showSkip" variant="secondary" size="md" @click="handleSkip">
-          Skip
-        </Button>
-
-        <Button :disabled="continueDisabled" :loading="isLoading" size="md" variant="primary" @click="goNext">
-          <div class="flex items-center w-full justify-between gap-2">
-            {{ continueLabel }}
-            <i v-if="!isLoading" class="text-base fa-solid fa-arrow-right"></i>
-          </div>
-        </Button>
-      </div>
+  class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t items-center border-border h-[80px]">
+  
+  <Button variant="secondary" size="md" @click="goBack" v-if="currentStep !== 4">
+    <div class="flex items-center gap-2">
+      <i class="text-base fa-solid fa-arrow-left"></i> Back
     </div>
+  </Button>
+
+  <div class="flex items-center gap-2 ml-auto">
+    <Button v-if="showSkip" variant="secondary" size="md" @click="handleSkip">
+      Skip
+    </Button>
+
+    <Button :disabled="continueDisabled" :loading="isLoading" size="md" variant="primary" @click="goNext">
+      <div class="flex items-center w-full justify-between gap-2">
+        {{ continueLabel }}
+        <i v-if="!isLoading" class="text-base fa-solid fa-arrow-right"></i>
+      </div>
+    </Button>
+  </div>
+</div>
   </div>
 </template>
 
