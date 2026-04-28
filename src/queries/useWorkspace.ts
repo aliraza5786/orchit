@@ -3,10 +3,7 @@ import { useApiQuery, useApiMutation } from "../libs/vq.ts";
 import api, { request } from "../libs/api.ts"; // for dynamic-URL mutations
 import { computed, unref, type Ref } from "vue";
 import { useQuery } from "@tanstack/vue-query";
-
-/** ---------------------------------
- * Query Keys (stable & parameterized)
- * -------------------------------- */
+import { useAuthStore } from "../stores/auth.ts";
 export const keys = {
   description: (id: string | number) => ["description", id] as const,
   suggestions: (category: string) => ["suggestions", category] as const,
@@ -93,35 +90,59 @@ export const useWorkspacesPrompt = () =>
     url: "/common/prompts-byname/workspace",
     method: "GET",
   });
-
 export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
+  const authStore = useAuthStore();
+
+  // ✅ Plain computed string — NOT a ref object inside the queryKey
+  const companyId = computed(() => authStore.company_id ?? '');
+
   return useQuery({
+    // ✅ Unwrap everything to primitives so the key is stable and serializable
     queryKey: computed(() => [
-      "workspaces",
+      'workspaces',
       unref(page),
       unref(limit),
-      unref(filter) || "all",
+      unref(filter) ?? 'all',
+      companyId.value,
     ]),
-    queryFn: () =>
-      request({
-        url: `/workspace/all?page=${unref(page)}&limit=${unref(limit)}&filter=${unref(filter) || "all"}`,
-        method: "GET",
-      }),
+    queryFn: async () => {
+      const companyIdVal = authStore.company_id;
 
-    staleTime: 0,
-    refetchOnMount: "always",
+      if (!companyIdVal) {
+        console.warn('⚠️ useWorkspaces: No company_id available');
+        return { workspaces: [] };
+      }
+
+      const pageVal = unref(page);
+      const limitVal = unref(limit);
+      const filterVal = unref(filter) ?? 'all';
+
+      const url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}&company_id=${companyIdVal}`;
+
+      console.log('📡 Fetching:', url);
+
+      return request({
+        url,
+        method: 'GET',
+      });
+    },
+    refetchOnMount: true,
+    enabled: computed(() => !!authStore.company_id),
   });
 };
+export const useWorkspacesTitles = () => {
+  const authStore = useAuthStore();
 
-export const useWorkspacesTitles = () =>
-  useApiQuery({
-    key: keys.workspacesTitles,
+  return useApiQuery({
+    key: computed(() => {
+      const companyId = authStore.company_id ?? "";
+      return ["workspaces", "titles", companyId];
+    }),
     url: "/workspace/titles",
     method: "GET",
+    enabled: computed(() => !!authStore.company_id),
   });
-
-
-
+};
 type WorkspaceId = string | number | undefined;
 type MaybeRef<T> = T | Ref<T>;
 
@@ -164,20 +185,24 @@ type IdLike =
   | undefined;
 
 export const useWorkspacesRoles = (id: IdLike) => {
+  const authStore = useAuthStore();
   const idRef = computed(() => unref(id));
+
   return useQuery({
-    queryKey: computed(() => ["workspaceRoles", idRef.value] as const),
-    enabled: computed(() => !!idRef.value),
+    queryKey: computed(() => {
+      const wid = idRef.value ?? "";
+      const companyId = authStore.company_id ?? "";
+      return ["workspaceRoles", wid, companyId];
+    }),
+    enabled: computed(() => !!idRef.value && !!authStore.company_id),
     queryFn: async () => {
       const wid = idRef.value;
       if (!wid && wid !== 0) return [];
       return await api.get(`/workspace/teams/${wid}`).then((r) => r.data.data);
     },
-    staleTime: 3 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    staleTime: 15_000,
   });
 };
-
 export const useWorkspacesVariables = () =>
   useApiQuery({
     key: keys.workspaceVariables,
@@ -431,4 +456,30 @@ export const useArchiveWorkspace = (options = {}) =>
     ...options,
   });
 };
+export const useWorkspaceModulesAndUsers = (workspaceId: Ref<string>) => {
+  return useQuery({
+    queryKey: ["workspace-modules-and-users", workspaceId],
+    queryFn: async () => {
+      const workspaceIdVal = unref(workspaceId)
 
+      if (!workspaceIdVal) {
+        console.warn("⚠️ useWorkspaceModulesAndUsers: No workspace_id provided")
+        return { data: { modules: [], company_users: [] } }
+      }
+
+      const url = `/workspace/${workspaceIdVal}/modules-and-users`
+
+      console.log("📡 Fetching:", url)
+
+      return request({
+        url,
+        method: "GET",
+      })
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
+    // ✅ Only guard on workspaceId — this query is used on the list page
+    // where there is no route workspaceId, so we must NOT check authStore.company_id
+    enabled: computed(() => !!unref(workspaceId)),
+  })
+}

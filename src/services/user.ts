@@ -2,8 +2,17 @@ import api from "../libs/api";
 import { useQuery } from '@tanstack/vue-query'
 import { useAuthStore } from '../stores/auth'
 import { watch } from 'vue'
-export const getProfile = () => api.get('/profile').then(r => r.data)
-
+export const getProfile = () => 
+  api.get('/profile').then(r => {
+    console.log("company new", r);
+    
+    const activeCompanyId = r.data?.data?.active_company_id
+    if (activeCompanyId) {
+      localStorage.setItem('company_id', activeCompanyId)
+      console.log('✅ company_id saved from getProfile:', activeCompanyId)
+    }
+    return r.data
+  })
 
 export function useProfile() {
   const auth = useAuthStore()
@@ -16,6 +25,7 @@ export function useProfile() {
     retry: false,
   })
 
+  // ✅ Logout on error
   watch(
     () => query.error.value,
     (err) => {
@@ -25,9 +35,26 @@ export function useProfile() {
     }
   )
 
+  // ✅ Save company_id from API → localStorage + state
+  watch(
+    () => query.data.value?.data?.active_company_id,
+    (activeCompanyId) => {
+      if (!activeCompanyId) return
+
+      const stored = localStorage.getItem('company_id')
+
+      if (stored !== activeCompanyId) {
+        localStorage.setItem('company_id', activeCompanyId)
+        auth.company_id = activeCompanyId
+
+        console.log('✅ company_id saved from useProfile:', activeCompanyId)
+      }
+    },
+    { immediate: true }
+  )
+
   return query
 }
-
 export function useCompanyId() {
   return useQuery({
     queryKey: ['me'],
@@ -50,14 +77,16 @@ export function useUserId() {
 }
 
 export const updateProfile = (payload: {
-    u_full_name?: string;
-    u_job_title?: string;
-    u_department?: string;
-    u_organization?: string;
-    u_location?: string;
-    u_profile_image?: string;
-  }) => {
-    return api.put('/profile', payload).then(res => res.data);
-  };
-
-
+  u_full_name?: string;
+  u_job_title?: string;
+  u_department?: string;
+  u_organization?: string;
+  u_location?: string;
+  u_profile_image?: string;
+  u_work_to_do?: string;
+  work_to_do?: string;
+  like_to_manage?: string[];
+  heard_about_us?: string[];
+}) => {
+  return api.put('/profile', payload).then(res => res.data);
+};

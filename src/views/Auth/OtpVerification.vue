@@ -112,77 +112,92 @@ function focusIdx(i: number) {
   // ---- Verify mutation (async to avoid re-created callbacks) ----
   const { mutateAsync: verifyAsync, isPending: isVerifying } = useMutation({ mutationFn: verifyOtp })
   
-  async function verifyCode() {
-    otpError.value = ''
-  
-    if (!isCodeComplete.value) {
-      otpError.value = 'Please enter the complete 5-digit code.'
+async function verifyCode() {
+  otpError.value = ''
+
+  if (!isCodeComplete.value) {
+    otpError.value = 'Please enter the complete 5-digit code.'
+    return
+  }
+
+  try {
+    const fullCode = code.value.join('')
+    const data = await verifyAsync({ u_email: email.value, otp: fullCode })
+    localStorage.setItem('token', data?.data?.token)
+    await authStore.bootstrap()
+
+    // ✅ Check post_auth_intent first
+    const intentStr = localStorage.getItem('post_auth_intent')
+    if (intentStr) {
+      try {
+        const intent = JSON.parse(intentStr)
+        localStorage.removeItem('post_auth_intent')
+        if (intent.aiResponse) {
+          const workspaceStore = (await import('../../stores/workspace')).useWorkspaceStore()
+          workspaceStore.setWorkspace(intent.aiResponse)
+        }
+        router.push(intent.path || '/dashboard')
+        return
+      } catch (e) {
+        console.error('Failed to parse post_auth_intent', e)
+        localStorage.removeItem('post_auth_intent')
+      }
+    }
+
+    // ✅ Check pending invite token → skip onboarding
+    const pendingToken = localStorage.getItem('pending_invite_token')
+    if (pendingToken) {
+      router.push(`/company-join/${pendingToken}`)
       return
     }
-  
-    try {
-      const fullCode = code.value.join('')
-      const data = await verifyAsync({ u_email: email.value, otp: fullCode })
-      localStorage.setItem('token', data?.data?.token)
-      await authStore.bootstrap()
-      
-      const intentStr = localStorage.getItem('post_auth_intent');
-      if (intentStr) {
-        try {
-          const intent = JSON.parse(intentStr);
-          localStorage.removeItem('post_auth_intent');
-          if (intent.aiResponse) {
-            const workspaceStore = (await import('../../stores/workspace')).useWorkspaceStore();
-            workspaceStore.setWorkspace(intent.aiResponse);
-          }
-          router.push(intent.path || "/dashboard");
-          return;
-        } catch (e) {
-          console.error("Failed to parse post_auth_intent", e);
-          localStorage.removeItem('post_auth_intent');
-        }
-      }
 
-      router.push('/create-profile')
-    } catch (err: any) {
-      otpError.value = err?.response?.data?.message || 'Invalid code, please try again.'
-    }
+    // Default → onboarding
+    router.push('/create-profile')
+
+  } catch (err: any) {
+    otpError.value = err?.response?.data?.message || 'Invalid code, please try again.'
   }
-  
- 
-  function handleKey(index: number, e: KeyboardEvent) {
-    const { key } = e
-    if (/^[0-9]$/.test(key)) {
-      code.value[index] = key
-      otpError.value && (otpError.value = '')
-      e.preventDefault()
-      if (index < DIGITS - 1) focusIdx(index + 1)
-    } else if (key === 'Backspace') {
-      if (code.value[index]) {
-        code.value[index] = ''
-        otpError.value && (otpError.value = '')
-      } else if (index > 0) {
-        focusIdx(index - 1)
-      }
-    } else if (key === 'ArrowLeft' && index > 0) {
-      focusIdx(index - 1)
-    } else if (key === 'ArrowRight' && index < DIGITS - 1) {
+}
+   function handleKey(index: number, e: KeyboardEvent) {
+  const { key } = e
+  if (/^[0-9]$/.test(key)) {
+    code.value[index] = key
+    otpError.value && (otpError.value = '')
+    e.preventDefault()
+    if (index < DIGITS - 1) {
       focusIdx(index + 1)
+    } else {
+      setTimeout(() => verifyCode(), 100)
     }
+  } else if (key === 'Backspace') {
+    if (code.value[index]) {
+      code.value[index] = ''
+      otpError.value && (otpError.value = '')
+    } else if (index > 0) {
+      focusIdx(index - 1)
+    }
+  } else if (key === 'ArrowLeft' && index > 0) {
+    focusIdx(index - 1)
+  } else if (key === 'ArrowRight' && index < DIGITS - 1) {
+    focusIdx(index + 1)
   }
+}
   
   function distribute(value: string, startIndex = 0) {
-    const digits = value.replace(/\D/g, '').slice(0, DIGITS - startIndex)
-    if (!digits) return
-    for (let i = 0; i < digits.length; i++) code.value[startIndex + i] = digits[i]
-    const next = Math.min(startIndex + digits.length, DIGITS - 1)
-    focusIdx(next)
-    otpError.value && (otpError.value = '')
+  const digits = value.replace(/\D/g, '').slice(0, DIGITS - startIndex)
+  if (!digits) return
+  for (let i = 0; i < digits.length; i++) code.value[startIndex + i] = digits[i]
+  const next = Math.min(startIndex + digits.length, DIGITS - 1)
+  focusIdx(next)
+  otpError.value && (otpError.value = '')
+}
+function handlePaste(index: number, e: ClipboardEvent) {
+  distribute(e.clipboardData?.getData('text') ?? '', index)
+  const pasted = (e.clipboardData?.getData('text') ?? '').replace(/\D/g, '')
+  if (pasted.length >= DIGITS) {
+    setTimeout(() => verifyCode(), 100)
   }
-  
-  function handlePaste(index: number, e: ClipboardEvent) {
-    distribute(e.clipboardData?.getData('text') ?? '', index)
-  }
+}
   
   function handleInput(index: number, e: Event) {
     const el = e.target as HTMLInputElement

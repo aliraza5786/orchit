@@ -493,7 +493,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, defineAsyncComponent, ref, watch, onMounted, computed, unref } from "vue";
+import { h, defineAsyncComponent, ref, watch, onMounted, computed} from "vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
 import { useWorkspaceRoles } from "../../queries/usePeople";
@@ -572,7 +572,7 @@ import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { usePeopleStore } from "../../stores/peopleStore";
 import { useAgentStore } from "../../stores/agentStore";
 import { useMediaQuery } from "@vueuse/core";
-const { canCreateVariable, canInviteUser, canCreateCard, canEditUser, canDeleteUser } = usePermissions();
+const { canCreateVariable, canInviteUser, canCreateCard } = usePermissions();
 const sidePanelStore = useSidePanelStore();
 const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
