@@ -4,12 +4,12 @@ import { h, ref, computed, watch } from 'vue'
 import { formatDate } from '../../../utilities/FormatDate'
 import Collaborators from '../../../components/ui/Collaborators.vue'
 import { useRouter } from 'vue-router'
-import { useWorkspaces, useDeleteWorkspace, useArchiveWorkspace } from '../../../queries/useWorkspace'
+import { useWorkspaces, useDeleteWorkspace, useArchiveWorkspace,useWorkspaceModulesAndUsers } from '../../../queries/useWorkspace'
 import InviteUsersWithPermissions from '../Modals/InviteUsersWithPermissions.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import { toast } from 'vue-sonner'
 import { useQueryClient } from '@tanstack/vue-query'
-
+import ShareModal from '../../../layout/WorkspaceLayout/components/ShareModal.vue'
 const router = useRouter()
 const queryClient = useQueryClient()
 
@@ -30,17 +30,23 @@ const handleClick = (rowEvt: any) => {
 
 const showInviteModal = ref(false)
 const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
+const showDeleteConfirm = ref(false)
+const workspaceToAction = ref<any>(null)
+const isDeleting = ref(false)
 
-
+ const showShareModal  = ref(false)
+const selectedShareWorkspace = ref<any>(null)
+// After selectedShareWorkspace ref
 const openInviteModal = (workspaceId: string | number) => {
     selectedInvitingWorkspaceId.value = workspaceId
     showInviteModal.value = true
 }
+const selectedShareWorkspaceId = computed(() => selectedShareWorkspace.value?._id ?? '')
 
-/* ------------ Actions handlers ------------ */
-const showDeleteConfirm = ref(false)
-const workspaceToAction = ref<any>(null)
-const isDeleting = ref(false)
+const { 
+  data: workspaceModulesAndUsers, 
+  isPending: isModulesAndUsersPending 
+} = useWorkspaceModulesAndUsers(selectedShareWorkspaceId)
 
 const { mutate: deleteWorkspace } = useDeleteWorkspace({
     onSuccess: () => {
@@ -80,37 +86,80 @@ const onConfirmDelete = () => {
     isDeleting.value = true
     deleteWorkspace({ id: workspaceToAction.value._id })
 }
-
 const renderActions = ({ row }: any) => {
-    if (props.filter === 'deleted') return h('div', { class: 'h-8' })
-    if(!row?.has_permission_to_manage_user) return
+  if (props.filter === 'deleted') return h('div', { class: 'h-8' })
 
-    const isArchived = props.filter === 'archived'
-    const archiveIcon = isArchived ? 'fa-regular fa-folder-open' : 'fa-regular fa-folder-closed'
-    const archiveTitle = isArchived ? 'Unarchive' : 'Archive'
+  const isArchived = props.filter === 'archived'
+  const archiveIcon = isArchived ? 'fa-regular fa-box-archive' : 'fa-solid fa-box-archive'
+  const archiveTitle = isArchived ? 'Unarchive' : 'Archive'
 
-    return h('div', { class: 'flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity' }, [
-        h('button', {
-            class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary group/action',
-            onClick: (e: Event) => {
+  return h(
+    'div',
+    { class: 'flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity' },
+    [
+      // 👁️ View button
+      h(
+        'button',
+        {
+          class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary',
+          onClick: (e: Event) => {
+            e.stopPropagation()
+            handleClick({ row })
+          },
+          title: 'View'
+        },
+        [h('i', { class: 'fa-regular fa-eye text-sm' })]
+      ),
+
+      // ✅ Share button — only show if has permission
+      row.has_permission_to_manage_user
+        ? h(
+            'button',
+            {
+              class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary',
+              onClick: (e: Event) => {
+                e.stopPropagation()
+                openShareModal(row)
+              },
+              title: 'Share'
+            },
+            [h('i', { class: 'fa-regular fa-share-nodes text-sm' })]
+          )
+        : null,
+
+      // 📁 Archive / Unarchive
+      row.has_permission_to_manage_user
+        ? h(
+            'button',
+            {
+              class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary',
+              onClick: (e: Event) => {
                 e.stopPropagation()
                 handleArchive(row)
+              },
+              title: archiveTitle
             },
-            title: archiveTitle
-        }, [
-            h('i', { class: `${archiveIcon} text-sm` })
-        ]),
-        h('button', {
-            class: 'p-2 hover:bg-red-500/10 rounded-md transition-colors text-red-500 hover:text-red-600 group/action',
-            onClick: (e: Event) => {
+            [h('i', { class: `${archiveIcon} text-sm` })]
+          )
+        : null,
+
+      // 🗑 Delete
+      row.has_permission_to_manage_user
+        ? h(
+            'button',
+            {
+              class: 'p-2 hover:bg-red-500/10 rounded-md transition-colors text-red-500 hover:text-red-600',
+              onClick: (e: Event) => {
                 e.stopPropagation()
                 openDeleteConfirm(row)
+              },
+              title: 'Delete'
             },
-            title: 'Delete'
-        }, [
-            h('i', { class: 'fa-regular fa-trash-can text-sm' })
-        ])
-    ])
+            [h('i', { class: 'fa-regular fa-trash-can text-sm' })]
+          )
+        : null,
+    ].filter(Boolean)
+  )
 }
 
 const renderProject = ({ row, value }: any) =>
@@ -132,7 +181,27 @@ const renderProject = ({ row, value }: any) =>
             }
         }, value?.title || 'Untitled'),
     ])
+const renderCompanyPercentage = ({ row }: any) => {
+  const percentage = row?.task_stats?.total_percentage ?? 0
 
+  return h('div', { class: 'flex items-center gap-2 w-full' }, [
+    // Progress bar background
+    h('div', {
+      class: 'flex-1 h-2 rounded-full bg-bg-body border border-border overflow-hidden'
+    }, [
+      // Progress fill
+      h('div', {
+        class: 'h-full rounded-full bg-accent transition-all duration-300',
+        style: { width: `${percentage}%` }
+      })
+    ]),
+
+    // Percentage text
+    h('span', {
+      class: 'text-xs text-text-secondary w-7 text-right'
+    }, `${percentage}%`)
+  ])
+}
 const renderProjectType = ({ value }: any) =>
     h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-')
 
@@ -196,7 +265,11 @@ const renderCompanyAdmin = ({ row }: any) => {
 };
 
 
- 
+
+function openShareModal(row: any) {
+  selectedShareWorkspace.value = row
+  showShareModal.value = true
+}
 
 /* ------------ Table columns ------------ */
 const columns = [
@@ -205,7 +278,8 @@ const columns = [
     { key: 'People', label: 'People', render: renderPeople, width: '120px' },
     { key: 'created_at', label: 'Start Date', render: renderStartDate, width: '150px' },
     { key: 'admin', label: 'Workspace Owner', render:  renderCompanyAdmin, width: '200px' },
-    { key: 'actions', label: '', render: renderActions, align: 'right' as const, width: '50px' },
+    { key: 'percentage', label: 'Percentage', render:  renderCompanyPercentage, width: '150px' },
+    { key: 'actions', label: 'Actions', render: renderActions, align: 'right' as const, width: '50px' },
 ]
 
 const props = defineProps({
@@ -221,10 +295,8 @@ const pageSize = ref(10)
 
 /* ------------ Data fetching (server mode) ------------ */
 /** useWorkspaces must accept reactive { page, pageSize, sort } and refetch when they change */
-const { data, isPending, isFetching } = useWorkspaces(page, pageSize, computed(() => props.filter))
-
-const isLoading = computed(() => isPending.value || isFetching.value)
-
+const { data, isPending } = useWorkspaces(page, pageSize, computed(() => props.filter))
+const isLoading = computed(() => isPending.value)
 /** Unwrap API shape: { workspaces: any[]; pagination: { totalCount: number } } */
 const items = computed(() => data.value?.workspaces ?? [])
 const totalCount = ref(0)
@@ -236,12 +308,27 @@ watch(() => props.filter, () => {
 watch(data, (newVal) => {
     totalCount.value = newVal?.pagination?.totalCount ?? 0
 }, { immediate: true })
+const emptyMessage = computed(() => {
+  switch (props.filter) {
+    case 'archived': return 'No archived workspaces'
+    case 'deleted': return 'No deleted workspaces'
+    case 'private': return 'No private workspaces'
+    case 'shared': return 'No shared workspaces'
+    default: return 'No workspaces yet — create your first one'
+  }
+})
 </script>
-
 <template>
-    <Table :columns="columns" :rows="items" :loading="isLoading" :total="totalCount" v-model:page="page"
-        v-model:pageSize="pageSize" :pageSizes="[10, 20, 50, 100]" :rowClass="() => 'group'">
-        <!-- Optional slots you were using -->
+    <Table 
+      :columns="columns" 
+      :rows="items" 
+      :loading="isLoading" 
+      :total="totalCount" 
+      v-model:page="page"
+      v-model:pageSize="pageSize" 
+      :pageSizes="[10, 20, 50, 100]" 
+      :rowClass="() => 'group'"
+    >
         <template #status="{ row }">
             <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
                 'bg-blue-100 text-blue-600': row.status === 'In progress',
@@ -261,8 +348,33 @@ watch(data, (newVal) => {
             </div>
         </template>
     </Table>
+
+    <!-- ✅ Empty state — shows after loading completes with no data -->
+    <div
+      v-if="!isLoading && !items.length"
+      class="flex flex-col items-center justify-center gap-3 py-20 text-center"
+    >
+      <div class="grid h-14 w-14 place-items-center rounded-2xl bg-bg-card border border-border/70">
+        <i class="fa-regular fa-folder-open text-xl text-text-secondary"></i>
+      </div>
+      <div class="flex flex-col gap-1">
+        <p class="text-sm font-medium text-text-primary">{{ emptyMessage }}</p>
+        <p class="text-xs text-text-secondary">
+          {{ props.filter === 'all' ? 'Get started by creating your first workspace.' : 'Try switching to a different filter.' }}
+        </p>
+      </div>
+    </div>
+
     <InviteUsersWithPermissions v-model="showInviteModal" :defaultWorkspaceId="selectedInvitingWorkspaceId" />
-    
+    <ShareModal
+      v-if="selectedShareWorkspace"
+      v-model="showShareModal"
+      resource-type="workspace"
+      :resourceId="selectedShareWorkspace._id"
+      :modulesAndUsers="workspaceModulesAndUsers"
+      :modulesAndUsersLoading="isModulesAndUsersPending"
+      @shared="queryClient.invalidateQueries({ queryKey: ['workspaces'] })"
+    />
     <ConfirmDeleteModal 
         v-model="showDeleteConfirm" 
         title="Delete Workspace" 

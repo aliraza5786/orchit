@@ -23,19 +23,46 @@ export const socialLogin = (payload: {
   u_social_id?: string;
   u_social_type?: string;
   u_full_name?: string;
+  
 }) => api.post("/auth/social-login", payload).then((res) => res.data);
 
 type createCompany = { payload: any };
+
 export const useCreateCompany = (options = {}) =>
   useApiMutation<any, createCompany>(
     {
       key: ["create-company"],
     } as any,
     {
+      mutationFn: async (vars: createCompany) => {
+        const data = await request({
+          url: `/workspace/company`,
+          method: "POST",
+          data: vars.payload,
+        })
+
+        // ✅ Treat API-level failures as thrown errors
+        if (data?.status === false) {
+          const err = new Error(data?.message ?? 'Request failed')
+          ;(err as any).response = { data }
+          throw err
+        }
+
+        return data
+      },
+      ...(options as any),
+    } as any
+  );
+export const useUpdateCompany = (options = {}) =>
+  useApiMutation<any, createCompany>(
+    {
+      key: ["update-company"],
+    } as any,
+    {
       mutationFn: (vars: createCompany) =>
         request({
           url: `/workspace/company`,
-          method: "POST",
+          method: "PUT",
           data: vars.payload,
         }),
       ...(options as any),
@@ -66,3 +93,8 @@ export const verifyResetToken = (payload: { token: string }) =>
 
 export const resetPassword = (payload: { token: string; new_password: string; confirm_password: string }) =>
   api.post("/auth/reset-password", payload).then((res) => res.data);
+
+export async function joinCompany(token: string) {
+  const response = await api.post(`/common/company-join/${token}`)
+  return response.data
+}
