@@ -11,7 +11,7 @@
         >
           Sign in to Orchit AI
         </h2>
-
+          {{ cookieToken }}
         <form @submit.prevent="handleLogin" class="space-y-4 w-full">
           <BaseTextField
             v-model="email"
@@ -146,7 +146,10 @@ const authStore = useAuthStore()
 const email = ref("");
 const password = ref("");
 const errorMessage = ref("");
-
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1] ?? null
 const touched = {
   email: false,
   password: false,
@@ -240,52 +243,51 @@ async function loginWithApple() {
     }
   }
 }
-
- 
-
 async function handleLoginSuccess(data: any) {
-    localStorage.setItem("token", data?.data?.token);
-    await authStore.bootstrap();
-
-    // Handle redirect parameter from deep links
+  localStorage.setItem("token", data?.data?.token);
+  await authStore.bootstrap();
+  // Handle redirect parameter from deep links
     const redirectPath = router.currentRoute.value.query.redirect as string;
     if (redirectPath) {
       router.push(redirectPath);
       return;
     }
-
-    const intentStr = localStorage.getItem('post_auth_intent');
-    if (intentStr) {
-      try {
-        const intent = JSON.parse(intentStr);
-        localStorage.removeItem('post_auth_intent');
-        
-        if (intent.aiResponse) {
-          workspaceStore.setWorkspace(intent.aiResponse);
-        }
-        
-        router.push(intent.path || "/dashboard");
-        return;
-      } catch (e) {
-        console.error("Failed to parse post_auth_intent", e);
-        localStorage.removeItem('post_auth_intent');
+  // ✅ Check post_auth_intent first (existing - untouched)
+  const intentStr = localStorage.getItem('post_auth_intent');
+  if (intentStr) {
+    try {
+      const intent = JSON.parse(intentStr);
+      localStorage.removeItem('post_auth_intent');
+      if (intent.aiResponse) {
+        workspaceStore.setWorkspace(intent.aiResponse);
       }
-    }
-
-    console.log(data?.data?.isNewUser, "new user")
-    
-    if (data?.data?.isNewUser) {
-      router.push("/create-profile");
+      router.push(intent.path || "/dashboard");
       return;
+    } catch (e) {
+      console.error("Failed to parse post_auth_intent", e);
+      localStorage.removeItem('post_auth_intent');
     }
+  }
 
-    if (workspaceStore.pricing) {
-      router.push(`/dashboard?stripePayment=true`);
-    } else {
-      router.push("/dashboard");
-    }
+  // ✅ Check pending invite → skip everything, go join workspace
+  const pendingToken = localStorage.getItem('pending_invite_token');
+  if (pendingToken) {
+    router.push(`/company-join/${pendingToken}`);
+    return;
+  }
+
+  // ✅ Normal login flow — completely untouched below
+  if (data?.data?.isNewUser) {
+    router.push("/create-profile");
+    return;
+  }
+
+  if (workspaceStore.pricing) {
+    router.push(`/dashboard?stripePayment=true`);
+  } else {
+    router.push("/dashboard");
+  }
 }
-
 async function handleLogin() {
   errorMessage.value = "";
   touched.email = true;
@@ -309,5 +311,3 @@ async function handleLogin() {
 }
 
 </script>
-
-
