@@ -74,7 +74,7 @@
 
             <!-- Company users -->
             <div
-              v-for="user in companyUsers"
+              v-for="user in shareableUsers"
               :key="user.user_id"
               class="flex items-center gap-2 px-3 py-2 border border-border rounded-md bg-bg-card"
             >
@@ -735,4 +735,8 @@ function reset() {
   expandedModules.value = new Set()
   selectedUserRoles.value = {}
 }
+// const shareableUsers = computed(() =>
+const shareableUsers = computed(() =>
+  companyUsers.value.filter((u: any) => u.membership_role !== 'owner')
+)
 </script>

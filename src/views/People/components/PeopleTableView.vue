@@ -95,14 +95,14 @@
                     :class="{ 'rotate-90': expandedGroups[group.title] }"
                   ></i>
                   <span class="capitalize">{{ group.title || 'Untitled' }}</span>
-                  <span class="text-text-secondary font-normal text-[11px] ml-2">{{ group.cards?.length || 0 }} seats</span>
+                  <span class="text-text-secondary font-normal text-[11px] ml-2">{{ (group.cards?.length || group.agents?.length || 0) }} seats</span>
                   
                   <!-- Group Header Quick Create '+' -->
                   <button 
-                    v-if="isTalent && isTeamView && canInviteUser"
+                    v-if="(isTalent && isTeamView && canInviteUser) || !isTalent"
                     class="ml-2 w-5 h-5 flex items-center justify-center rounded-md border border-border bg-bg-surface hover:border-accent hover:text-accent opacity-0 group-hover/header:opacity-100 transition-all text-[10px]"
                     @click.stop="$emit('add-seat', group)"
-                    title="Add Seat"
+                    :title="isTalent ? 'Add Seat' : 'Add Agent'"
                   >
                     <i class="fa-solid fa-plus font-bold"></i>
                   </button>
@@ -113,9 +113,10 @@
             <!-- GROUP CARDS -->
             <template v-if="expandedGroups[group.title]">
               <tr 
-                v-for="(person, index) in group.cards" 
+                v-for="(person, index) in (group.cards || group.agents || [])" 
                 :key="person._id || index"
-                class="border-b border-border transition-colors relative group/row hover:bg-bg-surface/40"
+                class="border-b border-border transition-colors relative group/row hover:bg-bg-surface/40 cursor-pointer"
+                @click="emit('select:ticket', person)"
               >
                 <td @click.stop class="w-8 group text-center align-middle border-r border-border/40 sticky left-0 z-20 bg-bg-surface">
                    <div class="flex justify-center items-center h-full w-full relative">
@@ -202,13 +203,18 @@ const { canInviteUser, canEditUser, canDeleteUser, canCreateVariable } = usePerm
 
 const activeMenuId = ref<string | number | null>(null);
 
-const visibleColumnKeys = ref<string[]>(props.columns.map((c: any) => c.key));
+const visibleColumnKeys = ref<string[]>([]);
 const showColumnMenu = ref(false);
 const columnWidths = ref<Record<string, number>>({});
 let isResizing = false;
 let currentResizeKey: string | null = null;
 let startX = 0;
 let startWidth = 0;
+
+// Update visibleColumnKeys when columns prop changes (e.g. tab switch)
+watch(() => props.columns, (newCols) => {
+  visibleColumnKeys.value = newCols.map((c: any) => c.key);
+}, { immediate: true });
 
 const visibleColumns = computed(() => {
   return props.columns.filter((c: any) => visibleColumnKeys.value.includes(c.key));

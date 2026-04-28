@@ -101,7 +101,7 @@ export const usePeople = (workspace_id: any, company_id: any, options = {}) => {
     queryKey: ["people", company_id],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `workspace/people?workspace_id=${workspace_id}&company_id=${unref(company_id)._id}`,
+        url: `workspace/people?workspace_id=${unref(workspace_id)}&company_id=${unref(company_id)._id}`,
         method: "GET",
         signal,
       }),
@@ -159,7 +159,7 @@ export const usePeopleVar = (workspaceId: any, options = {}) => {
     queryKey: ["people-var", workspaceId],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `/common/module-variables/filter?module=people&workspace_id=${workspaceId}`,
+        url: `/common/module-variables/filter?module=people&workspace_id=${unref(workspaceId)}`,
         method: "GET",
         signal,
       }),

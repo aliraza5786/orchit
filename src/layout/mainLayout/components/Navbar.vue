@@ -20,26 +20,24 @@
             :class="isSidebarOpen ? 'fa-xmark' : 'fa-bars'"
           ></i>
         </button>
-
-        <!-- Brand -->
-        <RouterLink to="/" class="flex items-center gap-2">
-          <img
-            v-if="!isDark"
-            src="../../../assets/global/light-logo.png"
-            alt="Orchit AI logo"
-            class="w-24 sm:w-30"
-            loading="eager"
-            decoding="async"
-          />
-          <img
-            v-else
-            src="../../../assets/global/dark-logo.png"
-            alt="Orchit AI logo"
-            class="w-24 sm:w-30"
-            loading="eager"
-            decoding="async"
-          />
-        </RouterLink>
+<div class="flex items-center gap-2 cursor-pointer" @click="handleLogoClick">
+  <img
+    v-if="!isDark"
+    src="../../../assets/global/light-logo.png"
+    alt="Orchit AI logo"
+    class="w-24 sm:w-30"
+    loading="eager"
+    decoding="async"
+  />
+  <img
+    v-else
+    src="../../../assets/global/dark-logo.png"
+    alt="Orchit AI logo"
+    class="w-24 sm:w-30"
+    loading="eager"
+    decoding="async"
+  />
+</div>
       </div>
 
       <!-- Primary nav -->
@@ -653,7 +651,6 @@ import NotificationBell from "./NotificationBell.vue";
 import LimitExceededModal from "../modals/LimitExceededModal.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useCurrentPackage } from "../../../queries/usePackages";
-
 // ── Types ──────────────────────────────────────────────────────
 interface Account {
   id: string;
@@ -683,7 +680,12 @@ function handleUgrade() {
   router.push(`/settings?tab=billing&stripePayment=${true}`);
   workspaceStore.setLimitExccedModal(false);
 }
-
+function handleLogoClick() {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    router.push('/')
+  }
+}
 // ── Profile query ──────────────────────────────────────────────
 const { data: profile, isPending } = useQuery({
   queryKey: ["profile"],
