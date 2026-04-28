@@ -40,7 +40,6 @@ function getCompanyId(): string {
 export const fetchNotifications = async () => {
   try {
     const companyId = getCompanyId()
-    console.log('🏢 fetchNotifications company_id:', companyId)
 
     const { data } = await api.get(`/notifications${companyId ? `?company_id=${companyId}` : ''}`)
     const notifications = data?.data?.notifications || []
@@ -68,8 +67,6 @@ export const fetchNotifications = async () => {
 export const fetchUnreadCount = async () => {
   try {
     const companyId = getCompanyId()
-    console.log('🏢 fetchUnreadCount company_id:', companyId)
-
     const { data } = await api.get(`/notifications/unread-count${companyId ? `?company_id=${companyId}` : ''}`)
     return data.data.count || 0
   } catch (err) {
@@ -105,7 +102,6 @@ export const useNotificationsQuery = (options = {}) => {
   // ✅ Re-fetch both queries whenever company_id changes
   watch(companyId, (newId, oldId) => {
     if (newId === oldId) return
-    console.log('🔄 company_id changed, refetching notifications:', newId)
 
     queryClient.invalidateQueries({ queryKey: ["notifications", "list"] })
     queryClient.invalidateQueries({ queryKey: ["notifications", "unreadCount"] })

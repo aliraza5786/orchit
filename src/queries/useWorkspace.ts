@@ -1,7 +1,7 @@
 // src/features/workspaces/queries.ts
 import { useApiQuery, useApiMutation } from "../libs/vq.ts";
 import api, { request } from "../libs/api.ts"; // for dynamic-URL mutations
-import { computed, unref, type Ref, ref } from "vue";
+import { computed, unref, type Ref } from "vue";
 import { useQuery } from "@tanstack/vue-query";
 import { useAuthStore } from "../stores/auth.ts";
 export const keys = {
@@ -93,36 +93,43 @@ export const useWorkspacesPrompt = () =>
 export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
   const authStore = useAuthStore();
 
-  const companyId = computed(() => authStore.company_id ?? "");
+  // ✅ Plain computed string — NOT a ref object inside the queryKey
+  const companyId = computed(() => authStore.company_id ?? '');
 
   return useQuery({
-    queryKey: ["workspaces", page, limit, filter ?? ref("all"), companyId],
+    // ✅ Unwrap everything to primitives so the key is stable and serializable
+    queryKey: computed(() => [
+      'workspaces',
+      unref(page),
+      unref(limit),
+      unref(filter) ?? 'all',
+      companyId.value,
+    ]),
     queryFn: async () => {
-      const companyId = authStore.company_id;
+      const companyIdVal = authStore.company_id;
 
-      if (!companyId) {
-        console.warn("⚠️ useWorkspaces: No company_id available");
+      if (!companyIdVal) {
+        console.warn('⚠️ useWorkspaces: No company_id available');
         return { workspaces: [] };
       }
 
       const pageVal = unref(page);
       const limitVal = unref(limit);
-      const filterVal = unref(filter) || "all";
+      const filterVal = unref(filter) ?? 'all';
 
-      const url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}&company_id=${companyId}`;
+      const url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}&company_id=${companyIdVal}`;
 
-      console.log("📡 Fetching:", url);
+      console.log('📡 Fetching:', url);
 
       return request({
         url,
-        method: "GET",
+        method: 'GET',
       });
     },
     refetchOnMount: true,
     enabled: computed(() => !!authStore.company_id),
   });
 };
-
 export const useWorkspacesTitles = () => {
   const authStore = useAuthStore();
 
