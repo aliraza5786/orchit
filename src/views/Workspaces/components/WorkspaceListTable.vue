@@ -4,12 +4,12 @@ import { h, ref, computed, watch } from 'vue'
 import { formatDate } from '../../../utilities/FormatDate'
 import Collaborators from '../../../components/ui/Collaborators.vue'
 import { useRouter } from 'vue-router'
-import { useWorkspaces, useDeleteWorkspace, useArchiveWorkspace } from '../../../queries/useWorkspace'
+import { useWorkspaces, useDeleteWorkspace, useArchiveWorkspace,useWorkspaceModulesAndUsers } from '../../../queries/useWorkspace'
 import InviteUsersWithPermissions from '../Modals/InviteUsersWithPermissions.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import { toast } from 'vue-sonner'
 import { useQueryClient } from '@tanstack/vue-query'
-
+import ShareModal from '../../../layout/WorkspaceLayout/components/ShareModal.vue'
 const router = useRouter()
 const queryClient = useQueryClient()
 
@@ -30,17 +30,23 @@ const handleClick = (rowEvt: any) => {
 
 const showInviteModal = ref(false)
 const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
+const showDeleteConfirm = ref(false)
+const workspaceToAction = ref<any>(null)
+const isDeleting = ref(false)
 
-
+ const showShareModal  = ref(false)
+const selectedShareWorkspace = ref<any>(null)
+// After selectedShareWorkspace ref
 const openInviteModal = (workspaceId: string | number) => {
     selectedInvitingWorkspaceId.value = workspaceId
     showInviteModal.value = true
 }
+const selectedShareWorkspaceId = computed(() => selectedShareWorkspace.value?._id ?? '')
 
-/* ------------ Actions handlers ------------ */
-const showDeleteConfirm = ref(false)
-const workspaceToAction = ref<any>(null)
-const isDeleting = ref(false)
+const { 
+  data: workspaceModulesAndUsers, 
+  isPending: isModulesAndUsersPending 
+} = useWorkspaceModulesAndUsers(selectedShareWorkspaceId)
 
 const { mutate: deleteWorkspace } = useDeleteWorkspace({
     onSuccess: () => {
@@ -82,58 +88,77 @@ const onConfirmDelete = () => {
 }
 const renderActions = ({ row }: any) => {
   if (props.filter === 'deleted') return h('div', { class: 'h-8' })
-  if (!row?.has_permission_to_manage_user) return
 
   const isArchived = props.filter === 'archived'
-  const archiveIcon = isArchived ? 'fa-regular fa-folder-open' : 'fa-regular fa-folder-closed'
+  const archiveIcon = isArchived ? 'fa-regular fa-box-archive' : 'fa-solid fa-box-archive'
   const archiveTitle = isArchived ? 'Unarchive' : 'Archive'
 
   return h(
     'div',
     { class: 'flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity' },
     [
-      // 👁️ View button (NEW)
+      // 👁️ View button
       h(
         'button',
         {
           class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary',
           onClick: (e: Event) => {
             e.stopPropagation()
-            handleClick({ row }) // same behavior as project click
+            handleClick({ row })
           },
           title: 'View'
         },
         [h('i', { class: 'fa-regular fa-eye text-sm' })]
       ),
 
+      // ✅ Share button — only show if has permission
+      row.has_permission_to_manage_user
+        ? h(
+            'button',
+            {
+              class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary',
+              onClick: (e: Event) => {
+                e.stopPropagation()
+                openShareModal(row)
+              },
+              title: 'Share'
+            },
+            [h('i', { class: 'fa-regular fa-share-nodes text-sm' })]
+          )
+        : null,
+
       // 📁 Archive / Unarchive
-      h(
-        'button',
-        {
-          class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary group/action',
-          onClick: (e: Event) => {
-            e.stopPropagation()
-            handleArchive(row)
-          },
-          title: archiveTitle
-        },
-        [h('i', { class: `${archiveIcon} text-sm` })]
-      ),
+      row.has_permission_to_manage_user
+        ? h(
+            'button',
+            {
+              class: 'p-2 hover:bg-bg-body rounded-md transition-colors text-text-secondary hover:text-text-primary',
+              onClick: (e: Event) => {
+                e.stopPropagation()
+                handleArchive(row)
+              },
+              title: archiveTitle
+            },
+            [h('i', { class: `${archiveIcon} text-sm` })]
+          )
+        : null,
 
       // 🗑 Delete
-      h(
-        'button',
-        {
-          class: 'p-2 hover:bg-red-500/10 rounded-md transition-colors text-red-500 hover:text-red-600 group/action',
-          onClick: (e: Event) => {
-            e.stopPropagation()
-            openDeleteConfirm(row)
-          },
-          title: 'Delete'
-        },
-        [h('i', { class: 'fa-regular fa-trash-can text-sm' })]
-      )
-    ]
+      row.has_permission_to_manage_user
+        ? h(
+            'button',
+            {
+              class: 'p-2 hover:bg-red-500/10 rounded-md transition-colors text-red-500 hover:text-red-600',
+              onClick: (e: Event) => {
+                e.stopPropagation()
+                openDeleteConfirm(row)
+              },
+              title: 'Delete'
+            },
+            [h('i', { class: 'fa-regular fa-trash-can text-sm' })]
+          )
+        : null,
+    ].filter(Boolean)
   )
 }
 
@@ -240,7 +265,11 @@ const renderCompanyAdmin = ({ row }: any) => {
 };
 
 
- 
+
+function openShareModal(row: any) {
+  selectedShareWorkspace.value = row
+  showShareModal.value = true
+}
 
 /* ------------ Table columns ------------ */
 const columns = [
@@ -337,7 +366,15 @@ const emptyMessage = computed(() => {
     </div>
 
     <InviteUsersWithPermissions v-model="showInviteModal" :defaultWorkspaceId="selectedInvitingWorkspaceId" />
-    
+    <ShareModal
+      v-if="selectedShareWorkspace"
+      v-model="showShareModal"
+      resource-type="workspace"
+      :resourceId="selectedShareWorkspace._id"
+      :modulesAndUsers="workspaceModulesAndUsers"
+      :modulesAndUsersLoading="isModulesAndUsersPending"
+      @shared="queryClient.invalidateQueries({ queryKey: ['workspaces'] })"
+    />
     <ConfirmDeleteModal 
         v-model="showDeleteConfirm" 
         title="Delete Workspace" 

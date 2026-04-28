@@ -450,4 +450,30 @@ export const useArchiveWorkspace = (options = {}) =>
     ...options,
   });
 };
+export const useWorkspaceModulesAndUsers = (workspaceId: Ref<string>) => {
+  return useQuery({
+    queryKey: ["workspace-modules-and-users", workspaceId],
+    queryFn: async () => {
+      const workspaceIdVal = unref(workspaceId)
 
+      if (!workspaceIdVal) {
+        console.warn("⚠️ useWorkspaceModulesAndUsers: No workspace_id provided")
+        return { data: { modules: [], company_users: [] } }
+      }
+
+      const url = `/workspace/${workspaceIdVal}/modules-and-users`
+
+      console.log("📡 Fetching:", url)
+
+      return request({
+        url,
+        method: "GET",
+      })
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnMount: true,
+    // ✅ Only guard on workspaceId — this query is used on the list page
+    // where there is no route workspaceId, so we must NOT check authStore.company_id
+    enabled: computed(() => !!unref(workspaceId)),
+  })
+}
