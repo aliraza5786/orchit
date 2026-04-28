@@ -59,7 +59,7 @@
     </div>
     <div v-if="currentStep !== 0"
       class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t items-center border-border h-[80px]">
-      <Button variant="secondary" size="md" @click="goBack">
+      <Button variant="secondary" size="md" @click="goBack" v-if="currentStep !== 4">
         <div class="flex items-center gap-2">
           <i class="text-base fa-solid fa-arrow-left"></i> Back
         </div>
@@ -83,7 +83,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, defineAsyncComponent, shallowRef, } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import Button from '../../components/ui/Button.vue'
 import IdealStep from './steps/IdealStep.vue'
 import StepOneSync from './steps/StepOne.vue'
@@ -94,6 +94,7 @@ const StepFour = defineAsyncComponent(() => import('./steps/StepFour.vue'))
 import { useWorkspaceStore } from '../../stores/workspace';
 defineOptions({ name: 'CreateWorkspace' })
 const router = useRouter()
+const route = useRoute()
 const workspaceStore = useWorkspaceStore()
 const STEPS = Object.freeze([
   'Get Started',
@@ -155,12 +156,39 @@ const continueLabel = computed(() => {
   }
   return currentStep.value === 4 ? 'Complete' : 'Continue'
 })
-
-/** Handlers (stable) */
 function handleClose() {
-  router.push('/')
-}
+  const type = route.query.type as string
+  const encodedToken = route.query._auth as string
+  const domainLink = route.query.domainLink as string
+  const encodedCompanyId = route.query._cid as string
+  const encodedUserId = route.query._uid as string
 
+  if (type === 'personal') {
+    router.push({ path: '/dashboard', query: { welcome: '1' } })
+    return
+  }
+
+  if (!encodedToken && !domainLink) {
+    router.push('/')
+    return
+  }
+
+  const isLocalhost = window.location.hostname === 'localhost'
+  const buildUrl = (base: string) => `${base}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}&_uid=${encodedUserId}`
+
+  if (isLocalhost) {
+    const port = window.location.port ? `:${window.location.port}` : ''
+    const subdomainUrl = `http://custom.localhost${port}/dashboard?welcome=1&_auth=${encodedToken}&_cid=${encodedCompanyId}&_uid=${encodedUserId}`
+    localStorage.setItem('subdomainUrl', subdomainUrl)
+    window.location.href = subdomainUrl
+  } else if (domainLink) {
+    const subdomainUrl = buildUrl(domainLink)
+    localStorage.setItem('subdomainUrl', subdomainUrl)
+    window.location.href = subdomainUrl
+  } else {
+    router.push({ path: '/dashboard', query: { welcome: '1' } })
+  }
+}
 import { onMounted } from 'vue'
 
 onMounted(() => {
