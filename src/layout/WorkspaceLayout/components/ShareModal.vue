@@ -303,7 +303,7 @@ import { toast } from 'vue-sonner'
 import BaseModal from '../../../components/ui/BaseModal.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
 import BaseTextAreaField from '../../../components/ui/BaseTextAreaField.vue'
-import EmailSearchChip from './EmailSearchChip.vue'
+// import EmailSearchChip from './EmailSearchChip.vue'
 import Button from '../../../components/ui/Button.vue'
 import {
   useShareResource,
@@ -546,15 +546,17 @@ const canSubmit = computed(() => {
 // ─── Users for autocomplete ───────────────────────────────────────────────────
 const companyId = computed(() => workspaceStore.singleWorkspace?.company_id)
 const { data: allUsersData } = useUsers(companyId)
-const allUsers = computed(() => {
-  if (!allUsersData.value?.data?.users) return []
-  return allUsersData.value.data.users.map((u: any) => ({
-    _id: u._id,
-    name: u.u_full_name,
-    email: u.u_email,
-    profile_image: u.u_profile_image,
-  }))
-})
+console.log(allUsersData);
+
+// const allUsers = computed(() => {
+//   if (!allUsersData.value?.data?.users) return []
+//   return allUsersData.value.data.users.map((u: any) => ({
+//     _id: u._id,
+//     name: u.u_full_name,
+//     email: u.u_email,
+//     profile_image: u.u_profile_image,
+//   }))
+// })
 
 // ─── Roles ────────────────────────────────────────────────────────────────────
 onMounted(() => {

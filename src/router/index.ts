@@ -170,8 +170,8 @@ router.beforeEach(async (to, _from, next) => {
   const hostname = window.location.hostname
   let subdomain: string | null = null
 
-  if (hostname.endsWith('.streamed.space')) {
-    const sub = hostname.replace('.streamed.space', '')
+  if (hostname.endsWith('.orchit.ai')) {
+    const sub = hostname.replace('.orchit.ai', '')
     if (sub && sub !== 'www' && sub !== 'stagging') {
       subdomain = sub
     }

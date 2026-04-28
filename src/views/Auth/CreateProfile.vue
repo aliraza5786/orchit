@@ -231,7 +231,7 @@
           <div class="flex items-center gap-2 px-3.5 border-l"
             style="background: var(--bg-surface); border-color: var(--border);">
             <span class="text-[13px] font-semibold whitespace-nowrap" style="color: var(--text-secondary);">
-              .streamed.space
+              .orchit.ai
             </span>
 
             <!-- checking -->
@@ -271,7 +271,7 @@
           </p>
           <p v-else-if="isSlugAvailable === true && !isCheckingSlug"
             class="text-xs" style="color: #1d9e75;">
-            <span class="font-medium">{{ siteSlug }}</span>.streamed.space is available
+            <span class="font-medium">{{ siteSlug }}</span>.orchit.ai is available
           </p>
           <p v-else class="text-xs" style="color: var(--text-secondary);">
             This is just a suggestion — feel free to change it to something your team will recognize.
@@ -285,7 +285,7 @@
         style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);">
         <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent); opacity: 0.7;" />
         <span class="text-[13px] font-semibold break-all" style="color: var(--accent);">
-          https://{{ siteSlug }}.streamed.space
+          https://{{ siteSlug }}.orchit.ai
         </span>
       </div>
 
@@ -1083,9 +1083,9 @@ function setAuthCookie(token: string) {
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     // localhost — no domain, no Secure
     document.cookie = cookieString
-  } else if (hostname.endsWith('.streamed.space') || hostname === 'streamed.space') {
+  } else if (hostname.endsWith('.orchit.ai') || hostname === 'orchit.ai') {
     // streamed.space subdomains
-    cookieString += `; domain=.streamed.space; Secure`
+    cookieString += `; domain=.orchit.ai; Secure`
     document.cookie = cookieString
   } else if (hostname.endsWith('.orchit.ai') || hostname === 'orchit.ai') {
     // orchit.ai subdomains

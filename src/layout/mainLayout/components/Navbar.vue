@@ -719,7 +719,7 @@ const personalAccount = computed<Account>(() => ({
   id: profileData.value?._id ?? "personal",
   name: profileData.value?.u_full_name ?? "My Account",
   email: profileData.value?.u_email ?? "",
-  domain: "stagging.streamed.space",
+  domain: "orchit.ai",
   type: "individual",
 }));
 
@@ -758,7 +758,7 @@ async function confirmSwitch() {
     } else {
       authStore.clearCompany()
       await new Promise((res) => setTimeout(res, 100))
-      window.location.href = `${window.location.protocol}//stagging.streamed.space/dashboard`
+      window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
     }
   } catch (e) {
     isSwitching.value = false

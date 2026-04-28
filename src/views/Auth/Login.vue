@@ -246,7 +246,12 @@ async function loginWithApple() {
 async function handleLoginSuccess(data: any) {
   localStorage.setItem("token", data?.data?.token);
   await authStore.bootstrap();
-
+  // Handle redirect parameter from deep links
+    const redirectPath = router.currentRoute.value.query.redirect as string;
+    if (redirectPath) {
+      router.push(redirectPath);
+      return;
+    }
   // ✅ Check post_auth_intent first (existing - untouched)
   const intentStr = localStorage.getItem('post_auth_intent');
   if (intentStr) {
