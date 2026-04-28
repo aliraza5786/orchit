@@ -1,1 +1,0 @@
-import{_ as o}from"./ManagePermissionsModal.vue_vue_type_script_setup_true_lang-CXB7P2j4.js";import"./index-D1M6cqh6.js";import"./BaseSpinner.vue_vue_type_script_setup_true_lang-B96YVTio.js";import"./usePeople-BO3sIuB7.js";import"./usePackages-D3MTFIW0.js";import"./permissionUtils-DTPUF_JQ.js";export{o as default};

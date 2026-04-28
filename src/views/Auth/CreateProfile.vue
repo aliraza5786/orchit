@@ -354,14 +354,12 @@
   <LoadingCreateProfile :active="activeStep === 6" :abort="!!companySlugError" @complete="activeStep = 7" />
 </div>
 <div v-show="activeStep === 7" class="flex items-center justify-center min-h-full">
-
   <div class="w-full max-w-130 space-y-8">
 
     <div class="space-y-2 text-center">
       <h2 class="text-[28px] font-semibold text-text-primary">
         Where did you hear about us?
       </h2>
-
       <p class="text-text-secondary text-sm">
         This helps us improve onboarding experience.
       </p>
@@ -369,7 +367,6 @@
 
     <!-- chips -->
     <div class="grid grid-cols-2 gap-3">
-
       <button
         v-for="item in referralOptions"
         :key="item.id"
@@ -382,11 +379,32 @@
       >
         {{ item.label }}
       </button>
+    </div>
 
+    <!-- ✅ Step 7 own nav -->
+    <div class="flex justify-between items-center mt-10 md:mt-15">
+      <Button variant="secondary" size="md" type="button" @click="goBack">
+        <div class="flex items-center gap-1">
+          <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
+        </div>
+      </Button>
+      <Button
+        :disabled="creatingProfile || updatingProfile || isUpdatingProfile"
+        size="md"
+        type="submit"
+        @click="continueHandler"
+      >
+        <div class="flex items-center gap-2">
+          <span
+            v-if="creatingProfile || updatingProfile || isUpdatingProfile"
+            class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
+          />
+          <span>Continue</span>
+        </div>
+      </Button>
     </div>
 
   </div>
-
 </div>
 <div v-show="activeStep === 8" v-if="selected === 'team' || selected === 'school'" class="flex items-center justify-center min-h-full">
 
@@ -474,14 +492,14 @@
       v-if="activeStep == 3"
       :to="`${workspaceStore.pricing ? `/dashboard?stripePayment=${true}` : workspaceStore.workspace ? '/create-workspace' : '/finish-profile'}`">
     </router-link>
-    <Button 
-      :disabled="isSiteStepBlocked || creatingProfile || updatingProfile || invitingPeople" 
-      size="md" 
-      type="submit" 
-      @click="continueHandler"
-    >
-      Continue 
-    </Button>
+<Button 
+  :disabled="isSiteStepBlocked || creatingProfile || updatingProfile || invitingPeople" 
+  size="md" 
+  type="submit" 
+  @click="activeStep === 5 ? continueSiteHandler() : continueHandler()"
+>
+  Continue 
+</Button>
   </div>
 
 </div>
@@ -1140,12 +1158,10 @@ const displayStep = computed(() => {
   if (activeStep.value === 8) return 7
   return activeStep.value
 })
-// ✅ Block Continue on step 5 for team/school until site is created
 const isSiteStepBlocked = computed(() => {
   if (activeStep.value !== 5) return false
   if (selected.value !== 'team' && selected.value !== 'school') return false
-  // companyID is only set after createProfile onSuccess
-  return !companyID.value
+  return !isSlugAvailable.value || isCheckingSlug.value
 })
 </script>
 
