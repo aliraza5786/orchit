@@ -388,20 +388,21 @@
           <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
         </div>
       </Button>
-      <Button
-        :disabled="creatingProfile || updatingProfile || isUpdatingProfile"
-        size="md"
-        type="submit"
-        @click="continueHandler"
-      >
-        <div class="flex items-center gap-2">
-          <span
-            v-if="creatingProfile || updatingProfile || isUpdatingProfile"
-            class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
-          />
-          <span>Continue</span>
-        </div>
-      </Button>
+      <Button 
+  :disabled="isSiteStepBlocked || creatingProfile || updatingProfile || invitingPeople" 
+  :class="{ 'pointer-events-none': isSiteStepBlocked }"
+  size="md" 
+  type="submit" 
+  @click="activeStep === 5 ? continueSiteHandler() : continueHandler()"
+>
+  <div class="flex items-center gap-2">
+    <span 
+      v-if="creatingProfile && activeStep === 5" 
+      class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" 
+    />
+    <span>Continue</span>
+  </div>
+</Button>
     </div>
 
   </div>
@@ -464,14 +465,31 @@
     </div>
 
     <!-- actions -->
-    <div class="flex items-center justify-between pt-2">
-      <Button variant="secondary" size="md" @click="sendInvites">
-        Do this later
-      </Button>
-      <Button size="md" @click="sendInvites">
-        Invite
-      </Button>
+<!-- actions -->
+<div class="flex items-center justify-between pt-2">
+  <Button 
+    variant="secondary" 
+    size="md" 
+    :disabled="invitingPeople"
+    @click="sendInvites"
+  >
+    <div class="flex items-center gap-2">
+      <span v-if="invitingPeople" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
+      <span>Do this later</span>
     </div>
+  </Button>
+
+  <Button 
+    size="md" 
+    :disabled="invitingPeople"
+    @click="sendInvites"
+  >
+    <div class="flex items-center gap-2">
+      <span v-if="invitingPeople" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+      <span>Invite</span>
+    </div>
+  </Button>
+</div>
 
   </div>
 

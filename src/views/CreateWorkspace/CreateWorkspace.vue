@@ -59,7 +59,7 @@
     </div>
     <div v-if="currentStep !== 0"
       class="flex z-2 bg-bg-body justify-between mt-15 fixed bottom-0 w-full px-6 border-t items-center border-border h-[80px]">
-      <Button variant="secondary" size="md" @click="goBack">
+      <Button variant="secondary" size="md" @click="goBack" v-if="currentStep !== 4">
         <div class="flex items-center gap-2">
           <i class="text-base fa-solid fa-arrow-left"></i> Back
         </div>
