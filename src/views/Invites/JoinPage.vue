@@ -40,16 +40,12 @@ async function acceptInvite() {
 
     const data = await joinCompany(token)
 
-    const companyId  = data?.company_id  ?? data?.data?.company_id
-    const domainLink = data?.domain_link ?? data?.data?.domain_link  // e.g. "abc.streamed.space"
+    const companyId   = data?.data?.company?.id  ?? data?.data?.company?._id
+    const redirectUrl = data?.data?.redirect_url  // "https://orchitai.streamed.space"
 
-    // ✅ 1. Save company_id to localStorage + cookie
-    if (companyId) {
-      authStore.setCompany(companyId)
-    }
+    // ✅ Save company + token to cookie for subdomain
+    if (companyId) authStore.setCompany(companyId)
 
-    // ✅ 2. Save auth token to cookie with .streamed.space domain
-    //       so abc.streamed.space can read it
     const authToken = localStorage.getItem('token')
     if (authToken) {
       saveAuthForSubdomain(authToken, companyId)
@@ -57,12 +53,9 @@ async function acceptInvite() {
 
     localStorage.removeItem('pending_invite_token')
 
-    // ✅ 3. Hard redirect to subdomain dashboard
-    if (domainLink) {
-      const base = domainLink.startsWith('http') 
-        ? domainLink 
-        : `https://${domainLink}`
-      window.location.href = `${base}/dashboard`
+    // ✅ Redirect to subdomain dashboard
+    if (redirectUrl) {
+      window.location.href = `${redirectUrl}/dashboard`
       return
     }
 
@@ -76,7 +69,6 @@ async function acceptInvite() {
     isJoining.value   = false
   }
 }
-
 // ✅ Sets cookie on .streamed.space so ALL subdomains can read it
 function saveAuthForSubdomain(token: string, companyId: string) {
   const maxAge = 60 * 60 * 24 * 30  // 30 days
