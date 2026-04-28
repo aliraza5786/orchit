@@ -769,6 +769,8 @@ function handleRoleChange(newRole: any) {
     return;
   }
 
+  if (cardDetails.value?.workspace_access_role_id === newRole) return;
+
   selectedRole.value = newRole;
 
   // Optimistic update

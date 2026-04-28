@@ -304,10 +304,16 @@
     </template>
     <div
       v-if="view === 'mindmap'"
-      class="flex-1 h-full min-h-0 overflow-hidden"
+      class="relative flex-1 h-full min-h-0 overflow-hidden"
     >
+      <div v-if="isListPending" class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]">
+        <div class="flex flex-col items-center gap-3">
+          <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+          <span class="text-sm font-medium text-text-secondary italic">Mapping your data...</span>
+        </div>
+      </div>
       <PinMindmapView
-        :listsData="Lists?.data ?? []"
+        :listsData="filteredBoard ?? []"
         :workspaceId="String(workspaceId)"
         :moduleId="String(moduleId)"
         :canCreateCard="canCreateCard"

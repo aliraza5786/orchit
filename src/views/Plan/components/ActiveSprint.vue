@@ -291,8 +291,15 @@
 
           <!-- ── MindMap View ─────────────────────────────────────── -->
           <template v-if="view === 'mindmap'">
-            <MindMapView
-              :listsData="Lists?.groups ?? []"
+            <div class="relative flex-1 flex flex-col overflow-hidden">
+              <div v-if="isPending" class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]">
+                <div class="flex flex-col items-center gap-3">
+                  <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+                  <span class="text-sm font-medium text-text-secondary italic">Mapping your data...</span>
+                </div>
+              </div>
+              <MindMapView
+                :listsData="filteredBoard ?? []"
               :style="Lists?.style"
               :selectedSheetId="selected_sheet_id"
               :selectedViewBy="selected_view_by"
@@ -320,6 +327,7 @@
               @add-column="handleAddColumn"
               @save:theme="handleSaveTheme "
             />
+          </div>
           </template>
 
           <!-- ── Calendar View ───────────────────────────────────── -->
@@ -1024,7 +1032,7 @@ const fuse = computed(() => {
 const filteredBoard = computed(() => {
   const query = searchQuery.value?.trim() || search.value?.trim();
   
-  if (view.value === "kanban") {
+  if (view.value === "kanban" || view.value === "mindmap") {
     if (!query) return Lists.value?.groups;
     const results = fuse.value.search(query).map((r: any) => r.item);
     return (Lists.value?.groups ?? []).map((col: any) => ({

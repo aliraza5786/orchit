@@ -169,56 +169,58 @@
                       v-for="agent in group.agents"
                       :key="agent._id"
                       @click="handleClickAgent(agent)"
-                      class="bg-bg-card border border-border rounded-lg px-4 py-3 flex flex-col gap-3"
+                      class="group/agent bg-bg-card border border-border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-3"
                     >
-                      <div class="flex justify-between items-start">
-                        <span class="text-sm font-medium">
-                          {{ agent.name }}
-                        </span>
-
-                        <span
-                          class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                          :class="levelClass(agent.level)"
+                      <div class="flex items-start gap-3 w-full">
+                        <!-- Agent Avatar/Icon -->
+                        <div 
+                          class="w-10 min-w-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full text-white text-sm font-semibold border border-border/20 shadow-sm"
+                          :style="{ backgroundColor: avatarColor({ name: agent.name }) }"
                         >
-                          {{ agent.level }}
-                        </span>
-                      </div>
-
-                      <div class="text-xs text-text-secondary">
-                        {{ agent.role }}
-                      </div>
-
-                      <div class="text-xs text-accent-hover">
-                        {{ agent.model }}
-                      </div>
-                      <div class="flex justify-between">
-                        <div class="flex items-center gap-2 mt-auto">
-                          <span
-                            class="w-2 h-2 rounded-full"
-                            :class="
-                              agent.is_active ? 'bg-green-500' : 'bg-gray-400'
-                            "
-                          />
-                          <div class="flex justify-between">
-                            <span class="text-xs text-green-500">
-                              {{ agent.is_active ? "Active" : "Inactive" }}
+                          {{ getInitials(agent.name) }}
+                        </div>
+                        
+                        <div class="flex-1 min-w-0">
+                          <div class="flex justify-between items-start mb-0.5">
+                            <h3 class="text-sm font-semibold text-text-primary leading-tight truncate pr-1">
+                              {{ agent.name }}
+                            </h3>
+                            <span
+                              class="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-tighter"
+                              :class="levelClass(agent.level)"
+                            >
+                              {{ agent.level }}
                             </span>
                           </div>
+                          
+                          <p class="text-text-secondary text-[11px] truncate mb-2">
+                            {{ agent.role }}
+                          </p>
+                          
+                          <div class="flex items-center gap-2 mt-auto">
+                              <span
+                                class="w-1.5 h-1.5 rounded-full"
+                                :class="agent.is_active ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.4)]' : 'bg-gray-400'"
+                              />
+                              <span class="text-[10px] font-medium" :class="agent.is_active ? 'text-green-500' : 'text-text-secondary'">
+                                {{ agent.is_active ? "Active" : "Inactive" }}
+                              </span>
+                              <span class="text-[10px] text-text-secondary/60 ml-auto font-medium">
+                                {{ agent.model }}
+                              </span>
+                          </div>
                         </div>
-                        <div>
+                      </div>
+                      
+                      <!-- Footer Action -->
+                      <div class="border-t border-border pt-3 mt-1">
                           <button
-                            class="bg-accent text-xs rounded-full px-2 py-1 text-white cursor-pointer"
-                            @click.stop="
-                              handleChatWithAgent(
-                                agent,
-                                group.module_id,
-                                group?.title,
-                              )
-                            "
+                            class="w-full bg-accent/5 hover:bg-accent text-accent hover:text-white text-[10px] font-bold rounded-md px-3 py-1.5 transition-all duration-300 flex items-center justify-center gap-2 border border-accent/20 hover:border-accent"
+                            @click.stop="handleChatWithAgent(agent, group.module_id, group?.title)"
                           >
-                            Chat Agent
+                            <i class="fa-solid fa-comments text-[10px]"></i>
+                            CHAT WITH AGENT
                           </button>
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -366,7 +368,7 @@
           @assigned="(res: any) => handleSeatUpdated(res._id || res.id, res)"
           @unAssigned="() => fetchPeople(true)"
           @addVar="isCreateVar = true"
-          @add-seat="handlePLus"
+          @add-seat="(group: any) => currentTab === 'talent' ? handlePLus(group) : handleAgent({ title: group.title, module_id: String(group.module_id) })"
           @invite="(person: any) => { activePerson = person; showAddMembers = true; }"
           @unassign="unassignHandler"
           @delete-seat="(person: any) => { activePerson = person; showDeleteSeat = true; }"
@@ -711,10 +713,15 @@ const handleSeatUpdated = (seatId: string, updatedSeat: any) => {
     cards: (col.cards || []).map((c: any) => {
       if (c._id !== seatId) return c;
       const merged = { ...c, ...updatedSeat };
-      // If we got a full object from backend, use it
       return merged;
     }),
   }));
+
+  // Sync with SidePanel if this seat is currently open
+  if (sidePanelStore.selectedCardPeople?._id === seatId) {
+    sidePanelStore.selectCard({ ...sidePanelStore.selectedCardPeople, ...updatedSeat });
+  }
+
   fetchPeople(true);
 };
 
@@ -915,13 +922,19 @@ const { mutate: unassignSeatAction } = useUnAssignTeam({
 });
 
 const { mutate: assignRoleAction } = useAssignRole({
-  onSuccess: () => {
+  onSuccess: (data: any, variables: any) => {
+    handleSeatUpdated(variables.id, data);
     toast.success("Access role updated!");
     queryClient.invalidateQueries({ queryKey: ["people-lists"] });
   }
 });
 
 const handleRoleChange = (person: any, roleId: string) => {
+  if (person.workspace_access_role_id === roleId) return;
+  
+  // Optimistic update
+  handleSeatUpdated(person._id, { workspace_access_role_id: roleId });
+
   assignRoleAction({
     id: person._id,
     workspace_access_role_id: roleId

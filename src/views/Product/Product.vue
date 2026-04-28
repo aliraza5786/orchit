@@ -318,33 +318,41 @@
 
     <!-- ── MindMap View ────────────────────────────────────────────────────── -->
     <template v-if="view === 'mindmap'">
-      <MindMapView
-        :listsData="Lists?.sheets[0]?.sheet_lists ?? []"
-        :selectedSheetId="selected_sheet_id"
-        :selectedViewBy="selected_view_by"
-        :workspaceId="workspaceId"
-        :moduleId="moduleId"
-        :addingList="!!addingList"
-        :activeAddList="activeAddList"
-        :selectedSheetTitle="sheetTitle"
-        :newColumn="newColumn"
-        :canCreateCard="canCreateCard"
-        :canEditCard="canEditCard"
-        :canDeleteCard="canDeleteCard"
-        :canAssignCard="canAssignCard"
-        :canCreateSheet="canCreateSheet"
-        :canCreateVariable="canCreateVariable"
-        :canEditSheet="canEditSheet"
-        @select:ticket="selectCardHandler"
-        @delete:ticket="handleMindmapDeleteTicket"
-        @create:sheet="handleMindmapCreateSheet"
-        @create:card="handleMindmapCreateCard"
-        @update:card="handleMindmapUpdateCard"
-        @update:sheet="handleMindmapUpdateSheet"
-        @reorder:card="handleMindmapReorderCard"
-        @toggle-add-list="setActiveAddList"
-        @add-column="handleAddColumn"
-      />
+      <div class="relative flex-1 flex flex-col overflow-hidden">
+        <div v-if="isPending" class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]">
+          <div class="flex flex-col items-center gap-3">
+            <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+            <span class="text-sm font-medium text-text-secondary italic">Mapping your data...</span>
+          </div>
+        </div>
+        <MindMapView
+          :listsData="filteredBoard ?? []"
+          :selectedSheetId="selected_sheet_id"
+          :selectedViewBy="selected_view_by"
+          :workspaceId="workspaceId"
+          :moduleId="moduleId"
+          :addingList="!!addingList"
+          :activeAddList="activeAddList"
+          :selectedSheetTitle="sheetTitle"
+          :newColumn="newColumn"
+          :canCreateCard="canCreateCard"
+          :canEditCard="canEditCard"
+          :canDeleteCard="canDeleteCard"
+          :canAssignCard="canAssignCard"
+          :canCreateSheet="canCreateSheet"
+          :canCreateVariable="canCreateVariable"
+          :canEditSheet="canEditSheet"
+          @select:ticket="selectCardHandler"
+          @delete:ticket="handleMindmapDeleteTicket"
+          @create:sheet="handleMindmapCreateSheet"
+          @create:card="handleMindmapCreateCard"
+          @update:card="handleMindmapUpdateCard"
+          @update:sheet="handleMindmapUpdateSheet"
+          @reorder:card="handleMindmapReorderCard"
+          @toggle-add-list="setActiveAddList"
+          @add-column="handleAddColumn"
+        />
+      </div>
     </template>
 
     <!-- ── Calendar View ───────────────────────────────────────────────────── -->
@@ -1352,7 +1360,7 @@ const flattenSheetListCards = (apiData: any): any[] => {
 
 const filteredBoard = computed(() => {
   const query = debouncedQuery.value?.trim();
-  if (view.value === "kanban") {
+  if (view.value === "kanban" || view.value === "mindmap") {
     if (!query) return Lists.value?.sheets[0]?.sheet_lists;
     const results = fuse.value
       .search(query)

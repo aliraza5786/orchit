@@ -423,7 +423,7 @@
                     <!-- Time Type -->
                     <div
                       v-else-if="item.type === 'Time'"
-                      class="h-8 px-3 flex items-center gap-1 rounded-md bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-orchit-white/10"
                     >
                       <i class="fa-regular fa-clock text-[14px]"></i>
                       <TimePicker
