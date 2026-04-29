@@ -755,14 +755,16 @@ async function confirmSwitch() {
     const token = localStorage.getItem('token')
 
     if (pendingAccount.value.type === 'company') {
+      // ✅ Switching to company — set company_id, keep token
       authStore.setCompany(pendingAccount.value.id)
-      // ✅ Ensure token survives navigation to new subdomain
-      if (token) authStore.writeAuthCookie({ token, company_id: pendingAccount.value.id })
+      if (token) authStore.writeAuthCookie({ token, company_id: pendingAccount.value.id, personal_mode: null })
       await new Promise((res) => setTimeout(res, 100))
       window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
     } else {
-      authStore.clearCompany()
-      // ✅ Ensure token survives navigation back to main domain
+      // ✅ Switching to personal — only remove company_id, keep token
+      authStore.company_id = null
+      localStorage.removeItem('company_id')
+      localStorage.setItem('personal_mode', 'true')
       if (token) authStore.writeAuthCookie({ token, company_id: null, personal_mode: true })
       await new Promise((res) => setTimeout(res, 100))
       window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
