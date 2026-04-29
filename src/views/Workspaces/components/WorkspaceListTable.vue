@@ -282,8 +282,8 @@ function openShareModal(row: any) {
 
 /* ------------ Table columns ------------ */
 const columns = [
-    { key: 'variables', label: 'Project', render: renderProject, width: '300px' },
-    { key: 'variables', label: 'Project type', render: renderProjectType, width: '150px' },
+    { key: 'variables', label: 'Workspace', render: renderProject, width: '300px' },
+    { key: 'variables', label: 'Workspace Type', render: renderProjectType, width: '150px' },
     { key: 'People', label: 'People', render: renderPeople, width: '120px' },
     { key: 'created_at', label: 'Start Date', render: renderStartDate, width: '150px' },
     { key: 'admin', label: 'Workspace Owner', render:  renderCompanyAdmin, width: '200px' },
