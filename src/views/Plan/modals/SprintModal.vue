@@ -70,7 +70,7 @@
         </div>
       </div>
 
-       <!-- Checkbox for Optional Fields -->
+       <!-- Checkbox for Optional Fields --> 
       <Checkbox 
         v-if="form.sprintType === 'milestone' || form.sprintType === 'sprint' || form.sprintType === 'huddle'"
         :checked="form.showOptionalFields"
@@ -415,16 +415,21 @@ watch(
     }
     form.name = s.title || s.name || "";
     form.description = s.description || "";
-    form.sprintType = s.sprintType || null;
+    const rawType = s.sprintType || s.value || props.lable || "";
+    form.sprintType = rawType.toLowerCase() || null;
     form.duration = s.duration ? Number(s.duration) : null;
     const startDate = s.start || s.start_date || "";
     const endDate = s.end || s.end_date || "";
     form.start = startDate ? startDate.slice(0, 10) : new Date().toISOString().slice(0, 10);
     form.end = endDate ? endDate.slice(0, 10) : "";
     form.goal = s.goal || "";
-    form.num_sprints = s.num_sprints || null;
-    form.parent_sprint_id = s.parent_sprint_id || null;
-    form.showOptionalFields = !!(s.num_sprints || s.parent_sprint_id);
+    const childCount = Number(s.no_of_child || s.num_sprints || 0);
+   form.num_sprints = childCount > 0 ? childCount : null;
+   form.parent_sprint_id = s.parent_sprint_id || null;
+  form.showOptionalFields = !!(
+  (form.sprintType === 'milestone' && childCount > 0) ||
+  (form.sprintType !== 'milestone' && form.parent_sprint_id)
+);
     resetTouched();
   },
   { immediate: true }
