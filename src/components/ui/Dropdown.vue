@@ -136,7 +136,7 @@
 
                 <!-- Right: row actions or nested indicator -->
                 <div
-                  v-if="option.nested?.length"
+                  v-if="option.nested?.length && !option.hideActions"
                   class="pl-2 flex items-center relative ml-auto"
                 >
                   <span
@@ -175,7 +175,7 @@
 
                 <!-- Existing actions logic (only if NOT nested, to avoid conflict or visual clutter, though user didn't say remove actions) -->
                 <div
-                 v-else-if="actions && (canEdit || canDelete)"
+                 v-else-if="actions && (canEdit || canDelete) && !option.hideActions"
                   class="pl-2 flex items-center relative"
                 >
                   <button
@@ -258,6 +258,7 @@ interface Option {
   slug?: string;
   nested?: Option[];
   disableDelete?: boolean;
+  hideActions?: boolean;
 }
 
 const props = withDefaults(

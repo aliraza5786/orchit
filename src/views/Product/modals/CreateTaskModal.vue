@@ -151,6 +151,7 @@ import { useQueryClient } from "@tanstack/vue-query";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useSprintKanban } from "../../../queries/usePlan"
 import { useRoute } from "vue-router";
+import { toast } from "vue-sonner";
 const { canCreateCard } = usePermissions();
 const route = useRoute();
 /** Emits */
@@ -186,6 +187,8 @@ const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
   onSuccess: () => {
     reset();
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+    toast.success("Ticket created successfully");
     if(route.path.includes("plan")){
       console.log("onSuccess triggered");
      queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });

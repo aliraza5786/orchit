@@ -455,6 +455,7 @@
     @close="selectCardHandler(null)"
     @role-assigned="() => fetchPeople(true)"
     @refetch-people="() => fetchPeople(true)"
+    @update-variable="handleVariableUpdate"
     :showPanel="showPanel"
   />
   <AgentsDetailPanel
@@ -498,7 +499,7 @@
 import { h, defineAsyncComponent, ref, watch, onMounted, computed} from "vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
-import { useWorkspaceRoles } from "../../queries/usePeople";
+import { useWorkspaceRoles, usePeopleVar } from "../../queries/usePeople";
 import {
   ReOrderCard,
   ReOrderList,
@@ -510,6 +511,7 @@ import {
   useDeleteSeat,
   useUnAssignTeam,
   usePeople,
+  useUpdateVar,
 } from "../../queries/usePeople";
 import { useUpdateInvitedWorkspace } from "../../queries/useWorkspace";
 import { useWorkspaceStore } from "../../stores/workspace";
@@ -518,7 +520,7 @@ import { debounce } from "lodash";
 import { useQueryClient } from "@tanstack/vue-query";
 import PeopleTableView from "./components/PeopleTableView.vue";
 import MindmapView from "../../components/feature/MindmapView.vue";
-import { useVariables } from "../../queries/useSheets";
+// import { useVariables } from "../../queries/useSheets";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 import { avatarColor } from "../../utilities/avatarColor";
 import { getInitials } from "../../utilities";
@@ -580,12 +582,9 @@ const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
 const { workspaceId } = useRouteIds(); 
 const workspaceStore = useWorkspaceStore();
-const currentTab = ref("talent");
-const peopleModuleId = ref("people");
-const { data: peopleVariables } = useVariables(
-  workspaceId,
-  peopleModuleId,
-  ref("")
+const currentTab = ref("talent"); 
+const { data: peopleVariables } = usePeopleVar(
+  workspaceId
 );
 const isMobile = useMediaQuery("(max-width: 650px)");
 const viewData = [
@@ -987,10 +986,41 @@ function getEmailInitials(email: string): string {
 }
 
 const getVariableValue = (person: any, colKey: string) => {
-  if (!person.variables || !Array.isArray(person.variables)) return null;
-  const v = person.variables.find((v: any) => v._id === colKey || v.variable_id === colKey);
+  if (!person.variable_values || !Array.isArray(person.variable_values)) return null;
+  const v = person.variable_values.find((v: any) => v.module_variable_id === colKey);
   return v?.value || null;
 }
+
+const { mutate: updateVarAction } = useUpdateVar({
+  onSuccess: () => {
+    toast.success("Field updated successfully!");
+    fetchPeople(true);
+  },
+  onError: (err: any) => {
+    toast.error(err.message || "Failed to update field.");
+  },
+});
+
+const handleVariableUpdate = (person: any, variableId: string, value: any) => {
+  // Check if value actually changed
+  const currentValue = getVariableValue(person, variableId);
+  if (currentValue === value) return;
+
+  // Optimistic update
+  handleSeatUpdated(person._id, {
+    variable_values: [
+      ...(person.variable_values || []).filter((v: any) => v.module_variable_id !== variableId),
+      { module_variable_id: variableId, value }
+    ]
+  });
+
+  updateVarAction({
+    id: person._id,
+    payload: {
+      variable_values: [{ module_variable_id: variableId, value }]
+    }
+  });
+};
 
 const getRoleTitle = (id: string) => {
   if (!id) return "";
@@ -1321,7 +1351,22 @@ const tableColumns = computed(() => {
       ...((peopleVariables.value && Array.isArray(peopleVariables.value)) ? peopleVariables.value.map((v: any) => ({
         key: v._id,
         label: v.title,
-        render: ({ row: person }: any) => h("div", { class: "text-[12px] text-text-secondary truncate" }, person[v._id] || getVariableValue(person, v._id) || '-')
+        render: ({ row: person }: any) => {
+          if (v.variable_type_id?.title === 'Select') {
+            return h("div", { class: "w-full" }, [
+              h(TableSearchCell, {
+                modelValue: getVariableValue(person, v._id),
+                options: (v.data || []).map((opt: any) => ({ _id: opt, title: opt })),
+                placeholder: `Select ${v.title}`,
+                emptyText: v.title,
+                onChange: (val: any) => handleVariableUpdate(person, v._id, val)
+              }, {
+                display: () => getVariableValue(person, v._id) ? h("span", { class: "text-[12px] font-medium text-text-primary truncate" }, getVariableValue(person, v._id)) : null
+              })
+            ])
+          }
+          return h("div", { class: "text-[12px] text-text-secondary truncate" }, person[v._id] || getVariableValue(person, v._id) || '-')
+        }
       })) : [])
     ];
   } else {
@@ -1374,7 +1419,22 @@ const tableColumns = computed(() => {
       ...((peopleVariables.value && Array.isArray(peopleVariables.value)) ? peopleVariables.value.map((v: any) => ({
         key: v._id,
         label: v.title,
-        render: ({ row: person }: any) => h("div", { class: "text-[12px] text-text-secondary truncate" }, person[v._id] || getVariableValue(person, v._id) || '-')
+        render: ({ row: person }: any) => {
+          if (v.variable_type_id?.title === 'Select') {
+            return h("div", { class: "w-full" }, [
+              h(TableSearchCell, {
+                modelValue: getVariableValue(person, v._id),
+                options: (v.data || []).map((opt: any) => ({ _id: opt, title: opt })),
+                placeholder: `Select ${v.title}`,
+                emptyText: v.title,
+                onChange: (val: any) => handleVariableUpdate(person, v._id, val)
+              }, {
+                display: () => getVariableValue(person, v._id) ? h("span", { class: "text-[12px] font-medium text-text-primary truncate" }, getVariableValue(person, v._id)) : null
+              })
+            ])
+          }
+          return h("div", { class: "text-[12px] text-text-secondary truncate" }, person[v._id] || getVariableValue(person, v._id) || '-')
+        }
       })) : [])
     ];
   }

@@ -1083,6 +1083,7 @@ interface DropdownOption {
   _id: string;
   title: string;
   icon: IconData;
+  hideActions?: boolean;
 }
 
 const transformedData = computed<DropdownOption[]>(() => {
@@ -1101,11 +1102,12 @@ const transformedData = computed<DropdownOption[]>(() => {
     } as any;
   });
 
-  if (options.length > 0) {
+  if (options.length > 1) {
     options.unshift({
       _id: "all",
       title: "All sheet",
       icon: { prefix: "fa-solid", iconName: "fa-layer-group" },
+      hideActions: true,
     } as any);
   }
   return options;
@@ -1140,7 +1142,12 @@ watch(
 watch(
   selected_sheet_id,
   (newVal, oldVal) => {
-    if (!newVal) return;
+    if (!newVal || (Array.isArray(newVal) && newVal.length === 0)) {
+      if (data.value && data.value.length > 0) {
+        selected_sheet_id.value = data.value[0]._id;
+      }
+      return;
+    }
     
     // Handle "All sheet" logic: mutual exclusivity
     if (Array.isArray(newVal)) {
@@ -1790,6 +1797,10 @@ const moveCard = useMoveCard({
     }
     console.log(err);
   },
+  onSettled: () => {
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+  }
 });
 const updateMoveCard = useMoveCard({
   onMutate: async (newPayload: any) => {
@@ -1940,6 +1951,7 @@ const updateMoveCard = useMoveCard({
 
     queryClient.invalidateQueries({ queryKey: ["product-card", cardId] });
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
   },
 });
 function incrementCommentCount({ cardId }: { cardId: string }) {

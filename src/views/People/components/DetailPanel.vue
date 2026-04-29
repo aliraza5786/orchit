@@ -399,7 +399,7 @@ import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useAgentStore } from "../../../stores/agentStore";
-import { usePeopleVar, useUpdateVar, useUpdatePeopleVarDef, useDeletePeopleVarDef } from "../../../queries/usePeople";
+import { usePeopleVar, useUpdatePeopleVarDef, useDeletePeopleVarDef } from "../../../queries/usePeople";
 const ProgressBar = defineAsyncComponent(() =>
   import("../../../components/ui/ProgressBar.vue")
 );
@@ -486,16 +486,6 @@ const tabOptions = [
   { label: "History", value: "history" },
 ];
 const { data: peopleVar } = usePeopleVar(workspaceId.value);
-const { mutate: UpdateVar } = useUpdateVar({
-  onSuccess: () => {
-    toast.success("Field updated successfully!");
-    queryClient.invalidateQueries({ queryKey: ["people-lists"] });
-    emit("refetch-people");
-  },
-  onError: (err: any) => {
-    toast.error(err.message || "Failed to update field.");
-  },
-});
 const props = defineProps({
   showPanel: { type: Boolean, required: true },
 });
@@ -545,6 +535,7 @@ const emit = defineEmits([
   "priority:change",
   "role-assigned",
   "refetch-people",
+  "update-variable",
 ]);
 
 const titleInput = ref<HTMLInputElement | null>(null);
@@ -607,34 +598,7 @@ const moveCard = useMoveCard({
 });
 const handleSelect = (val: any, slug: any) => { 
   localVarValues[slug] = val;
-
-  // Optimistically update the store object so switching cards stays in sync
-  if (cardDetails.value) {
-    if (!cardDetails.value.variable_values) cardDetails.value.variable_values = [];
-    const index = cardDetails.value.variable_values.findIndex(
-      (v: any) => v.module_variable_id === slug
-    );
-    if (index !== -1) {
-      cardDetails.value.variable_values[index].value = val;
-    } else {
-      cardDetails.value.variable_values.push({
-        module_variable_id: slug,
-        value: val,
-      });
-    }
-  }
-
-  UpdateVar({
-    id: cardDetails.value._id,
-    payload: {
-      variable_values: [
-        {
-          module_variable_id: slug,
-          value: val,
-        },
-      ],
-    },
-  });
+  emit("update-variable", cardDetails.value, slug, val);
 };
 
 function getDefaultValue(id: any) {

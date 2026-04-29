@@ -276,8 +276,9 @@ onUnmounted(() => {
 
 // Cell Rendering Logic
 const getVariableValue = (person: any, colKey: string) => {
-  if (!person.variables || !Array.isArray(person.variables)) return null;
-  const v = person.variables.find((v: any) => v._id === colKey || v.variable_id === colKey);
+  const values = person.variable_values || person.variables || [];
+  if (!Array.isArray(values)) return null;
+  const v = values.find((v: any) => v.module_variable_id === colKey || v._id === colKey || v.variable_id === colKey);
   return v?.value || null;
 };
 
