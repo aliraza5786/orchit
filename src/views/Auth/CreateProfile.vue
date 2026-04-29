@@ -174,7 +174,7 @@
     {{ errors.workType }}
   </p>
 </div>
-<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-10">
+<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-6">
 
   <div class="w-full max-w-115">
 
@@ -334,19 +334,6 @@
   <span v-else>Create site</span>
 </button>
 
-      <!-- DIVIDER + FOOTNOTE -->
-      <div class="space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="flex-1 h-px" style="background: var(--border);" />
-          <span class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">or</span>
-          <div class="flex-1 h-px" style="background: var(--border);" />
-        </div>
-        <p class="text-xs text-center" style="color: var(--text-secondary);">
-          You can update your site name later in
-          <a class="font-semibold cursor-pointer hover:underline" style="color: var(--accent);">Settings → Site details</a>.
-        </p>
-      </div>
-
     </div>
 
   </div>
@@ -458,7 +445,7 @@
 
     <!-- invite via email -->
     <div class="space-y-1.5">
-      <label class="text-sm font-medium text-text-primary">Invite via email</label>
+      <label class="text-sm font-medium text-text-primary mb-1.5">Invite via email</label>
       <BaseEmailChip
         v-model="emailList"
         :error="!!errors.emailList"
