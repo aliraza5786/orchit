@@ -150,27 +150,33 @@ export const useAuthStore = defineStore('auth', {
         this.initialized = true
       }
     },
-     writeAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
-      try {
-        const existing = getAuthCookie() || {}
-        const merged: Record<string, any> = { ...existing, ...data }
+    // In auth.ts store — update writeAuthCookie action
+writeAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
+  try {
+    const existing = getAuthCookie() || {}
+    const merged: Record<string, any> = { ...existing, ...data }
 
-        if (data.company_id === null) delete merged.company_id
-        if (data.personal_mode === null) delete merged.personal_mode
+    if (data.company_id === null) delete merged.company_id
+    if (data.personal_mode === null) delete merged.personal_mode
 
-        const value = encodeURIComponent(JSON.stringify(merged))
-        const hostname = window.location.hostname
-        const maxAge = 60 * 60 * 24 * 30
+    const value = encodeURIComponent(JSON.stringify(merged))
+    const maxAge = 60 * 60 * 24 * 30
+    const hostname = window.location.hostname
 
-        if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-          document.cookie = `auth_session=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
-        } else if (hostname.endsWith('.orchit.ai')) {
-          document.cookie = `auth_session=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-        }
-      } catch (e) {
-        console.error('❌ Failed to write auth cookie:', e)
-      }
-    },
+    if (hostname === 'localhost') {
+      // plain localhost — no domain attribute
+      document.cookie = `auth_session=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else if (hostname.endsWith('.localhost')) {
+      // subdomain of localhost — share across *.localhost
+      document.cookie = `auth_session=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else {
+      // ✅ Always use .orchit.ai domain — works on orchit.ai AND all subdomains
+      document.cookie = `auth_session=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    }
+  } catch (e) {
+    console.error('❌ Failed to write auth cookie:', e)
+  }
+},
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
