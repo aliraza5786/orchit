@@ -174,7 +174,7 @@
     {{ errors.workType }}
   </p>
 </div>
-<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-6">
+<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-3">
 
   <div class="w-full max-w-115">
 
@@ -371,7 +371,7 @@
     </div>
 
     <!-- ✅ Step 7 own nav -->
-    <div class="flex justify-between items-center mt-10 md:mt-15">
+    <div class="flex justify-between items-center border">
       <Button variant="secondary" size="md" type="button" @click="goBack">
         <div class="flex items-center gap-1">
           <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
@@ -455,26 +455,27 @@
 
     <!-- actions -->
 <!-- actions -->
+<!-- AFTER: -->
 <div class="flex items-center justify-between pt-2">
   <Button 
     variant="secondary" 
     size="md" 
-    :disabled="invitingPeople"
-    @click="sendInvites"
+    :disabled="isSkipping || isInviting"
+    @click="sendInvites(true)"
   >
     <div class="flex items-center gap-2">
-      <span v-if="invitingPeople" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
+      <span v-if="isSkipping" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
       <span>Do this later</span>
     </div>
   </Button>
 
   <Button 
     size="md" 
-    :disabled="invitingPeople"
-    @click="sendInvites"
+    :disabled="isInviting || isSkipping"
+    @click="sendInvites(false)"
   >
     <div class="flex items-center gap-2">
-      <span v-if="invitingPeople" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+      <span v-if="isInviting" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
       <span>Invite</span>
     </div>
   </Button>
@@ -484,7 +485,7 @@
 
 </div>
 <!-- ✅ KEEP THIS ONE — the original at the bottom -->
-<div class="flex justify-between items-center mt-10 md:mt-15" 
+<div class="flex justify-between items-center mt-10 md:mt-5" 
   v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
   
   <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
@@ -622,6 +623,8 @@ const isSlugAvailable = ref<boolean | null>(null)
 const referralSources = ref<string[]>([])
 const joinLink = ref('')
 const domainLink = ref('')
+const isInviting = ref(false)
+const isSkipping = ref(false)
 const moduleOptionsMap = {
   team: [
     { id: 'tasks', label: 'Tasks' },
@@ -1086,7 +1089,14 @@ function setAuthCookie(token: string) {
 
   console.log('🍪 cookie set for:', hostname, '→', cookieString)
 }
-function sendInvites() {
+// AFTER:
+async function sendInvites(skip = false) {
+  if (skip) {
+    isSkipping.value = true
+  } else {
+    isInviting.value = true
+  }
+
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)
   if (token) {
@@ -1096,7 +1106,6 @@ function sendInvites() {
     ? btoa(token).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
     : ''
 
-  // ✅ Use companyID ref directly — already set in createProfile onSuccess
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const encodedCompanyId = companyIdRaw
     ? btoa(companyIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
@@ -1110,23 +1119,32 @@ function sendInvites() {
 
   if (encodedToken) query._auth = encodedToken
   if (encodedCompanyId) query._cid = encodedCompanyId
-  if (emailList.value.length > 0) {
-    invitePeople(
-      {
-        payload: {
-          company_id: companyID.value,
-          emails: [...emailList.value]
-        }
-      },
-      {
-        onSuccess: () => {
-          router.push({ path: '/finish-profile', query })
-        }
-      }
-    )
-  } else {
+
+  // Skip or no emails — go directly without inviting
+  if (skip || emailList.value.length === 0) {
+    isSkipping.value = false
+    isInviting.value = false
     router.push({ path: '/finish-profile', query })
+    return
   }
+
+  invitePeople(
+    {
+      payload: {
+        company_id: companyID.value,
+        emails: [...emailList.value]
+      }
+    },
+    {
+      onSuccess: () => {
+        isInviting.value = false
+        router.push({ path: '/finish-profile', query })
+      },
+      onError: () => {
+        isInviting.value = false
+      }
+    }
+  )
 }
 onMounted(() => {
   gsap.to(".rocket", {
@@ -1175,6 +1193,16 @@ const isSiteStepBlocked = computed(() => {
   return !isSlugAvailable.value || isCheckingSlug.value
 })
 watch(workType, (v) => { if (v && errors.value.workType) errors.value.workType = undefined })
+// Add this alongside your other watchers
+watch(activeStep, (step) => {
+  if (step === 5 && !siteName.value) {
+    if (selected.value === 'team' && team.value.trim()) {
+      siteName.value = team.value.trim()
+    } else if (selected.value === 'school' && schoolName.value.trim()) {
+      siteName.value = schoolName.value.trim()
+    }
+  }
+})
 </script>
 
 <style scoped>
