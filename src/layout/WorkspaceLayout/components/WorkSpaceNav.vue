@@ -15,7 +15,7 @@
       <!-- Logo + Title (now a dropdown trigger) -->
       <div class="relative flex items-center ps-3.5 sm:ps-2">
         <div 
-          class="transition-all duration-300 ease-in-out overflow-hidden" 
+          class="transition-all duration-300 ease-in-out overflow-visible" 
           :class="expanded ? 'w-[235px]' : 'w-[64px]'"
         >
           <button
@@ -80,6 +80,67 @@
              <i class="fa-solid fa-ellipsis text-[12px]"></i>
            </div>
           </button>
+
+          <!-- ✅ Dropdown moved INSIDE the width-controlled div so it matches button width -->
+          <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
+            <div
+              v-show="logoMenuOpen"
+              ref="menuRef"
+              class="absolute top-full left-0 z-50 mt-2 w-full rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
+              role="menu"
+              aria-label="Workspace switcher"
+              @keydown.esc.stop.prevent="closeLogoMenu"
+            >
+              <!-- Home -->
+              <button
+                class="w-full px-3 py-2 cursor-pointer text-left text-sm hover:bg-bg-card/70 rounded-t-xl flex items-center gap-2"
+                role="menuitem"
+                @click="goHome"
+                ref="firstItemRef"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Home
+              </button>
+
+              <div class="my-1 h-px bg-border"></div>
+
+              <!-- Workspaces -->
+              <div class="overflow-y-auto">
+                <div class="max-h-72 py-1 cursor-pointer">
+                  <button
+                    v-for="ws in workspaces?.workspaces"
+                    :key="ws._id"
+                    class="w-full px-3 py-2 text-left text-sm hover:bg-bg-card/70 cursor-pointer flex items-center gap-3"
+                    role="menuitem"
+                    @click="switchTo(ws)"
+                  >
+                    <img
+                      :src="ws.logo ?? dp"
+                      alt=""
+                      class="w-6 h-6 rounded-full object-cover bg-white"
+                    />
+                    <span class="flex-1 line-clamp-1">{{
+                      ws?.variables?.title ?? "Untitled workspace"
+                    }}</span>
+                    <span
+                      v-if="ws._id === workspaceId"
+                      class="text-xs px-2 py-0.5 rounded-full border border-border"
+                    >
+                      Current
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </Transition>
+
         </div> 
       </div>
 
@@ -157,66 +218,6 @@
       </button>
     </div>
   </nav>
-  <!-- Dropdown -->
-  <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
-    <div
-      v-show="logoMenuOpen"
-      ref="menuRef"
-      class="absolute top-12 left-[11px] z-50 mt-2 w-72 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
-      role="menu"
-      aria-label="Workspace switcher"
-      @keydown.esc.stop.prevent="closeLogoMenu"
-    >
-      <!-- Home -->
-      <button
-        class="w-full px-3 py-2 cursor-pointer text-left text-sm hover:bg-bg-card/70 rounded-t-xl flex items-center gap-2"
-        role="menuitem"
-        @click="goHome"
-        ref="firstItemRef"
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linejoin="round"
-          />
-        </svg>
-        Home
-      </button>
-
-      <div class="my-1 h-px bg-border"></div>
-
-      <!-- Workspaces -->
-      <div class="overflow-y-auto">
-      <div class="max-h-72 py-1 cursor-pointer">
-         <button
-          v-for="ws in workspaces?.workspaces"
-          :key="ws._id"
-          class="w-full px-3 py-2 text-left text-sm hover:bg-bg-card/70 cursor-pointer flex items-center gap-3"
-          role="menuitem"
-          @click="switchTo(ws)"
-        >
-          <img
-            :src="ws.logo ?? dp"
-            alt=""
-            class="w-6 h-6 rounded-full object-cover bg-white"
-          />
-          <span class="flex-1 line-clamp-1">{{
-            ws?.variables?.title ?? "Untitled workspace"
-          }}</span>
-          <span
-            v-if="ws._id === workspaceId"
-            class="text-xs px-2 py-0.5 rounded-full border border-border"
-          >
-            Current
-          </span>
-        </button>
-        </div>
-        
-      </div>
-    </div>
-  </Transition>
 </template>
 
 <script setup lang="ts">
