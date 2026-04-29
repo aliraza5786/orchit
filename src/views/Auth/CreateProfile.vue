@@ -371,7 +371,7 @@
     </div>
 
     <!-- ✅ Step 7 own nav -->
-    <div class="flex justify-between items-center border">
+    <div class="flex justify-between items-center">
       <Button variant="secondary" size="md" type="button" @click="goBack">
         <div class="flex items-center gap-1">
           <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
@@ -1197,9 +1197,9 @@ watch(workType, (v) => { if (v && errors.value.workType) errors.value.workType =
 watch(activeStep, (step) => {
   if (step === 5 && !siteName.value) {
     if (selected.value === 'team' && team.value.trim()) {
-      siteName.value = team.value.trim()
+      siteName.value = generateSlug(team.value)
     } else if (selected.value === 'school' && schoolName.value.trim()) {
-      siteName.value = schoolName.value.trim()
+      siteName.value = generateSlug(schoolName.value)
     }
   }
 })

@@ -30,7 +30,8 @@ const handleClick = (rowEvt: any) => {
     if (r?.company && r.company.domain_link) {
         // Extract domain from domain_link (e.g., "https://streamed-zunairm.orchit.ai" -> "streamed-zunairm.orchit.ai")
         const domain = r.company.domain_link.replace('https://', '').replace('http://', '')
-        window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}`
+const theme = localStorage.getItem('theme') || 'light'
+window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
     } else {
         // No company — stay on current domain (orchit.ai for personal workspaces)
         router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
