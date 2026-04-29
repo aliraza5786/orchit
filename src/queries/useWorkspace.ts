@@ -93,7 +93,9 @@ export const useWorkspacesPrompt = () =>
 export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
   const authStore = useAuthStore();
 
-  const companyId = computed(() => authStore.company_id ?? null);
+const companyId = computed(() => 
+  authStore.company_id ?? localStorage.getItem('company_id') ?? null
+);
 
   return useQuery({
     queryKey: computed(() => [
@@ -125,7 +127,9 @@ export const useWorkspacesTitles = () => {
 
   return useApiQuery({
     key: computed(() => {
-      const companyId = authStore.company_id ?? "";
+      const companyId = computed(() => 
+  authStore.company_id ?? localStorage.getItem('company_id') ?? null
+);
       return ["workspaces", "titles", companyId];
     }),
     url: "/workspace/titles",
@@ -181,7 +185,9 @@ export const useWorkspacesRoles = (id: IdLike) => {
   return useQuery({
     queryKey: computed(() => {
       const wid = idRef.value ?? "";
-      const companyId = authStore.company_id ?? "";
+      const companyId = computed(() => 
+  authStore.company_id ?? localStorage.getItem('company_id') ?? null
+);
       return ["workspaceRoles", wid, companyId];
     }),
     enabled: computed(() => !!idRef.value && !!authStore.company_id),
