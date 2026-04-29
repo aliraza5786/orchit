@@ -74,19 +74,18 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    setCompany(id: string) {
+   setCompany(id: string) {
       this.company_id = id
       localStorage.setItem('company_id', id)
       localStorage.removeItem('personal_mode')
-      setAuthCookie({ company_id: id, personal_mode: null })
+      this.writeAuthCookie({ company_id: id, personal_mode: null }) // ✅
     },
 
     clearCompany() {
       this.company_id = null
       localStorage.removeItem('company_id')
       localStorage.setItem('personal_mode', 'true')
-      // Store personal_mode in cookie so ALL subdomains see it on next load
-      setAuthCookie({ company_id: null, personal_mode: true })
+      this.writeAuthCookie({ company_id: null, personal_mode: true }) // ✅
     },
 
     async bootstrap() {
@@ -151,7 +150,27 @@ export const useAuthStore = defineStore('auth', {
         this.initialized = true
       }
     },
+     writeAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
+      try {
+        const existing = getAuthCookie() || {}
+        const merged: Record<string, any> = { ...existing, ...data }
 
+        if (data.company_id === null) delete merged.company_id
+        if (data.personal_mode === null) delete merged.personal_mode
+
+        const value = encodeURIComponent(JSON.stringify(merged))
+        const hostname = window.location.hostname
+        const maxAge = 60 * 60 * 24 * 30
+
+        if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+          document.cookie = `auth_session=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+        } else if (hostname.endsWith('.orchit.ai')) {
+          document.cookie = `auth_session=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+        }
+      } catch (e) {
+        console.error('❌ Failed to write auth cookie:', e)
+      }
+    },
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')

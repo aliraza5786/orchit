@@ -199,6 +199,14 @@ interface Project {
   LatestTask?: { job_id?: string }
   owner?: { name: string }
   task_stats?: { total_percentage?: number }
+  company?: {                          // ✅ add this
+    _id: string
+    title: string
+    slug: string
+    domain_link: string
+    logo: string | null
+    status: string
+  }
 }
 
 const props = withDefaults(
@@ -243,6 +251,12 @@ function onClick(p: Project) {
   const job = p?.LatestTask?.job_id
   if (job) localStorage.setItem('jobId', job)
   else localStorage.removeItem('jobId')
-  router.push(`/workspace/peak/${p._id}/${job ?? ''}`)
+  const domainLink = p?.company?.domain_link
+  const path = `/workspace/peak/${p._id}/${job ?? ''}`
+  if (domainLink) {
+    window.location.href = `${domainLink}${path}`
+  } else {
+    router.push(path)
+  }
 }
 </script>
