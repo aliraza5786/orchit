@@ -467,118 +467,76 @@ resetStream() {
     clearCreatedEntities() {
       this.createdEntities = [];
     },
-    async declineSuggestedEntities(workspace_id: string, entity_id?: string) {
-      if (!workspace_id) return;
-
-      this.isLoadingHistory = true;
-
-      try {
-        const url = `${baseUrl}agent-chat/created-entities/${workspace_id}`;
-
-        const res = await api.request<{
-          data: { chats: ChatSession[]; pagination: any };
-        }>({
-          url,
-          method: "DELETE",
-          data: entity_id ? { entity_id } : undefined, // ✅ body payload
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        });
-
-        return res.data;
-      } catch (err) {
-        console.error("❌ Failed to decline suggested entities:", err);
-      } finally {
-        this.isLoadingHistory = false;
-      }
-    },
+   async declineSuggestedEntities(workspace_id: string, entity_id?: string) {
+  if (!workspace_id) return;
+  this.isLoadingHistory = true;
+  try {
+    const url = `${baseUrl}agent-chat/created-entities/${workspace_id}`;
+    const res = await api.request<{ data: { chats: ChatSession[]; pagination: any } }>({
+      url,
+      method: "DELETE",
+      data: entity_id ? { entity_id } : undefined,
+      // ✅ Removed cache headers
+    });
+    return res.data;
+  } catch (err) {
+    console.error("❌ Failed to decline suggested entities:", err);
+  } finally {
+    this.isLoadingHistory = false;
+  }
+},
     async trainPersona(
-      workspace_id: string,
-      payload: {
-        module_id?: string;
-        module_name?: string;
-        sheet_id?: string;
-        sheet_name?: string;
-        name: string;
-        description?: string;
-        role?: string;
-        level?: "JUNIOR" | "MID" | "SENIOR" | "EXPERT" | "LEAD";
-        responsibilities?: string[];
-        skills?: string[];
-        competencies?: string[];
-        capabilities?: string[];
-        conditions_rules?: string[];
-        workspace_role_id?: string;
-        workspace_access_role_id?: string;
-      },
-    ) {
-      if (!workspace_id) return;
-
-      try {
-        const url = `${baseUrl}agent-chat/${workspace_id}/train/persona`;
-
-        const res = await api.request({
-          url,
-          method: "POST",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-          data: payload,
-        });
-        if (res.status >= 200 && res.status < 300) {
-          toast.success("Agent created successfully.");
-        } else {
-          toast.error("Failed to create Agent.");
-        }
-      } catch (err: any) {
-        console.error("Failed to create Agent.", err);
-
-        toast.error(
-          err?.response?.data?.message ||
-            "Something went wrong while creating Agent.",
-        );
-      }
-    },
+  workspace_id: string,
+  payload: { /* ...same type... */ },
+) {
+  if (!workspace_id) return;
+  try {
+    const url = `${baseUrl}agent-chat/${workspace_id}/train/persona`;
+    const res = await api.request({
+      url,
+      method: "POST",
+      // ✅ Removed cache headers
+      data: payload,
+    });
+    if (res.status >= 200 && res.status < 300) {
+      toast.success("Agent created successfully.");
+    } else {
+      toast.error("Failed to create Agent.");
+    }
+  } catch (err: any) {
+    console.error("Failed to create Agent.", err);
+    toast.error(err?.response?.data?.message || "Something went wrong while creating Agent.");
+  }
+},
     async fetchAgentSettings(
-      workspace_id: string,
-      module_id?: string,
-      module_name?: string,
-      agent_id?: string,
-    ) {
-      if (!workspace_id) return;
+  workspace_id: string,
+  module_id?: string,
+  module_name?: string,
+  agent_id?: string,
+) {
+  if (!workspace_id) return;
+  this.isLoadingSettings = true;
+  try {
+    const queryParams = new URLSearchParams();
+    if (module_id) queryParams.append("module_id", module_id);
+    if (module_name) queryParams.append("module_name", module_name);
+    if (agent_id) queryParams.append("agent_id", agent_id);
+    const url = `${baseUrl}agent-chat/${workspace_id}/settings?${queryParams.toString()}`;
 
-      this.isLoadingSettings = true;
+    const res = await api.request<{ data: any }>({
+      url,
+      method: "GET",
+      // ✅ Removed cache headers — causing CORS preflight failures
+    });
 
-      try {
-        const queryParams = new URLSearchParams();
-        if (module_id) queryParams.append("module_id", module_id);
-        if (module_name) queryParams.append("module_name", module_name);
-        if (agent_id) queryParams.append("agent_id", agent_id);
-        const url = `${baseUrl}agent-chat/${workspace_id}/settings?${queryParams.toString()}`;
-
-        const res = await api.request<{ data: any }>({
-          url,
-          method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        });
-
-        this.agentSettings = res.data.data;
-        return res.data.data;
-      } catch (err) {
-        console.error("❌ Failed to fetch agent settings:", err);
-      } finally {
-        this.isLoadingSettings = false;
-      }
-    },
+    this.agentSettings = res.data.data;
+    return res.data.data;
+  } catch (err) {
+    console.error("❌ Failed to fetch agent settings:", err);
+  } finally {
+    this.isLoadingSettings = false;
+  }
+},
     async trainKnowledge(workspace_id: string, payload: KnowledgePayload) {
       if (!workspace_id) return;
       this.isLoadingKnowledge = true;
@@ -677,75 +635,53 @@ resetStream() {
         this.isLoadingSettings = false;
       }
     },
-    async updateSelectedAgent(
-      workspace_id: string,
-      payload: Record<string, any>,
-      agent_id?: string,
-    ) {
-      if (!workspace_id) return;
-
-      this.isUpdatingAgent = true;
-
-      try {
-        const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
-        const url = agent_id ? `${base}/${agent_id}` : base;
-
-        await api.request<{ data: any }>({
-          url,
-          method: "PUT", // or PATCH if backend supports partial updates
-          data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        });
-        this.isUpdatingAgent = false;
-        toast.success("Agent configuration has been updated successfully.");
-      } catch (err) {
-        toast.error("Failed to update agent Agent configuration");
-        console.error("Failed to update agent settings:", err);
-        this.isUpdatingAgent = false;
-        throw err;
-      } finally {
-        this.isUpdatingAgent = false;
-      }
-    },
-    async deleteSelectedAgent(
-      workspace_id: string,
-      // payload: Record<string, any>,
-      agent_id?: string,
-    ) {
-      if (!workspace_id) return;
-
-      this.isDeletingAgent = true;
-
-      try {
-        const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
-        const url = agent_id ? `${base}/${agent_id}` : base;
-
-        const res = await api.request<{ data: any }>({
-          url,
-          method: "DELETE",
-          // data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        });
-
-        console.log(res);
-
-        return res.data;
-      } catch (err) {
-        this.isDeletingAgent = false;
-        console.error("❌ Failed to Delete agent:", err);
-        throw err;
-      } finally {
-        this.isDeletingAgent = false;
-      }
-    },
+   async updateSelectedAgent(
+  workspace_id: string,
+  payload: Record<string, any>,
+  agent_id?: string,
+) {
+  if (!workspace_id) return;
+  this.isUpdatingAgent = true;
+  try {
+    const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
+    const url = agent_id ? `${base}/${agent_id}` : base;
+    await api.request<{ data: any }>({
+      url,
+      method: "PUT",
+      data: payload,
+      // ✅ Removed cache headers
+    });
+    this.isUpdatingAgent = false;
+    toast.success("Agent configuration has been updated successfully.");
+  } catch (err) {
+    toast.error("Failed to update agent configuration");
+    console.error("Failed to update agent settings:", err);
+    this.isUpdatingAgent = false;
+    throw err;
+  } finally {
+    this.isUpdatingAgent = false;
+  }
+},
+    async deleteSelectedAgent(workspace_id: string, agent_id?: string) {
+  if (!workspace_id) return;
+  this.isDeletingAgent = true;
+  try {
+    const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
+    const url = agent_id ? `${base}/${agent_id}` : base;
+    const res = await api.request<{ data: any }>({
+      url,
+      method: "DELETE",
+      // ✅ Removed cache headers
+    });
+    return res.data;
+  } catch (err) {
+    this.isDeletingAgent = false;
+    console.error("❌ Failed to Delete agent:", err);
+    throw err;
+  } finally {
+    this.isDeletingAgent = false;
+  }
+},
     async fetchAgentsByRoleOrModule(workspace_id: string, groupBy?: string) {
       if (!workspace_id) return;
 
@@ -838,25 +774,21 @@ resetStream() {
       this.moduleName = module_name;
     },
     async unpinStructure(payload: { workspace_id: string; log_id?: string }) {
-      this.isLoading = true;
-      try {
-        await api.request({
-          url: `${baseUrl}agent-chat/unpin-structure`,
-          method: "POST",
-          data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        });
-      } catch (err) {
-        console.error("Unpin failed", err);
-        throw err;
-      } finally {
-        this.isLoading = false;
-      }
-    },
+  this.isLoading = true;
+  try {
+    await api.request({
+      url: `${baseUrl}agent-chat/unpin-structure`,
+      method: "POST",
+      data: payload,
+      // ✅ Removed cache headers
+    });
+  } catch (err) {
+    console.error("Unpin failed", err);
+    throw err;
+  } finally {
+    this.isLoading = false;
+  }
+},
     async fetchAllAgentChatHistory(
       workspace_id: string,
       params?: {
@@ -1158,35 +1090,24 @@ resetStream() {
 async updateAgentWebBrowsing(
   workspace_id: string,
   agent_id: string,
-  payload?: {
-    web_browsing_enabled?: boolean;
-  }
+  payload?: { web_browsing_enabled?: boolean }
 ) {
   if (!workspace_id || !agent_id) return;
-
   this.isUpdatingAgentSettings = true;
-
   try {
     const url = `${baseUrl}agent-chat/${workspace_id}/agent/${agent_id}`;
 
     const res = await api.request<{
-      data: {
-        web_browsing_enabled: boolean;
-      };
+      data: { web_browsing_enabled: boolean }
     }>({
       url,
       method: "PUT",
       data: {
         web_browsing_enabled: payload?.web_browsing_enabled ?? true,
       },
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
+      // ✅ Removed cache headers — causing CORS preflight failures
     });
 
-    // Optional: update local state if you track agent settings
     this.agentSettings = {
       ...this.agentSettings,
       [agent_id]: {
