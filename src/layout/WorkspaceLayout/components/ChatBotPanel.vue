@@ -833,7 +833,7 @@
 
     <!-- ==================== RIGHT: CHAT PANEL ==================== -->
     <div
-      :class="isExpanded ? 'w-[40%]' : 'w-full'"
+      :class="isExpanded ? 'w-[30%]' : 'w-full'"
       class="border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden"
     >
       <!-- Chat Header -->
@@ -963,21 +963,23 @@
             </div>
 
             <!-- Bubble -->
-            <div class="relative max-w-[82%] flex flex-col">
+            <div class="relative max-w-[82%] w-fit flex flex-col overflow-hidden">
               <div
-    v-if="msg.type === 'assistant' && !msg.content"
-    class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md"
-  >
+<div
+  v-if="msg.type === 'assistant' && !msg.content"
+  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md min-w-0 w-full break-words"
+>
     Unable to generate a response. Please try again.
   </div>
-              <div v-else
-                class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative"
-                :class="
-                  msg.type === 'user'
-                    ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15'
-                    : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
-                "
-              >
+              <!-- AFTER: -->
+<div v-else
+  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 w-full break-words"
+  :class="
+    msg.type === 'user'
+      ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15'
+      : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
+  "
+>
                 <!-- Message menu trigger -->
                 <button
                   v-if="activeSessionId && !msg.metadata?.temp"
