@@ -244,15 +244,24 @@ async function loginWithApple() {
   }
 }
 async function handleLoginSuccess(data: any) {
-  localStorage.setItem("token", data?.data?.token);
-  await authStore.bootstrap();
+  const token = data?.data?.token
+
+  // ✅ Save to localStorage
+  localStorage.setItem("token", token)
+
+  // ✅ Write to auth_session cookie immediately so all subdomains can read it
+  authStore.writeAuthCookie({ token, company_id: null, personal_mode: null })
+
+  await authStore.bootstrap()
+
   // Handle redirect parameter from deep links
-    const redirectPath = router.currentRoute.value.query.redirect as string;
-    if (redirectPath) {
-      router.push(redirectPath);
-      return;
-    }
-  // ✅ Check post_auth_intent first (existing - untouched)
+  const redirectPath = router.currentRoute.value.query.redirect as string;
+  if (redirectPath) {
+    router.push(redirectPath);
+    return;
+  }
+
+  // ✅ Check post_auth_intent first
   const intentStr = localStorage.getItem('post_auth_intent');
   if (intentStr) {
     try {
@@ -276,7 +285,7 @@ async function handleLoginSuccess(data: any) {
     return;
   }
 
-  // ✅ Normal login flow — completely untouched below
+  // ✅ Normal login flow
   if (data?.data?.isNewUser) {
     router.push("/create-profile");
     return;
