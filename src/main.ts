@@ -39,18 +39,20 @@ function writeAuthCookie(data: Record<string, any>) {
   const value = encodeURIComponent(JSON.stringify(merged));
 
   if (hostname === 'localhost') {
+    // Local development: no domain or secure flags needed
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
   } else if (hostname.endsWith('.localhost')) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`;
   } else if (hostname === 'orchit.ai') {
-    // ✅ Write both so subdomains inherit
-    document.cookie = `${COOKIE_KEY}=${value}; domain=orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
-    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
+    // Production root domain: use leading dot to include all subdomains
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`;
   } else if (hostname.endsWith('.orchit.ai')) {
-    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
+    // Production subdomain: use leading dot for consistency
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`;
   }
 
-  console.log('🍪 auth_session cookie:', document.cookie.includes('auth_session') ? '✅' : '❌ NOT SET')
+  console.log('🍪 auth_session cookie:', document.cookie.includes('auth_session') ? '✅ SET' : '❌ NOT SET');
+  console.log('🍪 Hostname:', hostname, '| Cookie domain set appropriately');
 }
 const urlParams = new URLSearchParams(window.location.search);
 const encodedToken = urlParams.get("_auth");

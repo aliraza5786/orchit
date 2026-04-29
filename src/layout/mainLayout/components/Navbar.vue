@@ -746,6 +746,7 @@ const currentAccount = computed<Account>(() => {
 // ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
+
 async function confirmSwitch() {
   if (!pendingAccount.value) return
   isSwitching.value = true
@@ -755,33 +756,49 @@ async function confirmSwitch() {
     const token = localStorage.getItem('token')
 
     if (pendingAccount.value.type === 'company') {
+      // ✅ COMPANY SWITCH: Store token + company_id in cookie, then redirect to subdomain
+      if (token) {
+        // Ensure token is in localStorage first
+        localStorage.setItem('token', token)
+        // Then store both token and company_id in cookie
+        authStore.writeAuthCookie({ 
+          token, 
+          company_id: pendingAccount.value.id, 
+          personal_mode: null 
+        })
+      }
+      // Update store state
       authStore.setCompany(pendingAccount.value.id)
       
-      // ✅ Write FIRST, then wait, then redirect
-      if (token) authStore.writeAuthCookie({ 
-        token, 
-        company_id: pendingAccount.value.id, 
-        personal_mode: null 
-      })
-      
-      // ✅ Give the browser time to persist the cookie before navigating
+      // ✅ Give browser time to persist cookie before redirecting
       await new Promise((res) => setTimeout(res, 300))
-      window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
-    } else {
-      authStore.company_id = null
-      localStorage.removeItem('company_id')
-      localStorage.setItem('personal_mode', 'true')
       
-      if (token) authStore.writeAuthCookie({ 
-        token, 
-        company_id: null, 
-        personal_mode: true 
-      })
+      // ✅ Redirect to company subdomain
+      const subdomain = pendingAccount.value.domain
+      window.location.href = `${window.location.protocol}//${subdomain}/dashboard`
       
+    } else if (pendingAccount.value.type === 'individual') {
+      // ✅ PERSONAL SWITCH: Remove company_id, clear personal_mode flag, redirect to main domain
+      if (token) {
+        localStorage.setItem('token', token)
+        // Write cookie with token but no company_id, mark as personal mode
+        authStore.writeAuthCookie({ 
+          token, 
+          company_id: null, 
+          personal_mode: true 
+        })
+      }
+      // Update store state
+      authStore.clearCompany()
+      
+      // ✅ Give browser time to persist cookie before redirecting
       await new Promise((res) => setTimeout(res, 300))
+      
+      // ✅ Redirect to main domain
       window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
     }
   } catch (e) {
+    console.error('❌ Account switch failed:', e)
     isSwitching.value = false
   }
 }

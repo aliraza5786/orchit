@@ -60,20 +60,20 @@ export const useAuthStore = defineStore('auth', {
     const hostname = window.location.hostname
 
     if (hostname === 'localhost') {
+      // Local development: no Secure or SameSite=None needed
       document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
     } else if (hostname.endsWith('.localhost')) {
       document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`
     } else if (hostname === 'orchit.ai') {
-      // ✅ Apex domain — write BOTH with and without dot prefix so subdomains inherit it
-      document.cookie = `${COOKIE_KEY}=${value}; domain=orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+      // Production root domain: use leading dot + SameSite=None for cross-subdomain access
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
     } else if (hostname.endsWith('.orchit.ai')) {
-      // ✅ Subdomain — dot prefix so all subdomains share it
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+      // Production subdomain: use leading dot + SameSite=None for cross-subdomain access
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
     }
 
     // ✅ Verify it actually wrote
-    console.log('🍪 Cookie after write:', document.cookie.includes(COOKIE_KEY) ? '✅ found' : '❌ MISSING')
+    console.log('🍪 Auth Cookie Updated:', { merged, hostname })
   } catch (e) {
     console.error('❌ Failed to write auth cookie:', e)
   }
