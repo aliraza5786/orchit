@@ -139,6 +139,8 @@ declare const AppleID: any;
 defineProps<{
   isDark: boolean
 }>()
+
+
 // --- Constants (non-reactive) ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const authStore = useAuthStore()

@@ -17,10 +17,20 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
 }
 
 function clearAuthCookie() {
-  document.cookie = `${COOKIE_KEY}=; domain=.orchit.ai; path=/; max-age=0`
+  // ✅ Clear from all possible domain levels to ensure complete cleanup
+  // Root domain
+  document.cookie = `${COOKIE_KEY}=; domain=orchit.ai; path=/; max-age=0; Secure; SameSite=None`
+  // Subdomain wildcard
+  document.cookie = `${COOKIE_KEY}=; domain=.orchit.ai; path=/; max-age=0; Secure; SameSite=None`
+  // Current hostname (for any subdomain)
   document.cookie = `${COOKIE_KEY}=; path=/; max-age=0`
-  document.cookie = `auth_token=; domain=.orchit.ai; path=/; max-age=0`
+  
+  // Also clear old auth_token cookie if it exists
+  document.cookie = `auth_token=; domain=orchit.ai; path=/; max-age=0; Secure; SameSite=None`
+  document.cookie = `auth_token=; domain=.orchit.ai; path=/; max-age=0; Secure; SameSite=None`
   document.cookie = `auth_token=; path=/; max-age=0`
+  
+  console.log('🍪 Auth cookies cleared from all domains')
 }
 
 export const useAuthStore = defineStore('auth', {
