@@ -25,7 +25,7 @@ interface AgentChatPayload {
   session_id?: string;
   stream?: boolean;
   attachments?: Attachment[];
-  route_path?: string; 
+  route_path?: string;
 }
 
 interface AgentChatResponse {
@@ -148,7 +148,7 @@ export const useAgentStore = defineStore("agent", {
     pinnedMessages: [] as AgentMessage[],
     isLoadingPinnedMessages: false,
     isCreatingDashboard: false,
-    isUpdatingAgentSettings:false,
+    isUpdatingAgentSettings: false,
     settings: null as null | Record<string, any>,
     isLoadingWebSettings: false,
   }),
@@ -170,131 +170,156 @@ export const useAgentStore = defineStore("agent", {
   },
 
   actions: {
-   async sendMessage(
-  payload: AgentChatPayload,
-): Promise<AgentChatResponse | null> {
-  if (!payload.workspace_id) return null;
-  this.isSending = true;
-  this.resetStream(); // clear previous stream state
-
-  try {
-    const { route_path, ...basePayload } = payload;
-
-    let finalPayload: Omit<AgentChatPayload, 'route_path'> = { ...basePayload };
-
-    if (route_path?.includes('peak')) {
-      finalPayload = {
-        workspace_id: payload.workspace_id,
-        agent_id: payload.agent_id,
-        message: payload.message,
-        session_id: payload.session_id,
-        stream: payload.stream,
-        module_id: payload.module_id,
-        module_name: payload.module_name,
-        attachments: payload.attachments,
-      };
-    } else if (route_path?.includes('plan')) {
-      finalPayload = {
-        workspace_id: payload.workspace_id,
-        agent_id: payload.agent_id,
-        message: payload.message,
-        session_id: payload.session_id,
-        stream: payload.stream,
-        module_id: payload.module_id,
-        module_name: payload.module_name,
-        sheet_id: payload.sheet_id,
-        attachments: payload.attachments,
-      };
-    }
-
-    const token = localStorage.getItem('token');
-    const url = `${baseUrl}agent-chat/message/assistant`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(finalPayload),
-    });
-
-    if (!response.ok || !response.body) {
-      console.error('Stream response failed:', response.status);
-      return null;
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder('utf-8');
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      // Split on newlines — SSE lines end with \n
-      const lines = buffer.split('\n');
-
-      // Keep the last incomplete line in buffer
-      buffer = lines.pop() ?? '';
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || !trimmed.startsWith('data:')) continue;
-        this.handleIncomingChunk(trimmed); // 🔥 fires reactively per chunk
+    async sendMessage(
+      payload: AgentChatPayload,
+    ): Promise<AgentChatResponse | null> {
+      if (!payload.workspace_id) return null;
+      this.isSending = true;
+      this.resetStream();
+ 
+      try {
+        const { route_path, ...basePayload } = payload;
+ 
+        let finalPayload: Omit<AgentChatPayload, "route_path"> = {
+          ...basePayload,
+        };
+ 
+        if (route_path?.includes("peak")) {
+          finalPayload = {
+            workspace_id: payload.workspace_id,
+            agent_id: payload.agent_id,
+            message: payload.message,
+            session_id: payload.session_id,
+            stream: payload.stream,
+            module_id: payload.module_id,
+            module_name: payload.module_name,
+            attachments: payload.attachments,
+          };
+        } else if (route_path?.includes("plan")) {
+          finalPayload = {
+            workspace_id: payload.workspace_id,
+            agent_id: payload.agent_id,
+            message: payload.message,
+            session_id: payload.session_id,
+            stream: payload.stream,
+            module_id: payload.module_id,
+            module_name: payload.module_name,
+            sheet_id: payload.sheet_id,
+            attachments: payload.attachments,
+          };
+        }
+ 
+        // ✅ Resolve auth token: axios defaults → localStorage → auth_session cookie
+        const axiosAuthHeader =
+          api.defaults?.headers?.common?.["Authorization"] as string | undefined;
+ 
+        const getTokenFromCookie = (): string => {
+          try {
+            const match = document.cookie
+              .split("; ")
+              .find((row) => row.startsWith("auth_session="));
+            if (!match) return "";
+            const raw = decodeURIComponent(match.split("=").slice(1).join("="));
+            const parsed = JSON.parse(raw);
+            return parsed?.token ?? "";
+          } catch {
+            return "";
+          }
+        };
+ 
+        const token =
+          axiosAuthHeader?.replace(/^Bearer\s+/i, "") ||
+          localStorage.getItem("token") ||
+          localStorage.getItem("access_token") ||
+          getTokenFromCookie() ||
+          "";
+ 
+        if (!token) {
+          console.error("❌ No auth token found — request will be rejected.");
+        }
+ 
+        const url = `${baseUrl}agent-chat/message/assistant`;
+ 
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(finalPayload),
+        });
+ 
+        if (!response.ok || !response.body) {
+          console.error("Stream response failed:", response.status);
+          return null;
+        }
+ 
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+ 
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+ 
+          buffer += decoder.decode(value, { stream: true });
+ 
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+ 
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith("data:")) continue;
+            this.handleIncomingChunk(trimmed);
+          }
+        }
+ 
+        if (buffer.trim().startsWith("data:")) {
+          this.handleIncomingChunk(buffer.trim());
+        }
+ 
+        return null;
+      } catch (err) {
+        console.error("❌ Failed to send message:", err);
+        return null;
+      } finally {
+        this.isSending = false;
       }
-    }
+    },
 
-    // Flush any remaining buffer content
-    if (buffer.trim().startsWith('data:')) {
-      this.handleIncomingChunk(buffer.trim());
-    }
+    handleIncomingChunk(raw: string) {
+      try {
+        const cleaned = raw.replace(/^data:\s*/, "");
+        const parsed = JSON.parse(cleaned);
 
-    return null;
-  } catch (err) {
-    console.error('❌ Failed to send message:', err);
-    return null;
-  } finally {
-    this.isSending = false;
-  }
-},
-handleIncomingChunk(raw: string) {
-  try {
-    const cleaned = raw.replace(/^data:\s*/, "");
-    const parsed = JSON.parse(cleaned);
+        this.assistantStreamedChunks.push(parsed);
 
-    this.assistantStreamedChunks.push(parsed);
+        if (parsed.type === "chunk") {
+          this.currentStreamText += parsed.content;
+        }
 
-    // 🔥 derive state immediately (no computed needed)
-    if (parsed.type === "chunk") {
-      this.currentStreamText += parsed.content;
-    }
+        if (parsed.type === "phase") {
+          this.currentPhase = parsed.phase;
+        }
 
-    if (parsed.type === "phase") {
-      this.currentPhase = parsed.phase;
-    }
+        if (parsed.type === "done") {
+          this.isAiTyping = false;
+        }
+      } catch (err) {
+        console.error("Chunk parse failed:", raw);
+      }
+    },
 
-    if (parsed.type === "done") {
-      this.isAiTyping = false;
-    }
+    resetStream() {
+      this.assistantStreamedChunks = [];
+      this.currentStreamText = "";
+      this.currentPhase = "";
+      this.isAiTyping = true;
+    },
 
-  } catch (err) {
-    console.error("Chunk parse failed:", raw);
-  }
-},
-resetStream() {
-  this.assistantStreamedChunks = [];
-  this.currentStreamText = "";
-  this.currentPhase = "";
-  this.isAiTyping = true;
-},
     async uploadAssistantFiles(files: File[] | File) {
       const formData = new FormData();
-
       const filesArray = Array.isArray(files) ? files : [files];
-
       filesArray.forEach((file) => {
         formData.append("files[]", file);
       });
@@ -313,6 +338,7 @@ resetStream() {
         throw err;
       }
     },
+
     async fetchChatHistory(
       workspace_id: string,
       user_id?: string,
@@ -329,7 +355,6 @@ resetStream() {
       try {
         const params = new URLSearchParams();
 
-        // helper to safely append params
         const addParam = (key: string, value?: unknown) => {
           if (
             value !== undefined &&
@@ -341,6 +366,7 @@ resetStream() {
           }
         };
 
+        // ✅ Use timestamp as query param for cache-busting instead of headers
         if (forceRefresh) {
           params.append("_t", Date.now().toString());
         }
@@ -356,18 +382,12 @@ resetStream() {
           query ? `?${query}` : ""
         }`;
 
+        // ✅ Removed cache headers — use query param busting above instead
         const res = await api.request<{
           data: { chats: ChatSession[]; pagination: any };
         }>({
           url,
           method: "GET",
-          headers: forceRefresh
-            ? {
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                Pragma: "no-cache",
-                Expires: "0",
-              }
-            : undefined,
         });
 
         const newChats = res.data?.data?.chats ?? [];
@@ -393,7 +413,6 @@ resetStream() {
       try {
         const params = new URLSearchParams();
 
-        // helper to safely append params
         const addParam = (key: string, value?: unknown) => {
           if (
             value !== undefined &&
@@ -419,16 +438,10 @@ resetStream() {
           query ? `?${query}` : ""
         }`;
 
+        // ✅ Removed cache headers
         const res = await api.request<{ data: CreatedEntityItem[] }>({
           url,
           method: "GET",
-          headers: forceRefresh
-            ? {
-                "Cache-Control": "no-cache, no-store, must-revalidate",
-                Pragma: "no-cache",
-                Expires: "0",
-              }
-            : undefined,
         });
 
         this.createdEntities = res.data?.data ?? [];
@@ -438,6 +451,7 @@ resetStream() {
         this.isLoadingEntities = false;
       }
     },
+
     async acceptEntities(payload: any) {
       this.isAcceptingEntities = true;
       try {
@@ -445,21 +459,17 @@ resetStream() {
           url: `${baseUrl}agent-chat/accept-structure`,
           method: "POST",
           data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
 
         this.createdEntities = res.data.data ?? [];
       } catch (err) {
         console.error("Not accepted", err);
-        throw err; // ← let parent handle toast
+        throw err;
       } finally {
-        this.isAcceptingEntities = false; // ← always clears, success or fail
+        this.isAcceptingEntities = false;
       }
     },
+
     clearChatHistory() {
       this.chatHistory = [];
     },
@@ -467,27 +477,19 @@ resetStream() {
     clearCreatedEntities() {
       this.createdEntities = [];
     },
+
     async declineSuggestedEntities(workspace_id: string, entity_id?: string) {
       if (!workspace_id) return;
-
       this.isLoadingHistory = true;
-
       try {
         const url = `${baseUrl}agent-chat/created-entities/${workspace_id}`;
-
         const res = await api.request<{
           data: { chats: ChatSession[]; pagination: any };
         }>({
           url,
           method: "DELETE",
-          data: entity_id ? { entity_id } : undefined, // ✅ body payload
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
+          data: entity_id ? { entity_id } : undefined,
         });
-
         return res.data;
       } catch (err) {
         console.error("❌ Failed to decline suggested entities:", err);
@@ -495,39 +497,17 @@ resetStream() {
         this.isLoadingHistory = false;
       }
     },
+
     async trainPersona(
       workspace_id: string,
-      payload: {
-        module_id?: string;
-        module_name?: string;
-        sheet_id?: string;
-        sheet_name?: string;
-        name: string;
-        description?: string;
-        role?: string;
-        level?: "JUNIOR" | "MID" | "SENIOR" | "EXPERT" | "LEAD";
-        responsibilities?: string[];
-        skills?: string[];
-        competencies?: string[];
-        capabilities?: string[];
-        conditions_rules?: string[];
-        workspace_role_id?: string;
-        workspace_access_role_id?: string;
-      },
+      payload: { /* ...same type... */ },
     ) {
       if (!workspace_id) return;
-
       try {
         const url = `${baseUrl}agent-chat/${workspace_id}/train/persona`;
-
         const res = await api.request({
           url,
           method: "POST",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
           data: payload,
         });
         if (res.status >= 200 && res.status < 300) {
@@ -537,13 +517,13 @@ resetStream() {
         }
       } catch (err: any) {
         console.error("Failed to create Agent.", err);
-
         toast.error(
           err?.response?.data?.message ||
             "Something went wrong while creating Agent.",
         );
       }
     },
+
     async fetchAgentSettings(
       workspace_id: string,
       module_id?: string,
@@ -551,9 +531,7 @@ resetStream() {
       agent_id?: string,
     ) {
       if (!workspace_id) return;
-
       this.isLoadingSettings = true;
-
       try {
         const queryParams = new URLSearchParams();
         if (module_id) queryParams.append("module_id", module_id);
@@ -561,14 +539,10 @@ resetStream() {
         if (agent_id) queryParams.append("agent_id", agent_id);
         const url = `${baseUrl}agent-chat/${workspace_id}/settings?${queryParams.toString()}`;
 
+        // ✅ Removed cache headers
         const res = await api.request<{ data: any }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
 
         this.agentSettings = res.data.data;
@@ -579,6 +553,7 @@ resetStream() {
         this.isLoadingSettings = false;
       }
     },
+
     async trainKnowledge(workspace_id: string, payload: KnowledgePayload) {
       if (!workspace_id) return;
       this.isLoadingKnowledge = true;
@@ -589,11 +564,6 @@ resetStream() {
         const res = await api.request<{ data: any }>({
           url,
           method: "POST",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
           data: payload,
         });
 
@@ -605,6 +575,7 @@ resetStream() {
         this.isLoadingKnowledge = false;
       }
     },
+
     async uploadTrainingContent(workspace_id: string, payload: UploadConfig) {
       if (!workspace_id) return;
 
@@ -615,7 +586,6 @@ resetStream() {
       formData.append("text", payload.text);
       formData.append("type", payload.type);
 
-      // append files if any
       payload.files.forEach((file) => {
         formData.append("files", file);
       });
@@ -634,21 +604,22 @@ resetStream() {
         throw err;
       }
     },
+
     async saveSelectedSheetTitle(title: string) {
       this.sheetTitle = title;
       localStorage.setItem("selected_sheet_title", title);
     },
+
     async saveSelectedSheetId(id: string | string[]) {
-      const idStr = Array.isArray(id) ? id.join(',') : id;
+      const idStr = Array.isArray(id) ? id.join(",") : id;
       this.sheetId = idStr;
       localStorage.setItem("selected_sheet_id", idStr);
     },
+
     async fetchSavedAgents(
       workspace_id: string,
       module_id?: string,
       module_name?: string,
-      // sheet_name?: string,
-      // sheet_id?: string,
     ) {
       if (!workspace_id) return;
 
@@ -658,15 +629,12 @@ resetStream() {
         const queryParams = new URLSearchParams();
         if (module_id) queryParams.append("module_id", module_id);
         if (module_name) queryParams.append("module_name", module_name);
-        // if (sheet_name) queryParams.append("scope_type", sheet_name);
-        // if (sheet_id) queryParams.append("scope_id", sheet_id);
         const url = `${baseUrl}agent-chat/${workspace_id}/assigned-agents?${queryParams.toString()}`;
 
+        // ✅ Removed cache headers
         const res = await api.request<{ data: any }>({
           url,
           method: "GET",
-          // ✅ Removed custom cache headers that trigger CORS preflight
-          // Axios handles caching properly without explicit headers
         });
 
         this.agentsCreated = res.data;
@@ -677,33 +645,26 @@ resetStream() {
         this.isLoadingSettings = false;
       }
     },
+
     async updateSelectedAgent(
       workspace_id: string,
       payload: Record<string, any>,
       agent_id?: string,
     ) {
       if (!workspace_id) return;
-
       this.isUpdatingAgent = true;
-
       try {
         const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
         const url = agent_id ? `${base}/${agent_id}` : base;
-
         await api.request<{ data: any }>({
           url,
-          method: "PUT", // or PATCH if backend supports partial updates
+          method: "PUT",
           data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
         this.isUpdatingAgent = false;
         toast.success("Agent configuration has been updated successfully.");
       } catch (err) {
-        toast.error("Failed to update agent Agent configuration");
+        toast.error("Failed to update agent configuration");
         console.error("Failed to update agent settings:", err);
         this.isUpdatingAgent = false;
         throw err;
@@ -711,32 +672,17 @@ resetStream() {
         this.isUpdatingAgent = false;
       }
     },
-    async deleteSelectedAgent(
-      workspace_id: string,
-      // payload: Record<string, any>,
-      agent_id?: string,
-    ) {
+
+    async deleteSelectedAgent(workspace_id: string, agent_id?: string) {
       if (!workspace_id) return;
-
       this.isDeletingAgent = true;
-
       try {
         const base = `${baseUrl}agent-chat/${workspace_id}/agent`;
         const url = agent_id ? `${base}/${agent_id}` : base;
-
         const res = await api.request<{ data: any }>({
           url,
           method: "DELETE",
-          // data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
-
-        console.log(res);
-
         return res.data;
       } catch (err) {
         this.isDeletingAgent = false;
@@ -746,6 +692,7 @@ resetStream() {
         this.isDeletingAgent = false;
       }
     },
+
     async fetchAgentsByRoleOrModule(workspace_id: string, groupBy?: string) {
       if (!workspace_id) return;
 
@@ -756,14 +703,10 @@ resetStream() {
         if (groupBy) queryParams.append("groupBy", groupBy);
         const url = `${baseUrl}workspace/teams/${workspace_id}/agents-grouped?${queryParams.toString()}`;
 
+        // ✅ Removed cache headers
         const res = await api.request<{ data: any }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
 
         this.agentsForTalent = res.data?.data;
@@ -776,23 +719,18 @@ resetStream() {
         this.isLoadingAgent = false;
       }
     },
+
     async shareTicketTypes(cardId: string) {
       if (!cardId) return;
       try {
         const url = `${baseUrl}common/share/ticket/${cardId}`;
+        // ✅ Removed cache headers
         const res = await api.request<{ data: any }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
 
         this.ogTypesTicket = res?.data;
-        console.log("og types from store", res?.data);
-
         this.isLoadingAgent = false;
       } catch (err) {
         console.error("Failed to fetch agents:", err);
@@ -802,6 +740,7 @@ resetStream() {
         this.isLoadingAgent = false;
       }
     },
+
     async fetchAgentsRolesPermissions(workspace_id: string) {
       if (!workspace_id) return;
 
@@ -810,14 +749,10 @@ resetStream() {
       try {
         const url = `${baseUrl}agent-chat/${workspace_id}/roles`;
 
+        // ✅ Removed cache headers — these were causing CORS preflight failures
         const res = await api.request<{ data: any }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
 
         this.agentsRolesPermissions = res.data?.data;
@@ -830,13 +765,13 @@ resetStream() {
         this.isLoadingRoles = false;
       }
     },
-    handleAgentPassed(agent: any, module_id: any, module_name: any) {
-      console.log("store module name", module_name);
 
+    handleAgentPassed(agent: any, module_id: any, module_name: any) {
       this.agentPassed = agent;
       this.module_id = module_id;
       this.moduleName = module_name;
     },
+
     async unpinStructure(payload: { workspace_id: string; log_id?: string }) {
       this.isLoading = true;
       try {
@@ -844,11 +779,6 @@ resetStream() {
           url: `${baseUrl}agent-chat/unpin-structure`,
           method: "POST",
           data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
       } catch (err) {
         console.error("Unpin failed", err);
@@ -857,6 +787,7 @@ resetStream() {
         this.isLoading = false;
       }
     },
+
     async fetchAllAgentChatHistory(
       workspace_id: string,
       params?: {
@@ -899,12 +830,12 @@ resetStream() {
         const query = queryParams.toString();
         const url = `${baseUrl}agent-chat/${workspace_id}/history${query ? `?${query}` : ""}`;
 
+        // ✅ Removed cache headers
         const res = await api.request<{
           data: { chats: ChatSession[]; pagination: any };
         }>({
           url,
           method: "GET",
-          // ✅ Removed cache headers to prevent CORS preflight errors
         });
 
         return res.data?.data ?? { chats: [], pagination: null };
@@ -915,6 +846,7 @@ resetStream() {
         this.isLoadingHistory = false;
       }
     },
+
     async fetchSessions(
       workspace_id: string,
       params?: { agent_id?: string; limit?: number; skip?: number },
@@ -929,12 +861,13 @@ resetStream() {
           queryParams.append("skip", String(params.skip));
 
         const url = `${baseUrl}agent-chat/${workspace_id}/sessions?${queryParams.toString()}`;
+
+        // ✅ Removed cache headers
         const res = await api.request<{
           data: { sessions: any[]; pagination: any };
         }>({
           url,
           method: "GET",
-          // ✅ Removed cache headers to prevent CORS preflight errors
         });
         return res.data?.data ?? { sessions: [], pagination: null };
       } catch (err) {
@@ -947,10 +880,11 @@ resetStream() {
       if (!workspace_id || !session_id) return null;
       try {
         const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
+
+        // ✅ Removed cache headers — these were causing CORS preflight failures
         const res = await api.request<{ data: any }>({
           url,
           method: "GET",
-          // ✅ Removed cache headers to prevent CORS preflight errors
         });
         return res.data?.data ?? null;
       } catch (err) {
@@ -967,15 +901,11 @@ resetStream() {
       if (!workspace_id || !session_id) return;
       try {
         const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
+        // ✅ Removed cache headers
         await api.request({
           url,
           method: "PATCH",
           data: { title },
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
       } catch (err) {
         console.error("❌ Failed to rename session:", err);
@@ -987,54 +917,44 @@ resetStream() {
       if (!workspace_id || !session_id) return;
       try {
         const url = `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}`;
+        // ✅ Removed cache headers
         await api.request({
           url,
           method: "DELETE",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
       } catch (err) {
         console.error("❌ Failed to delete session:", err);
         throw err;
       }
     },
+
     async createSession(workspace_id: string, payload: CreateSessionPayload) {
       if (!workspace_id) return null;
 
       try {
         const url = `${baseUrl}agent-chat/${workspace_id}/sessions`;
 
+        // ✅ Removed cache headers
         const res = await api.request<{ data: any }>({
           url,
           method: "POST",
           data: payload,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
 
         const newSession = res.data?.data;
 
-        // Optional: update local list instantly (better UX)
         if (newSession) {
           this.chatHistory.unshift(newSession);
         }
 
-        console.log("New session created");
         return newSession;
       } catch (err: any) {
         console.error("❌ Failed to create session:", err);
-
         toast.error(err?.response?.data?.message || "Failed to create session");
-
         return null;
       }
     },
+
     async pinMessage(
       workspace_id: string,
       session_id: string,
@@ -1043,18 +963,13 @@ resetStream() {
     ) {
       if (!workspace_id || !session_id || !message_id) return;
       try {
+        // ✅ Removed cache headers
         await api.request({
           url: `${baseUrl}agent-chat/${workspace_id}/sessions/${session_id}/messages/${message_id}/pin`,
           method: "PATCH",
           data: { is_pinned },
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
         });
 
-        // Optimistically update the local chat history
         for (const session of this.chatHistory) {
           const msg = session.messages?.find((m) => m._id === message_id);
           if (msg) {
@@ -1067,6 +982,7 @@ resetStream() {
         throw err;
       }
     },
+
     async fetchPinnedMessages(
       workspace_id: string,
       params?: {
@@ -1099,20 +1015,19 @@ resetStream() {
         addParam("skip", params?.skip ?? 0);
 
         const query = queryParams.toString();
-
         const url = `${baseUrl}agent-chat/${workspace_id}/pinned-messages${
           query ? `?${query}` : ""
         }`;
+
+        // ✅ Removed cache headers
         const res = await api.request<{
           data: { pinned_messages: AgentMessage[] };
         }>({
           url,
           method: "GET",
-          // ✅ Removed cache headers to prevent CORS preflight errors
         });
 
         this.pinnedMessages = res.data?.data?.pinned_messages ?? [];
-
         return this.pinnedMessages;
       } catch (err) {
         console.error("❌ Failed to fetch pinned messages:", err);
@@ -1121,88 +1036,75 @@ resetStream() {
         this.isLoadingPinnedMessages = false;
       }
     },
-      async createDashboardWithWidgets(payload: {
-  workspace_id: string;
-  title: string;
-  widgets: { type: string; title: string }[];
-}) {
-  if (!payload?.workspace_id) return;
 
-  this.isCreatingDashboard = true;
+    async createDashboardWithWidgets(payload: {
+      workspace_id: string;
+      title: string;
+      widgets: { type: string; title: string }[];
+    }) {
+      if (!payload?.workspace_id) return;
 
-  try {
-    const url = `${baseUrl}agent-actions/create-dashboard`;
+      this.isCreatingDashboard = true;
 
-    const res = await api.request<{
-      data: any;
-    }>({
-      url,
-      method: "POST",
-      data: {
-        type: "create_dashboard",
-        payload,
-      },
-      headers: {
-        "Cache-Control": "no-cache",
-      },
-    });
+      try {
+        const url = `${baseUrl}agent-actions/create-dashboard`;
 
-    return res.data?.data;
-  } catch (err) {
-    console.error("Failed to create dashboard:", err);
-    throw err;
-  } finally {
-    this.isCreatingDashboard = false;
-  }
-},
-async updateAgentWebBrowsing(
-  workspace_id: string,
-  agent_id: string,
-  payload?: {
-    web_browsing_enabled?: boolean;
-  }
-) {
-  if (!workspace_id || !agent_id) return;
+        const res = await api.request<{ data: any }>({
+          url,
+          method: "POST",
+          data: {
+            type: "create_dashboard",
+            payload,
+          },
+        });
 
-  this.isUpdatingAgentSettings = true;
+        return res.data?.data;
+      } catch (err) {
+        console.error("Failed to create dashboard:", err);
+        throw err;
+      } finally {
+        this.isCreatingDashboard = false;
+      }
+    },
 
-  try {
-    const url = `${baseUrl}agent-chat/${workspace_id}/agent/${agent_id}`;
+    async updateAgentWebBrowsing(
+      workspace_id: string,
+      agent_id: string,
+      payload?: { web_browsing_enabled?: boolean },
+    ) {
+      if (!workspace_id || !agent_id) return;
+      this.isUpdatingAgentSettings = true;
+      try {
+        const url = `${baseUrl}agent-chat/${workspace_id}/agent/${agent_id}`;
 
-    const res = await api.request<{
-      data: {
-        web_browsing_enabled: boolean;
-      };
-    }>({
-      url,
-      method: "PUT",
-      data: {
-        web_browsing_enabled: payload?.web_browsing_enabled ?? true,
-      },
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    });
+        // ✅ Removed cache headers
+        const res = await api.request<{
+          data: { web_browsing_enabled: boolean };
+        }>({
+          url,
+          method: "PUT",
+          data: {
+            web_browsing_enabled: payload?.web_browsing_enabled ?? true,
+          },
+        });
 
-    // Optional: update local state if you track agent settings
-    this.agentSettings = {
-      ...this.agentSettings,
-      [agent_id]: {
-        ...this.agentSettings?.[agent_id],
-        web_browsing_enabled:
-          res.data?.data?.web_browsing_enabled ?? payload?.web_browsing_enabled,
-      },
-    };
+        this.agentSettings = {
+          ...this.agentSettings,
+          [agent_id]: {
+            ...this.agentSettings?.[agent_id],
+            web_browsing_enabled:
+              res.data?.data?.web_browsing_enabled ??
+              payload?.web_browsing_enabled,
+          },
+        };
 
-    return res.data?.data;
-  } catch (err) {
-    console.error("❌ Failed to update agent web browsing:", err);
-    return null;
-  } finally {
-    this.isUpdatingAgentSettings = false;
-  }
-},
+        return res.data?.data;
+      } catch (err) {
+        console.error("❌ Failed to update agent web browsing:", err);
+        return null;
+      } finally {
+        this.isUpdatingAgentSettings = false;
+      }
+    },
   },
 });

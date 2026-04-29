@@ -30,7 +30,7 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
     return null;
   }
 }
-// main.ts — replace the writeAuthCookie function
+
 function writeAuthCookie(data: Record<string, any>) {
   const existing = getAuthCookie() || {};
   const merged = { ...existing, ...data };
@@ -39,22 +39,29 @@ function writeAuthCookie(data: Record<string, any>) {
   const value = encodeURIComponent(JSON.stringify(merged));
 
   if (hostname === 'localhost') {
-    // Local development: no domain or secure flags needed
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
   } else if (hostname.endsWith('.localhost')) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`;
-  } else if (hostname === 'orchit.ai') {
-    // Production root domain: use leading dot to include all subdomains
-    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`;
-  } else if (hostname.endsWith('.orchit.ai')) {
-    // Production subdomain: use leading dot for consistency
+  } else if (hostname === 'orchit.ai' || hostname.endsWith('.orchit.ai')) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`;
   }
 
   console.log('🍪 auth_session cookie:', document.cookie.includes('auth_session') ? '✅ SET' : '❌ NOT SET');
   console.log('🍪 Hostname:', hostname, '| Cookie domain set appropriately');
 }
+
+// ─── Theme sync from URL (subdomain redirects) ────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
+
+const themeFromUrl = urlParams.get('theme');
+if (themeFromUrl && ['light', 'dark', 'system'].includes(themeFromUrl)) {
+  localStorage.setItem('theme', themeFromUrl);
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete('theme');
+  window.history.replaceState({}, '', cleanUrl.toString());
+}
+
+// ─── Token sync from URL ──────────────────────────────────────────────────────
 const encodedToken = urlParams.get("_auth");
 
 if (encodedToken) {
@@ -66,30 +73,28 @@ if (encodedToken) {
       );
     }
     localStorage.setItem("token", token);
-    // ✅ Write to auth_session (not auth_token)
     writeAuthCookie({ token });
   } catch (e) {
     console.error("❌ main.ts: Token decode failed:", e);
   }
 }
 
-// ✅ Handle personal_mode / company_id sync on load
+// ─── Session sync ─────────────────────────────────────────────────────────────
 const session = getAuthCookie();
 
 if (session?.personal_mode) {
   localStorage.removeItem("company_id");
-  // Clean company_id from cookie but keep token
   writeAuthCookie({ company_id: null });
 } else if (session?.company_id) {
   localStorage.setItem("company_id", session.company_id);
 }
 
-// ✅ If token is in localStorage but NOT in cookie, fix it
 const localToken = localStorage.getItem("token");
 if (localToken && !session?.token) {
   writeAuthCookie({ token: localToken });
 }
 
+// ─── App bootstrap ────────────────────────────────────────────────────────────
 const head = createHead();
 const app = createApp(App);
 

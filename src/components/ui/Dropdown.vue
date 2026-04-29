@@ -175,7 +175,7 @@
 
                 <!-- Existing actions logic (only if NOT nested, to avoid conflict or visual clutter, though user didn't say remove actions) -->
                 <div
-                 v-else-if="actions && (canEdit || canDelete) && !option.hideActions"
+                 v-else-if="actions && (canEdit || canDelete || canShare) && !option.hideActions"
                   class="pl-2 flex items-center relative"
                 >
                   <button
@@ -207,7 +207,14 @@
                         class="px-3 py-1.5 text-left hover:bg-bg-dropdown-menu-hover cursor-pointer"
                         @click.stop="onEdit(option)"
                       >
-                        <i class="fa-regular fa-edit"></i> Edit
+                        <i class="fa-regular fa-edit text-[12px]"></i> Edit
+                      </button>
+                      <button
+                        v-if="canShare"
+                        class="px-3 py-1.5 text-left hover:bg-bg-dropdown-menu-hover cursor-pointer"
+                        @click.stop="onShare(option)"
+                      >
+                        <i class="fa-solid fa-share-nodes text-[12px]"></i> Share
                       </button>
                       <button
                         v-if="canDelete && !option.disableDelete"
@@ -215,7 +222,7 @@
                         :disabled="option.disableDelete" 
                         @click.stop="!option.disableDelete && onDelete(option)"
                       >
-                        <i class="fa-regular fa-trash"></i> Delete
+                        <i class="fa-regular fa-trash text-[12px]"></i> Delete
                       </button>
                     </div>
                   </Teleport>
@@ -272,6 +279,7 @@ const props = withDefaults(
     actions?: boolean;
     canEdit?: boolean;
     canDelete?: boolean;
+    canShare?: boolean;
     customClasses?: string;
     customTitle?: string;
     isAgent?:boolean;
@@ -285,6 +293,7 @@ const props = withDefaults(
     actions: true,
     canEdit: true,
     canDelete: true,
+    canShare: false,
     customClasses: "",
     multiple: false,
   },
@@ -294,6 +303,7 @@ const emit = defineEmits([
   "update:modelValue",
   "edit-option",
   "delete-option",
+  "share-option",
   "nested-select",
   "open",
   "close"
@@ -482,6 +492,13 @@ function onEdit(option: Option) {
 
 function onDelete(option: Option) {
   emit("delete-option", option);
+  // keep menu open but collapse all action UI
+  actionOpenId.value = null;
+  confirmDeleteId.value = null;
+}
+
+function onShare(option: Option) {
+  emit("share-option", option);
   // keep menu open but collapse all action UI
   actionOpenId.value = null;
   confirmDeleteId.value = null;

@@ -560,9 +560,22 @@ const storageKey = computed(() => `pin_selected_sheets_${workspaceId.value}_${mo
 
 watch(data, (sheets) => {
   if (!sheets?.length) return;
+  
+  const currentVal = Array.isArray(selected_sheet_id.value) 
+        ? selected_sheet_id.value 
+        : [selected_sheet_id.value].filter(Boolean);
+  const validCurrent = currentVal.filter((id: string) => id === 'all' || sheets.some((s: any) => s._id === id));
+  
+  if (validCurrent.length > 0) {
+    if (validCurrent.length !== currentVal.length) {
+      selected_sheet_id.value = validCurrent;
+    }
+    return;
+  }
+
   const stored = localStorage.getItem(storageKey.value);
   const storedIds = stored ? JSON.parse(stored) : [];
-  const validIds = storedIds.filter((id: string) => sheets.some((s: any) => s._id === id));
+  const validIds = storedIds.filter((id: string) => id === 'all' || sheets.some((s: any) => s._id === id));
   
   if (validIds.length > 0) {
     selected_sheet_id.value = validIds;

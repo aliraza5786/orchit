@@ -170,9 +170,11 @@
     </button>
 
   </div>
-
+   <p v-if="errors.workType" class="text-xs text-red-500 mt-2">
+    {{ errors.workType }}
+  </p>
 </div>
-<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-10">
+<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-3">
 
   <div class="w-full max-w-115">
 
@@ -332,19 +334,6 @@
   <span v-else>Create site</span>
 </button>
 
-      <!-- DIVIDER + FOOTNOTE -->
-      <div class="space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="flex-1 h-px" style="background: var(--border);" />
-          <span class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">or</span>
-          <div class="flex-1 h-px" style="background: var(--border);" />
-        </div>
-        <p class="text-xs text-center" style="color: var(--text-secondary);">
-          You can update your site name later in
-          <a class="font-semibold cursor-pointer hover:underline" style="color: var(--accent);">Settings → Site details</a>.
-        </p>
-      </div>
-
     </div>
 
   </div>
@@ -382,7 +371,7 @@
     </div>
 
     <!-- ✅ Step 7 own nav -->
-    <div class="flex justify-between items-center mt-10 md:mt-15">
+    <div class="flex justify-between items-center">
       <Button variant="secondary" size="md" type="button" @click="goBack">
         <div class="flex items-center gap-1">
           <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
@@ -456,7 +445,7 @@
 
     <!-- invite via email -->
     <div class="space-y-1.5">
-      <label class="text-sm font-medium text-text-primary">Invite via email</label>
+      <label class="text-sm font-medium text-text-primary mb-1.5">Invite via email</label>
       <BaseEmailChip
         v-model="emailList"
         :error="!!errors.emailList"
@@ -466,26 +455,27 @@
 
     <!-- actions -->
 <!-- actions -->
+<!-- AFTER: -->
 <div class="flex items-center justify-between pt-2">
   <Button 
     variant="secondary" 
     size="md" 
-    :disabled="invitingPeople"
-    @click="sendInvites"
+    :disabled="isSkipping || isInviting"
+    @click="sendInvites(true)"
   >
     <div class="flex items-center gap-2">
-      <span v-if="invitingPeople" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
+      <span v-if="isSkipping" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
       <span>Do this later</span>
     </div>
   </Button>
 
   <Button 
     size="md" 
-    :disabled="invitingPeople"
-    @click="sendInvites"
+    :disabled="isInviting || isSkipping"
+    @click="sendInvites(false)"
   >
     <div class="flex items-center gap-2">
-      <span v-if="invitingPeople" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+      <span v-if="isInviting" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
       <span>Invite</span>
     </div>
   </Button>
@@ -495,7 +485,7 @@
 
 </div>
 <!-- ✅ KEEP THIS ONE — the original at the bottom -->
-<div class="flex justify-between items-center mt-10 md:mt-15" 
+<div class="flex justify-between items-center mt-10 md:mt-5" 
   v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
   
   <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
@@ -599,17 +589,18 @@ import LoadingCreateProfile from '../../components/LoadingCreateProfile.vue'
 import gsap from 'gsap'
 defineOptions({ name: 'OnboardingFlow' })
 const workspaceStore = useWorkspaceStore()
+// AFTER:
 const errors = ref<{
   team?: string
   role?: string
   companySize?: string
   emailList?: string
   personalRole?: string
-
   schoolName?: string
   educationLevel?: string
-  siteName?:string;
+  siteName?: string
   selectedModules?: string
+  workType?: string
 }>({})
 const authStore = useAuthStore()
 const personalRole = ref('')
@@ -632,6 +623,8 @@ const isSlugAvailable = ref<boolean | null>(null)
 const referralSources = ref<string[]>([])
 const joinLink = ref('')
 const domainLink = ref('')
+const isInviting = ref(false)
+const isSkipping = ref(false)
 const moduleOptionsMap = {
   team: [
     { id: 'tasks', label: 'Tasks' },
@@ -675,7 +668,8 @@ function toggleModule(id: string) {
   if (selectedModules.value.includes(id)) {
     selectedModules.value = selectedModules.value.filter(m => m !== id)
   } else {
-    selectedModules.value.push(id)
+    selectedModules.value.push(id);
+     if (errors.value.selectedModules) errors.value.selectedModules = undefined
   }
 }
 function validateCompanyStep() {
@@ -1006,7 +1000,7 @@ async function continueHandler() {
   }
 if (activeStep.value === 4) {
   if (!workType.value) {
-    errors.value.role = 'Please select what kind of work you do.'
+    errors.value.workType = 'Please select what kind of work you do.'
     return
   }
 
@@ -1095,7 +1089,14 @@ function setAuthCookie(token: string) {
 
   console.log('🍪 cookie set for:', hostname, '→', cookieString)
 }
-function sendInvites() {
+// AFTER:
+async function sendInvites(skip = false) {
+  if (skip) {
+    isSkipping.value = true
+  } else {
+    isInviting.value = true
+  }
+
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)
   if (token) {
@@ -1105,7 +1106,6 @@ function sendInvites() {
     ? btoa(token).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
     : ''
 
-  // ✅ Use companyID ref directly — already set in createProfile onSuccess
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const encodedCompanyId = companyIdRaw
     ? btoa(companyIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
@@ -1119,23 +1119,32 @@ function sendInvites() {
 
   if (encodedToken) query._auth = encodedToken
   if (encodedCompanyId) query._cid = encodedCompanyId
-  if (emailList.value.length > 0) {
-    invitePeople(
-      {
-        payload: {
-          company_id: companyID.value,
-          emails: [...emailList.value]
-        }
-      },
-      {
-        onSuccess: () => {
-          router.push({ path: '/finish-profile', query })
-        }
-      }
-    )
-  } else {
+
+  // Skip or no emails — go directly without inviting
+  if (skip || emailList.value.length === 0) {
+    isSkipping.value = false
+    isInviting.value = false
     router.push({ path: '/finish-profile', query })
+    return
   }
+
+  invitePeople(
+    {
+      payload: {
+        company_id: companyID.value,
+        emails: [...emailList.value]
+      }
+    },
+    {
+      onSuccess: () => {
+        isInviting.value = false
+        router.push({ path: '/finish-profile', query })
+      },
+      onError: () => {
+        isInviting.value = false
+      }
+    }
+  )
 }
 onMounted(() => {
   gsap.to(".rocket", {
@@ -1182,6 +1191,17 @@ const isSiteStepBlocked = computed(() => {
   if (activeStep.value !== 5) return false
   if (selected.value !== 'team' && selected.value !== 'school') return false
   return !isSlugAvailable.value || isCheckingSlug.value
+})
+watch(workType, (v) => { if (v && errors.value.workType) errors.value.workType = undefined })
+// Add this alongside your other watchers
+watch(activeStep, (step) => {
+  if (step === 5 && !siteName.value) {
+    if (selected.value === 'team' && team.value.trim()) {
+      siteName.value = generateSlug(team.value)
+    } else if (selected.value === 'school' && schoolName.value.trim()) {
+      siteName.value = generateSlug(schoolName.value)
+    }
+  }
 })
 </script>
 

@@ -13,7 +13,9 @@
           v-model="selected_sheet_id"
           :canEdit="canEditSheet"
           :canDelete="canDeleteSheet"
+          :canShare="canEditSheet"
           @delete-option="handleDeleteSheetModal"
+          @share-option="handleShareSheet"
           :options="transformedData"
           variant="secondary"
           customClasses="fixed w-auto"
@@ -497,6 +499,14 @@
       }
     "
   />
+
+  <ShareModal
+    v-if="showShareModal"
+    v-model="showShareModal"
+    resourceType="sheet"
+    :resourceId="activeShareId"
+    title="Share sheet"
+  />
 </template>
 
 <script setup lang="ts">
@@ -611,6 +621,9 @@ const TableGroupDropdown = defineAsyncComponent(
 const VariableViewDropdown = defineAsyncComponent(
   () => import("./components/VariableViewDropdown.vue"),
 );
+const ShareModal = defineAsyncComponent(
+  () => import("../../layout/WorkspaceLayout/components/ShareModal.vue"),
+);
 
 // Helper function to convert numbers to words for sheet count
 function numberToWords(num: number): string {
@@ -673,6 +686,14 @@ const groupTriggerRef = ref<HTMLElement | null>(null);
 const showVariableDropdown = ref(false);
 const variableTriggerRef = ref<HTMLElement | null>(null);
 
+const showShareModal = ref(false);
+const activeShareId = ref<string | undefined>(undefined);
+
+const handleShareSheet = (option: any) => {
+  activeShareId.value = option._id;
+  showShareModal.value = true;
+};
+
 const selectedGroupLabel = computed(() => {
   const options: Record<string, string> = {
     'priority': 'Priority',
@@ -710,39 +731,56 @@ const {
 
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
 const sheetTitle = computed(() => (data.value ? data.value[0]?.variables?.["sheet-title"] : ""));
-const selected_sheet_id = ref<any>(
-  localStorage.getItem("selected_sheet_id") || sheetId.value,
-);
-watch([sheetId, sheetTitle], ([id, title]) => {
-  if (id) {
-    localStorage.setItem("selected_sheet_id", id);
-    selected_sheet_id.value = id;
-    agentStore.saveSelectedSheetId(id);
-  }
+const selected_sheet_id = ref<any>("");
 
-  if (title) {
-    localStorage.setItem("selected_sheet_title", title);
-     agentStore.saveSelectedSheetTitle(title);
-  }
-}, { immediate: true });
+const storageKey = computed(() => {
+  return `selected_sheet_${route.params.workspace_id}_${route.params.workspace_module_id}`;
+});
 const { data: variables, isPending: isVariablesPending } = useVariables(
   workspaceId,
   moduleId,
   selected_sheet_id,
 );
 
-const storageKey = computed(() => {
-  return `selected_sheet_${route.params.workspace_id}_${route.params.workspace_module_id}`;
-});
 const sheetName = ref("");
 
 watch(
   data,
   (newData) => {
     if (!newData?.length) return;
+    
+    // Check if current selection is already valid and keep it if so
+    const currentVal = Array.isArray(selected_sheet_id.value) 
+        ? selected_sheet_id.value 
+        : [selected_sheet_id.value].filter(Boolean);
+    const validCurrent = currentVal.filter((id: string) => id === 'all' || newData.some((s: any) => s._id === id));
+    
+    if (validCurrent.length > 0) {
+        if (validCurrent.length !== currentVal.length) {
+            selected_sheet_id.value = validCurrent.length === 1 ? validCurrent[0] : validCurrent;
+        }
+        return;
+    }
+
+    // Otherwise load from storage
     const storedId = localStorage.getItem(storageKey.value);
-    const exists = newData.some((item: any) => item._id === storedId);
-    selected_sheet_id.value = storedId && exists ? storedId : newData[0]._id;
+    if (storedId?.startsWith('[')) {
+        try {
+            const parsed = JSON.parse(storedId);
+            const validParsed = parsed.filter((id: string) => id === 'all' || newData.some((s: any) => s._id === id));
+            if (validParsed.length > 0) {
+                selected_sheet_id.value = validParsed.length === 1 ? validParsed[0] : validParsed;
+                return;
+            }
+        } catch(e) {}
+    } else {
+        const exists = storedId === 'all' || newData.some((item: any) => item._id === storedId);
+        if (exists && storedId) {
+            selected_sheet_id.value = storedId;
+            return;
+        }
+    }
+    selected_sheet_id.value = newData[0]._id;
   },
   { immediate: true },
 );
@@ -1188,7 +1226,7 @@ watch(
       agentStore.saveSelectedSheetId(newVal);
       sheetName.value = titleText;
       localStorage.setItem("selected_sheet_title", titleText);
-      localStorage.setItem("selected_sheet_id", JSON.stringify(newVal));
+      localStorage.setItem(storageKey.value, JSON.stringify(newVal));
       return;
     }
 
@@ -1201,13 +1239,13 @@ watch(
       agentStore.saveSelectedSheetId(currentId);
       sheetName.value = selectedSheet.title || "";
       localStorage.setItem("selected_sheet_title", selectedSheet.title);
-      localStorage.setItem("selected_sheet_id", currentId);
+      localStorage.setItem(storageKey.value, Array.isArray(newVal) ? JSON.stringify(newVal) : currentId);
     } else if (currentId === 'all') {
       agentStore.saveSelectedSheetTitle("All sheet");
       agentStore.saveSelectedSheetId("all");
       sheetName.value = "All sheet";
       localStorage.setItem("selected_sheet_title", "All sheet");
-      localStorage.setItem("selected_sheet_id", "all");
+      localStorage.setItem(storageKey.value, Array.isArray(newVal) ? JSON.stringify(newVal) : "all");
     } else {
       agentStore.saveSelectedSheetTitle(sheetTitle.value);
       agentStore.saveSelectedSheetId(sheetId.value);

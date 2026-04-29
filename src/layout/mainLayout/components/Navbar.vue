@@ -132,10 +132,16 @@
               <div
                 class="flex items-center gap-2.5 rounded-xl p-2.5 shrink-0"
               >
-                <div
+              <img
+              v-if="profileData?.u_profile_image"
+              class="object-cover cursor-pointer w-10 h-10 rounded-full"
+              :src="profileData?.u_profile_image"
+              alt="profile_img"
+            />
+                <div v-else
                   class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
                 >
-                  {{ getInitials(currentAccount.name) }}
+                  {{ profileData?.u_profile_image }}
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-semibold leading-5">
@@ -977,7 +983,6 @@ function onResizeIndicator() {
   });
 }
 
-// ── Lifecycle ──────────────────────────────────────────────────
 onMounted(() => {
   if (route.query.stripePayment) {
     router.push({
@@ -986,11 +991,48 @@ onMounted(() => {
     });
   }
 
-  // ✅ Seed authStore from localStorage on every page load.
-  // We do NOT use the server's active_company_id because the server
-  // always returns a company ID regardless of the user's chosen mode.
   const storedCompanyId = localStorage.getItem("company_id");
   authStore.company_id = storedCompanyId ?? null;
+
+  // ✅ Auto-switch: if on a subdomain but currentAccount is personal, find and switch to matching company
+  const hostname = window.location.hostname;
+  const isSubdomain =
+    (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+    (hostname.endsWith('.localhost') && hostname !== 'localhost');
+
+  if (isSubdomain && !authStore.company_id) {
+    // Wait for profile data to load, then find matching company
+    const unwatch = watch(
+      () => profileData.value,
+      (profile) => {
+        if (!profile) return
+
+        const companies: Company[] = profile.companies_list ?? []
+        const matchingCompany = companies.find((c: Company) => {
+          const companyDomain = c.domain_link
+            .replace('https://', '')
+            .replace('http://', '')
+          return hostname === companyDomain || hostname.startsWith(companyDomain)
+        })
+
+        if (matchingCompany) {
+          // ✅ Auto-switch to the company matching the current subdomain
+          const token = localStorage.getItem('token')
+          if (token) {
+            authStore.writeAuthCookie({
+              token,
+              company_id: matchingCompany._id,
+              personal_mode: null
+            })
+          }
+          authStore.setCompany(matchingCompany._id)
+        }
+
+        unwatch() // stop watching after first resolution
+      },
+      { immediate: true }
+    )
+  }
 
   document.addEventListener("click", onClickOutside);
   window.addEventListener("resize", onResize);

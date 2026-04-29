@@ -212,7 +212,7 @@
 
       <!-- Job Role — module only -->
       <BaseSelectField
-        v-if="emailEntries.length > 0 && resourceType === 'module'"
+        v-if="emailEntries.length > 0 && resourceType === 'module' || resourceType === 'sheet'"
         label="Job Role"
         :options="jobRoles"
         placeholder="Choose Job Role"
@@ -337,7 +337,8 @@ const props = withDefaults(
   defineProps<{
     modelValue: boolean
     resourceId?: string
-    resourceType?: 'module' | 'workspace'
+    resourceType?: 'module' | 'workspace' | 'sheet'
+    title?: string
   }>(),
   {
     modelValue: false,
@@ -352,12 +353,17 @@ const isOpen = computed({
 })
 
 // ─── Labels ───────────────────────────────────────────────────────────────────
-const resourceLabel = computed(() =>
-  props.resourceType === 'workspace' ? 'workspace' : 'module'
-)
-const title = computed(() =>
-  props.resourceType === 'workspace' ? 'Share Workspace' : 'Share Module'
-)
+const resourceLabel = computed(() => {
+  if (props.resourceType === 'workspace') return 'workspace'
+  if (props.resourceType === 'sheet') return 'sheet'
+  return 'module'
+})
+const title = computed(() => {
+  if (props.title) return props.title
+  if (props.resourceType === 'workspace') return 'Share Workspace'
+  if (props.resourceType === 'sheet') return 'Share Sheet'
+  return 'Share Module'
+})
 
 // ─── Queries setup ────────────────────────────────────────────────────────────
 const { workspaceId } = useRouteIds()
