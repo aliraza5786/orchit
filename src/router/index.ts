@@ -161,9 +161,10 @@ api.interceptors.response.use(
 // ✅ Single beforeEach — merged both into one
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
+  const isLogoutRedirect = to.query.logout === 'true'
 
-  // ✅ Bootstrap only once
-  if (!auth.initialized) {
+  // ✅ Skip bootstrap on logout redirect - user is already logged out
+  if (!auth.initialized && !isLogoutRedirect) {
     await auth.bootstrap()
   }
 
@@ -209,7 +210,8 @@ router.beforeEach(async (to, _from, next) => {
     return next({ name: 'Login' })
   }
 
-  if (to.name === 'Login' && hasToken) {
+  // ✅ Skip auto-redirect on logout - let user stay on login page
+  if (to.name === 'Login' && hasToken && !isLogoutRedirect) {
     return next({ name: 'Home' })
   }
 

@@ -872,26 +872,36 @@ async function handleLogout() {
   try {
     closeMenu();
     workspaceStore.setWorkspace(null);
+    
+    // ✅ Clear auth state FIRST
     authStore.logout();
-    localStorage.removeItem("company_id");
     await queryClient.cancelQueries();
     queryClient.clear();
+    
+    // ✅ Wait a bit for cookie clearing to take effect
+    await new Promise((res) => setTimeout(res, 200));
 
     const hostname = window.location.hostname;
     const isSubdomain =
-      hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai' ||
-      hostname.endsWith('.localhost') && hostname !== 'localhost';
+      (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+      (hostname.endsWith('.localhost') && hostname !== 'localhost');
 
     if (isSubdomain) {
-      // ✅ Redirect to main domain login instead of subdomain
+      // ✅ Redirect to main domain login with logout flag
       const protocol = window.location.protocol;
       const baseDomain = hostname.endsWith('.localhost') ? 'localhost' : 'orchit.ai';
-      window.location.href = `${protocol}//${baseDomain}/login`;
+      // Add logout flag to prevent auto-auth on login page
+      window.location.href = `${protocol}//${baseDomain}/login?logout=true`;
     } else {
-      router.push('/login');
+      // ✅ On main domain, redirect to login with logout flag
+      router.push('/login?logout=true');
     }
   } catch (e) {
     console.error("Logout failed", e);
+    // ✅ Still redirect even if something fails
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    window.location.href = `${protocol}//${hostname === 'orchit.ai' ? 'orchit.ai' : 'orchit.ai'}/login`;
   }
 }
 

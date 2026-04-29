@@ -665,11 +665,8 @@ resetStream() {
         const res = await api.request<{ data: any }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
+          // ✅ Removed custom cache headers that trigger CORS preflight
+          // Axios handles caching properly without explicit headers
         });
 
         this.agentsCreated = res.data;
@@ -907,11 +904,7 @@ resetStream() {
         }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
+          // ✅ Removed cache headers to prevent CORS preflight errors
         });
 
         return res.data?.data ?? { chats: [], pagination: null };
@@ -941,11 +934,7 @@ resetStream() {
         }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
+          // ✅ Removed cache headers to prevent CORS preflight errors
         });
         return res.data?.data ?? { sessions: [], pagination: null };
       } catch (err) {
@@ -961,11 +950,7 @@ resetStream() {
         const res = await api.request<{ data: any }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
+          // ✅ Removed cache headers to prevent CORS preflight errors
         });
         return res.data?.data ?? null;
       } catch (err) {
@@ -1123,11 +1108,7 @@ resetStream() {
         }>({
           url,
           method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
+          // ✅ Removed cache headers to prevent CORS preflight errors
         });
 
         this.pinnedMessages = res.data?.data?.pinned_messages ?? [];
