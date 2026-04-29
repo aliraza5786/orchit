@@ -25,7 +25,16 @@ const handleClick = (rowEvt: any) => {
     const jobId = r?.LatestTask?.job_id
     if (jobId) localStorage.setItem('jobId', jobId)
     else localStorage.removeItem('jobId')
-    router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
+    
+    // ✅ Check if workspace belongs to a company
+    if (r?.company && r.company.domain_link) {
+        // Extract domain from domain_link (e.g., "https://streamed-zunairm.orchit.ai" -> "streamed-zunairm.orchit.ai")
+        const domain = r.company.domain_link.replace('https://', '').replace('http://', '')
+        window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}`
+    } else {
+        // No company — stay on current domain (orchit.ai for personal workspaces)
+        router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
+    }
 }
 
 const showInviteModal = ref(false)
