@@ -176,14 +176,14 @@ export const useAgentStore = defineStore("agent", {
       if (!payload.workspace_id) return null;
       this.isSending = true;
       this.resetStream();
-
+ 
       try {
         const { route_path, ...basePayload } = payload;
-
+ 
         let finalPayload: Omit<AgentChatPayload, "route_path"> = {
           ...basePayload,
         };
-
+ 
         if (route_path?.includes("peak")) {
           finalPayload = {
             workspace_id: payload.workspace_id,
@@ -208,48 +208,76 @@ export const useAgentStore = defineStore("agent", {
             attachments: payload.attachments,
           };
         }
-
-        const token = localStorage.getItem("token");
+ 
+        // ✅ Resolve auth token: axios defaults → localStorage → auth_session cookie
+        const axiosAuthHeader =
+          api.defaults?.headers?.common?.["Authorization"] as string | undefined;
+ 
+        const getTokenFromCookie = (): string => {
+          try {
+            const match = document.cookie
+              .split("; ")
+              .find((row) => row.startsWith("auth_session="));
+            if (!match) return "";
+            const raw = decodeURIComponent(match.split("=").slice(1).join("="));
+            const parsed = JSON.parse(raw);
+            return parsed?.token ?? "";
+          } catch {
+            return "";
+          }
+        };
+ 
+        const token =
+          axiosAuthHeader?.replace(/^Bearer\s+/i, "") ||
+          localStorage.getItem("token") ||
+          localStorage.getItem("access_token") ||
+          getTokenFromCookie() ||
+          "";
+ 
+        if (!token) {
+          console.error("❌ No auth token found — request will be rejected.");
+        }
+ 
         const url = `${baseUrl}agent-chat/message/assistant`;
-
+ 
         const response = await fetch(url, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(finalPayload),
         });
-
+ 
         if (!response.ok || !response.body) {
           console.error("Stream response failed:", response.status);
           return null;
         }
-
+ 
         const reader = response.body.getReader();
         const decoder = new TextDecoder("utf-8");
         let buffer = "";
-
+ 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-
+ 
           buffer += decoder.decode(value, { stream: true });
-
+ 
           const lines = buffer.split("\n");
           buffer = lines.pop() ?? "";
-
+ 
           for (const line of lines) {
             const trimmed = line.trim();
             if (!trimmed || !trimmed.startsWith("data:")) continue;
             this.handleIncomingChunk(trimmed);
           }
         }
-
+ 
         if (buffer.trim().startsWith("data:")) {
           this.handleIncomingChunk(buffer.trim());
         }
-
+ 
         return null;
       } catch (err) {
         console.error("❌ Failed to send message:", err);
