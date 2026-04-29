@@ -245,14 +245,19 @@ async function loginWithApple() {
 }
 async function handleLoginSuccess(data: any) {
   const token = data?.data?.token
-
-  // ✅ Save to localStorage
+   console.log('=== LOGIN DEBUG ===')
+  console.log('1. token exists:', !!token)
+  console.log('2. hostname:', window.location.hostname)
+  console.log('3. cookies BEFORE:', document.cookie)
+  
   localStorage.setItem("token", token)
-
-  // ✅ Write to cookie BEFORE bootstrap (bootstrap checks initialized flag)
+   const maxAge = 60 * 60 * 24 * 30
+  const payload = encodeURIComponent(JSON.stringify({ token }))
+  document.cookie = `auth_session=${payload}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+  authStore.initialized = false
+  await authStore.bootstrap()
+  localStorage.setItem("token", token)
   authStore.writeAuthCookie({ token, company_id: null, personal_mode: null })
-
-  // ✅ Reset initialized so bootstrap runs fresh with the new token
   authStore.initialized = false
   await authStore.bootstrap()
 
