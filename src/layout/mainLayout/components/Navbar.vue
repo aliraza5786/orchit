@@ -752,13 +752,18 @@ async function confirmSwitch() {
 
   try {
     await new Promise((res) => setTimeout(res, 1200))
+    const token = localStorage.getItem('token')
 
     if (pendingAccount.value.type === 'company') {
       authStore.setCompany(pendingAccount.value.id)
+      // ✅ Ensure token survives navigation to new subdomain
+      if (token) authStore.writeAuthCookie({ token, company_id: pendingAccount.value.id })
       await new Promise((res) => setTimeout(res, 100))
       window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
     } else {
       authStore.clearCompany()
+      // ✅ Ensure token survives navigation back to main domain
+      if (token) authStore.writeAuthCookie({ token, company_id: null, personal_mode: true })
       await new Promise((res) => setTimeout(res, 100))
       window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
     }
@@ -837,11 +842,23 @@ async function handleLogout() {
     closeMenu();
     workspaceStore.setWorkspace(null);
     authStore.logout();
-    // ✅ Always wipe company_id on logout so next login starts clean
     localStorage.removeItem("company_id");
     await queryClient.cancelQueries();
     queryClient.clear();
-    router.push("/login");
+
+    const hostname = window.location.hostname;
+    const isSubdomain =
+      hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai' ||
+      hostname.endsWith('.localhost') && hostname !== 'localhost';
+
+    if (isSubdomain) {
+      // ✅ Redirect to main domain login instead of subdomain
+      const protocol = window.location.protocol;
+      const baseDomain = hostname.endsWith('.localhost') ? 'localhost' : 'orchit.ai';
+      window.location.href = `${protocol}//${baseDomain}/login`;
+    } else {
+      router.push('/login');
+    }
   } catch (e) {
     console.error("Logout failed", e);
   }

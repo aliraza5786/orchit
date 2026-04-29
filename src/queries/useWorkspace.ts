@@ -93,41 +93,31 @@ export const useWorkspacesPrompt = () =>
 export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
   const authStore = useAuthStore();
 
-  // ✅ Plain computed string — NOT a ref object inside the queryKey
-  const companyId = computed(() => authStore.company_id ?? '');
+  const companyId = computed(() => authStore.company_id ?? null);
 
   return useQuery({
-    // ✅ Unwrap everything to primitives so the key is stable and serializable
     queryKey: computed(() => [
       'workspaces',
       unref(page),
       unref(limit),
       unref(filter) ?? 'all',
-      companyId.value,
+      companyId.value, // null for personal, string for company
     ]),
     queryFn: async () => {
-      const companyIdVal = authStore.company_id;
-
-      if (!companyIdVal) {
-        console.warn('⚠️ useWorkspaces: No company_id available');
-        return { workspaces: [] };
-      }
-
       const pageVal = unref(page);
       const limitVal = unref(limit);
       const filterVal = unref(filter) ?? 'all';
 
-      const url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}&company_id=${companyIdVal}`;
+      // ✅ Build URL — only append company_id if it exists
+      let url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}`;
+      if (companyId.value) {
+        url += `&company_id=${companyId.value}`;
+      }
 
-      console.log('📡 Fetching:', url);
-
-      return request({
-        url,
-        method: 'GET',
-      });
+      return request({ url, method: 'GET' });
     },
     refetchOnMount: true,
-    enabled: computed(() => !!authStore.company_id),
+    enabled: true,
   });
 };
 export const useWorkspacesTitles = () => {
