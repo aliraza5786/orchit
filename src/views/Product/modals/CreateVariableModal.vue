@@ -67,7 +67,7 @@
         </div>
   
         <!-- Group Filterable toggle -->
-        <label class="flex items-center gap-2 select-none"  v-if="['Checkbox','Radio','Select','Multi Select'].includes(selectedTypeTitle)">
+        <label class="flex items-center gap-2 select-none"  v-if="['Radio','Select'].includes(selectedTypeTitle)">
           <Checkbox
             :checked="isFilterable"
             label="Show this in Group filters"

@@ -260,6 +260,11 @@ const selectOption = (option: Option | string) => {
   if (typeof option === "string") value = option;
   else value = option._id ?? option.value ?? option.title;
 
+  if (value === props.modelValue) {
+    cancelEditing();
+    return;
+  }
+
   internalValue.value = value;  // update local reactive value immediately
   emit("update:modelValue", value);
   emit("change", value);
@@ -278,8 +283,11 @@ const handleEnter = () => {
       selectOption(match);
       return;
     }
-    // If one exact match? or select first?
-    // Default to text if no match
+  }
+
+  if (searchTerm.value === props.modelValue) {
+    cancelEditing();
+    return;
   }
 
   emit("update:modelValue", searchTerm.value);

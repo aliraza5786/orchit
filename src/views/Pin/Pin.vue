@@ -842,6 +842,7 @@ const moveCard = useMoveCard({
 
   onSettled: () => {
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
   },
 });
 function handleMindmapUpdateCard(payload: any) {
@@ -857,28 +858,67 @@ function toggleAddList() {
   activeAddList.value = !activeAddList.value;
 }
 const sheetName = ref("");
-// Dropdown Transformation
-const transformedData = computed(() =>
-  (data.value || []).map((item: any) => ({
+const transformedData = computed(() => {
+  const options = (data.value || []).map((item: any) => ({
     _id: item._id,
     title: item.variables["sheet-title"],
     description: item.variables["sheet-description"],
     icon: item.icon,
     disableDelete: item.variables["sheet-title"]?.toLowerCase() === "general",
-  })),
-);
+    hideActions: false,
+  }));
+
+  if (options.length > 1) {
+    options.unshift({
+      _id: "all",
+      title: "All sheet",
+      icon: { prefix: "fa-solid", iconName: "fa-layer-group" },
+      hideActions: true,
+    } as any);
+  }
+  return options;
+});
 watch(
   selected_sheet_id,
-  (newId) => {
-    if (!newId) return;
+  (newVal, oldVal) => {
+    if (!newVal || (Array.isArray(newVal) && newVal.length === 0)) {
+      if (data.value && data.value.length > 0) {
+        selected_sheet_id.value = [data.value[0]._id];
+      }
+      return;
+    }
+
+    // Handle "All sheet" logic: mutual exclusivity
+    if (Array.isArray(newVal)) {
+      const hadAll = oldVal === 'all' || (Array.isArray(oldVal) && oldVal.includes('all'));
+      const hasAll = newVal.includes('all');
+      let finalVal = [...newVal];
+      
+      if (hasAll && !hadAll) {
+        finalVal = ['all'];
+      } else if (hasAll && newVal.length > 1) {
+        finalVal = newVal.filter(id => id !== 'all');
+      }
+      
+      if (JSON.stringify(newVal) !== JSON.stringify(finalVal)) {
+        selected_sheet_id.value = finalVal;
+        return;
+      }
+    }
+
+    const currentId = Array.isArray(newVal) ? newVal[0] : newVal;
     const selectedSheet = transformedData.value.find(
-      (item :any) => item._id === newId,
+      (item: any) => item._id === currentId,
     );
     if (selectedSheet) {
       agentStore.saveSelectedSheetTitle(selectedSheet.title);
-      agentStore.saveSelectedSheetId(newId);
+      agentStore.saveSelectedSheetId(currentId);
       sheetName.value = selectedSheet.title || "";
-    }else {
+    } else if (currentId === 'all') {
+      agentStore.saveSelectedSheetTitle("All sheet");
+      agentStore.saveSelectedSheetId("all");
+      sheetName.value = "All sheet";
+    } else {
       agentStore.saveSelectedSheetTitle(sheetTitle.value);
       agentStore.saveSelectedSheetId(sheetId.value);
       sheetName.value = "";
