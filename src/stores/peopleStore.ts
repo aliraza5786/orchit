@@ -2,7 +2,12 @@ import { defineStore } from "pinia";
 import axios from "axios";
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL;
-const token = localStorage.getItem('token');
+function getCookieValue(name: string): string | null {
+  const match = document.cookie
+    .split('; ')
+    .find(row => row.startsWith(`${name}=`))
+  return match ? decodeURIComponent(match.split('=')[1]) : null
+}
 export const usePeopleStore = defineStore("people", {
   state: () => ({
     peopleData: [],
@@ -15,6 +20,9 @@ export const usePeopleStore = defineStore("people", {
     async fetchPeopleList(workspace_id:any, viewID:any, signal?: AbortSignal, silent = false) {
         if (!silent) this.isFetchingPeople = true;
       try {
+        // Get token from localStorage, fallback to cookie
+        const token = localStorage.getItem('token') || getCookieValue('space_auth')
+
         const res = await axios.get(
           `${baseUrl}workspace/teams/${workspace_id}/people-grouped`,
           {
@@ -22,8 +30,8 @@ export const usePeopleStore = defineStore("people", {
               groupBy: viewID,
             },
             headers: {
-          Authorization: `Bearer ${token}`,
-        },
+              Authorization: `Bearer ${token}`,
+            },
             signal,
           }
         );
@@ -38,7 +46,6 @@ export const usePeopleStore = defineStore("people", {
       } catch (err) {
        this.isFetchingPeople = false;
         if (axios.isCancel(err)) return;
-
         console.error(err);
       }
     },
