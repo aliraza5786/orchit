@@ -520,7 +520,7 @@ import { debounce } from "lodash";
 import { useQueryClient } from "@tanstack/vue-query";
 import PeopleTableView from "./components/PeopleTableView.vue";
 import MindmapView from "../../components/feature/MindmapView.vue";
-import { useVariables } from "../../queries/useSheets";
+// import { useVariables } from "../../queries/useSheets";
 import { useSingleWorkspaceCompany } from "../../queries/useWorkspace";
 import { avatarColor } from "../../utilities/avatarColor";
 import { getInitials } from "../../utilities";
