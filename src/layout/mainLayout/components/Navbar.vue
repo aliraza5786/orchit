@@ -132,10 +132,16 @@
               <div
                 class="flex items-center gap-2.5 rounded-xl p-2.5 shrink-0"
               >
-                <div
+              <img
+              v-if="profileData?.u_profile_image"
+              class="object-cover cursor-pointer w-10 h-10 rounded-full"
+              :src="profileData?.u_profile_image"
+              alt="profile_img"
+            />
+                <div v-else
                   class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
                 >
-                  {{ profileData?.u_profile_image || getInitials(currentAccount.name) }}
+                  {{ profileData?.u_profile_image }}
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-semibold leading-5">
