@@ -47,32 +47,37 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    // ✅ Single source of truth for writing cookies
     writeAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
-      try {
-        const existing = getAuthCookie() || {}
-        const merged: Record<string, any> = { ...existing, ...data }
+  try {
+    const existing = getAuthCookie() || {}
+    const merged: Record<string, any> = { ...existing, ...data }
 
-        if (data.company_id === null) delete merged.company_id
-        if (data.personal_mode === null) delete merged.personal_mode
+    if (data.company_id === null) delete merged.company_id
+    if (data.personal_mode === null) delete merged.personal_mode
 
-        const value = encodeURIComponent(JSON.stringify(merged))
-        const maxAge = 60 * 60 * 24 * 30
-        const hostname = window.location.hostname
+    const value = encodeURIComponent(JSON.stringify(merged))
+    const maxAge = 60 * 60 * 24 * 30
+    const hostname = window.location.hostname
 
-        if (hostname === 'localhost') {
-          document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
-        } else if (hostname.endsWith('.localhost')) {
-          document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`
-        } else {
-          // ✅ Always .orchit.ai — shared across ALL subdomains
-          document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-        }
-      } catch (e) {
-        console.error('❌ Failed to write auth cookie:', e)
-      }
-    },
+    if (hostname === 'localhost') {
+      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else if (hostname.endsWith('.localhost')) {
+      document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`
+    } else if (hostname === 'orchit.ai') {
+      // ✅ Apex domain — write BOTH with and without dot prefix so subdomains inherit it
+      document.cookie = `${COOKIE_KEY}=${value}; domain=orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    } else if (hostname.endsWith('.orchit.ai')) {
+      // ✅ Subdomain — dot prefix so all subdomains share it
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    }
 
+    // ✅ Verify it actually wrote
+    console.log('🍪 Cookie after write:', document.cookie.includes(COOKIE_KEY) ? '✅ found' : '❌ MISSING')
+  } catch (e) {
+    console.error('❌ Failed to write auth cookie:', e)
+  }
+},
     setCompany(id: string) {
       this.company_id = id
       localStorage.setItem('company_id', id)

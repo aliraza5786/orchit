@@ -30,8 +30,7 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
     return null;
   }
 }
-
-// ✅ Single cookie writer used everywhere in main.ts
+// main.ts — replace the writeAuthCookie function
 function writeAuthCookie(data: Record<string, any>) {
   const existing = getAuthCookie() || {};
   const merged = { ...existing, ...data };
@@ -39,17 +38,20 @@ function writeAuthCookie(data: Record<string, any>) {
   if (data.personal_mode === null) delete merged.personal_mode;
   const value = encodeURIComponent(JSON.stringify(merged));
 
-  if (hostname === "localhost") {
+  if (hostname === 'localhost') {
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-  } else if (hostname.endsWith(".localhost")) {
+  } else if (hostname.endsWith('.localhost')) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`;
-  } else {
-    // ✅ Always .orchit.ai — shared across ALL subdomains
+  } else if (hostname === 'orchit.ai') {
+    // ✅ Write both so subdomains inherit
+    document.cookie = `${COOKIE_KEY}=${value}; domain=orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
+  } else if (hostname.endsWith('.orchit.ai')) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
   }
-}
 
-// ✅ Handle _auth token from URL (cross-subdomain handoff)
+  console.log('🍪 auth_session cookie:', document.cookie.includes('auth_session') ? '✅' : '❌ NOT SET')
+}
 const urlParams = new URLSearchParams(window.location.search);
 const encodedToken = urlParams.get("_auth");
 
