@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import api from '../libs/api'
 
 const COOKIE_KEY = 'auth_session'
+
 function getAuthCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
   try {
     const raw = document.cookie
@@ -15,33 +16,6 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
   }
 }
 
-function setAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
-  try {
-    const existing = getAuthCookie() || {}
-    const merged = { ...existing, ...data }
-
-    if (data.company_id === null) {
-      delete merged.company_id
-    }
-
-    if (data.personal_mode === null) {
-      delete merged.personal_mode
-    }
-
-    const value = encodeURIComponent(JSON.stringify(merged))
-    const maxAge = 60 * 60 * 24 * 30
-    const hostname = window.location.hostname
-
-    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
-      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
-    } else if (hostname.endsWith('.orchit.ai')) {
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-    }
-  } catch (e) {
-    console.error('❌ Failed to set auth cookie:', e)
-  }
-}
-
 function clearAuthCookie() {
   document.cookie = `${COOKIE_KEY}=; domain=.orchit.ai; path=/; max-age=0`
   document.cookie = `${COOKIE_KEY}=; path=/; max-age=0`
@@ -52,7 +26,6 @@ function clearAuthCookie() {
 export const useAuthStore = defineStore('auth', {
   state: () => {
     const session = getAuthCookie()
-    // If personal_mode is in cookie, ignore company_id entirely
     if (session?.personal_mode) {
       return {
         user: null as any,
@@ -74,18 +47,44 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-   setCompany(id: string) {
+    // ✅ Single source of truth for writing cookies
+    writeAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
+      try {
+        const existing = getAuthCookie() || {}
+        const merged: Record<string, any> = { ...existing, ...data }
+
+        if (data.company_id === null) delete merged.company_id
+        if (data.personal_mode === null) delete merged.personal_mode
+
+        const value = encodeURIComponent(JSON.stringify(merged))
+        const maxAge = 60 * 60 * 24 * 30
+        const hostname = window.location.hostname
+
+        if (hostname === 'localhost') {
+          document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
+        } else if (hostname.endsWith('.localhost')) {
+          document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`
+        } else {
+          // ✅ Always .orchit.ai — shared across ALL subdomains
+          document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+        }
+      } catch (e) {
+        console.error('❌ Failed to write auth cookie:', e)
+      }
+    },
+
+    setCompany(id: string) {
       this.company_id = id
       localStorage.setItem('company_id', id)
       localStorage.removeItem('personal_mode')
-      this.writeAuthCookie({ company_id: id, personal_mode: null }) // ✅
+      this.writeAuthCookie({ company_id: id, personal_mode: null })
     },
 
     clearCompany() {
       this.company_id = null
       localStorage.removeItem('company_id')
       localStorage.setItem('personal_mode', 'true')
-      this.writeAuthCookie({ company_id: null, personal_mode: true }) // ✅
+      this.writeAuthCookie({ company_id: null, personal_mode: true })
     },
 
     async bootstrap() {
@@ -94,41 +93,42 @@ export const useAuthStore = defineStore('auth', {
       const urlParams = new URLSearchParams(window.location.search)
       const encodedToken = urlParams.get('_auth')
 
-      const cleanBase64 = (str: string) =>
-        str.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=')
-
       if (encodedToken) {
         try {
           let token = encodedToken
           if (!encodedToken.startsWith('eyJ')) {
-            token = atob(cleanBase64(encodedToken))
+            token = atob(encodedToken.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
           }
           localStorage.setItem('token', token)
-          setAuthCookie({ token })
-        } catch (e) {
-          console.log('❌ Token decode failed, using existing token')
+          this.writeAuthCookie({ token })
+        } catch {
+          console.log('❌ Token decode failed')
         }
       }
 
+      // Clean URL
       const transientParams = ['_auth', 'welcome']
       transientParams.forEach(p => urlParams.delete(p))
-      const newUrl =
-        window.location.pathname +
-        (urlParams.toString() ? '?' + urlParams.toString() : '')
-      window.history.replaceState({}, '', newUrl)
+      window.history.replaceState({}, '', window.location.pathname + (urlParams.toString() ? '?' + urlParams.toString() : ''))
 
       const session = getAuthCookie()
+      // ✅ Cookie first, localStorage only as last resort
       const token = session?.token ?? localStorage.getItem('token')
+
       if (!token) {
         this.initialized = true
         return
       }
 
-      // If personal_mode is in cookie, clear company from this subdomain's localStorage too
+      // ✅ If token was only in localStorage, persist it to cookie now
+      if (!session?.token && token) {
+        this.writeAuthCookie({ token })
+      }
+
       if (session?.personal_mode) {
         localStorage.removeItem('company_id')
         this.company_id = null
-      } else if (session?.company_id && localStorage.getItem('company_id')) {
+      } else if (session?.company_id) {
         localStorage.setItem('company_id', session.company_id)
         this.company_id = session.company_id
       }
@@ -138,11 +138,10 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data
         const activeCompanyId = res.data?.data?.active_company_id
 
-        // Never restore from server if personal_mode is active in cookie
         if (activeCompanyId && !this.company_id && !session?.personal_mode) {
           localStorage.setItem('company_id', activeCompanyId)
           this.company_id = activeCompanyId
-          setAuthCookie({ company_id: activeCompanyId })
+          this.writeAuthCookie({ company_id: activeCompanyId })
         }
       } catch (e) {
         console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
@@ -150,33 +149,7 @@ export const useAuthStore = defineStore('auth', {
         this.initialized = true
       }
     },
-    // In auth.ts store — update writeAuthCookie action
-writeAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
-  try {
-    const existing = getAuthCookie() || {}
-    const merged: Record<string, any> = { ...existing, ...data }
 
-    if (data.company_id === null) delete merged.company_id
-    if (data.personal_mode === null) delete merged.personal_mode
-
-    const value = encodeURIComponent(JSON.stringify(merged))
-    const maxAge = 60 * 60 * 24 * 30
-    const hostname = window.location.hostname
-
-    if (hostname === 'localhost') {
-      // plain localhost — no domain attribute
-      document.cookie = `auth_session=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
-    } else if (hostname.endsWith('.localhost')) {
-      // subdomain of localhost — share across *.localhost
-      document.cookie = `auth_session=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`
-    } else {
-      // ✅ Always use .orchit.ai domain — works on orchit.ai AND all subdomains
-      document.cookie = `auth_session=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
-    }
-  } catch (e) {
-    console.error('❌ Failed to write auth cookie:', e)
-  }
-},
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')

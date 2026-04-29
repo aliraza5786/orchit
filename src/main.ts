@@ -15,6 +15,8 @@ import vue3GoogleLogin from "vue3-google-login";
 import vTooltip from "./directives/vTooltip";
 
 const COOKIE_KEY = "auth_session";
+const maxAge = 60 * 60 * 24 * 30;
+const hostname = window.location.hostname;
 
 function getAuthCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
   try {
@@ -29,21 +31,25 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
   }
 }
 
-if (
-  window.location.hostname === "orchit.ai" ||
-  window.location.hostname.endsWith(".orchit.ai")
-) {
-  document.domain = "orchit.ai";
-} else if (window.location.hostname.endsWith(".localhost")) {
-  try {
-    document.domain = "localhost";
-  } catch (e) {
-    console.log("⚠️ Could not set document.domain to localhost:", e);
+// ✅ Single cookie writer used everywhere in main.ts
+function writeAuthCookie(data: Record<string, any>) {
+  const existing = getAuthCookie() || {};
+  const merged = { ...existing, ...data };
+  if (data.company_id === null) delete merged.company_id;
+  if (data.personal_mode === null) delete merged.personal_mode;
+  const value = encodeURIComponent(JSON.stringify(merged));
+
+  if (hostname === "localhost") {
+    document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  } else if (hostname.endsWith(".localhost")) {
+    document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`;
+  } else {
+    // ✅ Always .orchit.ai — shared across ALL subdomains
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
   }
 }
 
-const hostname = window.location.hostname;
-const maxAge = 60 * 60 * 24 * 30;
+// ✅ Handle _auth token from URL (cross-subdomain handoff)
 const urlParams = new URLSearchParams(window.location.search);
 const encodedToken = urlParams.get("_auth");
 
@@ -52,37 +58,32 @@ if (encodedToken) {
     let token = encodedToken;
     if (!encodedToken.startsWith("eyJ")) {
       token = atob(
-        encodedToken.replace(/-/g, "+").replace(/_/g, "/").replace(/\./g, "="),
+        encodedToken.replace(/-/g, "+").replace(/_/g, "/").replace(/\./g, "=")
       );
     }
     localStorage.setItem("token", token);
-    if (hostname === "localhost" || hostname.endsWith(".localhost")) {
-      document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".orchit.ai")) {
-      document.cookie = `auth_token=${token}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
-    }
+    // ✅ Write to auth_session (not auth_token)
+    writeAuthCookie({ token });
   } catch (e) {
     console.error("❌ main.ts: Token decode failed:", e);
   }
 }
 
+// ✅ Handle personal_mode / company_id sync on load
 const session = getAuthCookie();
-const isPersonalMode = session?.personal_mode === true;
 
-if (isPersonalMode) {
+if (session?.personal_mode) {
   localStorage.removeItem("company_id");
-  if (session?.company_id) {
-    const cleaned = { ...session };
-    delete cleaned.company_id;
-    const value = encodeURIComponent(JSON.stringify(cleaned));
-    if (hostname === "localhost" || hostname.endsWith(".localhost")) {
-      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".orchit.ai")) {
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
-    }
-  }
-} else if (session?.company_id && localStorage.getItem("company_id")) {
+  // Clean company_id from cookie but keep token
+  writeAuthCookie({ company_id: null });
+} else if (session?.company_id) {
   localStorage.setItem("company_id", session.company_id);
+}
+
+// ✅ If token is in localStorage but NOT in cookie, fix it
+const localToken = localStorage.getItem("token");
+if (localToken && !session?.token) {
+  writeAuthCookie({ token: localToken });
 }
 
 const head = createHead();
