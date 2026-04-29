@@ -135,7 +135,7 @@
                 <div
                   class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
                 >
-                  {{ getInitials(currentAccount.name) }}
+                  {{ profileData?.u_profile_image || getInitials(currentAccount.name) }}
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-semibold leading-5">

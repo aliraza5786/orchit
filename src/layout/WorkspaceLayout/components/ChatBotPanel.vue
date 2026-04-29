@@ -971,13 +971,12 @@
 >
     Unable to generate a response. Please try again.
   </div>
-              <!-- AFTER: -->
 <div v-else
-  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 w-full break-words"
+  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 break-words"
   :class="
     msg.type === 'user'
-      ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15'
-      : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
+      ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15 w-full'
+      : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md w-fit'
   "
 >
                 <!-- Message menu trigger -->
