@@ -170,7 +170,9 @@
     </button>
 
   </div>
-
+   <p v-if="errors.workType" class="text-xs text-red-500 mt-2">
+    {{ errors.workType }}
+  </p>
 </div>
 <div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-10">
 
@@ -599,17 +601,18 @@ import LoadingCreateProfile from '../../components/LoadingCreateProfile.vue'
 import gsap from 'gsap'
 defineOptions({ name: 'OnboardingFlow' })
 const workspaceStore = useWorkspaceStore()
+// AFTER:
 const errors = ref<{
   team?: string
   role?: string
   companySize?: string
   emailList?: string
   personalRole?: string
-
   schoolName?: string
   educationLevel?: string
-  siteName?:string;
+  siteName?: string
   selectedModules?: string
+  workType?: string
 }>({})
 const authStore = useAuthStore()
 const personalRole = ref('')
@@ -675,7 +678,8 @@ function toggleModule(id: string) {
   if (selectedModules.value.includes(id)) {
     selectedModules.value = selectedModules.value.filter(m => m !== id)
   } else {
-    selectedModules.value.push(id)
+    selectedModules.value.push(id);
+     if (errors.value.selectedModules) errors.value.selectedModules = undefined
   }
 }
 function validateCompanyStep() {
@@ -1006,7 +1010,7 @@ async function continueHandler() {
   }
 if (activeStep.value === 4) {
   if (!workType.value) {
-    errors.value.role = 'Please select what kind of work you do.'
+    errors.value.workType = 'Please select what kind of work you do.'
     return
   }
 
@@ -1183,6 +1187,7 @@ const isSiteStepBlocked = computed(() => {
   if (selected.value !== 'team' && selected.value !== 'school') return false
   return !isSlugAvailable.value || isCheckingSlug.value
 })
+watch(workType, (v) => { if (v && errors.value.workType) errors.value.workType = undefined })
 </script>
 
 <style scoped>
