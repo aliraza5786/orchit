@@ -183,14 +183,14 @@ export const useWorkspacesRoles = (id: IdLike) => {
   const idRef = computed(() => unref(id));
 
   return useQuery({
- queryKey: computed(() => {
+  queryKey: computed(() => {
       const wid = idRef.value ?? "";
       const companyId = computed(() => 
       authStore.company_id ?? localStorage.getItem('company_id') ?? null
- );
+   );
       return ["workspaceRoles", wid, companyId];
     }),
-    enabled: computed(() => !!idRef.value && !!authStore.company_id),
+    enabled: computed(() => !!idRef.value),
     queryFn: async () => {
       const wid = idRef.value;
       if (!wid && wid !== 0) return [];

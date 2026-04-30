@@ -12,8 +12,7 @@
           @edit-option="openEditSprintModal"
           v-model="selected_sheet_id"
           :canEdit="canEditSheet"
-          :canDelete="canDeleteSheet"
-          :canShare="canEditSheet"
+          :canDelete="canDeleteSheet" 
           @delete-option="handleDeleteSheetModal"
           @share-option="handleShareSheet"
           :options="transformedData"
@@ -1125,7 +1124,25 @@ interface DropdownOption {
 }
 
 const transformedData = computed<DropdownOption[]>(() => {
-  const options = (data.value || []).map((item: any) => {
+  const alwaysAllowed = ["features", "backlog", "module"];
+
+  const filteredSheets = (data.value || []).filter((item: any) => {
+    const title = item?.variables?.["sheet-title"]?.toLowerCase();
+    const source = item?.user_permissions?.source?.toLowerCase();
+
+    // Always allowed sheets
+    if (alwaysAllowed.includes(title)) return true;
+
+    // Owner can always view
+    if (source === "owner") return true;
+
+    // Shared with read permission
+    if (source === "shared" && item?.user_permissions?.can_read) return true;
+
+    return false;
+  });
+
+  const options = filteredSheets.map((item: any) => {
     const icon =
       item?.icon ??
       item?.variables?.["sheet-icon"] ??
@@ -1137,6 +1154,7 @@ const transformedData = computed<DropdownOption[]>(() => {
       description: item?.variables?.["sheet-description"],
       icon,
       status: item?.generation_status,
+      user_permissions: item?.user_permissions, 
     } as any;
   });
 

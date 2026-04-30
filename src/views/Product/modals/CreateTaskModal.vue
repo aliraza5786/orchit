@@ -406,15 +406,28 @@ interface DropdownOption {
   status:string
 }
 
-const transformedData = computed<DropdownOption[]>(() => {  
-  return (props.sheets || []).map((item: any) => ({
+const transformedData = computed<DropdownOption[]>(() => {
+  const alwaysAllowed = ["features", "backlog", "module"];
+
+  const filteredSheets = (props.sheets || []).filter((item: any) => {
+    const title = item?.variables?.["sheet-title"]?.toLowerCase();
+    const source = item?.user_permissions?.source?.toLowerCase();
+
+    if (alwaysAllowed.includes(title)) return true;
+    if (source === "owner") return true;
+    if (source === "shared" && item?.user_permissions?.can_read) return true;
+
+    return false;
+  });
+
+  return filteredSheets.map((item: any) => ({
     _id: item._id,
     title: item?.variables["sheet-title"],
     description: item?.variables["sheet-description"],
     icon: item["icon"],
     status: item?.generation_status || localStorage.getItem("selectedStatusTitle"),
   }));
-}); 
+});
 
 /** Actions */
 function cancel() {
