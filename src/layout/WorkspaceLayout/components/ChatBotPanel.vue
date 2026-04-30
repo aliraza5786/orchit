@@ -3660,17 +3660,6 @@ onClickOutside(levelRef, () => {
   openLevel.value = false;
 });
 
-
-
-type Agent = {
-  _id: string;
-  name: string;
-  description: string;
-  level?: string;
-  is_active?: boolean;
-  model?: string;
-  role?: string;
-};
 const agentOptions = computed(() => {
   return (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
     _id: agent._id,

@@ -100,9 +100,9 @@ const orgSubItems = [
   { label: 'Domain setup',      tab: 'org-domain',     icon: 'fa-regular fa-globe' },
 ]
 
-const isOrgTab = computed(() =>
-  currentTab.value === 'organization' || orgSubItems.some(s => s.tab === currentTab.value)
-)
+// const isOrgTab = computed(() =>
+//   currentTab.value === 'organization' || orgSubItems.some(s => s.tab === currentTab.value)
+// )
 
 function selectTab(tab: string) {
   router.push({ query: { ...route.query, tab } })
