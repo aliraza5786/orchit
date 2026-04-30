@@ -154,7 +154,12 @@
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
                   :transition="{ duration: 0.35, delay: (index as number) * 0.055, ease: [0.22, 1, 0.36, 1] }"
-                  :while-hover="{ x: 3, transition: { duration: 0.15 } }"
+                  :while-hover="{
+                  x: 4,
+                  scale: 1.01,
+                  backgroundColor: 'rgba(0,0,0,0.02)',
+                  transition: { duration: 0.18 }
+                }"
                 >
                   <div class="flex gap-3 pb-2 border-b border-border last:border-0">
                     <div
@@ -190,7 +195,12 @@
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
                   :transition="{ duration: 0.35, delay: 0.08 + (index as number) * 0.055, ease: [0.22, 1, 0.36, 1] }"
-                  :while-hover="{ x: 3, transition: { duration: 0.15 } }"
+                  :while-hover="{
+                  x: 4,
+                  scale: 1.01,
+                  backgroundColor: 'rgba(0,0,0,0.02)',
+                  transition: { duration: 0.18 }
+                }"
                 >
                   <div class="flex gap-3 pb-2 border-b border-border last:border-0">
                     <div
@@ -226,7 +236,12 @@
                   :initial="{ opacity: 0, x: -12 }"
                   :animate="{ opacity: 1, x: 0 }"
                   :transition="{ duration: 0.35, delay: 0.14 + (index as number) * 0.055, ease: [0.22, 1, 0.36, 1] }"
-                  :while-hover="{ x: 3, transition: { duration: 0.15 } }"
+                  :while-hover="{
+                    x: 4,
+                    scale: 1.01,
+                    backgroundColor: 'rgba(0,0,0,0.02)',
+                    transition: { duration: 0.18 }
+                  }"
                 >
                   <div class="flex gap-3 pb-2 border-b border-border last:border-0">
                     <div
@@ -506,7 +521,12 @@
                     :initial="{ opacity: 0, x: -10 }"
                     :animate="{ opacity: 1, x: 0 }"
                     :transition="{ duration: 0.3, delay: (index as number) * 0.04, ease: [0.22, 1, 0.36, 1] }"
-                    :while-hover="{ x: 3, transition: { duration: 0.15 } }"
+                    :while-hover="{
+                      x: 4,
+                      scale: 1.01,
+                      backgroundColor: 'rgba(0,0,0,0.02)',
+                      transition: { duration: 0.18 }
+                    }"
                   >
                     <div class="flex gap-3 pb-2 border-b border-border last:border-0">
                       <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0" :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }">
@@ -537,7 +557,12 @@
                     :initial="{ opacity: 0, x: -10 }"
                     :animate="{ opacity: 1, x: 0 }"
                     :transition="{ duration: 0.3, delay: 0.05 + (index as number) * 0.04, ease: [0.22, 1, 0.36, 1] }"
-                    :while-hover="{ x: 3, transition: { duration: 0.15 } }"
+                    :while-hover="{
+                      x: 4,
+                      scale: 1.01,
+                      backgroundColor: 'rgba(0,0,0,0.02)',
+                      transition: { duration: 0.18 }
+                    }"
                   >
                     <div class="flex gap-3 pb-2 border-b border-border last:border-0">
                       <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0" :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }">
@@ -568,7 +593,12 @@
                     :initial="{ opacity: 0, x: -10 }"
                     :animate="{ opacity: 1, x: 0 }"
                     :transition="{ duration: 0.3, delay: 0.1 + (index as number) * 0.04, ease: [0.22, 1, 0.36, 1] }"
-                    :while-hover="{ x: 3, transition: { duration: 0.15 } }"
+                    :while-hover="{
+                      x: 4,
+                      scale: 1.01,
+                      backgroundColor: 'rgba(0,0,0,0.02)',
+                      transition: { duration: 0.18 }
+                    }"
                   >
                     <div class="flex gap-3 pb-2 border-b border-border last:border-0">
                       <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0" :style="{ backgroundColor: avatarColor({ email: activity?.user?.email }) }">

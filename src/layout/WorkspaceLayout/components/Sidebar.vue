@@ -95,10 +95,12 @@
     prefix:'far',
     iconName:'ellipsis'
   }"
-  :canDelete="item.user_permissions?.can_update"
+  :canDelete="item.user_permissions?.can_delete"
+  :canUpdate="item.user_permissions?.can_update"
   :canShare = item.user_permissions.source
   @delete="deleteModule"
   @share="openShareModal"
+  @edit="editModule"
   @toggleDropdown="toggleDropdown"
   @closeDropdown="activeDropdownId = null"
 />
@@ -202,12 +204,20 @@
   :resourceId="activeShareId"
 />
 
+<!-- Edit Module Modal -->
+<EditModuleModal
+  v-if="showEditModuleModal"
+  v-model="showEditModuleModal"
+  :module="moduleToEdit"
+/>
+
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import SideItem from "./SideItem.vue";
 import ShareModal from "./ShareModal.vue";
+import EditModuleModal from "./EditModuleModal.vue";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { usePermissions } from "../../../composables/usePermissions";
 import SidebarSkeleton from "../../../components/skeletons/SidebarSkeleton.vue";
@@ -237,6 +247,21 @@ function toggleDropdown(id: string) {
 function openShareModal(id: string) {
   activeShareId.value = id;
   showShareModal.value = true;
+}
+
+// Edit Module
+const showEditModuleModal = ref(false)
+const moduleToEdit = ref<{ _id: string; title: string; icon: any } | null>(null)
+
+function editModule(id: string) {
+  const mod = workspace.value?.modules?.find((m: any) => m._id === id)
+  if (!mod) return
+  moduleToEdit.value = {
+    _id: mod._id,
+    title: mod.variables?.['module-title'] ?? '',
+    icon: mod.variables?.['module-icon'] ?? null,
+  }
+  showEditModuleModal.value = true
 }
 
 // Use store data for workspace

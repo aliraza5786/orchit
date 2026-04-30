@@ -32,8 +32,8 @@
                 </div>
             </section>
 
-            <!-- AI TAB -->
-            <section v-else-if="currentTab === 'ai'" class="space-y-6">
+            <!-- AI TAB (hidden when editing an existing sheet) -->
+            <section v-else-if="currentTab === 'ai' && !sheet?._id" class="space-y-6">
 
                 <!-- AI Input -->
                 <div class="relative w-full">
@@ -217,7 +217,7 @@ function close() {
     form.value = { title: '', description: '', icon: null }
     errors.value = {}
     model.value = false
-    currentTab.value='ai'
+    currentTab.value = props.sheet?._id ? 'manual' : 'ai'
 }
 
 const model = computed({
@@ -279,7 +279,11 @@ function handleGenerateSheet() {
 //     { label: 'Generate with AI', value: 'ai' },
 // ]
 
-const currentTab = ref('ai')
+const currentTab = ref(props.sheet?._id ? 'manual' : 'ai')
+
+watch(() => props.sheet, (newSheet) => {
+    currentTab.value = newSheet?._id ? 'manual' : 'ai'
+})
 
 // type Template = { id: string; title: string; subtitle: string; cover: string; tags: string[] }
 

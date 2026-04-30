@@ -93,11 +93,15 @@
             >
               <!-- Home -->
               <button
-                class="w-full px-3 py-2 cursor-pointer text-left text-sm hover:bg-bg-card/70 rounded-t-xl flex items-center gap-2"
-                role="menuitem"
-                @click="goHome"
-                ref="firstItemRef"
-              >
+              class="w-full px-3 py-2 cursor-pointer text-left text-sm font-normal 
+              hover:bg-bg-card/70 
+              transition-all duration-200 ease-out
+              hover:scale-[1.02] hover:translate-x-1
+              rounded-t-xl flex items-center gap-2"
+              role="menuitem"
+              @click="goHome"
+              ref="firstItemRef"
+            >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z"
@@ -115,12 +119,16 @@
               <div class="overflow-y-auto">
                 <div class="max-h-72 py-1 cursor-pointer">
                   <button
-                    v-for="ws in workspaces?.workspaces"
-                    :key="ws._id"
-                    class="w-full px-3 py-2 text-left text-sm hover:bg-bg-card/70 cursor-pointer flex items-center gap-3"
-                    role="menuitem"
-                    @click="switchTo(ws)"
-                  >
+                  v-for="ws in workspaces?.workspaces"
+                  :key="ws._id"
+                  class="w-full px-3 py-2 text-left text-sm font-normal 
+                    hover:bg-bg-card/70 
+                    transition-all duration-200 ease-out
+                    hover:scale-[1.02] hover:translate-x-1
+                    cursor-pointer flex items-center gap-3"
+                  role="menuitem"
+                  @click="switchTo(ws)"
+                >
                     <img
                       :src="ws.logo ?? dp"
                       alt=""
@@ -131,7 +139,7 @@
                     }}</span>
                     <span
                       v-if="ws._id === workspaceId"
-                      class="text-xs px-2 py-0.5 rounded-full border border-border"
+                      class="text-xs px-2 py-0.5 rounded-full border border-border bg-accent/30 text-accent"
                     >
                       Current
                     </span>
@@ -345,11 +353,14 @@ const goHome = () => {
 };
 
 // Switch workspace
-const switchTo = async (ws: any) => {
-  router.push(
-    `/workspace/peak/${ws._id}/${ws.LatestTask?.job_id ?? ""}`
-  );
-  // await fetchWorkspace(ws._id);  
+const switchTo = (ws: any) => {
+  const base = ws?.company?.domain_link;
+  const path = `/workspace/peak/${ws._id}/${ws?.LatestTask?.job_id ?? ""}`;
+  if (base) {
+    window.location.href = `${base}${path}`;
+    return;
+  }
+  router.push(path);
   closeLogoMenu();
   clearWorkspaceStorage();
 };

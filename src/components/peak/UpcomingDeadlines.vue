@@ -49,20 +49,26 @@
       <div
         v-for="deadline in deadlines"
         :key="deadline.id"
-        :class="['p-3 border border-border rounded-lg transition-colors', getDeadlineClass(deadline.daysUntil)]"
+        :class="[
+          'p-3 border border-border rounded-lg cursor-pointer group',
+          'transition-all duration-200 ease-out',
+          'hover:shadow-md hover:-translate-y-0.5 hover:scale-[1.01]',
+          'active:scale-[0.98]',
+          getDeadlineClass(deadline.daysUntil)
+        ]"
       >
         <div class="flex items-start justify-between mb-2">
           <div class="flex items-start gap-2 flex-1">
             <component
               :is="isUrgent(deadline.daysUntil) ? 'i' : 'i'"
               :class="[
-                'fa-regular',
-                isUrgent(deadline.daysUntil) ? 'fa-newspaper' : 'fa-calendar',
-                'h-4 w-4 mt-0.5 flex-shrink-0',
-                isUrgent(deadline.daysUntil)
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-text-secondary'
-              ]"
+              'fa-regular',
+              isUrgent(deadline.daysUntil) ? 'fa-newspaper' : 'fa-calendar',
+              'h-4 w-4 mt-0.5 flex-shrink-0 transition-transform duration-200 group-hover:scale-110',
+              isUrgent(deadline.daysUntil)
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-text-secondary'
+            ]"
             />
             <div class="flex-1 min-w-0">
               <p :class="['font-medium text-sm', isPast(deadline.daysUntil) ? 'line-through text-text-secondary' : 'text-text-primary']">

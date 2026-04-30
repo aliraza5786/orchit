@@ -5,11 +5,16 @@ import { watch } from 'vue'
 export const getProfile = () => 
   api.get('/profile').then(r => {
     console.log("company new", r);
-    
-    const activeCompanyId = r.data?.data?.active_company_id
+     console.log("user id is", r.data?.data?._id);
+     
+    const activeCompanyId = r.data?.data?.active_company_id;
+    const userId = r.data?.data?._id;
     if (activeCompanyId) {
       localStorage.setItem('company_id', activeCompanyId)
       console.log('✅ company_id saved from getProfile:', activeCompanyId)
+    }
+    if(userId){
+      localStorage.setItem('user_id', userId)
     }
     return r.data
   })

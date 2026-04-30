@@ -578,7 +578,7 @@ import schoolIcon from '../../assets/platform/school.svg'
 import Button from '../../components/ui/Button.vue'
 import BaseSelectField from '../../components/ui/BaseSelectField.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import BaseEmailChip from '../../components/ui/BaseEmailChip.vue'
 import { useCreateCompany, useUpdateCompany, useInviteCompany } from '../../services/auth'
 import { updateProfile as updateUserProfile } from '../../services/user'
@@ -625,6 +625,7 @@ const joinLink = ref('')
 const domainLink = ref('')
 const isInviting = ref(false)
 const isSkipping = ref(false)
+const route = useRoute()
 const moduleOptionsMap = {
   team: [
     { id: 'tasks', label: 'Tasks' },
@@ -1147,6 +1148,10 @@ async function sendInvites(skip = false) {
   )
 }
 onMounted(() => {
+  if (route.query.mode === 'company') {
+    selected.value = 'team'
+    activeStep.value = 2
+  }
   gsap.to(".rocket", {
     y: -10,
     rotation: -5,
