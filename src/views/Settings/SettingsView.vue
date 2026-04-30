@@ -34,7 +34,7 @@
     >
       <div class="py-6 px-4 sm:px-6 sm:p-10 overflow-y-auto h-full">
         <!-- Title & description based on tab -->
-        <div class="max-w-4xl mx-auto">
+        <div class="mx-auto">
           <header class="mb-4 md:mb-8 text-center md:text-left">
             <h1
               class="text-2xl lg:text-3xl font-bold font-manrope mb-2 sm:mb-3 tracking-tight text-text-primary capitalize"
@@ -49,6 +49,8 @@
           <!-- Dynamic Content -->
           <ProfileTab v-if="currentTab === 'profile'" />
           <BillingTab v-else-if="currentTab === 'billing'" />
+          <OrganizationTab v-else-if="currentTab === 'organization'" />
+          <PricingTab v-else-if="currentTab === 'org-packages'" />
         </div>
       </div>
     </main>
@@ -61,7 +63,9 @@ import { useRoute, useRouter } from "vue-router";
 import SettingsSidebar from "./components/SettingsSidebar.vue";
 import ProfileTab from "./components/ProfileTab.vue";
 import BillingTab from "./components/BillingTab.vue";
+import OrganizationTab from "./components/OrganizationTab.vue";
 import { useTheme } from "../../composables/useTheme";
+import PricingTab from "./components/OrgPackagesTab.vue";
 const { isDark } = useTheme(); // light / dark / system
 
 const route = useRoute();
@@ -76,6 +80,10 @@ const tabDescription = computed(() => {
       return "Manage your public profile and personal information.";
     case "billing":
       return "Manage your subscription, billing details, and usage limits.";
+    case "organization":
+      return "Manage your company's information and settings.";
+      case 'org-packages':
+  return 'Manage subscription packages available to your organization.'
     default:
       return "";
   }

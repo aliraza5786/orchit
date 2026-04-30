@@ -2,10 +2,10 @@
   <div
     v-if="workspaceStore.showChatBotPanel"
     :class="[
-      'flex h-full overflow-y-auto rounded-xl border border-border/60 overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
+      'flex h-full overflow-y-auto rounded-md border border-border overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
       isExpanded
         ? 'min-w-full max-w-full'
-        : 'min-w-full max-w-[37%] sm:min-w-[400px]',
+        : 'min-w-full max-w-[23%] sm:min-w-[400px]',
     ]"
     :style="{
       background:
@@ -17,7 +17,7 @@
   >
     <!-- ==================== LEFT: PREVIEW MODAL ==================== -->
     <div
-      v-if="isExpanded && !showConfigPanel"
+      v-if="isExpanded && !showConfigPanel && hasPreviewData"
       class="xl:w-[80%] lg:w-[76%] md:w-[60%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
@@ -30,8 +30,8 @@
 
     <!-- ==================== LEFT: CONFIG PANEL ==================== -->
     <div
-      v-if="isExpanded && (showConfigPanel)"
-      class="md:w-[55%] lg:w-[70%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
+      v-if="isExpanded && showConfigPanel && (!hasPreviewData)"
+      class="md:w-[65%] lg:w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
     >
       <!-- HEADER -->
       <div
@@ -832,10 +832,14 @@
     </div>
 
     <!-- ==================== RIGHT: CHAT PANEL ==================== -->
-    <div
-      :class="isExpanded ? 'w-[30%]' : 'w-full'"
-      class="border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden"
-    >
+   <div
+  :class="[
+    'border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden',
+    isExpanded
+      ? 'w-full md:w-[35%] lg:w-[24%]'
+      : 'w-full'
+  ]"
+>
       <!-- Chat Header -->
       <div
         class="flex items-center border-b border-border/40 px-3.5 py-2.5 sticky top-0 bg-bg-card/95 backdrop-blur-sm z-30 gap-2"
@@ -921,21 +925,62 @@
         ref="messagesContainer"
         class="flex-1 overflow-y-auto min-h-0 p-4 space-y-3"
       >
-        <!-- Loading state -->
-        <div
-          v-if="agentStore.isLoadingHistory && isFirstLoad"
-          class="absolute inset-0 flex items-center justify-center"
-        >
-          <div class="flex flex-col items-center gap-3 text-text-secondary">
-            <div class="chat-loader"></div>
-            <span class="text-xs">Loading conversation...</span>
-          </div>
-        </div>
+<!-- New skeleton loader -->
+<div
+  v-if="agentStore.isLoadingHistory && !hasEverLoaded"
+  class="flex flex-col gap-4 p-4"
+>
+  <!-- Assistant bubble skeleton -->
+  <div class="flex gap-2.5">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 max-w-[75%]">
+      <div class="h-9 w-52 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
+      <div class="h-4 w-32 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- User bubble skeleton -->
+  <div class="flex gap-2.5 flex-row-reverse">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 items-end max-w-[75%]">
+      <div class="h-9 w-44 bg-accent/20 animate-pulse rounded-2xl rounded-tr-md"></div>
+      <div class="h-4 w-20 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- Assistant bubble skeleton — longer -->
+  <div class="flex gap-2.5">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 max-w-[75%]">
+      <div class="h-20 w-64 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
+      <div class="h-4 w-24 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- User bubble skeleton -->
+  <div class="flex gap-2.5 flex-row-reverse">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 items-end max-w-[75%]">
+      <div class="h-12 w-56 bg-accent/20 animate-pulse rounded-2xl rounded-tr-md"></div>
+      <div class="h-4 w-20 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- Assistant bubble skeleton -->
+  <div class="flex gap-2.5">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 max-w-[75%]">
+      <div class="h-14 w-48 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
+      <div class="h-4 w-28 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+</div>
 
         <!-- Messages -->
         <template
           v-else-if="orderedMessages.length || isAiThinkingBubbleVisible"
         >
+        
           <div
             v-for="msg in orderedMessages"
             :key="msg._id"
@@ -963,20 +1008,22 @@
             </div>
 
             <!-- Bubble -->
-            <div class="relative max-w-[82%] w-fit flex flex-col overflow-hidden">
-              <div
-<div
+           <div
+            class="relative flex flex-col overflow-hidden"
+            :class="msg.type === 'user' ? 'max-w-[75%] w-fit ml-auto' : 'max-w-[75%]'"
+          >
+             <div
   v-if="msg.type === 'assistant' && !msg.content"
-  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md min-w-0 w-full break-words"
+  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md wrap-break-word"
 >
     Unable to generate a response. Please try again.
   </div>
 <div v-else
-  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 break-words"
+  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 wrap-break-word"
   :class="
     msg.type === 'user'
       ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15 w-full'
-      : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md w-fit'
+      : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
   "
 >
                 <!-- Message menu trigger -->
@@ -1109,18 +1156,16 @@
   </div>
 </div>
 <!-- AI Streaming response bubble -->
+<!-- AI Streaming response bubble -->
 <div
   v-if="streamingContent && streamingPhase !== 'completed'"
   class="flex gap-2.5 relative animate-fade-in"
 >
-  <div
-    class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm"
-  >
+  <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm">
     <i class="fa-solid fa-robot text-accent text-[11px]"></i>
   </div>
-  <div
-    class="px-3.5 py-2 rounded-2xl rounded-tl-md max-w-[82%] text-sm leading-relaxed border border-accent/20 bg-bg-body shadow-sm"
-  >
+  <!-- ✅ Change: w-fit → w-full max-w-[82%] -->
+  <div class="px-3.5 py-2 rounded-2xl rounded-tl-md w-full max-w-[82%] text-sm leading-relaxed border border-accent/20 bg-bg-body shadow-sm">
     <!-- Phase indicator -->
     <div
       v-if="streamingPhase === 'generating' && streamingThinkMs !== null"
@@ -1335,7 +1380,7 @@
           </button>
         </div>
         <!-- Chat Input Area -->
-        <div class="flex flex-col gap-2.5" :class="{ 'neon-flow-border-chatbot': isSendingAnimation }">
+        <div class="flex flex-col gap-2.5" :class="{ 'neon-flow-border-chatbot': agentStore.isSending }">
           <!-- Active suggested prompts (only when no messages yet) -->
           <div
             class="flex flex-wrap gap-1.5 px-1"
@@ -2508,7 +2553,7 @@ const isManuallyExpanded = ref(false);
 
 const isExpanded = computed(() => {
   return (
-    isManuallyExpanded.value || showConfigPanel.value || (entities.value[0] as any)?.payload?.workspace_id
+    isManuallyExpanded.value || showConfigPanel.value
   );
 });
 const showConfigPanel = ref(false);
@@ -2531,8 +2576,8 @@ const isFocused = ref(false);
 const activeSessionId = ref<string>("");
 const activeSessionTitle = ref<string>("");
 const isFirstLoad = ref(true);
+const hasEverLoaded = ref(false);
 const agentsData = computed(() => agentStore.agentSettings.agent);
-const agentPassedData = computed(() => agentStore.agentPassed);
 const agentModuleId = computed(() => agentStore.module_id);
 const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => agentStore?.agentSettings?.knowledge);
@@ -2547,7 +2592,7 @@ const animationFrameId = ref<number | null>(null);
 const webSearch = ref(false);
 // const isRecording = ref(false);
 const sourceSearch = ref("");
-
+const agentsCreated = computed(() => agentStore.agentsCreated);
 const filteredSources = computed(() => {
   if (!sourceSearch.value.trim()) return availableSources.value;
   const q = sourceSearch.value.toLowerCase();
@@ -2591,23 +2636,14 @@ const sheetName = computed(() => {
   }
   return sheetNameRef.value || "";
 });
-
-const isTalentRoute = computed(() => route.path?.includes("talent"));
-
-watch(
-  [isTalentRoute, agentPassedData],
-  ([isTalent, agentData]) => {
-    if (isTalent && agentData?._id) {
-      selectedAgentId.value = agentData._id;
-    }
-  },
-  { immediate: true },
-);
 watch(
   () => agentStore.isLoadingHistory,
   (loading) => {
-    if (!loading && isFirstLoad.value) {
-      isFirstLoad.value = false;
+    if (!loading) {
+      if (isFirstLoad.value) {
+        isFirstLoad.value = false;
+      }
+      hasEverLoaded.value = true;
     }
   },
 );
@@ -2729,11 +2765,30 @@ type EntityWithResponse = BaseEntity & {
   response?: {
     items?: unknown[];
   };
+  result?: {
+    items?: unknown[];
+  };
+  payload?: {
+    items?: unknown[];
+  };
 };
 
 const entities = computed<EntityWithResponse[]>(
   () => agentStore.createdEntities,
 );
+const hasPreviewData = computed(() => {
+  return entities.value?.some((e) => {
+    const payloadItems = e?.payload?.items || [];
+    const resultItems = e?.result?.items || [];
+    const responseItems = e?.response?.items || [];
+
+    return (
+      (Array.isArray(payloadItems) && payloadItems.length > 0) ||
+      (Array.isArray(resultItems) && resultItems.length > 0) ||
+      (Array.isArray(responseItems) && responseItems.length > 0)
+    );
+  });
+});
 
 const orderedMessages = computed(() => {
   const historyMessages = Array.isArray(agentStore.chatHistory)
@@ -2977,7 +3032,6 @@ interface FileWithId extends File {
 }
 
 const selectedFiles = ref<FileWithId[]>([]);
-const isSendingAnimation = ref(false);
 
 const createObjectURL = (file: FileWithId): string => file.objectUrl || "";
 
@@ -3081,14 +3135,13 @@ const uploadFiles = async (): Promise<any[]> => {
 };
 async function sendMessage() {
   const message = userMessage.value?.trim();
+
   if (
     (!message && !selectedFiles.value.length) ||
     !workspaceId.value ||
     agentStore.isSending
   )
     return;
-
-  isSendingAnimation.value = true;
 
   const filesToSend = [...selectedFiles.value];
   let attachments: any[] = [];
@@ -3104,7 +3157,7 @@ async function sendMessage() {
   const finalMessage = message || "";
   userMessage.value = "";
 
-  // Reset all streaming state before starting
+  // Reset streaming state
   streamingContent.value = "";
   displayedContent.value = "";
   streamingPhase.value = "thinking";
@@ -3112,15 +3165,17 @@ async function sendMessage() {
   streamingTotalMs.value = null;
   isAiThinkingBubbleVisible.value = true;
   agentStore.isAiTyping = true;
+
   scrollToBottom();
 
-  // Add optimistic user message
+  // Optimistic message
   const tempId = "temp-" + Date.now();
   const previewAttachments = filesToSend.map((f) => ({
     filename: f.name,
     mimetype: f.type,
     url: f.objectUrl,
   }));
+
   pendingMessages.value.push({
     _id: tempId,
     type: "user",
@@ -3137,19 +3192,24 @@ async function sendMessage() {
   // Set session optimistically
   if (!activeSessionId.value) {
     activeSessionId.value = sessionIdToUse;
+
     activeSessionTitle.value =
       finalMessage.length > 40
         ? finalMessage.slice(0, 40) + "…"
         : finalMessage;
+
     localStorage.setItem("activeSessionId", activeSessionId.value);
     localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
   }
 
+  let isSuccess = false;
+
   try {
-    // Await the full stream
+    // 🔥 SEND MESSAGE
     await agentStore.sendMessage({
       workspace_id: workspaceId.value,
-      user_id: authStore.userId as string,
+      user_id:
+        authStore.userId || (localStorage.getItem("user_id") as string),
       message: finalMessage,
       agent_id: selectedAgentId.value as string,
       sheet_id: sheetIdRef.value as string,
@@ -3169,116 +3229,129 @@ async function sendMessage() {
       route_path: route.path,
     });
 
-    // Wait for the typewriter animation to fully catch up to the
-    // streamed text before we do anything else — prevents a jump
-    // where history loads before animation finishes
+    // ✅ mark success ONLY if no error
+    isSuccess = true;
+
+    // Wait for typewriter animation
     await new Promise<void>((resolve) => {
       const fullText = agentStore.currentStreamText;
+
       if (!fullText || displayedContent.value.length >= fullText.length) {
         resolve();
         return;
       }
+
       const check = setInterval(() => {
         if (displayedContent.value.length >= fullText.length) {
           clearInterval(check);
           resolve();
         }
       }, 16);
-      // Safety timeout — max 6s
+
       setTimeout(() => {
         clearInterval(check);
         resolve();
       }, 6000);
     });
 
-    localStorage.setItem("activeSessionId", activeSessionId.value);
-    localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
+  } catch (err: any) {
+   toast.error(err?.message || "Something went wrong");
+  pendingMessages.value = pendingMessages.value.filter(
+    (m) => !m.metadata?.temp,
+  );
 
-    // Clear pending optimistic messages before fetching real history
-    pendingMessages.value = [];
+  isAiThinkingBubbleVisible.value = false;
+  agentStore.isAiTyping = false;
 
-    // Fetch history + entities — streaming bubble stays visible during this
-    await Promise.all([
-      agentStore.fetchChatHistory(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        route.path.includes("talent") && agentModuleName.value
-          ? agentModuleName.value
-          : (moduleSelected.value ?? undefined),
-        route.path.includes("talent") && agentModuleId.value
-          ? agentModuleId.value
-          : (moduleId.value ?? undefined),
-        sheetName.value && !isMongoId(sheetName.value)
-          ? sheetName.value
-          : undefined,
-        sheetId.value,
-        !!activeSessionId.value,
-      ),
-      agentStore.fetchCreatedEntities(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        route.path.includes("talent") && agentModuleName.value
-          ? agentModuleName.value
-          : (moduleSelected.value ?? undefined),
-        route.path.includes("talent") && agentModuleId.value
-          ? agentModuleId.value
-          : (moduleId.value ?? undefined),
-      ),
-    ]);
+  streamingContent.value = "";
+  displayedContent.value = "";
+  streamingPhase.value = "";
+  streamingThinkMs.value = null;
+  streamingTotalMs.value = null;
+}
 
-    // Wait for Vue to flush the new history messages into the DOM
-    await nextTick();
-    await nextTick();
+  // ✅ ONLY RUN THIS IF SUCCESS
+  if (isSuccess) {
+    try {
+      localStorage.setItem("activeSessionId", activeSessionId.value);
+      localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
 
-    // Verify the assistant reply is actually present in orderedMessages
-    // before we clear the streaming bubble — poll up to 2s just in case
-    // Vue hasn't finished reactivity propagation yet
-    await new Promise<void>((resolve) => {
-      const MAX_WAIT = 2000;
-      const start = Date.now();
-      const check = () => {
-        const hasAssistantReply = orderedMessages.value.some(
-          (m) => m.type === "assistant" || m.role === "assistant",
-        );
-        if (hasAssistantReply || Date.now() - start > MAX_WAIT) {
-          resolve();
-        } else {
-          requestAnimationFrame(check);
-        }
-      };
-      requestAnimationFrame(check);
-    });
+      // Clear optimistic messages
+      pendingMessages.value = [];
 
-    // History message is now painted in the DOM — atomically clear the
-    // streaming bubble in the same synchronous tick so there is NEVER
-    // a single frame where both streaming AND history message are absent
-    streamingContent.value = "";
-    displayedContent.value = "";
-    streamingPhase.value = "completed";
-    streamingThinkMs.value = null;
-    streamingTotalMs.value = null;
+      // Fetch history + entities
+      await Promise.all([
+        agentStore.fetchChatHistory(
+          workspaceId.value,
+          authStore.userId || (localStorage.getItem("user_id") as string),
+          route.path.includes("talent") && agentModuleName.value
+            ? agentModuleName.value
+            : moduleSelected.value ?? undefined,
+          route.path.includes("talent") && agentModuleId.value
+            ? agentModuleId.value
+            : moduleId.value ?? undefined,
+          sheetName.value && !isMongoId(sheetName.value)
+            ? sheetName.value
+            : undefined,
+          sheetId.value,
+          !!activeSessionId.value
+        ),
+        agentStore.fetchCreatedEntities(
+          workspaceId.value,
+          authStore.userId || (localStorage.getItem("user_id") as string),
+          route.path.includes("talent") && agentModuleName.value
+            ? agentModuleName.value
+            : moduleSelected.value ?? undefined,
+          route.path.includes("talent") && agentModuleId.value
+            ? agentModuleId.value
+            : moduleId.value ?? undefined
+        ),
+      ]);
 
-  } catch (err) {
-    console.error("Error sending message:", err);
-    pendingMessages.value = pendingMessages.value.filter(
-      (m) => !m.metadata?.temp,
-    );
-    isAiThinkingBubbleVisible.value = false;
-    agentStore.isAiTyping = false;
-    streamingContent.value = "";
-    displayedContent.value = "";
-    streamingPhase.value = "";
-    streamingThinkMs.value = null;
-    streamingTotalMs.value = null;
-  } finally {
-    pendingMessages.value = [];
-    showConfigPanel.value = false;
-    isAiThinkingBubbleVisible.value = false;
-    agentStore.isAiTyping = false;
-    agentStore.isSending = false;
-    isSendingAnimation.value = false;
-    scrollToBottom();
+      // Wait for DOM update
+      await nextTick();
+      await nextTick();
+
+      // Ensure assistant reply exists
+      await new Promise<void>((resolve) => {
+        const MAX_WAIT = 2000;
+        const start = Date.now();
+
+        const check = () => {
+          const hasAssistantReply = orderedMessages.value.some(
+            (m) => m.type === "assistant" || m.role === "assistant"
+          );
+
+          if (hasAssistantReply || Date.now() - start > MAX_WAIT) {
+            resolve();
+          } else {
+            requestAnimationFrame(check);
+          }
+        };
+
+        requestAnimationFrame(check);
+      });
+
+      // Clear streaming safely
+      streamingContent.value = "";
+      displayedContent.value = "";
+      streamingPhase.value = "completed";
+      streamingThinkMs.value = null;
+      streamingTotalMs.value = null;
+
+    } catch (err) {
+      console.error("Post-success processing failed:", err);
+    }
   }
+
+  // 🔚 FINAL CLEANUP (always runs)
+  pendingMessages.value = [];
+  showConfigPanel.value = false;
+  isAiThinkingBubbleVisible.value = false;
+  agentStore.isAiTyping = false;
+  agentStore.isSending = false;
+
+  scrollToBottom();
 }
 // Accept / Decline
 async function acceptChanges(payload: any) {
@@ -3524,6 +3597,9 @@ const openConfigPanel = () => {
 
 const expandPanel = () => {
   isManuallyExpanded.value = true;
+  if (isExpanded.value && !hasPreviewData.value) {
+    showConfigPanel.value = true;
+  }
 };
 
 const compressPanel = () => {
@@ -3584,7 +3660,7 @@ onClickOutside(levelRef, () => {
   openLevel.value = false;
 });
 
-const agentsCreated = computed(() => agentStore.agentsCreated);
+
 
 type Agent = {
   _id: string;
@@ -3595,9 +3671,8 @@ type Agent = {
   model?: string;
   role?: string;
 };
-
 const agentOptions = computed(() => {
-  const base = (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
+  return (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
     _id: agent._id,
     title: agent.name.includes(" ") ? agent.name : `${agent.name} agent`,
     description: agent.description,
@@ -3610,50 +3685,24 @@ const agentOptions = computed(() => {
       } text-[6px]`,
     },
   }));
-  const passedAgent = agentPassedData.value;
-  if (
-    isTalentRoute.value &&
-    passedAgent &&
-    !base.find((a: Agent) => a._id === passedAgent._id)
-  ) {
-    base.unshift({
-      _id: passedAgent._id,
-      title: passedAgent.name,
-      description: passedAgent.description,
-      icon: {
-        prefix: "fa-solid",
-        iconName: "fa-circle text-green-500 text-[6px]",
-      },
-    });
-  }
-  return base;
 });
 const selectedAgentName = computed(() => {
-  if (isTalentRoute.value && agentPassedData.value?.name) {
-    const name = agentPassedData.value.name;
-    return name.length > 20 ? name.slice(0, 20) + "..." : name;
-  }
-
   const agent = agentsCreated.value?.data?.agents?.find(
     (a: any) => a._id === selectedAgentId.value,
   );
-
   if (!agent?.name) return "Select Agent";
-
   return agent.name.length > 20 ? agent.name.slice(0, 20) + "..." : agent.name;
 });
 
+// ✅ Simple — always select first agent on any route
 watch(
   () => agentsCreated.value?.data?.agents,
   (agents) => {
     if (!agents?.length) return;
-    if (!isTalentRoute.value && !selectedAgentId.value) {
+    if (!selectedAgentId.value) {
       selectedAgentId.value = agents[0]._id;
-    }
-    if (!isTalentRoute.value && selectedAgentId.value) {
-      const stillExists = agents.some(
-        (a: any) => a._id === selectedAgentId.value,
-      );
+    } else {
+      const stillExists = agents.some((a: any) => a._id === selectedAgentId.value);
       if (!stillExists) {
         selectedAgentId.value = agents[0]._id;
       }
@@ -3661,7 +3710,6 @@ watch(
   },
   { immediate: true },
 );
-
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
   { _id: "2", title: "Lead", value: "LEAD" },
@@ -4252,7 +4300,6 @@ const loadAgentSettings = async () => {
   webSearch.value =
     agentsData.value?.web_browsing_enabled ?? false;
 };
-
 async function fetchAssignedAgents() {
   await agentStore.fetchSavedAgents(
     workspaceId.value,
@@ -4260,11 +4307,10 @@ async function fetchAssignedAgents() {
     selectedModule.value,
   );
   const agents = agentStore.agentsCreated?.data?.agents;
-  if (agents?.length && !isTalentRoute.value && !selectedAgentId.value) {
+  if (agents?.length && !selectedAgentId.value) {
     selectedAgentId.value = agents[0]._id;
   }
 }
-
 async function fetchAgentsRolesPermissions() {
   await agentStore.fetchAgentsRolesPermissions(workspaceId.value);
 }
@@ -4790,149 +4836,601 @@ onClickOutside(sourceDropdownRef, () => {
   showSourceDropdown.value = false;
 });
 
-const emptyStateQuickPrompts = computed(() => {
-  const ctx = contextTitle.value;
-  const mod = moduleSelected.value || ctx;
-  const src = selectedSource.value;
+// ── Module context detection ──────────────────────────────────────────────────
+const moduleContext = computed(() => {
+  const path = route.path.toLowerCase();
+  const name = (route.name as string)?.toLowerCase() || "";
 
-  const map: Record<string, string[]> = {
-    all: [
-      `Summarize the current status of ${mod}`,
-      `What tasks are overdue in ${mod}?`,
-      `What is assigned to me?`,
-      `Which items have the highest priority?`,
-    ],
-    workspace: [
-      `What's the latest update in ${mod}?`,
-      `Show me all open items in ${mod}`,
-      `Who is working on what in ${mod}?`,
-      `Give me a progress report for ${mod}`,
-    ],
-    sheets: [
-      `Summarize the data in my sheets`,
-      `Find any anomalies or outliers in my sheet data`,
-      `What are the top entries by value?`,
-      `Show me rows that haven't been updated recently`,
-    ],
-    tickets: [
-      `What tasks are overdue?`,
-      `Which tickets are assigned to me?`,
-      `Show me the highest priority open tickets`,
-      `Find tasks with no assignee`,
-    ],
-    docs: [
-      `Summarize my recent documents`,
-      `Find docs related to ${mod}`,
-      `Which docs haven't been updated in a while?`,
-      `What decisions are documented?`,
-    ],
-    web: [
-      `What are the latest trends in project management?`,
-      `Search for best practices in ${mod}`,
-      `Find recent news about my industry`,
-      `Look up tools similar to what we use`,
-    ],
-    training: [
-      `What have I trained this agent on?`,
-      `Summarize the agent's knowledge base`,
-      `What prompts are configured for this agent?`,
-      `Show me what this agent knows about ${mod}`,
-    ],
+  if (path.includes("peak") || name.includes("peak")) return "peak";
+  if (path.includes("talent") || name.includes("people")) return "talent";
+  if (path.includes("plan") || name.includes("plan")) return "plan";
+  if (path.includes("process") || name.includes("process")) return "process";
+  if (path.includes("more") || name.includes("more")) return "more";
+  return "workspace";
+});
+
+const emptyStateQuickPrompts = computed(() => {
+  const mod = moduleSelected.value || contextTitle.value;
+  const src = selectedSource.value;
+  const ctx = moduleContext.value;
+
+  // Per-module prompt maps
+  const modulePrompts: Record<string, Record<string, string[]>> = {
+    peak: {
+      all: [
+        `Give me a summary of all widgets in Peak`,
+        `Which KPIs are underperforming?`,
+        `What metrics need attention right now?`,
+        `Show me trends across all Peak dashboards`,
+      ],
+      workspace: [
+        `Summarize the Peak dashboard for ${mod}`,
+        `Which widgets have the most activity?`,
+        `Show me the top performing metrics`,
+        `What data sources are connected to Peak?`,
+      ],
+      sheets: [
+        `Which sheets are powering my Peak widgets?`,
+        `Show me sheet data behind my KPI widgets`,
+        `Find anomalies in the data feeding Peak`,
+        `What are the top rows driving my dashboard?`,
+      ],
+      tickets: [
+        `Which tasks are linked to Peak metrics?`,
+        `Show overdue items affecting my KPIs`,
+        `What open tickets are blocking peak performance?`,
+        `Find tasks assigned to me related to metrics`,
+      ],
+      docs: [
+        `Find docs related to my Peak setup`,
+        `Summarize documentation for my dashboards`,
+        `What decisions shaped the current Peak config?`,
+        `Show notes about my KPI targets`,
+      ],
+      web: [
+        `Search for best practices in dashboard design`,
+        `Find benchmarks for my key metrics`,
+        `Look up industry KPI standards`,
+        `Search for data visualization best practices`,
+      ],
+      training: [
+        `What does this agent know about my Peak setup?`,
+        `Summarize the training data for Peak`,
+        `What prompts are configured for Peak agent?`,
+        `Show me what this agent knows about my KPIs`,
+      ],
+    },
+
+    talent: {
+      all: [
+        `Summarize the current headcount in ${mod}`,
+        `Which employees are due for a review?`,
+        `Show me open positions and hiring status`,
+        `What are the top performers this quarter?`,
+      ],
+      workspace: [
+        `What's the latest update in talent management?`,
+        `Show me all active employees in ${mod}`,
+        `Who joined the team recently?`,
+        `Give me a headcount report for ${mod}`,
+      ],
+      sheets: [
+        `Summarize employee data from my sheets`,
+        `Find any missing or incomplete employee records`,
+        `What are the top entries by performance score?`,
+        `Show me employees who haven't been updated recently`,
+      ],
+      tickets: [
+        `What HR tasks are overdue?`,
+        `Which onboarding tickets are open?`,
+        `Show me highest priority HR requests`,
+        `Find tickets with no assignee in talent`,
+      ],
+      docs: [
+        `Summarize recent HR policies and documents`,
+        `Find docs related to employee onboarding`,
+        `Which HR documents haven't been updated?`,
+        `What decisions are documented for talent?`,
+      ],
+      web: [
+        `Search for best HR practices in ${mod}`,
+        `Find latest trends in talent management`,
+        `Look up industry salary benchmarks`,
+        `Search for employee retention strategies`,
+      ],
+      training: [
+        `What does this agent know about our talent data?`,
+        `Summarize the HR agent's knowledge base`,
+        `What prompts are configured for the talent agent?`,
+        `Show me what this agent knows about employees`,
+      ],
+    },
+
+    plan: {
+      all: [
+        `What sprints are currently active in ${mod}?`,
+        `Which planned items are behind schedule?`,
+        `Show me the roadmap for this quarter`,
+        `What milestones are coming up soon?`,
+      ],
+      workspace: [
+        `What's the current sprint status in ${mod}?`,
+        `Show me all planned vs completed items`,
+        `Who is responsible for upcoming milestones?`,
+        `Give me a sprint progress report`,
+      ],
+      sheets: [
+        `Summarize planning data from my sheets`,
+        `Find items that are behind schedule`,
+        `What are the top priorities by effort?`,
+        `Show me items without deadlines`,
+      ],
+      tickets: [
+        `What planned tickets are overdue?`,
+        `Which sprint items are assigned to me?`,
+        `Show me the highest priority backlog items`,
+        `Find tickets not assigned to any sprint`,
+      ],
+      docs: [
+        `Summarize the project planning documents`,
+        `Find docs related to roadmap decisions`,
+        `Which planning docs need updating?`,
+        `What decisions shaped the current roadmap?`,
+      ],
+      web: [
+        `Search for agile planning best practices`,
+        `Find sprint estimation techniques`,
+        `Look up roadmap planning frameworks`,
+        `Search for OKR goal-setting methods`,
+      ],
+      training: [
+        `What does this agent know about our planning?`,
+        `Summarize the planning agent's knowledge base`,
+        `What prompts are set up for the plan agent?`,
+        `Show me what this agent knows about sprints`,
+      ],
+    },
+
+    process: {
+      all: [
+        `What processes are currently active in ${mod}?`,
+        `Which workflows have bottlenecks?`,
+        `Show me process completion rates`,
+        `What steps are taking the longest?`,
+      ],
+      workspace: [
+        `What's the status of active processes in ${mod}?`,
+        `Show me all running workflows`,
+        `Which processes are blocked or stalled?`,
+        `Give me a process efficiency report`,
+      ],
+      sheets: [
+        `Summarize process data from my sheets`,
+        `Find bottlenecks in my workflow data`,
+        `What are the slowest process steps?`,
+        `Show me processes with missing data`,
+      ],
+      tickets: [
+        `What process tasks are overdue?`,
+        `Which workflow tickets are assigned to me?`,
+        `Show me blocked process tickets`,
+        `Find tickets causing workflow delays`,
+      ],
+      docs: [
+        `Summarize the process documentation`,
+        `Find docs related to workflow design`,
+        `Which process docs need updating?`,
+        `What SOPs are documented for ${mod}?`,
+      ],
+      web: [
+        `Search for workflow optimization strategies`,
+        `Find process automation best practices`,
+        `Look up business process improvement methods`,
+        `Search for SOP writing templates`,
+      ],
+      training: [
+        `What does this agent know about our processes?`,
+        `Summarize the process agent's knowledge base`,
+        `What prompts are configured for process agent?`,
+        `Show me what this agent knows about workflows`,
+      ],
+    },
+
+    workspace: {
+      all: [
+        `Summarize the current status of ${mod}`,
+        `What tasks are overdue in ${mod}?`,
+        `What is assigned to me?`,
+        `Which items have the highest priority?`,
+      ],
+      workspace: [
+        `What's the latest update in ${mod}?`,
+        `Show me all open items in ${mod}`,
+        `Who is working on what in ${mod}?`,
+        `Give me a progress report for ${mod}`,
+      ],
+      sheets: [
+        `Summarize the data in my sheets`,
+        `Find any anomalies or outliers in my sheet data`,
+        `What are the top entries by value?`,
+        `Show me rows that haven't been updated recently`,
+      ],
+      tickets: [
+        `What tasks are overdue?`,
+        `Which tickets are assigned to me?`,
+        `Show me the highest priority open tickets`,
+        `Find tasks with no assignee`,
+      ],
+      docs: [
+        `Summarize my recent documents`,
+        `Find docs related to ${mod}`,
+        `Which docs haven't been updated in a while?`,
+        `What decisions are documented?`,
+      ],
+      web: [
+        `What are the latest trends in project management?`,
+        `Search for best practices in ${mod}`,
+        `Find recent news about my industry`,
+        `Look up tools similar to what we use`,
+      ],
+      training: [
+        `What have I trained this agent on?`,
+        `Summarize the agent's knowledge base`,
+        `What prompts are configured for this agent?`,
+        `Show me what this agent knows about ${mod}`,
+      ],
+    },
   };
 
-  return (map[src] ?? map["all"]).slice(0, 4);
+  const promptsForModule = modulePrompts[ctx] ?? modulePrompts["workspace"];
+  return (promptsForModule[src] ?? promptsForModule["all"]).slice(0, 4);
 });
 
 const emptyStateFeatureCards = computed(() => {
-  const ctx = contextTitle.value;
+  const ctx = moduleContext.value;
   const src = selectedSource.value;
+  const mod = moduleSelected.value || contextTitle.value;
 
-  const all = [
-    {
-      title: "Executive summary",
-      description: "Generate a concise overview from your workspace data.",
-      prompt: `Create an executive summary for ${ctx}`,
-      icon: "fa-solid fa-chart-line",
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-500",
-      isNew: true,
-      sources: ["all", "workspace", "sheets"],
-    },
-    {
-      title: "Project update",
-      description: "Time-based status update across active items.",
-      prompt: `Give me a project update for ${ctx} this week`,
-      icon: "fa-solid fa-calendar-check",
-      iconBg: "bg-purple-50",
-      iconColor: "text-purple-500",
-      isNew: true,
-      sources: ["all", "workspace", "tickets"],
-    },
-    {
-      title: "Find duplicate tasks",
-      description: "Identify and surface overlapping or redundant work.",
-      prompt: `Find any duplicate or overlapping tasks in ${ctx}`,
-      icon: "fa-solid fa-copy",
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-500",
-      isNew: true,
-      sources: ["all", "tickets"],
-    },
-    {
-      title: "Find stuck tasks",
-      description: "Locate items with no recent progress or updates.",
-      prompt: `Which tasks in ${ctx} are stuck or stagnant?`,
-      icon: "fa-solid fa-triangle-exclamation",
-      iconBg: "bg-amber-50",
-      iconColor: "text-amber-500",
-      isNew: false,
-      sources: ["all", "tickets", "workspace"],
-    },
-    {
-      title: "Summarize documents",
-      description: "Get a quick digest of your recent docs.",
-      prompt: `Summarize the key points from my recent documents in ${ctx}`,
-      icon: "fa-solid fa-file-lines",
-      iconBg: "bg-orange-50",
-      iconColor: "text-orange-500",
-      isNew: false,
-      sources: ["all", "docs"],
-    },
-    {
-      title: "Web research",
-      description: "Find external context and latest information.",
-      prompt: `Search the web for insights relevant to ${ctx}`,
-      icon: "fa-solid fa-globe",
-      iconBg: "bg-sky-50",
-      iconColor: "text-sky-500",
-      isNew: true,
-      sources: ["all", "web"],
-    },
-    {
-      title: "Analyze sheet data",
-      description: "Surface patterns and insights from your sheets.",
-      prompt: `Analyze the data in my sheets and highlight key trends`,
-      icon: "fa-solid fa-chart-bar",
-      iconBg: "bg-teal-50",
-      iconColor: "text-teal-500",
-      isNew: false,
-      sources: ["all", "sheets"],
-    },
-    {
-      title: "Agent knowledge summary",
-      description: "See what this agent has been trained on.",
-      prompt: `Summarize what this agent knows and what it can help me with`,
-      icon: "fa-solid fa-brain",
-      iconBg: "bg-pink-50",
-      iconColor: "text-pink-500",
-      isNew: false,
-      sources: ["all", "training"],
-    },
-  ];
+  const cardsByModule: Record<string, any[]> = {
+    peak: [
+      {
+        title: "Dashboard summary",
+        description: "Get an AI overview of all your Peak widgets and KPIs.",
+        prompt: `Summarize all widgets and KPIs in my Peak dashboard`,
+        icon: "fa-solid fa-gauge-high",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: true,
+        sources: ["all", "workspace"],
+      },
+      {
+        title: "Underperforming metrics",
+        description: "Spot KPIs that are falling below targets.",
+        prompt: `Which metrics or KPIs are underperforming in Peak?`,
+        icon: "fa-solid fa-arrow-trend-down",
+        iconBg: "bg-red-50",
+        iconColor: "text-red-500",
+        isNew: true,
+        sources: ["all", "sheets", "workspace"],
+      },
+      {
+        title: "Data anomalies",
+        description: "Detect unusual patterns in your dashboard data.",
+        prompt: `Find any anomalies or unexpected trends in my Peak data`,
+        icon: "fa-solid fa-triangle-exclamation",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: false,
+        sources: ["all", "sheets"],
+      },
+      {
+        title: "Metric benchmarking",
+        description: "Compare your KPIs against industry standards.",
+        prompt: `Search for industry benchmarks to compare with my current KPIs`,
+        icon: "fa-solid fa-ranking-star",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: true,
+        sources: ["all", "web"],
+      },
+      {
+        title: "Widget data deep dive",
+        description: "Analyze the sheet data powering your widgets.",
+        prompt: `Analyze the sheet data behind my Peak widgets in detail`,
+        icon: "fa-solid fa-chart-bar",
+        iconBg: "bg-teal-50",
+        iconColor: "text-teal-500",
+        isNew: false,
+        sources: ["all", "sheets"],
+      },
+      {
+        title: "Agent knowledge summary",
+        description: "See what this agent knows about your dashboards.",
+        prompt: `What does this agent know about my Peak dashboard setup?`,
+        icon: "fa-solid fa-brain",
+        iconBg: "bg-pink-50",
+        iconColor: "text-pink-500",
+        isNew: false,
+        sources: ["all", "training"],
+      },
+    ],
 
-  return all.filter((c) => c.sources.includes(src)).slice(0, 4);
+    talent: [
+      {
+        title: "Headcount report",
+        description: "Get a full overview of your team composition.",
+        prompt: `Give me a complete headcount report for ${mod}`,
+        icon: "fa-solid fa-users",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: true,
+        sources: ["all", "workspace"],
+      },
+      {
+        title: "Pending reviews",
+        description: "Find employees due for performance reviews.",
+        prompt: `Which employees are due or overdue for a performance review?`,
+        icon: "fa-solid fa-star-half-stroke",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: true,
+        sources: ["all", "workspace", "tickets"],
+      },
+      {
+        title: "Open positions",
+        description: "Summarize current hiring pipeline and open roles.",
+        prompt: `Show me all open positions and the current hiring status`,
+        icon: "fa-solid fa-briefcase",
+        iconBg: "bg-emerald-50",
+        iconColor: "text-emerald-500",
+        isNew: false,
+        sources: ["all", "tickets"],
+      },
+      {
+        title: "Onboarding status",
+        description: "Check the progress of new hire onboarding.",
+        prompt: `What is the onboarding status for recent new hires?`,
+        icon: "fa-solid fa-person-walking-arrow-right",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: true,
+        sources: ["all", "tickets", "workspace"],
+      },
+      {
+        title: "Salary benchmarking",
+        description: "Compare compensation against industry rates.",
+        prompt: `Search for current salary benchmarks for roles in ${mod}`,
+        icon: "fa-solid fa-sack-dollar",
+        iconBg: "bg-sky-50",
+        iconColor: "text-sky-500",
+        isNew: false,
+        sources: ["all", "web"],
+      },
+      {
+        title: "HR policy summary",
+        description: "Get a digest of your latest HR documents.",
+        prompt: `Summarize the key HR policies and recent document updates`,
+        icon: "fa-solid fa-file-shield",
+        iconBg: "bg-orange-50",
+        iconColor: "text-orange-500",
+        isNew: false,
+        sources: ["all", "docs"],
+      },
+    ],
+
+    plan: [
+      {
+        title: "Sprint status",
+        description: "Get the current status of all active sprints.",
+        prompt: `Give me a full status report on all active sprints in ${mod}`,
+        icon: "fa-solid fa-rocket",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: true,
+        sources: ["all", "workspace", "tickets"],
+      },
+      {
+        title: "Behind schedule items",
+        description: "Find planned items that are running late.",
+        prompt: `Which planned items or milestones are behind schedule?`,
+        icon: "fa-solid fa-clock",
+        iconBg: "bg-red-50",
+        iconColor: "text-red-500",
+        isNew: true,
+        sources: ["all", "tickets", "workspace"],
+      },
+      {
+        title: "Roadmap overview",
+        description: "Summarize upcoming milestones and delivery dates.",
+        prompt: `Give me an overview of the roadmap and upcoming milestones for ${mod}`,
+        icon: "fa-solid fa-map",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: false,
+        sources: ["all", "workspace"],
+      },
+      {
+        title: "Backlog grooming",
+        description: "Identify unassigned or unprioritized backlog items.",
+        prompt: `Find backlog tickets that are unassigned or not in any sprint`,
+        icon: "fa-solid fa-list-check",
+        iconBg: "bg-emerald-50",
+        iconColor: "text-emerald-500",
+        isNew: false,
+        sources: ["all", "tickets"],
+      },
+      {
+        title: "Agile best practices",
+        description: "Get tips on improving sprint planning.",
+        prompt: `Search for agile sprint planning best practices and estimation techniques`,
+        icon: "fa-solid fa-lightbulb",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: true,
+        sources: ["all", "web"],
+      },
+      {
+        title: "Planning docs summary",
+        description: "Digest your roadmap and planning documents.",
+        prompt: `Summarize all planning and roadmap documents for ${mod}`,
+        icon: "fa-solid fa-file-lines",
+        iconBg: "bg-orange-50",
+        iconColor: "text-orange-500",
+        isNew: false,
+        sources: ["all", "docs"],
+      },
+    ],
+
+    process: [
+      {
+        title: "Workflow bottlenecks",
+        description: "Find steps causing delays in your processes.",
+        prompt: `Which steps or stages in ${mod} are causing workflow bottlenecks?`,
+        icon: "fa-solid fa-filter-circle-xmark",
+        iconBg: "bg-red-50",
+        iconColor: "text-red-500",
+        isNew: true,
+        sources: ["all", "workspace", "tickets"],
+      },
+      {
+        title: "Process completion rates",
+        description: "See how efficiently workflows are being completed.",
+        prompt: `Give me completion rates and efficiency metrics for processes in ${mod}`,
+        icon: "fa-solid fa-chart-pie",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: true,
+        sources: ["all", "workspace", "sheets"],
+      },
+      {
+        title: "Stalled processes",
+        description: "Locate workflows that haven't progressed recently.",
+        prompt: `Which processes or workflows in ${mod} are stalled or stuck?`,
+        icon: "fa-solid fa-pause",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: false,
+        sources: ["all", "tickets", "workspace"],
+      },
+      {
+        title: "SOP summary",
+        description: "Get a digest of your standard operating procedures.",
+        prompt: `Summarize all SOPs and process documentation for ${mod}`,
+        icon: "fa-solid fa-book-open",
+        iconBg: "bg-orange-50",
+        iconColor: "text-orange-500",
+        isNew: false,
+        sources: ["all", "docs"],
+      },
+      {
+        title: "Automation opportunities",
+        description: "Find process steps that could be automated.",
+        prompt: `Search for automation opportunities and best practices for workflows like ${mod}`,
+        icon: "fa-solid fa-robot",
+        iconBg: "bg-teal-50",
+        iconColor: "text-teal-500",
+        isNew: true,
+        sources: ["all", "web"],
+      },
+      {
+        title: "Process data analysis",
+        description: "Surface insights from your workflow sheet data.",
+        prompt: `Analyze the sheet data for ${mod} and highlight process inefficiencies`,
+        icon: "fa-solid fa-magnifying-glass-chart",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: false,
+        sources: ["all", "sheets"],
+      },
+    ],
+
+    workspace: [
+      {
+        title: "Executive summary",
+        description: "Generate a concise overview from your workspace data.",
+        prompt: `Create an executive summary for ${mod}`,
+        icon: "fa-solid fa-chart-line",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: true,
+        sources: ["all", "workspace", "sheets"],
+      },
+      {
+        title: "Project update",
+        description: "Time-based status update across active items.",
+        prompt: `Give me a project update for ${mod} this week`,
+        icon: "fa-solid fa-calendar-check",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: true,
+        sources: ["all", "workspace", "tickets"],
+      },
+      {
+        title: "Find duplicate tasks",
+        description: "Identify and surface overlapping or redundant work.",
+        prompt: `Find any duplicate or overlapping tasks in ${mod}`,
+        icon: "fa-solid fa-copy",
+        iconBg: "bg-emerald-50",
+        iconColor: "text-emerald-500",
+        isNew: true,
+        sources: ["all", "tickets"],
+      },
+      {
+        title: "Find stuck tasks",
+        description: "Locate items with no recent progress or updates.",
+        prompt: `Which tasks in ${mod} are stuck or stagnant?`,
+        icon: "fa-solid fa-triangle-exclamation",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: false,
+        sources: ["all", "tickets", "workspace"],
+      },
+      {
+        title: "Summarize documents",
+        description: "Get a quick digest of your recent docs.",
+        prompt: `Summarize the key points from my recent documents in ${mod}`,
+        icon: "fa-solid fa-file-lines",
+        iconBg: "bg-orange-50",
+        iconColor: "text-orange-500",
+        isNew: false,
+        sources: ["all", "docs"],
+      },
+      {
+        title: "Web research",
+        description: "Find external context and latest information.",
+        prompt: `Search the web for insights relevant to ${mod}`,
+        icon: "fa-solid fa-globe",
+        iconBg: "bg-sky-50",
+        iconColor: "text-sky-500",
+        isNew: true,
+        sources: ["all", "web"],
+      },
+      {
+        title: "Analyze sheet data",
+        description: "Surface patterns and insights from your sheets.",
+        prompt: `Analyze the data in my sheets for ${mod} and highlight key trends`,
+        icon: "fa-solid fa-chart-bar",
+        iconBg: "bg-teal-50",
+        iconColor: "text-teal-500",
+        isNew: false,
+        sources: ["all", "sheets"],
+      },
+      {
+        title: "Agent knowledge summary",
+        description: "See what this agent has been trained on.",
+        prompt: `Summarize what this agent knows and what it can help me with`,
+        icon: "fa-solid fa-brain",
+        iconBg: "bg-pink-50",
+        iconColor: "text-pink-500",
+        isNew: false,
+        sources: ["all", "training"],
+      },
+    ],
+  };
+
+  const cards = cardsByModule[ctx] ?? cardsByModule["workspace"];
+  return cards.filter((c) => c.sources.includes(src)).slice(0, 4);
 });
-
 // Clicks a suggestion, fills input AND immediately sends
 async function applyPromptAndSend(text: string) {
   userMessage.value = text;
