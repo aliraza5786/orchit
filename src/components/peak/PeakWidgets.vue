@@ -1217,7 +1217,12 @@
                       v-for="suggestion in aiSuggestions"
                       :key="suggestion"
                       @click="aiPrompt = suggestion"
-                      class="text-left px-3 py-3 rounded-xl border border-[var(--border)] text-[12px] text-[var(--text-secondary)] bg-[var(--bg-card)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer leading-snug"
+                      class="text-left px-3 py-3 rounded-xl border border-[var(--border)] text-[12px] text-[var(--text-secondary)] bg-[var(--bg-card)] 
+                      hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--bg-surface)]
+                      transition-all duration-200 ease-out 
+                      hover:scale-[1.03] hover:-translate-y-0.5
+                      active:scale-[0.98]
+                      cursor-pointer leading-snug"
                     >
                       {{ suggestion }}
                     </button>
