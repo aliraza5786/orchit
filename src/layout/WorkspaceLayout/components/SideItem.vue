@@ -76,6 +76,16 @@
         <i class="fa-solid fa-trash text-red-500 text-[11px] me-1"></i> Delete Module
     </button>
   </li>
+  <li>
+    <button
+      :disabled="!canUpdate"
+      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm flex items-center"
+      :class="!canUpdate? 'cursor-not-allowed':'cursor-pointer'"
+      @click.stop="emitEdit"
+    >
+     <i class="fa-regular fa-edit text-[12px] me-1"></i> Edit Module
+    </button>
+  </li>
    <li>
     <button
       class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
@@ -120,7 +130,7 @@
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useWorkspaceStore } from "../../../stores/workspace"; 
-const emit = defineEmits(['toggleDropdown','delete','closeDropdown','share'])
+const emit = defineEmits(['toggleDropdown','delete','closeDropdown','share','edit'])
 /** --- PROPS --- **/
 const props = defineProps<{
   label: string;
@@ -133,7 +143,8 @@ const props = defineProps<{
   deleteIcon?:any;
   activeDropdownId?: string | null;
   canDelete?: boolean;
-  canShare?: string
+  canShare?: string;
+  canUpdate?: boolean;
 }>();
 const showTooltip = ref(false);
 const itemRef = ref<HTMLElement | null>(null);
@@ -189,6 +200,11 @@ const emitConfigure = () => {
 const emitShare = () => {
   emit('closeDropdown')
   emit('share', props.id)
+}
+const emitEdit = () => {
+  if (!props.canDelete) return
+  emit('closeDropdown')
+  emit('edit', props.id)
 }
 const connectStream = () => {
   if (stopped) return;

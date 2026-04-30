@@ -33,6 +33,22 @@ export const useDeleteModule = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+export const useUpdateModule = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["update-module"],
+    } as any,
+    {
+      mutationFn: (vars: any) =>
+        request({
+          url: `/workspace/module/update`,
+          method: "PATCH",
+          data: vars.payload,
+        }),
+      ...(options as any),
+    } as any
+  );
 export const useCreateModuleAI = (options = {}) =>
   useApiMutation<any, any>(
     {
