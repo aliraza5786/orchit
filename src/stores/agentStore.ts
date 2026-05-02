@@ -88,7 +88,9 @@ interface StreamChunk {
 }
 interface AcceptEntitiesPayload {
   workspace_id: string;
-  entity_ids: string[];
+  entity_ids?: string[];
+  action?: string;
+  entities?: any[];
   // Add other properties as needed
 }
 interface TrainPersonaPayload {

@@ -5769,15 +5769,6 @@ function animateStreamingContent(targetText: string) {
   animFrameId = requestAnimationFrame(step)
 }
 
-// Also add a flush function — call this when stream completes
-// so text snaps to full content without waiting for animation
-function flushStreamingContent() {
-  if (animFrameId !== null) {
-    cancelAnimationFrame(animFrameId)
-    animFrameId = null
-  }
-  displayedContent.value = animTargetText
-}
 </script>
 
 <style scoped>
