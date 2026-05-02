@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col sm:flex-row shadow-none flex-nowrap items-center justify-between gap-3 pt-4 mt-auto py-4 bg-transparent w-full">
+  <div class="flex flex-col sm:flex-row shadow-none flex-nowrap items-center justify-between gap-3 mt-auto py-2.5 bg-transparent w-full">
     <!-- Page Info -->
     <p class="text-xs text-text-secondary order-2 sm:order-1 text-nowrap">
       Page {{ currentPage }} of {{ lastPage }}

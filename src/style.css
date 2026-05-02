@@ -1,11 +1,11 @@
 /* @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap"); */
 @import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
-/* @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"); */
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import "tailwindcss"; 
 
 /* -------- Base resets & defaults -------- */
 :root {
-  font-family: 'Lato', sans-serif;
+  font-family: 'Inter', sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -88,6 +88,7 @@ html.theme-switching * {
   --color-bg-dropdown: var(--bg-input); /* dropdown menus */
   --color-bg-dropdown-menu-hover: var(--bg-body); /* dropdown menus */
   --color-sky: var(--small-color);
+  --font-sans: "Inter", sans-serif;
   --font-manrope: "Manrope", sans-serif;
   --font-lato: "Lato", sans-serif;
   --font-inter: "Inter", sans-serif;
@@ -103,10 +104,11 @@ body {
   min-height: 100%;
 }
 
-body {
+body { 
   min-width: 320px;
   background: var(--background);
   color: var(--text);
+  font-family: 'Inter', sans-serif !important;
 }
 
 #app {
@@ -321,7 +323,7 @@ body:not(.home-page) * {
   border-radius: 12px !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
   padding: 14px 44px 14px 18px !important; /* Increased right padding for cross icon */
-  font-family: var(--font-lato) !important;
+  font-family: var(--font-inter) !important;
   color: var(--text-primary) !important;
   display: flex !important;
   align-items: center !important;

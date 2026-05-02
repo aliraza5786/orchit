@@ -4,7 +4,7 @@
   >
     <!-- Header -->
     <div class="overflow-x-auto shrink-0 border-b border-border">
-      <div class="header px-4 py-3 flex items-center justify-between gap-2">
+      <div class="header px-2 py-2 flex items-center justify-between gap-2">
         <Dropdown
           v-model="selected_sheet_id"
           :options="transformedData"
@@ -29,7 +29,7 @@
         </Dropdown>
         <div class="flex gap-3">
           <!-- Grouping -->
-          <div v-if="view != 'table'" class="relative flex items-center gap-3">
+          <div v-if="view != 'table'" class="relative flex items-center gap-2">
             <button
               ref="variableTriggerRef"
               @click="toggleVariableDropdown"
@@ -64,7 +64,7 @@
             />
           </div>
           <!-- Group button for Table View -->
-          <div v-if="view === 'table'" class="relative flex items-center gap-3">
+          <div v-if="view === 'table'" class="relative flex items-center gap-2">
             <button
               ref="groupTriggerRef"
               @click="toggleGroupDropdown"
@@ -218,7 +218,7 @@
     <!-- Kanban Board -->
     <div
       v-show="!isListPending"
-      class="flex overflow-x-auto custom_scroll_bar gap-3 py-4 h-full mx-4"
+      class="flex overflow-x-auto custom_scroll_bar gap-2 py-2 h-full mx-2"
       v-if="view === 'kanban'"
     >
       <KanbanBoard
@@ -261,7 +261,7 @@
         </template>
       </KanbanBoard>
       <!-- Add List Section -->
-      <div class="min-w-[328px]" v-if="view === 'kanban'" @click.stop>
+      <div class="min-w-[270px]" v-if="view === 'kanban'" @click.stop>
         <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
           <BaseTextField
             :autofocus="true"

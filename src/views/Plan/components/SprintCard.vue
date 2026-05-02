@@ -117,7 +117,7 @@
       <!-- Empty State -->
       <div
         v-else
-        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-15px)] min-h-0"
+        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-10px)] min-h-0"
       >
         <img
           src="../../../assets/emptyStates/sprint-plan.svg"

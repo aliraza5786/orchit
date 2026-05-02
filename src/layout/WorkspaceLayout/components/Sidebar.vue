@@ -2,23 +2,9 @@
   <SidebarSkeleton v-if="isLoading" />
   <div class="sidebar_mobile bottom-0 start-0 fixed sm:static overflow-hidden z-2 sm:z-1 sm:h-full">
     <aside
-      class="sm:overflow-y-auto whitespace-nowrap overflow-x-auto bg-transparent z-1 sm:min-w-[36px] sm:px-2 sm:max-h-full h-[60px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2.5 sm:pt-0 pb-2.5  transition-all duration-200 justify-start items-start"
-      :class="{ 'w-full sm:w-[250px]': expanded, 'w-full sm:w-14': !expanded }"
-    >
-      <!-- Mobile Toggle -->
-      <div class="hidden sm:block py-1.5 px-2 bg-bg-card mb-2  rounded-lg">
-        <button 
-          @click="emit('toggle-sidebar')"
-          class="text-text-secondary hover:text-text-primary cursor-pointer"
-          aria-label="Toggle Sidebar"
-        >
-          <i class="fa-solid fa-bars text-[14px]"></i>
-        </button>
-      </div> 
-      <!-- Workspace Logo Component -->
-    <!-- <div class="hidden sm:block">
-       <WorkSpaceDropdown :expanded="expanded" />
-    </div> -->
+      class="sm:overflow-y-auto whitespace-nowrap overflow-x-auto bg-transparent z-1 sm:min-w-[36px] sm:ps-1 pe-1.5 sm:max-h-full h-[50px] sm:h-full flex flex-row sm:flex-col gap-1 pt-2 sm:pt-0 pb-2 transition-all duration-200 justify-start items-start"
+      :class="{ 'w-full sm:w-[230px]': expanded, 'w-full sm:w-11': !expanded }"
+    >  
     <div class="text-center min-w-max" :class="expanded? 'w-full': 'w-max'">
       <SideItem
         label="Peak"

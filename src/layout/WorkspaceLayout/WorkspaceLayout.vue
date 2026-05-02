@@ -8,12 +8,12 @@
       backgroundSize: 'cover',
       backgroundPosition: 'center'
     }">
-    <WorkSpaceNav  ref="workspaceNavRef"   :expanded="sidebarExpanded" />
+    <WorkSpaceNav  ref="workspaceNavRef"   :expanded="sidebarExpanded" @toggle-sidebar="toggleSidebar" />
     <div class="flex flex-grow items-start h-full max-w-full overflow-x-hidden "
-      style="max-height:calc(100dvh - 55px);">
+      style="max-height:calc(100dvh - 40px);">
         <Sidebar v-if="localWorkspace"   :isLoading="isPending || isLoading"
        :expanded="sidebarExpanded" @toggle-sidebar="toggleSidebar" />
-       <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex pb-3 sm:max-w-[calc(100vw - 100px)] transition-all duration-200 pe-[12px] gap-[10px]"  
+       <div class="dashboard_content h-full w-full z-1 relative  rounded-lg flex pb-3 sm:max-w-[calc(100vw - 100px)] transition-all duration-200 pe-[6px] gap-[10px]"  
         :style="dashboardContentStyle"
         >
         <router-view  /> 
@@ -114,9 +114,9 @@ function toggleSidebar() {
 
 const dashboardContentStyle = computed(() => ({
   maxWidth: sidebarExpanded.value
-    ? 'calc(100vw - 250px)'
-    : 'calc(100vw - 56px)',
-  maxHeight: 'calc(100dvh - 60px)'
+    ? 'calc(100vw - 230px)'
+    : 'calc(100vw - 40px)',
+  maxHeight: 'calc(100dvh - 40px)'
 }));
 </script>
 
@@ -124,7 +124,7 @@ const dashboardContentStyle = computed(() => ({
 @media(max-width:639px){
 .dashboard_content{
   max-width: 100% !important;
-  padding: 0 14px 70px 14px;
+  padding: 0 14px 52px 14px;
 }
 
 }

@@ -3,8 +3,8 @@
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto overflow-y-hidden flex-col flex scrollbar-visible w-full"
   >
     <div class="relative">
-      <div class="header py-3 px-4  border-b border-border flex items-center justify-between gap-3  overflow-x-auto h-full">
-        <div class="flex gap-3">
+      <div class="header py-2 px-2  border-b border-border flex items-center justify-between gap-2 overflow-x-auto h-full">
+        <div class="flex gap-2">
         <!-- ... Sheet Dropdown ... -->
         <Dropdown
           ref="sheetDropdownRef"
@@ -32,7 +32,7 @@
           </template>
         </Dropdown>
         <!-- filters -->
-        <div class="relative flex items-center gap-3">
+        <div class="relative flex items-center gap-2">
             <button
               ref="filterTriggerRef"
               @click="toggleFilters"
@@ -70,7 +70,7 @@
               @close="showFilterBar = false"
             />
         </div> 
-          <div v-if="view != 'table'" class="relative flex items-center gap-3">
+          <div v-if="view != 'table'" class="relative flex items-center gap-2">
              <button
                 ref="variableTriggerRef"
                 @click="toggleVariableDropdown"
@@ -116,7 +116,7 @@
         </div>
 
         <div
-          class="flex gap-3 items-center"
+          class="flex gap-2 items-center"
           :class="{ 'opacity-60 pointer-events-none': !transformedData?.length }"
         >
          
@@ -128,7 +128,7 @@
 
           
 
-          <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
+          <div class="flex items-center gap-2 bg-bg-surface/50 h-[32px] px-2 rounded-md">
             <!-- View Buttons ... -->
             <button
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
@@ -199,9 +199,9 @@
       <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
       <div
         v-show="!isPending && !isSheetPending && hasSheets"
-        class="flex overflow-x-auto gap-3 scrollbar-visible h-full mx-4 py-4"
+        class="flex overflow-x-auto gap-2 scrollbar-visible h-full mx-2 py-2"
       >
-        <div class="flex gap-3">
+        <div class="flex gap-2">
           <KanbanBoard
             @onPlus="plusHandler"
             :board="filteredBoard"

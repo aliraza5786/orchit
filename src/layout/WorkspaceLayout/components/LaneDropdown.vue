@@ -3,7 +3,7 @@
   <div class="relative inline-block text-left" ref="dropdownRef">
     <!-- Trigger -->
     <a href="#" :class="[
-      'hover:text-text-primary text-nowrap  overflow-hidden relative hover:bg-bg-card  group rounded-lg transition-all duration-75 text-primary flex gap-2 items-center px-3 py-2',
+      'hover:text-text-primary text-nowrap text-[13px] !text-normal overflow-hidden relative hover:bg-bg-card  group rounded-lg transition-all duration-75 text-primary flex gap-1.5 items-center px-2 py-1.5',
       isOpen || selected ? 'bg-bg-card text-text-primary  ' : ''
     ]">
       <div :style="`background:${selectedColor.color}`" class="w-2 h-2 rounded-2xl "></div>

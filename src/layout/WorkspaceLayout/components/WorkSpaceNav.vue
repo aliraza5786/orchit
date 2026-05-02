@@ -1,68 +1,100 @@
 <template>
-  <nav
-    class="flex items-center justify-between min-h-16 w-full gap-4"
-  >
+  <nav class="flex items-center justify-between min-h-11 w-full gap-3 pe-1.5">
     <!-- Left side: Logo + lanes -->
     <div
-     :class="[
-     'text-2xl font-bold flex items-center min-w-0',
-      expanded ? 'gap-4' : 'gap-2',
-      workspaceStore.background.startsWith('url')
-      ? 'text-text-secondary'
-      : 'text-text-primary'
-     ]"
+      :class="[
+        'text-2xl font-bold flex items-center min-w-0',
+        expanded ? 'gap-1.5' : 'gap-1.5 ps-2 sm:ps-0',
+        workspaceStore.background.startsWith('url')
+          ? 'text-text-secondary'
+          : 'text-text-primary',
+      ]"
     >
       <!-- Logo + Title (now a dropdown trigger) -->
-      <div class="relative flex items-center ps-3.5 sm:ps-2">
-        <div 
-          class="transition-all duration-300 ease-in-out overflow-visible" 
-          :class="expanded ? 'w-[235px]' : 'w-[64px]'"
+      <div class="relative flex items-center ps-1">
+        <div
+          class="transition-all duration-300 ease-in-out overflow-visible flex items-center gap-1"
+          :class="expanded ? 'w-[220px]' : 'w-8'"
         >
           <button
             ref="logoBtnRef"
-            class="flex relative group items-center overflow-hidden justify-between cursor-pointer rounded-md w-full px-2 transition-all duration-300"
-            :class="expanded? 'b hover:shadow-md border-bg-card bg-bg-card py-1':''"
+            class="flex relative group items-center border-0 outline-0 overflow-hidden justify-between cursor-pointer rounded-lg transition-all duration-300"
+            :class="
+              expanded
+                ? 'border border-transparent hover:bg-bg-card w-full px-1.5 py-1'
+                : 'w-auto'
+            "
             aria-haspopup="menu"
             :aria-expanded="logoMenuOpen ? 'true' : 'false'"
-            @click="toggleLogoMenu"
+            @click="handleLogoClick"
             @keydown.down.prevent="openAndFocusFirst"
-            @keydown.enter.prevent="toggleLogoMenu"
-            @keydown.space.prevent="toggleLogoMenu"
+            @keydown.enter.prevent="handleLogoClick"
+            @keydown.space.prevent="handleLogoClick"
           >
-           <div class="flex items-center min-h-[25px]">
-                <!-- Loader -->
-                <div
-                  v-if="isWorkspaceLoading"
-                  class="flex items-center gap-2"
+            <div class="flex items-center">
+              <!-- Loader -->
+              <div
+                v-if="isWorkspaceLoading"
+                class="flex items-center gap-2 px-1"
+              >
+                <svg
+                  class="animate-spin h-5 w-5 text-text-primary"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
                 >
-                 <svg class="animate-spin h-5 w-5 text-text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="#6e3b96" stroke-width="2"></circle>
-                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </div>
-
-                <!-- Workspace content -->
-                <div v-else class="flex items-center">
-                  <img
-                    :src="localWorkspace.logo ?? dp"
-                    alt="Workspace menu"
-                    class="shadow-2xl rounded-full w-[25px] h-[25px] cursor-pointer aspect-square object-cover shrink-0"
-                  />
-                  <Transition name="title-fade">
-                    <h3
-                      v-if="expanded"
-                      class="text-[16px] text-left font-medium max-w-43 text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-2"
-                    >
-                      {{ localWorkspace.variables.title }}
-                    </h3>
-                  </Transition>
-                </div>
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="#6e3b96"
+                    stroke-width="2"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
               </div>
 
+              <!-- Workspace content -->
+              <div v-else class="flex items-center">
+                <div
+                  class="w-[25px] h-[25px] rounded-[10px] bg-[#2da1e7] text-white flex items-center justify-center font-bold text-[13px] shrink-0 shadow-sm"
+                  v-if="!localWorkspace.logo"
+                >
+                  {{
+                    localWorkspace.variables.title
+                      ?.substring(0, 2)
+                      .toUpperCase() || "WS"
+                  }}
+                </div>
+                <img
+                  v-else
+                  :src="localWorkspace.logo ?? dp"
+                  alt="Workspace menu"
+                  :class="expanded
+                    ? 'w-[25px] h-[25px]'
+                    : 'w-[30px] h-[30px]'"
+                  class="rounded-[10px] cursor-pointer aspect-square object-cover shrink-0 shadow-sm"
+                />
+                <Transition name="title-fade">
+                  <h3
+                    v-if="expanded"
+                    class="text-[15px] text-left font-semibold max-w-[140px] text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-1.5"
+                  >
+                    {{ localWorkspace.variables.title }}
+                  </h3>
+                </Transition>
+              </div>
+            </div>
+
             <svg
-             v-if="!expanded"
-              class="w-4 h-4 opacity-70 transition-transform duration-200 ms-1 shrink-0"
-              :class="logoMenuOpen  ? 'rotate-180' : 'rotate-0'"
+              v-if="expanded"
+              class="w-4 h-4 opacity-50 transition-transform duration-200 ms-1 shrink-0"
+              :class="logoMenuOpen ? 'rotate-180' : 'rotate-0'"
               viewBox="0 0 20 20"
               fill="currentColor"
               aria-hidden="true"
@@ -73,12 +105,27 @@
                 clip-rule="evenodd"
               />
             </svg>
-             <div @click.stop="toggleLogoMenu"
-             v-if="expanded"
-             class="transition-all duration-400 flex items-center  w-8 p-1 bg-bg-card  -right-8 top-0 h-9 group-hover:right-[-4px]  absolute"
-              >
-             <i class="fa-solid fa-ellipsis text-[12px]"></i>
-           </div>
+          </button>
+
+          <button
+            v-if="expanded"
+            @click="handleSidebarToggle"
+            class="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg hover:bg-bg-card transition-colors text-text-secondary opacity-70 border-0 cursor-pointer"
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+              <path d="M15 15l-3-3 3-3"></path>
+            </svg>
           </button>
 
           <!-- ✅ Dropdown moved INSIDE the width-controlled div so it matches button width -->
@@ -93,15 +140,11 @@
             >
               <!-- Home -->
               <button
-              class="w-full px-3 py-2 cursor-pointer text-left text-sm font-normal 
-              hover:bg-bg-card/70 
-              transition-all duration-200 ease-out
-              hover:scale-[1.02] hover:translate-x-1
-              rounded-t-xl flex items-center gap-2"
-              role="menuitem"
-              @click="goHome"
-              ref="firstItemRef"
-            >
+                class="w-full px-3 py-2 cursor-pointer text-left text-sm font-normal hover:bg-bg-card/70 transition-all duration-200 ease-out hover:scale-[1.02] hover:translate-x-1 rounded-t-xl flex items-center gap-2"
+                role="menuitem"
+                @click="goHome"
+                ref="firstItemRef"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z"
@@ -119,16 +162,12 @@
               <div class="overflow-y-auto">
                 <div class="max-h-72 py-1 cursor-pointer">
                   <button
-                  v-for="ws in workspaces?.workspaces"
-                  :key="ws._id"
-                  class="w-full px-3 py-2 text-left text-sm font-normal 
-                    hover:bg-bg-card/70 
-                    transition-all duration-200 ease-out
-                    hover:scale-[1.02] hover:translate-x-1
-                    cursor-pointer flex items-center gap-3"
-                  role="menuitem"
-                  @click="switchTo(ws)"
-                >
+                    v-for="ws in workspaces?.workspaces"
+                    :key="ws._id"
+                    class="w-full px-3 py-2 text-left text-sm font-normal hover:bg-bg-card/70 transition-all duration-200 ease-out hover:scale-[1.02] hover:translate-x-1 cursor-pointer flex items-center gap-3"
+                    role="menuitem"
+                    @click="switchTo(ws)"
+                  >
                     <img
                       :src="ws.logo ?? dp"
                       alt=""
@@ -148,20 +187,19 @@
               </div>
             </div>
           </Transition>
-
-        </div> 
+        </div>
       </div>
 
       <!-- Navigation Links -->
       <ul
-        :class="`flex text-xs font-bold overflow-x-auto items-center gap-2 ${
+        :class="`flex text-xs font-bold overflow-x-auto items-center gap-1 ${
           workspaceStore.background.startsWith('url')
             ? 'text-white'
             : 'text-text-primary'
         }`"
       >
         <li
-          class="px-3 py-2 hover:bg-bg-card cursor-pointer group rounded-lg"
+          class="px-2 text-[13px] text-normal py-1.5 hover:bg-bg-card cursor-pointer group rounded-lg"
           :class="
             workspaceStore.selectedLaneIds.length == 0
               ? 'bg-bg-card text-text-primary'
@@ -171,7 +209,7 @@
         >
           Main
         </li>
-        
+
         <li
           v-for="item in localLanes"
           :key="localWorkspace._id + '-' + item._id"
@@ -191,7 +229,7 @@
 
         <li
           v-if="canCreateLane"
-          class="hover:text-accent text-nowrap text-text-primary flex gap-2 items-center text-xs cursor-pointer px-2 py-1"
+          class="hover:text-accent text-nowrap text-text-primary flex gap-1 items-center text-[13px] text-normal cursor-pointer px-2 py-1"
           @click="createLaneHandler"
         >
           <svg
@@ -215,13 +253,17 @@
     </div>
 
     <!-- Right side -->
-    <div class="flex sm:gap-2 min-w-max items-center">
-      <button class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-2 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20" @click="workspaceStore.toggleChatBotPanel()" v-tooltip="'Ask any question'">
+    <div class="flex sm:gap-1 min-w-max items-center">
+      <button
+        class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-2 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20"
+        @click="workspaceStore.toggleChatBotPanel()"
+        v-tooltip="'Ask any question'"
+      >
         <i class="fa-solid fa-sparkles"></i>
         Ask Ai
       </button>
 
-      <button class="cursor-pointer rounded-lg p-2" @click="handleClick">
+      <button class="cursor-pointer rounded-lg p-2 w-8 h-8 flex items-center justify-center hover:bg-bg-card" @click="handleClick">
         <i class="fa-solid fa-ellipsis rotate-90 cursor-pointer"></i>
       </button>
     </div>
@@ -232,11 +274,18 @@
 import LaneDropdown from "./LaneDropdown.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import dp from "../../../assets/global/dummy.jpeg";
-import { ref, onMounted, onBeforeUnmount, nextTick, computed, watch } from "vue";
+import {
+  ref,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+  computed,
+  watch,
+} from "vue";
 import { useRouter } from "vue-router";
 import { useWorkspaces } from "../../../queries/useWorkspace"; // keep workspaces listing
 import { useWorkspaceId } from "../../../composables/useQueryParams";
-import { usePermissions } from "../../../composables/usePermissions";  
+import { usePermissions } from "../../../composables/usePermissions";
 const { canCreateLane } = usePermissions();
 
 const router = useRouter();
@@ -249,9 +298,9 @@ const laneId = ref("");
 const { workspaceId } = useWorkspaceId();
 
 // Use computed from store instead of local ref
-const localWorkspace = computed(() => workspaceStore.singleWorkspace); 
+const localWorkspace = computed(() => workspaceStore.singleWorkspace);
 // Computed lanes from store
-const localLanes = computed(() => workspaceStore.lanes || []); 
+const localLanes = computed(() => workspaceStore.lanes || []);
 const isWorkspaceLoading = computed(() => {
   return (
     !localWorkspace.value ||
@@ -261,10 +310,9 @@ const isWorkspaceLoading = computed(() => {
 });
 
 // Initialize props - removed getWorkspace
-defineProps<{ 
-  expanded?: Boolean;
+const props = defineProps<{
+  expanded?: boolean;
 }>();
-
 
 // Watch title to update localStorage (preserving existing logic)
 watch(
@@ -274,9 +322,8 @@ watch(
       localStorage.setItem("currentName", newTitle);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
-
 
 // Duplicate lane handler - updates store now
 const duplicateHandler = (data: any) => {
@@ -290,9 +337,9 @@ const duplicateHandler = (data: any) => {
 };
 
 // Toggle sidebar
-// const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
-// const handleSidebarToggle = () => emit("toggle-sidebar");
-
+const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
+const handleSidebarToggle = () => emit("toggle-sidebar");
+[];
 // === Logo dropdown state & refs ===
 const logoMenuOpen = ref(false);
 const logoBtnRef = ref<HTMLButtonElement | null>(null);
@@ -303,6 +350,18 @@ const toggleLogoMenu = async () => {
   logoMenuOpen.value = !logoMenuOpen.value;
   if (logoMenuOpen.value) await nextTick();
   firstItemRef.value?.focus();
+};
+
+const handleLogoClick = (e?: Event) => {
+  if (window.innerWidth < 640) {
+    toggleLogoMenu();
+  } else {
+    if (!props.expanded) {
+      emit("toggle-sidebar");
+    } else {
+      toggleLogoMenu();
+    }
+  }
 };
 
 const closeLogoMenu = () => {
@@ -366,23 +425,23 @@ const switchTo = (ws: any) => {
 };
 
 const clearWorkspaceStorage = () => {
-  localStorage.removeItem("activeSprintId")
-  localStorage.removeItem('showActiveSprint')
-  localStorage.removeItem('selectedModuleId')
-  localStorage.removeItem('activeSprintKey')
-  localStorage.removeItem('lastSelectedParentId')
-  localStorage.removeItem('selectedSprintTitle')
-  localStorage.removeItem('activeMilestoneId')
-  localStorage.removeItem('activeSheetId')
-  localStorage.removeItem('activeMilestoneLabel')
-  localStorage.removeItem('activePlanIds')
-  localStorage.removeItem('activePlanLabel')
-  localStorage.removeItem('sprintType')
-  localStorage.removeItem('asFirstTime')
-  localStorage.removeItem('activeSessionId');
-  localStorage.removeItem('activeSessionTitle');
-  localStorage.removeItem('selected_sheet_id');
-}
+  localStorage.removeItem("activeSprintId");
+  localStorage.removeItem("showActiveSprint");
+  localStorage.removeItem("selectedModuleId");
+  localStorage.removeItem("activeSprintKey");
+  localStorage.removeItem("lastSelectedParentId");
+  localStorage.removeItem("selectedSprintTitle");
+  localStorage.removeItem("activeMilestoneId");
+  localStorage.removeItem("activeSheetId");
+  localStorage.removeItem("activeMilestoneLabel");
+  localStorage.removeItem("activePlanIds");
+  localStorage.removeItem("activePlanLabel");
+  localStorage.removeItem("sprintType");
+  localStorage.removeItem("asFirstTime");
+  localStorage.removeItem("activeSessionId");
+  localStorage.removeItem("activeSessionTitle");
+  localStorage.removeItem("selected_sheet_id");
+};
 
 const handleClick = () => workspaceStore.toggleSettingPanel();
 const createLaneHandler = () => workspaceStore.toggleCreateLaneModalWithAI();
@@ -394,7 +453,6 @@ const openUpdateModal = (id: any) => {
 defineExpose({ laneId });
 </script>
 
-
 <style scoped>
 /* Prevent accidental text selection while navigating the menu quickly */
 [role="menu"] button {
@@ -404,7 +462,9 @@ defineExpose({ laneId });
 /* Fade + slight scale + slide-down */
 .fade-scale-enter-active,
 .fade-scale-leave-active {
-  transition: opacity 160ms ease, transform 160ms ease;
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
   will-change: opacity, transform;
 }
 

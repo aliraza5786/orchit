@@ -15,8 +15,8 @@
         ? 'text-text-primary bg-bg-card '
         : ' text-text-secondary',
       expanded
-        ? 'w-[36px] h-[36px] sm:w-full sm:h-[38px] gap-2.5'
-        : ' w-[36px] h-[36px] gap-1.5 ',
+        ? 'w-[32px] h-[32px] sm:w-full sm:h-[32px] gap-2.5'
+        : ' w-[32px] h-[32px] gap-1.5 ',
     ]"
     ref="itemRef"
   >
@@ -28,7 +28,7 @@
 
     <i
       v-else
-      :class="[...iconClasses, expanded ? 'text-[14px]' : 'text-[14px]']"
+      :class="[...iconClasses, expanded ? 'text-[12px]' : 'text-[12px]']"
     ></i>
 
     <!-- Label -->
@@ -39,8 +39,8 @@
   >
    <span
   v-if="label"
-  class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
-  :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
+  class="whitespace-nowrap font-normal line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
+  :class="expanded ? 'text-start text-[13px]' : 'text-[10px]'"
 >
   {{ label.length > 20 ? label.slice(0, 20) + '...' : label }}
 </span>
