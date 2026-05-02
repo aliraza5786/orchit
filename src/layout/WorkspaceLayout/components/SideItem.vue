@@ -8,18 +8,29 @@
       progress == 'processing' && status == 'running'
         ? 'disbled !cursor-not-allowed opacity-50'
         : workspaceStore.background.startsWith('url') && !isActive
-        ? 'text-text-primary bg-bg-card'
-        : workspaceStore.background.startsWith('url') && isActive
-        ? 'text-text-primary bg-accent'
-        : isActive
-        ? 'text-text-primary bg-bg-card '
-        : ' text-text-secondary',
+          ? 'text-text-primary bg-bg-card'
+          : workspaceStore.background.startsWith('url') && isActive
+            ? 'text-text-primary bg-accent'
+            : isActive
+              ? 'text-text-primary bg-bg-card '
+              : ' text-text-secondary',
       expanded
-        ? 'w-[36px] h-[36px] sm:w-full sm:h-[38px] gap-2.5'
-        : ' w-[36px] h-[36px] gap-1.5 ',
+        ? 'w-[32px] h-[32px] sm:w-full sm:h-[32px] gap-2.5'
+        : ' w-[32px] h-[32px] gap-1.5 ',
     ]"
     ref="itemRef"
   >
+    <!-- Active Indicator (Left Border) -->
+    <div
+      v-if="isActive"
+      class="absolute left-0 top-1/2 -translate-y-1/2 h-[60%] w-[2px] rounded-r-md"
+      :style="{
+        backgroundColor:
+          workspaceStore.singleWorkspace?.variables?.['workspace-color'] ||
+          'var(--accent)',
+      }"
+    ></div>
+
     <!-- Icon -->
     <i
       v-if="progress == 'processing' && status == 'running'"
@@ -28,109 +39,135 @@
 
     <i
       v-else
-      :class="[...iconClasses, expanded ? 'text-[14px]' : 'text-[14px]']"
+      :class="[
+        ...iconClasses,
+        expanded ? 'text-[12px]' : 'text-[12px]',
+        isActive ? '' : 'text-text-secondary',
+      ]"
+      :style="
+        isActive
+          ? {
+              color:
+                workspaceStore.singleWorkspace?.variables?.[
+                  'workspace-color'
+                ] || 'var(--accent)',
+            }
+          : {}
+      "
     ></i>
 
     <!-- Label -->
     <Transition name="sidebar-label">
-  <div
-    v-if="expanded"
-    class="flex items-center justify-between w-full gap-2"
-  >
-   <span
-  v-if="label"
-  class="whitespace-nowrap font-medium line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
-  :class="expanded ? 'text-start text-[14px]' : 'text-[10px]'"
->
-  {{ label.length > 20 ? label.slice(0, 20) + '...' : label }}
-</span>
+      <div
+        v-if="expanded"
+        class="flex items-center justify-between w-full gap-2"
+      >
+        <span
+          v-if="label"
+          class="whitespace-nowrap font-normal line-clamp-1 w-full overflow-ellipsis text-center min-h-3"
+          :class="expanded ? 'text-start text-[13px]' : 'text-[10px]'"
+        >
+          {{ label.length > 20 ? label.slice(0, 20) + "..." : label }}
+        </span>
 
+        <!-- Delete Icon (only if exists + hover) -->
+        <div
+          v-if="deleteIcon && label !== 'Tasks' && label !== 'Pin'"
+          class="relative"
+        >
+          <i
+            :class="[
+              ...deleteIconClasses,
+              'opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[13px] cursor-pointer',
+            ]"
+            @click.stop="toggleDropdown"
+          ></i>
 
-    <!-- Delete Icon (only if exists + hover) -->
-    <div
-  v-if="deleteIcon && label !== 'Tasks' && label !== 'Pin'"
-  class="relative"
->
-  <i
-    :class="[
-      ...deleteIconClasses,
-      'opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-[13px] cursor-pointer'
-    ]"
-    @click.stop="toggleDropdown"
-  ></i>
-
-  <!-- Dropdown -->
-  <div
-    v-if="activeDropdownId === props.id"
-    ref="dropdownRef"
-    class="absolute right-[-8px] top-7 w-44 rounded-md shadow-lg bg-bg-card z-50"
-  >
-  <ul>
-    <li>
-      <button
-      :disabled="!canDelete"
-      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm flex items-center"
-      :class="!canDelete? 'cursor-not-allowed':'cursor-pointer'"
-      @click.stop="emitDelete"
-    >
-        <i class="fa-solid fa-trash text-red-500 text-[11px] me-1"></i> Delete Module
-    </button>
-  </li>
-  <li>
-    <button
-      :disabled="!canUpdate"
-      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm flex items-center"
-      :class="!canUpdate? 'cursor-not-allowed':'cursor-pointer'"
-      @click.stop="emitEdit"
-    >
-     <i class="fa-regular fa-edit text-[12px] me-1"></i> Edit Module
-    </button>
-  </li>
-   <li>
-    <button
-      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
-      @click.stop="emitConfigure"
-    >
-     <i class="fa-solid fa-gear text-[11px] me-1"></i> Configure Agent
-    </button>
-    </li>
-    <li>
-    <button
-      v-if="canShare?.toLocaleLowerCase() === 'owner'"
-      :disabled="canShare?.toLocaleLowerCase() !== 'owner'"
-      class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm"
-      :class="canShare?.toLocaleLowerCase() !== 'owner'? 'cursor-not-allowed':'cursor-pointer'"
-      @click.stop="emitShare"
-    >
-     <i class="fa-solid fa-share-nodes text-[11px] me-1"></i> Share Module
-    </button>
-    </li>
-  </ul>
-    
-  </div>
-</div>
-
-  </div>
-</Transition>
+          <!-- Dropdown -->
+          <div
+            v-if="activeDropdownId === props.id"
+            ref="dropdownRef"
+            class="absolute right-[-8px] top-7 w-44 rounded-md shadow-lg bg-bg-card z-50"
+          >
+            <ul>
+              <li>
+                <button
+                  :disabled="!canDelete"
+                  class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm flex items-center"
+                  :class="!canDelete ? 'cursor-not-allowed' : 'cursor-pointer'"
+                  @click.stop="emitDelete"
+                >
+                  <i
+                    class="fa-solid fa-trash text-red-500 text-[11px] me-1"
+                  ></i>
+                  Delete Module
+                </button>
+              </li>
+              <li>
+                <button
+                  :disabled="!canUpdate"
+                  class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm flex items-center"
+                  :class="!canUpdate ? 'cursor-not-allowed' : 'cursor-pointer'"
+                  @click.stop="emitEdit"
+                >
+                  <i class="fa-regular fa-edit text-[12px] me-1"></i> Edit
+                  Module
+                </button>
+              </li>
+              <li>
+                <button
+                  class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm cursor-pointer"
+                  @click.stop="emitConfigure"
+                >
+                  <i class="fa-solid fa-gear text-[11px] me-1"></i> Configure
+                  Agent
+                </button>
+              </li>
+              <li>
+                <button
+                  v-if="canShare?.toLocaleLowerCase() === 'owner'"
+                  :disabled="canShare?.toLocaleLowerCase() !== 'owner'"
+                  class="w-full text-left px-3 py-2 hover:bg-[var(--hover)] text-sm"
+                  :class="
+                    canShare?.toLocaleLowerCase() !== 'owner'
+                      ? 'cursor-not-allowed'
+                      : 'cursor-pointer'
+                  "
+                  @click.stop="emitShare"
+                >
+                  <i class="fa-solid fa-share-nodes text-[11px] me-1"></i> Share
+                  Module
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </Transition>
   </div>
 
   <!-- Tooltip rendered in body via Teleport -->
- <Teleport to="body" v-if="!expanded && showTooltip">
-  <div
-    class="hidden sm:block bg-bg-card text-text-primary text-xs font-medium px-3 py-2 border border-border-input rounded-md shadow-md whitespace-nowrap z-[9999] pointer-events-none fixed transition-all"
-    :style="tooltipStyles"
-  >
-    {{ label }}
-  </div>
-</Teleport>
-
+  <Teleport to="body" v-if="!expanded && showTooltip">
+    <div
+      class="hidden sm:block bg-bg-card text-text-primary text-xs font-medium px-3 py-2 border border-border-input rounded-md shadow-md whitespace-nowrap z-[9999] pointer-events-none fixed transition-all"
+      :style="tooltipStyles"
+    >
+      {{ label }}
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useWorkspaceStore } from "../../../stores/workspace"; 
-const emit = defineEmits(['toggleDropdown','delete','closeDropdown','share','edit'])
+import { useWorkspaceStore } from "../../../stores/workspace";
+const emit = defineEmits([
+  "toggleDropdown",
+  "delete",
+  "closeDropdown",
+  "share",
+  "edit",
+]);
 /** --- PROPS --- **/
 const props = defineProps<{
   label: string;
@@ -140,7 +177,7 @@ const props = defineProps<{
   to: string;
   status?: string;
   expanded?: boolean;
-  deleteIcon?:any;
+  deleteIcon?: any;
   activeDropdownId?: string | null;
   canDelete?: boolean;
   canShare?: string;
@@ -148,7 +185,7 @@ const props = defineProps<{
 }>();
 const showTooltip = ref(false);
 const itemRef = ref<HTMLElement | null>(null);
-const dropdownRef = ref<HTMLElement | null>(null)
+const dropdownRef = ref<HTMLElement | null>(null);
 const tooltipStyles = computed(() => {
   if (!itemRef.value) return {};
 
@@ -161,21 +198,18 @@ const tooltipStyles = computed(() => {
 });
 
 const handleClickOutside = (e: MouseEvent) => {
-  if (
-    dropdownRef.value &&
-    !dropdownRef.value.contains(e.target as Node)
-  ) {
-    emit('closeDropdown')
+  if (dropdownRef.value && !dropdownRef.value.contains(e.target as Node)) {
+    emit("closeDropdown");
   }
-}
+};
 
 onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
+  document.addEventListener("click", handleClickOutside);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
+  document.removeEventListener("click", handleClickOutside);
+});
 
 /** --- STATE --- **/
 const progress = ref<any>(""); // store only progress as required
@@ -184,28 +218,28 @@ let stopped = false;
 /** --- SSE URL --- **/
 const SERVER_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const toggleDropdown = () => {
-  emit('toggleDropdown', props.id)
-}
-const emitDelete = () => { 
-  if(!props.canDelete) return
-  emit('closeDropdown')
-  emit('delete', props.id)
-}
+  emit("toggleDropdown", props.id);
+};
+const emitDelete = () => {
+  if (!props.canDelete) return;
+  emit("closeDropdown");
+  emit("delete", props.id);
+};
 
 const emitConfigure = () => {
-  emit('closeDropdown')
-  workspaceStore.toggleChatBotPanel()
-  workspaceStore.saveAgentModule(props.label)
-}
+  emit("closeDropdown");
+  workspaceStore.toggleChatBotPanel();
+  workspaceStore.saveAgentModule(props.label);
+};
 const emitShare = () => {
-  emit('closeDropdown')
-  emit('share', props.id)
-}
+  emit("closeDropdown");
+  emit("share", props.id);
+};
 const emitEdit = () => {
-  if (!props.canDelete) return
-  emit('closeDropdown')
-  emit('edit', props.id)
-}
+  if (!props.canDelete) return;
+  emit("closeDropdown");
+  emit("edit", props.id);
+};
 const connectStream = () => {
   if (stopped) return;
   if (!props.id) return; // no job id → no stream
@@ -287,7 +321,7 @@ watch(
     disconnectStream();
     progress.value = 0;
     connectStream();
-  }
+  },
 );
 
 /** other existing logic */
@@ -298,7 +332,7 @@ const router = useRouter();
 function clickHandler() {
   if (progress.value == "processing" && props.status == "running") return;
   router.push(props.to);
-  workspaceStore.saveAgentModule(props.label)
+  workspaceStore.saveAgentModule(props.label);
 }
 
 // sidebar item icon normalizer
@@ -344,7 +378,6 @@ const deleteIconClasses = computed(() => {
 
   return [prefix, name];
 });
-
 </script>
 
 <style scoped>

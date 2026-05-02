@@ -2,17 +2,17 @@
   <div class="flex bg-bg-body flex-col min-h-[565px] h-full w-full rounded-lg transition-all duration-200"
     :class="columnBgClass">
     <!-- Column header -->
-    <div class="flex items-center justify-between w-full p-4 border-b border-border cursor-grab">
+    <div class="flex items-center justify-between w-full px-2 py-2.5 border-b border-border cursor-grab">
       <div class="flex items-center gap-2 flex-auto max-w-4/5">
         <!-- Title: display vs edit -->
         <button v-if="!isEditingTitle"
-          class="font-semibold overflow-ellipsis line-clamp-1 text-nowrap capitalize  text-foreground px-1 py-0.5 rounded hover:bg-bg-card focus:outline-none focus:ring-1 focus:ring-border cursor-text"
+          class="font-semibold text-[14px] overflow-ellipsis line-clamp-1 text-nowrap capitalize  text-foreground px-1 py-0.5 rounded hover:bg-bg-card focus:outline-none focus:ring-1 focus:ring-border cursor-text"
           @click="beginEdit" @keydown.enter.prevent="beginEdit" title="Click to rename">
           {{ localTitle }}
         </button>
 
         <input v-else autofocus ref="titleInputRef" v-model="localTitle"
-          class="font-semibold inline text-foreground px-1 py-0.5 rounded bg-transparent border border-border focus:outline-none focus:ring-1 focus:ring-border"
+          class="font-semibold inline  text-[14px] text-foreground px-1 py-0.5 rounded bg-transparent border border-border focus:outline-none focus:ring-1 focus:ring-border"
           @keydown.enter.prevent="commitTitle" @keydown.esc.prevent="cancelTitle" @blur="commitTitle" @mousedown.stop />
 
         <span
@@ -31,7 +31,7 @@
 
     <!-- Tickets list -->
     <Draggable :disabled="!canDragList" v-model="localTickets" item-key="_id"
-      class="flex-1 p-4 space-y-3 overflow-y-auto" :group="{ name: 'tickets', pull: true, put: true }" :animation="180"
+      class="flex-1 p-2 space-y-2 overflow-y-auto" :group="{ name: 'tickets', pull: true, put: true }" :animation="180"
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" @start="onStart" @end="onEnd"
       :drag-class="'kanban-dragging'" @change="onTicketsChange">
       <template #item="{ element: ticket }">

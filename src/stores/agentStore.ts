@@ -29,9 +29,7 @@ interface AgentChatPayload {
 }
 
 interface AgentChatResponse {
-  data: {
-    data: any;
-  };
+  success: boolean;
 }
 
 interface AgentMessage {
@@ -42,6 +40,9 @@ interface AgentMessage {
   metadata?: {
     intent?: string;
     status?: string;
+    think_ms?: number | null;
+    total_ms?: number | null;
+    temp?: boolean;
   };
 }
 
@@ -76,6 +77,30 @@ interface KnowledgePayload {
   sources: Array<{ source_type: string }>;
   is_active: boolean;
   metadata: Record<string, any>;
+}
+interface StreamChunk {
+  type: 'chunk' | 'phase' | 'timing' | 'done';
+  content?: string;
+  phase?: string;
+  timestamp?: number;
+  think_time_ms?: number;
+  total_time_ms?: number;
+}
+interface AcceptEntitiesPayload {
+  workspace_id: string;
+  entity_ids?: string[];
+  action?: string;
+  entities?: any[];
+  // Add other properties as needed
+}
+interface TrainPersonaPayload {
+  name: string;
+  description: string;
+  role?: string;
+  level?: string;
+  module_id: string;
+  module_name: string;
+  // Add other properties as needed
 }
 interface UploadConfig {
   name: string;
@@ -121,7 +146,7 @@ export const useAgentStore = defineStore("agent", {
     chatHistory: [] as ChatSession[],
     createdEntities: [] as CreatedEntityItem[],
     isSending: false,
-    assistantStreamedChunks: [] as any[],
+    assistantStreamedChunks: [] as StreamChunk[],
     currentStreamText: "",
     currentPhase: "",
     isAiTyping: false,
@@ -151,6 +176,10 @@ export const useAgentStore = defineStore("agent", {
     isUpdatingAgentSettings: false,
     settings: null as null | Record<string, any>,
     isLoadingWebSettings: false,
+    streamThinkMs: null as number | null,
+    streamTotalMs: null as number | null,
+    streamThinkStartTs: null as number | null,
+    streamGeneratingStartTs: null as number | null,
   }),
 
   getters: {
@@ -327,34 +356,99 @@ if (!response.ok || !response.body) {
   }
 },
     handleIncomingChunk(raw: string) {
-      try {
-        const cleaned = raw.replace(/^data:\s*/, "");
-        const parsed = JSON.parse(cleaned);
+  try {
+    const cleaned = raw.replace(/^data:\s*/, '')
+    const parsed = JSON.parse(cleaned)
 
-        this.assistantStreamedChunks.push(parsed);
+    this.assistantStreamedChunks.push(parsed)
 
-        if (parsed.type === "chunk") {
-          this.currentStreamText += parsed.content;
-        }
+    if (parsed.type === 'chunk') {
+      this.currentStreamText += parsed.content
+    }
 
-        if (parsed.type === "phase") {
-          this.currentPhase = parsed.phase;
-        }
-
-        if (parsed.type === "done") {
-          this.isAiTyping = false;
-        }
-      } catch (err) {
-        console.error("Chunk parse failed:", raw);
+    if (parsed.type === 'phase') {
+      this.currentPhase = parsed.phase
+      if (parsed.phase === 'thinking') {
+        this.streamThinkStartTs = parsed.timestamp ?? Date.now()
       }
-    },
+      if (parsed.phase === 'generating') {
+        this.streamGeneratingStartTs = parsed.timestamp ?? Date.now()
+      }
+    }
 
-    resetStream() {
-      this.assistantStreamedChunks = [];
-      this.currentStreamText = "";
-      this.currentPhase = "";
-      this.isAiTyping = true;
-    },
+    if (parsed.type === 'timing') {
+      this.streamThinkMs = parsed.think_time_ms ?? null
+      this.streamTotalMs = parsed.total_time_ms ?? null
+    }
+
+    if (parsed.type === 'done') {
+      this.isAiTyping = false
+    }
+  } catch (err) {
+    console.error('Chunk parse failed:', raw)
+  }
+},
+mergeChatHistory(newChats: ChatSession[]) {
+  for (const newSession of newChats) {
+    const existingIdx = this.chatHistory.findIndex(
+      (s) => s.session_id === newSession.session_id
+    )
+
+    if (existingIdx !== -1) {
+      const existingMsgs = this.chatHistory[existingIdx].messages
+
+      for (const newMsg of newSession.messages) {
+        const alreadyExists = existingMsgs.some(
+          (m) =>
+            m._id === newMsg._id ||
+            // ← catches locally-appended temp messages with fake _id
+            (m.type === newMsg.type &&
+              m.content === newMsg.content &&
+              m.type === 'assistant')
+        )
+        if (!alreadyExists) {
+          existingMsgs.push(newMsg)
+        }
+      }
+
+      // Replace any temp-_id assistant message with the real server message
+      const serverAssistant = newSession.messages.find(
+        (m) => m.type === 'assistant'
+      )
+      if (serverAssistant) {
+        const tempIdx = existingMsgs.findIndex(
+          (m) =>
+            m.type === 'assistant' &&
+            m._id.startsWith('assistant-')
+        )
+        if (tempIdx !== -1) {
+          // Swap temp with real — preserves metadata like think_ms/total_ms
+          existingMsgs[tempIdx] = {
+            ...serverAssistant,
+            metadata: {
+              ...serverAssistant.metadata,
+              think_ms: existingMsgs[tempIdx].metadata?.think_ms,
+              total_ms: existingMsgs[tempIdx].metadata?.total_ms,
+            },
+          }
+        }
+      }
+
+    } else {
+      this.chatHistory.push(newSession)
+    }
+  }
+},
+resetStream() {
+  this.assistantStreamedChunks = []
+  this.currentStreamText = ''
+  this.currentPhase = ''
+  this.streamThinkMs = null
+  this.streamTotalMs = null
+  this.streamThinkStartTs = null
+  this.streamGeneratingStartTs = null
+  this.isAiTyping = true
+},
 
     async uploadAssistantFiles(files: File[] | File) {
       const formData = new FormData();
@@ -430,7 +524,7 @@ if (!response.ok || !response.body) {
         });
 
         const newChats = res.data?.data?.chats ?? [];
-        this.chatHistory = [...newChats];
+        this.mergeChatHistory(newChats)
       } catch (err) {
         console.error("❌ Failed to fetch chat history:", err);
       } finally {
@@ -491,7 +585,7 @@ if (!response.ok || !response.body) {
       }
     },
 
-    async acceptEntities(payload: any) {
+    async acceptEntities(payload: AcceptEntitiesPayload) {
       this.isAcceptingEntities = true;
       try {
         const res = await api.request<{ data: CreatedEntityItem[] }>({
@@ -539,7 +633,7 @@ if (!response.ok || !response.body) {
 
     async trainPersona(
       workspace_id: string,
-      payload: { /* ...same type... */ },
+      payload: TrainPersonaPayload,
     ) {
       if (!workspace_id) return;
       try {
@@ -805,7 +899,7 @@ if (!response.ok || !response.body) {
       }
     },
 
-    handleAgentPassed(agent: any, module_id: any, module_name: any) {
+    handleAgentPassed(agent: Agent, module_id: string, module_name: string) {
       this.agentPassed = agent;
       this.module_id = module_id;
       this.moduleName = module_name;

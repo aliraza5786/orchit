@@ -567,7 +567,7 @@ function handleMouseEnter(option: any) {
   if (option.nested?.length) {
     nextTick(() => startNestedFloating(option._id));
   }
-}
+} 
 
 function handleMouseLeave() {
   if (hoverTimeout) clearTimeout(hoverTimeout);

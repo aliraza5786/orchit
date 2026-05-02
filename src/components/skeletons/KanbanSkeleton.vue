@@ -1,6 +1,6 @@
 <template>
   <div
-    class="p-4 overflow-x-auto flex-auto flex gap-6"
+    class="p-2 overflow-x-auto flex-auto flex gap-2"
     aria-busy="true"
     aria-live="polite"
   >
@@ -8,12 +8,12 @@
     <div
       v-for="c in columnIdx"
       :key="c"
-      class="kanban-col max-w-[328px] min-w-[328px] min-h-[555px] h-full bg-bg-body rounded-lg p-2 flex flex-col"
+      class="kanban-col max-w-[270px] min-w-[270px] min-h-[555px] h-full bg-bg-body rounded-lg p-2 flex flex-col"
       v-memo="[props.cardsPerColumn]"
       role="presentation"
     >
       <!-- Header skeleton -->
-      <div class="flex justify-between items-center py-3 px-4 sticky top-0 bg-bg-body rounded-xl mb-2 z-10" role="presentation">
+      <div class="flex justify-between items-center py-3 px-2 sticky top-0 bg-bg-body rounded-xl mb-2 z-10" role="presentation">
         <div class="flex items-center gap-2">
           <div class="h-4 w-24 rounded shimmer" aria-hidden="true" />
           <div class="h-4 w-4 rounded-full shimmer" aria-hidden="true" />
@@ -25,7 +25,7 @@
       </div>
 
       <!-- Cards skeleton list -->
-      <div class="flex-1 w-full overflow-y-auto space-y-3 px-2 pb-2" role="presentation">
+      <div class="flex-1 w-full overflow-y-auto space-y-2 px-2 pb-2" role="presentation">
         <div
           v-for="i in cardIdx"
           :key="i"
@@ -56,8 +56,8 @@
     </div>
 
     <!-- Add list column skeleton -->
-    <div v-if="props.showAddList" class="min-w-[328px]" role="presentation">
-      <div class="bg-bg-body rounded-lg p-4">
+    <div v-if="props.showAddList" class="min-w-[270px]" role="presentation">
+      <div class="bg-bg-body rounded-lg p-2">
         <div class="h-9 rounded shimmer" aria-hidden="true" />
       </div>
     </div>

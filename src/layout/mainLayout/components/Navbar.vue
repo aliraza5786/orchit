@@ -665,7 +665,7 @@ function handleUgrade() {
 }
 function openOrgSetup() {
   closeMenu()
-  router.push('/settings?tab=organization')
+  router.push('/settings?tab=org-setup')
 }
 function handleLogoClick() {
   const token = localStorage.getItem('token')

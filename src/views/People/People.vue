@@ -2,8 +2,8 @@
   <div
     class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
-    <div class="overflow-x-auto shrink-0 border-b border-border mx-4">
-      <div class="header py-3 flex items-center justify-between gap-2">
+    <div class="overflow-x-auto shrink-0 border-b border-border mx-2">
+      <div class="header py-2 flex items-center justify-between gap-2">
         <div
           class="flex border-b border-border bg-bg-surface/50 gap-2 rounded-md py-1 px-1"
         >
@@ -114,7 +114,7 @@
     <span class="text-sm animate-pulse">Loading mindmap...</span>
   </div>
 </div>
-    <div v-else class="flex flex-col flex-1 overflow-hidden px-4">
+    <div v-else class="flex flex-col flex-1 overflow-hidden px-2">
       <template v-if="currentView === 'kanban'">
         <!-- AGENTS KANBAN -->
         <template v-if="currentTab === 'agents'">
@@ -124,26 +124,26 @@
               item-key="title"
               group="agent-groups"
               :animation="180"
-              class="flex gap-4 mt-4 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
+              class="flex gap-2 mt-2 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
               direction="horizontal"
               @end="onAgentGroupsEnd"
               :disabled="isMobile"
             >
               <template #item="{ element: group }">
                 <div
-                  class="flex flex-col min-w-[220px] bg-bg-body h-full rounded-md"
+                  class="flex flex-col bg-bg-body rounded-md mb-1"
                   :class="{
                     'snap-center min-w-[270px] max-w-[270px]': isMobile,
-                    'min-w-[320px] max-w-[320px]': !isMobile,
+                    'min-w-[270px] max-w-[270px]': !isMobile,
                   }"
                 >
                   <div
-                    class="flex justify-between px-5 py-4 border-b border-border"
+                    class="flex justify-between px-2 py-2.5 border-b border-border"
                   >
                     <div
-                      class="text-normal flex gap-2 font-semibold text-text-primary"
+                      class="text-normal flex items-center gap-2 font-semibold text-text-primary"
                     >
-                      <span>{{ group.title }}</span>
+                      <span class="text-[14px]">{{ group.title }}</span>
                       <span
                         class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 min-w-6 rounded-full"
                       >
@@ -163,15 +163,15 @@
                     </div>
                   </div>
                   <div
-                    class="flex flex-col gap-4 mx-4 mt-4 overflow-y-auto flex-1"
+                    class="flex flex-col gap-2 mx-2 mt-2 overflow-y-auto flex-1"
                   >
                     <div
                       v-for="agent in group.agents"
                       :key="agent._id"
                       @click="handleClickAgent(agent)"
-                      class="group/agent bg-bg-card border border-border rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-3"
+                      class="group/agent bg-bg-card border border-border rounded-lg p-2.5 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col gap-3"
                     >
-                      <div class="flex items-start gap-3 w-full">
+                      <div class="flex items-start gap-2 w-full">
                         <!-- Agent Avatar/Icon -->
                         <div 
                           class="w-10 min-w-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full text-white text-sm font-semibold border border-border/20 shadow-sm"
@@ -239,7 +239,7 @@
 
         <!-- TALENT KANBAN -->
         <template v-else>
-          <div class="flex flex-1 overflow-x-auto gap-3 custom_scroll_bar py-4 overflow-y-hidden">
+          <div class="flex flex-1 overflow-x-auto gap-2 custom_scroll_bar pt-2 pb-1 overflow-y-hidden">
             <KanbanBoard
               :plusIcon="selected_view_id === 'team' && canCreateCard"
               v-if="filteredBoard?.length > 0"
@@ -304,7 +304,7 @@
             </KanbanBoard>
             
             <!-- Add Column -->
-            <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
+            <div class="min-w-[270px] sm:min-w-[270px]" @click.stop>
               <form
                 @submit.prevent=""
                 v-if="activeAddList"
