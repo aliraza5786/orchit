@@ -95,7 +95,7 @@
                 <Transition name="title-fade">
                   <h3
                     v-if="expanded"
-                    class="text-[15px] text-left font-semibold max-w-[140px] text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-1.5"
+                    class="text-[15px] text-left font-semibold max-w-[120px] text-nowrap overflow-hidden text-ellipsis text-text-primary hidden sm:block ms-1.5"
                   >
                     {{ localWorkspace.variables.title }}
                   </h3>

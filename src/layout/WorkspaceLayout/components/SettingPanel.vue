@@ -12,8 +12,9 @@
 
     <div class="flex px-5 py-6 flex-col">
       <!-- Workspace Identity -->
-      <div class="flex items-center gap-3.5">
-        <!-- Logo + hover overlay -->
+      <div class="flex items-center justify-between w-full gap-2">
+        <div class="flex items-center gap-3.5 min-w-0">
+          <!-- Logo + hover overlay -->
         <div class="relative group">
           <img :src="logoPreview || workspace.logo || dummy"
             class="w-12 h-12 min-w-12 object-cover aspect-square rounded-lg border border-border"
@@ -43,18 +44,32 @@
               v-tooltip="'Click to rename'">
               {{ editableTitle }}
             </h3>
-            
           </template>
           <template v-else>
-            <div class="flex items-center gap-2">
-              <input ref="titleInputRef" v-model="editableTitle"
-                class="px-2 py-1 rounded-md border border-border bg-g-input text-text-primary text-xl font-medium outline-none min-w-[120px] max-w-[220px]"
-                @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle" @blur="saveTitle" />
-            </div>
+            <input ref="titleInputRef" v-model="editableTitle"
+              class="px-2 py-1 rounded-md border border-border bg-g-input text-text-primary text-xl font-medium outline-none min-w-[120px] max-w-[220px]"
+              @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle" @blur="saveTitle" />
           </template>
           <p class="text-xs text-text-secondary mt-0.5" v-if="workspace?.created_at">
-              Created at {{ formatDateTime(workspace.created_at) }}
-            </p>
+            Created at {{ formatDateTime(workspace.created_at) }}
+          </p>
+        </div>
+        </div>
+
+        <!-- Custom Color Picker Swatch -->
+        <div class="shrink-0">
+          <label 
+            class="cursor-pointer block w-8 h-8 rounded-full shadow-sm border border-border/20 overflow-hidden relative" 
+            :style="{ backgroundColor: editableWorkspaceColor }" 
+            v-tooltip="'Change workspace color'"
+          >
+            <input 
+              type="color" 
+              v-model="editableWorkspaceColor" 
+              @change="saveWorkspaceColor" 
+              class="opacity-0 absolute inset-0 w-[200%] h-[200%] -top-1/2 -left-1/2 cursor-pointer" 
+            />
+          </label>
         </div>
       </div>
 
@@ -430,6 +445,26 @@ function saveTitle() {
   })
 }
 
+const editableWorkspaceColor = ref(props.workspace?.variables?.['workspace-color'] || '#7D68C8')
+watch(() => props.workspace?.variables?.['workspace-color'], (newColor) => {
+  if (newColor) editableWorkspaceColor.value = newColor
+})
+
+function saveWorkspaceColor() {
+  const c = editableWorkspaceColor.value;
+  workspaceStore.updateSingleWorkspaceLocal({
+    variables: {
+      'workspace-color': c
+    }
+  })
+  updateWS({
+    workspace_id: workspaceId.value,
+    variables: {
+      'workspace-color': c
+    }
+  })
+}
+
 /* ----- Logo: upload on hover click ----- */
 const logoInputRef = ref<HTMLInputElement | null>(null)
 const isUploadingLogo = ref(false)
@@ -440,6 +475,7 @@ function triggerLogoPicker() {
 }
 const { mutate } = usePrivateUploadFile({
   onSuccess: (data: any) => {
+    isUploadingLogo.value = false;
     const url: string | undefined = data?.data?.url;
     if (!url) {
       toast.error('Upload succeeded but no URL was returned.');
@@ -452,6 +488,7 @@ const { mutate } = usePrivateUploadFile({
 
   },
   onError: (err: any) => {
+    isUploadingLogo.value = false;
     console.error('File upload failed', err);
     toast.error('File upload failed. Please try again.');
   },
@@ -463,9 +500,9 @@ async function onLogoPicked(e: Event) {
     const selectedFile = input.files[0];
     const fd = new FormData();
     fd.append('file', selectedFile);
+    isUploadingLogo.value = true;
     mutate(fd);
   }
-  isUploadingLogo.value = true
 }
 
 /* ----- Invite state ----- */
