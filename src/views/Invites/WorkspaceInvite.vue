@@ -136,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInvitedWorkspace } from '../../queries/useWorkspace'
 import { useAuthStore } from '../../stores/auth'
@@ -147,6 +147,19 @@ import Button from '../../components/ui/Button.vue'
 const router = useRouter()
 const auth = useAuthStore()
 const { token } = useRouteIds()
+
+// ✅ Check auth on mount — if no token in localStorage, redirect to login
+// and pass current full URL as redirect so we come back here after login
+onMounted(() => {
+  const authToken = localStorage.getItem('token') // adjust key to match your actual localStorage key
+  if (!authToken) {
+    router.replace({
+      name: 'Login',
+      query: { redirect: router.currentRoute.value.fullPath },
+    })
+  }
+})
+
 const { data, refetch, isPending } = useInvitedWorkspace(token.value)
 
 type Invite = {
@@ -172,20 +185,16 @@ function toTitle(s?: string) {
   return s.replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
-const isLoggedIn = computed(() => auth.isAuthenticated) 
-const currentUserEmail = computed(() => auth.user?.data?.u_email) 
-const inviteEmail = computed(() => data.value?.email) // Assuming data.email is the invitee email
+const isLoggedIn = computed(() => auth.isAuthenticated)
+const currentUserEmail = computed(() => auth.user?.data?.u_email)
+const inviteEmail = computed(() => data.value?.email)
 const isEmailMatch = computed(() => {
   if (!isLoggedIn.value || !inviteEmail.value) return false
   return currentUserEmail.value === inviteEmail.value
 })
 
- 
-
-/** ---- actions ---- */
 async function accept() {
   if (!data.value || data.value.status == 'expired') return
-  
   acting.value = true
   actionType.value = 'accepted'
   error.value = null
@@ -216,18 +225,17 @@ async function decline() {
   }
 }
 
-/** ---- navigation helpers ---- */
 function goHome() {
   router.push('/')
 }
 
 function goToLogin() {
-    router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
+  router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
 }
- 
+
 function logoutAndSwitch() {
-    auth.logout()
-    router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
+  auth.logout()
+  router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
 }
 
 function goToWorkspace() {
@@ -235,7 +243,7 @@ function goToWorkspace() {
     if (!data.value?.job_id) {
       localStorage.removeItem('jobId')
       router.push(`/workspace/peak/${data.value?.workspace?._id}`)
-    }else{
+    } else {
       router.push(`/workspace/peak/${data.value?.workspace?._id}/${data.value?.job_id}`)
     }
   } else {
@@ -245,13 +253,12 @@ function goToWorkspace() {
 
 watch(() => data.value, () => {
   if (data.value?.status == 'rejected') {
-    declined.value = true;
+    declined.value = true
     return
   }
   if (data.value?.status == 'accepted') {
-    accepted.value = true;
+    accepted.value = true
     return
   }
 })
-
 </script>

@@ -247,13 +247,9 @@ async function loginWithApple() {
 }
 async function handleLoginSuccess(data: any) {
   const token = data?.data?.token
-   console.log('=== LOGIN DEBUG ===')
-  console.log('1. token exists:', !!token)
-  console.log('2. hostname:', window.location.hostname)
-  console.log('3. cookies BEFORE:', document.cookie)
-  
+
   localStorage.setItem("token", token)
-   const maxAge = 60 * 60 * 24 * 30
+  const maxAge = 60 * 60 * 24 * 30
   const payload = encodeURIComponent(JSON.stringify({ token }))
   document.cookie = `auth_session=${payload}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
   authStore.initialized = false
@@ -263,6 +259,7 @@ async function handleLoginSuccess(data: any) {
   authStore.initialized = false
   await authStore.bootstrap()
 
+  // ✅ Redirect back to invite page or any other protected route
   const redirectPath = router.currentRoute.value.query.redirect as string
   if (redirectPath) {
     router.push(redirectPath)
