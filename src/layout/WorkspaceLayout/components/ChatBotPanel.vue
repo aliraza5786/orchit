@@ -1129,7 +1129,7 @@
         <div
           v-if="openMsgMenuId === msg._id"
           class="absolute z-50 top-8 w-40 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 py-1 overflow-hidden"
-          :class="msg.type === 'user' ? 'right-0' : 'left-0'"
+          :class="msg.type === 'user' ? 'right-0' : 'right-0'"
         >
           <button
             @click.stop="
@@ -1152,6 +1152,44 @@
           </button>
         </div>
       </transition>
+
+      <!-- Like, Dislike, Copy buttons for assistant messages -->
+      <div
+        v-if="msg.type === 'assistant' && msg.content && activeSessionId"
+        class="flex items-center gap-1.5 mt-2 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150"
+      >
+        <button
+          @click.stop="toggleLike(msg._id)"
+          title="Like this response"
+          :class="[
+            'flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition-colors cursor-pointer',
+            likedMessages.has(msg._id)
+              ? 'text-accent bg-accent/8'
+              : 'text-text-secondary hover:text-accent hover:bg-accent/8'
+          ]"
+        >
+          <i :class="['text-[12px]', likedMessages.has(msg._id) ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up']"></i>
+        </button>
+        <button
+          @click.stop="toggleDislike(msg._id)"
+          title="Dislike this response"
+          :class="[
+            'flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition-colors cursor-pointer',
+            dislikedMessages.has(msg._id)
+              ? 'text-red-500 bg-red-500/8'
+              : 'text-text-secondary hover:text-red-500 hover:bg-red-500/8'
+          ]"
+        >
+          <i :class="['text-[12px]', dislikedMessages.has(msg._id) ? 'fa-solid fa-thumbs-down' : 'fa-regular fa-thumbs-down']"></i>
+        </button>
+        <button
+          @click.stop="copyMessageToClipboard(msg.content)"
+          title="Copy message"
+          class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] text-text-secondary hover:text-accent hover:bg-accent/8 transition-colors cursor-pointer"
+        >
+          <i class="fa-regular fa-copy text-[12px]"></i>
+        </button>
+      </div>
 
     </div>
   </div>
@@ -4636,6 +4674,47 @@ function toggleMsgMenu(msgId: string) {
 function handleMsgMenuClickOutside() {
   if (openMsgMenuId.value) openMsgMenuId.value = null;
 }
+
+// Like/Dislike tracking
+const likedMessages = ref<Set<string>>(new Set());
+const dislikedMessages = ref<Set<string>>(new Set());
+
+function toggleLike(msgId: string) {
+  if (likedMessages.value.has(msgId)) {
+    likedMessages.value.delete(msgId);
+    toast.success('Like removed');
+  } else {
+    likedMessages.value.add(msgId);
+    dislikedMessages.value.delete(msgId); // Remove dislike if exists
+    toast.success('Message liked!');
+  }
+}
+
+function toggleDislike(msgId: string) {
+  if (dislikedMessages.value.has(msgId)) {
+    dislikedMessages.value.delete(msgId);
+    toast.success('Dislike removed');
+  } else {
+    dislikedMessages.value.add(msgId);
+    likedMessages.value.delete(msgId); // Remove like if exists
+    toast.success('Message disliked');
+  }
+}
+
+async function copyMessageToClipboard(content: string) {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(content);
+      toast.success('Copied to clipboard');
+    } else {
+      toast.error('Copy not supported');
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err);
+    toast.error('Failed to copy message');
+  }
+}
+
 type Action = {
   _id: string;
   title: string;
