@@ -555,7 +555,6 @@ import { useAgentStore } from "../../../stores/agentStore";
 import { useDeletePeopleVarDef } from "../../../queries/usePeople";
 import AddCustomRoleModal from "../modals/AddCustomRoleModal.vue";
 import { usePermissions } from "../../../composables/usePermissions";
-import { useAssignRole } from "../../../queries/usePeople";
 const SwitchTab = defineAsyncComponent(
   () => import("../../../components/ui/SwitchTab.vue"),
 );
@@ -751,11 +750,6 @@ watch(
     description.value = cardDetails.value?.description ?? "";
   },
 );
-function handleRoleClick() {
-  if (!canEditUser) {
-    toast.error("You have no permission to edit user details");
-  }
-}
 watch(
   () => cardDetails.value,
   () => {
@@ -837,7 +831,6 @@ const selectLevel = (value: string) => {
   agentConfig.level = value as any;
   openLevel.value = false;
 };
-const isRoleChangedByUser = ref(false);
 const isMounted = ref(false);
 
 onMounted(() => {
@@ -845,48 +838,6 @@ onMounted(() => {
     isMounted.value = true;
   });
 });
-const { mutate: assignRole } = useAssignRole({
-  onSuccess: () => {
-    console.log("Role assigned successfully!");
-  },
-  onError: (err: any) => console.error(err), 
-});
-function handleRoleChange(newRole: any) {
-  if (!isMounted.value) return;
-  if (!canEditUser) {
-    toast.error("You have no permission to edit user details");
-    return;
-  }
-
-  if (newRole === 'ADD_NEW_ROLE') {
-    showAddRoleModal.value = true;
-    return;
-  }
-
-  if (newRole === 'MANAGE_PERMISSIONS') {
-    showManagePermissionsModal.value = true;
-    return;
-  }
-
-  isRoleChangedByUser.value = true;
-  selectedRole.value = newRole;
-  sidePanelStore.updatePeopleRoleOptimistic(newRole);
-
-  assignRole(
-    {
-      id: cardDetails.value?._id!,
-      workspace_access_role_id: newRole,
-    },
-    {
-      onSuccess: () => {
-        isRoleChangedByUser.value = false;
-      },
-      onError: () => {
-        isRoleChangedByUser.value = false;
-      },
-    }
-  );
-}
 
 watch(
   () => cardDetails.value?._id,

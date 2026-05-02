@@ -158,7 +158,7 @@ import { useUsers } from '../../../queries/useWorkspace'
 import InviteUsers from '../../Workspaces/Modals/InviteUsers.vue'
 
 const companyId = localStorage.getItem('company_id')
-const { data: usersData, isPending, refetch } = useUsers(companyId)
+const { data: usersData, refetch } = useUsers(companyId)
 
 interface TeamMember {
   id: string
@@ -187,7 +187,6 @@ const members = computed<TeamMember[]>(() => {
 const searchQuery = ref('')
 const roleFilter = ref('')
 const statusFilter = ref('')
-const activeMenuId = ref<string | null>(null)
 const showInviteModal = ref(false)
 const isUpdatingRole = ref(false)
 
@@ -206,11 +205,7 @@ function getInitials(name: string): string {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
-function toggleActionMenu(memberId: string) {
-  activeMenuId.value = activeMenuId.value === memberId ? null : memberId
-}
-
-async function updateMemberRole(memberId: string, newRole: string) {
+async function updateMemberRole(_memberId: string, _newRole: string) {
   isUpdatingRole.value = true
   try {
     await new Promise(r => setTimeout(r, 400)) // replace with real API call
@@ -223,31 +218,7 @@ async function updateMemberRole(memberId: string, newRole: string) {
   }
 }
 
-async function sendInviteReminder(memberId: string) {
-  try {
-    await new Promise(r => setTimeout(r, 600)) // replace with real API call
-    toast.success('Invitation resent')
-  } catch {
-    toast.error('Failed to resend invitation')
-  } finally {
-    activeMenuId.value = null
-  }
-}
-
-async function removeMember(memberId: string) {
-  if (!window.confirm('Are you sure you want to remove this member?')) return
-  try {
-    await new Promise(r => setTimeout(r, 600)) // replace with real API call
-    toast.success('Member removed')
-    refetch()
-  } catch {
-    toast.error('Failed to remove member')
-  } finally {
-    activeMenuId.value = null
-  }
-}
-
-function handleInvited(payload: any) {
+function handleInvited(_payload: any) {
   refetch() // refresh list after invite
 }
 </script>

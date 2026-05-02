@@ -332,7 +332,6 @@ const filteredModules = computed(() => {
     return false; // important
   });
 });
-const emit = defineEmits<{ (e: "toggle-sidebar"): void }>();
 </script>
 
 <style scoped>
