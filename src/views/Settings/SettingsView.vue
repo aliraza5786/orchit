@@ -19,41 +19,42 @@
       </h2>
       
     </div>
-    
-
-    <!-- Sidebar -->
-    <SettingsSidebar 
-      :mobile-open="isMobileSidebarOpen"
-      @close-mobile="closeMobileSidebar"
-    />
+     <SettingsSidebar
+  :mobile-open="isMobileSidebarOpen"
+  :active-org-name="activeOrgName"
+  :membership-role="membershipRole"
+  :profile="profileData"
+  @close-mobile="closeMobileSidebar"
+/>
 
     <!-- Main Content Area -->
-    <main
-      class="flex-grow flex flex-col min-w-0  md:m-2 md:rounded-2xl md:border border-border overflow-hidden relative"
-      :class="isDark?'bg-bg-card/30':'bg-bg-card'"
-    >
-      <div class="py-6 px-4 sm:px-6 sm:p-10 overflow-y-auto h-full">
-        <!-- Title & description based on tab -->
-        <div class="mx-auto">
-          <header class="mb-4 md:mb-8 text-center md:text-left">
-            <h1
-              class="text-2xl lg:text-3xl font-bold font-manrope mb-2 sm:mb-3 tracking-tight text-text-primary capitalize"
-            >
-              {{ currentTab }} Settings
-            </h1>
-            <p class="text-text-secondary mt-1">
-              {{ tabDescription }}
-            </p>
-          </header>
+<main
+  class="flex-grow flex flex-col min-w-0 max-w-full md:m-2 md:rounded-2xl md:border border-border overflow-hidden relative"
+  :class="isDark ? 'bg-bg-card/30' : 'bg-bg-card'"
+>
+  <div class="py-6 px-4 sm:px-6 sm:p-10 overflow-y-auto h-full flex flex-col">
+    <div class="mx-auto w-full flex-1 flex flex-col">
 
-          <!-- Dynamic Content -->
-          <ProfileTab v-if="currentTab === 'profile'" />
-          <BillingTab v-else-if="currentTab === 'billing'" />
-          <OrganizationTab v-else-if="currentTab === 'organization'" />
-          <PricingTab v-else-if="currentTab === 'org-packages'" />
-        </div>
-      </div>
-    </main>
+      <!-- Title & Description -->
+      <header class="mb-4 md:mb-8 text-center md:text-left">
+        <h1 class="text-2xl lg:text-3xl font-bold font-manrope mb-2 sm:mb-3 tracking-tight text-text-primary">
+          {{ pageTitle }}
+        </h1>
+        <p class="text-text-secondary mt-1">
+          {{ tabDescription }}
+        </p>
+      </header>
+      <!-- Dynamic Content -->
+      <ProfileTab v-if="currentTab === 'profile'" />
+      <BillingTab v-else-if="currentTab === 'billing'" />
+      <OrganizationTab v-else-if="currentTab === 'org-setup'" :profile="profileData" />
+      <OrgUsersTab v-else-if="currentTab === 'org-users'" />
+      <OrgRolesTab v-else-if="currentTab === 'org-roles'" />
+      <OrgPackagesTab v-else-if="currentTab === 'org-packages'" />
+
+    </div>
+  </div>
+</main>
   </div>
 </template>
 
@@ -64,15 +65,38 @@ import SettingsSidebar from "./components/SettingsSidebar.vue";
 import ProfileTab from "./components/ProfileTab.vue";
 import BillingTab from "./components/BillingTab.vue";
 import OrganizationTab from "./components/OrganizationTab.vue";
+import OrgUsersTab from "./components/OrgUsersTab.vue";
+import OrgRolesTab from "./components/OrgRolesTab.vue";
+import OrgPackagesTab from "./components/OrgPackagesTab.vue";
 import { useTheme } from "../../composables/useTheme";
-import PricingTab from "./components/OrgPackagesTab.vue";
+import { useQuery } from "@tanstack/vue-query";
+import { getProfile } from "../../services/user";
 const { isDark } = useTheme(); // light / dark / system
+const activeOrgName = localStorage.getItem('company_name') ?? ''
 
 const route = useRoute();
-const router = useRouter(); // Added router
+const router = useRouter();
 const isMobileSidebarOpen = ref(false); // Mobile sidebar state
-
 const currentTab = computed(() => (route.query.tab as string) || "profile");
+const { data: profile } = useQuery({
+  queryKey: ["profile"],
+  queryFn: getProfile,
+  staleTime: 1000 * 60 * 5,
+});
+
+const profileData = computed(() => profile.value?.data ?? null);
+const membershipRole = profileData.value?.active_company?.membership?.role || ''
+const pageTitle = computed(() => {
+  const titles: Record<string, string> = {
+    'profile': 'Your profile',
+    'billing': 'Billing & subscription',
+    'org-setup': 'Organization setup',
+    'org-users': 'Team members',
+    'org-roles': 'Role management',
+    'org-packages': 'Organization billing',
+  };
+  return titles[currentTab.value] || 'Account';
+});
 
 const tabDescription = computed(() => {
   switch (currentTab.value) {
@@ -80,10 +104,14 @@ const tabDescription = computed(() => {
       return "Manage your public profile and personal information.";
     case "billing":
       return "Manage your subscription, billing details, and usage limits.";
-    case "organization":
-      return "Manage your company's information and settings.";
-      case 'org-packages':
-  return 'Manage subscription packages available to your organization.'
+    case "org-setup":
+      return "Create and configure your organization's basic information, branding, and settings.";
+    case "org-users":
+      return "Invite team members, manage their roles, and control access to your organization.";
+    case "org-roles":
+      return "Create custom roles and manage permissions for your team members.";
+    case "org-packages":
+      return "Manage billing and subscription plans for your organization.";
     default:
       return "";
   }
