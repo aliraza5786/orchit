@@ -140,23 +140,27 @@
             </svg>
           </button>
 
-          <!-- ✅ Dropdown moved INSIDE the width-controlled div so it matches button width -->
           <Transition name="fade-scale" @after-leave="logoBtnRef?.focus()">
             <div
               v-show="logoMenuOpen"
               ref="menuRef"
-              class="absolute top-full left-0 z-50 mt-2 w-full rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
+              class="absolute top-full left-[5px] z-50 mt-2 rounded-md border border-border shadow-2xl backdrop-blur supports-[backdrop-filter]:bg-bg-body/60 bg-bg-body origin-top-left"
+              :class="expanded ? 'w-full' : 'w-[235px]'"
               role="menu"
               aria-label="Workspace switcher"
               @keydown.esc.stop.prevent="closeLogoMenu"
             >
               <!-- Home -->
               <button
-                class="w-full px-3 py-2 cursor-pointer text-left text-sm font-normal hover:bg-bg-card/70 transition-all duration-200 ease-out hover:scale-[1.02] hover:translate-x-1 rounded-t-xl flex items-center gap-2"
-                role="menuitem"
-                @click="goHome"
-                ref="firstItemRef"
-              >
+              class="w-full px-3 py-2 cursor-pointer text-left text-sm font-normal 
+              hover:bg-bg-card/70 
+              transition-all duration-200 ease-out
+              hover:scale-[1.02] hover:translate-x-1
+              rounded-t-xl flex items-center gap-2"
+              role="menuitem"
+              @click="goHome"
+              ref="firstItemRef"
+            >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z"
@@ -174,12 +178,16 @@
               <div class="overflow-y-auto">
                 <div class="max-h-72 py-1 cursor-pointer">
                   <button
-                    v-for="ws in workspaces?.workspaces"
-                    :key="ws._id"
-                    class="w-full px-3 py-2 text-left text-sm font-normal hover:bg-bg-card/70 transition-all duration-200 ease-out hover:scale-[1.02] hover:translate-x-1 cursor-pointer flex items-center gap-3"
-                    role="menuitem"
-                    @click="switchTo(ws)"
-                  >
+                  v-for="ws in workspaces?.workspaces"
+                  :key="ws._id"
+                  class="w-full px-3 py-2 text-left text-sm font-normal 
+                    hover:bg-bg-card/70 
+                    transition-all duration-200 ease-out
+                    hover:scale-[1.02] hover:translate-x-1
+                    cursor-pointer flex items-center gap-3"
+                  role="menuitem"
+                  @click="switchTo(ws)"
+                >
                     <img
                       :src="ws.logo ?? dp"
                       alt=""
