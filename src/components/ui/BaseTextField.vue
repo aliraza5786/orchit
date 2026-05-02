@@ -22,7 +22,7 @@
           'flex items-center border rounded-md px-3 py-2 w-full text-sm focus-within:ring-2',
           size === 'md' ? 'h-10' : 'h-12',
           error ? 'border-red-500 focus-within:ring-red-500' : ' focus-within:ring-black',
-          isDarkTheme ? 'bg-[#131318] border-border  ' : 'bg-bg-input border-border'
+          isDarkTheme ? 'bg-bg-input border-border  ' : 'bg-bg-input border-border'
         ]"
       >
         <!-- Prefix slot -->

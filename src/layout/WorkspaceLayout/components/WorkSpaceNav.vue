@@ -11,7 +11,7 @@
       ]"
     >
       <!-- Logo + Title (now a dropdown trigger) -->
-      <div class="relative flex items-center ps-1">
+      <div class="relative flex items-center ps-1.5">
         <div
           class="transition-all duration-300 ease-in-out overflow-visible flex items-center gap-1"
           :class="expanded ? 'w-[220px]' : 'w-8'"
@@ -62,7 +62,13 @@
               <!-- Workspace content -->
               <div v-else class="flex items-center">
                 <div
-                  class="w-[25px] h-[25px] rounded-[10px] bg-[#2da1e7] text-white flex items-center justify-center font-bold text-[13px] shrink-0 shadow-sm"
+                  class="rounded-full text-white flex items-center justify-center font-bold text-[13px] shrink-0 shadow-sm"
+                  :class="expanded ? 'w-[25px] h-[25px]' : 'w-[30px] h-[30px]'"
+                  :style="{
+                    backgroundColor:
+                      localWorkspace.variables?.['workspace-color'] ||
+                      'var(--accent)',
+                  }"
                   v-if="!localWorkspace.logo"
                 >
                   {{
@@ -75,10 +81,16 @@
                   v-else
                   :src="localWorkspace.logo ?? dp"
                   alt="Workspace menu"
-                  :class="expanded
-                    ? 'w-[25px] h-[25px]'
-                    : 'w-[30px] h-[30px]'"
-                  class="rounded-[10px] cursor-pointer aspect-square object-cover shrink-0 shadow-sm"
+                  :class="expanded ? 'w-[25px] h-[25px]' : 'w-[30px] h-[30px]'"
+                  :style="{
+                    borderColor:
+                      localWorkspace.variables?.['workspace-color'] ||
+                      'transparent',
+                    borderWidth: localWorkspace.variables?.['workspace-color']
+                      ? '2px'
+                      : '0',
+                  }"
+                  class="rounded-full cursor-pointer aspect-square object-cover shrink-0 shadow-sm border-solid"
                 />
                 <Transition name="title-fade">
                   <h3
@@ -192,14 +204,14 @@
 
       <!-- Navigation Links -->
       <ul
-        :class="`flex text-xs font-bold overflow-x-auto items-center gap-1 ${
+        :class="`flex text-xs overflow-x-auto items-center gap-1 ${
           workspaceStore.background.startsWith('url')
             ? 'text-white'
             : 'text-text-primary'
         }`"
       >
         <li
-          class="px-2 text-[13px] text-normal py-1.5 hover:bg-bg-card cursor-pointer group rounded-lg"
+          class="px-2 text-[13px] font-normal py-1.5 hover:bg-bg-card cursor-pointer group rounded-lg"
           :class="
             workspaceStore.selectedLaneIds.length == 0
               ? 'bg-bg-card text-text-primary'
@@ -229,7 +241,7 @@
 
         <li
           v-if="canCreateLane"
-          class="hover:text-accent text-nowrap text-text-primary flex gap-1 items-center text-[13px] text-normal cursor-pointer px-2 py-1"
+          class="hover:text-accent text-nowrap text-text-secondary flex gap-1 items-center text-[13px] font-normal cursor-pointer px-2 py-1"
           @click="createLaneHandler"
         >
           <svg
@@ -263,7 +275,10 @@
         Ask Ai
       </button>
 
-      <button class="cursor-pointer rounded-lg p-2 w-8 h-8 flex items-center justify-center hover:bg-bg-card" @click="handleClick">
+      <button
+        class="cursor-pointer rounded-lg p-2 w-8 h-8 flex items-center justify-center hover:bg-bg-card"
+        @click="handleClick"
+      >
         <i class="fa-solid fa-ellipsis rotate-90 cursor-pointer"></i>
       </button>
     </div>
@@ -302,11 +317,7 @@ const localWorkspace = computed(() => workspaceStore.singleWorkspace);
 // Computed lanes from store
 const localLanes = computed(() => workspaceStore.lanes || []);
 const isWorkspaceLoading = computed(() => {
-  return (
-    !localWorkspace.value ||
-    !localWorkspace.value.logo ||
-    !localWorkspace.value.variables?.title
-  );
+  return !localWorkspace.value || !localWorkspace.value.variables?.title;
 });
 
 // Initialize props - removed getWorkspace
@@ -352,7 +363,7 @@ const toggleLogoMenu = async () => {
   firstItemRef.value?.focus();
 };
 
-const handleLogoClick = (e?: Event) => {
+const handleLogoClick = (_e?: Event) => {
   if (window.innerWidth < 640) {
     toggleLogoMenu();
   } else {
