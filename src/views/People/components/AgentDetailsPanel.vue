@@ -51,8 +51,6 @@
             :model-value="selectedRole"
             :options="roleOptions"
             placeholder="Select Role"
-            @click.stop="handleRoleClick"
-            @update:modelValue="handleRoleChange"
             :disabled="!canEditUser" 
             :loading="agentStore.isLoadingRoles"
           />

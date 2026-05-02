@@ -836,7 +836,7 @@
   :class="[
     'border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden',
     isExpanded
-      ? 'w-full md:w-[35%] lg:w-[24%]'
+      ? 'w-full md:w-[30%] lg:w-[30%]'
       : 'w-full'
   ]"
 >
@@ -975,233 +975,267 @@
     </div>
   </div>
 </div>
-
-        <!-- Messages -->
-        <template
-          v-else-if="orderedMessages.length || isAiThinkingBubbleVisible"
-        >
-        
-          <div
-            v-for="msg in orderedMessages"
-            :key="msg._id"
-            class="flex gap-2.5 relative animate-fade-in group/msg"
-            :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
-          >
-            <!-- Avatar -->
-            <div
-              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm"
-              :class="
-                msg.type === 'user'
-                  ? 'bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20'
-                  : 'bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15'
-              "
-            >
-              <i
-                v-if="msg.type === 'assistant'"
-                class="fa-solid fa-robot text-accent text-[11px]"
-              ></i>
-              <span
-                v-else-if="msg.type === 'user'"
-                class="text-[9px] font-bold text-accent"
-                >ME</span
-              >
-            </div>
-
-            <!-- Bubble -->
-           <div
-            class="relative flex flex-col overflow-hidden"
-            :class="msg.type === 'user' ? 'max-w-[75%] w-fit ml-auto' : 'max-w-[75%]'"
-          >
-             <div
-  v-if="msg.type === 'assistant' && !msg.content"
-  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md wrap-break-word"
->
-    Unable to generate a response. Please try again.
-  </div>
-<div v-else
-  class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 wrap-break-word"
-  :class="
-    msg.type === 'user'
-      ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15 w-full'
-      : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
-  "
->
-                <!-- Message menu trigger -->
-                <button
-                  v-if="activeSessionId && !msg.metadata?.temp"
-                  @click.stop="toggleMsgMenu(msg._id)"
-                  class="absolute top-1.5 right-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded-md cursor-pointer"
-                  :class="
-                    msg.type === 'user'
-                      ? 'text-white/70 hover:text-white hover:bg-white/10'
-                      : 'text-text-tertiary hover:text-text-secondary hover:bg-black/5'
-                  "
-                >
-                  <i class="fa-solid fa-ellipsis text-[9px]"></i>
-                </button>
-
-                <p class="whitespace-pre-wrap pr-4" v-if="msg.content">
-                  {{ msg.content }}
-                </p>
-
-                <!-- Attachments -->
-                <div
-                  v-if="msg.attachments && msg.attachments.length"
-                  class="flex flex-wrap gap-1.5 mt-1.5"
-                >
-                  <div
-                    v-for="(attachment, idx) in msg.attachments"
-                    :key="idx"
-                    class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]"
-                    :class="
-                      msg.type === 'user'
-                        ? 'bg-white/15 text-white/90'
-                        : 'border border-accent/20 bg-accent/5 text-text-primary'
-                    "
-                  >
-                    <i
-                      class="fa-solid"
-                      :class="[
-                        attachment.mimetype === 'application/pdf'
-                          ? 'fa-file-pdf'
-                          : 'fa-file-image',
-                        msg.type === 'user' ? 'text-white/80' : 'text-accent',
-                      ]"
-                    ></i>
-                    <span class="max-w-[100px] truncate">{{
-                      attachment.filename || attachment.name
-                    }}</span>
-                  </div>
-                </div>
-
-                <!-- Timestamp -->
-                <div
-                  class="flex justify-end items-center gap-1.5 text-[10px] mt-1"
-                  :class="
-                    msg.type === 'user' ? 'text-white/60' : 'text-text-tertiary'
-                  "
-                >
-                  <span>{{ formatTimestamp(msg.timestamp) }}</span>
-                  <i
-                    v-if="msg.is_pinned"
-                    class="fa-solid fa-thumbtack text-[9px]"
-                    :class="
-                      msg.type === 'user' ? 'text-white/70' : 'text-accent'
-                    "
-                    title="Pinned message"
-                  ></i>
-                  <span v-if="msg.type === 'user'">
-                    <i
-                      v-if="msg.metadata?.status === 'completed'"
-                      class="fa-solid fa-check-double text-green-300"
-                    ></i>
-                    <i v-else class="fa-solid fa-check text-white/50"></i>
-                  </span>
-                </div>
-              </div>
-
-              <!-- Message dropdown menu -->
-              <transition name="dropdown">
-                <div
-                  v-if="openMsgMenuId === msg._id"
-                  class="absolute z-50 top-8 w-40 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 py-1 overflow-hidden"
-                  :class="msg.type === 'user' ? 'right-0' : 'left-0'"
-                >
-                  <button
-                    @click.stop="
-                      togglePinMessage(msg);
-                      openMsgMenuId = null;
-                    "
-                    class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:bg-accent/8 hover:text-accent transition-colors cursor-pointer"
-                  >
-                    <i
-                      class="text-[11px] w-3"
-                      :class="
-                        (msg as any).is_pinned
-                          ? 'fa-solid fa-thumbtack text-accent'
-                          : 'fa-regular fa-thumbtack text-text-secondary'
-                      "
-                    ></i>
-                    <span>{{
-                      (msg as any).is_pinned ? "Unpin message" : "Pin message"
-                    }}</span>
-                  </button>
-                </div>
-              </transition>
-            </div>
-          </div>
-                <!-- AI Thinking bubble -->
-<div
-  v-if="isAiThinkingBubbleVisible"
-  class="flex gap-2.5 relative animate-fade-in"
->
+<template v-else-if="orderedMessages.length || isAiThinkingBubbleVisible">
+  
   <div
-    class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm"
+    v-for="msg in orderedMessages"
+    :key="msg._id"
+    class="flex gap-2.5 relative animate-fade-in group/msg"
+    :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
   >
-    <i class="fa-solid fa-robot text-accent text-[11px]"></i>
-  </div>
-  <div
-    class="px-3.5 py-2 rounded-2xl rounded-tl-md max-w-[82%] text-sm leading-relaxed border border-border/40 bg-bg-body"
-  >
-    <div class="flex items-center gap-1.5">
-      <div class="typing-dots">
-        <span></span>
-        <span></span>
-        <span></span>
+    <!-- Avatar -->
+    <div
+      class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm"
+      :class="
+        msg.type === 'user'
+          ? 'bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20'
+          : 'bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15'
+      "
+    >
+      <i
+        v-if="msg.type === 'assistant'"
+        class="fa-solid fa-robot text-accent text-[11px]"
+      ></i>
+      <span
+        v-else-if="msg.type === 'user'"
+        class="text-[9px] font-bold text-accent"
+        >ME</span
+      >
+    </div>
+
+    <!-- Bubble wrapper -->
+    <div
+      class="relative flex flex-col overflow-hidden"
+      :class="msg.type === 'user' ? 'max-w-[75%] w-fit ml-auto' : 'max-w-[75%]'"
+    >
+
+      <!-- Empty assistant response -->
+      <div
+        v-if="msg.type === 'assistant' && !msg.content"
+        class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md wrap-break-word"
+      >
+        Unable to generate a response. Please try again.
       </div>
-      <span class="text-[11px] text-text-secondary ml-1">
-        {{ streamingPhase === "thinking" ? "Thinking..." : "Working on it..." }}
-      </span>
+
+      <!-- Main bubble -->
+      <div
+        v-else
+        class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 wrap-break-word"
+        :class="
+          msg.type === 'user'
+            ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15 w-full'
+            : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
+        "
+      >
+        <!-- Message menu trigger -->
+        <button
+          v-if="activeSessionId && !(msg.metadata as MessageMetadata)?.temp"
+          @click.stop="toggleMsgMenu(msg._id)"
+          class="absolute top-1.5 right-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded-md cursor-pointer"
+          :class="
+            msg.type === 'user'
+              ? 'text-white/70 hover:text-white hover:bg-white/10'
+              : 'text-text-tertiary hover:text-text-secondary hover:bg-black/5'
+          "
+        >
+          <i class="fa-solid fa-ellipsis text-[9px]"></i>
+        </button>
+
+        <!-- Message content -->
+        <p class="whitespace-pre-wrap pr-4" v-if="msg.content">
+          {{ msg.content }}
+        </p>
+
+        <!-- Attachments -->
+        <div
+          v-if="msg.attachments && msg.attachments.length"
+          class="flex flex-wrap gap-1.5 mt-1.5"
+        >
+          <div
+            v-for="(attachment, idx) in msg.attachments"
+            :key="idx"
+            class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]"
+            :class="
+              msg.type === 'user'
+                ? 'bg-white/15 text-white/90'
+                : 'border border-accent/20 bg-accent/5 text-text-primary'
+            "
+          >
+            <i
+              class="fa-solid"
+              :class="[
+                attachment.mimetype === 'application/pdf'
+                  ? 'fa-file-pdf'
+                  : 'fa-file-image',
+                msg.type === 'user' ? 'text-white/80' : 'text-accent',
+              ]"
+            ></i>
+            <span class="max-w-[100px] truncate">{{
+              attachment.filename || attachment.name
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Timing pills + timestamp footer -->
+        <div class="mt-1.5 flex flex-col gap-1">
+
+          <!-- Timing pills — assistant only, when metadata has timing -->
+          <div
+            v-if="msg.type === 'assistant' && (msg.metadata?.think_ms || msg.metadata?.total_ms)"
+            class="flex items-center gap-1.5 flex-wrap"
+          >
+            <span
+              v-if="msg.metadata?.think_ms"
+              class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
+            >
+              <i class="fa-solid fa-brain text-accent text-[8px]"></i>
+              Thought {{ (msg.metadata.think_ms / 1000).toFixed(1) }}s
+            </span>
+            <span
+              v-if="msg.metadata?.total_ms"
+              class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
+            >
+              <i class="fa-regular fa-clock text-accent text-[8px]"></i>
+              {{ (msg.metadata.total_ms / 1000).toFixed(1) }}s total
+            </span>
+          </div>
+
+          <!-- Timestamp row -->
+          <div
+            class="flex justify-end items-center gap-1.5 text-[10px]"
+            :class="msg.type === 'user' ? 'text-white/60' : 'text-text-tertiary'"
+          >
+            <span>{{ formatTimestamp(msg.timestamp) }}</span>
+            <i
+              v-if="msg.is_pinned"
+              class="fa-solid fa-thumbtack text-[9px]"
+              :class="msg.type === 'user' ? 'text-white/70' : 'text-accent'"
+              title="Pinned message"
+            ></i>
+            <span v-if="msg.type === 'user'">
+              <i
+                v-if="msg.metadata?.status === 'completed'"
+                class="fa-solid fa-check-double text-green-300"
+              ></i>
+              <i v-else class="fa-solid fa-check text-white/50"></i>
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Message dropdown menu -->
+      <transition name="dropdown">
+        <div
+          v-if="openMsgMenuId === msg._id"
+          class="absolute z-50 top-8 w-40 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 py-1 overflow-hidden"
+          :class="msg.type === 'user' ? 'right-0' : 'left-0'"
+        >
+          <button
+            @click.stop="
+              togglePinMessage(msg);
+              openMsgMenuId = null;
+            "
+            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:bg-accent/8 hover:text-accent transition-colors cursor-pointer"
+          >
+            <i
+              class="text-[11px] w-3"
+              :class="
+                (msg as any).is_pinned
+                  ? 'fa-solid fa-thumbtack text-accent'
+                  : 'fa-regular fa-thumbtack text-text-secondary'
+              "
+            ></i>
+            <span>{{
+              (msg as any).is_pinned ? "Unpin message" : "Pin message"
+            }}</span>
+          </button>
+        </div>
+      </transition>
+
     </div>
   </div>
-</div>
-<!-- AI Streaming response bubble -->
-<!-- AI Streaming response bubble -->
+<!-- ===== Thinking bubble — only during thinking phase ===== -->
 <div
-  v-if="streamingContent && streamingPhase !== 'completed'"
+  v-if="showThinkingBubble"
   class="flex gap-2.5 relative animate-fade-in"
 >
   <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm">
     <i class="fa-solid fa-robot text-accent text-[11px]"></i>
   </div>
-  <!-- ✅ Change: w-fit → w-full max-w-[82%] -->
-  <div class="px-3.5 py-2 rounded-2xl rounded-tl-md w-full max-w-[82%] text-sm leading-relaxed border border-accent/20 bg-bg-body shadow-sm">
-    <!-- Phase indicator -->
-    <div
-      v-if="streamingPhase === 'generating' && streamingThinkMs !== null"
-      class="flex items-center gap-1.5 mb-1.5"
-    >
-      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
-        <i class="fa-solid fa-brain text-accent text-[8px]"></i>
-        Thought for {{ (streamingThinkMs / 1000).toFixed(1) }}s
-      </span>
-    </div>
-
-    <!-- Animated text -->
-    <p class="whitespace-pre-wrap text-text-primary">{{ displayedContent }}<span
-      v-if="displayedContent.length < streamingContent.length || streamingPhase === 'generating'"
-      class="inline-block w-[2px] h-[13px] bg-accent ml-0.5 align-middle animate-pulse rounded-sm"
-    ></span></p>
-
-    <!-- Timing pills — shown once timing arrives -->
-    <div
-      v-if="streamingThinkMs !== null && streamingTotalMs !== null"
-      class="flex items-center gap-2 mt-1.5 flex-wrap"
-    >
-      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
-        <i class="fa-solid fa-brain text-accent text-[8px]"></i>
-        Thought {{ (streamingThinkMs / 1000).toFixed(1) }}s
-      </span>
-      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
-        <i class="fa-regular fa-clock text-accent text-[8px]"></i>
-        {{ (streamingTotalMs / 1000).toFixed(1) }}s total
-      </span>
+  <div class="px-3.5 py-2.5 rounded-2xl rounded-tl-md max-w-[82%] text-sm border border-border/40 bg-bg-body">
+    <div class="flex items-center gap-2">
+      <div class="typing-dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+      <span class="text-[11px] font-medium text-text-primary">Thinking</span>
+      <span class="text-[10px] text-text-tertiary tabular-nums">{{ elapsedLabel }}</span>
     </div>
   </div>
 </div>
-        </template>
 
-        <!-- Empty state -->
+<!-- ===== Streaming bubble — only when generating AND has content ===== -->
+<div
+  v-if="showStreamingBubble"
+  class="flex gap-2.5 relative animate-fade-in"
+>
+  <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm">
+    <i class="fa-solid fa-robot text-accent text-[11px]"></i>
+  </div>
+
+  <div class="px-3.5 py-2.5 rounded-2xl rounded-tl-md w-full max-w-[82%] text-sm leading-relaxed border border-accent/20 bg-bg-body shadow-sm">
+
+    <!-- Status bar -->
+    <div class="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-border/30 flex-wrap">
+
+      <!-- Thought time — appears once thinking phase ends -->
+      <span
+        v-if="streamingThinkMs !== null"
+        class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
+      >
+        <i class="fa-solid fa-brain text-accent text-[8px]"></i>
+        Thought {{ (streamingThinkMs / 1000).toFixed(1) }}s
+      </span>
+
+      <!-- Live writing indicator -->
+      <span class="inline-flex items-center gap-1.5 text-[10px] text-accent font-medium">
+        <span class="relative flex h-1.5 w-1.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent"></span>
+        </span>
+        Writing
+        <span class="text-text-tertiary font-normal tabular-nums">{{ elapsedLabel }}</span>
+      </span>
+
+      <!-- Total time — appears once timing chunk arrives -->
+      <span
+        v-if="streamingTotalMs !== null"
+        class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
+      >
+        <i class="fa-regular fa-clock text-accent text-[8px]"></i>
+        {{ (streamingTotalMs / 1000).toFixed(1) }}s total
+      </span>
+
+    </div>
+
+    <!-- Streaming text + cursor -->
+    <p class="whitespace-pre-wrap text-text-primary leading-relaxed">
+      {{ displayedContent }}<span
+        class="inline-block w-[2px] h-[13px] bg-accent ml-0.5 align-middle animate-pulse rounded-sm"
+      ></span>
+    </p>
+
+    <!-- Timestamp -->
+    <div class="flex justify-end text-[10px] text-text-tertiary mt-1.5">
+      <span>{{ formatTimestamp(new Date().toISOString()) }}</span>
+    </div>
+
+  </div>
+</div>
+
+</template>
         <!-- Empty state — rich suggestions like ClickUp AI -->
         <div
           v-else
@@ -2513,6 +2547,14 @@ import { useQueryClient } from "@tanstack/vue-query";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 import { useWidgetStore } from "../../../stores/widgets";
 
+// Types
+interface MessageMetadata {
+  status?: string;
+  temp?: boolean;
+  think_ms?: number | null;
+  total_ms?: number | null;
+}
+
 // Stores
 const workspaceStore = useWorkspaceStore();
 const agentStore = useAgentStore();
@@ -2575,24 +2617,33 @@ const showHistoryPanel = ref(false);
 const isFocused = ref(false);
 const activeSessionId = ref<string>("");
 const activeSessionTitle = ref<string>("");
-const isFirstLoad = ref(true);
-const hasEverLoaded = ref(false);
+const streamingElapsedMs = ref(0)
+const streamingElapsedTimer = ref<ReturnType<typeof setInterval> | null>(null)
+const streamingPhaseLabel = ref("")
+let elapsedTimerHandle: ReturnType<typeof setInterval> | null = null
 const agentsData = computed(() => agentStore.agentSettings.agent);
 const agentModuleId = computed(() => agentStore.module_id);
 const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => agentStore?.agentSettings?.knowledge);
 const trainingFileInput = ref<HTMLInputElement | null>(null);
   // After: const isAiThinkingBubbleVisible = ref(false);
-const streamingContent = ref("");
-const streamingPhase = ref<"thinking" | "generating" | "completed" | "">("");
-const streamingThinkMs = ref<number | null>(null);
-const streamingTotalMs = ref<number | null>(null);
-const displayedContent = ref("");
-const animationFrameId = ref<number | null>(null);
+const streamingContent = ref("")
+const streamingPhase = ref<"thinking" | "generating" | "completed" | "">("")
+const streamingThinkMs = ref<number | null>(null)
+const streamingTotalMs = ref<number | null>(null)
+const displayedContent = ref("")
+const animationFrameId = ref<number | null>(null)
 const webSearch = ref(false);
 // const isRecording = ref(false);
 const sourceSearch = ref("");
 const agentsCreated = computed(() => agentStore.agentsCreated);
+const showStreamingBubble = computed(() =>
+  (streamingPhase.value === 'generating' && streamingContent.value.length > 0) ||
+  (streamingPhase.value === 'completed' && displayedContent.value.length > 0 && !orderedMessages.value.some((m) => m.type === 'assistant' && !(m.metadata as MessageMetadata)?.temp))
+)
+const showThinkingBubble = computed(() =>
+  isAiThinkingBubbleVisible.value && streamingPhase.value === 'thinking'
+)
 const filteredSources = computed(() => {
   if (!sourceSearch.value.trim()) return availableSources.value;
   const q = sourceSearch.value.toLowerCase();
@@ -2636,17 +2687,18 @@ const sheetName = computed(() => {
   }
   return sheetNameRef.value || "";
 });
+const SESSION_KEY = 'chatbot_ever_loaded'
+const hasEverLoaded = ref(sessionStorage.getItem(SESSION_KEY) === '1')
+
 watch(
   () => agentStore.isLoadingHistory,
   (loading) => {
-    if (!loading) {
-      if (isFirstLoad.value) {
-        isFirstLoad.value = false;
-      }
-      hasEverLoaded.value = true;
+    if (!loading && !hasEverLoaded.value) {
+      hasEverLoaded.value = true
+      sessionStorage.setItem(SESSION_KEY, '1')
     }
   },
-);
+)
 const sheetId = computed(() => {
   if (
     route.path.includes("peak") ||
@@ -2789,22 +2841,35 @@ const hasPreviewData = computed(() => {
     );
   });
 });
-
 const orderedMessages = computed(() => {
-  const historyMessages = Array.isArray(agentStore.chatHistory)
+  const sessionMessages = Array.isArray(agentStore.chatHistory)
     ? agentStore.chatHistory
         .filter((s) =>
-          activeSessionId.value
-            ? s.session_id === activeSessionId.value
-            : false,
+          activeSessionId.value ? s.session_id === activeSessionId.value : false
         )
         .flatMap((s) => s.messages || [])
-        .filter((msg) => msg.metadata?.status !== "thinking")
-    : [];
-  return [...historyMessages, ...pendingMessages.value].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-  );
-});
+        .filter((msg) => msg.metadata?.status !== 'thinking')
+    : []
+
+  const historyIds = new Set(sessionMessages.map((m) => m._id))
+  const uniquePending = pendingMessages.value.filter(
+    (m) => !historyIds.has(m._id)
+  )
+
+  const all = [...sessionMessages, ...uniquePending].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  )
+
+  // ← Remove duplicate assistant messages — keep the one with real _id (no 'assistant-' prefix)
+  const seen = new Set<string>()
+  return all.filter((msg) => {
+    if (msg.type !== 'assistant') return true
+    const key = msg.content?.slice(0, 50) // dedup by content prefix
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+})
 const pinnedPrompts = computed(() => {
   return (pinnedAgentMessages.value || []).map((item: any) => {
     const msg = item.message || {};
@@ -3257,7 +3322,7 @@ async function sendMessage() {
   } catch (err: any) {
    toast.error(err?.message || "Something went wrong");
   pendingMessages.value = pendingMessages.value.filter(
-    (m) => !m.metadata?.temp,
+    (m) => !(m.metadata as MessageMetadata)?.temp,
   );
 
   isAiThinkingBubbleVisible.value = false;
@@ -3269,89 +3334,82 @@ async function sendMessage() {
   streamingThinkMs.value = null;
   streamingTotalMs.value = null;
 }
-
-  // ✅ ONLY RUN THIS IF SUCCESS
-  if (isSuccess) {
-    try {
-      localStorage.setItem("activeSessionId", activeSessionId.value);
-      localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
-
-      // Clear optimistic messages
-      pendingMessages.value = [];
-
-      // Fetch history + entities
-      await Promise.all([
-        agentStore.fetchChatHistory(
-          workspaceId.value,
-          authStore.userId || (localStorage.getItem("user_id") as string),
-          route.path.includes("talent") && agentModuleName.value
-            ? agentModuleName.value
-            : moduleSelected.value ?? undefined,
-          route.path.includes("talent") && agentModuleId.value
-            ? agentModuleId.value
-            : moduleId.value ?? undefined,
-          sheetName.value && !isMongoId(sheetName.value)
-            ? sheetName.value
-            : undefined,
-          sheetId.value,
-          !!activeSessionId.value
-        ),
-        agentStore.fetchCreatedEntities(
-          workspaceId.value,
-          authStore.userId || (localStorage.getItem("user_id") as string),
-          route.path.includes("talent") && agentModuleName.value
-            ? agentModuleName.value
-            : moduleSelected.value ?? undefined,
-          route.path.includes("talent") && agentModuleId.value
-            ? agentModuleId.value
-            : moduleId.value ?? undefined
-        ),
-      ]);
-
-      // Wait for DOM update
-      await nextTick();
-      await nextTick();
-
-      // Ensure assistant reply exists
-      await new Promise<void>((resolve) => {
-        const MAX_WAIT = 2000;
-        const start = Date.now();
-
-        const check = () => {
-          const hasAssistantReply = orderedMessages.value.some(
-            (m) => m.type === "assistant" || m.role === "assistant"
-          );
-
-          if (hasAssistantReply || Date.now() - start > MAX_WAIT) {
-            resolve();
-          } else {
-            requestAnimationFrame(check);
-          }
-        };
-
-        requestAnimationFrame(check);
-      });
-
-      // Clear streaming safely
-      streamingContent.value = "";
-      displayedContent.value = "";
-      streamingPhase.value = "completed";
-      streamingThinkMs.value = null;
-      streamingTotalMs.value = null;
-
-    } catch (err) {
-      console.error("Post-success processing failed:", err);
+if (isSuccess) {
+  try {
+    localStorage.setItem('activeSessionId', activeSessionId.value)
+    localStorage.setItem('activeSessionTitle', activeSessionTitle.value)
+    // Set displayed content to final text for the bubble
+    displayedContent.value = agentStore.currentStreamText
+    // Build assistant message with timing metadata
+    const assistantMsg = {
+      _id: 'assistant-' + Date.now(),
+      type: 'assistant' as const,
+      content: agentStore.currentStreamText,
+      timestamp: new Date().toISOString(),
+      metadata: {
+        status: 'completed',
+        think_ms: agentStore.streamThinkMs,
+        total_ms: agentStore.streamTotalMs,
+      },
     }
+
+    // Find or create session in chatHistory
+    const existingIdx = agentStore.chatHistory.findIndex(
+      (s) => s.session_id === activeSessionId.value
+    )
+
+    if (existingIdx !== -1) {
+      // Promote optimistic user message + append assistant reply
+      const session = agentStore.chatHistory[existingIdx]
+      // Find the temp user message in pendingMessages
+      const tempUserMsg = pendingMessages.value.find((m) => (m.metadata as MessageMetadata)?.temp)
+      if (tempUserMsg) {
+        // Add the confirmed user message to session
+        session.messages.push({
+          ...tempUserMsg,
+          metadata: { status: 'completed' }
+        })
+      }
+      session.messages.push(assistantMsg)
+    } else {
+      // Brand new session
+      const userMsg = pendingMessages.value.find((m) => (m.metadata as MessageMetadata)?.temp)
+      agentStore.chatHistory.push({
+        _id: activeSessionId.value,
+        session_id: activeSessionId.value,
+        context: { module_id: null, sheet_id: null, lane_id: null, card_id: null },
+        messages: [
+          ...(userMsg ? [{ ...userMsg, metadata: { status: 'completed' } }] : []),
+          assistantMsg,
+        ],
+      })
+    }
+
+    // Clear pending — history now has the real messages
+    pendingMessages.value = []
+
+    // Fetch entities (no flicker — doesn't touch chatHistory)
+    await agentStore.fetchCreatedEntities(
+      workspaceId.value,
+      authStore.userId || (localStorage.getItem('user_id') as string),
+      route.path.includes('talent') && agentModuleName.value
+        ? agentModuleName.value ?? undefined
+        : moduleSelected.value ?? undefined,
+      route.path.includes('talent') && agentModuleId.value
+        ? agentModuleId.value ?? undefined
+        : moduleId.value ?? undefined,
+    )
+  } catch (err) {
+    console.error('Post-success processing failed:', err)
   }
+}
 
-  // 🔚 FINAL CLEANUP (always runs)
-  pendingMessages.value = [];
-  showConfigPanel.value = false;
-  isAiThinkingBubbleVisible.value = false;
-  agentStore.isAiTyping = false;
-  agentStore.isSending = false;
-
-  scrollToBottom();
+// Final cleanup — always runs
+pendingMessages.value = []
+isAiThinkingBubbleVisible.value = false
+agentStore.isAiTyping = false
+agentStore.isSending = false
+scrollToBottom()
 }
 // Accept / Decline
 async function acceptChanges(payload: any) {
@@ -3569,13 +3627,17 @@ watch(
 );
 
 onBeforeUnmount(() => {
+  
   if (workspaceId.value && socket.value) {
     socket.value.emit("leave-workspace", workspaceId.value);
   }
   socket.value?.removeAllListeners();
   socket.value?.disconnect();
+   if (animFrameId !== null) cancelAnimationFrame(animFrameId)
+  stopElapsedTimer()
 });
 onBeforeUnmount(() => {
+   if (streamingElapsedTimer.value) clearInterval(streamingElapsedTimer.value)
   if (animationFrameId.value !== null) {
     cancelAnimationFrame(animationFrameId.value);
   }
@@ -5508,75 +5570,134 @@ const toggleWebSearch = async () => {
 watch(
   () => agentStore.currentStreamText,
   (newText) => {
-    if (!newText) return;
-    // As soon as first chunk arrives, kill thinking bubble immediately
-    isAiThinkingBubbleVisible.value = false;
-    streamingContent.value = newText;
-    animateStreamingContent(newText);
-    scrollToBottom();
+    if (!newText) return
+    isAiThinkingBubbleVisible.value = false
+    streamingContent.value = newText
+    animateStreamingContent(newText)
+    scrollToBottom()
   }
-);
-
+)
+watch(
+  () => [agentStore.streamThinkMs, agentStore.streamTotalMs] as const,
+  ([thinkMs, totalMs]) => {
+    if (thinkMs !== null) streamingThinkMs.value = thinkMs
+    if (totalMs !== null) streamingTotalMs.value = totalMs
+  }
+)
 watch(
   () => agentStore.currentPhase,
   (phase) => {
-    if (!phase) return;
+    if (!phase) return
 
-    if (phase === "thinking") {
-      isAiThinkingBubbleVisible.value = true;
-      streamingContent.value = "";
-      displayedContent.value = "";
-      streamingPhase.value = "thinking";
+    if (phase === 'thinking') {
+      // Reset everything, show only thinking bubble
+      streamingContent.value = ''
+      displayedContent.value = ''
+      streamingThinkMs.value = null
+      streamingTotalMs.value = null
+      streamingPhase.value = 'thinking'
+      isAiThinkingBubbleVisible.value = true
+      streamingPhaseLabel.value = 'Thinking'
+      startElapsedTimer()
     }
 
-    if (phase === "generating") {
-      // Switch from thinking bubble to streaming bubble
-      isAiThinkingBubbleVisible.value = false;
-      streamingPhase.value = "generating";
+    if (phase === 'generating') {
+      // Hide thinking bubble, streaming bubble will show once first chunk arrives
+      isAiThinkingBubbleVisible.value = false
+      streamingPhase.value = 'generating'
+      streamingPhaseLabel.value = 'Writing'
+      startElapsedTimer()
     }
 
-    if (phase === "completed") {
-      isAiThinkingBubbleVisible.value = false;
-      agentStore.isAiTyping = false;
-      streamingPhase.value = "completed";
-      scrollToBottom();
+    if (phase === 'completed') {
+      isAiThinkingBubbleVisible.value = false
+      agentStore.isAiTyping = false
+      streamingPhase.value = 'completed'
+      streamingPhaseLabel.value = 'Done'
+      stopElapsedTimer()
+      scrollToBottom()
     }
   }
-);
+)
+watch(
+  () => orderedMessages.value,
+  (msgs) => {
+    if (
+      streamingPhase.value === 'completed' &&
+      msgs.some((m) => m.type === 'assistant' && !(m.metadata as MessageMetadata)?.temp)
+    ) {
+      // Message confirmed in history — now safe to hide streaming bubble
+      streamingPhase.value = ''
+      streamingContent.value = ''
+      displayedContent.value = ''
+    }
+  },
+  { deep: false }
+)
+const elapsedLabel = computed(() => {
+  const s = (streamingElapsedMs.value / 1000).toFixed(1)
+  return `${s}s`
+})
+function startElapsedTimer() {
+  stopElapsedTimer()
+  streamingElapsedMs.value = 0
+  elapsedTimerHandle = setInterval(() => {
+    streamingElapsedMs.value += 100
+  }, 100)
+}
 
+function stopElapsedTimer() {
+  if (elapsedTimerHandle) {
+    clearInterval(elapsedTimerHandle)
+    elapsedTimerHandle = null
+  }
+}
+watch(
+  () => [agentStore.streamThinkMs, agentStore.streamTotalMs],
+  ([thinkMs, totalMs]) => {
+    if (thinkMs !== null) streamingThinkMs.value = thinkMs
+    if (totalMs !== null) streamingTotalMs.value = totalMs
+  }
+)
+// Replace animateStreamingContent entirely:
+let animFrameId: number | null = null
+let animTargetText = ''
 
 function animateStreamingContent(targetText: string) {
-  // Cancel any ongoing animation before starting a new one
-  if (animationFrameId.value !== null) {
-    cancelAnimationFrame(animationFrameId.value);
-    animationFrameId.value = null;
-  }
+  animTargetText = targetText // always update target, never restart loop
 
-  const totalChars = targetText.length;
-  let currentIndex = displayedContent.value.length; // Resume from current position
+  // Only start the loop if it's not already running
+  if (animFrameId !== null) return
 
-  // If target is shorter than what's displayed (reset happened), start fresh
-  if (currentIndex > totalChars) {
-    currentIndex = 0;
-    displayedContent.value = "";
-  }
-
-  const CHARS_PER_FRAME = 3; // Increase for faster, decrease for slower
+  const CHARS_PER_FRAME = 4
 
   function step() {
-    if (currentIndex >= totalChars) {
-      displayedContent.value = targetText;
-      animationFrameId.value = null;
-      return;
+    if (displayedContent.value.length >= animTargetText.length) {
+      displayedContent.value = animTargetText
+      animFrameId = null
+      return
     }
 
-    currentIndex = Math.min(currentIndex + CHARS_PER_FRAME, totalChars);
-    displayedContent.value = targetText.slice(0, currentIndex);
-    scrollToBottom();
-    animationFrameId.value = requestAnimationFrame(step);
+    const nextIndex = Math.min(
+      displayedContent.value.length + CHARS_PER_FRAME,
+      animTargetText.length
+    )
+    displayedContent.value = animTargetText.slice(0, nextIndex)
+    scrollToBottom()
+    animFrameId = requestAnimationFrame(step)
   }
 
-  animationFrameId.value = requestAnimationFrame(step);
+  animFrameId = requestAnimationFrame(step)
+}
+
+// Also add a flush function — call this when stream completes
+// so text snaps to full content without waiting for animation
+function flushStreamingContent() {
+  if (animFrameId !== null) {
+    cancelAnimationFrame(animFrameId)
+    animFrameId = null
+  }
+  displayedContent.value = animTargetText
 }
 </script>
 
