@@ -338,10 +338,20 @@ export const useWorkspaceRoles = (
   return useQuery({
     queryKey: ["workspace-roles", company_id, workspace_id],
     queryFn: ({ signal }) => {
-      let url = `roles/workspace-access-roles?company_id=${unref(company_id)}`;
+      let url = `roles/workspace-access-roles`;
+      const queryParams = new URLSearchParams();
+
+      if (unref(company_id)) {
+        queryParams.append('company_id', String(unref(company_id)));
+      }
       
       if (unref(workspace_id)) {
-        url += `&workspace_id=${unref(workspace_id)}`;
+        queryParams.append('workspace_id', String(unref(workspace_id)));
+      }
+
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
       }
 
       return request<any>({
@@ -349,8 +359,7 @@ export const useWorkspaceRoles = (
         method: "GET",
         signal,
       });
-    },
-    enabled: !!unref(company_id),
+    }, 
     ...options,
   });
 };

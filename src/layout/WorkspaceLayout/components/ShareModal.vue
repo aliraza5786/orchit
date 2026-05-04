@@ -574,7 +574,7 @@ const companyIdFromLS = localStorage.getItem('company_id')
 
 const { data: workspaceRolesData } = useWorkspaceRoles(
   { company_id: companyIdFromLS, workspace_id: workspaceResourceId },
-  { enabled: computed(() => !!companyIdFromLS && !!workspaceResourceId.value) }
+  { enabled: computed(() => !!workspaceResourceId.value) }
 )
 
 const accessRoles = computed(() => {

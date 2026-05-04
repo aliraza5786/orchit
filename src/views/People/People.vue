@@ -683,7 +683,7 @@ const { data: workspaceRoles } = useWorkspaceRoles(
     workspace_id: workspaceId,
   },
   {
-    enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
+    enabled: computed(() => !!workspaceId.value),
   },
 );
 // ─── Fetch people ─────────────────────────────────────────────────────────────

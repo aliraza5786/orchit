@@ -349,8 +349,7 @@ function onDropBacklog(e: DragEvent) {
     if (deduped.length) normalizedBacklog.value.push(...deduped);
     const ids =
       data.ids && data.ids.length ? data.ids : data.id ? [data.id] : [];
-    if (ids.length) emit("ticket-moved-to-backlog", ids, data.sprintId);
-    console.log(data.sprintId, "sprintId ....");
+    if (ids.length) emit("ticket-moved-to-backlog", ids, data.sprintId); 
   } catch (error) {
     console.error("Drop error:", error);
   }
@@ -376,8 +375,7 @@ watch(
   () => props.checkedAll,
   (newVal) => {
     if (newVal) {
-      selectedBacklogIds.value = normalizedBacklog.value.map((t) => t.id); // select all
-      console.log(selectedBacklogIds.value);
+      selectedBacklogIds.value = normalizedBacklog.value.map((t) => t.id); // select all 
     } else {
       selectedBacklogIds.value = []; // deselect all
     }

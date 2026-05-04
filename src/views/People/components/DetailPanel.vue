@@ -103,7 +103,7 @@
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
             :disabled="!canEditUser" 
-            :loading="isLoadingWorkspaceRoles || !newCompanyId"
+            :loading="isLoadingWorkspaceRoles"
           />
           <div v-if="cardDetails?.slug?.includes('agent')" class="flex items-center justify-between mb-1 mt-3">
              <span class="text-base font-medium text-text-primary block">Select Job Role</span>
@@ -117,7 +117,7 @@
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
             :disabled="!canEditUser" 
-            :loading="isLoadingWorkspaceRoles || !newCompanyId"
+            :loading="isLoadingWorkspaceRoles "
           />
 
         </div>
@@ -458,7 +458,7 @@ function getEmailInitials(email: string): string {
   const local = email.split('@')[0] || ''
   return local.slice(0, 2).toUpperCase()
 }
-import { useSingleWorkspaceCompany } from '../../../queries/useWorkspace'
+import { useWorkspaceStore } from "../../../stores/workspace";
 
 // workspace roles
 import { useWorkspaceRoles, useAssignRole } from "../../../queries/usePeople";
@@ -611,15 +611,13 @@ function getDefaultValue(id: any) {
 }
 
 // workspace roles 
-const { data: workspaceData } = useSingleWorkspaceCompany(workspaceId, {
-  enabled: computed(() => !!workspaceId.value), //reactive
-});
-const newCompanyId = computed(() => workspaceData.value?.company_id ?? null); 
+const workspaceStore = useWorkspaceStore();
+const newCompanyId = computed(() => workspaceStore.singleWorkspace?.company_id ?? null); 
 const { data: workspaceRoles, isLoading: isLoadingWorkspaceRoles } = useWorkspaceRoles( {
     company_id: newCompanyId,
     workspace_id:  workspaceId
   }, {  
- enabled: computed(() => !!newCompanyId.value && !!workspaceId.value),
+ enabled: computed(() =>  !!workspaceId.value),
 });
 const selectedRole = ref(cardDetails.value?.workspace_access_role_id ?? "");
 
