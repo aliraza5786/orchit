@@ -1,4 +1,4 @@
-import { isRootDomain, getCurrentTenant } from './tenant'
+import { isRootDomain } from './tenant'
 
 const COOKIE_KEY = 'auth_session'
 

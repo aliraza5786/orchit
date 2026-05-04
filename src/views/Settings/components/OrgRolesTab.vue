@@ -332,6 +332,8 @@ function formatCategory(category: string): string {
 
 // ── Delete ────────────────────────────────────────────────────────────────────
 async function deleteRole(roleId: string) {
+  console.log(roleId);
+  
   if (!window.confirm('Are you sure you want to delete this role?')) return
   try {
     await new Promise(r => setTimeout(r, 600))

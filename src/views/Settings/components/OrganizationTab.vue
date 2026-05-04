@@ -284,7 +284,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { useWorkspaceStore } from '../../../stores/workspace'
 import { useUpdateCompany } from '../../../services/auth'
 import { useQueryClient } from '@tanstack/vue-query'
-import { uploadPrivateFile } from '../../../queries/useCommon'
+// import { uploadPrivateFile } from '../../../queries/useCommon'
 const queryClient = useQueryClient()
 
 const props = defineProps<{
