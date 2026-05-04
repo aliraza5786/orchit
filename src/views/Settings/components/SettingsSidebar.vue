@@ -137,8 +137,8 @@
             Create an organization to collaborate with your team and unlock all features.
           </p>
           <button
-            @click="selectTab('org-setup')"
-            class="w-full px-2 py-1.5 bg-accent text-white text-xs font-semibold rounded-md hover:bg-accent/90 transition-all"
+            @click="selectTab('org-packages')"
+            class="w-full px-2 py-1.5 bg-accent text-white cursor-pointer text-xs font-semibold rounded-md hover:bg-accent/90 transition-all"
           >
             Learn more
           </button>

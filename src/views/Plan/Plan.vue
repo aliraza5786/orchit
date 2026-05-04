@@ -90,7 +90,7 @@
                       class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
                     ></div>
                   </div>
-                    <div class="flex-1 min-h-0 overflow-y-hidden" v-else>
+                    <div class="flex-1 min-h-0 overflow-y-hidden mt-2" v-else>
                       <BacklogTable
                         :searchQuery="backlogSearchQuery"
                         :checkedAll="checkedAll"

@@ -1,7 +1,9 @@
 <template>
   <div class="flex flex-col h-[calc(100vh-125px)] relative rounded-[6px] mt-2 overflow-hidden border border-border/60">
     <div ref="tableViewport" class="kanban-table flex-1 overflow-y-auto overflow-x-auto rounded-[6px]">
-      <table class="w-full table-fixed h-[calc(100vh-175px)] border-collapse shadow-sm bg-bg-body/20 text-sm">
+      <table class="w-full table-fixed border-collapse shadow-sm bg-bg-body/20 text-sm"
+      :class="{'h-[calc(100vh-175px)]':(!isGrouped && tickets.length === 0) || (isGrouped && groups.length === 0)}"
+      >
         <!-- HEADER -->
         <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-[999]">
           <tr class="text-text-secondary">

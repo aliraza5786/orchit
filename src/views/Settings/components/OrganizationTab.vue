@@ -1,52 +1,80 @@
 <template>
   <div class="w-full space-y-6 flex-1">
-    <!-- Empty state -->
-    <div
-      v-if="!hasOrg"
-      class="flex flex-col items-center justify-center py-12 px-4"
-    >
-      <div class="flex flex-col items-center max-w-xl text-center">
-        <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 border border-accent/30 flex items-center justify-center mb-6">
-          <i class="fa-regular fa-building text-accent text-4xl"></i>
-        </div>
-        <h2 class="text-3xl font-bold text-text-primary mb-3">Ready to collaborate?</h2>
-        <p class="text-sm text-text-secondary mb-8 leading-relaxed max-w-md">
-          Create an organization to invite team members, manage projects together, and scale your business.
-        </p>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full mb-8 text-left">
-          <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
-            <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-              <i class="fa-solid fa-users text-accent text-sm"></i>
-            </div>
-            <p class="text-xs font-semibold text-text-primary">Invite members</p>
-            <p class="text-[11px] text-text-secondary">Build your team</p>
-          </div>
-          <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
-            <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-              <i class="fa-solid fa-shield-halved text-accent text-sm"></i>
-            </div>
-            <p class="text-xs font-semibold text-text-primary">Manage roles</p>
-            <p class="text-[11px] text-text-secondary">Control permissions</p>
-          </div>
-          <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
-            <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-              <i class="fa-solid fa-chart-line text-accent text-sm"></i>
-            </div>
-            <p class="text-xs font-semibold text-text-primary">Scale easily</p>
-            <p class="text-[11px] text-text-secondary">Grow your team</p>
-          </div>
-        </div>
-        <button
-          @click="createOrganization"
-          class="px-6 py-3 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20"
-        >
-          <i class="fa-solid fa-sparkles mr-2"></i> Create organization
-        </button>
-        <p class="text-xs text-text-secondary mt-6">
-          💡 Your personal account will be linked as the owner
-        </p>
-      </div>
+<!-- Replace the entire v-if="!hasOrg" block -->
+<div v-if="!hasOrg">
+
+  <!-- ── Inline creation flow ─────────────────────────────────── -->
+  <div v-if="isCreatingOrg" class="space-y-6">
+    <div class="flex items-center gap-3 mb-2">
+      <button
+        @click="isCreatingOrg = false"
+        class="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
+      >
+        <i class="fa-solid fa-arrow-left text-xs"></i>
+        Back
+      </button>
+      <div class="h-px flex-1 bg-border/40"></div>
+      <span class="text-xs text-text-secondary font-medium">Create Organization</span>
     </div>
+    <CreateOrganizationInline @done="onOrgCreated" />
+  </div>
+
+  <!-- ── Empty state ──────────────────────────────────────────── -->
+  <div v-else class="flex flex-col items-center justify-center py-12 px-4">
+    <div class="flex flex-col items-center max-w-xl text-center">
+
+      <!-- Icon -->
+      <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/10 border border-accent/30 flex items-center justify-center mb-6">
+        <i class="fa-regular fa-building text-accent text-4xl"></i>
+      </div>
+
+      <!-- Heading -->
+      <h2 class="text-3xl font-bold text-text-primary mb-3">Ready to collaborate?</h2>
+      <p class="text-sm text-text-secondary mb-8 leading-relaxed max-w-md">
+        Create an organization to invite team members, manage projects together, and scale your business.
+      </p>
+
+      <!-- Feature cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full mb-8 text-left">
+        <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
+          <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+            <i class="fa-solid fa-users text-accent text-sm"></i>
+          </div>
+          <p class="text-xs font-semibold text-text-primary">Invite members</p>
+          <p class="text-[11px] text-text-secondary">Build your team</p>
+        </div>
+        <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
+          <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+            <i class="fa-solid fa-shield-halved text-accent text-sm"></i>
+          </div>
+          <p class="text-xs font-semibold text-text-primary">Manage roles</p>
+          <p class="text-[11px] text-text-secondary">Control permissions</p>
+        </div>
+        <div class="flex flex-col gap-2 p-3 rounded-lg bg-bg-card/40 border border-border/40">
+          <div class="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+            <i class="fa-solid fa-chart-line text-accent text-sm"></i>
+          </div>
+          <p class="text-xs font-semibold text-text-primary">Scale easily</p>
+          <p class="text-[11px] text-text-secondary">Grow your team</p>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <button
+        @click="isCreatingOrg = true"
+        class="px-6 py-3 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20"
+      >
+        <i class="fa-solid fa-sparkles mr-2"></i> Create organization
+      </button>
+
+      <p class="text-xs text-text-secondary mt-6">
+        💡 Your personal account will be linked as the owner
+      </p>
+
+    </div>
+  </div>
+
+</div>
 
     <!-- Has org — settings form -->
     <div v-else class="space-y-6">
@@ -282,11 +310,17 @@ import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useDebounceFn } from '@vueuse/core'
 import { useWorkspaceStore } from '../../../stores/workspace'
-import { useUpdateCompanyProfile } from '../../../services/auth'
+import { useUpdateCompanyProfile, useDeleteOrganization } from '../../../services/auth'
 import { useQueryClient } from '@tanstack/vue-query'
 import { uploadPrivateFile } from '../../../queries/useCommon'
+import CreateOrganizationInline from './CreateOrganizationInline.vue'
 const queryClient = useQueryClient()
+const isCreatingOrg = ref(false)
 
+function onOrgCreated() {
+  isCreatingOrg.value = false
+  queryClient.invalidateQueries({ queryKey: ['profile'] })
+}
 const props = defineProps<{
   profile?: any
 }>()
@@ -411,12 +445,12 @@ watch(
       orgSlug.value !== originalValues.value.slug ||
       orgSize.value !== originalValues.value.company_size ||
       industry.value !== originalValues.value.work_to_do ||
-      orgDescription.value !== originalValues.value.description
+      orgDescription.value !== originalValues.value.description ||
+      (orgLogoPreview.value !== null && orgLogoPreview.value !== originalValues.value.logo) // ← add this
   }
 )
 // UI state
 const showDeleteConfirm = ref(false)
-const isDeleting = ref(false)
 const isUploadingLogo = ref(false)
 const logoInputRef = ref<HTMLInputElement>()
 const saveError = ref('')
@@ -458,10 +492,6 @@ function validateOrgSlug() {
   } else {
     errors.value.orgSlug = ''
   }
-}
-
-function createOrganization() {
-  router.push('/create-profile?mode=company')
 }
 
 function triggerLogoPicker() {
@@ -524,17 +554,27 @@ async function saveOrg() {
     },
   })
 }
-async function deleteOrg() {
-  isDeleting.value = true
-  try {
-    await new Promise(r => setTimeout(r, 800))
-    toast.success('Organization deleted')
+const { mutate: deleteOrganization, isPending: isDeleting } = useDeleteOrganization({
+  onSuccess: (data: any) => {
+    const payload = data?.data ?? data
+    if (!payload || payload?.status === false) {
+      toast.error(payload?.message || 'Failed to delete organization')
+      return
+    }
+    toast.success(payload?.message || 'Organization deleted successfully')
+    localStorage.removeItem('company_id')
     router.push('/dashboard')
-  } catch {
-    toast.error('Failed to delete organization')
-  } finally {
-    isDeleting.value = false
     showDeleteConfirm.value = false
-  }
+  },
+  onError: (error: any) => {
+    const msg = error?.response?.data?.message || error?.message || 'Failed to delete organization'
+    toast.error(msg)
+    showDeleteConfirm.value = false
+  },
+})
+async function deleteOrg() {
+  const companyId = localStorage.getItem('company_id')
+  if (!companyId) return
+  deleteOrganization({ payload: { company_id: companyId } })
 }
 </script>

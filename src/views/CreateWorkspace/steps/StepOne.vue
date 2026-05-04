@@ -88,7 +88,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, ref, computed, watch } from "vue";
 import BaseTextField from "../../../components/ui/BaseTextField.vue";
 import BaseMultiSelect from "../../../components/ui/BaseMultiSelect.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
@@ -162,6 +162,90 @@ const form = ref<WorkspaceVariables>({
   "workspace-type": "",
   "workspace-industries": [],
   "workspace-color": "#7D68C8",
+});
+
+function extractDominantColor(imageSrc: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return reject("No canvas context");
+
+      canvas.width = 50;
+      canvas.height = 50;
+      ctx.drawImage(img, 0, 0, 50, 50);
+
+      const imgData = ctx.getImageData(0, 0, 50, 50).data;
+      let r = 0,
+        g = 0,
+        b = 0,
+        count = 0;
+
+      for (let i = 0; i < imgData.length; i += 4) {
+        if (imgData[i + 3] < 128) continue; // skip transparent
+
+        // Skip near white and near black to prioritize the main brand color
+        const isWhite =
+          imgData[i] > 240 && imgData[i + 1] > 240 && imgData[i + 2] > 240;
+        const isBlack =
+          imgData[i] < 15 && imgData[i + 1] < 15 && imgData[i + 2] < 15;
+
+        if (!isWhite && !isBlack) {
+          r += imgData[i];
+          g += imgData[i + 1];
+          b += imgData[i + 2];
+          count++;
+        }
+      }
+
+      if (count === 0) {
+        // Fallback to all non-transparent pixels
+        for (let i = 0; i < imgData.length; i += 4) {
+          if (imgData[i + 3] < 128) continue;
+          r += imgData[i];
+          g += imgData[i + 1];
+          b += imgData[i + 2];
+          count++;
+        }
+      }
+
+      if (count === 0) return resolve("#7D68C8");
+
+      r = Math.floor(r / count);
+      g = Math.floor(g / count);
+      b = Math.floor(b / count);
+
+      const hex =
+        "#" + [r, g, b].map((x) => x.toString(16).padStart(2, "0")).join("");
+      resolve(hex);
+    };
+    img.onerror = reject;
+    img.src = imageSrc;
+  });
+}
+
+watch(logo, async (newLogo) => {
+  if (!newLogo) return;
+
+  let url = "";
+  if (newLogo instanceof File) {
+    url = URL.createObjectURL(newLogo);
+  } else if (typeof newLogo === "string") {
+    url = newLogo;
+  }
+
+  if (url) {
+    try {
+      const color = await extractDominantColor(url);
+      if (color) {
+        form.value["workspace-color"] = color;
+      }
+    } catch (e) {
+      console.warn("Failed to extract color from logo", e);
+    }
+  }
 });
 
 onMounted(() => {

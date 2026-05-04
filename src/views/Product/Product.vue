@@ -504,7 +504,7 @@
     v-model="showShareModal"
     resourceType="sheet"
     :resourceId="activeShareId"
-    title="Share sheet"
+    title="Sheet"
   />
 </template>
 
@@ -1077,7 +1077,7 @@ function onReorder(a: any) {
           workspace_module_id: moduleId.value,
           variable_id: selected_view_by.value,
           moved_value: a.meta.id,
-          new_index: a.meta.newIndex,
+          new_index: a.meta.newIndex-1,
         },
       },
       {
