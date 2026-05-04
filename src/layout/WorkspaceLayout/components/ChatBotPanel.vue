@@ -2859,7 +2859,7 @@ type EntityWithResponse = BaseEntity & {
     items?: unknown[];
   };
   payload?: {
-    items?: unknown[];
+    sheets?: unknown[];
   };
 };
 
@@ -2868,7 +2868,7 @@ const entities = computed<EntityWithResponse[]>(
 );
 const hasPreviewData = computed(() => {
   return entities.value?.some((e) => {
-    const payloadItems = e?.payload?.items || [];
+    const payloadItems = e?.payload?.sheets || [];
     const resultItems = e?.result?.items || [];
     const responseItems = e?.response?.items || [];
 
