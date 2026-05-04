@@ -143,27 +143,30 @@ const router = createRouter({
     return { top: 0, behavior: 'smooth' }
   },
 })
-
-// ─── API 401 interceptor ──────────────────────────────────────────────────────
+// ✅ Fixed
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       const auth = useAuthStore()
       auth.logout()
-      router.replace({ name: 'Login' })
+
+      if (!isRootDomain()) {
+        // On subdomain — redirect to root domain login
+        const isLocalhost = window.location.hostname.endsWith('.localhost')
+        const loginUrl = isLocalhost
+          ? `http://localhost:${window.location.port || 3000}/login`
+          : 'https://orchit.ai/login'
+        window.location.href = loginUrl
+      } else {
+        router.replace({ name: 'Login' })
+      }
     }
     return Promise.reject(error)
   }
 )
-
-// ─── Save last tenant path for smart redirect ────────────────────────────────
-// Runs after every navigation on subdomains so orchit.ai can redirect back
-// to exactly where the user was
 router.afterEach((to) => {
   if (!isRootDomain()) {
-    // Save the full path including query string (e.g. /workspace/peak/abc123?theme=light)
-    // Exclude auth/transient routes so we don't redirect back to login page
     const excludedRoutes = ['Login', 'Register', 'Otp', 'ForgotPassword', 'ResetPassword', 'create-profile']
     const isExcluded = excludedRoutes.includes(to.name as string)
 
@@ -221,11 +224,19 @@ router.beforeEach(async (to, _from, next) => {
   })()
 
   const hasToken = !!(session?.token ?? localStorage.getItem('token'))
-
-  if (requiresAuth && !hasToken) {
-    return next({ name: 'Login' })
+// ✅ Fixed
+if (requiresAuth && !hasToken) {
+  if (!isRootDomain()) {
+    // On subdomain with no token — send to root domain login
+    const isLocalhost = window.location.hostname.endsWith('.localhost')
+    const loginUrl = isLocalhost
+      ? `http://localhost:${window.location.port || 3000}/login`
+      : 'https://orchit.ai/login'
+    window.location.href = loginUrl
+    return
   }
-
+  return next({ name: 'Login' })
+}
   // Skip auto-redirect on logout — let user stay on login page
   if (to.name === 'Login' && hasToken && !isLogoutRedirect) {
     return next({ name: 'Home' })
