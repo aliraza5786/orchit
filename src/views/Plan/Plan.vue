@@ -390,7 +390,7 @@
                           </div>
                         </div>
 
-                        <div v-if="expandedSprints['parent-global']" class="pt-[15px] px-[15px] h-[350px]">
+                        <div v-if="expandedSprints['parent-global']" class="pt-[10px] px-[10px] h-[350px]">
                            <SprintCard
                             :searchQuery="searchQuery"
                             :sprintId="selectedSprintId"
@@ -496,7 +496,7 @@
                         </div>
 
                         <!-- Content Area (SprintCard or Nested Huddles) -->
-                        <div v-if="expandedSprints[sprint._id]" class=" pt-[15px] px-[15px]">
+                        <div v-if="expandedSprints[sprint._id]" class=" pt-[10px] px-[10px]">
                           <!-- If this sub-item has its own sub-items (Huddles/Sub-Sprints) -->
                           <template v-if="(sprint.hurdles?.length || 0) > 0 || (sprint.sprints?.length || 0) > 0">
                             <!-- Tickets of this sprint (collapsible) -->
@@ -516,7 +516,7 @@
                                   </span>
                                 </div>
                               </div>
-                              <div v-if="expandedSprints[sprint._id + '-global-tickets']" class="h-[350px] pt-[15px] px-[15px]">
+                              <div v-if="expandedSprints[sprint._id + '-global-tickets']" class="h-[350px] pt-[10px] px-[10px]">
                                  <SprintCard
                                   :searchQuery="searchQuery"
                                   :sprintId="sprint._id"
@@ -566,7 +566,7 @@
                                   <span v-if="huddle.status === 'completed'" class="text-[10px] font-semibold  bg-green-600/10 text-green-600 px-2.5 py-1.5 rounded-full">Completed</span>
                                 </div>
                               </div>
-                              <div v-if="expandedSprints[huddle._id]" class="pt-[15px] px-[15px] h-[350px]">
+                              <div v-if="expandedSprints[huddle._id]" class="pt-[10px] px-[10px] h-[350px]">
                                  <SprintCard
                                   :searchQuery="searchQuery"
                                   :sprintId="huddle._id"

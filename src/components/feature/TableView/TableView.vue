@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col h-[calc(100vh-160px)] relative rounded-[6px] mt-4 overflow-hidden border border-border/60">
+  <div class="flex flex-col h-[calc(100vh-125px)] relative rounded-[6px] mt-2 overflow-hidden border border-border/60">
     <div ref="tableViewport" class="kanban-table flex-1 overflow-y-auto overflow-x-auto rounded-[6px]">
-      <table class="w-full table-fixed border-collapse shadow-sm bg-bg-body/20 text-sm">
+      <table class="w-full table-fixed h-[calc(100vh-175px)] border-collapse shadow-sm bg-bg-body/20 text-sm">
         <!-- HEADER -->
         <thead class="bg-bg-surface border-b border-border sticky top-[-1px] z-[999]">
           <tr class="text-text-secondary">
@@ -82,6 +82,21 @@
               </td>
             </tr>
           </template>
+
+          <!-- EMPTY STATE -->
+          <tr v-else-if="(!isGrouped && tickets.length === 0) || (isGrouped && groups.length === 0)">
+            <td :colspan="visibleColumns.length + 2" class="text-center py-20">
+              <div class="flex flex-col items-center justify-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-bg-body/60 flex items-center justify-center border border-border/40 shadow-sm">
+                  <i class="fa-regular fa-folder-open text-xl text-text-secondary/60"></i>
+                </div>
+                <div class="text-sm font-medium text-text-primary">No tickets found</div>
+                <div class="text-[12px] text-text-secondary max-w-xs text-center">
+                   You can add a new ticket using the create button below.
+                </div>
+              </div>
+            </td>
+          </tr>
 
           <!-- GROUPED VIEW -->
           <template v-else-if="isGrouped">

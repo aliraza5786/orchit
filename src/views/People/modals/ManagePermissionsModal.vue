@@ -265,7 +265,7 @@ const { data: workspaceRoles, isLoading: isLoadingRoles } = useWorkspaceRoles({
   company_id: computed(() => props.companyId),
   workspace_id: workspaceId
 }, {
-  enabled: computed(() => !!props.companyId)
+  enabled: computed(() => !!workspaceId.value),
 });
 
 const roleOptions = computed(() =>

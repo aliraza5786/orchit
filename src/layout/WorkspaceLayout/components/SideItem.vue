@@ -327,7 +327,11 @@ watch(
 /** other existing logic */
 const route = useRoute();
 const workspaceStore = useWorkspaceStore();
-const isActive = computed(() => route.fullPath === props.to);
+const isActive = computed(() => {
+  const currentPath = route.path.replace(/\/$/, "");
+  const targetPath = props.to.split("?")[0].replace(/\/$/, "");
+  return currentPath === targetPath;
+});
 const router = useRouter();
 function clickHandler() {
   if (progress.value == "processing" && props.status == "running") return;

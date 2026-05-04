@@ -82,12 +82,17 @@ export const useRolesPermisions = (options = {}) => {
 export const useRoles = (id:any,options = {}) => {
   return useQuery({
     queryKey: ["roles"],
-    queryFn: ({ signal }) =>
-      request<any>({
-        url: `/roles/workspace-access-roles?company_id=${unref(id)?._id}`,
+    queryFn: ({ signal }) => {
+      let url = `/roles/workspace-access-roles`;
+      if (unref(id)?._id) {
+        url += `?company_id=${unref(id)?._id}`;
+      }
+      return request<any>({
+        url,
         method: "GET",
         signal,
-      }),
+      });
+    },
     ...options,
   });
 };
