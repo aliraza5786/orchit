@@ -135,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed, onMounted } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useInvitedWorkspace } from '../../queries/useWorkspace'
 import { useAuthStore } from '../../stores/auth'
