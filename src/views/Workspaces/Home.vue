@@ -17,7 +17,7 @@
       </div>
 
       <!-- ✅ Only show entire workspaces section if user can read workspaces -->
-      <template v-if="can('workspace.read')">
+      <template>
         <div class="overflow-x-auto">
           <div class="mt-15 sm:mt-21 mb-8 flex items-center justify-between min-w-max">
             <h2 class="text-xl font-medium me-3">All Workspaces</h2>
@@ -66,20 +66,6 @@
           />
         </div>
       </template>
-
-      <!-- ✅ No read access fallback -->
-      <div
-        v-else
-        class="mt-20 flex flex-col items-center justify-center text-center py-16 px-4 rounded-2xl border border-dashed border-border"
-      >
-        <div class="w-14 h-14 rounded-full bg-border/20 flex items-center justify-center mb-4">
-          <i class="fa-solid fa-lock text-text-secondary text-lg"></i>
-        </div>
-        <h3 class="text-base font-semibold text-text-primary mb-1">Access restricted</h3>
-        <p class="text-sm text-text-secondary max-w-xs">
-          You don't have permission to view workspaces. Contact your administrator to request access.
-        </p>
-      </div>
 
     </div>
   </div>
