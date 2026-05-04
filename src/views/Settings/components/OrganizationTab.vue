@@ -282,9 +282,9 @@ import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { useDebounceFn } from '@vueuse/core'
 import { useWorkspaceStore } from '../../../stores/workspace'
-import { useUpdateCompany } from '../../../services/auth'
+import { useUpdateCompanyProfile } from '../../../services/auth'
 import { useQueryClient } from '@tanstack/vue-query'
-// import { uploadPrivateFile } from '../../../queries/useCommon'
+import { uploadPrivateFile } from '../../../queries/useCommon'
 const queryClient = useQueryClient()
 
 const props = defineProps<{
@@ -325,38 +325,37 @@ const domainSuffix = computed(() => {
   }
 })
 
-// Original values for change tracking
 const originalValues = ref({
   title: '',
   slug: '',
   company_size: '',
   work_to_do: '',
   logo: '',
+  description: '',  
 })
-
-// Single watch — pre-fill form AND set originalValues
 watch(
   () => props.profile?.active_company,
   (company) => {
     if (!company) return
+
     orgName.value = company.title ?? ''
     orgSlug.value = company.slug ?? ''
     orgSize.value = company.company_size ?? '1–10'
     orgData.value.logo = company.logo ?? ''
     industry.value = company.work_to_do ?? ''
+    orgDescription.value = company.description ?? ''
 
-    // Set originals so hasChanges works correctly
     originalValues.value = {
       title: company.title ?? '',
       slug: company.slug ?? '',
       company_size: company.company_size ?? '1–10',
       work_to_do: company.work_to_do ?? '',
       logo: company.logo ?? '',
+      description: company.description ?? '',
     }
   },
   { immediate: true }
 )
-
 // Slug availability check
 const checkSlugAvailability = useDebounceFn(async (slug: string) => {
   if (!slug || slug === props.profile?.active_company?.slug) {
@@ -382,19 +381,39 @@ watch(orgSlug, (val) => {
 
 // Change tracking
 const hasChanges = ref(false)
+async function onLogoPicked(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
 
+  const formData = new FormData()
+  formData.append('file', file)
+
+  isUploadingLogo.value = true
+
+  try {
+    const res = await uploadPrivateFile(formData)
+
+    // ✅ correct mapping
+    orgLogoPreview.value = res?.data?.url
+
+    toast.success('Logo uploaded successfully')
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || 'Upload failed')
+  } finally {
+    isUploadingLogo.value = false
+  }
+}
 watch(
-  [orgName, orgSlug, orgSize, industry, orgLogoPreview],
+  [orgName, orgSlug, orgSize, industry, orgLogoPreview, orgDescription],
   () => {
     hasChanges.value =
       orgName.value !== originalValues.value.title ||
       orgSlug.value !== originalValues.value.slug ||
       orgSize.value !== originalValues.value.company_size ||
       industry.value !== originalValues.value.work_to_do ||
-      !!orgLogoPreview.value
+      orgDescription.value !== originalValues.value.description
   }
 )
-
 // UI state
 const showDeleteConfirm = ref(false)
 const isDeleting = ref(false)
@@ -449,68 +468,34 @@ function triggerLogoPicker() {
   logoInputRef.value?.click()
 }
 
-async function onLogoPicked(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-  if (!file) return
-  if (!file.type.startsWith('image/')) { toast.error('Please upload an image file'); return }
-  if (file.size > 2 * 1024 * 1024) { toast.error('File size must be less than 2MB'); return }
-
-  const reader = new FileReader()
-  reader.onload = (e) => { orgLogoPreview.value = e.target?.result as string }
-  reader.readAsDataURL(file)
-
-  isUploadingLogo.value = true
-  try {
-    await new Promise(r => setTimeout(r, 800))
-    toast.success('Logo uploaded successfully')
-  } catch {
-    toast.error('Failed to upload logo')
-    orgLogoPreview.value = null
-  } finally {
-    isUploadingLogo.value = false
-  }
-}
-
-const { mutate: updateCompany, isPending: isSaving } = useUpdateCompany({
+const { mutate: updateCompany, isPending: isSaving } = useUpdateCompanyProfile({
   onSuccess: (data: any) => {
     const payload = data?.data ?? data
 
     if (!payload || payload?.status === false) {
-      const serverMessage = payload?.message ?? ''
-      const isSlugConflict =
-        serverMessage.toLowerCase().includes('slug') ||
-        serverMessage.toLowerCase().includes('already exists') ||
-        serverMessage.toLowerCase().includes('company name')
-
-      saveError.value = isSlugConflict
-        ? 'A company with a similar name already exists. Please try a different name.'
-        : 'Something went wrong while saving. Please try again.'
+      saveError.value =
+        payload?.message || 'Something went wrong while saving.'
       return
     }
 
     saveError.value = ''
     hasChanges.value = false
     orgLogoPreview.value = null
-    toast.success('Organization saved successfully')
+
+    toast.success(payload?.message || 'Organization updated successfully')
     queryClient.invalidateQueries({ queryKey: ['profile'] })
   },
+
   onError: (error: any) => {
-  const serverMessage =
-    error?.response?.data?.message ||
-    error?.response?.data?.data || // fallback (your API puts error string here sometimes)
-    error?.message ||
-    'Something went wrong'
+    const serverMessage =
+      error?.response?.data?.message ||
+      error?.response?.data?.data ||
+      error?.message ||
+      'Something went wrong'
 
-  const isSlugConflict =
-    serverMessage.toLowerCase().includes('slug') ||
-    serverMessage.toLowerCase().includes('already exists')
-
-  saveError.value = isSlugConflict
-    ? 'This domain is already taken. Please choose another.'
-    : serverMessage   // ✅ USE REAL MESSAGE
-
-  toast.error(saveError.value)
-}
+    saveError.value = serverMessage
+    toast.error(serverMessage)
+  },
 })
 
 async function saveOrg() {
@@ -519,6 +504,7 @@ async function saveOrg() {
   if (!isFormValid.value) return
 
   const slugChanged = orgSlug.value !== props.profile?.active_company?.slug
+
   if (slugChanged && isSlugAvailable.value === false) {
     toast.error('This domain is already taken. Please choose another.')
     return
@@ -526,16 +512,18 @@ async function saveOrg() {
 
   updateCompany({
     payload: {
+      company_id: localStorage.getItem('company_id'),
+
       title: orgName.value,
+       description: orgDescription.value,
       slug: orgSlug.value,
       company_size: orgSize.value,
-      work_to_do: industry.value,        // ✅ was missing
-      logo: orgLogoPreview.value || orgData.value.logo || null,
-      company_id: localStorage.getItem('company_id'),
-    }
+      work_to_do: industry.value,
+      
+      logo: orgLogoPreview.value ?? orgData.value.logo ?? null,
+    },
   })
 }
-
 async function deleteOrg() {
   isDeleting.value = true
   try {
