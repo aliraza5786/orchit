@@ -13,7 +13,7 @@
       <!-- Logo + Title (now a dropdown trigger) -->
       <div class="relative flex items-center ps-1.5">
         <div
-          class="transition-all duration-300 ease-in-out overflow-visible flex items-center gap-1"
+          class="transition-all duration-300 ease-in-out overflow-visible justify-between flex items-center gap-1"
           :class="expanded ? 'w-[220px]' : 'w-8'"
         >
           <button
@@ -21,7 +21,7 @@
             class="flex relative group items-center border-0 outline-0 overflow-hidden justify-between cursor-pointer rounded-lg transition-all duration-300"
             :class="
               expanded
-                ? 'border border-transparent hover:bg-bg-card w-full px-1.5 py-1'
+                ? 'border border-transparent hover:bg-bg-card w-max-content px-1.5 py-1'
                 : 'w-auto'
             "
             aria-haspopup="menu"

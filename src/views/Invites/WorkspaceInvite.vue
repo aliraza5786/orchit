@@ -27,13 +27,12 @@
           <div
             class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/50 dark:bg-red-950/40 red-200">
             <div class="font-medium mb-1">We couldn’t open this invite.</div>
-            <p class="text-sm leading-relaxed">{{ error }}</p>
+            <p class="text-sm leading-relaxed">Please log in to your account to accept this invitation.</p>
           </div>
           <div class="mt-4 flex gap-2">
             <button class="px-4 py-2 rounded-md border text-sm border-border " @click="() => refetch()">Try
               again</button>
-            <Button  @click="goHome">Go to
-              home</Button>
+            <Button  @click="goToLogin">Log In</Button>
           </div>
         </div>
 
@@ -148,17 +147,6 @@ const router = useRouter()
 const auth = useAuthStore()
 const { token } = useRouteIds()
 
-// ✅ Check auth on mount — if no token in localStorage, redirect to login
-// and pass current full URL as redirect so we come back here after login
-onMounted(() => {
-  const authToken = localStorage.getItem('token') // adjust key to match your actual localStorage key
-  if (!authToken) {
-    router.replace({
-      name: 'Login',
-      query: { redirect: router.currentRoute.value.fullPath },
-    })
-  }
-})
 
 const { data, refetch, isPending } = useInvitedWorkspace(token.value)
 
@@ -195,6 +183,12 @@ const isEmailMatch = computed(() => {
 
 async function accept() {
   if (!data.value || data.value.status == 'expired') return
+  
+  if (!isLoggedIn.value) {
+    goToLogin()
+    return
+  }
+
   acting.value = true
   actionType.value = 'accepted'
   error.value = null
