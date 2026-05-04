@@ -13,6 +13,7 @@ import { initThemeImmediately } from "./composables/useTheme";
 import { createHead } from "@vueuse/head";
 import vue3GoogleLogin from "vue3-google-login";
 import vTooltip from "./directives/vTooltip";
+import { isRootDomain } from "./utilities/tenant";
 
 const COOKIE_KEY = "auth_session";
 const maxAge = 60 * 60 * 24 * 30;
@@ -38,27 +39,69 @@ function writeAuthCookie(data: Record<string, any>) {
   if (data.personal_mode === null) delete merged.personal_mode;
   const value = encodeURIComponent(JSON.stringify(merged));
 
-  if (hostname === 'localhost') {
+  if (hostname === "localhost") {
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-  } else if (hostname.endsWith('.localhost')) {
+  } else if (hostname.endsWith(".localhost")) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`;
-  } else if (hostname === 'orchit.ai' || hostname.endsWith('.orchit.ai')) {
+  } else if (hostname === "orchit.ai" || hostname.endsWith(".orchit.ai")) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`;
   }
-
-  console.log('🍪 auth_session cookie:', document.cookie.includes('auth_session') ? '✅ SET' : '❌ NOT SET');
-  console.log('🍪 Hostname:', hostname, '| Cookie domain set appropriately');
 }
 
-// ─── Theme sync from URL (subdomain redirects) ────────────────────────────────
+// ─── Smart Tenant Redirect ────────────────────────────────────────────────────
+// If user visits orchit.ai but has an active tenant session,
+// redirect them back to their tenant automatically
+function redirectToTenantIfNeeded(): boolean {
+  if (!isRootDomain()) return false;
+
+  // User explicitly chose to stay on root (e.g. clicked "Switch Workspace")
+  const stayOnRoot = sessionStorage.getItem("stay_on_root");
+  if (stayOnRoot) {
+    sessionStorage.removeItem("stay_on_root"); // one-time flag, consume it
+    console.log("🌐 stay_on_root flag found — skipping tenant redirect");
+    return false;
+  }
+
+  const session = getAuthCookie();
+
+  // No token → not logged in → stay on root
+  if (!session?.token) return false;
+
+  // Personal mode → no tenant → stay on root
+  if (session?.personal_mode) return false;
+
+  // Get last visited tenant slug
+  const tenantSlug = localStorage.getItem("last_tenant_slug");
+  if (!tenantSlug) return false;
+
+  // Build redirect URL — preserve current path and query
+  const isLocalhost = hostname === "localhost";
+  const baseDomain = isLocalhost ? "localhost" : "orchit.ai";
+  const port = window.location.port ? `:${window.location.port}` : "";
+  const protocol = isLocalhost ? "http" : "https";
+  const targetUrl = `${protocol}://${tenantSlug}.${baseDomain}${port}${window.location.pathname}${window.location.search}`;
+
+  console.log(`🔀 Active tenant session found — redirecting to: ${targetUrl}`);
+  window.location.href = targetUrl;
+  return true;
+}
+
+// Run redirect check FIRST before anything else mounts
+const redirecting = redirectToTenantIfNeeded();
+if (redirecting) {
+  // Stop execution — page is being redirected, no need to boot Vue
+  throw new Error("⏩ Redirecting to tenant subdomain...");
+}
+
+// ─── Theme sync from URL ──────────────────────────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
 
-const themeFromUrl = urlParams.get('theme');
-if (themeFromUrl && ['light', 'dark', 'system'].includes(themeFromUrl)) {
-  localStorage.setItem('theme', themeFromUrl);
+const themeFromUrl = urlParams.get("theme");
+if (themeFromUrl && ["light", "dark", "system"].includes(themeFromUrl)) {
+  localStorage.setItem("theme", themeFromUrl);
   const cleanUrl = new URL(window.location.href);
-  cleanUrl.searchParams.delete('theme');
-  window.history.replaceState({}, '', cleanUrl.toString());
+  cleanUrl.searchParams.delete("theme");
+  window.history.replaceState({}, "", cleanUrl.toString());
 }
 
 // ─── Token sync from URL ──────────────────────────────────────────────────────
@@ -82,9 +125,12 @@ if (encodedToken) {
 // ─── Session sync ─────────────────────────────────────────────────────────────
 const session = getAuthCookie();
 
-if (session?.personal_mode) {
+if (session?.personal_mode || isRootDomain()) {
+  // Root domain or personal mode — never load stale company_id
   localStorage.removeItem("company_id");
-  writeAuthCookie({ company_id: null });
+  if (session?.personal_mode) {
+    writeAuthCookie({ company_id: null });
+  }
 } else if (session?.company_id) {
   localStorage.setItem("company_id", session.company_id);
 }

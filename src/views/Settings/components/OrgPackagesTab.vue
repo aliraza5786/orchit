@@ -79,7 +79,7 @@ const formatPackages = (packages: any[]) => {
           }
         return parseFloat(price.toFixed(2));
       };
-    const baseMonthlyPrice = (pkg.activePrice?.amount || 0);
+    const baseMonthlyPrice = (pkg.activePrice?.amount/100 || 0);
     const discountPercent = pkg.activePrice?.discountPercentage || 0;
      
      // Apply discount only if applicable

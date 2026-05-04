@@ -68,7 +68,34 @@ export const useUpdateCompany = (options = {}) =>
       ...(options as any),
     } as any
   );
+type UpdateCompanyProfilePayload = {
+  id: string
+  title?: string
+  company_size?: string
+  description?: string | null
+  logo?: string | null
+  work_to_do?: string | null
+  heard_about_us?: string | null
+  like_to_manage?: string[]
+}
 
+export const useUpdateCompanyProfile = (options = {}) =>
+  useApiMutation<any, UpdateCompanyProfilePayload>(
+    {
+      key: ['update-company-profile'],
+      url: '/profile/company',
+      method: 'PUT',
+    },
+    {
+      mutationFn: ({ id, ...payload }: UpdateCompanyProfilePayload) =>
+        request({
+          url: `/profile/company/${id}`,
+          method: 'PUT',
+          data: payload,
+        }),
+      ...(options as any),
+    }
+  )
 export const useInviteCompany = (options = {}) =>
   useApiMutation<any, createCompany>(
     {
