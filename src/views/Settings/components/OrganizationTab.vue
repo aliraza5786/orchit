@@ -284,7 +284,7 @@ import { useDebounceFn } from '@vueuse/core'
 import { useWorkspaceStore } from '../../../stores/workspace'
 import { useUpdateCompany } from '../../../services/auth'
 import { useQueryClient } from '@tanstack/vue-query'
-
+import { uploadPrivateFile } from '../../../queries/useCommon'
 const queryClient = useQueryClient()
 
 const props = defineProps<{
@@ -495,17 +495,22 @@ const { mutate: updateCompany, isPending: isSaving } = useUpdateCompany({
     queryClient.invalidateQueries({ queryKey: ['profile'] })
   },
   onError: (error: any) => {
-    const serverMessage = error?.response?.data?.message ?? error?.message ?? ''
-    const isSlugConflict =
-      serverMessage.toLowerCase().includes('slug') ||
-      serverMessage.toLowerCase().includes('already exists')
+  const serverMessage =
+    error?.response?.data?.message ||
+    error?.response?.data?.data || // fallback (your API puts error string here sometimes)
+    error?.message ||
+    'Something went wrong'
 
-    saveError.value = isSlugConflict
-      ? 'This domain is already taken. Please choose another.'
-      : 'Failed to save organization. Please try again.'
+  const isSlugConflict =
+    serverMessage.toLowerCase().includes('slug') ||
+    serverMessage.toLowerCase().includes('already exists')
 
-    toast.error(saveError.value)
-  },
+  saveError.value = isSlugConflict
+    ? 'This domain is already taken. Please choose another.'
+    : serverMessage   // ✅ USE REAL MESSAGE
+
+  toast.error(saveError.value)
+}
 })
 
 async function saveOrg() {

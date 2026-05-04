@@ -43,8 +43,12 @@
     class="absolute top-1.5 left-3"
   >
     <span class="rounded-md bg-accent px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-white">
-      {{ project.variables?.['workspace-type'] ?? 'Project' }}
-    </span>
+  {{
+    project.variables?.['workspace-type'] === 'team'
+      ? 'Organization'
+      : (project.variables?.['workspace-type'] ?? 'Project')
+  }}
+</span>
   </Motion>
 
   <Motion
@@ -163,18 +167,26 @@
       </Motion>
     </Motion>
 
-    <!-- Empty -->
-    <Motion
-      v-else
-      key="empty"
-      :initial="{ opacity: 0, y: 10 }"
-      :animate="{ opacity: 1, y: 0 }"
-      :exit="{ opacity: 0, y: -10 }"
-      :transition="{ duration: 0.3 }"
-      class="col-span-full flex items-center justify-center py-10 text-sm text-text-secondary"
-    >
-      No projects yet
-    </Motion>
+   <!-- Empty -->
+<Motion
+  v-else
+  key="empty"
+  :initial="{ opacity: 0, y: 10 }"
+  :animate="{ opacity: 1, y: 0 }"
+  :exit="{ opacity: 0, y: -10 }"
+  :transition="{ duration: 0.3 }"
+  class="col-span-full flex flex-col items-center justify-center gap-3 py-20 text-center"
+>
+  <div class="grid h-14 w-14 place-items-center rounded-2xl bg-bg-card border border-border/70">
+    <i class="fa-regular fa-folder-open text-xl text-text-secondary"></i>
+  </div>
+  <div class="flex flex-col gap-1">
+    <p class="text-sm font-medium text-text-primary">{{ emptyMessage }}</p>
+    <p class="text-xs text-text-secondary">
+      {{ filter === 'all' ? 'Get started by creating your first workspace.' : 'Try switching to a different filter.' }}
+    </p>
+  </div>
+</Motion>
 
   </AnimatePresence>
 </template>
@@ -211,10 +223,18 @@ interface Project {
 }
 
 const props = withDefaults(
-  defineProps<{ projects: Project[]; loading?: boolean; skeletonCount?: number }>(),
+  defineProps<{ projects: Project[]; loading?: boolean; skeletonCount?: number; filter?: string    }>(),
   { loading: false, skeletonCount: 8 }
 )
-
+const emptyMessage = computed(() => {
+  switch (props.filter) {
+    case 'archived': return 'No archived workspaces'
+    case 'deleted':  return 'No deleted workspaces'
+    case 'private':  return 'No private workspaces'
+    case 'shared':   return 'No shared workspaces'
+    default:         return 'No workspaces yet — create your first one'
+  }
+})
 const router = useRouter()
 
 const resolvedSkeletonCount = computed(() => props.skeletonCount ?? 8)
