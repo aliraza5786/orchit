@@ -9,6 +9,7 @@ import Users from "../views/Workspaces/Users.vue";
 import api from "../libs/api";
 import type { AxiosError, AxiosResponse } from "axios";
 import ReleaseNote from "../views/ReleaseNote.vue";
+import { isRootDomain } from "../utilities/tenant";
 
 const Login = () => import("../views/Auth/Login.vue");
 const Register = () => import("../views/Auth/Register.vue");
@@ -32,7 +33,7 @@ const More = () => import("../views/More/More.vue");
 const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
-const companyJoin = () =>import("../views/Invites/JoinPage.vue")
+const companyJoin = () => import("../views/Invites/JoinPage.vue");
 const LandingPageLayout = () => import("../layout/LandingPageLayout/LandingPageLayout.vue");
 const requestDelete = () => import("../views/request_delete.vue");
 const NewHomepage = () => import("../views/homenew.vue");
@@ -55,8 +56,8 @@ const routes: RouteRecordRaw[] = [
         name: "new-homepage",
         component: NewHomepage,
         beforeEnter: (to, from, next) => {
-          console.log("to", to);
-          console.log("from", from);
+          console.log(to,from);
+          
           const authStore = useAuthStore()
           if (authStore.isAuthenticated) {
             next('/dashboard')
@@ -106,10 +107,8 @@ const routes: RouteRecordRaw[] = [
       { path: "users", name: "users", component: Users, meta: { requiresAuth: true } },
     ],
   },
-
   { path: "/create-workspace/:id?", name: "create-workspace", component: CreateWorkspace, props: true, meta: { requiresAuth: false } },
   { path: "/request_delete", name: "Request Delete", component: requestDelete, meta: { requiresAuth: false } },
-
   {
     path: "/workspace",
     component: WorkspaceLayout,
@@ -132,7 +131,6 @@ const routes: RouteRecordRaw[] = [
       }
     ],
   },
-
   { path: "/settings", name: "settings", component: SettingsView, meta: { requiresAuth: true } },
   { path: "/:pathMatch(.*)*", name: "NotFound", component: NotFound },
 ]
@@ -146,6 +144,7 @@ const router = createRouter({
   },
 })
 
+// ─── API 401 interceptor ──────────────────────────────────────────────────────
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
@@ -158,12 +157,29 @@ api.interceptors.response.use(
   }
 )
 
-// ✅ Single beforeEach — merged both into one
+// ─── Save last tenant path for smart redirect ────────────────────────────────
+// Runs after every navigation on subdomains so orchit.ai can redirect back
+// to exactly where the user was
+router.afterEach((to) => {
+  if (!isRootDomain()) {
+    // Save the full path including query string (e.g. /workspace/peak/abc123?theme=light)
+    // Exclude auth/transient routes so we don't redirect back to login page
+    const excludedRoutes = ['Login', 'Register', 'Otp', 'ForgotPassword', 'ResetPassword', 'create-profile']
+    const isExcluded = excludedRoutes.includes(to.name as string)
+
+    if (!isExcluded && to.fullPath !== '/') {
+      localStorage.setItem('last_tenant_path', to.fullPath)
+      console.log('📍 Saved last tenant path:', to.fullPath)
+    }
+  }
+})
+
+// ─── Route guard ──────────────────────────────────────────────────────────────
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
   const isLogoutRedirect = to.query.logout === 'true'
 
-  // ✅ Skip bootstrap on logout redirect - user is already logged out
+  // Skip bootstrap on logout redirect — user is already logged out
   if (!auth.initialized && !isLogoutRedirect) {
     await auth.bootstrap()
   }
@@ -183,7 +199,7 @@ router.beforeEach(async (to, _from, next) => {
     }
   }
 
-  // ✅ On subdomain, unknown paths → go to dashboard
+  // On subdomain, unknown paths → go to dashboard
   if (subdomain && to.name === 'NotFound') {
     return next('/dashboard')
   }
@@ -192,7 +208,7 @@ router.beforeEach(async (to, _from, next) => {
     (record) => record.meta.requiresAuth === true
   )
 
-  // ✅ Check token from auth_session cookie object first
+  // Read token from cookie first, localStorage as fallback
   const session = (() => {
     try {
       const raw = document.cookie
@@ -210,7 +226,7 @@ router.beforeEach(async (to, _from, next) => {
     return next({ name: 'Login' })
   }
 
-  // ✅ Skip auto-redirect on logout - let user stay on login page
+  // Skip auto-redirect on logout — let user stay on login page
   if (to.name === 'Login' && hasToken && !isLogoutRedirect) {
     return next({ name: 'Home' })
   }
