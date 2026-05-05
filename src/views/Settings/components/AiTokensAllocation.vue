@@ -375,40 +375,13 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useCompanyTokenAllocation } from '../../../queries/useCommon'
-import { useAuthStore } from '../../../stores/auth'
-
-const authStore = useAuthStore()
 const allocationMode = ref<'percentage' | 'custom'>('percentage')
 const range = ref('30d')
 const isSaving = ref(false)
 const saveSuccess = ref(false)
-const error = ref<string | null>(null)
+const allocationQuery = useCompanyTokenAllocation()
 
-// Check if company_id is available before making the query
-const hasCompanyId = computed(() => {
-  const getCookie = (name: string) => {
-    const match = document.cookie.match(
-      new RegExp('(^| )' + name + '=([^;]+)')
-    )
-    return match ? decodeURIComponent(match[2]) : null
-  }
-  return authStore.company_id ?? getCookie('company_id')
-})
-
-// Fetch token allocation data - only if company_id is available
-let allocationData = ref<any>(null)
-
-if (hasCompanyId.value) {
-  try {
-    const result = useCompanyTokenAllocation()
-    allocationData.value = result.data
-  } catch (e: any) {
-    error.value = e?.message || 'Failed to load token allocation'
-    console.warn('Token allocation error:', error.value)
-  }
-} else {
-  error.value = 'company_id not found - please ensure you are logged in to an organization'
-}
+const allocationData = computed(() => allocationQuery.data?.value)
 
 // Type definitions
 interface UserAllocation {
@@ -454,36 +427,45 @@ const rawSparks = [
   [8,  10, 12, 11, 14, 16, 15, 18, 21, 20, 23, 25, 24, 27, 28],
   [15, 17, 16, 19, 21, 23, 22, 26, 28, 27, 30, 32, 31, 34, 36],
 ]
-
-// Build users array from API data
 const users = computed<UserAllocation[]>(() => {
-  if (!allocationData.value?.data?.allocation) return []
-  
   const allocation = allocationData.value?.data?.allocation
+  if (!allocation?.per_user) return []
+
   const totalTokens = allocation.total_tokens || 1
-  
-  // If per_user data exists, use it
-  if (allocation.per_user && allocation.per_user.length > 0) {
-    return allocation.per_user.map((user: any, idx: number) => {
-      const percentage = Math.round((user.allocated_tokens / totalTokens) * 100)
-      const sparkData = buildSpark(rawSparks[idx % rawSparks.length])
-      return {
-        id: user.user_id,
-        name: user.user_id, // Replace with actual user name from per_user data if available
-        initials: user.user_id.substring(0, 2).toUpperCase(),
-        role: 'Member',
-        color: colorPalette[idx % colorPalette.length],
-        percentage: percentage || 0,
-        tokens: user.allocated_tokens || 0,
-        usedThisMonth: user.used_tokens || 0,
-        sparkLine: sparkData.sparkLine,
-        sparkPath: sparkData.sparkPath
-      }
-    })
-  }
-  
-  // For shared/equal mode with no per_user breakdown, show empty state
-  return []
+
+  return allocation.per_user.map((u: any, idx: number) => {
+    const apiUser = u.user
+
+    const allocatedTokens = u.allocated_tokens || 0
+    const usedTokens = u.used_tokens || 0
+    const percentage =
+  totalTokens > 0 ? Math.round((allocatedTokens / totalTokens) * 100) : 0
+
+    const spark = buildSpark(rawSparks[idx % rawSparks.length])
+
+    return {
+      id: u.user_id,
+
+      // ✅ FIXED: real user data
+      name: apiUser?.u_full_name || 'Unknown User',
+      initials: apiUser?.u_full_name
+        ? apiUser.u_full_name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+        : 'UN',
+
+      role: u.membership_role || 'Member',
+
+      color: colorPalette[idx % colorPalette.length],
+
+      percentage,
+      tokens: allocatedTokens,
+
+      // used tokens from API
+      usedThisMonth: usedTokens,
+
+      sparkLine: spark.sparkLine,
+      sparkPath: spark.sparkPath
+    }
+  })
 })
 
 // Saved snapshot (what was last committed)

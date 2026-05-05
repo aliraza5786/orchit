@@ -464,28 +464,25 @@ export const useMyTokenAllocation = (options: Record<string, unknown> = {}) => {
     ...options,
   })
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2.2 – Get company allocation (admin)
-// ─────────────────────────────────────────────────────────────────────────────
 export const useCompanyTokenAllocation = (options: Record<string, unknown> = {}) => {
-  const companyId = getCompanyId()
+  const companyId = computed(() => localStorage.getItem('company_id'))
 
-  return useQuery<TokenApiResponse<CompanyAllocationData>>({
-    queryKey: [TOKEN_ALLOC_KEY, 'company', companyId],
-    queryFn: ({ signal }) =>
-      request<TokenApiResponse<CompanyAllocationData>>({
-        url: `billing/token-allocation?company_id=${companyId}`,
+  return useQuery({
+    queryKey: ['token-allocation', 'company', companyId],
+    queryFn: ({ signal }) => {
+      const id = companyId.value
+      return request({
+        url: `billing/token-allocation?company_id=${id}`,
         method: 'GET',
         signal,
-      }),
+      })
+    },
+    enabled: computed(() => !!companyId.value),
     staleTime: 0,
     refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
     ...options,
   })
 }
-
 // ─────────────────────────────────────────────────────────────────────────────
 // 2.3 – Set allocation mode
 // ─────────────────────────────────────────────────────────────────────────────
