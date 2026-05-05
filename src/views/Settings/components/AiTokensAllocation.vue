@@ -92,11 +92,11 @@
       </div>
       <div class="flex flex-wrap gap-x-4 gap-y-1.5 mt-3">
         <div v-for="user in users" :key="user.id" class="flex items-center gap-1.5 text-xs text-text-secondary">
-          <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: user.color }"></span>
+          <span class="w-2 h-2 rounded-full shrink-0" :style="{ background: user.color }"></span>
           {{ user.name }}
         </div>
         <div class="flex items-center gap-1.5 text-xs text-text-secondary">
-          <span class="w-2 h-2 rounded-full flex-shrink-0 bg-border/40"></span>
+          <span class="w-2 h-2 rounded-full shrink-0 bg-border/40"></span>
           Unallocated
         </div>
       </div>
@@ -143,7 +143,7 @@
           <div class="space-y-2 mt-5">
             <div v-for="user in users" :key="user.id" class="flex items-center justify-between text-xs">
               <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ background: user.color }"></span>
+                <span class="w-2.5 h-2.5 rounded-full shrink-0" :style="{ background: user.color }"></span>
                 <span class="text-text-secondary">{{ user.name }}</span>
               </div>
               <span class="font-semibold text-text-primary">{{ user.percentage }}%</span>
@@ -171,7 +171,7 @@
         >
           <!-- Avatar -->
           <div
-            class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+            class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
             :style="{ background: user.color + '22', color: user.color, border: `1.5px solid ${user.color}44` }"
           >
             {{ user.initials }}
@@ -194,7 +194,7 @@
           </div>
 
           <!-- Controls -->
-          <div class="text-right flex-shrink-0 w-28">
+          <div class="text-right shrink-0 w-28">
             <template v-if="allocationMode === 'percentage'">
               <div class="flex items-center justify-end gap-1">
                 <button
@@ -259,9 +259,9 @@
           class="bg-bg-card border border-border/40 rounded-xl p-4"
         >
           <div class="flex items-center gap-2 mb-3">
-            <span class="w-2 h-2 rounded-full flex-shrink-0" :style="{ background: user.color }"></span>
+            <span class="w-2 h-2 rounded-full shrink-0" :style="{ background: user.color }"></span>
             <span class="text-xs font-semibold text-text-primary truncate">{{ user.name }}</span>
-            <span class="ml-auto text-[10px] text-text-secondary flex-shrink-0">{{ user.usedThisMonth.toLocaleString() }} used</span>
+            <span class="ml-auto text-[10px] text-text-secondary shrink-0">{{ user.usedThisMonth.toLocaleString() }} used</span>
           </div>
 
           <svg viewBox="0 0 120 40" class="w-full h-10" preserveAspectRatio="none">
@@ -297,7 +297,7 @@
       v-if="isOverBudget"
       class="flex items-start gap-3 bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3.5"
     >
-      <svg class="flex-shrink-0 mt-0.5 text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <svg class="shrink-0 mt-0.5 text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
         <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
@@ -308,7 +308,7 @@
 
     <!-- ── Info banner ───────────────────────────────────────────────────────── -->
     <div class="flex items-start gap-3 bg-blue-500/5 border border-blue-500/15 rounded-xl px-4 py-3.5">
-      <svg class="flex-shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <svg class="shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
       <p class="text-xs text-blue-400 leading-relaxed">
@@ -331,12 +331,12 @@
         class="sticky bottom-4 z-10 flex items-center justify-between gap-4 bg-bg-card border border-border/60 rounded-xl px-5 py-3.5 shadow-xl shadow-black/30"
       >
         <div class="flex items-center gap-2.5">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0"></span>
+          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
           <p class="text-sm font-medium text-text-primary">You have unsaved changes</p>
           <span class="hidden sm:inline text-xs text-text-secondary">— review allocations before saving</span>
         </div>
 
-        <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           <button
             @click="discardChanges"
             class="px-3.5 py-2 text-xs font-semibold text-text-secondary border border-border/50 rounded-lg hover:bg-border/20 hover:text-text-primary transition-all"
@@ -375,14 +375,40 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useCompanyTokenAllocation } from '../../../queries/useCommon'
+import { useAuthStore } from '../../../stores/auth'
 
+const authStore = useAuthStore()
 const allocationMode = ref<'percentage' | 'custom'>('percentage')
 const range = ref('30d')
 const isSaving = ref(false)
 const saveSuccess = ref(false)
+const error = ref<string | null>(null)
 
-// Fetch token allocation data
-const { data: allocationData } = useCompanyTokenAllocation() as any
+// Check if company_id is available before making the query
+const hasCompanyId = computed(() => {
+  const getCookie = (name: string) => {
+    const match = document.cookie.match(
+      new RegExp('(^| )' + name + '=([^;]+)')
+    )
+    return match ? decodeURIComponent(match[2]) : null
+  }
+  return authStore.company_id ?? getCookie('company_id')
+})
+
+// Fetch token allocation data - only if company_id is available
+let allocationData = ref<any>(null)
+
+if (hasCompanyId.value) {
+  try {
+    const result = useCompanyTokenAllocation()
+    allocationData.value = result.data
+  } catch (e: any) {
+    error.value = e?.message || 'Failed to load token allocation'
+    console.warn('Token allocation error:', error.value)
+  }
+} else {
+  error.value = 'company_id not found - please ensure you are logged in to an organization'
+}
 
 // Type definitions
 interface UserAllocation {
@@ -431,9 +457,9 @@ const rawSparks = [
 
 // Build users array from API data
 const users = computed<UserAllocation[]>(() => {
-  if (!allocationData?.value?.data?.allocation) return []
+  if (!allocationData.value?.data?.allocation) return []
   
-  const allocation = allocationData.value.data.allocation
+  const allocation = allocationData.value?.data?.allocation
   const totalTokens = allocation.total_tokens || 1
   
   // If per_user data exists, use it
@@ -469,8 +495,8 @@ watch(() => users.value, () => {
 }, { deep: true, immediate: true })
 
 // Get allocation data from API
-const totalBudget = computed(() => allocationData?.data?.allocation?.total_tokens || 2000000)
-const allocatedTokens = computed(() => allocationData?.data?.allocation?.used_tokens || 0)
+const totalBudget = computed(() => allocationData.value?.data?.allocation?.total_tokens || 2000000)
+const allocatedTokens = computed(() => allocationData.value?.data?.allocation?.used_tokens || 0)
 const remainingTokens = computed(() => totalBudget.value - allocatedTokens.value)
 const allocatedPercentage = computed(() => 
   totalBudget.value > 0 ? Math.round((allocatedTokens.value / totalBudget.value) * 100) : 0
