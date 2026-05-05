@@ -178,7 +178,7 @@
               <div class="overflow-y-auto">
                 <div class="max-h-72 py-1 cursor-pointer">
                   <button
-                  v-for="ws in workspaces?.workspaces"
+                  v-for="ws in workspaceList"
                   :key="ws._id"
                   class="w-full px-3 py-2 text-left text-sm font-normal 
                     hover:bg-bg-card/70 
@@ -319,7 +319,7 @@ const limit = ref(30);
 const { data: workspaces } = useWorkspaces(page, limit);
 const laneId = ref("");
 const { workspaceId } = useWorkspaceId();
-
+const workspaceList = computed(() => workspaces.value?.workspaces || []);
 // Use computed from store instead of local ref
 const localWorkspace = computed(() => workspaceStore.singleWorkspace);
 // Computed lanes from store
