@@ -194,9 +194,11 @@ const personalItems = [
 
 // Users & Roles only shown when org is active
 const orgItems = [
-  { label: 'Organization Settings', tab: 'org-setup',    icon: 'fa-regular fa-sliders' },
-  { label: 'Users Management',  tab: 'org-users',    icon: 'fa-regular fa-users' },
-  { label: 'Manage Roles',    tab: 'org-roles',    icon: 'fa-regular fa-shield-halved' },
-  { label: 'Our Packages',  tab: 'org-packages', icon: 'fa-regular fa-credit-card' },
+  { label: 'Organization Settings', tab: 'org-setup', icon: 'fa-regular fa-sliders' },
+  { label: 'Domain Setup', tab: 'org-domain', icon: 'fa-regular fa-globe' },
+  { label: 'Users Management', tab: 'org-users', icon: 'fa-regular fa-users' },
+  { label: 'Manage Roles', tab: 'org-roles', icon: 'fa-regular fa-shield-halved' },
+  { label: 'Our Packages', tab: 'org-packages', icon: 'fa-regular fa-credit-card' },
+  { label: 'Tokens Allocation', tab: 'token-allocation', icon: 'fa-regular fa-coins' }
 ]
 </script>

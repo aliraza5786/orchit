@@ -124,7 +124,7 @@ const formatPackages = (packages: any[]) => {
 };
 
 // ----------------- Vue Query -----------------
-const { data, isLoading } = usePackages();
+const { data, isLoading } = usePackages({scope: "organization"});
 const pricingPlans = computed(() => {
   if (!data.value) return [];
   return formatPackages(data.value);

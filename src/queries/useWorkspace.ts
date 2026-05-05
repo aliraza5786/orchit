@@ -2,7 +2,7 @@
 import { useApiQuery, useApiMutation } from "../libs/vq.ts";
 import api, { request } from "../libs/api.ts"; // for dynamic-URL mutations
 import { computed, unref, type Ref } from "vue";
-import { useQuery } from "@tanstack/vue-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import { useAuthStore } from "../stores/auth.ts";
 export const keys = {
   description: (id: string | number) => ["description", id] as const,
@@ -102,9 +102,6 @@ export const useWorkspaces = (
   limit: Ref<number>,
   filter?: Ref<string>
 ) => {
-  const authStore = useAuthStore()
-
-  // ✅ derive context from cookie (source of truth)
   const companyId = computed(() => {
     const personalMode = getCookie('personal_mode')
     const companyFromCookie = getCookie('company_id')
@@ -142,6 +139,41 @@ export const useWorkspaces = (
 
     refetchOnMount: true,
     enabled: true,
+  })
+}
+type CreateRolePayload = {
+  title: string
+  slug: string
+  description?: string
+  company_id?: string | null
+  is_admin: boolean
+  is_editor: boolean
+  is_viewer: boolean
+  permission_ids: string[]
+}
+
+export const useCreateCompanyRole = (options?: any) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: CreateRolePayload) => {
+      return request({
+        url: "/roles/company-roles",
+        method: "POST",
+        data: payload,
+      })
+    },
+
+    onSuccess: async (data:any, variables:any) => {
+      
+      await queryClient.invalidateQueries({
+        queryKey: ["company-roles", variables.company_id || "personal"],
+      })
+
+      options?.onSuccess?.(data, variables)
+    },
+
+    ...options,
   })
 }
 export const useWorkspacesTitles = () => {

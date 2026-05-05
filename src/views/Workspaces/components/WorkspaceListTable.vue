@@ -176,7 +176,7 @@ const renderActions = ({ row }: any) => {
 }
 const renderOrganization = ({ row }: any) => {
   const company = row?.company
-  if (!company) return h('span', { class: 'text-text-secondary text-xs' }, '-')
+  if (!company) return h('span', { class: 'text-text-secondary text-xs' }, '-----')
 
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -265,7 +265,13 @@ const renderCompanyPercentage = ({ row }: any) => {
   ])
 }
 const renderProjectType = ({ value }: any) =>
-    h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-')
+  h(
+    'span',
+    { class: 'capitalize' },
+    value?.['workspace-type'] === 'team'
+      ? 'Organization'
+      : value?.['workspace-type'] || '-'
+  )
 
 const renderPeople = ({ row, value }: any) =>
     h('div', { class: 'flex items-center -space-x-3' }, [

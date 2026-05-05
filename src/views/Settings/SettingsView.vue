@@ -29,7 +29,7 @@
 
     <!-- Main Content Area -->
 <main
-  class="flex-grow flex flex-col min-w-0 max-w-full md:m-2 md:rounded-2xl md:border border-border overflow-hidden relative"
+  class="flex-grow flex flex-col min-w-0 max-w-full md:m-2 md:rounded-xl md:border border-border overflow-hidden relative"
   :class="isDark ? 'bg-bg-card/30' : 'bg-bg-card'"
 >
   <div class="py-6 px-4 sm:px-6 sm:p-10 overflow-y-auto h-full flex flex-col">
@@ -37,7 +37,7 @@
 
       <!-- Title & Description -->
       <header class="mb-4 md:mb-8 text-center md:text-left">
-        <h1 class="text-2xl lg:text-3xl font-bold font-manrope mb-2 sm:mb-3 tracking-tight text-text-primary">
+        <h1 class="text-xl lg:text-xl font-bold font-manrope mb-2 sm:mb-3 tracking-tight text-text-primary">
           {{ pageTitle }}
         </h1>
         <p class="text-text-secondary mt-1">
@@ -51,7 +51,8 @@
       <OrgUsersTab v-else-if="currentTab === 'org-users'" />
       <OrgRolesTab v-else-if="currentTab === 'org-roles'" />
       <OrgPackagesTab v-else-if="currentTab === 'org-packages'" />
-
+      <OrgDomainSetup v-else-if="currentTab === 'org-domain'" />
+      <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" />
     </div>
   </div>
 </main>
@@ -68,6 +69,8 @@ import OrganizationTab from "./components/OrganizationTab.vue";
 import OrgUsersTab from "./components/OrgUsersTab.vue";
 import OrgRolesTab from "./components/OrgRolesTab.vue";
 import OrgPackagesTab from "./components/OrgPackagesTab.vue";
+import OrgAiTokensAllocationTab from "./components/AiTokensAllocation.vue";
+import OrgDomainSetup from "./components/OrgDomainSetup.vue";
 import { useTheme } from "../../composables/useTheme";
 import { useQuery } from "@tanstack/vue-query";
 import { getProfile } from "../../services/user";
@@ -91,9 +94,11 @@ const pageTitle = computed(() => {
     'profile': 'Your profile',
     'billing': 'Billing & subscription',
     'org-setup': 'Organization setup',
+    'org-domain': 'Organization Domain setup',
     'org-users': 'Team members',
     'org-roles': 'Role management',
     'org-packages': 'Organization billing',
+    'token-allocation': 'Organization Tokens allocation',
   };
   return titles[currentTab.value] || 'Account';
 });
