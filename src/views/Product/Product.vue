@@ -269,7 +269,7 @@
       <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
       <div
         v-show="!isPending && !isSheetPending && hasSheets"
-        class="flex overflow-x-auto gap-2 scrollbar-visible h-full mx-2 py-2"
+        class="flex overflow-x-auto gap-2 scrollbar-visible h-full mx-2 pt-2"
       >
         <div class="flex gap-2">
           <KanbanBoard
@@ -394,7 +394,7 @@
 
     <!-- ── MindMap View ────────────────────────────────────────────────────── -->
     <template v-if="view === 'mindmap'">
-      <div class="relative flex-1 flex flex-col overflow-hidden">
+      <div class="relative flex-1 flex flex-col px-2 overflow-hidden">
         <div
           v-if="isPending"
           class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"

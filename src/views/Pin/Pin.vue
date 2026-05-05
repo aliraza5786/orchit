@@ -218,7 +218,7 @@
     <!-- Kanban Board -->
     <div
       v-show="!isListPending"
-      class="flex overflow-x-auto custom_scroll_bar gap-2 py-2 h-full mx-2"
+      class="flex overflow-x-auto custom_scroll_bar gap-2 pt-2 h-full mx-2"
       v-if="view === 'kanban'"
     >
       <KanbanBoard
@@ -327,7 +327,7 @@
     </template>
     <div
       v-if="view === 'mindmap'"
-      class="relative flex-1 h-full min-h-0 overflow-hidden"
+      class="relative flex-1 h-full min-h-0 p-2 overflow-hidden"
     >
       <div
         v-if="isListPending"

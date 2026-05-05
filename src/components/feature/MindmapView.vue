@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative w-full h-full flex overflow-hidden mindmap-root"
+    class="relative w-full h-full flex rounded-[6px] my-2 overflow-hidden mindmap-root"
     ref="rootEl"
     :data-dark="isDark ? 'true' : 'false'"
   >

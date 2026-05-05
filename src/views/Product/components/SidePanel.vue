@@ -28,12 +28,12 @@
       <div v-else>
         <!-- Header -->
         <div
-          class="sticky top-0 z-10 border-b border-border px-4 sm:px-6 py-[9px] flex items-center justify-between bg-bg-card"
+          class="sticky top-0 z-10 border-b border-border px-3 sm:px-3 py-[9px] flex items-center justify-between bg-bg-card"
         >
           <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
             <button
-              class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+              class="shrink-0 hidden sm:flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
               @click="isExpanded = !isExpanded"
               :aria-label="isExpanded ? 'Collapse details' : 'Expand details'"
             >
@@ -41,12 +41,12 @@
                 :class="[
                   'fa-solid',
                   isExpanded ? 'fa-compress' : 'fa-expand',
-                  'text-lg',
+                  'text-md',
                 ]"
               ></i>
             </button>
             <button
-              class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+              class="shrink-0 flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
               @click="
                 () => {
                   emit('close');
@@ -55,12 +55,12 @@
               "
               aria-label="Close details"
             >
-              <i class="fa-solid fa-xmark text-lg"></i>
+              <i class="fa-solid fa-xmark text-md"></i>
             </button>
           </div>
         </div>
         <!-- Body -->
-        <div class="py-5 px-4 sm:px-6 flex flex-col gap-5 flex-grow">
+        <div class="py-3 px-3 flex flex-col gap-3 flex-grow">
           <!-- Sprint/Milestone Badge -->
           <div v-if="cardDetails?.sprint" class="flex items-center gap-2">
             <span
@@ -93,7 +93,7 @@
           >
             <div
               v-if="item?.type === 'Select' && item.slug == 'card-type'"
-              class="space-y-2 sm:col-span-1"
+              class="space-y-1.5 sm:col-span-1"
             >
               <div class="text-xs uppercase tracking-wider text-text-secondary">
                 {{ item.title }}
