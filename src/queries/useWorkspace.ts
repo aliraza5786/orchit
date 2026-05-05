@@ -90,12 +90,30 @@ export const useWorkspacesPrompt = () =>
     url: "/common/prompts-byname/workspace",
     method: "GET",
   });
-export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
-  const authStore = useAuthStore();
+const getCookie = (name: string) => {
+  const match = document.cookie.match(
+    new RegExp('(^| )' + name + '=([^;]+)')
+  )
+  return match ? decodeURIComponent(match[2]) : null
+}
 
-const companyId = computed(() => 
-  authStore.company_id ?? localStorage.getItem('company_id') ?? null
-);
+export const useWorkspaces = (
+  page: Ref<number>,
+  limit: Ref<number>,
+  filter?: Ref<string>
+) => {
+  const authStore = useAuthStore()
+
+  // ✅ derive context from cookie (source of truth)
+  const companyId = computed(() => {
+    const personalMode = getCookie('personal_mode')
+    const companyFromCookie = getCookie('company_id')
+
+    if (personalMode === 'true') return null
+    if (companyFromCookie) return companyFromCookie
+
+    return null
+  })
 
   return useQuery({
     queryKey: computed(() => [
@@ -103,25 +121,29 @@ const companyId = computed(() =>
       unref(page),
       unref(limit),
       unref(filter) ?? 'all',
-      companyId.value, // null for personal, string for company
+      unref(companyId), // ✅ reactive + correct
     ]),
-    queryFn: async () => {
-      const pageVal = unref(page);
-      const limitVal = unref(limit);
-      const filterVal = unref(filter) ?? 'all';
 
-      // ✅ Build URL — only append company_id if it exists
-      let url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}`;
-      if (companyId.value) {
-        url += `&company_id=${companyId.value}`;
+    queryFn: async () => {
+      const pageVal = unref(page)
+      const limitVal = unref(limit)
+      const filterVal = unref(filter) ?? 'all'
+      const company = unref(companyId)
+
+      let url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}`
+
+      // ✅ only append when truly in company context
+      if (company) {
+        url += `&company_id=${company}`
       }
 
-      return request({ url, method: 'GET' });
+      return request({ url, method: 'GET' })
     },
+
     refetchOnMount: true,
     enabled: true,
-  });
-};
+  })
+}
 export const useWorkspacesTitles = () => {
   const authStore = useAuthStore();
 
