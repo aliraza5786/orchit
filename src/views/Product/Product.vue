@@ -3,36 +3,38 @@
     class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto overflow-y-hidden flex-col flex scrollbar-visible w-full"
   >
     <div class="relative">
-      <div class="header py-2 px-2  border-b border-border flex items-center justify-between gap-2 overflow-x-auto h-full">
+      <div
+        class="header py-2 px-2 border-b border-border flex items-center justify-between gap-2 overflow-x-auto h-full"
+      >
         <div class="flex gap-2">
-        <!-- ... Sheet Dropdown ... -->
-        <Dropdown
-          ref="sheetDropdownRef"
-          @open="closeAllDropdowns('sheet')"
-          @edit-option="openEditSprintModal"
-          v-model="selected_sheet_id"
-          :canEdit="canEditSheet"
-          :canDelete="canDeleteSheet" 
-          @delete-option="handleDeleteSheetModal"
-          @share-option="handleShareSheet"
-          :options="transformedData"
-          variant="secondary"
-          customClasses="fixed w-auto"
-          custom-title="Create Sheet"
-          :multiple="true"
-        >
-          <template #more>
-            <div
-              v-if="canCreateSheet"
-              @click="createSheet()"
-              class="sticky bottom-0 bg-bg-dropdown shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap min-w-[150px]"
-            >
-              <i class="fa-solid fa-plus"></i> Add new
-            </div>
-          </template>
-        </Dropdown>
-        <!-- filters -->
-        <div class="relative flex items-center gap-2">
+          <!-- ... Sheet Dropdown ... -->
+          <Dropdown
+            ref="sheetDropdownRef"
+            @open="closeAllDropdowns('sheet')"
+            @edit-option="openEditSprintModal"
+            v-model="selected_sheet_id"
+            :canEdit="canEditSheet"
+            :canDelete="canDeleteSheet"
+            @delete-option="handleDeleteSheetModal"
+            @share-option="handleShareSheet"
+            :options="transformedData"
+            variant="secondary"
+            customClasses="fixed w-auto"
+            custom-title="Create Sheet"
+            :multiple="true"
+          >
+            <template #more>
+              <div
+                v-if="canCreateSheet"
+                @click="createSheet()"
+                class="sticky bottom-0 bg-bg-dropdown shadow-border capitalize border-t border-border px-4 py-2 hover:bg-bg-dropdown-menu-hover cursor-pointer flex items-center gap-1 overflow-hidden overflow-ellipsis text-nowrap min-w-[150px]"
+              >
+                <i class="fa-solid fa-plus"></i> Add new
+              </div>
+            </template>
+          </Dropdown>
+          <!-- filters -->
+          <div class="relative flex items-center gap-2">
             <button
               ref="filterTriggerRef"
               @click="toggleFilters"
@@ -41,15 +43,15 @@
             >
               <i class="fa-solid fa-filter text-accent text-[14px]"></i>
               <span>Filter</span>
-              <span 
-                v-if="activeFilterCount" 
+              <span
+                v-if="activeFilterCount"
                 class="bg-accent text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
               >
                 {{ activeFilterCount }}
               </span>
             </button>
-            
-            <button 
+
+            <button
               v-if="hasActiveFilters"
               @click="handleClearFilters"
               class="text-[11px] font-medium text-text-secondary hover:text-accent transition-colors whitespace-nowrap"
@@ -65,74 +67,102 @@
               :workspaceId="workspaceId"
               :moduleId="moduleId"
               :activeFilters="activeFilters"
-              @apply="(f) => { handleApplyFilters(f); showFilterBar = false; }"
+              @apply="
+                (f) => {
+                  handleApplyFilters(f);
+                  showFilterBar = false;
+                }
+              "
               @clear="handleClearFilters"
               @close="showFilterBar = false"
             />
-        </div> 
+          </div>
           <div v-if="view != 'table'" class="relative flex items-center gap-2">
-             <button
-                ref="variableTriggerRef"
-                @click="toggleVariableDropdown"
-                class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
-                :class="showVariableDropdown ? 'border-accent text-accent' : 'border-border text-text-primary'"
+            <button
+              ref="variableTriggerRef"
+              @click="toggleVariableDropdown"
+              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              :class="
+                showVariableDropdown
+                  ? 'border-accent text-accent'
+                  : 'border-border text-text-primary'
+              "
             >
-                <i class="fa-solid fa-layer-group text-[14px]" :class="showVariableDropdown ? 'text-accent' : 'text-accent'"></i>
-                <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
+              <i
+                class="fa-solid fa-layer-group text-[14px]"
+                :class="showVariableDropdown ? 'text-accent' : 'text-accent'"
+              ></i>
+              <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
             </button>
 
             <!-- Variable View Dropdown -->
             <VariableViewDropdown
-                v-if="showVariableDropdown"
-                :triggerRef="variableTriggerRef"
-                :options="variables"
-                v-model="selected_view_by"
-                :canCreateVariable="canCreateVariable"
-                @close="showVariableDropdown = false"
-                @nested-select="handleProcessNestedSelection"
-                @add-new="() => { isCreateVar = true; showVariableDropdown = false; }"
+              v-if="showVariableDropdown"
+              :triggerRef="variableTriggerRef"
+              :options="variables"
+              v-model="selected_view_by"
+              :canCreateVariable="canCreateVariable"
+              @close="showVariableDropdown = false"
+              @nested-select="handleProcessNestedSelection"
+              @add-new="
+                () => {
+                  isCreateVar = true;
+                  showVariableDropdown = false;
+                }
+              "
             />
           </div>
-           <!-- Group button for Table View -->
-           <div v-if="view === 'table'" class="relative flex items-center gap-3">
+          <!-- Group button for Table View -->
+          <div v-if="view === 'table'" class="relative flex items-center gap-3">
             <button
-                ref="groupTriggerRef"
-                @click="toggleGroupDropdown"
-                class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
-                :class="showGroupDropdown ? 'border-accent text-accent' : 'border-border text-text-primary'"
+              ref="groupTriggerRef"
+              @click="toggleGroupDropdown"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              :class="
+                showGroupDropdown
+                  ? 'border-accent text-accent'
+                  : 'border-border text-text-primary'
+              "
             >
-                <i class="fa-solid fa-layer-group text-[14px]" :class="showGroupDropdown ? 'text-accent' : 'text-accent'"></i>
-                <span>Group: {{ selectedGroupLabel }}</span>
+              <i
+                class="fa-solid fa-layer-group text-[14px]"
+                :class="showGroupDropdown ? 'text-accent' : 'text-accent'"
+              ></i>
+              <span>Group: {{ selectedGroupLabel }}</span>
             </button>
 
             <!-- Table Group Dropdown -->
             <TableGroupDropdown
-                v-if="showGroupDropdown"
-                :triggerRef="groupTriggerRef"
-                v-model="selectedGroup"
-                @close="showGroupDropdown = false"
+              v-if="showGroupDropdown"
+              :triggerRef="groupTriggerRef"
+              v-model="selectedGroup"
+              @close="showGroupDropdown = false"
             />
-           </div>
+          </div>
         </div>
 
         <div
           class="flex gap-2 items-center"
-          :class="{ 'opacity-60 pointer-events-none': !transformedData?.length }"
+          :class="{
+            'opacity-60 pointer-events-none': !transformedData?.length,
+          }"
         >
-         
-
           <Searchbar
-            @onChange="(e) => searchQuery = e"
+            @onChange="(e) => (searchQuery = e)"
             placeholder="Search in Orchit AI space"
           />
 
-          
-
-          <div class="flex items-center gap-2 bg-bg-surface/50 h-[32px] px-2 rounded-md">
+          <div
+            class="flex items-center gap-2 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+          >
             <!-- View Buttons ... -->
             <button
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="view === 'kanban' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'kanban'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="Kanban view"
               @click="view = 'kanban'"
             >
@@ -142,7 +172,11 @@
             <button
               @click="view = 'table'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="view === 'table' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'table'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="List view"
             >
               <i class="fa-solid fa-align-left"></i>
@@ -151,7 +185,11 @@
             <button
               @click="view = 'mindmap'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="view === 'mindmap' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'mindmap'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="MindMap view"
             >
               <i class="fa-solid fa-chart-diagram"></i>
@@ -160,7 +198,11 @@
             <button
               @click="view = 'calendar'"
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
-              :class="view === 'calendar' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'calendar'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="Calendar view"
             >
               <i class="fa-regular fa-calendar"></i>
@@ -169,23 +211,52 @@
             <button
               @click="view = 'gantt'"
               class="aspect-square cursor-pointer rounded-sm p-0"
-              :class="view === 'gantt' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'gantt'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="Gantt Chart view"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
+                />
               </svg>
             </button>
 
             <button
               @click="view = 'timeline'"
               class="aspect-square cursor-pointer rounded-sm p-0"
-              :class="view === 'timeline' ? 'text-accent bg-accent-text' : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+              :class="
+                view === 'timeline'
+                  ? 'text-accent bg-accent-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+              "
               title="Timeline view"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" opacity="0" />
-                <path d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-6 w-6"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
+                  opacity="0"
+                />
+                <path
+                  d="M4 12h4m8 0h4M9 12h6M9 12v-6M15 12v6"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -193,13 +264,12 @@
       </div>
     </div>
 
-    
     <!-- ── Kanban View ─────────────────────────────────────────────────────── -->
     <template v-if="view == 'kanban'">
       <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
       <div
         v-show="!isPending && !isSheetPending && hasSheets"
-        class="flex overflow-x-auto gap-2 scrollbar-visible h-full mx-2 py-2"
+        class="flex overflow-x-auto gap-2 scrollbar-visible h-full mx-2 pt-2"
       >
         <div class="flex gap-2">
           <KanbanBoard
@@ -265,7 +335,7 @@
             <button
               v-else
               :disabled="!canCreateVariable"
-              class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
+              class="text-sm text-text-primary max-w-[270px] min-w-[270px] py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
               :class="
                 !canCreateVariable ? 'cursor-not-allowed' : 'cursor-pointer'
               "
@@ -281,49 +351,59 @@
     <!-- ── Table View ──────────────────────────────────────────────────────── -->
     <template v-if="view == 'table'">
       <div class="ps-4 pe-4">
-      <TableView
-        ref="tableViewRef"
-        class="mx-3"
-        @toggleVisibility="toggleVisibilityHandler"
-        @addVar="
-          () => {
-            isCreateVar = true;
-          }
-        "
-        :isPending="isPending || isVariablesPending || isFlatTablePending || (!!selectedGroup && isTablePending)"
-        :isCreating="isAddingTableTicket"
-        :columns="columns"
-        :rows="filteredBoard"
-        :groups="tableGroups"
-        :isGrouped="!!selectedGroup"
-        :selectedGroup="selectedGroup"
-        :canCreate="canCreateCard"
-        :canCreateVariable="canCreateVariable"
-        :canDelete="canDeleteCard"
-        @delete="
-          (t) => {
-            ticketToDelete = t;
-            selectedDeleteId = t._id;
-            showTicketDelete = true;
-          }
-        "
-        @create="handleCreateTicket"
-        @quickCreate="handleQuickCreate"
-        @refresh="refreshTable"
-        @update:rows="handleTableRowsUpdate"
-        :totalCount="totalTableCount"
-        :totalTotal="totalTableTotal"
-      />
+        <TableView
+          ref="tableViewRef"
+          class="mx-3"
+          @toggleVisibility="toggleVisibilityHandler"
+          @addVar="
+            () => {
+              isCreateVar = true;
+            }
+          "
+          :isPending="
+            isPending ||
+            isVariablesPending ||
+            isFlatTablePending ||
+            (!!selectedGroup && isTablePending)
+          "
+          :isCreating="isAddingTableTicket"
+          :columns="columns"
+          :rows="filteredBoard"
+          :groups="tableGroups"
+          :isGrouped="!!selectedGroup"
+          :selectedGroup="selectedGroup"
+          :canCreate="canCreateCard"
+          :canCreateVariable="canCreateVariable"
+          :canDelete="canDeleteCard"
+          @delete="
+            (t) => {
+              ticketToDelete = t;
+              selectedDeleteId = t._id;
+              showTicketDelete = true;
+            }
+          "
+          @create="handleCreateTicket"
+          @quickCreate="handleQuickCreate"
+          @refresh="refreshTable"
+          @update:rows="handleTableRowsUpdate"
+          :totalCount="totalTableCount"
+          :totalTotal="totalTableTotal"
+        />
       </div>
     </template>
 
     <!-- ── MindMap View ────────────────────────────────────────────────────── -->
     <template v-if="view === 'mindmap'">
-      <div class="relative flex-1 flex flex-col overflow-hidden">
-        <div v-if="isPending" class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]">
+      <div class="relative flex-1 flex flex-col px-2 overflow-hidden">
+        <div
+          v-if="isPending"
+          class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
+        >
           <div class="flex flex-col items-center gap-3">
             <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
-            <span class="text-sm font-medium text-text-secondary italic">Mapping your data...</span>
+            <span class="text-sm font-medium text-text-secondary italic"
+              >Mapping your data...</span
+            >
           </div>
         </div>
         <MindMapView
@@ -627,15 +707,15 @@ const ShareModal = defineAsyncComponent(
 // Helper function to convert numbers to words for sheet count
 function numberToWords(num: number): string {
   const words: { [key: number]: string } = {
-    2: 'Two',
-    3: 'Three',
-    4: 'Four',
-    5: 'Five',
-    6: 'Six',
-    7: 'Seven',
-    8: 'Eight',
-    9: 'Nine',
-    10: 'Ten'
+    2: "Two",
+    3: "Three",
+    4: "Four",
+    5: "Five",
+    6: "Six",
+    7: "Seven",
+    8: "Eight",
+    9: "Nine",
+    10: "Ten",
   };
   return words[num] || num.toString();
 }
@@ -679,7 +759,7 @@ const showFilterBar = ref(false);
 const activeFilters = ref<any>({});
 const filterTriggerRef = ref<HTMLElement | null>(null);
 const showGroupDropdown = ref(false);
-const selectedGroup = ref('');
+const selectedGroup = ref("");
 const groupTriggerRef = ref<HTMLElement | null>(null);
 
 const showVariableDropdown = ref(false);
@@ -695,13 +775,13 @@ const handleShareSheet = (option: any) => {
 
 const selectedGroupLabel = computed(() => {
   const options: Record<string, string> = {
-    'priority': 'Priority',
-    'status': 'Status',
-    'assignee': 'Assignee',
-    'owner': 'Owner/Reporter',
-    'card_type': 'Card Type'
+    priority: "Priority",
+    status: "Status",
+    assignee: "Assignee",
+    owner: "Owner/Reporter",
+    card_type: "Card Type",
   };
-  return options[selectedGroup.value] || 'None';
+  return options[selectedGroup.value] || "None";
 });
 
 watch(showBgPicker, (v) => {
@@ -729,7 +809,9 @@ const {
 } = useSheets({ workspace_id: workspaceId, workspace_module_id: moduleId });
 
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
-const sheetTitle = computed(() => (data.value ? data.value[0]?.variables?.["sheet-title"] : ""));
+const sheetTitle = computed(() =>
+  data.value ? data.value[0]?.variables?.["sheet-title"] : "",
+);
 const selected_sheet_id = ref<any>("");
 
 const storageKey = computed(() => {
@@ -747,37 +829,46 @@ watch(
   data,
   (newData) => {
     if (!newData?.length) return;
-    
+
     // Check if current selection is already valid and keep it if so
-    const currentVal = Array.isArray(selected_sheet_id.value) 
-        ? selected_sheet_id.value 
-        : [selected_sheet_id.value].filter(Boolean);
-    const validCurrent = currentVal.filter((id: string) => id === 'all' || newData.some((s: any) => s._id === id));
-    
+    const currentVal = Array.isArray(selected_sheet_id.value)
+      ? selected_sheet_id.value
+      : [selected_sheet_id.value].filter(Boolean);
+    const validCurrent = currentVal.filter(
+      (id: string) => id === "all" || newData.some((s: any) => s._id === id),
+    );
+
     if (validCurrent.length > 0) {
-        if (validCurrent.length !== currentVal.length) {
-            selected_sheet_id.value = validCurrent.length === 1 ? validCurrent[0] : validCurrent;
-        }
-        return;
+      if (validCurrent.length !== currentVal.length) {
+        selected_sheet_id.value =
+          validCurrent.length === 1 ? validCurrent[0] : validCurrent;
+      }
+      return;
     }
 
     // Otherwise load from storage
     const storedId = localStorage.getItem(storageKey.value);
-    if (storedId?.startsWith('[')) {
-        try {
-            const parsed = JSON.parse(storedId);
-            const validParsed = parsed.filter((id: string) => id === 'all' || newData.some((s: any) => s._id === id));
-            if (validParsed.length > 0) {
-                selected_sheet_id.value = validParsed.length === 1 ? validParsed[0] : validParsed;
-                return;
-            }
-        } catch(e) {}
-    } else {
-        const exists = storedId === 'all' || newData.some((item: any) => item._id === storedId);
-        if (exists && storedId) {
-            selected_sheet_id.value = storedId;
-            return;
+    if (storedId?.startsWith("[")) {
+      try {
+        const parsed = JSON.parse(storedId);
+        const validParsed = parsed.filter(
+          (id: string) =>
+            id === "all" || newData.some((s: any) => s._id === id),
+        );
+        if (validParsed.length > 0) {
+          selected_sheet_id.value =
+            validParsed.length === 1 ? validParsed[0] : validParsed;
+          return;
         }
+      } catch (e) {}
+    } else {
+      const exists =
+        storedId === "all" ||
+        newData.some((item: any) => item._id === storedId);
+      if (exists && storedId) {
+        selected_sheet_id.value = storedId;
+        return;
+      }
     }
     selected_sheet_id.value = newData[0]._id;
   },
@@ -867,7 +958,7 @@ watch(selected_view_by, (newVal) => {
 const formattedExtraParams = computed(() => {
   const f = activeFilters.value;
   const toLower = (val: any) =>
-  typeof val === "string" ? val.toLowerCase() : val;
+    typeof val === "string" ? val.toLowerCase() : val;
   return {
     ...listProcessPayload.value,
     ...(f.seat_ids?.length ? { seat_ids: f.seat_ids.join(",") } : {}),
@@ -905,30 +996,30 @@ const activeFilterCount = computed(() => {
 });
 
 const closeAllDropdowns = (except: string) => {
-  if (except !== 'sheet') {
+  if (except !== "sheet") {
     sheetDropdownRef.value?.closeDropdown();
   }
-  if (except !== 'variable') {
+  if (except !== "variable") {
     showVariableDropdown.value = false;
   }
-  if (except !== 'filter') showFilterBar.value = false;
-  if (except !== 'group') showGroupDropdown.value = false;
+  if (except !== "filter") showFilterBar.value = false;
+  if (except !== "group") showGroupDropdown.value = false;
 };
 
 const toggleVariableDropdown = () => {
-    closeAllDropdowns('variable');
-    showVariableDropdown.value = !showVariableDropdown.value;
+  closeAllDropdowns("variable");
+  showVariableDropdown.value = !showVariableDropdown.value;
 };
 
 const toggleFilters = () => {
   const willShow = !showFilterBar.value;
-  if (willShow) closeAllDropdowns('filter');
+  if (willShow) closeAllDropdowns("filter");
   showFilterBar.value = willShow;
 };
 
 const toggleGroupDropdown = () => {
   const willShow = !showGroupDropdown.value;
-  if (willShow) closeAllDropdowns('group');
+  if (willShow) closeAllDropdowns("group");
   showGroupDropdown.value = willShow;
 };
 
@@ -948,10 +1039,7 @@ const {
 );
 
 // ─── Dedicated flat Table View data (no variable_id = no grouping shuffle) ─────
-const {
-  data: FlatTableData,
-  isPending: isFlatTablePending,
-} = useTableCards(
+const { data: FlatTableData, isPending: isFlatTablePending } = useTableCards(
   moduleId,
   selected_sheet_id,
   computed(() => [...workspaceStore.selectedLaneIds]),
@@ -964,30 +1052,31 @@ const tableActiveVariableId = computed(() => {
   const group = selectedGroup.value;
 
   // Assignee and Owner use variable_slug instead — skip variable_id lookup for them
-  if (group === 'assignee' || group === 'owner') return "";
+  if (group === "assignee" || group === "owner") return "";
 
   let slug = group;
-  if (slug === 'card_type') slug = 'card-type';
+  if (slug === "card_type") slug = "card-type";
 
   const findVar = (searchSlug: string) =>
-    variables.value?.find((v: any) =>
-      v.slug?.toLowerCase() === searchSlug.toLowerCase() ||
-      v.title?.toLowerCase() === searchSlug.toLowerCase()
+    variables.value?.find(
+      (v: any) =>
+        v.slug?.toLowerCase() === searchSlug.toLowerCase() ||
+        v.title?.toLowerCase() === searchSlug.toLowerCase(),
     );
 
   let variable = findVar(slug);
 
-  if (!variable && slug === 'status') variable = findVar('card-status');
-  if (!variable && slug === 'card-type') variable = findVar('type');
+  if (!variable && slug === "status") variable = findVar("card-status");
+  if (!variable && slug === "card-type") variable = findVar("type");
 
   return variable?._id || "";
 });
 
 // Maps group selections that use variable_slug instead of variable_id
 const tableActiveVariableSlug = computed(() => {
-  if (selectedGroup.value === 'assignee') return 'assigned_to';
-  if (selectedGroup.value === 'owner') return 'created_by';
-  return '';
+  if (selectedGroup.value === "assignee") return "assigned_to";
+  if (selectedGroup.value === "owner") return "created_by";
+  return "";
 });
 
 // Extra params for the grouped table query — injects variable_slug when needed
@@ -999,15 +1088,12 @@ const tableGroupExtraParams = computed(() => {
   return base;
 });
 
-const {
-  data: TableGroupedLists,
-  isPending: isTablePending,
-} = useSheetList(
+const { data: TableGroupedLists, isPending: isTablePending } = useSheetList(
   moduleId,
   selected_sheet_id,
   computed(() => [...workspaceStore.selectedLaneIds]),
   tableActiveVariableId,
-  tableGroupExtraParams,  // uses variable_slug for assignee/owner, falls back to regular extra params
+  tableGroupExtraParams, // uses variable_slug for assignee/owner, falls back to regular extra params
 );
 
 // ─── Refresh Logic ────────────────────────────────────────────────────────────
@@ -1077,7 +1163,7 @@ function onReorder(a: any) {
           workspace_module_id: moduleId.value,
           variable_id: selected_view_by.value,
           moved_value: a.meta.id,
-          new_index: a.meta.newIndex-1,
+          new_index: a.meta.newIndex - 1,
         },
       },
       {
@@ -1096,7 +1182,10 @@ function onReorder(a: any) {
           group_value: a.meta.fromColumnId,
           group_variable_id: selected_view_by.value,
           new_index: a.meta.newIndex,
-          sheet_id: selected_sheet_id.value === 'all' ? (a.meta.moved.sheet_id || sheetId.value) : selected_sheet_id.value,
+          sheet_id:
+            selected_sheet_id.value === "all"
+              ? a.meta.moved.sheet_id || sheetId.value
+              : selected_sheet_id.value,
         },
       },
       {
@@ -1143,10 +1232,11 @@ const transformedData = computed<DropdownOption[]>(() => {
   });
 
   const options = filteredSheets.map((item: any) => {
-    const icon =
-      item?.icon ??
-      item?.variables?.["sheet-icon"] ??
-      { prefix: "fa-solid", iconName: "fa-file" };
+    const icon = item?.icon ??
+      item?.variables?.["sheet-icon"] ?? {
+        prefix: "fa-solid",
+        iconName: "fa-file",
+      };
 
     return {
       _id: item._id,
@@ -1154,7 +1244,7 @@ const transformedData = computed<DropdownOption[]>(() => {
       description: item?.variables?.["sheet-description"],
       icon,
       status: item?.generation_status,
-      user_permissions: item?.user_permissions, 
+      user_permissions: item?.user_permissions,
     } as any;
   });
 
@@ -1204,22 +1294,23 @@ watch(
       }
       return;
     }
-    
+
     // Handle "All sheet" logic: mutual exclusivity
     if (Array.isArray(newVal)) {
-      const hadAll = oldVal === 'all' || (Array.isArray(oldVal) && oldVal.includes('all'));
-      const hasAll = newVal.includes('all');
-      
+      const hadAll =
+        oldVal === "all" || (Array.isArray(oldVal) && oldVal.includes("all"));
+      const hasAll = newVal.includes("all");
+
       let finalVal = [...newVal];
-      
+
       if (hasAll && !hadAll) {
         // If "All" was just selected, unselect everything else
-        finalVal = ['all'];
+        finalVal = ["all"];
       } else if (hasAll && newVal.length > 1) {
         // If "All" was already selected and a new sheet was selected, unselect "All"
-        finalVal = newVal.filter(id => id !== 'all');
+        finalVal = newVal.filter((id) => id !== "all");
       }
-      
+
       // Ensure specific output format: string if single, array if multiple
       if (finalVal.length === 1) {
         const singleId = finalVal[0];
@@ -1228,7 +1319,9 @@ watch(
           return;
         }
       } else if (finalVal.length > 1) {
-        if (JSON.stringify(selected_sheet_id.value) !== JSON.stringify(finalVal)) {
+        if (
+          JSON.stringify(selected_sheet_id.value) !== JSON.stringify(finalVal)
+        ) {
           selected_sheet_id.value = finalVal;
           return;
         }
@@ -1257,13 +1350,19 @@ watch(
       agentStore.saveSelectedSheetId(currentId);
       sheetName.value = selectedSheet.title || "";
       localStorage.setItem("selected_sheet_title", selectedSheet.title);
-      localStorage.setItem(storageKey.value, Array.isArray(newVal) ? JSON.stringify(newVal) : currentId);
-    } else if (currentId === 'all') {
+      localStorage.setItem(
+        storageKey.value,
+        Array.isArray(newVal) ? JSON.stringify(newVal) : currentId,
+      );
+    } else if (currentId === "all") {
       agentStore.saveSelectedSheetTitle("All sheet");
       agentStore.saveSelectedSheetId("all");
       sheetName.value = "All sheet";
       localStorage.setItem("selected_sheet_title", "All sheet");
-      localStorage.setItem(storageKey.value, Array.isArray(newVal) ? JSON.stringify(newVal) : "all");
+      localStorage.setItem(
+        storageKey.value,
+        Array.isArray(newVal) ? JSON.stringify(newVal) : "all",
+      );
     } else {
       agentStore.saveSelectedSheetTitle(sheetTitle.value);
       agentStore.saveSelectedSheetId(sheetId.value);
@@ -1355,7 +1454,7 @@ const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
   onSuccess: () => {
     refetchSheets();
     showDeleteModal.value = false;
-      refetchSheetLists();
+    refetchSheetLists();
   },
 });
 
@@ -1425,9 +1524,7 @@ const filteredBoard = computed(() => {
   const query = debouncedQuery.value?.trim();
   if (view.value === "kanban" || view.value === "mindmap") {
     if (!query) return Lists.value?.sheets[0]?.sheet_lists;
-    const results = fuse.value
-      .search(query)
-      .map((r: any) => r.item);
+    const results = fuse.value.search(query).map((r: any) => r.item);
     return Lists.value?.sheets[0]?.sheet_lists?.map((col: any) => ({
       ...col,
       cards: results.filter((c: any) => c.columnId === col.title),
@@ -1471,10 +1568,12 @@ const tableGroups = computed(() => {
   // Use TableGroupedLists (has variable_id) for grouped UI
   const sourceLists = TableGroupedLists.value?.sheets?.[0]?.sheet_lists ?? [];
   if (!query) return sourceLists;
-  
+
   const fuseTable = new Fuse(
-    sourceLists.flatMap((col: any) => (col.cards || []).map((c: any) => ({...c, columnId: col.title}))), 
-    { keys: ["card-title", "card-description"], threshold: 0.3 }
+    sourceLists.flatMap((col: any) =>
+      (col.cards || []).map((c: any) => ({ ...c, columnId: col.title })),
+    ),
+    { keys: ["card-title", "card-description"], threshold: 0.3 },
   );
   const results = fuseTable.search(query).map((r: any) => r.item);
   return sourceLists.map((col: any) => ({
@@ -1486,7 +1585,10 @@ const tableGroups = computed(() => {
 // ─── Table Counts ─────────────────────────────────────────────────────────────
 const totalTableCount = computed(() => {
   if (selectedGroup.value) {
-    return tableGroups.value.reduce((acc: number, group: any) => acc + (group.cards?.length || 0), 0);
+    return tableGroups.value.reduce(
+      (acc: number, group: any) => acc + (group.cards?.length || 0),
+      0,
+    );
   }
   return filteredBoard.value.length;
 });
@@ -1494,61 +1596,61 @@ const totalTableCount = computed(() => {
 const totalTableTotal = computed(() => {
   if (selectedGroup.value) {
     const sourceLists = TableGroupedLists.value?.sheets?.[0]?.sheet_lists ?? [];
-    return sourceLists.reduce((acc: number, group: any) => acc + (group.cards?.length || 0), 0);
+    return sourceLists.reduce(
+      (acc: number, group: any) => acc + (group.cards?.length || 0),
+      0,
+    );
   }
   const flatCards = flattenSheetListCards(FlatTableData.value);
   return flatCards.length + localPendingTickets.value.length;
 });
 
+function handleQuickCreate(title: string, group: any) {
+  if (!title?.trim()) return;
+  let cardPriority = "";
+  let cardStatus = "";
+  let cardType = "";
+  let cardAssignee = "";
+  let cardReporter = "";
 
-
-function handleQuickCreate(title: string, group: any) { 
-  if (!title?.trim()) return;   
-  let cardPriority = '';
-  let cardStatus = '';
-  let cardType = '';
-  let cardAssignee = '';
-  let cardReporter = '';
-
-  
   const label = selectedGroupLabel.value?.toLowerCase();
-  
-  if (label === 'priority') {
-    cardPriority = group.title; 
+
+  if (label === "priority") {
+    cardPriority = group.title;
   }
 
-  if (label === 'status') {
+  if (label === "status") {
     cardStatus = group.title;
   }
 
-  if (label === 'card type') {
+  if (label === "card type") {
     cardType = group.title;
   }
 
-  if (label === 'assignee') {
-    cardAssignee = group?.cards[0]?.seat?._id; 
+  if (label === "assignee") {
+    cardAssignee = group?.cards[0]?.seat?._id;
   }
 
-  if (label === 'owner/reporter') {
+  if (label === "owner/reporter") {
     cardReporter = group.title;
-    console.log(cardReporter)
+    console.log(cardReporter);
   }
 
-  const laneId = laneOptions.value[0]?._id || ""; 
+  const laneId = laneOptions.value[0]?._id || "";
 
   const payload = {
     "card-title": title,
     "card-status": cardStatus,
     "card-type": cardType,
-    "priority": cardPriority,
-    "seat_id": cardAssignee,
+    priority: cardPriority,
+    seat_id: cardAssignee,
     workspace_lane_id: laneId,
     variables: {
       "card-title": title,
-      "card-status": cardStatus || 'General',
+      "card-status": cardStatus || "General",
       "card-type": cardType,
-      "priority": cardPriority
-    }
+      priority: cardPriority,
+    },
   };
 
   handleCreateTicket(payload);
@@ -1856,7 +1958,7 @@ const moveCard = useMoveCard({
   onSettled: () => {
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
     queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
-  }
+  },
 });
 const updateMoveCard = useMoveCard({
   onMutate: async (newPayload: any) => {
@@ -2071,12 +2173,18 @@ const deleteTicket = async () => {
     const processRemoval = (oldData: any) => {
       if (!oldData) return oldData;
       if (oldData.data) {
-        return { ...oldData, data: removeFromCacheStructure(oldData.data, deletedId) };
+        return {
+          ...oldData,
+          data: removeFromCacheStructure(oldData.data, deletedId),
+        };
       }
       return removeFromCacheStructure(oldData, deletedId);
     };
 
-    queryClient.setQueriesData({ queryKey: ["table-cards-flat"] }, processRemoval);
+    queryClient.setQueriesData(
+      { queryKey: ["table-cards-flat"] },
+      processRemoval,
+    );
     queryClient.setQueriesData({ queryKey: ["sheet-list"] }, processRemoval);
 
     await request({
@@ -2105,12 +2213,14 @@ const { mutate: addTicket } = useAddTicket({
   onMutate: (variables: any) => {
     const tempId = variables.temp_row_id;
     if (tempId) {
-      const exists = localPendingTickets.value.some(t => t._id === tempId || t.id === tempId);
+      const exists = localPendingTickets.value.some(
+        (t) => t._id === tempId || t.id === tempId,
+      );
       if (!exists) {
         localPendingTickets.value.push({
           _id: tempId,
           "card-title": variables.variables?.["card-title"] || "New Ticket",
-          ...variables.variables
+          ...variables.variables,
         });
       }
     }
@@ -2119,7 +2229,7 @@ const { mutate: addTicket } = useAddTicket({
     const tempId = variables.temp_row_id;
     toast.success("Ticket created successfully");
     tableViewRef.value?.closeQuickCreate();
-    
+
     if (tempId) {
       localPendingTickets.value = localPendingTickets.value.filter(
         (t) => t._id !== tempId && t.id !== tempId,
@@ -2132,51 +2242,55 @@ const { mutate: addTicket } = useAddTicket({
   onSettled: () => {
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
     queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
-  }
+  },
 });
 
 const tableViewRef = ref<any>(null);
 
-const { mutate: addTableTicket, isPending: isAddingTableTicket } = useAddTicket({
-  onMutate: (variables: any) => {
-    const tempId = variables.temp_row_id;
-    if (tempId) {
-      const exists = localPendingTickets.value.some(t => t._id === tempId || t.id === tempId);
-      if (!exists) {
-        localPendingTickets.value.push({
-          _id: tempId,
-          "card-title": variables.variables?.["card-title"] || "New Ticket",
-          ...variables.variables
-        });
+const { mutate: addTableTicket, isPending: isAddingTableTicket } = useAddTicket(
+  {
+    onMutate: (variables: any) => {
+      const tempId = variables.temp_row_id;
+      if (tempId) {
+        const exists = localPendingTickets.value.some(
+          (t) => t._id === tempId || t.id === tempId,
+        );
+        if (!exists) {
+          localPendingTickets.value.push({
+            _id: tempId,
+            "card-title": variables.variables?.["card-title"] || "New Ticket",
+            ...variables.variables,
+          });
+        }
       }
-    }
+    },
+    onSuccess: (newCard: any, variables: any) => {
+      const tempId = variables.temp_row_id;
+      toast.success("Ticket created successfully");
+      tableViewRef.value?.closeQuickCreate();
+
+      if (tempId) {
+        localPendingTickets.value = localPendingTickets.value.filter(
+          (t) => t._id !== tempId && t.id !== tempId,
+        );
+        localTableOrder.value = localTableOrder.value.map((id) =>
+          id === tempId ? newCard._id : id,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+      queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+    },
   },
-  onSuccess: (newCard: any, variables: any) => {
-    const tempId = variables.temp_row_id;
-    toast.success("Ticket created successfully");
-    tableViewRef.value?.closeQuickCreate();
-    
-    if (tempId) {
-      localPendingTickets.value = localPendingTickets.value.filter(
-        (t) => t._id !== tempId && t.id !== tempId,
-      );
-      localTableOrder.value = localTableOrder.value.map((id) =>
-        id === tempId ? newCard._id : id,
-      );
-    }
-  },
-  onSettled: () => {
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
-  }
-});
+);
 
 function checkAndCreateTicket(row: any) {
   const title = row["card-title"];
   const laneId = row.lane?._id || row.workspace_lane_id;
   let status = row["card-status"];
   let type = row["card-type"];
-  let priority = row["priority"]; 
+  let priority = row["priority"];
 
   if (Array.isArray(row.variables)) {
     const sVar = row.variables.find((v: any) => v.slug === "card-status");
@@ -2229,9 +2343,15 @@ function checkAndCreateTicket(row: any) {
     };
     addTableTicket(payload);
   } else {
-    console.warn("Card creation blocked: Missing required fields", { title, status, type });
+    console.warn("Card creation blocked: Missing required fields", {
+      title,
+      status,
+      type,
+    });
     if (title) {
-        toast.error(`Please provide ${!status ? 'Status' : ''} ${!status && !type ? 'and ' : ''} ${!type ? 'Type' : ''}`);
+      toast.error(
+        `Please provide ${!status ? "Status" : ""} ${!status && !type ? "and " : ""} ${!type ? "Type" : ""}`,
+      );
     }
   }
 }
@@ -2377,7 +2497,6 @@ declare global {
     ) => void;
   }
 }
-
 </script>
 
 <style scoped>

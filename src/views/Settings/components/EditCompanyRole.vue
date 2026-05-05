@@ -182,7 +182,31 @@
               />
               <p v-if="errors.name" class="text-xs text-red-500 mt-1">{{ errors.name }}</p>
             </div>
+             <div>
+              <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-2">
+                Slug
+              </label>
+              <input
+                v-model="form.slug"
+                type="text"
+                placeholder="e.g., project-manager"
+                class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all placeholder:text-text-tertiary"
+                @blur="validateName"
+              />
+            </div>
+            <div>
+            <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-2">
+              Role Type
+            </label>
 
+            <select
+              v-model="form.type"
+              class="w-full border border-border/60 bg-bg-body/80 rounded-lg px-4 py-2.5 text-sm focus:border-accent/50 focus:ring-2 focus:ring-accent/10 outline-none transition-all">
+              <option value="admin">Admin</option>
+              <option value="editor">Editor</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
             <!-- Description -->
             <div>
               <label class="text-[11px] font-semibold text-text-primary uppercase tracking-wider block mb-2">
@@ -323,7 +347,7 @@
 import { ref, computed, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import { useCompanyRoleById } from '../../../queries/useCommon'
-
+import { useCreateCompanyRole } from '../../../queries/useWorkspace'
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Permission {
   _id: string
@@ -357,7 +381,13 @@ const props = defineProps<{
   role?: CompanyRole | null
   availablePermissions?: Permission[]
 }>()
-
+const mapRoleType = (type: 'admin' | 'editor' | 'viewer') => {
+  return {
+    is_admin: type === 'admin',
+    is_editor: type === 'editor',
+    is_viewer: type === 'viewer',
+  }
+}
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
   'saved': []
@@ -383,7 +413,13 @@ const { data: roleData, isLoading: isRoleLoading } = useCompanyRoleById(
   computed(() => props.role?._id ?? ''),
   { enabled: computed(() => currentMode.value === 'edit' && !!props.role?._id) }
 )
-
+const { mutate: createRole } = useCreateCompanyRole({
+  onSuccess: () => {
+    toast.success('Role created')
+    emit('saved')
+    emit('update:modelValue', false)
+  }
+})
 const resolvedRole = computed<CompanyRole | null>(() => {
   if (currentMode.value === 'view') return props.role ?? null
   if (currentMode.value === 'edit') return (roleData.value?.data ?? roleData.value ?? props.role) as CompanyRole | null
@@ -430,25 +466,29 @@ function expandAll(scope: 'view' | 'edit') {
 function collapseAll() {
   openCategories.value = new Set()
 }
-
-// ── Switch view → edit inline (no modal close/reopen) ────────────────────────
-// ✅ Fixed: was previously just closing the modal
 function switchToEdit() {
-  // Populate form from current role before switching
   if (props.role) {
+    let type: 'admin' | 'editor' | 'viewer' = 'viewer'
+
+    if (props.role.is_admin) type = 'admin'
+    else if (props.role.is_editor) type = 'editor'
+    else if (props.role.is_viewer) type = 'viewer'
+
     form.value = {
-      name: props.role.title ?? '',
-      description: props.role.description ?? '',
+      name: props.role.title || '',
+      slug: props.role.slug || '',
+      description: props.role.description || '',
+      type,
       permissionIds: props.role.permissions.map(p => p._id),
     }
   }
-  // Re-open all categories for the edit permission list
+
   openCategories.value = new Set(
-    (props.availablePermissions ?? []).map(p => p.category ?? 'other')
+    (props.availablePermissions || []).map(p => p.category || 'other')
   )
+
   currentMode.value = 'edit'
 }
-
 // ✅ Cancel in edit-from-view goes back to view; in standalone edit/create closes
 function handleCancel() {
   if (props.mode === 'view') {
@@ -478,25 +518,49 @@ const viewGroupedPermissions = computed(() =>
 const editGroupedPermissions = computed(() =>
   groupByCategory(props.availablePermissions ?? [])
 )
-
-// ── Form state ────────────────────────────────────────────────────────────────
-const form = ref({ name: '', description: '', permissionIds: [] as string[] })
+const form = ref({
+  name: '',
+  slug: '',
+  description: '',
+  type: 'viewer' as 'admin' | 'editor' | 'viewer',
+  permissionIds: [] as string[],
+})
+watch(
+  () => form.value.name,
+  (val) => {
+    form.value.slug = val
+      ?.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '')
+  }
+)
 const errors = ref({ name: '', permissions: '' })
 const isSaving = ref(false)
-
 watch(resolvedRole, (role) => {
   if (currentMode.value !== 'edit' || !role) return
+
   form.value = {
     name: role.title ?? '',
+    slug: role.slug ?? '',
     description: role.description ?? '',
+    type: role.is_admin
+      ? 'admin'
+      : role.is_editor
+      ? 'editor'
+      : 'viewer',
     permissionIds: role.permissions.map(p => p._id),
   }
 }, { immediate: true })
-
 watch(() => props.modelValue, (open) => {
   if (!open) {
-    form.value = { name: '', description: '', permissionIds: [] }
-    errors.value = { name: '', permissions: '' }
+    form.value.name = ''
+    form.value.slug = ''
+    form.value.description = ''
+    form.value.type = 'viewer'
+    form.value.permissionIds = []
+
+    errors.value.name = ''
+    errors.value.permissions = ''
   }
 })
 
@@ -531,6 +595,9 @@ function togglePermission(permId: string) {
 function validateName() {
   const name = form.value.name.trim()
   if (!name) errors.value.name = 'Role name is required'
+  if (!form.value.slug.trim()) {
+  errors.value.name = 'Slug is required'
+}
   else if (name.length < 2) errors.value.name = 'At least 2 characters required'
   else if (name.length > 50) errors.value.name = 'Max 50 characters'
   else errors.value.name = ''
@@ -541,39 +608,46 @@ const isFormValid = computed(() =>
   form.value.permissionIds.length > 0 &&
   !errors.value.name
 )
-
-// ── Save ──────────────────────────────────────────────────────────────────────
 async function handleSave() {
   validateName()
+
+  if (!form.value.slug) {
+    errors.value.name = 'Slug is required'
+    return
+  }
+
   if (form.value.permissionIds.length === 0) {
     errors.value.permissions = 'Select at least one permission'
   }
+
   if (!isFormValid.value) return
 
   isSaving.value = true
+
   try {
-    // await request({
-    //   url: currentMode.value === 'edit'
-    //     ? `common/roles/company-roles/${props.role?._id}`
-    //     : `common/roles/company-roles`,
-    //   method: currentMode.value === 'edit' ? 'PUT' : 'POST',
-    //   data: {
-    //     title: form.value.name,
-    //     description: form.value.description,
-    //     permissions: form.value.permissionIds,
-    //   },
-    // })
-    await new Promise(r => setTimeout(r, 800))
-    toast.success(currentMode.value === 'edit' ? 'Role updated' : 'Role created')
-    emit('saved')
-    emit('update:modelValue', false)
+    const roleFlags = mapRoleType(form.value.type)
+
+    const payload = {
+      title: form.value.name,
+      slug: form.value.slug,
+      description: form.value.description,
+      permission_ids: form.value.permissionIds,
+      company_id: localStorage.getItem('company_id') || undefined,
+      ...roleFlags,
+    }
+
+    if (currentMode.value === 'edit') {
+      // TODO: call update mutation
+    } else {
+      createRole(payload)
+    }
+
   } catch {
     toast.error('Failed to save role')
   } finally {
     isSaving.value = false
   }
 }
-
 // ── Formatted date ────────────────────────────────────────────────────────────
 const formattedDate = computed(() => {
   if (!resolvedRole.value?.created_at) return ''

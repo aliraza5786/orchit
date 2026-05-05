@@ -1,5 +1,3 @@
-//DetailPanel.vue
-
 <template>
   <div
     :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
@@ -10,17 +8,17 @@
   >
     <!-- Header -->
     <div
-      class="pt-[17px] pb-[18px] flex justify-between items-center border-b border-border px-5 sticky top-0 bg-bg-card z-1"
+      class="pt-[14.5px] pb-[15px] flex justify-between items-center border-b border-border px-3 sticky top-0 bg-bg-card z-1"
     >
       <h5 class="text-[16px] font-medium">Profile</h5>
       <i
-  class="cursor-pointer text-text-primary fa-solid fa-close"
-  @click="$emit('close')"
-/>
+        class="cursor-pointer text-text-primary fa-solid fa-close"
+        @click="$emit('close')"
+      />
     </div>
 
     <!-- Body -->
-    <div class="py-4 px-5">
+    <div class="py-3 px-3">
       <div class="bg-bg-surface/50 p-2 rounded-lg flex gap-2 items-center">
         <img
           v-if="cardDetails?.avatar"
@@ -33,13 +31,18 @@
           v-else
           class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full text-white text-sm font-semibold"
           :style="{
-            backgroundColor: (cardDetails?.name || cardDetails?.email)
-              ? avatarColor({ email: cardDetails?.email })
-              : '',
+            backgroundColor:
+              cardDetails?.name || cardDetails?.email
+                ? avatarColor({ email: cardDetails?.email })
+                : '',
           }"
         >
-          <template v-if="cardDetails?.name">{{ getInitials(cardDetails.name) }}</template>
-          <template v-else-if="cardDetails?.email">{{ getEmailInitials(cardDetails.email) }}</template>
+          <template v-if="cardDetails?.name">{{
+            getInitials(cardDetails.name)
+          }}</template>
+          <template v-else-if="cardDetails?.email">{{
+            getEmailInitials(cardDetails.email)
+          }}</template>
           <i v-else class="fa-solid fa-user text-white"></i>
         </div>
         <div>
@@ -63,8 +66,8 @@
           fillColor="bg-accent "
           :indeterminate="true"
         />
-        <span class="text-sm text-text-secondary mt-2"
-          > Completed {{ completedTasks }} tasks out of {{ totalTasks }}</span
+        <span class="text-sm text-text-secondary mt-2">
+          Completed {{ completedTasks }} tasks out of {{ totalTasks }}</span
         >
       </div>
       <!-- Title -->
@@ -90,10 +93,13 @@
             </h1>
           </template>
         </div>
-         <!-- work space  -->
+        <!-- work space  -->
         <div class="mt-5 mb-4 relstive">
           <div class="flex items-center justify-between mb-1">
-             <span class="text-xs uppercase tracking-wider text-text-secondary block mb-1">Select Role</span>
+            <span
+              class="text-xs uppercase tracking-wider text-text-secondary block mb-1"
+              >Select Role</span
+            >
           </div>
           <BaseSelectField
             size="md"
@@ -102,13 +108,18 @@
             placeholder="Select Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
-            :disabled="!canEditUser" 
+            :disabled="!canEditUser"
             :loading="isLoadingWorkspaceRoles"
           />
-          <div v-if="cardDetails?.slug?.includes('agent')" class="flex items-center justify-between mb-1 mt-3">
-             <span class="text-base font-medium text-text-primary block">Select Job Role</span>
+          <div
+            v-if="cardDetails?.slug?.includes('agent')"
+            class="flex items-center justify-between mb-1 mt-3"
+          >
+            <span class="text-base font-medium text-text-primary block"
+              >Select Job Role</span
+            >
           </div>
-           <BaseSelectField
+          <BaseSelectField
             v-if="cardDetails?.slug?.includes('agent')"
             size="md"
             :model-value="selectJobRole"
@@ -116,10 +127,9 @@
             placeholder="Select Job Role"
             @click.stop="handleRoleClick"
             @update:modelValue="handleRoleChange"
-            :disabled="!canEditUser" 
-            :loading="isLoadingWorkspaceRoles "
+            :disabled="!canEditUser"
+            :loading="isLoadingWorkspaceRoles"
           />
-
         </div>
         <div class="space-y-4">
           <div
@@ -132,7 +142,7 @@
               <div class="text-xs uppercase tracking-wider text-text-secondary">
                 {{ item.title }}
               </div>
-              <div v-if="canEditUser" class=" flex items-center gap-1">
+              <div v-if="canEditUser" class="flex items-center gap-1">
                 <button
                   v-if="canEditVariable"
                   @click="handleEditVar(item)"
@@ -172,7 +182,13 @@
               size="md"
               :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
               :placeholder="`Select ${item.title}`"
-              :model-value="Array.isArray(localVarValues[item._id]) ? localVarValues[item._id] : (localVarValues[item._id] ? [localVarValues[item._id]] : [])"
+              :model-value="
+                Array.isArray(localVarValues[item._id])
+                  ? localVarValues[item._id]
+                  : localVarValues[item._id]
+                    ? [localVarValues[item._id]]
+                    : []
+              "
               @update:modelValue="(val: any) => handleSelect(val, item._id)"
             />
 
@@ -201,13 +217,17 @@
               :disabled="!canEditUser"
               placeholder="Enter text..."
               :model-value="localVarValues[item._id]"
-              @update:modelValue="(val: any) => localVarValues[item._id] = val"
+              @update:modelValue="
+                (val: any) => (localVarValues[item._id] = val)
+              "
               @blur="() => handleSelect(localVarValues[item._id], item._id)"
             />
 
             <!-- Date & Time Types -->
             <div
-              v-else-if="['Date', 'Date & Time'].includes(item.variable_type_id?.title)"
+              v-else-if="
+                ['Date', 'Date & Time'].includes(item.variable_type_id?.title)
+              "
               class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-border"
             >
               <i class="fa-regular fa-calendar text-[14px]"></i>
@@ -248,7 +268,10 @@
             />
 
             <!-- Switch/Toggle -->
-            <div v-else-if="item.variable_type_id?.title === 'Switch/Toggle'" class="flex items-center gap-2 py-1">
+            <div
+              v-else-if="item.variable_type_id?.title === 'Switch/Toggle'"
+              class="flex items-center gap-2 py-1"
+            >
               <Checkbox
                 :disabled="!canEditUser"
                 :checked="!!localVarValues[item._id]"
@@ -266,10 +289,17 @@
             />
 
             <!-- Range/Slider Type -->
-            <div v-else-if="item.variable_type_id?.title === 'Range/Slider'" class="space-y-1 py-1">
-              <div class="flex justify-between text-[10px] text-text-secondary px-1">
+            <div
+              v-else-if="item.variable_type_id?.title === 'Range/Slider'"
+              class="space-y-1 py-1"
+            >
+              <div
+                class="flex justify-between text-[10px] text-text-secondary px-1"
+              >
                 <span>Min: {{ item.data?.[0] || 0 }}</span>
-                <span class="font-bold text-accent">{{ localVarValues[item._id] ?? item.data?.[0] ?? 0 }}</span>
+                <span class="font-bold text-accent">{{
+                  localVarValues[item._id] ?? item.data?.[0] ?? 0
+                }}</span>
                 <span>Max: {{ item.data?.[1] || 100 }}</span>
               </div>
               <input
@@ -279,34 +309,51 @@
                 :disabled="!canEditUser"
                 class="w-full h-1.5 bg-bg-input rounded-lg appearance-none cursor-pointer accent-accent"
                 :value="localVarValues[item._id] ?? item.data?.[0] ?? 0"
-                @input="(e: any) => handleSelect(Number(e.target.value), item._id)"
+                @input="
+                  (e: any) => handleSelect(Number(e.target.value), item._id)
+                "
               />
             </div>
 
             <!-- Default: TextField -->
             <BaseTextField
               v-else
-              :disabled="!canEditUser || item.variable_type_id?.title === 'Label'"
-              :type="item.variable_type_id?.title === 'Number' ? 'number' : (item.variable_type_id?.title === 'Color Picker' ? 'color' : (item.variable_type_id?.title === 'Email' ? 'email' : (item.variable_type_id?.title === 'Password' ? 'password' : 'text')))"
+              :disabled="
+                !canEditUser || item.variable_type_id?.title === 'Label'
+              "
+              :type="
+                item.variable_type_id?.title === 'Number'
+                  ? 'number'
+                  : item.variable_type_id?.title === 'Color Picker'
+                    ? 'color'
+                    : item.variable_type_id?.title === 'Email'
+                      ? 'email'
+                      : item.variable_type_id?.title === 'Password'
+                        ? 'password'
+                        : 'text'
+              "
               placeholder="Enter value..."
               :model-value="localVarValues[item._id]"
-              @update:modelValue="(val: any) => localVarValues[item._id] = val"
+              @update:modelValue="
+                (val: any) => (localVarValues[item._id] = val)
+              "
               @blur="() => handleSelect(localVarValues[item._id], item._id)"
             />
           </div>
         </div>
-        <button 
+        <button
           @click="canCreateVariable && (isCreateVar = true)"
           :disabled="!canCreateVariable"
           :class="[
-           'w-full mt-6 py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent flex items-center justify-center gap-2 transition-all duration-150',
-           canCreateVariable? 'cursor-pointer active:scale-95': 'cursor-not-allowed opacity-90']"
-          >
+            'w-full mt-6 py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent flex items-center justify-center gap-2 transition-all duration-150',
+            canCreateVariable
+              ? 'cursor-pointer active:scale-95'
+              : 'cursor-not-allowed opacity-90',
+          ]"
+        >
           <i class="fa-solid fa-plus text-xs"></i>
           Add Custom Fields
         </button>
-
-       
       </section>
 
       <section v-if="activeTab == 'tasks'" class="mt-3">
@@ -344,8 +391,7 @@
             </p>
           </li>
         </ul>
-      </section> 
-
+      </section>
     </div>
     <AddCustomRoleModal
       v-if="showAddRoleModal"
@@ -390,7 +436,7 @@
       :initialRoleId="selectedRole"
       @close="showManagePermissionsModal = false"
     />
-  </div>  
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -399,64 +445,68 @@ import { useMoveCard } from "../../../queries/useSheets";
 import { nextTick } from "vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useAgentStore } from "../../../stores/agentStore";
-import { usePeopleVar, useUpdatePeopleVarDef, useDeletePeopleVarDef } from "../../../queries/usePeople";
-const ProgressBar = defineAsyncComponent(() =>
-  import("../../../components/ui/ProgressBar.vue")
+import {
+  usePeopleVar,
+  useUpdatePeopleVarDef,
+  useDeletePeopleVarDef,
+} from "../../../queries/usePeople";
+const ProgressBar = defineAsyncComponent(
+  () => import("../../../components/ui/ProgressBar.vue"),
 );
-const SwitchTab = defineAsyncComponent(() =>
-  import("../../../components/ui/SwitchTab.vue")
+const SwitchTab = defineAsyncComponent(
+  () => import("../../../components/ui/SwitchTab.vue"),
 );
-const BaseSelectField = defineAsyncComponent(() =>
-  import("../../../components/ui/BaseSelectField.vue")
+const BaseSelectField = defineAsyncComponent(
+  () => import("../../../components/ui/BaseSelectField.vue"),
 );
-const Checkbox = defineAsyncComponent(() =>
-  import("../../../components/ui/Checkbox.vue")
+const Checkbox = defineAsyncComponent(
+  () => import("../../../components/ui/Checkbox.vue"),
 );
-const BaseMultiSelect = defineAsyncComponent(() =>
-  import("../../../components/ui/BaseMultiSelect.vue")
+const BaseMultiSelect = defineAsyncComponent(
+  () => import("../../../components/ui/BaseMultiSelect.vue"),
 );
-const BaseRadioGroup = defineAsyncComponent(() =>
-  import("../../../components/ui/BaseRadioGroup.vue")
+const BaseRadioGroup = defineAsyncComponent(
+  () => import("../../../components/ui/BaseRadioGroup.vue"),
 );
-const BaseCheckboxGroup = defineAsyncComponent(() =>
-  import("../../../components/ui/BaseCheckboxGroup.vue")
+const BaseCheckboxGroup = defineAsyncComponent(
+  () => import("../../../components/ui/BaseCheckboxGroup.vue"),
 );
-const BaseTextAreaField = defineAsyncComponent(() =>
-  import("../../../components/ui/BaseTextAreaField.vue")
+const BaseTextAreaField = defineAsyncComponent(
+  () => import("../../../components/ui/BaseTextAreaField.vue"),
 );
-const FileUploader = defineAsyncComponent(() =>
-  import("../../../components/ui/FileUploader.vue")
+const FileUploader = defineAsyncComponent(
+  () => import("../../../components/ui/FileUploader.vue"),
 );
-const BaseTextField = defineAsyncComponent(() =>
-  import("../../../components/ui/BaseTextField.vue")
+const BaseTextField = defineAsyncComponent(
+  () => import("../../../components/ui/BaseTextField.vue"),
 );
-const AssigmentDropdown = defineAsyncComponent(() =>
-  import("../../Product/components/AssigmentDropdown.vue")
+const AssigmentDropdown = defineAsyncComponent(
+  () => import("../../Product/components/AssigmentDropdown.vue"),
 );
-const DatePicker = defineAsyncComponent(() =>
-  import("../../Product/components/DatePicker.vue")
+const DatePicker = defineAsyncComponent(
+  () => import("../../Product/components/DatePicker.vue"),
 );
-const TimePicker = defineAsyncComponent(() =>
-  import("../../Product/components/TimePicker.vue")
+const TimePicker = defineAsyncComponent(
+  () => import("../../Product/components/TimePicker.vue"),
 );
-const CreateVariableModal = defineAsyncComponent(() =>
-  import("../modals/PeopleCreateVariableModal.vue")
+const CreateVariableModal = defineAsyncComponent(
+  () => import("../modals/PeopleCreateVariableModal.vue"),
 );
-const EditVariableModal = defineAsyncComponent(() =>
-  import("../modals/PeopleEditVariableModal.vue")
+const EditVariableModal = defineAsyncComponent(
+  () => import("../modals/PeopleEditVariableModal.vue"),
 );
-const ConfirmModal = defineAsyncComponent(() =>
-  import("../../Product/modals/ConfirmDeleteModal.vue")
+const ConfirmModal = defineAsyncComponent(
+  () => import("../../Product/modals/ConfirmDeleteModal.vue"),
 );
-const ManagePermissionsModal = defineAsyncComponent(() =>
-  import("../modals/ManagePermissionsModal.vue")
+const ManagePermissionsModal = defineAsyncComponent(
+  () => import("../modals/ManagePermissionsModal.vue"),
 );
 import { getInitials } from "../../../utilities";
 import { avatarColor } from "../../../utilities/avatarColor";
 
 function getEmailInitials(email: string): string {
-  const local = email.split('@')[0] || ''
-  return local.slice(0, 2).toUpperCase()
+  const local = email.split("@")[0] || "";
+  return local.slice(0, 2).toUpperCase();
 }
 import { useWorkspaceStore } from "../../../stores/workspace";
 
@@ -466,9 +516,15 @@ import { toast } from "vue-sonner";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useRouteIds } from "../../../composables/useQueryParams";
-const { workspaceId } = useRouteIds()
-const { canEditUser,  canCreateVariable,  canViewVariable,canEditVariable,canDeleteVariable, } = usePermissions();
-const sidePanelStore = useSidePanelStore(); 
+const { workspaceId } = useRouteIds();
+const {
+  canEditUser,
+  canCreateVariable,
+  canViewVariable,
+  canEditVariable,
+  canDeleteVariable,
+} = usePermissions();
+const sidePanelStore = useSidePanelStore();
 const localVarValues = reactive<any>({});
 const isCreateVar = ref(false);
 const isEditVar = ref(false);
@@ -476,8 +532,8 @@ const showManagePermissionsModal = ref(false);
 const showDeleteModal = ref(false);
 const selectedVarToEdit = ref<any>(null);
 const selectedItem = ref<any>(null);
-const agentStore = useAgentStore()
-const selectJobRole = ref("")
+const agentStore = useAgentStore();
+const selectJobRole = ref("");
 const activeTab = ref<"details" | "tasks" | "history">("details");
 const cardDetails = computed(() => sidePanelStore.selectedCardPeople);
 const tabOptions = [
@@ -493,16 +549,16 @@ const props = defineProps({
 const editingTitle = ref(false);
 const localTitle = ref(cardDetails.value?.title ?? "");
 const lane = ref(cardDetails.value?._id ?? "");
-const agentsRolesPermissions = computed(() =>{
+const agentsRolesPermissions = computed(() => {
   return agentStore.agentsRolesPermissions;
-})
+});
 // Watch for prop updates if details change
 watch(
   () => cardDetails.value?.title,
   (val) => {
     localTitle.value = val;
     lane.value = cardDetails.value?._id;
-  }
+  },
 );
 
 const description = ref(cardDetails.value?.description ?? "");
@@ -512,21 +568,21 @@ watch(
   () => cardDetails.value,
   () => {
     description.value = cardDetails.value?.description ?? "";
-  }
+  },
 );
 
 watch(
   () => cardDetails.value,
   () => {
     // clear previous values
-    Object.keys(localVarValues).forEach(key => delete localVarValues[key]);
+    Object.keys(localVarValues).forEach((key) => delete localVarValues[key]);
     if (cardDetails.value?.variable_values) {
       cardDetails.value.variable_values.forEach((v: any) => {
         localVarValues[v.module_variable_id] = v.value;
       });
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 const emit = defineEmits([
   "close",
@@ -596,7 +652,7 @@ const moveCard = useMoveCard({
     });
   },
 });
-const handleSelect = (val: any, slug: any) => { 
+const handleSelect = (val: any, slug: any) => {
   localVarValues[slug] = val;
   emit("update-variable", cardDetails.value, slug, val);
 };
@@ -604,35 +660,41 @@ const handleSelect = (val: any, slug: any) => {
 function getDefaultValue(id: any) {
   if (cardDetails.value?.variable_values) {
     const sbn = cardDetails.value?.variable_values.filter(
-      (e: any) => e.module_variable_id == id
+      (e: any) => e.module_variable_id == id,
     );
     return sbn[0]?.value;
   }
 }
 
-// workspace roles 
+// workspace roles
 const workspaceStore = useWorkspaceStore();
-const newCompanyId = computed(() => workspaceStore.singleWorkspace?.company_id ?? null); 
-const { data: workspaceRoles, isLoading: isLoadingWorkspaceRoles } = useWorkspaceRoles( {
-    company_id: newCompanyId,
-    workspace_id:  workspaceId
-  }, {  
- enabled: computed(() =>  !!workspaceId.value),
-});
+const newCompanyId = computed(
+  () => workspaceStore.singleWorkspace?.company_id ?? null,
+);
+const { data: workspaceRoles, isLoading: isLoadingWorkspaceRoles } =
+  useWorkspaceRoles(
+    {
+      company_id: newCompanyId,
+      workspace_id: workspaceId,
+    },
+    {
+      enabled: computed(() => !!workspaceId.value),
+    },
+  );
 const selectedRole = ref(cardDetails.value?.workspace_access_role_id ?? "");
 
 // Mutation
 const { mutate: assignRole } = useAssignRole({
   onSuccess: () => {
     toast.success("Role assigned successfully!");
-    // Optionally refetch people or roles 
-    queryClient.invalidateQueries({ queryKey: ["people-lists"]});  
-    queryClient.invalidateQueries({ queryKey: ["people"]});  
+    // Optionally refetch people or roles
+    queryClient.invalidateQueries({ queryKey: ["people-lists"] });
+    queryClient.invalidateQueries({ queryKey: ["people"] });
     emit("role-assigned");
   },
   onError: (err: any) => {
     toast.error(err.message || "Failed to assign role.");
-  }, 
+  },
 });
 
 async function fetchAgentsRolesPermissions() {
@@ -643,10 +705,12 @@ const roleOptions = computed(() => {
   let roles: any[] = [];
 
   if (cardDetails.value?.slug?.includes("agent")) {
-    roles = (agentsRolesPermissions.value?.access_roles || []).map((r: any) => ({
-      _id: r._id,
-      title: r.title,
-    }));
+    roles = (agentsRolesPermissions.value?.access_roles || []).map(
+      (r: any) => ({
+        _id: r._id,
+        title: r.title,
+      }),
+    );
   } else {
     roles = (workspaceRoles.value || []).map((r: any) => ({
       _id: r._id,
@@ -654,20 +718,21 @@ const roleOptions = computed(() => {
     }));
   }
 
-  roles.push({
-    _id: "ADD_NEW_ROLE",
-    title: "➕ Add New Role",
-    customClass:
-      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
-    isAction: true,
-  }, 
-  {
-    _id: "MANAGE_PERMISSIONS",
-    title: "🛠 Manage Permissions",
-    customClass:
-      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
-    isAction: true,
-  },
+  roles.push(
+    {
+      _id: "ADD_NEW_ROLE",
+      title: "➕ Add New Role",
+      customClass:
+        "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+      isAction: true,
+    },
+    {
+      _id: "MANAGE_PERMISSIONS",
+      title: "🛠 Manage Permissions",
+      customClass:
+        "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+      isAction: true,
+    },
   );
 
   return roles;
@@ -693,22 +758,20 @@ const jobOptions = computed(() => {
   return roles;
 });
 
-
 watch(
   () => cardDetails.value?.workspace_access_role_id,
   (newRoleId) => {
     selectedRole.value = newRoleId ?? "";
-  }
+  },
 );
 watch(
   () => cardDetails.value?._id,
   () => {
     selectedRole.value = cardDetails.value?.workspace_access_role_id ?? "";
   },
-  { immediate: true }
+  { immediate: true },
 );
 
- 
 function handleRoleClick() {
   if (!canEditUser) {
     toast.error("You have no permission to edit user details");
@@ -721,12 +784,12 @@ function handleRoleChange(newRole: any) {
     return;
   }
 
-  if (newRole === 'ADD_NEW_ROLE') {
+  if (newRole === "ADD_NEW_ROLE") {
     showAddRoleModal.value = true;
     return;
   }
 
-  if (newRole === 'MANAGE_PERMISSIONS') {
+  if (newRole === "MANAGE_PERMISSIONS") {
     showManagePermissionsModal.value = true;
     return;
   }
@@ -746,15 +809,14 @@ function handleRoleChange(newRole: any) {
 
 // Permissions Display Logic removed as it is now in ManagePermissionsModal
 
-
-
 // Add Role Modal
 const showAddRoleModal = ref(false);
-const AddCustomRoleModal = defineAsyncComponent(() => import('../modals/AddCustomRoleModal.vue'));
-
+const AddCustomRoleModal = defineAsyncComponent(
+  () => import("../modals/AddCustomRoleModal.vue"),
+);
 
 const completedTasks = computed(() => {
-  return cardDetails.value?.assigned_cards_status_counts?.['Done'] ?? 0;
+  return cardDetails.value?.assigned_cards_status_counts?.["Done"] ?? 0;
 });
 
 const totalTasks = computed(() => {
@@ -781,18 +843,21 @@ function handleDeleteVar(item: any) {
 
 function confirmDelete() {
   if (!selectedItem.value) return;
-  deleteVarDef({
-    id: selectedItem.value._id
-  }, {
-    onSuccess: () => {
-      toast.success("Variable deleted successfully");
-      showDeleteModal.value = false;
-      refetchCardDetails();
+  deleteVarDef(
+    {
+      id: selectedItem.value._id,
     },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to delete variable");
-    }
-  });
+    {
+      onSuccess: () => {
+        toast.success("Variable deleted successfully");
+        showDeleteModal.value = false;
+        refetchCardDetails();
+      },
+      onError: (err: any) => {
+        toast.error(err.message || "Failed to delete variable");
+      },
+    },
+  );
 }
 
 function refetchCardDetails() {
@@ -801,17 +866,19 @@ function refetchCardDetails() {
 }
 
 function handleVariableDefinitionUpdate({ id, payload }: any) {
-  updateVarDef({ id, payload }, {
-    onSuccess: () => {
-      toast.success("Field updated successfully");
-      refetchCardDetails();
+  updateVarDef(
+    { id, payload },
+    {
+      onSuccess: () => {
+        toast.success("Field updated successfully");
+        refetchCardDetails();
+      },
+      onError: (err: any) => {
+        toast.error(err.message || "Failed to update field");
+      },
     },
-    onError: (err: any) => {
-      toast.error(err.message || "Failed to update field");
-    }
-  });
+  );
 }
-
 </script>
 
 <style scoped>

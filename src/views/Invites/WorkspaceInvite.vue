@@ -27,10 +27,10 @@
           <div
             class="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-900/50 dark:bg-red-950/40 red-200">
             <div class="font-medium mb-1">We couldn’t open this invite.</div>
-            <p class="text-sm leading-relaxed">Please log in to your account to accept this invitation.</p>
+            <p class="text-sm leading-relaxed">{{ error || "Please log in to your account to accept this invitation." }}</p>
           </div>
           <div class="mt-4 flex gap-2">
-            <button class="px-4 py-2 rounded-md border text-sm border-border " @click="() => refetch()">Try
+            <button class="px-4 py-2 rounded-md border text-sm border-border " @click="() => handleRetry()">Try
               again</button>
             <Button  @click="goToLogin">Log In</Button>
           </div>
@@ -118,6 +118,8 @@
               <span v-else>Decline</span>
             </Button>
           </div>
+          <p v-if="error" class="mt-2 text-xs text-red-500">{{ error }}</p>
+
 
           <!-- Already accepted / state note -->
           <p v-if="invite?.status === 'accepted' && !accepted" class="mt-3 text-xs text-emerald-600 emerald-400">
@@ -148,7 +150,11 @@ const auth = useAuthStore()
 const { token } = useRouteIds()
 
 
-const { data, refetch, isPending } = useInvitedWorkspace(token.value)
+const { data, refetch, isPending } = useInvitedWorkspace(token.value);
+function handleRetry() {
+  error.value = null
+  refetch()
+}
 
 type Invite = {
   id: string
@@ -166,7 +172,7 @@ const acting = ref(false)
 const actionType = ref<'accepted' | 'decline' | null>(null)
 const invite = ref<Invite | null>(null)
 const accepted = ref(false)
-const declined = ref(false)
+const declined = ref(false) 
 
 function toTitle(s?: string) {
   if (!s) return ''
@@ -224,6 +230,9 @@ function goHome() {
 }
 
 function goToLogin() {
+  // Save intent so we can auto-accept after login
+  auth.logout()
+  localStorage.setItem('pending_invite_token', token.value)
   router.push({ name: 'Login', query: { redirect: router.currentRoute.value.fullPath } })
 }
 
@@ -245,14 +254,26 @@ function goToWorkspace() {
   }
 }
 
-watch(() => data.value, () => {
-  if (data.value?.status == 'rejected') {
-    declined.value = true
-    return
-  }
-  if (data.value?.status == 'accepted') {
-    accepted.value = true
-    return
-  }
-})
+// Watch for auth + data being ready together
+watch(
+  [() => data.value, isLoggedIn],
+  ([newData, loggedIn]) => {
+    if (!newData) return
+
+    // ADD THIS LINE
+    invite.value = newData as any
+
+    if (!loggedIn) return
+
+    if (newData.status === 'rejected') { declined.value = true; return }
+    if (newData.status === 'accepted') { accepted.value = true; return }
+
+    const pendingToken = localStorage.getItem('pending_invite_token')
+    if (pendingToken && pendingToken === token.value) {
+      localStorage.removeItem('pending_invite_token')
+      accept()
+    }
+  },
+  { immediate: true }
+)
 </script>

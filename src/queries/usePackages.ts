@@ -15,20 +15,39 @@ export const useCompany = () => {
   return { companyId, setCompanyId }
 }
 
-export const useCurrentPackage = () => {
-  const { companyId } = useCompany()
-
-  const url = computed(() =>
-    `/auth/subscription-stats${
-      companyId.value ? `?company_id=${companyId.value}` : ""
-    }`
+const getCookie = (name: string) => {
+  const match = document.cookie.match(
+    new RegExp('(^| )' + name + '=([^;]+)')
   )
+  return match ? decodeURIComponent(match[2]) : null
+}
+
+export const useCurrentPackage = () => {
+  // ✅ derive from cookie (source of truth)
+  const companyId = computed(() => {
+    const personalMode = getCookie('personal_mode')
+    const companyFromCookie = getCookie('company_id')
+
+    if (personalMode === 'true') return null
+    if (companyFromCookie) return companyFromCookie
+
+    return null
+  })
+
+  const url = computed(() => {
+    const base = `/auth/subscription-stats`
+    return companyId.value
+      ? `${base}?company_id=${companyId.value}`
+      : base
+  })
 
   return useApiQuery({
-    key: ["current-package", companyId],
+    key: computed(() => ["current-package", companyId.value]), // ✅ reactive + stable
     url,
     method: "GET",
-    enabled: computed(() => !!companyId.value),
+
+    // ✅ IMPORTANT: allow both personal + company
+    enabled: computed(() => true),
   })
 }
 export const useUpgradePackage = (options = {}) =>

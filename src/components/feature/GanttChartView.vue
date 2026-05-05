@@ -1,5 +1,7 @@
 <template>
-  <div ref="ganttContainer" class="gantt-container max-h-[calc(100vh-100px)] ms-4"></div>
+  <div class="mobile-scroll-visible overflow-x-auto h-full mx-2 snap-x snap-mandatory">
+      <div ref="ganttContainer" class="gantt-container max-h-[calc(100vh-100px)] my-2"></div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -158,13 +160,15 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .gantt-container {
-  width: 100%;
-  height: 100%;
+  width: 100%; 
+  height:  calc(100% - 16px) !important;
   min-height: 500px;
   overflow: hidden;
+  min-width: 1000px ;
 }
 
 :deep(.gantt_container) {
   font-family: inherit;
 }
+
 </style>

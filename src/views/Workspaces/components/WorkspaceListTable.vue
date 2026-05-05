@@ -19,25 +19,28 @@ const getCachedDate = (dateStr: string) => {
     if (!dateCache.has(dateStr)) dateCache.set(dateStr, formatDate(dateStr))
     return dateCache.get(dateStr)!
 }
-
 const handleClick = (rowEvt: any) => {
     const r = rowEvt.row
     const jobId = r?.LatestTask?.job_id
+
     if (jobId) localStorage.setItem('jobId', jobId)
     else localStorage.removeItem('jobId')
-    
-    // ✅ Check if workspace belongs to a company
-    if (r?.company && r.company.domain_link) {
-        // Extract domain from domain_link (e.g., "https://streamed-zunairm.orchit.ai" -> "streamed-zunairm.orchit.ai")
-        const domain = r.company.domain_link.replace('https://', '').replace('http://', '')
-const theme = localStorage.getItem('theme') || 'light'
-window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
+
+    const isLocalhost = window.location.hostname === 'localhost'
+
+    if (!isLocalhost && r?.company && r.company.domain_link) {
+        const domain = r.company.domain_link
+            .replace('https://', '')
+            .replace('http://', '')
+
+        const theme = localStorage.getItem('theme') || 'light'
+
+        window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
     } else {
-        // No company — stay on current domain (orchit.ai for personal workspaces)
+        // localhost OR missing domain → use internal routing
         router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
     }
 }
-
 const showInviteModal = ref(false)
 const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
 const showDeleteConfirm = ref(false)
@@ -173,7 +176,7 @@ const renderActions = ({ row }: any) => {
 }
 const renderOrganization = ({ row }: any) => {
   const company = row?.company
-  if (!company) return h('span', { class: 'text-text-secondary text-xs' }, '-')
+  if (!company) return h('span', { class: 'text-text-secondary text-xs' }, '-----')
 
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -262,7 +265,13 @@ const renderCompanyPercentage = ({ row }: any) => {
   ])
 }
 const renderProjectType = ({ value }: any) =>
-    h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-')
+  h(
+    'span',
+    { class: 'capitalize' },
+    value?.['workspace-type'] === 'team'
+      ? 'Organization'
+      : value?.['workspace-type'] || '-'
+  )
 
 const renderPeople = ({ row, value }: any) =>
     h('div', { class: 'flex items-center -space-x-3' }, [

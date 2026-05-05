@@ -1,11 +1,11 @@
 /* @import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap"); */
 @import url("https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
-@import "tailwindcss"; 
+@import "tailwindcss";
 
 /* -------- Base resets & defaults -------- */
 :root {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   line-height: 1.5;
   font-weight: 400;
   font-synthesis: none;
@@ -21,7 +21,7 @@
   --bg-body: #f3f4f6;
   --bg-surface: #dedfe3; /* table headers, panels */
   --bg-card: #ffffff;
-  --accent: #7D68C8;
+  --accent: #7d68c8;
   --accent-hover: #6e3b96;
   --accent-text: #ffffff;
   --sidebar-primary: 224.3 76.3% 48%;
@@ -94,7 +94,7 @@ html.theme-switching * {
   --font-inter: "Inter", sans-serif;
   --color-bg-charcoal: var(--bg-charcoal);
   --color-bg-lavender: var(--bg-lavender);
-  --color-orchit-white:var(--orchit-white)
+  --color-orchit-white: var(--orchit-white);
 }
 
 /* Let the layout behave normally (no forced centering) */
@@ -104,11 +104,11 @@ body {
   min-height: 100%;
 }
 
-body { 
+body {
   min-width: 320px;
   background: var(--background);
   color: var(--text);
-  font-family: 'Inter', sans-serif !important;
+  font-family: "Inter", sans-serif !important;
 }
 
 #app {
@@ -198,7 +198,8 @@ input:-webkit-autofill:active {
     position: relative;
     isolation: isolate;
     /* subtle outer glow */
-    box-shadow: 0 0 24px hsl(var(--glow-brand) / 0.12),
+    box-shadow:
+      0 0 24px hsl(var(--glow-brand) / 0.12),
       0 0 8px hsl(var(--glow-2) / 0.18);
   }
 
@@ -220,10 +221,13 @@ input:-webkit-autofill:active {
       hsl(var(--glow-brand)) calc(var(--sweep) + 24deg),
       transparent calc(var(--sweep) + 24deg) 360deg
     );
-    -webkit-mask: linear-gradient(#000 0 0) content-box,
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
-    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
     mask-composite: exclude;
     /* mix-blend-mode: screen; */
     animation: sweep var(--neon-speed, 4s) linear infinite;
@@ -263,7 +267,7 @@ input:-webkit-autofill:active {
   text-decoration: underline;
 }
 /* Hide scrollbars everywhere EXCEPT home page */
-body:not(.home-page) *::-webkit-scrollbar {
+body:not(.home-page) *:not(.mobile-scroll-visible)::-webkit-scrollbar {
   display: none;
 }
 
@@ -280,13 +284,13 @@ body:not(.home-page) * {
 }
 
 .home-page *::-webkit-scrollbar-thumb {
-  background-color: #7D68C8;
+  background-color: #7d68c8;
   border-radius: 4px;
 }
 
 .home-page * {
   scrollbar-width: auto;
-  scrollbar-color: #7D68C8 #f0f0f0;
+  scrollbar-color: #7d68c8 #f0f0f0;
 }
 
 /* puls */
@@ -407,4 +411,33 @@ body:not(.home-page) * {
   width: 12px !important;
   height: 12px !important;
   stroke-width: 3 !important;
+}
+
+/* -------- Mobile Scroll Visibility -------- */y
+.mobile-scroll-visible {
+  overflow: auto;
+}
+body .mobile-scroll-visible::-webkit-scrollbar {
+  display: block !important;
+  height: 6px !important;
+  width: 6px !important;
+}
+
+body .mobile-scroll-visible::-webkit-scrollbar-track {
+  background: var(--bg-surface) !important;
+  border-radius: 4px;
+}
+
+body .mobile-scroll-visible::-webkit-scrollbar-thumb {
+  background-color: red !important;   
+  border-radius: 4px; 
+}
+
+body .mobile-scroll-visible::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-secondary) !important;
+}
+
+body .mobile-scroll-visible {
+  scrollbar-width: auto !important;
+  scrollbar-color: var(--border) var(--bg-surface) !important;
 }
