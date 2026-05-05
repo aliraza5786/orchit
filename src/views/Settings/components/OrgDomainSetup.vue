@@ -116,11 +116,11 @@
       v-else-if="fetchError"
       class="flex items-center gap-3 bg-red-500/5 border border-red-500/20 rounded-xl px-4 py-3.5"
     >
-      <svg class="flex-shrink-0 text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <svg class="shrink-0 text-red-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       <p class="text-xs text-red-400">Failed to load domains. Please try again.</p>
-      <button  @click="() => refetch()" class="ml-auto text-xs font-semibold text-red-400 hover:underline">Retry</button>
+      <button @click="() => refetch()" class="ml-auto text-xs font-semibold text-red-400 hover:underline">Retry</button>
     </div>
 
     <template v-else>
@@ -163,7 +163,7 @@
           <div class="flex items-center justify-between px-4 py-3.5">
             <div class="flex items-center gap-3 min-w-0">
               <!-- Globe icon chip -->
-              <div class="w-8 h-8 rounded-lg bg-border/15 border border-border/30 flex items-center justify-center flex-shrink-0">
+              <div class="w-8 h-8 rounded-lg bg-border/15 border border-border/30 flex items-center justify-center shrink-0">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="text-text-secondary">
                   <circle cx="12" cy="12" r="10"/>
                   <line x1="2" y1="12" x2="22" y2="12"/>
@@ -185,7 +185,7 @@
             </div>
 
             <!-- Status badge + actions -->
-            <div class="flex items-center gap-2 flex-shrink-0 ml-3">
+            <div class="flex items-center gap-2 shrink-0 ml-3">
               <!-- Status badge -->
               <span :class="statusBadgeClass(domain.status)">
                 <span :class="statusDotClass(domain.status)"></span>
@@ -259,7 +259,7 @@
                 </div>
                 <div class="col-span-4 flex items-center gap-1.5 min-w-0">
                   <p class="text-xs font-mono text-text-primary truncate">{{ domain.instructions.record_host }}</p>
-                  <button @click="copy(domain.instructions!.record_host)" class="copy-btn flex-shrink-0">
+                  <button @click="copy(domain.instructions!.record_host)" class="copy-btn shrink-0">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                     </svg>
@@ -267,7 +267,7 @@
                 </div>
                 <div class="col-span-5 flex items-center gap-1.5 min-w-0">
                   <p class="text-xs font-mono text-text-secondary truncate">{{ domain.instructions.record_value }}</p>
-                  <button @click="copy(domain.instructions!.record_value)" class="copy-btn flex-shrink-0">
+                  <button @click="copy(domain.instructions!.record_value)" class="copy-btn shrink-0">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
                     </svg>
@@ -344,7 +344,7 @@
 
     <!-- ── Info banner ───────────────────────────────────────────────────────── -->
     <div class="flex items-start gap-3 bg-blue-500/5 border border-blue-500/15 rounded-xl px-4 py-3.5">
-      <svg class="flex-shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+      <svg class="shrink-0 mt-0.5 text-blue-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
       <p class="text-xs text-blue-400 leading-relaxed">
@@ -375,7 +375,7 @@ const {
   refetch,
 } = useListDomains()
 
-const { mutateAsync: verifyDomainMutation, isPending: isVerifyPending } = useVerifyDomain()
+const { mutateAsync: verifyDomainMutation } = useVerifyDomain()
 const { mutateAsync: removeDomainMutation, isPending: isRemoving } = useRemoveDomain()
 const { mutateAsync: setPrimaryMutation, isPending: isSettingPrimary } = useSetPrimaryDomain()
 
