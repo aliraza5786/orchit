@@ -216,7 +216,6 @@ const router = useRouter();
 const {
   data: currentPackage,
   refetch: reftechCurrentPackage,
-  isPending,
 } = useCurrentPackage();
 
 watch(
