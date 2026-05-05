@@ -291,7 +291,7 @@
                   <p class="text-sm text-text-secondary">
                     You can assign user later 
                   </p>
-                  <Button size="md" @click="addSeatToColumn(column)">{{
+                  <Button size="md" @click="addSeatToColumn(column)" :disabled="isPending">{{
                     isPending ? "Adding..." : "Add Seat"
                   }}</Button>
                   <i
@@ -481,7 +481,7 @@
     </div>
     <div class="flex justify-end gap-3 px-6 py-4 border-t border-border">
       <Button variant="secondary" @click="closeModal">Cancel</Button>
-      <Button variant="primary" @click="addSeatToColumn(modalColumn)">
+      <Button variant="primary" @click="addSeatToColumn(modalColumn)" :disabled="isPending">
         {{ isPending ? "Adding..." : "Add Seat" }}
       </Button>
     </div>
@@ -1064,6 +1064,7 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
       localList.value = context.previous;
     }
     toast.error(_err.message || "Failed to add seat. Please try again.");
+    showModal.value = false
   },
 
   onSuccess: (res: any, variables: any) => {
@@ -1080,6 +1081,7 @@ const { mutate: createTeam, isPending } = useCreateTeamMember({
       );
       return { ...col, cards: [...filteredCards, data.assigned_seat] };
     });
+    showModal.value = false;
   },
 });
 
@@ -1105,7 +1107,7 @@ const createSeat = (column: any) => {
 };
 
 function extractNameFromEmail(email: string) {
-  const local = (email.split("@")[0] || "").split("+")[0];
+  const local = (email?.split("@")[0] || "").split("+")[0];
   const parts = local.split(/[^a-zA-Z]+/).filter(Boolean);
   if (!parts.length) return email;
   return parts
@@ -1121,8 +1123,7 @@ const toggleAddNewColumn = (column: any) => {
 
 const addSeatToColumn = (column: any) => {
   createSeat(column);
-  column.showADDNEW = false;
-  showModal.value = false;
+  column.showADDNEW = false; 
 };
 
 // ─── Reorder ──────────────────────────────────────────────────────────────────
