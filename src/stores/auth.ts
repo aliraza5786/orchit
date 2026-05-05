@@ -179,11 +179,12 @@ export const useAuthStore = defineStore('auth', {
         const res = await api.get('/profile')
         this.user = res.data
         const activeCompanyId = res.data?.data?.active_company_id
-
+         console.log("active company id in store", res.data?.data?.active_company_id);
+         
         // Only auto-set active company on subdomains, never on root
         if (activeCompanyId && !this.company_id && !session?.personal_mode && !isRootDomain()) {
           localStorage.setItem('company_id', activeCompanyId)
-          this.company_id = activeCompanyId
+          this.company_id = activeCompanyId || res.data?.data?.active_company_id;
           this.writeAuthCookie({ company_id: activeCompanyId })
           console.log('🏢 Active company auto-set from profile:', activeCompanyId)
         }

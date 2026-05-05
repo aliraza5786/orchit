@@ -1,23 +1,39 @@
 import { useQuery } from "@tanstack/vue-query";
 import api from "../libs/api";
 import { computed, unref, type Ref } from "vue";
+import type { QueryFunctionContext } from "@tanstack/vue-query";
 
-// ---------------------------
-// Fetch All Packages
-// ---------------------------
-export const fetchPackages = async () => {
-  const { data } = await api.get("/billing/packages");
-  return data.data; // return the array of packages
+type PackagesParams = {
+  scope?: "personal" | "organization";
 };
 
-export const usePackages = (options = {}) => {
+type PackagesQueryKey = readonly [
+  "billing",
+  "packages",
+  PackagesParams?
+];
+
+export const fetchPackages = async (
+  context: QueryFunctionContext<PackagesQueryKey>
+) => {
+  const [, , params] = context.queryKey;
+
+  const { data } = await api.get("/billing/packages", {
+    params: params?.scope ? { scope: params.scope } : {},
+  });
+
+  return data.data;
+};
+export const usePackages = (
+  params: PackagesParams = {},
+  options = {}
+) => {
   return useQuery({
-    queryKey: ["billing", "packages"],
+    queryKey: ["billing", "packages", params] as const,
     queryFn: fetchPackages,
     ...options,
   });
 };
-
 // ---------------------------
 // Fetch Package by Slug
 // ---------------------------
