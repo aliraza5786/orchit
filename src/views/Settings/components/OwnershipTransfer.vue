@@ -772,18 +772,6 @@ async function handleCancelTransfer(): Promise<void> {
   }
 }
 
-// ── Static display data ────────────────────────────────────────────────────────
-const roleComparisonRows: { permission: string; adminHas: boolean }[] = [
-  { permission: 'Transfer or delete workspace',         adminHas: false },
-  { permission: 'Manage billing & subscription',        adminHas: false },
-  { permission: 'Remove any member (incl. old owner)',  adminHas: false },
-  { permission: 'Invite & manage members',              adminHas: true  },
-  { permission: 'Manage roles & permissions',           adminHas: true  },
-  { permission: 'Access all workspace content',         adminHas: true  },
-  { permission: 'Create & manage AI token allocations', adminHas: true  },
-  { permission: 'View analytics & reports',             adminHas: true  },
-]
-
 const whatHappensSteps = computed<{ text: string; type: 'info' | 'warning' }[]>(() => [
   {
     text: `An ownership invitation email is sent to ${modalMember.value?.name ?? 'the selected member'} at ${modalMember.value?.email ?? ''}.`,
