@@ -180,6 +180,9 @@ export const useAgentStore = defineStore("agent", {
     streamTotalMs: null as number | null,
     streamThinkStartTs: null as number | null,
     streamGeneratingStartTs: null as number | null,
+    currentPhaseDetail: "" as string,
+    currentPhaseTimestamp: null as number | null,
+    streamPhases: [] as Array<{ phase: string; detail: string; timestamp: number }>
   }),
 
   getters: {
@@ -368,6 +371,16 @@ if (!response.ok || !response.body) {
 
     if (parsed.type === 'phase') {
       this.currentPhase = parsed.phase
+      this.currentPhaseDetail = parsed.detail ?? ''
+      this.currentPhaseTimestamp = parsed.timestamp ?? Date.now()
+      
+      // Track phase history
+      this.streamPhases.push({
+        phase: parsed.phase,
+        detail: parsed.detail ?? '',
+        timestamp: parsed.timestamp ?? Date.now()
+      })
+      
       if (parsed.phase === 'thinking') {
         this.streamThinkStartTs = parsed.timestamp ?? Date.now()
       }
@@ -443,6 +456,9 @@ resetStream() {
   this.assistantStreamedChunks = []
   this.currentStreamText = ''
   this.currentPhase = ''
+  this.currentPhaseDetail = ''
+  this.currentPhaseTimestamp = null
+  this.streamPhases = []
   this.streamThinkMs = null
   this.streamTotalMs = null
   this.streamThinkStartTs = null
