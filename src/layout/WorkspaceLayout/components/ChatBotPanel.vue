@@ -1202,7 +1202,7 @@
     <i class="fa-solid fa-robot text-accent text-[11px]"></i>
   </div>
   <div class="px-3.5 py-2.5 rounded-2xl rounded-tl-md max-w-[82%] text-sm border border-border/40 bg-bg-body">
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 mb-1">
       <div class="typing-dots">
         <span></span>
         <span></span>
@@ -1210,6 +1210,10 @@
       </div>
       <span class="text-[11px] font-medium text-text-primary">Thinking</span>
       <span class="text-[10px] text-text-tertiary tabular-nums">{{ elapsedLabel }}</span>
+    </div>
+    <!-- Phase detail -->
+    <div v-if="streamingPhaseDetail" class="text-[11px] text-text-secondary italic mt-1">
+      {{ streamingPhaseDetail }}
     </div>
   </div>
 </div>
@@ -1270,6 +1274,26 @@
       <span>{{ formatTimestamp(new Date().toISOString()) }}</span>
     </div>
 
+  </div>
+</div>
+
+<!-- ===== Phase Timeline — shows all streamed phase updates ===== -->
+<div
+  v-if="phaseHistory.length > 0 && streamingPhase !== 'thinking' && streamingPhase !== 'completed'"
+  class="flex gap-2.5 relative mt-2"
+>
+  <div class="w-7 h-7 flex-shrink-0"></div>
+  <div class="flex-1 space-y-2">
+    <div v-for="(phase, idx) in phaseHistory" :key="idx" class="text-[10px]">
+      <div class="flex items-start gap-2">
+        <div class="mt-1.5 w-2 h-2 rounded-full bg-accent flex-shrink-0"></div>
+        <div class="space-y-0.5">
+          <p class="font-semibold text-text-primary capitalize">{{ phase.phase }}</p>
+          <p v-if="phase.detail" class="text-text-secondary italic">{{ phase.detail }}</p>
+          <p class="text-text-tertiary">{{ formatTimestamp(new Date(phase.timestamp).toISOString()) }}</p>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2671,6 +2695,9 @@ const streamingThinkMs = ref<number | null>(null)
 const streamingTotalMs = ref<number | null>(null)
 const displayedContent = ref("")
 const animationFrameId = ref<number | null>(null)
+const streamingPhaseDetail = ref("")
+const streamingPhaseTimestamp = ref<number | null>(null)
+const phaseHistory = ref<Array<{ phase: string; detail: string; timestamp: number }>>([])
 const webSearch = ref(false);
 // const isRecording = ref(false);
 const sourceSearch = ref("");
@@ -3266,6 +3293,9 @@ async function sendMessage() {
   streamingPhase.value = "thinking";
   streamingThinkMs.value = null;
   streamingTotalMs.value = null;
+  streamingPhaseDetail.value = "";
+  streamingPhaseTimestamp.value = null;
+  phaseHistory.value = [];
   isAiThinkingBubbleVisible.value = true;
   agentStore.isAiTyping = true;
 
@@ -3371,6 +3401,9 @@ async function sendMessage() {
   streamingPhase.value = "";
   streamingThinkMs.value = null;
   streamingTotalMs.value = null;
+  streamingPhaseDetail.value = "";
+  streamingPhaseTimestamp.value = null;
+  phaseHistory.value = [];
 }
 if (isSuccess) {
   try {
@@ -5712,6 +5745,24 @@ watch(
     }
   },
   { deep: false }
+)
+
+// Watch for phase detail and timestamp changes from store
+watch(
+  () => [agentStore.currentPhaseDetail, agentStore.currentPhaseTimestamp] as const,
+  ([detail, timestamp]) => {
+    if (detail) streamingPhaseDetail.value = detail
+    if (timestamp !== null) streamingPhaseTimestamp.value = timestamp
+  }
+)
+
+// Watch for phase history updates from store
+watch(
+  () => agentStore.streamPhases,
+  (phases) => {
+    phaseHistory.value = phases
+  },
+  { deep: true }
 )
 const elapsedLabel = computed(() => {
   const s = (streamingElapsedMs.value / 1000).toFixed(1)

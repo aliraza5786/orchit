@@ -216,7 +216,7 @@ const router = useRouter();
 const {
   data: currentPackage,
   refetch: reftechCurrentPackage,
-} = useCurrentPackage();
+} = useCurrentPackage('individual')
 
 watch(
   () => currentPackage.value,

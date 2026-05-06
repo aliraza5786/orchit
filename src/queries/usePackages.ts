@@ -22,31 +22,38 @@ const getCookie = (name: string) => {
   return match ? decodeURIComponent(match[2]) : null
 }
 
-export const useCurrentPackage = () => {
-  // ✅ derive from cookie (source of truth)
+export const useCurrentPackage = (overrideScope?: 'individual' | 'organization') => {
+  const personalMode = computed(() => getCookie('personal_mode'))
+  const companyFromCookie = computed(() => getCookie('company_id'))
+
+  const scope = computed(() => {
+    // ✅ priority: explicit override > cookie
+    if (overrideScope) return overrideScope
+    return personalMode.value === 'true' ? 'individual' : 'organization'
+  })
+
   const companyId = computed(() => {
-    const personalMode = getCookie('personal_mode')
-    const companyFromCookie = getCookie('company_id')
-
-    if (personalMode === 'true') return null
-    if (companyFromCookie) return companyFromCookie
-
-    return null
+    if (scope.value === 'individual') return null
+    return companyFromCookie.value || null
   })
 
   const url = computed(() => {
     const base = `/auth/subscription-stats`
-    return companyId.value
-      ? `${base}?company_id=${companyId.value}`
-      : base
+    const params = new URLSearchParams()
+
+    params.append('scope', scope.value)
+
+    if (scope.value === 'organization' && companyId.value) {
+      params.append('company_id', companyId.value)
+    }
+
+    return `${base}?${params.toString()}`
   })
 
   return useApiQuery({
-    key: computed(() => ["current-package", companyId.value]), // ✅ reactive + stable
+    key: computed(() => ["current-package", scope.value, companyId.value]),
     url,
     method: "GET",
-
-    // ✅ IMPORTANT: allow both personal + company
     enabled: computed(() => true),
   })
 }

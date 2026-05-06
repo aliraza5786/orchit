@@ -465,12 +465,28 @@ export const useMyTokenAllocation = (options: Record<string, unknown> = {}) => {
   })
 }
 export const useCompanyTokenAllocation = (options: Record<string, unknown> = {}) => {
-  const companyId = computed(() => localStorage.getItem('company_id'))
+  const authStore = useAuthStore()
+
+  const companyId = computed(() => {
+    // 1. Prefer store (runtime state)
+    const storeCompany = authStore.company_id
+
+    // 2. Fallback to cookies
+    const cookieCompany = getCookie('company_id')
+
+    // 3. Fallback to localStorage
+    const localCompany = localStorage.getItem('company_id')
+
+    return storeCompany ?? cookieCompany ?? localCompany ?? null
+  })
+
+  const queryKey = computed(() => ['token-allocation', 'company', companyId.value])
 
   return useQuery({
-    queryKey: ['token-allocation', 'company', companyId],
+    queryKey,
     queryFn: ({ signal }) => {
       const id = companyId.value
+      if (!id) return Promise.reject(new Error('No company ID'))
       return request({
         url: `billing/token-allocation?company_id=${id}`,
         method: 'GET',
@@ -480,6 +496,7 @@ export const useCompanyTokenAllocation = (options: Record<string, unknown> = {})
     enabled: computed(() => !!companyId.value),
     staleTime: 0,
     refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     ...options,
   })
 }
