@@ -568,3 +568,166 @@ export const useSetUserAllocation = (options: Record<string, unknown> = {}) => {
     ...options,
   })
 }
+
+// ownership transfer of organization
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Ownership Transfer Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface TransferUser {
+  _id: string
+  u_full_name: string
+  u_email: string
+  u_profile_image: string | null
+}
+
+export interface Transfer {
+  _id: string
+  company_id?: string
+  token: string
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled'
+  expires_at: string
+  note?: string
+  from_user_id?: TransferUser
+  to_user?: {
+    _id: string
+    name: string
+    email: string
+  }
+  to_user_id?: TransferUser
+  created_at?: string
+}
+
+export interface InitiateTransferPayload {
+  target_user_id: string
+  note?: string
+}
+
+export interface InitiateTransferData {
+  transfer: Transfer
+}
+
+export interface PendingTransferData {
+  transfer: Transfer | null
+}
+
+export interface TransferApiResponse<T> {
+  success: boolean
+  message: string
+  data?: T
+}
+
+const TRANSFER_KEY = 'ownership-transfer'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. Get Pending Transfer
+// ─────────────────────────────────────────────────────────────────────────────
+export const usePendingTransfer = (options: Record<string, unknown> = {}) => {
+  const companyId = getCompanyId()
+
+  return useQuery<TransferApiResponse<PendingTransferData>>({
+    queryKey: [TRANSFER_KEY, 'pending', companyId],
+    queryFn: ({ signal }) =>
+      request<TransferApiResponse<PendingTransferData>>({
+        url: `workspace/company/transfer-ownership/pending?company_id=${companyId}`,
+        method: 'GET',
+        signal,
+      }),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    ...options,
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. Initiate Transfer
+// ─────────────────────────────────────────────────────────────────────────────
+export const useInitiateTransfer = (options: Record<string, unknown> = {}) => {
+  const queryClient = useQueryClient()
+
+  return useMutation<TransferApiResponse<InitiateTransferData>, Error, InitiateTransferPayload>({
+    mutationKey: ['initiate-transfer'],
+    mutationFn: (payload) => {
+      const companyId = getCompanyId()
+      return request<TransferApiResponse<InitiateTransferData>>({
+        url: `workspace/company/transfer-ownership`,
+        method: 'POST',
+        data: {
+          ...payload,
+          company_id: companyId,
+        },
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [TRANSFER_KEY] })
+    },
+    ...options,
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. Cancel Transfer
+// ─────────────────────────────────────────────────────────────────────────────
+export const useCancelTransfer = (options: Record<string, unknown> = {}) => {
+  const queryClient = useQueryClient()
+
+  return useMutation<TransferApiResponse<null>, Error, string>({
+    mutationKey: ['cancel-transfer'],
+    mutationFn: (transferId) => {
+      return request<TransferApiResponse<null>>({
+        url: `workspace/company/transfer-ownership/${transferId}`,
+        method: 'DELETE',
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [TRANSFER_KEY] })
+    },
+    ...options,
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. Accept Transfer (for target user via email deep-link)
+// ─────────────────────────────────────────────────────────────────────────────
+export const useAcceptTransfer = (options: Record<string, unknown> = {}) => {
+  const queryClient = useQueryClient()
+
+  return useMutation<TransferApiResponse<null>, Error, string>({
+    mutationKey: ['accept-transfer'],
+    mutationFn: (token) => {
+      return request<TransferApiResponse<null>>({
+        url: `workspace/company/transfer-ownership/accept`,
+        method: 'POST',
+        data: { token },
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [TRANSFER_KEY] })
+    },
+    ...options,
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. Reject Transfer (for target user via email deep-link)
+// ─────────────────────────────────────────────────────────────────────────────
+export const useRejectTransfer = (options: Record<string, unknown> = {}) => {
+  const queryClient = useQueryClient()
+
+  return useMutation<TransferApiResponse<null>, Error, string>({
+    mutationKey: ['reject-transfer'],
+    mutationFn: (token) => {
+      return request<TransferApiResponse<null>>({
+        url: `workspace/company/transfer-ownership/reject`,
+        method: 'POST',
+        data: { token },
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [TRANSFER_KEY] })
+    },
+    ...options,
+  })
+}

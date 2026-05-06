@@ -34,6 +34,7 @@ const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
 const companyJoin = () => import("../views/Invites/JoinPage.vue");
+const joinAsOwner = () => import("../views/Invites/OrganizationOwnershipInvite.vue");
 const LandingPageLayout = () => import("../layout/LandingPageLayout/LandingPageLayout.vue");
 const requestDelete = () => import("../views/request_delete.vue");
 const NewHomepage = () => import("../views/homenew.vue");
@@ -98,6 +99,7 @@ const routes: RouteRecordRaw[] = [
   { path: "/workspace-invite/:token", name: "workspaceInvite", component: WorkspaceInvite, meta: { requiresAuth: false } },
   { path: "/space-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
   { path: "/company-join/:token", name: "companyjoin", component: companyJoin, meta: { requiresAuth: false } },
+  { path: "/join-as-owner/:token", name: "joinAsOwner", component: joinAsOwner, meta: { requiresAuth: false } },
   {
     path: "/dashboard",
     component: LandingLayout,
