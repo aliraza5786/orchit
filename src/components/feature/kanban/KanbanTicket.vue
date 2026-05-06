@@ -29,12 +29,12 @@
             </div>
         </div>
 
-        <h3 class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize">
+        <h3   :title="ticket['card-title']" class="text-sm font-medium text-card-foreground leading-tight mb-2 capitalize line-clamp-2 break-words">
             {{ ticket['card-title'] }}
         </h3>
 
         <p v-html="ticket['card-description']"
-            class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2 max-h-20">
+            class="card-description text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2 max-h-20">
         </p>
 
         <div v-if="!footer" class="flex justify-between items-center mt-3 pt-3 border-t border-border/50">
@@ -306,5 +306,9 @@ const emit = defineEmits(['select'])
 .product-ticket:hover .product-menu-icon,
 .product-menu-icon.menu-open {
     visibility: visible;
+} 
+.card-description :deep(a){
+  color: var(--color-text-primary, #6b7280) !important;
+  text-decoration: underline !important;
 }
 </style>

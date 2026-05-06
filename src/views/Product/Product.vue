@@ -313,7 +313,7 @@
             </template>
           </KanbanBoard>
 
-          <div class="min-w-[270px] sm:min-w-[328px]" @click.stop>
+          <div class="min-w-[270px]" @click.stop>
             <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
               <BaseTextField
                 :autofocus="true"
@@ -1678,8 +1678,9 @@ const columns = computed(() => {
             "a",
             {
               onClick: () => (selectedCard.value = row),
-              class:
-                "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
+            class:
+            "text-[12px] max-w-[80px] underline text-blue-500 shrink-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap",
+             title: row["card-code"],
             },
             row["card-code"],
           ),
@@ -1689,7 +1690,7 @@ const columns = computed(() => {
                 handleChangeTicket(row, "card-title", e?.target?.value);
               },
               class:
-                "text-[12px] w-full overflow-ellipsis capitalize p-1 w-full p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
               defaultValue: value,
               disabled: !canEditCard.value,
             }),
