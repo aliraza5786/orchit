@@ -8,7 +8,11 @@ const route     = useRoute()
 const router    = useRouter()
 const authStore = useAuthStore()
 
-const token = route.params.token as string
+const token  = route.params.token  as string
+const action = route.params.action as 'accept' | 'reject'
+
+const isValidAction = action === 'accept' || action === 'reject'
+const isAcceptFlow  = action === 'accept'
 
 // ── State ──────────────────────────────────────────────────────────────────────
 const isLoading    = ref(true)
@@ -19,22 +23,23 @@ const error        = ref<string | null>(null)
 const errorDetail  = ref<string | null>(null)
 
 // ── Mutations ──────────────────────────────────────────────────────────────────
-const { mutateAsync: acceptTransfer, isPending: isAccepting } = useAcceptTransfer()
-const { mutateAsync: rejectTransfer, isPending: isRejecting  } = useRejectTransfer()
+const { mutateAsync: acceptTransfer } = useAcceptTransfer()
+const { mutateAsync: rejectTransfer  } = useRejectTransfer()
 
 onMounted(() => {
-  if (!token) {
+  if (!token || !isValidAction) {
     error.value       = 'Invalid invite link.'
-    errorDetail.value = 'No token was found in the URL.'
+    errorDetail.value = 'The URL is missing a valid token or action.'
     isLoading.value   = false
     return
   }
 
-  // Persist token so it survives a login redirect
-  localStorage.setItem('pending_ownership_token', token)
+  // Persist so it survives a login redirect
+  localStorage.setItem('pending_ownership_token',  token)
+  localStorage.setItem('pending_ownership_action', action)
 
   if (authStore.user) {
-    // Already logged in — show the accept/reject prompt immediately
+    // Logged in — show the confirmation prompt straight away
     isLoading.value = false
   } else {
     // Not logged in — show login/register prompt
@@ -42,28 +47,20 @@ onMounted(() => {
   }
 })
 
-// ── Accept ─────────────────────────────────────────────────────────────────────
-async function handleAccept() {
+// ── Process action (called when user clicks confirm) ──────────────────────────
+async function handleAction() {
   isProcessing.value = true
   try {
-    await acceptTransfer(token)
-    isSuccess.value = true
+    if (isAcceptFlow) {
+      await acceptTransfer(token)
+      isSuccess.value = true
+    } else {
+      await rejectTransfer(token)
+      isRejected.value = true
+    }
     localStorage.removeItem('pending_ownership_token')
-    await authStore.bootstrap()
-  } catch (err: unknown) {
-    handleError(err)
-  } finally {
-    isProcessing.value = false
-  }
-}
-
-// ── Reject ─────────────────────────────────────────────────────────────────────
-async function handleReject() {
-  isProcessing.value = true
-  try {
-    await rejectTransfer(token)
-    isRejected.value = true
-    localStorage.removeItem('pending_ownership_token')
+    localStorage.removeItem('pending_ownership_action')
+    if (isAcceptFlow) await authStore.bootstrap()
   } catch (err: unknown) {
     handleError(err)
   } finally {
@@ -91,7 +88,7 @@ function handleError(err: unknown) {
   }
 }
 
-// ── Auth redirects ─────────────────────────────────────────────────────────────
+// ── Navigation ─────────────────────────────────────────────────────────────────
 function goToLogin() {
   router.push({ path: '/login', query: { redirect: route.fullPath } })
 }
@@ -144,7 +141,7 @@ function goToDashboard() {
           style="border-color: var(--border); border-top-color: var(--accent);"
         />
         <h1 class="text-xl font-medium" style="color: var(--text-primary);">
-          {{ isAccepting ? 'Transferring ownership…' : 'Declining transfer…' }}
+          {{ isAcceptFlow ? 'Transferring ownership…' : 'Declining transfer…' }}
         </h1>
         <p class="text-sm" style="color: var(--text-secondary);">
           This only takes a moment.
@@ -177,7 +174,6 @@ function goToDashboard() {
           You are now the workspace owner. You have full control over billing, members, and workspace settings.
         </p>
 
-        <!-- What you can do now -->
         <div class="space-y-2.5 text-left">
           <div
             v-for="perk in [
@@ -239,7 +235,7 @@ function goToDashboard() {
         </button>
       </template>
 
-      <!-- ── NOT LOGGED IN — show login/register prompt ── -->
+      <!-- ── NOT LOGGED IN ── -->
       <template v-else-if="!authStore.user && !error">
         <div
           class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium"
@@ -250,35 +246,13 @@ function goToDashboard() {
         </div>
 
         <h1 class="text-[22px] font-medium" style="color: var(--text-primary);">
-          You've been invited as Owner
+          {{ isAcceptFlow ? "You've been invited as Owner" : 'Decline ownership transfer' }}
         </h1>
         <p class="text-sm leading-relaxed" style="color: var(--text-secondary);">
-          Log in to your account to review and accept or decline the workspace ownership transfer.
+          {{ isAcceptFlow
+            ? 'Log in to your account to review and accept the workspace ownership transfer.'
+            : 'Log in to your account to decline the workspace ownership transfer.' }}
         </p>
-
-        <!-- What ownership means -->
-        <div class="space-y-2.5 text-left">
-          <div
-            v-for="perk in [
-              'Full control over billing & subscription',
-              'Manage all members and their roles',
-              'Transfer or delete the workspace',
-            ]"
-            :key="perk"
-            class="flex items-center gap-2.5 text-sm"
-            style="color: var(--text-primary);"
-          >
-            <div
-              class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-              style="background: rgba(29,158,117,0.12);"
-            >
-              <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
-                <path d="M2 5l2.5 2.5L8 3" stroke="#1d9e75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </div>
-            {{ perk }}
-          </div>
-        </div>
 
         <button
           @click="goToLogin"
@@ -303,7 +277,7 @@ function goToDashboard() {
         </button>
       </template>
 
-      <!-- ── LOGGED IN — show accept / reject prompt ── -->
+      <!-- ── LOGGED IN — confirm prompt ── -->
       <template v-else-if="authStore.user && !error && !isSuccess && !isRejected">
         <div
           class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium"
@@ -314,25 +288,28 @@ function goToDashboard() {
         </div>
 
         <h1 class="text-[22px] font-medium" style="color: var(--text-primary);">
-          Accept Organization ownership?
+          {{ isAcceptFlow ? 'Accept workspace ownership?' : 'Decline workspace ownership?' }}
         </h1>
         <p class="text-sm leading-relaxed" style="color: var(--text-secondary);">
-          You have been invited to become the new owner of this organization. This action is immediate upon acceptance.
+          {{ isAcceptFlow
+            ? 'You have been invited to become the new owner of this workspace.'
+            : 'You are about to decline this ownership transfer. No changes will be made.' }}
         </p>
 
-        <!-- What changes -->
+        <!-- Info card — only shown for accept flow -->
         <div
-          class="rounded-xl border text-left divide-y"
-          style="border-color: var(--border); divide-color: var(--border);"
+          v-if="isAcceptFlow"
+          class="rounded-xl border text-left"
+          style="border-color: var(--border);"
         >
-          <div class="px-4 py-2.5">
-            <p class="text-[10px] font-semibold uppercase tracking-widest mb-2" style="color: var(--text-secondary);">
+          <div class="px-4 py-3 border-b" style="border-color: var(--border);">
+            <p class="text-[10px] font-semibold uppercase tracking-widest mb-2.5" style="color: var(--text-secondary);">
               What you'll gain
             </p>
             <div class="space-y-1.5">
               <div
                 v-for="item in [
-                  'Full ownership of the organization',
+                  'Full ownership of the workspace',
                   'Billing & subscription control',
                   'Ability to remove any member',
                   'Transfer or delete the workspace',
@@ -349,13 +326,14 @@ function goToDashboard() {
             </div>
           </div>
 
-          <div class="px-4 py-2.5">
-            <p class="text-[10px] font-semibold uppercase tracking-widest mb-2" style="color: var(--text-secondary);">
+          <div class="px-4 py-3">
+            <p class="text-[10px] font-semibold uppercase tracking-widest mb-2.5" style="color: var(--text-secondary);">
               Important to know
             </p>
             <div class="space-y-1.5">
               <div
                 v-for="item in [
+                  'The previous owner will become an Admin',
                   'This cannot be undone without their consent',
                   'They may remove you after transfer',
                 ]"
@@ -374,40 +352,37 @@ function goToDashboard() {
           </div>
         </div>
 
-        <!-- Action buttons -->
-        <div class="flex gap-3 pt-1">
-          <button
-            @click="handleReject"
-            :disabled="isProcessing"
-            class="flex-1 py-3 rounded-[10px] text-sm font-medium border transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style="border-color: var(--border); color: var(--text-secondary);"
-          >
-            <span v-if="isRejecting" class="flex items-center justify-center gap-2">
-              <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              Declining…
-            </span>
-            <span v-else>Decline</span>
-          </button>
+        <!-- Action button -->
+        <button
+          @click="handleAction"
+          :disabled="isProcessing"
+          class="w-full py-3 rounded-[10px] text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          :style="isAcceptFlow
+            ? 'background: var(--accent); color: var(--accent-text);'
+            : 'border: 1px solid var(--border); color: var(--text-secondary); background: transparent;'"
+        >
+          <span v-if="isProcessing" class="flex items-center justify-center gap-2">
+            <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            {{ isAcceptFlow ? 'Accepting…' : 'Declining…' }}
+          </span>
+          <span v-else>
+            {{ isAcceptFlow ? 'Accept ownership' : 'Decline transfer' }}
+          </span>
+        </button>
 
-          <button
-            @click="handleAccept"
-            :disabled="isProcessing"
-            class="flex-1 py-3 rounded-[10px] text-sm font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style="background: var(--accent); color: var(--accent-text);"
-          >
-            <span v-if="isAccepting" class="flex items-center justify-center gap-2">
-              <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              Accepting…
-            </span>
-            <span v-else>Accept ownership</span>
-          </button>
-        </div>
+        <!-- Secondary action for accept flow — also show a decline option -->
+        <button
+          v-if="isAcceptFlow"
+          @click="goToDashboard"
+          class="w-full py-2 text-xs transition-all"
+          style="color: var(--text-tertiary, #9ca3af);"
+        >
+          Maybe later — go to dashboard
+        </button>
 
-        <p class="text-xs" style="color: var(--text-tertiary, #9ca3af);">
+        <p v-if="isAcceptFlow" class="text-xs" style="color: var(--text-tertiary, #9ca3af);">
           By accepting, you agree to take full responsibility for this workspace.
         </p>
       </template>
@@ -415,7 +390,7 @@ function goToDashboard() {
       <!-- ── ERROR ── -->
       <template v-else-if="error">
         <div
-          class="w-13 h-13 rounded-full flex items-center justify-center mx-auto"
+          class="w-14 h-14 rounded-full flex items-center justify-center mx-auto"
           style="background: rgba(229,80,80,0.1); border: 1px solid rgba(229,80,80,0.2);"
         >
           <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
