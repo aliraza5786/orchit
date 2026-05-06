@@ -108,8 +108,13 @@ const { data: members } = useWorkspacesRoles(workspaceId.value);
 import { 
     removeFromCacheStructure, 
     moveBetweenColumns,  
-    updateCardOptimistically
+    updateCardOptimistically,
+    performOptimisticUpdate,
+    rollbackOptimisticUpdate
 } from '../../../utilities/cacheSync'
+import { useSidePanelStore } from '../../../stores/sidePanelStore'
+
+const sidePanelStore = useSidePanelStore()
 
 const props = defineProps<{
     ticket: any
@@ -199,9 +204,7 @@ function queryCacheUpdater(key: any[], updater: (data: any) => any, snapshots: a
 }
 
 function rollbackSnapshots(snapshots: any[]) {
-    snapshots.forEach(({ queryKey, data }) => {
-        queryClient.setQueryData(queryKey, data)
-    })
+    rollbackOptimisticUpdate(queryClient, snapshots)
 }
 
 function getMenuItems() {
@@ -235,18 +238,49 @@ function getMenuItems() {
 }
 
 const assignHandle = (users: any[]) => {
-    const payload = {
-        card_id: props.ticket._id,
-        seat_id: users.map(u => u._id || u.id).filter(Boolean)
-    }
-    moveCard.mutate(payload);
+    // Correctly extract IDs whether the input is an object or a string ID
+    const userIds = users.map(u => typeof u === 'string' ? u : (u?._id || u?.id)).filter(Boolean)
+    // Maintain local consistency for seat (single) and seats (multiple)
+    const primarySeat = users.length > 0 ? users[0] : null
+    
+    const snapshots = performOptimisticUpdate({
+        queryClient,
+        sidePanelStore,
+        cardId: props.ticket._id,
+        updates: { 
+            seat_id: userIds, 
+            seat: primarySeat, 
+            seats: users 
+        },
+        invalidateKeys: invalidateKeys.value
+    })
+
+    moveCard.mutate(
+        { card_id: props.ticket._id, seat_id: userIds },
+        { 
+            onError: () => rollbackSnapshots(snapshots),
+            // Don't invalidate immediately to avoid flashing/resetting while user is still selecting
+            onSuccess: () => {
+                // We still want to invalidate eventually, but maybe not on every single click if fast
+                // TanStack Query handles deduplication of invalidations anyway
+            }
+        }
+    )
 }
 
 const setDueDate = (date: string | null) => {
-    moveCard.mutate({
-        card_id: props.ticket._id,
-        variables: { 'end-date': date }
+    const snapshots = performOptimisticUpdate({
+        queryClient,
+        sidePanelStore,
+        cardId: props.ticket._id,
+        updates: { 'end-date': date },
+        invalidateKeys: invalidateKeys.value
     })
+
+    moveCard.mutate(
+        { card_id: props.ticket._id, variables: { 'end-date': date } },
+        { onError: () => rollbackSnapshots(snapshots) }
+    )
 }
 
 const { workspaceId: routeWorkspaceId, moduleId: routeModuleId } = useRouteIds();
@@ -266,26 +300,14 @@ const statusOptions = computed<string[]>(() => {
 
 function changeStatus(newStatus: string) {
     localStatus.value = newStatus
-    const cardId = String(props.ticket._id)
-    const snapshots: { queryKey: any; data: any }[] = []
-
-    // 1. Board Updates
-    invalidateKeys.value.forEach(key => {
-        queryCacheUpdater([key], (oldData) => {
-            if (Array.isArray(oldData.sheets)) {
-                return { ...oldData, sheets: oldData.sheets.map((sheet: any) => ({
-                    ...sheet, sheet_lists: moveBetweenColumns(sheet.sheet_lists ?? [], cardId, newStatus)
-                }))}
-            }
-            if (Array.isArray(oldData.groups)) {
-                return { ...oldData, groups: moveBetweenColumns(oldData.groups ?? [], cardId, newStatus) }
-            }
-            return oldData
-        }, snapshots)
+    
+    const snapshots = performOptimisticUpdate({
+        queryClient,
+        sidePanelStore,
+        cardId: props.ticket._id,
+        updates: { 'card-status': newStatus },
+        invalidateKeys: invalidateKeys.value
     })
-
-    // 2. Detail Update (SidePanel)
-    queryCacheUpdater(detailKey.value, (old) => updateCardOptimistically(old, cardId, { 'card-status': newStatus }), snapshots)
 
     moveCard.mutate(
         { card_id: props.ticket._id, variables: { 'card-status': newStatus } },
