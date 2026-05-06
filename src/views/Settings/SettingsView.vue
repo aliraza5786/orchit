@@ -50,6 +50,7 @@
       <OrganizationTab v-else-if="currentTab === 'org-setup'" :profile="profileData" />
       <OrgUsersTab v-else-if="currentTab === 'org-users'" />
       <OrgRolesTab v-else-if="currentTab === 'org-roles'" />
+      <OwnershipTransfer v-else-if="currentTab === 'ownership-transfer'" />
       <OrgPackagesTab v-else-if="currentTab === 'org-packages'" />
       <OrgDomainSetup v-else-if="currentTab === 'org-domain'" />
       <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" />
@@ -71,6 +72,7 @@ import OrgRolesTab from "./components/OrgRolesTab.vue";
 import OrgPackagesTab from "./components/OrgPackagesTab.vue";
 import OrgAiTokensAllocationTab from "./components/AiTokensAllocation.vue";
 import OrgDomainSetup from "./components/OrgDomainSetup.vue";
+import OwnershipTransfer from "./components/OwnershipTransfer.vue";
 import { useTheme } from "../../composables/useTheme";
 import { useQuery } from "@tanstack/vue-query";
 import { getProfile } from "../../services/user";
@@ -97,6 +99,7 @@ const pageTitle = computed(() => {
     'org-domain': 'Organization Domain setup',
     'org-users': 'Team members',
     'org-roles': 'Role management',
+    'ownership-transfer': 'Transfer Ownership of Organization',
     'org-packages': 'Organization billing',
     'token-allocation': 'Organization Tokens allocation',
   };

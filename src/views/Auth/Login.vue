@@ -256,10 +256,6 @@ async function handleLoginSuccess(data: any) {
   await authStore.bootstrap()
   localStorage.setItem("token", token)
   authStore.writeAuthCookie({ token, company_id: null, personal_mode: null })
-  authStore.initialized = false
-  await authStore.bootstrap()
-
-  // ✅ Redirect back to invite page or any other protected route
   const redirectPath = router.currentRoute.value.query.redirect as string
   if (redirectPath) {
     router.push(redirectPath)

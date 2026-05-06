@@ -198,6 +198,7 @@ const orgItems = [
   { label: 'Domain Setup', tab: 'org-domain', icon: 'fa-regular fa-globe' },
   { label: 'Users Management', tab: 'org-users', icon: 'fa-regular fa-users' },
   { label: 'Manage Roles', tab: 'org-roles', icon: 'fa-regular fa-shield-halved' },
+  { label: 'Ownership Transfer', tab: 'ownership-transfer', icon: 'fa-regular fa-user-gear'},
   { label: 'Our Packages', tab: 'org-packages', icon: 'fa-regular fa-credit-card' },
   { label: 'Tokens Allocation', tab: 'token-allocation', icon: 'fa-regular fa-coins' }
 ]
