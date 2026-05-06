@@ -208,9 +208,9 @@ const canUpdateUserRole = computed(() =>
 const canViewUsers = computed(() =>
   can('company_user.read') || isOwner.value
 )
-const canDeleteUsers = computed(() =>
-  can('company_user.delete') || isOwner.value
-)
+// const canDeleteUsers = computed(() =>
+//   can('company_user.delete') || isOwner.value
+// )
 interface TeamMember {
   id: string
   name: string
