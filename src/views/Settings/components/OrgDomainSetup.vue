@@ -19,6 +19,7 @@
 
       <!-- Add domain button -->
       <button
+      v-if="canAddDomain"
         @click="openAddModal"
         class="inline-flex items-center gap-2 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 self-start sm:self-auto whitespace-nowrap"
       >
@@ -60,12 +61,12 @@
               type="text"
               placeholder="yourdomain.com"
               class="flex-1 px-3.5 py-2.5 text-sm text-text-primary bg-border/10 border border-border/40 rounded-lg outline-none focus:border-accent/50 focus:bg-accent/5 transition-all placeholder:text-text-secondary/40"
-              :disabled="isAdding"
+              :disabled="isAdding || !canAddDomain"
               @keyup.enter="addDomain"
             />
             <button
               @click="addDomain"
-              :disabled="!newDomain.trim() || isAdding"
+              :disabled="!newDomain.trim() || isAdding || !canAddDomain"
               class="px-4 py-2.5 text-sm font-semibold bg-accent text-white rounded-lg hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center gap-1.5"
             >
               <svg v-if="isAdding" class="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -194,7 +195,7 @@
 
               <!-- Set primary button (only for verified, non-primary domains) -->
               <button
-                v-if="domain.status === 'verified' && !domain.is_primary"
+                v-if="canSetPrimaryDomain && domain.status === 'verified' && !domain.is_primary"
                 @click="setPrimary(domain._id)"
                 :disabled="isSettingPrimary"
                 class="p-1.5 rounded-lg border border-transparent text-text-secondary hover:bg-accent/10 hover:border-accent/20 hover:text-accent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -207,6 +208,7 @@
 
               <!-- Delete button -->
               <button
+              v-if="canDeleteDomain"
                 @click="deleteDomain(domain._id)"
                 :disabled="isRemoving"
                 class="p-1.5 rounded-lg border border-transparent text-text-secondary hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -227,6 +229,7 @@
             <div class="flex items-center justify-between">
               <p class="text-xs font-semibold text-text-secondary uppercase tracking-wider">Required DNS Records</p>
               <button
+              v-if="canVerifyDomain"
                 @click="verifyDomain(domain.domain, domain.verification_method)"
                 :disabled="verifyingDomains.has(domain._id)"
                 class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold border border-accent/30 text-accent rounded-lg hover:bg-accent/10 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -367,7 +370,38 @@ import {
 } from '../../../queries/useCommon'
 
 // ── Queries & Mutations ───────────────────────────────────────────────────────
- 
+ const props = defineProps<{
+  profile?: any
+}>()
+const activeCompany = computed(() => props.profile?.active_company)
+
+const membershipRole = computed(() => 
+  activeCompany.value?.membership_role || null
+)
+
+const permissions = computed<string[]>(() => 
+  activeCompany.value?.permissions || []
+)
+function can(permission: string) {
+  return permissions.value.includes(permission)
+}
+const isOwner = computed(() => membershipRole.value === 'owner')
+
+const canAddDomain = computed(() => {
+  return isOwner.value || can('company_domain.create')
+})
+
+const canDeleteDomain = computed(() => {
+  return isOwner.value || can('company_domain.delete')
+})
+
+const canVerifyDomain = computed(() => {
+  return isOwner.value || can('company_domain.verify')
+})
+
+const canSetPrimaryDomain = computed(() => {
+  return isOwner.value || can('company_domain.set_primary')
+})
 const {
   data: domainsData,
   isLoading,
@@ -412,6 +446,7 @@ function closeAddModal() {
 // ── Add domain (calls POST /verify for first-time setup) ──────────────────────
 
 async function addDomain() {
+   if (!canAddDomain.value) return
   const raw = newDomain.value.trim().toLowerCase()
   if (!raw) return
 
@@ -442,6 +477,7 @@ async function addDomain() {
 // ── Re-verify domain ──────────────────────────────────────────────────────────
 
 async function verifyDomain(domainName: string, method: CompanyDomain['verification_method']) {
+   if (!canVerifyDomain.value) return
   // Find the domain object to get its _id for tracking
   const target = domains.value.find(d => d.domain === domainName)
   if (!target) return
@@ -461,6 +497,7 @@ async function verifyDomain(domainName: string, method: CompanyDomain['verificat
 // ── Set primary domain ────────────────────────────────────────────────────────
 
 async function setPrimary(id: string) {
+  if (!canSetPrimaryDomain.value) return
   try {
     await setPrimaryMutation(id)
   } catch {
@@ -471,6 +508,7 @@ async function setPrimary(id: string) {
 // ── Delete domain ─────────────────────────────────────────────────────────────
 
 async function deleteDomain(id: string) {
+  if (!canDeleteDomain.value) return
   if (!window.confirm('Remove this domain? This cannot be undone.')) return
   try {
     await removeDomainMutation(id)
