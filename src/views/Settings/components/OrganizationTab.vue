@@ -356,13 +356,10 @@ const workspaceStore = useWorkspaceStore()
 const router = useRouter()
 
 const hasOrg = computed(() => {
-  const localCompanyId = localStorage.getItem('company_id')
-  const activeCompanyId = props.profile?.active_company_id
-  return !!localCompanyId && !!activeCompanyId && localCompanyId === activeCompanyId
+  return !!props.profile?.active_company_id
 })
 const canCreateOrg = computed(() => {
-  // only owner can create AND only when no org exists
-  return !hasOrg.value && isOwner.value
+  return !hasOrg.value
 })
 // Form state
 const orgName = ref('')
