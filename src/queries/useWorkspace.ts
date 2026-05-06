@@ -103,11 +103,32 @@ export const useWorkspaces = (
   filter?: Ref<string>
 ) => {
   const companyId = computed(() => {
-    const personalMode = getCookie('personal_mode')
-    const companyFromCookie = getCookie('company_id')
+    const hostname = window.location.hostname
 
-    if (personalMode === 'true') return null
-    if (companyFromCookie) return companyFromCookie
+    // ✅ Detect if we're on a subdomain (both orchit.ai and localhost)
+    const isSubdomain =
+      (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+      (hostname.endsWith('.localhost') && hostname !== 'localhost')
+
+    // ✅ Parse auth_session cookie directly (same source of truth as auth store)
+    let session: { company_id?: string; personal_mode?: boolean } | null = null
+    try {
+      const raw = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_session='))
+        ?.split('=')[1]
+      if (raw) session = JSON.parse(decodeURIComponent(raw))
+    } catch { /* ignore */ }
+
+    // ✅ On main domain with personal_mode=true → no company
+    if (session?.personal_mode && !isSubdomain) return null
+
+    // ✅ On subdomain → always use company_id from cookie
+    // (ignores personal_mode even if stale from before redirect)
+    if (isSubdomain && session?.company_id) return session.company_id
+
+    // ✅ Fallback to cookie company_id for any other case
+    if (session?.company_id) return session.company_id
 
     return null
   })
@@ -118,7 +139,7 @@ export const useWorkspaces = (
       unref(page),
       unref(limit),
       unref(filter) ?? 'all',
-      unref(companyId), // ✅ reactive + correct
+      unref(companyId),
     ]),
 
     queryFn: async () => {
@@ -129,7 +150,6 @@ export const useWorkspaces = (
 
       let url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}`
 
-      // ✅ only append when truly in company context
       if (company) {
         url += `&company_id=${company}`
       }

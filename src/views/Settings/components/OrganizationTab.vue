@@ -4,11 +4,10 @@
 <div v-if="!hasOrg">
 
   <!-- ── Inline creation flow ─────────────────────────────────── -->
-  <div v-if="isCreatingOrg" class="space-y-6">
+  <div class="space-y-6" v-if="isCreatingOrg">
     <div class="flex items-center gap-3 mb-2">
       <button
         @click="isCreatingOrg = true"
-        :disabled="!canCreateOrg"
         class="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
       >
         <i class="fa-solid fa-arrow-left text-xs"></i>
@@ -17,13 +16,13 @@
       <div class="h-px flex-1 bg-border/40"></div>
       <span class="text-xs text-text-secondary font-medium">Create Organization</span>
     </div>
-    <div v-if="isCreatingOrg && canCreateOrg">
+    <div>
   <CreateOrganizationInline @done="onOrgCreated" />
 </div>
   </div>
 
   <!-- ── Empty state ──────────────────────────────────────────── -->
-  <div v-else class="flex flex-col items-center justify-center py-12 px-4">
+  <div v-if="!hasOrg && !isCreatingOrg" class="flex flex-col items-center justify-center py-12 px-4">
     <div class="flex flex-col items-center max-w-xl text-center">
 
       <!-- Icon -->
@@ -162,7 +161,7 @@
     <!-- Slug check indicator -->
     <div class="px-3 flex items-center shrink-0">
       <i v-if="isCheckingSlug" class="fa-solid fa-spinner fa-spin text-text-secondary text-xs"></i>
-      <i v-else-if="isSlugAvailable === true && orgSlug !== props.profile?.active_company?.slug" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
+      <i v-else-if="isSlugAvailable === true && orgSlug !== currentCompany.value?.slug" class="fa-solid fa-circle-check text-green-500 text-xs"></i>
       <i v-else-if="isSlugAvailable === false" class="fa-solid fa-circle-xmark text-red-500 text-xs"></i>
     </div>
     <span class="px-3 py-2.5 text-sm text-text-secondary bg-bg-body border-l border-border/40 shrink-0 whitespace-nowrap">
@@ -170,8 +169,8 @@
     </span>
   </div>
   <p v-if="errors.orgSlug" class="text-xs text-red-500 mt-1">{{ errors.orgSlug }}</p>
-  <p v-else-if="isSlugAvailable === false && orgSlug !== props.profile?.active_company?.slug" class="text-xs text-red-500 mt-1">This domain is already taken.</p>
-  <p v-else-if="isSlugAvailable === true && orgSlug !== props.profile?.active_company?.slug" class="text-xs text-green-500 mt-1">Domain is available!</p>
+  <p v-else-if="isSlugAvailable === false && orgSlug !== currentCompany.value?.slug" class="text-xs text-red-500 mt-1">This domain is already taken.</p>
+  <p v-else-if="isSlugAvailable === true && orgSlug !== currentCompany.value?.slug" class="text-xs text-green-500 mt-1">Domain is available!</p>
   <p v-else class="text-xs text-text-secondary mt-1">This will be your organization's public workspace URL.</p>
 </div>
           <!-- Organization Size -->
@@ -329,16 +328,38 @@ function onOrgCreated() {
   queryClient.invalidateQueries({ queryKey: ['profile'] })
 }
 const props = defineProps<{
+  forceCreate?: boolean
   profile?: any
 }>()
-const activeCompany = computed(() => props.profile?.active_company)
+// const activeCompany = computed(() => props.profile?.active_company)
+import { onMounted, onBeforeUnmount } from 'vue'
 
+const selectedCompanyId = ref(
+  localStorage.getItem('company_id') || props.profile?.active_company_id
+)
+
+function handleCompanyChange(e: any) {
+  selectedCompanyId.value = e.detail
+}
+
+onMounted(() => {
+  window.addEventListener('company-changed', handleCompanyChange)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('company-changed', handleCompanyChange)
+})
+
+const currentCompany = computed(() => {
+  const list = props.profile?.companies_list || []
+  return list.find((c: any) => c._id === selectedCompanyId.value) || null
+})
 const membershipRole = computed(() => 
-  activeCompany.value?.membership_role || null
+  currentCompany.value?.membership_role || null
 )
 
 const permissions = computed<string[]>(() => 
-  activeCompany.value?.permissions || []
+  currentCompany.value?.permissions || []
 )
 function can(permission: string) {
   return permissions.value.includes(permission)
@@ -356,11 +377,10 @@ const workspaceStore = useWorkspaceStore()
 const router = useRouter()
 
 const hasOrg = computed(() => {
+  if (props.forceCreate) return false
   return !!props.profile?.active_company_id
 })
-const canCreateOrg = computed(() => {
-  return !hasOrg.value
-})
+
 // Form state
 const orgName = ref('')
 const orgSlug = ref('')
@@ -376,7 +396,7 @@ const isSlugAvailable = ref<boolean | null>(null)
 
 // Domain suffix from domain_link
 const domainSuffix = computed(() => {
-  const domainLink = props.profile?.active_company?.domain_link
+  const domainLink = currentCompany.value?.domain_link
   if (!domainLink) return ''
   try {
     const url = new URL(domainLink)
@@ -395,7 +415,7 @@ const originalValues = ref({
   description: '',  
 })
 watch(
-  () => props.profile?.active_company,
+  currentCompany,
   (company) => {
     if (!company) return
 
@@ -419,7 +439,7 @@ watch(
 )
 // Slug availability check
 const checkSlugAvailability = useDebounceFn(async (slug: string) => {
-  if (!slug || slug === props.profile?.active_company?.slug) {
+  if (!slug || slug === currentCompany.value?.slug) {
     isSlugAvailable.value = null
     isCheckingSlug.value = false
     return
@@ -560,7 +580,7 @@ async function saveOrg() {
   validateOrgSlug()
   if (!isFormValid.value) return
 
-  const slugChanged = orgSlug.value !== props.profile?.active_company?.slug
+  const slugChanged = orgSlug.value !== currentCompany.value?.slug
 
   if (slugChanged && isSlugAvailable.value === false) {
     toast.error('This domain is already taken. Please choose another.')

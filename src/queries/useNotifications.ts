@@ -29,21 +29,40 @@ const dummyNotifications: Notification[] = [];
 // -----------------------------
 // HELPERS — always read fresh company_id
 // -----------------------------
-function getCompanyId(): string {
-  const authStore = useAuthStore()
-  return authStore.company_id || localStorage.getItem('company_id') || ''
-}
+function getCompanyId(): string | null {
+  const hostname = window.location.hostname
 
-// -----------------------------
-// API FUNCTIONS
-// -----------------------------
+  const isSubdomain =
+    (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+    (hostname.endsWith('.localhost') && hostname !== 'localhost')
+
+  // ✅ Read from auth_session cookie — single source of truth
+  let session: { token?: string; company_id?: string; personal_mode?: boolean } | null = null
+  try {
+    const raw = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_session='))
+      ?.split('=')[1]
+    if (raw) session = JSON.parse(decodeURIComponent(raw))
+  } catch { /* ignore */ }
+
+  // ✅ Personal mode on main domain → no company
+  if (session?.personal_mode && !isSubdomain) return null
+
+  // ✅ On subdomain → trust company_id from cookie
+  if (isSubdomain && session?.company_id) return session.company_id
+
+  // ✅ Main domain without personal_mode → use company_id if present
+  if (session?.company_id && !session?.personal_mode) return session.company_id
+
+  return null
+}
 export const fetchNotifications = async () => {
   try {
     const companyId = getCompanyId()
-
     const { data } = await api.get(`/notifications${companyId ? `?company_id=${companyId}` : ''}`)
+    
     const notifications = data?.data?.notifications || []
-
     const mappedNotifications = notifications.map((item: any): Notification => ({
       id: item._id,
       actor_name: item.triggered_by?.user_email || "Unknown User",
@@ -74,7 +93,6 @@ export const fetchUnreadCount = async () => {
     return 0
   }
 }
-
 export const markNotificationsRead = async (ids: string[]) => {
   const { data } = await api.patch("/notifications/read", {
     notification_ids: ids,
