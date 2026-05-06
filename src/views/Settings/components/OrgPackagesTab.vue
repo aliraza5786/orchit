@@ -26,9 +26,6 @@ function can(permission: string) {
 }
 
 const isOwner = computed(() => membershipRole.value === 'owner')
-const canViewPackages = computed(() =>
-  isOwner.value || can('package.read')
-)
 
 const canUpgradePackage = computed(() =>
   isOwner.value || can('package.change')
