@@ -10,6 +10,7 @@
         <p class="text-sm text-text-secondary mt-1">Define roles and manage permissions for your organization.</p>
       </div>
       <button
+      v-if="canCreateRole"
         @click="openCreateModal"
         class="px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto"
       >
@@ -92,6 +93,7 @@
             <!-- ✅ Two-button row for system roles -->
             <div class="flex gap-2">
               <button
+              v-if="canViewRole"
                 @click="openViewModal(role)"
                 class="flex-1 px-3 py-2 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all"
               >
@@ -149,6 +151,7 @@
                 <p class="text-xs text-text-secondary mt-0.5 capitalize">{{ role.slug }}</p>
               </div>
               <button
+                v-if="canDeleteRole"
                 @click="deleteRole(role._id)"
                 class="p-1.5 text-text-secondary hover:text-red-600 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
                 title="Delete role"
@@ -189,6 +192,7 @@
                 <i class="fa-solid fa-eye mr-2 text-xs"></i> View
               </button>
               <button
+                v-if="canUpdateRole"
                 @click="openEditModal(role)"
                 class="flex-1 px-3 py-2 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all"
               >
@@ -268,7 +272,40 @@ interface CompanyRole {
   permissions: Permission[]
   created_at: string
 }
+const props = defineProps<{
+  profile?: any
+}>()
 
+const activeCompany = computed(() => props.profile?.active_company)
+
+const membershipRole = computed(() =>
+  activeCompany.value?.membership_role || null
+)
+
+const permissions = computed<string[]>(() =>
+  activeCompany.value?.permissions || []
+)
+
+function can(permission: string) {
+  return permissions.value.includes(permission)
+}
+
+const isOwner = computed(() => membershipRole.value === 'owner')
+const canCreateRole = computed(() =>
+  isOwner.value || can('role.create')
+)
+
+const canUpdateRole = computed(() =>
+  isOwner.value || can('role.update')
+)
+
+const canDeleteRole = computed(() =>
+  isOwner.value || can('role.delete')
+)
+
+const canViewRole = computed(() =>
+  isOwner.value || can('role.read')
+)
 // ── Fetch all roles ───────────────────────────────────────────────────────────
 const { data: rolesData, isLoading: isRolesLoading, refetch: refetchRoles } = useCompanyRolesWithoutPermission()
 

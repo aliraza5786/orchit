@@ -10,6 +10,7 @@
         <p class="text-sm text-text-secondary mt-1">Manage team members and their permissions.</p>
       </div>
       <button
+      v-if="canInviteUsers"
         @click="showInviteModal = true"
         class="px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto"
       >
@@ -68,6 +69,7 @@
         Invite your team members to collaborate and manage projects together.
       </p>
       <button
+       v-if="canInviteUsers"
         @click="showInviteModal = true"
         class="px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 transition-all"
       >
@@ -121,6 +123,7 @@
 
        <div class="relative">
   <select
+   v-if="canUpdateUserRole"
     :value="member.role"
     @change="(e) => updateMemberRole(member.id, (e.target as HTMLSelectElement).value)"
     :disabled="isUpdatingRole"
@@ -136,8 +139,10 @@
     </div>
 
     <!-- Invite Modal -->
-      <InviteUsers v-model="showInviteModal" defaultWorkspaceId="abc123" @invited="handleInvited" />
-
+      <InviteUsers  v-if="canInviteUsers" v-model="showInviteModal" defaultWorkspaceId="abc123" @invited="handleInvited" />
+<div v-if="!canViewUsers">
+  <p class="text-sm text-text-secondary">You don’t have access to view team members.</p>
+</div>
     <!-- Role Info Card -->
     <div class="rounded-xl border border-blue-500/20 bg-blue-500/5 px-5 py-4 mt-6">
       <p class="text-sm text-blue-600 font-medium flex items-start gap-2">
@@ -159,7 +164,35 @@ import InviteUsers from '../../Workspaces/Modals/InviteUsers.vue'
 
 const companyId = localStorage.getItem('company_id')
 const { data: usersData, refetch } = useUsers(companyId)
+const props = defineProps<{
+  profile?: any
+}>()
+const activeCompany = computed(() => props.profile?.active_company)
 
+const membershipRole = computed(() =>
+  activeCompany.value?.membership_role || null
+)
+
+const permissions = computed<string[]>(() =>
+  activeCompany.value?.permissions || []
+)
+
+function can(permission: string) {
+  return permissions.value.includes(permission)
+}
+
+const isOwner = computed(() => membershipRole.value === 'owner')
+const canInviteUsers = computed(() => {
+  return isOwner.value || can('company_user.invite')
+})
+
+const canUpdateUserRole = computed(() => {
+  return isOwner.value || can('company_user.update')
+})
+
+const canViewUsers = computed(() => {
+  return isOwner.value || can('company_user.read')
+})
 interface TeamMember {
   id: string
   name: string

@@ -7,7 +7,33 @@ import PricingSkeleton from "../../../components/skeletons/PricingSkeleton.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useRouter } from "vue-router";
 import { useUpgradePackage } from "../../../queries/usePackages";
+import { toast } from "vue-sonner";
+const props = defineProps<{
+  profile?: any
+}>()
 
+const activeCompany = computed(() => props.profile?.active_company)
+
+const membershipRole = computed(() =>
+  activeCompany.value?.membership_role || null
+)
+
+const permissions = computed<string[]>(() =>
+  activeCompany.value?.permissions || []
+)
+
+function can(permission: string) {
+  return permissions.value.includes(permission)
+}
+
+const isOwner = computed(() => membershipRole.value === 'owner')
+const canViewPackages = computed(() =>
+  isOwner.value || can('package.read')
+)
+
+const canUpgradePackage = computed(() =>
+  isOwner.value || can('package.upgrade')
+)
 const { isDark } = useTheme(); // light / dark / system
 const isYearly = ref(false);
 const workspaceStore = useWorkspaceStore();
@@ -24,6 +50,9 @@ const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
 const upgradingPackageId = ref<string | null>(null);
 
 function handleClick(plan: any) {
+  if (!canUpgradePackage.value) {
+    return toast.error("You don't have permission to upgrade packages")
+  }
   if (authStore.isAuthenticated) {
     upgradingPackageId.value = plan.packageId;
     upgradePackage({
@@ -132,7 +161,7 @@ const pricingPlans = computed(() => {
 </script>
 
 <template>
-  <section
+  <section v-if="canViewPackages"
     class="w-full py-[40px] md:py-[70px] xl:py-[105px]"
   >
     <div class="custom_container">
@@ -287,7 +316,7 @@ const pricingPlans = computed(() => {
             <!-- Button -->
             <button
               @click="handleClick(plan)"
-              :disabled="isUpgrading && upgradingPackageId === plan.packageId"
+              :disabled="(isUpgrading && upgradingPackageId === plan.packageId) || !canUpgradePackage"
               class="w-full py-[14px] cursor-pointer rounded-[12px] font-normal text-[14px] transition relative z-10 shadow-[0_4px_6px_-4px_rgba(0,0,0,0.1)]"
               :class="[
                 isDark

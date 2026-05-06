@@ -26,7 +26,6 @@
   :profile="profileData"
   @close-mobile="closeMobileSidebar"
 />
-
     <!-- Main Content Area -->
 <main
   class="flex-grow flex flex-col min-w-0 max-w-full md:m-2 md:rounded-xl md:border border-border overflow-hidden relative"
@@ -48,12 +47,12 @@
       <ProfileTab v-if="currentTab === 'profile'" />
       <BillingTab v-else-if="currentTab === 'billing'" />
       <OrganizationTab v-else-if="currentTab === 'org-setup'" :profile="profileData" />
-      <OrgUsersTab v-else-if="currentTab === 'org-users'" />
-      <OrgRolesTab v-else-if="currentTab === 'org-roles'" />
-      <OwnershipTransfer v-else-if="currentTab === 'ownership-transfer'" />
-      <OrgPackagesTab v-else-if="currentTab === 'org-packages'" />
-      <OrgDomainSetup v-else-if="currentTab === 'org-domain'" />
-      <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" />
+      <OrgUsersTab v-else-if="currentTab === 'org-users'" :profile="profileData" />
+      <OrgRolesTab v-else-if="currentTab === 'org-roles'" :profile="profileData" />
+      <OwnershipTransfer v-else-if="currentTab === 'ownership-transfer'" :profile="profileData" />
+      <OrgPackagesTab v-else-if="currentTab === 'org-packages'" :profile="profileData" />
+      <OrgDomainSetup v-else-if="currentTab === 'org-domain'" :profile="profileData" />
+      <OrgAiTokensAllocationTab v-else-if="currentTab === 'token-allocation'" :profile="profileData" />
     </div>
   </div>
 </main>
@@ -90,7 +89,7 @@ const { data: profile } = useQuery({
 });
 
 const profileData = computed(() => profile.value?.data ?? null);
-const membershipRole = profileData.value?.active_company?.membership?.role || ''
+const membershipRole = profileData.value?.active_company?.membership_role || ''
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     'profile': 'Your profile',

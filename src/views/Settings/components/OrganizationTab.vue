@@ -7,7 +7,8 @@
   <div v-if="isCreatingOrg" class="space-y-6">
     <div class="flex items-center gap-3 mb-2">
       <button
-        @click="isCreatingOrg = false"
+        @click="isCreatingOrg = true"
+        :disabled="!canCreateOrg"
         class="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
       >
         <i class="fa-solid fa-arrow-left text-xs"></i>
@@ -16,7 +17,9 @@
       <div class="h-px flex-1 bg-border/40"></div>
       <span class="text-xs text-text-secondary font-medium">Create Organization</span>
     </div>
-    <CreateOrganizationInline @done="onOrgCreated" />
+    <div v-if="isCreatingOrg && canCreateOrg">
+  <CreateOrganizationInline @done="onOrgCreated" />
+</div>
   </div>
 
   <!-- ── Empty state ──────────────────────────────────────────── -->
@@ -79,7 +82,7 @@
     <!-- Has org — settings form -->
     <div v-else class="space-y-6">
       <!-- Organization Info Section -->
-      <section class="rounded-2xl border border-border/40 bg-bg-body/50 p-6">
+      <section class="rounded-2xl border border-border/40 bg-bg-body/50 p-6" :class="{ 'opacity-60 pointer-events-none': !canUpdateOrg }">
         <div class="mb-6">
           <h3 class="text-lg font-bold text-text-primary flex items-center gap-2">
             <i class="fa-solid fa-building text-accent"></i>
@@ -231,10 +234,11 @@
           <p class="text-xs text-text-secondary mt-1">{{ orgDescription.length }}/500 characters</p>
         </div>
       </section>
+
    <div class="flex flex-col sm:flex-row gap-3 justify-start">
 <button
   @click="saveOrg"
-  :disabled="isSaving || !isFormValid"
+  :disabled="isSaving || !isFormValid || !canUpdateOrg"
   class="px-6 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20"
 >
   <span v-if="isSaving" class="flex items-center gap-2">
@@ -246,13 +250,16 @@
 </button>
 
   <button
+  v-if="canDeleteOrg"
     @click="showDeleteConfirm = true"
     class="px-6 py-2.5 text-sm font-semibold rounded-lg border border-red-500/30 text-red-600 hover:bg-red-500/10 transition-all active:scale-95"
   >
     <i class="fa-solid fa-trash mr-2"></i> Delete organization
   </button>
 </div>
-
+<p v-if="!canUpdateOrg" class="text-xs text-red-500 mt-2">
+  You don’t have permission to modify organization settings.
+</p>
 <!-- Save error -->
 <p v-if="saveError" class="text-xs text-red-500 mt-2 flex items-center gap-1.5">
   <i class="fa-solid fa-circle-exclamation"></i> {{ saveError }}
@@ -324,7 +331,27 @@ function onOrgCreated() {
 const props = defineProps<{
   profile?: any
 }>()
+const activeCompany = computed(() => props.profile?.active_company)
 
+const membershipRole = computed(() => 
+  activeCompany.value?.membership_role || null
+)
+
+const permissions = computed<string[]>(() => 
+  activeCompany.value?.permissions || []
+)
+function can(permission: string) {
+  return permissions.value.includes(permission)
+}
+const isOwner = computed(() => membershipRole.value === 'owner')
+
+const canUpdateOrg = computed(() => {
+  return isOwner.value || can('company.update') || can('company_user.update')
+})
+
+const canDeleteOrg = computed(() => {
+  return isOwner.value
+})
 const workspaceStore = useWorkspaceStore()
 const router = useRouter()
 
@@ -333,7 +360,10 @@ const hasOrg = computed(() => {
   const activeCompanyId = props.profile?.active_company_id
   return !!localCompanyId && !!activeCompanyId && localCompanyId === activeCompanyId
 })
-
+const canCreateOrg = computed(() => {
+  // only owner can create AND only when no org exists
+  return !hasOrg.value && isOwner.value
+})
 // Form state
 const orgName = ref('')
 const orgSlug = ref('')

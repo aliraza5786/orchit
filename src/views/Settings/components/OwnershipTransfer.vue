@@ -493,6 +493,7 @@ interface Member {
   id: string
   name: string
   initials: string
+  is_owner?: boolean
   email: string
   role: string
   color: string
@@ -503,6 +504,7 @@ interface Member {
 
 interface RawUser {
   _id?: string
+  is_owner?: boolean
   u_full_name?: string
   u_email?: string
   u_profile_image?: string
@@ -574,13 +576,8 @@ function formatExpiry(isoString?: string): string {
 const currentOwner = computed<Member>(() => {
   const raw: RawUser[] = usersData.value?.data?.users ?? usersData.value?.users ?? []
   const users = Array.isArray(raw) ? raw : []
-
-  const ownerRaw: RawUser | undefined =
-    users.find(
-      (u) =>
-        u.seat_title?.toLowerCase() === 'owner' ||
-        u.role_title?.toLowerCase() === 'owner'
-    ) ?? users[0]
+const ownerRaw: RawUser | undefined =
+  users.find((u) => u.is_owner === true)
 
   if (!ownerRaw) {
     return {
