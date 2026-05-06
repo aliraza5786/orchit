@@ -18,11 +18,11 @@
             <th
               v-for="col in visibleColumns"
               :key="col.key"
-              class="relative font-bold px-3 py-2 uppercase text-left text-[11px] tracking-wide border-r border-border/40 select-none whitespace-nowrap min-w-[200px]"
+              class="relative font-bold px-3 py-2 uppercase text-left text-[11px] tracking-wide border-r border-border/40 select-none whitespace-nowrap"
               :style="{
                 width: columnWidths[col.key]
                   ? columnWidths[col.key] + 'px'
-                  : '100%',
+                  : '200px',
               }"
             >
               <span>{{ col.label }}</span>

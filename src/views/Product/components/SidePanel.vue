@@ -95,7 +95,7 @@
               v-if="item?.type === 'Select' && item.slug == 'card-type'"
               class="space-y-1.5 sm:col-span-1"
             >
-              <div class="text-xs uppercase tracking-wider text-text-secondary">
+              <div class="text-xs uppercase tracking-wider text-text-secondary ">
                 {{ item.title }}
               </div>
               <BaseSelectField
@@ -129,7 +129,7 @@
                 @keydown.enter.prevent="saveTitle"
                 @keydown.esc.prevent="cancelEdit"
                 @blur="saveTitle"
-                class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition"
+                class="w-full text-[18px] font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition"
                 type="text"
                 aria-label="Edit title"
               />
@@ -137,7 +137,7 @@
                 v-else
                 key="title-view"
                 :class="canEditCard ? 'cursor-text' : 'cursor-not-allowed'"
-                class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-lg px-2 py-1 hover:bg-orchit-white/5 transition"
+                class="text-[18px] leading-[24px] break-words font-semibold tracking-tight rounded-lg px-2 py-1 hover:bg-orchit-white/5 transition"
                 @click="editTitle()"
                 aria-label="Card title"
                 :title="
@@ -2649,5 +2649,9 @@ function handleEditVar(item: any) {
 }
 .word-break :deep(p) {
   overflow-wrap: break-word !important;
+}
+.word-break :deep(a) {
+  color: var(--color-text-primary, #6b7280) !important;
+  text-decoration: underline !important;
 }
 </style>

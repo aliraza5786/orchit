@@ -1,10 +1,10 @@
 <template>
   <div v-if="modelValue" class="fixed inset-0 z-[2000] flex items-center justify-center">
     <!-- backdrop -->
-    <div class="absolute inset-0 bg-black/30" @click="close"></div>
+    <div class="absolute inset-0 bg-black/10 backdrop-blur-md " @click="close"></div>
 
     <!-- modal -->
-    <div class="relative w-[520px] max-w-[92vw] rounded-xl bg-bg-surface shadow-2xl p-5 space-y-4" role="dialog"
+    <div class="relative w-[340px] max-w-[92vw] rounded-[6px] bg-bg-body shadow-lg shadow-accent/30 p-5 space-y-4" role="dialog"
       aria-modal="true" aria-labelledby="link-modal-title">
       <h3 id="link-modal-title" class="text-lg font-semibold">Insert link</h3>
 
@@ -91,6 +91,29 @@ const text = ref('');
 const newTab = ref(true);
 const error = ref('');
 
+// Watch for protocol being typed/pasted into the text field
+watch(urlWithoutProto, (newVal) => {
+  if (!newVal) return;
+
+  // Detect common protocols, including those with missing colons (e.g. http//)
+  const match = newVal.match(/^(https?:\/\/|mailto:|tel:|\/|https?:\/\/)/i);
+  
+  if (match) {
+    let proto = match[0].toLowerCase();
+    
+    // Normalize missing colon mistakes
+    if (proto === 'http//') proto = 'http://';
+    if (proto === 'https//') proto = 'https://';
+
+    const supported = ['https://', 'http://', 'mailto:', 'tel:', '/'];
+    if (supported.includes(proto)) {
+      protocol.value = proto as any;
+      // Strip the matched protocol from the input
+      urlWithoutProto.value = newVal.slice(match[0].length);
+    }
+  }
+});
+
 function hydrateFromProps() {
   const href = props.initialHref || '';
   // detect protocol
@@ -113,12 +136,15 @@ watch(() => props.modelValue, async (open) => {
 function close() { emit('update:modelValue', false); }
 
 function buildHref() {
+  let clean = urlWithoutProto.value.trim();
+  
+  // Defensive: Strip protocol if it somehow still exists in the input
+  clean = clean.replace(/^(https?:\/\/|mailto:|tel:|\/|https?:\/\/)/i, '');
+
   if (protocol.value === '/') {
-    // treat as relative path; ensure leading slash
-    const clean = urlWithoutProto.value.startsWith('/') ? urlWithoutProto.value : `/${urlWithoutProto.value}`;
-    return clean;
+    return clean.startsWith('/') ? clean : `/${clean}`;
   }
-  return `${protocol.value}${urlWithoutProto.value}`;
+  return `${protocol.value}${clean}`;
 }
 
 function validate(href: string) {

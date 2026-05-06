@@ -21,7 +21,7 @@
             </h3>
         </div>
         <p v-html="ticket['card-description']" v-once
-            class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
+            class="card-description text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2">
         </p> 
         <div class="flex justify-between">
             <div class="flex justify-start text-sm text-text-secondary mt-2">
@@ -247,3 +247,10 @@ const formatDate = (dateString?: string) => {
 };
 const emit = defineEmits(['click'])
 </script>
+
+<style scoped>
+.card-description :deep(a){
+  color: var(--color-text-primary, #6b7280) !important;
+  text-decoration: underline !important;
+}
+</style>

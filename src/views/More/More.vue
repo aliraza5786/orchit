@@ -1,7 +1,7 @@
 <template>
-  <div class=" flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border  overflow-x-auto flex-col flex  ">
+  <div class=" flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex">
     <header class="sticky top-0 w-full z-10 bg-bg-card">
-      <div class="mx-auto  px-2 py-2">
+      <div class="mx-auto px-3 py-2">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 class="text-2xl font-semibold tracking-tight">Apps</h1>
           <div class="overflow-x-auto">
@@ -39,12 +39,12 @@
       </div>
     </header>
 
-    <main class="mx-auto w-full px-2 pb-16">
+    <main class="mx-auto w-full px-3 pb-16">
       <section>
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-lg font-semibold">Current Using</h2>
         </div>
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           <div v-if="isPending" v-for="i in ['3', '2', '2']" :key="i"
             class="h-16 w-full p-3 rounded-lg bg-bg-surface animate-pulse"></div>
           <AppCard v-else v-for="app in filteredModules" :key="app?._id" :app="app" action-label="Open" />

@@ -13,7 +13,6 @@ const props = defineProps<{
 }>()
 
 const activeCompany = computed(() => props.profile?.active_company)
-
 const membershipRole = computed(() =>
   activeCompany.value?.membership_role || null
 )
@@ -27,12 +26,9 @@ function can(permission: string) {
 }
 
 const isOwner = computed(() => membershipRole.value === 'owner')
-const canViewPackages = computed(() =>
-  isOwner.value || can('package.read')
-)
 
 const canUpgradePackage = computed(() =>
-  isOwner.value || can('package.upgrade')
+  isOwner.value || can('package.change')
 )
 const { isDark } = useTheme(); // light / dark / system
 const isYearly = ref(false);
@@ -50,7 +46,7 @@ const { mutate: upgradePackage, isPending: isUpgrading } = useUpgradePackage({
 const upgradingPackageId = ref<string | null>(null);
 
 function handleClick(plan: any) {
-  if (!canUpgradePackage.value) {
+   if (!canUpgradePackage.value) {
     return toast.error("You don't have permission to upgrade packages")
   }
   if (authStore.isAuthenticated) {
@@ -161,7 +157,7 @@ const pricingPlans = computed(() => {
 </script>
 
 <template>
-  <section v-if="canViewPackages"
+  <section
     class="w-full py-[40px] md:py-[70px] xl:py-[105px]"
   >
     <div class="custom_container">

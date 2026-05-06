@@ -374,34 +374,47 @@ import {
   profile?: any
 }>()
 const activeCompany = computed(() => props.profile?.active_company)
-
-const membershipRole = computed(() => 
+const membershipRole = computed(() =>
   activeCompany.value?.membership_role || null
 )
 
-const permissions = computed<string[]>(() => 
+const permissions = computed<string[]>(() =>
   activeCompany.value?.permissions || []
 )
+
 function can(permission: string) {
   return permissions.value.includes(permission)
 }
+
 const isOwner = computed(() => membershipRole.value === 'owner')
 
-const canAddDomain = computed(() => {
-  return isOwner.value || can('company_domain.create')
+/**
+ * Centralized domain access control
+ * Owner always allowed + permission-based access
+ */
+const canManageDomain = computed(() => {
+  return (
+    isOwner.value ||
+    can('domain.manage') ||
+    can('company_domain.manage') // fallback if backend still uses old naming
+  )
 })
 
-const canDeleteDomain = computed(() => {
-  return isOwner.value || can('company_domain.delete')
-})
+const canAddDomain = computed(() =>
+  canManageDomain.value || can('company_domain.create')
+)
 
-const canVerifyDomain = computed(() => {
-  return isOwner.value || can('company_domain.verify')
-})
+const canDeleteDomain = computed(() =>
+  canManageDomain.value || can('company_domain.delete')
+)
 
-const canSetPrimaryDomain = computed(() => {
-  return isOwner.value || can('company_domain.set_primary')
-})
+const canVerifyDomain = computed(() =>
+  canManageDomain.value || can('company_domain.verify')
+)
+
+const canSetPrimaryDomain = computed(() =>
+  canManageDomain.value || can('company_domain.set_primary')
+)
 const {
   data: domainsData,
   isLoading,

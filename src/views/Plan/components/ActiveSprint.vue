@@ -291,7 +291,7 @@
 
           <!-- ── MindMap View ─────────────────────────────────────── -->
           <template v-if="view === 'mindmap'">
-            <div class="relative flex-1 flex flex-col overflow-hidden">
+            <div class="relative flex-1 flex flex-col overflow-hidden px-2">
               <div v-if="isPending" class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]">
                 <div class="flex flex-col items-center gap-3">
                   <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
@@ -959,7 +959,8 @@ const { mutate: updateSheet } = useUpdateWorkspaceSheet({
 
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });  
     newColumn.value = "";
     showDelete.value = false;
     activeAddList.value = false;

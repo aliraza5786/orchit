@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full space-y-6 flex-1">
+  <div class="w-full space-y-6 flex-1"  v-if="canManageUsers">
     <!-- Header Section -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
@@ -154,6 +154,9 @@
       </p>
     </div>
   </div>
+  <div v-else>
+  You don’t have access to user management
+</div>
 </template>
 
 <script setup lang="ts">
@@ -182,17 +185,32 @@ function can(permission: string) {
 }
 
 const isOwner = computed(() => membershipRole.value === 'owner')
-const canInviteUsers = computed(() => {
-  return isOwner.value || can('company_user.invite')
-})
 
-const canUpdateUserRole = computed(() => {
-  return isOwner.value || can('company_user.update')
+/**
+ * Central user management capability
+ * Owner always allowed + explicit permission fallback
+ */
+const canManageUsers = computed(() => {
+  return (
+    isOwner.value ||
+    can('company_user.create') ||
+    can('company_user.update') ||
+    can('company_user.delete') ||
+    can('company_user.read')
+  )
 })
-
-const canViewUsers = computed(() => {
-  return isOwner.value || can('company_user.read')
-})
+const canInviteUsers = computed(() =>
+  can('company_user.create') || isOwner.value
+)
+const canUpdateUserRole = computed(() =>
+  can('company_user.update') || isOwner.value
+)
+const canViewUsers = computed(() =>
+  can('company_user.read') || isOwner.value
+)
+// const canDeleteUsers = computed(() =>
+//   can('company_user.delete') || isOwner.value
+// )
 interface TeamMember {
   id: string
   name: string
