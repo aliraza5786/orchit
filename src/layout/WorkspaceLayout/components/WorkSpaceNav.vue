@@ -173,7 +173,6 @@
               </button>
 
               <div class="my-1 h-px bg-border"></div>
-
               <!-- Workspaces -->
               <div class="overflow-y-auto">
                 <div class="max-h-72 py-1 cursor-pointer">

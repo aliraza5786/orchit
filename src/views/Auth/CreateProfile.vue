@@ -443,16 +443,6 @@
       </div>
     </div>
 
-    <!-- invite via email -->
-    <div class="space-y-1.5">
-      <label class="text-sm font-medium text-text-primary mb-1.5">Invite via email</label>
-      <BaseEmailChip
-        v-model="emailList"
-        :error="!!errors.emailList"
-        :message="errors.emailList"
-      />
-    </div>
-
     <!-- actions -->
 <!-- actions -->
 <!-- AFTER: -->
@@ -476,7 +466,7 @@
   >
     <div class="flex items-center gap-2">
       <span v-if="isInviting" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-      <span>Invite</span>
+      <span>Finish Profile</span>
     </div>
   </Button>
 </div>
