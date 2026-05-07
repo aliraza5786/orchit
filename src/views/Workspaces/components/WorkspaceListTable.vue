@@ -42,9 +42,6 @@ const handleClick = async (rowEvt: any) => {
   const company = r?.company
   const domainLink = company?.domain_link
 
-  // ─────────────────────────────
-  // NO COMPANY DOMAIN → NORMAL ROUTE
-  // ─────────────────────────────
   if (!domainLink) {
     router.push(peakPath)
     return
@@ -52,50 +49,34 @@ const handleClick = async (rowEvt: any) => {
 
   const companyId = company._id
 
-  // Clean domain safely
   const cleanDomain = domainLink
     .trim()
     .replace(/^https?:\/\//, '')
     .replace(/\/$/, '')
 
-  // ─────────────────────────────
-  // STORE CONTEXT (SYNC FIRST)
-  // ─────────────────────────────
-  localStorage.setItem('company_id', companyId)
-  localStorage.setItem('company_name', company.title || '')
-  localStorage.removeItem('personal_mode')
+  // 1. Write cookie BEFORE anything else
+  authStore.writeAuthCookie({
+    token: token ?? undefined,
+    company_id: companyId,
+    personal_mode: null,
+  })
 
-  authStore.setCompany(companyId)
+  // 2. Save tenant slug so redirectToTenantIfNeeded works on return
+  const tenantSlug = cleanDomain.split('.')[0]
+  localStorage.setItem('last_tenant_slug', tenantSlug)
 
-  if (token) {
-    authStore.writeAuthCookie({
-      token,
-      company_id: companyId,
-      personal_mode: null,
-    })
-  }
-
-  window.dispatchEvent(
-    new CustomEvent('company-changed', {
-      detail: companyId,
-    })
-  )
-
-  // ─────────────────────────────
-  // BUILD TARGET URL (IMPORTANT FIX)
-  // ─────────────────────────────
+  // 3. Pass jobId via URL — localStorage doesn't cross subdomains
   const targetUrl =
     `${window.location.protocol}//${cleanDomain}${peakPath}` +
-    `?theme=${theme}`
+    `?theme=${theme}` +
+    (jobId ? `&jobId=${encodeURIComponent(jobId)}` : '')
 
   console.log('Redirecting to:', targetUrl)
 
-  // ─────────────────────────────
-  // SAFE REDIRECT (NO replace)
-  // ─────────────────────────────
+  // 4. Small delay to ensure cookie write is flushed
   setTimeout(() => {
     window.location.href = targetUrl
-  }, 50)
+  }, 80)
 }
 
 const showInviteModal = ref(false)

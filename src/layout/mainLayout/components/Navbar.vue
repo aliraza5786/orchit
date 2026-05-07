@@ -721,108 +721,106 @@ const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
 // const switchAborted = ref(false);
 async function confirmSwitch() {
-  if (!pendingAccount.value) return;
+  if (!pendingAccount.value) return
 
-  console.log("pending accounts", pendingAccount.value);
-
-  const account = { ...pendingAccount.value };
-  isSwitching.value = true;
+  const account = { ...pendingAccount.value }
+  isSwitching.value = true
 
   try {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token')
 
     // =========================
     // 🔁 SWITCH TO COMPANY
     // =========================
-    if (account.type === "company") {
-      const companyId = account.id;
+    if (account.type === 'company') {
+      const companyId = account.id
 
-      // ✅ Normalize domain safely (preserve protocol if present)
-      let domain = account.domain?.trim();
-      if (!domain) throw new Error("Invalid domain");
+      let domain = account.domain?.trim()
+      if (!domain) throw new Error('Invalid domain')
 
-      // remove trailing slash only
-      domain = domain.replace(/\/+$/, "");
-
-      // ensure protocol exists
+      domain = domain.replace(/\/+$/, '')
       if (!/^https?:\/\//i.test(domain)) {
-        domain = `https://${domain}`;
+        domain = `https://${domain}`
       }
 
-      const targetUrl = `${domain}/dashboard`;
+      // ✅ Extract slug for last_tenant_slug
+      // e.g. "https://user-62fcf3s-company.orchit.ai" → "user-62fcf3s-company"
+      const slugMatch = domain.match(/^https?:\/\/([^.]+)\./)
+      const tenantSlug = slugMatch?.[1] ?? null
 
-      // 1. CLEAR PERSONAL MODE
-      localStorage.removeItem("personal_mode");
-
-      // 2. SAVE COMPANY STATE
-      localStorage.setItem("company_id", companyId);
-      localStorage.setItem("company_name", account.name);
-
-      // 3. UPDATE STORE
-      authStore.setCompany(companyId);
-
-      // 4. COOKIE SYNC
+      // 1. COOKIE FIRST — only thing that crosses subdomains
       if (token) {
         authStore.writeAuthCookie({
           token,
           company_id: companyId,
           personal_mode: null,
-        });
+        })
       }
 
-      // 5. NOTIFY GLOBAL STATE
-      window.dispatchEvent(
-        new CustomEvent("company-changed", {
-          detail: companyId,
-        })
-      );
+      // 2. Save slug for redirectToTenantIfNeeded on return trips
+      if (tenantSlug) {
+        localStorage.setItem('last_tenant_slug', tenantSlug)
+      }
 
-      // 6. HARD REDIRECT
-      console.log("Redirecting to:", targetUrl);
+      // 3. Update store
+      authStore.setCompany(companyId)
 
-      window.location.href = targetUrl;
-      return;
+      // 4. Build URL — pass extras via query params since localStorage won't cross
+      const theme = localStorage.getItem('theme') || 'light'
+      const targetUrl = `${domain}/dashboard?theme=${theme}`
+
+      console.log('Redirecting to:', targetUrl)
+
+      // 5. Small delay to ensure cookie is written
+      setTimeout(() => {
+        window.location.href = targetUrl
+      }, 80)
+
+      return
     }
 
     // =========================
     // 👤 SWITCH TO INDIVIDUAL
     // =========================
-    if (account.type === "individual") {
-      // 1. REMOVE ALL COMPANY STATE
-      localStorage.removeItem("company_id");
-      localStorage.removeItem("company_name");
-      localStorage.setItem("personal_mode", "true");
-
-      // 2. UPDATE STORE
-      authStore.clearCompany();
-
-      // 3. COOKIE SYNC
+    if (account.type === 'individual') {
+      // 1. Cookie first
       if (token) {
         authStore.writeAuthCookie({
           token,
           company_id: null,
           personal_mode: true,
-        });
+        })
       }
 
-      // 4. NOTIFY GLOBAL STATE
-      window.dispatchEvent(
-        new CustomEvent("company-changed", {
-          detail: null,
-        })
-      );
+      // 2. Clear local state
+      localStorage.removeItem('company_id')
+      localStorage.removeItem('company_name')
+      localStorage.removeItem('last_tenant_slug') // ✅ prevent auto-redirect back
+      localStorage.setItem('personal_mode', 'true')
 
-      // 5. FORCE REDIRECT TO MAIN DOMAIN
-      const targetUrl = `https://orchit.ai/dashboard`;
+      // 3. Update store
+      authStore.clearCompany()
 
-      console.log("Redirecting to:", targetUrl);
+      // 4. Notify (fires before redirect, still useful for same-page listeners)
+      window.dispatchEvent(new CustomEvent('company-changed', { detail: null }))
 
-      window.location.href = targetUrl;
-      return;
+      // 5. Redirect — orchit.ai/dashboard
+      // main.ts will see personal_mode=true in cookie and stay on root
+      const theme = localStorage.getItem('theme') || 'light'
+      const targetUrl = `https://orchit.ai/dashboard?theme=${theme}`
+
+      console.log('Redirecting to:', targetUrl)
+
+      setTimeout(() => {
+        window.location.href = targetUrl
+      }, 80)
+
+      return
     }
+
   } catch (err) {
-    console.error("Account switch failed:", err);
-    isSwitching.value = false;
+    console.error('Account switch failed:', err)
+    isSwitching.value = false
   }
 }
 function getInitials(name: string) {
