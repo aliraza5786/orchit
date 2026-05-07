@@ -22,7 +22,7 @@ const getCachedDate = (dateStr: string) => {
   if (!dateCache.has(dateStr)) dateCache.set(dateStr, formatDate(dateStr))
   return dateCache.get(dateStr)!
 }
-const handleClick = (rowEvt: any) => {
+const handleClick = async (rowEvt: any) => {
   const r = rowEvt.row
   const jobId = r?.LatestTask?.job_id
 
@@ -35,56 +35,67 @@ const handleClick = (rowEvt: any) => {
   const theme = localStorage.getItem('theme') || 'light'
   const token = localStorage.getItem('token')
 
-  // Build peak path
   const peakPath = jobId
     ? `/workspace/peak/${r._id}/${jobId}`
     : `/workspace/peak/${r._id}`
 
-  const domainLink = r?.company?.domain_link
+  const company = r?.company
+  const domainLink = company?.domain_link
 
-  // ───────────────── COMPANY DOMAIN ─────────────────
-  if (domainLink) {
-    const companyId = r.company._id
-
-    // Clean domain
-    const cleanDomain = domainLink
-      .trim()
-      .replace(/^https?:\/\//, '')
-      .replace(/\/$/, '')
-
-    // Save company context
-    localStorage.setItem('company_id', companyId)
-    localStorage.setItem('company_name', r.company.title ?? '')
-    localStorage.removeItem('personal_mode')
-
-    if (token) {
-      authStore.writeAuthCookie({
-        token,
-        company_id: companyId,
-        personal_mode: null,
-      })
-    }
-
-    authStore.setCompany(companyId)
-
-    window.dispatchEvent(
-      new CustomEvent('company-changed', {
-        detail: companyId,
-      })
-    )
-
-    // ✅ Redirect to company domain
-    const targetUrl = `${window.location.protocol}//${cleanDomain}${peakPath}?theme=${theme}`
-
-    console.log('Redirecting to:', targetUrl)
-
-    window.location.replace(targetUrl)
-
+  // ─────────────────────────────
+  // NO COMPANY DOMAIN → NORMAL ROUTE
+  // ─────────────────────────────
+  if (!domainLink) {
+    router.push(peakPath)
     return
   }
 
-  // ───────────────── NO COMPANY DOMAIN ─────────────────
-  router.push(peakPath)
+  const companyId = company._id
+
+  // Clean domain safely
+  const cleanDomain = domainLink
+    .trim()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/$/, '')
+
+  // ─────────────────────────────
+  // STORE CONTEXT (SYNC FIRST)
+  // ─────────────────────────────
+  localStorage.setItem('company_id', companyId)
+  localStorage.setItem('company_name', company.title || '')
+  localStorage.removeItem('personal_mode')
+
+  authStore.setCompany(companyId)
+
+  if (token) {
+    authStore.writeAuthCookie({
+      token,
+      company_id: companyId,
+      personal_mode: null,
+    })
+  }
+
+  window.dispatchEvent(
+    new CustomEvent('company-changed', {
+      detail: companyId,
+    })
+  )
+
+  // ─────────────────────────────
+  // BUILD TARGET URL (IMPORTANT FIX)
+  // ─────────────────────────────
+  const targetUrl =
+    `${window.location.protocol}//${cleanDomain}${peakPath}` +
+    `?theme=${theme}&company_id=${companyId}`
+
+  console.log('Redirecting to:', targetUrl)
+
+  // ─────────────────────────────
+  // SAFE REDIRECT (NO replace)
+  // ─────────────────────────────
+  setTimeout(() => {
+    window.location.href = targetUrl
+  }, 50)
 }
 
 const showInviteModal = ref(false)

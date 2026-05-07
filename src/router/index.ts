@@ -150,20 +150,22 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      const auth = useAuthStore()
-      auth.logout()
+  const auth = useAuthStore()
 
-      if (!isRootDomain()) {
-        // On subdomain — redirect to root domain login
-        const isLocalhost = window.location.hostname.endsWith('.localhost')
-        const loginUrl = isLocalhost
-          ? `http://localhost:${window.location.port || 3000}/login`
-          : 'https://orchit.ai/login'
-        window.location.href = loginUrl
-      } else {
-        router.replace({ name: 'Login' })
-      }
-    }
+  // only logout if token is truly invalid, not transient API failure
+  const hasToken = !!localStorage.getItem('token')
+
+  if (!hasToken) {
+    auth.logout()
+
+    const isLocalhost = window.location.hostname.endsWith('.localhost')
+    const loginUrl = isLocalhost
+      ? `http://localhost:${window.location.port || 3000}/login`
+      : 'https://orchit.ai/login'
+
+    window.location.href = loginUrl
+  }
+}
     return Promise.reject(error)
   }
 )
@@ -183,15 +185,14 @@ router.afterEach((to) => {
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
   const isLogoutRedirect = to.query.logout === 'true'
-
-  // Skip bootstrap on logout redirect — user is already logged out
-  if (!auth.initialized && !isLogoutRedirect) {
-    await auth.bootstrap()
-  }
-
+  if (!auth.initialized) {
+  const timeout = new Promise((resolve) => setTimeout(resolve, 3000))
+  await Promise.race([auth.bootstrap(), timeout])
+}
   const hostname = window.location.hostname
   let subdomain: string | null = null
-
+  console.log(subdomain);
+  
   if (hostname.endsWith('.orchit.ai')) {
     const sub = hostname.replace('.orchit.ai', '')
     if (sub && sub !== 'www' && sub !== 'stagging') {
@@ -203,12 +204,6 @@ router.beforeEach(async (to, _from, next) => {
       subdomain = sub
     }
   }
-
-  // On subdomain, unknown paths → go to dashboard
-  if (subdomain && to.name === 'NotFound') {
-    return next('/dashboard')
-  }
-
   const requiresAuth = to.matched.some(
     (record) => record.meta.requiresAuth === true
   )

@@ -32,7 +32,7 @@
 
     <!-- Main Content Area -->
     <main
-      class="flex-grow flex flex-col min-w-0 max-w-full md:m-2 md:rounded-xl md:border border-border overflow-hidden relative"
+      class="flex-grow flex flex-col min-w-0 max-w-full md:m-2 md:rounded-lg md:border border-border overflow-hidden relative"
       :class="isDark ? 'bg-bg-card/30' : 'bg-bg-card'"
     >
       <div class="py-6 px-4 sm:px-6 sm:p-10 overflow-y-auto h-full flex flex-col">

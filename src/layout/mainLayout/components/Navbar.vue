@@ -177,9 +177,9 @@
               ></div>
 
               <!-- Scrollable middle section (account switcher only) -->
-              <div class="flex-1 overflow-y-auto overscroll-contain min-h-0">
+              <div class="flex-1 overflow-y-auto overscroll-contain min-h-0" >
                 <!-- ── ACCOUNT SWITCHER ── -->
-                <div class="px-1 pt-2 pb-1">
+                <div class="px-1 pt-2 pb-1" v-if="companyAccounts.length > 0">
                   <p
                     class="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-text-primary"
                   >
@@ -444,17 +444,6 @@
                       <span>Account settings</span>
                     </button>
                   </li>
-                  <li>
-                    <button
-                      class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                      role="menuitem"
-                      type="button"
-                      @click="openOrgSetup"
-                    >
-                      <i class="fa-regular fa-buildings"></i>
-                      <span>Organization setup</span>
-                    </button>
-                  </li>
                   <!-- Theme submenu -->
                   <li
                     class="relative cursor-pointer"
@@ -654,10 +643,7 @@ function handleUgrade() {
   router.push(`/settings?tab=billing&stripePayment=${true}`);
   workspaceStore.setLimitExccedModal(false);
 }
-function openOrgSetup() {
-  closeMenu();
-  router.push('/settings?tab=org-setup');
-}
+
 function handleLogoClick() {
   const token = localStorage.getItem('token');
   if (!token) {
@@ -734,7 +720,6 @@ const currentAccount = computed<Account>(() => {
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
 // const switchAborted = ref(false);
-
 async function confirmSwitch() {
   if (!pendingAccount.value) return;
 
@@ -742,61 +727,57 @@ async function confirmSwitch() {
   isSwitching.value = true;
 
   try {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
 
-    // ───────────────── COMPANY SWITCH ─────────────────
-    if (account.type === 'company') {
-      localStorage.setItem('company_id', account.id);
-      localStorage.setItem('company_name', account.name);
-      localStorage.removeItem('personal_mode');
+    // =========================
+    // 🔁 SWITCH TO COMPANY
+    // =========================
+    if (account.type === "company") {
+      const companyId = account.id;
+      const domain = account.domain?.replace(/^https?:\/\//, "").replace(/\/$/, "");
 
+      // 1. CLEAR PERSONAL MODE
+      localStorage.removeItem("personal_mode");
+
+      // 2. SAVE COMPANY STATE
+      localStorage.setItem("company_id", companyId);
+      localStorage.setItem("company_name", account.name);
+
+      // 3. UPDATE STORE
+      authStore.setCompany(companyId);
+
+      // 4. COOKIE SYNC
       if (token) {
         authStore.writeAuthCookie({
           token,
-          company_id: account.id,
+          company_id: companyId,
           personal_mode: null,
         });
       }
 
-      authStore.setCompany(account.id);
-
+      // 5. NOTIFY GLOBAL STATE
       window.dispatchEvent(
-        new CustomEvent('company-changed', {
-          detail: account.id,
+        new CustomEvent("company-changed", {
+          detail: companyId,
         })
       );
 
-      // ✅ Always redirect to company domain
-      let targetDomain = account.domain?.trim();
-
-      if (!targetDomain) {
-        throw new Error('Company domain missing');
-      }
-
-      // remove protocol + trailing slash
-      targetDomain = targetDomain
-        .replace(/^https?:\/\//, '')
-        .replace(/\/$/, '');
-
-      const targetUrl = `${window.location.protocol}//${targetDomain}/dashboard`;
-
-      console.log('Redirecting to:', targetUrl);
-
-      // ❌ Do NOT call router.push()
-      // ❌ Do NOT call closeMenu()
-      // ❌ Do NOT invalidate queries before redirect
+      // 6. HARD REDIRECT TO COMPANY DOMAIN
+      const targetUrl = `${window.location.protocol}//${domain}/dashboard`;
 
       window.location.replace(targetUrl);
-
       return;
     }
+    if (account.type === "individual") {
+      // 1. REMOVE ALL COMPANY STATE
+      localStorage.removeItem("company_id");
+      localStorage.removeItem("company_name");
+      localStorage.setItem("personal_mode", "true");
 
-    // ───────────────── PERSONAL SWITCH ─────────────────
-    if (account.type === 'individual') {
-      localStorage.removeItem('company_id');
-      localStorage.removeItem('company_name');
-      localStorage.setItem('personal_mode', 'true');
+      // 2. UPDATE STORE
+      authStore.clearCompany();
 
+      // 3. COOKIE SYNC
       if (token) {
         authStore.writeAuthCookie({
           token,
@@ -805,29 +786,24 @@ async function confirmSwitch() {
         });
       }
 
-      authStore.clearCompany();
-
+      // 4. NOTIFY GLOBAL STATE
       window.dispatchEvent(
-        new CustomEvent('company-changed', {
+        new CustomEvent("company-changed", {
           detail: null,
         })
       );
 
-      // ✅ Always redirect to main domain
-      const personalUrl = `${window.location.protocol}//orchit.ai/dashboard`;
+      // 5. FORCE REDIRECT TO MAIN DOMAIN
+      const targetUrl = `${window.location.protocol}//orchit.ai/dashboard`;
 
-      console.log('Redirecting to:', personalUrl);
-
-      window.location.replace(personalUrl);
-
+      window.location.replace(targetUrl);
       return;
     }
-  } catch (e) {
-    console.error('❌ Account switch failed:', e);
+  } catch (err) {
+    console.error("Account switch failed:", err);
     isSwitching.value = false;
   }
 }
-
 function getInitials(name: string) {
   return name
     .trim()
