@@ -628,7 +628,7 @@ import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
 import { removeFromCacheStructure, performOptimisticUpdate, rollbackOptimisticUpdate } from "../../utilities/cacheSync";
 
-// ─── Lazy-loaded components ───────────────────────────────────────────────────
+// ─── Lazy components ──────────────────────────────────────────────────────────
 const Dropdown = defineAsyncComponent(
   () => import("../../components/ui/Dropdown.vue"),
 );
@@ -985,6 +985,7 @@ const handleClearFilters = () => {
   activeFilters.value = {};
 };
 
+// ─── Filter Logic ─────────────────────────────────────────────────────────────
 const activeFilterCount = computed(() => {
   const f = activeFilters.value;
   let count = 0;
@@ -995,6 +996,7 @@ const activeFilterCount = computed(() => {
   return count;
 });
 
+// ─── Selection & Dropdowns ────────────────────────────────────────────────────
 const closeAllDropdowns = (except: string) => {
   if (except !== "sheet") {
     sheetDropdownRef.value?.closeDropdown();
@@ -1025,6 +1027,7 @@ const toggleGroupDropdown = () => {
 
 const hasActiveFilters = computed(() => activeFilterCount.value > 0);
 
+// ─── Queries ──────────────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore();
 const {
   data: Lists,
@@ -1105,6 +1108,7 @@ const refreshTable = () => {
 };
 
 // ─── Route card open ──────────────────────────────────────────────────────────
+// ─── Initializers ─────────────────────────────────────────────────────────────
 onMounted(() => {
   openPanelFromRoute();
 });
@@ -1120,6 +1124,7 @@ async function openPanelFromRoute() {
   selectCardHandler({ _id: cardId, id: cardId });
 }
 
+// ─── Ticket Details ──────────────────────────────────────────────────────────
 const selectCardHandler = (card: any) => {
   if (!card._id) card._id = card.id;
   selectedCard.value = card;
@@ -1473,6 +1478,7 @@ function openEditSprintModal(opt: any) {
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
+// ─── Search & Fuse Logic ──────────────────────────────────────────────────────
 const searchQuery = ref("");
 const debouncedQuery = ref("");
 
@@ -1507,6 +1513,7 @@ const fuse = computed(() => {
 // request() returns the JSON body directly — same level as Lists.value?.sheets[0] works.
 // Without variable_id: { cards: [...], variable: null }
 // With variable_id:    { sheets: [{ sheet_lists: [{ cards: [...] }] }] }
+// ─── Table Utilities ─────────────────────────────────────────────────────────
 const flattenSheetListCards = (apiData: any): any[] => {
   // Flat response (no variable_id): root-level cards array
   if (Array.isArray(apiData?.cards)) return apiData.cards;
@@ -1667,6 +1674,7 @@ const laneOptions = computed<any[]>(() =>
 );
 
 // ─── Table Columns ────────────────────────────────────────────────────────────
+// ─── Table Rendering (Columns) ────────────────────────────────────────────────
 const columns = computed(() => {
   return [
     {
@@ -1854,6 +1862,7 @@ const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
   return found;
 };
 
+// ─── Mutations & Handlers ─────────────────────────────────────────────────────
 const moveCard = useMoveCard({
   onMutate: async (newPayload: any) => {
     const { card_id, variables: updatedVariables } = newPayload;
@@ -2396,7 +2405,7 @@ const setStartDate = (row: any, e: any) => {
       sidePanelStore,
       cardId: card_id,
       updates: { "end-date": e, "start-date": e },
-      invalidateKeys: ['sheet-list', 'table-cards-flat']
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
     });
 
     moveCard.mutate(
@@ -2418,7 +2427,7 @@ function setLane(row: any, v: any) {
       sidePanelStore,
       cardId: id,
       updates: { lane: newLane, workspace_lane_id: v },
-      invalidateKeys: ['sheet-list', 'table-cards-flat']
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
     });
 
     moveCard.mutate(

@@ -391,7 +391,7 @@
 
                     <!-- Selection Types -->
                     <BaseSelectField
-                      v-if="item.type === 'Select'"
+                      v-if="item.type === 'Select' || !item?.type && item?.data?.length"
                       :disabled="!canEditCard"
                       size="md"
                       :options="
@@ -1415,9 +1415,7 @@ const local = reactive({
     props.details?.created_at ??
     props.details?.createdAt ??
     "",
-});
-
-console.log(props.details, "dta detail");
+}); 
 
 const dateISO = computed({
   get: () =>
@@ -1517,6 +1515,8 @@ const assignHandle = (users: any[]) => {
     optimisticUser: users,
   });
 };
+
+// --- Comments Logic ---
 const commentId = computed(() => props.details?._id);
 const { data: commentsData } = useComments(commentId);
 const comments = ref<any>(commentsData.value?.comments);
@@ -1527,6 +1527,7 @@ watch(
   },
 );
 
+// --- Create Comment Logic with Optimistic Update ---
 const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
   {
     onMutate: async (newCommentPayload: any) => {
@@ -1612,7 +1613,7 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
 const newComment = ref("");
 const showInviteModal = ref(false);
 
-// --- Mention Logic ---
+// --- Edit Comment Logic ---
 const { data: workspaceRoles } = useWorkspacesRoles(workspaceId);
 const commentTextarea = ref<HTMLTextAreaElement | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -1627,7 +1628,7 @@ function syncScroll(e: Event, type: string) {
     overlay.scrollLeft = target.scrollLeft;
   }
 }
-
+// --- Mention Logic ---
 const mentionMenuRef = ref<HTMLElement | null>(null);
 const mentionStyles = ref<any>({
   position: "fixed",
@@ -1663,6 +1664,7 @@ const filteredMentionUsers = computed(() => {
   });
 });
 
+// Core logic to detect "@" mentions and trigger the dropdown
 function handleCommentInput(e: Event, type: string) {
   const target = e.target as HTMLTextAreaElement;
   const val = target.value;
@@ -1704,6 +1706,7 @@ const userPopover = ref<{
   target: null,
 });
 
+// When user clicks on a mention in the comment text, show the profile popover
 function handleCommentClick(e: MouseEvent) {
   const target = e.target as HTMLElement;
   if (target.classList.contains("mention-highlight")) {
@@ -2017,6 +2020,7 @@ function removeEditAttachment(index: number) {
   editAttachments.value.splice(index, 1);
 }
 
+//--------------- Delete Comment with Optimistic Update ---------------
 const { mutate: deleteComment, isPending: isDeletingComment } =
   useDeleteComment({
     onMutate: async (variables: any) => {

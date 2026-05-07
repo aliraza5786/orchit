@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import api from '../libs/api'
 import { isRootDomain, getCurrentTenant } from '../utilities/tenant'
+import userSocket, { resetSocket } from '../libs/socket';
 
 const COOKIE_KEY = 'auth_session'
 
@@ -226,6 +227,8 @@ export const useAuthStore = defineStore('auth', {
         console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
       } finally {
         this.initialized = true
+         // Socket connects here — token is in localStorage, company_id is resolved
+         userSocket.initializeSocket()
       }
     },
 
@@ -246,6 +249,8 @@ export const useAuthStore = defineStore('auth', {
       this.user = null
       this.company_id = null
       this.initialized = false
+       //Kill socket so next login gets a fresh connection with the new token
+      resetSocket()
     },
 
     // ─── Go to Root Domain (escape hatch) ───────────────────────────────────
