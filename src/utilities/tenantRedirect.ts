@@ -1,45 +1,61 @@
-import { isRootDomain } from './tenant'
+export function getCurrentTenant(): string | null {
+  const hostname = window.location.hostname
+  const parts = hostname.split('.')
+  if (parts.length > 2 && !hostname.startsWith('www.')) return parts[0]
+  return null
+}
 
-const COOKIE_KEY = 'auth_session'
+export function isRootDomain(): boolean {
+  return getCurrentTenant() === null
+}
 
-function getAuthCookie(): { 
-  token?: string
-  company_id?: string
-  personal_mode?: boolean 
-} | null {
+// tenantUrl.ts
+export function isLocalhost(): boolean {
+  const h = window.location.hostname
+  return h === 'localhost' || h.endsWith('.localhost')
+}
+
+export function buildTenantUrl(
+  slug: string,
+  path: string = '/dashboard',
+  params: Record<string, string> = {}
+): string {
+  if (isLocalhost()) {
+    // Stay on the same origin — tenant is tracked via state/cookie, not subdomain
+    const qs = new URLSearchParams(params).toString()
+    return `${window.location.origin}${path}${qs ? '?' + qs : ''}`
+  }
+
+  const base = `https://${slug}.orchit.ai`
+  const qs = new URLSearchParams(params).toString()
+  return `${base}${path}${qs ? '?' + qs : ''}`
+}
+
+export function buildRootUrl(
+  path: string = '/dashboard',
+  params: Record<string, string> = {}
+): string {
+  if (isLocalhost()) {
+    const qs = new URLSearchParams(params).toString()
+    return `${window.location.origin}${path}${qs ? '?' + qs : ''}`
+  }
+
+  const qs = new URLSearchParams(params).toString()
+  return `https://orchit.ai${path}${qs ? '?' + qs : ''}`
+}
+
+export function slugFromDomainLink(domainLink: string): string | null {
+  if (!domainLink) return null
   try {
-    const raw = document.cookie
-      .split('; ')
-      .find(row => row.startsWith(COOKIE_KEY + '='))
-      ?.split('=')[1]
-    if (!raw) return null
-    return JSON.parse(decodeURIComponent(raw))
+    // Normalise — add scheme if missing so URL() can parse it
+    const normalized = /^https?:\/\//i.test(domainLink)
+      ? domainLink
+      : `https://${domainLink}`
+    const hostname = new URL(normalized).hostname          // "acme.orchit.ai"
+    const parts = hostname.split('.')
+    if (parts.length > 2 && !hostname.startsWith('www.')) return parts[0]
+    return null
   } catch {
     return null
   }
-}
-
-export function redirectToTenantIfNeeded(): boolean {
-  if (!isRootDomain()) return false
-
-  const session = getAuthCookie()
-  if (!session?.token) return false
-  if (session?.personal_mode) return false
-
-  const tenantSlug = localStorage.getItem('last_tenant_slug')
-  if (!tenantSlug) return false
-
-  const hostname = window.location.hostname
-  const isLocalhost = hostname === 'localhost'
-
-  // ✅ Fix: build URL correctly for both environments
-  const targetBase = isLocalhost
-    ? `http://${tenantSlug}.localhost:${window.location.port || 3000}`
-    : `https://${tenantSlug}.orchit.ai`   // hardcode, not .${hostname} which loses port on local
-
-  const targetUrl = targetBase + window.location.pathname + window.location.search
-
-  console.log('🔀 Redirecting to tenant:', targetUrl)
-  window.location.href = targetUrl
-  return true
 }

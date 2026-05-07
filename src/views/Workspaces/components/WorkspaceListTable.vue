@@ -11,6 +11,7 @@ import { toast } from 'vue-sonner'
 import { useQueryClient } from '@tanstack/vue-query'
 import ShareModal from '../../../layout/WorkspaceLayout/components/ShareModal.vue'
 import { useAuthStore } from '../../../stores/auth'
+import { buildTenantUrl, slugFromDomainLink } from '../../../utilities/tenantRedirect'
 
 const router = useRouter()
 const queryClient = useQueryClient()
@@ -22,23 +23,26 @@ const getCachedDate = (dateStr: string) => {
   if (!dateCache.has(dateStr)) dateCache.set(dateStr, formatDate(dateStr))
   return dateCache.get(dateStr)!
 }
+
 const handleClick = async (rowEvt: any) => {
   const r = rowEvt.row
-  const jobId = r?.LatestTask?.job_id
-  const workspaceId = r._id
+  const jobId: string | undefined = r?.LatestTask?.job_id
+  const workspaceId: string = r._id
 
   const theme = localStorage.getItem('theme') || 'light'
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token') ?? undefined
 
+  // Path we want to land on after redirect
   const peakPath = jobId
     ? `/workspace/peak/${workspaceId}/${jobId}`
     : `/workspace/peak/${workspaceId}`
 
   const company = r?.company
-  const domainLink = company?.domain_link
+  const domainLink: string | undefined = company?.domain_link
 
+  // ── Personal workspace (no company / no domain_link) ───────────────────────
+  // Stay on current domain, just push via Vue Router
   if (!domainLink) {
-    // Same domain — localStorage is fine, just route
     if (jobId) {
       localStorage.setItem('jobId', jobId)
     } else {
@@ -48,33 +52,36 @@ const handleClick = async (rowEvt: any) => {
     return
   }
 
-  const companyId = company._id
+  // ── Company workspace — must redirect to the tenant subdomain ───────────────
+  const companyId: string = company._id
+  const tenantSlug = slugFromDomainLink(domainLink)
 
-  const cleanDomain = domainLink
-    .trim()
-    .replace(/^https?:\/\//, '')
-    .replace(/\/$/, '')
+  if (!tenantSlug) {
+    // domain_link exists but slug couldn't be parsed — fall back to same-domain routing
+    console.warn('⚠️ Could not parse tenant slug from domain_link:', domainLink)
+    router.push(peakPath)
+    return
+  }
 
-  const tenantSlug = cleanDomain.split('.')[0]
-
-  // ✅ 1. Cookie FIRST — only cross-subdomain storage
+  // 1. Write cookie FIRST — only storage that crosses subdomains
   authStore.writeAuthCookie({
-    token: token ?? undefined,
+    token,
     company_id: companyId,
     personal_mode: null,
   })
 
-  // ✅ 2. Save slug for return trips
+  // 2. Save slug so root-domain redirectToTenantIfNeeded works on return trips
   localStorage.setItem('last_tenant_slug', tenantSlug)
 
-  // ✅ 3. Build URL — pass ALL needed state via query params
-  const params = new URLSearchParams({ theme })
-  if (jobId) params.set('jobId', jobId)
+  // 3. Build the full tenant URL — works on localhost AND production
+  const queryParams: Record<string, string> = { theme }
+  if (jobId) queryParams.jobId = jobId
 
-  const targetUrl = `${window.location.protocol}//${cleanDomain}${peakPath}?${params.toString()}`
+  const targetUrl = buildTenantUrl(tenantSlug, peakPath, queryParams)
 
-  console.log('Redirecting to:', targetUrl)
+  console.log('🔀 Redirecting to workspace on tenant:', targetUrl)
 
+  // 4. Small delay to ensure cookie write is flushed before navigation
   setTimeout(() => {
     window.location.href = targetUrl
   }, 80)
@@ -216,7 +223,7 @@ const renderOrganization = ({ row }: any) => {
   if (!company) return h('span', { class: 'text-text-secondary text-xs' }, '-----')
 
   const getInitials = (name: string) =>
-    name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   const getColorFromString = (str: string) => {
     let hash = 0
@@ -228,9 +235,25 @@ const renderOrganization = ({ row }: any) => {
 
   const goToDomain = (e: Event) => {
     e.stopPropagation()
-    if (company.domain_link) {
-      const theme = localStorage.getItem('theme') || 'light'
-      window.location.href = `${company.domain_link}/dashboard?theme=${theme}`
+    if (!company.domain_link) return
+
+    const tenantSlug = slugFromDomainLink(company.domain_link)
+    const theme = localStorage.getItem('theme') || 'light'
+    const token = localStorage.getItem('token') ?? undefined
+
+    if (tenantSlug) {
+      // Write company context into cookie before jumping
+      authStore.writeAuthCookie({
+        token,
+        company_id: company._id,
+        personal_mode: null,
+      })
+      localStorage.setItem('last_tenant_slug', tenantSlug)
+      window.location.href = buildTenantUrl(tenantSlug, '/dashboard', { theme })
+    } else {
+      // Fallback: raw domain_link
+      const target = company.domain_link.replace(/\/$/, '')
+      window.location.href = `${target}/dashboard?theme=${theme}`
     }
   }
 
@@ -238,21 +261,21 @@ const renderOrganization = ({ row }: any) => {
     ? h('img', {
         src: company.logo,
         alt: company.title,
-        class: 'h-6 w-6 rounded-full object-cover flex-shrink-0',
+        class: 'h-6 w-6 rounded-full object-cover',
         loading: 'lazy',
         decoding: 'async',
       })
     : h('div', {
-        class: 'h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-medium flex-shrink-0',
-        style: { backgroundColor: getColorFromString(company.title) },
+        class: 'h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0',
+        style: { backgroundColor: getColorFromString(company.title) }
       }, getInitials(company.title))
 
   const title = h(
     'span',
     {
       class: company.domain_link
-        ? 'text-sm text-text-primary hover:underline cursor-pointer truncate max-w-[120px]'
-        : 'text-sm text-text-primary truncate max-w-[120px]',
+        ? 'text-xs text-text-primary hover:underline cursor-pointer'
+        : 'text-xs text-text-primary',
       onClick: company.domain_link ? goToDomain : undefined,
       title: company.domain_link ? `Go to ${company.domain_link}` : company.title,
     },
@@ -333,17 +356,15 @@ const renderCompanyAdmin = ({ row }: any) => {
   const owner = row?.owner
   if (!owner) return h('span', '-')
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase()
-  }
+  const getInitials = (name: string) =>
+    name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
 
   const getColorFromString = (str: string) => {
     let hash = 0
     for (let i = 0; i < str.length; i++) {
       hash = str.charCodeAt(i) + ((hash << 5) - hash)
     }
-    const hue = Math.abs(hash) % 360
-    return `hsl(${hue}, 60%, 50%)`
+    return `hsl(${Math.abs(hash) % 360}, 60%, 50%)`
   }
 
   return h('div', { class: 'flex items-center gap-2' }, [
@@ -423,6 +444,7 @@ const emptyMessage = computed(() => {
     v-model:pageSize="pageSize"
     :pageSizes="[10, 20, 50, 100]"
     :rowClass="() => 'group'"
+    @row-click="handleClick"
   >
     <template #status="{ row }">
       <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
