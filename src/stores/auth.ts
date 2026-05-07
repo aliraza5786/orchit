@@ -131,6 +131,8 @@ export const useAuthStore = defineStore('auth', {
     async bootstrap() {
       if (this.initialized) return
 
+      this.initialized = false
+
       // ── Step 1: Handle _auth token from URL ────────────────────────────
       const urlParams = new URLSearchParams(window.location.search)
       const encodedToken = urlParams.get('_auth')
