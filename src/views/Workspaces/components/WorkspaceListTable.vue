@@ -36,72 +36,59 @@ const handleClick = (rowEvt: any) => {
   const theme = localStorage.getItem('theme') || 'light'
   const token = localStorage.getItem('token')
 
-  const isLocalhost =
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-  const isLocalhostSubdomain = window.location.hostname.endsWith('.localhost')
+  const hostname = window.location.hostname
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
+  const isLocalhostSubdomain = hostname.endsWith('.localhost') && hostname !== 'localhost'
 
-  // ── Workspace belongs to a company ────────────────────────────────────────
-  if (r?.company && r.company.domain_link) {
+  // Build peak path — never add empty trailing segment when jobId is absent
+  const peakPath = jobId
+    ? `/workspace/peak/${r._id}/${jobId}`
+    : `/workspace/peak/${r._id}`
+
+  const domainLink = r?.company?.domain_link
+
+  if (domainLink) {
+    // ── Has company domain — set context then redirect to company subdomain ──
     const companyId = r.company._id
-    const rawDomain = r.company.domain_link
-      .replace('https://', '')
-      .replace('http://', '')
+    const rawDomain = domainLink.replace('https://', '').replace('http://', '')
 
-    // Always write the company context into the cookie so the target
-    // subdomain can authenticate the user correctly.
-    if (token) {
-      authStore.writeAuthCookie({
-        token,
-        company_id: companyId,
-        personal_mode: null,
-      })
-    }
-
-    // If the user was in personal mode, save that intent so they can
-    // return to personal after visiting the workspace.
-    const isPersonalMode = localStorage.getItem('personal_mode') === 'true'
-    if (isPersonalMode) {
+    // Save personal mode intent before switching context
+    if (localStorage.getItem('personal_mode') === 'true') {
       authStore.savePersonalModeIntent?.()
     }
 
-    // Update localStorage to reflect the company switch
+    // Write company context — cookie for subdomain auth, localStorage for store
     localStorage.setItem('company_id', companyId)
     localStorage.setItem('company_name', r.company.title ?? '')
     localStorage.removeItem('personal_mode')
-
-    // Update the auth store so the navbar badge updates immediately
+    if (token) {
+      authStore.writeAuthCookie({ token, company_id: companyId, personal_mode: null })
+    }
     authStore.setCompany(companyId)
     window.dispatchEvent(new CustomEvent('company-changed', { detail: companyId }))
 
-    // Only append jobId segment if it actually exists — avoids trailing slash
-    // that causes the router to fall through to the 404/dashboard catch-all.
-    const peakPath = jobId
-      ? `/workspace/peak/${r._id}/${jobId}`
-      : `/workspace/peak/${r._id}`
-
-    // Small delay to ensure cookie/storage is persisted before navigation
-    setTimeout(() => {
-      if (isLocalhostSubdomain) {
-        // localhost subdomain: map production domain → localhost equivalent
-        const localDomain = rawDomain.replace('orchit.ai', 'localhost')
-        window.location.href = `${window.location.protocol}//${localDomain}${peakPath}?theme=${theme}`
-      } else if (isLocalhost) {
-        // Pure localhost: subdomains don't work, navigate internally
-        router.push(peakPath)
-      } else {
-        // Production: redirect to the company's subdomain
-        window.location.href = `${window.location.protocol}//${rawDomain}${peakPath}?theme=${theme}`
-      }
-    }, 150)
+    if (isLocalhost) {
+      // localhost: no subdomains — just navigate internally
+      router.push(peakPath)
+    } else if (isLocalhostSubdomain) {
+      const localDomain = rawDomain.replace('orchit.ai', 'localhost')
+      window.location.href = `${window.location.protocol}//${localDomain}${peakPath}?theme=${theme}`
+    } else {
+      // Production: go to company subdomain peak URL
+      // e.g. https://streamed-zunairm.orchit.ai/workspace/peak/:id
+      window.location.href = `${window.location.protocol}//${rawDomain}${peakPath}?theme=${theme}`
+    }
 
   } else {
-    // ── Personal workspace (no company) — simple internal navigation ──────
-    // Same clean path: only add jobId segment if it exists
-    const peakPath = jobId
-      ? `/workspace/peak/${r?._id}/${jobId}`
-      : `/workspace/peak/${r?._id}`
-    router.push(peakPath)
+    // ── No company domain — go to orchit.ai/workspace/peak/... ──────────────
+    // On localhost: router.push works directly
+    // On production: if we're already on orchit.ai, router.push works fine
+    // If somehow on a subdomain, redirect explicitly to root domain
+    if (!isLocalhost && !isLocalhostSubdomain && hostname !== 'orchit.ai') {
+      window.location.href = `https://orchit.ai${peakPath}?theme=${theme}`
+    } else {
+      router.push(peakPath)
+    }
   }
 }
 
