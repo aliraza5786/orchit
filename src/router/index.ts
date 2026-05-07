@@ -56,12 +56,12 @@ const routes: RouteRecordRaw[] = [
         path: "",
         name: "new-homepage",
         component: NewHomepage,
-        beforeEnter: (to, from, next) => {
-          console.log(to,from);
-          
+           beforeEnter: (to, from, next) => {
           const authStore = useAuthStore()
+          console.log(to, from);
+          
           if (authStore.isAuthenticated) {
-            next('/dashboard')
+            next('/dashboard')   // ← could fire if route fails
           } else {
             next()
           }
@@ -180,35 +180,21 @@ router.afterEach((to) => {
     }
   }
 })
-
 // ─── Route guard ──────────────────────────────────────────────────────────────
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
   const isLogoutRedirect = to.query.logout === 'true'
+
+  // ✅ FIX 1: Remove the 3s timeout race — it causes unauthenticated flash
+  // If bootstrap takes long, user gets bounced. Just await it properly.
   if (!auth.initialized) {
-  const timeout = new Promise((resolve) => setTimeout(resolve, 3000))
-  await Promise.race([auth.bootstrap(), timeout])
-}
-  const hostname = window.location.hostname
-  let subdomain: string | null = null
-  console.log(subdomain);
-  
-  if (hostname.endsWith('.orchit.ai')) {
-    const sub = hostname.replace('.orchit.ai', '')
-    if (sub && sub !== 'www' && sub !== 'stagging') {
-      subdomain = sub
-    }
-  } else if (hostname.endsWith('.localhost')) {
-    const sub = hostname.replace('.localhost', '')
-    if (sub && sub !== 'www') {
-      subdomain = sub
-    }
+    await auth.bootstrap()
   }
+
   const requiresAuth = to.matched.some(
     (record) => record.meta.requiresAuth === true
   )
 
-  // Read token from cookie first, localStorage as fallback
   const session = (() => {
     try {
       const raw = document.cookie
@@ -221,22 +207,31 @@ router.beforeEach(async (to, _from, next) => {
   })()
 
   const hasToken = !!(session?.token ?? localStorage.getItem('token'))
-// ✅ Fixed
-if (requiresAuth && !hasToken) {
-  if (!isRootDomain()) {
-    // On subdomain with no token — send to root domain login
-    const isLocalhost = window.location.hostname.endsWith('.localhost')
-    const loginUrl = isLocalhost
-      ? `http://localhost:${window.location.port || 3000}/login`
-      : 'https://orchit.ai/login'
-    window.location.href = loginUrl
-    return
+
+  if (requiresAuth && !hasToken) {
+    if (!isRootDomain()) {
+      const isLocalhost = window.location.hostname.endsWith('.localhost')
+      const loginUrl = isLocalhost
+        ? `http://localhost:${window.location.port || 3000}/login`
+        : 'https://orchit.ai/login'
+      window.location.href = loginUrl
+      return
+    }
+    return next({ name: 'Login' })
   }
-  return next({ name: 'Login' })
-}
-  // Skip auto-redirect on logout — let user stay on login page
+
   if (to.name === 'Login' && hasToken && !isLogoutRedirect) {
     return next({ name: 'Home' })
+  }
+
+  // ✅ FIX 2: On subdomain, if user lands on "/" redirect to last known path
+  // This prevents the blank "/" render when subdomain has no route at root
+  if (!isRootDomain() && to.path === '/') {
+    const lastPath = localStorage.getItem('last_tenant_path')
+    if (lastPath && lastPath !== '/') {
+      return next(lastPath)
+    }
+    return next('/dashboard')
   }
 
   next()
