@@ -738,18 +738,13 @@ const isSwitching = ref(false);
 async function confirmSwitch() {
   if (!pendingAccount.value) return;
 
-  // ✅ Snapshot FIRST — closeMenu() sets pendingAccount = null,
-  // so any reference to pendingAccount.value after that crashes.
   const account = { ...pendingAccount.value };
   isSwitching.value = true;
 
   try {
     const token = localStorage.getItem('token');
-    const isLocalhost =
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1';
 
-    // ── COMPANY SWITCH ──────────────────────────────────────────────────────
+    // ───────────────── COMPANY SWITCH ─────────────────
     if (account.type === 'company') {
       localStorage.setItem('company_id', account.id);
       localStorage.setItem('company_name', account.name);
@@ -764,23 +759,40 @@ async function confirmSwitch() {
       }
 
       authStore.setCompany(account.id);
-      window.dispatchEvent(new CustomEvent('company-changed', { detail: account.id }));
 
-      if (isLocalhost) {
-        // localhost: no real subdomains — navigate internally, don't reload
-        closeMenu();
-        await queryClient.invalidateQueries();
-        router.push('/dashboard');
-      } else {
-        // Production: redirect to company subdomain.
-        // Don't call closeMenu() here — it triggers watchers that can
-        // throw before window.location.href executes.
-        const targetDomain = account.domain; // already stripped of https://
-        window.location.href = `${window.location.protocol}//${targetDomain}/dashboard`;
+      window.dispatchEvent(
+        new CustomEvent('company-changed', {
+          detail: account.id,
+        })
+      );
+
+      // ✅ Always redirect to company domain
+      let targetDomain = account.domain?.trim();
+
+      if (!targetDomain) {
+        throw new Error('Company domain missing');
       }
 
-    // ── PERSONAL SWITCH ─────────────────────────────────────────────────────
-    } else if (account.type === 'individual') {
+      // remove protocol + trailing slash
+      targetDomain = targetDomain
+        .replace(/^https?:\/\//, '')
+        .replace(/\/$/, '');
+
+      const targetUrl = `${window.location.protocol}//${targetDomain}/dashboard`;
+
+      console.log('Redirecting to:', targetUrl);
+
+      // ❌ Do NOT call router.push()
+      // ❌ Do NOT call closeMenu()
+      // ❌ Do NOT invalidate queries before redirect
+
+      window.location.replace(targetUrl);
+
+      return;
+    }
+
+    // ───────────────── PERSONAL SWITCH ─────────────────
+    if (account.type === 'individual') {
       localStorage.removeItem('company_id');
       localStorage.removeItem('company_name');
       localStorage.setItem('personal_mode', 'true');
@@ -794,17 +806,21 @@ async function confirmSwitch() {
       }
 
       authStore.clearCompany();
-      window.dispatchEvent(new CustomEvent('company-changed', { detail: null }));
 
-      if (isLocalhost) {
-        // localhost: navigate internally
-        closeMenu();
-        await queryClient.invalidateQueries();
-        router.push('/dashboard');
-      } else {
-        // Production: always back to orchit.ai for personal
-        window.location.href = `${window.location.protocol}//orchit.ai/dashboard`;
-      }
+      window.dispatchEvent(
+        new CustomEvent('company-changed', {
+          detail: null,
+        })
+      );
+
+      // ✅ Always redirect to main domain
+      const personalUrl = `${window.location.protocol}//orchit.ai/dashboard`;
+
+      console.log('Redirecting to:', personalUrl);
+
+      window.location.replace(personalUrl);
+
+      return;
     }
   } catch (e) {
     console.error('❌ Account switch failed:', e);
