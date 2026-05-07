@@ -2,7 +2,11 @@ import { isRootDomain } from './tenant'
 
 const COOKIE_KEY = 'auth_session'
 
-function getAuthCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
+function getAuthCookie(): { 
+  token?: string
+  company_id?: string
+  personal_mode?: boolean 
+} | null {
   try {
     const raw = document.cookie
       .split('; ')
@@ -16,25 +20,26 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
 }
 
 export function redirectToTenantIfNeeded(): boolean {
-  // Only run on root domain
   if (!isRootDomain()) return false
 
   const session = getAuthCookie()
-
-  // No session or personal mode → stay on root
   if (!session?.token) return false
   if (session?.personal_mode) return false
 
-  // Get tenant slug from cookie company_id
-  // You need a way to map company_id → subdomain slug
   const tenantSlug = localStorage.getItem('last_tenant_slug')
-
   if (!tenantSlug) return false
 
-  const hostname = window.location.hostname  // orchit.ai
-  const targetUrl = `https://${tenantSlug}.${hostname}${window.location.pathname}`
+  const hostname = window.location.hostname
+  const isLocalhost = hostname === 'localhost'
 
-  console.log(`🔀 Redirecting to tenant: ${targetUrl}`)
+  // ✅ Fix: build URL correctly for both environments
+  const targetBase = isLocalhost
+    ? `http://${tenantSlug}.localhost:${window.location.port || 3000}`
+    : `https://${tenantSlug}.orchit.ai`   // hardcode, not .${hostname} which loses port on local
+
+  const targetUrl = targetBase + window.location.pathname + window.location.search
+
+  console.log('🔀 Redirecting to tenant:', targetUrl)
   window.location.href = targetUrl
   return true
 }

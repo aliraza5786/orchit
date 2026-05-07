@@ -113,7 +113,14 @@ if (themeFromUrl && ["light", "dark", "system"].includes(themeFromUrl)) {
   cleanUrl.searchParams.delete("theme")
   window.history.replaceState({}, "", cleanUrl.toString())
 }
-
+// After the themeFromUrl block in main.ts
+const jobIdFromUrl = urlParams.get('jobId')
+if (jobIdFromUrl) {
+  localStorage.setItem('jobId', decodeURIComponent(jobIdFromUrl))
+  const cleanUrl = new URL(window.location.href)
+  cleanUrl.searchParams.delete('jobId')
+  window.history.replaceState({}, '', cleanUrl.toString())
+}
 const encodedToken = urlParams.get("_auth")
 
 if (encodedToken) {
