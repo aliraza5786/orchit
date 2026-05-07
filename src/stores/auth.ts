@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import api from '../libs/api'
 import { isRootDomain, getCurrentTenant } from '../utilities/tenant'
-import userSocket, { resetSocket } from '../libs/socket';
+import userSocket, { resetSocket } from '../libs/socket'
 
 const COOKIE_KEY = 'auth_session'
 
@@ -37,8 +37,8 @@ export const useAuthStore = defineStore('auth', {
     const session = getAuthCookie()
     const onRoot = isRootDomain()
 
-    // personal mode OR root domain → never load company_id
-    if (session?.personal_mode || onRoot) {
+    // Root domain → never load company_id regardless of cookie state
+    if (onRoot) {
       return {
         user: null as any,
         initialized: false,
@@ -47,7 +47,8 @@ export const useAuthStore = defineStore('auth', {
       }
     }
 
-    // Subdomain → safe to load company_id
+    // Subdomain → always try to load company_id, even if personal_mode is true
+    // personal_mode may be stale from a previous root domain visit
     return {
       user: null as any,
       initialized: false,
@@ -68,6 +69,7 @@ export const useAuthStore = defineStore('auth', {
         const existing = getAuthCookie() || {}
         const merged: Record<string, any> = { ...existing, ...data }
 
+        // null = delete the key, false = keep it as false
         if (data.company_id === null) delete merged.company_id
         if (data.personal_mode === null) delete merged.personal_mode
 
@@ -105,24 +107,17 @@ export const useAuthStore = defineStore('auth', {
       this.writeAuthCookie({ company_id: null, personal_mode: true })
     },
 
-    // ─── Save Personal Mode Intent ──────────────────────────────────────────
-    // ✅ Call this before redirecting from main domain to a company subdomain
-    // when the user is currently in personal mode.
-    // This lets App.vue restore personal mode when user returns to main domain.
+    // ─── Personal Mode Intent ───────────────────────────────────────────────
     savePersonalModeIntent() {
       localStorage.setItem('personal_mode_intended', 'true')
       console.log('💾 Personal mode intent saved')
     },
 
-    // ─── Clear Personal Mode Intent ─────────────────────────────────────────
-    // ✅ Call this after restoring personal mode on main domain
     clearPersonalModeIntent() {
       localStorage.removeItem('personal_mode_intended')
       console.log('🗑️ Personal mode intent cleared')
     },
 
-    // ─── Had Personal Mode Intent ───────────────────────────────────────────
-    // ✅ Returns true if user was in personal mode before jumping to subdomain
     hadPersonalModeIntent(): boolean {
       return localStorage.getItem('personal_mode_intended') === 'true'
     },
@@ -173,18 +168,32 @@ export const useAuthStore = defineStore('auth', {
         this.writeAuthCookie({ token })
       }
 
-      // ── Step 4: Resolve company_id based on domain ────────────────────
-      if (session?.personal_mode) {
-        // Personal mode — never has a company
-        localStorage.removeItem('company_id')
-        localStorage.removeItem('last_tenant_slug')
-        this.company_id = null
+      // ── Step 4: Resolve company context based on domain ───────────────
+
+      if (session?.personal_mode && !isRootDomain()) {
+        // ✅ Subdomain but cookie has personal_mode: true — this is STALE
+        // It means user redirected here from root before root could clear it
+        // Ignore personal_mode, resolve company from cookie or localStorage
+        const currentTenant = getCurrentTenant()
+        if (currentTenant) localStorage.setItem('last_tenant_slug', currentTenant)
+
+        const companyId = session?.company_id ?? localStorage.getItem('company_id')
+        if (companyId) {
+          localStorage.setItem('company_id', companyId)
+          this.company_id = companyId
+        }
+
+        // Rewrite cookie with personal_mode cleared
+        this.writeAuthCookie({
+          token: session.token,
+          company_id: companyId ?? undefined,
+          personal_mode: false,
+        })
+        console.log('🔧 Stale personal_mode cleared on subdomain, company restored:', companyId)
 
       } else if (isRootDomain()) {
-        // ✅ Root domain — check if we need to restore personal mode intent
-        // This handles returning from subdomain back to main domain
+        // ✅ Root domain — check if returning from subdomain with personal mode intent
         if (this.hadPersonalModeIntent()) {
-          const token = session?.token ?? localStorage.getItem('token')
           if (token) {
             this.writeAuthCookie({ token, company_id: null, personal_mode: true })
             this.clearCompany()
@@ -192,22 +201,30 @@ export const useAuthStore = defineStore('auth', {
           this.clearPersonalModeIntent()
           console.log('✅ Personal mode restored from intent on root domain')
         } else {
-          // Normal root domain visit — ignore any stored company_id
+          // Normal root domain visit — clear tenant context
           localStorage.removeItem('company_id')
           this.company_id = null
           console.log('🌐 Root domain — tenant context cleared')
         }
 
       } else if (session?.company_id) {
-        // Subdomain — safe to load company_id
+        // ✅ Subdomain with valid company_id in cookie
         localStorage.setItem('company_id', session.company_id)
         this.company_id = session.company_id
 
-        // ✅ Save tenant slug so root domain can redirect back here
         const currentTenant = getCurrentTenant()
         if (currentTenant) {
           localStorage.setItem('last_tenant_slug', currentTenant)
           console.log('🏢 Tenant loaded & slug saved:', currentTenant)
+        }
+
+      } else if (!isRootDomain()) {
+        // ✅ Subdomain but no company_id anywhere — try localStorage as last resort
+        const storedCompanyId = localStorage.getItem('company_id')
+        if (storedCompanyId) {
+          this.company_id = storedCompanyId
+          this.writeAuthCookie({ token, company_id: storedCompanyId, personal_mode: false })
+          console.log('🏢 Company restored from localStorage fallback:', storedCompanyId)
         }
       }
 
@@ -216,12 +233,12 @@ export const useAuthStore = defineStore('auth', {
         const res = await api.get('/profile')
         this.user = res.data
         const activeCompanyId = res.data?.data?.active_company_id
-        console.log("active company id in store", res.data?.data?.active_company_id)
+        console.log('active company id in store', activeCompanyId)
 
         // Only auto-set active company on subdomains, never on root
-        if (activeCompanyId && !this.company_id && !session?.personal_mode && !isRootDomain()) {
+        if (activeCompanyId && !this.company_id && !isRootDomain()) {
           localStorage.setItem('company_id', activeCompanyId)
-          this.company_id = activeCompanyId || res.data?.data?.active_company_id
+          this.company_id = activeCompanyId
           this.writeAuthCookie({ company_id: activeCompanyId })
           console.log('🏢 Active company auto-set from profile:', activeCompanyId)
         }
@@ -229,8 +246,7 @@ export const useAuthStore = defineStore('auth', {
         console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
       } finally {
         this.initialized = true
-         // Socket connects here — token is in localStorage, company_id is resolved
-         userSocket.initializeSocket()
+        userSocket.initializeSocket()
       }
     },
 
@@ -244,18 +260,17 @@ export const useAuthStore = defineStore('auth', {
         'activeMilestoneId', 'activeSprintId', 'showActiveSprint',
         'activeSprintKey', 'selectedSprintTitle', 'selected_sheet_title',
         'activeSessionId', 'activeSessionTitle', 'selected_sheet_id',
-        'personal_mode_intended', // ✅ clean intent flag on logout
+        'personal_mode_intended',
       ]
       keysToRemove.forEach(key => localStorage.removeItem(key))
       clearAuthCookie()
       this.user = null
       this.company_id = null
       this.initialized = false
-       //Kill socket so next login gets a fresh connection with the new token
       resetSocket()
     },
 
-    // ─── Go to Root Domain (escape hatch) ───────────────────────────────────
+    // ─── Go to Root Domain ───────────────────────────────────────────────────
     goToRootDomain() {
       sessionStorage.setItem('stay_on_root', 'true')
       window.location.href = 'https://orchit.ai'
