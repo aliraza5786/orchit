@@ -22,74 +22,69 @@ const getCachedDate = (dateStr: string) => {
   if (!dateCache.has(dateStr)) dateCache.set(dateStr, formatDate(dateStr))
   return dateCache.get(dateStr)!
 }
-
-// ── FIX 3: handleClick now properly switches company context when clicking
-//    a company workspace while in personal mode, then redirects to the
-//    correct company domain's peak URL.
 const handleClick = (rowEvt: any) => {
   const r = rowEvt.row
   const jobId = r?.LatestTask?.job_id
 
-  if (jobId) localStorage.setItem('jobId', jobId)
-  else localStorage.removeItem('jobId')
+  if (jobId) {
+    localStorage.setItem('jobId', jobId)
+  } else {
+    localStorage.removeItem('jobId')
+  }
 
   const theme = localStorage.getItem('theme') || 'light'
   const token = localStorage.getItem('token')
 
-  const hostname = window.location.hostname
-  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1'
-  const isLocalhostSubdomain = hostname.endsWith('.localhost') && hostname !== 'localhost'
-
-  // Build peak path — never add empty trailing segment when jobId is absent
+  // Build peak path
   const peakPath = jobId
     ? `/workspace/peak/${r._id}/${jobId}`
     : `/workspace/peak/${r._id}`
 
   const domainLink = r?.company?.domain_link
 
+  // ───────────────── COMPANY DOMAIN ─────────────────
   if (domainLink) {
-    // ── Has company domain — set context then redirect to company subdomain ──
     const companyId = r.company._id
-    const rawDomain = domainLink.replace('https://', '').replace('http://', '')
 
-    // Save personal mode intent before switching context
-    if (localStorage.getItem('personal_mode') === 'true') {
-      authStore.savePersonalModeIntent?.()
-    }
+    // Clean domain
+    const cleanDomain = domainLink
+      .trim()
+      .replace(/^https?:\/\//, '')
+      .replace(/\/$/, '')
 
-    // Write company context — cookie for subdomain auth, localStorage for store
+    // Save company context
     localStorage.setItem('company_id', companyId)
     localStorage.setItem('company_name', r.company.title ?? '')
     localStorage.removeItem('personal_mode')
+
     if (token) {
-      authStore.writeAuthCookie({ token, company_id: companyId, personal_mode: null })
+      authStore.writeAuthCookie({
+        token,
+        company_id: companyId,
+        personal_mode: null,
+      })
     }
+
     authStore.setCompany(companyId)
-    window.dispatchEvent(new CustomEvent('company-changed', { detail: companyId }))
 
-    if (isLocalhost) {
-      // localhost: no subdomains — just navigate internally
-      router.push(peakPath)
-    } else if (isLocalhostSubdomain) {
-      const localDomain = rawDomain.replace('orchit.ai', 'localhost')
-      window.location.href = `${window.location.protocol}//${localDomain}${peakPath}?theme=${theme}`
-    } else {
-      // Production: go to company subdomain peak URL
-      // e.g. https://streamed-zunairm.orchit.ai/workspace/peak/:id
-      window.location.href = `${window.location.protocol}//${rawDomain}${peakPath}?theme=${theme}`
-    }
+    window.dispatchEvent(
+      new CustomEvent('company-changed', {
+        detail: companyId,
+      })
+    )
 
-  } else {
-    // ── No company domain — go to orchit.ai/workspace/peak/... ──────────────
-    // On localhost: router.push works directly
-    // On production: if we're already on orchit.ai, router.push works fine
-    // If somehow on a subdomain, redirect explicitly to root domain
-    if (!isLocalhost && !isLocalhostSubdomain && hostname !== 'orchit.ai') {
-      window.location.href = `https://orchit.ai${peakPath}?theme=${theme}`
-    } else {
-      router.push(peakPath)
-    }
+    // ✅ Redirect to company domain
+    const targetUrl = `${window.location.protocol}//${cleanDomain}${peakPath}?theme=${theme}`
+
+    console.log('Redirecting to:', targetUrl)
+
+    window.location.replace(targetUrl)
+
+    return
   }
+
+  // ───────────────── NO COMPANY DOMAIN ─────────────────
+  router.push(peakPath)
 }
 
 const showInviteModal = ref(false)
