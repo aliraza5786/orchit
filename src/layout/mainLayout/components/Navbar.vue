@@ -737,59 +737,79 @@ const switchAborted = ref(false);
 async function confirmSwitch() {
   if (!pendingAccount.value) return
   isSwitching.value = true
-  switchAborted.value = false;
+  switchAborted.value = false
+ 
   try {
     await new Promise((res) => setTimeout(res, 1200))
-    if (switchAborted.value) return;
+    if (switchAborted.value) return
+ 
     const token = localStorage.getItem('token')
-
+    const isLocalhost =
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+ 
+    // ── COMPANY SWITCH ──────────────────────────────────────────────────────
     if (pendingAccount.value.type === 'company') {
-      // ✅ COMPANY SWITCH: Store token + company_id in cookie, then redirect to subdomain
       if (token) {
-        // Ensure token is in localStorage first
         localStorage.setItem('token', token)
-        // Then store both token and company_id in cookie
-        authStore.writeAuthCookie({ 
-          token, 
-          company_id: pendingAccount.value.id, 
-          personal_mode: null 
+        authStore.writeAuthCookie({
+          token,
+          company_id: pendingAccount.value.id,
+          personal_mode: null,
         })
       }
-      // Update store state
+ 
+      localStorage.setItem('company_id', pendingAccount.value.id)
+      localStorage.setItem('company_name', pendingAccount.value.name)
+      localStorage.removeItem('personal_mode') // ← clear personal flag
+ 
       authStore.setCompany(pendingAccount.value.id)
-      
-      // ✅ Give browser time to persist cookie before redirecting
+ 
+      window.dispatchEvent(
+        new CustomEvent('company-changed', { detail: pendingAccount.value.id })
+      )
+ 
       await new Promise((res) => setTimeout(res, 300))
-      
-      // ✅ Redirect to company subdomain
-      const subdomain = pendingAccount.value.domain
-      window.location.href = `${window.location.protocol}//${subdomain}/dashboard`
-      
+ 
+      if (isLocalhost) {
+        window.location.href = `${window.location.protocol}//${window.location.host}/dashboard`
+      } else {
+        window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
+      }
+ 
+    // ── PERSONAL SWITCH ─────────────────────────────────────────────────────
     } else if (pendingAccount.value.type === 'individual') {
-      // ✅ PERSONAL SWITCH: Remove company_id, clear personal_mode flag, redirect to main domain
       if (token) {
         localStorage.setItem('token', token)
-        // Write cookie with token but no company_id, mark as personal mode
-        authStore.writeAuthCookie({ 
-          token, 
-          company_id: null, 
-          personal_mode: true 
+        authStore.writeAuthCookie({
+          token,
+          company_id: null,
+          personal_mode: true,
         })
       }
-      // Update store state
+ 
+      localStorage.removeItem('company_id')
+      localStorage.removeItem('company_name')
+      localStorage.setItem('personal_mode', 'true') // ← set personal flag
+ 
       authStore.clearCompany()
-      
-      // ✅ Give browser time to persist cookie before redirecting
+ 
+      window.dispatchEvent(new CustomEvent('company-changed', { detail: null }))
+ 
       await new Promise((res) => setTimeout(res, 300))
-      
-      // ✅ Redirect to main domain
-      window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
+ 
+      if (isLocalhost) {
+        window.location.href = `${window.location.protocol}//${window.location.host}/dashboard`
+      } else {
+        window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
+      }
     }
   } catch (e) {
     console.error('❌ Account switch failed:', e)
     isSwitching.value = false
   }
 }
+ 
 function getInitials(name: string) {
   return name
     .trim()
@@ -965,31 +985,40 @@ function onResizeIndicator() {
     rAF2 = null;
   });
 }
-
 onMounted(() => {
   if (route.query.stripePayment) {
     router.push({
-      path: "/settings",
-      query: { ...route.query, tab: "billing" },
-    });
+      path: '/settings',
+      query: { ...route.query, tab: 'billing' },
+    })
   }
-
-  const storedCompanyId = localStorage.getItem("company_id");
-  authStore.company_id = storedCompanyId ?? null;
-
-  // ✅ Auto-switch: if on a subdomain but currentAccount is personal, find and switch to matching company
-  const hostname = window.location.hostname;
+ 
+  // ── FIXED: respect personal_mode before restoring company ──────────────────
+  const isPersonalMode = localStorage.getItem('personal_mode') === 'true'
+ 
+  if (isPersonalMode) {
+    // User explicitly switched to Personal — ensure store and storage are clean
+    localStorage.removeItem('company_id')
+    localStorage.removeItem('company_name')
+    authStore.clearCompany()
+  } else {
+    const storedCompanyId = localStorage.getItem('company_id')
+    authStore.company_id = storedCompanyId ?? null
+  }
+  // ── END FIX ────────────────────────────────────────────────────────────────
+ 
+  // Subdomain auto-switch (production only — localhost has no subdomains)
+  const hostname = window.location.hostname
   const isSubdomain =
     (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
-    (hostname.endsWith('.localhost') && hostname !== 'localhost');
-
+    (hostname.endsWith('.localhost') && hostname !== 'localhost')
+ 
   if (isSubdomain && !authStore.company_id) {
-    // Wait for profile data to load, then find matching company
     const unwatch = watch(
       () => profileData.value,
       (profile) => {
         if (!profile) return
-
+ 
         const companies: Company[] = profile.companies_list ?? []
         const matchingCompany = companies.find((c: Company) => {
           const companyDomain = c.domain_link
@@ -997,31 +1026,32 @@ onMounted(() => {
             .replace('http://', '')
           return hostname === companyDomain || hostname.startsWith(companyDomain)
         })
-
+ 
         if (matchingCompany) {
-          // ✅ Auto-switch to the company matching the current subdomain
           const token = localStorage.getItem('token')
           if (token) {
             authStore.writeAuthCookie({
               token,
               company_id: matchingCompany._id,
-              personal_mode: null
+              personal_mode: null,
             })
           }
+          localStorage.removeItem('personal_mode')
           authStore.setCompany(matchingCompany._id)
         }
-
-        unwatch() // stop watching after first resolution
+ 
+        unwatch()
       },
       { immediate: true }
     )
   }
-
-  document.addEventListener("click", onClickOutside);
-  window.addEventListener("resize", onResize);
-  window.addEventListener("resize", onResizeIndicator);
-  nextTick(syncIndicatorToRoute);
-});
+ 
+  document.addEventListener('click', onClickOutside)
+  window.addEventListener('resize', onResize)
+  window.addEventListener('resize', onResizeIndicator)
+  nextTick(syncIndicatorToRoute)
+})
+ 
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", onClickOutside);

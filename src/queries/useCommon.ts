@@ -590,11 +590,7 @@ export interface Transfer {
   expires_at: string
   note?: string
   from_user_id?: TransferUser
-  to_user?: {
-    _id: string
-    name: string
-    email: string
-  }
+  to_user?: TransferUser
   to_user_id?: TransferUser
   created_at?: string
 }
@@ -625,11 +621,10 @@ const TRANSFER_KEY = 'ownership-transfer'
 // ─────────────────────────────────────────────────────────────────────────────
 export const usePendingTransfer = (options: Record<string, unknown> = {}) => {
   const companyId = getCompanyId()
-
-  return useQuery<TransferApiResponse<PendingTransferData>>({
+return useQuery<PendingTransferData>({
     queryKey: [TRANSFER_KEY, 'pending', companyId],
     queryFn: ({ signal }) =>
-      request<TransferApiResponse<PendingTransferData>>({
+      request<PendingTransferData>({
         url: `workspace/company/transfer-ownership/pending?company_id=${companyId}`,
         method: 'GET',
         signal,

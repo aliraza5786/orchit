@@ -17,7 +17,6 @@
         </h3>
         <p class="text-sm text-text-secondary mt-1">Transfer workspace ownership to another member of your team.</p>
       </div>
-
       <!-- Status badge -->
       <div class="self-start sm:self-auto">
         <span v-if="isPendingLoading" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border bg-border/10 border-border/40 text-text-secondary">
@@ -102,7 +101,6 @@
             />
           </div>
         </div>
-
         <div class="divide-y divide-border/20 max-h-72 overflow-y-auto">
           <div v-if="filteredMembers.length === 0" class="flex flex-col items-center justify-center py-10 px-4">
             <svg class="w-10 h-10 text-text-secondary/30 mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -481,11 +479,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, type Ref } from 'vue'
 import { toast } from 'vue-sonner'
-import { useUsers } from '../../../queries/useWorkspace'
+import { useCompanyUsers } from '../../../queries/useCompanyUsers'
 import {
   usePendingTransfer,
   useInitiateTransfer,
   useCancelTransfer,
+  type TransferUser,
 } from '../../../queries/useCommon'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -502,16 +501,9 @@ interface Member {
   since?: string
 }
 
-interface RawUser {
-  _id?: string
+interface RawUser extends TransferUser {
   is_owner?: boolean
-  u_full_name?: string
-  u_email?: string
-  u_profile_image?: string
-  seat_title?: string
-  role_title?: string
-  seat_status?: string
-  invitation_status?: string
+  membership_role?: string
   last_active_at?: string
   updated_at?: string
   created_at?: string
@@ -519,14 +511,21 @@ interface RawUser {
 
 type TransferState = 'idle' | 'pending' | 'success'
 
-// ── Fetch users ────────────────────────────────────────────────────────────────
-const companyId = localStorage.getItem('company_id')
-const { data: usersData } = useUsers(companyId)
+// ── Props & company context ────────────────────────────────────────────────────
+const props = defineProps<{ profile?: any }>()
 
+const companyId = computed<string>(() =>
+  localStorage.getItem('company_id') || props.profile?.active_company?._id || ''
+)
+
+const { data: usersData, isLoading } = useCompanyUsers({
+  company_id: companyId.value,
+})
 // ── Ownership transfer queries ─────────────────────────────────────────────────
 const { data: pendingData, isLoading: isPendingLoading } = usePendingTransfer()
 const { mutateAsync: initiateTransfer, isPending: isInitiating } = useInitiateTransfer()
 const { mutateAsync: cancelTransfer, isPending: isCancelling } = useCancelTransfer()
+console.log("company pending ownership transfer", pendingData.value);
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 const colorPalette: string[] = [
@@ -534,12 +533,7 @@ const colorPalette: string[] = [
 ]
 
 function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
+  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
 function getColor(index: number): string {
@@ -574,28 +568,21 @@ function formatExpiry(isoString?: string): string {
 
 // ── Current owner ──────────────────────────────────────────────────────────────
 const currentOwner = computed<Member>(() => {
-  const raw: RawUser[] = usersData.value?.data?.users ?? usersData.value?.users ?? []
+  const raw = (usersData.value?.data?.users ?? usersData.value?.users ?? []) as RawUser[]
   const users = Array.isArray(raw) ? raw : []
-const ownerRaw: RawUser | undefined =
-  users.find((u) => u.is_owner === true)
+  const ownerRaw = users.find((u) => u.is_owner === true)
 
   if (!ownerRaw) {
     return {
-      id: '',
-      name: 'You',
-      initials: 'YO',
-      email: '',
-      role: 'Owner',
-      color: colorPalette[0],
-      lastActive: 'Now',
-      isYou: true,
-      since: '',
+      id: '', name: 'You', initials: 'O', email: '',
+      role: 'Owner', color: colorPalette[0],
+      lastActive: 'Now', isYou: true, since: '',
     }
   }
 
   const name = ownerRaw.u_full_name ?? ownerRaw.u_email ?? 'You'
   return {
-    id: ownerRaw._id ?? ownerRaw.u_email ?? '',
+    id: ownerRaw._id ?? '',
     name,
     initials: getInitials(name),
     email: ownerRaw.u_email ?? '',
@@ -605,34 +592,28 @@ const ownerRaw: RawUser | undefined =
     isYou: true,
     since: ownerRaw.created_at
       ? new Date(ownerRaw.created_at).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
+          year: 'numeric', month: 'short', day: 'numeric',
         })
       : '',
   }
 })
 
-// ── Eligible members (no owner, no current user, accepted only) ───────────────
+// ── Eligible members ───────────────────────────────────────────────────────────
 const allMembers = computed<Member[]>(() => {
-  const raw: RawUser[] = usersData.value?.data?.users ?? usersData.value?.users ?? []
+  const raw = (usersData.value?.data?.users ?? usersData.value?.users ?? []) as RawUser[]
   const users = Array.isArray(raw) ? raw : []
 
   return users
     .filter((u) => {
-      const role = u.seat_title?.toLowerCase() ?? u.role_title?.toLowerCase() ?? ''
-      const isOwner = role === 'owner'
-      const isCurrentUser = (u.u_email ?? '') === currentOwner.value.email
-      const isAccepted = u.seat_status === 'accepted'
-      return !isOwner && !isCurrentUser && isAccepted
+      const isOwner = u.is_owner === true
+      const isCurrentUser = u.u_email === currentOwner.value.email
+      return !isOwner && !isCurrentUser
     })
     .map((u, index) => {
-        console.log("user data is", u);
-        
       const name = u.u_full_name ?? u.u_email ?? 'Unknown'
-      const role = u.seat_title ?? u.role_title ?? 'Member'
+      const role = u.membership_role ?? 'member'
       return {
-        id: u._id ?? '', 
+        id: u._id ?? '',
         name,
         initials: getInitials(name),
         email: u.u_email ?? '',
@@ -644,26 +625,29 @@ const allMembers = computed<Member[]>(() => {
 })
 
 // ── UI state ───────────────────────────────────────────────────────────────────
-const searchQuery: Ref<string>         = ref('')
-const confirmText: Ref<string>         = ref('')
-const transferState: Ref<TransferState> = ref('idle')
-const showModal: Ref<boolean>          = ref(false)
-const modalMember: Ref<Member | null>  = ref(null)
+const searchQuery: Ref<string>              = ref('')
+const confirmText: Ref<string>              = ref('')
+const transferState: Ref<TransferState>     = ref('idle')
+const showModal: Ref<boolean>               = ref(false)
+const modalMember: Ref<Member | null>       = ref(null)
 const pendingTransferId: Ref<string | null> = ref(null)
 
-// ── Derived pending target from API ───────────────────────────────────────────
+// ── Pending transfer target ────────────────────────────────────────────────────
 const pendingTransferTarget = computed<Member | null>(() => {
-  const transfer = pendingData.value?.data?.transfer
+  console.log("pending data transfer", pendingData.value);
+  
+  const transfer = pendingData.value?.transfer
   if (!transfer || transfer.status !== 'pending') return null
 
-  const toUser = transfer.to_user ?? transfer.to_user_id
+  // to_user_id is populated TransferUser from API
+  const toUser: TransferUser | undefined = transfer.to_user_id ?? transfer.to_user
   if (!toUser) return null
 
-  const name = ('name' in toUser ? toUser.name : toUser.u_full_name) ?? ''
-  const email = ('email' in toUser ? toUser.email : toUser.u_email) ?? ''
+  const name = toUser.u_full_name ?? toUser.u_email ?? ''
+  const email = toUser.u_email ?? ''
 
   return {
-    id: toUser._id,
+    id: toUser._id ?? '',
     name,
     initials: getInitials(name),
     email,
@@ -673,15 +657,15 @@ const pendingTransferTarget = computed<Member | null>(() => {
   }
 })
 
-// Expiry timestamp shown in pending card
+// ── Expiry timestamp ───────────────────────────────────────────────────────────
 const pendingExpiresAt = computed<string>(() => {
-  const transfer = pendingData.value?.data?.transfer
+  const transfer = pendingData.value?.transfer
   return formatExpiry(transfer?.expires_at)
 })
 
 // ── Sync transferState from API ────────────────────────────────────────────────
 onMounted(() => {
-  const transfer = pendingData.value?.data?.transfer
+  const transfer = pendingData.value?.transfer
   if (transfer?.status === 'pending') {
     transferState.value = 'pending'
     pendingTransferId.value = transfer._id
@@ -691,16 +675,16 @@ onMounted(() => {
 watch(
   pendingData,
   (val) => {
-    const transfer = val?.data?.transfer
+    const transfer = val?.transfer
     if (transfer?.status === 'pending') {
       transferState.value = 'pending'
-      pendingTransferId.value = transfer._id
-    } else if (transferState.value === 'pending' && !transfer) {
+      pendingTransferId.value = transfer._id ?? null
+    } else {
       transferState.value = 'idle'
       pendingTransferId.value = null
     }
   },
-  { immediate: true }
+  { immediate: true, deep: true }
 )
 
 // ── Filtered members ───────────────────────────────────────────────────────────
@@ -708,9 +692,7 @@ const filteredMembers = computed<Member[]>(() => {
   const q = searchQuery.value.trim().toLowerCase()
   if (!q) return allMembers.value
   return allMembers.value.filter(
-    (m) =>
-      m.name.toLowerCase().includes(q) ||
-      m.email.toLowerCase().includes(q)
+    (m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
   )
 })
 
@@ -730,9 +712,7 @@ function closeModal(): void {
   if (isTransferring.value) return
   showModal.value = false
   confirmText.value = ''
-  setTimeout(() => {
-    modalMember.value = null
-  }, 200)
+  setTimeout(() => { modalMember.value = null }, 200)
   document.body.style.overflow = ''
 }
 
@@ -769,6 +749,7 @@ async function handleCancelTransfer(): Promise<void> {
   }
 }
 
+// ── Static data ────────────────────────────────────────────────────────────────
 const whatHappensSteps = computed<{ text: string; type: 'info' | 'warning' }[]>(() => [
   {
     text: `An ownership invitation email is sent to ${modalMember.value?.name ?? 'the selected member'} at ${modalMember.value?.email ?? ''}.`,
