@@ -90,12 +90,6 @@ export const useWorkspacesPrompt = () =>
     url: "/common/prompts-byname/workspace",
     method: "GET",
   });
-const getCookie = (name: string) => {
-  const match = document.cookie.match(
-    new RegExp('(^| )' + name + '=([^;]+)')
-  )
-  return match ? decodeURIComponent(match[2]) : null
-}
 
 export const useWorkspaces = (
   page: Ref<number>,
@@ -103,11 +97,32 @@ export const useWorkspaces = (
   filter?: Ref<string>
 ) => {
   const companyId = computed(() => {
-    const personalMode = getCookie('personal_mode')
-    const companyFromCookie = getCookie('company_id')
+    const hostname = window.location.hostname
 
-    if (personalMode === 'true') return null
-    if (companyFromCookie) return companyFromCookie
+    // ✅ Detect if we're on a subdomain (both orchit.ai and localhost)
+    const isSubdomain =
+      (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+      (hostname.endsWith('.localhost') && hostname !== 'localhost')
+
+    // ✅ Parse auth_session cookie directly (same source of truth as auth store)
+    let session: { company_id?: string; personal_mode?: boolean } | null = null
+    try {
+      const raw = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_session='))
+        ?.split('=')[1]
+      if (raw) session = JSON.parse(decodeURIComponent(raw))
+    } catch { /* ignore */ }
+
+    // ✅ On main domain with personal_mode=true → no company
+    if (session?.personal_mode && !isSubdomain) return null
+
+    // ✅ On subdomain → always use company_id from cookie
+    // (ignores personal_mode even if stale from before redirect)
+    if (isSubdomain && session?.company_id) return session.company_id
+
+    // ✅ Fallback to cookie company_id for any other case
+    if (session?.company_id) return session.company_id
 
     return null
   })
@@ -118,7 +133,7 @@ export const useWorkspaces = (
       unref(page),
       unref(limit),
       unref(filter) ?? 'all',
-      unref(companyId), // ✅ reactive + correct
+      unref(companyId),
     ]),
 
     queryFn: async () => {
@@ -129,7 +144,6 @@ export const useWorkspaces = (
 
       let url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}`
 
-      // ✅ only append when truly in company context
       if (company) {
         url += `&company_id=${company}`
       }
@@ -453,11 +467,44 @@ export function useTasks(userId: any) {
     enabled: computed(() => !!unref(userId)), // don't run until we have an id
   });
 }
-export const getUsers = (id: any) => {
-  const companyId = typeof id === 'object' ? id?._id : id;
-  return api.get(`workspace/team-users?company_id=${companyId}`).then((r) => r.data);
-};
+function getCompanyId(): string | null {
+  const hostname = window.location.hostname
 
+  const isSubdomain =
+    (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+    (hostname.endsWith('.localhost') && hostname !== 'localhost')
+
+  // ✅ Read from auth_session cookie — single source of truth
+  let session: { token?: string; company_id?: string; personal_mode?: boolean } | null = null
+  try {
+    const raw = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_session='))
+      ?.split('=')[1]
+    if (raw) session = JSON.parse(decodeURIComponent(raw))
+  } catch { /* ignore */ }
+
+  // ✅ Personal mode on main domain → no company
+  if (session?.personal_mode && !isSubdomain) return null
+
+  // ✅ On subdomain → trust company_id from cookie
+  if (isSubdomain && session?.company_id) return session.company_id
+
+  // ✅ Main domain without personal_mode → use company_id if present
+  if (session?.company_id && !session?.personal_mode) return session.company_id
+
+  return null
+}
+export const getUsers = (id: any) => {
+  const companyId = getCompanyId()
+  console.log(id);
+  
+  const url = companyId
+    ? `workspace/team-users?company_id=${companyId}`
+    : `workspace/team-users`
+
+  return api.get(url).then((r) => r.data)
+}
 export function useUsers(companyId: any) {
   return useQuery({
     queryKey: computed(() => ["all-users", unref(companyId)]),

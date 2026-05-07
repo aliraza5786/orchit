@@ -10,9 +10,10 @@ import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import { toast } from 'vue-sonner'
 import { useQueryClient } from '@tanstack/vue-query'
 import ShareModal from '../../../layout/WorkspaceLayout/components/ShareModal.vue'
+import { useAuthStore } from '../../../stores/auth'
 const router = useRouter()
 const queryClient = useQueryClient()
-
+const authStore = useAuthStore()
 /* ------------ Column render helpers ------------ */
 const dateCache = new Map<string, string>()
 const getCachedDate = (dateStr: string) => {
@@ -20,26 +21,94 @@ const getCachedDate = (dateStr: string) => {
     return dateCache.get(dateStr)!
 }
 const handleClick = (rowEvt: any) => {
-    const r = rowEvt.row
-    const jobId = r?.LatestTask?.job_id
+  const r = rowEvt.row
+  const jobId = r?.LatestTask?.job_id
 
-    if (jobId) localStorage.setItem('jobId', jobId)
-    else localStorage.removeItem('jobId')
+  if (jobId) localStorage.setItem('jobId', jobId)
+  else localStorage.removeItem('jobId')
 
-    const isLocalhost = window.location.hostname === 'localhost'
+  const isLocalhost = window.location.hostname === 'localhost'
 
-    if (!isLocalhost && r?.company && r.company.domain_link) {
-        const domain = r.company.domain_link
-            .replace('https://', '')
-            .replace('http://', '')
+  if (!isLocalhost && r?.company && r.company.domain_link) {
+    const domain = r.company.domain_link
+      .replace('https://', '')
+      .replace('http://', '')
 
-        const theme = localStorage.getItem('theme') || 'light'
+    const theme = localStorage.getItem('theme') || 'light'
+    const token = localStorage.getItem('token')
 
-        window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
-    } else {
-        // localhost OR missing domain → use internal routing
-        router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
+    // ✅ If currently in personal mode, save intent so main domain
+    // can restore personal mode when user returns
+    const session = JSON.parse(
+      decodeURIComponent(
+        document.cookie
+          .split('; ')
+          .find(row => row.startsWith('auth_session='))
+          ?.split('=')[1] ?? 'null'
+      ) ?? 'null'
+    )
+    if (session?.personal_mode) {
+      authStore.savePersonalModeIntent()
     }
+
+    // ✅ Write company context into cookie BEFORE redirecting
+    if (token) {
+      authStore.writeAuthCookie({
+        token,
+        company_id: r.company._id,
+        personal_mode: null
+      })
+    }
+
+    // ✅ Small delay so cookie persists before navigation
+    setTimeout(() => {
+      window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
+    }, 150)
+
+  } else {
+    // localhost fallback — also handle localhost subdomains
+    const hostname = window.location.hostname
+    const isLocalhostSubdomain = hostname.endsWith('.localhost')
+
+    if (isLocalhostSubdomain && r?.company && r.company.domain_link) {
+      // ✅ localhost subdomain support
+      const domain = r.company.domain_link
+        .replace('https://', '')
+        .replace('http://', '')
+        .replace('orchit.ai', 'localhost') // map production domain to localhost
+
+      const theme = localStorage.getItem('theme') || 'light'
+      const token = localStorage.getItem('token')
+
+      const session = JSON.parse(
+        decodeURIComponent(
+          document.cookie
+            .split('; ')
+            .find(row => row.startsWith('auth_session='))
+            ?.split('=')[1] ?? 'null'
+        ) ?? 'null'
+      )
+      if (session?.personal_mode) {
+        authStore.savePersonalModeIntent()
+      }
+
+      if (token) {
+        authStore.writeAuthCookie({
+          token,
+          company_id: r.company._id,
+          personal_mode: null
+        })
+      }
+
+      setTimeout(() => {
+        window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
+      }, 150)
+
+    } else {
+      // Pure localhost — internal routing, no cookie changes needed
+      router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
+    }
+  }
 }
 const showInviteModal = ref(false)
 const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)

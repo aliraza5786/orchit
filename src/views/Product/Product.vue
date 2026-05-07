@@ -626,9 +626,9 @@ import {
 } from "../../queries/useSheets";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
-import { removeFromCacheStructure } from "../../utilities/cacheSync";
+import { removeFromCacheStructure, performOptimisticUpdate, rollbackOptimisticUpdate } from "../../utilities/cacheSync";
 
-// ─── Lazy-loaded components ───────────────────────────────────────────────────
+// ─── Lazy components ──────────────────────────────────────────────────────────
 const Dropdown = defineAsyncComponent(
   () => import("../../components/ui/Dropdown.vue"),
 );
@@ -985,6 +985,7 @@ const handleClearFilters = () => {
   activeFilters.value = {};
 };
 
+// ─── Filter Logic ─────────────────────────────────────────────────────────────
 const activeFilterCount = computed(() => {
   const f = activeFilters.value;
   let count = 0;
@@ -995,6 +996,7 @@ const activeFilterCount = computed(() => {
   return count;
 });
 
+// ─── Selection & Dropdowns ────────────────────────────────────────────────────
 const closeAllDropdowns = (except: string) => {
   if (except !== "sheet") {
     sheetDropdownRef.value?.closeDropdown();
@@ -1025,6 +1027,7 @@ const toggleGroupDropdown = () => {
 
 const hasActiveFilters = computed(() => activeFilterCount.value > 0);
 
+// ─── Queries ──────────────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore();
 const {
   data: Lists,
@@ -1105,6 +1108,7 @@ const refreshTable = () => {
 };
 
 // ─── Route card open ──────────────────────────────────────────────────────────
+// ─── Initializers ─────────────────────────────────────────────────────────────
 onMounted(() => {
   openPanelFromRoute();
 });
@@ -1120,6 +1124,7 @@ async function openPanelFromRoute() {
   selectCardHandler({ _id: cardId, id: cardId });
 }
 
+// ─── Ticket Details ──────────────────────────────────────────────────────────
 const selectCardHandler = (card: any) => {
   if (!card._id) card._id = card.id;
   selectedCard.value = card;
@@ -1473,6 +1478,7 @@ function openEditSprintModal(opt: any) {
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
+// ─── Search & Fuse Logic ──────────────────────────────────────────────────────
 const searchQuery = ref("");
 const debouncedQuery = ref("");
 
@@ -1507,6 +1513,7 @@ const fuse = computed(() => {
 // request() returns the JSON body directly — same level as Lists.value?.sheets[0] works.
 // Without variable_id: { cards: [...], variable: null }
 // With variable_id:    { sheets: [{ sheet_lists: [{ cards: [...] }] }] }
+// ─── Table Utilities ─────────────────────────────────────────────────────────
 const flattenSheetListCards = (apiData: any): any[] => {
   // Flat response (no variable_id): root-level cards array
   if (Array.isArray(apiData?.cards)) return apiData.cards;
@@ -1667,6 +1674,7 @@ const laneOptions = computed<any[]>(() =>
 );
 
 // ─── Table Columns ────────────────────────────────────────────────────────────
+// ─── Table Rendering (Columns) ────────────────────────────────────────────────
 const columns = computed(() => {
   return [
     {
@@ -1798,18 +1806,25 @@ const columns = computed(() => {
 
 const assignHandle = (row: any, users: any[]) => {
   const id = row?._id;
-  const userIds = (users || [])
-    .filter((u) => u && (u._id || u.id))
-    .map((u) => u._id || u.id);
+  const userIds = (users || []).map(u => typeof u === 'string' ? u : (u?._id || u?.id)).filter(Boolean)
+  
+  const primarySeat = users.length > 0 ? users[0] : null;
+
   if (id) {
-    updateOptimisticCard(id, (card) => {
-      card.seat = users;
-      card.seats = users;
-      card.seat_id = userIds;
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: id,
+      updates: { seat: primarySeat, seats: users, seat_id: userIds },
+      invalidateKeys: ['sheet-list', 'table-cards-flat']
     });
-    moveCard.mutate({ card_id: id, seat_id: userIds, optimisticUser: users });
+
+    moveCard.mutate(
+      { card_id: id, seat_id: userIds, optimisticUser: users },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+    );
   } else {
-    row.seat = users;
+    row.seat = primarySeat;
     row.seats = users;
     row.seat_id = userIds;
     checkAndCreateTicket(row);
@@ -1847,6 +1862,7 @@ const updateCardInLists = (cardId: string, updates: Record<string, any>) => {
   return found;
 };
 
+// ─── Mutations & Handlers ─────────────────────────────────────────────────────
 const moveCard = useMoveCard({
   onMutate: async (newPayload: any) => {
     const { card_id, variables: updatedVariables } = newPayload;
@@ -2127,19 +2143,7 @@ function incrementCommentCount({ cardId }: { cardId: string }) {
   });
 }
 
-const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
-  const cols = Lists.value?.sheets[0]?.sheet_lists || [];
-  if (!Array.isArray(cols)) return;
-  for (const column of cols) {
-    if (!column.cards) continue;
-    const cardIndex = column.cards.findIndex((c: any) => c._id === cardId);
-    if (cardIndex !== -1) {
-      updater(column.cards[cardIndex]);
-      triggerRef(Lists);
-      break;
-    }
-  }
-};
+// Removed manual updateOptimisticCard as it's replaced by performOptimisticUpdate
 
 // ─── Ticket CRUD ──────────────────────────────────────────────────────────────
 interface Card {
@@ -2362,28 +2366,25 @@ function handleChangeTicket(row: any, key: any, value: any) {
   const id = row?._id;
   const cleanValue = typeof value === "string" ? value.trim() : value;
   if (id) {
-    updateOptimisticCard(id, (card) => {
-      card[key] = cleanValue;
-      if (Array.isArray(card.variables)) {
-        const varIndex = card.variables.findIndex((v: any) => v.slug === key);
-        if (varIndex !== -1) card.variables[varIndex].value = cleanValue;
-        else
-          card.variables.push({ slug: key, value: cleanValue, type: "Text" });
-      } else if (
-        typeof card.variables === "object" &&
-        card.variables !== null
-      ) {
-        card.variables[key] = cleanValue;
-      }
-      if (selectedCard.value?._id === id) selectedCard.value[key] = cleanValue;
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: id,
+      updates: { [key]: cleanValue },
+      invalidateKeys: ['sheet-list', 'table-cards-flat']
     });
-    moveCard.mutate({ card_id: id, variables: { [key]: cleanValue } });
+
+    moveCard.mutate(
+      { card_id: id, variables: { [key]: cleanValue } },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+    );
   } else {
     row[key] = cleanValue;
     if (Array.isArray(row.variables)) {
       const varIndex = row.variables.findIndex((v: any) => v.slug === key);
       if (varIndex !== -1) row.variables[varIndex].value = cleanValue;
-      else row.variables.push({ slug: key, value: cleanValue, type: "Text" });
+      else
+        row.variables.push({ slug: key, value: cleanValue, type: "Text" });
     } else {
       if (!row.variables) row.variables = {};
       row.variables[key] = cleanValue;
@@ -2399,10 +2400,18 @@ function handleCreateTicket(row: any) {
 const setStartDate = (row: any, e: any) => {
   const card_id = row?._id;
   if (card_id) {
-    updateOptimisticCard(card_id, (card) => {
-      card["end-date"] = e;
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: card_id,
+      updates: { "end-date": e, "start-date": e },
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
     });
-    moveCard.mutate({ card_id, variables: { "start-date": e } });
+
+    moveCard.mutate(
+      { card_id, variables: { "start-date": e } },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+    );
   } else {
     row["end-date"] = e;
     checkAndCreateTicket(row);
@@ -2412,12 +2421,19 @@ const setStartDate = (row: any, e: any) => {
 function setLane(row: any, v: any) {
   const id = row?._id;
   if (id) {
-    updateOptimisticCard(id, (card) => {
-      const newLane = laneOptions.value.find((l: any) => l._id === v);
-      if (newLane) card.lane = newLane;
+    const newLane = laneOptions.value.find((l: any) => l._id === v);
+    const snapshots = performOptimisticUpdate({
+      queryClient,
+      sidePanelStore,
+      cardId: id,
+      updates: { lane: newLane, workspace_lane_id: v },
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
     });
-    triggerRef(Lists);
-    moveCard.mutate({ card_id: id, workspace_lane_id: v });
+
+    moveCard.mutate(
+      { card_id: id, workspace_lane_id: v },
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+    );
   } else {
     const newLane = laneOptions.value.find((l: any) => l._id === v);
     if (newLane) {

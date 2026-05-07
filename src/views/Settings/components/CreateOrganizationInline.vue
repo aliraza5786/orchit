@@ -196,12 +196,6 @@
           </Button>
         </div>
       </div>
-
-      <!-- Invite emails -->
-      <div class="space-y-1.5">
-        <label class="text-sm font-medium text-text-primary">Invite via email</label>
-        <BaseEmailChip v-model="emailList" :error="!!errors.emailList" :message="errors.emailList" />
-      </div>
     </div>
 
     <!-- Company slug conflict modal -->
@@ -260,13 +254,6 @@
             <span>{{ activeStep === 5 ? 'Create site' : 'Continue' }}</span>
           </div>
         </Button>
-
-        <Button v-if="activeStep === 8" size="md" :disabled="isInviting || isSkipping" @click="sendInvites(false)">
-          <div class="flex items-center gap-2">
-            <span v-if="isInviting" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-            <span>Invite</span>
-          </div>
-        </Button>
       </div>
     </div>
 
@@ -278,7 +265,6 @@ import { ref, computed, watch } from 'vue'
 import Button from '../../../components/ui/Button.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import BaseSelectField from '../../../components/ui/BaseSelectField.vue'
-import BaseEmailChip from '../../../components/ui/BaseEmailChip.vue'
 import LoadingCreateProfile from '../../../components/LoadingCreateProfile.vue'
 import { useCreateCompany, useUpdateCompanyProfile, useInviteCompany } from '../../../services/auth'
 import { useRolesList } from '../../../queries/useCommon'

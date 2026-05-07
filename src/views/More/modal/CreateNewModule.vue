@@ -42,7 +42,7 @@
                     <div
                         :class="`${isAiPending || isPending ? 'neon-flow-border' : ''} bg-bg-input flex h-[200px] p-4 rounded-xl relative`">
                         <textarea v-if="!isRecording && !audioURL" v-model="description"
-                            placeholder="Ask Orchit AI to create a sheet..."
+                            placeholder="Ask Orchit AI to create a module..."
                             class="w-full h-full resize-none outline-none bg-transparent text-sm" />
 
                         <!-- Record Button -->

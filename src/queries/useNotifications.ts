@@ -1,12 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import api from "../libs/api";
-import { socket } from "../libs/socket";
-import { onUnmounted, watch, computed } from "vue";
+import { getSocket } from "../libs/socket";           // ✅ lazy getter, not bare socket
+import { onMounted, onUnmounted, watch, computed } from "vue";
 import { useAuthStore } from '../stores/auth'
 
-// -----------------------------
-// INTERFACES
-// -----------------------------
 export interface Notification {
   id: string;
   title: string;
@@ -26,24 +23,41 @@ export interface Notification {
 // -----------------------------
 const dummyNotifications: Notification[] = [];
 
-// -----------------------------
-// HELPERS — always read fresh company_id
-// -----------------------------
-function getCompanyId(): string {
-  const authStore = useAuthStore()
-  return authStore.company_id || localStorage.getItem('company_id') || ''
-}
+ 
+function getCompanyId(): string | null {
+  const hostname = window.location.hostname
 
-// -----------------------------
-// API FUNCTIONS
-// -----------------------------
+  const isSubdomain =
+    (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+    (hostname.endsWith('.localhost') && hostname !== 'localhost')
+
+  // ✅ Read from auth_session cookie — single source of truth
+  let session: { token?: string; company_id?: string; personal_mode?: boolean } | null = null
+  try {
+    const raw = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_session='))
+      ?.split('=')[1]
+    if (raw) session = JSON.parse(decodeURIComponent(raw))
+  } catch { /* ignore */ }
+
+  // ✅ Personal mode on main domain → no company
+  if (session?.personal_mode && !isSubdomain) return null
+
+  // ✅ On subdomain → trust company_id from cookie
+  if (isSubdomain && session?.company_id) return session.company_id
+
+  // ✅ Main domain without personal_mode → use company_id if present
+  if (session?.company_id && !session?.personal_mode) return session.company_id
+
+  return null
+}
 export const fetchNotifications = async () => {
   try {
     const companyId = getCompanyId()
-
     const { data } = await api.get(`/notifications${companyId ? `?company_id=${companyId}` : ''}`)
+    
     const notifications = data?.data?.notifications || []
-
     const mappedNotifications = notifications.map((item: any): Notification => ({
       id: item._id,
       actor_name: item.triggered_by?.user_email || "Unknown User",
@@ -76,69 +90,118 @@ export const fetchUnreadCount = async () => {
 }
 
 export const markNotificationsRead = async (ids: string[]) => {
-  const { data } = await api.patch("/notifications/read", {
-    notification_ids: ids,
-  })
+  const { data } = await api.patch("/notifications/read", { notification_ids: ids })
   return data.data
 }
 
 export const markAllNotificationsRead = async () => {
-  const { data } = await api.patch("/notifications/read-all")
+  const companyId = getCompanyId()
+  // ✅ company_id was missing — server was rejecting or updating wrong tenant
+  const { data } = await api.patch(`/notifications/read-all${companyId ? `?company_id=${companyId}` : ''}`)
   return data.data
 }
 
-// -----------------------------
-// COMPOSABLE
-// -----------------------------
+// ─── Composable ───────────────────────────────────────────────────────────────
+
 export const useNotificationsQuery = (options = {}) => {
   const queryClient = useQueryClient()
   const authStore = useAuthStore()
 
-  // ✅ Reactive company_id — watches both authStore and localStorage
   const companyId = computed(() =>
     authStore.company_id || localStorage.getItem('company_id') || ''
   )
 
-  // ✅ Re-fetch both queries whenever company_id changes
   watch(companyId, (newId, oldId) => {
     if (newId === oldId) return
-
     queryClient.invalidateQueries({ queryKey: ["notifications", "list"] })
     queryClient.invalidateQueries({ queryKey: ["notifications", "unreadCount"] })
   })
 
-  // Fetch notifications
   const notificationsQuery = useQuery({
     queryKey: ["notifications", "list", companyId],
     queryFn: fetchNotifications,
     ...options,
   })
 
-  // Fetch unread count
   const unreadCountQuery = useQuery({
     queryKey: ["notifications", "unreadCount", companyId],
     queryFn: fetchUnreadCount,
     ...options,
   })
 
-  onUnmounted(() => {
-    socket.off("new_notification")
-    socket.off("unread_count_update")
+  // ✅ Register listeners here — they were cleaned up but never added before
+  onMounted(() => {
+    const sock = getSocket()
+
+    sock.on("new_notification", (raw: any) => {
+      // Prepend to list immediately — no waiting for HTTP
+      queryClient.setQueryData(
+        ["notifications", "list", companyId.value],
+        (old: Notification[] = []) => [{
+          id: raw._id,
+          actor_name: raw.triggered_by?.user_email || "Unknown",
+          title: raw.title || "New notification",
+          body: raw.message || "",
+          created_at: raw.createdAt,
+          url: raw.action_url || "#",
+          read: false,
+          workspace_id: raw.workspace_id || null,
+          module_id: raw.module_id || null,
+          metaData: raw.metadata,
+        }, ...old]
+      )
+      // Bump the badge count
+      queryClient.setQueryData(
+        ["notifications", "unreadCount", companyId.value],
+        (old: number = 0) => old + 1
+      )
+    })
+
+    sock.on("unread_count_update", (data: { count: number }) => {
+      // ✅ Server pushes authoritative count — use it directly
+      queryClient.setQueryData(
+        ["notifications", "unreadCount", companyId.value],
+        data.count
+      )
+    })
   })
 
-  // -----------------------------
-  // MUTATIONS
-  // -----------------------------
+  onUnmounted(() => {
+    const sock = getSocket()
+    sock.off("new_notification")
+    sock.off("unread_count_update")
+  })
+
+  // ─── Mutations ─────────────────────────────────────────────────────────────
+
   const markReadMutation = useMutation({
     mutationFn: markNotificationsRead,
+    onMutate: async (ids: string[]) => {
+      // ✅ Optimistic update — dot disappears instantly on click
+      queryClient.setQueryData(
+        ["notifications", "list", companyId.value],
+        (old: Notification[] = []) =>
+          old.map(n => ids.includes(n.id) ? { ...n, read: true } : n)
+      )
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications", "list"] })
       queryClient.invalidateQueries({ queryKey: ["notifications", "unreadCount"] })
     },
   })
 
   const markAllReadMutation = useMutation({
     mutationFn: markAllNotificationsRead,
+    onMutate: async () => {
+      // ✅ Optimistic — all dots vanish before server responds
+      queryClient.setQueryData(
+        ["notifications", "list", companyId.value],
+        (old: Notification[] = []) => old.map(n => ({ ...n, read: true }))
+      )
+      queryClient.setQueryData(
+        ["notifications", "unreadCount", companyId.value],
+        0
+      )
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications", "list"] })
       queryClient.invalidateQueries({ queryKey: ["notifications", "unreadCount"] })

@@ -430,9 +430,7 @@ import {
   defineAsyncComponent,
   ref,
   watch,
-  h,
-  triggerRef,
-  watchEffect,
+  h, 
   onMounted,
 } from "vue";
 import { toast } from "vue-sonner";
@@ -467,6 +465,7 @@ import { avatarColor } from "../../../utilities/avatarColor";
 import SearchBar from "../../../components/ui/SearchBar.vue";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { useUpdateSprint } from "../../../queries/usePlan";
+import { performOptimisticUpdate, rollbackOptimisticUpdate } from "../../../utilities/cacheSync";
 // ─── Lazy components ──────────────────────────────────────────────────────────
 const CreateTaskModal = defineAsyncComponent(() => import("../../Product/modals/CreateTaskModal.vue"));
 const ConfirmDeleteModal = defineAsyncComponent(() => import("../../Product/modals/ConfirmDeleteModal.vue"));
@@ -493,6 +492,7 @@ const VariableViewDropdown = defineAsyncComponent(
 const CreateVariableModal = defineAsyncComponent(
   () => import("../../Product/modals/CreateVariableModal.vue"),
 );
+// ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
   sprint_id: any;
   searchQuery: string;
@@ -512,6 +512,7 @@ const route = useRoute();
 const router = useRouter();
 const { workspaceId, moduleId } = useRouteIds();
 
+// ─── Initializers ─────────────────────────────────────────────────────────────
 onMounted(() => {
   openPanelFromRoute();
 });
@@ -527,6 +528,7 @@ async function openPanelFromRoute() {
   if (!cardId) return;
   selectCardHandler({ _id: cardId, id: cardId });
 }
+// ─── Selection & Grouping ─────────────────────────────────────────────────────
 const queryClient = useQueryClient();
 const workspaceStore = useWorkspaceStore();
 const isCreateVar = ref(false);
@@ -575,27 +577,19 @@ watch(
     }
   },
   { immediate: true },
-);
- 
-watchEffect(()=>{
-  console.log( moduleId.value, "module id hia")
-})
+); 
 
 const { data: sheets, refetch: refetchSheets } = useSheets({
   workspace_id: workspaceId.value,
   workspace_module_id: selected_module_id.value,
-});
-
-watchEffect(()=>{
-  console.log(sheets.value, 'all parnet sheets')
-})
+}); 
 
 watch(selected_module_id, (newModuleId) => {
   if (newModuleId) refetchSheets();
 });
-const laneIds = computed(() =>{
-  return workspaceStore.selectedLaneIds
-})
+const laneIds = computed(() => {
+  return workspaceStore.selectedLaneIds;
+});
 const sheetId = computed(() => (sheets.value ? sheets.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(sheetId);
 const { data: variables, isPending: isVariablesPending } = useVariables(
@@ -604,14 +598,10 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
   selected_sheet_id,
 );
 
-watchEffect(()=>{
-  console.log(variables.value, "all va")
-})
-
 const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
 const selected_view_by = ref(viewBy.value);
 watch(viewBy, () => {
-  if(!selected_view_by.value) selected_view_by.value = viewBy.value;
+  if (!selected_view_by.value) selected_view_by.value = viewBy.value;
 });
 const selected_sprint_id = ref(props.sprint_id || localStorage.getItem("activeSprintKey"));
 watch(() => props.sprint_id, (newId) => {
@@ -630,6 +620,7 @@ watch(selected_view_by, () => {
     lastSelectionWasNested = false;
 });
 
+// ─── Filter Logic ─────────────────────────────────────────────────────────────
 const showFilterBar = ref(false);
 const activeFilters = ref<any>({});
 const filterTriggerRef = ref<HTMLElement | null>(null);
@@ -827,6 +818,7 @@ const refreshTable = () => {
   toast.success("Data refreshed");
 };
 
+// ─── Table Utilities ─────────────────────────────────────────────────────────
 // Helper to extract cards from both Flat and Grouped sprint responses
 const flattenSprintCards = (apiData: any): any[] => {
   if (!apiData) return [];
@@ -1004,7 +996,10 @@ const handleDeleteColumn = () => {
   });
 };
 
-const deleteHandler = (e: any) => { showDelete.value = true; localColumnData.value = e; };
+const deleteHandler = (e: any) => {
+  showDelete.value = true;
+  localColumnData.value = e;
+};
 const plusHandler = (e: any) => {
   createTeamModal.value = true;
   localStorage.setItem("selectedStatusTitle", e?.title);
@@ -1012,12 +1007,15 @@ const plusHandler = (e: any) => {
   localColumnData.value = e;
 };
 
+// ─── Search & Fuse Logic ──────────────────────────────────────────────────────
 const searchQuery = computed(() => props.searchQuery);
 const debouncedQuery = ref("");
 
 watch(
   searchQuery,
-  debounce((val: string) => { debouncedQuery.value = val; }, 200),
+  debounce((val: string) => {
+    debouncedQuery.value = val;
+  }, 200),
 );
 
 const fuse = computed(() => {
@@ -1075,6 +1073,7 @@ const tableGroups = computed(() => {
   }));
 });
 
+// ─── Lane & Dropdown Helpers ──────────────────────────────────────────────────
 const { data: lanes } = useLanes(workspaceId);
 
 const laneOptions = computed<any[]>(() =>
@@ -1088,6 +1087,7 @@ const laneOptions = computed<any[]>(() =>
 const getOptions = (options: any) =>
   options.map((el: any) => ({ _id: el.value ?? el, title: el.value ?? el }));
 
+// ─── Mutations & Handlers ─────────────────────────────────────────────────────
 const moveCard = useMoveCard({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["get-sheets"] });
@@ -1130,53 +1130,57 @@ const { mutate: addTicket } = useAddTicket({
   },
 });
 
-const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
-  if (!Lists.value?.groups) return;
-  const listIndex = Lists.value.groups.findIndex((l: any) => (l.cards ?? []).some((c: any) => c._id === cardId));
-  if (listIndex !== -1) {
-    const cardIndex = Lists.value.groups[listIndex].cards.findIndex((c: any) => c._id === cardId);
-    if (cardIndex !== -1) {
-      const newCard = { ...Lists.value.groups[listIndex].cards[cardIndex] };
-      updater(newCard);
-      Lists.value.groups[listIndex].cards[cardIndex] = newCard;
-      triggerRef(Lists);
-    }
-  }
-};
+// Removed manual updateOptimisticCard as it's replaced by performOptimisticUpdate
 
 function setLane(id: any, v: any) {
-  updateOptimisticCard(id, (card) => {
-    const newLane = laneOptions.value.find((l: any) => l._id === v);
-    if (newLane) card.lane = newLane;
+  const newLane = laneOptions.value.find((l: any) => l._id === v);
+  const snapshots = performOptimisticUpdate({
+    queryClient,
+    sidePanelStore,
+    cardId: id,
+    updates: { lane: newLane, workspace_lane_id: v },
+    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
   });
-  triggerRef(Lists);
-  moveCard.mutate({ card_id: id, workspace_lane_id: v });
+  
+  moveCard.mutate(
+    { card_id: id, workspace_lane_id: v },
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+  );
 }
 
 const assignHandle = (cardId: any, users: any[]) => {
-  const userIds = users.filter((u) => u && (u._id || u.id)).map((u) => u._id || u.id);
-  updateOptimisticCard(cardId, (card) => {
-    card.seat = users;
-    card.seats = users;
-    card.seat_id = userIds;
+  const userIds = users.map(u => typeof u === 'string' ? u : (u?._id || u?.id)).filter(Boolean)
+  const primarySeat = users.length > 0 ? users[0] : null;
+  
+  const snapshots = performOptimisticUpdate({
+    queryClient,
+    sidePanelStore,
+    cardId: cardId,
+    updates: { seat: primarySeat, seats: users, seat_id: userIds },
+    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
   });
-  moveCard.mutate({ card_id: cardId, seat_id: userIds });
+
+  moveCard.mutate(
+    { card_id: cardId, seat_id: userIds },
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+  );
 };
 
 function handleChangeTicket(id: any, key: any, value: any) {
-  updateOptimisticCard(id, (card) => {
-    if (key === "card-title") card[key] = value;
-    if (Array.isArray(card.variables)) {
-      const variable = card.variables.find((v: any) => v.slug === key);
-      if (variable) variable.value = value;
-      else card.variables.push({ slug: key, value, type: "Select" });
-    } else if (card.variables && typeof card.variables === "object") {
-      card.variables[key] = value;
-    } else {
-      card[key] = value;
-    }
+  const updates: Record<string, any> = { [key]: value.trim() };
+  
+  const snapshots = performOptimisticUpdate({
+    queryClient,
+    sidePanelStore,
+    cardId: id,
+    updates,
+    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
   });
-  moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } });
+
+  moveCard.mutate(
+    { card_id: id, variables: { [key]: value.trim() } },
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+  );
 }
 
 function handleCreateTicket(title: any) {
@@ -1244,12 +1248,18 @@ const ticketToDelete = ref<any>(null);
 const showTicketDelete = ref(false);
 
 const setStartDate = (card_id: any, e: any) => {
-  const listIndex = Lists.value?.groups?.findIndex((l: any) => (l.cards ?? []).some((c: any) => c._id === card_id));
-  if (listIndex !== -1 && listIndex !== undefined) {
-    const cardIndex = Lists.value.groups[listIndex].cards.findIndex((c: any) => c._id === card_id);
-    if (cardIndex !== -1) Lists.value.groups[listIndex].cards[cardIndex]["end-date"] = e;
-  }
-  moveCard.mutate({ card_id, variables: { "start-date": e } });
+  const snapshots = performOptimisticUpdate({
+    queryClient,
+    sidePanelStore,
+    cardId: card_id,
+    updates: { "end-date": e, "start-date": e }, // The UI seems to use end-date for display sometimes
+    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
+  });
+
+  moveCard.mutate(
+    { card_id, variables: { "start-date": e } },
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+  );
 };
 
 const { mutate: toggleVisibility } = useVarVisibilty();
@@ -1264,6 +1274,7 @@ const toggleVisibilityHandler = (key: any, visible: any) => {
   });
 };
 
+// ─── Table Rendering (Columns) ────────────────────────────────────────────────
 const columns = computed(() => {
   return [
     {
@@ -1391,13 +1402,16 @@ const deleteTicket = async () => {
   if (!selectedDeleteId.value) return;
   try {
     isDeletingTicket.value = true;
-    await request({ url: `workspace/card/${selectedDeleteId.value}`, method: "DELETE" });
-    removeCardFromState(selectedDeleteId.value); 
+    await request({
+      url: `workspace/card/${selectedDeleteId.value}`,
+      method: "DELETE",
+    });
+    removeCardFromState(selectedDeleteId.value);
     queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
     queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });
     toast.success("Ticket deleted successfully");
     showTicketDelete.value = false;
-    ticketToDelete.value = null; 
+    ticketToDelete.value = null;
   } catch (err) {
     toast.error(toApiMessage(err));
   } finally {
@@ -1405,6 +1419,7 @@ const deleteTicket = async () => {
     showTicketDelete.value = false;
   }
 };
+// ─── MindMap & Theme Helpers ──────────────────────────────────────────────────
 const { mutateAsync: createNewSheet } = useCreateWorkspaceSheet({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["sheets"] });
