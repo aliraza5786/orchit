@@ -67,7 +67,7 @@ const handleClick = async (rowEvt: any) => {
   authStore.writeAuthCookie({
     token,
     company_id: companyId,
-    personal_mode: null,
+    personal_mode: false,
   })
 
   // 2. Save slug so root-domain redirectToTenantIfNeeded works on return trips

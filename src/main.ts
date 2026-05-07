@@ -63,16 +63,25 @@ function writeAuthCookie(data: Record<string, any>) {
 }
 function redirectToTenantIfNeeded(): boolean {
   if (!isRootDomain()) return false
-  if (isLocalhost()) return false   // ← add this line
+  if (isLocalhost()) return false
 
   const session = getAuthCookie()
   if (!session?.token) return false
-  if (session?.personal_mode) return false
+
+  // ✅ Only respect personal_mode if there's no company_id in cookie
+  // If cookie has company_id, user explicitly navigated to a tenant — redirect them
+  if (session?.personal_mode && !session?.company_id) return false
 
   const tenantSlug = localStorage.getItem("last_tenant_slug")
   if (!tenantSlug) return false
 
-  window.location.href = buildTenantUrl(tenantSlug, window.location.pathname + window.location.search)
+  // ✅ Validate slug format
+  if (!/^[a-z0-9-]+$/.test(tenantSlug)) return false
+
+  window.location.href = buildTenantUrl(
+    tenantSlug,
+    window.location.pathname + window.location.search
+  )
   return true
 }
 if (redirectToTenantIfNeeded()) {
@@ -115,27 +124,24 @@ if (encodedToken) {
     console.error("Token decode failed:", e)
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SESSION SYNC (FIXED — NO MORE WRONG DASHBOARD RESET)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// REPLACE the entire session sync block
 const session = getAuthCookie()
 
 if (isRootDomain()) {
-  // ROOT DOMAIN = always clean tenant state
   localStorage.removeItem("company_id")
 
-  if (session?.token) {
+  // ✅ Only set personal_mode if there's NO last_tenant_slug
+  // If user has a tenant, they may be returning from subdomain — don't overwrite
+  const hasTenant = !!localStorage.getItem("last_tenant_slug")
+  if (session?.token && !hasTenant && !session?.company_id) {
     writeAuthCookie({
       token: session.token,
       company_id: null,
       personal_mode: true,
     })
   }
-
 } else {
-  // SUBDOMAIN = restore company context ONLY
+  // SUBDOMAIN — restore company context
   if (session?.company_id) {
     localStorage.setItem("company_id", session.company_id)
   }
