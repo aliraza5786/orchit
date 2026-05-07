@@ -86,7 +86,7 @@ const handleClick = async (rowEvt: any) => {
   // ─────────────────────────────
   const targetUrl =
     `${window.location.protocol}//${cleanDomain}${peakPath}` +
-    `?theme=${theme}&company_id=${companyId}`
+    `?theme=${theme}`
 
   console.log('Redirecting to:', targetUrl)
 

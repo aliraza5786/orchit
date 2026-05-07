@@ -695,7 +695,7 @@ const companyAccounts = computed<Account[]>(() =>
     id: c._id,
     name: c.title,
     email: profileData.value?.u_email ?? "",
-    domain: c.domain_link.replace("https://", "").replace("http://", ""),
+    domain: c.domain_link,
     type: "company",
   })),
 );
@@ -723,6 +723,8 @@ const isSwitching = ref(false);
 async function confirmSwitch() {
   if (!pendingAccount.value) return;
 
+  console.log("pending accounts", pendingAccount.value);
+
   const account = { ...pendingAccount.value };
   isSwitching.value = true;
 
@@ -734,7 +736,20 @@ async function confirmSwitch() {
     // =========================
     if (account.type === "company") {
       const companyId = account.id;
-      const domain = account.domain?.replace(/^https?:\/\//, "").replace(/\/$/, "");
+
+      // ✅ Normalize domain safely (preserve protocol if present)
+      let domain = account.domain?.trim();
+      if (!domain) throw new Error("Invalid domain");
+
+      // remove trailing slash only
+      domain = domain.replace(/\/+$/, "");
+
+      // ensure protocol exists
+      if (!/^https?:\/\//i.test(domain)) {
+        domain = `https://${domain}`;
+      }
+
+      const targetUrl = `${domain}/dashboard`;
 
       // 1. CLEAR PERSONAL MODE
       localStorage.removeItem("personal_mode");
@@ -762,12 +777,16 @@ async function confirmSwitch() {
         })
       );
 
-      // 6. HARD REDIRECT TO COMPANY DOMAIN
-      const targetUrl = `${window.location.protocol}//${domain}/dashboard`;
+      // 6. HARD REDIRECT
+      console.log("Redirecting to:", targetUrl);
 
-      window.location.replace(targetUrl);
+      window.location.href = targetUrl;
       return;
     }
+
+    // =========================
+    // 👤 SWITCH TO INDIVIDUAL
+    // =========================
     if (account.type === "individual") {
       // 1. REMOVE ALL COMPANY STATE
       localStorage.removeItem("company_id");
@@ -794,9 +813,11 @@ async function confirmSwitch() {
       );
 
       // 5. FORCE REDIRECT TO MAIN DOMAIN
-      const targetUrl = `${window.location.protocol}//orchit.ai/dashboard`;
+      const targetUrl = `https://orchit.ai/dashboard`;
 
-      window.location.replace(targetUrl);
+      console.log("Redirecting to:", targetUrl);
+
+      window.location.href = targetUrl;
       return;
     }
   } catch (err) {
