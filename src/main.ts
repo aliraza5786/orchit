@@ -12,9 +12,9 @@ import { queryClient } from "./libs/queryClient"
 import { initThemeImmediately } from "./composables/useTheme"
 import { createHead } from "@vueuse/head"
 import vue3GoogleLogin from "vue3-google-login"
-import vTooltip from "./directives/vTooltip"
-import { isRootDomain } from "./utilities/tenant"
-
+import vTooltip from "./directives/vTooltip" 
+import { isRootDomain, buildTenantUrl } from "./utilities/tenantRedirect"
+import { isLocalhost } from "./utilities/tenantRedirect"
 // ─────────────────────────────────────────────────────────────────────────────
 // COOKIE CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,41 +61,20 @@ function writeAuthCookie(data: Record<string, any>) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SMART TENANT REDIRECT (ROOT ONLY)
-// ─────────────────────────────────────────────────────────────────────────────
-
 function redirectToTenantIfNeeded(): boolean {
   if (!isRootDomain()) return false
+  if (isLocalhost()) return false   // ← add this line
 
   const session = getAuthCookie()
-
-  // no login → stay root
   if (!session?.token) return false
-
-  // personal mode → stay root
   if (session?.personal_mode) return false
 
   const tenantSlug = localStorage.getItem("last_tenant_slug")
   if (!tenantSlug) return false
 
-  const isLocalhost = hostname === "localhost"
-  const baseDomain = isLocalhost ? "localhost" : "orchit.ai"
-  const protocol = isLocalhost ? "http" : "https"
-
-  const targetUrl =
-    `${protocol}://${tenantSlug}.${baseDomain}` +
-    window.location.pathname +
-    window.location.search
-
-  console.log("🔀 Redirecting to tenant:", targetUrl)
-
-  window.location.href = targetUrl
+  window.location.href = buildTenantUrl(tenantSlug, window.location.pathname + window.location.search)
   return true
 }
-
-// ⛔ STOP BOOTSTRAP IF REDIRECTING
 if (redirectToTenantIfNeeded()) {
   throw new Error("Redirecting to tenant...")
 }
