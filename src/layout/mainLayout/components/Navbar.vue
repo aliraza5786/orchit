@@ -20,24 +20,24 @@
             :class="isSidebarOpen ? 'fa-xmark' : 'fa-bars'"
           ></i>
         </button>
-<div class="flex items-center gap-2 cursor-pointer" @click="handleLogoClick">
-  <img
-    v-if="!isDark"
-    src="../../../assets/global/light-logo.png"
-    alt="Orchit AI logo"
-    class="w-24 sm:w-30"
-    loading="eager"
-    decoding="async"
-  />
-  <img
-    v-else
-    src="../../../assets/global/dark-logo.png"
-    alt="Orchit AI logo"
-    class="w-24 sm:w-30"
-    loading="eager"
-    decoding="async"
-  />
-</div>
+        <div class="flex items-center gap-2 cursor-pointer" @click="handleLogoClick">
+          <img
+            v-if="!isDark"
+            src="../../../assets/global/light-logo.png"
+            alt="Orchit AI logo"
+            class="w-24 sm:w-30"
+            loading="eager"
+            decoding="async"
+          />
+          <img
+            v-else
+            src="../../../assets/global/dark-logo.png"
+            alt="Orchit AI logo"
+            class="w-24 sm:w-30"
+            loading="eager"
+            decoding="async"
+          />
+        </div>
       </div>
 
       <!-- Primary nav -->
@@ -132,16 +132,16 @@
               <div
                 class="flex items-center gap-2.5 rounded-xl p-2.5 shrink-0"
               >
-              <img
-              v-if="profileData?.u_profile_image"
-              class="object-cover cursor-pointer w-10 h-10 rounded-full"
-              :src="profileData?.u_profile_image"
-              alt="profile_img"
-            />
+                <img
+                  v-if="profileData?.u_profile_image"
+                  class="object-cover cursor-pointer w-10 h-10 rounded-full"
+                  :src="profileData?.u_profile_image"
+                  alt="profile_img"
+                />
                 <div v-else
                   class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
                 >
-                  {{ profileData?.u_profile_image }}
+                  {{ initials }}
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-semibold leading-5">
@@ -150,6 +150,7 @@
                   <p class="truncate text-[11px] text-text-secondary">
                     {{ currentAccount.email }}
                   </p>
+                  <!-- FIX 1: Badge now correctly reflects current account type from authStore -->
                   <span
                     class="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
                     :class="
@@ -166,9 +167,7 @@
                       "
                       class="text-[9px]"
                     ></i>
-                    {{
-                      currentAccount.type === "company" ? "Company" : "Personal"
-                    }}
+                    {{ currentAccount.type === 'company' ? currentAccount.name : 'Personal' }}
                   </span>
                 </div>
               </div>
@@ -395,34 +394,34 @@
                             </span>
                           </p>
                           <ul class="max-h-[180px] overflow-y-auto flex flex-col gap-1">
-  <li v-for="account in filteredCompanyAccounts" :key="account.id">
-    <button
-      type="button"
-      class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
-      :class="currentAccount.id === account.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
-      @click="currentAccount.id !== account.id && (pendingAccount = account)"
-    >
-      <div class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-purple-500 text-xs font-bold text-white">
-        {{ getInitials(account.name) }}
-      </div>
-      <div class="min-w-0 flex-1 text-left">
-        <p class="truncate text-xs font-medium leading-tight">{{ account.name }}</p>
-        <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ account.domain }}</p>
-      </div>
-      <span v-if="currentAccount.id === account.id"
-        class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-purple-500 text-[10px] text-white">
-        <i class="fa-solid fa-check"></i>
-      </span>
-      <span v-else
-        class="hidden shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-600 group-hover:block dark:bg-purple-900/30 dark:text-purple-400">
-        Switch
-      </span>
-    </button>
-  </li>
-  <li v-if="filteredCompanyAccounts.length === 0" class="px-3 py-2 text-xs text-text-secondary">
-    No companies match your search.
-  </li>
-</ul>
+                            <li v-for="account in filteredCompanyAccounts" :key="account.id">
+                              <button
+                                type="button"
+                                class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
+                                :class="currentAccount.id === account.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
+                                @click="currentAccount.id !== account.id && (pendingAccount = account)"
+                              >
+                                <div class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-purple-500 text-xs font-bold text-white">
+                                  {{ getInitials(account.name) }}
+                                </div>
+                                <div class="min-w-0 flex-1 text-left">
+                                  <p class="truncate text-xs font-medium leading-tight">{{ account.name }}</p>
+                                  <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ account.domain }}</p>
+                                </div>
+                                <span v-if="currentAccount.id === account.id"
+                                  class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-purple-500 text-[10px] text-white">
+                                  <i class="fa-solid fa-check"></i>
+                                </span>
+                                <span v-else
+                                  class="hidden shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-600 group-hover:block dark:bg-purple-900/30 dark:text-purple-400">
+                                  Switch
+                                </span>
+                              </button>
+                            </li>
+                            <li v-if="filteredCompanyAccounts.length === 0" class="px-3 py-2 text-xs text-text-secondary">
+                              No companies match your search.
+                            </li>
+                          </ul>
                         </div>
                       </template>
                     </div>
@@ -445,7 +444,7 @@
                       <span>Account settings</span>
                     </button>
                   </li>
-                   <li>
+                  <li>
                     <button
                       class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
                       role="menuitem"
@@ -501,30 +500,21 @@
                       >
                         <button
                           class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                          @click="
-                            setTheme('system');
-                            closeMenu();
-                          "
+                          @click="setTheme('system'); closeMenu();"
                           type="button"
                         >
                           <i class="fa-solid fa-desktop"></i> System
                         </button>
                         <button
                           class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                          @click="
-                            setTheme('light');
-                            closeMenu();
-                          "
+                          @click="setTheme('light'); closeMenu();"
                           type="button"
                         >
                           <i class="fa-regular fa-sun-cloud"></i> Light
                         </button>
                         <button
                           class="block w-full cursor-pointer rounded-lg px-3 py-2 text-left hover:bg-bg-dropdown-menu-hover"
-                          @click="
-                            setTheme('dark');
-                            closeMenu();
-                          "
+                          @click="setTheme('dark'); closeMenu();"
                           type="button"
                         >
                           <i class="fa-regular fa-clouds-moon"></i> Dark
@@ -634,6 +624,7 @@ import NotificationBell from "./NotificationBell.vue";
 import LimitExceededModal from "../modals/LimitExceededModal.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useCurrentPackage } from "../../../queries/usePackages";
+
 // ── Types ──────────────────────────────────────────────────────
 interface Account {
   id: string;
@@ -664,15 +655,16 @@ function handleUgrade() {
   workspaceStore.setLimitExccedModal(false);
 }
 function openOrgSetup() {
-  closeMenu()
-  router.push('/settings?tab=org-setup')
+  closeMenu();
+  router.push('/settings?tab=org-setup');
 }
 function handleLogoClick() {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token');
   if (!token) {
-    router.push('/')
+    router.push('/');
   }
 }
+
 // ── Profile query ──────────────────────────────────────────────
 const { data: profile, isPending } = useQuery({
   queryKey: ["profile"],
@@ -717,99 +709,113 @@ const companyAccounts = computed<Account[]>(() =>
     id: c._id,
     name: c.title,
     email: profileData.value?.u_email ?? "",
-    domain: c.domain_link.replace("https://", ""),
+    domain: c.domain_link.replace("https://", "").replace("http://", ""),
     type: "company",
   })),
 );
 
+// FIX 1: currentAccount is now reactive to authStore.company_id changes.
+// Previously it used a stale value; now it re-computes whenever the store updates.
 const currentAccount = computed<Account>(() => {
-  const activeId = authStore.company_id; // ✅ driven by localStorage via authStore
-  if (!activeId) return personalAccount.value;
+  // Force reactivity on authStore.company_id by reading it directly
+  const activeId = authStore.company_id;
+  const isPersonalMode = localStorage.getItem('personal_mode') === 'true';
+
+  // If explicitly in personal mode or no activeId, return personal
+  if (isPersonalMode || !activeId) return personalAccount.value;
+
   return (
     companyAccounts.value.find((c) => c.id === activeId) ??
     personalAccount.value
   );
 });
+
 // ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
 const switchAborted = ref(false);
+
 async function confirmSwitch() {
-  if (!pendingAccount.value) return
-  isSwitching.value = true
-  switchAborted.value = false
- 
+  if (!pendingAccount.value) return;
+  isSwitching.value = true;
+  switchAborted.value = false;
+
   try {
-    await new Promise((res) => setTimeout(res, 1200))
-    if (switchAborted.value) return
- 
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token');
     const isLocalhost =
       window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1'
- 
+      window.location.hostname === '127.0.0.1';
+
     // ── COMPANY SWITCH ──────────────────────────────────────────────────────
     if (pendingAccount.value.type === 'company') {
       if (token) {
-        localStorage.setItem('token', token)
         authStore.writeAuthCookie({
           token,
           company_id: pendingAccount.value.id,
           personal_mode: null,
-        })
+        });
       }
- 
-      localStorage.setItem('company_id', pendingAccount.value.id)
-      localStorage.setItem('company_name', pendingAccount.value.name)
-      localStorage.removeItem('personal_mode') // ← clear personal flag
- 
-      authStore.setCompany(pendingAccount.value.id)
- 
+
+      localStorage.setItem('company_id', pendingAccount.value.id);
+      localStorage.setItem('company_name', pendingAccount.value.name);
+      localStorage.removeItem('personal_mode');
+
+      // Update the store BEFORE redirect so reactive badge updates immediately
+      authStore.setCompany(pendingAccount.value.id);
+
       window.dispatchEvent(
         new CustomEvent('company-changed', { detail: pendingAccount.value.id })
-      )
- 
-      await new Promise((res) => setTimeout(res, 300))
- 
+      );
+
+      closeMenu();
+
+      const targetDomain = pendingAccount.value.domain; // already stripped of https://
+
       if (isLocalhost) {
-        window.location.href = `${window.location.protocol}//${window.location.host}/dashboard`
+        // ✅ On localhost, router.push avoids a full page reload which would
+        // re-run bootstrap() → isRootDomain() → wipe company_id from the store.
+        await queryClient.invalidateQueries();
+        router.push('/dashboard');
       } else {
-        window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
+        await new Promise((res) => setTimeout(res, 300));
+        window.location.href = `${window.location.protocol}//${targetDomain}/dashboard`;
       }
- 
+
     // ── PERSONAL SWITCH ─────────────────────────────────────────────────────
     } else if (pendingAccount.value.type === 'individual') {
       if (token) {
-        localStorage.setItem('token', token)
         authStore.writeAuthCookie({
           token,
           company_id: null,
           personal_mode: true,
-        })
+        });
       }
- 
-      localStorage.removeItem('company_id')
-      localStorage.removeItem('company_name')
-      localStorage.setItem('personal_mode', 'true') // ← set personal flag
- 
-      authStore.clearCompany()
- 
-      window.dispatchEvent(new CustomEvent('company-changed', { detail: null }))
- 
-      await new Promise((res) => setTimeout(res, 300))
- 
+
+      localStorage.removeItem('company_id');
+      localStorage.removeItem('company_name');
+      localStorage.setItem('personal_mode', 'true');
+
+      authStore.clearCompany();
+
+      window.dispatchEvent(new CustomEvent('company-changed', { detail: null }));
+
+      closeMenu();
+
       if (isLocalhost) {
-        window.location.href = `${window.location.protocol}//${window.location.host}/dashboard`
+        // ✅ Same: router.push avoids bootstrap() re-run wiping personal state
+        await queryClient.invalidateQueries();
+        router.push('/dashboard');
       } else {
-        window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
+        await new Promise((res) => setTimeout(res, 300));
+        window.location.href = `${window.location.protocol}//orchit.ai/dashboard`;
       }
     }
   } catch (e) {
-    console.error('❌ Account switch failed:', e)
-    isSwitching.value = false
+    console.error('❌ Account switch failed:', e);
+    isSwitching.value = false;
   }
 }
- 
+
 function getInitials(name: string) {
   return name
     .trim()
@@ -881,13 +887,9 @@ async function handleLogout() {
   try {
     closeMenu();
     workspaceStore.setWorkspace(null);
-    
-    // ✅ Clear auth state FIRST
     authStore.logout();
     await queryClient.cancelQueries();
     queryClient.clear();
-    
-    // ✅ Wait a bit for cookie clearing to take effect
     await new Promise((res) => setTimeout(res, 200));
 
     const hostname = window.location.hostname;
@@ -896,18 +898,14 @@ async function handleLogout() {
       (hostname.endsWith('.localhost') && hostname !== 'localhost');
 
     if (isSubdomain) {
-      // ✅ Redirect to main domain login with logout flag
       const protocol = window.location.protocol;
       const baseDomain = hostname.endsWith('.localhost') ? 'localhost' : 'orchit.ai';
-      // Add logout flag to prevent auto-auth on login page
       window.location.href = `${protocol}//${baseDomain}/login?logout=true`;
     } else {
-      // ✅ On main domain, redirect to login with logout flag
       router.push('/login?logout=true');
     }
   } catch (e) {
     console.error("Logout failed", e);
-    // ✅ Still redirect even if something fails
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
     window.location.href = `${protocol}//${hostname === 'orchit.ai' ? 'orchit.ai' : 'orchit.ai'}/login`;
@@ -975,7 +973,6 @@ watch(
   },
 );
 
-// Resize handling for indicator (rAF throttled)
 let rAF2: number | null = null;
 
 function onResizeIndicator() {
@@ -985,73 +982,78 @@ function onResizeIndicator() {
     rAF2 = null;
   });
 }
+
 onMounted(() => {
   if (route.query.stripePayment) {
     router.push({
       path: '/settings',
       query: { ...route.query, tab: 'billing' },
-    })
+    });
   }
- 
-  // ── FIXED: respect personal_mode before restoring company ──────────────────
-  const isPersonalMode = localStorage.getItem('personal_mode') === 'true'
- 
+
+  // FIX 1: Respect personal_mode before restoring company
+  const isPersonalMode = localStorage.getItem('personal_mode') === 'true';
+
   if (isPersonalMode) {
-    // User explicitly switched to Personal — ensure store and storage are clean
-    localStorage.removeItem('company_id')
-    localStorage.removeItem('company_name')
-    authStore.clearCompany()
+    localStorage.removeItem('company_id');
+    localStorage.removeItem('company_name');
+    authStore.clearCompany();
   } else {
-    const storedCompanyId = localStorage.getItem('company_id')
-    authStore.company_id = storedCompanyId ?? null
+    const storedCompanyId = localStorage.getItem('company_id');
+    // FIX 1: Use setCompany so store is reactive, not direct assignment
+    if (storedCompanyId) {
+      authStore.setCompany(storedCompanyId);
+    } else {
+      authStore.clearCompany();
+    }
   }
-  // ── END FIX ────────────────────────────────────────────────────────────────
- 
-  // Subdomain auto-switch (production only — localhost has no subdomains)
-  const hostname = window.location.hostname
+
+  // Subdomain auto-switch (production only)
+  const hostname = window.location.hostname;
   const isSubdomain =
     (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
-    (hostname.endsWith('.localhost') && hostname !== 'localhost')
- 
+    (hostname.endsWith('.localhost') && hostname !== 'localhost');
+
   if (isSubdomain && !authStore.company_id) {
     const unwatch = watch(
       () => profileData.value,
       (profile) => {
-        if (!profile) return
- 
-        const companies: Company[] = profile.companies_list ?? []
+        if (!profile) return;
+
+        const companies: Company[] = profile.companies_list ?? [];
         const matchingCompany = companies.find((c: Company) => {
           const companyDomain = c.domain_link
             .replace('https://', '')
-            .replace('http://', '')
-          return hostname === companyDomain || hostname.startsWith(companyDomain)
-        })
- 
+            .replace('http://', '');
+          return hostname === companyDomain || hostname.startsWith(companyDomain);
+        });
+
         if (matchingCompany) {
-          const token = localStorage.getItem('token')
+          const token = localStorage.getItem('token');
           if (token) {
             authStore.writeAuthCookie({
               token,
               company_id: matchingCompany._id,
               personal_mode: null,
-            })
+            });
           }
-          localStorage.removeItem('personal_mode')
-          authStore.setCompany(matchingCompany._id)
+          localStorage.removeItem('personal_mode');
+          localStorage.setItem('company_id', matchingCompany._id);
+          localStorage.setItem('company_name', matchingCompany.title);
+          authStore.setCompany(matchingCompany._id);
         }
- 
-        unwatch()
+
+        unwatch();
       },
       { immediate: true }
-    )
+    );
   }
- 
-  document.addEventListener('click', onClickOutside)
-  window.addEventListener('resize', onResize)
-  window.addEventListener('resize', onResizeIndicator)
-  nextTick(syncIndicatorToRoute)
-})
- 
+
+  document.addEventListener('click', onClickOutside);
+  window.addEventListener('resize', onResize);
+  window.addEventListener('resize', onResizeIndicator);
+  nextTick(syncIndicatorToRoute);
+});
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", onClickOutside);
@@ -1073,15 +1075,13 @@ const filteredCompanyAccounts = computed(() => {
   );
 });
 
-// Clear search when dropdown closes
 watch(menuOpen, (open) => {
   if (!open) accountSearch.value = "";
-   pendingAccount.value = null;
+  pendingAccount.value = null;
 });
 </script>
 
 <style scoped>
-/* Reduce layout shift on show/hide by reserving space subtly */
 #user-menu {
   will-change: transform, opacity;
 }
