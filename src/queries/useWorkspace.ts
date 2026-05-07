@@ -90,12 +90,6 @@ export const useWorkspacesPrompt = () =>
     url: "/common/prompts-byname/workspace",
     method: "GET",
   });
-const getCookie = (name: string) => {
-  const match = document.cookie.match(
-    new RegExp('(^| )' + name + '=([^;]+)')
-  )
-  return match ? decodeURIComponent(match[2]) : null
-}
 
 export const useWorkspaces = (
   page: Ref<number>,
@@ -502,9 +496,9 @@ function getCompanyId(): string | null {
   return null
 }
 export const getUsers = (id: any) => {
-  const workspaceId = typeof id === 'object' ? id?._id : id
   const companyId = getCompanyId()
-
+  console.log(id);
+  
   const url = companyId
     ? `workspace/team-users?company_id=${companyId}`
     : `workspace/team-users`

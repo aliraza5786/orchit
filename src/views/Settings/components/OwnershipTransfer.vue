@@ -518,7 +518,7 @@ const companyId = computed<string>(() =>
   localStorage.getItem('company_id') || props.profile?.active_company?._id || ''
 )
 
-const { data: usersData, isLoading } = useCompanyUsers({
+const { data: usersData } = useCompanyUsers({
   company_id: companyId.value,
 })
 // ── Ownership transfer queries ─────────────────────────────────────────────────
