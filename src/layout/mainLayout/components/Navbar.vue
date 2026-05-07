@@ -733,12 +733,15 @@ const currentAccount = computed<Account>(() => {
 // ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
-const switchAborted = ref(false);
+// const switchAborted = ref(false);
 
 async function confirmSwitch() {
   if (!pendingAccount.value) return;
+
+  // ✅ Snapshot FIRST — closeMenu() sets pendingAccount = null,
+  // so any reference to pendingAccount.value after that crashes.
+  const account = { ...pendingAccount.value };
   isSwitching.value = true;
-  switchAborted.value = false;
 
   try {
     const token = localStorage.getItem('token');
@@ -747,42 +750,41 @@ async function confirmSwitch() {
       window.location.hostname === '127.0.0.1';
 
     // ── COMPANY SWITCH ──────────────────────────────────────────────────────
-    if (pendingAccount.value.type === 'company') {
+    if (account.type === 'company') {
+      localStorage.setItem('company_id', account.id);
+      localStorage.setItem('company_name', account.name);
+      localStorage.removeItem('personal_mode');
+
       if (token) {
         authStore.writeAuthCookie({
           token,
-          company_id: pendingAccount.value.id,
+          company_id: account.id,
           personal_mode: null,
         });
       }
 
-      localStorage.setItem('company_id', pendingAccount.value.id);
-      localStorage.setItem('company_name', pendingAccount.value.name);
-      localStorage.removeItem('personal_mode');
-
-      // Update the store BEFORE redirect so reactive badge updates immediately
-      authStore.setCompany(pendingAccount.value.id);
-
-      window.dispatchEvent(
-        new CustomEvent('company-changed', { detail: pendingAccount.value.id })
-      );
-
-      closeMenu();
-
-      const targetDomain = pendingAccount.value.domain; // already stripped of https://
+      authStore.setCompany(account.id);
+      window.dispatchEvent(new CustomEvent('company-changed', { detail: account.id }));
 
       if (isLocalhost) {
-        // ✅ On localhost, router.push avoids a full page reload which would
-        // re-run bootstrap() → isRootDomain() → wipe company_id from the store.
+        // localhost: no real subdomains — navigate internally, don't reload
+        closeMenu();
         await queryClient.invalidateQueries();
         router.push('/dashboard');
       } else {
-        await new Promise((res) => setTimeout(res, 300));
+        // Production: redirect to company subdomain.
+        // Don't call closeMenu() here — it triggers watchers that can
+        // throw before window.location.href executes.
+        const targetDomain = account.domain; // already stripped of https://
         window.location.href = `${window.location.protocol}//${targetDomain}/dashboard`;
       }
 
     // ── PERSONAL SWITCH ─────────────────────────────────────────────────────
-    } else if (pendingAccount.value.type === 'individual') {
+    } else if (account.type === 'individual') {
+      localStorage.removeItem('company_id');
+      localStorage.removeItem('company_name');
+      localStorage.setItem('personal_mode', 'true');
+
       if (token) {
         authStore.writeAuthCookie({
           token,
@@ -791,22 +793,16 @@ async function confirmSwitch() {
         });
       }
 
-      localStorage.removeItem('company_id');
-      localStorage.removeItem('company_name');
-      localStorage.setItem('personal_mode', 'true');
-
       authStore.clearCompany();
-
       window.dispatchEvent(new CustomEvent('company-changed', { detail: null }));
 
-      closeMenu();
-
       if (isLocalhost) {
-        // ✅ Same: router.push avoids bootstrap() re-run wiping personal state
+        // localhost: navigate internally
+        closeMenu();
         await queryClient.invalidateQueries();
         router.push('/dashboard');
       } else {
-        await new Promise((res) => setTimeout(res, 300));
+        // Production: always back to orchit.ai for personal
         window.location.href = `${window.location.protocol}//orchit.ai/dashboard`;
       }
     }
@@ -1076,8 +1072,15 @@ const filteredCompanyAccounts = computed(() => {
 });
 
 watch(menuOpen, (open) => {
-  if (!open) accountSearch.value = "";
-  pendingAccount.value = null;
+  if (!open) {
+    accountSearch.value = "";
+    // Only clear pendingAccount if we're NOT mid-switch — otherwise
+    // the watcher fires from closeMenu() and nulls the ref before
+    // window.location.href can execute on production.
+    if (!isSwitching.value) {
+      pendingAccount.value = null;
+    }
+  }
 });
 </script>
 
