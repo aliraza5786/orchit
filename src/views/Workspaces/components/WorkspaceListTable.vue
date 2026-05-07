@@ -25,24 +25,25 @@ const getCachedDate = (dateStr: string) => {
 const handleClick = async (rowEvt: any) => {
   const r = rowEvt.row
   const jobId = r?.LatestTask?.job_id
-
-  if (jobId) {
-    localStorage.setItem('jobId', jobId)
-  } else {
-    localStorage.removeItem('jobId')
-  }
+  const workspaceId = r._id
 
   const theme = localStorage.getItem('theme') || 'light'
   const token = localStorage.getItem('token')
 
   const peakPath = jobId
-    ? `/workspace/peak/${r._id}/${jobId}`
-    : `/workspace/peak/${r._id}`
+    ? `/workspace/peak/${workspaceId}/${jobId}`
+    : `/workspace/peak/${workspaceId}`
 
   const company = r?.company
   const domainLink = company?.domain_link
 
   if (!domainLink) {
+    // Same domain — localStorage is fine, just route
+    if (jobId) {
+      localStorage.setItem('jobId', jobId)
+    } else {
+      localStorage.removeItem('jobId')
+    }
     router.push(peakPath)
     return
   }
@@ -54,26 +55,26 @@ const handleClick = async (rowEvt: any) => {
     .replace(/^https?:\/\//, '')
     .replace(/\/$/, '')
 
-  // 1. Write cookie BEFORE anything else
+  const tenantSlug = cleanDomain.split('.')[0]
+
+  // ✅ 1. Cookie FIRST — only cross-subdomain storage
   authStore.writeAuthCookie({
     token: token ?? undefined,
     company_id: companyId,
     personal_mode: null,
   })
 
-  // 2. Save tenant slug so redirectToTenantIfNeeded works on return
-  const tenantSlug = cleanDomain.split('.')[0]
+  // ✅ 2. Save slug for return trips
   localStorage.setItem('last_tenant_slug', tenantSlug)
 
-  // 3. Pass jobId via URL — localStorage doesn't cross subdomains
-  const targetUrl =
-    `${window.location.protocol}//${cleanDomain}${peakPath}` +
-    `?theme=${theme}` +
-    (jobId ? `&jobId=${encodeURIComponent(jobId)}` : '')
+  // ✅ 3. Build URL — pass ALL needed state via query params
+  const params = new URLSearchParams({ theme })
+  if (jobId) params.set('jobId', jobId)
+
+  const targetUrl = `${window.location.protocol}//${cleanDomain}${peakPath}?${params.toString()}`
 
   console.log('Redirecting to:', targetUrl)
 
-  // 4. Small delay to ensure cookie write is flushed
   setTimeout(() => {
     window.location.href = targetUrl
   }, 80)

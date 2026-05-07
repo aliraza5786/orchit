@@ -99,28 +99,25 @@ function redirectToTenantIfNeeded(): boolean {
 if (redirectToTenantIfNeeded()) {
   throw new Error("Redirecting to tenant...")
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// URL PARAM SYNC
-// ─────────────────────────────────────────────────────────────────────────────
-
 const urlParams = new URLSearchParams(window.location.search)
 
-const themeFromUrl = urlParams.get("theme")
-if (themeFromUrl && ["light", "dark", "system"].includes(themeFromUrl)) {
-  localStorage.setItem("theme", themeFromUrl)
-  const cleanUrl = new URL(window.location.href)
-  cleanUrl.searchParams.delete("theme")
-  window.history.replaceState({}, "", cleanUrl.toString())
+// Theme
+const themeFromUrl = urlParams.get('theme')
+if (themeFromUrl && ['light', 'dark', 'system'].includes(themeFromUrl)) {
+  localStorage.setItem('theme', themeFromUrl)
 }
-// After the themeFromUrl block in main.ts
+
+// ✅ JobId
 const jobIdFromUrl = urlParams.get('jobId')
 if (jobIdFromUrl) {
   localStorage.setItem('jobId', decodeURIComponent(jobIdFromUrl))
-  const cleanUrl = new URL(window.location.href)
-  cleanUrl.searchParams.delete('jobId')
-  window.history.replaceState({}, '', cleanUrl.toString())
 }
+
+// ✅ Clean ALL transient params at once
+const cleanUrl = new URL(window.location.href)
+cleanUrl.searchParams.delete('theme')
+cleanUrl.searchParams.delete('jobId')
+window.history.replaceState({}, '', cleanUrl.toString())
 const encodedToken = urlParams.get("_auth")
 
 if (encodedToken) {
