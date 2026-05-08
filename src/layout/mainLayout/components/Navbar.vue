@@ -723,7 +723,8 @@ const switchAborted = ref(false);
 async function confirmSwitch() {
   if (!pendingAccount.value) return
   isSwitching.value = true
-  switchAborted.value = false;
+  switchAborted.value = false
+
   try {
     await new Promise((res) => setTimeout(res, 1200))
 
@@ -732,7 +733,9 @@ async function confirmSwitch() {
       await new Promise((res) => setTimeout(res, 100))
       window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
     } else {
+      // ✅ Clear everything company-related before redirecting
       authStore.clearCompany()
+      localStorage.removeItem('company_id')  // belt-and-suspenders
       await new Promise((res) => setTimeout(res, 100))
       window.location.href = `${window.location.protocol}//stagging.streamed.space/dashboard`
     }
@@ -918,22 +921,18 @@ function onResizeIndicator() {
 onMounted(() => {
   if (route.query.stripePayment) {
     router.push({
-      path: "/settings",
-      query: { ...route.query, tab: "billing" },
-    });
+      path: '/settings',
+      query: { ...route.query, tab: 'billing' },
+    })
   }
 
-  // ✅ Seed authStore from localStorage on every page load.
-  // We do NOT use the server's active_company_id because the server
-  // always returns a company ID regardless of the user's chosen mode.
-  const storedCompanyId = localStorage.getItem("company_id");
-  authStore.company_id = storedCompanyId ?? null;
+  authStore.seedFromStorage()
 
-  document.addEventListener("click", onClickOutside);
-  window.addEventListener("resize", onResize);
-  window.addEventListener("resize", onResizeIndicator);
-  nextTick(syncIndicatorToRoute);
-});
+  document.addEventListener('click', onClickOutside)
+  window.addEventListener('resize', onResize)
+  window.addEventListener('resize', onResizeIndicator)
+  nextTick(syncIndicatorToRoute)
+})
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", onClickOutside);

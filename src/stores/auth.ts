@@ -152,7 +152,18 @@ export const useAuthStore = defineStore('auth', {
         this.initialized = true
       }
     },
-
+seedFromStorage() {
+  const personalMode = localStorage.getItem('personal_mode')
+  if (personalMode === 'true') {
+    this.company_id = null
+    localStorage.removeItem('company_id')
+    return
+  }
+  const storedCompanyId = localStorage.getItem('company_id')
+  if (storedCompanyId) {
+    this.company_id = storedCompanyId
+  }
+},
     logout() {
       localStorage.removeItem('token')
       localStorage.removeItem('user_id')
