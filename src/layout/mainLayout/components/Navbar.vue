@@ -711,11 +711,13 @@ const isSwitching = ref(false);
 async function confirmSwitch() {
   if (!pendingAccount.value) return
 
-  const account = { ...pendingAccount.value }
+  const account  = { ...pendingAccount.value }
   isSwitching.value = true
 
   try {
-    const token = localStorage.getItem('token')
+    const token    = localStorage.getItem('token')
+    const hostname = window.location.hostname
+    const isLocal  = hostname === 'localhost' || hostname.endsWith('.localhost')
 
     // =========================
     // 🔁 SWITCH TO COMPANY
@@ -723,86 +725,100 @@ async function confirmSwitch() {
     if (account.type === 'company') {
       const companyId = account.id
 
+      // account.domain is the raw domain_link from the API
+      // e.g. "https://tech-studio.orchit.ai"
       let domain = account.domain?.trim()
-      if (!domain) throw new Error('Invalid domain')
+      if (!domain) throw new Error('Invalid domain_link for company')
 
       domain = domain.replace(/\/+$/, '')
       if (!/^https?:\/\//i.test(domain)) {
         domain = `https://${domain}`
       }
 
-      // ✅ Extract slug for last_tenant_slug
-      // e.g. "https://user-62fcf3s-company.orchit.ai" → "user-62fcf3s-company"
-      const slugMatch = domain.match(/^https?:\/\/([^.]+)\./)
-      const tenantSlug = slugMatch?.[1] ?? null
+      // Extract the first label (subdomain slug) from the domain_link
+      // "https://tech-studio.orchit.ai" → "tech-studio"
+      let tenantSlug: string | null = null
+      try {
+        const parsedHost = new URL(domain).hostname
+        const parts = parsedHost.split('.')
+        if (parts.length >= 2) tenantSlug = parts[0]
+      } catch { /* ignore */ }
 
-      // 1. COOKIE FIRST — only thing that crosses subdomains
+      // 1. COOKIE FIRST — only storage that is readable across all *.orchit.ai subdomains
       if (token) {
         authStore.writeAuthCookie({
           token,
-          company_id: companyId,
+          company_id:    companyId,
           personal_mode: null,
         })
       }
 
-      // 2. Save slug for redirectToTenantIfNeeded on return trips
+      // 2. Store slug for auto-redirect when returning to root later
       if (tenantSlug) {
         localStorage.setItem('last_tenant_slug', tenantSlug)
       }
 
-      // 3. Update store
+      // 3. Update Pinia store (also writes company_id to localStorage)
       authStore.setCompany(companyId)
 
-      // 4. Build URL — pass extras via query params since localStorage won't cross
+      // 4. Set mid-switch guard so main.ts on root skips auto-redirect loop
+      //    sessionStorage is PER-ORIGIN, so on the subdomain it will be absent — correct.
+      sessionStorage.setItem('__mid_switch__', '1')
+
+      // 5. Build target URL
       const theme = localStorage.getItem('theme') || 'light'
-      const targetUrl = `${domain}/dashboard?theme=${theme}`
+      let targetUrl: string
 
-      console.log('Redirecting to:', targetUrl)
+      if (isLocal) {
+        const port = window.location.port ? `:${window.location.port}` : ''
+        targetUrl = tenantSlug
+          ? `http://${tenantSlug}.localhost${port}/dashboard?theme=${theme}`
+          : `/dashboard?theme=${theme}`
+      } else {
+        targetUrl = `${domain}/dashboard?theme=${theme}`
+      }
 
-      // 5. Small delay to ensure cookie is written
-      setTimeout(() => {
-        window.location.href = targetUrl
-      }, 80)
+      console.log('🔀 Switching to company, redirecting to:', targetUrl)
 
+      setTimeout(() => { window.location.href = targetUrl }, 80)
       return
     }
 
     // =========================
-    // 👤 SWITCH TO INDIVIDUAL
+    // 👤 SWITCH TO PERSONAL
     // =========================
     if (account.type === 'individual') {
-      // 1. Cookie first
+      // 1. Cookie first — personal_mode=true tells main.ts to stay on root
       if (token) {
         authStore.writeAuthCookie({
           token,
-          company_id: null,
+          company_id:    null,
           personal_mode: true,
         })
       }
 
-      // 2. Clear local state
+      // 2. Clear ALL company state from localStorage
       localStorage.removeItem('company_id')
       localStorage.removeItem('company_name')
-      localStorage.removeItem('last_tenant_slug') // ✅ prevent auto-redirect back
+      // CRITICAL: clear slug so main.ts will NOT auto-redirect back to tenant
+      localStorage.removeItem('last_tenant_slug')
       localStorage.setItem('personal_mode', 'true')
 
-      // 3. Update store
+      // 3. Update Pinia store
       authStore.clearCompany()
 
-      // 4. Notify (fires before redirect, still useful for same-page listeners)
+      // 4. Signal any in-page listeners
       window.dispatchEvent(new CustomEvent('company-changed', { detail: null }))
 
-      // 5. Redirect — orchit.ai/dashboard
-      // main.ts will see personal_mode=true in cookie and stay on root
+      // 5. Build root URL
       const theme = localStorage.getItem('theme') || 'light'
-      const targetUrl = `https://orchit.ai/dashboard?theme=${theme}`
+      const targetUrl = isLocal
+        ? `http://localhost${window.location.port ? ':' + window.location.port : ''}/dashboard?theme=${theme}`
+        : `https://orchit.ai/dashboard?theme=${theme}`
 
-      console.log('Redirecting to:', targetUrl)
+      console.log('🔀 Switching to personal, redirecting to:', targetUrl)
 
-      setTimeout(() => {
-        window.location.href = targetUrl
-      }, 80)
-
+      setTimeout(() => { window.location.href = targetUrl }, 80)
       return
     }
 

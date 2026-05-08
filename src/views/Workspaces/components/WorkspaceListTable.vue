@@ -11,7 +11,6 @@ import { toast } from 'vue-sonner'
 import { useQueryClient } from '@tanstack/vue-query'
 import ShareModal from '../../../layout/WorkspaceLayout/components/ShareModal.vue'
 import { useAuthStore } from '../../../stores/auth'
-import { buildTenantUrl, slugFromDomainLink } from '../../../utilities/tenantRedirect'
 
 const router = useRouter()
 const queryClient = useQueryClient()
@@ -32,16 +31,14 @@ const handleClick = async (rowEvt: any) => {
   const theme = localStorage.getItem('theme') || 'light'
   const token = localStorage.getItem('token') ?? undefined
 
-  // Path we want to land on after redirect
   const peakPath = jobId
     ? `/workspace/peak/${workspaceId}/${jobId}`
     : `/workspace/peak/${workspaceId}`
 
-  const company = r?.company
+  const company    = r?.company
   const domainLink: string | undefined = company?.domain_link
 
-  // ── Personal workspace (no company / no domain_link) ───────────────────────
-  // Stay on current domain, just push via Vue Router
+  // ── Personal workspace (no company / no domain_link) ──────────────────────
   if (!domainLink) {
     if (jobId) {
       localStorage.setItem('jobId', jobId)
@@ -52,39 +49,66 @@ const handleClick = async (rowEvt: any) => {
     return
   }
 
-  // ── Company workspace — must redirect to the tenant subdomain ───────────────
+  // ── Company workspace — redirect to the tenant subdomain ──────────────────
   const companyId: string = company._id
-  const tenantSlug = slugFromDomainLink(domainLink)
+
+  // Parse the slug from domain_link
+  // Production: "https://tech-studio.orchit.ai" → "tech-studio"
+  // Dev:        "https://tech-studio.localhost"  → "tech-studio"
+  let tenantSlug: string | null = null
+  try {
+    let normalized = domainLink.trim()
+    if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`
+    const parsedHost = new URL(normalized).hostname
+    const parts = parsedHost.split('.')
+    if (parts.length >= 2) tenantSlug = parts[0]
+  } catch { /* ignore */ }
 
   if (!tenantSlug) {
-    // domain_link exists but slug couldn't be parsed — fall back to same-domain routing
     console.warn('⚠️ Could not parse tenant slug from domain_link:', domainLink)
-    router.push(peakPath)
-    return
+    // Best-effort: still set cookie and try raw domain_link
   }
 
-  // 1. Write cookie FIRST — only storage that crosses subdomains
+  // 1. Write cookie FIRST — only storage readable across *.orchit.ai subdomains
   authStore.writeAuthCookie({
     token,
-    company_id: companyId,
+    company_id:    companyId,
     personal_mode: false,
   })
 
-  // 2. Save slug so root-domain redirectToTenantIfNeeded works on return trips
-  localStorage.setItem('last_tenant_slug', tenantSlug)
+  // 2. Save slug for auto-redirect when returning to root
+  if (tenantSlug) {
+    localStorage.setItem('last_tenant_slug', tenantSlug)
+  }
+  // Also update Pinia store + localStorage
+  authStore.setCompany(companyId)
 
-  // 3. Build the full tenant URL — works on localhost AND production
-  const queryParams: Record<string, string> = { theme }
-  if (jobId) queryParams.jobId = jobId
+  // 3. Set mid-switch guard so main.ts on root skips loop
+  sessionStorage.setItem('__mid_switch__', '1')
 
-  const targetUrl = buildTenantUrl(tenantSlug, peakPath, queryParams)
+  // 4. Build target URL
+  const hostname = window.location.hostname
+  const isLocal  = hostname === 'localhost' || hostname.endsWith('.localhost')
+  const queryParams = new URLSearchParams({ theme })
+  if (jobId) queryParams.set('jobId', jobId)
+
+  let targetUrl: string
+
+  if (isLocal) {
+    const port = window.location.port ? `:${window.location.port}` : ''
+    targetUrl = tenantSlug
+      ? `http://${tenantSlug}.localhost${port}${peakPath}?${queryParams}`
+      : `${window.location.origin}${peakPath}?${queryParams}`
+  } else {
+    // Normalise domain_link
+    let base = domainLink.trim().replace(/\/+$/, '')
+    if (!/^https?:\/\//i.test(base)) base = `https://${base}`
+    targetUrl = `${base}${peakPath}?${queryParams}`
+  }
 
   console.log('🔀 Redirecting to workspace on tenant:', targetUrl)
 
-  // 4. Small delay to ensure cookie write is flushed before navigation
-  setTimeout(() => {
-    window.location.href = targetUrl
-  }, 80)
+  setTimeout(() => { window.location.href = targetUrl }, 80)
 }
 
 const showInviteModal = ref(false)
@@ -237,24 +261,42 @@ const renderOrganization = ({ row }: any) => {
     e.stopPropagation()
     if (!company.domain_link) return
 
-    const tenantSlug = slugFromDomainLink(company.domain_link)
-    const theme = localStorage.getItem('theme') || 'light'
-    const token = localStorage.getItem('token') ?? undefined
+    const theme    = localStorage.getItem('theme') || 'light'
+    const token    = localStorage.getItem('token') ?? undefined
+    const hostname = window.location.hostname
+    const isLocal  = hostname === 'localhost' || hostname.endsWith('.localhost')
 
-    if (tenantSlug) {
-      // Write company context into cookie before jumping
-      authStore.writeAuthCookie({
-        token,
-        company_id: company._id,
-        personal_mode: null,
-      })
-      localStorage.setItem('last_tenant_slug', tenantSlug)
-      window.location.href = buildTenantUrl(tenantSlug, '/dashboard', { theme })
+    // Parse slug from domain_link
+    let tenantSlug: string | null = null
+    try {
+      let normalized = company.domain_link.trim()
+      if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`
+      const parsedHost = new URL(normalized).hostname
+      const parts = parsedHost.split('.')
+      if (parts.length >= 2) tenantSlug = parts[0]
+    } catch { /* ignore */ }
+
+    // Write company context to cookie (crosses subdomains on *.orchit.ai)
+    authStore.writeAuthCookie({ token, company_id: company._id, personal_mode: null })
+    authStore.setCompany(company._id)
+    if (tenantSlug) localStorage.setItem('last_tenant_slug', tenantSlug)
+
+    // Set mid-switch guard
+    sessionStorage.setItem('__mid_switch__', '1')
+
+    let targetUrl: string
+    if (isLocal) {
+      const port = window.location.port ? `:${window.location.port}` : ''
+      targetUrl = tenantSlug
+        ? `http://${tenantSlug}.localhost${port}/dashboard?theme=${theme}`
+        : `/dashboard?theme=${theme}`
     } else {
-      // Fallback: raw domain_link
-      const target = company.domain_link.replace(/\/$/, '')
-      window.location.href = `${target}/dashboard?theme=${theme}`
+      let base = company.domain_link.trim().replace(/\/+$/, '')
+      if (!/^https?:\/\//i.test(base)) base = `https://${base}`
+      targetUrl = `${base}/dashboard?theme=${theme}`
     }
+
+    window.location.href = targetUrl
   }
 
   const avatar = company.logo

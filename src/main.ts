@@ -12,9 +12,10 @@ import { queryClient } from "./libs/queryClient"
 import { initThemeImmediately } from "./composables/useTheme"
 import { createHead } from "@vueuse/head"
 import vue3GoogleLogin from "vue3-google-login"
-import vTooltip from "./directives/vTooltip" 
+import vTooltip from "./directives/vTooltip"
 import { isRootDomain, buildTenantUrl } from "./utilities/tenantRedirect"
 import { isLocalhost } from "./utilities/tenantRedirect"
+
 // ─────────────────────────────────────────────────────────────────────────────
 // COOKIE CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
@@ -56,11 +57,24 @@ function writeAuthCookie(data: Record<string, any>) {
 
   if (hostname === "localhost") {
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
-  } 
-  else if (hostname.endsWith(".orchit.ai") || hostname === "orchit.ai") {
+  } else if (hostname.endsWith(".orchit.ai") || hostname === "orchit.ai") {
     document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TENANT REDIRECT
+//
+// Runs once on every page load on the ROOT domain only.
+// Redirects the user to their last known company subdomain UNLESS:
+//   1. They are on localhost (dev — single origin, no subdomains needed)
+//   2. They explicitly switched to personal mode (personal_mode=true in cookie)
+//   3. No last_tenant_slug is saved (never been on a tenant before)
+//   4. The Navbar is mid-switch right now (__mid_switch__ flag in sessionStorage)
+//      — this prevents a loop where switching to company writes the slug, then
+//        main.ts immediately redirects BEFORE the browser can navigate away.
+// ─────────────────────────────────────────────────────────────────────────────
+
 function redirectToTenantIfNeeded(): boolean {
   if (!isRootDomain()) return false
   if (isLocalhost()) return false
@@ -68,14 +82,24 @@ function redirectToTenantIfNeeded(): boolean {
   const session = getAuthCookie()
   if (!session?.token) return false
 
-  // ✅ Only respect personal_mode if there's no company_id in cookie
-  // If cookie has company_id, user explicitly navigated to a tenant — redirect them
-  if (session?.personal_mode && !session?.company_id) return false
+  // User explicitly chose personal mode → stay on root
+  if (session?.personal_mode === true) return false
+
+  // Navbar sets this flag in sessionStorage right before triggering a company
+  // switch redirect. sessionStorage is per-origin, so on the tenant it is
+  // always absent. On root it is present only during the brief window between
+  // "Confirm Switch" click and the browser navigating away — clearing it here
+  // stops any accidental double-redirect that could create a loop.
+  const midSwitch = sessionStorage.getItem("__mid_switch__") === "1"
+  if (midSwitch) {
+    sessionStorage.removeItem("__mid_switch__")
+    return false
+  }
 
   const tenantSlug = localStorage.getItem("last_tenant_slug")
   if (!tenantSlug) return false
 
-  // ✅ Validate slug format
+  // Validate slug format (only lowercase alphanumeric + hyphens)
   if (!/^[a-z0-9-]+$/.test(tenantSlug)) return false
 
   window.location.href = buildTenantUrl(
@@ -84,28 +108,35 @@ function redirectToTenantIfNeeded(): boolean {
   )
   return true
 }
+
 if (redirectToTenantIfNeeded()) {
   throw new Error("Redirecting to tenant...")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// URL PARAM HANDLING
+// ─────────────────────────────────────────────────────────────────────────────
+
 const urlParams = new URLSearchParams(window.location.search)
 
 // Theme
-const themeFromUrl = urlParams.get('theme')
-if (themeFromUrl && ['light', 'dark', 'system'].includes(themeFromUrl)) {
-  localStorage.setItem('theme', themeFromUrl)
+const themeFromUrl = urlParams.get("theme")
+if (themeFromUrl && ["light", "dark", "system"].includes(themeFromUrl)) {
+  localStorage.setItem("theme", themeFromUrl)
 }
 
-// ✅ JobId
-const jobIdFromUrl = urlParams.get('jobId')
+// JobId
+const jobIdFromUrl = urlParams.get("jobId")
 if (jobIdFromUrl) {
-  localStorage.setItem('jobId', decodeURIComponent(jobIdFromUrl))
+  localStorage.setItem("jobId", decodeURIComponent(jobIdFromUrl))
 }
 
-// ✅ Clean ALL transient params at once
+// Clean ALL transient params at once
 const cleanUrl = new URL(window.location.href)
-cleanUrl.searchParams.delete('theme')
-cleanUrl.searchParams.delete('jobId')
-window.history.replaceState({}, '', cleanUrl.toString())
+cleanUrl.searchParams.delete("theme")
+cleanUrl.searchParams.delete("jobId")
+window.history.replaceState({}, "", cleanUrl.toString())
+
 const encodedToken = urlParams.get("_auth")
 
 if (encodedToken) {
@@ -124,13 +155,17 @@ if (encodedToken) {
     console.error("Token decode failed:", e)
   }
 }
-// REPLACE the entire session sync block
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION CONTEXT SYNC
+// ─────────────────────────────────────────────────────────────────────────────
+
 const session = getAuthCookie()
 
 if (isRootDomain()) {
   localStorage.removeItem("company_id")
 } else {
-  // SUBDOMAIN — restore company context
+  // SUBDOMAIN — restore company context from cookie
   if (session?.company_id) {
     localStorage.setItem("company_id", session.company_id)
   }
