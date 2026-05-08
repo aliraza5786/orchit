@@ -34,8 +34,8 @@ function setAuthCookie(data: { token?: string; company_id?: string | null; perso
 
     if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
       document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
-    } else if (hostname.endsWith('.orchit.ai')) {
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    } else if (hostname.endsWith('.streamed.space')) {
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
     }
   } catch (e) {
     console.error('❌ Failed to set auth cookie:', e)
@@ -43,9 +43,9 @@ function setAuthCookie(data: { token?: string; company_id?: string | null; perso
 }
 
 function clearAuthCookie() {
-  document.cookie = `${COOKIE_KEY}=; domain=.orchit.ai; path=/; max-age=0`
+  document.cookie = `${COOKIE_KEY}=; domain=.streamed.space; path=/; max-age=0`
   document.cookie = `${COOKIE_KEY}=; path=/; max-age=0`
-  document.cookie = `auth_token=; domain=.orchit.ai; path=/; max-age=0`
+  document.cookie = `auth_token=; domain=.streamed.space; path=/; max-age=0`
   document.cookie = `auth_token=; path=/; max-age=0`
   console.log('🍪 Auth cookies cleared from all domains')
 }
