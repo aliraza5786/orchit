@@ -431,7 +431,6 @@ import {
   ref,
   watch,
   h,
-  triggerRef,
   watchEffect,
   onMounted,
 } from "vue";

@@ -107,8 +107,6 @@ const { data: members } = useWorkspacesRoles(workspaceId.value);
 
 import { 
     removeFromCacheStructure, 
-    moveBetweenColumns,  
-    updateCardOptimistically,
     performOptimisticUpdate,
     rollbackOptimisticUpdate
 } from '../../../utilities/cacheSync'

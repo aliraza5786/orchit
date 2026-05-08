@@ -74,7 +74,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useQueryClient } from '@tanstack/vue-query'
+// import { useQueryClient } from '@tanstack/vue-query'
 import SettingsSidebar from './components/SettingsSidebar.vue'
 import ProfileTab from './components/ProfileTab.vue'
 import BillingTab from './components/BillingTab.vue'
@@ -93,7 +93,6 @@ import { getProfile } from '../../services/user'
 const { isDark } = useTheme()
 const route = useRoute()
 const router = useRouter()
-const queryClient = useQueryClient()
 
 const isMobileSidebarOpen = ref(false)
 const currentTab = computed(() => (route.query.tab as string) || 'profile')

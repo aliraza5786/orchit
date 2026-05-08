@@ -90,12 +90,7 @@ export const useWorkspacesPrompt = () =>
     url: "/common/prompts-byname/workspace",
     method: "GET",
   });
-const getCookie = (name: string) => {
-  const match = document.cookie.match(
-    new RegExp('(^| )' + name + '=([^;]+)')
-  )
-  return match ? decodeURIComponent(match[2]) : null
-}
+
 
 export const useWorkspaces = (
   page: Ref<number>,
