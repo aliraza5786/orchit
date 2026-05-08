@@ -19,12 +19,14 @@ onMounted(async () => {
   const params = new URLSearchParams(window.location.search)
   const companyId = params.get('company_id')
   const theme = params.get('theme')
-
-  // ✅ Save company_id from URL before bootstrap runs
+  const token = params.get('_token')
+  if (token) {
+    localStorage.setItem('token', token)
+  }
   if (companyId) {
     authStore.setCompany(companyId)
   }
-  if (companyId || theme) {
+  if (token || companyId || theme) {
     window.history.replaceState({}, '', window.location.pathname)
   }
   await authStore.bootstrap()

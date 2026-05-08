@@ -26,8 +26,8 @@ const handleClick = async (rowEvt: any) => {
   const workspaceId: string = r._id
 
   const theme = localStorage.getItem('theme') || 'light'
+  const token = localStorage.getItem('token') ?? ''
 
-  // Path we want to land on after redirect
   const peakPath = jobId
     ? `/workspace/peak/${workspaceId}/${jobId}`
     : `/workspace/peak/${workspaceId}`
@@ -35,7 +35,7 @@ const handleClick = async (rowEvt: any) => {
   const company = r?.company
   const domainLink: string | undefined = company?.domain_link
 
-  // ── Personal workspace (no company / no domain_link) ───────────────────────
+  // ── Personal workspace ─────────────────────────────────────────────────────
   if (!domainLink) {
     if (jobId) {
       localStorage.setItem('jobId', jobId)
@@ -46,14 +46,18 @@ const handleClick = async (rowEvt: any) => {
     return
   }
 
-const queryParams = new URLSearchParams({ theme })
-queryParams.set('company_id', company._id)
+  // ── Company workspace — redirect to tenant subdomain ───────────────────────
+  const queryParams = new URLSearchParams({ theme, company_id: company._id })
+  
+  // ✅ Pass token so tenant subdomain can save it to localStorage on load
+  if (token) queryParams.set('_token', token)
+
   const targetUrl = `${domainLink.replace(/\/$/, '')}${peakPath}?${queryParams.toString()}`
+
   setTimeout(() => {
     window.location.href = targetUrl
   }, 80)
 }
-
 const showInviteModal = ref(false)
 const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
 const showDeleteConfirm = ref(false)
