@@ -1,204 +1,159 @@
-import { createApp } from "vue"
-import { createPinia } from "pinia"
-import "./style.css"
-import "./styles/theme.css"
-import App from "./App.vue"
-import router from "./router"
-import { VueQueryPlugin } from "@tanstack/vue-query"
-import { Toaster } from "vue-sonner"
-import "@/assets/fontawesome/css/fontawesome.min.css"
-import "@/assets/fontawesome/css/regular.min.css"
-import { queryClient } from "./libs/queryClient"
-import { initThemeImmediately } from "./composables/useTheme"
-import { createHead } from "@vueuse/head"
-import vue3GoogleLogin from "vue3-google-login"
-import vTooltip from "./directives/vTooltip"
-import { isRootDomain, buildTenantUrl } from "./utilities/tenantRedirect"
-import { isLocalhost } from "./utilities/tenantRedirect"
+import { createApp } from "vue";
+import { createPinia } from "pinia";
+import "./style.css";
+import "./styles/theme.css";
+import App from "./App.vue";
+import router from "./router";
+import { VueQueryPlugin } from "@tanstack/vue-query";
+import { Toaster } from "vue-sonner";
+import "@/assets/fontawesome/css/fontawesome.min.css";
+import "@/assets/fontawesome/css/regular.min.css";
+import { queryClient } from "./libs/queryClient";
+import { initThemeImmediately } from "./composables/useTheme";
+import { createHead } from "@vueuse/head";
+import vue3GoogleLogin from "vue3-google-login";
+import vTooltip from "./directives/vTooltip";
+import { isRootDomain } from "./utilities/tenant";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// COOKIE CONFIG
-// ─────────────────────────────────────────────────────────────────────────────
+const COOKIE_KEY = "auth_session";
+const maxAge = 60 * 60 * 24 * 30;
+const hostname = window.location.hostname;
 
-const COOKIE_KEY = "auth_session"
-const maxAge = 60 * 60 * 24 * 30
-const hostname = window.location.hostname
-
-// ─────────────────────────────────────────────────────────────────────────────
-// COOKIE HELPERS
-// ─────────────────────────────────────────────────────────────────────────────
-
-function getAuthCookie(): {
-  token?: string
-  company_id?: string
-  personal_mode?: boolean
-} | null {
+function getAuthCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
   try {
     const raw = document.cookie
       .split("; ")
       .find((row) => row.startsWith(COOKIE_KEY + "="))
-      ?.split("=")[1]
-
-    if (!raw) return null
-    return JSON.parse(decodeURIComponent(raw))
+      ?.split("=")[1];
+    if (!raw) return null;
+    return JSON.parse(decodeURIComponent(raw));
   } catch {
-    return null
+    return null;
   }
 }
 
 function writeAuthCookie(data: Record<string, any>) {
-  const existing = getAuthCookie() || {}
-  const merged = { ...existing, ...data }
-
-  if (data.company_id === null) delete merged.company_id
-  if (data.personal_mode === null) delete merged.personal_mode
-
-  const value = encodeURIComponent(JSON.stringify(merged))
+  const existing = getAuthCookie() || {};
+  const merged = { ...existing, ...data };
+  if (data.company_id === null) delete merged.company_id;
+  if (data.personal_mode === null) delete merged.personal_mode;
+  const value = encodeURIComponent(JSON.stringify(merged));
 
   if (hostname === "localhost") {
-    document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
-  } else if (hostname.endsWith(".orchit.ai") || hostname === "orchit.ai") {
-    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
+    document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  } else if (hostname.endsWith(".localhost")) {
+    document.cookie = `${COOKIE_KEY}=${value}; domain=localhost; path=/; max-age=${maxAge}; SameSite=Lax`;
+  } else if (hostname === "orchit.ai" || hostname.endsWith(".orchit.ai")) {
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`;
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TENANT REDIRECT
-//
-// Runs once on every page load on the ROOT domain only.
-// Redirects the user to their last known company subdomain UNLESS:
-//   1. They are on localhost (dev — single origin, no subdomains needed)
-//   2. They explicitly switched to personal mode (personal_mode=true in cookie)
-//   3. No last_tenant_slug is saved (never been on a tenant before)
-//   4. The Navbar is mid-switch right now (__mid_switch__ flag in sessionStorage)
-//      — this prevents a loop where switching to company writes the slug, then
-//        main.ts immediately redirects BEFORE the browser can navigate away.
-// ─────────────────────────────────────────────────────────────────────────────
-
+// ─── Smart Tenant Redirect ────────────────────────────────────────────────────
+// If user visits orchit.ai but has an active tenant session,
+// redirect them back to their tenant automatically
 function redirectToTenantIfNeeded(): boolean {
-  if (!isRootDomain()) return false
-  if (isLocalhost()) return false
+  if (!isRootDomain()) return false;
 
-  const session = getAuthCookie()
-  if (!session?.token) return false
-
-  // User explicitly chose personal mode → stay on root
-  if (session?.personal_mode === true) return false
-
-  // Navbar sets this flag in sessionStorage right before triggering a company
-  // switch redirect. sessionStorage is per-origin, so on the tenant it is
-  // always absent. On root it is present only during the brief window between
-  // "Confirm Switch" click and the browser navigating away — clearing it here
-  // stops any accidental double-redirect that could create a loop.
-  const midSwitch = sessionStorage.getItem("__mid_switch__") === "1"
-  if (midSwitch) {
-    sessionStorage.removeItem("__mid_switch__")
-    return false
+  // User explicitly chose to stay on root (e.g. clicked "Switch Workspace")
+  const stayOnRoot = sessionStorage.getItem("stay_on_root");
+  if (stayOnRoot) {
+    sessionStorage.removeItem("stay_on_root"); // one-time flag, consume it
+    console.log("🌐 stay_on_root flag found — skipping tenant redirect");
+    return false;
   }
 
-  const tenantSlug = localStorage.getItem("last_tenant_slug")
-  if (!tenantSlug) return false
+  const session = getAuthCookie();
 
-  // Validate slug format (only lowercase alphanumeric + hyphens)
-  if (!/^[a-z0-9-]+$/.test(tenantSlug)) return false
+  // No token → not logged in → stay on root
+  if (!session?.token) return false;
 
-  window.location.href = buildTenantUrl(
-    tenantSlug,
-    window.location.pathname + window.location.search
-  )
-  return true
+  // Personal mode → no tenant → stay on root
+  if (session?.personal_mode) return false;
+
+  // Get last visited tenant slug
+  const tenantSlug = localStorage.getItem("last_tenant_slug");
+  if (!tenantSlug) return false;
+
+  // Build redirect URL — preserve current path and query
+  const isLocalhost = hostname === "localhost";
+  const baseDomain = isLocalhost ? "localhost" : "orchit.ai";
+  const port = window.location.port ? `:${window.location.port}` : "";
+  const protocol = isLocalhost ? "http" : "https";
+  const targetUrl = `${protocol}://${tenantSlug}.${baseDomain}${port}${window.location.pathname}${window.location.search}`;
+
+  console.log(`🔀 Active tenant session found — redirecting to: ${targetUrl}`);
+  window.location.href = targetUrl;
+  return true;
 }
 
-if (redirectToTenantIfNeeded()) {
-  throw new Error("Redirecting to tenant...")
+// Run redirect check FIRST before anything else mounts
+const redirecting = redirectToTenantIfNeeded();
+if (redirecting) {
+  // Stop execution — page is being redirected, no need to boot Vue
+  throw new Error("⏩ Redirecting to tenant subdomain...");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// URL PARAM HANDLING
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Theme sync from URL ──────────────────────────────────────────────────────
+const urlParams = new URLSearchParams(window.location.search);
 
-const urlParams = new URLSearchParams(window.location.search)
-
-// Theme
-const themeFromUrl = urlParams.get("theme")
+const themeFromUrl = urlParams.get("theme");
 if (themeFromUrl && ["light", "dark", "system"].includes(themeFromUrl)) {
-  localStorage.setItem("theme", themeFromUrl)
+  localStorage.setItem("theme", themeFromUrl);
+  const cleanUrl = new URL(window.location.href);
+  cleanUrl.searchParams.delete("theme");
+  window.history.replaceState({}, "", cleanUrl.toString());
 }
 
-// JobId
-const jobIdFromUrl = urlParams.get("jobId")
-if (jobIdFromUrl) {
-  localStorage.setItem("jobId", decodeURIComponent(jobIdFromUrl))
-}
-
-// Clean ALL transient params at once
-const cleanUrl = new URL(window.location.href)
-cleanUrl.searchParams.delete("theme")
-cleanUrl.searchParams.delete("jobId")
-window.history.replaceState({}, "", cleanUrl.toString())
-
-const encodedToken = urlParams.get("_auth")
+// ─── Token sync from URL ──────────────────────────────────────────────────────
+const encodedToken = urlParams.get("_auth");
 
 if (encodedToken) {
   try {
-    let token = encodedToken
-
+    let token = encodedToken;
     if (!encodedToken.startsWith("eyJ")) {
       token = atob(
         encodedToken.replace(/-/g, "+").replace(/_/g, "/").replace(/\./g, "=")
-      )
+      );
     }
-
-    localStorage.setItem("token", token)
-    writeAuthCookie({ token })
+    localStorage.setItem("token", token);
+    writeAuthCookie({ token });
   } catch (e) {
-    console.error("Token decode failed:", e)
+    console.error("❌ main.ts: Token decode failed:", e);
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SESSION CONTEXT SYNC
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Session sync ─────────────────────────────────────────────────────────────
+const session = getAuthCookie();
 
-const session = getAuthCookie()
-
-if (isRootDomain()) {
-  localStorage.removeItem("company_id")
-} else {
-  // SUBDOMAIN — restore company context from cookie
-  if (session?.company_id) {
-    localStorage.setItem("company_id", session.company_id)
+if (session?.personal_mode || isRootDomain()) {
+  // Root domain or personal mode — never load stale company_id
+  localStorage.removeItem("company_id");
+  if (session?.personal_mode) {
+    writeAuthCookie({ company_id: null });
   }
+} else if (session?.company_id) {
+  localStorage.setItem("company_id", session.company_id);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// TOKEN SYNC FALLBACK
-// ─────────────────────────────────────────────────────────────────────────────
-
-const localToken = localStorage.getItem("token")
-
+const localToken = localStorage.getItem("token");
 if (localToken && !session?.token) {
-  writeAuthCookie({ token: localToken })
+  writeAuthCookie({ token: localToken });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// APP BOOTSTRAP
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── App bootstrap ────────────────────────────────────────────────────────────
+const head = createHead();
+const app = createApp(App);
 
-const app = createApp(App)
-const head = createHead()
+initThemeImmediately();
 
-initThemeImmediately()
-
-app.directive("tooltip", vTooltip)
-app.component("Toaster", Toaster)
-
-app.use(createPinia())
-app.use(VueQueryPlugin, { queryClient })
-app.use(router)
-app.use(head)
+app.directive("tooltip", vTooltip);
+app.component("Toaster", Toaster);
+app.use(createPinia());
+app.use(VueQueryPlugin, { queryClient });
+app.use(router);
+app.use(head);
 app.use(vue3GoogleLogin, {
   clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-})
+});
 
-app.mount("#app")
+app.mount("#app");

@@ -4,172 +4,170 @@ import { h, ref, computed, watch } from 'vue'
 import { formatDate } from '../../../utilities/FormatDate'
 import Collaborators from '../../../components/ui/Collaborators.vue'
 import { useRouter } from 'vue-router'
-import { useWorkspaces, useDeleteWorkspace, useArchiveWorkspace, useWorkspaceModulesAndUsers } from '../../../queries/useWorkspace'
+import { useWorkspaces, useDeleteWorkspace, useArchiveWorkspace,useWorkspaceModulesAndUsers } from '../../../queries/useWorkspace'
 import InviteUsersWithPermissions from '../Modals/InviteUsersWithPermissions.vue'
 import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import { toast } from 'vue-sonner'
 import { useQueryClient } from '@tanstack/vue-query'
 import ShareModal from '../../../layout/WorkspaceLayout/components/ShareModal.vue'
 import { useAuthStore } from '../../../stores/auth'
-
 const router = useRouter()
 const queryClient = useQueryClient()
 const authStore = useAuthStore()
-
 /* ------------ Column render helpers ------------ */
 const dateCache = new Map<string, string>()
 const getCachedDate = (dateStr: string) => {
-  if (!dateCache.has(dateStr)) dateCache.set(dateStr, formatDate(dateStr))
-  return dateCache.get(dateStr)!
+    if (!dateCache.has(dateStr)) dateCache.set(dateStr, formatDate(dateStr))
+    return dateCache.get(dateStr)!
 }
-
-const handleClick = async (rowEvt: any) => {
+const handleClick = (rowEvt: any) => {
   const r = rowEvt.row
-  const jobId: string | undefined = r?.LatestTask?.job_id
-  const workspaceId: string = r._id
+  const jobId = r?.LatestTask?.job_id
 
-  const theme = localStorage.getItem('theme') || 'light'
-  const token = localStorage.getItem('token') ?? undefined
+  if (jobId) localStorage.setItem('jobId', jobId)
+  else localStorage.removeItem('jobId')
 
-  const peakPath = jobId
-    ? `/workspace/peak/${workspaceId}/${jobId}`
-    : `/workspace/peak/${workspaceId}`
+  const isLocalhost = window.location.hostname === 'localhost'
 
-  const company    = r?.company
-  const domainLink: string | undefined = company?.domain_link
+  if (!isLocalhost && r?.company && r.company.domain_link) {
+    const domain = r.company.domain_link
+      .replace('https://', '')
+      .replace('http://', '')
 
-  // ── Personal workspace (no company / no domain_link) ──────────────────────
-  if (!domainLink) {
-    if (jobId) {
-      localStorage.setItem('jobId', jobId)
-    } else {
-      localStorage.removeItem('jobId')
+    const theme = localStorage.getItem('theme') || 'light'
+    const token = localStorage.getItem('token')
+
+    // ✅ If currently in personal mode, save intent so main domain
+    // can restore personal mode when user returns
+    const session = JSON.parse(
+      decodeURIComponent(
+        document.cookie
+          .split('; ')
+          .find(row => row.startsWith('auth_session='))
+          ?.split('=')[1] ?? 'null'
+      ) ?? 'null'
+    )
+    if (session?.personal_mode) {
+      authStore.savePersonalModeIntent()
     }
-    router.push(peakPath)
-    return
-  }
 
-  // ── Company workspace — redirect to the tenant subdomain ──────────────────
-  const companyId: string = company._id
+    // ✅ Write company context into cookie BEFORE redirecting
+    if (token) {
+      authStore.writeAuthCookie({
+        token,
+        company_id: r.company._id,
+        personal_mode: null
+      })
+    }
 
-  // Parse the slug from domain_link
-  // Production: "https://tech-studio.orchit.ai" → "tech-studio"
-  // Dev:        "https://tech-studio.localhost"  → "tech-studio"
-  let tenantSlug: string | null = null
-  try {
-    let normalized = domainLink.trim()
-    if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`
-    const parsedHost = new URL(normalized).hostname
-    const parts = parsedHost.split('.')
-    if (parts.length >= 2) tenantSlug = parts[0]
-  } catch { /* ignore */ }
+    // ✅ Small delay so cookie persists before navigation
+    setTimeout(() => {
+      window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
+    }, 150)
 
-  if (!tenantSlug) {
-    console.warn('⚠️ Could not parse tenant slug from domain_link:', domainLink)
-    // Best-effort: still set cookie and try raw domain_link
-  }
-
-  // 1. Write cookie FIRST — only storage readable across *.orchit.ai subdomains
-  authStore.writeAuthCookie({
-    token,
-    company_id:    companyId,
-    personal_mode: false,
-  })
-
-  // 2. Save slug for auto-redirect when returning to root
-  if (tenantSlug) {
-    localStorage.setItem('last_tenant_slug', tenantSlug)
-  }
-  // Also update Pinia store + localStorage
-  authStore.setCompany(companyId)
-
-  // 3. Set mid-switch guard so main.ts on root skips loop
-  sessionStorage.setItem('__mid_switch__', '1')
-
-  // 4. Build target URL
-  const hostname = window.location.hostname
-  const isLocal  = hostname === 'localhost' || hostname.endsWith('.localhost')
-  const queryParams = new URLSearchParams({ theme })
-  if (jobId) queryParams.set('jobId', jobId)
-
-  let targetUrl: string
-
-  if (isLocal) {
-    const port = window.location.port ? `:${window.location.port}` : ''
-    targetUrl = tenantSlug
-      ? `http://${tenantSlug}.localhost${port}${peakPath}?${queryParams}`
-      : `${window.location.origin}${peakPath}?${queryParams}`
   } else {
-    // Normalise domain_link
-    let base = domainLink.trim().replace(/\/+$/, '')
-    if (!/^https?:\/\//i.test(base)) base = `https://${base}`
-    targetUrl = `${base}${peakPath}?${queryParams}`
+    // localhost fallback — also handle localhost subdomains
+    const hostname = window.location.hostname
+    const isLocalhostSubdomain = hostname.endsWith('.localhost')
+
+    if (isLocalhostSubdomain && r?.company && r.company.domain_link) {
+      // ✅ localhost subdomain support
+      const domain = r.company.domain_link
+        .replace('https://', '')
+        .replace('http://', '')
+        .replace('orchit.ai', 'localhost') // map production domain to localhost
+
+      const theme = localStorage.getItem('theme') || 'light'
+      const token = localStorage.getItem('token')
+
+      const session = JSON.parse(
+        decodeURIComponent(
+          document.cookie
+            .split('; ')
+            .find(row => row.startsWith('auth_session='))
+            ?.split('=')[1] ?? 'null'
+        ) ?? 'null'
+      )
+      if (session?.personal_mode) {
+        authStore.savePersonalModeIntent()
+      }
+
+      if (token) {
+        authStore.writeAuthCookie({
+          token,
+          company_id: r.company._id,
+          personal_mode: null
+        })
+      }
+
+      setTimeout(() => {
+        window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
+      }, 150)
+
+    } else {
+      // Pure localhost — internal routing, no cookie changes needed
+      router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
+    }
   }
-
-  console.log('🔀 Redirecting to workspace on tenant:', targetUrl)
-
-  setTimeout(() => { window.location.href = targetUrl }, 80)
 }
-
 const showInviteModal = ref(false)
 const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
 const showDeleteConfirm = ref(false)
 const workspaceToAction = ref<any>(null)
 const isDeleting = ref(false)
 
-const showShareModal = ref(false)
+ const showShareModal  = ref(false)
 const selectedShareWorkspace = ref<any>(null)
-
+// After selectedShareWorkspace ref
 const openInviteModal = (workspaceId: string | number) => {
-  selectedInvitingWorkspaceId.value = workspaceId
-  showInviteModal.value = true
+    selectedInvitingWorkspaceId.value = workspaceId
+    showInviteModal.value = true
 }
 const selectedShareWorkspaceId = computed(() => selectedShareWorkspace.value?._id ?? '')
 
-const {
-  data: workspaceModulesAndUsers,
-  isPending: isModulesAndUsersPending
+const { 
+  data: workspaceModulesAndUsers, 
+  isPending: isModulesAndUsersPending 
 } = useWorkspaceModulesAndUsers(selectedShareWorkspaceId)
 
 const { mutate: deleteWorkspace } = useDeleteWorkspace({
-  onSuccess: () => {
-    toast.success('Workspace deleted successfully')
-    queryClient.invalidateQueries({ queryKey: ['workspaces'] })
-    showDeleteConfirm.value = false
-    isDeleting.value = false
-  },
-  onError: (err: any) => {
-    isDeleting.value = false
-    toast.error(err?.response?.data?.message || 'Failed to delete workspace')
-  }
+    onSuccess: () => {
+        toast.success('Workspace deleted successfully')
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+        showDeleteConfirm.value = false
+        isDeleting.value = false
+    },
+    onError: (err: any) => {
+        isDeleting.value = false
+        toast.error(err?.response?.data?.message || 'Failed to delete workspace')
+    }
 })
 
 const { mutate: archiveWorkspace } = useArchiveWorkspace({
-  onSuccess: () => {
-    const msg = props.filter === 'archived' ? 'Workspace unarchived successfully' : 'Workspace archived successfully'
-    toast.success(msg)
-    queryClient.invalidateQueries({ queryKey: ['workspaces'] })
-  },
-  onError: (err: any) => {
-    toast.error(err?.response?.data?.message || 'Failed to archive workspace')
-  }
+    onSuccess: () => {
+        const msg = props.filter === 'archived' ? 'Workspace unarchived successfully' : 'Workspace archived successfully'
+        toast.success(msg)
+        queryClient.invalidateQueries({ queryKey: ['workspaces'] })
+    },
+    onError: (err: any) => {
+        toast.error(err?.response?.data?.message || 'Failed to archive workspace')
+    }
 })
 
 const handleArchive = (row: any) => {
-  archiveWorkspace({ id: row._id })
+    archiveWorkspace({ id: row._id })
 }
 
 const openDeleteConfirm = (row: any) => {
-  workspaceToAction.value = row
-  showDeleteConfirm.value = true
+    workspaceToAction.value = row
+    showDeleteConfirm.value = true
 }
 
 const onConfirmDelete = () => {
-  if (!workspaceToAction.value) return
-  isDeleting.value = true
-  deleteWorkspace({ id: workspaceToAction.value._id })
+    if (!workspaceToAction.value) return
+    isDeleting.value = true
+    deleteWorkspace({ id: workspaceToAction.value._id })
 }
-
 const renderActions = ({ row }: any) => {
   if (props.filter === 'deleted') return h('div', { class: 'h-8' })
 
@@ -181,6 +179,7 @@ const renderActions = ({ row }: any) => {
     'div',
     { class: 'flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity' },
     [
+      // 👁️ View button
       h(
         'button',
         {
@@ -194,6 +193,7 @@ const renderActions = ({ row }: any) => {
         [h('i', { class: 'fa-regular fa-eye text-sm' })]
       ),
 
+      // ✅ Share button — only show if has permission
       row.has_permission_to_manage_user
         ? h(
             'button',
@@ -209,6 +209,7 @@ const renderActions = ({ row }: any) => {
           )
         : null,
 
+      // 📁 Archive / Unarchive
       row.has_permission_to_manage_user
         ? h(
             'button',
@@ -224,6 +225,7 @@ const renderActions = ({ row }: any) => {
           )
         : null,
 
+      // 🗑 Delete
       row.has_permission_to_manage_user
         ? h(
             'button',
@@ -241,13 +243,12 @@ const renderActions = ({ row }: any) => {
     ].filter(Boolean)
   )
 }
-
 const renderOrganization = ({ row }: any) => {
   const company = row?.company
   if (!company) return h('span', { class: 'text-text-secondary text-xs' }, '-----')
 
   const getInitials = (name: string) =>
-    name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
+    name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
   const getColorFromString = (str: string) => {
     let hash = 0
@@ -259,65 +260,31 @@ const renderOrganization = ({ row }: any) => {
 
   const goToDomain = (e: Event) => {
     e.stopPropagation()
-    if (!company.domain_link) return
-
-    const theme    = localStorage.getItem('theme') || 'light'
-    const token    = localStorage.getItem('token') ?? undefined
-    const hostname = window.location.hostname
-    const isLocal  = hostname === 'localhost' || hostname.endsWith('.localhost')
-
-    // Parse slug from domain_link
-    let tenantSlug: string | null = null
-    try {
-      let normalized = company.domain_link.trim()
-      if (!/^https?:\/\//i.test(normalized)) normalized = `https://${normalized}`
-      const parsedHost = new URL(normalized).hostname
-      const parts = parsedHost.split('.')
-      if (parts.length >= 2) tenantSlug = parts[0]
-    } catch { /* ignore */ }
-
-    // Write company context to cookie (crosses subdomains on *.orchit.ai)
-    authStore.writeAuthCookie({ token, company_id: company._id, personal_mode: null })
-    authStore.setCompany(company._id)
-    if (tenantSlug) localStorage.setItem('last_tenant_slug', tenantSlug)
-
-    // Set mid-switch guard
-    sessionStorage.setItem('__mid_switch__', '1')
-
-    let targetUrl: string
-    if (isLocal) {
-      const port = window.location.port ? `:${window.location.port}` : ''
-      targetUrl = tenantSlug
-        ? `http://${tenantSlug}.localhost${port}/dashboard?theme=${theme}`
-        : `/dashboard?theme=${theme}`
-    } else {
-      let base = company.domain_link.trim().replace(/\/+$/, '')
-      if (!/^https?:\/\//i.test(base)) base = `https://${base}`
-      targetUrl = `${base}/dashboard?theme=${theme}`
+    if (company.domain_link) {
+      const theme = localStorage.getItem('theme') || 'light'
+      window.location.href = `${company.domain_link}/dashboard?theme=${theme}`
     }
-
-    window.location.href = targetUrl
   }
 
   const avatar = company.logo
     ? h('img', {
         src: company.logo,
         alt: company.title,
-        class: 'h-6 w-6 rounded-full object-cover',
+        class: 'h-6 w-6 rounded-full object-cover flex-shrink-0',
         loading: 'lazy',
         decoding: 'async',
       })
     : h('div', {
-        class: 'h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0',
-        style: { backgroundColor: getColorFromString(company.title) }
+        class: 'h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-medium flex-shrink-0',
+        style: { backgroundColor: getColorFromString(company.title) },
       }, getInitials(company.title))
 
   const title = h(
     'span',
     {
       class: company.domain_link
-        ? 'text-xs text-text-primary hover:underline cursor-pointer'
-        : 'text-xs text-text-primary',
+        ? 'text-sm text-text-primary hover:underline cursor-pointer truncate max-w-[120px]'
+        : 'text-sm text-text-primary truncate max-w-[120px]',
       onClick: company.domain_link ? goToDomain : undefined,
       title: company.domain_link ? `Go to ${company.domain_link}` : company.title,
     },
@@ -326,45 +293,46 @@ const renderOrganization = ({ row }: any) => {
 
   return h('div', { class: 'flex items-center gap-2' }, [avatar, title])
 }
-
 const renderProject = ({ row, value }: any) =>
-  h('div', { class: 'flex items-center gap-2' }, [
-    row.logo
-      ? h('img', {
-          src: row.logo,
-          alt: value?.title || 'Project',
-          class: 'h-8 w-8 bg-bg-card rounded-full object-cover',
-          loading: 'lazy',
-          decoding: 'async',
-        })
-      : h('div', { class: 'h-8 w-8 rounded-full bg-bg-card' }),
-    h('span', {
-      class: 'cursor-pointer hover:underline',
-      onClick: (e: Event) => {
-        e.stopPropagation()
-        handleClick({ row })
-      }
-    }, value?.title || 'Untitled'),
-  ])
-
+    h('div', { class: 'flex items-center gap-2' }, [
+        row.logo
+            ? h('img', {
+                src: row.logo,
+                alt: value?.title || 'Project',
+                class: 'h-8 w-8 bg-bg-card rounded-full object-cover',
+                loading: 'lazy',
+                decoding: 'async',
+            })
+            : h('div', { class: 'h-8 w-8 rounded-full bg-bg-card' }),
+        h('span', { 
+            class: 'cursor-pointer hover:underline',
+            onClick: (e: Event) => {
+                e.stopPropagation()
+                handleClick({ row })
+            }
+        }, value?.title || 'Untitled'),
+    ])
 const renderCompanyPercentage = ({ row }: any) => {
   const percentage = row?.task_stats?.total_percentage ?? 0
 
   return h('div', { class: 'flex items-center gap-2 w-full' }, [
+    // Progress bar background
     h('div', {
       class: 'flex-1 h-2 rounded-full bg-bg-body border border-border overflow-hidden'
     }, [
+      // Progress fill
       h('div', {
         class: 'h-full rounded-full bg-accent transition-all duration-300',
         style: { width: `${percentage}%` }
       })
     ]),
+
+    // Percentage text
     h('span', {
       class: 'text-xs text-text-secondary w-7 text-right'
     }, `${percentage}%`)
   ])
 }
-
 const renderProjectType = ({ value }: any) =>
   h(
     'span',
@@ -375,40 +343,47 @@ const renderProjectType = ({ value }: any) =>
   )
 
 const renderPeople = ({ row, value }: any) =>
-  h('div', { class: 'flex items-center -space-x-3' }, [
-    h(Collaborators, { avatars: value || [], image: true, maxVisible: 3 }),
-    h('button', {
-      class: row.has_permission_to_manage_user
-        ? 'flex justify-center items-center rounded-full border border-border text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition h-8 w-8 cursor-pointer'
-        : 'hidden',
-      onClick: (e: Event) => {
-        e.stopPropagation()
-        openInviteModal(row._id)
-      },
-      title: 'Invite Users'
-    }, [
-      h('i', { class: 'fa-solid fa-plus text-gray-500 text-xs' })
+    h('div', { class: 'flex items-center -space-x-3' }, [
+        h(Collaborators, { avatars: value || [], image: true, maxVisible: 3 }),
+        h('button', {
+            class:row.has_permission_to_manage_user? 'flex justify-center items-center rounded-full border border-border text-xs bg-bg-dropdown cursor-pointer hover:bg-bg-dropdown-menu-hover transition  h-8 w-8 cursor-pointer': 'hidden',
+            onClick: (e: Event) => {
+                e.stopPropagation()
+                openInviteModal(row._id)
+            },
+             title: 'Invite Users' 
+        }, [
+            h('i', { class: 'fa-solid fa-plus text-gray-500 text-xs' })
+        ])
     ])
-  ])
 
 const renderStartDate = ({ value }: any) =>
-  h('span', getCachedDate(value))
+    h('span', getCachedDate(value))
 
 const renderCompanyAdmin = ({ row }: any) => {
-  const owner = row?.owner
-  if (!owner) return h('span', '-')
+  const owner = row?.owner;
+  if (!owner) return h('span', '-');
 
-  const getInitials = (name: string) =>
-    name.split(' ').map((n: string) => n[0]).join('').toUpperCase()
-
-  const getColorFromString = (str: string) => {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    return `hsl(${Math.abs(hash) % 360}, 60%, 50%)`
+  // Function to get initials from name
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase();
   }
 
+  // Function to generate consistent color from string
+  const getColorFromString = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return `hsl(${hue}, 60%, 50%)`; // adjust saturation/lightness as needed
+  }
+
+  // Render avatar or initials
   return h('div', { class: 'flex items-center gap-2' }, [
     owner.profile_img
       ? h('img', {
@@ -423,8 +398,10 @@ const renderCompanyAdmin = ({ row }: any) => {
           style: { backgroundColor: getColorFromString(owner.name) }
         }, getInitials(owner.name)),
     h('span', owner.name)
-  ])
-}
+  ]);
+};
+
+
 
 function openShareModal(row: any) {
   selectedShareWorkspace.value = row
@@ -436,34 +413,33 @@ const columns = [
   { key: 'variables',   label: 'Workspace Type',   render: renderProjectType,       width: '150px' },
   { key: 'People',      label: 'People',           render: renderPeople,            width: '120px' },
   { key: 'created_at',  label: 'Start Date',       render: renderStartDate,         width: '100px' },
-  { key: 'organization', label: 'Organization',    render: renderOrganization,      width: '150px' },
+  { key: 'organization',  label: 'Organization',     render: renderOrganization,       width: '150px' },
   { key: 'admin',       label: 'Workspace Owner',  render: renderCompanyAdmin,      width: '180px' },
   { key: 'percentage',  label: 'Percentage',       render: renderCompanyPercentage, width: '150px' },
   { key: 'actions',     label: 'Actions',          render: renderActions,           align: 'right' as const, width: '50px' },
 ]
 
 const props = defineProps({
-  filter: {
-    type: String,
-    default: 'all'
-  }
+    filter: {
+        type: String,
+        default: 'all'
+    }
 })
-
 const page = ref(1)
 const pageSize = ref(10)
 const { data, isPending } = useWorkspaces(page, pageSize, computed(() => props.filter))
 const isLoading = computed(() => isPending.value)
 const items = computed(() => data.value?.workspaces ?? [])
 const totalCount = ref(0)
+console.log("workspaces list", items.value);
 
 watch(() => props.filter, () => {
-  page.value = 1
+    page.value = 1
 })
 
 watch(data, (newVal) => {
-  totalCount.value = newVal?.pagination?.totalCount ?? 0
+    totalCount.value = newVal?.pagination?.totalCount ?? 0
 }, { immediate: true })
-
 const emptyMessage = computed(() => {
   switch (props.filter) {
     case 'archived': return 'No archived workspaces'
@@ -474,84 +450,81 @@ const emptyMessage = computed(() => {
   }
 })
 </script>
-
 <template>
-  <Table
-    v-if="isLoading || items.length"
-    :columns="columns"
-    :rows="items"
-    :loading="isLoading"
-    :total="totalCount"
-    v-model:page="page"
-    v-model:pageSize="pageSize"
-    :pageSizes="[10, 20, 50, 100]"
-    :rowClass="() => 'group'"
-    @row-click="handleClick"
-  >
-    <template #status="{ row }">
-      <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
-        'bg-blue-100 text-blue-600': row.status === 'In progress',
-        'bg-red-100 text-red-600': row.status === 'Live',
-        'bg-green-100 text-green-600': row.status === 'Done'
-      }">
-        {{ row.status }}
-      </span>
-    </template>
+    <Table
+      v-if="isLoading || items.length"
+      :columns="columns"
+      :rows="items"
+      :loading="isLoading"
+      :total="totalCount"
+      v-model:page="page"
+      v-model:pageSize="pageSize"
+      :pageSizes="[10, 20, 50, 100]"
+      :rowClass="() => 'group'"
+    >
+        <template #status="{ row }">
+            <span class="px-3 py-1 rounded-full text-xs font-medium" :class="{
+                'bg-blue-100 text-blue-600': row.status === 'In progress',
+                'bg-red-100 text-red-600': row.status === 'Live',
+                'bg-green-100 text-green-600': row.status === 'Done'
+            }">
+                {{ row.status }}
+            </span>
+        </template>
 
-    <template #team="{ row }">
-      <div class="flex -space-x-2">
-        <span v-for="(member, i) in row.Roles" :key="i"
-          class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 text-xs">
-          {{ member }}
-        </span>
+        <template #team="{ row }">
+            <div class="flex -space-x-2">
+                <span v-for="(member, i) in row.Roles" :key="i"
+                    class="w-6 h-6 flex items-center justify-center rounded-full bg-gray-200 text-xs">
+                    {{ member }}
+                </span>
+            </div>
+        </template>
+    </Table>
+
+    <!-- ✅ Custom empty state — shown only when not loading and no data -->
+    <div
+      v-if="!isLoading && !items.length"
+      class="flex flex-col items-center justify-center gap-3 py-20 text-center"
+    >
+      <div class="grid h-14 w-14 place-items-center rounded-2xl bg-bg-card border border-border/70">
+        <i class="fa-regular fa-folder-open text-xl text-text-secondary"></i>
       </div>
-    </template>
-  </Table>
-
-  <!-- Custom empty state -->
-  <div
-    v-if="!isLoading && !items.length"
-    class="flex flex-col items-center justify-center gap-3 py-20 text-center"
-  >
-    <div class="grid h-14 w-14 place-items-center rounded-2xl bg-bg-card border border-border/70">
-      <i class="fa-regular fa-folder-open text-xl text-text-secondary"></i>
+      <div class="flex flex-col gap-1">
+        <p class="text-sm font-medium text-text-primary">{{ emptyMessage }}</p>
+        <p class="text-xs text-text-secondary">
+          {{ props.filter === 'all' ? 'Get started by creating your first workspace.' : 'Try switching to a different filter.' }}
+        </p>
+      </div>
     </div>
-    <div class="flex flex-col gap-1">
-      <p class="text-sm font-medium text-text-primary">{{ emptyMessage }}</p>
-      <p class="text-xs text-text-secondary">
-        {{ props.filter === 'all' ? 'Get started by creating your first workspace.' : 'Try switching to a different filter.' }}
-      </p>
-    </div>
-  </div>
 
-  <InviteUsersWithPermissions v-model="showInviteModal" :defaultWorkspaceId="selectedInvitingWorkspaceId" />
-  <ShareModal
-    v-if="selectedShareWorkspace"
-    v-model="showShareModal"
-    resource-type="workspace"
-    :resourceId="selectedShareWorkspace._id"
-    :modulesAndUsers="workspaceModulesAndUsers"
-    :modulesAndUsersLoading="isModulesAndUsersPending"
-    @shared="queryClient.invalidateQueries({ queryKey: ['workspaces'] })"
-  />
-  <ConfirmDeleteModal
-    v-model="showDeleteConfirm"
-    title="Delete Workspace"
-    :item-label="'workspace'"
-    :item-name="workspaceToAction?.variables?.title || 'this workspace'"
-    :require-match-text="workspaceToAction?.variables?.title || ''"
-    :loading="isDeleting"
-    confirm-text="Delete Workspace"
-    size="md"
-    @confirm="onConfirmDelete"
-    @cancel="showDeleteConfirm = false"
-  >
-    <template #message>
-      <p class="text-sm text-text-secondary">
-        This action cannot be undone. This will permanently delete the workspace
-        <span class="font-semibold text-text-primary">{{ workspaceToAction?.variables?.title }}</span>
-        and all of its data.
-      </p>
-    </template>
-  </ConfirmDeleteModal>
+    <InviteUsersWithPermissions v-model="showInviteModal" :defaultWorkspaceId="selectedInvitingWorkspaceId" />
+    <ShareModal
+      v-if="selectedShareWorkspace"
+      v-model="showShareModal"
+      resource-type="workspace"
+      :resourceId="selectedShareWorkspace._id"
+      :modulesAndUsers="workspaceModulesAndUsers"
+      :modulesAndUsersLoading="isModulesAndUsersPending"
+      @shared="queryClient.invalidateQueries({ queryKey: ['workspaces'] })"
+    />
+    <ConfirmDeleteModal
+        v-model="showDeleteConfirm"
+        title="Delete Workspace"
+        :item-label="'workspace'"
+        :item-name="workspaceToAction?.variables?.title || 'this workspace'"
+        :require-match-text="workspaceToAction?.variables?.title || ''"
+        :loading="isDeleting"
+        confirm-text="Delete Workspace"
+        size="md"
+        @confirm="onConfirmDelete"
+        @cancel="showDeleteConfirm = false"
+    >
+        <template #message>
+            <p class="text-sm text-text-secondary">
+                This action cannot be undone. This will permanently delete the workspace <span
+                    class="font-semibold text-text-primary">{{ workspaceToAction?.variables?.title }}</span> and all of its data.
+            </p>
+        </template>
+    </ConfirmDeleteModal>
 </template>
