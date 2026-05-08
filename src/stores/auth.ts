@@ -47,6 +47,7 @@ function clearAuthCookie() {
   document.cookie = `${COOKIE_KEY}=; path=/; max-age=0`
   document.cookie = `auth_token=; domain=.streamed.space; path=/; max-age=0`
   document.cookie = `auth_token=; path=/; max-age=0`
+  console.log('🍪 Auth cookies cleared from all domains')
 }
 
 export const useAuthStore = defineStore('auth', {

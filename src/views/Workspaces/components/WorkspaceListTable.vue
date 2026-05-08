@@ -27,7 +27,6 @@ const handleClick = (rowEvt: any) => {
     else localStorage.removeItem('jobId')
     router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
 }
-
 const showInviteModal = ref(false)
 const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
 const showDeleteConfirm = ref(false)
@@ -300,6 +299,7 @@ const isLoading = computed(() => isPending.value)
 /** Unwrap API shape: { workspaces: any[]; pagination: { totalCount: number } } */
 const items = computed(() => data.value?.workspaces ?? [])
 const totalCount = ref(0)
+console.log("workspaces list", items.value);
 
 watch(() => props.filter, () => {
     page.value = 1
