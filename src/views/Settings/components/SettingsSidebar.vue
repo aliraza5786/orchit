@@ -95,14 +95,10 @@ async function selectCompany(company: any, navigate = true) {
   selectedCompanyId.value = company._id
 
   try {
-    const token = localStorage.getItem('token')
+    // const token = localStorage.getItem('token')
     localStorage.setItem('company_id', company._id)
     localStorage.setItem('company_name', company.title)
     authStore.setCompany(company._id)
-
-    if (token) {
-      authStore.writeAuthCookie({ token, company_id: company._id, personal_mode: null })
-    }
 
     emit('switch-company', company)
 

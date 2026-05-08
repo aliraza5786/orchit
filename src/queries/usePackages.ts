@@ -5,21 +5,21 @@ import { useQuery } from "@tanstack/vue-query";
 import { unref, computed, ref } from "vue";
 import api from "../libs/api";
 
-import {
-  getAuthSession,
-  getSessionCompanyId,
-  isPersonalMode,
-} from "../utilities/session";
-
 // ---------------------------------------------
-// Company State
+// Company state (localStorage only)
 // ---------------------------------------------
 
-const companyId = ref<string | null>(getSessionCompanyId());
+const companyId = ref<string | null>(
+  localStorage.getItem("company_id")
+);
 
 export const useCompany = () => {
-  const setCompanyId = (id: string) => {
-    localStorage.setItem("company_id", id);
+  const setCompanyId = (id: string | null) => {
+    if (id) {
+      localStorage.setItem("company_id", id);
+    } else {
+      localStorage.removeItem("company_id");
+    }
     companyId.value = id;
   };
 
@@ -33,25 +33,13 @@ export const useCompany = () => {
 export const useCurrentPackage = (
   overrideScope?: "individual" | "organization"
 ) => {
-  const session = computed(() => getAuthSession());
-
   const scope = computed(() => {
-    // priority:
-    // 1. explicit override
-    // 2. session personal mode
-    if (overrideScope) return overrideScope;
-
-    return isPersonalMode() ? "individual" : "organization";
+    return overrideScope ?? "organization";
   });
 
-  const companyId = computed(() => {
+  const companyIdComputed = computed(() => {
     if (scope.value === "individual") return null;
-
-    return (
-      session.value?.company_id ??
-      localStorage.getItem("company_id") ??
-      null
-    );
+    return localStorage.getItem("company_id");
   });
 
   const url = computed(() => {
@@ -60,8 +48,8 @@ export const useCurrentPackage = (
 
     params.append("scope", scope.value);
 
-    if (scope.value === "organization" && companyId.value) {
-      params.append("company_id", companyId.value);
+    if (scope.value === "organization" && companyIdComputed.value) {
+      params.append("company_id", companyIdComputed.value);
     }
 
     return `${base}?${params.toString()}`;
@@ -71,7 +59,7 @@ export const useCurrentPackage = (
     key: computed(() => [
       "current-package",
       scope.value,
-      companyId.value,
+      companyIdComputed.value,
     ]),
     url,
     method: "GET",
@@ -149,8 +137,10 @@ export const useRoles = (id: any, options = {}) => {
     queryFn: ({ signal }) => {
       let url = `/roles/workspace-access-roles`;
 
-      if (unref(id)?._id) {
-        url += `?company_id=${unref(id)?._id}`;
+      const company = unref(id)?._id;
+
+      if (company) {
+        url += `?company_id=${company}`;
       }
 
       return request<any>({
@@ -191,9 +181,7 @@ export const useUpdatePermissions = (options = {}) => {
 // Workspace Permissions
 // ---------------------------------------------
 
-export const fetchWorkspacePermissions = async ({
-  signal,
-}: any) => {
+export const fetchWorkspacePermissions = async ({ signal }: any) => {
   try {
     const { data } = await api.get(
       "/roles/workspace-access-roles/without-permission",

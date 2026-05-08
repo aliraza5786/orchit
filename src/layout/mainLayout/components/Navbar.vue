@@ -710,120 +710,21 @@ const isSwitching = ref(false);
 // const switchAborted = ref(false);
 async function confirmSwitch() {
   if (!pendingAccount.value) return
-
-  const account  = { ...pendingAccount.value }
   isSwitching.value = true
 
   try {
-    const token    = localStorage.getItem('token')
-    const hostname = window.location.hostname
-    const isLocal  = hostname === 'localhost' || hostname.endsWith('.localhost')
+    await new Promise((res) => setTimeout(res, 1200))
 
-    // =========================
-    // 🔁 SWITCH TO COMPANY
-    // =========================
-    if (account.type === 'company') {
-      const companyId = account.id
-
-      // account.domain is the raw domain_link from the API
-      // e.g. "https://tech-studio.orchit.ai"
-      let domain = account.domain?.trim()
-      if (!domain) throw new Error('Invalid domain_link for company')
-
-      domain = domain.replace(/\/+$/, '')
-      if (!/^https?:\/\//i.test(domain)) {
-        domain = `https://${domain}`
-      }
-
-      // Extract the first label (subdomain slug) from the domain_link
-      // "https://tech-studio.orchit.ai" → "tech-studio"
-      let tenantSlug: string | null = null
-      try {
-        const parsedHost = new URL(domain).hostname
-        const parts = parsedHost.split('.')
-        if (parts.length >= 2) tenantSlug = parts[0]
-      } catch { /* ignore */ }
-
-      // 1. COOKIE FIRST — only storage that is readable across all *.orchit.ai subdomains
-      if (token) {
-        authStore.writeAuthCookie({
-          token,
-          company_id:    companyId,
-          personal_mode: null,
-        })
-      }
-
-      // 2. Store slug for auto-redirect when returning to root later
-      if (tenantSlug) {
-        localStorage.setItem('last_tenant_slug', tenantSlug)
-      }
-
-      // 3. Update Pinia store (also writes company_id to localStorage)
-      authStore.setCompany(companyId)
-
-      // 4. Set mid-switch guard so main.ts on root skips auto-redirect loop
-      //    sessionStorage is PER-ORIGIN, so on the subdomain it will be absent — correct.
-      sessionStorage.setItem('__mid_switch__', '1')
-
-      // 5. Build target URL
-      const theme = localStorage.getItem('theme') || 'light'
-      let targetUrl: string
-
-      if (isLocal) {
-        const port = window.location.port ? `:${window.location.port}` : ''
-        targetUrl = tenantSlug
-          ? `http://${tenantSlug}.localhost${port}/dashboard?theme=${theme}`
-          : `/dashboard?theme=${theme}`
-      } else {
-        targetUrl = `${domain}/dashboard?theme=${theme}`
-      }
-
-      console.log('🔀 Switching to company, redirecting to:', targetUrl)
-
-      setTimeout(() => { window.location.href = targetUrl }, 80)
-      return
-    }
-
-    // =========================
-    // 👤 SWITCH TO PERSONAL
-    // =========================
-    if (account.type === 'individual') {
-      // 1. Cookie first — personal_mode=true tells main.ts to stay on root
-      if (token) {
-        authStore.writeAuthCookie({
-          token,
-          company_id:    null,
-          personal_mode: true,
-        })
-      }
-
-      // 2. Clear ALL company state from localStorage
-      localStorage.removeItem('company_id')
-      localStorage.removeItem('company_name')
-      // CRITICAL: clear slug so main.ts will NOT auto-redirect back to tenant
-      localStorage.removeItem('last_tenant_slug')
-      localStorage.setItem('personal_mode', 'true')
-
-      // 3. Update Pinia store
+    if (pendingAccount.value.type === 'company') {
+      authStore.setCompany(pendingAccount.value.id)
+      await new Promise((res) => setTimeout(res, 100))
+      window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
+    } else {
       authStore.clearCompany()
-
-      // 4. Signal any in-page listeners
-      window.dispatchEvent(new CustomEvent('company-changed', { detail: null }))
-
-      // 5. Build root URL
-      const theme = localStorage.getItem('theme') || 'light'
-      const targetUrl = isLocal
-        ? `http://localhost${window.location.port ? ':' + window.location.port : ''}/dashboard?theme=${theme}`
-        : `https://orchit.ai/dashboard?theme=${theme}`
-
-      console.log('🔀 Switching to personal, redirecting to:', targetUrl)
-
-      setTimeout(() => { window.location.href = targetUrl }, 80)
-      return
+      await new Promise((res) => setTimeout(res, 100))
+      window.location.href = `${window.location.protocol}//stagging.streamed.space/dashboard`
     }
-
-  } catch (err) {
-    console.error('Account switch failed:', err)
+  } catch (e) {
     isSwitching.value = false
   }
 }
@@ -993,59 +894,23 @@ function onResizeIndicator() {
     rAF2 = null;
   });
 }
-
 onMounted(() => {
   if (route.query.stripePayment) {
     router.push({
-      path: '/settings',
-      query: { ...route.query, tab: 'billing' },
+      path: "/settings",
+      query: { ...route.query, tab: "billing" },
     });
   }
 
-  // Subdomain auto-switch (production only)
-  const hostname = window.location.hostname;
-  const isSubdomain =
-    (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
-    (hostname.endsWith('.localhost') && hostname !== 'localhost');
+  // ✅ Seed authStore from localStorage on every page load.
+  // We do NOT use the server's active_company_id because the server
+  // always returns a company ID regardless of the user's chosen mode.
+  const storedCompanyId = localStorage.getItem("company_id");
+  authStore.company_id = storedCompanyId ?? null;
 
-  if (isSubdomain && !authStore.company_id) {
-    const unwatch = watch(
-      () => profileData.value,
-      (profile) => {
-        if (!profile) return;
-
-        const companies: Company[] = profile.companies_list ?? [];
-        const matchingCompany = companies.find((c: Company) => {
-          const companyDomain = c.domain_link
-            .replace('https://', '')
-            .replace('http://', '');
-          return hostname === companyDomain || hostname.startsWith(companyDomain);
-        });
-
-        if (matchingCompany) {
-          const token = localStorage.getItem('token');
-          if (token) {
-            authStore.writeAuthCookie({
-              token,
-              company_id: matchingCompany._id,
-              personal_mode: null,
-            });
-          }
-          localStorage.removeItem('personal_mode');
-          localStorage.setItem('company_id', matchingCompany._id);
-          localStorage.setItem('company_name', matchingCompany.title);
-          authStore.setCompany(matchingCompany._id);
-        }
-
-        unwatch();
-      },
-      { immediate: true }
-    );
-  }
-
-  document.addEventListener('click', onClickOutside);
-  window.addEventListener('resize', onResize);
-  window.addEventListener('resize', onResizeIndicator);
+  document.addEventListener("click", onClickOutside);
+  window.addEventListener("resize", onResize);
+  window.addEventListener("resize", onResizeIndicator);
   nextTick(syncIndicatorToRoute);
 });
 

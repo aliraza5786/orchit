@@ -9,7 +9,6 @@ import Users from "../views/Workspaces/Users.vue";
 import api from "../libs/api";
 import type { AxiosError, AxiosResponse } from "axios";
 import ReleaseNote from "../views/ReleaseNote.vue";
-import { isRootDomain } from "../utilities/tenant";
 
 const Login = () => import("../views/Auth/Login.vue");
 const Register = () => import("../views/Auth/Register.vue");
@@ -145,56 +144,52 @@ const router = createRouter({
     return { top: 0, behavior: 'smooth' }
   },
 })
-// ✅ Fixed
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-  const auth = useAuthStore()
-
-  // only logout if token is truly invalid, not transient API failure
-  const hasToken = !!localStorage.getItem('token')
-
-  if (!hasToken) {
-    auth.logout()
-
-    const isLocalhost = window.location.hostname.endsWith('.localhost')
-    const loginUrl = isLocalhost
-      ? `http://localhost:${window.location.port || 3000}/login`
-      : 'https://orchit.ai/login'
-
-    window.location.href = loginUrl
-  }
-}
+      const auth = useAuthStore()
+      auth.logout()
+      router.replace({ name: 'Login' })
+    }
     return Promise.reject(error)
   }
 )
-router.afterEach((to) => {
-  if (!isRootDomain()) {
-    const excludedRoutes = ['Login', 'Register', 'Otp', 'ForgotPassword', 'ResetPassword', 'create-profile']
-    const isExcluded = excludedRoutes.includes(to.name as string)
 
-    if (!isExcluded && to.fullPath !== '/') {
-      localStorage.setItem('last_tenant_path', to.fullPath)
-      console.log('📍 Saved last tenant path:', to.fullPath)
-    }
-  }
-})
-// ─── Route guard ──────────────────────────────────────────────────────────────
+// ✅ Single beforeEach — merged both into one
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
-  const isLogoutRedirect = to.query.logout === 'true'
 
-  // ✅ FIX 1: Remove the 3s timeout race — it causes unauthenticated flash
-  // If bootstrap takes long, user gets bounced. Just await it properly.
+  // ✅ Bootstrap only once
   if (!auth.initialized) {
     await auth.bootstrap()
+  }
+
+  const hostname = window.location.hostname
+  let subdomain: string | null = null
+
+  if (hostname.endsWith('.streamed.space')) {
+    const sub = hostname.replace('.streamed.space', '')
+    if (sub && sub !== 'www' && sub !== 'stagging') {
+      subdomain = sub
+    }
+  } else if (hostname.endsWith('.localhost')) {
+    const sub = hostname.replace('.localhost', '')
+    if (sub && sub !== 'www') {
+      subdomain = sub
+    }
+  }
+
+  // ✅ On subdomain, unknown paths → go to dashboard
+  if (subdomain && to.name === 'NotFound') {
+    return next('/dashboard')
   }
 
   const requiresAuth = to.matched.some(
     (record) => record.meta.requiresAuth === true
   )
 
+  // ✅ Check token from auth_session cookie object first
   const session = (() => {
     try {
       const raw = document.cookie
@@ -209,29 +204,11 @@ router.beforeEach(async (to, _from, next) => {
   const hasToken = !!(session?.token ?? localStorage.getItem('token'))
 
   if (requiresAuth && !hasToken) {
-    if (!isRootDomain()) {
-      const isLocalhost = window.location.hostname.endsWith('.localhost')
-      const loginUrl = isLocalhost
-        ? `http://localhost:${window.location.port || 3000}/login`
-        : 'https://orchit.ai/login'
-      window.location.href = loginUrl
-      return
-    }
     return next({ name: 'Login' })
   }
 
-  if (to.name === 'Login' && hasToken && !isLogoutRedirect) {
+  if (to.name === 'Login' && hasToken) {
     return next({ name: 'Home' })
-  }
-
-  // ✅ FIX 2: On subdomain, if user lands on "/" redirect to last known path
-  // This prevents the blank "/" render when subdomain has no route at root
-  if (!isRootDomain() && to.path === '/') {
-    const lastPath = localStorage.getItem('last_tenant_path')
-    if (lastPath && lastPath !== '/') {
-      return next(lastPath)
-    }
-    return next('/dashboard')
   }
 
   next()

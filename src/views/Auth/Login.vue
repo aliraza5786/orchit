@@ -255,7 +255,7 @@ async function handleLoginSuccess(data: any) {
   authStore.initialized = false
   await authStore.bootstrap()
   localStorage.setItem("token", token)
-  authStore.writeAuthCookie({ token, company_id: null, personal_mode: null })
+  // authStore.writeAuthCookie({ token, company_id: null, personal_mode: null })
   const redirectPath = router.currentRoute.value.query.redirect as string
   if (redirectPath) {
     router.push(redirectPath)
