@@ -30,10 +30,10 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
 }
 
 if (
-  window.location.hostname === "streamed.space" ||
-  window.location.hostname.endsWith(".streamed.space")
+  window.location.hostname === "orchit.ai" ||
+  window.location.hostname.endsWith(".orchit.ai")
 ) {
-  document.domain = "streamed.space";
+  document.domain = "orchit.ai";
 } else if (window.location.hostname.endsWith(".localhost")) {
   try {
     document.domain = "localhost";
@@ -58,8 +58,8 @@ if (encodedToken) {
     localStorage.setItem("token", token);
     if (hostname === "localhost" || hostname.endsWith(".localhost")) {
       document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".streamed.space")) {
-      document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
+    } else if (hostname.endsWith(".orchit.ai")) {
+      document.cookie = `auth_token=${token}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
     }
   } catch (e) {
     console.error("❌ main.ts: Token decode failed:", e);
@@ -77,8 +77,8 @@ if (isPersonalMode) {
     const value = encodeURIComponent(JSON.stringify(cleaned));
     if (hostname === "localhost" || hostname.endsWith(".localhost")) {
       document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".streamed.space")) {
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
+    } else if (hostname.endsWith(".orchit.ai")) {
+      document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
     }
   }
 } else if (session?.company_id && localStorage.getItem("company_id")) {

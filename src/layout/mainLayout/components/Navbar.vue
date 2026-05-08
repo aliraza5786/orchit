@@ -748,7 +748,7 @@ async function confirmSwitch() {
     } else {
       authStore.clearCompany()
       await new Promise((res) => setTimeout(res, 100))
-      window.location.href = `${window.location.protocol}//stagging.streamed.space/dashboard`
+      window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
     }
   } catch (e) {
     isSwitching.value = false
