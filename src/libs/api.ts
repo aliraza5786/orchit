@@ -12,13 +12,24 @@ export const api: AxiosInstance = axios.create({
   headers: { "Content-Type": "application/json" },
   withCredentials: true, // ✅ CRITICAL: Allow cookies to be sent/received with requests
 });
-
-/** Auth token injector */
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+  const localToken = localStorage.getItem('token')
+  const cookieToken = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('auth_token='))
+    ?.split('=')[1] ?? null
+
+  const token = localToken || cookieToken
+
+  if (token) {
+if (cookieToken && localStorage.getItem('token') !== cookieToken) {
+  localStorage.setItem('token', cookieToken)
+}
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
+})
 
 /** Response / error interceptor */
 api.interceptors.response.use(

@@ -12,31 +12,52 @@ import {
 } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
-// import { MiniMap } from '@vue-flow/minimap'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import { useWorkspaceId } from '../../../composables/useQueryParams'
 
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
 import Button from '../../../components/ui/Button.vue'
-// import Loader from '../../../components/ui/Loader.vue'
 import type { EdgeUpdateEvent } from '@vue-flow/core'
 
-import { useTheme } from "../../../composables/useTheme";
-const { isDark } = useTheme();
+import { useTheme } from '../../../composables/useTheme'
+const { isDark } = useTheme()
 
 // --- Modal state for editing an existing transition (edge) ---
 const showEditEdgeModal = ref(false)
 const editEdgeName = ref('')
 const selectedEdgeId = ref<string | null>(null)
+import { shallowRef } from 'vue'
 
-const nodes = ref<VFNode[]>([])
-const edges = ref<VFEdge[]>([])
+const nodes = shallowRef<VFNode[]>([])
+const edges = shallowRef<VFEdge[]>([])
 
-/**
- *  
- * Tracks the flow diagram and generates status objects for Kanban statuses.
- */
+// ── Typed helpers ──────────────────────────────────────────────────────────────
+type SafeNode = {
+  id: string
+  data?: {
+    label?: string
+  }
+}
+
+type SafeEdge = {
+  id: string
+  source: string
+  target: string
+}
+
+// Explicit type predicate so filter() narrows to string[] not (string|undefined)[]
+function isString(v: unknown): v is string {
+  return typeof v === 'string'
+}
+
+// Typed shape for handleAddNode argument
+interface AddNodePayload {
+  name: string
+  status_name?: string
+  status_color?: string
+}
+
 const statusObjects = computed(() => {
   const filtered = (nodes.value as VFNode[]).filter((node: VFNode) => node.data?.label)
   return filtered.map((node, index) => {
@@ -56,7 +77,7 @@ const incomingEdges = (edges.value as VFEdge[]).filter((e: VFEdge) => e.target =
 
     return {
       _id: node.id,
-      status: node.data.label,
+      status: node.data?.label,
       sort_order: index + 1,
       position: index + 1,
       forward_moves: forwardMoves,
@@ -68,58 +89,70 @@ const incomingEdges = (edges.value as VFEdge[]).filter((e: VFEdge) => e.target =
   })
 })
 
- 
+const {
+  setNodes,
+  updateNode,
+  addEdges,
+  setEdges,
+  removeEdges,
+  removeNodes,           // ← added: was missing, needed for node deletion in watch
+  onNodesInitialized,
+  fitView,
+  updateNodeInternals,
+  addNodes,
+  getNodes,
+  getEdges,
+  zoomIn,
+  zoomOut,
+} = useVueFlow()
 
-const { setNodes, updateNode, addEdges, setEdges, removeEdges,  onNodesInitialized, fitView, updateNodeInternals, addNodes, getNodes, getEdges, zoomIn, zoomOut } = useVueFlow()
 // ---- API hooks ----
 const { workspaceId } = useWorkspaceId()
-const props = withDefaults(defineProps<{
-    processId?:any,
-    showTransitionLabels?:boolean,
-    workflowData?: any,
-    canEdit?: boolean,
-    canDelete?: boolean,
-    isSaving?: boolean
 
+const props = withDefaults(defineProps<{
+  processId?: any
+  showTransitionLabels?: boolean
+  workflowData?: any
+  canEdit?: boolean
+  canDelete?: boolean
+  isSaving?: boolean
 }>(), { canEdit: true })
 
 // ---- Helpers to normalize API -> VueFlow ----
 const initialized = ref(false)
-// Watch for prop-injected data
-watch(() => props.workflowData, async (data) => {
-     if (!data || initialized.value) return
-     if (props.isSaving) return
-        // Assuming data structure matches what we expect (nodes, edges) or the API response shape
-        // If it's the raw transition object, we might need to drill down
-        const fd = data.flow_diagram || data; // Adapt as needed based on API
-        
-        const incomingNodes = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
-        const incomingEdges = Array.isArray(fd.edges) ? fd.edges.map(mapApiEdge) : []
 
-        await nextTick()
-        setNodes(incomingNodes)
-        
-        onNodesInitialized(async () => {
-             incomingNodes.forEach((n: any) => updateNodeInternals(n.id))
-             setEdges(incomingEdges)
-             fitView({ padding: 0.5, maxZoom: 1 })
-        })
-        initialized.value = true
-    
+watch(() => props.workflowData, async (data) => {
+  if (!data || initialized.value) return
+  if (props.isSaving) return
+
+  const fd = data.flow_diagram || data
+
+  const incomingNodes: VFNode[] = Array.isArray(fd.nodes) ? fd.nodes.map(mapApiNode) : []
+  const incomingEdges: VFEdge[] = Array.isArray(fd.edges) ? fd.edges.map(mapApiEdge) : []
+
+  await nextTick()
+  setNodes(incomingNodes)
+
+ onNodesInitialized(async () => {
+  updateNodeInternals(incomingNodes.map(n => n.id))
+  setEdges(incomingEdges)
+  fitView({ padding: 0.5, maxZoom: 1 })
+})
+
+  initialized.value = true
 }, { immediate: true })
 
 
 function triggerSave() {
-    const payload = serializeWorkflowPayload()
-    emit('save', payload)
-}
-
-function saveWorkflow() {
-  const payload = serializeWorkflowPayload() 
+  const payload = serializeWorkflowPayload()
   emit('save', payload)
 }
 
-// ... expose triggerSave ...
+function saveWorkflow() {
+  const payload = serializeWorkflowPayload()
+  emit('save', payload)
+}
+
 defineExpose({ openCreateNodeModal, handleAddNode, saveWorkflow, triggerSave, handleConfirmEdit })
 
 function mapApiNode(n: any): VFNode {
@@ -129,21 +162,17 @@ function mapApiNode(n: any): VFNode {
     position: n.position,
     data: n.data,
     style: n.style,
-    // (optional) dimensions aren’t required by VueFlow; it will measure.
   }
 }
 
-// Replace your normalizeMarkerType with this:
 function normalizeMarkerType(t?: string): MarkerType {
   const key = (t ?? 'arrow').toLowerCase()
   if (key === 'arrow') return MarkerType.Arrow
   if (key === 'arrowclosed') return MarkerType.ArrowClosed
-  // add other mappings here if you use them; default to Arrow
   return MarkerType.Arrow
 }
 
 function mapApiEdge(e: any): VFEdge {
-  // Accept either snake_case or camelCase from API
   const marker = e.markerEnd || e.marker_end
   const style = e.style
 
@@ -160,19 +189,18 @@ function mapApiEdge(e: any): VFEdge {
     style: style ? { ...style, strokeWidth: Number(style.strokeWidth ?? 2) } : undefined,
     markerEnd: marker
       ? {
-        type: normalizeMarkerType(marker.type),
-        color: marker.color,
-        width: Number(marker.width ?? 18),
-        height: Number(marker.height ?? 18),
-      }
+          type: normalizeMarkerType(marker.type),
+          color: marker.color,
+          width: Number(marker.width ?? 18),
+          height: Number(marker.height ?? 18),
+        }
       : undefined,
   }
 }
 
-
-// ---- onConnect: ask for transition name first ----
+// ---- onConnect ----
 function onConnect(conn: Connection) {
-  if(!props.canEdit) return;
+  if (!props.canEdit) return
   pendingConnection.value = conn
   transitionName.value = ''
   showTransitionModal.value = true
@@ -185,16 +213,18 @@ function confirmTransition() {
   const name = transitionName.value.trim() || 'Transition'
   const id = `${conn.source}-${conn.target}-${crypto.randomUUID?.() ?? Math.random()}`
 
+  // Explicitly construct VFEdge — avoids spreading Connection onto VFEdge
   const payload: VFEdge = {
-    ...conn,
     id,
+    source: conn.source!,
+    target: conn.target!,
+    sourceHandle: conn.sourceHandle,
+    targetHandle: conn.targetHandle,
     type: 'step',
     label: name,
     data: { name },
     style: { stroke: '#1152de', strokeWidth: 2 },
     markerEnd: { type: MarkerType.Arrow, color: '#1152de', width: 18, height: 18 },
-    sourceHandle: conn.sourceHandle,
-    targetHandle: conn.targetHandle, 
   }
 
   addEdges(payload)
@@ -210,7 +240,6 @@ function cancelTransition() {
 }
 
 const defaultEdgeOptions: Partial<VFEdge> = {
-  // sharp/right-angle like Jira
   type: 'default',
   animated: false,
   style: { strokeWidth: 2 },
@@ -221,10 +250,9 @@ const defaultEdgeOptions: Partial<VFEdge> = {
     height: 18,
   },
   labelBgPadding: [6, 2],
-  labelBgBorderRadius: 6, 
-   updatable: true,
+  labelBgBorderRadius: 6,
+  updatable: true,
 }
-
 
 // --- Modal state for create & rename ---
 const showCreateModal = ref(false)
@@ -233,7 +261,13 @@ const showTransitionModal = ref(false)
 const transitionName = ref('')
 const pendingConnection = ref<Connection | null>(null)
 
-const emit = defineEmits(['edit:node', 'save', 'update:workflow', 'add:status', 'add:transition'])
+const emit = defineEmits<{
+  (e: 'edit:node', payload: any): void
+  (e: 'save', payload: any): void
+  (e: 'update:workflow', payload: any): void
+  (e: 'add:status'): void
+  (e: 'add:transition'): void
+}>()
 
 function openCreateNodeModal() {
   createName.value = ''
@@ -241,67 +275,67 @@ function openCreateNodeModal() {
 }
 
 function handleEditNode(nodeId: string, nodeData: any) {
-  const node = getNodes.value.find(n => n.id === nodeId) 
+  const node = getNodes.value.find(n => n.id === nodeId)
 
   if (node) {
     emit('edit:node', {
       id: nodeId,
       ...node.data,
-
       status_color: nodeData.status || '#6b7280'
     })
   }
 }
+
 function handleConfirmEdit(id: string, nodeData: any) {
   if (nodeData) {
     updateNode(id, n => ({
-      ...n, data: {
-        ...n.data, label: nodeData.name, status: nodeData.category,
-      }, style: { border: '2px solid #64748b', borderRadius: '8px', background: nodeData.status_color }
+      ...n,
+      data: {
+        ...n.data,
+        label: nodeData.name,
+        status: nodeData.category,
+      },
+      style: {
+        border: '2px solid #64748b',
+        borderRadius: '8px',
+        background: nodeData.status_color,
+      }
     }))
   }
-  nextTick();
-
+  nextTick()
 }
-// Add a brand-new independent node
-async function handleAddNode(e: any) {
-  const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
-  const id = makeId();
-  
-  // Get existing nodes excluding the add button
-  const currentNodes = getNodes.value.filter(n => n.type !== 'custom-add-icon');
-  
-  // Default start position
-  let targetX = 50;
-  let targetY = 150;
 
-  // If there are existing nodes, place the new one after the last one
+// Add a brand-new independent node
+async function handleAddNode(e: AddNodePayload) {
+  const makeId = () => crypto.randomUUID?.() ?? `n-${Date.now()}-${Math.random()}`
+  const id = makeId()
+
+  const currentNodes = getNodes.value.filter(n => n.type !== 'custom-add-icon')
+
+  let targetX = 50
+  let targetY = 150
+
   if (currentNodes.length > 0) {
-      // Find the right-most node
-      const lastNode = currentNodes.reduce((prev, current) => {
-          return current.position.x > prev.position.x ? current : prev;
-      }, currentNodes[0]);
-      
-      const PADDING_X = 300; // Space between nodes
-      targetX = lastNode.position.x + PADDING_X;
-      targetY = lastNode.position.y; // Keep alignment
+    const lastNode = currentNodes.reduce((prev, current) =>
+      current.position.x > prev.position.x ? current : prev
+    , currentNodes[0])
+
+    const PADDING_X = 300
+    targetX = lastNode.position.x + PADDING_X
+    targetY = lastNode.position.y
   }
 
-  // We use the calculated graph coordinates directly
   addNodes({
-      id,
-      position: { x: targetX, y: targetY },
-      data: { label: e.name, status: e.status_name },
-      style: { border: '2px solid #64748b', borderRadius: '8px', background: e.status_color },
+    id,
+    position: { x: targetX, y: targetY },
+    data: { label: e.name, status: e.status_name },
+    style: { border: '2px solid #64748b', borderRadius: '8px', background: e.status_color },
   })
 }
 
-
-function markerTypeToApi(t?: MarkerType | string) {
-  if (!t) return undefined
-  // VueFlow enum values stringify to names; also accept strings
+function markerTypeToApi(t?: MarkerType | string): string {
+  if (!t) return 'arrow'
   const key = String(t).toLowerCase()
-  // normalize common cases
   if (key.includes('arrowclosed')) return 'arrowclosed'
   if (key.includes('arrow')) return 'arrow'
   if (key.includes('circle')) return 'circle'
@@ -312,31 +346,37 @@ function markerTypeToApi(t?: MarkerType | string) {
 }
 
 function mapVFNodeToApi(n: VFNode) {
-  // Send what your GET returned under flow_diagram.nodes
   return {
     id: n.id,
     type: n.type ?? 'default',
     position: n.position,
-    // dimensions are optional; backend can store last known box if you want
     data: n.data,
     style: n.style,
   }
 }
 
 function mapVFEdgeToApi(e: VFEdge) {
-  // narrow markerEnd which is EdgeMarkerType (object | string | undefined)
   const m = e.markerEnd
-  const marker_end = m
-    ? (() => {
-      const mt = typeof m === 'string' ? m : (m as any).type
-      return {
-        type: markerTypeToApi(mt as MarkerType | string), // ← now safe
-        color: typeof m === 'string' ? undefined : (m as any).color,
-        width: typeof m === 'string' ? undefined : Number((m as any).width ?? 18),
-        height: typeof m === 'string' ? undefined : Number((m as any).height ?? 18),
-      }
-    })()
+
+  // Narrow marker_end cleanly with a proper type guard
+  type MarkerObj = { type?: string; color?: string; width?: number; height?: number }
+  const markerObj: MarkerObj | undefined = m
+    ? (typeof m === 'string'
+        ? { type: m }
+        : (m as MarkerObj))
     : undefined
+
+  const marker_end = markerObj
+    ? {
+        type: markerTypeToApi(markerObj.type as MarkerType | string),
+        color: markerObj.color,
+        width: Number(markerObj.width ?? 18),
+        height: Number(markerObj.height ?? 18),
+      }
+    : undefined
+
+  // Safe cast for style — CSSProperties is a subset of Record<string, any>
+  const styleRecord = e.style as Record<string, unknown> | undefined
 
   return {
     id: e.id,
@@ -347,41 +387,33 @@ function mapVFEdgeToApi(e: VFEdge) {
     target_handle: e.targetHandle,
     label: e.label,
     data: e.data,
-    style: e.style
-      ? { ...(e.style as Record<string, any>), strokeWidth: Number((e.style as any).strokeWidth ?? 2) }
+    style: styleRecord
+      ? { ...styleRecord, strokeWidth: Number(styleRecord.strokeWidth ?? 2) }
       : undefined,
-    marker_end,                 // ← use the narrowed value
+    marker_end,
     animated: !!e.animated,
   }
 }
 
-
 function serializeWorkflowPayload() {
-  const currentNodes = getNodes.value   // ✅ not getNodes()
-  const currentEdges = getEdges.value   // ✅ not getEdges()
+  const currentNodes = getNodes.value
+  const currentEdges = getEdges.value
 
   return {
     workspace_id: workspaceId.value,
     flow_diagram: {
-      nodes: currentNodes.filter((n) => n.type !== 'custom-add-icon').map(mapVFNodeToApi),
+      nodes: currentNodes.filter(n => n.type !== 'custom-add-icon').map(mapVFNodeToApi),
       edges: currentEdges.map(mapVFEdgeToApi),
     },
-    flow_metadata:statusObjects.value
+    flow_metadata: statusObjects.value
   }
 }
 
+// Safety net — intentionally left as no-op (async API calls can't run here)
+window.addEventListener('beforeunload', () => {})
 
-// Optional safety net when navigating away
-window.addEventListener('beforeunload', () => {
-    // We can't really save synchronousy here if it's an API call, 
-    // but we can trigger event.
-})
-
-
-function openEditEdge(edge: VFEdge) { 
-  
+function openEditEdge(edge: VFEdge) {
   selectedEdgeId.value = edge.id
-  // prefer existing label, fallback to data.name, else empty
   editEdgeName.value = String(edge.label ?? edge.data?.name ?? '')
   showEditEdgeModal.value = true
 }
@@ -390,7 +422,6 @@ function confirmEditEdge() {
   if (!selectedEdgeId.value) return
   const name = editEdgeName.value.trim()
 
-  // Update the edge’s label (and mirror into data.name to keep your API shape consistent)
   setEdges(eds =>
     eds.map(e =>
       e.id === selectedEdgeId.value
@@ -399,24 +430,21 @@ function confirmEditEdge() {
     )
   )
 
-  // reset modal
   showEditEdgeModal.value = false
   selectedEdgeId.value = null
   editEdgeName.value = ''
 }
-// delete edge
+
 function deleteSelectedEdge() {
   if (!selectedEdgeId.value) return
 
-  removeEdges([selectedEdgeId.value])
+  removeEdges([selectedEdgeId.value])  // ← was removeEdges(selectedEdgeId.value) — now array
 
-  // close modal + reset state
   showEditEdgeModal.value = false
   selectedEdgeId.value = null
   editEdgeName.value = ''
 }
 
-// reverse selection transition
 function reverseSelectedEdge() {
   if (!selectedEdgeId.value) return
 
@@ -450,22 +478,21 @@ function deleteStatus(nodeId: string) {
 
   selectedEdgeId.value = null
 }
+
 function confirmDeleteNode(nodeId: string) {
   const ok = window.confirm(
     'Are you sure you want to delete this status? All transitions will also be removed.'
   )
   if (!ok) return
-
   deleteStatus(nodeId)
 }
 
-// change transition direction by dragging and dropping
 function onEdgeUpdate(event: EdgeUpdateEvent) {
   const { edge, connection } = event
   if (!edge || !connection) return
 
-  setEdges(edges =>
-    edges.map(e =>
+  setEdges(eds =>
+    eds.map(e =>
       e.id === edge.id
         ? {
             ...e,
@@ -479,22 +506,18 @@ function onEdgeUpdate(event: EdgeUpdateEvent) {
   )
 }
 
-
-
-
 function cancelEditEdge() {
   showEditEdgeModal.value = false
   selectedEdgeId.value = null
   editEdgeName.value = ''
 }
-function onEdgeClick({event, edge}:{event:any, edge:any}) { 
-  
+
+function onEdgeClick({ event, edge }: { event: MouseEvent; edge: VFEdge }) {
   openEditEdge(edge)
   event.stopPropagation()
 }
 
-
-// zoom in zoom out
+// zoom in / out
 onMounted(() => {
   window.addEventListener('workflow:zoom', handleZoomEvent)
 })
@@ -504,15 +527,15 @@ onUnmounted(() => {
 })
 
 function handleZoomEvent(e: Event) {
-  const detail = (e as CustomEvent).detail
+  const detail = (e as CustomEvent<{ action: 'in' | 'out' | 'reset' }>).detail
   if (!detail) return
-  
+
   if (detail.action === 'in') zoomIn()
   if (detail.action === 'out') zoomOut()
   if (detail.action === 'reset') fitView({ padding: 0.12 })
 }
 
-// Ensure the "Add" button node is always after the last node
+// Keep the add-button node positioned after the last real node
 watch(
   [nodes, () => props.canEdit],
   ([newNodes, canEdit]) => {
@@ -566,10 +589,9 @@ watch(
   { deep: true, immediate: true }
 )
 
-function triggerAddStatus() { 
-  emit('add:status');
+function triggerAddStatus() {
+  emit('add:status')
 }
-
 </script>
 
 <template>
@@ -587,7 +609,7 @@ function triggerAddStatus() {
   :max-zoom="100"
   fit-view-on-init
   @connect="onConnect"
-  @edge-click="(e) => (canEdit ? onEdgeClick(e) : null)"
+  @edge-click="(e) => (canEdit ? onEdgeClick(e as any) : null)"
   @edge-update="(e) => (canEdit ? onEdgeUpdate(e) : null)"
   :edge-updater-radius="20" 
 >

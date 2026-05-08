@@ -103,6 +103,9 @@ export const markAllNotificationsRead = async () => {
 
 // ─── Composable ───────────────────────────────────────────────────────────────
 
+// -----------------------------
+// COMPOSABLE
+// -----------------------------
 export const useNotificationsQuery = (options = {}) => {
   const queryClient = useQueryClient()
   const authStore = useAuthStore()
