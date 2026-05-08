@@ -10,105 +10,22 @@ import ConfirmDeleteModal from '../../Product/modals/ConfirmDeleteModal.vue'
 import { toast } from 'vue-sonner'
 import { useQueryClient } from '@tanstack/vue-query'
 import ShareModal from '../../../layout/WorkspaceLayout/components/ShareModal.vue'
-import { useAuthStore } from '../../../stores/auth'
 const router = useRouter()
 const queryClient = useQueryClient()
-const authStore = useAuthStore()
+
 /* ------------ Column render helpers ------------ */
 const dateCache = new Map<string, string>()
 const getCachedDate = (dateStr: string) => {
     if (!dateCache.has(dateStr)) dateCache.set(dateStr, formatDate(dateStr))
     return dateCache.get(dateStr)!
 }
+
 const handleClick = (rowEvt: any) => {
-  const r = rowEvt.row
-  const jobId = r?.LatestTask?.job_id
-
-  if (jobId) localStorage.setItem('jobId', jobId)
-  else localStorage.removeItem('jobId')
-
-  const isLocalhost = window.location.hostname === 'localhost'
-
-  if (!isLocalhost && r?.company && r.company.domain_link) {
-    const domain = r.company.domain_link
-      .replace('https://', '')
-      .replace('http://', '')
-
-    const theme = localStorage.getItem('theme') || 'light'
-    const token = localStorage.getItem('token')
-
-    // ✅ If currently in personal mode, save intent so main domain
-    // can restore personal mode when user returns
-    const session = JSON.parse(
-      decodeURIComponent(
-        document.cookie
-          .split('; ')
-          .find(row => row.startsWith('auth_session='))
-          ?.split('=')[1] ?? 'null'
-      ) ?? 'null'
-    )
-    if (session?.personal_mode) {
-      authStore.savePersonalModeIntent()
-    }
-
-    // ✅ Write company context into cookie BEFORE redirecting
-    if (token) {
-      authStore.writeAuthCookie({
-        token,
-        company_id: r.company._id,
-        personal_mode: null
-      })
-    }
-
-    // ✅ Small delay so cookie persists before navigation
-    setTimeout(() => {
-      window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
-    }, 150)
-
-  } else {
-    // localhost fallback — also handle localhost subdomains
-    const hostname = window.location.hostname
-    const isLocalhostSubdomain = hostname.endsWith('.localhost')
-
-    if (isLocalhostSubdomain && r?.company && r.company.domain_link) {
-      // ✅ localhost subdomain support
-      const domain = r.company.domain_link
-        .replace('https://', '')
-        .replace('http://', '')
-        .replace('orchit.ai', 'localhost') // map production domain to localhost
-
-      const theme = localStorage.getItem('theme') || 'light'
-      const token = localStorage.getItem('token')
-
-      const session = JSON.parse(
-        decodeURIComponent(
-          document.cookie
-            .split('; ')
-            .find(row => row.startsWith('auth_session='))
-            ?.split('=')[1] ?? 'null'
-        ) ?? 'null'
-      )
-      if (session?.personal_mode) {
-        authStore.savePersonalModeIntent()
-      }
-
-      if (token) {
-        authStore.writeAuthCookie({
-          token,
-          company_id: r.company._id,
-          personal_mode: null
-        })
-      }
-
-      setTimeout(() => {
-        window.location.href = `${window.location.protocol}//${domain}/workspace/peak/${r._id}/${jobId || ''}?theme=${theme}`
-      }, 150)
-
-    } else {
-      // Pure localhost — internal routing, no cookie changes needed
-      router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
-    }
-  }
+    const r = rowEvt.row
+    const jobId = r?.LatestTask?.job_id
+    if (jobId) localStorage.setItem('jobId', jobId)
+    else localStorage.removeItem('jobId')
+    router.push(`/workspace/peak/${r?._id}/${jobId || ''}`)
 }
 const showInviteModal = ref(false)
 const selectedInvitingWorkspaceId = ref<string | number | undefined>(undefined)
@@ -243,56 +160,7 @@ const renderActions = ({ row }: any) => {
     ].filter(Boolean)
   )
 }
-const renderOrganization = ({ row }: any) => {
-  const company = row?.company
-  if (!company) return h('span', { class: 'text-text-secondary text-xs' }, '-----')
 
-  const getInitials = (name: string) =>
-    name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-
-  const getColorFromString = (str: string) => {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash)
-    }
-    return `hsl(${Math.abs(hash) % 360}, 60%, 50%)`
-  }
-
-  const goToDomain = (e: Event) => {
-    e.stopPropagation()
-    if (company.domain_link) {
-      const theme = localStorage.getItem('theme') || 'light'
-      window.location.href = `${company.domain_link}/dashboard?theme=${theme}`
-    }
-  }
-
-  const avatar = company.logo
-    ? h('img', {
-        src: company.logo,
-        alt: company.title,
-        class: 'h-6 w-6 rounded-full object-cover flex-shrink-0',
-        loading: 'lazy',
-        decoding: 'async',
-      })
-    : h('div', {
-        class: 'h-6 w-6 rounded-full flex items-center justify-center text-white text-[10px] font-medium flex-shrink-0',
-        style: { backgroundColor: getColorFromString(company.title) },
-      }, getInitials(company.title))
-
-  const title = h(
-    'span',
-    {
-      class: company.domain_link
-        ? 'text-sm text-text-primary hover:underline cursor-pointer truncate max-w-[120px]'
-        : 'text-sm text-text-primary truncate max-w-[120px]',
-      onClick: company.domain_link ? goToDomain : undefined,
-      title: company.domain_link ? `Go to ${company.domain_link}` : company.title,
-    },
-    company.title
-  )
-
-  return h('div', { class: 'flex items-center gap-2' }, [avatar, title])
-}
 const renderProject = ({ row, value }: any) =>
     h('div', { class: 'flex items-center gap-2' }, [
         row.logo
@@ -334,13 +202,7 @@ const renderCompanyPercentage = ({ row }: any) => {
   ])
 }
 const renderProjectType = ({ value }: any) =>
-  h(
-    'span',
-    { class: 'capitalize' },
-    value?.['workspace-type'] === 'team'
-      ? 'Organization'
-      : value?.['workspace-type'] || '-'
-  )
+    h('span', { class: 'capitalize' }, value?.['workspace-type'] || '-')
 
 const renderPeople = ({ row, value }: any) =>
     h('div', { class: 'flex items-center -space-x-3' }, [
@@ -408,15 +270,15 @@ function openShareModal(row: any) {
   showShareModal.value = true
 }
 
+/* ------------ Table columns ------------ */
 const columns = [
-  { key: 'variables',   label: 'Workspace',       render: renderProject,           width: '200px' },
-  { key: 'variables',   label: 'Workspace Type',   render: renderProjectType,       width: '150px' },
-  { key: 'People',      label: 'People',           render: renderPeople,            width: '120px' },
-  { key: 'created_at',  label: 'Start Date',       render: renderStartDate,         width: '100px' },
-  { key: 'organization',  label: 'Organization',     render: renderOrganization,       width: '150px' },
-  { key: 'admin',       label: 'Workspace Owner',  render: renderCompanyAdmin,      width: '180px' },
-  { key: 'percentage',  label: 'Percentage',       render: renderCompanyPercentage, width: '150px' },
-  { key: 'actions',     label: 'Actions',          render: renderActions,           align: 'right' as const, width: '50px' },
+    { key: 'variables', label: 'Project', render: renderProject, width: '300px' },
+    { key: 'variables', label: 'Project type', render: renderProjectType, width: '150px' },
+    { key: 'People', label: 'People', render: renderPeople, width: '120px' },
+    { key: 'created_at', label: 'Start Date', render: renderStartDate, width: '150px' },
+    { key: 'admin', label: 'Workspace Owner', render:  renderCompanyAdmin, width: '200px' },
+    { key: 'percentage', label: 'Percentage', render:  renderCompanyPercentage, width: '150px' },
+    { key: 'actions', label: 'Actions', render: renderActions, align: 'right' as const, width: '50px' },
 ]
 
 const props = defineProps({
@@ -425,10 +287,16 @@ const props = defineProps({
         default: 'all'
     }
 })
+
+/* ------------ Internal pagination + sort state ------------ */
 const page = ref(1)
 const pageSize = ref(10)
+
+/* ------------ Data fetching (server mode) ------------ */
+/** useWorkspaces must accept reactive { page, pageSize, sort } and refetch when they change */
 const { data, isPending } = useWorkspaces(page, pageSize, computed(() => props.filter))
 const isLoading = computed(() => isPending.value)
+/** Unwrap API shape: { workspaces: any[]; pagination: { totalCount: number } } */
 const items = computed(() => data.value?.workspaces ?? [])
 const totalCount = ref(0)
 console.log("workspaces list", items.value);
@@ -451,15 +319,14 @@ const emptyMessage = computed(() => {
 })
 </script>
 <template>
-    <Table
-      v-if="isLoading || items.length"
-      :columns="columns"
-      :rows="items"
-      :loading="isLoading"
-      :total="totalCount"
+    <Table 
+      :columns="columns" 
+      :rows="items" 
+      :loading="isLoading" 
+      :total="totalCount" 
       v-model:page="page"
-      v-model:pageSize="pageSize"
-      :pageSizes="[10, 20, 50, 100]"
+      v-model:pageSize="pageSize" 
+      :pageSizes="[10, 20, 50, 100]" 
       :rowClass="() => 'group'"
     >
         <template #status="{ row }">
@@ -482,7 +349,7 @@ const emptyMessage = computed(() => {
         </template>
     </Table>
 
-    <!-- ✅ Custom empty state — shown only when not loading and no data -->
+    <!-- ✅ Empty state — shows after loading completes with no data -->
     <div
       v-if="!isLoading && !items.length"
       class="flex flex-col items-center justify-center gap-3 py-20 text-center"
@@ -508,16 +375,16 @@ const emptyMessage = computed(() => {
       :modulesAndUsersLoading="isModulesAndUsersPending"
       @shared="queryClient.invalidateQueries({ queryKey: ['workspaces'] })"
     />
-    <ConfirmDeleteModal
-        v-model="showDeleteConfirm"
-        title="Delete Workspace"
+    <ConfirmDeleteModal 
+        v-model="showDeleteConfirm" 
+        title="Delete Workspace" 
         :item-label="'workspace'"
-        :item-name="workspaceToAction?.variables?.title || 'this workspace'"
-        :require-match-text="workspaceToAction?.variables?.title || ''"
+        :item-name="workspaceToAction?.variables?.title || 'this workspace'" 
+        :require-match-text="workspaceToAction?.variables?.title || ''" 
         :loading="isDeleting"
-        confirm-text="Delete Workspace"
-        size="md"
-        @confirm="onConfirmDelete"
+        confirm-text="Delete Workspace" 
+        size="md" 
+        @confirm="onConfirmDelete" 
         @cancel="showDeleteConfirm = false"
     >
         <template #message>

@@ -1089,9 +1089,6 @@ async function sendInvites(skip = false) {
 
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)
-  if (token) {
-    authStore.writeAuthCookie({ token })
-  }
   const encodedToken = token
     ? btoa(token).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
     : ''
