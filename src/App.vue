@@ -28,7 +28,23 @@ onMounted(async () => {
   }
   if (token || companyId || theme) {
     window.history.replaceState({}, '', window.location.pathname)
-  }
+  }else {
+  // ✅ Read token from cookie and save to localStorage for this subdomain
+  const cookieRaw = document.cookie
+    .split('; ')
+    .find(row => row.startsWith('space_auth='))
+    ?.split('=')[1]
+
+  if (cookieRaw) {
+    try {
+      const session = JSON.parse(decodeURIComponent(cookieRaw))
+      if (session?.token) {
+        localStorage.setItem('token', session.token)
+      }
+    } catch (e) {
+      console.error('❌ Failed to parse space_auth cookie:', e)
+    }
+  }}
   await authStore.bootstrap()
 })
 </script>
