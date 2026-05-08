@@ -733,31 +733,32 @@
                         "
                         v-html="formatOverlay(editText)"
                       ></div>
-                      <textarea
-                        :ref="
-                          (el) => {
-                            if (el) editCommentTextareas[c._id] = el;
-                          }
-                        "
-                        v-model="editText"
-                        rows="3"
-                        @scroll="(e) => syncScroll(e, c._id)"
-                        @input="(e) => handleCommentInput(e, c._id)"
-                        @keydown="(e) => handleCommentKeydown(e, c._id)"
-                        @blur="handleCommentBlur"
-                        class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
-                        style="
-                          font-family:
-                            Inter,
-                            system-ui,
-                            -apple-system,
-                            sans-serif;
-                          line-height: 1.5;
-                          letter-spacing: normal;
-                          font-weight: 400;
-                          -webkit-font-smoothing: antialiased;
-                        "
-                      />
+                        <textarea
+                          :ref="
+                            (el) => {
+                              if (el) editCommentTextareas[c._id] = el;
+                            }
+                          "
+                          v-model="editText"
+                          rows="3"
+                          spellcheck="false"
+                          @scroll="(e) => syncScroll(e, c._id)"
+                          @input="(e) => handleCommentInput(e, c._id)"
+                          @keydown="(e) => handleCommentKeydown(e, c._id)"
+                          @blur="handleCommentBlur"
+                          class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                          style="
+                            font-family:
+                              Inter,
+                              system-ui,
+                              -apple-system,
+                              sans-serif;
+                            line-height: 1.5;
+                            letter-spacing: normal;
+                            font-weight: 400;
+                            -webkit-font-smoothing: antialiased;
+                          "
+                        />
                     </div>
                     <div class="flex items-center gap-2 justify-end">
                       <Button variant="secondary" size="sm" @click="cancelEdit"
@@ -853,6 +854,7 @@
                     :disabled="!canCreateComment"
                     v-model="newComment"
                     rows="3"
+                    spellcheck="false"
                     @scroll="(e) => syncScroll(e, 'new')"
                     @input="(e) => handleCommentInput(e, 'new')"
                     @keydown="(e) => handleCommentKeydown(e, 'new')"
@@ -935,64 +937,87 @@
             </section>
 
             <!-- TAB: Attachment -->
-            <section v-else key="tab-attachments" class="space-y-3">
-              <div class="text-xs text-text-secondary">
-                Files attached to this {{ details?.type ?? "item" }}.
+            <section v-else key="tab-attachments" class="space-y-6">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+                  Files attached to this {{ details?.type ?? "item" }}
+                </div>
+                <div class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-orchit-white/10">
+                  {{ attachments.length }} files
+                </div>
               </div>
 
-              <div class="grid sm:grid-cols-2 gap-4">
+              <div v-if="attachments.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div
                   v-for="file in attachments"
                   :key="file._id"
-                  class="rounded-2xl overflow-hidden border border-orchit-white/10 bg-orchit-white/5 hover:bg-orchit-white/8 transition group"
+                  class="group relative flex flex-col flex-wrap rounded-xl border border-orchit-white/10 bg-orchit-white/5 hover:bg-orchit-white/8 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
                 >
-                  <div class="p-3">
-                    <div
+                  <!-- Preview Area -->
+                  <div class="aspect-[16/10] w-full relative rounded-t-xl overflow-hidden bg-bg-surface">
+                    <img
                       v-if="file.kind === 'image'"
-                      class="rounded-lg overflow-hidden"
-                    >
-                      <img
-                        :src="file.url"
-                        class="w-full h-40 object-cover group-hover:scale-[1.02] transition"
-                      />
-                    </div>
-                    <div
+                      :src="file.url"
+                      class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <video
                       v-else-if="file.kind === 'video'"
-                      class="rounded-lg overflow-hidden"
-                    >
-                      <video
-                        :src="file.url"
-                        controls
-                        class="w-full h-40 object-cover"
-                      ></video>
-                    </div>
+                      :src="file.url"
+                      class="w-full h-full object-cover"
+                    ></video>
                     <div
                       v-else
-                      class="h-40 rounded-lg bg-black/5 grid place-items-center"
+                      class="w-full h-full flex items-center justify-center bg-bg-surface"
                     >
-                      <i
-                        class="fa-regular fa-file text-3xl text-text-secondary"
-                      ></i>
-                    </div>
-                    <div class="mt-3">
-                      <div class="font-medium truncate">{{ file.name }}</div>
-                      <div class="text-xs text-text-secondary capitalize">
-                        {{ file.kind }}
+                      <div class="relative">
+                        <i v-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-4xl text-red-400 opacity-80"></i>
+                        <i v-else-if="file.name.match(/\.(doc|docx)$/i)" class="fa-regular fa-file-word text-4xl text-blue-400 opacity-80"></i>
+                        <i v-else-if="file.name.match(/\.(xls|xlsx)$/i)" class="fa-regular fa-file-excel text-4xl text-green-400 opacity-80"></i>
+                        <i v-else class="fa-regular fa-file-lines text-4xl text-text-secondary opacity-60"></i>
                       </div>
                     </div>
+
+                    <!-- Type Badge -->
+                    <div class="absolute top-3 left-3 px-2 py-1 bg-bg-body backdrop-blur-md rounded-lg text-[9px] font-bold text-text-primary uppercase tracking-tighter border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {{ file.kind }}
+                    </div>
                   </div>
-                  <div class="p-3 pt-0">
-                    <a
-                      :href="file.url"
-                      target="_blank"
-                      rel="noopener"
-                      class="w-full inline-flex items-center justify-center gap-2 h-9 rounded-lg bg-accent text-orchit-white text-sm hover:opacity-90 transition"
-                    >
-                      <i class="fa-regular fa-arrow-up-right-from-square"></i>
-                      View
-                    </a>
+
+                  <!-- Info Area -->
+                  <div class="p-3.5 flex flex-col flex-1">
+                    <div class="font-medium text-sm text-text-primary truncate mb-1" :title="file.name">
+                      {{ file.name }}
+                    </div>
+                    <div class="flex items-center justify-between mt-auto pt-2">
+                      <div class="flex flex-col gap-0.5 min-w-0">
+                        <span v-if="file.author" class="text-[10px] text-text-secondary truncate opacity-80">
+                          By {{ file.author }}
+                        </span>
+                        <span v-if="file.date" class="text-[9px] text-text-secondary opacity-60">
+                          {{ new Date(file.date).toLocaleDateString() }}
+                        </span>
+                      </div>
+                      <a
+                        :href="file.url"
+                        target="_blank"
+                        rel="noopener"
+                        class="flex items-center justify-center w-8 h-8 rounded-[6px] bg-accent/10 hover:bg-accent text-accent hover:text-white transition-all duration-200 border border-accent/20"
+                        title="View Full File"
+                      >
+                        <i class="fa-regular fa-external-link text-xs"></i>
+                      </a>
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- Empty State -->
+              <div v-else class="py-12 flex flex-col items-center justify-center border border-dashed border-orchit-white/10 rounded-3xl bg-orchit-white/2">
+                <div class="w-16 h-16 rounded-2xl bg-orchit-white/5 flex items-center justify-center mb-4">
+                  <i class="fa-regular fa-folder-open text-2xl text-text-secondary opacity-40"></i>
+                </div>
+                <div class="text-sm font-medium text-text-primary">No attachments found</div>
+                <div class="text-xs text-text-secondary mt-1">Files from comments will appear here</div>
               </div>
             </section>
           </Transition>
@@ -1604,6 +1629,7 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
       });
       queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
+      queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
     },
     onSuccess: () => {
       toast.success("Comment posted successfully");
@@ -2006,6 +2032,7 @@ const { mutate: updateComment, isPending: isUpdatingComment } =
       editingId.value = null;
       editText.value = "";
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
+      queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
       queryClient.invalidateQueries({
         queryKey: ["comments", props.details._id],
       });
@@ -2089,12 +2116,30 @@ const { mutate: deleteComment, isPending: isDeletingComment } =
       });
       queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
+      queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
     },
   });
 
 function beginEdit(c: any) {
   editingId.value = c._id;
-  editText.value = c.comment_text ?? "";
+  currentMentions.value = [];
+
+  let text = c.comment_text ?? "";
+  const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+  let match;
+  while ((match = mentionRegex.exec(text)) !== null) {
+    const [_, name, id] = match;
+    const user = workspaceRoles.value?.find(
+      (u: any) => u._id === id || u.id === id,
+    );
+    currentMentions.value.push({
+      name,
+      id,
+      email: user?.email || "",
+    });
+  }
+
+  editText.value = text.replace(mentionRegex, "@$1");
   editAttachments.value = [...(c.attachments || [])];
 }
 function cancelEdit() {
@@ -2102,6 +2147,7 @@ function cancelEdit() {
   editText.value = "";
   editAttachments.value = [];
   editingTitle.value = false;
+  currentMentions.value = [];
 }
 function saveEdit(c: any) {
   let text = editText.value.trim();
@@ -2142,6 +2188,7 @@ function saveEdit(c: any) {
         cancelEdit();
         currentMentions.value = [];
         queryClient.invalidateQueries({ queryKey: ["product-card"] });
+        queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
       },
     },
   );
@@ -2167,15 +2214,27 @@ function removeComment(c: any) {
   );
 }
 const attachments = computed(() => {
-  return cardDetails.value?.attachments.map((f: any) => ({
-    _id: f._id ?? f.id ?? crypto.randomUUID?.() ?? Math.random(),
+  const cardFiles = cardDetails.value?.attachments || [];
+  const commentFiles = (cardDetails.value?.comments || []).flatMap((c: any) =>
+    (c.attachments || []).map((a: any) => ({
+      ...a,
+      author: c.commented_by?.u_full_name,
+      date: c.created_at,
+    }))
+  );
+
+  const all = [...cardFiles, ...commentFiles];
+  // Deduplicate by URL
+  const unique = Array.from(new Map(all.map((item: any) => [item.url, item])).values());
+
+  return unique.map((f: any) => ({
+    _id: f._id ?? f.id ?? Math.random().toString(36).substr(2, 9),
     name: f.name ?? f.filename ?? "file",
     url: f.url,
-    kind: (f.type ?? f.kind ?? "").toLowerCase().includes("image")
-      ? "image"
-      : (f.type ?? f.kind ?? "").toLowerCase().includes("video")
-        ? "video"
-        : "file",
+    author: f.author,
+    date: f.date,
+    kind: f.url.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i) ? "image" :
+          f.url.match(/\.(mp4|webm|ogg)$/i) ? "video" : "file"
   }));
 });
 const moveCard = useMoveCard({
@@ -2304,7 +2363,7 @@ function uploadSingleFile(file: File) {
         item.loading = false;
         item.data = res.data;
       }
-      queryClient.invalidateQueries({ queryKey: ["product-card"] });
+      queryClient.invalidateQueries({ queryKey: ["cardDetail", propsID.value] });
     },
     onError: () => {
       removeAttachment(tempId);
@@ -2446,7 +2505,8 @@ const { mutate: updateVariable } = useUpdateVar();
  * This avoids repeating the same filtering/mapping logic.
  */
 function broadUpdateVariables(transformer: (vars: any[]) => any[]) {
-  const queryKeys = [["cardDetail"], ["product-card"]];
+  const queryKeys = [["cardDetail"], ["product-card"]]; 
+
 
   // 1. Update card specific caches
   queryKeys.forEach((key) => {

@@ -97,6 +97,7 @@ const routes: RouteRecordRaw[] = [
   { path: "/finish-profile", name: "finishProfile", component: FinishProfile, meta: { requiresAuth: true } },
   { path: "/workspace-invite/:token", name: "workspaceInvite", component: WorkspaceInvite, meta: { requiresAuth: false } },
   { path: "/space-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
+  { path: "/company-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
   { path: "/company-join/:token", name: "companyjoin", component: companyJoin, meta: { requiresAuth: false } },
   { path: "/join-as-owner/:token/:action", name: "joinAsOwner", component: joinAsOwner, meta: { requiresAuth: false } },
   {

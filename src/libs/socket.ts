@@ -1,19 +1,33 @@
 // libs/socket.ts
 import { io, Socket } from "socket.io-client";
-
 const API_BASE_URL = import.meta.env.VITE_SOCKET_IO_URL;
-
 let _socket: Socket | null = null;
+
+function getCookie(name: string) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+
+  if (parts.length === 2) {
+    return parts.pop()?.split(";").shift();
+  }
+
+  return null;
+}
 
 export function getSocket(): Socket {
   if (!_socket) {
-    const token = localStorage.getItem("token");
-    console.log("🔌 Creating socket — token present:", !!token, "| URL:", API_BASE_URL);
-    
+    const token = localStorage.getItem("token") || getCookie("space_auth"); // Try localStorage first, then fallback to cookie
+    console.log(
+      "🔌 Creating socket — token present:",
+      !!token,
+      "| URL:",
+      API_BASE_URL,
+    );
+
     _socket = io(API_BASE_URL, {
       transports: ["websocket"],
       withCredentials: true,
-      autoConnect: false,           // ✅ KEY FIX: don't connect until we call .connect()
+      autoConnect: false, // KEY FIX: don't connect until we call .connect()
       auth: { token: token ?? undefined },
     });
 
@@ -65,7 +79,7 @@ export function resetSocket() {
 class WSService {
   initializeSocket() {
     console.log("📡 initializeSocket() called");
-    connectSocket();              // ✅ explicit connect — not implicit at creation
+    connectSocket(); // ✅ explicit connect — not implicit at creation
   }
 
   emit(event: string, data?: any, cb?: Function) {

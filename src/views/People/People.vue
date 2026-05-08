@@ -497,6 +497,7 @@
 
 <script setup lang="ts">
 import { h, defineAsyncComponent, ref, watch, onMounted, computed} from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useRouteIds } from "../../composables/useQueryParams";
 import Draggable from "vuedraggable";
 import { useWorkspaceRoles, usePeopleVar } from "../../queries/usePeople";
@@ -580,6 +581,8 @@ const { canCreateVariable, canInviteUser, canCreateCard } = usePermissions();
 const sidePanelStore = useSidePanelStore();
 const peopleStore = usePeopleStore();
 const agentStore = useAgentStore();
+const route = useRoute();
+const router = useRouter();
 const { workspaceId } = useRouteIds(); 
 const workspaceStore = useWorkspaceStore();
 const currentTab = ref("talent"); 
@@ -1469,6 +1472,28 @@ watch(currentTab, (tab) => {
     selectAgentHandler(null); // or showAgentPanel.value = false
   }
 });
+
+// Handle deep link to user profile via query param
+watch(
+  [() => route.query.user_id, () => localList.value],
+  ([userId, list]) => {
+    if (userId && list && list.length > 0) {
+      const allCards = list.flatMap((col: any) => col.cards || []);
+      const card = allCards.find((c: any) => c._id === userId);
+
+      if (card) {
+        currentTab.value = "talent";
+        handleClickTicket(card);
+        
+        // Clean up URL
+        const query = { ...route.query };
+        delete query.user_id;
+        router.replace({ query });
+      }
+    }
+  },
+  { immediate: true }
+);
 </script>
 
 <style scoped>
