@@ -445,17 +445,6 @@
                       <span>Account settings</span>
                     </button>
                   </li>
-                   <li>
-                    <button
-                      class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
-                      role="menuitem"
-                      type="button"
-                      @click="openOrgSetup"
-                    >
-                      <i class="fa-regular fa-buildings"></i>
-                      <span>Organization setup</span>
-                    </button>
-                  </li>
                   <!-- Theme submenu -->
                   <li
                     class="relative cursor-pointer"
@@ -663,10 +652,7 @@ function handleUgrade() {
   router.push(`/settings?tab=billing&stripePayment=${true}`);
   workspaceStore.setLimitExccedModal(false);
 }
-function openOrgSetup() {
-  closeMenu()
-  router.push('/settings?tab=org-setup')
-}
+
 function handleLogoClick() {
   const token = localStorage.getItem('token')
   if (!token) {
@@ -748,7 +734,7 @@ async function confirmSwitch() {
     } else {
       authStore.clearCompany()
       await new Promise((res) => setTimeout(res, 100))
-      window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
+      window.location.href = `${window.location.protocol}//stagging.streamed.space/dashboard`
     }
   } catch (e) {
     isSwitching.value = false
@@ -836,13 +822,13 @@ async function handleLogout() {
 
     const hostname = window.location.hostname;
     const isSubdomain =
-      (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+      (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') ||
       (hostname.endsWith('.localhost') && hostname !== 'localhost');
 
     if (isSubdomain) {
       // ✅ Redirect to main domain login with logout flag
       const protocol = window.location.protocol;
-      const baseDomain = hostname.endsWith('.localhost') ? 'localhost' : 'orchit.ai';
+      const baseDomain = hostname.endsWith('.localhost') ? 'localhost' : 'streamed.space';
       // Add logout flag to prevent auto-auth on login page
       window.location.href = `${protocol}//${baseDomain}/login?logout=true`;
     } else {
@@ -854,7 +840,7 @@ async function handleLogout() {
     // ✅ Still redirect even if something fails
     const hostname = window.location.hostname;
     const protocol = window.location.protocol;
-    window.location.href = `${protocol}//${hostname === 'orchit.ai' ? 'orchit.ai' : 'orchit.ai'}/login`;
+    window.location.href = `${protocol}//${hostname === 'streamed.space' ? 'streamed.space' : 'streamed.space'}/login`;
   }
 }
 

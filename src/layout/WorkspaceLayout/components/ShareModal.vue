@@ -802,25 +802,6 @@ const selectionPayload = computed(() => {
 // ─── Submit ───────────────────────────────────────────────────────────────────
 const { mutate: shareResource, isPending: isSharing } = useShareResource();
 
-  const selectedModuleIds = [...selectedModules.value]
-  const selectedSheetIds = [...selectedSheets.value]
-
-  const isAllModules =
-    allModuleIds.length > 0 &&
-    selectedModuleIds.length === allModuleIds.length
-
-  const isAllSheets =
-    allSheetIds.length > 0 &&
-    selectedSheetIds.length === allSheetIds.length
-
-  return {
-    hasModules: selectedModuleIds.length > 0,
-    hasSheets: selectedSheetIds.length > 0,
-
-    modules: isAllModules ? 'all' : selectedModuleIds,
-    sheets: isAllSheets ? 'all' : selectedSheetIds,
-  }
-})
 function submit() {
   if (!canSubmit.value || isSharing.value) return;
 

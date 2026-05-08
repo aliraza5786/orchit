@@ -4,17 +4,6 @@ import { useApiMutation, useApiQuery } from "../libs/vq";
 import { useQuery } from "@tanstack/vue-query";
 import { unref, computed, ref } from "vue";
 import api from "../libs/api";
-import { ref, computed } from "vue"
-const companyId = ref(localStorage.getItem("company_id"))
-export const useCompany = () => {
-  const setCompanyId = (id: string) => {
-    localStorage.setItem("company_id", id)
-    companyId.value = id
-  }
-
-  return { companyId, setCompanyId }
-}
-
 // ---------------------------------------------
 // Company state (localStorage only)
 // ---------------------------------------------
