@@ -277,7 +277,7 @@
         >
           <div
             v-if="showCreateModal"
-            class="w-full max-w-md bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden"
+            class="w-full max-w-xl bg-bg-body rounded-xl border border-border shadow-2xl overflow-hidden"
           >
             <!-- Modal header -->
             <div class="px-6 py-5 border-b border-border/50 flex items-center justify-between">
@@ -445,7 +445,7 @@
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         @click.self="closeEditModal"
       >
-        <div class="w-full max-w-md bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
+        <div class="w-full max-w-lg bg-bg-body rounded-2xl border border-border shadow-2xl overflow-hidden">
           <!-- Header -->
           <div class="px-6 py-5 border-b border-border/50 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -565,7 +565,7 @@
         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
         @click.self="showDeactivateConfirm = false"
       >
-        <div class="w-full max-w-sm bg-bg-body rounded-2xl border border-border shadow-2xl p-6">
+        <div class="w-full max-w-lg bg-bg-body rounded-2xl border border-border shadow-2xl p-6">
           <div class="w-12 h-12 rounded-full bg-red-500/15 flex items-center justify-center mx-auto mb-4">
             <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
           </div>

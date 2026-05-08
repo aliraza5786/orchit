@@ -12,9 +12,9 @@ import { queryClient } from "./libs/queryClient"
 import { initThemeImmediately } from "./composables/useTheme"
 import { createHead } from "@vueuse/head"
 import vue3GoogleLogin from "vue3-google-login"
-import vTooltip from "./directives/vTooltip"
-import { isRootDomain } from "./utilities/tenant"
-
+import vTooltip from "./directives/vTooltip" 
+import { isRootDomain, buildTenantUrl } from "./utilities/tenantRedirect"
+import { isLocalhost } from "./utilities/tenantRedirect"
 // ─────────────────────────────────────────────────────────────────────────────
 // COOKIE CONFIG
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,41 +61,29 @@ function writeAuthCookie(data: Record<string, any>) {
     document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SMART TENANT REDIRECT (ROOT ONLY)
-// ─────────────────────────────────────────────────────────────────────────────
-
 function redirectToTenantIfNeeded(): boolean {
   if (!isRootDomain()) return false
+  if (isLocalhost()) return false
 
   const session = getAuthCookie()
-
-  // no login → stay root
   if (!session?.token) return false
 
-  // personal mode → stay root
-  if (session?.personal_mode) return false
+  // ✅ Only respect personal_mode if there's no company_id in cookie
+  // If cookie has company_id, user explicitly navigated to a tenant — redirect them
+  if (session?.personal_mode && !session?.company_id) return false
 
   const tenantSlug = localStorage.getItem("last_tenant_slug")
   if (!tenantSlug) return false
 
-  const isLocalhost = hostname === "localhost"
-  const baseDomain = isLocalhost ? "localhost" : "orchit.ai"
-  const protocol = isLocalhost ? "http" : "https"
+  // ✅ Validate slug format
+  if (!/^[a-z0-9-]+$/.test(tenantSlug)) return false
 
-  const targetUrl =
-    `${protocol}://${tenantSlug}.${baseDomain}` +
-    window.location.pathname +
-    window.location.search
-
-  console.log("🔀 Redirecting to tenant:", targetUrl)
-
-  window.location.href = targetUrl
+  window.location.href = buildTenantUrl(
+    tenantSlug,
+    window.location.pathname + window.location.search
+  )
   return true
 }
-
-// ⛔ STOP BOOTSTRAP IF REDIRECTING
 if (redirectToTenantIfNeeded()) {
   throw new Error("Redirecting to tenant...")
 }
@@ -136,27 +124,13 @@ if (encodedToken) {
     console.error("Token decode failed:", e)
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// SESSION SYNC (FIXED — NO MORE WRONG DASHBOARD RESET)
-// ─────────────────────────────────────────────────────────────────────────────
-
+// REPLACE the entire session sync block
 const session = getAuthCookie()
 
 if (isRootDomain()) {
-  // ROOT DOMAIN = always clean tenant state
   localStorage.removeItem("company_id")
-
-  if (session?.token) {
-    writeAuthCookie({
-      token: session.token,
-      company_id: null,
-      personal_mode: true,
-    })
-  }
-
 } else {
-  // SUBDOMAIN = restore company context ONLY
+  // SUBDOMAIN — restore company context
   if (session?.company_id) {
     localStorage.setItem("company_id", session.company_id)
   }

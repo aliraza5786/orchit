@@ -699,23 +699,11 @@ const companyAccounts = computed<Account[]>(() =>
     type: "company",
   })),
 );
-
-// FIX 1: currentAccount is now reactive to authStore.company_id changes.
-// Previously it used a stale value; now it re-computes whenever the store updates.
 const currentAccount = computed<Account>(() => {
-  // Force reactivity on authStore.company_id by reading it directly
-  const activeId = authStore.company_id;
-  const isPersonalMode = localStorage.getItem('personal_mode') === 'true';
-
-  // If explicitly in personal mode or no activeId, return personal
-  if (isPersonalMode || !activeId) return personalAccount.value;
-
-  return (
-    companyAccounts.value.find((c) => c.id === activeId) ??
-    personalAccount.value
-  );
-});
-
+  const activeId = authStore.company_id
+  if (!activeId) return personalAccount.value
+  return companyAccounts.value.find((c) => c.id === activeId) ?? personalAccount.value
+})
 // ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
@@ -996,23 +984,6 @@ onMounted(() => {
       path: '/settings',
       query: { ...route.query, tab: 'billing' },
     });
-  }
-
-  // FIX 1: Respect personal_mode before restoring company
-  const isPersonalMode = localStorage.getItem('personal_mode') === 'true';
-
-  if (isPersonalMode) {
-    localStorage.removeItem('company_id');
-    localStorage.removeItem('company_name');
-    authStore.clearCompany();
-  } else {
-    const storedCompanyId = localStorage.getItem('company_id');
-    // FIX 1: Use setCompany so store is reactive, not direct assignment
-    if (storedCompanyId) {
-      authStore.setCompany(storedCompanyId);
-    } else {
-      authStore.clearCompany();
-    }
   }
 
   // Subdomain auto-switch (production only)
