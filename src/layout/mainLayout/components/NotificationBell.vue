@@ -98,7 +98,7 @@
           <p class="text-xs font-bold text-text-secondary uppercase tracking-wider">Additional Information</p>
           <div class="grid grid-cols-1 gap-2">
              <div v-for="(value, key) in selectedNotification.metaData" :key="key" class="flex justify-between text-xs py-1 border-b border-border/20 last:border-0">
-                <span class="text-text-secondary capitalize">{{ key.replace(/_/g, ' ') }}:</span>
+                <span class="text-text-secondary capitalize">{{ key.toString().replace(/_/g, ' ') }}:</span>
                 <span class="text-text-primary font-medium">{{ value }}</span>
              </div>
           </div>
