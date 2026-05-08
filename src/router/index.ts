@@ -189,19 +189,17 @@ router.beforeEach(async (to, _from, next) => {
     (record) => record.meta.requiresAuth === true
   )
 
-  // ✅ Check token from auth_session cookie object first
-  const session = (() => {
-    try {
-      const raw = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('auth_session='))
-        ?.split('=')[1]
-      if (!raw) return null
-      return JSON.parse(decodeURIComponent(raw))
-    } catch { return null }
-  })()
-
-  const hasToken = !!(session?.token ?? localStorage.getItem('token'))
+const hasToken = !!((() => {
+  try {
+    const raw = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('space_auth='))
+      ?.split('=')[1]
+    if (!raw) return null
+    const session = JSON.parse(decodeURIComponent(raw))
+    return session?.token ?? null
+  } catch { return null }
+})() ?? localStorage.getItem('token'))
 
   if (requiresAuth && !hasToken) {
     return next({ name: 'Login' })
