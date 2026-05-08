@@ -24,7 +24,7 @@
                 class="flex gap-1 min-h-0 overflow-x-auto group h-full"
               >
                 <section
-                    class="px-4 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border shrink-0"
+                    class="px-2 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border shrink-0"
                     :style="{ width: leftWidth + 'px', minWidth: '400px', maxWidth: '50%' }"
                   >
                   <div class="flex items-center justify-between mt-2">
@@ -63,8 +63,8 @@
                     </div>
                   </div>
                   <!-- filters -->
-                  <div class="mt-3">
-                    <div class="flex flex-wrap gap-2 mb-[8px]">
+                  <div class="mt-2">
+                    <div class="flex flex-wrap gap-2 mb-[0px]">
                       <ModuleSheetDropdown 
                         :modules="visibleModules" 
                         :selectedIds="selectedFilter" 
@@ -90,7 +90,7 @@
                       class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
                     ></div>
                   </div>
-                    <div class="flex-1 min-h-0 overflow-y-hidden pb-2" v-else>
+                    <div class="flex-1 min-h-0 overflow-y-hidden mt-2" v-else>
                       <BacklogTable
                         :searchQuery="backlogSearchQuery"
                         :checkedAll="checkedAll"
@@ -133,7 +133,7 @@
                   class="rounded-md relative flex flex-col flex-1 min-w-0 bg-bg-card min-h-0 border border-border"
                 >
                   <div
-                    class="flex pt-2 justify-between gap-4 px-3 pb-2 border-b border-border-input"
+                    class="flex py-1 justify-between gap-4 px-2 border-b border-border-input"
                   >
                     <!-- Left Section: Sprint Tabs -->
                     <div class="overflow-x-auto">
@@ -370,7 +370,7 @@
                     ></div>
                   </div>
 
-                  <div class="flex-1 min-h-0 overflow-y-auto mt-4 px-3" v-else ref="subSprintsContainer">
+                  <div class="flex-1 min-h-0 overflow-y-auto mt-2 px-2" v-else ref="subSprintsContainer">
                     <template v-if="hasSubSprints && ['planning', 'active'].includes(sprintDetailData?.status?.toLowerCase())">
                       <!-- Milestone Global Tickets -->
                       <div class="mb-2 border border-border rounded-lg overflow-hidden bg-bg-card">
@@ -390,7 +390,7 @@
                           </div>
                         </div>
 
-                        <div v-if="expandedSprints['parent-global']" class="pt-[15px] px-[15px] h-[350px]">
+                        <div v-if="expandedSprints['parent-global']" class="pt-[10px] px-[10px] h-[350px]">
                            <SprintCard
                             :searchQuery="searchQuery"
                             :sprintId="selectedSprintId"
@@ -496,7 +496,7 @@
                         </div>
 
                         <!-- Content Area (SprintCard or Nested Huddles) -->
-                        <div v-if="expandedSprints[sprint._id]" class=" pt-[15px] px-[15px]">
+                        <div v-if="expandedSprints[sprint._id]" class=" pt-[10px] px-[10px]">
                           <!-- If this sub-item has its own sub-items (Huddles/Sub-Sprints) -->
                           <template v-if="(sprint.hurdles?.length || 0) > 0 || (sprint.sprints?.length || 0) > 0">
                             <!-- Tickets of this sprint (collapsible) -->
@@ -516,7 +516,7 @@
                                   </span>
                                 </div>
                               </div>
-                              <div v-if="expandedSprints[sprint._id + '-global-tickets']" class="h-[350px] pt-[15px] px-[15px]">
+                              <div v-if="expandedSprints[sprint._id + '-global-tickets']" class="h-[350px] pt-[10px] px-[10px]">
                                  <SprintCard
                                   :searchQuery="searchQuery"
                                   :sprintId="sprint._id"
@@ -566,7 +566,7 @@
                                   <span v-if="huddle.status === 'completed'" class="text-[10px] font-semibold  bg-green-600/10 text-green-600 px-2.5 py-1.5 rounded-full">Completed</span>
                                 </div>
                               </div>
-                              <div v-if="expandedSprints[huddle._id]" class="pt-[15px] px-[15px] h-[350px]">
+                              <div v-if="expandedSprints[huddle._id]" class="pt-[10px] px-[10px] h-[350px]">
                                  <SprintCard
                                   :searchQuery="searchQuery"
                                   :sprintId="huddle._id"
@@ -739,6 +739,8 @@
        <SidePanel
         v-if="selectedCard?._id"
         :details="selectedCard"
+        :moduleId="module_id"
+        moduleName="plan"
        @close="closeSidePanel"
        @closeSidePanel="closeSidePanel"
       :showPanel="!!selectedCard?._id"

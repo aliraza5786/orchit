@@ -4,7 +4,7 @@
       :size="size"
       :modalClass="computedModalClass"
     >
-      <div class="p-5">
+      <div class="p-5" @click.stop>
         <div class="flex items-start gap-3">
           <!-- Danger icon -->
           <div class="h-10 w-10 rounded-full bg-red-100 text-red-600 grid place-items-center dark:bg-red-500/15">
@@ -71,9 +71,9 @@
   </template>
   
   <script setup lang="ts">
-  import { computed, ref } from 'vue'
+import { computed, ref } from 'vue'
 import BaseModal from '../../../components/ui/BaseModal.vue';
- 
+defineOptions({ inheritAttrs: false })
   const props = withDefaults(defineProps<{
     modelValue: boolean
     title?: string

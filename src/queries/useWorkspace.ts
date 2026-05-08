@@ -1,8 +1,8 @@
 // src/features/workspaces/queries.ts
 import { useApiQuery, useApiMutation } from "../libs/vq.ts";
 import api, { request } from "../libs/api.ts"; // for dynamic-URL mutations
-import { computed, unref, type Ref, ref } from "vue";
-import { useQuery } from "@tanstack/vue-query";
+import { computed, unref, type Ref } from "vue";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/vue-query";
 import { useAuthStore } from "../stores/auth.ts";
 export const keys = {
   description: (id: string | number) => ["description", id] as const,
@@ -90,46 +90,114 @@ export const useWorkspacesPrompt = () =>
     url: "/common/prompts-byname/workspace",
     method: "GET",
   });
-export const useWorkspaces = (page: Ref<number>, limit: Ref<number>, filter?: Ref<string>) => {
-  const authStore = useAuthStore();
 
-  const companyId = computed(() => authStore.company_id ?? "");
+export const useWorkspaces = (
+  page: Ref<number>,
+  limit: Ref<number>,
+  filter?: Ref<string>
+) => {
+  const companyId = computed(() => {
+    const hostname = window.location.hostname
+
+    // ✅ Detect if we're on a subdomain (both orchit.ai and localhost)
+    const isSubdomain =
+      (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+      (hostname.endsWith('.localhost') && hostname !== 'localhost')
+
+    // ✅ Parse auth_session cookie directly (same source of truth as auth store)
+    let session: { company_id?: string; personal_mode?: boolean } | null = null
+    try {
+      const raw = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('auth_session='))
+        ?.split('=')[1]
+      if (raw) session = JSON.parse(decodeURIComponent(raw))
+    } catch { /* ignore */ }
+
+    // ✅ On main domain with personal_mode=true → no company
+    if (session?.personal_mode && !isSubdomain) return null
+
+    // ✅ On subdomain → always use company_id from cookie
+    // (ignores personal_mode even if stale from before redirect)
+    if (isSubdomain && session?.company_id) return session.company_id
+
+    // ✅ Fallback to cookie company_id for any other case
+    if (session?.company_id) return session.company_id
+
+    return null
+  })
 
   return useQuery({
-    queryKey: ["workspaces", page, limit, filter ?? ref("all"), companyId],
-    queryFn: async () => {
-      const companyId = authStore.company_id;
+    queryKey: computed(() => [
+      'workspaces',
+      unref(page),
+      unref(limit),
+      unref(filter) ?? 'all',
+      unref(companyId),
+    ]),
 
-      if (!companyId) {
-        console.warn("⚠️ useWorkspaces: No company_id available");
-        return { workspaces: [] };
+    queryFn: async () => {
+      const pageVal = unref(page)
+      const limitVal = unref(limit)
+      const filterVal = unref(filter) ?? 'all'
+      const company = unref(companyId)
+
+      let url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}`
+
+      if (company) {
+        url += `&company_id=${company}`
       }
 
-      const pageVal = unref(page);
-      const limitVal = unref(limit);
-      const filterVal = unref(filter) || "all";
-
-      const url = `/workspace/all?page=${pageVal}&limit=${limitVal}&filter=${filterVal}&company_id=${companyId}`;
-
-      console.log("📡 Fetching:", url);
-
-      return request({
-        url,
-        method: "GET",
-      });
+      return request({ url, method: 'GET' })
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes — avoids refetch on every mount
-    refetchOnMount: true,      // only refetch if data is stale, not always
-    enabled: computed(() => !!authStore.company_id),
-  });
-};
 
+    refetchOnMount: true,
+    enabled: true,
+  })
+}
+type CreateRolePayload = {
+  title: string
+  slug: string
+  description?: string
+  company_id?: string | null
+  is_admin: boolean
+  is_editor: boolean
+  is_viewer: boolean
+  permission_ids: string[]
+}
+
+export const useCreateCompanyRole = (options?: any) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (payload: CreateRolePayload) => {
+      return request({
+        url: "/roles/company-roles",
+        method: "POST",
+        data: payload,
+      })
+    },
+
+    onSuccess: async (data:any, variables:any) => {
+      
+      await queryClient.invalidateQueries({
+        queryKey: ["company-roles", variables.company_id || "personal"],
+      })
+
+      options?.onSuccess?.(data, variables)
+    },
+
+    ...options,
+  })
+}
 export const useWorkspacesTitles = () => {
   const authStore = useAuthStore();
 
   return useApiQuery({
     key: computed(() => {
-      const companyId = authStore.company_id ?? "";
+      const companyId = computed(() => 
+  authStore.company_id ?? localStorage.getItem('company_id') ?? null
+);
       return ["workspaces", "titles", companyId];
     }),
     url: "/workspace/titles",
@@ -183,12 +251,14 @@ export const useWorkspacesRoles = (id: IdLike) => {
   const idRef = computed(() => unref(id));
 
   return useQuery({
-    queryKey: computed(() => {
+  queryKey: computed(() => {
       const wid = idRef.value ?? "";
-      const companyId = authStore.company_id ?? "";
+      const companyId = computed(() => 
+      authStore.company_id ?? localStorage.getItem('company_id') ?? null
+   );
       return ["workspaceRoles", wid, companyId];
     }),
-    enabled: computed(() => !!idRef.value && !!authStore.company_id),
+    enabled: computed(() => !!idRef.value),
     queryFn: async () => {
       const wid = idRef.value;
       if (!wid && wid !== 0) return [];
@@ -397,11 +467,44 @@ export function useTasks(userId: any) {
     enabled: computed(() => !!unref(userId)), // don't run until we have an id
   });
 }
-export const getUsers = (id: any) => {
-  const companyId = typeof id === 'object' ? id?._id : id;
-  return api.get(`workspace/team-users?company_id=${companyId}`).then((r) => r.data);
-};
+function getCompanyId(): string | null {
+  const hostname = window.location.hostname
 
+  const isSubdomain =
+    (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+    (hostname.endsWith('.localhost') && hostname !== 'localhost')
+
+  // ✅ Read from auth_session cookie — single source of truth
+  let session: { token?: string; company_id?: string; personal_mode?: boolean } | null = null
+  try {
+    const raw = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('auth_session='))
+      ?.split('=')[1]
+    if (raw) session = JSON.parse(decodeURIComponent(raw))
+  } catch { /* ignore */ }
+
+  // ✅ Personal mode on main domain → no company
+  if (session?.personal_mode && !isSubdomain) return null
+
+  // ✅ On subdomain → trust company_id from cookie
+  if (isSubdomain && session?.company_id) return session.company_id
+
+  // ✅ Main domain without personal_mode → use company_id if present
+  if (session?.company_id && !session?.personal_mode) return session.company_id
+
+  return null
+}
+export const getUsers = (id: any) => {
+  const companyId = getCompanyId()
+  console.log(id);
+  
+  const url = companyId
+    ? `workspace/team-users?company_id=${companyId}`
+    : `workspace/team-users`
+
+  return api.get(url).then((r) => r.data)
+}
 export function useUsers(companyId: any) {
   return useQuery({
     queryKey: computed(() => ["all-users", unref(companyId)]),

@@ -32,7 +32,8 @@ const More = () => import("../views/More/More.vue");
 const Product = () => import("../views/Product/Product.vue");
 const WorkspaceInvite = () => import("../views/Invites/WorkspaceInvite.vue");
 const CompanyInvites = () => import("../views/Invites/CompanyInvites.vue");
-const companyJoin = () =>import("../views/Invites/JoinPage.vue")
+const companyJoin = () => import("../views/Invites/JoinPage.vue");
+const joinAsOwner = () => import("../views/Invites/OrganizationOwnershipInvite.vue");
 const LandingPageLayout = () => import("../layout/LandingPageLayout/LandingPageLayout.vue");
 const requestDelete = () => import("../views/request_delete.vue");
 const NewHomepage = () => import("../views/homenew.vue");
@@ -54,12 +55,12 @@ const routes: RouteRecordRaw[] = [
         path: "",
         name: "new-homepage",
         component: NewHomepage,
-        beforeEnter: (to, from, next) => {
-          console.log("to", to);
-          console.log("from", from);
+           beforeEnter: (to, from, next) => {
           const authStore = useAuthStore()
+          console.log(to, from);
+          
           if (authStore.isAuthenticated) {
-            next('/dashboard')
+            next('/dashboard')   // ← could fire if route fails
           } else {
             next()
           }
@@ -97,6 +98,7 @@ const routes: RouteRecordRaw[] = [
   { path: "/workspace-invite/:token", name: "workspaceInvite", component: WorkspaceInvite, meta: { requiresAuth: false } },
   { path: "/space-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
   { path: "/company-join/:token", name: "companyjoin", component: companyJoin, meta: { requiresAuth: false } },
+  { path: "/join-as-owner/:token/:action", name: "joinAsOwner", component: joinAsOwner, meta: { requiresAuth: false } },
   {
     path: "/dashboard",
     component: LandingLayout,
@@ -106,10 +108,8 @@ const routes: RouteRecordRaw[] = [
       { path: "users", name: "users", component: Users, meta: { requiresAuth: true } },
     ],
   },
-
   { path: "/create-workspace/:id?", name: "create-workspace", component: CreateWorkspace, props: true, meta: { requiresAuth: false } },
   { path: "/request_delete", name: "Request Delete", component: requestDelete, meta: { requiresAuth: false } },
-
   {
     path: "/workspace",
     component: WorkspaceLayout,
@@ -132,7 +132,6 @@ const routes: RouteRecordRaw[] = [
       }
     ],
   },
-
   { path: "/settings", name: "settings", component: SettingsView, meta: { requiresAuth: true } },
   { path: "/:pathMatch(.*)*", name: "NotFound", component: NotFound },
 ]
@@ -145,7 +144,6 @@ const router = createRouter({
     return { top: 0, behavior: 'smooth' }
   },
 })
-
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {

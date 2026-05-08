@@ -28,6 +28,92 @@
 
           <!-- VIEW SWITCHER -->
           <div class="flex gap-3 items-center">
+            <!-- filters -->
+            <div class="relative flex items-center gap-3">
+                <button
+                  ref="filterTriggerRef"
+                  @click="toggleFilters"
+                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+                  :class="showFilterBar ? 'border-accent' : 'border-border'"
+                >
+                  <i class="fa-solid fa-filter text-accent text-[14px]"></i>
+                  <span>Filter</span>
+                  <span 
+                    v-if="activeFilterCount" 
+                    class="bg-accent text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
+                  >
+                    {{ activeFilterCount }}
+                  </span>
+                </button>
+                
+                <button 
+                  v-if="hasActiveFilters"
+                  @click="handleClearFilters"
+                  class="text-[11px] font-medium text-text-secondary hover:text-accent transition-colors whitespace-nowrap"
+                >
+                  Clear filters
+                </button>
+
+                <!-- Floating Filter Dropdown -->
+                <ProductFilters
+                  v-if="showFilterBar"
+                  :triggerRef="filterTriggerRef"
+                  :variables="variables"
+                  :workspaceId="workspaceId"
+                  :moduleId="moduleId"
+                  :activeFilters="activeFilters"
+                  :hidePlanItems="true"
+                  @apply="(f: any) => { handleApplyFilters(f); showFilterBar = false; }"
+                  @clear="handleClearFilters"
+                  @close="showFilterBar = false"
+                />
+            </div>
+
+            <div v-if="view != 'table'" class="relative flex items-center gap-3">
+               <button
+                  ref="variableTriggerRef"
+                  @click="toggleVariableDropdown"
+                  class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+                  :class="showVariableDropdown ? 'border-accent text-accent' : 'border-border text-text-primary'"
+              >
+                  <i class="fa-solid fa-layer-group text-[14px]" :class="showVariableDropdown ? 'text-accent' : 'text-accent'"></i>
+                  <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
+              </button>
+  
+              <!-- Variable View Dropdown -->
+              <VariableViewDropdown
+                  v-if="showVariableDropdown"
+                  :triggerRef="variableTriggerRef"
+                  :options="variables"
+                  v-model="selected_view_by"
+                  :canCreateVariable="canCreateVariable"
+                  @close="showVariableDropdown = false"
+                  @nested-select="handleProcessNestedSelection"
+                  @add-new="() => { isCreateVar = true; showVariableDropdown = false; }"
+              />
+            </div>
+
+            <!-- Group button for Table View -->
+            <div v-if="view === 'table'" class="relative flex items-center gap-3">
+              <button
+                  ref="groupTriggerRef"
+                  @click="toggleGroupDropdown"
+                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+                  :class="showGroupDropdown ? 'border-accent text-accent' : 'border-border text-text-primary'"
+              >
+                  <i class="fa-solid fa-layer-group text-[14px]" :class="showGroupDropdown ? 'text-accent' : 'text-accent'"></i>
+                  <span>Group: {{ selectedGroupLabel }}</span>
+              </button>
+  
+              <!-- Table Group Dropdown -->
+              <TableGroupDropdown
+                  v-if="showGroupDropdown"
+                  :triggerRef="groupTriggerRef"
+                  v-model="selectedGroup"
+                  @close="showGroupDropdown = false"
+              />
+             </div>
+
             <SearchBar
             @onChange="(e: string) => { search = e; }"
             placeholder="Search in Orchit AI space"
@@ -163,6 +249,9 @@
                       <KanbanTicket
                         :selectedVar="selected_view_by"
                         :ticket="ticket"
+                        :invalidateKeys="['sprint-kanban', 'sprint-table-flat']"
+                        :workspaceId="workspaceId"
+                        :moduleId="selected_module_id"
                         @select="() => selectCardHandler(ticket)"
                       />
                     </div>
@@ -174,24 +263,43 @@
 
           <!-- ── Table View ──────────────────────────────────────── -->
           <template v-if="view === 'table'">
-            <div class="flex-1 overflow-auto pb-12">
+            <div class="flex-1 overflow-auto ps-4 pe-4">
               <TableView
+                ref="tableViewRef"
                 @toggleVisibility="toggleVisibilityHandler"
                 @addVar="() => { isCreateVar = true }"
-                :isPending="isPending || isVariablesPending"
+                :isPending="isPending || isVariablesPending || isFlatTablePending || (!!selectedGroup && isTablePending)"
+                :isCreating="isAddingTableTicket"
                 :columns="columns"
                 :rows="filteredBoard"
                 :canCreate="canCreateCard"
                 :canCreateVariable="canCreateVariable"
+                :canDelete="canDeleteCard"
+                @delete="handleDeleteTicketModal"
                 @create="handleCreateTicket"
+                @quickCreate="handleQuickCreate"
+                @refresh="refreshTable"
+                @update:rows="handleTableRowsUpdate"
+                :groups="tableGroups"
+                :isGrouped="!!selectedGroup"
+                :selectedGroup="selectedGroup"
+                :totalCount="totalTableCount"
+                :totalTotal="totalTableTotal"
               />
             </div>
           </template>
 
           <!-- ── MindMap View ─────────────────────────────────────── -->
           <template v-if="view === 'mindmap'">
-            <MindMapView
-              :listsData="Lists?.groups ?? []"
+            <div class="relative flex-1 flex flex-col overflow-hidden px-2">
+              <div v-if="isPending" class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]">
+                <div class="flex flex-col items-center gap-3">
+                  <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+                  <span class="text-sm font-medium text-text-secondary italic">Mapping your data...</span>
+                </div>
+              </div>
+              <MindMapView
+                :listsData="filteredBoard ?? []"
               :style="Lists?.style"
               :selectedSheetId="selected_sheet_id"
               :selectedViewBy="selected_view_by"
@@ -219,6 +327,7 @@
               @add-column="handleAddColumn"
               @save:theme="handleSaveTheme "
             />
+          </div>
           </template>
 
           <!-- ── Calendar View ───────────────────────────────────── -->
@@ -265,10 +374,37 @@
             :listId="localColumnData?.title"
             :sheet_id="selected_sheet_id"
             :sprint_id="sprintId"
+            :sheetVariables="variables"
+            :sheets="sheets"
             v-if="createTeamModal"
             key="createTaskModalKey"
             v-model="createTeamModal"
             @submit=""
+          />
+
+          <ConfirmDeleteModal
+            v-model="showTicketDelete"
+            title="Delete Ticket"
+            itemLabel="Ticket"
+            :itemName="ticketToDelete?.['card-title'] || ticketToDelete?.title"
+            :requireMatchText="ticketToDelete?.['card-title'] || ticketToDelete?.title"
+            confirmText="Delete Ticket"
+            cancelText="Cancel"
+            size="md"
+            :loading="isDeletingTicket"
+            @confirm="deleteTicket"
+            @cancel="
+              () => {
+                showTicketDelete = false;
+                ticketToDelete = null;
+              }
+            "
+          />
+
+          <CreateVariableModal
+            v-model="isCreateVar"
+            v-if="isCreateVar"
+            :sheetID="selected_sheet_id || sheetId"
           />
 
         </div>
@@ -280,6 +416,8 @@
       v-if="selectedCard?._id"
       class="shrink-0 h-full"
       :details="selectedCard"
+      :moduleId="selected_sprint_id"
+      moduleName="plan"
       @close="() => selectCardHandler({ variables: {} })"
       :showPanel="!!selectedCard?._id"
     />
@@ -292,8 +430,8 @@ import {
   defineAsyncComponent,
   ref,
   watch,
-  h,
-  triggerRef,
+  h, 
+  onMounted,
 } from "vue";
 import { toast } from "vue-sonner";
 import { usePermissions } from "../../../composables/usePermissions";
@@ -313,11 +451,11 @@ import {
   useVarVisibilty,
   useAddTicket,
 } from "../../../queries/useSheets";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import KanbanSkeleton from "../../../components/skeletons/KanbanSkeleton.vue";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../../composables/useQueryParams";
-import { useSprintKanban } from "../../../queries/usePlan";
+import { useSprintKanban, useSprintTable } from "../../../queries/usePlan";
 import KanbanTicket from "../../../components/feature/kanban/KanbanTicket.vue";
 import Fuse from "fuse.js";
 import { debounce } from "lodash";
@@ -327,6 +465,7 @@ import { avatarColor } from "../../../utilities/avatarColor";
 import SearchBar from "../../../components/ui/SearchBar.vue";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { useUpdateSprint } from "../../../queries/usePlan";
+import { performOptimisticUpdate, rollbackOptimisticUpdate } from "../../../utilities/cacheSync";
 // ─── Lazy components ──────────────────────────────────────────────────────────
 const CreateTaskModal = defineAsyncComponent(() => import("../../Product/modals/CreateTaskModal.vue"));
 const ConfirmDeleteModal = defineAsyncComponent(() => import("../../Product/modals/ConfirmDeleteModal.vue"));
@@ -341,6 +480,19 @@ const TimelineView = defineAsyncComponent(() => import("../../../components/feat
 const MindMapView = defineAsyncComponent(
   () => import("../../../components/feature/MindmapView.vue"),
 );
+const ProductFilters = defineAsyncComponent(
+  () => import("../../Product/components/ProductFilters.vue"),
+);
+const TableGroupDropdown = defineAsyncComponent(
+  () => import("../../Product/components/TableGroupDropdown.vue"),
+);
+const VariableViewDropdown = defineAsyncComponent(
+  () => import("../../Product/components/VariableViewDropdown.vue"),
+);
+const CreateVariableModal = defineAsyncComponent(
+  () => import("../../Product/modals/CreateVariableModal.vue"),
+);
+// ─── Props ────────────────────────────────────────────────────────────────────
 const props = defineProps<{
   sprint_id: any;
   searchQuery: string;
@@ -357,7 +509,26 @@ const {
 const view = ref("kanban");
 const search = ref("");
 const route = useRoute();
+const router = useRouter();
 const { workspaceId, moduleId } = useRouteIds();
+
+// ─── Initializers ─────────────────────────────────────────────────────────────
+onMounted(() => {
+  openPanelFromRoute();
+});
+
+watch(
+  () => route.query.card_id,
+  () => openPanelFromRoute(),
+);
+ 
+
+async function openPanelFromRoute() {
+  const cardId = route.query.card_id as string;
+  if (!cardId) return;
+  selectCardHandler({ _id: cardId, id: cardId });
+}
+// ─── Selection & Grouping ─────────────────────────────────────────────────────
 const queryClient = useQueryClient();
 const workspaceStore = useWorkspaceStore();
 const isCreateVar = ref(false);
@@ -372,6 +543,16 @@ const showDeleteModal = ref(false);
 const selectedDeleteId = ref<string | null>(null);
 const isDeletingTicket = ref(false);
 const selectedSheetTitle = ref<string>("");
+const isAddingTableTicket = ref(false);
+const localPendingTickets = ref<any[]>([]);
+const localTableOrder = ref<any[]>([]);
+const tableViewRef = ref<any>(null);
+
+const handleTableRowsUpdate = (newRows: any[]) => {
+  localPendingTickets.value = newRows.filter((r) => !r._id);
+  localTableOrder.value = newRows.map((r) => r._id || r.id);
+};
+
 const { data: workspaces } = useSingleWorkspace(workspaceId.value);
 const modules = ref(workspaces.value.modules || []);
 const activeSprintTitle = localStorage.getItem("selectedSprintTitle")
@@ -396,19 +577,19 @@ watch(
     }
   },
   { immediate: true },
-);
+); 
 
 const { data: sheets, refetch: refetchSheets } = useSheets({
   workspace_id: workspaceId.value,
-  workspace_module_id: moduleId.value,
-});
+  workspace_module_id: selected_module_id.value,
+}); 
 
 watch(selected_module_id, (newModuleId) => {
   if (newModuleId) refetchSheets();
 });
-const laneIds = computed(() =>{
-  return workspaceStore.selectedLaneIds
-})
+const laneIds = computed(() => {
+  return workspaceStore.selectedLaneIds;
+});
 const sheetId = computed(() => (sheets.value ? sheets.value[0]?._id : ""));
 const selected_sheet_id = ref<any>(sheetId);
 const { data: variables, isPending: isVariablesPending } = useVariables(
@@ -418,14 +599,252 @@ const { data: variables, isPending: isVariablesPending } = useVariables(
 );
 
 const viewBy = computed(() => (variables.value ? variables.value[0]?._id : ""));
-const selected_view_by = ref(viewBy);
+const selected_view_by = ref(viewBy.value);
+watch(viewBy, () => {
+  if (!selected_view_by.value) selected_view_by.value = viewBy.value;
+});
 const selected_sprint_id = ref(props.sprint_id || localStorage.getItem("activeSprintKey"));
 watch(() => props.sprint_id, (newId) => {
   if (newId) {
     selected_sprint_id.value = newId;
   }
 });
-const { data: Lists, isPending, refetch: refetchSheetLists } = useSprintKanban(selected_sprint_id, laneIds);
+
+// Clear nested process selection when the main grouping variable changes
+// We use a flag to skip clearing when the change comes from a nested selection
+let lastSelectionWasNested = false;
+watch(selected_view_by, () => {
+    if (!lastSelectionWasNested) {
+        selectedProcessMeta.value = null;
+    }
+    lastSelectionWasNested = false;
+});
+
+// ─── Filter Logic ─────────────────────────────────────────────────────────────
+const showFilterBar = ref(false);
+const activeFilters = ref<any>({});
+const filterTriggerRef = ref<HTMLElement | null>(null);
+
+const showGroupDropdown = ref(false);
+const groupTriggerRef = ref<HTMLElement | null>(null);
+const selectedGroup = ref<string>("");
+
+const showVariableDropdown = ref(false);
+const variableTriggerRef = ref<HTMLElement | null>(null);
+const selectedProcessMeta = ref<any>(null);
+
+const handleProcessNestedSelection = (item: any, _rootOpt: any) => {
+  lastSelectionWasNested = true;
+  selectedProcessMeta.value = item;
+};
+
+const listProcessPayload = computed(() => {
+  if (
+    selectedViewByVariable.value?.title === "Process" &&
+    selectedProcessMeta.value
+  ) {
+    return {
+      variable_slug: "card-type",
+      type_value: selectedProcessMeta.value.title,
+    };
+  }
+  return {};
+});
+
+const selectedViewByVariable = computed(() => {
+  return variables.value?.find((v: any) => v._id === selected_view_by.value);
+});
+
+const selectedViewByLabel = computed(() => {
+  const opt = selectedViewByVariable.value;
+  if (!opt) return "None";
+  if (selectedProcessMeta.value && opt._id === selected_view_by.value) {
+    return `${opt.title} (${selectedProcessMeta.value.title})`;
+  }
+  return opt.title;
+});
+
+const GROUP_OPTIONS: Record<string, string> = {
+  None: "",
+  Status: "status",
+  Priority: "priority",
+  Assignee: "assignee",
+  "Owner/Reporter": "owner",
+  "Card Type": "card_type",
+};
+
+const selectedGroupLabel = computed(() => {
+  return selectedGroup.value
+    ? Object.keys(GROUP_OPTIONS).find((k) => GROUP_OPTIONS[k] === selectedGroup.value)
+    : "None";
+});
+
+const closeAllDropdowns = (except: string) => {
+  if (except !== 'variable') showVariableDropdown.value = false;
+  if (except !== 'filter') showFilterBar.value = false;
+  if (except !== 'group') showGroupDropdown.value = false;
+};
+
+const toggleVariableDropdown = () => {
+  closeAllDropdowns('variable');
+  showVariableDropdown.value = !showVariableDropdown.value;
+};
+
+const toggleGroupDropdown = () => {
+  const willShow = !showGroupDropdown.value;
+  if (willShow) closeAllDropdowns('group');
+  showGroupDropdown.value = willShow;
+};
+
+const toggleFilters = () => {
+  const willShow = !showFilterBar.value;
+  if (willShow) closeAllDropdowns('filter');
+  showFilterBar.value = willShow;
+};
+
+const formattedExtraParams = computed(() => {
+  const f = activeFilters.value;
+  const toLower = (val: any) =>
+    typeof val === "string" ? val.toLowerCase() : val;
+
+  const result: any = {
+    ...listProcessPayload.value,
+    ...(f.seat_ids?.length ? { seat_ids: f.seat_ids.join(",") } : {}),
+    priority: toLower(f.priority),
+    status: toLower(f.status),
+    card_type: toLower(f.card_type),
+    sprint_id: f.sprint_id,
+    milestone_id: f.milestone_id,
+    huddle_id: f.huddle_id,
+    start_date_from: f.start_date_from,
+    start_date_to: f.start_date_to,
+    end_date_from: f.end_date_from,
+    end_date_to: f.end_date_to,
+    created_at_from: f.created_at_from,
+    created_at_to: f.created_at_to,
+  };
+
+  return result;
+});
+
+const kanbanExtraParams = computed(() => ({
+  ...formattedExtraParams.value,
+  variable_id: selected_view_by.value
+}));
+
+const handleApplyFilters = (filters: any) => {
+  activeFilters.value = filters;
+};
+
+const handleClearFilters = () => {
+  activeFilters.value = {};
+};
+
+const activeFilterCount = computed(() => {
+  const f = activeFilters.value;
+  let count = 0;
+  Object.keys(f).forEach((key) => {
+    if (Array.isArray(f[key])) count += f[key].length;
+    else if (f[key]) count += 1;
+  });
+  return count;
+});
+
+const hasActiveFilters = computed(() => activeFilterCount.value > 0);
+
+// ─── Queries ──────────────────────────────────────────────────────────────────
+// Kanban view data (defaults to Status grouping handled by the hook)
+const {
+  data: Lists,
+  isPending,
+  refetch: refetchSheetLists,
+} = useSprintKanban(selected_sprint_id, laneIds, kanbanExtraParams);
+
+// Dedicated flat Table View data (no variable_id passed = no grouping)
+const {
+  data: FlatTableData,
+  isPending: isFlatTablePending,
+} = useSprintTable(selected_sprint_id, laneIds, formattedExtraParams);
+
+const tableActiveVariableId = computed(() => {
+  if (!selectedGroup.value) return "";
+  const group = selectedGroup.value;
+  if (group === 'assignee' || group === 'owner') return "";
+
+  let slug = group;
+  if (slug === 'card_type') slug = 'card-type';
+
+  const findVar = (searchSlug: string) =>
+    variables.value?.find((v: any) =>
+      v.slug?.toLowerCase() === searchSlug.toLowerCase() ||
+      v.title?.toLowerCase() === searchSlug.toLowerCase()
+    );
+
+  let variable = findVar(slug);
+  if (!variable && slug === 'status') variable = findVar('card-status');
+  if (!variable && slug === 'card-type') variable = findVar('type');
+
+  return variable?._id || "";
+});
+
+const tableActiveVariableSlug = computed(() => {
+  if (selectedGroup.value === 'assignee') return 'assigned_to';
+  if (selectedGroup.value === 'owner') return 'created_by';
+  return '';
+});
+
+const tableGroupExtraParams = computed(() => {
+  const base = formattedExtraParams.value || {};
+  const result = { ...base };
+  if (tableActiveVariableSlug.value) {
+    result.variable_slug = tableActiveVariableSlug.value;
+  }
+  if (tableActiveVariableId.value) {
+    result.variable_id = tableActiveVariableId.value;
+  }
+  return result;
+});
+
+// Grouped Table View data
+const {
+  data: TableGroupedLists,
+  isPending: isTablePending,
+} = useSprintKanban(selected_sprint_id, laneIds, tableGroupExtraParams);
+
+const refreshTable = () => {
+  queryClient.invalidateQueries({ queryKey: ["sheets"] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
+  queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });
+  toast.success("Data refreshed");
+};
+
+// ─── Table Utilities ─────────────────────────────────────────────────────────
+// Helper to extract cards from both Flat and Grouped sprint responses
+const flattenSprintCards = (apiData: any): any[] => {
+  if (!apiData) return [];
+  // Flat response (no variable_id): root-level cards array
+  if (Array.isArray(apiData?.cards)) return apiData.cards;
+  // Grouped response: flatten groups[].cards
+  const all: any[] = [];
+  (apiData?.groups ?? []).forEach((group: any) => {
+    (group.cards ?? []).forEach((card: any) => all.push(card));
+  });
+  return all;
+};
+
+const totalTableCount = computed(() => {
+  if (selectedGroup.value) {
+    return tableGroups.value.reduce((acc: number, group: any) => acc + (group.cards?.length || 0), 0);
+  }
+  return filteredBoard.value.length;
+});
+
+const totalTableTotal = computed(() => {
+  const currentData = selectedGroup.value ? TableGroupedLists.value : FlatTableData.value;
+  const cards = flattenSprintCards(currentData);
+  return cards.length + localPendingTickets.value.length;
+});
+
 watch(selected_sprint_id, () => {
   refetchSheetLists();
 });
@@ -474,6 +893,13 @@ const selectCardHandler = (card: any) => {
   if (!card._id) card._id = card.id;
   selectedCard.value = card;
   sidePanelStore.selectTaskCard(card);
+
+  // Clean up card_id query param if present
+  if (route.query.card_id) {
+    const query = { ...route.query };
+    delete query.card_id;
+    router.replace({ query });
+  }
 };
 (window as any).selectCardHandler = selectCardHandler;
 
@@ -525,7 +951,8 @@ const { mutate: updateSheet } = useUpdateWorkspaceSheet({
 
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });  
     newColumn.value = "";
     showDelete.value = false;
     activeAddList.value = false;
@@ -538,6 +965,7 @@ const handleAddColumn = (v: any) => {
     module_id: moduleId.value,
     variable_id: selected_view_by.value,
     value: v,
+    ...listProcessPayload.value,
   });
 };
 
@@ -552,6 +980,7 @@ const handleUpdateColumn = (newTitle: any) => {
     new_value: newTitle.title,
     value: newTitle.oldTitle,
     variable_id: selected_view_by.value,
+    ...listProcessPayload.value,
   });
 };
 
@@ -559,14 +988,18 @@ const handleDeleteColumn = () => {
   addList({
     value: localColumnData.value.title,
     workspace_id: workspaceId.value,
-    module_id: moduleId.value,
+    module_id: selected_sprint_id.value,
     newValue: localColumnData.value.title,
     variable_id: selected_view_by.value,
     is_trash: true,
+    ...listProcessPayload.value,
   });
 };
 
-const deleteHandler = (e: any) => { showDelete.value = true; localColumnData.value = e; };
+const deleteHandler = (e: any) => {
+  showDelete.value = true;
+  localColumnData.value = e;
+};
 const plusHandler = (e: any) => {
   createTeamModal.value = true;
   localStorage.setItem("selectedStatusTitle", e?.title);
@@ -574,12 +1007,15 @@ const plusHandler = (e: any) => {
   localColumnData.value = e;
 };
 
+// ─── Search & Fuse Logic ──────────────────────────────────────────────────────
 const searchQuery = computed(() => props.searchQuery);
 const debouncedQuery = ref("");
 
 watch(
   searchQuery,
-  debounce((val: string) => { debouncedQuery.value = val; }, 200),
+  debounce((val: string) => {
+    debouncedQuery.value = val;
+  }, 200),
 );
 
 const fuse = computed(() => {
@@ -592,47 +1028,57 @@ const fuse = computed(() => {
   });
 });
 
-const normalizedTableData = computed(() => {
-  let array: any = [];
-  (Lists.value?.groups ?? []).forEach((col: any) => { 
-    array = [...array, ...(col?.cards ?? [])]; 
-  });
-  return array;
-});
-
 const filteredBoard = computed(() => {
   const query = searchQuery.value?.trim() || search.value?.trim();
   
-  if (view.value === "kanban") {
+  if (view.value === "kanban" || view.value === "mindmap") {
     if (!query) return Lists.value?.groups;
-
     const results = fuse.value.search(query).map((r: any) => r.item);
     return (Lists.value?.groups ?? []).map((col: any) => ({
       ...col,
       cards: results.filter((c: any) => c.columnId === col.title),
     }));
-
   } else {
+    // TABLE VIEW
+    const currentData = selectedGroup.value ? TableGroupedLists.value : FlatTableData.value;
+    const allCards = flattenSprintCards(currentData);
+
     if (!query) {
-      let array: any = [];
-      (Lists.value?.groups ?? []).forEach((col: any) => { 
-        array = [...array, ...(col?.cards ?? [])]; 
-      });
-      return array;
+      return [...allCards, ...localPendingTickets.value];
     }
 
-    const fuseTable = new Fuse(normalizedTableData.value, {
+    const fuseTable = new Fuse(allCards, {
       keys: ["card-title", "card-description"],
       threshold: 0.3,
     });
-    return fuseTable.search(query).map((r) => r.item);
+    const results = fuseTable.search(query).map((r) => r.item);
+    return [...results, ...localPendingTickets.value];
   }
 });
 
+const tableGroups = computed(() => {
+  if (!selectedGroup.value) return [];
+  const query = searchQuery.value?.trim() || search.value?.trim();
+  const sourceLists = TableGroupedLists.value?.groups ?? [];
+  if (!query) return sourceLists;
+  
+  const fuseTable = new Fuse(
+    sourceLists.flatMap((col: any) => (col.cards || []).map((c: any) => ({...c, columnId: col.title}))), 
+    { keys: ["card-title", "card-description"], threshold: 0.3 }
+  );
+  const results = fuseTable.search(query).map((r: any) => r.item);
+  return sourceLists.map((col: any) => ({
+    ...col,
+    cards: results.filter((c: any) => c.columnId === col.title),
+  }));
+});
+
+// ─── Lane & Dropdown Helpers ──────────────────────────────────────────────────
 const { data: lanes } = useLanes(workspaceId);
 
 const laneOptions = computed<any[]>(() =>
   (lanes?.value ?? []).map((el: any) => ({
+    ...el,
     _id: el._id,
     title: el?.variables?.["lane-title"] ?? String(el._id),
   })),
@@ -641,6 +1087,7 @@ const laneOptions = computed<any[]>(() =>
 const getOptions = (options: any) =>
   options.map((el: any) => ({ _id: el.value ?? el, title: el.value ?? el }));
 
+// ─── Mutations & Handlers ─────────────────────────────────────────────────────
 const moveCard = useMoveCard({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["get-sheets"] });
@@ -650,79 +1097,169 @@ const moveCard = useMoveCard({
 });
 
 const { mutate: addTicket } = useAddTicket({
-  onSuccess: () => {
+  onMutate: (variables: any) => {
+    const tempId = variables.temp_row_id;
+    if (tempId) {
+      const exists = localPendingTickets.value.some(t => t._id === tempId || t.id === tempId);
+      if (!exists) {
+        localPendingTickets.value.push({
+          _id: tempId,
+          "card-title": variables.variables?.["card-title"] || "New Ticket",
+          ...variables.variables
+        });
+      }
+    }
+  },
+  onSuccess: (newCard: any, variables: any) => {
+    const tempId = variables.temp_row_id;
+    toast.success("Ticket created successfully");
+    tableViewRef.value?.closeQuickCreate();
+    
+    if (tempId) {
+      localPendingTickets.value = localPendingTickets.value.filter(
+        (t) => t._id !== tempId && t.id !== tempId,
+      );
+      localTableOrder.value = localTableOrder.value.map((id) =>
+        id === tempId ? newCard._id : id,
+      );
+    }
+  },
+  onSettled: () => {
     queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });
   },
 });
 
-const updateOptimisticCard = (cardId: string, updater: (card: any) => void) => {
-  if (!Lists.value?.groups) return;
-  const listIndex = Lists.value.groups.findIndex((l: any) => (l.cards ?? []).some((c: any) => c._id === cardId));
-  if (listIndex !== -1) {
-    const cardIndex = Lists.value.groups[listIndex].cards.findIndex((c: any) => c._id === cardId);
-    if (cardIndex !== -1) {
-      const newCard = { ...Lists.value.groups[listIndex].cards[cardIndex] };
-      updater(newCard);
-      Lists.value.groups[listIndex].cards[cardIndex] = newCard;
-      triggerRef(Lists);
-    }
-  }
-};
+// Removed manual updateOptimisticCard as it's replaced by performOptimisticUpdate
 
 function setLane(id: any, v: any) {
-  updateOptimisticCard(id, (card) => {
-    const newLane = laneOptions.value.find((l: any) => l._id === v);
-    if (newLane) card.lane = newLane;
+  const newLane = laneOptions.value.find((l: any) => l._id === v);
+  const snapshots = performOptimisticUpdate({
+    queryClient,
+    sidePanelStore,
+    cardId: id,
+    updates: { lane: newLane, workspace_lane_id: v },
+    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
   });
-  triggerRef(Lists);
-  moveCard.mutate({ card_id: id, workspace_lane_id: v });
+  
+  moveCard.mutate(
+    { card_id: id, workspace_lane_id: v },
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+  );
 }
 
 const assignHandle = (cardId: any, users: any[]) => {
-  const userIds = users.filter((u) => u && (u._id || u.id)).map((u) => u._id || u.id);
-  updateOptimisticCard(cardId, (card) => {
-    card.seat = users;
-    card.seats = users;
-    card.seat_id = userIds;
+  const userIds = users.map(u => typeof u === 'string' ? u : (u?._id || u?.id)).filter(Boolean)
+  const primarySeat = users.length > 0 ? users[0] : null;
+  
+  const snapshots = performOptimisticUpdate({
+    queryClient,
+    sidePanelStore,
+    cardId: cardId,
+    updates: { seat: primarySeat, seats: users, seat_id: userIds },
+    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
   });
-  moveCard.mutate({ card_id: cardId, seat_id: userIds });
+
+  moveCard.mutate(
+    { card_id: cardId, seat_id: userIds },
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+  );
 };
 
 function handleChangeTicket(id: any, key: any, value: any) {
-  updateOptimisticCard(id, (card) => {
-    if (key === "card-title") card[key] = value;
-    if (Array.isArray(card.variables)) {
-      const variable = card.variables.find((v: any) => v.slug === key);
-      if (variable) variable.value = value;
-      else card.variables.push({ slug: key, value, type: "Select" });
-    } else if (card.variables && typeof card.variables === "object") {
-      card.variables[key] = value;
-    } else {
-      card[key] = value;
-    }
+  const updates: Record<string, any> = { [key]: value.trim() };
+  
+  const snapshots = performOptimisticUpdate({
+    queryClient,
+    sidePanelStore,
+    cardId: id,
+    updates,
+    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
   });
-  moveCard.mutate({ card_id: id, variables: { [key]: value.trim() } });
+
+  moveCard.mutate(
+    { card_id: id, variables: { [key]: value.trim() } },
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+  );
 }
 
 function handleCreateTicket(title: any) {
   if (title["card-title"]) {
+    isAddingTableTicket.value = true;
     addTicket({
-      sheet_list_id: "To Do",
+      sheet_list_id: "General",
       workspace_id: workspaceId.value,
       sheet_id: selected_sheet_id.value,
-      variables: { "card-title": title["card-title"].trim() },
+      variables: { "card-title": title["card-title"].trim(), ...title.variables },
+      sprint_id: sprintId.value,
       createdAt: new Date().toISOString(),
+      ...title
+    }, {
+      onSettled: () => {
+        isAddingTableTicket.value = false;
+      }
     });
   }
 }
 
-const setStartDate = (card_id: any, e: any) => {
-  const listIndex = Lists.value?.groups?.findIndex((l: any) => (l.cards ?? []).some((c: any) => c._id === card_id));
-  if (listIndex !== -1 && listIndex !== undefined) {
-    const cardIndex = Lists.value.groups[listIndex].cards.findIndex((c: any) => c._id === card_id);
-    if (cardIndex !== -1) Lists.value.groups[listIndex].cards[cardIndex]["end-date"] = e;
+function handleQuickCreate(title: string, group: any) {
+  if (!title?.trim()) return;
+  let cardPriority = '';
+  let cardStatus = '';
+  let cardType = '';
+  let cardAssignee = '';
+
+  const label = selectedGroupLabel.value?.toLowerCase();
+  
+  if (label === 'status') {
+    cardStatus = group.title;
+  } else if (label === 'priority') {
+    cardPriority = group.title;
+  } else if (label === 'card type') {
+    cardType = group.title;
+  } else if (label === 'assignee') {
+     cardAssignee = group?.cards[0]?.seat?._id || group?.cards[0]?.seat_id;
   }
-  moveCard.mutate({ card_id, variables: { "start-date": e } });
+
+  const payload = {
+    "card-title": title,
+    "card-status": cardStatus,
+    "card-type": cardType,
+    "priority": cardPriority,
+    "seat_id": cardAssignee,
+    variables: {
+      "card-title": title,
+      "card-status": cardStatus || 'General',
+      "card-type": cardType,
+      "priority": cardPriority
+    }
+  };
+
+  handleCreateTicket(payload);
+}
+
+function handleDeleteTicketModal(ticket: any) {
+  ticketToDelete.value = ticket;
+  selectedDeleteId.value = ticket._id || ticket.id;
+  showTicketDelete.value = true;
+}
+
+const ticketToDelete = ref<any>(null);
+const showTicketDelete = ref(false);
+
+const setStartDate = (card_id: any, e: any) => {
+  const snapshots = performOptimisticUpdate({
+    queryClient,
+    sidePanelStore,
+    cardId: card_id,
+    updates: { "end-date": e, "start-date": e }, // The UI seems to use end-date for display sometimes
+    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
+  });
+
+  moveCard.mutate(
+    { card_id, variables: { "start-date": e } },
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+  );
 };
 
 const { mutate: toggleVisibility } = useVarVisibilty();
@@ -737,6 +1274,7 @@ const toggleVisibilityHandler = (key: any, visible: any) => {
   });
 };
 
+// ─── Table Rendering (Columns) ────────────────────────────────────────────────
 const columns = computed(() => {
   return [
     {
@@ -776,7 +1314,7 @@ const columns = computed(() => {
     },
     {
       key: "lane",
-      label: "Lane",
+      label: "Tab",
       render: ({ row }: any) =>
         h(TableSearchCell, {
           options: laneOptions.value ?? [],
@@ -818,7 +1356,7 @@ const columns = computed(() => {
           emptyText: "Assignee",
         }),
     },
-    ...(variables.value?.variables
+    ...(variables.value
       ?.filter((e: any) => e?.type?.title === "Select")
       .map((e: any) => ({
         key: e?.slug,
@@ -847,15 +1385,16 @@ const columns = computed(() => {
   ];
 });
 
-interface Card { _id: string; }
-interface SheetList { cards: Card[]; }
-interface Sheet { sheet_lists: SheetList[]; }
+// interface Card { _id: string; }
+// interface SheetList { cards: Card[]; }
+// interface Sheet { sheet_lists: SheetList[]; }
 
 const removeCardFromState = (cardId: string) => {
-  Lists.value?.sheets?.forEach((sheet: Sheet) => {
-    sheet.sheet_lists?.forEach((list: SheetList) => {
-      list.cards = list.cards.filter((card: Card) => card._id !== cardId);
-    });
+  if (!Lists.value?.groups) return;
+  Lists.value.groups.forEach((list: any) => {
+    if (list.cards) {
+      list.cards = list.cards.filter((card: any) => (card._id || card.id) !== cardId);
+    }
   });
 };
 
@@ -863,17 +1402,24 @@ const deleteTicket = async () => {
   if (!selectedDeleteId.value) return;
   try {
     isDeletingTicket.value = true;
-    await request({ url: `workspace/card/${selectedDeleteId.value}`, method: "DELETE" });
+    await request({
+      url: `workspace/card/${selectedDeleteId.value}`,
+      method: "DELETE",
+    });
     removeCardFromState(selectedDeleteId.value);
+    queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
+    queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });
     toast.success("Ticket deleted successfully");
-    await refetchSheets();
-    await refetchSheetLists();
+    showTicketDelete.value = false;
+    ticketToDelete.value = null;
   } catch (err) {
     toast.error(toApiMessage(err));
   } finally {
     isDeletingTicket.value = false;
+    showTicketDelete.value = false;
   }
 };
+// ─── MindMap & Theme Helpers ──────────────────────────────────────────────────
 const { mutateAsync: createNewSheet } = useCreateWorkspaceSheet({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["sheets"] });

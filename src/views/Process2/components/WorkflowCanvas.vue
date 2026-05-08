@@ -59,35 +59,21 @@ interface AddNodePayload {
 }
 
 const statusObjects = computed(() => {
-  const safeNodes = nodes.value as SafeNode[]
-  const safeEdges = edges.value as SafeEdge[]
-
-  const nodeMap = new Map<string, SafeNode>(
-    safeNodes.map(n => [n.id, n])
-  )
-
-  const filtered = safeNodes.filter(node => node.data?.label)
-
+  const filtered = (nodes.value as VFNode[]).filter((node: VFNode) => node.data?.label)
   return filtered.map((node, index) => {
-    const outgoingEdges = safeEdges.filter(e => e.source === node.id)
-    const incomingEdges = safeEdges.filter(e => e.target === node.id)
+    const outgoingEdges = (edges.value as VFEdge[]).filter((e: VFEdge) => e.source === node.id)
+const incomingEdges = (edges.value as VFEdge[]).filter((e: VFEdge) => e.target === node.id)
 
-    // Use explicit type predicate → string[] instead of (string | undefined)[]
-    const forwardMoves: string[] = [
-      ...new Set(
-        outgoingEdges
-          .map(e => nodeMap.get(e.target)?.data?.label)
-          .filter(isString)
-      )
-    ]
+    const forwardMoves = [...new Set(outgoingEdges.map(e => {
+      const targetNode = (nodes.value as VFNode[]).find((n: VFNode) => n.id === e.target)
 
-    const backwardMoves: string[] = [
-      ...new Set(
-        incomingEdges
-          .map(e => nodeMap.get(e.source)?.data?.label)
-          .filter(isString)
-      )
-    ]
+      return targetNode?.data?.label
+    }).filter(Boolean))]
+
+    const backwardMoves = [...new Set(incomingEdges.map(e => {
+      const sourceNode = (nodes.value as VFNode[]).find((n: VFNode) => n.id === e.source)
+      return sourceNode?.data?.label
+    }).filter(Boolean))]
 
     return {
       _id: node.id,
@@ -476,9 +462,20 @@ function reverseSelectedEdge() {
     )
   )
 }
+
 function deleteStatus(nodeId: string) {
-  nodes.value = nodes.value.filter(n => n.id !== nodeId)
-  edges.value = edges.value.filter(e => e.source !== nodeId && e.target !== nodeId)
+  const nextNodes = (nodes.value as { id: string }[]).filter(
+    (n) => n.id !== nodeId
+  )
+
+  const nextEdges = (edges.value as { source: string; target: string }[]).filter(
+    (e) => e.source !== nodeId && e.target !== nodeId
+  )
+
+  // ✅ cast ONLY at assignment (not during filter)
+  nodes.value = nextNodes as unknown as VFNode[]
+  edges.value = nextEdges as unknown as VFEdge[]
+
   selectedEdgeId.value = null
 }
 
@@ -542,22 +539,24 @@ function handleZoomEvent(e: Event) {
 watch(
   [nodes, () => props.canEdit],
   ([newNodes, canEdit]) => {
+    const nodeList = newNodes as { id: string; type?: string; position: { x: number; y: number } }[]
+
     if (!canEdit) {
-      // ← was removeEdges(btn.id) which is wrong — removeNodes takes node ids
-      const btn = (newNodes as VFNode[]).find(n => n.id === 'add-button-node')
-      if (btn) removeNodes([btn.id])
+      const btn = nodeList.find(n => n.id === 'add-button-node')
+      if (btn) setNodes(nodeList.filter(n => n.id !== 'add-button-node') as any)
+      setNodes(nodeList.filter(n => n.id !== 'add-button-node') as any)
       return
     }
 
-    const realNodes = (newNodes as VFNode[]).filter(n => n.type !== 'custom-add-icon')
+    const realNodes = nodeList.filter(n => n.type !== 'custom-add-icon')
 
     let targetX = 50
     let targetY = 150
 
     if (realNodes.length > 0) {
-      const lastNode = realNodes.reduce((prev, current) =>
-        current.position.x > prev.position.x ? current : prev
-      , realNodes[0])
+      const lastNode = realNodes.reduce((prev, current) => {
+        return current.position.x > prev.position.x ? current : prev
+      })
 
       const PADDING_X = 200
       targetX = lastNode.position.x + PADDING_X
@@ -565,14 +564,16 @@ watch(
     }
 
     const addButtonNodeId = 'add-button-node'
-    const existingNode = (newNodes as VFNode[]).find(n => n.id === addButtonNodeId)
+    const existingNode = nodeList.find(n => n.id === addButtonNodeId)
 
     if (existingNode) {
       if (
         Math.abs(existingNode.position.x - targetX) > 5 ||
         Math.abs(existingNode.position.y - targetY) > 5
       ) {
-        updateNode(addButtonNodeId, { position: { x: targetX, y: targetY } })
+        updateNode(addButtonNodeId, {
+          position: { x: targetX, y: targetY }
+        })
       }
     } else {
       addNodes({
@@ -581,7 +582,7 @@ watch(
         position: { x: targetX, y: targetY },
         data: {},
         draggable: false,
-        selectable: false,
+        selectable: false
       })
     }
   },
@@ -598,8 +599,8 @@ function triggerAddStatus() {
     <!-- <Loader v-if="isProcessPending || isProcessFetching" /> -->
 
     <VueFlow
-  v-model:nodes="nodes"
-  v-model:edges="edges"
+  v-model:nodes="(nodes as any)"
+  v-model:edges="(edges as any)"
   :default-edge-options="defaultEdgeOptions"
   :nodes-draggable="canEdit"
   :nodes-connectable="canEdit"

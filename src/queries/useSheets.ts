@@ -189,7 +189,7 @@ export function useSheetList(
   ]);
 
   const enabled = computed(() =>
-    Boolean(unref(module_id) && unref(view_by) && unref(sheet_ids))
+    Boolean(unref(module_id) && unref(sheet_ids))
   );
 
   return useQuery({
@@ -203,10 +203,81 @@ export function useSheetList(
 
       const params: any = {
         module_id: unref(module_id),
-        variable_id: unref(view_by),
         ...(unref(laneIdsParam)
           ? { lane_ids: unref(laneIdsParam) }
           : {}),
+        ...(unref(extraParams) || {}),
+      };
+      
+      const viewByVal = unref(view_by);
+      if (viewByVal) {
+        params.variable_id = viewByVal;
+      }
+
+      if (formattedSheetId && formattedSheetId !== 'all') {
+        params.sheet_ids = formattedSheetId;
+      }
+
+      return request({
+        url: "/workspace/cards/grouped",
+        method: "GET",
+        params,
+      });
+    },
+
+    ...options,
+  });
+}
+
+/**
+ * Dedicated flat cards query for Table View.
+ * Never passes variable_id — always returns ungrouped flat data.
+ * Used as the default data source for table view rows.
+ */
+export function useTableCards(
+  module_id: MaybeRef<string | null | undefined>,
+  sheet_ids: MaybeRef<string | null | undefined>,
+  laneIds: MaybeRef<string[] | string | null | undefined>,
+  extraParams?: MaybeRef<Record<string, any> | undefined>,
+  options: Omit<UseQueryOptions<any, any, any, any>, "queryKey" | "queryFn"> = {}
+) {
+  const laneIdsParam = computed<string | undefined>(() => {
+    const v = unref(laneIds);
+    if (v == null) return undefined;
+    if (Array.isArray(v)) {
+      const s = Array.from(
+        new Set(v.map((x) => String(x).trim()).filter(Boolean))
+      ).join(",");
+      return s || undefined;
+    }
+    const one = String(v).trim();
+    return one || undefined;
+  });
+
+  const queryKey = computed(() => [
+    "table-cards-flat",
+    unref(module_id),
+    unref(sheet_ids),
+    unref(laneIdsParam),
+    unref(extraParams),
+  ]);
+
+  const enabled = computed(() =>
+    Boolean(unref(module_id) && unref(sheet_ids))
+  );
+
+  return useQuery({
+    queryKey,
+    enabled,
+    retry: 0,
+    queryFn: async () => {
+      const sId = unref(sheet_ids);
+      const formattedSheetId = Array.isArray(sId) ? sId.join(",") : sId;
+
+      // NOTE: variable_id is intentionally NOT passed here
+      const params: any = {
+        module_id: unref(module_id),
+        ...(unref(laneIdsParam) ? { lane_ids: unref(laneIdsParam) } : {}),
         ...(unref(extraParams) || {}),
       };
 
@@ -220,7 +291,6 @@ export function useSheetList(
         params,
       });
     },
-
     ...options,
   });
 }

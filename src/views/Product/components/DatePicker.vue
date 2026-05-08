@@ -29,7 +29,7 @@
         <div
           v-if="open"
           ref="popover"
-          class="z-[9999] rounded-md shadow-lg border p-3 select-none"
+          class="datepicker-popover z-[9999] rounded-md shadow-lg border p-3 select-none"
           :style="{
             position: 'fixed',
             top: coords.top + 'px',

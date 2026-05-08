@@ -106,8 +106,9 @@ function setAuthCookie(data: { token?: string, company_id?: string }) {
 
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
-  } else if (hostname.endsWith('.streamed.space')) {
-    document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+  } else if (hostname === 'orchit.ai' || hostname.endsWith('.orchit.ai')) {
+    // ✅ Use SameSite=None for cross-site cookie sending on production
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=None`
   }
 
   console.log('🍪 auth_session cookie set:', merged)

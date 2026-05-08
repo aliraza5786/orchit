@@ -4,12 +4,12 @@
   >
     <!-- Sprint Table -->
     <div
-      :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-lg' : ''"
+      class="box-border relative"
+      :class="dropOverSprint ? 'ring-2 ring-blue-400 rounded-[6px] h-full' : 'h-full'"
       @dragover.prevent
       @dragenter="onDragEnterSprint"
       @dragleave="onDragLeaveSprint"
       @drop="onDropSprint"
-      class="h-full box-border relative"
     >
       <!-- Loading Overlay -->
       <div
@@ -117,7 +117,7 @@
       <!-- Empty State -->
       <div
         v-else
-        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-15px)] min-h-0"
+        class="empty-state flex flex-col justify-center items-center border-dashed border-3 p-2 border-border h-[calc(100%-10px)] min-h-0"
       >
         <img
           src="../../../assets/emptyStates/sprint-plan.svg"
@@ -356,8 +356,7 @@ watch(
   () => props.checkedSprintAll,
   (newVal) => {
     if (newVal) {
-      selectedIds.value = filteredTickets.value.map((t) => t.id); // select all
-      console.log(filteredTickets.value);
+      selectedIds.value = filteredTickets.value.map((t) => t.id); // select all 
     } else {
       selectedIds.value = [];
     }

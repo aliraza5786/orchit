@@ -2,8 +2,8 @@
   <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-hidden flex flex-col">
      <!-- Header (Added) -->
          <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card border-b border-border">
-             <div class="flex items-center justify-between gap-4 py-3 px-4">
-                 <h2 class="text-lg font-semibold text-foreground text-nowrap">All Processes</h2>
+             <div class="flex items-center justify-between gap-4 py-2 px-2">
+                 <h2 class="text-md font-semibold text-foreground text-nowrap">All Processes</h2>
                   <div class="w-[250px]">
                   <SearchBar 
                     placeholder="Search processes..." 
@@ -15,50 +15,8 @@
      <!-- Skeleton Loader -->
     <KanbanSkeleton v-if="isPending" />
      <!-- Board Area -->
-    <div  v-if="!isPending" class="flex-1 w-full px-4 overflow-hidden flex flex-col ">      
-       <div class="flex-1 overflow-x-auto flex items-start gap-4 custom_scroll_bar py-4">
-
-      <!-- Kanban Board (Columns) --> 
-      <!-- General Process Static Column -->
-      <!-- <div v-if="!isPending" class="rounded-lg bg-bg-body h-full min-w-[270px] sm:min-w-[320px] max-w-[270px] sm:max-w-[320px] flex flex-col border-border/50 border">
-          
-         <div class="flex items-center justify-between w-full p-4 border-b border-border">
-            <div class="flex items-center gap-2 flex-auto max-w-4/5">
-              <span class="font-semibold overflow-ellipsis line-clamp-1 text-nowrap text-foreground px-1 py-0.5">
-                General Process
-              </span>
-              <span class="text-xs bg-muted bg-bg-card aspect-square flex justify-center items-center text-muted-foreground p-1 min-w-6 rounded-full">
-                1
-              </span>
-            </div>
-         </div>
-
-          
-         <div class="flex-1 p-4 space-y-3 overflow-y-auto">
-             <div 
-               @click="handleGeneralOpenBuilder()"
-               class="bg-bg-card rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition-all duration-200"
-             >
-               <div class="flex justify-between gap-2 items-start">
-                 <div class="flex items-start gap-3 flex-1"> 
-                   <div class="flex-1 min-w-0">
-                      <span
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-bg-surface/60 text-text-secondary font-medium captalize mb-3 inline-flex">
-                     General
-                     </span>
-                     <h3 class="text-sm font-medium text-card-foreground mb-2 capitalize">
-                       General Process
-                     </h3>
-                     <p class="text-xs text-muted-foreground mb-3 text-text-secondary line-clamp-2 max-h-20">
-                       This is a general process card.
-                     </p>
-                   </div>
-                 </div>
-               </div>
-             </div>
-         </div>
-      </div> -->
-
+    <div  v-if="!isPending" class="flex-1 w-full px-2 overflow-hidden flex flex-col ">      
+      <div class="flex-1 overflow-x-auto flex items-start gap-2 custom_scroll_bar py-2"> 
       <!-- Kanban Board (Columns) --> 
       <ProcessKanbanBoard 
         v-if="filteredList?.length > 0" 
@@ -80,14 +38,14 @@
       </ProcessKanbanBoard>
 
       <!-- Inline Add Column Button/Form -->
-      <div class="min-w-[270px] sm:min-w-[300px] max-w-[270px] sm:max-w-[300px] shrink-0">
+      <div class="min-w-[270px] max-w-[270px] shrink-0">
         <div v-if="!activeAddList" 
           @click="canCreateVariable ? activeAddList = true : null"
           class="text-sm text-text-primary py-2.5 font-medium flex items-center justify-center w-full gap-2 bg-bg-body rounded-lg"
           :class="canCreateVariable ? 'cursor-pointer':'cursor-not-allowed'"
           >
           <i class="fa-solid fa-plus"></i>
-          <span class="font-medium">Add Process Group</span>
+          <span class="font-medium text-[14px]">Add Process Group</span>
         </div>
 
         <div v-else class="bg-bg-body rounded-lg p-3 border border-border shadow-sm">

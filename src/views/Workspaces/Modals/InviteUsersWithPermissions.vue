@@ -43,7 +43,7 @@
         :disabled="!form.workspace_id"
         :message="roleError"
         :error="!!roleError"
-        :loading="isLoadingWorkspaceRoles || !newCompanyId"
+        :loading="isLoadingWorkspaceRoles"
       />
       
 
@@ -218,7 +218,7 @@ const { data: workspaceRoles, refetch: refetchWorkspaceRoles, isLoading: isLoadi
     workspace_id: workspaceIdRef
   },
   {
-    enabled: computed(() => !!newCompanyId.value && !!workspaceIdRef.value),
+    enabled: computed(() =>  !!workspaceIdRef.value),
   }
 );
 watch(workspaceIdRef, () => {

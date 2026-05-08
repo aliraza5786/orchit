@@ -101,7 +101,7 @@ export const usePeople = (workspace_id: any, company_id: any, options = {}) => {
     queryKey: ["people", company_id],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `workspace/people?workspace_id=${workspace_id}&company_id=${unref(company_id)._id}`,
+        url: `workspace/people?workspace_id=${unref(workspace_id)}&company_id=${unref(company_id)._id}`,
         method: "GET",
         signal,
       }),
@@ -159,7 +159,7 @@ export const usePeopleVar = (workspaceId: any, options = {}) => {
     queryKey: ["people-var", workspaceId],
     queryFn: ({ signal }) =>
       request<any>({
-        url: `/common/module-variables/filter?module=people&workspace_id=${workspaceId}`,
+        url: `/common/module-variables/filter?module=people&workspace_id=${unref(workspaceId)}`,
         method: "GET",
         signal,
       }),
@@ -338,10 +338,20 @@ export const useWorkspaceRoles = (
   return useQuery({
     queryKey: ["workspace-roles", company_id, workspace_id],
     queryFn: ({ signal }) => {
-      let url = `roles/workspace-access-roles?company_id=${unref(company_id)}`;
+      let url = `roles/workspace-access-roles`;
+      const queryParams = new URLSearchParams();
+
+      if (unref(company_id)) {
+        queryParams.append('company_id', String(unref(company_id)));
+      }
       
       if (unref(workspace_id)) {
-        url += `&workspace_id=${unref(workspace_id)}`;
+        queryParams.append('workspace_id', String(unref(workspace_id)));
+      }
+
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
       }
 
       return request<any>({
@@ -349,8 +359,7 @@ export const useWorkspaceRoles = (
         method: "GET",
         signal,
       });
-    },
-    enabled: !!unref(company_id),
+    }, 
     ...options,
   });
 };

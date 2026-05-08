@@ -83,7 +83,7 @@ function saveAuthForSubdomain(token: string, companyId: string) {
     document.cookie = `auth_session=${value}; path=/; max-age=${maxAge}; SameSite=Lax`
   } else {
     // ✅ .streamed.space — shared across ALL subdomains
-    document.cookie = `auth_session=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+    document.cookie = `auth_session=${value}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
   }
 }
 function goToRegister() {

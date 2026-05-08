@@ -1,6 +1,7 @@
 <template>
+  <div class="mobile-scroll-visible overflow-x-auto h-full mx-2">
   <div class="schedule-container">
-    <div class="calendar-header bg-bg-card text-text-secondary lg:space-y-0 space-y-2">
+    <div class="calendar-header bg-bg-card text-text-secondary lg:space-y-0 space-y-2 py-2">
       <div class="nav-group bg-bg-body text-text-secondary rounded-md px-2 py-1">
         <button class="nav-btn text-text-secondary" @click="goPrev">
           <i class="fa-regular fa-chevron-left text-sm"></i>
@@ -24,9 +25,10 @@
       </div>
     </div>
 
-    <div class="calendar-wrapper px-3">
+    <div class="calendar-wrapper">
       <div ref="calendarEl" class="calendar-host border border-border"></div>
     </div>
+  </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -229,16 +231,19 @@ onBeforeUnmount(() => {
 
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height:  calc(100% - 10px) !important;
   transition: background 0.2s;
+  min-width: 1000px;
 }
 .calendar-header {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
-  align-items: center;
-  padding: 12px 13px;
+  align-items: center; 
   transition: background 0.2s;
+}
+::v-deep .toastui-calendar-weekday-grid, ::v-deep .toastui-calendar-daygrid-cell, ::v-deep .toastui-calendar-panel-grid, ::v-deep .calendar-wrapper *{
+  border-color: var(--color-border) !important;
 }
 
 .nav-group {
@@ -348,7 +353,7 @@ onBeforeUnmount(() => {
 :deep(.toastui-calendar-grid-cell) {
   background: var(--cal-bg) !important;
   color: var(--cal-text) !important;
-  border-color: var(--cal-border) !important;
+  /* border-color: var(--cal-border) !important; */
   transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 

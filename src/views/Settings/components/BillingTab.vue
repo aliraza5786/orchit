@@ -1,7 +1,7 @@
 <template>
   <div
     class="w-full flex justify-center items-center py-10"
-    v-if="isPending || isConfirming"
+    v-if="isConfirming"
   >
     <div
       role="status"
@@ -16,6 +16,8 @@
         <h3 class="text-lg font-semibold text-text-primary mb-4">
           Current Plan
         </h3>
+        <pre>
+        </pre>
         <div class="flex items-center justify-between mb-4">
           <div>
             <p class="text-2xl font-bold text-text-primary">
@@ -214,8 +216,7 @@ const router = useRouter();
 const {
   data: currentPackage,
   refetch: reftechCurrentPackage,
-  isPending,
-} = useCurrentPackage();
+} = useCurrentPackage('individual')
 
 watch(
   () => currentPackage.value,
@@ -252,36 +253,44 @@ const formatFeature = (feature: any) => {
 
   return feature.description || feature.name;
 };
-
 const getPriceInfo = (pkg: any, interval: any) => {
-    const monthPrice = pkg?.pricing?.month?.amount || 0;
-    const trialInfo = pkg?.pricing?.month?.trialDays > 0 ? `${pkg?.pricing?.month?.trialDays} days free trial` : "";
-    const discountPercent =  pkg?.pricing?.month?.discount?.percentage || 0;
-   // Apply discount only if applicable
-    const discountedMonthlyPrice = discountPercent > 0
-    ? (monthPrice * (100 - discountPercent)) / 100
-    : monthPrice;
-   const currency = pkg?.pricing?.month?.currencySymbol || "$";
+  // ✅ normalize to major currency unit
+  const rawMonthPrice = pkg?.pricing?.month?.amount || 0;
+  const monthPrice = rawMonthPrice / 100;
 
-  
-  if (interval === 'year') {
+  const trialInfo =
+    pkg?.pricing?.month?.trialDays > 0
+      ? `${pkg?.pricing?.month?.trialDays} days free trial`
+      : "";
+
+  const discountPercent =
+    pkg?.pricing?.month?.discount?.percentage || 0;
+
+  const discountedMonthlyPrice =
+    discountPercent > 0
+      ? (monthPrice * (100 - discountPercent)) / 100
+      : monthPrice;
+
+  const currency = pkg?.pricing?.month?.currencySymbol || "$";
+
+  if (interval === "year") {
     const totalYear = monthPrice * 12;
-    const discountedYear = Math.round(totalYear * 0.8); // 20% discount
+    const discountedYear = Math.round(totalYear * 0.8);
+
     return {
       amount: toPsychPrice(discountedYear),
       currencySymbol: currency,
-      interval: 'year',
+      interval: "year",
       originalAmount: toPsychPrice(totalYear),
     };
   }
-  
+
   return {
     amount: toPsychPrice(discountedMonthlyPrice),
     currencySymbol: currency,
-    interval: 'month',
+    interval: "month",
     originalAmount: toPsychPrice(monthPrice),
-    trialInfo: trialInfo
-
+    trialInfo: trialInfo,
   };
 };
 

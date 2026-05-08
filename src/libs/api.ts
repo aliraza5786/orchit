@@ -10,6 +10,7 @@ import axios, {
 export const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true, // ✅ CRITICAL: Allow cookies to be sent/received with requests
 });
 api.interceptors.request.use((config) => {
   const localToken = localStorage.getItem('token')

@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative w-full h-full flex overflow-hidden mindmap-root"
+    class="relative w-full h-full flex rounded-[6px] my-2 overflow-hidden mindmap-root"
     ref="rootEl"
     :data-dark="isDark ? 'true' : 'false'"
   >
@@ -3131,8 +3131,8 @@ function buildTree(sheets: any[]): MindNode {
 
   sheets.forEach((sheet) => {
     const title =
+    localStorage.getItem("selected_sheet_title") ||
       props.selectedSheetTitle ||
-      localStorage.getItem("selected_sheet_title") ||
       localStorage.getItem("selectedSprintTitle") ||
       "Sheet";
 

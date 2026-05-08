@@ -30,41 +30,44 @@
 
         <!-- Options Container -->
         <div class="max-h-[300px] overflow-y-auto py-1">
-          <!-- Recently Used Section -->
-          <div v-if="!searchQuery" class="px-3 py-1.5">
-            <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Recently used</span>
-          </div>
-          <div 
-            v-if="!searchQuery"
-            @click="selectOption('priority')"
-            class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group"
-            :class="modelValue === 'priority' ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
-          >
-            <span class="text-xs">Priority</span>
-            <i v-if="modelValue === 'priority'" class="fa-solid fa-check text-[10px]"></i>
-          </div>
+          <!-- Watch and Track Section -->
+          <template v-if="!searchQuery && lastSelectedOption">
+            <div class="px-3 py-1.5">
+              <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">Recent used</span>
+            </div>
+            <div 
+              @click="selectOption(lastSelectedOption.id)"
+              class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group"
+              :class="modelValue === lastSelectedOption.id ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
+            >
+              <div class="flex items-center gap-2">
+                 <span class="text-xs">{{ lastSelectedOption.label }}</span>
+              </div>
+              <i v-if="modelValue === lastSelectedOption.id" class="fa-solid fa-check text-[10px]"></i>
+            </div>
+          </template>
 
           <!-- All Fields Section -->
-          <div class="px-3 py-1.5 mt-1 border-t border-border/40">
+          <div v-if="filteredOptions.length > 0" class="px-3 py-1.5 mt-1 border-t border-border/40">
             <span class="text-[10px] font-bold text-text-secondary uppercase tracking-wider">All fields</span>
           </div>
           
           <div 
             v-for="option in filteredOptions" 
-            :key="option.id"
-            @click="selectOption(option.id)"
+            :key="option._id"
+            @click="selectOption(option._id)"
             class="px-3 py-2 flex items-center justify-between cursor-pointer transition-colors group"
-            :class="modelValue === option.id ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
+            :class="modelValue === option._id ? 'bg-accent/10 text-accent font-semibold' : 'hover:bg-bg-body text-text-primary'"
           >
-            <span class="text-xs">{{ option.label }}</span>
-            <i v-if="modelValue === option.id" class="fa-solid fa-check text-[10px]"></i>
+            <span class="text-xs">{{ option.title }}</span>
+            <i v-if="modelValue === option._id" class="fa-solid fa-check text-[10px]"></i>
           </div>
         </div>
 
         <!-- Footer: Clear Selection -->
         <div class="border-t border-border mt-1">
           <button 
-            @click="selectOption('')"
+            @click="clearSelection"
             class="w-full px-3 py-2.5 text-left text-xs text-text-secondary hover:bg-bg-body hover:text-text-primary transition-colors flex items-center gap-2"
           >
              Clear selection
@@ -82,8 +85,12 @@ import { onClickOutside } from "@vueuse/core";
 
 const props = defineProps<{
   triggerRef: HTMLElement | null;
-  modelValue: string;
+  modelValue: string | Record<string, any>;
+  options?: any[];
+  pin?: boolean;
 }>();
+
+const pinOptions = computed(() => props.options || []);
 
 const emit = defineEmits(['update:modelValue', 'close']);
 
@@ -99,21 +106,52 @@ const dropdownStyles = ref<CSSProperties>({
 
 let cleanupFloating: (() => void) | null = null;
 
-const allOptions = [
-  { id: 'priority', label: 'Priority' },
-  { id: 'status', label: 'Status' },
-  { id: 'assignee', label: 'Assignee' },
-  { id: 'owner', label: 'Owner/Reporter' },
-  { id: 'card_type', label: 'Card Type' },
-];
+const allOptions = computed(() => {
+  return props.pin
+    ? pinOptions.value
+    : [
+        { _id: 'priority', title: 'Priority' },
+        { _id: 'status', title: 'Status' },
+        { _id: 'assignee', title: 'Assignee' },
+        { _id: 'owner', title: 'Owner/Reporter' },
+        { _id: 'card_type', title: 'Card Type' },
+      ];
+});
+
+const lastSelectedGroup = ref(localStorage.getItem('last_selected_group') || '');
+
+const lastSelectedOption = computed(() => {
+  if (!lastSelectedGroup.value) return null;
+  return allOptions.value?.find(o => o._id === lastSelectedGroup.value);
+});
 
 const filteredOptions = computed(() => {
   const q = searchQuery.value.toLowerCase();
-  return allOptions.filter(o => o.label.toLowerCase().includes(q));
+
+  return (allOptions.value || []).filter(o => {
+    const label = (o.label || o.title || '').toLowerCase();
+
+    return (
+      label.includes(q) &&
+      o._id !== lastSelectedGroup.value
+    );
+  });
 });
 
 function selectOption(id: string) {
-  emit('update:modelValue', id);
+  const option = allOptions.value.find(o => o._id === id);
+
+  if (!option) return;
+
+  // store last selected
+  if (props.modelValue) {
+    localStorage.setItem('last_selected_group', props.modelValue as string);
+    lastSelectedGroup.value = props.modelValue as string;
+  }
+
+  // emit conditionally
+  emit('update:modelValue', props.pin ? option : option._id);
+
   emit('close');
 }
 
@@ -136,7 +174,10 @@ function updatePosition() {
     };
   });
 }
-
+function clearSelection() {
+  emit('update:modelValue', props.pin ? null : '');
+  emit('close');
+}
 onMounted(() => {
   nextTick(() => {
     updatePosition();

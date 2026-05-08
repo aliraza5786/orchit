@@ -81,6 +81,18 @@
         </div>
         <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>
       </div>
+      <!-- sheet selection -->
+        <div v-if="route.path.includes('plan')" class="flex flex-col">
+      <BaseSelectField
+        size="md"
+        label="Select Sheet"
+        placeholder="Select Sheet"
+        :options="sheetOptions"
+        :model-value="selected_sheet_id"
+        :allowCustom="false"
+        @update:modelValue="onSheetChange"
+      />
+</div>
       <!-- Assignee -->
       <div class="flex flex-col gap-1" v-if="!route.path.includes('/pin')">
         <label class="text-sm">Assignee</label>
@@ -98,17 +110,7 @@
           />
         </div>
       </div>
-      <div v-if="route.path.includes('plan')" class="flex flex-col">
-  <BaseSelectField
-    size="md"
-    label="Select Sheet"
-    placeholder="Select Sheet"
-    :options="sheetOptions"
-    :model-value="selected_sheet_id"
-    :allowCustom="false"
-    @update:modelValue="onSheetChange"
-  />
-</div>
+     
 
     </div>
 
@@ -135,12 +137,12 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, computed, watch, ref, onMounted } from "vue";
+import { reactive, computed, watch, ref, onMounted, watchEffect } from "vue";
 import BaseModal from "../../../components/ui/BaseModal.vue";
 import BaseTextField from "../../../components/ui/BaseTextField.vue";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 import Button from "../../../components/ui/Button.vue";
-import { useAddTicket, useLanes, useVariables, useSheets } from "../../../queries/useSheets";
+import { useAddTicket, useLanes } from "../../../queries/useSheets";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import BaseRichTextEditor from "../../../components/ui/BaseRichTextEditor.vue";
 import DatePicker from "../components/DatePicker.vue";
@@ -149,6 +151,7 @@ import { useQueryClient } from "@tanstack/vue-query";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useSprintKanban } from "../../../queries/usePlan"
 import { useRoute } from "vue-router";
+import { toast } from "vue-sonner";
 const { canCreateCard } = usePermissions();
 const route = useRoute();
 /** Emits */
@@ -167,16 +170,25 @@ const props = withDefaults(
     pin?: Boolean;
     size?: string;
     sprint_id?: string;
+    sheetVariables?: any[];
+    sheets?: any[];
+
   }>(),
-  { modelValue: false, size: "lg" }
+  { modelValue: false, size: "lg",  sheetVariables: () => [], sheets: () => []  }
 );
 
+watchEffect(()=>{
+  console.log(props.sheetVariables, "sheet varaibles")
+})
+
 const queryClient = useQueryClient();
-const { workspaceId, moduleId } = useRouteIds();
+const { workspaceId } = useRouteIds();
 const { mutate: addTicket, isPending: isSubmitting } = useAddTicket({
   onSuccess: () => {
     reset();
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+    toast.success("Ticket created successfully");
     if(route.path.includes("plan")){
       console.log("onSuccess triggered");
      queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
@@ -229,24 +241,34 @@ type Variable = {
   type?: { title?: string };
   data: string[];
   slug: string;
-};
-const module_id= ref(localStorage.getItem("selectedModuleId") ||"");
-const {
-  data
-} = useSheets({
-  workspace_id: workspaceId,
-  workspace_module_id: module_id,
-});
-const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
-const selected_sheet_id = ref<any>(sheetId.value);
-const resolvedSheetId = computed(() => {
-  return props.sheet_id || selected_sheet_id.value || ''
-})
-const { data: variables } = useVariables(
-  workspaceId,
-  moduleId,
-  resolvedSheetId
-)
+}; 
+  
+const selected_sheet_id = ref<any>();
+// Watch for props.sheets changes
+watch(
+  () => props.sheets,
+  (newSheets) => {
+    if (newSheets?.length && !selected_sheet_id.value && !props.sheet_id) {
+      selected_sheet_id.value = newSheets[0]?._id;
+    }
+  },
+  { immediate: true }
+);
+
+// Watch for props.sheet_id changes
+watch(
+  () => props.sheet_id,
+  (newSheetId) => {
+    if (newSheetId) {
+      selected_sheet_id.value = newSheetId;
+    }
+  },
+  { immediate: true }
+);
+  
+
+const variables = computed(() => props.sheetVariables);
+
 
 /** Modal open proxy */
 const isOpen = computed({
@@ -255,9 +277,16 @@ const isOpen = computed({
 });
 
 /** Filter to "Select" variables */
-const selectVariables = computed<Variable[]>(() =>
-  (variables?.value ?? []).filter((v: any) => v?.type?.title === "Select")
-);
+const selectVariables = computed<Variable[]>(() => {
+  if (!variables.value || !Array.isArray(variables.value)) {
+    return [];
+  }
+  return variables.value.filter((v: any) => v?.type?.title === "Select");
+});
+
+ 
+
+
 
 /** Option mapping */
 type Option = { _id: string | number; title: string };
@@ -377,8 +406,21 @@ interface DropdownOption {
   status:string
 }
 
-const transformedData = computed<DropdownOption[]>(() => {  
-  return (data.value || []).map((item: any) => ({
+const transformedData = computed<DropdownOption[]>(() => {
+  const alwaysAllowed = ["features", "backlog", "module"];
+
+  const filteredSheets = (props.sheets || []).filter((item: any) => {
+    const title = item?.variables?.["sheet-title"]?.toLowerCase();
+    const source = item?.user_permissions?.source?.toLowerCase();
+
+    if (alwaysAllowed.includes(title)) return true;
+    if (source === "owner") return true;
+    if (source === "shared" && item?.user_permissions?.can_read) return true;
+
+    return false;
+  });
+
+  return filteredSheets.map((item: any) => ({
     _id: item._id,
     title: item?.variables["sheet-title"],
     description: item?.variables["sheet-description"],
@@ -470,7 +512,9 @@ const payload = {
     ["card-description"]: form.description.trim(),
     ["start-date"]: form.startDate,
     ["end-date"]: form.endDate,
-    ["card-status"]: localStorage.getItem("selectedStatusTitle") || "To Do"
+    ["card-status"]: (variableKey === 'card-status' || variableKey === 'status' || !variableKey) 
+      ? (localStorage.getItem("selectedStatusTitle") || "To Do") 
+      : "To Do"
   },
   seat_id: Array.isArray(form.assignees)
   ? form.assignees.map(u => u?._id || u?.id).filter(Boolean)

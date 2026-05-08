@@ -5,7 +5,7 @@
       :ghost-class="'kanban-ghost'" :chosen-class="'kanban-chosen'" :drag-class="'kanban-dragging'"
       :force-fallback="true" 
       :disabled="isMobile"
-      class="flex gap-3"
+      class="flex gap-2"
       :class="{
         'overflow-x-auto snap-x snap-mandatory w-full pb-4 mobile-scroll-visible': isMobile,
         'min-w-max': !isMobile
@@ -16,7 +16,7 @@
         <div class="rounded-lg bg-bg-surface h-full " 
           :class="{ 
             'snap-center min-w-[270px] max-w-[270px]': isMobile,
-            'min-w-[320px] max-w-[320px]': !isMobile 
+            'min-w-[270px] max-w-[270px]': !isMobile 
           }"
           :key="column._id"
         >

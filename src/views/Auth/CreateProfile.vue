@@ -170,9 +170,11 @@
     </button>
 
   </div>
-
+   <p v-if="errors.workType" class="text-xs text-red-500 mt-2">
+    {{ errors.workType }}
+  </p>
 </div>
-<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-10">
+<div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-3">
 
   <div class="w-full max-w-115">
 
@@ -231,7 +233,7 @@
           <div class="flex items-center gap-2 px-3.5 border-l"
             style="background: var(--bg-surface); border-color: var(--border);">
             <span class="text-[13px] font-semibold whitespace-nowrap" style="color: var(--text-secondary);">
-              .streamed.space
+              .orchit.ai
             </span>
 
             <!-- checking -->
@@ -271,7 +273,7 @@
           </p>
           <p v-else-if="isSlugAvailable === true && !isCheckingSlug"
             class="text-xs" style="color: #1d9e75;">
-            <span class="font-medium">{{ siteSlug }}</span>.streamed.space is available
+            <span class="font-medium">{{ siteSlug }}</span>.orchit.ai is available
           </p>
           <p v-else class="text-xs" style="color: var(--text-secondary);">
             This is just a suggestion — feel free to change it to something your team will recognize.
@@ -285,7 +287,7 @@
         style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);">
         <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent); opacity: 0.7;" />
         <span class="text-[13px] font-semibold break-all" style="color: var(--accent);">
-          https://{{ siteSlug }}.streamed.space
+          https://{{ siteSlug }}.orchit.ai
         </span>
       </div>
 
@@ -332,19 +334,6 @@
   <span v-else>Create site</span>
 </button>
 
-      <!-- DIVIDER + FOOTNOTE -->
-      <div class="space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="flex-1 h-px" style="background: var(--border);" />
-          <span class="text-[11px] font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">or</span>
-          <div class="flex-1 h-px" style="background: var(--border);" />
-        </div>
-        <p class="text-xs text-center" style="color: var(--text-secondary);">
-          You can update your site name later in
-          <a class="font-semibold cursor-pointer hover:underline" style="color: var(--accent);">Settings → Site details</a>.
-        </p>
-      </div>
-
     </div>
 
   </div>
@@ -382,7 +371,7 @@
     </div>
 
     <!-- ✅ Step 7 own nav -->
-    <div class="flex justify-between items-center mt-10 md:mt-15">
+    <div class="flex justify-between items-center">
       <Button variant="secondary" size="md" type="button" @click="goBack">
         <div class="flex items-center gap-1">
           <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
@@ -454,39 +443,30 @@
       </div>
     </div>
 
-    <!-- invite via email -->
-    <div class="space-y-1.5">
-      <label class="text-sm font-medium text-text-primary">Invite via email</label>
-      <BaseEmailChip
-        v-model="emailList"
-        :error="!!errors.emailList"
-        :message="errors.emailList"
-      />
-    </div>
-
     <!-- actions -->
 <!-- actions -->
+<!-- AFTER: -->
 <div class="flex items-center justify-between pt-2">
   <Button 
     variant="secondary" 
     size="md" 
-    :disabled="invitingPeople"
-    @click="sendInvites"
+    :disabled="isSkipping || isInviting"
+    @click="sendInvites(true)"
   >
     <div class="flex items-center gap-2">
-      <span v-if="invitingPeople" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
+      <span v-if="isSkipping" class="w-4 h-4 rounded-full border-2 border-accent/30 border-t-accent animate-spin" />
       <span>Do this later</span>
     </div>
   </Button>
 
   <Button 
     size="md" 
-    :disabled="invitingPeople"
-    @click="sendInvites"
+    :disabled="isInviting || isSkipping"
+    @click="sendInvites(false)"
   >
     <div class="flex items-center gap-2">
-      <span v-if="invitingPeople" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-      <span>Invite</span>
+      <span v-if="isInviting" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+      <span>Finish Profile</span>
     </div>
   </Button>
 </div>
@@ -495,7 +475,7 @@
 
 </div>
 <!-- ✅ KEEP THIS ONE — the original at the bottom -->
-<div class="flex justify-between items-center mt-10 md:mt-15" 
+<div class="flex justify-between items-center mt-10 md:mt-5" 
   v-if="activeStep !== 6 && activeStep !== 7 && activeStep !== 8 && activeStep !== 9">
   
   <Button v-if="activeStep != 1" variant="secondary" size="md" type="button" @click="goBack"
@@ -588,8 +568,7 @@ import schoolIcon from '../../assets/platform/school.svg'
 import Button from '../../components/ui/Button.vue'
 import BaseSelectField from '../../components/ui/BaseSelectField.vue'
 import BaseTextField from '../../components/ui/BaseTextField.vue'
-import { useRouter } from 'vue-router'
-import BaseEmailChip from '../../components/ui/BaseEmailChip.vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useCreateCompany, useUpdateCompany, useInviteCompany } from '../../services/auth'
 import { updateProfile as updateUserProfile } from '../../services/user'
 import { useRolesList } from '../../queries/useCommon'
@@ -599,17 +578,18 @@ import LoadingCreateProfile from '../../components/LoadingCreateProfile.vue'
 import gsap from 'gsap'
 defineOptions({ name: 'OnboardingFlow' })
 const workspaceStore = useWorkspaceStore()
+// AFTER:
 const errors = ref<{
   team?: string
   role?: string
   companySize?: string
   emailList?: string
   personalRole?: string
-
   schoolName?: string
   educationLevel?: string
-  siteName?:string;
+  siteName?: string
   selectedModules?: string
+  workType?: string
 }>({})
 const authStore = useAuthStore()
 const personalRole = ref('')
@@ -632,6 +612,9 @@ const isSlugAvailable = ref<boolean | null>(null)
 const referralSources = ref<string[]>([])
 const joinLink = ref('')
 const domainLink = ref('')
+const isInviting = ref(false)
+const isSkipping = ref(false)
+const route = useRoute()
 const moduleOptionsMap = {
   team: [
     { id: 'tasks', label: 'Tasks' },
@@ -675,7 +658,8 @@ function toggleModule(id: string) {
   if (selectedModules.value.includes(id)) {
     selectedModules.value = selectedModules.value.filter(m => m !== id)
   } else {
-    selectedModules.value.push(id)
+    selectedModules.value.push(id);
+     if (errors.value.selectedModules) errors.value.selectedModules = undefined
   }
 }
 function validateCompanyStep() {
@@ -1006,7 +990,7 @@ async function continueHandler() {
   }
 if (activeStep.value === 4) {
   if (!workType.value) {
-    errors.value.role = 'Please select what kind of work you do.'
+    errors.value.workType = 'Please select what kind of work you do.'
     return
   }
 
@@ -1083,9 +1067,9 @@ function setAuthCookie(token: string) {
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
     // localhost — no domain, no Secure
     document.cookie = cookieString
-  } else if (hostname.endsWith('.streamed.space') || hostname === 'streamed.space') {
+  } else if (hostname.endsWith('.orchit.ai') || hostname === 'orchit.ai') {
     // streamed.space subdomains
-    cookieString += `; domain=.streamed.space; Secure`
+    cookieString += `; domain=.orchit.ai; Secure`
     document.cookie = cookieString
   } else if (hostname.endsWith('.orchit.ai') || hostname === 'orchit.ai') {
     // orchit.ai subdomains
@@ -1095,15 +1079,20 @@ function setAuthCookie(token: string) {
 
   console.log('🍪 cookie set for:', hostname, '→', cookieString)
 }
-function sendInvites() {
+// AFTER:
+async function sendInvites(skip = false) {
+  if (skip) {
+    isSkipping.value = true
+  } else {
+    isInviting.value = true
+  }
+
   const token = localStorage.getItem('token')
   if (token) setAuthCookie(token)
-
   const encodedToken = token
     ? btoa(token).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
     : ''
 
-  // ✅ Use companyID ref directly — already set in createProfile onSuccess
   const companyIdRaw = companyID.value ?? localStorage.getItem('company_id') ?? ''
   const encodedCompanyId = companyIdRaw
     ? btoa(companyIdRaw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '.')
@@ -1117,25 +1106,38 @@ function sendInvites() {
 
   if (encodedToken) query._auth = encodedToken
   if (encodedCompanyId) query._cid = encodedCompanyId
-  if (emailList.value.length > 0) {
-    invitePeople(
-      {
-        payload: {
-          company_id: companyID.value,
-          emails: [...emailList.value]
-        }
-      },
-      {
-        onSuccess: () => {
-          router.push({ path: '/finish-profile', query })
-        }
-      }
-    )
-  } else {
+
+  // Skip or no emails — go directly without inviting
+  if (skip || emailList.value.length === 0) {
+    isSkipping.value = false
+    isInviting.value = false
     router.push({ path: '/finish-profile', query })
+    return
   }
+
+  invitePeople(
+    {
+      payload: {
+        company_id: companyID.value,
+        emails: [...emailList.value]
+      }
+    },
+    {
+      onSuccess: () => {
+        isInviting.value = false
+        router.push({ path: '/finish-profile', query })
+      },
+      onError: () => {
+        isInviting.value = false
+      }
+    }
+  )
 }
 onMounted(() => {
+  if (route.query.mode === 'company') {
+    selected.value = 'team'
+    activeStep.value = 2
+  }
   gsap.to(".rocket", {
     y: -10,
     rotation: -5,
@@ -1180,6 +1182,17 @@ const isSiteStepBlocked = computed(() => {
   if (activeStep.value !== 5) return false
   if (selected.value !== 'team' && selected.value !== 'school') return false
   return !isSlugAvailable.value || isCheckingSlug.value
+})
+watch(workType, (v) => { if (v && errors.value.workType) errors.value.workType = undefined })
+// Add this alongside your other watchers
+watch(activeStep, (step) => {
+  if (step === 5 && !siteName.value) {
+    if (selected.value === 'team' && team.value.trim()) {
+      siteName.value = generateSlug(team.value)
+    } else if (selected.value === 'school' && schoolName.value.trim()) {
+      siteName.value = generateSlug(schoolName.value)
+    }
+  }
 })
 </script>
 

@@ -5,15 +5,18 @@
     workspaceStore.showSettingPanel ? 'translate-x-0 min-w-full sm:min-w-[380px] w-full h-full' : 'translate-x-100 !max-w-0 h-0'
   ]">
     <!-- Header -->
-    <div class="flex justify-between items-center border-b border-border px-5 py-4.5 sticky top-0 bg-bg-card z-10">
+    <div class="flex justify-between items-center border-b border-border px-3 py-2.5 sticky top-0 bg-bg-card z-10">
       <h5 class="text-[16px] font-medium">Space Details</h5>
-      <i class=" cursor-pointer text-text-primary fa-solid fa-close" @click="closeHandler"></i>
+      <div class="shrink-0 flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer">
+        <i class="text-text-primary fa-solid fa-close" @click="closeHandler"></i>
+      </div>
     </div>
 
-    <div class="flex px-5 py-6 flex-col">
+    <div class="flex px-3 py-3 flex-col">
       <!-- Workspace Identity -->
-      <div class="flex items-center gap-3.5">
-        <!-- Logo + hover overlay -->
+      <div class="flex items-center justify-between w-full gap-2">
+        <div class="flex items-center gap-3.5 min-w-0">
+          <!-- Logo + hover overlay -->
         <div class="relative group">
           <img :src="logoPreview || workspace.logo || dummy"
             class="w-12 h-12 min-w-12 object-cover aspect-square rounded-lg border border-border"
@@ -43,18 +46,32 @@
               v-tooltip="'Click to rename'">
               {{ editableTitle }}
             </h3>
-            
           </template>
           <template v-else>
-            <div class="flex items-center gap-2">
-              <input ref="titleInputRef" v-model="editableTitle"
-                class="px-2 py-1 rounded-md border border-border bg-g-input text-text-primary text-xl font-medium outline-none min-w-[120px] max-w-[220px]"
-                @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle" @blur="saveTitle" />
-            </div>
+            <input ref="titleInputRef" v-model="editableTitle"
+              class="px-2 py-1 rounded-md border border-border bg-g-input text-text-primary text-xl font-medium outline-none min-w-[120px] max-w-[220px]"
+              @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle" @blur="saveTitle" />
           </template>
           <p class="text-xs text-text-secondary mt-0.5" v-if="workspace?.created_at">
-              Created at {{ formatDateTime(workspace.created_at) }}
-            </p>
+            Created at {{ formatDateTime(workspace.created_at) }}
+          </p>
+        </div>
+        </div>
+
+        <!-- Custom Color Picker Swatch -->
+        <div class="shrink-0">
+          <label 
+            class="cursor-pointer block w-8 h-8 rounded-full shadow-sm border border-border/20 overflow-hidden relative" 
+            :style="{ backgroundColor: editableWorkspaceColor }" 
+            v-tooltip="'Change workspace color'"
+          >
+            <input 
+              type="color" 
+              v-model="editableWorkspaceColor" 
+              @change="saveWorkspaceColor" 
+              class="opacity-0 absolute inset-0 w-[200%] h-[200%] -top-1/2 -left-1/2 cursor-pointer" 
+            />
+          </label>
         </div>
       </div>
 
@@ -92,7 +109,7 @@
       </div>
 
       <!-- ===== DETAILS ===== -->
-      <div v-if="switchState === 'details'" class="space-y-6 w-full">
+      <div v-if="switchState === 'details'" class="space-y-3 w-full">
          
 
         <!-- ===== SHARE / INVITE ===== -->
@@ -196,31 +213,60 @@
 
 
           <div v-if="workspace.usage_stats?.storage">
-            <h3 class="text-sm font-medium text-text-secondary mb-2">Usage</h3>
-            <div class="bg-bg-body rounded-xl p-4 space-y-3">
-              <div class="flex items-center justify-between text-text-primary text-base font-medium">
-                <div class="flex items-center gap-2">
-                  <i class="fa-regular fa-cloud"></i>
-                  <span>Storage</span>
+            <h3 class="text-sm font-medium text-text-secondary mb-2">Workspace Storage</h3>
+            <div class="bg-bg-body border border-border/40 rounded-xl p-5 space-y-4 shadow-sm relative overflow-hidden group">
+              <!-- Top Info -->
+              <div class="flex items-center justify-between relative z-10">
+                <div class="flex items-center gap-2.5">
+                  <div class="p-2 bg-accent/10 rounded-lg text-accent group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-regular fa-cloud text-lg"></i>
+                  </div>
+                  <div>
+                    <span class="text-sm font-semibold text-text-primary block">Storage</span>
+                    <span class="text-xs text-text-secondary">
+                      {{ workspace.usage_stats.storage.used_mb?.toFixed(2) }} MB used
+                    </span>
+                  </div>
                 </div>
-                 <span v-if="workspace.usage_stats.storage.total_allowed_mb !== 'unlimited'" class="text-sm">
-                   {{ Math.round(storagePercentage) }}% full
-                 </span>
+                
+                <div v-if="workspace.usage_stats.storage.total_allowed_mb !== 'unlimited'" class="text-right">
+                  <span class="text-sm font-bold text-text-primary">{{ Math.round(storagePercentage) }}%</span>
+                  <span class="text-[10px] text-text-secondary block uppercase tracking-wider font-bold">Capacity</span>
+                </div>
+                <div v-else class="flex items-center gap-1.5 px-2.5 py-1 bg-green-500/10 text-green-500 rounded-full border border-green-500/20">
+                  <i class="fa-solid fa-infinity text-xs"></i>
+                  <span class="text-[10px] font-bold uppercase tracking-wider">Unlimited</span>
+                </div>
               </div>
               
-              <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
-                <div class="h-full bg-accent rounded-full transition-all duration-300" 
-                     :style="{ width: `${storagePercentage}%` }">
+              <!-- Progress Bar Container -->
+              <div class="relative h-2.5 w-full bg-border/40 rounded-full overflow-hidden">
+                <!-- Shimmer background for both states -->
+                <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-shimmer-fast"></div>
+                
+                <!-- Finite Storage Bar -->
+                <div v-if="workspace.usage_stats.storage.total_allowed_mb !== 'unlimited'"
+                  class="absolute inset-y-0 left-0 bg-gradient-to-r from-accent to-accent-hover rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(125,104,200,0.3)]" 
+                  :style="{ width: `${storagePercentage}%` }">
+                  <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-50"></div>
+                </div>
+                
+                <!-- Unlimited Storage Bar (Full width, animated) -->
+                <div v-else
+                  class="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-accent/40 via-accent to-accent/40 rounded-full animate-shimmer-slow" 
+                  style="background-size: 200% 100%">
                 </div>
               </div>
 
-              <div class="text-sm text-text-secondary">
-                 <template v-if="workspace.usage_stats.storage.total_allowed_mb === 'unlimited'">
-                     {{ workspace.usage_stats.storage.used_mb?.toFixed(2) }} MB used (Unlimited)
-                 </template>
-                 <template v-else>
-                    {{ workspace.usage_stats.storage.used_mb?.toFixed(2) }} MB of {{ workspace.usage_stats.storage.total_allowed_mb }} MB used
-                 </template>
+              <!-- Bottom Details -->
+              <div v-if="workspace.usage_stats.storage.total_allowed_mb !== 'unlimited'" class="flex justify-between items-center text-[11px] font-medium text-text-secondary relative z-10">
+                <span>0 MB</span>
+                <span class="px-1.5 py-0.5 bg-bg-surface rounded text-text-primary">
+                  {{ workspace.usage_stats.storage.total_allowed_mb }} MB Limit
+                </span>
+              </div>
+              <div v-else class="text-[11px] font-medium text-text-secondary italic">
+                * Your workspace has no storage limits.
               </div>
             </div>
           </div>
@@ -430,6 +476,26 @@ function saveTitle() {
   })
 }
 
+const editableWorkspaceColor = ref(props.workspace?.variables?.['workspace-color'] || '#7D68C8')
+watch(() => props.workspace?.variables?.['workspace-color'], (newColor) => {
+  if (newColor) editableWorkspaceColor.value = newColor
+})
+
+function saveWorkspaceColor() {
+  const c = editableWorkspaceColor.value;
+  workspaceStore.updateSingleWorkspaceLocal({
+    variables: {
+      'workspace-color': c
+    }
+  })
+  updateWS({
+    workspace_id: workspaceId.value,
+    variables: {
+      'workspace-color': c
+    }
+  })
+}
+
 /* ----- Logo: upload on hover click ----- */
 const logoInputRef = ref<HTMLInputElement | null>(null)
 const isUploadingLogo = ref(false)
@@ -440,6 +506,7 @@ function triggerLogoPicker() {
 }
 const { mutate } = usePrivateUploadFile({
   onSuccess: (data: any) => {
+    isUploadingLogo.value = false;
     const url: string | undefined = data?.data?.url;
     if (!url) {
       toast.error('Upload succeeded but no URL was returned.');
@@ -452,6 +519,7 @@ const { mutate } = usePrivateUploadFile({
 
   },
   onError: (err: any) => {
+    isUploadingLogo.value = false;
     console.error('File upload failed', err);
     toast.error('File upload failed. Please try again.');
   },
@@ -463,9 +531,9 @@ async function onLogoPicked(e: Event) {
     const selectedFile = input.files[0];
     const fd = new FormData();
     fd.append('file', selectedFile);
+    isUploadingLogo.value = true;
     mutate(fd);
   }
-  isUploadingLogo.value = true
 }
 
 /* ----- Invite state ----- */
@@ -704,3 +772,23 @@ function handleDeleteWorkspace() {
   deleteWorkspace({ id: props.workspace._id })
 }
 </script>
+
+<style scoped>
+@keyframes shimmer-slow {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes shimmer-fast {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-shimmer-slow {
+  animation: shimmer-slow 8s linear infinite;
+}
+
+.animate-shimmer-fast {
+  animation: shimmer-fast 2s infinite;
+}
+</style>

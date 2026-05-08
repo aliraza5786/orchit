@@ -28,12 +28,12 @@
       <div v-else>
         <!-- Header -->
         <div
-          class="sticky top-0 z-10 border-b border-border px-4 sm:px-6 py-[9px] flex items-center justify-between bg-bg-card"
+          class="sticky top-0 z-10 border-b border-border px-3 sm:px-3 py-[9px] flex items-center justify-between bg-bg-card"
         >
           <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1">
             <button
-              class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+              class="shrink-0 hidden sm:flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
               @click="isExpanded = !isExpanded"
               :aria-label="isExpanded ? 'Collapse details' : 'Expand details'"
             >
@@ -41,12 +41,12 @@
                 :class="[
                   'fa-solid',
                   isExpanded ? 'fa-compress' : 'fa-expand',
-                  'text-lg',
+                  'text-md',
                 ]"
               ></i>
             </button>
             <button
-              class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
+              class="shrink-0 flex items-center text-text-primary justify-center w-8 h-8 rounded-lg hover:bg-orchit-white/5 active:scale-[.98] transition-colors border-0 cursor-pointer"
               @click="
                 () => {
                   emit('close');
@@ -55,28 +55,37 @@
               "
               aria-label="Close details"
             >
-              <i class="fa-solid fa-xmark text-lg"></i>
+              <i class="fa-solid fa-xmark text-md"></i>
             </button>
           </div>
         </div>
         <!-- Body -->
-        <div class="py-5 px-4 sm:px-6 flex flex-col gap-5 flex-grow">
-           <!-- Sprint/Milestone Badge --> 
-            <div v-if="cardDetails?.sprint" class="flex items-center gap-2">
-              <span 
-                class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm transition-all duration-300 border"
-                :class="cardDetails.sprint.status === 'active' 
-                  ? 'bg-accent/15 text-accent border-accent/20' 
-                  : 'bg-orchit-white/5 text-text-secondary border-orchit-white/10'"
+        <div class="py-3 px-3 flex flex-col gap-3 flex-grow">
+          <!-- Sprint/Milestone Badge -->
+          <div v-if="cardDetails?.sprint" class="flex items-center gap-2">
+            <span
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm transition-all duration-300 border"
+              :class="
+                cardDetails.sprint.status === 'active'
+                  ? 'bg-accent/15 text-accent border-accent/20'
+                  : 'bg-orchit-white/5 text-text-secondary border-orchit-white/10'
+              "
+            >
+              <i class="fa-solid fa-layer-group text-[10px]"></i>
+              {{ cardDetails.sprint.title }}
+              <span
+                v-if="cardDetails.sprint.status === 'active'"
+                class="flex h-2 w-2 relative"
               >
-                <i class="fa-solid fa-layer-group text-[10px]"></i>
-                {{ cardDetails.sprint.title }}
-                <span v-if="cardDetails.sprint.status === 'active'" class="flex h-2 w-2 relative">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[rgb(34,139,34)] opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-[rgb(34,139,34)]"></span>
-                </span>
+                <span
+                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[rgb(34,139,34)] opacity-75"
+                ></span>
+                <span
+                  class="relative inline-flex rounded-full h-2 w-2 bg-[rgb(34,139,34)]"
+                ></span>
               </span>
-            </div>
+            </span>
+          </div>
           <!-- card type -->
           <template
             v-for="(item, index) in cardDetails?.variables"
@@ -84,9 +93,9 @@
           >
             <div
               v-if="item?.type === 'Select' && item.slug == 'card-type'"
-              class="space-y-2 sm:col-span-1"
+              class="space-y-1.5 sm:col-span-1"
             >
-              <div class="text-xs uppercase tracking-wider text-text-secondary">
+              <div class="text-xs uppercase tracking-wider text-text-secondary ">
                 {{ item.title }}
               </div>
               <BaseSelectField
@@ -96,11 +105,13 @@
                 placeholder="Select option"
                 :allowCustom="false"
                 :model-value="localVarValues[item.slug]"
-                @update:modelValue="(val) => handleVariableUpdate(val, item.slug)"
+                @update:modelValue="
+                  (val) => handleVariableUpdate(val, item.slug)
+                "
               />
             </div>
           </template>
-           
+
           <!-- Title row -->
           <div class="capitalize">
             <Transition name="fade-scale" mode="out-in">
@@ -118,7 +129,7 @@
                 @keydown.enter.prevent="saveTitle"
                 @keydown.esc.prevent="cancelEdit"
                 @blur="saveTitle"
-                class="w-full text-2xl font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition"
+                class="w-full text-[18px] font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition"
                 type="text"
                 aria-label="Edit title"
               />
@@ -126,7 +137,7 @@
                 v-else
                 key="title-view"
                 :class="canEditCard ? 'cursor-text' : 'cursor-not-allowed'"
-                class="text-[20px] leading-[28px] font-semibold tracking-tight rounded-lg px-2 py-1 hover:bg-orchit-white/5 transition"
+                class="text-[18px] leading-[24px] break-words font-semibold tracking-tight rounded-lg px-2 py-1 hover:bg-orchit-white/5 transition"
                 @click="editTitle()"
                 aria-label="Card title"
                 :title="
@@ -138,8 +149,6 @@
                 {{ localTitle || "Untitled" }}
               </h1>
             </Transition>
-            
-          
           </div>
 
           <!-- Description -->
@@ -158,7 +167,11 @@
                 :class="canEditCard ? 'cursor-text' : 'cursor-not-allowed'"
                 @click="startEditDesc"
               >
-                <div v-if="description" v-html="description"></div>
+                <div
+                  v-if="description"
+                  v-html="description"
+                  class="word-break"
+                ></div>
                 <span v-else class="opacity-60"
                   >Click to add a description…</span
                 >
@@ -175,7 +188,6 @@
                   v-model="description"
                   @focusOut="finishDescEdit"
                 />
-                
               </div>
             </Transition>
           </div>
@@ -215,7 +227,9 @@
                   >
                     ID
                   </div>
-                  <div class="mt-1 font-medium">{{ details["card-code"] || cardDetails["card-code"]  }}</div>
+                  <div class="mt-1 font-medium">
+                    {{ details["card-code"] || cardDetails["card-code"] }}
+                  </div>
                 </div>
               </div>
 
@@ -239,20 +253,20 @@
                     @update:modelValue="setLane"
                   />
                 </div>
-                <div class="space-y-2">
-                  <div
-                    class="text-xs uppercase tracking-wider text-text-secondary"
-                  >
-                    Assign
-                  </div>
-                  <AssigmentDropdown
-                    :disabled="!canAssignCard"
-                    @assign="(user) => assignHandle(user)"
-                    :assigneeId="curentAssigne"
-                    :seat="cardDetails?.seats || cardDetails?.seat"
-                  />
-                </div>
                 <template v-if="!pin">
+                  <div class="space-y-2">
+                    <div
+                      class="text-xs uppercase tracking-wider text-text-secondary"
+                    >
+                      Assign
+                    </div>
+                    <AssigmentDropdown
+                      :disabled="!canAssignCard"
+                      @assign="(user) => assignHandle(user)"
+                      :assigneeId="curentAssigne"
+                      :seat="cardDetails?.seats || cardDetails?.seat"
+                    />
+                  </div>
                   <div class="space-y-2">
                     <div
                       class="text-xs uppercase tracking-wider text-text-secondary"
@@ -268,7 +282,7 @@
                         placeholder="Set start date"
                         class="w-full"
                         :model-value="form.startDate"
-                        emit-as="ymd" 
+                        emit-as="ymd"
                         @update:modelValue="setStartDate"
                       />
                     </div>
@@ -317,30 +331,52 @@
                     class="bg-bg-surface/40 w-full animate-pulse h-6 p-1"
                   ></div>
                 </template>
-                
+
                 <template
                   v-else-if="cardDetails?.variables"
                   v-for="(item, index) in cardDetails?.variables"
                   :key="item.slug || `var-${index}`"
                 >
                   <div
-                    v-if="!['card-title', 'card-description', 'start-date', 'end-date', 'card-code', 'card-type', 'ok', 'process'].includes(item.slug)"
+                    v-if="
+                      ![
+                        'card-title',
+                        'card-description',
+                        'start-date',
+                        'end-date',
+                        'card-code',
+                        'card-type',
+                        'ok',
+                        'process',
+                      ].includes(item.slug)
+                    "
                     class="space-y-2 sm:col-span-1"
                   >
-                    <div
-                      class="flex items-center justify-between group h-5"
-                    >
-                      <div class="text-xs uppercase tracking-wider text-text-secondary">
+                    <div class="flex items-center justify-between group h-5">
+                      <div
+                        class="text-xs uppercase tracking-wider text-text-secondary"
+                      >
                         {{ item.title }}
                       </div>
-                      <div  v-if="!['priority', 'card status', 'card priority'].includes(item.title?.toLowerCase())" class="hidden group-hover:flex items-center gap-1">
+                      <div
+                        v-if="
+                          ![
+                            'priority',
+                            'card status',
+                            'card priority',
+                          ].includes(item.title?.toLowerCase())
+                        "
+                        class="hidden group-hover:flex items-center gap-1"
+                      >
                         <button
                           v-if="canEditCard"
                           @click="handleEditVar(item)"
                           class="text-text-secondary hover:text-accent transition-colors p-1"
                           title="Edit variable"
                         >
-                          <i class="fa-regular fa-pen-to-square text-[11px]"></i>
+                          <i
+                            class="fa-regular fa-pen-to-square text-[11px]"
+                          ></i>
                         </button>
                         <button
                           v-if="canEditCard"
@@ -355,43 +391,65 @@
 
                     <!-- Selection Types -->
                     <BaseSelectField
-                      v-if="item.type === 'Select'"
+                      v-if="item.type === 'Select' || !item?.type && item?.data?.length"
                       :disabled="!canEditCard"
                       size="md"
-                      :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+                      :options="
+                        item?.data?.map((e: any) => ({ _id: e, title: e }))
+                      "
                       placeholder="Select option"
                       :allowCustom="false"
                       :model-value="localVarValues[item.slug]"
-                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                      @update:modelValue="
+                        (val: any) => handleVariableUpdate(val, item.slug)
+                      "
                     />
 
                     <BaseMultiSelect
                       v-else-if="item.type === 'Multi Select'"
                       :disabled="!canEditCard"
                       size="md"
-                      :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+                      :options="
+                        item?.data?.map((e: any) => ({ _id: e, title: e }))
+                      "
                       placeholder="Select options"
-                      :model-value="Array.isArray(localVarValues[item.slug]) ? localVarValues[item.slug] : (localVarValues[item.slug] ? [localVarValues[item.slug]] : [])"
-                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                      :model-value="
+                        Array.isArray(localVarValues[item.slug])
+                          ? localVarValues[item.slug]
+                          : localVarValues[item.slug]
+                            ? [localVarValues[item.slug]]
+                            : []
+                      "
+                      @update:modelValue="
+                        (val: any) => handleVariableUpdate(val, item.slug)
+                      "
                     />
 
                     <!-- Radio Type -->
                     <BaseRadioGroup
                       v-else-if="item.type === 'Radio'"
                       :disabled="!canEditCard"
-                      :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+                      :options="
+                        item?.data?.map((e: any) => ({ _id: e, title: e }))
+                      "
                       :model-value="localVarValues[item.slug]"
                       :name="item.slug"
-                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                      @update:modelValue="
+                        (val: any) => handleVariableUpdate(val, item.slug)
+                      "
                     />
 
                     <!-- Checkbox Type -->
                     <BaseCheckboxGroup
                       v-else-if="item.type === 'Checkbox'"
                       :disabled="!canEditCard"
-                      :options="item?.data?.map((e: any) => ({ _id: e, title: e }))"
+                      :options="
+                        item?.data?.map((e: any) => ({ _id: e, title: e }))
+                      "
                       :model-value="localVarValues[item.slug]"
-                      @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                      @update:modelValue="
+                        (val: any) => handleVariableUpdate(val, item.slug)
+                      "
                     />
 
                     <!-- Textarea Type -->
@@ -400,8 +458,16 @@
                       :disabled="!canEditCard"
                       placeholder="Enter text..."
                       :model-value="localVarValues[item.slug]"
-                      @update:modelValue="(val: any) => localVarValues[item.slug] = val"
-                      @blur="() => handleVariableUpdate(localVarValues[item.slug], item.slug)"
+                      @update:modelValue="
+                        (val: any) => (localVarValues[item.slug] = val)
+                      "
+                      @blur="
+                        () =>
+                          handleVariableUpdate(
+                            localVarValues[item.slug],
+                            item.slug,
+                          )
+                      "
                     />
 
                     <!-- Date & Time Types -->
@@ -416,14 +482,16 @@
                         class="w-full"
                         :model-value="localVarValues[item.slug]"
                         emit-as="ymd"
-                        @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                        @update:modelValue="
+                          (val: any) => handleVariableUpdate(val, item.slug)
+                        "
                       />
                     </div>
 
                     <!-- Time Type -->
                     <div
                       v-else-if="item.type === 'Time'"
-                      class="h-8 px-3 flex items-center gap-1 rounded-md bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-orchit-white/10"
                     >
                       <i class="fa-regular fa-clock text-[14px]"></i>
                       <TimePicker
@@ -431,7 +499,9 @@
                         placeholder="Set time"
                         class="w-full"
                         :model-value="localVarValues[item.slug]"
-                        @update:modelValue="(val: any) => handleVariableUpdate(val, item.slug)"
+                        @update:modelValue="
+                          (val: any) => handleVariableUpdate(val, item.slug)
+                        "
                       />
                     </div>
 
@@ -441,15 +511,23 @@
                       :disabled="!canEditCard"
                       label=""
                       :model-value="localVarValues[item.slug]"
-                      @update:model-value="(val: any) => handleVariableUpdate(val, item.slug)"
+                      @update:model-value="
+                        (val: any) => handleVariableUpdate(val, item.slug)
+                      "
                     />
 
                     <!-- Switch/Toggle -->
-                    <div v-else-if="item.type === 'Switch/Toggle'" class="flex items-center gap-2 py-1">
+                    <div
+                      v-else-if="item.type === 'Switch/Toggle'"
+                      class="flex items-center gap-2 py-1"
+                    >
                       <Checkbox
                         :disabled="!canEditCard"
                         :checked="!!localVarValues[item.slug]"
-                        @change="(e: any) => handleVariableUpdate(e.target.checked, item.slug)"
+                        @change="
+                          (e: any) =>
+                            handleVariableUpdate(e.target.checked, item.slug)
+                        "
                         label="Enable"
                       />
                     </div>
@@ -459,14 +537,23 @@
                       v-else-if="item.type === 'Person'"
                       :disabled="!canEditCard"
                       :seat="localVarValues[item.slug]"
-                      @assign="(users) => handleVariableUpdate(users, item.slug)"
+                      @assign="
+                        (users) => handleVariableUpdate(users, item.slug)
+                      "
                     />
 
                     <!-- Range/Slider Type -->
-                    <div v-else-if="item.type === 'Range/Slider'" class="space-y-1 py-1">
-                      <div class="flex justify-between text-[10px] text-text-secondary px-1">
+                    <div
+                      v-else-if="item.type === 'Range/Slider'"
+                      class="space-y-1 py-1"
+                    >
+                      <div
+                        class="flex justify-between text-[10px] text-text-secondary px-1"
+                      >
                         <span>Min: {{ item.data?.[0] || 0 }}</span>
-                        <span class="font-bold text-accent">{{ localVarValues[item.slug] ?? item.data?.[0] ?? 0 }}</span>
+                        <span class="font-bold text-accent">{{
+                          localVarValues[item.slug] ?? item.data?.[0] ?? 0
+                        }}</span>
                         <span>Max: {{ item.data?.[1] || 100 }}</span>
                       </div>
                       <input
@@ -475,8 +562,16 @@
                         :max="Number(item.data?.[1]) || 100"
                         :disabled="!canEditCard"
                         class="w-full h-1.5 bg-orchit-white/10 rounded-lg appearance-none cursor-pointer accent-accent"
-                        :value="localVarValues[item.slug] ?? item.data?.[0] ?? 0"
-                        @input="(e: any) => handleVariableUpdate(Number(e.target.value), item.slug)"
+                        :value="
+                          localVarValues[item.slug] ?? item.data?.[0] ?? 0
+                        "
+                        @input="
+                          (e: any) =>
+                            handleVariableUpdate(
+                              Number(e.target.value),
+                              item.slug,
+                            )
+                        "
                       />
                     </div>
 
@@ -484,23 +579,43 @@
                     <BaseTextField
                       v-else
                       :disabled="!canEditCard || item.type === 'Label'"
-                      :type="item.type === 'Number' ? 'number' : (item.type === 'Color Picker' ? 'color' : (item.type === 'Email' ? 'email' : (item.type === 'Password' ? 'password' : 'text')))"
+                      :type="
+                        item.type === 'Number'
+                          ? 'number'
+                          : item.type === 'Color Picker'
+                            ? 'color'
+                            : item.type === 'Email'
+                              ? 'email'
+                              : item.type === 'Password'
+                                ? 'password'
+                                : 'text'
+                      "
                       placeholder="Enter value..."
                       :model-value="localVarValues[item.slug]"
-                      @update:modelValue="(val: any) => localVarValues[item.slug] = val"
-                      @blur="() => handleVariableUpdate(localVarValues[item.slug], item.slug)"
+                      @update:modelValue="
+                        (val: any) => (localVarValues[item.slug] = val)
+                      "
+                      @blur="
+                        () =>
+                          handleVariableUpdate(
+                            localVarValues[item.slug],
+                            item.slug,
+                          )
+                      "
                     />
                   </div>
                 </template>
               </div>
-              <button 
-               @click="
+              <button
+                @click="
                   () => {
-                    isCreateVar = true; }"
+                    isCreateVar = true;
+                  }
+                "
                 class="w-full py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent cursor-pointer active:scale-95 transition-all duration-150 flex items-center justify-center gap-2"
               >
-                 <i class="fa-solid fa-plus text-xs"></i>
-               Add Custom Fields
+                <i class="fa-solid fa-plus text-xs"></i>
+                Add Custom Fields
               </button>
             </section>
             <section v-else-if="activeTab === 'history'">
@@ -562,14 +677,22 @@
                   <div v-if="isMine(c)" class="flex items-center gap-2">
                     <button
                       v-if="editingId !== c._id"
-                      :disabled="!canEditComment || isUpdatingComment || isDeletingComment"
+                      :disabled="
+                        !canEditComment ||
+                        isUpdatingComment ||
+                        isDeletingComment
+                      "
                       class="text-xs text-accent hover:underline"
                       @click="beginEdit(c)"
                     >
                       Edit
                     </button>
                     <button
-                      :disabled="!canDeleteComment || isDeletingComment || isUpdatingComment"
+                      :disabled="
+                        !canDeleteComment ||
+                        isDeletingComment ||
+                        isUpdatingComment
+                      "
                       class="text-xs text-red-400 hover:underline"
                       @click="removeComment(c)"
                     >
@@ -583,27 +706,57 @@
                     v-if="editingId !== c._id"
                     :key="`c-view-${c._id}`"
                     class="text-[15px] leading-6"
-                    v-html="formatComment(c.comment_text)"
-                  >
-                  </p>
+                    v-html="renderMentions(c.comment_text)"
+                    @click="handleCommentClick"
+                  ></p>
                   <div v-else :key="`c-edit-${c._id}`" class="space-y-2">
                     <div class="relative w-full">
                       <!-- overlay -->
-                      <div 
-                        :ref="el => { if (el) overlays[c._id] = el as HTMLElement }"
-                        class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal" 
-                        aria-hidden="true" 
+                      <div
+                        :ref="
+                          (el) => {
+                            if (el) overlays[c._id] = el as HTMLElement;
+                          }
+                        "
+                        class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal font-sans"
+                        aria-hidden="true"
+                        style="
+                          font-family:
+                            Inter,
+                            system-ui,
+                            -apple-system,
+                            sans-serif;
+                          line-height: 1.5;
+                          letter-spacing: normal;
+                          font-weight: 400;
+                          -webkit-font-smoothing: antialiased;
+                        "
                         v-html="formatOverlay(editText)"
                       ></div>
                       <textarea
-                        :ref="el => { if (el) editCommentTextareas[c._id] = el }"
+                        :ref="
+                          (el) => {
+                            if (el) editCommentTextareas[c._id] = el;
+                          }
+                        "
                         v-model="editText"
                         rows="3"
                         @scroll="(e) => syncScroll(e, c._id)"
                         @input="(e) => handleCommentInput(e, c._id)"
                         @keydown="(e) => handleCommentKeydown(e, c._id)"
                         @blur="handleCommentBlur"
-                        class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-text-primary"
+                        class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                        style="
+                          font-family:
+                            Inter,
+                            system-ui,
+                            -apple-system,
+                            sans-serif;
+                          line-height: 1.5;
+                          letter-spacing: normal;
+                          font-weight: 400;
+                          -webkit-font-smoothing: antialiased;
+                        "
                       />
                     </div>
                     <div class="flex items-center gap-2 justify-end">
@@ -627,21 +780,44 @@
                 </Transition>
 
                 <div
-                  v-if="c?.attachments?.length"
+                  v-if="
+                    (editingId === c._id ? editAttachments : c.attachments)
+                      ?.length
+                  "
                   class="mt-3 grid grid-cols-2 gap-2"
                 >
-                  <a
-                    v-for="(file, index) in c.attachments"
+                  <div
+                    v-for="(file, index) in editingId === c._id
+                      ? editAttachments
+                      : c.attachments"
                     :key="index"
-                    :href="file.url"
-                    target="_blank"
-                    class="group flex items-center gap-2 rounded-lg border border-orchit-white/10 bg-orchit-white/5 px-2 py-1 hover:bg-orchit-white/10 transition"
+                    class="group relative flex items-center gap-2 rounded-lg border border-orchit-white/10 bg-orchit-white/5 px-2 py-1 hover:bg-orchit-white/10 transition"
                   >
-                    <i
-                      class="fa-regular fa-file text-text-secondary group-hover:text-text-primary transition"
-                    ></i>
-                    <span class="text-xs truncate">{{ file?.name }}</span>
-                  </a>
+                    <a
+                      :href="file.url"
+                      target="_blank"
+                      class="flex items-center gap-2 flex-1 min-w-0"
+                    >
+                      <div v-if="file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)" class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-orchit-white/10">
+                        <img :src="file.url" class="w-full h-full object-cover" />
+                      </div>
+                      <i v-else-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-[11px] text-red-400"></i>
+                      <i v-else-if="file.name.match(/\.(doc|docx)$/i)" class="fa-regular fa-file-word text-[11px] text-blue-400"></i>
+                      <i
+                        v-else
+                        class="fa-regular fa-file text-text-secondary group-hover:text-text-primary transition"
+                      ></i>
+                      <span class="text-xs truncate">{{ file?.name }}</span>
+                    </a>
+                    <button
+                      v-if="editingId === c._id"
+                      @click="removeEditAttachment(Number(index))"
+                      class="text-red-400 hover:text-red-500 p-1 transition-colors"
+                      title="Remove attachment"
+                    >
+                      <i class="fa-solid fa-xmark text-[10px]"></i>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -649,38 +825,98 @@
               <div
                 class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden relative"
               >
-                <!-- overlay -->
-                <div 
-                  :ref="el => { if (el) overlays['new'] = el as HTMLElement }"
-                  class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal" 
-                  aria-hidden="true" 
-                  v-html="formatOverlay(newComment)"
-                ></div>
-                <textarea
-                  ref="commentTextarea"
-                  :disabled="!canCreateComment || !canEditComment"
-                  v-model="newComment"
-                  rows="3"
-                  @scroll="(e) => syncScroll(e, 'new')"
-                  @input="(e) => handleCommentInput(e, 'new')"
-                  @keydown="(e) => handleCommentKeydown(e, 'new')"
-                  @blur="handleCommentBlur"
-                  :class="
-                    canCreateComment || canEditComment
-                      ? 'cursor-text'
-                      : 'cursor-not-allowed'
-                  "
-                  class="relative z-0 w-full p-3 bg-transparent outline-none text-sm leading-normal resize-none"
-                  placeholder="Write a comment"
-                />
+                <div class="relative">
+                  <div
+                    :ref="
+                      (el) => {
+                        if (el) overlays['new'] = el as HTMLElement;
+                      }
+                    "
+                    class="absolute inset-0 pointer-events-none p-3 whitespace-pre-wrap break-words overflow-hidden text-sm z-10 leading-normal font-sans"
+                    aria-hidden="true"
+                    style="
+                      font-family:
+                        Inter,
+                        system-ui,
+                        -apple-system,
+                        sans-serif;
+                      line-height: 1.5;
+                      letter-spacing: normal;
+                      font-weight: 400;
+                      -webkit-font-smoothing: antialiased;
+                    "
+                    v-html="formatOverlay(newComment)"
+                  ></div>
+                  <textarea
+                    ref="commentTextarea"
+                    @paste="handlePaste"
+                    :disabled="!canCreateComment"
+                    v-model="newComment"
+                    rows="3"
+                    @scroll="(e) => syncScroll(e, 'new')"
+                    @input="(e) => handleCommentInput(e, 'new')"
+                    @keydown="(e) => handleCommentKeydown(e, 'new')"
+                    @blur="handleCommentBlur"
+                    :class="
+                      canCreateComment ? 'cursor-text' : 'cursor-not-allowed'
+                    "
+                    class="relative z-0 w-full p-3 bg-transparent outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                    style="
+                      font-family:
+                        Inter,
+                        system-ui,
+                        -apple-system,
+                        sans-serif;
+                      line-height: 1.5;
+                      letter-spacing: normal;
+                      font-weight: 400;
+                      -webkit-font-smoothing: antialiased;
+                    "
+                    placeholder="Write a comment"
+                  />
+                </div>
+                <div
+                  v-if="commentAttachments.length"
+                  class="flex flex-wrap gap-2 p-2 px-3 border-t border-orchit-white/5 bg-orchit-white/2"
+                >
+                  <div
+                    v-for="file in commentAttachments"
+                    :key="file.id"
+                    class="group flex items-center gap-2 px-2 py-1 rounded-lg bg-orchit-white/5 border border-orchit-white/10 text-[11px] text-text-secondary transition-all hover:border-orchit-white/20"
+                  >
+                    <div v-if="(file.previewUrl || file.data?.url) && file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)" class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-orchit-white/10">
+                      <img :src="file.previewUrl || file.data?.url" class="w-full h-full object-cover" />
+                    </div>
+                    <i v-else-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-[10px] text-red-400"></i>
+                    <i v-else-if="file.name.match(/\.(doc|docx)$/i)" class="fa-regular fa-file-word text-[10px] text-blue-400"></i>
+                    <i
+                      v-else
+                      class="fa-regular fa-file text-[10px]"
+                    ></i>
+                    <span class="truncate max-w-[120px]">{{ file.name }}</span>
+                    <i
+                      v-if="file.loading"
+                      class="fa-solid fa-spinner animate-spin text-[10px] text-accent"
+                    ></i>
+                    <button
+                      v-else
+                      @click="removeAttachment(file.id)"
+                      class="hover:text-red-400 transition-colors p-0.5"
+                      title="Remove attachment"
+                    >
+                      <i class="fa-solid fa-xmark text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
                 <div
                   class="flex items-center w-full justify-between p-2 border-t border-orchit-white/10"
                 >
                   <input
+                    ref="fileInput"
                     type="file"
                     multiple
                     @change="handleFileChange"
-                    class="max-w-full text-ellipsis text-xs text-text-secondary file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md file:border file:border-orchit-white/10 file:bg-orchit-white/10 hover:file:bg-orchit-white/15 file:text-text-primary transition inline w-fit"
+                    class="text-ellipsis text-xs text-transparent file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md file:border file:border-orchit-white/10 file:bg-orchit-white/10 hover:file:bg-orchit-white/15 file:text-text-primary transition inline-flex file:cursor-pointer max-w-[150px]"
                   />
                   <Button
                     variant="primary"
@@ -782,55 +1018,92 @@
     :sheetID="props?.sheetID ?? ''"
   />
   <ConfirmModal
-  v-model="showDeleteModal"
-  title="Delete Variable"
-  :itemLabel="'variable'"
-  :itemName="selectedItem?.title"
-  confirmText="Delete"
-  cancelText="Cancel"
-  :loading="isDeleting"
-  @confirm="confirmDelete"
-/>
+    v-model="showDeleteModal"
+    title="Delete Variable"
+    :itemLabel="'variable'"
+    :itemName="selectedItem?.title"
+    confirmText="Delete"
+    cancelText="Cancel"
+    :loading="isDeleting"
+    @confirm="confirmDelete"
+  />
 
   <teleport to="body">
-    <div v-if="mentionContext.active"
-         ref="mentionMenuRef"
-         class="z-[9999] absolute rounded-md border border-border bg-bg-dropdown shadow-xl w-60 py-1"
-         :style="mentionStyles"
-         @mousedown.prevent>
+    <div
+      v-if="mentionContext.active"
+      ref="mentionMenuRef"
+      class="z-[9999] absolute rounded-md border border-border bg-bg-dropdown shadow-xl w-60 py-1"
+      :style="mentionStyles"
+      @mousedown.prevent
+    >
       <ul class="max-h-60 overflow-auto">
-        <li v-for="(u, idx) in filteredMentionUsers" :key="u._id || idx"
+        <li
+          v-for="(u, idx) in filteredMentionUsers"
+          :key="u._id || idx"
           @mousedown.prevent="insertMention(u)"
           @mouseenter="mentionContext.selectedIndex = Number(idx)"
           :class="[
             'flex items-center gap-3 px-4 py-2 cursor-pointer transition min-w-0',
-            mentionContext.selectedIndex === Number(idx) ? 'bg-bg-dropdown-menu-hover' : 'hover:bg-bg-dropdown-menu-hover'
-          ]">
-              <img v-if="u?.avatar?.src || u?.u_profile_image || u?.user?.avatar" :src="u?.avatar?.src ?? u?.u_profile_image ?? u?.user?.avatar" class="w-6 h-6 rounded-full object-cover border border-border" alt="" />
-              <div v-else-if="(u.name || u.title || u.u_full_name) && u._id"
-                class="w-6 min-w-[24px] aspect-square border-border border rounded-full text-[10px] font-semibold text-text-primary flex items-center justify-center pt-[1px]"
-                :style="{ backgroundColor: avatarColor({ name: u.name || u.title || u.u_full_name, email: u.email, _id: u?._id }) }">
-                {{ initials(u.name || u.title || u.u_full_name) }}
-              </div>
-              <div v-else
-                class="w-6 min-w-[24px] h-6 bg-bg-body border border-border rounded-full flex justify-center items-center">
-                <i class="fa-regular fa-user text-xs"></i>
-              </div>
-           <div class="text-xs font-medium truncate flex-1">{{ u.name || u.title || u.u_full_name }}</div>
+            mentionContext.selectedIndex === Number(idx)
+              ? 'bg-bg-dropdown-menu-hover'
+              : 'hover:bg-bg-dropdown-menu-hover',
+          ]"
+        >
+          <img
+            v-if="u?.avatar?.src || u?.u_profile_image || u?.user?.avatar"
+            :src="u?.avatar?.src ?? u?.u_profile_image ?? u?.user?.avatar"
+            class="w-6 h-6 rounded-full object-cover border border-border"
+            alt=""
+          />
+          <div
+            v-else-if="(u.name || u.title || u.u_full_name) && u._id"
+            class="w-6 min-w-[24px] aspect-square border-border border rounded-full text-[10px] font-semibold text-text-primary flex items-center justify-center pt-[1px]"
+            :style="{
+              backgroundColor: avatarColor({
+                name: u.name || u.title || u.u_full_name,
+                email: u.email,
+                _id: u?._id,
+              }),
+            }"
+          >
+            {{ initials(u.name || u.title || u.u_full_name) }}
+          </div>
+          <div
+            v-else
+            class="w-6 min-w-[24px] h-6 bg-bg-body border border-border rounded-full flex justify-center items-center"
+          >
+            <i class="fa-regular fa-user text-xs"></i>
+          </div>
+          <div class="text-xs font-medium truncate flex-1">
+            {{ u.name || u.title || u.u_full_name }}
+          </div>
         </li>
-        <li 
+        <li
           @mousedown.prevent="handleInviteClick"
-          @mouseenter="mentionContext.selectedIndex = filteredMentionUsers.length"
+          @mouseenter="
+            mentionContext.selectedIndex = filteredMentionUsers.length
+          "
           :class="[
             'flex items-center gap-3 px-4 py-3 cursor-pointer transition border-t border-border mt-1',
-            mentionContext.selectedIndex === filteredMentionUsers.length ? 'bg-bg-dropdown-menu-hover' : 'hover:bg-bg-dropdown-menu-hover'
-          ]">
-          <div class="h-6 w-6 rounded-full bg-accent/15 text-accent flex items-center justify-center">
+            mentionContext.selectedIndex === filteredMentionUsers.length
+              ? 'bg-bg-dropdown-menu-hover'
+              : 'hover:bg-bg-dropdown-menu-hover',
+          ]"
+        >
+          <div
+            class="h-6 w-6 rounded-full bg-accent/15 text-accent flex items-center justify-center"
+          >
             <i class="fa-solid fa-user-plus text-[10px]"></i>
           </div>
           <div class="flex flex-col">
-            <span class="text-xs font-medium text-text-primary">Invite to workspace</span>
-            <span v-if="mentionContext.query" class="text-[10px] text-text-secondary">Invite "{{ mentionContext.query }}"</span>
+            <span class="text-xs font-medium text-text-primary"
+              >Invite to workspace</span
+            >
+            <span
+              v-if="mentionContext.query"
+              class="text-[10px] text-text-secondary"
+              >Invite "{{ mentionContext.query }}"</span
+            >
           </div>
         </li>
       </ul>
@@ -841,6 +1114,13 @@
     v-model="showInviteModal"
     v-if="showInviteModal"
     :defaultWorkspaceId="workspaceId"
+  />
+
+  <MentionProfileCard
+    v-if="userPopover.show && userPopover.user && userPopover.target"
+    :user="userPopover.user"
+    :target="userPopover.target"
+    @close="closeUserPopover"
   />
 </template>
 
@@ -853,7 +1133,7 @@ import {
   nextTick,
   onMounted,
   onBeforeUnmount,
-  defineAsyncComponent, 
+  defineAsyncComponent,
 } from "vue";
 import {
   computePosition,
@@ -862,12 +1142,17 @@ import {
   shift,
   offset,
 } from "@floating-ui/dom";
-import { useLanes, useMoveCard, useDeleteVar, useUpdateVar } from "../../../queries/useSheets";
+import {
+  useLanes,
+  useMoveCard,
+  useDeleteVar,
+  useUpdateVar,
+} from "../../../queries/useSheets";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useRouteIds } from "../../../composables/useQueryParams";
 import { useWorkspacesRoles } from "../../../queries/useWorkspace";
 import { avatarColor } from "../../../utilities/avatarColor";
-import {useWorkspaceStore} from "../../../stores/workspace";
+import { useWorkspaceStore } from "../../../stores/workspace";
 import {
   useComments,
   useCreateComment,
@@ -878,6 +1163,10 @@ import {
 import { useUserId } from "../../../services/user";
 import { usePrivateUploadFile } from "../../../queries/useCommon";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
+import {
+  updateCardInStructure,
+  updateCardOptimistically,
+} from "../../../utilities/cacheSync";
 const sidePanelStore = useSidePanelStore();
 const BaseRichTextEditor = defineAsyncComponent({
   loader: () => import("../../../components/ui/BaseRichTextEditor.vue"),
@@ -926,15 +1215,18 @@ const BaseMultiSelect = defineAsyncComponent(
   () => import("../../../components/ui/BaseMultiSelect.vue"),
 );
 
-const  ConfirmModal = defineAsyncComponent(()=> import ("../modals/ConfirmDeleteModal.vue"))
-
+const ConfirmModal = defineAsyncComponent(
+  () => import("../modals/ConfirmDeleteModal.vue"),
+);
+const MentionProfileCard = defineAsyncComponent(
+  () => import("./MentionProfileCard.vue"),
+);
 
 import CreateVariableModal from "../modals/CreateVariableModal.vue";
 import EditVariableModal from "../modals/EditVariableModal.vue";
 const isCreateVar = ref(false);
 const isEditVar = ref(false);
 const selectedVarToEdit = ref<any>(null);
-
 
 const isExpanded = ref(false);
 
@@ -956,8 +1248,9 @@ const props = defineProps({
   pin: { type: Boolean, default: false },
   showPanel: { type: Boolean, default: true },
   details: { type: Object as () => any, default: () => ({}) },
-  sheetID: { type: String, required: false }, 
-  moduleId:{type: String, required: false}
+  sheetID: { type: String, required: false },
+  moduleId: { type: String, required: false },
+  moduleName: { type: String, required: false },
 });
 const emit = defineEmits([
   "close",
@@ -965,7 +1258,7 @@ const emit = defineEmits([
   "update:details",
   "comment:post",
   "priority:change",
-  "ticketUpdated"
+  "ticketUpdated",
 ]);
 const propsID = ref(props.details._id);
 const {
@@ -985,7 +1278,7 @@ watch(
     if (newId && newId !== propsID.value) {
       propsID.value = newId;
     }
-  }
+  },
 );
 watch(
   () => cardDetails.value,
@@ -997,8 +1290,6 @@ watch(
     sidePanelStore.selectedCardId = card._id;
   },
   { immediate: true },
-  
-  
 );
 const activeTab = ref<"details" | "comments" | "attachment" | "history">(
   "details",
@@ -1077,15 +1368,14 @@ watch(
       description.value = val ?? "";
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 function finishDescEdit() {
-  const normalize = (html: string) =>
-    html.replace(/<p><\/p>/g, "").trim();
+  const normalize = (html: string) => html.replace(/<p><\/p>/g, "").trim();
 
   const newDescription = normalize(description.value || "");
   const prevDescription = normalize(
-    cardDetails.value?.["card-description"] || ""
+    cardDetails.value?.["card-description"] || "",
   );
 
   if (newDescription === prevDescription) {
@@ -1107,7 +1397,7 @@ watch(
       description.value = val ?? "";
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 function onDocMouseDown(e: MouseEvent) {
   if (!editingDesc.value) return;
@@ -1120,10 +1410,12 @@ onBeforeUnmount(() =>
   document.removeEventListener("mousedown", onDocMouseDown),
 );
 const local = reactive({
-  posted_on: props.details?.posted_on ?? props.details?.created_at ?? props.details?.createdAt ?? "",
-});
-
-console.log(props.details, "dta detail")
+  posted_on:
+    props.details?.posted_on ??
+    props.details?.created_at ??
+    props.details?.createdAt ??
+    "",
+}); 
 
 const dateISO = computed({
   get: () =>
@@ -1146,27 +1438,30 @@ watch([() => cardDetails.value, () => isFetching.value], () => {
 });
 
 const mainLaneOption = {
-  _id: 'Main',
-  title: 'Main',
+  _id: "Main",
+  title: "Main",
 };
 const laneOptions = computed<any[]>(() => {
-  const dynamicOptions =
-    (lanes?.value ?? []).map((el: any) => ({
-      _id: el._id,
-      title: el?.variables?.['lane-title'] ?? String(el._id),
-    }));
+  const dynamicOptions = (lanes?.value ?? []).map((el: any) => ({
+    ...el,
+    _id: el._id,
+    title: el?.variables?.["lane-title"] ?? String(el._id),
+  }));
 
   return [mainLaneOption, ...dynamicOptions];
 });
- 
+
 function setLane(v: any) {
   lane.value = v;
   // If Main is selected, do not call API
   if (v === "Main") return;
 
+  const selectedLaneObject = laneOptions.value.find((l: any) => l._id === v);
+
   moveCard.mutate({
     card_id: props.details._id,
     workspace_lane_id: v,
+    lane: selectedLaneObject,
   });
 }
 const form = ref<{ startDate: string | null; endDate: string | null }>({
@@ -1204,15 +1499,24 @@ const setEndDate = (e: any) => {
     variables: { "end-date": e },
   });
 };
-const curentAssigne = computed(() => cardDetails?.value?.seat_id || cardDetails?.value?.seats || cardDetails?.value?.assigned_to);
+const curentAssigne = computed(
+  () =>
+    cardDetails?.value?.seat_id ||
+    cardDetails?.value?.seats ||
+    cardDetails?.value?.assigned_to,
+);
 const assignHandle = (users: any[]) => {
-  const seat_ids = Array.isArray(users) ? users.map(u => u?._id || u?.id).filter(Boolean) : []
+  const seat_ids = Array.isArray(users)
+    ? users.map((u) => u?._id || u?.id).filter(Boolean)
+    : [];
   moveCard.mutate({
     card_id: props.details._id,
     seat_id: seat_ids,
     optimisticUser: users,
   });
 };
+
+// --- Comments Logic ---
 const commentId = computed(() => props.details?._id);
 const { data: commentsData } = useComments(commentId);
 const comments = ref<any>(commentsData.value?.comments);
@@ -1223,63 +1527,63 @@ watch(
   },
 );
 
+// --- Create Comment Logic with Optimistic Update ---
 const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
   {
     onMutate: async (newCommentPayload: any) => {
-  const cardId = props.details._id;
-  
-  // Cancel queries
-  await queryClient.cancelQueries({
-    queryKey: ["comments", cardId],
-  });
-  await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
-  
-  // Save previous state
-  const previousComments = queryClient.getQueryData([
-    "comments",
-    cardId,
-  ]);
-  const previousLists = queryClient.getQueriesData({ queryKey: ["sheet-list"] });
-  
-  // Create optimistic comment
-  const optimisticComment = {
-    _id: Date.now().toString(),
-    comment_text: newCommentPayload.payload.comment_text,
-    commented_by: { u_full_name: "You", _id: currentUserId.value },
-    attachments: newCommentPayload.payload.attachments || [],
-    created_at: new Date().toISOString(),
-  };
-  
-  // Update comments list
-  queryClient.setQueryData(["comments", cardId], (old: any) => {
-    return {
-      ...old,
-      comments: [...(old?.comments || []), optimisticComment],
-    };
-  });
+      const cardId = props.details._id;
 
-  // Update comment count in sheet-list (THIS IS THE KEY FIX!)
-  queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-    if (!old?.data || !Array.isArray(old.data)) return old;
+      // Cancel queries
+      await queryClient.cancelQueries({
+        queryKey: ["comments", cardId],
+      });
+      await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
 
-    return {
-      ...old,
-      data: old.data.map((column: any) => ({
-        ...column,
-        cards: column.cards?.map((card: any) =>
-          card._id === cardId
-            ? {
-                ...card,
-                comment_count: (card.comment_count || 0) + 1,
-              }
-            : card,
-        ),
-      })),
-    };
-  });
+      // Save previous state
+      const previousComments = queryClient.getQueryData(["comments", cardId]);
+      const previousLists = queryClient.getQueriesData({
+        queryKey: ["sheet-list"],
+      });
 
-  return { previousComments, previousLists };
-},
+      // Create optimistic comment
+      const optimisticComment = {
+        _id: Date.now().toString(),
+        comment_text: newCommentPayload.payload.comment_text,
+        commented_by: { u_full_name: "You", _id: currentUserId.value },
+        attachments: newCommentPayload.payload.attachments || [],
+        created_at: new Date().toISOString(),
+      };
+
+      // Update comments list
+      queryClient.setQueryData(["comments", cardId], (old: any) => {
+        return {
+          ...old,
+          comments: [...(old?.comments || []), optimisticComment],
+        };
+      });
+
+      // Update comment count in sheet-list (THIS IS THE KEY FIX!)
+      queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+        if (!old?.data || !Array.isArray(old.data)) return old;
+
+        return {
+          ...old,
+          data: old.data.map((column: any) => ({
+            ...column,
+            cards: column.cards?.map((card: any) =>
+              card._id === cardId
+                ? {
+                    ...card,
+                    comment_count: (card.comment_count || 0) + 1,
+                  }
+                : card,
+            ),
+          })),
+        };
+      });
+
+      return { previousComments, previousLists };
+    },
     onError: (err: any, variables: any, context: any) => {
       if (context?.previousComments)
         queryClient.setQueryData(
@@ -1309,9 +1613,10 @@ const { mutate: createComment, isPending: isPostingComment } = useCreateComment(
 const newComment = ref("");
 const showInviteModal = ref(false);
 
-// --- Mention Logic ---
+// --- Edit Comment Logic ---
 const { data: workspaceRoles } = useWorkspacesRoles(workspaceId);
 const commentTextarea = ref<HTMLTextAreaElement | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 const editCommentTextareas = ref<{ [key: string]: any }>({});
 const overlays = ref<{ [key: string]: HTMLElement }>({});
 
@@ -1323,7 +1628,7 @@ function syncScroll(e: Event, type: string) {
     overlay.scrollLeft = target.scrollLeft;
   }
 }
-
+// --- Mention Logic ---
 const mentionMenuRef = ref<HTMLElement | null>(null);
 const mentionStyles = ref<any>({
   position: "fixed",
@@ -1353,28 +1658,29 @@ const filteredMentionUsers = computed(() => {
   const q = mentionContext.value.query.toLowerCase().trim();
   if (!q) return workspaceRoles.value;
   return workspaceRoles.value.filter((u: any) => {
-    const name = u.title || u.name || u.u_full_name || '';
-    const email = u.email || '';
+    const name = u.title || u.name || u.u_full_name || "";
+    const email = u.email || "";
     return name.toLowerCase().includes(q) || email.toLowerCase().includes(q);
   });
 });
 
+// Core logic to detect "@" mentions and trigger the dropdown
 function handleCommentInput(e: Event, type: string) {
   const target = e.target as HTMLTextAreaElement;
   const val = target.value;
   const cursor = target.selectionStart;
 
   const textBeforeCursor = val.slice(0, cursor);
-  const atIndex = textBeforeCursor.lastIndexOf('@');
-  
+  const atIndex = textBeforeCursor.lastIndexOf("@");
+
   if (atIndex !== -1) {
     const textAfterAt = textBeforeCursor.slice(atIndex + 1);
-    
-    // Logic: Only show if there's no space/newline after @, 
+
+    // Logic: Only show if there's no space/newline after @,
     // and @ is at start or preceded by white space.
-    if (!textAfterAt.includes(' ') && !textAfterAt.includes('\n')) {
+    if (!textAfterAt.includes(" ") && !textAfterAt.includes("\n")) {
       const charBeforeAt = atIndex > 0 ? textBeforeCursor[atIndex - 1] : null;
-      if (atIndex === 0 || charBeforeAt === ' ' || charBeforeAt === '\n') {
+      if (atIndex === 0 || charBeforeAt === " " || charBeforeAt === "\n") {
         mentionContext.value.active = true;
         mentionContext.value.query = textAfterAt;
         mentionContext.value.startIndex = atIndex;
@@ -1388,6 +1694,41 @@ function handleCommentInput(e: Event, type: string) {
   mentionContext.value.active = false;
 }
 
+const currentMentions = ref<any[]>([]);
+
+const userPopover = ref<{
+  show: boolean;
+  user: any;
+  target: HTMLElement | null;
+}>({
+  show: false,
+  user: null,
+  target: null,
+});
+
+// When user clicks on a mention in the comment text, show the profile popover
+function handleCommentClick(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (target.classList.contains("mention-highlight")) {
+    const userId = target.getAttribute("data-user-id");
+    if (!userId) return;
+
+    const user = workspaceRoles.value?.find(
+      (u: any) => u?._id === userId || u?.id === userId,
+    );
+    if (!user) return;
+
+    userPopover.value.user = user;
+    userPopover.value.target = target;
+    userPopover.value.show = true;
+  }
+}
+
+function closeUserPopover() {
+  userPopover.value.show = false;
+  userPopover.value.target = null;
+}
+
 function updateMentionPosition(textarea: HTMLTextAreaElement) {
   if (cleanupMention) {
     cleanupMention();
@@ -1397,25 +1738,28 @@ function updateMentionPosition(textarea: HTMLTextAreaElement) {
   const virtualElement = {
     getBoundingClientRect() {
       const rect = textarea.getBoundingClientRect();
-      const div = document.createElement('div');
+      const div = document.createElement("div");
       const computedStyle = window.getComputedStyle(textarea);
       for (const prop of Array.from(computedStyle)) {
         div.style.setProperty(prop, computedStyle.getPropertyValue(prop));
       }
-      div.style.position = 'absolute';
-      div.style.visibility = 'hidden';
-      div.style.whiteSpace = 'pre-wrap';
-      div.style.wordWrap = 'break-word';
+      div.style.position = "absolute";
+      div.style.visibility = "hidden";
+      div.style.whiteSpace = "pre-wrap";
+      div.style.wordWrap = "break-word";
       div.style.width = computedStyle.width;
       div.style.height = computedStyle.height;
-      
-      const textBeforeCursor = textarea.value.substring(0, textarea.selectionStart);
+
+      const textBeforeCursor = textarea.value.substring(
+        0,
+        textarea.selectionStart,
+      );
       div.textContent = textBeforeCursor;
-      const span = document.createElement('span');
-      span.textContent = '.';
+      const span = document.createElement("span");
+      span.textContent = ".";
       div.appendChild(span);
       document.body.appendChild(div);
-      
+
       const spanTop = span.offsetTop;
       const spanLeft = span.offsetLeft;
       document.body.removeChild(div);
@@ -1462,12 +1806,15 @@ function updateMentionPosition(textarea: HTMLTextAreaElement) {
 }
 
 // Ensure cleanup when mention active state changes or component unmounts
-watch(() => mentionContext.value.active, (val) => {
-  if (!val && cleanupMention) {
-    cleanupMention();
-    cleanupMention = null;
-  }
-});
+watch(
+  () => mentionContext.value.active,
+  (val) => {
+    if (!val && cleanupMention) {
+      cleanupMention();
+      cleanupMention = null;
+    }
+  },
+);
 
 onBeforeUnmount(() => {
   if (cleanupMention) cleanupMention();
@@ -1475,75 +1822,68 @@ onBeforeUnmount(() => {
 
 function handleCommentKeydown(e: KeyboardEvent, type: string) {
   if (!mentionContext.value.active) {
-    // Atomic deletion logic for Backspace/Delete
-    if (e.key === 'Backspace' || e.key === 'Delete') {
+    if (e.key === "Backspace" || e.key === "Delete") {
       const textarea = e.target as HTMLTextAreaElement;
       const cursor = textarea.selectionStart;
-      
-      if (cursor !== textarea.selectionEnd) return; // Ignore if text is highlighted
-      
-      const val = type === 'new' ? newComment.value : editText.value;
+      if (cursor !== textarea.selectionEnd) return;
+
+      const val = type === "new" ? newComment.value : editText.value;
       const users = workspaceRoles.value || [];
-      const userNames = users.flatMap((u: any) => [u.u_full_name, u.name, u.title]).filter(Boolean);
+      const userNames = users
+        .flatMap((u: any) => [u.u_full_name, u.name, u.title])
+        .filter(Boolean);
       userNames.sort((a: string, b: string) => b.length - a.length);
 
       for (const name of userNames) {
         const mention = `@${name}`;
-        let startIndex = 0;
-        let index;
-        while ((index = val.indexOf(mention, startIndex)) > -1) {
-          const endIndex = index + mention.length;
-          
-          // Trigger atomic deletion if cursor is inside or IMMEDIATELY after the mention
-          const isIntersectingBackspace = e.key === 'Backspace' && cursor > index && cursor <= endIndex;
-          const isIntersectingDelete = e.key === 'Delete' && cursor >= index && cursor < endIndex;
+        const index = val.lastIndexOf(mention, cursor - 1);
 
-          if (isIntersectingBackspace || isIntersectingDelete) {
-            e.preventDefault();
-            const newVal = val.slice(0, index) + val.slice(endIndex);
-            
-            if (type === 'new') newComment.value = newVal;
-            else editText.value = newVal;
-
-            // Use direct manipulation if nextTick is too slow to feel "atomic"
-            textarea.value = newVal; 
-            textarea.setSelectionRange(index, index);
-            
-            // Sync with reactive refs
-            if (type === 'new') newComment.value = newVal;
-            else editText.value = newVal;
-            
-            return;
-          }
-          startIndex = endIndex;
+        if (index !== -1 && index + mention.length >= cursor) {
+          e.preventDefault();
+          const newVal =
+            val.slice(0, index) + val.slice(index + mention.length);
+          if (type === "new") newComment.value = newVal;
+          else editText.value = newVal;
+          textarea.value = newVal;
+          textarea.setSelectionRange(index, index);
+          return;
         }
       }
     }
     return;
   }
-  
-  if (e.key === 'ArrowDown') {
+
+  if (e.key === "ArrowDown") {
     e.preventDefault();
-    mentionContext.value.selectedIndex = (mentionContext.value.selectedIndex + 1) % ((filteredMentionUsers.value.length || 0) + 1);
-  } else if (e.key === 'ArrowUp') {
+    mentionContext.value.selectedIndex =
+      (mentionContext.value.selectedIndex + 1) %
+      ((filteredMentionUsers.value.length || 0) + 1);
+  } else if (e.key === "ArrowUp") {
     e.preventDefault();
-    mentionContext.value.selectedIndex = (mentionContext.value.selectedIndex - 1 + ((filteredMentionUsers.value.length || 0) + 1)) % ((filteredMentionUsers.value.length || 0) + 1);
-  } else if (e.key === 'Enter') {
+    mentionContext.value.selectedIndex =
+      (mentionContext.value.selectedIndex -
+        1 +
+        ((filteredMentionUsers.value.length || 0) + 1)) %
+      ((filteredMentionUsers.value.length || 0) + 1);
+  } else if (e.key === "Enter") {
     e.preventDefault();
-    if (mentionContext.value.selectedIndex === filteredMentionUsers.value.length) {
+    if (
+      mentionContext.value.selectedIndex === filteredMentionUsers.value.length
+    ) {
       handleInviteClick();
     } else {
-      const selected = filteredMentionUsers.value[mentionContext.value.selectedIndex];
+      const selected =
+        filteredMentionUsers.value[mentionContext.value.selectedIndex];
       if (selected) insertMention(selected);
     }
-  } else if (e.key === 'Escape') {
+  } else if (e.key === "Escape") {
     mentionContext.value.active = false;
   }
 }
 
 function handleCommentBlur() {
   setTimeout(() => {
-     mentionContext.value.active = false;
+    mentionContext.value.active = false;
   }, 150);
 }
 
@@ -1551,30 +1891,35 @@ function insertMention(user: any) {
   const name = user.u_full_name || user.name || user.title;
   let currentVal = "";
   let targetElement: HTMLTextAreaElement | null = null;
-  
-  if (mentionContext.value.targetType === 'new') {
+
+  if (mentionContext.value.targetType === "new") {
     currentVal = newComment.value;
     targetElement = commentTextarea.value;
   } else {
     currentVal = editText.value;
-    targetElement = editCommentTextareas.value[mentionContext.value.targetType] as HTMLTextAreaElement;
+    targetElement = editCommentTextareas.value[
+      mentionContext.value.targetType
+    ] as HTMLTextAreaElement;
   }
-  
+
   if (!targetElement) return;
 
   const before = currentVal.slice(0, mentionContext.value.startIndex);
   const after = currentVal.slice(targetElement.selectionStart);
-  
+
   const newVal = `${before}@${name} ${after}`;
-  if (mentionContext.value.targetType === 'new') {
+  if (mentionContext.value.targetType === "new") {
     newComment.value = newVal;
   } else {
     editText.value = newVal;
   }
-  
+
+  // Track this mention metadata
+  currentMentions.value.push({ name, id: user._id, email: user.email });
+
   mentionContext.value.active = false;
-  const newPos = before.length + name.length + 2;
-  
+  const newPos = before.length + name.length + 1;
+
   nextTick(() => {
     if (targetElement) {
       targetElement.focus();
@@ -1588,52 +1933,44 @@ function handleInviteClick() {
   showInviteModal.value = true;
 }
 
-function formatComment(text: string) {
+function renderMentions(text: string) {
   if (!text) return "";
-  
-  const users = workspaceRoles.value || [];
-  // AFTER — cast to string[] after filter
-  const userNames = users.flatMap((u: any) => [u.u_full_name, u.name, u.title]).filter(Boolean) as string[];
-
-  
-  if (userNames.length === 0) {
-    return text.replace(/@([a-zA-Z0-9_.-]+)/g, (match) => {
-      return `<span class="bg-accent text-orchit-white text-[14px] px-1.5 py-[1px] rounded-full font-medium shadow-sm hover:opacity-90 cursor-pointer relative z-10 mr-[2px]">${match}</span>`;
-    });
-  }
-
-  // Sort by length to match the longest full name first
-  userNames.sort((a, b) => b.length - a.length);
-
-  // Escape regex special chars and add generic word fallback
-  const escapedNames = [...new Set(userNames)].map((n: string) => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-  const regex = new RegExp(`@(${escapedNames.join('|')}|[a-zA-Z0-9_.-]+)(?=\\s|[.,!?]|$)`, 'gi');
-  
-  return text.replace(regex, (match) => {
-    return `<span class="bg-accent text-[14px] text-orchit-white px-[4px] -mx-[1px] py-[1px] rounded-full font-normal shadow-sm hover:opacity-90 cursor-pointer relative z-10">${match}</span>`;
-  });
+  return text.replace(
+    /@\[([^\]]+)\]\(([^)]+)\)/g,
+    '<span class="mention-highlight cursor-pointer hover:underline" data-user-id="$2">@$1</span>',
+  );
 }
 
 function formatOverlay(text: string) {
   if (!text) return "";
-  const escapedText = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  
-  const users = workspaceRoles.value || []; 
-  const userNames = users.flatMap((u: any) => [u.u_full_name, u.name, u.title]).filter(Boolean) as string[];
-  
+  const escapedText = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+
+  const users = workspaceRoles.value || [];
+  const userNames = users
+    .flatMap((u: any) => [u.u_full_name, u.name, u.title])
+    .filter(Boolean) as string[];
+
   if (userNames.length === 0) {
-    return `<span class="text-transparent">${escapedText.replace(/@([a-zA-Z0-9_.-]+)/g, '<strong class="bg-accent text-[14px] text-orchit-white px-[4px] -mx-[4px] py-[1px] rounded-full font-normal">@$1</strong>')}</span>`;
+    return `<div class="text-text-primary whitespace-pre-wrap break-words">${escapedText.replace(/@([a-zA-Z0-9_.-]+)/g, '<strong class="mention-highlight">@$1</strong>')}</div>`;
   }
 
   userNames.sort((a, b) => b.length - a.length);
-  const escapedNames = [...new Set(userNames)].map((n: string) => n.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'));
-  const regex = new RegExp(`@(${escapedNames.join('|')}|[a-zA-Z0-9_.-]+)(?=\\s|[.,!?]|$)`, 'gi');
-  
+  const escapedNames = [...new Set(userNames)].map((n: string) =>
+    n.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&"),
+  );
+  const regex = new RegExp(
+    `@(${escapedNames.join("|")}|[a-zA-Z0-9_.-]+)(?=\\s|[.,!?]|$)`,
+    "gi",
+  );
+
   const formatted = escapedText.replace(regex, (match) => {
-    return `<strong class="bg-accent text-orchit-white px-[4px] -mx-[4px] py-[1px] text-[14px] rounded-full font-medium">${match}</strong>`;
+    return `<strong class="mention-highlight">${match}</strong>`;
   });
-  
-  return `<span class="text-transparent">${formatted}</span>`;
+
+  return `<div class="text-text-primary whitespace-pre-wrap break-words">${formatted}</div>`;
 }
 // ----------------------
 
@@ -1653,6 +1990,7 @@ const isMine = (c: any) => c?.created_by?._id === currentUserId.value;
 
 const editingId = ref<string | null>(null);
 const editText = ref("");
+const editAttachments = ref<any[]>([]);
 const { mutate: updateComment, isPending: isUpdatingComment } =
   useUpdateComment({
     onSuccess: (updatedComment: any) => {
@@ -1668,7 +2006,9 @@ const { mutate: updateComment, isPending: isUpdatingComment } =
       editingId.value = null;
       editText.value = "";
       queryClient.invalidateQueries({ queryKey: ["product-card"] });
-      queryClient.invalidateQueries({ queryKey: ["comments", props.details._id] });
+      queryClient.invalidateQueries({
+        queryKey: ["comments", props.details._id],
+      });
       toast.success("Comment updated");
     },
     onError: () => {
@@ -1676,87 +2016,123 @@ const { mutate: updateComment, isPending: isUpdatingComment } =
     },
   });
 
-const { mutate: deleteComment, isPending: isDeletingComment } = useDeleteComment({
-  onMutate: async (variables: any) => {
-    const cardId = props.details._id;
-    const commentId = variables.id;
+function removeEditAttachment(index: number) {
+  editAttachments.value.splice(index, 1);
+}
 
-    // Cancel outgoing queries
-    await queryClient.cancelQueries({ queryKey: ["comments", cardId] });
-    await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
+//--------------- Delete Comment with Optimistic Update ---------------
+const { mutate: deleteComment, isPending: isDeletingComment } =
+  useDeleteComment({
+    onMutate: async (variables: any) => {
+      const cardId = props.details._id;
+      const commentId = variables.id;
 
-    // Snapshot current state
-    const previousLists = queryClient.getQueriesData({ queryKey: ["sheet-list"] });
-    const previousComments = queryClient.getQueryData(["comments", cardId]);
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: ["comments", cardId] });
+      await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
 
-    // Optimistically remove comment from comments list
-    queryClient.setQueryData(["comments", cardId], (old: any) => {
-      if (!old?.comments) return old;
-      return {
-        ...old,
-        comments: old.comments.filter((c: any) => c._id !== commentId),
-      };
-    });
+      // Snapshot current state
+      const previousLists = queryClient.getQueriesData({
+        queryKey: ["sheet-list"],
+      });
+      const previousComments = queryClient.getQueryData(["comments", cardId]);
 
-    // Optimistically update comment count in sheet-list
-    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-      if (!old?.data || !Array.isArray(old.data)) return old;
+      // Optimistically remove comment from comments list
+      queryClient.setQueryData(["comments", cardId], (old: any) => {
+        if (!old?.comments) return old;
+        return {
+          ...old,
+          comments: old.comments.filter((c: any) => c._id !== commentId),
+        };
+      });
 
-      return {
-        ...old,
-        data: old.data.map((column: any) => ({
-          ...column,
-          cards: column.cards?.map((card: any) =>
-            card._id === cardId
-              ? {
-                  ...card,
-                  comment_count: Math.max(0, (card.comment_count || 0) - 1),
-                }
-              : card,
-          ),
-        })),
-      };
-    });
+      // Optimistically update comment count in sheet-list
+      queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+        if (!old?.data || !Array.isArray(old.data)) return old;
 
-    return { previousLists, previousComments };
-  },
-  onError: (_err: any, _variables: any, context: any) => {
-    if (context?.previousLists) {
-      queryClient.setQueriesData(
-        { queryKey: ["sheet-list"] },
-        context.previousLists,
-      );
-    }
-    if (context?.previousComments) {
-      queryClient.setQueryData(["comments", props.details._id], context.previousComments);
-    }
-    toast.error("Failed to delete comment");
-  },
-  onSettled: () => {
-    queryClient.invalidateQueries({ queryKey: ["comments", props.details._id] });
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-    queryClient.invalidateQueries({ queryKey: ["product-card"] });
-  },
-});
+        return {
+          ...old,
+          data: old.data.map((column: any) => ({
+            ...column,
+            cards: column.cards?.map((card: any) =>
+              card._id === cardId
+                ? {
+                    ...card,
+                    comment_count: Math.max(0, (card.comment_count || 0) - 1),
+                  }
+                : card,
+            ),
+          })),
+        };
+      });
+
+      return { previousLists, previousComments };
+    },
+    onError: (_err: any, _variables: any, context: any) => {
+      if (context?.previousLists) {
+        queryClient.setQueriesData(
+          { queryKey: ["sheet-list"] },
+          context.previousLists,
+        );
+      }
+      if (context?.previousComments) {
+        queryClient.setQueryData(
+          ["comments", props.details._id],
+          context.previousComments,
+        );
+      }
+      toast.error("Failed to delete comment");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["comments", props.details._id],
+      });
+      queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+      queryClient.invalidateQueries({ queryKey: ["product-card"] });
+    },
+  });
 
 function beginEdit(c: any) {
   editingId.value = c._id;
   editText.value = c.comment_text ?? "";
+  editAttachments.value = [...(c.attachments || [])];
 }
 function cancelEdit() {
   editingId.value = null;
   editText.value = "";
+  editAttachments.value = [];
   editingTitle.value = false;
 }
 function saveEdit(c: any) {
-  const text = editText.value.trim();
+  let text = editText.value.trim();
   if (!text) return;
+
+  // Convert @Name to @[Name](ID) for payload
+  const mentions: any[] = [];
+  currentMentions.value.forEach((m) => {
+    const mentionToken = `@${m.name}`;
+    if (text.includes(mentionToken)) {
+      text = text.replace(mentionToken, `@[${m.name}](${m.id})`);
+      mentions.push({ id: m.id, name: m.name, email: m.email, type: "user" });
+    }
+  });
+
   const idx = comments.value.findIndex((x: any) => x._id === c._id);
   const prev = idx > -1 ? { ...comments.value[idx] } : null;
   if (idx > -1)
     comments.value[idx] = { ...comments.value[idx], comment_text: text };
+
   updateComment(
-    { id: c._id, payload: { comment_text: text } },
+    {
+      id: c._id,
+      payload: {
+        comment_text: text,
+        mentions,
+        module_name: props.moduleName,
+        module_id: props.moduleId,
+        attachments: editAttachments.value,
+      },
+    },
     {
       onError: () => {
         if (idx > -1 && prev) comments.value[idx] = prev;
@@ -1764,6 +2140,7 @@ function saveEdit(c: any) {
       onSuccess: (server: any) => {
         if (idx > -1) comments.value[idx] = server ?? comments.value[idx];
         cancelEdit();
+        currentMentions.value = [];
         queryClient.invalidateQueries({ queryKey: ["product-card"] });
       },
     },
@@ -1804,232 +2181,195 @@ const attachments = computed(() => {
 const moveCard = useMoveCard({
   onMutate: async (newPayload: any) => {
     const { card_id, variables: updatedVariables } = newPayload;
+    const cardId = String(card_id);
+    const snapshots: { queryKey: any; data: any }[] = [];
 
-    await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
-    await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
+    const boardKeys = [
+      "sheet-list",
+      "sprint-kanban",
+      "table-cards-flat",
+      "sprint-table-flat",
+    ];
+    const detailKeys = [
+      ["cardDetail", cardId],
+      ["product-card", cardId],
+    ];
 
-    const previousCard = queryClient.getQueryData(["product-card", card_id]);
-    const previousLists = queryClient.getQueryData(["sheet-list"]);
+    const updates = { ...updatedVariables };
+    if (newPayload.workspace_lane_id)
+      updates.workspace_lane_id = newPayload.workspace_lane_id;
+    if (newPayload.lane) updates.lane = newPayload.lane;
+    if (newPayload.optimisticUser) {
+      const users = Array.isArray(newPayload.optimisticUser)
+        ? newPayload.optimisticUser
+        : [newPayload.optimisticUser];
+      updates.assigned_to = users;
+      updates.seats = users;
+      updates.seat_id = users.map((u: any) => u?._id || u?.id).filter(Boolean);
+    }
 
-    // Snapshot ALL sprint-kanban queries for rollback
-    const previousSprintKanbans = queryClient.getQueriesData({
-      queryKey: ["sprint-kanban"],
+    boardKeys.forEach((key) => {
+      queryClient.setQueriesData(
+        { queryKey: [key], exact: false },
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          snapshots.push({ queryKey: [key], data: oldData });
+          return updateCardInStructure(oldData, cardId, updates);
+        },
+      );
     });
 
-    const updateCardLogic = (oldCard: any) => {
-      if (!oldCard || oldCard._id !== card_id) return oldCard;
-
-      const updatedCard = {
-        ...oldCard,
-        variables: Array.isArray(oldCard.variables)
-          ? [...oldCard.variables]
-          : [],
-      };
-
-      if (updatedVariables) {
-        Object.assign(updatedCard, updatedVariables);
-
-        Object.entries(updatedVariables).forEach(([key, value]) => {
-          const idx = updatedCard.variables.findIndex(
-            (v: any) => v.slug === key,
-          );
-
-          if (idx !== -1) {
-            updatedCard.variables[idx] = {
-              ...updatedCard.variables[idx],
-              value,
-            };
-          } else {
-            updatedCard.variables.push({ slug: key, value, type: "Text" });
-          }
-
-          if (key === "card-description") {
-            updatedCard["card-description"] = value;
-            updatedCard.description = value;
-          }
-        });
-      }
-
-      if (newPayload.workspace_lane_id) {
-        updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
-      }
-
-      if (newPayload.optimisticUser) {
-        const users = Array.isArray(newPayload.optimisticUser)
-          ? newPayload.optimisticUser
-          : [newPayload.optimisticUser];
-        updatedCard.seats = users;
-        updatedCard.seat_id = users
-          .map((u: any) => u?._id || u?.id)
-          .filter(Boolean);
-        updatedCard.seat = users[0] || null;
-        updatedCard.assigned_to = users;
-      }
-
-      return updatedCard;
-    };
-
-    // Update product-card cache
-    queryClient.setQueryData(["product-card", card_id], updateCardLogic);
-
-    // Update sheet-list cache
-    queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-      if (!old || !Array.isArray(old.data)) return old;
-      return {
-        ...old,
-        data: old.data.map((column: any) => ({
-          ...column,
-          cards: column.cards?.map((card: any) =>
-            card._id === card_id ? { ...updateCardLogic(card) } : card,
-          ),
-        })),
-      };
+    detailKeys.forEach((key) => {
+      queryClient.setQueryData(key, (old: any) => {
+        if (!old) return old;
+        snapshots.push({ queryKey: key, data: old });
+        return updateCardOptimistically(old, cardId, updates);
+      });
     });
 
-    // Update ALL sprint-kanban cached queries optimistically
-    // Each entry is [queryKey, data] — update only the one containing this card
-    queryClient.setQueriesData(
-      { queryKey: ["sprint-kanban"] },
-      (old: any) => {
-        // sprint-kanban returns array of columns directly
-        if (!old || !Array.isArray(old)) return old;
-
-        const hasCard = old.some((col: any) =>
-          col.cards?.some((c: any) => c._id === card_id),
-        );
-
-        // Only patch the query instance that actually contains this card
-        if (!hasCard) return old;
-
-        return old.map((col: any) => ({
-          ...col,
-          cards: (col.cards ?? []).map((card: any) =>
-            card._id === card_id ? { ...updateCardLogic(card) } : card,
-          ),
-        }));
-      },
-    );
-
-    return { previousCard, previousLists, previousSprintKanbans };
+    return { snapshots };
   },
 
   onSuccess: (serverCard: any, variables: any) => {
-    const cardId = variables.card_id;
-    refetchCardDetails();
-
+    const cardId = String(variables.card_id);
     if (serverCard) {
-      // Update product-card cache with server response
-      queryClient.setQueryData(["product-card", cardId], serverCard);
-
-      // Update sheet-list cache with server response
-      queryClient.setQueryData(["sheet-list"], (old: any) => {
-        if (!old?.data) return old;
-        return {
-          ...old,
-          data: old.data.map((column: any) => ({
-            ...column,
-            cards: column.cards?.map((card: any) =>
-              card._id === cardId ? { ...card, ...serverCard } : card,
-            ),
-          })),
-        };
+      const boardKeys = [
+        "sheet-list",
+        "sprint-kanban",
+        "table-cards-flat",
+        "sprint-table-flat",
+      ];
+      boardKeys.forEach((key) => {
+        queryClient.setQueriesData(
+          { queryKey: [key], exact: false },
+          (old: any) => updateCardInStructure(old, cardId, serverCard),
+        );
       });
-
-      // Update ALL sprint-kanban queries with server response
-      queryClient.setQueriesData(
-        { queryKey: ["sprint-kanban"] },
-        (old: any) => {
-          if (!old || !Array.isArray(old)) return old;
-
-          const hasCard = old.some((col: any) =>
-            col.cards?.some((c: any) => c._id === cardId),
-          );
-
-          if (!hasCard) return old;
-
-          return old.map((col: any) => ({
-            ...col,
-            cards: (col.cards ?? []).map((card: any) =>
-              card._id === cardId ? { ...card, ...serverCard } : card,
-            ),
-          }));
-        },
-      );
-      queryClient.invalidateQueries({
-        queryKey: ["product-card", cardId],
+      queryClient.setQueryData(["cardDetail", cardId], (old: any) => {
+        if (!old) return serverCard;
+        // Merge server response with existing data to prevent partial data from wiping out detail fields
+        return { ...old, ...serverCard };
       });
     }
   },
 
-  onError: (_err: any, variables: any, context: any) => {
-    if (!context) return;
-
-    const cardId = variables.card_id;
-
-    // Rollback product-card cache
-    queryClient.setQueryData(["product-card", cardId], context.previousCard);
-
-    // Rollback sheet-list cache
-    queryClient.setQueriesData(
-      { queryKey: ["sheet-list"] },
-      context.previousLists,
-    );
-
-    // Rollback each sprint-kanban query instance individually
-    if (context.previousSprintKanbans?.length) {
-      context.previousSprintKanbans.forEach(([queryKey, data]: any) => {
+  onError: (_err: any, _variables: any, context: any) => {
+    if (context?.snapshots) {
+      context.snapshots.forEach(({ queryKey, data }: any) => {
         queryClient.setQueryData(queryKey, data);
       });
     }
-
-    // Refetch card details to ensure consistency
-    refetchCardDetails();
+    toast.error("Failed to update card");
   },
 
   onSettled: (_data: any, _err: any, variables: any) => {
-    const cardId = variables.card_id;
-
-    queryClient.invalidateQueries({ queryKey: ["product-card", cardId] });
-    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-
+    const cardId = String(variables.card_id);
+    queryClient.invalidateQueries({ queryKey: ["cardDetail", cardId] });
+    [
+      "sheet-list",
+      "sprint-kanban",
+      "table-cards-flat",
+      "sprint-table-flat",
+    ].forEach((key) => {
+      queryClient.invalidateQueries({ queryKey: [key] });
+    });
   },
 });
-const commentAttachments = ref<File[]>([]);
-const { mutate: uploadFile } = usePrivateUploadFile({
-  onSuccess: (data: any) => {
-    commentAttachments.value = [data];
-    queryClient.invalidateQueries({ queryKey: ["product-card"] });
-  },
-});
-function handleFileChange(event: any) {
-  const files = event.target.files;
-  Array.from(files).forEach((file: any) => {
-    const fd = new FormData();
-    fd.append("file", file);
-    uploadFile(fd);
+const commentAttachments = ref<any[]>([]);
+const { mutate: uploadFile } = usePrivateUploadFile();
+
+function removeAttachment(id: string) {
+  commentAttachments.value = commentAttachments.value.filter(
+    (a) => a.id !== id,
+  );
+}
+
+function uploadSingleFile(file: File) {
+  const tempId = Math.random().toString(36).substring(2, 9);
+  const isImage = file.type.startsWith("image/");
+  commentAttachments.value.push({
+    id: tempId,
+    name: file.name,
+    loading: true,
+    previewUrl: isImage ? URL.createObjectURL(file) : null,
+  });
+
+  const fd = new FormData();
+  fd.append("file", file);
+
+  uploadFile(fd, {
+    onSuccess: (res: any) => {
+      const item = commentAttachments.value.find((a) => a.id === tempId);
+      if (item) {
+        item.loading = false;
+        item.data = res.data;
+      }
+      queryClient.invalidateQueries({ queryKey: ["product-card"] });
+    },
+    onError: () => {
+      removeAttachment(tempId);
+      toast.error(`Failed to upload ${file.name}`);
+    },
   });
 }
+
+function handleFileChange(event: any) {
+  const files = event.target.files;
+  Array.from(files).forEach((file: any) => uploadSingleFile(file));
+}
+
+function handlePaste(event: ClipboardEvent) {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.type.indexOf("image") !== -1) {
+      const file = item.getAsFile();
+      if (file) uploadSingleFile(file);
+    }
+  }
+}
 function postComment() {
-  const comment_text = newComment.value.trim();
+  let comment_text = newComment.value.trim();
   if (!comment_text && !commentAttachments.value.length) return;
 
   const cardId = props.details._id;
-  
-  // Call the mutation (onMutate will handle optimistic updates)
+
+  // Convert @Name to @[Name](ID) for payload
+  const mentions: any[] = [];
+  currentMentions.value.forEach((m) => {
+    const mentionToken = `@${m.name}`;
+    if (comment_text.includes(mentionToken)) {
+      comment_text = comment_text.replace(
+        mentionToken,
+        `@[${m.name}](${m.id})`,
+      );
+      mentions.push({ id: m.id, name: m.name, email: m.email, type: "user" });
+    }
+  });
+
+  // Call the mutation
   createComment({
     id: cardId,
     payload: {
-      comment_text,
-      attachments: commentAttachments.value.map((file: any) => ({
-        name: file.data.name,
-        url: file.data.url,
-      })),
+      comment_text: comment_text,
+      mentions,
+      module_name: props.moduleName,
+      module_id: props.moduleId,
+      attachments: commentAttachments.value
+        .filter((a) => !a.loading && a.data)
+        .map((a: any) => ({
+          name: a.data.name,
+          url: a.data.url,
+        })),
     },
   });
 
-  // Clear input immediately for better UX
+  // Clear input
   newComment.value = "";
   commentAttachments.value = [];
+  currentMentions.value = [];
+  if (fileInput.value) fileInput.value.value = "";
 }
 const localVarValues = reactive<Record<string, any>>({});
 const initLocalVars = () => {
@@ -2038,7 +2378,12 @@ const initLocalVars = () => {
     vars.forEach((v: any) => {
       if (!v) return;
 
-      if (v.type === "Select" || v.type === "Multi Select" || v.type === "Radio" || v.type === "Checkbox") {
+      if (
+        v.type === "Select" ||
+        v.type === "Multi Select" ||
+        v.type === "Radio" ||
+        v.type === "Checkbox"
+      ) {
         const first =
           Array.isArray(v.data) && v.data.length
             ? (v.data[0]?.value ?? v.data[0]?._id ?? v.data[0])
@@ -2053,14 +2398,18 @@ const initLocalVars = () => {
     });
   }
 };
-watch(() => cardDetails.value, (newDetails) => {
-  if (newDetails?.variables) {
-    newDetails.variables.forEach((variable: any) => {
-      // This ensures the slug (e.g., 'card-type') is mapped to its value
-      localVarValues[variable.slug] = variable.value;
-    });
-  }
-}, { immediate: true });
+watch(
+  () => cardDetails.value,
+  (newDetails) => {
+    if (newDetails?.variables) {
+      newDetails.variables.forEach((variable: any) => {
+        // This ensures the slug (e.g., 'card-type') is mapped to its value
+        localVarValues[variable.slug] = variable.value;
+      });
+    }
+  },
+  { immediate: true },
+);
 
 onMounted(initLocalVars);
 watch(() => cardDetails.value, initLocalVars, { deep: true });
@@ -2092,15 +2441,15 @@ const { mutate: deleteVar, isPending: isDeleting } = useDeleteVar();
 
 const { mutate: updateVariable } = useUpdateVar();
 
-/** 
+/**
  * Helper to surgicaly update variable definitions across all card and board caches
  * This avoids repeating the same filtering/mapping logic.
  */
 function broadUpdateVariables(transformer: (vars: any[]) => any[]) {
-  const queryKeys = [['cardDetail'], ['product-card']];
-  
+  const queryKeys = [["cardDetail"], ["product-card"]];
+
   // 1. Update card specific caches
-  queryKeys.forEach(key => {
+  queryKeys.forEach((key) => {
     queryClient.setQueriesData({ queryKey: key }, (old: any) => {
       if (!old || !Array.isArray(old.variables)) return old;
       return { ...old, variables: transformer(old.variables) };
@@ -2108,7 +2457,7 @@ function broadUpdateVariables(transformer: (vars: any[]) => any[]) {
   });
 
   // 2. Update the Board (sheet-list)
-  queryClient.setQueriesData({ queryKey: ['sheet-list'] }, (old: any) => {
+  queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
     if (!old || !Array.isArray(old.data)) return old;
     return {
       ...old,
@@ -2119,41 +2468,50 @@ function broadUpdateVariables(transformer: (vars: any[]) => any[]) {
             return { ...card, variables: transformer(card.variables) };
           }
           return card;
-        })
-      }))
+        }),
+      })),
     };
   });
 }
 
 function handleVariableDefinitionUpdate({ id, payload }: any) {
   // Optimistic Definitions Update
-  const updateTransformer = (vars: any[]) => vars.map((v: any) => {
-    if ((v.variable_id || v._id) === id) {
-      return { ...v, title: payload.title, data: payload.data };
-    }
-    return v;
-  });
+  const updateTransformer = (vars: any[]) =>
+    vars.map((v: any) => {
+      if ((v.variable_id || v._id) === id) {
+        return { ...v, title: payload.title, data: payload.data };
+      }
+      return v;
+    });
 
   broadUpdateVariables(updateTransformer);
 
   // Update Global definitions list
-  queryClient.setQueriesData({ queryKey: ['all-module-variables'] }, (old: any) => {
-    if (!Array.isArray(old)) return old;
-    return old.map((v: any) => (v.variable_id || v._id) === id ? { ...v, ...payload } : v);
-  });
-
-  updateVariable({ id, payload }, {
-    onError: (err: any) => {
-        console.error('Mutation failed:', err?.response ?? err);
-        toast.error('Failed to update field definition');
+  queryClient.setQueriesData(
+    { queryKey: ["all-module-variables"] },
+    (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.map((v: any) =>
+        (v.variable_id || v._id) === id ? { ...v, ...payload } : v,
+      );
     },
-    onSettled: () => {
-        queryClient.invalidateQueries({ queryKey: ['all-module-variables'] });
-        queryClient.invalidateQueries({ queryKey: ['sheet-list'] });
-        queryClient.invalidateQueries({ queryKey: ['product-card'] });
-        queryClient.invalidateQueries({ queryKey: ['cardDetail'] });
-    }
-  });
+  );
+
+  updateVariable(
+    { id, payload },
+    {
+      onError: (err: any) => {
+        console.error("Mutation failed:", err?.response ?? err);
+        toast.error("Failed to update field definition");
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
+        queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+        queryClient.invalidateQueries({ queryKey: ["product-card"] });
+        queryClient.invalidateQueries({ queryKey: ["cardDetail"] });
+      },
+    },
+  );
 }
 
 const showDeleteModal = ref(false);
@@ -2167,40 +2525,49 @@ function handleDeleteVar(item: any) {
 function confirmDelete() {
   if (!selectedItem.value) return;
 
-  const itemToDelete = selectedItem.value; 
+  const itemToDelete = selectedItem.value;
 
   // Optimistic Deletion
-  const deleteTransformer = (vars: any[]) => 
-    vars.filter((v: any) => (v.variable_id || v._id) !== itemToDelete.variable_id);
+  const deleteTransformer = (vars: any[]) =>
+    vars.filter(
+      (v: any) => (v.variable_id || v._id) !== itemToDelete.variable_id,
+    );
 
   broadUpdateVariables(deleteTransformer);
 
   // Update Global list
-  queryClient.setQueriesData({ queryKey: ['all-module-variables'] }, (old: any) => {
-    if (!Array.isArray(old)) return old;
-    return old.filter((v: any) => (v.variable_id || v._id) !== itemToDelete.variable_id);
-  });
+  queryClient.setQueriesData(
+    { queryKey: ["all-module-variables"] },
+    (old: any) => {
+      if (!Array.isArray(old)) return old;
+      return old.filter(
+        (v: any) => (v.variable_id || v._id) !== itemToDelete.variable_id,
+      );
+    },
+  );
 
   showDeleteModal.value = false;
   selectedItem.value = null;
   toast.success("Field deleted successfully");
 
-  deleteVar({
-    id: itemToDelete.variable_id,
-    module_id: props.moduleId ?? ''
-  }, {
-    onError: () => {
-      toast.error("Failed to delete field");
+  deleteVar(
+    {
+      id: itemToDelete.variable_id,
+      module_id: props.moduleId ?? "",
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['product-card'] });
-      queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
-      queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
-      queryClient.invalidateQueries({ queryKey: ["cardDetail"] });
-    }
-  });
+    {
+      onError: () => {
+        toast.error("Failed to delete field");
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ["product-card"] });
+        queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+        queryClient.invalidateQueries({ queryKey: ["all-module-variables"] });
+        queryClient.invalidateQueries({ queryKey: ["cardDetail"] });
+      },
+    },
+  );
 }
-
 
 function handleEditVar(item: any) {
   selectedVarToEdit.value = item;
@@ -2273,5 +2640,22 @@ function handleEditVar(item: any) {
 
 :global(.rich-scroll)::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.14);
+}
+/* Mentions */
+:global(.mention-highlight) {
+  background-color: rgba(var(--accent-rgb, 99, 102, 241), 0.15);
+  color: var(--accent, #6366f1);
+  padding: 1px 0;
+  border-radius: 4px;
+  font-weight: 400; /* Must match textarea exactly to prevent width drift */
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb, 99, 102, 241), 0.2);
+  display: inline;
+}
+.word-break :deep(p) {
+  overflow-wrap: break-word !important;
+}
+.word-break :deep(a) {
+  color: var(--color-text-primary, #6b7280) !important;
+  text-decoration: underline !important;
 }
 </style>

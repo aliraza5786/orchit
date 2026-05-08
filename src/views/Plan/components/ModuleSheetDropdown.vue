@@ -129,8 +129,8 @@
             @click="toggleSheet(hoveredModuleId!, sheet._id)"
           >
              <div class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                  :class="isSelectedSheet(sheet._id) ? 'bg-accent border-accent' : 'border-border bg-white'">
-               <i v-if="isSelectedSheet(sheet._id)" class="fas fa-check text-[10px] text-white"></i>
+                  :class="isSelectedSheet(sheet._id, hoveredModuleId) ? 'bg-accent border-accent' : 'border-border bg-white'">
+               <i v-if="isSelectedSheet(sheet._id, hoveredModuleId)" class="fas fa-check text-[10px] text-white"></i>
              </div>
              <i class="fa-regular fa-file-lines text-[10px] opacity-40"></i>
              <span class="truncate">{{ sheet.variables['sheet-title'] }}</span>
@@ -179,14 +179,19 @@ let cleanupNested: (() => void) | null = null;
 let hoverTimeout: any = null;
 
 // Helper to check selection
-const isSelectedModule = (id: string) => props.selectedIds.includes(id);
-const isSelectedSheet = (id: string) => props.selectedSheetIds.includes(id);
 const isSelectedAllModules = computed(() => props.selectedIds.length === 0 && props.selectedSheetIds.length === 0);
+const isSelectedModule = (id: string) => props.selectedIds.includes(id) || isSelectedAllModules.value;
 
 const isAllSheetsSelected = (moduleId: string) => {
   return isSelectedModule(moduleId) && !props.selectedSheetIds.some(sid => 
     sheetsMap.value[moduleId]?.some(s => s._id === sid)
   );
+};
+
+const isSelectedSheet = (id: string, moduleId?: string | null) => {
+  if (props.selectedSheetIds.includes(id)) return true;
+  if (moduleId && isAllSheetsSelected(moduleId)) return true;
+  return false;
 };
 
 onClickOutside(wrapperRef, (event) => {

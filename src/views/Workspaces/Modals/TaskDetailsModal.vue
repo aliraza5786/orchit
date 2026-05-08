@@ -69,7 +69,7 @@
               <div
                 class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="space-y-2">
-                  <div class="text-xs uppercase tracking-wider text-text-secondary">Lane</div>
+                  <div class="text-xs uppercase tracking-wider text-text-secondary">Tab</div>
                    <BaseSelectField size="md" :options="laneOptions" placeholder="Select lane" :allowCustom="false"
                      :model-value="lane" @update:modelValue="setLane" :loading="isLanesLoading" />
                 </div>

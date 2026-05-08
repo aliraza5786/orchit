@@ -68,7 +68,44 @@ export const useUpdateCompany = (options = {}) =>
       ...(options as any),
     } as any
   );
+export const useUpdateCompanyProfile = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["update-company-profile"],
+      url: "/profile/company", // base path
+      method: "PUT",
+    },
+    {
+      mutationFn: (vars: any) => {
+        const { company_id, ...payload } = vars.payload
 
+        return request({
+          url: `/profile/company/${company_id}`,
+          method: "PUT",
+          data: payload,
+        })
+      },
+      ...(options as any),
+    }
+  )
+  export const useDeleteOrganization = (options = {}) =>
+  useApiMutation<any, any>(
+    {
+      key: ["delete-organization"],
+      url: "/profile/company",
+      method: "DELETE",
+    },
+    {
+      mutationFn: (vars: any) => {
+        const { company_id } = vars.payload
+        return request({
+          url: `/profile/company/${company_id}`,
+          method: "DELETE",
+        })
+      },
+      ...(options as any),
+    }
+  )
 export const useInviteCompany = (options = {}) =>
   useApiMutation<any, createCompany>(
     {

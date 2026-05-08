@@ -139,6 +139,8 @@ declare const AppleID: any;
 defineProps<{
   isDark: boolean
 }>()
+
+
 // --- Constants (non-reactive) ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const authStore = useAuthStore()
@@ -244,43 +246,51 @@ async function loginWithApple() {
   }
 }
 async function handleLoginSuccess(data: any) {
-  localStorage.setItem("token", data?.data?.token);
-  await authStore.bootstrap();
+  const token = data?.data?.token
 
-  // ✅ Check post_auth_intent first (existing - untouched)
-  const intentStr = localStorage.getItem('post_auth_intent');
+  localStorage.setItem("token", token)
+  const maxAge = 60 * 60 * 24 * 30
+  const payload = encodeURIComponent(JSON.stringify({ token }))
+  document.cookie = `auth_session=${payload}; domain=.orchit.ai; path=/; max-age=${maxAge}; Secure; SameSite=Lax`
+  authStore.initialized = false
+  await authStore.bootstrap()
+  localStorage.setItem("token", token)
+  // authStore.writeAuthCookie({ token, company_id: null, personal_mode: null })
+  const redirectPath = router.currentRoute.value.query.redirect as string
+  if (redirectPath) {
+    router.push(redirectPath)
+    return
+  }
+
+  const intentStr = localStorage.getItem('post_auth_intent')
   if (intentStr) {
     try {
-      const intent = JSON.parse(intentStr);
-      localStorage.removeItem('post_auth_intent');
-      if (intent.aiResponse) {
-        workspaceStore.setWorkspace(intent.aiResponse);
-      }
-      router.push(intent.path || "/dashboard");
-      return;
+      const intent = JSON.parse(intentStr)
+      localStorage.removeItem('post_auth_intent')
+      if (intent.aiResponse) workspaceStore.setWorkspace(intent.aiResponse)
+      router.push(intent.path || "/dashboard")
+      return
     } catch (e) {
-      console.error("Failed to parse post_auth_intent", e);
-      localStorage.removeItem('post_auth_intent');
+      console.error("Failed to parse post_auth_intent", e)
+      localStorage.removeItem('post_auth_intent')
     }
   }
 
-  // ✅ Check pending invite → skip everything, go join workspace
-  const pendingToken = localStorage.getItem('pending_invite_token');
+  const pendingToken = localStorage.getItem('pending_invite_token')
   if (pendingToken) {
-    router.push(`/company-join/${pendingToken}`);
-    return;
+    router.push(`/company-join/${pendingToken}`)
+    return
   }
 
-  // ✅ Normal login flow — completely untouched below
   if (data?.data?.isNewUser) {
-    router.push("/create-profile");
-    return;
+    router.push("/create-profile")
+    return
   }
 
   if (workspaceStore.pricing) {
-    router.push(`/dashboard?stripePayment=true`);
+    router.push(`/dashboard?stripePayment=true`)
   } else {
-    router.push("/dashboard");
+    router.push("/dashboard")
   }
 }
 async function handleLogin() {
@@ -306,5 +316,3 @@ async function handleLogin() {
 }
 
 </script>
-
-

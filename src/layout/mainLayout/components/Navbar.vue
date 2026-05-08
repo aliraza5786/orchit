@@ -20,26 +20,24 @@
             :class="isSidebarOpen ? 'fa-xmark' : 'fa-bars'"
           ></i>
         </button>
-
-        <!-- Brand -->
-        <RouterLink to="/" class="flex items-center gap-2">
-          <img
-            v-if="!isDark"
-            src="../../../assets/global/light-logo.png"
-            alt="Orchit AI logo"
-            class="w-24 sm:w-30"
-            loading="eager"
-            decoding="async"
-          />
-          <img
-            v-else
-            src="../../../assets/global/dark-logo.png"
-            alt="Orchit AI logo"
-            class="w-24 sm:w-30"
-            loading="eager"
-            decoding="async"
-          />
-        </RouterLink>
+<div class="flex items-center gap-2 cursor-pointer" @click="handleLogoClick">
+  <img
+    v-if="!isDark"
+    src="../../../assets/global/light-logo.png"
+    alt="Orchit AI logo"
+    class="w-24 sm:w-30"
+    loading="eager"
+    decoding="async"
+  />
+  <img
+    v-else
+    src="../../../assets/global/dark-logo.png"
+    alt="Orchit AI logo"
+    class="w-24 sm:w-30"
+    loading="eager"
+    decoding="async"
+  />
+</div>
       </div>
 
       <!-- Primary nav -->
@@ -134,10 +132,16 @@
               <div
                 class="flex items-center gap-2.5 rounded-xl p-2.5 shrink-0"
               >
-                <div
+              <img
+              v-if="profileData?.u_profile_image"
+              class="object-cover cursor-pointer w-10 h-10 rounded-full"
+              :src="profileData?.u_profile_image"
+              alt="profile_img"
+            />
+                <div v-else
                   class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
                 >
-                  {{ getInitials(currentAccount.name) }}
+                  {{ profileData?.u_profile_image }}
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-semibold leading-5">
@@ -301,7 +305,7 @@
                     <!-- Account list -->
                     <div v-else key="list" class="flex flex-col gap-1">
                       <!-- Search -->
-                      <div v-if="companyAccounts.length > 4" class="px-1 pb-1">
+                      <div v-if="companyAccounts.length > 4 && companyAccounts.length > 0" class="px-1 pb-1">
                         <div
                           class="flex items-center gap-2 rounded-lg bg-bg-dropdown-menu-hover/50 px-2.5 py-1.5"
                         >
@@ -380,80 +384,47 @@
                       <div
                         class="h-px w-full bg-bg-dropdown-menu-hover/40 my-0.5"
                       ></div>
-
-                      <!-- Companies — capped height so footer stays visible -->
-                      <div class="px-1">
-                        <p
-                          class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary"
-                        >
-                          Company
-                          <span
-                            class="ml-1 font-normal normal-case tracking-normal text-text-secondary/70"
-                            >({{ filteredCompanyAccounts.length }})</span
-                          >
-                        </p>
-                        <ul
-                          class="max-h-[180px] overflow-y-auto overscroll-contain space-y-0.5 pr-0.5 scrollbar-thin scrollbar-thumb-bg-dropdown-menu-hover scrollbar-track-transparent"
-                        >
-                          <li
-                            v-if="filteredCompanyAccounts.length === 0"
-                            class="py-4 text-center text-xs text-text-secondary/50"
-                          >
-                            No companies match "<span class="font-medium">{{
-                              accountSearch
-                            }}</span
-                            >"
-                          </li>
-                          <li
-                            v-for="acc in filteredCompanyAccounts"
-                            :key="acc.id"
-                          >
-                            <button
-                              type="button"
-                              class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
-                              :class="
-                                acc.id === currentAccount.id
-                                  ? 'bg-bg-dropdown-menu-hover/60'
-                                  : ''
-                              "
-                              @click="
-                                acc.id !== currentAccount.id &&
-                                (pendingAccount = acc)
-                              "
-                            >
-                              <div
-                                class="grid h-8 w-8 flex-shrink-0 place-items-center rounded-lg bg-purple-100 text-xs font-bold text-purple-600 dark:bg-purple-900/40 dark:text-purple-300"
-                              >
-                                {{ getInitials(acc.name) }}
-                              </div>
-                              <div class="min-w-0 flex-1 text-left">
-                                <p
-                                  class="truncate text-xs font-medium leading-tight"
-                                >
-                                  {{ acc.name }}
-                                </p>
-                                <p
-                                  class="truncate text-[11px] text-text-secondary leading-tight mt-0.5"
-                                >
-                                  {{ acc.domain }}
-                                </p>
-                              </div>
-                              <span
-                                v-if="acc.id === currentAccount.id"
-                                class="grid h-5 w-5 flex-shrink-0 place-items-center rounded-full bg-orange-500 text-[10px] text-white"
-                              >
-                                <i class="fa-solid fa-check"></i>
-                              </span>
-                              <span
-                                v-else
-                                class="hidden flex-shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-600 group-hover:block dark:bg-purple-900/30 dark:text-purple-400"
-                              >
-                                Switch
-                              </span>
-                            </button>
-                          </li>
-                        </ul>
-                      </div>
+                      <!-- Companies — only shown when user has companies -->
+                      <template v-if="companyAccounts.length > 0">
+                        <div class="h-px w-full bg-bg-dropdown-menu-hover/40 my-0.5"></div>
+                        <div class="px-1">
+                          <p class="px-2 pb-0.5 text-[9px] font-semibold uppercase tracking-widest text-text-secondary">
+                            Company
+                            <span class="ml-1 font-normal normal-case tracking-normal text-text-secondary/70">
+                              ({{ filteredCompanyAccounts.length }})
+                            </span>
+                          </p>
+                          <ul class="max-h-[180px] overflow-y-auto flex flex-col gap-1">
+  <li v-for="account in filteredCompanyAccounts" :key="account.id">
+    <button
+      type="button"
+      class="group flex w-full cursor-pointer items-center gap-2.5 rounded-lg px-3 py-2 transition hover:bg-bg-dropdown-menu-hover"
+      :class="currentAccount.id === account.id ? 'bg-bg-dropdown-menu-hover/60' : ''"
+      @click="currentAccount.id !== account.id && (pendingAccount = account)"
+    >
+      <div class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-purple-500 text-xs font-bold text-white">
+        {{ getInitials(account.name) }}
+      </div>
+      <div class="min-w-0 flex-1 text-left">
+        <p class="truncate text-xs font-medium leading-tight">{{ account.name }}</p>
+        <p class="truncate text-[11px] text-text-secondary leading-tight mt-0.5">{{ account.domain }}</p>
+      </div>
+      <span v-if="currentAccount.id === account.id"
+        class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-purple-500 text-[10px] text-white">
+        <i class="fa-solid fa-check"></i>
+      </span>
+      <span v-else
+        class="hidden shrink-0 rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-600 group-hover:block dark:bg-purple-900/30 dark:text-purple-400">
+        Switch
+      </span>
+    </button>
+  </li>
+  <li v-if="filteredCompanyAccounts.length === 0" class="px-3 py-2 text-xs text-text-secondary">
+    No companies match your search.
+  </li>
+</ul>
+                        </div>
+                      </template>
                     </div>
                   </Transition>
                 </div>
@@ -474,7 +445,17 @@
                       <span>Account settings</span>
                     </button>
                   </li>
-
+                   <li>
+                    <button
+                      class="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2 hover:bg-bg-dropdown-menu-hover"
+                      role="menuitem"
+                      type="button"
+                      @click="openOrgSetup"
+                    >
+                      <i class="fa-regular fa-buildings"></i>
+                      <span>Organization setup</span>
+                    </button>
+                  </li>
                   <!-- Theme submenu -->
                   <li
                     class="relative cursor-pointer"
@@ -653,7 +634,6 @@ import NotificationBell from "./NotificationBell.vue";
 import LimitExceededModal from "../modals/LimitExceededModal.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useCurrentPackage } from "../../../queries/usePackages";
-
 // ── Types ──────────────────────────────────────────────────────
 interface Account {
   id: string;
@@ -683,7 +663,16 @@ function handleUgrade() {
   router.push(`/settings?tab=billing&stripePayment=${true}`);
   workspaceStore.setLimitExccedModal(false);
 }
-
+function openOrgSetup() {
+  closeMenu()
+  router.push('/settings?tab=org-setup')
+}
+function handleLogoClick() {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    router.push('/')
+  }
+}
 // ── Profile query ──────────────────────────────────────────────
 const { data: profile, isPending } = useQuery({
   queryKey: ["profile"],
@@ -719,7 +708,7 @@ const personalAccount = computed<Account>(() => ({
   id: profileData.value?._id ?? "personal",
   name: profileData.value?.u_full_name ?? "My Account",
   email: profileData.value?.u_email ?? "",
-  domain: "stagging.streamed.space",
+  domain: "orchit.ai",
   type: "individual",
 }));
 
@@ -744,10 +733,11 @@ const currentAccount = computed<Account>(() => {
 // ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
+const switchAborted = ref(false);
 async function confirmSwitch() {
   if (!pendingAccount.value) return
   isSwitching.value = true
-
+  switchAborted.value = false;
   try {
     await new Promise((res) => setTimeout(res, 1200))
 
@@ -758,7 +748,7 @@ async function confirmSwitch() {
     } else {
       authStore.clearCompany()
       await new Promise((res) => setTimeout(res, 100))
-      window.location.href = `${window.location.protocol}//stagging.streamed.space/dashboard`
+      window.location.href = `${window.location.protocol}//orchit.ai/dashboard`
     }
   } catch (e) {
     isSwitching.value = false
@@ -790,6 +780,7 @@ function toggleMenu() {
 function closeMenu() {
   menuOpen.value = false;
   themeOpen.value = false;
+  pendingAccount.value = null;
 }
 
 // ── Theme submenu placement ────────────────────────────────────
@@ -834,14 +825,36 @@ async function handleLogout() {
   try {
     closeMenu();
     workspaceStore.setWorkspace(null);
+    
+    // ✅ Clear auth state FIRST
     authStore.logout();
-    // ✅ Always wipe company_id on logout so next login starts clean
-    localStorage.removeItem("company_id");
     await queryClient.cancelQueries();
     queryClient.clear();
-    router.push("/login");
+    
+    // ✅ Wait a bit for cookie clearing to take effect
+    await new Promise((res) => setTimeout(res, 200));
+
+    const hostname = window.location.hostname;
+    const isSubdomain =
+      (hostname.endsWith('.orchit.ai') && hostname !== 'orchit.ai') ||
+      (hostname.endsWith('.localhost') && hostname !== 'localhost');
+
+    if (isSubdomain) {
+      // ✅ Redirect to main domain login with logout flag
+      const protocol = window.location.protocol;
+      const baseDomain = hostname.endsWith('.localhost') ? 'localhost' : 'orchit.ai';
+      // Add logout flag to prevent auto-auth on login page
+      window.location.href = `${protocol}//${baseDomain}/login?logout=true`;
+    } else {
+      // ✅ On main domain, redirect to login with logout flag
+      router.push('/login?logout=true');
+    }
   } catch (e) {
     console.error("Logout failed", e);
+    // ✅ Still redirect even if something fails
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
+    window.location.href = `${protocol}//${hostname === 'orchit.ai' ? 'orchit.ai' : 'orchit.ai'}/login`;
   }
 }
 
@@ -916,8 +929,6 @@ function onResizeIndicator() {
     rAF2 = null;
   });
 }
-
-// ── Lifecycle ──────────────────────────────────────────────────
 onMounted(() => {
   if (route.query.stripePayment) {
     router.push({
@@ -961,6 +972,7 @@ const filteredCompanyAccounts = computed(() => {
 // Clear search when dropdown closes
 watch(menuOpen, (open) => {
   if (!open) accountSearch.value = "";
+   pendingAccount.value = null;
 });
 </script>
 

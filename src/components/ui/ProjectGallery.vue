@@ -30,36 +30,41 @@
           :aria-label="`Open project ${displayTitle(project)}`"
         />
 
-        <!-- Banner -->
-        <div
-          class="relative flex h-20 items-end justify-between px-3 pb-2.5 overflow-hidden"
-          :style="{ background: bannerBackground(project) }"
-        >
-          <Motion
-            :initial="{ opacity: 0, x: -10 }"
-            :animate="{ opacity: 1, x: 0 }"
-            :transition="{ duration: 0.3, delay: index * 0.055 + 0.15 }"
-          >
-            <span class="rounded-md bg-black/20 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/90">
-              {{ project.variables?.['workspace-type'] ?? 'Project' }}
-            </span>
-          </Motion>
+       <!-- Banner -->
+     <!-- Banner -->
+<div
+  class="relative flex h-24 items-center justify-center px-3 overflow-hidden"
+  :style="{ background: bannerBackground(project) }"
+>
+  <Motion
+    :initial="{ opacity: 0, x: -10 }"
+    :animate="{ opacity: 1, x: 0 }"
+    :transition="{ duration: 0.3, delay: index * 0.055 + 0.15 }"
+    class="absolute top-1.5 left-3"
+  >
+    <span class="rounded-md bg-accent px-2 py-1 text-[10px] font-medium uppercase tracking-wide text-white">
+  {{
+    project.variables?.['workspace-type'] === 'team'
+      ? 'Organization'
+      : (project.variables?.['workspace-type'] ?? 'Project')
+  }}
+</span>
+  </Motion>
 
-          <Motion
-            :initial="{ opacity: 0, scale: 0.65 }"
-            :animate="{ opacity: 1, scale: 1 }"
-            :transition="{ duration: 0.3, delay: index * 0.055 + 0.2, ease: 'easeOut' }"
-          >
-            <img
-              :src="project.logo"
-              class="h-8 w-8 rounded-lg object-cover ring-1 ring-white/20"
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
-          </Motion>
-        </div>
-
+  <Motion
+    :initial="{ opacity: 0, scale: 0.65 }"
+    :animate="{ opacity: 1, scale: 1 }"
+    :transition="{ duration: 0.3, delay: index * 0.055 + 0.2, ease: 'easeOut' }"
+  >
+    <img
+      :src="project.logo"
+      class="h-12 w-12 rounded-xl object-cover ring-2 ring-white/30 shadow-lg"
+      alt=""
+      loading="lazy"
+      decoding="async"
+    />
+  </Motion>
+</div>
         <!-- Body -->
         <div class="flex flex-col gap-2.5 p-3">
 
@@ -162,18 +167,26 @@
       </Motion>
     </Motion>
 
-    <!-- Empty -->
-    <Motion
-      v-else
-      key="empty"
-      :initial="{ opacity: 0, y: 10 }"
-      :animate="{ opacity: 1, y: 0 }"
-      :exit="{ opacity: 0, y: -10 }"
-      :transition="{ duration: 0.3 }"
-      class="col-span-full flex items-center justify-center py-10 text-sm text-text-secondary"
-    >
-      No projects yet
-    </Motion>
+   <!-- Empty -->
+<Motion
+  v-else
+  key="empty"
+  :initial="{ opacity: 0, y: 10 }"
+  :animate="{ opacity: 1, y: 0 }"
+  :exit="{ opacity: 0, y: -10 }"
+  :transition="{ duration: 0.3 }"
+  class="col-span-full flex flex-col items-center justify-center gap-3 py-20 text-center"
+>
+  <div class="grid h-14 w-14 place-items-center rounded-2xl bg-bg-card border border-border/70">
+    <i class="fa-regular fa-folder-open text-xl text-text-secondary"></i>
+  </div>
+  <div class="flex flex-col gap-1">
+    <p class="text-sm font-medium text-text-primary">{{ emptyMessage }}</p>
+    <p class="text-xs text-text-secondary">
+      {{ filter === 'all' ? 'Get started by creating your first workspace.' : 'Try switching to a different filter.' }}
+    </p>
+  </div>
+</Motion>
 
   </AnimatePresence>
 </template>
@@ -199,13 +212,29 @@ interface Project {
   LatestTask?: { job_id?: string }
   owner?: { name: string }
   task_stats?: { total_percentage?: number }
+  company?: {                          // ✅ add this
+    _id: string
+    title: string
+    slug: string
+    domain_link: string
+    logo: string | null
+    status: string
+  }
 }
 
 const props = withDefaults(
-  defineProps<{ projects: Project[]; loading?: boolean; skeletonCount?: number }>(),
+  defineProps<{ projects: Project[]; loading?: boolean; skeletonCount?: number; filter?: string    }>(),
   { loading: false, skeletonCount: 8 }
 )
-
+const emptyMessage = computed(() => {
+  switch (props.filter) {
+    case 'archived': return 'No archived workspaces'
+    case 'deleted':  return 'No deleted workspaces'
+    case 'private':  return 'No private workspaces'
+    case 'shared':   return 'No shared workspaces'
+    default:         return 'No workspaces yet — create your first one'
+  }
+})
 const router = useRouter()
 
 const resolvedSkeletonCount = computed(() => props.skeletonCount ?? 8)
@@ -238,11 +267,18 @@ function avatarColor(name: string): string {
 function getInitials(name: string): string {
   return name.trim().split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?'
 }
-
 function onClick(p: Project) {
   const job = p?.LatestTask?.job_id
   if (job) localStorage.setItem('jobId', job)
   else localStorage.removeItem('jobId')
-  router.push(`/workspace/peak/${p._id}/${job ?? ''}`)
+
+  const path = `/workspace/peak/${p._id}/${job ?? ''}`
+
+  if (p?.company?.domain_link) {
+    const domain = p.company.domain_link.replace('https://', '').replace('http://', '')
+    window.location.href = `${window.location.protocol}//${domain}${path}`
+  } else {
+    router.push(path)
+  }
 }
 </script>

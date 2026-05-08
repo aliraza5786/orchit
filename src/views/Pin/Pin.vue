@@ -4,14 +4,17 @@
   >
     <!-- Header -->
     <div class="overflow-x-auto shrink-0 border-b border-border">
-      <div class="header px-4 py-3 flex items-center justify-between gap-2">
+      <div class="header px-2 py-2 flex items-center justify-between gap-2">
         <Dropdown
           v-model="selected_sheet_id"
           :options="transformedData"
           variant="secondary"
-          v-bind="dropdownListeners"
+          @open="closeAllDropdowns('sheet')"
+          @edit-option="openEditSprintModal"
           :canEdit="canEditSheet"
           :canDelete="canDeleteSheet"
+          @delete-option="handleDeleteSheetModal"
+          :multiple="true"
           ref="sheetDropdownRef"
         >
           <template #more>
@@ -24,7 +27,72 @@
             </div>
           </template>
         </Dropdown>
-        <div class="flex gap-2">
+        <div class="flex gap-3">
+          <!-- Grouping -->
+          <div v-if="view != 'table'" class="relative flex items-center gap-2">
+            <button
+              ref="variableTriggerRef"
+              @click="toggleVariableDropdown"
+              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              :class="
+                showVariableDropdown
+                  ? 'border-accent text-accent'
+                  : 'border-border text-text-primary'
+              "
+            >
+              <i
+                class="fa-solid fa-layer-group text-[14px]"
+                :class="showVariableDropdown ? 'text-accent' : 'text-accent'"
+              ></i>
+              <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
+            </button>
+
+            <!-- Variable View Dropdown -->
+            <VariableViewDropdown
+              v-if="showVariableDropdown"
+              :triggerRef="variableTriggerRef"
+              :options="variables"
+              v-model="selected_view_by"
+              :canCreateVariable="canCreateVariable"
+              @close="showVariableDropdown = false"
+              @add-new="
+                () => {
+                  isCreateVar = true;
+                  showVariableDropdown = false;
+                }
+              "
+            />
+          </div>
+          <!-- Group button for Table View -->
+          <div v-if="view === 'table'" class="relative flex items-center gap-2">
+            <button
+              ref="groupTriggerRef"
+              @click="toggleGroupDropdown"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              :class="
+                showGroupDropdown
+                  ? 'border-accent text-accent'
+                  : 'border-border text-text-primary'
+              "
+            >
+              <i
+                class="fa-solid fa-layer-group text-[14px]"
+                :class="showGroupDropdown ? 'text-accent' : 'text-accent'"
+              ></i>
+              <span>Group: {{ selectedGroupLabel }}</span>
+            </button>
+
+            <!-- Table Group Dropdown -->
+            <TableGroupDropdown
+              v-if="showGroupDropdown"
+              :triggerRef="groupTriggerRef"
+              :options="variables"
+              :pin="true"
+              v-model="selectedGroup"
+              @close="showGroupDropdown = false"
+            />
+          </div>
+
           <SearchBar
             class="max-w-[250px]"
             @onChange="
@@ -145,12 +213,12 @@
       </div>
     </div>
     <!-- Kanban Skeleton -->
-    <KanbanSkeleton v-show="isListPending" />
+    <KanbanSkeleton v-show="isListPending && view === 'kanban'" />
 
     <!-- Kanban Board -->
     <div
       v-show="!isListPending"
-      class="flex overflow-x-auto custom_scroll_bar gap-3 py-4 h-full mx-4"
+      class="flex overflow-x-auto custom_scroll_bar gap-2 pt-2 h-full mx-2"
       v-if="view === 'kanban'"
     >
       <KanbanBoard
@@ -166,7 +234,12 @@
         :sheet_id="selected_sheet_id"
       >
         <template #ticket="{ ticket }">
-          <KanbanCard @click="handleClickTicket(ticket)" :ticket="ticket" />
+          <KanbanCard
+            @click="handleClickTicket(ticket)"
+            :ticket="ticket"
+            :moduleId="moduleId"
+            :workspaceId="workspaceId"
+          />
         </template>
 
         <template #emptyState="{ column }">
@@ -188,7 +261,7 @@
         </template>
       </KanbanBoard>
       <!-- Add List Section -->
-      <div class="min-w-[328px]" v-if="view === 'kanban'" @click.stop>
+      <div class="min-w-[270px]" v-if="view === 'kanban'" @click.stop>
         <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
           <BaseTextField
             :autofocus="true"
@@ -220,32 +293,55 @@
       </div>
     </div>
     <template v-if="view == 'table'">
-        <div class="ps-4 overflow-auto">
-              <TableView
-        class="mx-3"
-        :columns="columns"
-        :isPending="isListPending"
-        @addVar="
-          () => {
-            isCreateVar = true;
-          }
-        "
-        :rows="tableRows"
-        :canCreate="canCreateCard"
-        :canCreateVariable="canCreateVariable"
-        :canDelete="canDeleteCard"
-        @create="handleCreateTicket"
-        @update:rows="handleTableRowsUpdate"
-        @delete="handleTableDelete"
-      />
-        </div>
+      <div class="ps-4 pe-4 overflow-auto">
+        <TableView
+          ref="tableViewRef"
+          :columns="columns"
+          :isCreating="isAddingTicket"
+          :isPending="
+            isListPending ||
+            isFlatTablePending ||
+            (!!selectedGroup && isTablePending)
+          "
+          @addVar="
+            () => {
+              isCreateVar = true;
+            }
+          "
+          :rows="tableRows"
+          :groups="tableGroups"
+          :isGrouped="!!selectedGroup"
+          :selectedGroup="selectedGroup"
+          :canCreate="canCreateCard"
+          :canCreateVariable="canCreateVariable"
+          :canDelete="canDeleteCard"
+          :totalCount="totalTableCount"
+          :totalTotal="totalTableTotal"
+          @create="handleCreateTicket"
+          @quickCreate="handleQuickCreate"
+          @refresh="refreshTable"
+          @update:rows="handleTableRowsUpdate"
+          @delete="handleTableDelete"
+        />
+      </div>
     </template>
     <div
       v-if="view === 'mindmap'"
-      class="flex-1 h-full min-h-0 overflow-hidden"
+      class="relative flex-1 h-full min-h-0 p-2 overflow-hidden"
     >
+      <div
+        v-if="isListPending"
+        class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
+      >
+        <div class="flex flex-col items-center gap-3">
+          <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+          <span class="text-sm font-medium text-text-secondary italic"
+            >Mapping your data...</span
+          >
+        </div>
+      </div>
       <PinMindmapView
-        :listsData="Lists?.data ?? []"
+        :listsData="filteredBoard ?? []"
         :workspaceId="String(workspaceId)"
         :moduleId="String(moduleId)"
         :canCreateCard="canCreateCard"
@@ -313,6 +409,7 @@
       v-if="createTeamModal"
       key="createTaskModalKey"
       v-model="createTeamModal"
+      :sheetVariables="variables"
     />
 
     <CreateSheetModal
@@ -324,6 +421,7 @@
       v-if="isCreateVar"
       v-model="isCreateVar"
       :sheetID="selected_sheet_id"
+      :tableView="view === 'table'"
     />
     <ConfirmDeleteModal
       @click.stop=""
@@ -349,13 +447,15 @@
     :details="selectedCard"
     :showPanel="!!selectedCard?._id"
     :pin="true"
+    :moduleId="moduleId"
+    moduleName="pin"
     @close="() => selectCardHandler({ variables: {} })"
   />
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineAsyncComponent, onMounted, watch, h} from "vue";
-import { useRoute } from "vue-router";
+import { ref, computed, defineAsyncComponent, onMounted, watch, h } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useQueryClient } from "@tanstack/vue-query";
 import { useWorkspaceStore } from "../../stores/workspace";
 import {
@@ -369,6 +469,7 @@ import {
   useAddTicket,
   useMoveCard,
   useLanes,
+  useTableCards,
 } from "../../queries/useSheets";
 import { useRouteIds } from "../../composables/useQueryParams";
 
@@ -397,9 +498,6 @@ import { useAgentStore } from "../../stores/agentStore";
 const TableSearchCell = defineAsyncComponent(
   () => import("../../components/feature/TableView/TableSearchCell.vue"),
 );
-const TableAssigneeCell = defineAsyncComponent(
-  () => import("../../components/feature/TableView/TableAssigneeCell.vue"),
-);
 const ConfirmDeleteModal = defineAsyncComponent(
   () => import("../Product/modals/ConfirmDeleteModal.vue"),
 );
@@ -409,6 +507,14 @@ const CreateVariableModal = defineAsyncComponent(
 const KanbanBoard = defineAsyncComponent(
   () => import("../../components/feature/kanban/KanbanBoard.vue"),
 );
+const TableGroupDropdown = defineAsyncComponent(
+  () => import("../Product/components/TableGroupDropdown.vue"),
+);
+const VariableViewDropdown = defineAsyncComponent(
+  () => import("../Product/components/VariableViewDropdown.vue"),
+);
+import { updateCardInStructure } from "../../utilities/cacheSync";
+
 import { usePermissions } from "../../composables/usePermissions";
 import { toast } from "vue-sonner";
 const {
@@ -428,6 +534,14 @@ const isCreateSheetModal = ref(false);
 const createTeamModal = ref(false);
 const showDelete = ref(false);
 const showDeleteTicket = ref(false);
+
+const showVariableDropdown = ref(false);
+const variableTriggerRef = ref<HTMLElement | null>(null);
+
+const showGroupDropdown = ref(false);
+const groupTriggerRef = ref<HTMLElement | null>(null);
+const selectedGroup = ref<any | null>(null);
+
 const localColumnData = ref<any>();
 const activeAddList = ref(false);
 const newColumn = ref("");
@@ -436,10 +550,11 @@ const localList = ref<any>([]);
 const view = ref("kanban");
 // Routing & Stores
 const route = useRoute();
+const router = useRouter();
 const { workspaceId, moduleId } = useRouteIds();
 const workspaceStore = useWorkspaceStore();
 const queryClient = useQueryClient();
-const selectedTicketId = ref("")
+const selectedTicketId = ref("");
 const isDeletingTicket = ref(false);
 const agentStore = useAgentStore();
 
@@ -451,12 +566,14 @@ const { data, refetch: refetchSheets } = useSheets(
   { onSuccess: () => refetchList() },
 );
 const sheetId = computed(() => (data.value ? data.value[0]?._id : ""));
-const sheetTitle = computed(() => (data.value ? data.value[0]?.variables?.["sheet-title"] : ""));
+const sheetTitle = computed(() =>
+  data.value ? data.value[0]?.variables?.["sheet-title"] : "",
+);
 const authStore = useAuthStore();
 const pendingCreations = ref(new Set<string | number>());
 const localTableOrder = ref<any[]>([]);
 
-const selected_sheet_id = ref<any>(data.value?.[0]?._id ?? null);
+const selected_sheet_id = ref<any>([]);
 const { data: variables } = useVariables(
   workspaceId,
   moduleId,
@@ -466,11 +583,55 @@ const viewBy = computed(() => variables.value?.[0]?._id ?? "");
 const selected_view_by = ref(viewBy.value);
 watch(viewBy, (val) => (selected_view_by.value = val));
 
-watch(data, (sheets) => {
-  if (sheets?.length) selected_sheet_id.value = sheets[0]._id;
+const storageKey = computed(
+  () => `pin_selected_sheets_${workspaceId.value}_${moduleId.value}`,
+);
+
+watch(
+  data,
+  (sheets) => {
+    if (!sheets?.length) return;
+
+    const currentVal = Array.isArray(selected_sheet_id.value)
+      ? selected_sheet_id.value
+      : [selected_sheet_id.value].filter(Boolean);
+    const validCurrent = currentVal.filter(
+      (id: string) => id === "all" || sheets.some((s: any) => s._id === id),
+    );
+
+    if (validCurrent.length > 0) {
+      if (validCurrent.length !== currentVal.length) {
+        selected_sheet_id.value = validCurrent;
+      }
+      return;
+    }
+
+    const stored = localStorage.getItem(storageKey.value);
+    const storedIds = stored ? JSON.parse(stored) : [];
+    const validIds = storedIds.filter(
+      (id: string) => id === "all" || sheets.some((s: any) => s._id === id),
+    );
+
+    if (validIds.length > 0) {
+      selected_sheet_id.value = validIds;
+    } else {
+      // Default to 'General' if exists, otherwise first sheet
+      const general = sheets.find(
+        (s: any) => s.variables?.["sheet-title"]?.toLowerCase() === "general",
+      );
+      selected_sheet_id.value = [general?._id || sheets[0]._id];
+    }
+  },
+  { immediate: true },
+);
+
+watch(selected_sheet_id, (newVal) => {
+  if (Array.isArray(newVal)) {
+    localStorage.setItem(storageKey.value, JSON.stringify(newVal));
+  }
 });
 
-// Lists
+const formattedExtraParams = computed(() => ({}));
 const {
   data: Lists,
   isPending: isListPending,
@@ -480,7 +641,68 @@ const {
   selected_sheet_id,
   computed(() => [...workspaceStore.selectedLaneIds]),
   selected_view_by,
+  formattedExtraParams,
 );
+
+const toggleVariableDropdown = () => {
+  showVariableDropdown.value = !showVariableDropdown.value;
+};
+
+const toggleGroupDropdown = () => {
+  showGroupDropdown.value = !showGroupDropdown.value;
+};
+
+const selectedViewByVariable = computed(() => {
+  return variables.value?.find((v: any) => v._id === selected_view_by.value);
+});
+
+const selectedViewByLabel = computed(() => {
+  return selectedViewByVariable.value?.title || "None";
+});
+
+const selectedGroupLabel = computed(() => {
+  return selectedGroup.value?.title || "None";
+});
+
+// ─── Dedicated flat Table View data (no variable_id = no grouping shuffle) ─────
+const { data: FlatTableData, isPending: isFlatTablePending } = useTableCards(
+  moduleId,
+  selected_sheet_id,
+  computed(() => [...workspaceStore.selectedLaneIds]),
+  formattedExtraParams,
+);
+
+const tableActiveVariableId = computed(() => {
+  return selectedGroup.value?._id || "";
+});
+
+// Extra params for the grouped table query
+const tableGroupExtraParams = computed(() => {
+  return formattedExtraParams.value || {};
+});
+
+const { data: TableGroupedLists, isPending: isTablePending } = useSheetList(
+  moduleId,
+  selected_sheet_id,
+  computed(() => [...workspaceStore.selectedLaneIds]),
+  tableActiveVariableId,
+  tableGroupExtraParams, // uses variable_slug for assignee/owner, falls back to regular extra params
+);
+
+// ─── View & Grouping Synchronization ──────────────────────────────────────────
+// Sync Table grouping selection to Kanban view for consistency
+watch(selectedGroup, (newGroup: any) => {
+  if (newGroup?._id && selected_view_by.value !== newGroup._id) {
+    selected_view_by.value = newGroup._id;
+  }
+});
+
+const refreshTable = () => {
+  queryClient.invalidateQueries({ queryKey: ["sheets"] });
+  queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+  queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+  toast.success("Data refreshed");
+};
 
 watch(Lists, (newLists) => {
   localList.value = Array.isArray(newLists)
@@ -492,7 +714,19 @@ onMounted(() => {
   localList.value = Array.isArray(Lists.value)
     ? JSON.parse(JSON.stringify(Lists.value))
     : [];
+  openPanelFromRoute();
 });
+
+watch(
+  () => route.query.card_id,
+  () => openPanelFromRoute(),
+);
+
+async function openPanelFromRoute() {
+  const cardId = route.query.card_id as string;
+  if (!cardId) return;
+  handleClickTicket({ _id: cardId });
+}
 
 const { data: lanes } = useLanes(workspaceId);
 const laneOptions = computed<any[]>(() =>
@@ -529,15 +763,6 @@ function handleAddColumn(value: string) {
     value,
   });
 }
-const dropdownListeners = computed(() => {
-  const listeners: Record<string, Function> = {};
-
-  if (canEditSheet.value) listeners["onEdit-option"] = openEditSprintModal;
-  if (canDeleteSheet.value)
-    listeners["onDelete-option"] = handleDeleteSheetModal;
-
-  return listeners;
-});
 
 function emitAddColumn() {
   const trimmed = newColumn.value.trim();
@@ -604,15 +829,26 @@ function onReorder(a: any) {
 function handleBoardUpdate(_: any) {}
 
 function selectCardHandler(card: any) {
-  console.log(card, "card data");
-  
   selectedCard.value = card;
+
+  // Clean up card_id query param if present
+  if (route.query.card_id) {
+    const query = { ...route.query };
+    delete query.card_id;
+    router.replace({ query });
+  }
 }
 
 function handleClickTicket(ticket: any) {
-  console.log("selected card", ticket);
   selectedTicketId.value = ticket?._id;
   selectedCard.value = ticket;
+
+  // Clean up card_id query param if present
+  if (route.query.card_id) {
+    const query = { ...route.query };
+    delete query.card_id;
+    router.replace({ query });
+  }
 }
 
 function plusHandler(e: any) {
@@ -622,180 +858,35 @@ function plusHandler(e: any) {
 }
 const moveCard = useMoveCard({
   onMutate: async (newPayload: any) => {
-    const { card_id, variables: updatedVariables } = newPayload;
-
-    await queryClient.cancelQueries({ queryKey: ["product-card", card_id] });
+    const { card_id } = newPayload;
     await queryClient.cancelQueries({ queryKey: ["sheet-list"] });
-    toast.success("Card Formatted successfully");
-    const previousCard = queryClient.getQueryData(["product-card", card_id]);
     const previousLists = queryClient.getQueryData(["sheet-list"]);
 
-    // Snapshot ALL sprint-kanban queries for rollback
-    const previousSprintKanbans = queryClient.getQueriesData({
-      queryKey: ["sprint-kanban"],
-    });
-
-    const updateCardLogic = (oldCard: any) => {
-      if (!oldCard || oldCard._id !== card_id) return oldCard;
-
-      const updatedCard = {
-        ...oldCard,
-        variables: Array.isArray(oldCard.variables)
-          ? [...oldCard.variables]
-          : [],
-      };
-
-      if (updatedVariables) {
-        Object.assign(updatedCard, updatedVariables);
-
-        Object.entries(updatedVariables).forEach(([key, value]) => {
-          const idx = updatedCard.variables.findIndex(
-            (v: any) => v.slug === key,
-          );
-
-          if (idx !== -1) {
-            updatedCard.variables[idx] = {
-              ...updatedCard.variables[idx],
-              value,
-            };
-          } else {
-            updatedCard.variables.push({ slug: key, value, type: "Text" });
-          }
-
-          if (key === "card-description") {
-            updatedCard["card-description"] = value;
-            updatedCard.description = value;
-          }
-        });
-      }
-
-      if (newPayload.workspace_lane_id) {
-        updatedCard.workspace_lane_id = newPayload.workspace_lane_id;
-      }
-
-      if (newPayload.optimisticUser) {
-        const users = Array.isArray(newPayload.optimisticUser)
-          ? newPayload.optimisticUser
-          : [newPayload.optimisticUser];
-        updatedCard.seats = users;
-        updatedCard.seat_id = users
-          .map((u: any) => u?._id || u?.id)
-          .filter(Boolean);
-        updatedCard.seat = users[0] || null;
-        updatedCard.assigned_to = users;
-      }
-
-      return updatedCard;
-    };
-
-    // Update product-card cache
-    queryClient.setQueryData(["product-card", card_id], updateCardLogic);
-
-    // Update sheet-list cache
     queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
-      if (!old || !Array.isArray(old.data)) return old;
-      return {
-        ...old,
-        data: old.data.map((column: any) => ({
-          ...column,
-          cards: column.cards?.map((card: any) =>
-            card._id === card_id ? { ...updateCardLogic(card) } : card,
-          ),
-        })),
-      };
+      return updateCardInStructure(old, card_id, newPayload);
     });
 
-    // Update ALL sprint-kanban cached queries optimistically
-    // Each entry is [queryKey, data] — update only the one containing this card
-    queryClient.setQueriesData({ queryKey: ["sprint-kanban"] }, (old: any) => {
-      // sprint-kanban returns array of columns directly
-      if (!old || !Array.isArray(old)) return old;
-
-      const hasCard = old.some((col: any) =>
-        col.cards?.some((c: any) => c._id === card_id),
-      );
-
-      // Only patch the query instance that actually contains this card
-      if (!hasCard) return old;
-
-      return old.map((col: any) => ({
-        ...col,
-        cards: (col.cards ?? []).map((card: any) =>
-          card._id === card_id ? { ...updateCardLogic(card) } : card,
-        ),
-      }));
-    });
-
-    return { previousCard, previousLists, previousSprintKanbans };
+    return { previousLists };
   },
 
   onSuccess: (serverCard: any, variables: any) => {
     const cardId = variables.card_id;
-
     if (serverCard) {
-      // Update product-card cache with server response
-      queryClient.setQueryData(["product-card", cardId], serverCard);
-
-      // Update sheet-list cache with server response
-      queryClient.setQueryData(["sheet-list"], (old: any) => {
-        if (!old?.data) return old;
-        return {
-          ...old,
-          data: old.data.map((column: any) => ({
-            ...column,
-            cards: column.cards?.map((card: any) =>
-              card._id === cardId ? { ...card, ...serverCard } : card,
-            ),
-          })),
-        };
-      });
-
-      // Update ALL sprint-kanban queries with server response
-      queryClient.setQueriesData(
-        { queryKey: ["sprint-kanban"] },
-        (old: any) => {
-          if (!old || !Array.isArray(old)) return old;
-
-          const hasCard = old.some((col: any) =>
-            col.cards?.some((c: any) => c._id === cardId),
-          );
-
-          if (!hasCard) return old;
-
-          return old.map((col: any) => ({
-            ...col,
-            cards: (col.cards ?? []).map((card: any) =>
-              card._id === cardId ? { ...card, ...serverCard } : card,
-            ),
-          }));
-        },
-      );
-      queryClient.invalidateQueries({
-        queryKey: ["product-card", cardId],
+      queryClient.setQueriesData({ queryKey: ["sheet-list"] }, (old: any) => {
+        return updateCardInStructure(old, cardId, serverCard);
       });
     }
   },
 
-  onError: (_err: any, variables: any, context: any) => {
-    if (!context) return;
-
-    const cardId = variables.card_id;
-
-    // Rollback product-card cache
-    queryClient.setQueryData(["product-card", cardId], context.previousCard);
-
-    // Rollback sheet-list cache
-    queryClient.setQueriesData(
-      { queryKey: ["sheet-list"] },
-      context.previousLists,
-    );
+  onError: (_err: any, _variables: any, context: any) => {
+    if (context?.previousLists) {
+      queryClient.setQueryData(["sheet-list"], context.previousLists);
+    }
   },
 
-  onSettled: (_data: any, _err: any, variables: any) => {
-    const cardId = variables.card_id;
-
-    queryClient.invalidateQueries({ queryKey: ["product-card", cardId] });
+  onSettled: () => {
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
   },
 });
 function handleMindmapUpdateCard(payload: any) {
@@ -811,28 +902,82 @@ function toggleAddList() {
   activeAddList.value = !activeAddList.value;
 }
 const sheetName = ref("");
-// Dropdown Transformation
-const transformedData = computed(() =>
-  (data.value || []).map((item: any) => ({
+const transformedData = computed(() => {
+  const alwaysAllowed = ["general"];
+
+  const filteredSheets = (data.value || []).filter((item: any) => {
+    const title = item?.variables?.["sheet-title"]?.toLowerCase();
+    const source = item?.user_permissions?.source?.toLowerCase();
+
+    if (alwaysAllowed.includes(title)) return true;
+    if (source === "owner") return true;
+    if (source === "shared" && item?.user_permissions?.can_read) return true;
+
+    return false;
+  });
+
+  const options = filteredSheets.map((item: any) => ({
     _id: item._id,
     title: item.variables["sheet-title"],
     description: item.variables["sheet-description"],
     icon: item.icon,
     disableDelete: item.variables["sheet-title"]?.toLowerCase() === "general",
-  })),
-);
+    hideActions: false,
+    user_permissions: item.user_permissions,
+  }));
+
+  if (options.length > 1) {
+    options.unshift({
+      _id: "all",
+      title: "All sheet",
+      icon: { prefix: "fa-solid", iconName: "fa-layer-group" },
+      hideActions: true,
+    } as any);
+  }
+  return options;
+});
 watch(
   selected_sheet_id,
-  (newId) => {
-    if (!newId) return;
+  (newVal, oldVal) => {
+    if (!newVal || (Array.isArray(newVal) && newVal.length === 0)) {
+      if (data.value && data.value.length > 0) {
+        selected_sheet_id.value = [data.value[0]._id];
+      }
+      return;
+    }
+
+    // Handle "All sheet" logic: mutual exclusivity
+    if (Array.isArray(newVal)) {
+      const hadAll =
+        oldVal === "all" || (Array.isArray(oldVal) && oldVal.includes("all"));
+      const hasAll = newVal.includes("all");
+      let finalVal = [...newVal];
+
+      if (hasAll && !hadAll) {
+        finalVal = ["all"];
+      } else if (hasAll && newVal.length > 1) {
+        finalVal = newVal.filter((id) => id !== "all");
+      }
+
+      if (JSON.stringify(newVal) !== JSON.stringify(finalVal)) {
+        selected_sheet_id.value = finalVal;
+        return;
+      }
+    }
+
+    const currentId = Array.isArray(newVal) ? newVal[0] : newVal;
     const selectedSheet = transformedData.value.find(
-      (item :any) => item._id === newId,
+      (item: any) => item._id === currentId,
     );
     if (selectedSheet) {
       agentStore.saveSelectedSheetTitle(selectedSheet.title);
-      agentStore.saveSelectedSheetId(newId);
+      agentStore.saveSelectedSheetId(currentId);
       sheetName.value = selectedSheet.title || "";
-    }else {
+    } else if (currentId === "all") {
+      agentStore.saveSelectedSheetTitle("All sheet");
+      agentStore.saveSelectedSheetId("all");
+      sheetName.value = "All sheet";
+    } else {
       agentStore.saveSelectedSheetTitle(sheetTitle.value);
       agentStore.saveSelectedSheetId(sheetId.value);
       sheetName.value = "";
@@ -842,6 +987,18 @@ watch(
 );
 const showDeleteModal = ref(false);
 const selectedSheettoAction = ref<any>();
+const closeAllDropdowns = (except: string) => {
+  if (except !== "sheet") {
+    sheetDropdownRef.value?.closeDropdown();
+  }
+  if (except !== "variable") {
+    showVariableDropdown.value = false;
+  }
+  if (except !== "group") {
+    showGroupDropdown.value = false;
+  }
+};
+
 const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
   onSuccess: () => {
     showDeleteModal.value = false;
@@ -850,7 +1007,6 @@ const { mutate: updateSheet, isPending: isDeleting } = useUpdateWorkspaceSheet({
   },
 });
 function handleDeleteSheetModal(opt: any) {
-  
   showDeleteModal.value = true;
   selectedSheettoAction.value = opt;
 }
@@ -866,7 +1022,6 @@ function openEditSprintModal(opt: any) {
   selectedSheettoAction.value = opt;
 }
 
-// reactive search query
 const searchQuery = ref("");
 const debouncedQuery = ref("");
 
@@ -876,21 +1031,31 @@ watch(
     debouncedQuery.value = val;
   }, 200),
 );
+
+// Helper: flatten cards from the /workspace/cards/grouped response.
+const flattenSheetListCards = (apiData: any): any[] => {
+  if (!apiData) return [];
+  const target = apiData.data || apiData;
+  // Flat response (no variable_id): root-level cards array
+  if (Array.isArray(target.cards)) return target.cards;
+  // Grouped response: flatten sheets[].sheet_lists[].cards
+  const all: any[] = [];
+  (target.sheets ?? []).forEach((sheet: any) => {
+    (sheet.sheet_lists ?? []).forEach((list: any) => {
+      (list.cards ?? []).forEach((card: any) => {
+        all.push({
+          ...card,
+          columnId: list.title,
+        });
+      });
+    });
+  });
+  return all;
+};
+
 // computed filtered board
 const fuse = computed(() => {
-  const lists = Array.isArray(Lists.value?.data?.data)
-    ? Lists.value?.data?.data
-    : [];
-  console.log("lists data", Lists.value?.data);
-
-  const allCards = lists.flatMap((col: any) =>
-    (col.cards || []).map((card: any) => ({
-      ...card,
-      columnId: col.title,
-      "card-title": card["card-title"] || "", // <- top-level now
-      "card-description": card["card-description"] || "", // <- top-level
-    })),
-  );
+  const allCards = flattenSheetListCards(Lists.value);
 
   return new Fuse(allCards, {
     keys: ["card-title", "card-description"],
@@ -899,67 +1064,174 @@ const fuse = computed(() => {
 });
 
 const filteredBoard = computed(() => {
-  const lists = Array.isArray(Lists.value?.data) ? Lists.value?.data : [];
+  const target = Lists.value?.data || Lists.value || {};
+  const sheets = target.sheets || [];
 
-  if (!searchQuery.value) {
-    return lists.map((col: any) => ({
-      ...col,
-      cards: (col.cards || []).map((card: any) => ({
-        _id: card._id,
-        "card-title": card["card-title"], // include title
-        "card-description": card["card-description"], // include description
-        created_at: card.created_at,
-        "card-code": card["card-code"],
-        variables: card.variables || {},
-        // "start-date": card["start-date"],
-        // "end-date": card["end-date"],
-      })),
-    }));
+  if (!sheets.length) return [];
+
+  // Merge columns by title across all sheets to support multi-sheet Kanban
+  const columnMap = new Map<string, any>();
+
+  sheets.forEach((sheet: any) => {
+    (sheet.sheet_lists || []).forEach((list: any) => {
+      if (!columnMap.has(list.title)) {
+        columnMap.set(list.title, {
+          ...list,
+          cards: [...(list.cards || [])],
+        });
+      } else {
+        const existing = columnMap.get(list.title);
+        // Merge cards, avoiding duplicates if any
+        const existingIds = new Set(existing.cards.map((c: any) => c._id));
+        (list.cards || []).forEach((c: any) => {
+          if (!existingIds.has(c._id)) {
+            existing.cards.push(c);
+            existingIds.add(c._id);
+          }
+        });
+      }
+    });
+  });
+
+  const mergedLists = Array.from(columnMap.values());
+
+  // Include local pending tickets in their respective columns
+  if (localPendingTickets.value.length > 0) {
+    localPendingTickets.value.forEach((pending) => {
+      // Logic for where to put pending tickets in Kanban:
+      // In Pin module, we often use 'General' or the first column
+      const targetCol =
+        mergedLists.find((l) => l.title === "General") || mergedLists[0];
+      if (targetCol) {
+        if (
+          !targetCol.cards.some(
+            (c: any) => c.id === pending.id || c._id === pending.id,
+          )
+        ) {
+          targetCol.cards.unshift(pending);
+        }
+      }
+    });
   }
 
-  const results = fuse.value.search(searchQuery.value).map((r: any) => r.item);
+  const query = debouncedQuery.value?.trim();
+  if (!query) {
+    return mergedLists;
+  }
 
-  return lists.map((col: any) => {
-    const filteredCards = results
-      .filter((c: any) => c.columnId === col.title)
-      .map((card: any) => ({
-        _id: card._id,
-        "card-title": card["card-title"], // include title
-        "card-description": card["card-description"], // include description
-        created_at: card.created_at,
-        "card-code": card["card-code"],
-        variables: card.variables || {},
-      }));
+  const results = fuse.value.search(query).map((r: any) => r.item);
 
+  return mergedLists.map((col: any) => {
+    const filteredCards = results.filter((c: any) => c.columnId === col.title);
     return { ...col, cards: filteredCards };
   });
 });
+
 const tableRows = computed(() => {
-  const lists = Lists.value?.data || [];
-  let rows: any[] = [];
-  lists.forEach((sheet: any) => {
-    rows = [...rows, ...(sheet.cards || [])];
+  const query = debouncedQuery.value?.trim();
+  const allCards = flattenSheetListCards(FlatTableData.value);
+  let rows: any[] = [...allCards];
+
+  if (!query) {
+    if (localTableOrder.value.length > 0) {
+      const cardMap = new Map();
+      rows.forEach((c: any) => cardMap.set(c._id, c));
+      localPendingTickets.value.forEach((c: any) =>
+        cardMap.set(c.id || c._id, c),
+      );
+
+      const ordered = localTableOrder.value
+        .map((id) => cardMap.get(id))
+        .filter(Boolean);
+
+      const returnedIds = new Set(ordered.map((c) => c._id || c.id));
+
+      const extras = [
+        ...rows.filter((c: any) => !returnedIds.has(c._id)),
+        ...localPendingTickets.value.filter(
+          (c: any) => !returnedIds.has(c.id || c._id),
+        ),
+      ];
+      return [...ordered, ...extras];
+    }
+
+    return [...rows, ...localPendingTickets.value];
+  }
+
+  const fuseTable = new Fuse(flattenSheetListCards(FlatTableData.value), {
+    keys: ["card-title", "card-description"],
+    threshold: 0.3,
+  });
+  const results = fuseTable.search(query).map((r: any) => r.item);
+  return [...results, ...localPendingTickets.value];
+});
+
+const tableGroups = computed(() => {
+  // Only populate when a group is actively selected
+  if (!selectedGroup.value) return [];
+
+  const target = TableGroupedLists.value?.data || TableGroupedLists.value || {};
+  const sheets = target.sheets || [];
+
+  if (!sheets.length) return [];
+
+  // Merge columns across sheets for multi-sheet Table grouping
+  const columnMap = new Map<string, any>();
+  sheets.forEach((sheet: any) => {
+    (sheet.sheet_lists || []).forEach((list: any) => {
+      if (!columnMap.has(list.title)) {
+        columnMap.set(list.title, {
+          ...list,
+          cards: [...(list.cards || [])],
+        });
+      } else {
+        const existing = columnMap.get(list.title);
+        const existingIds = new Set(existing.cards.map((c: any) => c._id));
+        (list.cards || []).forEach((c: any) => {
+          if (!existingIds.has(c._id)) {
+            existing.cards.push(c);
+            existingIds.add(c._id);
+          }
+        });
+      }
+    });
   });
 
-  if (localTableOrder.value.length > 0) {
-    const cardMap = new Map();
-    rows.forEach((c: any) => cardMap.set(c._id, c));
-    localPendingTickets.value.forEach((c: any) => cardMap.set(c.id || c._id, c));
-    
-    const ordered = localTableOrder.value
-      .map((id) => cardMap.get(id))
-      .filter(Boolean);
-      
-    const returnedIds = new Set(ordered.map((c) => c._id || c.id));
-    
-    const extras = [
-      ...rows.filter((c: any) => !returnedIds.has(c._id)),
-      ...localPendingTickets.value.filter((c: any) => !returnedIds.has(c.id || c._id)),
-    ];
-    return [...ordered, ...extras];
+  const mergedGroups = Array.from(columnMap.values());
+  const query = debouncedQuery.value?.trim();
+
+  if (!query) return mergedGroups;
+
+  const fuseTable = new Fuse(
+    mergedGroups.flatMap((col: any) =>
+      (col.cards || []).map((c: any) => ({ ...c, columnId: col.title })),
+    ),
+    { keys: ["card-title", "card-description"], threshold: 0.3 },
+  );
+  const results = fuseTable.search(query).map((r: any) => r.item);
+
+  return mergedGroups.map((col: any) => ({
+    ...col,
+    cards: results.filter((c: any) => c.columnId === col.title),
+  }));
+});
+
+const totalTableCount = computed(() => {
+  if (selectedGroup.value) {
+    return tableGroups.value.reduce(
+      (acc: number, group: any) => acc + (group.cards?.length || 0),
+      0,
+    );
   }
-  
-  return [...rows, ...localPendingTickets.value];
+  return tableRows.value.length;
+});
+
+const totalTableTotal = computed(() => {
+  const currentData = selectedGroup.value
+    ? TableGroupedLists.value
+    : FlatTableData.value;
+  const cards = flattenSheetListCards(currentData);
+  return cards.length + localPendingTickets.value.length;
 });
 
 const columns = computed(() => {
@@ -1013,11 +1285,16 @@ const columns = computed(() => {
     },
     {
       key: "lane",
-      label: "Lane",
+      label: "Tab",
       render: ({ row, value }: any) =>
         h(TableSearchCell, {
           options: laneOptions.value ?? [],
-          modelValue: row.lane?._id || row.workspace_lane_id || value?._id || value || null,
+          modelValue:
+            row.lane?._id ||
+            row.workspace_lane_id ||
+            value?._id ||
+            value ||
+            null,
           "onUpdate:modelValue": (val: any) => setLane(row, val),
           displayField: "title",
           disabled: !canEditCard.value,
@@ -1049,20 +1326,20 @@ const columns = computed(() => {
           h("span", { class: "text-[12px]" }, value ? value?.u_full_name : ""),
         ]),
     },
-    {
-      key: "seat",
-      label: "Assignee",
-      render: ({ row, value }: any) =>
-        h(TableAssigneeCell, {
-          class: "capitalize flex items-center gap-2",
-          onAssign: (users: any[]) => assignHandle(row, users),
-          assigneeId: row.seats || row.seat_id || value,
-          seat: row.seats || row.seat || value,
-          name: true,
-          disabled: !canAssignCard.value,
-          emptyText: "Assignee",
-        }),
-    },
+    // {
+    //   key: "seat",
+    //   label: "Assignee",
+    //   render: ({ row, value }: any) =>
+    //     h(TableAssigneeCell, {
+    //       class: "capitalize flex items-center gap-2",
+    //       onAssign: (users: any[]) => assignHandle(row, users),
+    //       assigneeId: row.seats || row.seat_id || value,
+    //       seat: row.seats || row.seat || value,
+    //       name: true,
+    //       disabled: !canAssignCard.value,
+    //       emptyText: "Assignee",
+    //     }),
+    // },
     ...(variableList
       ?.filter((e: any) => e?.type?.title === "Select")
       .map((e: any) => ({
@@ -1085,7 +1362,8 @@ const columns = computed(() => {
               modelValue: cellValue,
               disabled: !canEditCard.value,
               emptyText: e.slug,
-              "onUpdate:modelValue": (val: any) => handleChangeTicket(row, e.slug, val),
+              "onUpdate:modelValue": (val: any) =>
+                handleChangeTicket(row, e.slug, val),
               columnName: e.slug,
             }),
           ]);
@@ -1101,8 +1379,6 @@ function handleTableRowsUpdate(newRows: any[]) {
   localPendingTickets.value = pending;
   localTableOrder.value = newRows.map((r) => r._id || r.id);
 }
-
- 
 
 function setLane(row: any, laneId: string) {
   if (row._id) {
@@ -1123,20 +1399,6 @@ function setLane(row: any, laneId: string) {
   }
 }
 
-const assignHandle = (row: any, users: any[]) => {
-  const userIds = (users || [])
-    .filter((u) => u && (u._id || u.id))
-    .map((u) => u._id || u.id);
-  if (row._id) {
-    moveCard.mutate({ card_id: row._id, seat_id: userIds, optimisticUser: users });
-  } else {
-    row.seat = users;
-    row.seats = users;
-    row.seat_id = userIds;
-    checkAndCreateTicket(row);
-  }
-};
-
 function handleChangeTicket(row: any, key: any, value: any) {
   if (row._id) {
     moveCard.mutate({ card_id: row._id, variables: { [key]: value } });
@@ -1152,7 +1414,7 @@ function handleChangeTicket(row: any, key: any, value: any) {
     checkAndCreateTicket(row);
   }
 }
-console.log(workspaceStore.lanes, 'lanes')
+
 function checkAndCreateTicket(row: any) {
   const title = row["card-title"];
   if (!title || !title.trim()) return;
@@ -1161,26 +1423,11 @@ function checkAndCreateTicket(row: any) {
   const tempId = row._id || row.id;
   if (pendingCreations.value.has(tempId)) return;
 
-  let status = row["card-status"];
-  let type = row["card-type"];
-
-  if (Array.isArray(row.variables)) {
-    const sVar = row.variables.find((v: any) => v.slug === "card-status");
-    if (sVar) status = sVar.value;
-    const tVar = row.variables.find((v: any) => v.slug === "card-type");
-    if (tVar) type = tVar.value;
-  } else if (typeof row.variables === "object" && row.variables !== null) {
-    status = row.variables["card-status"] || status;
-    type = row.variables["card-type"] || type;
-  }
-
   // Fallback: use first list's _id as the status/sheet_list_id
-  if (!status) {
-    const firstList = Lists.value?.data?.[0];
-    status = firstList?._id || firstList?.title;
-  }
-  // Fallback type — always allow creation when title is present
-  if (!type) type = "Text";
+
+  const target = Lists.value?.data || Lists.value || {};
+  const firstList = target.sheets?.[0]?.sheet_lists?.[0];
+  const status = firstList?._id || firstList?.title;
 
   // Can now always proceed since we always have title, status fallback, and type fallback
   pendingCreations.value.add(tempId);
@@ -1194,7 +1441,6 @@ function checkAndCreateTicket(row: any) {
 
   payloadVariables["card-title"] = title.trim();
   if (status) payloadVariables["card-status"] = status;
-  if (type) payloadVariables["card-type"] = type;
 
   Object.keys(row).forEach((key) => {
     if (Object.prototype.hasOwnProperty.call(payloadVariables, key)) {
@@ -1210,7 +1456,8 @@ function checkAndCreateTicket(row: any) {
     });
   } else if (typeof row.variables === "object" && row.variables !== null) {
     Object.entries(row.variables).forEach(([k, v]) => {
-      if (Object.prototype.hasOwnProperty.call(payloadVariables, k)) payloadVariables[k] = v;
+      if (Object.prototype.hasOwnProperty.call(payloadVariables, k))
+        payloadVariables[k] = v;
     });
   }
 
@@ -1219,16 +1466,14 @@ function checkAndCreateTicket(row: any) {
     workspace_id: workspaceId.value,
     sheet_id: selected_sheet_id.value,
     workspace_lane_id: row.lane?._id || row.workspace_lane_id || null,
-    seat_id: row.seat?._id || row.seat_id || null,
     variables: payloadVariables,
-    "end-date": row["end-date"] || null,
     temp_row_id: tempId,
+    createdAt: new Date().toISOString(),
   };
 
   addTicket(payload);
 }
 const selectedDeleteId = ref<string | null>(null);
-  
 
 const openDeleteModal = (cardId: string) => {
   selectedDeleteId.value = cardId;
@@ -1241,7 +1486,7 @@ const handleTableDelete = (row: any) => {
 };
 const handleDeleteCard = async () => {
   if (!selectedDeleteId.value) return;
- isDeletingTicket.value = true;
+  isDeletingTicket.value = true;
   try {
     await request({
       url: `workspace/card/${selectedDeleteId.value}`,
@@ -1251,6 +1496,7 @@ const handleDeleteCard = async () => {
     toast.success("Ticket deleted successfully");
 
     queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
     await refetchSheets();
     refetchList();
   } catch (err) {
@@ -1262,33 +1508,32 @@ const handleDeleteCard = async () => {
     selectedDeleteId.value = null;
   }
 };
+const tableViewRef = ref<any>(null);
 const localPendingTickets = ref<any[]>([]);
-const { mutate: addTicket } = useAddTicket({
-  onMutate: () => {
-    // Optimistic UI update could go here
+const { mutate: addTicket, isPending: isAddingTicket } = useAddTicket({
+  onMutate: (variables: any) => {
+    const tempId = variables.temp_row_id;
+    if (tempId) {
+      // Optimistically add to localPendingTickets if not already there
+      const exists = localPendingTickets.value.some(
+        (t) => t._id === tempId || t.id === tempId,
+      );
+      if (!exists) {
+        localPendingTickets.value.push({
+          _id: tempId,
+          "card-title": variables.variables?.["card-title"] || "New Ticket",
+          columnId: "General",
+          ...variables.variables,
+        });
+      }
+    }
   },
   onSuccess: (newCard: any, variables: any) => {
     const tempId = variables.temp_row_id;
     pendingCreations.value.delete(tempId);
 
-    queryClient.setQueriesData(
-      { queryKey: ["sheet-list"], exact: false },
-      (oldData: any) => {
-        if (!oldData) return oldData;
-        const isArray = Array.isArray(oldData);
-        const sheets = isArray ? oldData : oldData?.data ?? oldData?.sheets ?? [];
-        if (!Array.isArray(sheets)) return oldData;
-
-        const updatedSheets = sheets.map((sheet: any) => {
-          if (sheet._id !== newCard?.sheet_id) return sheet;
-          const existingCards = sheet.cards ?? [];
-          if (existingCards.some((c: any) => c._id === newCard._id)) return sheet;
-          return { ...sheet, cards: [...existingCards, newCard] };
-        });
-
-        return isArray ? updatedSheets : { ...oldData, data: updatedSheets };
-      },
-    );
+    tableViewRef.value?.closeQuickCreate();
+    toast.success("Ticket created successfully");
 
     if (tempId) {
       localPendingTickets.value = localPendingTickets.value.filter(
@@ -1299,8 +1544,19 @@ const { mutate: addTicket } = useAddTicket({
       );
     }
   },
+  onSettled: () => {
+    // Background refetch to sync with server without UI flicker
+    queryClient.invalidateQueries({ queryKey: ["sheet-list"] });
+    queryClient.invalidateQueries({ queryKey: ["table-cards-flat"] });
+  },
   onError: (_err: any, variables: any) => {
-    pendingCreations.value.delete(variables.temp_row_id);
+    const tempId = variables.temp_row_id;
+    pendingCreations.value.delete(tempId);
+    if (tempId) {
+      localPendingTickets.value = localPendingTickets.value.filter(
+        (t) => t._id !== tempId && t.id !== tempId,
+      );
+    }
     toast.error("Failed to create ticket");
   },
 });
@@ -1314,12 +1570,56 @@ function handleCreateTicket(newRow: any) {
       u_email: authStore.user?.data.u_email,
     };
   }
+  checkAndCreateTicket(newRow);
+}
+
+function handleQuickCreate(title: string, group: any) {
+  if (!title?.trim()) return;
+
+  const variableKey = selectedGroup.value?.slug;
+  const label = selectedGroupLabel.value?.toLowerCase();
+  const laneId = laneOptions.value?.[0]?._id || "";
+
+  // Build variables object dynamically
+  const variablesObj: Record<string, any> = {
+    ["card-title"]: title.trim(),
+    // Auto-detect variable from group and set its value
+    ...(variableKey ? { [variableKey]: group.title } : {}),
+  };
+
+  const payload: any = {
+    "card-title": title,
+    workspace_lane_id: laneId,
+    variables: variablesObj,
+  };
+
+  // Set default status if not grouped by
+  if (!selectedGroup.value) {
+    payload["pin-list"] = "General";
+  }
+
+  // Special handling for assignee grouping
+  if (label === "assignee") {
+    const cards = group?.cards || [];
+    const firstCard = cards[0];
+    const cardAssignee =
+      firstCard?.seat_id ||
+      firstCard?.seat?.map((u: any) => u._id || u.id) ||
+      firstCard?.seat?._id;
+
+    if (cardAssignee) {
+      payload.seat_id = Array.isArray(cardAssignee)
+        ? cardAssignee
+        : [cardAssignee];
+    }
+  }
+
+  handleCreateTicket(payload);
 }
 
 function handleMindmapCreateCard(payload: any) {
   addTicket(payload);
 }
-
 </script>
 
 <style scoped>

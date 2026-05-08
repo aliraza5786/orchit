@@ -2,10 +2,10 @@
   <div
     v-if="workspaceStore.showChatBotPanel"
     :class="[
-      'flex h-full overflow-y-auto rounded-xl border border-border/60 overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
+      'flex h-full overflow-y-auto rounded-md border border-border overflow-x-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-xl',
       isExpanded
         ? 'min-w-full max-w-full'
-        : 'min-w-full max-w-[37%] sm:min-w-[400px]',
+        : 'min-w-full max-w-[23%] sm:min-w-[400px]',
     ]"
     :style="{
       background:
@@ -17,7 +17,7 @@
   >
     <!-- ==================== LEFT: PREVIEW MODAL ==================== -->
     <div
-      v-if="isExpanded && !showConfigPanel"
+      v-if="isExpanded && !showConfigPanel && hasPreviewData"
       class="xl:w-[80%] lg:w-[76%] md:w-[60%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden pb-4 pt-2"
     >
       <ChatBotPreviewModal
@@ -30,8 +30,8 @@
 
     <!-- ==================== LEFT: CONFIG PANEL ==================== -->
     <div
-      v-if="isExpanded && (showConfigPanel)"
-      class="md:w-[55%] lg:w-[70%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
+      v-if="isExpanded && showConfigPanel && (!hasPreviewData)"
+      class="md:w-[65%] lg:w-[76%] border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-y-hidden"
     >
       <!-- HEADER -->
       <div
@@ -832,10 +832,14 @@
     </div>
 
     <!-- ==================== RIGHT: CHAT PANEL ==================== -->
-    <div
-      :class="isExpanded ? 'w-[40%]' : 'w-full'"
-      class="border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden"
-    >
+   <div
+  :class="[
+    'border-r border-border/40 bg-bg-card h-full min-h-0 flex flex-col overflow-x-hidden',
+    isExpanded
+      ? 'w-full md:w-[30%] lg:w-[30%]'
+      : 'w-full'
+  ]"
+>
       <!-- Chat Header -->
       <div
         class="flex items-center border-b border-border/40 px-3.5 py-2.5 sticky top-0 bg-bg-card/95 backdrop-blur-sm z-30 gap-2"
@@ -921,241 +925,379 @@
         ref="messagesContainer"
         class="flex-1 overflow-y-auto min-h-0 p-4 space-y-3"
       >
-        <!-- Loading state -->
-        <div
-          v-if="agentStore.isLoadingHistory && isFirstLoad"
-          class="absolute inset-0 flex items-center justify-center"
+<!-- New skeleton loader -->
+<div
+  v-if="agentStore.isLoadingHistory && !hasEverLoaded"
+  class="flex flex-col gap-4 p-4"
+>
+  <!-- Assistant bubble skeleton -->
+  <div class="flex gap-2.5">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 max-w-[75%]">
+      <div class="h-9 w-52 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
+      <div class="h-4 w-32 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- User bubble skeleton -->
+  <div class="flex gap-2.5 flex-row-reverse">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 items-end max-w-[75%]">
+      <div class="h-9 w-44 bg-accent/20 animate-pulse rounded-2xl rounded-tr-md"></div>
+      <div class="h-4 w-20 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- Assistant bubble skeleton — longer -->
+  <div class="flex gap-2.5">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 max-w-[75%]">
+      <div class="h-20 w-64 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
+      <div class="h-4 w-24 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- User bubble skeleton -->
+  <div class="flex gap-2.5 flex-row-reverse">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 items-end max-w-[75%]">
+      <div class="h-12 w-56 bg-accent/20 animate-pulse rounded-2xl rounded-tr-md"></div>
+      <div class="h-4 w-20 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+
+  <!-- Assistant bubble skeleton -->
+  <div class="flex gap-2.5">
+    <div class="w-7 h-7 rounded-full bg-bg-body animate-pulse shrink-0"></div>
+    <div class="flex flex-col gap-1.5 max-w-[75%]">
+      <div class="h-14 w-48 bg-bg-body animate-pulse rounded-2xl rounded-tl-md"></div>
+      <div class="h-4 w-28 bg-bg-body animate-pulse rounded-full"></div>
+    </div>
+  </div>
+</div>
+<template v-else-if="orderedMessages.length || isAiThinkingBubbleVisible">
+  
+  <div
+    v-for="msg in orderedMessages"
+    :key="msg._id"
+    class="flex gap-2.5 relative animate-fade-in group/msg"
+    :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
+  >
+    <!-- Avatar -->
+    <div
+      class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm"
+      :class="
+        msg.type === 'user'
+          ? 'bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20'
+          : 'bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15'
+      "
+    >
+      <i
+        v-if="msg.type === 'assistant'"
+        class="fa-solid fa-robot text-accent text-[11px]"
+      ></i>
+      <span
+        v-else-if="msg.type === 'user'"
+        class="text-[9px] font-bold text-accent"
+        >ME</span
+      >
+    </div>
+
+    <!-- Bubble wrapper -->
+    <div
+      class="relative flex flex-col overflow-hidden"
+      :class="msg.type === 'user' ? 'max-w-[75%] w-fit ml-auto' : 'max-w-[75%]'"
+    >
+
+      <!-- Empty assistant response -->
+      <div
+        v-if="msg.type === 'assistant' && !msg.content"
+        class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md wrap-break-word"
+      >
+        Unable to generate a response. Please try again.
+      </div>
+
+      <!-- Main bubble -->
+      <div
+        v-else
+        class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative min-w-0 wrap-break-word"
+        :class="
+          msg.type === 'user'
+            ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15 w-full'
+            : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
+        "
+      >
+        <!-- Message menu trigger -->
+        <button
+          v-if="activeSessionId && !(msg.metadata as MessageMetadata)?.temp"
+          @click.stop="toggleMsgMenu(msg._id)"
+          class="absolute top-1.5 right-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded-md cursor-pointer"
+          :class="
+            msg.type === 'user'
+              ? 'text-white/70 hover:text-white hover:bg-white/10'
+              : 'text-text-tertiary hover:text-text-secondary hover:bg-black/5'
+          "
         >
-          <div class="flex flex-col items-center gap-3 text-text-secondary">
-            <div class="chat-loader"></div>
-            <span class="text-xs">Loading conversation...</span>
+          <i class="fa-solid fa-ellipsis text-[9px]"></i>
+        </button>
+
+        <!-- Message content -->
+        <p class="whitespace-pre-wrap pr-4" v-if="msg.content">
+          {{ msg.content }}
+        </p>
+
+        <!-- Attachments -->
+        <div
+          v-if="msg.attachments && msg.attachments.length"
+          class="flex flex-wrap gap-1.5 mt-1.5"
+        >
+          <div
+            v-for="(attachment, idx) in msg.attachments"
+            :key="idx"
+            class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]"
+            :class="
+              msg.type === 'user'
+                ? 'bg-white/15 text-white/90'
+                : 'border border-accent/20 bg-accent/5 text-text-primary'
+            "
+          >
+            <i
+              class="fa-solid"
+              :class="[
+                attachment.mimetype === 'application/pdf'
+                  ? 'fa-file-pdf'
+                  : 'fa-file-image',
+                msg.type === 'user' ? 'text-white/80' : 'text-accent',
+              ]"
+            ></i>
+            <span class="max-w-[100px] truncate">{{
+              attachment.filename || attachment.name
+            }}</span>
           </div>
         </div>
 
-        <!-- Messages -->
-        <template
-          v-else-if="orderedMessages.length || isAiThinkingBubbleVisible"
-        >
+        <!-- Timing pills + timestamp footer -->
+        <div class="mt-1.5 flex flex-col gap-1">
+
+          <!-- Timing pills — assistant only, when metadata has timing -->
           <div
-            v-for="msg in orderedMessages"
-            :key="msg._id"
-            class="flex gap-2.5 relative animate-fade-in group/msg"
-            :class="msg.type === 'user' ? 'flex-row-reverse' : ''"
+            v-if="msg.type === 'assistant' && (msg.metadata?.think_ms || msg.metadata?.total_ms)"
+            class="flex items-center gap-1.5 flex-wrap"
           >
-            <!-- Avatar -->
-            <div
-              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 shadow-sm"
-              :class="
-                msg.type === 'user'
-                  ? 'bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20'
-                  : 'bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15'
-              "
+            <span
+              v-if="msg.metadata?.think_ms"
+              class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
             >
-              <i
-                v-if="msg.type === 'assistant'"
-                class="fa-solid fa-robot text-accent text-[11px]"
-              ></i>
-              <span
-                v-else-if="msg.type === 'user'"
-                class="text-[9px] font-bold text-accent"
-                >ME</span
-              >
-            </div>
-
-            <!-- Bubble -->
-            <div class="relative max-w-[82%] flex flex-col">
-              <div
-    v-if="msg.type === 'assistant' && !msg.content"
-    class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-md"
-  >
-    Unable to generate a response. Please try again.
-  </div>
-              <div v-else
-                class="px-3.5 py-2 rounded-2xl text-sm leading-relaxed relative"
-                :class="
-                  msg.type === 'user'
-                    ? 'bg-accent text-white rounded-tr-md shadow-sm shadow-accent/15'
-                    : 'bg-bg-body border border-border/40 text-text-primary rounded-tl-md'
-                "
-              >
-                <!-- Message menu trigger -->
-                <button
-                  v-if="activeSessionId && !msg.metadata?.temp"
-                  @click.stop="toggleMsgMenu(msg._id)"
-                  class="absolute top-1.5 right-1.5 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150 w-5 h-5 flex items-center justify-center rounded-md cursor-pointer"
-                  :class="
-                    msg.type === 'user'
-                      ? 'text-white/70 hover:text-white hover:bg-white/10'
-                      : 'text-text-tertiary hover:text-text-secondary hover:bg-black/5'
-                  "
-                >
-                  <i class="fa-solid fa-ellipsis text-[9px]"></i>
-                </button>
-
-                <p class="whitespace-pre-wrap pr-4" v-if="msg.content">
-                  {{ msg.content }}
-                </p>
-
-                <!-- Attachments -->
-                <div
-                  v-if="msg.attachments && msg.attachments.length"
-                  class="flex flex-wrap gap-1.5 mt-1.5"
-                >
-                  <div
-                    v-for="(attachment, idx) in msg.attachments"
-                    :key="idx"
-                    class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px]"
-                    :class="
-                      msg.type === 'user'
-                        ? 'bg-white/15 text-white/90'
-                        : 'border border-accent/20 bg-accent/5 text-text-primary'
-                    "
-                  >
-                    <i
-                      class="fa-solid"
-                      :class="[
-                        attachment.mimetype === 'application/pdf'
-                          ? 'fa-file-pdf'
-                          : 'fa-file-image',
-                        msg.type === 'user' ? 'text-white/80' : 'text-accent',
-                      ]"
-                    ></i>
-                    <span class="max-w-[100px] truncate">{{
-                      attachment.filename || attachment.name
-                    }}</span>
-                  </div>
-                </div>
-
-                <!-- Timestamp -->
-                <div
-                  class="flex justify-end items-center gap-1.5 text-[10px] mt-1"
-                  :class="
-                    msg.type === 'user' ? 'text-white/60' : 'text-text-tertiary'
-                  "
-                >
-                  <span>{{ formatTimestamp(msg.timestamp) }}</span>
-                  <i
-                    v-if="msg.is_pinned"
-                    class="fa-solid fa-thumbtack text-[9px]"
-                    :class="
-                      msg.type === 'user' ? 'text-white/70' : 'text-accent'
-                    "
-                    title="Pinned message"
-                  ></i>
-                  <span v-if="msg.type === 'user'">
-                    <i
-                      v-if="msg.metadata?.status === 'completed'"
-                      class="fa-solid fa-check-double text-green-300"
-                    ></i>
-                    <i v-else class="fa-solid fa-check text-white/50"></i>
-                  </span>
-                </div>
-              </div>
-
-              <!-- Message dropdown menu -->
-              <transition name="dropdown">
-                <div
-                  v-if="openMsgMenuId === msg._id"
-                  class="absolute z-50 top-8 w-40 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 py-1 overflow-hidden"
-                  :class="msg.type === 'user' ? 'right-0' : 'left-0'"
-                >
-                  <button
-                    @click.stop="
-                      togglePinMessage(msg);
-                      openMsgMenuId = null;
-                    "
-                    class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:bg-accent/8 hover:text-accent transition-colors cursor-pointer"
-                  >
-                    <i
-                      class="text-[11px] w-3"
-                      :class="
-                        (msg as any).is_pinned
-                          ? 'fa-solid fa-thumbtack text-accent'
-                          : 'fa-regular fa-thumbtack text-text-secondary'
-                      "
-                    ></i>
-                    <span>{{
-                      (msg as any).is_pinned ? "Unpin message" : "Pin message"
-                    }}</span>
-                  </button>
-                </div>
-              </transition>
-            </div>
+              <i class="fa-solid fa-brain text-accent text-[8px]"></i>
+              Thought {{ (msg.metadata.think_ms / 1000).toFixed(1) }}s
+            </span>
+            <span
+              v-if="msg.metadata?.total_ms"
+              class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
+            >
+              <i class="fa-regular fa-clock text-accent text-[8px]"></i>
+              {{ (msg.metadata.total_ms / 1000).toFixed(1) }}s total
+            </span>
           </div>
-                <!-- AI Thinking bubble -->
+
+          <!-- Timestamp row -->
+          <div
+            class="flex justify-end items-center gap-1.5 text-[10px]"
+            :class="msg.type === 'user' ? 'text-white/60' : 'text-text-tertiary'"
+          >
+            <span>{{ formatTimestamp(msg.timestamp) }}</span>
+            <i
+              v-if="msg.is_pinned"
+              class="fa-solid fa-thumbtack text-[9px]"
+              :class="msg.type === 'user' ? 'text-white/70' : 'text-accent'"
+              title="Pinned message"
+            ></i>
+            <span v-if="msg.type === 'user'">
+              <i
+                v-if="msg.metadata?.status === 'completed'"
+                class="fa-solid fa-check-double text-green-300"
+              ></i>
+              <i v-else class="fa-solid fa-check text-white/50"></i>
+            </span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Message dropdown menu -->
+      <transition name="dropdown">
+        <div
+          v-if="openMsgMenuId === msg._id"
+          class="absolute z-50 top-8 w-40 rounded-xl border border-border/60 bg-bg-card shadow-lg shadow-black/8 py-1 overflow-hidden"
+          :class="msg.type === 'user' ? 'right-0' : 'right-0'"
+        >
+          <button
+            @click.stop="
+              togglePinMessage(msg);
+              openMsgMenuId = null;
+            "
+            class="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-text-primary hover:bg-accent/8 hover:text-accent transition-colors cursor-pointer"
+          >
+            <i
+              class="text-[11px] w-3"
+              :class="
+                (msg as any).is_pinned
+                  ? 'fa-solid fa-thumbtack text-accent'
+                  : 'fa-regular fa-thumbtack text-text-secondary'
+              "
+            ></i>
+            <span>{{
+              (msg as any).is_pinned ? "Unpin message" : "Pin message"
+            }}</span>
+          </button>
+        </div>
+      </transition>
+
+      <!-- Like, Dislike, Copy buttons for assistant messages -->
+      <div
+        v-if="msg.type === 'assistant' && msg.content && activeSessionId"
+        class="flex items-center gap-1.5 mt-2 opacity-0 group-hover/msg:opacity-100 transition-opacity duration-150"
+      >
+        <button
+          @click.stop="toggleLike(msg._id)"
+          title="Like this response"
+          :class="[
+            'flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition-colors cursor-pointer',
+            likedMessages.has(msg._id)
+              ? 'text-accent bg-accent/8'
+              : 'text-text-secondary hover:text-accent hover:bg-accent/8'
+          ]"
+        >
+          <i :class="['text-[12px]', likedMessages.has(msg._id) ? 'fa-solid fa-thumbs-up' : 'fa-regular fa-thumbs-up']"></i>
+        </button>
+        <button
+          @click.stop="toggleDislike(msg._id)"
+          title="Dislike this response"
+          :class="[
+            'flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] transition-colors cursor-pointer',
+            dislikedMessages.has(msg._id)
+              ? 'text-red-500 bg-red-500/8'
+              : 'text-text-secondary hover:text-red-500 hover:bg-red-500/8'
+          ]"
+        >
+          <i :class="['text-[12px]', dislikedMessages.has(msg._id) ? 'fa-solid fa-thumbs-down' : 'fa-regular fa-thumbs-down']"></i>
+        </button>
+        <button
+          @click.stop="copyMessageToClipboard(msg.content)"
+          title="Copy message"
+          class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] text-text-secondary hover:text-accent hover:bg-accent/8 transition-colors cursor-pointer"
+        >
+          <i class="fa-regular fa-copy text-[12px]"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+<!-- ===== Thinking bubble — only during thinking phase ===== -->
 <div
-  v-if="isAiThinkingBubbleVisible"
+  v-if="showThinkingBubble"
   class="flex gap-2.5 relative animate-fade-in"
 >
-  <div
-    class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm"
-  >
+  <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm">
     <i class="fa-solid fa-robot text-accent text-[11px]"></i>
   </div>
-  <div
-    class="px-3.5 py-2 rounded-2xl rounded-tl-md max-w-[82%] text-sm leading-relaxed border border-border/40 bg-bg-body"
-  >
-    <div class="flex items-center gap-1.5">
+  <div class="px-3.5 py-2.5 rounded-2xl rounded-tl-md max-w-[82%] text-sm border border-border/40 bg-bg-body">
+    <div class="flex items-center gap-2 mb-1">
       <div class="typing-dots">
         <span></span>
         <span></span>
         <span></span>
       </div>
-      <span class="text-[11px] text-text-secondary ml-1">
-        {{ streamingPhase === "thinking" ? "Thinking..." : "Working on it..." }}
-      </span>
+      <span class="text-[11px] font-medium text-text-primary">Thinking</span>
+      <span class="text-[10px] text-text-tertiary tabular-nums">{{ elapsedLabel }}</span>
+    </div>
+    <!-- Phase detail -->
+    <div v-if="streamingPhaseDetail" class="text-[11px] text-text-secondary italic mt-1">
+      {{ streamingPhaseDetail }}
     </div>
   </div>
 </div>
-<!-- AI Streaming response bubble -->
+
+<!-- ===== Streaming bubble — only when generating AND has content ===== -->
 <div
-  v-if="streamingContent && streamingPhase !== 'completed'"
+  v-if="showStreamingBubble"
   class="flex gap-2.5 relative animate-fade-in"
 >
-  <div
-    class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm"
-  >
+  <div class="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-gradient-to-br from-accent/15 to-accent/5 border border-accent/15 shadow-sm">
     <i class="fa-solid fa-robot text-accent text-[11px]"></i>
   </div>
-  <div
-    class="px-3.5 py-2 rounded-2xl rounded-tl-md max-w-[82%] text-sm leading-relaxed border border-accent/20 bg-bg-body shadow-sm"
-  >
-    <!-- Phase indicator -->
-    <div
-      v-if="streamingPhase === 'generating' && streamingThinkMs !== null"
-      class="flex items-center gap-1.5 mb-1.5"
-    >
-      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
-        <i class="fa-solid fa-brain text-accent text-[8px]"></i>
-        Thought for {{ (streamingThinkMs / 1000).toFixed(1) }}s
-      </span>
-    </div>
 
-    <!-- Animated text -->
-    <p class="whitespace-pre-wrap text-text-primary">{{ displayedContent }}<span
-      v-if="displayedContent.length < streamingContent.length || streamingPhase === 'generating'"
-      class="inline-block w-[2px] h-[13px] bg-accent ml-0.5 align-middle animate-pulse rounded-sm"
-    ></span></p>
+  <div class="px-3.5 py-2.5 rounded-2xl rounded-tl-md w-full max-w-[82%] text-sm leading-relaxed border border-accent/20 bg-bg-body shadow-sm">
 
-    <!-- Timing pills — shown once timing arrives -->
-    <div
-      v-if="streamingThinkMs !== null && streamingTotalMs !== null"
-      class="flex items-center gap-2 mt-1.5 flex-wrap"
-    >
-      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
+    <!-- Status bar -->
+    <div class="flex items-center gap-1.5 mb-2 pb-1.5 border-b border-border/30 flex-wrap">
+
+      <!-- Thought time — appears once thinking phase ends -->
+      <span
+        v-if="streamingThinkMs !== null"
+        class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
+      >
         <i class="fa-solid fa-brain text-accent text-[8px]"></i>
         Thought {{ (streamingThinkMs / 1000).toFixed(1) }}s
       </span>
-      <span class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full">
+
+      <!-- Live writing indicator -->
+      <span class="inline-flex items-center gap-1.5 text-[10px] text-accent font-medium">
+        <span class="relative flex h-1.5 w-1.5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent"></span>
+        </span>
+        Writing
+        <span class="text-text-tertiary font-normal tabular-nums">{{ elapsedLabel }}</span>
+      </span>
+
+      <!-- Total time — appears once timing chunk arrives -->
+      <span
+        v-if="streamingTotalMs !== null"
+        class="inline-flex items-center gap-1 text-[10px] text-text-tertiary bg-bg-body border border-border/40 px-2 py-0.5 rounded-full"
+      >
         <i class="fa-regular fa-clock text-accent text-[8px]"></i>
         {{ (streamingTotalMs / 1000).toFixed(1) }}s total
       </span>
+
+    </div>
+
+    <!-- Streaming text + cursor -->
+    <p class="whitespace-pre-wrap text-text-primary leading-relaxed">
+      {{ displayedContent }}<span
+        class="inline-block w-[2px] h-[13px] bg-accent ml-0.5 align-middle animate-pulse rounded-sm"
+      ></span>
+    </p>
+
+    <!-- Timestamp -->
+    <div class="flex justify-end text-[10px] text-text-tertiary mt-1.5">
+      <span>{{ formatTimestamp(new Date().toISOString()) }}</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== Phase Timeline — shows all streamed phase updates ===== -->
+<div
+  v-if="phaseHistory.length > 0 && streamingPhase !== 'thinking' && streamingPhase !== 'completed'"
+  class="flex gap-2.5 relative mt-2"
+>
+  <div class="w-7 h-7 flex-shrink-0"></div>
+  <div class="flex-1 space-y-2">
+    <div v-for="(phase, idx) in phaseHistory" :key="idx" class="text-[10px]">
+      <div class="flex items-start gap-2">
+        <div class="mt-1.5 w-2 h-2 rounded-full bg-accent flex-shrink-0"></div>
+        <div class="space-y-0.5">
+          <p class="font-semibold text-text-primary capitalize">{{ phase.phase }}</p>
+          <p v-if="phase.detail" class="text-text-secondary italic">{{ phase.detail }}</p>
+          <p class="text-text-tertiary">{{ formatTimestamp(new Date(phase.timestamp).toISOString()) }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </div>
-        </template>
 
-        <!-- Empty state -->
+</template>
         <!-- Empty state — rich suggestions like ClickUp AI -->
         <div
           v-else
@@ -1334,7 +1476,7 @@
           </button>
         </div>
         <!-- Chat Input Area -->
-        <div class="flex flex-col gap-2.5">
+        <div class="flex flex-col gap-2.5" :class="{ 'neon-flow-border-chatbot': agentStore.isSending }">
           <!-- Active suggested prompts (only when no messages yet) -->
           <div
             class="flex flex-wrap gap-1.5 px-1"
@@ -1619,7 +1761,7 @@
               </div>
             </transition>
             <!-- Textarea -->
-            <div class="px-4 py-1">
+            <div class="px-4 py-1 relative">
               <textarea
                 v-model="userMessage"
                 ref="autoTextarea"
@@ -1631,6 +1773,7 @@
                 @input="autoResize"
                 @focus="isFocused = true"
                 @blur="isFocused = false"
+                @paste="handlePaste"
               ></textarea>
             </div>
 
@@ -2466,6 +2609,14 @@ import { useQueryClient } from "@tanstack/vue-query";
 import BaseSelectField from "../../../components/ui/BaseSelectField.vue";
 import { useWidgetStore } from "../../../stores/widgets";
 
+// Types
+interface MessageMetadata {
+  status?: string;
+  temp?: boolean;
+  think_ms?: number | null;
+  total_ms?: number | null;
+}
+
 // Stores
 const workspaceStore = useWorkspaceStore();
 const agentStore = useAgentStore();
@@ -2506,7 +2657,7 @@ const isManuallyExpanded = ref(false);
 
 const isExpanded = computed(() => {
   return (
-    isManuallyExpanded.value || showConfigPanel.value || (entities.value[0] as any)?.payload?.workspace_id
+    isManuallyExpanded.value || showConfigPanel.value
   );
 });
 const showConfigPanel = ref(false);
@@ -2528,24 +2679,36 @@ const showHistoryPanel = ref(false);
 const isFocused = ref(false);
 const activeSessionId = ref<string>("");
 const activeSessionTitle = ref<string>("");
-const isFirstLoad = ref(true);
+const streamingElapsedMs = ref(0)
+const streamingElapsedTimer = ref<ReturnType<typeof setInterval> | null>(null)
+const streamingPhaseLabel = ref("")
+let elapsedTimerHandle: ReturnType<typeof setInterval> | null = null
 const agentsData = computed(() => agentStore.agentSettings.agent);
-const agentPassedData = computed(() => agentStore.agentPassed);
 const agentModuleId = computed(() => agentStore.module_id);
 const agentModuleName = computed(() => agentStore.moduleName);
 const knowledgeData = computed(() => agentStore?.agentSettings?.knowledge);
 const trainingFileInput = ref<HTMLInputElement | null>(null);
   // After: const isAiThinkingBubbleVisible = ref(false);
-const streamingContent = ref("");
-const streamingPhase = ref<"thinking" | "generating" | "completed" | "">("");
-const streamingThinkMs = ref<number | null>(null);
-const streamingTotalMs = ref<number | null>(null);
-const displayedContent = ref("");
-const animationFrameId = ref<number | null>(null);
+const streamingContent = ref("")
+const streamingPhase = ref<"thinking" | "generating" | "completed" | "">("")
+const streamingThinkMs = ref<number | null>(null)
+const streamingTotalMs = ref<number | null>(null)
+const displayedContent = ref("")
+const animationFrameId = ref<number | null>(null)
+const streamingPhaseDetail = ref("")
+const streamingPhaseTimestamp = ref<number | null>(null)
+const phaseHistory = ref<Array<{ phase: string; detail: string; timestamp: number }>>([])
 const webSearch = ref(false);
 // const isRecording = ref(false);
 const sourceSearch = ref("");
-
+const agentsCreated = computed(() => agentStore.agentsCreated);
+const showStreamingBubble = computed(() =>
+  (streamingPhase.value === 'generating' && streamingContent.value.length > 0) ||
+  (streamingPhase.value === 'completed' && displayedContent.value.length > 0 && !orderedMessages.value.some((m) => m.type === 'assistant' && !(m.metadata as MessageMetadata)?.temp))
+)
+const showThinkingBubble = computed(() =>
+  isAiThinkingBubbleVisible.value && streamingPhase.value === 'thinking'
+)
 const filteredSources = computed(() => {
   if (!sourceSearch.value.trim()) return availableSources.value;
   const q = sourceSearch.value.toLowerCase();
@@ -2589,26 +2752,18 @@ const sheetName = computed(() => {
   }
   return sheetNameRef.value || "";
 });
+const SESSION_KEY = 'chatbot_ever_loaded'
+const hasEverLoaded = ref(sessionStorage.getItem(SESSION_KEY) === '1')
 
-const isTalentRoute = computed(() => route.path?.includes("talent"));
-
-watch(
-  [isTalentRoute, agentPassedData],
-  ([isTalent, agentData]) => {
-    if (isTalent && agentData?._id) {
-      selectedAgentId.value = agentData._id;
-    }
-  },
-  { immediate: true },
-);
 watch(
   () => agentStore.isLoadingHistory,
   (loading) => {
-    if (!loading && isFirstLoad.value) {
-      isFirstLoad.value = false;
+    if (!loading && !hasEverLoaded.value) {
+      hasEverLoaded.value = true
+      sessionStorage.setItem(SESSION_KEY, '1')
     }
   },
-);
+)
 const sheetId = computed(() => {
   if (
     route.path.includes("peak") ||
@@ -2727,27 +2882,59 @@ type EntityWithResponse = BaseEntity & {
   response?: {
     items?: unknown[];
   };
+  result?: {
+    items?: unknown[];
+  };
+  payload?: {
+    sheets?: unknown[];
+  };
 };
 
 const entities = computed<EntityWithResponse[]>(
   () => agentStore.createdEntities,
 );
+const hasPreviewData = computed(() => {
+  return entities.value?.some((e) => {
+    const payloadItems = e?.payload?.sheets || [];
+    const resultItems = e?.result?.items || [];
+    const responseItems = e?.response?.items || [];
 
+    return (
+      (Array.isArray(payloadItems) && payloadItems.length > 0) ||
+      (Array.isArray(resultItems) && resultItems.length > 0) ||
+      (Array.isArray(responseItems) && responseItems.length > 0)
+    );
+  });
+});
 const orderedMessages = computed(() => {
-  const historyMessages = Array.isArray(agentStore.chatHistory)
+  const sessionMessages = Array.isArray(agentStore.chatHistory)
     ? agentStore.chatHistory
         .filter((s) =>
-          activeSessionId.value
-            ? s.session_id === activeSessionId.value
-            : false,
+          activeSessionId.value ? s.session_id === activeSessionId.value : false
         )
         .flatMap((s) => s.messages || [])
-        .filter((msg) => msg.metadata?.status !== "thinking")
-    : [];
-  return [...historyMessages, ...pendingMessages.value].sort(
-    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-  );
-});
+        .filter((msg) => msg.metadata?.status !== 'thinking')
+    : []
+
+  const historyIds = new Set(sessionMessages.map((m) => m._id))
+  const uniquePending = pendingMessages.value.filter(
+    (m) => !historyIds.has(m._id)
+  )
+
+  const all = [...sessionMessages, ...uniquePending].sort(
+    (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  )
+
+  // ← Remove duplicate assistant messages — keep the one with real _id (no 'assistant-' prefix)
+  const seen = new Set<string>()
+  return all.filter((msg) => {
+    if (msg.type !== 'assistant') return true
+    const key = msg.content?.slice(0, 50) // dedup by content prefix
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+})
 const pinnedPrompts = computed(() => {
   return (pinnedAgentMessages.value || []).map((item: any) => {
     const msg = item.message || {};
@@ -2894,19 +3081,9 @@ async function fetchPinnedMessages() {
     session_id: activeSessionId.value || undefined,
   });
 }
-
-// Watchers
 watch(
   () => orderedMessages.value.length,
-  (newLength, oldLength) => {
-    if (newLength > oldLength && isAiThinkingBubbleVisible.value) {
-      const lastMessage =
-        orderedMessages.value[orderedMessages.value.length - 1];
-      if (lastMessage?.type === "assistant") {
-        isAiThinkingBubbleVisible.value = false;
-        agentStore.isAiTyping = false;
-      }
-    }
+  () => {
     scrollToBottom();
   },
 );
@@ -3029,6 +3206,53 @@ const removeFile = (tempId: string) => {
   selectedFiles.value = selectedFiles.value.filter((f) => f.tempId !== tempId);
 };
 
+const handlePaste = async (event: ClipboardEvent) => {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+
+  const files: File[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.kind === 'file') {
+      const file = item.getAsFile();
+      if (file) {
+        files.push(file);
+      }
+    }
+  }
+
+  if (files.length > 0) {
+    event.preventDefault(); // Prevent default paste behavior
+
+    // Filter files based on type (same logic as handleFileChange)
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    const pdfs = files.filter((f) => f.type === "application/pdf");
+
+    if (pdfs.length > 1) {
+      toast.error("Only one PDF is allowed");
+      return;
+    }
+    if (images.length > MAX_IMAGES) {
+      toast.error(`Max ${MAX_IMAGES} images`);
+      return;
+    }
+    if (pdfs.length === 1 && images.length > 0) {
+      toast.error("Images or PDF, not both");
+      return;
+    }
+
+    const filesWithId: FileWithId[] = files.map((f) => {
+      const fw = f as FileWithId;
+      fw.tempId = "temp-" + Date.now() + Math.random().toString(36).substr(2, 5);
+      fw.objectUrl = URL.createObjectURL(f);
+      return fw;
+    });
+
+    selectedFiles.value = [...selectedFiles.value, ...filesWithId];
+    toast.success(`${files.length} file${files.length > 1 ? 's' : ''} pasted from clipboard`);
+  }
+};
+
 const uploadFiles = async (): Promise<any[]> => {
   if (!selectedFiles.value.length) return [];
   try {
@@ -3039,9 +3263,9 @@ const uploadFiles = async (): Promise<any[]> => {
     return [];
   }
 };
-
 async function sendMessage() {
   const message = userMessage.value?.trim();
+
   if (
     (!message && !selectedFiles.value.length) ||
     !workspaceId.value ||
@@ -3049,7 +3273,6 @@ async function sendMessage() {
   )
     return;
 
-  // Capture snapshot BEFORE any async ops clear the array
   const filesToSend = [...selectedFiles.value];
   let attachments: any[] = [];
 
@@ -3062,23 +3285,30 @@ async function sendMessage() {
   }
 
   const finalMessage = message || "";
-    userMessage.value = "";
-    isAiThinkingBubbleVisible.value = true;
-    streamingContent.value = "";
-    displayedContent.value = "";
-    streamingPhase.value = "thinking";
-    streamingThinkMs.value = null;
-    streamingTotalMs.value = null;
-    agentStore.isSending = true;
-    agentStore.isAiTyping = true;
-    scrollToBottom();
+  userMessage.value = "";
 
+  // Reset streaming state
+  streamingContent.value = "";
+  displayedContent.value = "";
+  streamingPhase.value = "thinking";
+  streamingThinkMs.value = null;
+  streamingTotalMs.value = null;
+  streamingPhaseDetail.value = "";
+  streamingPhaseTimestamp.value = null;
+  phaseHistory.value = [];
+  isAiThinkingBubbleVisible.value = true;
+  agentStore.isAiTyping = true;
+
+  scrollToBottom();
+
+  // Optimistic message
   const tempId = "temp-" + Date.now();
   const previewAttachments = filesToSend.map((f) => ({
     filename: f.name,
     mimetype: f.type,
-    url: f.objectUrl, // already set in handleFileChange
+    url: f.objectUrl,
   }));
+
   pendingMessages.value.push({
     _id: tempId,
     type: "user",
@@ -3092,14 +3322,31 @@ async function sendMessage() {
     activeSessionId.value ||
     `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+  // Set session optimistically
+  if (!activeSessionId.value) {
+    activeSessionId.value = sessionIdToUse;
+
+    activeSessionTitle.value =
+      finalMessage.length > 40
+        ? finalMessage.slice(0, 40) + "…"
+        : finalMessage;
+
+    localStorage.setItem("activeSessionId", activeSessionId.value);
+    localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
+  }
+
+  let isSuccess = false;
+
   try {
+    // 🔥 SEND MESSAGE
     await agentStore.sendMessage({
       workspace_id: workspaceId.value,
-      user_id: authStore.userId as string,
+      user_id:
+        authStore.userId || (localStorage.getItem("user_id") as string),
       message: finalMessage,
       agent_id: selectedAgentId.value as string,
       sheet_id: sheetIdRef.value as string,
-      attachments: attachments,
+      attachments,
       module_id:
         route.path.includes("talent") && agentModuleId.value
           ? agentModuleId.value
@@ -3114,67 +3361,127 @@ async function sendMessage() {
       stream: true,
       route_path: route.path,
     });
-    if (!activeSessionId.value) {
-      activeSessionId.value = sessionIdToUse;
-      activeSessionTitle.value =
-        finalMessage.length > 40
-          ? finalMessage.slice(0, 40) + "…"
-          : finalMessage;
-    }
-    localStorage.setItem("activeSessionId", activeSessionId.value);
-    localStorage.setItem("activeSessionTitle", activeSessionTitle.value);
 
-    await Promise.all([
-      agentStore.fetchChatHistory(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        route.path.includes("talent") && agentModuleName.value
-          ? agentModuleName.value
-          : (moduleSelected.value ?? undefined),
-        route.path.includes("talent") && agentModuleId.value
-          ? agentModuleId.value
-          : (moduleId.value ?? undefined),
-        sheetName.value && !isMongoId(sheetName.value)
-          ? sheetName.value
-          : undefined,
-        sheetId.value,
-        !!activeSessionId.value,
-      ),
-      agentStore.fetchCreatedEntities(
-        workspaceId.value,
-        authStore.userId ?? undefined,
-        route.path.includes("talent") && agentModuleName.value
-          ? agentModuleName.value
-          : (moduleSelected.value ?? undefined),
-        route.path.includes("talent") && agentModuleId.value
-          ? agentModuleId.value
-          : (moduleId.value ?? undefined),
-      ),
-    ]);
-    showConfigPanel.value = false;
-    pendingMessages.value = [];
-    scrollToBottom();
-    isAiThinkingBubbleVisible.value = false;
-    agentStore.isAiTyping = false;
-    streamingContent.value = "";
-    streamingPhase.value = "completed";
-    streamingThinkMs.value = null;
-    streamingTotalMs.value = null;
+    // ✅ mark success ONLY if no error
+    isSuccess = true;
+
+    // Wait for typewriter animation
+    await new Promise<void>((resolve) => {
+      const fullText = agentStore.currentStreamText;
+
+      if (!fullText || displayedContent.value.length >= fullText.length) {
+        resolve();
+        return;
+      }
+
+      const check = setInterval(() => {
+        if (displayedContent.value.length >= fullText.length) {
+          clearInterval(check);
+          resolve();
+        }
+      }, 16);
+
+      setTimeout(() => {
+        clearInterval(check);
+        resolve();
+      }, 6000);
+    });
+
+  } catch (err: any) {
+   toast.error(err?.message || "Something went wrong");
+  pendingMessages.value = pendingMessages.value.filter(
+    (m) => !(m.metadata as MessageMetadata)?.temp,
+  );
+
+  isAiThinkingBubbleVisible.value = false;
+  agentStore.isAiTyping = false;
+
+  streamingContent.value = "";
+  displayedContent.value = "";
+  streamingPhase.value = "";
+  streamingThinkMs.value = null;
+  streamingTotalMs.value = null;
+  streamingPhaseDetail.value = "";
+  streamingPhaseTimestamp.value = null;
+  phaseHistory.value = [];
+}
+if (isSuccess) {
+  try {
+    localStorage.setItem('activeSessionId', activeSessionId.value)
+    localStorage.setItem('activeSessionTitle', activeSessionTitle.value)
+    // Set displayed content to final text for the bubble
+    displayedContent.value = agentStore.currentStreamText
+    // Build assistant message with timing metadata
+    const assistantMsg = {
+      _id: 'assistant-' + Date.now(),
+      type: 'assistant' as const,
+      content: agentStore.currentStreamText,
+      timestamp: new Date().toISOString(),
+      metadata: {
+        status: 'completed',
+        think_ms: agentStore.streamThinkMs,
+        total_ms: agentStore.streamTotalMs,
+      },
+    }
+
+    // Find or create session in chatHistory
+    const existingIdx = agentStore.chatHistory.findIndex(
+      (s) => s.session_id === activeSessionId.value
+    )
+
+    if (existingIdx !== -1) {
+      // Promote optimistic user message + append assistant reply
+      const session = agentStore.chatHistory[existingIdx]
+      // Find the temp user message in pendingMessages
+      const tempUserMsg = pendingMessages.value.find((m) => (m.metadata as MessageMetadata)?.temp)
+      if (tempUserMsg) {
+        // Add the confirmed user message to session
+        session.messages.push({
+          ...tempUserMsg,
+          metadata: { status: 'completed' }
+        })
+      }
+      session.messages.push(assistantMsg)
+    } else {
+      // Brand new session
+      const userMsg = pendingMessages.value.find((m) => (m.metadata as MessageMetadata)?.temp)
+      agentStore.chatHistory.push({
+        _id: activeSessionId.value,
+        session_id: activeSessionId.value,
+        context: { module_id: null, sheet_id: null, lane_id: null, card_id: null },
+        messages: [
+          ...(userMsg ? [{ ...userMsg, metadata: { status: 'completed' } }] : []),
+          assistantMsg,
+        ],
+      })
+    }
+
+    // Clear pending — history now has the real messages
+    pendingMessages.value = []
+
+    // Fetch entities (no flicker — doesn't touch chatHistory)
+    await agentStore.fetchCreatedEntities(
+      workspaceId.value,
+      authStore.userId || (localStorage.getItem('user_id') as string),
+      route.path.includes('talent') && agentModuleName.value
+        ? agentModuleName.value ?? undefined
+        : moduleSelected.value ?? undefined,
+      route.path.includes('talent') && agentModuleId.value
+        ? agentModuleId.value ?? undefined
+        : moduleId.value ?? undefined,
+    )
   } catch (err) {
-    console.error("Error sending message:", err);
-    pendingMessages.value = pendingMessages.value.filter(
-      (m) => !m.metadata?.temp,
-    );
-    isAiThinkingBubbleVisible.value = false;
-    agentStore.isAiTyping = false;
-  } finally {
-    agentStore.isSending = false;
-    streamingContent.value = "";
-    displayedContent.value = "";
-    streamingPhase.value = "completed";
+    console.error('Post-success processing failed:', err)
   }
 }
 
+// Final cleanup — always runs
+pendingMessages.value = []
+isAiThinkingBubbleVisible.value = false
+agentStore.isAiTyping = false
+agentStore.isSending = false
+scrollToBottom()
+}
 // Accept / Decline
 async function acceptChanges(payload: any) {
   try {
@@ -3391,13 +3698,17 @@ watch(
 );
 
 onBeforeUnmount(() => {
+  
   if (workspaceId.value && socket.value) {
     socket.value.emit("leave-workspace", workspaceId.value);
   }
   socket.value?.removeAllListeners();
   socket.value?.disconnect();
+   if (animFrameId !== null) cancelAnimationFrame(animFrameId)
+  stopElapsedTimer()
 });
 onBeforeUnmount(() => {
+   if (streamingElapsedTimer.value) clearInterval(streamingElapsedTimer.value)
   if (animationFrameId.value !== null) {
     cancelAnimationFrame(animationFrameId.value);
   }
@@ -3419,6 +3730,9 @@ const openConfigPanel = () => {
 
 const expandPanel = () => {
   isManuallyExpanded.value = true;
+  if (isExpanded.value && !hasPreviewData.value) {
+    showConfigPanel.value = true;
+  }
 };
 
 const compressPanel = () => {
@@ -3479,20 +3793,8 @@ onClickOutside(levelRef, () => {
   openLevel.value = false;
 });
 
-const agentsCreated = computed(() => agentStore.agentsCreated);
-
-type Agent = {
-  _id: string;
-  name: string;
-  description: string;
-  level?: string;
-  is_active?: boolean;
-  model?: string;
-  role?: string;
-};
-
 const agentOptions = computed(() => {
-  const base = (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
+  return (agentsCreated.value?.data?.agents || []).map((agent: any) => ({
     _id: agent._id,
     title: agent.name.includes(" ") ? agent.name : `${agent.name} agent`,
     description: agent.description,
@@ -3505,50 +3807,24 @@ const agentOptions = computed(() => {
       } text-[6px]`,
     },
   }));
-  const passedAgent = agentPassedData.value;
-  if (
-    isTalentRoute.value &&
-    passedAgent &&
-    !base.find((a: Agent) => a._id === passedAgent._id)
-  ) {
-    base.unshift({
-      _id: passedAgent._id,
-      title: passedAgent.name,
-      description: passedAgent.description,
-      icon: {
-        prefix: "fa-solid",
-        iconName: "fa-circle text-green-500 text-[6px]",
-      },
-    });
-  }
-  return base;
 });
 const selectedAgentName = computed(() => {
-  if (isTalentRoute.value && agentPassedData.value?.name) {
-    const name = agentPassedData.value.name;
-    return name.length > 20 ? name.slice(0, 20) + "..." : name;
-  }
-
   const agent = agentsCreated.value?.data?.agents?.find(
     (a: any) => a._id === selectedAgentId.value,
   );
-
   if (!agent?.name) return "Select Agent";
-
   return agent.name.length > 20 ? agent.name.slice(0, 20) + "..." : agent.name;
 });
 
+// ✅ Simple — always select first agent on any route
 watch(
   () => agentsCreated.value?.data?.agents,
   (agents) => {
     if (!agents?.length) return;
-    if (!isTalentRoute.value && !selectedAgentId.value) {
+    if (!selectedAgentId.value) {
       selectedAgentId.value = agents[0]._id;
-    }
-    if (!isTalentRoute.value && selectedAgentId.value) {
-      const stillExists = agents.some(
-        (a: any) => a._id === selectedAgentId.value,
-      );
+    } else {
+      const stillExists = agents.some((a: any) => a._id === selectedAgentId.value);
       if (!stillExists) {
         selectedAgentId.value = agents[0]._id;
       }
@@ -3556,7 +3832,6 @@ watch(
   },
   { immediate: true },
 );
-
 const availableAgentsLevels = [
   { _id: "1", title: "Expert", value: "EXPERT" },
   { _id: "2", title: "Lead", value: "LEAD" },
@@ -4147,7 +4422,6 @@ const loadAgentSettings = async () => {
   webSearch.value =
     agentsData.value?.web_browsing_enabled ?? false;
 };
-
 async function fetchAssignedAgents() {
   await agentStore.fetchSavedAgents(
     workspaceId.value,
@@ -4155,11 +4429,10 @@ async function fetchAssignedAgents() {
     selectedModule.value,
   );
   const agents = agentStore.agentsCreated?.data?.agents;
-  if (agents?.length && !isTalentRoute.value && !selectedAgentId.value) {
+  if (agents?.length && !selectedAgentId.value) {
     selectedAgentId.value = agents[0]._id;
   }
 }
-
 async function fetchAgentsRolesPermissions() {
   await agentStore.fetchAgentsRolesPermissions(workspaceId.value);
 }
@@ -4434,6 +4707,47 @@ function toggleMsgMenu(msgId: string) {
 function handleMsgMenuClickOutside() {
   if (openMsgMenuId.value) openMsgMenuId.value = null;
 }
+
+// Like/Dislike tracking
+const likedMessages = ref<Set<string>>(new Set());
+const dislikedMessages = ref<Set<string>>(new Set());
+
+function toggleLike(msgId: string) {
+  if (likedMessages.value.has(msgId)) {
+    likedMessages.value.delete(msgId);
+    toast.success('Like removed');
+  } else {
+    likedMessages.value.add(msgId);
+    dislikedMessages.value.delete(msgId); // Remove dislike if exists
+    toast.success('Message liked!');
+  }
+}
+
+function toggleDislike(msgId: string) {
+  if (dislikedMessages.value.has(msgId)) {
+    dislikedMessages.value.delete(msgId);
+    toast.success('Dislike removed');
+  } else {
+    dislikedMessages.value.add(msgId);
+    likedMessages.value.delete(msgId); // Remove like if exists
+    toast.success('Message disliked');
+  }
+}
+
+async function copyMessageToClipboard(content: string) {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(content);
+      toast.success('Copied to clipboard');
+    } else {
+      toast.error('Copy not supported');
+    }
+  } catch (err) {
+    console.error('Failed to copy:', err);
+    toast.error('Failed to copy message');
+  }
+}
+
 type Action = {
   _id: string;
   title: string;
@@ -4685,149 +4999,601 @@ onClickOutside(sourceDropdownRef, () => {
   showSourceDropdown.value = false;
 });
 
-const emptyStateQuickPrompts = computed(() => {
-  const ctx = contextTitle.value;
-  const mod = moduleSelected.value || ctx;
-  const src = selectedSource.value;
+// ── Module context detection ──────────────────────────────────────────────────
+const moduleContext = computed(() => {
+  const path = route.path.toLowerCase();
+  const name = (route.name as string)?.toLowerCase() || "";
 
-  const map: Record<string, string[]> = {
-    all: [
-      `Summarize the current status of ${mod}`,
-      `What tasks are overdue in ${mod}?`,
-      `What is assigned to me?`,
-      `Which items have the highest priority?`,
-    ],
-    workspace: [
-      `What's the latest update in ${mod}?`,
-      `Show me all open items in ${mod}`,
-      `Who is working on what in ${mod}?`,
-      `Give me a progress report for ${mod}`,
-    ],
-    sheets: [
-      `Summarize the data in my sheets`,
-      `Find any anomalies or outliers in my sheet data`,
-      `What are the top entries by value?`,
-      `Show me rows that haven't been updated recently`,
-    ],
-    tickets: [
-      `What tasks are overdue?`,
-      `Which tickets are assigned to me?`,
-      `Show me the highest priority open tickets`,
-      `Find tasks with no assignee`,
-    ],
-    docs: [
-      `Summarize my recent documents`,
-      `Find docs related to ${mod}`,
-      `Which docs haven't been updated in a while?`,
-      `What decisions are documented?`,
-    ],
-    web: [
-      `What are the latest trends in project management?`,
-      `Search for best practices in ${mod}`,
-      `Find recent news about my industry`,
-      `Look up tools similar to what we use`,
-    ],
-    training: [
-      `What have I trained this agent on?`,
-      `Summarize the agent's knowledge base`,
-      `What prompts are configured for this agent?`,
-      `Show me what this agent knows about ${mod}`,
-    ],
+  if (path.includes("peak") || name.includes("peak")) return "peak";
+  if (path.includes("talent") || name.includes("people")) return "talent";
+  if (path.includes("plan") || name.includes("plan")) return "plan";
+  if (path.includes("process") || name.includes("process")) return "process";
+  if (path.includes("more") || name.includes("more")) return "more";
+  return "workspace";
+});
+
+const emptyStateQuickPrompts = computed(() => {
+  const mod = moduleSelected.value || contextTitle.value;
+  const src = selectedSource.value;
+  const ctx = moduleContext.value;
+
+  // Per-module prompt maps
+  const modulePrompts: Record<string, Record<string, string[]>> = {
+    peak: {
+      all: [
+        `Give me a summary of all widgets in Peak`,
+        `Which KPIs are underperforming?`,
+        `What metrics need attention right now?`,
+        `Show me trends across all Peak dashboards`,
+      ],
+      workspace: [
+        `Summarize the Peak dashboard for ${mod}`,
+        `Which widgets have the most activity?`,
+        `Show me the top performing metrics`,
+        `What data sources are connected to Peak?`,
+      ],
+      sheets: [
+        `Which sheets are powering my Peak widgets?`,
+        `Show me sheet data behind my KPI widgets`,
+        `Find anomalies in the data feeding Peak`,
+        `What are the top rows driving my dashboard?`,
+      ],
+      tickets: [
+        `Which tasks are linked to Peak metrics?`,
+        `Show overdue items affecting my KPIs`,
+        `What open tickets are blocking peak performance?`,
+        `Find tasks assigned to me related to metrics`,
+      ],
+      docs: [
+        `Find docs related to my Peak setup`,
+        `Summarize documentation for my dashboards`,
+        `What decisions shaped the current Peak config?`,
+        `Show notes about my KPI targets`,
+      ],
+      web: [
+        `Search for best practices in dashboard design`,
+        `Find benchmarks for my key metrics`,
+        `Look up industry KPI standards`,
+        `Search for data visualization best practices`,
+      ],
+      training: [
+        `What does this agent know about my Peak setup?`,
+        `Summarize the training data for Peak`,
+        `What prompts are configured for Peak agent?`,
+        `Show me what this agent knows about my KPIs`,
+      ],
+    },
+
+    talent: {
+      all: [
+        `Summarize the current headcount in ${mod}`,
+        `Which employees are due for a review?`,
+        `Show me open positions and hiring status`,
+        `What are the top performers this quarter?`,
+      ],
+      workspace: [
+        `What's the latest update in talent management?`,
+        `Show me all active employees in ${mod}`,
+        `Who joined the team recently?`,
+        `Give me a headcount report for ${mod}`,
+      ],
+      sheets: [
+        `Summarize employee data from my sheets`,
+        `Find any missing or incomplete employee records`,
+        `What are the top entries by performance score?`,
+        `Show me employees who haven't been updated recently`,
+      ],
+      tickets: [
+        `What HR tasks are overdue?`,
+        `Which onboarding tickets are open?`,
+        `Show me highest priority HR requests`,
+        `Find tickets with no assignee in talent`,
+      ],
+      docs: [
+        `Summarize recent HR policies and documents`,
+        `Find docs related to employee onboarding`,
+        `Which HR documents haven't been updated?`,
+        `What decisions are documented for talent?`,
+      ],
+      web: [
+        `Search for best HR practices in ${mod}`,
+        `Find latest trends in talent management`,
+        `Look up industry salary benchmarks`,
+        `Search for employee retention strategies`,
+      ],
+      training: [
+        `What does this agent know about our talent data?`,
+        `Summarize the HR agent's knowledge base`,
+        `What prompts are configured for the talent agent?`,
+        `Show me what this agent knows about employees`,
+      ],
+    },
+
+    plan: {
+      all: [
+        `What sprints are currently active in ${mod}?`,
+        `Which planned items are behind schedule?`,
+        `Show me the roadmap for this quarter`,
+        `What milestones are coming up soon?`,
+      ],
+      workspace: [
+        `What's the current sprint status in ${mod}?`,
+        `Show me all planned vs completed items`,
+        `Who is responsible for upcoming milestones?`,
+        `Give me a sprint progress report`,
+      ],
+      sheets: [
+        `Summarize planning data from my sheets`,
+        `Find items that are behind schedule`,
+        `What are the top priorities by effort?`,
+        `Show me items without deadlines`,
+      ],
+      tickets: [
+        `What planned tickets are overdue?`,
+        `Which sprint items are assigned to me?`,
+        `Show me the highest priority backlog items`,
+        `Find tickets not assigned to any sprint`,
+      ],
+      docs: [
+        `Summarize the project planning documents`,
+        `Find docs related to roadmap decisions`,
+        `Which planning docs need updating?`,
+        `What decisions shaped the current roadmap?`,
+      ],
+      web: [
+        `Search for agile planning best practices`,
+        `Find sprint estimation techniques`,
+        `Look up roadmap planning frameworks`,
+        `Search for OKR goal-setting methods`,
+      ],
+      training: [
+        `What does this agent know about our planning?`,
+        `Summarize the planning agent's knowledge base`,
+        `What prompts are set up for the plan agent?`,
+        `Show me what this agent knows about sprints`,
+      ],
+    },
+
+    process: {
+      all: [
+        `What processes are currently active in ${mod}?`,
+        `Which workflows have bottlenecks?`,
+        `Show me process completion rates`,
+        `What steps are taking the longest?`,
+      ],
+      workspace: [
+        `What's the status of active processes in ${mod}?`,
+        `Show me all running workflows`,
+        `Which processes are blocked or stalled?`,
+        `Give me a process efficiency report`,
+      ],
+      sheets: [
+        `Summarize process data from my sheets`,
+        `Find bottlenecks in my workflow data`,
+        `What are the slowest process steps?`,
+        `Show me processes with missing data`,
+      ],
+      tickets: [
+        `What process tasks are overdue?`,
+        `Which workflow tickets are assigned to me?`,
+        `Show me blocked process tickets`,
+        `Find tickets causing workflow delays`,
+      ],
+      docs: [
+        `Summarize the process documentation`,
+        `Find docs related to workflow design`,
+        `Which process docs need updating?`,
+        `What SOPs are documented for ${mod}?`,
+      ],
+      web: [
+        `Search for workflow optimization strategies`,
+        `Find process automation best practices`,
+        `Look up business process improvement methods`,
+        `Search for SOP writing templates`,
+      ],
+      training: [
+        `What does this agent know about our processes?`,
+        `Summarize the process agent's knowledge base`,
+        `What prompts are configured for process agent?`,
+        `Show me what this agent knows about workflows`,
+      ],
+    },
+
+    workspace: {
+      all: [
+        `Summarize the current status of ${mod}`,
+        `What tasks are overdue in ${mod}?`,
+        `What is assigned to me?`,
+        `Which items have the highest priority?`,
+      ],
+      workspace: [
+        `What's the latest update in ${mod}?`,
+        `Show me all open items in ${mod}`,
+        `Who is working on what in ${mod}?`,
+        `Give me a progress report for ${mod}`,
+      ],
+      sheets: [
+        `Summarize the data in my sheets`,
+        `Find any anomalies or outliers in my sheet data`,
+        `What are the top entries by value?`,
+        `Show me rows that haven't been updated recently`,
+      ],
+      tickets: [
+        `What tasks are overdue?`,
+        `Which tickets are assigned to me?`,
+        `Show me the highest priority open tickets`,
+        `Find tasks with no assignee`,
+      ],
+      docs: [
+        `Summarize my recent documents`,
+        `Find docs related to ${mod}`,
+        `Which docs haven't been updated in a while?`,
+        `What decisions are documented?`,
+      ],
+      web: [
+        `What are the latest trends in project management?`,
+        `Search for best practices in ${mod}`,
+        `Find recent news about my industry`,
+        `Look up tools similar to what we use`,
+      ],
+      training: [
+        `What have I trained this agent on?`,
+        `Summarize the agent's knowledge base`,
+        `What prompts are configured for this agent?`,
+        `Show me what this agent knows about ${mod}`,
+      ],
+    },
   };
 
-  return (map[src] ?? map["all"]).slice(0, 4);
+  const promptsForModule = modulePrompts[ctx] ?? modulePrompts["workspace"];
+  return (promptsForModule[src] ?? promptsForModule["all"]).slice(0, 4);
 });
 
 const emptyStateFeatureCards = computed(() => {
-  const ctx = contextTitle.value;
+  const ctx = moduleContext.value;
   const src = selectedSource.value;
+  const mod = moduleSelected.value || contextTitle.value;
 
-  const all = [
-    {
-      title: "Executive summary",
-      description: "Generate a concise overview from your workspace data.",
-      prompt: `Create an executive summary for ${ctx}`,
-      icon: "fa-solid fa-chart-line",
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-500",
-      isNew: true,
-      sources: ["all", "workspace", "sheets"],
-    },
-    {
-      title: "Project update",
-      description: "Time-based status update across active items.",
-      prompt: `Give me a project update for ${ctx} this week`,
-      icon: "fa-solid fa-calendar-check",
-      iconBg: "bg-purple-50",
-      iconColor: "text-purple-500",
-      isNew: true,
-      sources: ["all", "workspace", "tickets"],
-    },
-    {
-      title: "Find duplicate tasks",
-      description: "Identify and surface overlapping or redundant work.",
-      prompt: `Find any duplicate or overlapping tasks in ${ctx}`,
-      icon: "fa-solid fa-copy",
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-500",
-      isNew: true,
-      sources: ["all", "tickets"],
-    },
-    {
-      title: "Find stuck tasks",
-      description: "Locate items with no recent progress or updates.",
-      prompt: `Which tasks in ${ctx} are stuck or stagnant?`,
-      icon: "fa-solid fa-triangle-exclamation",
-      iconBg: "bg-amber-50",
-      iconColor: "text-amber-500",
-      isNew: false,
-      sources: ["all", "tickets", "workspace"],
-    },
-    {
-      title: "Summarize documents",
-      description: "Get a quick digest of your recent docs.",
-      prompt: `Summarize the key points from my recent documents in ${ctx}`,
-      icon: "fa-solid fa-file-lines",
-      iconBg: "bg-orange-50",
-      iconColor: "text-orange-500",
-      isNew: false,
-      sources: ["all", "docs"],
-    },
-    {
-      title: "Web research",
-      description: "Find external context and latest information.",
-      prompt: `Search the web for insights relevant to ${ctx}`,
-      icon: "fa-solid fa-globe",
-      iconBg: "bg-sky-50",
-      iconColor: "text-sky-500",
-      isNew: true,
-      sources: ["all", "web"],
-    },
-    {
-      title: "Analyze sheet data",
-      description: "Surface patterns and insights from your sheets.",
-      prompt: `Analyze the data in my sheets and highlight key trends`,
-      icon: "fa-solid fa-chart-bar",
-      iconBg: "bg-teal-50",
-      iconColor: "text-teal-500",
-      isNew: false,
-      sources: ["all", "sheets"],
-    },
-    {
-      title: "Agent knowledge summary",
-      description: "See what this agent has been trained on.",
-      prompt: `Summarize what this agent knows and what it can help me with`,
-      icon: "fa-solid fa-brain",
-      iconBg: "bg-pink-50",
-      iconColor: "text-pink-500",
-      isNew: false,
-      sources: ["all", "training"],
-    },
-  ];
+  const cardsByModule: Record<string, any[]> = {
+    peak: [
+      {
+        title: "Dashboard summary",
+        description: "Get an AI overview of all your Peak widgets and KPIs.",
+        prompt: `Summarize all widgets and KPIs in my Peak dashboard`,
+        icon: "fa-solid fa-gauge-high",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: true,
+        sources: ["all", "workspace"],
+      },
+      {
+        title: "Underperforming metrics",
+        description: "Spot KPIs that are falling below targets.",
+        prompt: `Which metrics or KPIs are underperforming in Peak?`,
+        icon: "fa-solid fa-arrow-trend-down",
+        iconBg: "bg-red-50",
+        iconColor: "text-red-500",
+        isNew: true,
+        sources: ["all", "sheets", "workspace"],
+      },
+      {
+        title: "Data anomalies",
+        description: "Detect unusual patterns in your dashboard data.",
+        prompt: `Find any anomalies or unexpected trends in my Peak data`,
+        icon: "fa-solid fa-triangle-exclamation",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: false,
+        sources: ["all", "sheets"],
+      },
+      {
+        title: "Metric benchmarking",
+        description: "Compare your KPIs against industry standards.",
+        prompt: `Search for industry benchmarks to compare with my current KPIs`,
+        icon: "fa-solid fa-ranking-star",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: true,
+        sources: ["all", "web"],
+      },
+      {
+        title: "Widget data deep dive",
+        description: "Analyze the sheet data powering your widgets.",
+        prompt: `Analyze the sheet data behind my Peak widgets in detail`,
+        icon: "fa-solid fa-chart-bar",
+        iconBg: "bg-teal-50",
+        iconColor: "text-teal-500",
+        isNew: false,
+        sources: ["all", "sheets"],
+      },
+      {
+        title: "Agent knowledge summary",
+        description: "See what this agent knows about your dashboards.",
+        prompt: `What does this agent know about my Peak dashboard setup?`,
+        icon: "fa-solid fa-brain",
+        iconBg: "bg-pink-50",
+        iconColor: "text-pink-500",
+        isNew: false,
+        sources: ["all", "training"],
+      },
+    ],
 
-  return all.filter((c) => c.sources.includes(src)).slice(0, 4);
+    talent: [
+      {
+        title: "Headcount report",
+        description: "Get a full overview of your team composition.",
+        prompt: `Give me a complete headcount report for ${mod}`,
+        icon: "fa-solid fa-users",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: true,
+        sources: ["all", "workspace"],
+      },
+      {
+        title: "Pending reviews",
+        description: "Find employees due for performance reviews.",
+        prompt: `Which employees are due or overdue for a performance review?`,
+        icon: "fa-solid fa-star-half-stroke",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: true,
+        sources: ["all", "workspace", "tickets"],
+      },
+      {
+        title: "Open positions",
+        description: "Summarize current hiring pipeline and open roles.",
+        prompt: `Show me all open positions and the current hiring status`,
+        icon: "fa-solid fa-briefcase",
+        iconBg: "bg-emerald-50",
+        iconColor: "text-emerald-500",
+        isNew: false,
+        sources: ["all", "tickets"],
+      },
+      {
+        title: "Onboarding status",
+        description: "Check the progress of new hire onboarding.",
+        prompt: `What is the onboarding status for recent new hires?`,
+        icon: "fa-solid fa-person-walking-arrow-right",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: true,
+        sources: ["all", "tickets", "workspace"],
+      },
+      {
+        title: "Salary benchmarking",
+        description: "Compare compensation against industry rates.",
+        prompt: `Search for current salary benchmarks for roles in ${mod}`,
+        icon: "fa-solid fa-sack-dollar",
+        iconBg: "bg-sky-50",
+        iconColor: "text-sky-500",
+        isNew: false,
+        sources: ["all", "web"],
+      },
+      {
+        title: "HR policy summary",
+        description: "Get a digest of your latest HR documents.",
+        prompt: `Summarize the key HR policies and recent document updates`,
+        icon: "fa-solid fa-file-shield",
+        iconBg: "bg-orange-50",
+        iconColor: "text-orange-500",
+        isNew: false,
+        sources: ["all", "docs"],
+      },
+    ],
+
+    plan: [
+      {
+        title: "Sprint status",
+        description: "Get the current status of all active sprints.",
+        prompt: `Give me a full status report on all active sprints in ${mod}`,
+        icon: "fa-solid fa-rocket",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: true,
+        sources: ["all", "workspace", "tickets"],
+      },
+      {
+        title: "Behind schedule items",
+        description: "Find planned items that are running late.",
+        prompt: `Which planned items or milestones are behind schedule?`,
+        icon: "fa-solid fa-clock",
+        iconBg: "bg-red-50",
+        iconColor: "text-red-500",
+        isNew: true,
+        sources: ["all", "tickets", "workspace"],
+      },
+      {
+        title: "Roadmap overview",
+        description: "Summarize upcoming milestones and delivery dates.",
+        prompt: `Give me an overview of the roadmap and upcoming milestones for ${mod}`,
+        icon: "fa-solid fa-map",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: false,
+        sources: ["all", "workspace"],
+      },
+      {
+        title: "Backlog grooming",
+        description: "Identify unassigned or unprioritized backlog items.",
+        prompt: `Find backlog tickets that are unassigned or not in any sprint`,
+        icon: "fa-solid fa-list-check",
+        iconBg: "bg-emerald-50",
+        iconColor: "text-emerald-500",
+        isNew: false,
+        sources: ["all", "tickets"],
+      },
+      {
+        title: "Agile best practices",
+        description: "Get tips on improving sprint planning.",
+        prompt: `Search for agile sprint planning best practices and estimation techniques`,
+        icon: "fa-solid fa-lightbulb",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: true,
+        sources: ["all", "web"],
+      },
+      {
+        title: "Planning docs summary",
+        description: "Digest your roadmap and planning documents.",
+        prompt: `Summarize all planning and roadmap documents for ${mod}`,
+        icon: "fa-solid fa-file-lines",
+        iconBg: "bg-orange-50",
+        iconColor: "text-orange-500",
+        isNew: false,
+        sources: ["all", "docs"],
+      },
+    ],
+
+    process: [
+      {
+        title: "Workflow bottlenecks",
+        description: "Find steps causing delays in your processes.",
+        prompt: `Which steps or stages in ${mod} are causing workflow bottlenecks?`,
+        icon: "fa-solid fa-filter-circle-xmark",
+        iconBg: "bg-red-50",
+        iconColor: "text-red-500",
+        isNew: true,
+        sources: ["all", "workspace", "tickets"],
+      },
+      {
+        title: "Process completion rates",
+        description: "See how efficiently workflows are being completed.",
+        prompt: `Give me completion rates and efficiency metrics for processes in ${mod}`,
+        icon: "fa-solid fa-chart-pie",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: true,
+        sources: ["all", "workspace", "sheets"],
+      },
+      {
+        title: "Stalled processes",
+        description: "Locate workflows that haven't progressed recently.",
+        prompt: `Which processes or workflows in ${mod} are stalled or stuck?`,
+        icon: "fa-solid fa-pause",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: false,
+        sources: ["all", "tickets", "workspace"],
+      },
+      {
+        title: "SOP summary",
+        description: "Get a digest of your standard operating procedures.",
+        prompt: `Summarize all SOPs and process documentation for ${mod}`,
+        icon: "fa-solid fa-book-open",
+        iconBg: "bg-orange-50",
+        iconColor: "text-orange-500",
+        isNew: false,
+        sources: ["all", "docs"],
+      },
+      {
+        title: "Automation opportunities",
+        description: "Find process steps that could be automated.",
+        prompt: `Search for automation opportunities and best practices for workflows like ${mod}`,
+        icon: "fa-solid fa-robot",
+        iconBg: "bg-teal-50",
+        iconColor: "text-teal-500",
+        isNew: true,
+        sources: ["all", "web"],
+      },
+      {
+        title: "Process data analysis",
+        description: "Surface insights from your workflow sheet data.",
+        prompt: `Analyze the sheet data for ${mod} and highlight process inefficiencies`,
+        icon: "fa-solid fa-magnifying-glass-chart",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: false,
+        sources: ["all", "sheets"],
+      },
+    ],
+
+    workspace: [
+      {
+        title: "Executive summary",
+        description: "Generate a concise overview from your workspace data.",
+        prompt: `Create an executive summary for ${mod}`,
+        icon: "fa-solid fa-chart-line",
+        iconBg: "bg-blue-50",
+        iconColor: "text-blue-500",
+        isNew: true,
+        sources: ["all", "workspace", "sheets"],
+      },
+      {
+        title: "Project update",
+        description: "Time-based status update across active items.",
+        prompt: `Give me a project update for ${mod} this week`,
+        icon: "fa-solid fa-calendar-check",
+        iconBg: "bg-purple-50",
+        iconColor: "text-purple-500",
+        isNew: true,
+        sources: ["all", "workspace", "tickets"],
+      },
+      {
+        title: "Find duplicate tasks",
+        description: "Identify and surface overlapping or redundant work.",
+        prompt: `Find any duplicate or overlapping tasks in ${mod}`,
+        icon: "fa-solid fa-copy",
+        iconBg: "bg-emerald-50",
+        iconColor: "text-emerald-500",
+        isNew: true,
+        sources: ["all", "tickets"],
+      },
+      {
+        title: "Find stuck tasks",
+        description: "Locate items with no recent progress or updates.",
+        prompt: `Which tasks in ${mod} are stuck or stagnant?`,
+        icon: "fa-solid fa-triangle-exclamation",
+        iconBg: "bg-amber-50",
+        iconColor: "text-amber-500",
+        isNew: false,
+        sources: ["all", "tickets", "workspace"],
+      },
+      {
+        title: "Summarize documents",
+        description: "Get a quick digest of your recent docs.",
+        prompt: `Summarize the key points from my recent documents in ${mod}`,
+        icon: "fa-solid fa-file-lines",
+        iconBg: "bg-orange-50",
+        iconColor: "text-orange-500",
+        isNew: false,
+        sources: ["all", "docs"],
+      },
+      {
+        title: "Web research",
+        description: "Find external context and latest information.",
+        prompt: `Search the web for insights relevant to ${mod}`,
+        icon: "fa-solid fa-globe",
+        iconBg: "bg-sky-50",
+        iconColor: "text-sky-500",
+        isNew: true,
+        sources: ["all", "web"],
+      },
+      {
+        title: "Analyze sheet data",
+        description: "Surface patterns and insights from your sheets.",
+        prompt: `Analyze the data in my sheets for ${mod} and highlight key trends`,
+        icon: "fa-solid fa-chart-bar",
+        iconBg: "bg-teal-50",
+        iconColor: "text-teal-500",
+        isNew: false,
+        sources: ["all", "sheets"],
+      },
+      {
+        title: "Agent knowledge summary",
+        description: "See what this agent has been trained on.",
+        prompt: `Summarize what this agent knows and what it can help me with`,
+        icon: "fa-solid fa-brain",
+        iconBg: "bg-pink-50",
+        iconColor: "text-pink-500",
+        isNew: false,
+        sources: ["all", "training"],
+      },
+    ],
+  };
+
+  const cards = cardsByModule[ctx] ?? cardsByModule["workspace"];
+  return cards.filter((c) => c.sources.includes(src)).slice(0, 4);
 });
-
 // Clicks a suggestion, fills input AND immediately sends
 async function applyPromptAndSend(text: string) {
   userMessage.value = text;
@@ -4914,118 +5680,146 @@ const toggleWebSearch = async () => {
   }
 };
 watch(
-  () => agentStore.assistantStreamedChunks,
-  (raw) => {
-    const rawStr: string =
-      typeof raw === "string"
-        ? raw
-        : typeof raw === "object" && raw !== null
-          ? JSON.stringify(raw)
-          : String(raw ?? "");
+  () => agentStore.currentStreamText,
+  (newText) => {
+    if (!newText) return
+    isAiThinkingBubbleVisible.value = false
+    streamingContent.value = newText
+    animateStreamingContent(newText)
+    scrollToBottom()
+  }
+)
+watch(
+  () => [agentStore.streamThinkMs, agentStore.streamTotalMs] as const,
+  ([thinkMs, totalMs]) => {
+    if (thinkMs !== null) streamingThinkMs.value = thinkMs
+    if (totalMs !== null) streamingTotalMs.value = totalMs
+  }
+)
+watch(
+  () => agentStore.currentPhase,
+  (phase) => {
+    if (!phase) return
 
-    if (!rawStr) return;
-
-    const lines = rawStr
-      .split("\n")
-      .filter((l) => l.trim().startsWith("data: "));
-
-    let accumulatedContent = "";
-    let latestPhase: typeof streamingPhase.value = "";
-    let latestThinkMs: number | null = null;
-    let latestTotalMs: number | null = null;
-    let isDone = false;
-
-    for (const line of lines) {
-      try {
-        const json = JSON.parse(line.replace(/^data:\s*/, "").trim());
-
-        if (json.type === "phase") {
-          latestPhase = json.phase;
-
-          if (json.phase === "thinking") {
-            isAiThinkingBubbleVisible.value = true;
-            accumulatedContent = "";
-          }
-
-          if (json.phase === "generating") {
-            isAiThinkingBubbleVisible.value = false;
-          }
-        }
-
-        if (json.type === "chunk") {
-          accumulatedContent += json.content ?? "";
-          isAiThinkingBubbleVisible.value = false;
-          // Don't set streamingContent here — let the animator handle display
-        }
-
-        if (json.type === "timing") {
-          latestThinkMs = json.think_time_ms ?? null;
-          latestTotalMs = json.total_time_ms ?? null;
-        }
-
-        if (json.type === "done") {
-          isDone = true;
-        }
-      } catch {
-        // skip malformed lines
-      }
+    if (phase === 'thinking') {
+      // Reset everything, show only thinking bubble
+      streamingContent.value = ''
+      displayedContent.value = ''
+      streamingThinkMs.value = null
+      streamingTotalMs.value = null
+      streamingPhase.value = 'thinking'
+      isAiThinkingBubbleVisible.value = true
+      streamingPhaseLabel.value = 'Thinking'
+      startElapsedTimer()
     }
 
-    // Update phase and timing state
-    if (latestPhase) streamingPhase.value = latestPhase;
-    if (latestThinkMs !== null) streamingThinkMs.value = latestThinkMs;
-    if (latestTotalMs !== null) streamingTotalMs.value = latestTotalMs;
-
-    // Set the full target content and kick off letter-by-letter animation
-    if (accumulatedContent) {
-      streamingContent.value = accumulatedContent; // full text (used as animation target)
-      animateStreamingContent(accumulatedContent); // drives displayedContent char by char
+    if (phase === 'generating') {
+      // Hide thinking bubble, streaming bubble will show once first chunk arrives
+      isAiThinkingBubbleVisible.value = false
+      streamingPhase.value = 'generating'
+      streamingPhaseLabel.value = 'Writing'
+      startElapsedTimer()
     }
 
-    if (isDone) {
-      isAiThinkingBubbleVisible.value = false;
-      agentStore.isAiTyping = false;
-      // displayedContent will finish animating on its own via requestAnimationFrame
+    if (phase === 'completed') {
+      isAiThinkingBubbleVisible.value = false
+      agentStore.isAiTyping = false
+      streamingPhase.value = 'completed'
+      streamingPhaseLabel.value = 'Done'
+      stopElapsedTimer()
+      scrollToBottom()
     }
-
-    scrollToBottom();
+  }
+)
+watch(
+  () => orderedMessages.value,
+  (msgs) => {
+    if (
+      streamingPhase.value === 'completed' &&
+      msgs.some((m) => m.type === 'assistant' && !(m.metadata as MessageMetadata)?.temp)
+    ) {
+      // Message confirmed in history — now safe to hide streaming bubble
+      streamingPhase.value = ''
+      streamingContent.value = ''
+      displayedContent.value = ''
+    }
   },
-  { immediate: false },
-);
+  { deep: false }
+)
+
+// Watch for phase detail and timestamp changes from store
+watch(
+  () => [agentStore.currentPhaseDetail, agentStore.currentPhaseTimestamp] as const,
+  ([detail, timestamp]) => {
+    if (detail) streamingPhaseDetail.value = detail
+    if (timestamp !== null) streamingPhaseTimestamp.value = timestamp
+  }
+)
+
+// Watch for phase history updates from store
+watch(
+  () => agentStore.streamPhases,
+  (phases) => {
+    phaseHistory.value = phases
+  },
+  { deep: true }
+)
+const elapsedLabel = computed(() => {
+  const s = (streamingElapsedMs.value / 1000).toFixed(1)
+  return `${s}s`
+})
+function startElapsedTimer() {
+  stopElapsedTimer()
+  streamingElapsedMs.value = 0
+  elapsedTimerHandle = setInterval(() => {
+    streamingElapsedMs.value += 100
+  }, 100)
+}
+
+function stopElapsedTimer() {
+  if (elapsedTimerHandle) {
+    clearInterval(elapsedTimerHandle)
+    elapsedTimerHandle = null
+  }
+}
+watch(
+  () => [agentStore.streamThinkMs, agentStore.streamTotalMs],
+  ([thinkMs, totalMs]) => {
+    if (thinkMs !== null) streamingThinkMs.value = thinkMs
+    if (totalMs !== null) streamingTotalMs.value = totalMs
+  }
+)
+// Replace animateStreamingContent entirely:
+let animFrameId: number | null = null
+let animTargetText = ''
 
 function animateStreamingContent(targetText: string) {
-  // Cancel any ongoing animation before starting a new one
-  if (animationFrameId.value !== null) {
-    cancelAnimationFrame(animationFrameId.value);
-    animationFrameId.value = null;
-  }
+  animTargetText = targetText // always update target, never restart loop
 
-  const totalChars = targetText.length;
-  let currentIndex = displayedContent.value.length; // Resume from current position
+  // Only start the loop if it's not already running
+  if (animFrameId !== null) return
 
-  // If target is shorter than what's displayed (reset happened), start fresh
-  if (currentIndex > totalChars) {
-    currentIndex = 0;
-    displayedContent.value = "";
-  }
-
-  const CHARS_PER_FRAME = 3; // Increase for faster, decrease for slower
+  const CHARS_PER_FRAME = 4
 
   function step() {
-    if (currentIndex >= totalChars) {
-      displayedContent.value = targetText;
-      animationFrameId.value = null;
-      return;
+    if (displayedContent.value.length >= animTargetText.length) {
+      displayedContent.value = animTargetText
+      animFrameId = null
+      return
     }
 
-    currentIndex = Math.min(currentIndex + CHARS_PER_FRAME, totalChars);
-    displayedContent.value = targetText.slice(0, currentIndex);
-    scrollToBottom();
-    animationFrameId.value = requestAnimationFrame(step);
+    const nextIndex = Math.min(
+      displayedContent.value.length + CHARS_PER_FRAME,
+      animTargetText.length
+    )
+    displayedContent.value = animTargetText.slice(0, nextIndex)
+    scrollToBottom()
+    animFrameId = requestAnimationFrame(step)
   }
 
-  animationFrameId.value = requestAnimationFrame(step);
+  animFrameId = requestAnimationFrame(step)
 }
+
 </script>
 
 <style scoped>
@@ -5061,6 +5855,40 @@ function animateStreamingContent(targetText: string) {
   transform: translateX(-100%);
   opacity: 0;
 }
+ .neon-flow-border-chatbot {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .neon-flow-border-chatbot::after {
+    /* Crisp neon arc passing over the cut-out */
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: 20px;
+    background: conic-gradient(
+      from 45deg,
+      transparent 0deg,
+      transparent calc(var(--sweep) - 24deg),
+      hsl(var(--glow-brand)) calc(var(--sweep) - 24deg),
+      hsl(var(--glow-2)) calc(var(--sweep) - 12deg),
+      hsl(var(--glow-3)) var(--sweep),
+      hsl(var(--glow-2)) calc(var(--sweep) + 12deg),
+      hsl(var(--glow-brand)) calc(var(--sweep) + 24deg),
+      transparent calc(var(--sweep) + 24deg) 360deg
+    );
+    -webkit-mask: linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    /* mix-blend-mode: screen; */
+    animation: sweep var(--neon-speed, 4s) linear infinite;
+    pointer-events: none;
+    z-index: 2;
+  }
 @keyframes chat-spin {
   to {
     transform: rotate(360deg);

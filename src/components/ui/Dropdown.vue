@@ -136,7 +136,7 @@
 
                 <!-- Right: row actions or nested indicator -->
                 <div
-                  v-if="option.nested?.length"
+                  v-if="option.nested?.length && !option.hideActions"
                   class="pl-2 flex items-center relative ml-auto"
                 >
                   <span
@@ -175,7 +175,7 @@
 
                 <!-- Existing actions logic (only if NOT nested, to avoid conflict or visual clutter, though user didn't say remove actions) -->
                 <div
-                 v-else-if="actions && (canEdit || canDelete)"
+                 v-else-if="actions && (canEdit || canDelete) && !option.hideActions && option.user_permissions?.can_delete||option.user_permissions?.can_update|| option.user_permissions?.source === 'owner'"
                   class="pl-2 flex items-center relative"
                 >
                   <button
@@ -203,19 +203,26 @@
                       @click.stop
                     >
                       <button
-                        v-if="canEdit"
+                        v-if="option.user_permissions?.can_update && canEdit"
                         class="px-3 py-1.5 text-left hover:bg-bg-dropdown-menu-hover cursor-pointer"
                         @click.stop="onEdit(option)"
                       >
-                        <i class="fa-regular fa-edit"></i> Edit
+                        <i class="fa-regular fa-edit text-[12px]"></i> Edit
                       </button>
                       <button
-                        v-if="canDelete && !option.disableDelete"
+                        v-if="option.user_permissions.source === 'owner'"
+                        class="px-3 py-1.5 text-left hover:bg-bg-dropdown-menu-hover cursor-pointer"
+                        @click.stop="onShare(option)"
+                      >
+                        <i class="fa-solid fa-share-nodes text-[12px]"></i> Share
+                      </button>
+                      <button
+                        v-if="option.user_permissions?.can_delete && canDelete && !option.disableDelete"
                         class="px-3 py-1.5 text-left text-red-600 cursor-pointer"
                         :disabled="option.disableDelete" 
                         @click.stop="!option.disableDelete && onDelete(option)"
                       >
-                        <i class="fa-regular fa-trash"></i> Delete
+                        <i class="fa-regular fa-trash text-[12px]"></i> Delete
                       </button>
                     </div>
                   </Teleport>
@@ -258,6 +265,12 @@ interface Option {
   slug?: string;
   nested?: Option[];
   disableDelete?: boolean;
+  hideActions?: boolean;
+  user_permissions?: {
+    can_update?: boolean;
+    can_delete?: boolean;  
+    source?: string; // e.g. 'owner', 'shared', etc.
+  };
 }
 
 const props = withDefaults(
@@ -270,7 +283,7 @@ const props = withDefaults(
     size?: "sm" | "md";
     actions?: boolean;
     canEdit?: boolean;
-    canDelete?: boolean;
+    canDelete?: boolean; 
     customClasses?: string;
     customTitle?: string;
     isAgent?:boolean;
@@ -283,7 +296,7 @@ const props = withDefaults(
     size: "md",
     actions: true,
     canEdit: true,
-    canDelete: true,
+    canDelete: true, 
     customClasses: "",
     multiple: false,
   },
@@ -293,6 +306,7 @@ const emit = defineEmits([
   "update:modelValue",
   "edit-option",
   "delete-option",
+  "share-option",
   "nested-select",
   "open",
   "close"
@@ -327,8 +341,10 @@ const selectedOption = computed(
 
 function isOptionSelected(option: Option) {
   if (props.multiple && Array.isArray(selected.value)) {
+    if (selected.value.includes('all')) return true;
     return selected.value.includes(option._id);
   }
+  if (selected.value === 'all') return true;
   return selected.value === option._id;
 }
 
@@ -486,6 +502,13 @@ function onDelete(option: Option) {
   confirmDeleteId.value = null;
 }
 
+function onShare(option: Option) {
+  emit("share-option", option);
+  // keep menu open but collapse all action UI
+  actionOpenId.value = null;
+  confirmDeleteId.value = null;
+}
+
 onClickOutside(wrapperRef, (event) => {
   const target = event.target as Node;
   // If click is inside the teleported menu, ignore
@@ -544,7 +567,7 @@ function handleMouseEnter(option: any) {
   if (option.nested?.length) {
     nextTick(() => startNestedFloating(option._id));
   }
-}
+} 
 
 function handleMouseLeave() {
   if (hoverTimeout) clearTimeout(hoverTimeout);
