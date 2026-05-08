@@ -2,61 +2,87 @@ import { useRoute } from "vue-router";
 import { request } from "../libs/api";
 import { useApiMutation, useApiQuery } from "../libs/vq";
 import { useQuery } from "@tanstack/vue-query";
-import { unref } from "vue";
+import { unref, computed, ref } from "vue";
 import api from "../libs/api";
-import { ref, computed } from "vue"
-const companyId = ref(localStorage.getItem("company_id"))
+
+import {
+  getAuthSession,
+  getSessionCompanyId,
+  isPersonalMode,
+} from "../utilities/session";
+
+// ---------------------------------------------
+// Company State
+// ---------------------------------------------
+
+const companyId = ref<string | null>(getSessionCompanyId());
+
 export const useCompany = () => {
   const setCompanyId = (id: string) => {
-    localStorage.setItem("company_id", id)
-    companyId.value = id
-  }
+    localStorage.setItem("company_id", id);
+    companyId.value = id;
+  };
 
-  return { companyId, setCompanyId }
-}
+  return { companyId, setCompanyId };
+};
 
-const getCookie = (name: string) => {
-  const match = document.cookie.match(
-    new RegExp('(^| )' + name + '=([^;]+)')
-  )
-  return match ? decodeURIComponent(match[2]) : null
-}
+// ---------------------------------------------
+// Current Package
+// ---------------------------------------------
 
-export const useCurrentPackage = (overrideScope?: 'individual' | 'organization') => {
-  const personalMode = computed(() => getCookie('personal_mode'))
-  const companyFromCookie = computed(() => getCookie('company_id'))
+export const useCurrentPackage = (
+  overrideScope?: "individual" | "organization"
+) => {
+  const session = computed(() => getAuthSession());
 
   const scope = computed(() => {
-    // ✅ priority: explicit override > cookie
-    if (overrideScope) return overrideScope
-    return personalMode.value === 'true' ? 'individual' : 'organization'
-  })
+    // priority:
+    // 1. explicit override
+    // 2. session personal mode
+    if (overrideScope) return overrideScope;
+
+    return isPersonalMode() ? "individual" : "organization";
+  });
 
   const companyId = computed(() => {
-    if (scope.value === 'individual') return null
-    return companyFromCookie.value || null
-  })
+    if (scope.value === "individual") return null;
+
+    return (
+      session.value?.company_id ??
+      localStorage.getItem("company_id") ??
+      null
+    );
+  });
 
   const url = computed(() => {
-    const base = `/auth/subscription-stats`
-    const params = new URLSearchParams()
+    const base = `/auth/subscription-stats`;
+    const params = new URLSearchParams();
 
-    params.append('scope', scope.value)
+    params.append("scope", scope.value);
 
-    if (scope.value === 'organization' && companyId.value) {
-      params.append('company_id', companyId.value)
+    if (scope.value === "organization" && companyId.value) {
+      params.append("company_id", companyId.value);
     }
 
-    return `${base}?${params.toString()}`
-  })
+    return `${base}?${params.toString()}`;
+  });
 
   return useApiQuery({
-    key: computed(() => ["current-package", scope.value, companyId.value]),
+    key: computed(() => [
+      "current-package",
+      scope.value,
+      companyId.value,
+    ]),
     url,
     method: "GET",
     enabled: computed(() => true),
-  })
-}
+  });
+};
+
+// ---------------------------------------------
+// Upgrade Package
+// ---------------------------------------------
+
 export const useUpgradePackage = (options = {}) =>
   useApiMutation<any, any>(
     {
@@ -72,8 +98,14 @@ export const useUpgradePackage = (options = {}) =>
       ...(options as any),
     } as any
   );
+
+// ---------------------------------------------
+// Confirm Payment
+// ---------------------------------------------
+
 export const confirmPayment = (payload: any, options = {}) => {
   const route = useRoute();
+
   return useApiMutation<any, any>(
     {
       key: ["package-payment-confirm"],
@@ -83,14 +115,20 @@ export const confirmPayment = (payload: any, options = {}) => {
         request({
           url: `billing/confirm-payment`,
           method: "POST",
-          data: { ...payload, ...vars, sessionId: route.query.session_id },
+          data: {
+            ...payload,
+            ...vars,
+            sessionId: route.query.session_id,
+          },
         }),
       ...(options as any),
     } as any
   );
 };
 
-
+// ---------------------------------------------
+// Roles & Permissions
+// ---------------------------------------------
 
 export const useRolesPermisions = (options = {}) => {
   return useQuery({
@@ -105,14 +143,16 @@ export const useRolesPermisions = (options = {}) => {
   });
 };
 
-export const useRoles = (id:any,options = {}) => {
+export const useRoles = (id: any, options = {}) => {
   return useQuery({
-    queryKey: ["roles"],
+    queryKey: ["roles", unref(id)?._id],
     queryFn: ({ signal }) => {
       let url = `/roles/workspace-access-roles`;
+
       if (unref(id)?._id) {
         url += `?company_id=${unref(id)?._id}`;
       }
+
       return request<any>({
         url,
         method: "GET",
@@ -122,29 +162,38 @@ export const useRoles = (id:any,options = {}) => {
     ...options,
   });
 };
-  
+
 export const useUpdatePermissions = (options = {}) => {
   return useApiMutation<any, any>(
     {
       key: ["update-permissions"],
     } as any,
     {
-      mutationFn: ({ roleId, payload }: { roleId: string; payload: any }) =>
+      mutationFn: ({
+        roleId,
+        payload,
+      }: {
+        roleId: string;
+        payload: any;
+      }) =>
         request({
           url: `/roles/workspace-access-roles/${roleId}`,
           method: "PUT",
           data: payload,
         }),
+
       ...(options as any),
     } as any
   );
 };
 
+// ---------------------------------------------
+// Workspace Permissions
+// ---------------------------------------------
 
- 
-
-
-export const fetchWorkspacePermissions = async ({ signal }: any) => {
+export const fetchWorkspacePermissions = async ({
+  signal,
+}: any) => {
   try {
     const { data } = await api.get(
       "/roles/workspace-access-roles/without-permission",
@@ -157,16 +206,12 @@ export const fetchWorkspacePermissions = async ({ signal }: any) => {
     return [];
   }
 };
+
 export const useWorkspacePermissions = (options = {}) => {
   return useQuery({
     queryKey: ["workspace-permissions"],
     queryFn: fetchWorkspacePermissions,
-    staleTime: 1000 * 60 * 5, // optional
+    staleTime: 1000 * 60 * 5,
     ...options,
   });
 };
-
-
-
-
- 

@@ -129,17 +129,6 @@ const session = getAuthCookie()
 
 if (isRootDomain()) {
   localStorage.removeItem("company_id")
-
-  // ✅ Only set personal_mode if there's NO last_tenant_slug
-  // If user has a tenant, they may be returning from subdomain — don't overwrite
-  const hasTenant = !!localStorage.getItem("last_tenant_slug")
-  if (session?.token && !hasTenant && !session?.company_id) {
-    writeAuthCookie({
-      token: session.token,
-      company_id: null,
-      personal_mode: true,
-    })
-  }
 } else {
   // SUBDOMAIN — restore company context
   if (session?.company_id) {
