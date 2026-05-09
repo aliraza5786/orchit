@@ -266,15 +266,17 @@ input:-webkit-autofill:active {
   color: rgb(48, 41, 246);
   text-decoration: underline;
 }
-/* Hide scrollbars everywhere EXCEPT home page */
-body:not(.home-page) *:not(.mobile-scroll-visible)::-webkit-scrollbar {
+/* Hide scrollbars everywhere EXCEPT home page and where explicitly enabled */
+body:not(.home-page) *:not(.scrollbar-visible)::-webkit-scrollbar {
   display: none;
 }
 
-body:not(.home-page) * {
+
+body:not(.home-page) *:not(.scrollbar-visible) {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
 .home-page *::-webkit-scrollbar {
   width: 8px;
 }
@@ -413,31 +415,26 @@ body:not(.home-page) * {
   stroke-width: 3 !important;
 }
 
-/* -------- Mobile Scroll Visibility -------- */y
-.mobile-scroll-visible {
-  overflow: auto;
-}
-body .mobile-scroll-visible::-webkit-scrollbar {
+
+/* -------- Global visible scrollbar Utility -------- */
+.scrollbar-visible::-webkit-scrollbar {
   display: block !important;
-  height: 6px !important;
-  width: 6px !important;
+  width: 6px;
+  height: 6px;
 }
-
-body .mobile-scroll-visible::-webkit-scrollbar-track {
-  background: var(--bg-surface) !important;
-  border-radius: 4px;
+.scrollbar-visible::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 8px;
 }
-
-body .mobile-scroll-visible::-webkit-scrollbar-thumb {
-  background-color: red !important;   
-  border-radius: 4px; 
+.scrollbar-visible::-webkit-scrollbar-thumb {
+  background-color: rgba(150, 150, 150, 0.35);
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
 }
-
-body .mobile-scroll-visible::-webkit-scrollbar-thumb:hover {
-  background-color: var(--text-secondary) !important;
+.scrollbar-visible::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(150, 150, 150, 0.6);
 }
-
-body .mobile-scroll-visible {
-  scrollbar-width: auto !important;
-  scrollbar-color: var(--border) var(--bg-surface) !important;
+.scrollbar-visible {
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(150, 150, 150, 0.4) transparent !important;
 }

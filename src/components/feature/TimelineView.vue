@@ -1,5 +1,5 @@
 <template>
-  <div class="mobile-scroll-visible overflow-x-auto h-full mx-2">
+  <div class="scrollbar-visible overflow-x-auto h-full mx-2">
   <div class="schedule-container">
     <div class="calendar-header bg-bg-card text-text-secondary lg:space-y-0 space-y-2 py-2">
       <div class="nav-group bg-bg-body text-text-secondary rounded-md px-2 py-1">

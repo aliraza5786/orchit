@@ -1485,19 +1485,5 @@ const sprintId = computed(() => {
 </script>
 
 <style scoped>
-.scrollbar-visible::-webkit-scrollbar {
-  height: 8px;
-  margin-bottom: 5px !important;
-}
-.scrollbar-visible::-webkit-scrollbar-thumb {
-  background-color: rgba(150, 150, 150, 0.4);
-  border-radius: 8px;
-}
-.scrollbar-visible::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(150, 150, 150, 0.6);
-}
-.scrollbar-visible {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(150, 150, 150, 0.5) transparent;
-}
+
 </style>

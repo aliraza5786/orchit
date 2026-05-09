@@ -960,7 +960,7 @@ function handleDeletePerson() {
 }
 
 function unassignHandler(person: any) {
-  unassignSeatAction({ id: person._id });
+  unassignSeatAction({ id: person._id, payload: {} });
 }
 
 function getStatusClass(status: string) {

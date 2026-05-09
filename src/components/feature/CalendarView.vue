@@ -1,5 +1,5 @@
 <template>
-  <div class="mobile-scroll-visible overflow-x-auto h-full m-2">
+  <div class="scrollbar-visible overflow-x-auto h-full m-2">
     <div class="calendar-wrapper  max-h-[calc(100vh-100px)]">
       <FullCalendar ref="calendarRef" :options="calendarOptions" />
     </div>

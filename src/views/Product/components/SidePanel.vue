@@ -152,45 +152,71 @@
           </div>
 
           <!-- Description -->
-          <div>
-            <h3 class="mb-2 text-base font-semibold tracking-wide px-1">
+          <div class="desc-section">
+            <h3 class="mb-1 text-[11px] font-semibold uppercase tracking-widest text-text-secondary px-1">
               Description
             </h3>
 
             <Transition name="fade-scale" mode="out-in">
-              <!-- view mode -->
+              <!-- ── VIEW MODE (Jira style: no border, subtle hover) ── -->
               <div
                 v-if="!editingDesc"
                 key="desc-view"
-                class="text-[15px] leading-6 text-text-secondary whitespace-pre-wrap rounded-xl px-4 py-3 border border-orchit-white/10 bg-orchit-white/5 hover:border-orchit-white/20 transition"
-                :disabled="!canEditCard"
-                :class="canEditCard ? 'cursor-text' : 'cursor-not-allowed'"
+                class="group relative rounded-lg px-3 py-2.5 transition-all duration-150 max-h-[400px] overflow-y-auto scrollbar-visible"
+                :class="[
+                  canEditCard
+                    ? 'cursor-text hover:bg-orchit-white/5 hover:ring-1 hover:ring-orchit-white/10'
+                    : 'cursor-not-allowed opacity-60'
+                ]"
                 @click="startEditDesc"
               >
                 <div
                   v-if="description"
                   v-html="description"
-                  class="word-break"
+                  class="word-break desc-rendered text-[14px] leading-6 text-text-primary"
                 ></div>
-                <span v-else class="opacity-60"
-                  >Click to add a description…</span
-                >
+                <div v-else class="flex items-center gap-2 text-text-secondary">
+                  <i class="fa-regular fa-pen-to-square text-[13px] opacity-50"></i>
+                  <span class="text-[14px] italic opacity-60">Add a description…</span>
+                </div>
+                <!-- Jira-style edit hint badge -->
+                <span
+                  v-if="canEditCard && !description"
+                  class="absolute bottom-2 right-2 text-[10px] text-text-secondary opacity-0 group-hover:opacity-60 transition-opacity"
+                >Click to edit</span>
               </div>
 
-              <!-- edit mode -->
+              <!-- ── EDIT MODE ── -->
               <div
                 v-else
                 key="desc-edit"
                 ref="descEditorWrap"
-                class="rounded-xl overflow-hidden border border-orchit-white/10 shadow-sm"
+                class="rounded-lg overflow-hidden ring-2 ring-accent/40 border border-accent/25 shadow-sm"
               >
-                <BaseRichTextEditor
-                  v-model="description"
-                  @focusOut="finishDescEdit"
-                />
+                <BaseRichTextEditor v-model="description" />
+
+                <!-- Save / Cancel — Jira style -->
+                <div class="flex items-center gap-2 px-3 py-2 border-t border-border bg-orchit-white/3">
+                  <button
+                    type="button"
+                    class="px-3 py-1.5 rounded-md text-[13px] font-medium text-text-secondary bg-orchit-white/5 hover:bg-orchit-white/10 border border-orchit-white/10 transition-all active:scale-95"
+                    @click="cancelDescEdit"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    class="px-4 py-1.5 rounded-md text-[13px] font-semibold text-white transition-all active:scale-95 hover:opacity-90"
+                    style="background: var(--accent)"
+                    @click="finishDescEdit"
+                  >
+                    Save
+                  </button>
+                </div>
               </div>
             </Transition>
           </div>
+
 
           <!-- Tabs (segmented) -->
           <SwitchTab
@@ -1382,10 +1408,21 @@ function focusProseMirror(container?: HTMLElement | null) {
 }
 async function startEditDesc() {
   if (!canEditCard.value) return;
+  // Snapshot the current saved value so Cancel can restore it
+  descSnapshot.value = description.value;
   editingDesc.value = true;
   await nextTick();
   focusProseMirror(descEditorWrap.value || undefined);
 }
+
+const descSnapshot = ref("");
+
+function cancelDescEdit() {
+  // Restore to the snapshotted value (what was last saved)
+  description.value = descSnapshot.value;
+  editingDesc.value = false;
+}
+
 watch(
   () => cardDetails.value?.["card-description"],
   (val) => {
@@ -1395,6 +1432,7 @@ watch(
   },
   { immediate: true },
 );
+
 function finishDescEdit() {
   const normalize = (html: string) => html.replace(/<p><\/p>/g, "").trim();
 
@@ -1403,37 +1441,15 @@ function finishDescEdit() {
     cardDetails.value?.["card-description"] || "",
   );
 
-  if (newDescription === prevDescription) {
-    editingDesc.value = false;
-    return;
+  if (newDescription !== prevDescription) {
+    moveCard.mutate({
+      card_id: props.details._id,
+      variables: { "card-description": newDescription },
+    });
   }
-
-  moveCard.mutate({
-    card_id: props.details._id,
-    variables: { "card-description": newDescription },
-  });
 
   editingDesc.value = false;
 }
-watch(
-  () => cardDetails.value?.["card-description"],
-  (val) => {
-    if (!editingDesc.value) {
-      description.value = val ?? "";
-    }
-  },
-  { immediate: true },
-);
-function onDocMouseDown(e: MouseEvent) {
-  if (!editingDesc.value) return;
-  const target = e.target as Node;
-  if (descEditorWrap.value?.contains(target)) return;
-  finishDescEdit();
-}
-onMounted(() => document.addEventListener("mousedown", onDocMouseDown));
-onBeforeUnmount(() =>
-  document.removeEventListener("mousedown", onDocMouseDown),
-);
 const local = reactive({
   posted_on:
     props.details?.posted_on ??
@@ -2714,8 +2730,45 @@ function handleEditVar(item: any) {
 .word-break :deep(p) {
   overflow-wrap: break-word !important;
 }
+
+/* ─── File attachment links rendered via v-html in description view mode ─────── */
+.word-break :deep(a.file-attachment-link) {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.7rem;
+  margin: 0.2rem 0;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none !important;
+  border: 1px solid rgba(124, 58, 237, 0.25);
+  background: rgba(124, 58, 237, 0.07);
+  color: #a78bfa;
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.word-break :deep(a.file-attachment-link:hover) {
+  background: rgba(124, 58, 237, 0.16);
+  border-color: rgba(124, 58, 237, 0.45);
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+}
+
 .word-break :deep(a) {
   color: var(--color-text-primary, #6b7280) !important;
   text-decoration: underline !important;
 }
+
+.word-break :deep(img) {
+  margin: 12px 0;
+  border-radius: 8px;
+  display: block;
+  max-width: 100%;
+}
+
 </style>

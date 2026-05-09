@@ -6,97 +6,149 @@
         </label>
 
         <div :class="[
-            'rounded-lg border flex flex-col h-full cursor-text',
+            'rounded-lg border flex flex-col cursor-text overflow-hidden',
             theme === 'dark' ? 'bg-[#131318] border-border text-white' : 'bg-bg-input border-border text-text-primary'
         ]" @mousedown="focusEditor">
-            <!-- Content -->
-            <EditorContent :placeholder="placeholder" :editor="editor"
-                :class="['min-h-[150px] px-4 py-3 editor-shell grow', theme === 'dark' ? 'text-white' : 'text-text-primary']" />
 
-            <!-- Toolbar (always visible) -->
+            <!-- ── Toolbar (TOP — Jira style) ─────────────────────────────── -->
             <div data-editor-toolbar :class="[
-                'border-t sticky bottom-0 px-2 py-2 flex items-center flex-wrap gap-2 text-sm',
+                'border-b px-2 py-1.5 flex items-center flex-wrap gap-0.5 text-sm shrink-0',
                 theme === 'dark' ? 'border-border bg-[#0D0D10] text-text-secondary' : 'border-border bg-bg-body text-text-primary'
             ]">
-                <!-- Undo/Redo -->
-                <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" :class="btnClass"
-                    title="Undo">↩</button>
-                <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" :class="btnClass"
-                    title="Redo">↪</button>
-
                 <!-- Text type -->
                 <select v-model="textType" @change="setTextType"
-                    :class="['text-sm bg-transparent focus:outline-none rounded-md px-1 py-1 text-text-primary']">
-                    <option value="paragraph">Normal text</option>
-                    <option value="heading1">Heading 1</option>
-                    <option value="heading2">Heading 2</option>
+                    :class="['text-xs bg-transparent focus:outline-none rounded px-1.5 py-1 text-text-secondary hover:bg-orchit-white/8 transition mr-1 border-0 cursor-pointer']">
+                    <option value="paragraph">Normal</option>
+                    <option value="heading1">H1</option>
+                    <option value="heading2">H2</option>
                 </select>
 
-                <!-- Inline formatting -->
+                <!-- Divider -->
+                <span class="w-px h-4 bg-border mx-1 shrink-0"></span>
+
+                <!-- Formatting -->
                 <button @click.prevent="editor.chain().focus().toggleBold().run()"
                     :class="[btnClass, editor.isActive('bold') ? activeBtnClass : '']"
-                    title="Bold"><strong>B</strong></button>
+                    title="Bold"><strong class="text-[13px]">B</strong></button>
                 <button @click.prevent="editor.chain().focus().toggleItalic().run()"
                     :class="[btnClass, editor.isActive('italic') ? activeBtnClass : '']"
-                    title="Italic"><em>I</em></button>
+                    title="Italic"><em class="text-[13px]">I</em></button>
                 <button @click.prevent="editor.chain().focus().toggleStrike().run()"
                     :class="[btnClass, editor.isActive('strike') ? activeBtnClass : '']"
-                    title="Strikethrough">S</button>
-                <button @click.prevent="editor.chain().focus().toggleCodeBlock().run()"
-                    :class="[btnClass, editor.isActive('codeBlock') ? activeBtnClass : '']"
-                    title="Code">&lt;/&gt;</button>
+                    title="Strikethrough"><s class="text-[13px]">S</s></button>
+                <button @click.prevent="editor.chain().focus().toggleCode().run()"
+                    :class="[btnClass, editor.isActive('code') ? activeBtnClass : '']"
+                    title="Inline code"><span class="text-[12px] font-mono">`</span></button>
+
+                <!-- Divider -->
+                <span class="w-px h-4 bg-border mx-1 shrink-0"></span>
 
                 <!-- Lists -->
                 <button @click.prevent="editor.chain().focus().toggleBulletList().run()"
-                    :class="[btnClass, editor.isActive('bulletList') ? activeBtnClass : '']" title="Bulleted list"><i
-                        class="fa-solid fa-list"></i></button>
+                    :class="[btnClass, editor.isActive('bulletList') ? activeBtnClass : '']" title="Bullet list">
+                    <i class="fa-solid fa-list text-[11px]"></i>
+                </button>
                 <button @click.prevent="editor.chain().focus().toggleOrderedList().run()"
-                    :class="[btnClass, editor.isActive('orderedList') ? activeBtnClass : '']" title="Numbered list"><i
-                        class="fa-solid fa-list-ol"></i></button>
+                    :class="[btnClass, editor.isActive('orderedList') ? activeBtnClass : '']" title="Numbered list">
+                    <i class="fa-solid fa-list-ol text-[11px]"></i>
+                </button>
+                <button @click.prevent="editor.chain().focus().toggleCodeBlock().run()"
+                    :class="[btnClass, editor.isActive('codeBlock') ? activeBtnClass : '']" title="Code block">
+                    <i class="fa-solid fa-code text-[11px]"></i>
+                </button>
+                <button @click.prevent="editor.chain().focus().toggleBlockquote().run()"
+                    :class="[btnClass, editor.isActive('blockquote') ? activeBtnClass : '']" title="Quote">
+                    <i class="fa-solid fa-quote-left text-[11px]"></i>
+                </button>
+
+                <!-- Divider -->
+                <span class="w-px h-4 bg-border mx-1 shrink-0"></span>
 
                 <!-- Link -->
                 <button @click.prevent="openLinkPanel"
-                    :class="[btnClass, editor.isActive('link') ? activeBtnClass : '']" title="Add/Edit link">
-                    <i class="fa-regular fa-link"></i>
+                    :class="[btnClass, editor.isActive('link') ? activeBtnClass : '']" title="Add link">
+                    <i class="fa-solid fa-link text-[11px]"></i>
                 </button>
 
-                <!-- Uploads -->
-                <button type="button" @click="triggerImagePicker" :class="btnClass" title="Upload image">
-                    <i class="fa-regular fa-image"></i>
+                <!-- Image -->
+                <button type="button" @click="triggerImagePicker" :class="btnClass" title="Insert image"
+                    :disabled="uploadingImages.length > 0">
+                    <i v-if="uploadingImages.length > 0" class="fa-solid fa-spinner animate-spin text-[11px]"></i>
+                    <i v-else class="fa-regular fa-image text-[11px]"></i>
                 </button>
-                <input ref="imageInput" type="file" class="hidden" accept="image/*" multiple
-                    @change="handleImageUpload" />
+                <input ref="imageInput" type="file" class="hidden" accept="image/*" multiple @change="handleImageUpload" />
 
-                <!-- Attachments fan-out -->
-                <div class="relative" @mouseenter="showFan = true" @mouseleave="showFan = false">
-                    <!-- trigger -->
-                    <button type="button" @click="triggerFilePicker" :class="btnClass + ' relative'"
-                        title="Upload file">
-                        <i class="fa-regular fa-file"></i>
-
-                        <!-- count badge -->
-                        <span v-if="filePreviews.length" class="absolute -top-1.5 -right-1.5 min-w-[1.2rem] h-[1.2rem] px-1 rounded-full text-[10px] leading-[1.2rem] text-white text-center
-             bg-purple-600 shadow ring-1 ring-black/10">
-                            {{ filePreviews.length }}
-                        </span>
-                    </button>
-
-                    <!-- fan-out icons -->
-                    <!-- fan-out icons -->
-                    <div class="relative">
-                        <button v-for="(f, i) in filePreviewIcons" :key="f.key" class="fan-pill absolute z-10 w-8 h-8 rounded-full shadow ring-1 ring-black/10
-           bg-white dark:bg-neutral-800 flex items-center justify-center overflow-hidden"
-                            :style="fanStyle(i, filePreviewIcons.length)" @click.stop="openAttachment(f.url)"
-                            :title="f.name">
-                            <img v-if="f.thumb" :src="f.thumb" class="w-5 h-5 object-cover rounded-sm" alt="" />
-                            <i v-else :class="f.icon" class="text-[14px]"></i>
-                        </button>
-                    </div>
-
-                </div>
-
+                <!-- Attachment -->
+                <button type="button" @click="triggerFilePicker" :class="btnClass" title="Attach file">
+                    <i class="fa-solid fa-paperclip text-[11px]"></i>
+                </button>
                 <input ref="fileInput" type="file" class="hidden" multiple @change="handleFileUpload" />
 
+                <!-- Divider -->
+                <span class="w-px h-4 bg-border mx-1 shrink-0"></span>
+
+                <!-- Undo/Redo -->
+                <button @click="editor.chain().focus().undo().run()" :disabled="!editor.can().undo()" :class="btnClass" title="Undo">
+                    <i class="fa-solid fa-rotate-left text-[11px]"></i>
+                </button>
+                <button @click="editor.chain().focus().redo().run()" :disabled="!editor.can().redo()" :class="btnClass" title="Redo">
+                    <i class="fa-solid fa-rotate-right text-[11px]"></i>
+                </button>
+            </div>
+
+            <!-- ── Content area ────────────────────────────────────────────── -->
+            <EditorContent :placeholder="placeholder" :editor="editor"
+                :class="['min-h-[150px] max-h-[400px] overflow-y-auto px-4 py-3 editor-shell', theme === 'dark' ? 'text-white' : 'text-text-primary']" />
+
+            <!-- Upload skeletons -->
+            <div v-if="uploadingImages.length > 0" class="px-4 pb-3 flex flex-wrap gap-2">
+                <div
+                    v-for="item in uploadingImages"
+                    :key="item.id"
+                    class="image-skeleton rounded-xl overflow-hidden border border-border relative"
+                    style="width: 120px; height: 90px;"
+                >
+                    <div class="skeleton-shimmer w-full h-full"></div>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                        <i class="fa-solid fa-spinner animate-spin text-text-secondary text-base"></i>
+                        <span class="text-[10px] text-text-secondary">Uploading…</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── File/image preview strip ───────────────────────────────── -->
+            <div v-if="filePreviews.length > 0" :class="[
+                'border-t px-3 py-2 flex flex-wrap gap-2',
+                theme === 'dark' ? 'border-border bg-[#0D0D10]' : 'border-border bg-bg-body'
+            ]">
+                <div
+                    v-for="(f, idx) in filePreviews"
+                    :key="idx"
+                    class="file-chip group flex items-center gap-2 rounded-lg border border-border px-2 py-1.5 cursor-pointer hover:border-accent/60 transition-all"
+                    :class="theme === 'dark' ? 'bg-[#1a1a1f] hover:bg-[#22222a]' : 'bg-bg-surface hover:bg-bg-card'"
+                    @click="openAttachment(f.url)"
+                    :title="f.name"
+                >
+                    <div v-if="isImageFile(f)" class="w-9 h-9 rounded-md overflow-hidden shrink-0 border border-border">
+                        <img :src="f.url" :alt="f.name" class="w-full h-full object-cover" />
+                    </div>
+                    <div v-else class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 border border-border"
+                        :class="theme === 'dark' ? 'bg-[#131318]' : 'bg-bg-input'">
+                        <i :class="[fileIcon(f.name), fileIconColor(f.name), 'text-[18px]']"></i>
+                    </div>
+                    <div class="flex flex-col min-w-0" style="max-width: 120px">
+                        <span class="text-[12px] font-medium text-text-primary truncate leading-tight">{{ f.name }}</span>
+                        <span class="text-[10px] text-text-secondary uppercase tracking-wide leading-tight mt-0.5">{{ fileExt(f.name) }}</span>
+                    </div>
+                    <button
+                        type="button"
+                        class="w-5 h-5 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-text-secondary hover:text-red-400 shrink-0 ml-1"
+                        @click.stop="removeFilePreview(idx)"
+                        title="Remove"
+                    >
+                        <i class="fa-solid fa-times text-[10px]"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -106,13 +158,14 @@
         :initial-new-tab="linkDraft.newTab" @insert="insertLink" />
 </template>
 
+
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { Editor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
-import { usePrivateUploadFile } from '../../queries/useCommon'
+import { uploadPrivateFile } from '../../queries/useCommon'
 import LinkDialog from './LinkDialog.vue'
 
 const props = withDefaults(defineProps<{
@@ -127,10 +180,21 @@ const emit = defineEmits(['update:modelValue', 'focusOut'])
 const imageInput = ref<HTMLInputElement | null>(null)
 const fileInput = ref<HTMLInputElement | null>(null)
 const filePreviews = ref<{ name: string; url: string }[]>([])
-watch(() => filePreviews.value, () => {
-    console.log(filePreviews, '>>>> filePreviews <<<<<');
 
-})
+// ─── Upload skeleton tracking ─────────────────────────────────────────────────
+const uploadingImages = ref<{ id: string }[]>([])
+
+function addUploadingPlaceholder(): string {
+    const id = `upload-${Date.now()}-${Math.random()}`
+    uploadingImages.value = [...uploadingImages.value, { id }]
+    return id
+}
+
+function removeUploadingPlaceholder(id: string) {
+    uploadingImages.value = uploadingImages.value.filter(u => u.id !== id)
+}
+
+// ─── Editor setup ─────────────────────────────────────────────────────────────
 const editor = new Editor({
     content: props.modelValue,
     extensions: [
@@ -139,10 +203,16 @@ const editor = new Editor({
             openOnClick: true,
             autolink: true,
             linkOnPaste: true,
-            HTMLAttributes: { rel: 'noopener noreferrer nofollow' }, // target set per-link in insertLink
+            HTMLAttributes: { rel: 'noopener noreferrer nofollow' },
             validate: href => validateUrl(href),
         }),
-        Image,
+        Image.configure({
+            inline: false,
+            allowBase64: false,
+            HTMLAttributes: {
+                class: 'editor-image',
+            },
+        }),
     ],
     onUpdate: ({ editor }) => emit('update:modelValue', editor.getHTML()),
     onBlur: () => emit('focusOut', filePreviews.value),
@@ -155,18 +225,22 @@ const editor = new Editor({
                 imageItems.forEach(item => {
                     const file = item.getAsFile()
                     if (file) {
+                        const pid = addUploadingPlaceholder()
                         const fd = new FormData()
                         fd.append('file', file)
-                        uploadFile(fd, {
-                            onSuccess: (resp: any) => {
+                        runUpload(
+                            fd,
+                            (resp: any) => {
                                 const url = resp?.data?.url
-                                const name = resp?.data?.name
+                                const name = resp?.data?.name || file.name
+                                removeUploadingPlaceholder(pid)
                                 if (url) {
-                                    editor.chain().focus().insertContent(`<img src="${url}" alt="${name}" />`).run()
+                                    insertImageIntoEditor(url, name)
                                     filePreviews.value = [...filePreviews.value, { name, url }]
                                 }
-                            }
-                        })
+                            },
+                            () => removeUploadingPlaceholder(pid)
+                        )
                     }
                 })
                 return true
@@ -179,24 +253,29 @@ const editor = new Editor({
             if (imageFiles.length > 0) {
                 event.preventDefault()
                 imageFiles.forEach(file => {
+                    const pid = addUploadingPlaceholder()
                     const fd = new FormData()
                     fd.append('file', file)
-                    uploadFile(fd, {
-                        onSuccess: (resp: any) => {
+                    runUpload(
+                        fd,
+                        (resp: any) => {
                             const url = resp?.data?.url
-                            const name = resp?.data?.name
+                            const name = resp?.data?.name || file.name
+                            removeUploadingPlaceholder(pid)
                             if (url) {
-                                // Try to insert at the drop position
-                                const coordinates = view.posAtCoords({ left: event.clientX, top: event.clientY })
-                                if (coordinates) {
-                                    editor.chain().setTextSelection(coordinates.pos).insertContent(`<img src="${url}" alt="${name}" />`).run()
+                                const coords = view.posAtCoords({ left: event.clientX, top: event.clientY })
+                                if (coords) {
+                                    editor.chain().setTextSelection(coords.pos)
+                                        .insertContent(`<img src="${url}" alt="${name}" class="editor-image" />`)
+                                        .run()
                                 } else {
-                                    editor.chain().focus().insertContent(`<img src="${url}" alt="${name}" />`).run()
+                                    insertImageIntoEditor(url, name)
                                 }
                                 filePreviews.value = [...filePreviews.value, { name, url }]
                             }
-                        }
-                    })
+                        },
+                        () => removeUploadingPlaceholder(pid)
+                    )
                 })
                 return true
             }
@@ -205,6 +284,35 @@ const editor = new Editor({
     }
 })
 
+// ─── Insert image at end of editor ────────────────────────────────────────────
+function insertImageIntoEditor(url: string, name: string) {
+    const endPos = editor.state.doc.content.size
+    editor.chain()
+        .setTextSelection(endPos)
+        .insertContent(`<img src="${url}" alt="${name}" class="editor-image" />`)
+        .run()
+}
+
+// ─── Insert non-image file attachment into editor ──────────────────────────────
+function insertFileAttachmentIntoEditor(url: string, name: string, ext: string) {
+    // Pick an emoji icon by extension so it renders in plain HTML (no CSS dependency)
+    const iconMap: Record<string, string> = {
+        pdf: '📄', doc: '📝', docx: '📝', xls: '📊', xlsx: '📊', csv: '📊',
+        ppt: '📑', pptx: '📑', zip: '🗜️', rar: '🗜️', '7z': '🗜️',
+        txt: '📃', md: '📃', mp4: '🎬', mov: '🎬', avi: '🎬', webm: '🎬',
+        mp3: '🎵', wav: '🎵', ogg: '🎵',
+    }
+    const icon = iconMap[ext] || '📎'
+    const endPos = editor.state.doc.content.size
+    editor.chain()
+        .setTextSelection(endPos)
+        .insertContent(
+            `<p><a href="${url}" target="_blank" rel="noopener noreferrer" class="file-attachment-link" data-ext="${ext}">${icon}&nbsp;${name}</a></p>`
+        )
+        .run()
+}
+
+// ─── Text type ────────────────────────────────────────────────────────────────
 const textType = ref<'paragraph' | 'heading1' | 'heading2'>('paragraph')
 function setTextType() {
     if (textType.value === 'heading1') editor.chain().focus().setHeading({ level: 1 }).run()
@@ -212,58 +320,87 @@ function setTextType() {
     else editor.chain().focus().setParagraph().run()
 }
 
-const { mutate: uploadFile } = usePrivateUploadFile();
+// Use the raw async function directly so multiple parallel uploads
+// all complete independently — useMutation is single-slot and
+// cancels previous callbacks when called concurrently.
+async function runUpload(
+    fd: FormData,
+    onSuccess: (resp: any) => void,
+    onError?: () => void
+) {
+    try {
+        const resp = await uploadPrivateFile(fd)
+        onSuccess(resp)
+    } catch {
+        onError?.()
+    }
+}
 
+// ─── Image upload (toolbar button) ────────────────────────────────────────────
 function handleImageUpload(e: Event) {
     const files = (e.target as HTMLInputElement).files
     if (!files) return
 
     Array.from(files).forEach(file => {
+        const pid = addUploadingPlaceholder()
         const fd = new FormData()
         fd.append('file', file)
-        uploadFile(fd, {
-            onSuccess: (resp: any) => {
+        runUpload(
+            fd,
+            (resp: any) => {
                 const url = resp?.data?.url
-                const name = resp?.data?.name
+                const name = resp?.data?.name || file.name
+                removeUploadingPlaceholder(pid)
                 if (url) {
-                    // Move the cursor to the end of the editor
-                    const { doc } = editor.state
-                    const endPos = doc.content.size
-                    editor.chain().setTextSelection(endPos).insertContent(`<img src="${url}" alt="${name}" />`).run()
+                    insertImageIntoEditor(url, name)
                     filePreviews.value = [...filePreviews.value, { name, url }]
                 }
-            }
-        })
+            },
+            () => removeUploadingPlaceholder(pid)
+        )
     })
+
+    // Allow re-selecting the same file
+    if (imageInput.value) imageInput.value.value = ''
 }
 
-
+// ─── File upload (non-image attachments) ──────────────────────────────────────
 function handleFileUpload(e: Event) {
     const files = (e.target as HTMLInputElement).files
     if (!files) return
     Array.from(files).forEach(file => {
+        const pid = addUploadingPlaceholder()
         const fd = new FormData()
         fd.append('file', file)
-        uploadFile(fd, {
-            onSuccess: (resp: any) => {
-                 const url = resp?.data?.url
-                 const name = resp?.data?.name
-                 if (url) {
+        runUpload(
+            fd,
+            (resp: any) => {
+                const url = resp?.data?.url
+                const name = resp?.data?.name || file.name
+                const ext = (name.split('.').pop() || '').toLowerCase()
+                removeUploadingPlaceholder(pid)
+                if (url) {
+                    // Insert into editor so it's saved with the description
+                    insertFileAttachmentIntoEditor(url, name, ext)
                     filePreviews.value = [...filePreviews.value, { name, url }]
-                 }
-            }
-        })
+                }
+            },
+            () => removeUploadingPlaceholder(pid)
+        )
     })
+    if (fileInput.value) fileInput.value.value = ''
 }
 
 function triggerImagePicker() { imageInput?.value?.click() }
 function triggerFilePicker() { fileInput?.value?.click() }
 
+// ─── Sync content ─────────────────────────────────────────────────────────────
 watch(() => props.modelValue, (val) => {
     if (val !== editor.getHTML()) editor.commands.setContent(val || '', false)
 })
 onBeforeUnmount(() => editor.destroy())
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
 const btnClass = computed(() =>
     [
         'px-2 py-1 rounded-md border text-sm transition',
@@ -275,6 +412,7 @@ const btnClass = computed(() =>
 )
 const activeBtnClass = computed(() => props.theme === 'dark' ? 'bg-[#2B2C30] text-white' : 'bg-accent text-white')
 
+// ─── URL validation ───────────────────────────────────────────────────────────
 function validateUrl(href: string) {
     try {
         if (!href) return false
@@ -284,21 +422,16 @@ function validateUrl(href: string) {
     } catch { return false }
 }
 
-/* Link dialog wiring */
+// ─── Link dialog ──────────────────────────────────────────────────────────────
 const showLinkDialog = ref(false)
 const linkDraft = ref<{ href?: string; text?: string; newTab?: boolean }>({})
+
 function openLinkPanel() {
     const attrs = editor.getAttributes('link') || {}
     const { from, to } = editor.state.selection
     const selectedText = editor.state.doc.textBetween(from, to) || ''
-
     const newTab = attrs.target == null ? true : attrs.target === '_blank'
-
-    linkDraft.value = {
-        href: attrs.href || '',
-        text: selectedText || '',
-        newTab,
-    }
+    linkDraft.value = { href: attrs.href || '', text: selectedText || '', newTab }
     showLinkDialog.value = true
 }
 
@@ -320,105 +453,178 @@ function insertLink({ href, text, newTab }: { href: string; text?: string; newTa
     }
 }
 
-/* Focus anywhere in wrapper (but not on toolbar buttons) */
+// ─── Focus helper ─────────────────────────────────────────────────────────────
 function focusEditor(e?: MouseEvent) {
     const target = e?.target as HTMLElement | undefined
     if (target && target.closest('[data-editor-toolbar]')) return
     editor?.commands.focus()
 }
 
-
-// Show/hide fan on hover
-const showFan = ref(false);
-
-// Build small set of icon items (limit to 6 around the arc)
-const filePreviewIcons = computed(() => {
-    const mapIcon = (name: string) => {
-        const ext = (name.split('.').pop() || '').toLowerCase();
-        if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) return null; // thumbnail via <img>
-        if (['pdf'].includes(ext)) return 'fa-regular fa-file-pdf';
-        if (['doc', 'docx'].includes(ext)) return 'fa-regular fa-file-word';
-        if (['xls', 'xlsx', 'csv'].includes(ext)) return 'fa-regular fa-file-excel';
-        if (['ppt', 'pptx'].includes(ext)) return 'fa-regular fa-file-powerpoint';
-        if (['zip', 'rar', '7z'].includes(ext)) return 'fa-regular fa-file-zipper';
-        if (['txt', 'md'].includes(ext)) return 'fa-regular fa-file-lines';
-        return 'fa-regular fa-file';
-    };
-
-    return filePreviews.value.slice(0, 6).map((f, idx) => ({
-        key: `${f.name}-${idx}`,
-        name: f.name,
-        url: f.url,
-        thumb: /\.(png|jpe?g|gif|webp|svg)$/i.test(f.url) ? f.url : null,
-        icon: mapIcon(f.name),
-    }));
-});
-
-// Open the file (you can replace with in-app preview)
-function openAttachment(url: string) {
-    window.open(url, '_blank');
-}
-function fanStyle(i: number, n: number) {
-    // How wide the arc should be (degrees). More items → a bit wider, but capped.
-    const minSpan = 50;   // tighter cluster for 2 items
-    const maxSpan = 100;  // don't go too wide
-    const span = Math.min(maxSpan, minSpan + (n - 1) * 12);
-
-    // Keep them centered above the button
-    const center = -90;
-    const start = center - span / 2;
-    const end = center + span / 2;
-
-    // Radius in px (slightly increases with count, but capped)
-    const baseR = 44;
-    const maxR = 60;
-    const r = Math.min(maxR, baseR + (n - 1) * 3);
-
-    // Compute position on arc
-    const angle = n <= 1 ? center : start + ((end - start) * (i / (n - 1)));
-    const rad = (angle * Math.PI) / 180;
-    const tx = Math.round(r * Math.cos(rad));
-    const ty = Math.round(r * Math.sin(rad)); // negative = up
-
-    // Optional: tiny stagger for a nicer feel
-    const delay = `${i * 25}ms`;
-
-    return {
-        transform: showFan.value
-            ? `translate(${tx}px, ${ty - 18}px) scale(1)`
-            : `translate(0px, 0px) scale(0.6)`,
-        opacity: showFan.value ? 1 : 0,
-        transitionDelay: showFan.value ? delay : '0ms',
-    } as const;
+// ─── Professional file preview helpers ───────────────────────────────────────
+function isImageFile(f: { name: string; url: string }): boolean {
+    return /\.(png|jpe?g|gif|webp|svg)$/i.test(f.url) || /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name)
 }
 
+function fileExt(name: string): string {
+    return (name.split('.').pop() || 'file').toLowerCase()
+}
+
+function fileIcon(name: string): string {
+    const ext = fileExt(name)
+    if (['pdf'].includes(ext)) return 'fa-regular fa-file-pdf'
+    if (['doc', 'docx'].includes(ext)) return 'fa-regular fa-file-word'
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'fa-regular fa-file-excel'
+    if (['ppt', 'pptx'].includes(ext)) return 'fa-regular fa-file-powerpoint'
+    if (['zip', 'rar', '7z'].includes(ext)) return 'fa-regular fa-file-zipper'
+    if (['txt', 'md'].includes(ext)) return 'fa-regular fa-file-lines'
+    if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return 'fa-regular fa-file-video'
+    if (['mp3', 'wav', 'ogg'].includes(ext)) return 'fa-regular fa-file-audio'
+    return 'fa-regular fa-file'
+}
+
+function fileIconColor(name: string): string {
+    const ext = fileExt(name)
+    if (['pdf'].includes(ext)) return 'text-red-500'
+    if (['doc', 'docx'].includes(ext)) return 'text-blue-500'
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'text-green-500'
+    if (['ppt', 'pptx'].includes(ext)) return 'text-orange-500'
+    if (['zip', 'rar', '7z'].includes(ext)) return 'text-amber-500'
+    if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return 'text-purple-500'
+    if (['mp3', 'wav', 'ogg'].includes(ext)) return 'text-pink-500'
+    return 'text-text-secondary'
+}
+
+function removeFilePreview(idx: number) {
+    filePreviews.value = filePreviews.value.filter((_, i) => i !== idx)
+}
+
+function openAttachment(url: string) { window.open(url, '_blank'); }
 
 </script>
 
 <style scoped>
-/* Remove focus outlines from the editable area */
+/* ─── Base editor ────────────────────────────────────────────────────────────── */
 :deep(.ProseMirror),
 :deep(.ProseMirror:focus) {
     outline: none !important;
     min-height: 150px;
-    padding-bottom: 50px; /* Space to click below content */
+    padding-bottom: 50px;
 }
 
+/* ─── Image block styling ────────────────────────────────────────────────────── */
+:deep(.ProseMirror img.editor-image),
 :deep(.ProseMirror img) {
-    max-width: 100%;
-    height: auto;
     display: block;
-    margin: 0.5rem 0;
-    transition: box-shadow 0.2s;
+    max-width: min(100%, 480px);
+    width: auto;
+    height: auto;
+    margin: 0.75rem 0;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    background: #f5f5f5;
+    transition: box-shadow 0.2s ease, transform 0.15s ease;
     cursor: default;
+    object-fit: contain;
+}
+
+:deep(.ProseMirror img.editor-image:hover),
+:deep(.ProseMirror img:hover) {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.13), 0 2px 6px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
 :deep(.ProseMirror img.ProseMirror-selectednode) {
-    outline: 2px solid #5a2d7f;
-    box-shadow: 0 0 0 4px rgba(90, 45, 127, 0.1);
+    outline: 2px solid #7c3aed;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+    transform: none;
 }
 
-/* Gapcursor styling - allows placing cursor between blocks or at start/end */
+/* Dark theme */
+.dark :deep(.ProseMirror img.editor-image),
+.dark :deep(.ProseMirror img) {
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.45), 0 1px 4px rgba(0, 0, 0, 0.30);
+    background: #1a1a1f;
+}
+
+/* ─── File attachment link (rendered in editor + v-html view mode) ───────────── */
+:deep(.ProseMirror a.file-attachment-link),
+:deep(a.file-attachment-link) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    margin: 0.25rem 0;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    text-decoration: none !important;
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    background: rgba(124, 58, 237, 0.07);
+    color: #7c3aed;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    max-width: 320px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+:deep(.ProseMirror a.file-attachment-link:hover),
+:deep(a.file-attachment-link:hover) {
+    background: rgba(124, 58, 237, 0.14);
+    border-color: rgba(124, 58, 237, 0.45);
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.15);
+}
+
+/* Dark theme */
+.dark :deep(.ProseMirror a.file-attachment-link),
+.dark :deep(a.file-attachment-link) {
+    background: rgba(124, 58, 237, 0.12);
+    border-color: rgba(124, 58, 237, 0.30);
+    color: #a78bfa;
+}
+
+.dark :deep(.ProseMirror a.file-attachment-link:hover),
+.dark :deep(a.file-attachment-link:hover) {
+    background: rgba(124, 58, 237, 0.22);
+    border-color: rgba(124, 58, 237, 0.55);
+}
+
+/* ─── Upload skeleton ────────────────────────────────────────────────────────── */
+.image-skeleton {
+    background: var(--bg-surface, #f3f4f6);
+    flex-shrink: 0;
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.04) 25%,
+        rgba(0, 0, 0, 0.09) 50%,
+        rgba(0, 0, 0, 0.04) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite linear;
+}
+
+.dark .skeleton-shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.09) 50%,
+        rgba(255, 255, 255, 0.04) 75%
+    );
+    background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ─── Gapcursor ──────────────────────────────────────────────────────────────── */
 :deep(.ProseMirror-gapcursor) {
     display: none;
     pointer-events: none;
@@ -440,6 +646,19 @@ function fanStyle(i: number, n: number) {
     display: block;
 }
 
+:deep(.ProseMirror img) {
+    margin: 12px 0;
+    border-radius: 8px;
+    display: block;
+    max-width: 100%;
+    transition: box-shadow 0.2s ease;
+}
+
+:deep(.ProseMirror img.ProseMirror-selectednode) {
+    outline: 2px solid #7c3aad;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.15);
+}
+
 .ProseMirror-focused {
     border: none !important;
     outline: none !important;
@@ -450,33 +669,11 @@ function fanStyle(i: number, n: number) {
     outline: none !important;
 }
 
-/* Fan-out transitions; we animate from the trigger button center */
-.fan-enter-from,
-.fan-leave-to {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.6);
+/* ─── File chip strip ────────────────────────────────────────────────────────── */
+.file-chip {
+    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
-
-.fan-enter-active,
-.fan-leave-active {
-    transition: opacity 180ms ease, transform 220ms cubic-bezier(.2, .7, .2, 1.1);
-}
-
-.fan-enter-to,
-.fan-leave-from {
-    opacity: 1;
-    transform: translate(var(--tx), var(--ty)) scale(1);
-}
-
-/* When shown (computed style sets --tx/--ty), keep them at final positions */
-.fan-move {
-    transition: transform 220ms ease;
-}
-
-/* Smoothly animate to/from their arc positions */
-.fan-pill {
-    transition: transform 220ms cubic-bezier(.2, .7, .2, 1.05), opacity 160ms ease;
-    /* optional: subtle stacking so they don't visually merge */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+.file-chip:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
 }
 </style>

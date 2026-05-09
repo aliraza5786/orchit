@@ -2516,21 +2516,5 @@ declare global {
 </script>
 
 <style scoped>
-/* Force visible scrollbars only where applied */
-.scrollbar-visible::-webkit-scrollbar {
-  display: block !important;
-  height: 8px;
-  width: 8px;
-}
-.scrollbar-visible::-webkit-scrollbar-thumb {
-  background-color: rgba(150, 150, 150, 0.4);
-  border-radius: 8px;
-}
-.scrollbar-visible::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(150, 150, 150, 0.6);
-}
-.scrollbar-visible {
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(150, 150, 150, 0.5) transparent !important;
-}
 </style>
+

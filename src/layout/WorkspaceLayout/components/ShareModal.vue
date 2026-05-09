@@ -827,7 +827,8 @@ function submit() {
         })),
       }),
 
-      ...(props.resourceType === "module" && {
+      ...((props.resourceType === "module" ||
+        props.resourceType === "sheet") && {
         workspace_role_id: form.workspace_role_id,
       }),
 
