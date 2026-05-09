@@ -935,7 +935,7 @@ const adminEmail = computed(() =>
 )
 
 // ─── Computed: slug/dns availability ─────────────────────────────────────────
-const isAnyChecking = computed(() => isCheckingSlug.value || isCheckingDns.value)
+// const isAnyChecking = computed(() => isCheckingSlug.value || isCheckingDns.value)
 const isFullyAvailable = computed(() => isSlugAvailable.value === true)
 const isAnyUnavailable = computed(() => isSlugAvailable.value === false)
 
