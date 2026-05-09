@@ -274,15 +274,16 @@ async fetchTitleSlug(slug: string) {
        
       }
     },
-    // async fetchWorkspaceBySlug(slug: string) {
-    //   try {
-    //     const res = await api.get(`tenant/workspace/${slug}`);
-    //     const data = res.data?.data;
-    //     return data;
-    //   } catch (err: any) {
-    //     console.error("fetchWorkspaceBySlug:", err);
-    //     return null;
-    //   }
-    // },
+   async fetchDnsCheck(domain: string) {
+  try {
+    const res = await api.get(`tenant/dns-check/${domain}`)
+    return res.data?.data   // inner data on success
+  } catch (err: any) {
+    console.error('fetchDnsCheck:', err)
+    return { __error: true, message: err?.response?.data?.message ?? 'Could not verify domain.' }
+  } finally {
+    console.log('dns check completed')
+  }
+}
   },
 });
