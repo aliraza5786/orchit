@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import api from '../libs/api'
-
 const COOKIE_KEY = 'auth_session'
-function getAuthCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
+function parseCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
   try {
     const raw = document.cookie
       .split('; ')
@@ -15,18 +14,17 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
   }
 }
 
-function setAuthCookie(data: { token?: string; company_id?: string | null; personal_mode?: boolean | null }) {
+function writeCookie(data: {
+  token?: string
+  company_id?: string | null
+  personal_mode?: boolean | null
+}) {
   try {
-    const existing = getAuthCookie() || {}
-    const merged = { ...existing, ...data }
+    const existing = parseCookie() || {}
+    const merged: Record<string, unknown> = { ...existing, ...data }
 
-    if (data.company_id === null) {
-      delete merged.company_id
-    }
-
-    if (data.personal_mode === null) {
-      delete merged.personal_mode
-    }
+    if (data.company_id === null) delete merged.company_id
+    if (data.personal_mode === null) delete merged.personal_mode
 
     const value = encodeURIComponent(JSON.stringify(merged))
     const maxAge = 60 * 60 * 24 * 30
@@ -42,18 +40,26 @@ function setAuthCookie(data: { token?: string; company_id?: string | null; perso
   }
 }
 
-function clearAuthCookie() {
-  document.cookie = `${COOKIE_KEY}=; domain=.streamed.space; path=/; max-age=0`
-  document.cookie = `${COOKIE_KEY}=; path=/; max-age=0`
-  document.cookie = `auth_token=; domain=.streamed.space; path=/; max-age=0`
-  document.cookie = `auth_token=; path=/; max-age=0`
-  console.log('🍪 Auth cookies cleared from all domains')
+function clearCookies() {
+  const pairs = [
+    `${COOKIE_KEY}=; domain=.streamed.space; path=/; max-age=0`,
+    `${COOKIE_KEY}=; path=/; max-age=0`,
+    `auth_token=; domain=.streamed.space; path=/; max-age=0`,
+    `auth_token=; path=/; max-age=0`,
+    `space_auth=; domain=.streamed.space; path=/; max-age=0`,
+    `space_auth=; path=/; max-age=0`,
+  ]
+  pairs.forEach(p => (document.cookie = p))
+}
+export function getToken(): string | null {
+  const session = parseCookie()
+  if (session?.token) return session.token
+  return localStorage.getItem('token')
 }
 
 export const useAuthStore = defineStore('auth', {
   state: () => {
-    const session = getAuthCookie()
-    // If personal_mode is in cookie, ignore company_id entirely
+    const session = parseCookie()
     if (session?.personal_mode) {
       return {
         user: null as any,
@@ -66,7 +72,7 @@ export const useAuthStore = defineStore('auth', {
       user: null as any,
       initialized: false,
       userId: localStorage.getItem('user_id') as string | null,
-      company_id: session?.company_id ?? localStorage.getItem('company_id') as string | null,
+      company_id: session?.company_id ?? localStorage.getItem('company_id') ?? null,
     }
   },
 
@@ -79,58 +85,54 @@ export const useAuthStore = defineStore('auth', {
       this.company_id = id
       localStorage.setItem('company_id', id)
       localStorage.removeItem('personal_mode')
-      setAuthCookie({ company_id: id, personal_mode: null })
+      writeCookie({ company_id: id, personal_mode: null })
     },
 
     clearCompany() {
       this.company_id = null
       localStorage.removeItem('company_id')
       localStorage.setItem('personal_mode', 'true')
-      // Store personal_mode in cookie so ALL subdomains see it on next load
-      setAuthCookie({ company_id: null, personal_mode: true })
+      writeCookie({ company_id: null, personal_mode: true })
     },
 
     async bootstrap() {
       if (this.initialized) return
-
       const urlParams = new URLSearchParams(window.location.search)
       const encodedToken = urlParams.get('_auth')
-
-      const cleanBase64 = (str: string) =>
-        str.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '=')
-
       if (encodedToken) {
         try {
-          let token = encodedToken
-          if (!encodedToken.startsWith('eyJ')) {
-            token = atob(cleanBase64(encodedToken))
-          }
+          const token = encodedToken.startsWith('eyJ')
+            ? encodedToken
+            : atob(encodedToken.replace(/-/g, '+').replace(/_/g, '/').replace(/\./g, '='))
           localStorage.setItem('token', token)
-          setAuthCookie({ token })
-        } catch (e) {
-          console.log('❌ Token decode failed, using existing token')
+          writeCookie({ token })
+        } catch {
+          // keep existing token
         }
+
+        urlParams.delete('_auth')
+        urlParams.delete('welcome')
+        const newUrl =
+          window.location.pathname +
+          (urlParams.toString() ? '?' + urlParams.toString() : '')
+        window.history.replaceState({}, '', newUrl)
       }
 
-      const transientParams = ['_auth', 'welcome']
-      transientParams.forEach(p => urlParams.delete(p))
-      const newUrl =
-        window.location.pathname +
-        (urlParams.toString() ? '?' + urlParams.toString() : '')
-      window.history.replaceState({}, '', newUrl)
-
-      const session = getAuthCookie()
-      const token = session?.token ?? localStorage.getItem('token')
+      const token = getToken()
       if (!token) {
         this.initialized = true
         return
       }
+      const session = parseCookie()
+      if (!session?.token) {
+        writeCookie({ token })
+      }
 
-      // If personal_mode is in cookie, clear company from this subdomain's localStorage too
+      // personal_mode takes priority
       if (session?.personal_mode) {
         localStorage.removeItem('company_id')
         this.company_id = null
-      } else if (session?.company_id && localStorage.getItem('company_id')) {
+      } else if (session?.company_id) {
         localStorage.setItem('company_id', session.company_id)
         this.company_id = session.company_id
       }
@@ -140,51 +142,40 @@ export const useAuthStore = defineStore('auth', {
         this.user = res.data
         const activeCompanyId = res.data?.data?.active_company_id
 
-        // Never restore from server if personal_mode is active in cookie
         if (activeCompanyId && !this.company_id && !session?.personal_mode) {
           localStorage.setItem('company_id', activeCompanyId)
           this.company_id = activeCompanyId
-          setAuthCookie({ company_id: activeCompanyId })
+          writeCookie({ company_id: activeCompanyId })
         }
       } catch (e) {
-        console.log('⚠️ Profile fetch failed:', (e as any)?.response?.status)
+        console.warn('⚠️ Profile fetch failed:', (e as any)?.response?.status)
       } finally {
         this.initialized = true
       }
     },
-seedFromStorage() {
-  const personalMode = localStorage.getItem('personal_mode')
-  if (personalMode === 'true') {
-    this.company_id = null
-    localStorage.removeItem('company_id')
-    return
-  }
-  const storedCompanyId = localStorage.getItem('company_id')
-  if (storedCompanyId) {
-    this.company_id = storedCompanyId
-  }
-},
+
+    seedFromStorage() {
+      const session = parseCookie()
+      if (session?.personal_mode || localStorage.getItem('personal_mode') === 'true') {
+        this.company_id = null
+        localStorage.removeItem('company_id')
+        return
+      }
+      // Cookie wins over localStorage for cross-subdomain consistency
+      const id = session?.company_id ?? localStorage.getItem('company_id')
+      if (id) this.company_id = id
+    },
+
     logout() {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user_id')
-      localStorage.removeItem('company_id')
-      localStorage.removeItem('personal_mode')
-      localStorage.removeItem('currentName')
-      localStorage.removeItem('jobId')
-      localStorage.removeItem('mannualWorkspace')
-      localStorage.removeItem('selectedAgentModule')
-      localStorage.removeItem('selectedModuleId')
-      localStorage.removeItem('sprintType')
-      localStorage.removeItem('activeMilestoneId')
-      localStorage.removeItem('activeSprintId')
-      localStorage.removeItem('showActiveSprint')
-      localStorage.removeItem('activeSprintKey')
-      localStorage.removeItem('selectedSprintTitle')
-      localStorage.removeItem('selected_sheet_title')
-      localStorage.removeItem('activeSessionId')
-      localStorage.removeItem('activeSessionTitle')
-      localStorage.removeItem('selected_sheet_id')
-      clearAuthCookie()
+      const keys = [
+        'token', 'user_id', 'company_id', 'personal_mode', 'currentName',
+        'jobId', 'mannualWorkspace', 'selectedAgentModule', 'selectedModuleId',
+        'sprintType', 'activeMilestoneId', 'activeSprintId', 'showActiveSprint',
+        'activeSprintKey', 'selectedSprintTitle', 'selected_sheet_title',
+        'activeSessionId', 'activeSessionTitle', 'selected_sheet_id',
+      ]
+      keys.forEach(k => localStorage.removeItem(k))
+      clearCookies()
       this.user = null
       this.company_id = null
       this.initialized = false

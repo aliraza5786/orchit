@@ -3,7 +3,8 @@ import {
   createWebHistory,
   type RouteRecordRaw,
 } from "vue-router";
-import { useAuthStore } from "../stores/auth";
+import { useAuthStore, getToken } from "../stores/auth";
+import { redirectToLogin } from "../utilities/authRedirect"; // ← new
 import Task from "../views/Workspaces/Task.vue";
 import Users from "../views/Workspaces/Users.vue";
 import api from "../libs/api";
@@ -55,12 +56,12 @@ const routes: RouteRecordRaw[] = [
         path: "",
         name: "new-homepage",
         component: NewHomepage,
-           beforeEnter: (to, from, next) => {
-          const authStore = useAuthStore()
+        beforeEnter: (to, from, next) => {
           console.log(to, from);
           
+          const authStore = useAuthStore()
           if (authStore.isAuthenticated) {
-            next('/dashboard')   // ← could fire if route fails
+            next('/dashboard')
           } else {
             next()
           }
@@ -97,7 +98,7 @@ const routes: RouteRecordRaw[] = [
   { path: "/finish-profile", name: "finishProfile", component: FinishProfile, meta: { requiresAuth: true } },
   { path: "/workspace-invite/:token", name: "workspaceInvite", component: WorkspaceInvite, meta: { requiresAuth: false } },
   { path: "/space-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
-  { path: "/company-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
+  { path: "/company-invite/:token", name: "companyInvite", component: CompanyInvites, meta: { requiresAuth: false } },
   { path: "/company-join/:token", name: "companyjoin", component: companyJoin, meta: { requiresAuth: false } },
   { path: "/join-as-owner/:token/:action", name: "joinAsOwner", component: joinAsOwner, meta: { requiresAuth: false } },
   {
@@ -145,23 +146,28 @@ const router = createRouter({
     return { top: 0, behavior: 'smooth' }
   },
 })
+
+// ── GAP 2 FIX: Axios 401 interceptor ─────────────────────────────────────────
+// Token expired mid-session. Previously did router.replace({ name: 'Login' })
+// which renders company.streamed.space/login — a route that doesn't exist on subdomains.
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       const auth = useAuthStore()
       auth.logout()
-      router.replace({ name: 'Login' })
+      // redirectToLogin() checks hostname — issues hard redirect on subdomains,
+      // uses Vue router on main domain. Never lands on subdomain /login.
+      redirectToLogin(router, window.location.pathname)
     }
     return Promise.reject(error)
   }
 )
 
-// ✅ Single beforeEach — merged both into one
+// ── GAP 1 FIX: beforeEach guard ───────────────────────────────────────────────
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
-  // ✅ Bootstrap only once
   if (!auth.initialized) {
     await auth.bootstrap()
   }
@@ -169,48 +175,37 @@ router.beforeEach(async (to, _from, next) => {
   const hostname = window.location.hostname
   let subdomain: string | null = null
 
-  if (hostname.endsWith('.streamed.space')) {
-    const sub = hostname.replace('.streamed.space', '')
-    if (sub && sub !== 'www' && sub !== 'stagging') {
-      subdomain = sub
-    }
-  } else if (hostname.endsWith('.localhost')) {
-    const sub = hostname.replace('.localhost', '')
-    if (sub && sub !== 'www') {
-      subdomain = sub
-    }
+  if (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') {
+    subdomain = hostname.replace('.streamed.space', '')
+    if (subdomain === 'www' || subdomain === 'stagging') subdomain = null
+  } else if (hostname.endsWith('.localhost') && hostname !== 'localhost') {
+    subdomain = hostname.replace('.localhost', '')
+    if (subdomain === 'www') subdomain = null
   }
 
-  // ✅ On subdomain, unknown paths → go to dashboard
+  // Unknown routes on subdomain → dashboard (not 404)
   if (subdomain && to.name === 'NotFound') {
     return next('/dashboard')
   }
 
-  const requiresAuth = to.matched.some(
-    (record) => record.meta.requiresAuth === true
-  )
-
-const hasToken = !!((() => {
-  try {
-    const raw = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('space_auth='))
-      ?.split('=')[1]
-    if (!raw) return null
-    const session = JSON.parse(decodeURIComponent(raw))
-    return session?.token ?? null
-  } catch { return null }
-})() ?? localStorage.getItem('token'))
+  const requiresAuth = to.matched.some(r => r.meta.requiresAuth === true)
+  const hasToken = !!getToken()
 
   if (requiresAuth && !hasToken) {
+    // GAP 1 FIX: Hard redirect to main domain login when on a subdomain.
+    // next({ name: 'Login' }) would try to render /login on the subdomain
+    // — that route doesn't exist there, causing a blank page or redirect loop.
+    const redirected = redirectToLogin(undefined, to.fullPath)
+    if (redirected) return // hard redirect issued, stop navigation
     return next({ name: 'Login' })
   }
 
-  if (to.name === 'Login' && hasToken) {
+  // Prevent logged-in users from seeing /login on main domain
+  if (to.name === 'Login' && hasToken && !subdomain) {
     return next({ name: 'Home' })
   }
 
   next()
 })
 
-export default router;
+export default router
