@@ -2,7 +2,7 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../stores/auth'
-
+import { isOnSubdomain } from '../../../utilities/authRedirect'
 const props = defineProps<{
   mobileOpen?: boolean
   profile?: any
@@ -43,27 +43,35 @@ onMounted(() => {
 
 watch(mode, (val) => localStorage.setItem('sidebar_mode', val))
 
+
+
 function switchMode(val: 'personal' | 'org') {
   if (val === mode.value) return
   mode.value = val
 
   if (val === 'personal') {
     authStore.clearCompany()
+
+    // FIX: If on a company subdomain, redirect to primary domain settings
+    // not just push query — that would stay on the subdomain
+    if (isOnSubdomain()) {
+      const primary = import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
+      location.href = `${location.protocol}//${primary}/settings?tab=profile`
+      return
+    }
+
     router.push({ query: { tab: 'profile' } })
   } else {
-    // auto-select first org if none active
     const first = companiesList.value[0]
     if (first && !activeCompanyId.value) {
       selectCompany(first, true)
     } else if (activeCompanyId.value) {
       router.push({ query: { tab: 'org-setup' } })
     } else {
-      // no orgs → show create flow
       router.push({ query: { tab: 'org-create' } })
     }
   }
 }
-
 // ─────────────────────────────
 // COMPANY STATE
 // ─────────────────────────────
@@ -88,19 +96,16 @@ const isOwnerOfActive = computed(() =>
 )
 
 const isSwitching = ref(false)
-
 async function selectCompany(company: any, navigate = true) {
   if (!company?._id || isSwitching.value) return
   isSwitching.value = true
   selectedCompanyId.value = company._id
 
   try {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token') ?? ''
     localStorage.setItem('company_id', company._id)
     localStorage.setItem('company_name', company.title)
     authStore.setCompany(company._id)
-    console.log(token);
-    
 
     emit('switch-company', company)
 
@@ -114,7 +119,15 @@ async function selectCompany(company: any, navigate = true) {
 
     if (company.domain_link) {
       const domain = company.domain_link.replace(/^https?:\/\//, '')
-      location.href = `${location.protocol}//${domain}/dashboard`
+      
+      // FIX: Build URL with /settings?tab=org-setup instead of /dashboard
+      // Also pass token in URL for Opera/Safari cross-subdomain cookie issues
+      const url = new URL(`${location.protocol}//${domain}/settings`)
+      url.searchParams.set('tab', 'org-setup')
+      if (token) url.searchParams.set('_token', token)
+      url.searchParams.set('company_id', company._id)
+
+      location.href = url.toString()
     } else {
       router.push({ query: { tab: 'org-setup' } })
     }
@@ -122,10 +135,6 @@ async function selectCompany(company: any, navigate = true) {
     isSwitching.value = false
   }
 }
-
-// ─────────────────────────────
-// NAVIGATION
-// ─────────────────────────────
 const currentTab = computed(() => (route.query.tab as string) || 'profile')
 
 function selectTab(tab: string) {

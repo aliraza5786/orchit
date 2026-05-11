@@ -47,7 +47,7 @@ const handleClick = async (rowEvt: any) => {
   }
 
   // ── Company workspace — redirect to tenant subdomain ───────────────────────
-  const queryParams = new URLSearchParams({ theme, company_id: company._id })
+  const queryParams = new URLSearchParams({ theme })
   
   // ✅ Pass token so tenant subdomain can save it to localStorage on load
   if (token) queryParams.set('_token', token)
@@ -249,13 +249,16 @@ const renderProject = ({ row, value }: any) =>
       ? h('img', {
           src: row.logo,
           alt: value?.title || 'Project',
-          class: 'h-8 w-8 bg-bg-card rounded-full object-cover',
+          class: 'h-8 w-8 shrink-0 bg-bg-card rounded-full object-cover',
           loading: 'lazy',
           decoding: 'async',
         })
-      : h('div', { class: 'h-8 w-8 rounded-full bg-bg-card' }),
+      : h('div', {
+          class: 'h-8 w-8 shrink-0 rounded-full bg-bg-card'
+        }),
+
     h('span', {
-      class: 'cursor-pointer hover:underline',
+      class: 'cursor-pointer hover:underline truncate',
       onClick: (e: Event) => {
         e.stopPropagation()
         handleClick({ row })

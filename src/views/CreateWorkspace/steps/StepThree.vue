@@ -177,7 +177,7 @@ function enforceCapacity(role: Role) {
 
 function addMemberEmail(role: Role, email: string) {
   if (role.people.some(p => p.email.toLowerCase() === email.toLowerCase())) return
-  role.people.push({ name: email.split('@')[0], email })
+  role.people.push({ name: email?.split('@')[0], email })
 }
 
 function removeMember(role: Role, index: number) {
