@@ -623,7 +623,8 @@ import NotificationBell from "./NotificationBell.vue";
 import LimitExceededModal from "../modals/LimitExceededModal.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useCurrentPackage } from "../../../queries/usePackages";
-import { redirectToLogin } from '../../../utilities/authRedirect'
+import { redirectToLogin, getPersonalDashboardUrl } from '../../../utilities/authRedirect'
+
 // ── Types ──────────────────────────────────────────────────────
 interface Account {
   id: string;
@@ -727,24 +728,16 @@ async function confirmSwitch() {
   try {
     await new Promise((res) => setTimeout(res, 800))
 
-    const hostname = window.location.hostname
-    const protocol = window.location.protocol
-    function getMainDomain(): string {
-      if (hostname === 'localhost') return 'localhost'
-      if (hostname.endsWith('.localhost')) return 'localhost'
-      if (hostname.endsWith('.streamed.space')) return 'streamed.space'
-      const parts = hostname.split('.')
-      return parts.length > 2 ? parts.slice(1).join('.') : hostname
-    }
-
     if (pendingAccount.value.type === 'company') {
       authStore.setCompany(pendingAccount.value.id)
       await new Promise((res) => setTimeout(res, 100))
-      window.location.href = `${protocol}//${pendingAccount.value.domain}/dashboard`
+      // Company domain comes from the API via profileData — correct already
+      window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
     } else {
       authStore.clearCompany()
       await new Promise((res) => setTimeout(res, 100))
-      window.location.href = `${protocol}//${getMainDomain()}/dashboard`
+      // FIX: getPersonalDashboardUrl() reads VITE_PRIMARY_DOMAIN — no hardcoding
+      window.location.href = getPersonalDashboardUrl()
     }
   } catch {
     isSwitching.value = false
