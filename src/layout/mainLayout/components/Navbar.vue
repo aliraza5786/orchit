@@ -623,6 +623,7 @@ import NotificationBell from "./NotificationBell.vue";
 import LimitExceededModal from "../modals/LimitExceededModal.vue";
 import { useAuthStore } from "../../../stores/auth";
 import { useCurrentPackage } from "../../../queries/usePackages";
+import { redirectToLogin } from '../../../utilities/authRedirect'
 // ── Types ──────────────────────────────────────────────────────
 interface Account {
   id: string;
@@ -719,27 +720,33 @@ const currentAccount = computed<Account>(() => {
 // ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
-const switchAborted = ref(false);
 async function confirmSwitch() {
   if (!pendingAccount.value) return
   isSwitching.value = true
-  switchAborted.value = false
 
   try {
-    await new Promise((res) => setTimeout(res, 1200))
+    await new Promise((res) => setTimeout(res, 800))
+
+    const hostname = window.location.hostname
+    const protocol = window.location.protocol
+    function getMainDomain(): string {
+      if (hostname === 'localhost') return 'localhost'
+      if (hostname.endsWith('.localhost')) return 'localhost'
+      if (hostname.endsWith('.streamed.space')) return 'streamed.space'
+      const parts = hostname.split('.')
+      return parts.length > 2 ? parts.slice(1).join('.') : hostname
+    }
 
     if (pendingAccount.value.type === 'company') {
       authStore.setCompany(pendingAccount.value.id)
       await new Promise((res) => setTimeout(res, 100))
-      window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
+      window.location.href = `${protocol}//${pendingAccount.value.domain}/dashboard`
     } else {
-      // ✅ Clear everything company-related before redirecting
       authStore.clearCompany()
-      localStorage.removeItem('company_id')  // belt-and-suspenders
       await new Promise((res) => setTimeout(res, 100))
-      window.location.href = `${window.location.protocol}//stagging.streamed.space/dashboard`
+      window.location.href = `${protocol}//${getMainDomain()}/dashboard`
     }
-  } catch (e) {
+  } catch {
     isSwitching.value = false
   }
 }
@@ -809,41 +816,18 @@ function onClickOutside(e: MouseEvent) {
   if (!root.contains(e.target as Node)) closeMenu();
 }
 
-// ── Auth actions ───────────────────────────────────────────────
 async function handleLogout() {
   try {
-    closeMenu();
-    workspaceStore.setWorkspace(null);
-    
-    // ✅ Clear auth state FIRST
-    authStore.logout();
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    
-    // ✅ Wait a bit for cookie clearing to take effect
-    await new Promise((res) => setTimeout(res, 200));
-
-    const hostname = window.location.hostname;
-    const isSubdomain =
-      (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') ||
-      (hostname.endsWith('.localhost') && hostname !== 'localhost');
-
-    if (isSubdomain) {
-      // ✅ Redirect to main domain login with logout flag
-      const protocol = window.location.protocol;
-      const baseDomain = hostname.endsWith('.localhost') ? 'localhost' : 'streamed.space';
-      // Add logout flag to prevent auto-auth on login page
-      window.location.href = `${protocol}//${baseDomain}/login?logout=true`;
-    } else {
-      // ✅ On main domain, redirect to login with logout flag
-      router.push('/login?logout=true');
-    }
+    closeMenu()
+    workspaceStore.setWorkspace(null)
+    authStore.logout()
+    await queryClient.cancelQueries()
+    queryClient.clear()
+    await new Promise((res) => setTimeout(res, 200))
+    redirectToLogin(router, '/dashboard')
   } catch (e) {
-    console.error("Logout failed", e);
-    // ✅ Still redirect even if something fails
-    const hostname = window.location.hostname;
-    const protocol = window.location.protocol;
-    window.location.href = `${protocol}//${hostname === 'streamed.space' ? 'streamed.space' : 'streamed.space'}/login`;
+    console.error('Logout failed', e)
+    redirectToLogin(undefined, '/dashboard')
   }
 }
 

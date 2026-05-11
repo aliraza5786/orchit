@@ -15,13 +15,24 @@ import { createHead } from "@vueuse/head";
 import vue3GoogleLogin from "vue3-google-login";
 import vTooltip from "./directives/vTooltip";
 
+// BUG 2 FIX: Use one consistent cookie name everywhere
 const COOKIE_KEY = "auth_session";
+const maxAge = 60 * 60 * 24 * 30;
 
-function getAuthCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
+const hostname = window.location.hostname;
+// const protocol = window.location.protocol;
+
+if (hostname === "streamed.space" || hostname.endsWith(".streamed.space")) {
+  document.domain = "streamed.space";
+} else if (hostname.endsWith(".localhost")) {
+  try { document.domain = "localhost"; } catch {}
+}
+
+function readCookie(name: string): Record<string, unknown> | null {
   try {
     const raw = document.cookie
       .split("; ")
-      .find((row) => row.startsWith(COOKIE_KEY + "="))
+      .find(row => row.startsWith(name + "="))
       ?.split("=")[1];
     if (!raw) return null;
     return JSON.parse(decodeURIComponent(raw));
@@ -30,95 +41,82 @@ function getAuthCookie(): { token?: string; company_id?: string; personal_mode?:
   }
 }
 
-if (
-  window.location.hostname === "streamed.space" ||
-  window.location.hostname.endsWith(".streamed.space")
-) {
-  document.domain = "streamed.space";
-} else if (window.location.hostname.endsWith(".localhost")) {
-  try {
-    document.domain = "localhost";
-  } catch (e) {
-    console.log("⚠️ Could not set document.domain to localhost:", e);
+function writeAuthCookie(data: Record<string, unknown>) {
+  const existing = readCookie(COOKIE_KEY) || {};
+  const merged = { ...existing, ...data };
+  const value = encodeURIComponent(JSON.stringify(merged));
+  if (hostname === "localhost" || hostname.endsWith(".localhost")) {
+    document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  } else if (hostname.endsWith(".streamed.space")) {
+    document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
   }
 }
 
-const hostname = window.location.hostname;
-const maxAge = 60 * 60 * 24 * 30;
+// ── Step 1: Read URL params ────────────────────────────────────────────────
+const urlParams = new URLSearchParams(window.location.search);
+const urlToken = urlParams.get("_token");
+const urlCompanyId = urlParams.get("company_id");
+const urlTheme = urlParams.get("theme");
+const encodedToken = urlParams.get("_auth");
 
-// ── Step 1: Read URL params FIRST before anything else ────────────────────
-const urlParamsMain = new URLSearchParams(window.location.search);
-const urlToken = urlParamsMain.get("_token");
-const urlCompanyId = urlParamsMain.get("company_id");
-const urlTheme = urlParamsMain.get("theme");
-const encodedToken = urlParamsMain.get("_auth");
-
-// ── Step 2: Save token to localStorage ────────────────────────────────────
+// ── Step 2: Save token ─────────────────────────────────────────────────────
 if (urlToken) {
-  // Token passed explicitly from handleClick
   localStorage.setItem("token", urlToken);
+  writeAuthCookie({ token: urlToken });
 } else if (encodedToken) {
-  // Legacy _auth encoded token
   try {
-    let token = encodedToken;
-    if (!encodedToken.startsWith("eyJ")) {
-      token = atob(
-        encodedToken.replace(/-/g, "+").replace(/_/g, "/").replace(/\./g, "="),
-      );
-    }
+    const token = encodedToken.startsWith("eyJ")
+      ? encodedToken
+      : atob(encodedToken.replace(/-/g, "+").replace(/_/g, "/").replace(/\./g, "="));
     localStorage.setItem("token", token);
-    if (hostname === "localhost" || hostname.endsWith(".localhost")) {
-      document.cookie = `auth_token=${token}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".streamed.space")) {
-      document.cookie = `auth_token=${token}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
-    }
+    writeAuthCookie({ token });
   } catch (e) {
-    console.error("❌ main.ts: Token decode failed:", e);
+    console.error("❌ Token decode failed:", e);
   }
 } else {
-  // ✅ Fallback — pull token from shared space_auth cookie into localStorage
-  try {
-    const raw = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("space_auth="))
-      ?.split("=")[1];
-    if (raw) {
-      const session = JSON.parse(decodeURIComponent(raw));
-      if (session?.token) {
-        localStorage.setItem("token", session.token);
-      }
-    }
-  } catch (e) {
-    console.error("❌ Failed to parse space_auth cookie:", e);
+  // BUG 2 FIX: Read from auth_session (the real cookie), not space_auth.
+  // Also migrate anyone still on the old space_auth cookie.
+  const session = readCookie(COOKIE_KEY);
+  const legacySession = readCookie("space_auth");
+
+  const token = session?.token as string | undefined
+    ?? (legacySession?.token as string | undefined)
+    ?? undefined;
+
+  if (token) {
+    localStorage.setItem("token", token);
+    // Write it into auth_session if it wasn't already there
+    if (!session?.token) writeAuthCookie({ token });
   }
 }
 
-// ── Step 3: Save company_id to localStorage ───────────────────────────────
+// ── Step 3: Save company_id ────────────────────────────────────────────────
 if (urlCompanyId) {
   localStorage.setItem("company_id", urlCompanyId);
+  writeAuthCookie({ company_id: urlCompanyId });
 }
 
-// ── Step 4: Apply theme from URL param ────────────────────────────────────
+// ── Step 4: Apply theme ────────────────────────────────────────────────────
 if (urlTheme) {
   const validThemes: ThemeMode[] = ["light", "dark", "system"];
-  const safeTheme: ThemeMode = validThemes.includes(urlTheme as ThemeMode)
+  const safeTheme = validThemes.includes(urlTheme as ThemeMode)
     ? (urlTheme as ThemeMode)
     : "light";
   localStorage.setItem("theme", safeTheme);
 }
 
-// ── Step 5: Clean URL if any injected params were present ─────────────────
+// ── Step 5: Clean URL ──────────────────────────────────────────────────────
 if (urlToken || urlCompanyId || urlTheme || encodedToken) {
   const cleaned = new URLSearchParams(window.location.search);
-  ["_token", "company_id", "theme", "_auth"].forEach((p) => cleaned.delete(p));
+  ["_token", "company_id", "theme", "_auth"].forEach(p => cleaned.delete(p));
   const newUrl =
     window.location.pathname +
     (cleaned.toString() ? "?" + cleaned.toString() : "");
   window.history.replaceState({}, "", newUrl);
 }
 
-// ── Step 6: Handle auth_session cookie (company_id / personal_mode) ───────
-const session = getAuthCookie();
+// ── Step 6: Handle personal_mode from cookie ───────────────────────────────
+const session = readCookie(COOKIE_KEY);
 const isPersonalMode = session?.personal_mode === true;
 
 if (isPersonalMode) {
@@ -126,22 +124,16 @@ if (isPersonalMode) {
   if (session?.company_id) {
     const cleaned = { ...session };
     delete cleaned.company_id;
-    const value = encodeURIComponent(JSON.stringify(cleaned));
-    if (hostname === "localhost" || hostname.endsWith(".localhost")) {
-      document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
-    } else if (hostname.endsWith(".streamed.space")) {
-      document.cookie = `${COOKIE_KEY}=${value}; domain=.streamed.space; path=/; max-age=${maxAge}; Secure; SameSite=Lax`;
-    }
+    writeAuthCookie({ company_id: null });
   }
 } else if (session?.company_id && !urlCompanyId) {
-  // Only restore from cookie if URL didn't supply a fresh company_id
-  localStorage.setItem("company_id", session.company_id);
+  localStorage.setItem("company_id", session.company_id as string);
 }
 
-// ── Step 7: Init theme immediately (reads localStorage we just set) ───────
+// ── Step 7: Init theme ─────────────────────────────────────────────────────
 initThemeImmediately();
 
-// ── Step 8: Mount app ─────────────────────────────────────────────────────
+// ── Step 8: Mount ─────────────────────────────────────────────────────────
 const head = createHead();
 const app = createApp(App);
 

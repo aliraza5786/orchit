@@ -8,11 +8,6 @@ const { isDark } = useTheme()
 const authStore = useAuthStore()
 
 onMounted(async () => {
-  const storedCompanyId = localStorage.getItem('company_id')
-  if (storedCompanyId) {
-    authStore.setCompany(storedCompanyId)
-  }
-
   await authStore.bootstrap()
 })
 </script>
