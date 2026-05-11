@@ -1,34 +1,39 @@
-export function getMainDomainLoginUrl(redirectPath = '/dashboard'): string | null {
-  const hostname = window.location.hostname
-  const protocol = window.location.protocol
-  const encoded = encodeURIComponent(redirectPath)
-
-  if (hostname.endsWith('.streamed.space') && hostname !== 'streamed.space') {
-    return `${protocol}//streamed.space/login?logout=true&redirect=${encoded}`
-  }
-
-  if (hostname.endsWith('.localhost') && hostname !== 'localhost') {
-    return `${protocol}//localhost/login?logout=true&redirect=${encoded}`
-  }
-  return null
+function getPrimaryDomain(): string {
+  return import.meta.env.VITE_PRIMARY_DOMAIN || window.location.hostname
 }
 
 export function isOnSubdomain(): boolean {
-  const h = window.location.hostname
-  return (
-    (h.endsWith('.streamed.space') && h !== 'streamed.space') ||
-    (h.endsWith('.localhost') && h !== 'localhost')
+  const primary = getPrimaryDomain()
+  const current = window.location.hostname
+  return current !== primary && (
+    current.endsWith('.streamed.space') ||
+    current.endsWith('.localhost')
   )
 }
 
-export function redirectToLogin(router?: { replace: (to: any) => void }, redirectPath = '/dashboard'): boolean {
+export function getMainDomainLoginUrl(redirectPath = '/dashboard'): string | null {
+  if (!isOnSubdomain()) return null
+  const primary = getPrimaryDomain()
+  const protocol = window.location.protocol
+  const encoded = encodeURIComponent(redirectPath)
+  return `${protocol}//${primary}/login?logout=true&redirect=${encoded}`
+}
+
+export function redirectToLogin(
+  router?: { replace: (to: any) => void },
+  redirectPath = '/dashboard'
+): boolean {
   const url = getMainDomainLoginUrl(redirectPath)
   if (url) {
     window.location.href = url
     return true
   }
-  if (router) {
-    router.replace({ name: 'Login' })
-  }
+  router?.replace({ name: 'Login' })
   return false
+}
+
+export function getPersonalDashboardUrl(): string {
+  const primary = getPrimaryDomain()
+  const protocol = window.location.protocol
+  return `${protocol}//${primary}/dashboard`
 }
