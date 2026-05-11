@@ -661,12 +661,14 @@ function handleLogoClick() {
     router.push('/')
   }
 }
-// ── Profile query ──────────────────────────────────────────────
+// Replace the profile query:
 const { data: profile, isPending } = useQuery({
-  queryKey: ["profile"],
+  queryKey: ['profile'],
   queryFn: getProfile,
   staleTime: 1000 * 60 * 5,
-});
+  // Don't show loading state if we already have cached data from a previous page
+  placeholderData: (prev) => prev,
+})
 
 const profileData = computed(() => profile.value?.data ?? null);
 
@@ -690,15 +692,13 @@ const initials = computed(() => {
     .join("")
     .toUpperCase();
 });
-
-// ── Dynamic account switcher ───────────────────────────────────
 const personalAccount = computed<Account>(() => ({
-  id: profileData.value?._id ?? "personal",
-  name: profileData.value?.u_full_name ?? "My Account",
-  email: profileData.value?.u_email ?? "",
-  domain: "orchit.ai",
-  type: "individual",
-}));
+  id: profileData.value?._id ?? 'personal',
+  name: profileData.value?.u_full_name ?? 'My Account',
+  email: profileData.value?.u_email ?? '',
+  domain: import.meta.env.VITE_PRIMARY_DOMAIN || window.location.hostname,
+  type: 'individual',
+}))
 
 const companyAccounts = computed<Account[]>(() =>
   (profileData.value?.companies_list ?? []).map((c: Company) => ({
@@ -711,13 +711,18 @@ const companyAccounts = computed<Account[]>(() =>
 );
 
 const currentAccount = computed<Account>(() => {
-  const activeId = authStore.company_id; // ✅ driven by localStorage via authStore
-  if (!activeId) return personalAccount.value;
-  return (
-    companyAccounts.value.find((c) => c.id === activeId) ??
-    personalAccount.value
-  );
-});
+  const activeId = authStore.company_id
+  if (!activeId) return personalAccount.value
+  const found = companyAccounts.value.find((c) => c.id === activeId)
+  if (found) return found
+  return {
+    id: activeId,
+    name: '...',
+    email: profileData.value?.u_email ?? '',
+    domain: window.location.hostname,
+    type: 'company',
+  }
+})
 // ── Account switch state ───────────────────────────────────────
 const pendingAccount = ref<Account | null>(null);
 const isSwitching = ref(false);
