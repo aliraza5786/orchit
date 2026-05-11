@@ -63,6 +63,7 @@ const encodedToken = urlParams.get("_auth");
 if (urlToken) {
   localStorage.setItem("token", urlToken);
   writeAuthCookie({ token: urlToken });
+  sessionStorage.setItem('_relay_token', urlToken)
 } else if (encodedToken) {
   try {
     const token = encodedToken.startsWith("eyJ")
