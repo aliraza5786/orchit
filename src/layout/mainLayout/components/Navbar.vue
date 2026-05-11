@@ -736,12 +736,19 @@ async function confirmSwitch() {
     if (pendingAccount.value.type === 'company') {
       authStore.setCompany(pendingAccount.value.id)
       await new Promise((res) => setTimeout(res, 100))
-      // Company domain comes from the API via profileData — correct already
-      window.location.href = `${window.location.protocol}//${pendingAccount.value.domain}/dashboard`
+
+      // FIX: Pass token in URL so Opera/Safari don't need to read
+      // the cross-subdomain cookie. The subdomain app reads _token
+      // from URL in main.ts and stores it locally before Vue mounts.
+      const token = localStorage.getItem('token') ?? ''
+      const url = new URL(`${window.location.protocol}//${pendingAccount.value.domain}/dashboard`)
+      if (token) url.searchParams.set('_token', token)
+      url.searchParams.set('company_id', pendingAccount.value.id)
+
+      window.location.href = url.toString()
     } else {
       authStore.clearCompany()
       await new Promise((res) => setTimeout(res, 100))
-      // FIX: getPersonalDashboardUrl() reads VITE_PRIMARY_DOMAIN — no hardcoding
       window.location.href = getPersonalDashboardUrl()
     }
   } catch {

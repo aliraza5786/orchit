@@ -97,6 +97,12 @@ export const useAuthStore = defineStore('auth', {
 
     async bootstrap() {
       if (this.initialized) return
+      const relayToken = sessionStorage.getItem('_relay_token')
+      if (relayToken) {
+        localStorage.setItem('token', relayToken)
+        writeCookie({ token: relayToken })
+        sessionStorage.removeItem('_relay_token')
+      }
       const urlParams = new URLSearchParams(window.location.search)
       const encodedToken = urlParams.get('_auth')
       if (encodedToken) {

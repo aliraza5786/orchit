@@ -164,7 +164,6 @@ api.interceptors.response.use(
   }
 )
 
-// ── GAP 1 FIX: beforeEach guard ───────────────────────────────────────────────
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
@@ -183,24 +182,30 @@ router.beforeEach(async (to, _from, next) => {
     if (subdomain === 'www') subdomain = null
   }
 
-  // Unknown routes on subdomain → dashboard (not 404)
+  // On subdomain: unknown routes → dashboard
   if (subdomain && to.name === 'NotFound') {
     return next('/dashboard')
+  }
+
+  // SAFETY NET: On a company subdomain, NEVER render /login locally.
+  // If anything tries to push to Login while on a subdomain,
+  // hard redirect to primary domain login instead.
+  // This catches Opera's cookie blocking, token expiry, any edge case.
+  if (subdomain && to.name === 'Login') {
+    const primary = import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
+    window.location.href = `${window.location.protocol}//${primary}/login?logout=true`
+    return // stop navigation
   }
 
   const requiresAuth = to.matched.some(r => r.meta.requiresAuth === true)
   const hasToken = !!getToken()
 
   if (requiresAuth && !hasToken) {
-    // GAP 1 FIX: Hard redirect to main domain login when on a subdomain.
-    // next({ name: 'Login' }) would try to render /login on the subdomain
-    // — that route doesn't exist there, causing a blank page or redirect loop.
     const redirected = redirectToLogin(undefined, to.fullPath)
-    if (redirected) return // hard redirect issued, stop navigation
+    if (redirected) return
     return next({ name: 'Login' })
   }
 
-  // Prevent logged-in users from seeing /login on main domain
   if (to.name === 'Login' && hasToken && !subdomain) {
     return next({ name: 'Home' })
   }
