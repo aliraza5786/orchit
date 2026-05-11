@@ -267,8 +267,23 @@
     <!-- ── Kanban View ─────────────────────────────────────────────────────── -->
     <template v-if="view == 'kanban'">
       <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
+      
+      <!-- Empty State -->
+      <div 
+        v-if="!isPending && !isSheetPending && hasSheets && !filteredBoard?.length"
+        class="flex flex-col items-center justify-center flex-1 h-full py-20 text-center"
+      >
+        <div class="bg-bg-body p-6 rounded-full mb-4">
+          <i class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-text-primary">No columns to display</h3>
+        <p class="text-sm text-text-secondary mt-1 max-w-[300px]">
+          There are no columns found for the current grouping or filter selection.
+        </p>
+      </div>
+
       <div
-        v-show="!isPending && !isSheetPending && hasSheets"
+        v-show="!isPending && !isSheetPending && hasSheets && filteredBoard?.length"
         class="flex overflow-x-auto gap-2 scrollbar-visible h-full mx-2 pt-2"
       >
         <div class="flex gap-2">
@@ -938,6 +953,9 @@ const selectedViewByVariable = computed(() => {
 });
 
 const selectedViewByLabel = computed(() => {
+  if (selected_view_by.value === "owner") return "Owner/Reporter";
+  if (selected_view_by.value === "assignee") return "Assignee";
+
   const opt = selectedViewByVariable.value;
   if (!opt) return "None";
 
@@ -1029,6 +1047,27 @@ const hasActiveFilters = computed(() => activeFilterCount.value > 0);
 
 // ─── Queries ──────────────────────────────────────────────────────────────────
 const workspaceStore = useWorkspaceStore();
+const kanbanActiveVariableId = computed(() => {
+  const val = selected_view_by.value;
+  if (val === "owner" || val === "assignee") return "";
+
+  return val;
+});
+
+const kanbanActiveVariableSlug = computed(() => {
+  if (selected_view_by.value === "owner") return "created_by";
+  if (selected_view_by.value === "assignee") return "assigned_to";
+  return "";
+});
+
+const kanbanGroupExtraParams = computed(() => {
+  const base = formattedExtraParams.value || {};
+  if (kanbanActiveVariableSlug.value) {
+    return { ...base, variable_slug: kanbanActiveVariableSlug.value };
+  }
+  return base;
+});
+
 const {
   data: Lists,
   isPending,
@@ -1037,8 +1076,8 @@ const {
   moduleId,
   selected_sheet_id,
   computed(() => [...workspaceStore.selectedLaneIds]),
-  selected_view_by,
-  formattedExtraParams,
+  kanbanActiveVariableId,
+  kanbanGroupExtraParams,
 );
 
 // ─── Dedicated flat Table View data (no variable_id = no grouping shuffle) ─────

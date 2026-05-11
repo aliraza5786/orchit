@@ -212,8 +212,23 @@
           <!-- ── Kanban View ─────────────────────────────────────── -->
           <template v-if="view === 'kanban'">
             <KanbanSkeleton v-show="isPending" />
+
+            <!-- Empty State -->
+            <div 
+              v-if="!isPending && !filteredBoard?.length"
+              class="flex flex-col items-center justify-center flex-1 h-full py-20 text-center"
+            >
+              <div class="bg-bg-body p-6 rounded-full mb-4">
+                <i class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"></i>
+              </div>
+              <h3 class="text-lg font-semibold text-text-primary">No columns to display</h3>
+              <p class="text-sm text-text-secondary mt-1 max-w-[300px]">
+                There are no columns found for the current grouping or filter selection.
+              </p>
+            </div>
+
             <div
-              v-show="!isPending"
+              v-show="!isPending && filteredBoard?.length"
               class="flex-1 overflow-x-auto overflow-y-hidden scrollbar-visible py-4 mx-4"
             >
               <div class="flex gap-3 min-w-max h-full">
@@ -656,6 +671,9 @@ const selectedViewByVariable = computed(() => {
 });
 
 const selectedViewByLabel = computed(() => {
+  if (selected_view_by.value === "owner") return "Owner/Reporter";
+  if (selected_view_by.value === "assignee") return "Assignee";
+
   const opt = selectedViewByVariable.value;
   if (!opt) return "None";
   if (selectedProcessMeta.value && opt._id === selected_view_by.value) {
@@ -727,10 +745,26 @@ const formattedExtraParams = computed(() => {
   return result;
 });
 
-const kanbanExtraParams = computed(() => ({
-  ...formattedExtraParams.value,
-  variable_id: selected_view_by.value
-}));
+const kanbanActiveVariableId = computed(() => {
+  const val = selected_view_by.value;
+  if (val === "owner" || val === "assignee") return "";
+  return val;
+});
+
+const kanbanActiveVariableSlug = computed(() => {
+  if (selected_view_by.value === "owner") return "created_by";
+  if (selected_view_by.value === "assignee") return "assigned_to";
+  return "";
+});
+
+const kanbanExtraParams = computed(() => {
+  const base = formattedExtraParams.value || {};
+  const result: any = { ...base, variable_id: kanbanActiveVariableId.value };
+  if (kanbanActiveVariableSlug.value) {
+    result.variable_slug = kanbanActiveVariableSlug.value;
+  }
+  return result;
+});
 
 const handleApplyFilters = (filters: any) => {
   activeFilters.value = filters;

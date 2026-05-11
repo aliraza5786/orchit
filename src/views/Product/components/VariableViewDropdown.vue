@@ -167,21 +167,28 @@ let cleanupNested: (() => void) | null = null;
 
 const recentId = ref(localStorage.getItem('last_selected_view_by') || '');
 
+const staticOptions: Option[] = [
+  { _id: 'assignee', title: 'Assignee' },
+  { _id: 'owner', title: 'Owner/Reporter' },
+];
+
+const allOptions = computed(() => [...staticOptions, ...props.options]);
+
 const recentOption = computed(() => {
   if (!recentId.value) return null;
-  return props.options.find(o => o._id === recentId.value);
+  return allOptions.value.find(o => o._id === recentId.value);
 });
 
 const filteredOptions = computed(() => {
   const q = searchQuery.value.toLowerCase();
 
-  return props.options.filter(o => {
+  return allOptions.value.filter(o => {
     const matchesSearch = o.title.toLowerCase().includes(q);
 
     // ❌  hide if is_checkbox_table === true
     const isHidden = o.is_checkbox_table === true;
 
-    return matchesSearch && !isHidden;
+    return matchesSearch && !isHidden && o._id !== recentId.value;
   });
 });
 
