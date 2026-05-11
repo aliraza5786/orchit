@@ -105,15 +105,16 @@ if (urlTheme) {
     : "light";
   localStorage.setItem("theme", safeTheme);
 }
-
 // ── Step 5: Clean URL ──────────────────────────────────────────────────────
 if (urlToken || urlCompanyId || urlTheme || encodedToken) {
-  const cleaned = new URLSearchParams(window.location.search);
-  ["_token", "company_id", "theme", "_auth"].forEach(p => cleaned.delete(p));
+  const cleaned = new URLSearchParams(window.location.search)
+  ;['_token', '_auth', 'company_id', 'theme'].forEach(p => cleaned.delete(p))
+  
   const newUrl =
     window.location.pathname +
-    (cleaned.toString() ? "?" + cleaned.toString() : "");
-  window.history.replaceState({}, "", newUrl);
+    (cleaned.toString() ? '?' + cleaned.toString() : '')
+  
+  window.history.replaceState({}, '', newUrl)
 }
 
 // ── Step 6: Handle personal_mode from cookie ───────────────────────────────
