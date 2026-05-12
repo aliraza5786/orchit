@@ -58,14 +58,13 @@ const getCookie = (name: string) => {
 
 // Get company roles without permission
 export const useCompanyRolesWithoutPermission = (options = {}) => {
-  const authStore = useAuthStore()
 
   const companyId = computed(() => {
     // 1. Prefer store (runtime state)
-    const storeCompany = authStore.company_id
+    const storeCompany = localStorage.getItem('company_id')
 
     // 2. Fallback to cookies (persistent state after refresh)
-    const cookieCompany = getCookie('company_id')
+    const cookieCompany = localStorage.getItem('company_id')
     const personalMode = getCookie('personal_mode')
 
     // If personal mode → force null
@@ -447,6 +446,21 @@ const TOKEN_ALLOC_KEY = 'token-allocation'
 // ─────────────────────────────────────────────────────────────────────────────
 // 2.1 – Get my allocation
 // ─────────────────────────────────────────────────────────────────────────────
+export const useMyPersonalTokenAllocation = (options: Record<string, unknown> = {}) => {
+  return useQuery<TokenApiResponse<MyAllocationData>>({
+    queryKey: [TOKEN_ALLOC_KEY, 'me'],
+    queryFn: ({ signal }) =>
+      request<TokenApiResponse<MyAllocationData>>({
+        url: `billing/token-allocation/me`,
+        method: 'GET',
+        signal,
+      }),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    ...options,
+  })
+}
 export const useMyTokenAllocation = (options: Record<string, unknown> = {}) => {
   const companyId = getCompanyId()
 
@@ -722,6 +736,84 @@ export const useRejectTransfer = (options: Record<string, unknown> = {}) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [TRANSFER_KEY] })
+    },
+    ...options,
+  })
+}
+
+type CompanyJoinRegisterPayload = {
+  u_full_name: string
+  u_email: string
+  u_password: string
+}
+
+export const useCompanyJoinRegister = (
+  token: string,
+  options: Record<string, unknown> = {},
+) => {
+  return useMutation<
+    TransferApiResponse<null>,
+    Error,
+    CompanyJoinRegisterPayload
+  >({
+    mutationKey: ['company-join-register'],
+    mutationFn: (data) => {
+      return request<TransferApiResponse<null>>({
+        url: `common/company-join/${token}/register`,
+        method: 'POST',
+        data,
+      })
+    },
+    ...options,
+  })
+}
+
+type CompanyJoinSendOtpPayload = {
+  u_email: string
+}
+
+export const useCompanyJoinSendOtp = (
+  token: string,
+  options: Record<string, unknown> = {},
+) => {
+  return useMutation<
+    TransferApiResponse<null>,
+    Error,
+    CompanyJoinSendOtpPayload
+  >({
+    mutationKey: ['company-join-send-otp'],
+    mutationFn: (data) => {
+      return request<TransferApiResponse<null>>({
+        url: `common/company-join/${token}/send-otp`,
+        method: 'POST',
+        data,
+      })
+    },
+    ...options,
+  })
+}
+
+type CompanyJoinVerifyOtpPayload = {
+  u_email: string
+  otp: string
+}
+
+export const useCompanyJoinVerifyOtp = (
+  token: string,
+  options: Record<string, unknown> = {},
+) => {
+  return useMutation<
+    TransferApiResponse<null>,
+    Error,
+    CompanyJoinVerifyOtpPayload
+  >({
+    mutationKey: ['company-join-verify-otp'],
+    mutationFn: (data) => {
+      return request<TransferApiResponse<null>>({
+        url: `common/company-join/${token}/verify-otp`,
+        method: 'POST',
+        data,
+      })
     },
     ...options,
   })

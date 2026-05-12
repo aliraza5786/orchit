@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
-import {
-  joinCompany,    // POST { token, email }
-} from '../../services/auth'
+import { useCompanyJoinRegister, useCompanyJoinSendOtp, useCompanyJoinVerifyOtp } from '../../queries/useCommon'
 
 /* -------------------------------------------------------------------------- */
 /*  Setup                                                                     */
@@ -25,14 +23,14 @@ const errorDetail = ref<string | null>(null)
 /*  Invite info                                                               */
 /* -------------------------------------------------------------------------- */
 const companyName = ref<string>('your workspace')
-const domain      = ref<string>('')        // e.g. "abc.com"
-const lockedLocal = ref<string | null>(null) // if invite was issued to a specific email
+const domain      = ref<string>('')
+const lockedLocal = ref<string | null>(null)
 
 /* -------------------------------------------------------------------------- */
 /*  Form state                                                                */
 /* -------------------------------------------------------------------------- */
 const name            = ref('')
-const emailLocal      = ref('')   // part before @
+const emailLocal      = ref('')
 const password        = ref('')
 const confirmPassword = ref('')
 
@@ -42,7 +40,7 @@ const showConfirmPassword = ref(false)
 const submitting = ref(false)
 
 const fullEmail = computed(() =>
-  emailLocal.value && domain.value ? `${emailLocal.value.trim()}@${domain.value}` : ''
+  emailLocal.value && domain.value ? `${emailLocal.value.trim()}@${domain.value}` : emailLocal.value.trim()
 )
 
 const passwordStrength = computed(() => {
@@ -52,7 +50,7 @@ const passwordStrength = computed(() => {
   if (/[A-Z]/.test(v)) s++
   if (/[0-9]/.test(v)) s++
   if (/[^A-Za-z0-9]/.test(v)) s++
-  return s // 0..4
+  return s
 })
 
 const strengthLabel = computed(
@@ -66,8 +64,8 @@ function validate(): boolean {
   if (!name.value.trim() || name.value.trim().length < 2)
     e.name = 'Please enter your full name.'
   if (!emailLocal.value.trim())
-    e.email = 'Enter the part before @' + domain.value
-  else if (!/^[a-zA-Z0-9._%+-]+$/.test(emailLocal.value.trim()))
+    e.email = domain.value ? 'Enter the part before @' + domain.value : 'Please enter your email.'
+  else if (domain.value && !/^[a-zA-Z0-9._%+-]+$/.test(emailLocal.value.trim()))
     e.email = 'Only letters, numbers and . _ % + - are allowed.'
   if (password.value.length < 8)
     e.password = 'Password must be at least 8 characters.'
@@ -138,157 +136,92 @@ function onOtpPaste(ev: ClipboardEvent) {
 const otpComplete = computed(() => otp.value.every((c) => c !== ''))
 
 /* -------------------------------------------------------------------------- */
-/*  Lifecycle                                                                 */
+/*  Mutations                                                                 */
 /* -------------------------------------------------------------------------- */
-// onMounted(async () => {
-//   if (!token) {
-//     showError('Invalid invite link.', 'No token was found in the URL.')
-//     return
-//   }
-
-//   localStorage.setItem('pending_invite_token', token)
-
-//   try {
-//     const info = await fetchInviteInfo(token)
-//     companyName.value = info?.data?.company_name ?? 'your workspace'
-//     domain.value      = (info?.data?.domain ?? '').replace(/^@/, '')
-
-//     const invitedEmail: string | undefined = info?.data?.invited_email
-//     if (invitedEmail && invitedEmail.includes('@')) {
-//       const [local, dom] = invitedEmail.split('@')
-//       lockedLocal.value = local
-//       emailLocal.value  = local
-//       if (!domain.value) domain.value = dom
-//     }
-//   } catch (err: any) {
-//     showError(
-//       'This invite link is invalid or expired.',
-//       err?.response?.data?.message ?? 'Please ask your admin to send a new invitation.'
-//     )
-//     return
-//   }
-
-//   // Already logged in → just join directly
-//   if (authStore.user) {
-//     await acceptInviteDirect()
-//     return
-//   }
-
-//   step.value = 'form'
-// })
+const { mutateAsync: registerUser }  = useCompanyJoinRegister(token)
+const { mutateAsync: sendOtp }       = useCompanyJoinSendOtp(token)
+const { mutateAsync: verifyOtp }     = useCompanyJoinVerifyOtp(token)
 
 /* -------------------------------------------------------------------------- */
 /*  Actions                                                                   */
 /* -------------------------------------------------------------------------- */
-// async function onSubmitForm() {
-//   if (!validate()) return
-//   submitting.value = true
-//   try {
-//     await registerInvitedUser({
-//       token,
-//       name: name.value.trim(),
-//       email: fullEmail.value,
-//       password: password.value,
-//     })
-//     step.value = 'otp'
-//     startCooldown(30)
-//     await nextTick()
-//     otpRefs.value[0]?.focus()
-//   } catch (err: any) {
-//     const msg = err?.response?.data?.message ?? 'Could not create your account. Please try again.'
-//     if (/email/i.test(msg)) errors.value.email = msg
-//     else errors.value._global = msg
-//   } finally {
-//     submitting.value = false
-//   }
-// }
-
-// async function onVerifyOtp() {
-//   if (!otpComplete.value || verifying.value) return
-//   verifying.value = true
-//   otpError.value  = null
-//   try {
-//     const data = await verifyInviteOtp({
-//       token,
-//       email: fullEmail.value,
-//       otp: otp.value.join(''),
-//     })
-
-//     const authToken   = data?.data?.token
-//     const companyId   = data?.data?.company?.id ?? data?.data?.company?._id
-//     const redirectUrl = data?.data?.redirect_url
-
-//     if (authToken) localStorage.setItem('token', authToken)
-//     if (companyId) authStore.setCompany(companyId)
-//     if (authToken && companyId) saveAuthForSubdomain(authToken, companyId)
-
-//     localStorage.removeItem('pending_invite_token')
-
-//     step.value = 'joining'
-
-//     if (redirectUrl) {
-//       window.location.href = `${redirectUrl}/dashboard`
-//       return
-//     }
-
-//     await authStore.bootstrap()
-//     router.push('/dashboard')
-//   } catch (err: any) {
-//     otpError.value = err?.response?.data?.message ?? 'Invalid or expired code. Please try again.'
-//     otp.value = Array(OTP_LENGTH).fill('')
-//     await nextTick()
-//     otpRefs.value[0]?.focus()
-//   } finally {
-//     verifying.value = false
-//   }
-// }
-
-// async function onResendOtp() {
-//   if (resendCooldown.value > 0) return
-//   try {
-//     await resendInviteOtp({ token, email: fullEmail.value })
-//     startCooldown(30)
-//   } catch (err: any) {
-//     otpError.value = err?.response?.data?.message ?? 'Could not resend the code.'
-//   }
-// }
-
-async function acceptInviteDirect() {
-  step.value = 'joining'
+async function onSubmitForm() {
+  if (!validate()) return
+  submitting.value = true
   try {
-    const data        = await joinCompany(token)
-    const companyId   = data?.data?.company?.id ?? data?.data?.company?._id
-    const redirectUrl = data?.data?.redirect_url
+    await registerUser({
+      u_full_name: name.value.trim(),
+      u_email:     fullEmail.value,
+      u_password:  password.value,
+    })
 
+    // After successful registration, send OTP to the registered email
+    await sendOtp({ u_email: fullEmail.value })
+
+    step.value = 'otp'
+    startCooldown(30)
+    await nextTick()
+    otpRefs.value[0]?.focus()
+  } catch (err: any) {
+    const msg = err?.response?.data?.message ?? 'Could not create your account. Please try again.'
+    if (/email/i.test(msg)) errors.value.email = msg
+    else errors.value._global = msg
+  } finally {
+    submitting.value = false
+  }
+}
+
+async function onVerifyOtp() {
+  if (!otpComplete.value || verifying.value) return
+  verifying.value = true
+  otpError.value  = null
+  try {
+    const data = await verifyOtp({
+      u_email: fullEmail.value,
+      otp:     otp.value.join(''),
+    })
+
+    const authToken   = (data as any)?.data?.token
+    const companyId   = (data as any)?.data?.company?.id ?? (data as any)?.data?.company?._id
+    const redirectUrl = (data as any)?.data?.redirect_url
+
+    if (authToken) localStorage.setItem('token', authToken)
     if (companyId) authStore.setCompany(companyId)
-    const authToken = localStorage.getItem('token')
     if (authToken && companyId) saveAuthForSubdomain(authToken, companyId)
-    localStorage.removeItem('pending_invite_token')
+
+    step.value = 'joining'
 
     if (redirectUrl) {
       window.location.href = `${redirectUrl}/dashboard`
       return
     }
+
     await authStore.bootstrap()
     router.push('/dashboard')
   } catch (err: any) {
-    showError(
-      'Could not join workspace',
-      err?.response?.data?.message ?? 'Something went wrong. Please try again.'
-    )
+    otpError.value = err?.response?.data?.message ?? 'Invalid or expired code. Please try again.'
+    otp.value = Array(OTP_LENGTH).fill('')
+    await nextTick()
+    otpRefs.value[0]?.focus()
+  } finally {
+    verifying.value = false
   }
 }
 
-function showError(title: string, detail?: string) {
-  error.value       = title
-  errorDetail.value = detail ?? null
-  step.value        = 'error'
+async function onResendOtp() {
+  if (resendCooldown.value > 0) return
+  try {
+    await sendOtp({ u_email: fullEmail.value })
+    startCooldown(30)
+  } catch (err: any) {
+    otpError.value = err?.response?.data?.message ?? 'Could not resend the code.'
+  }
 }
 
 function saveAuthForSubdomain(token: string, companyId: string) {
-  const maxAge   = 60 * 60 * 24 * 30
-  const session  = JSON.stringify({ token, company_id: companyId })
-  const value    = encodeURIComponent(session)
+  const maxAge  = 60 * 60 * 24 * 30
+  const session = JSON.stringify({ token, company_id: companyId })
+  const value   = encodeURIComponent(session)
   const hostname = window.location.hostname
 
   if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
@@ -305,6 +238,7 @@ function goToLogin() {
 function backToForm() {
   step.value = 'form'
   otp.value  = Array(OTP_LENGTH).fill('')
+  otpError.value = null
 }
 </script>
 
@@ -365,7 +299,7 @@ function backToForm() {
           </p>
         </div>
 
-        <form class="space-y-4" novalidate>
+        <form class="space-y-4" novalidate @submit.prevent="onSubmitForm">
           <!-- Name -->
           <div class="space-y-1.5">
             <label for="name" class="block text-xs font-medium" style="color: var(--text-secondary);">
@@ -384,12 +318,15 @@ function backToForm() {
             <p v-if="errors.name" class="text-xs text-red-500">{{ errors.name }}</p>
           </div>
 
-          <!-- Email (split input with locked domain) -->
+          <!-- Email — split input when domain is known, plain input otherwise -->
           <div class="space-y-1.5">
             <label for="emailLocal" class="block text-xs font-medium" style="color: var(--text-secondary);">
               Work email
             </label>
-            <div class="flex items-stretch rounded-[10px] border overflow-hidden"
+
+            <!-- Split input: username + @domain -->
+            <div v-if="domain"
+              class="flex items-stretch rounded-[10px] border overflow-hidden"
               :class="errors.email ? 'ring-1 ring-red-400' : ''"
               style="background: var(--bg-surface); border-color: var(--border);">
               <input
@@ -405,9 +342,24 @@ function backToForm() {
               />
               <div class="flex items-center px-3 text-sm select-none border-l"
                 style="background: var(--bg-lavender); color: var(--accent); border-color: var(--border);">
-                @{{ domain || 'company.com' }}
+                @{{ domain }}
               </div>
             </div>
+
+            <!-- Plain email input when no domain is set -->
+            <input
+              v-else
+              id="emailLocal"
+              v-model="emailLocal"
+              type="email"
+              autocomplete="email"
+              spellcheck="false"
+              placeholder="e.g. sarah@company.com"
+              class="w-full h-11 px-3.5 rounded-[10px] text-sm border outline-none transition-all"
+              :class="errors.email ? 'ring-1 ring-red-400' : ''"
+              style="background: var(--bg-surface); border-color: var(--border); color: var(--text-primary);"
+            />
+
             <p v-if="errors.email" class="text-xs text-red-500">{{ errors.email }}</p>
             <p v-else-if="lockedLocal" class="text-xs" style="color: var(--text-secondary);">
               This invite is for {{ fullEmail }}.
@@ -430,56 +382,20 @@ function backToForm() {
                 :class="errors.password ? 'ring-1 ring-red-400' : ''"
                 style="background: var(--bg-surface); border-color: var(--border); color: var(--text-primary);"
               />
-              <button
-  type="button"
-  tabindex="-1"
-  class="absolute inset-y-0 right-0 flex items-center px-3"
-  style="color: var(--text-secondary);"
-  @click="showPassword = !showPassword"
->
-  <svg
-    v-if="showPassword"
-    xmlns="http://www.w3.org/2000/svg"
-    class="w-5 h-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    stroke-width="1.8"
-  >
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M3 3l18 18"
-    />
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M10.58 10.58a2 2 0 102.83 2.83"
-    />
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 7 9 7a17.45 17.45 0 01-4.23 5.17M6.61 6.61C3.73 8.57 2 12 2 12a17.73 17.73 0 003.66 4.59"
-    />
-  </svg>
-
-  <svg
-    v-else
-    xmlns="http://www.w3.org/2000/svg"
-    class="w-5 h-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    stroke-width="1.8"
-  >
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
-    />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-</button>
+              <button type="button" tabindex="-1"
+                class="absolute inset-y-0 right-0 flex items-center px-3"
+                style="color: var(--text-secondary);"
+                @click="showPassword = !showPassword">
+                <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.58 10.58a2 2 0 102.83 2.83"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 7 9 7a17.45 17.45 0 01-4.23 5.17M6.61 6.61C3.73 8.57 2 12 2 12a17.73 17.73 0 003.66 4.59"/>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
             </div>
 
             <!-- Strength meter -->
@@ -516,56 +432,20 @@ function backToForm() {
                 :class="errors.confirmPassword ? 'ring-1 ring-red-400' : ''"
                 style="background: var(--bg-surface); border-color: var(--border); color: var(--text-primary);"
               />
-             <button
-  type="button"
-  tabindex="-1"
-  class="absolute inset-y-0 right-0 flex items-center px-3"
-  style="color: var(--text-secondary);"
-  @click="showConfirmPassword = !showConfirmPassword"
->
-  <svg
-    v-if="showConfirmPassword"
-    xmlns="http://www.w3.org/2000/svg"
-    class="w-5 h-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    stroke-width="1.8"
-  >
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M3 3l18 18"
-    />
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M10.58 10.58a2 2 0 102.83 2.83"
-    />
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 7 9 7a17.45 17.45 0 01-4.23 5.17M6.61 6.61C3.73 8.57 2 12 2 12a17.73 17.73 0 003.66 4.59"
-    />
-  </svg>
-
-  <svg
-    v-else
-    xmlns="http://www.w3.org/2000/svg"
-    class="w-5 h-5"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    stroke-width="1.8"
-  >
-    <path
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
-    />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-</button>
+              <button type="button" tabindex="-1"
+                class="absolute inset-y-0 right-0 flex items-center px-3"
+                style="color: var(--text-secondary);"
+                @click="showConfirmPassword = !showConfirmPassword">
+                <svg v-if="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M10.58 10.58a2 2 0 102.83 2.83"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.88 5.09A10.94 10.94 0 0112 5c5 0 9 7 9 7a17.45 17.45 0 01-4.23 5.17M6.61 6.61C3.73 8.57 2 12 2 12a17.73 17.73 0 003.66 4.59"/>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
             </div>
             <p v-if="errors.confirmPassword" class="text-xs text-red-500">{{ errors.confirmPassword }}</p>
           </div>
@@ -577,7 +457,7 @@ function backToForm() {
             style="background: var(--accent); color: var(--accent-text);">
             <span v-if="submitting" class="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
               style="border-color: var(--accent-text);" />
-            {{ submitting ? 'Sending code...' : 'Continue' }}
+            {{ submitting ? 'Creating account...' : 'Continue' }}
           </button>
 
           <p class="text-xs text-center" style="color: var(--text-secondary);">
@@ -631,7 +511,7 @@ function backToForm() {
         <button type="button" :disabled="!otpComplete || verifying"
           class="w-full h-11 rounded-[10px] text-sm font-medium transition-all flex items-center justify-center gap-2 disabled:opacity-60"
           style="background: var(--accent); color: var(--accent-text);"
-          >
+          @click="onVerifyOtp">
           <span v-if="verifying" class="w-4 h-4 rounded-full border-2 border-t-transparent animate-spin"
             style="border-color: var(--accent-text);" />
           {{ verifying ? 'Verifying...' : 'Verify & join' }}
@@ -644,7 +524,7 @@ function backToForm() {
           <button type="button" :disabled="resendCooldown > 0"
             class="font-medium disabled:opacity-50"
             :style="resendCooldown > 0 ? '' : 'color: var(--accent);'"
-            >
+            @click="onResendOtp">
             {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code' }}
           </button>
         </div>

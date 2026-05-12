@@ -52,19 +52,19 @@
     <div class="flex flex-wrap items-stretch bg-bg-card border border-border/40 rounded-xl overflow-hidden">
       <div class="flex-1 min-w-[130px] px-5 py-4 transition-all duration-200 hover:bg-border/5 group cursor-default">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Total Budget</p>
-        <p class="text-2xl font-bold text-text-primary mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ totalBudget.toLocaleString() }}</p>
+        <p class="text-2xl font-bold text-text-primary mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ totalBudget?.toLocaleString() }}</p>
         <p class="text-[11px] text-text-secondary">tokens / mo</p>
       </div>
       <div class="w-px self-stretch bg-border/40 hidden sm:block"></div>
       <div class="flex-1 min-w-[130px] px-5 py-4 transition-all duration-200 hover:bg-border/5 group cursor-default">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Allocated</p>
-        <p class="text-2xl font-bold text-amber-400 mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ allocatedTokens.toLocaleString() }}</p>
+        <p class="text-2xl font-bold text-amber-400 mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ allocatedTokens?.toLocaleString() }}</p>
         <p class="text-[11px] text-text-secondary">{{ allocatedPercentage }}% used</p>
       </div>
       <div class="w-px self-stretch bg-border/40 hidden sm:block"></div>
       <div class="flex-1 min-w-[130px] px-5 py-4 transition-all duration-200 hover:bg-border/5 group cursor-default">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-text-secondary">Remaining</p>
-        <p class="text-2xl font-bold text-emerald-400 mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ remainingTokens.toLocaleString() }}</p>
+        <p class="text-2xl font-bold text-emerald-400 mt-1 mb-0.5 transition-transform duration-200 group-hover:scale-105 origin-left">{{ remainingTokens?.toLocaleString() || 0 }}</p>
         <p class="text-[11px] text-text-secondary">{{ remainingPercentage }}% free</p>
       </div>
       <div class="w-px self-stretch bg-border/40 hidden sm:block"></div>
@@ -495,9 +495,9 @@ watch(apiUsers, (incoming) => {
 }, { immediate: true })
 
 // ── Budget totals ─────────────────────────────────────────────────────────────
-const totalBudget = computed(() => allocationData.value?.allocation?.total_tokens ?? 50_000)
+const totalBudget = computed(() => allocationData.value?.allocation?.total_tokens || 0)
 const allocatedTokens = computed(() => allocationData.value?.allocation?.used_tokens ?? 0)
-const remainingTokens = computed(() => totalBudget.value - allocatedTokens.value)
+const remainingTokens = computed(() => totalBudget.value - allocatedTokens.value || 0)
 const allocatedPercentage = computed(() =>
   totalBudget.value > 0 ? Math.round((allocatedTokens.value / totalBudget.value) * 100) : 0
 )

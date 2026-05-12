@@ -141,7 +141,7 @@
                 <div v-else
                   class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-orange-500 text-sm font-bold text-white"
                 >
-                  {{ profileData?.u_profile_image }}
+              {{ initials }} 
                 </div>
                 <div class="min-w-0 flex-1">
                   <p class="truncate text-sm font-semibold leading-5">
@@ -178,7 +178,7 @@
               ></div>
 
               <!-- Scrollable middle section (account switcher only) -->
-              <div class="flex-1 overflow-y-auto overscroll-contain min-h-0">
+              <div class="flex-1 overflow-y-auto overscroll-contain min-h-0" v-if="companyAccounts?.length">
                 <!-- ── ACCOUNT SWITCHER ── -->
                 <div class="px-1 pt-2 pb-1">
                   <p
@@ -665,8 +665,6 @@ function handleLogoClick() {
 const { data: profile, isPending } = useQuery({
   queryKey: ['profile'],
   queryFn: getProfile,
-  staleTime: 1000 * 60 * 5,
-  // Don't show loading state if we already have cached data from a previous page
   placeholderData: (prev) => prev,
 })
 
@@ -717,7 +715,7 @@ const currentAccount = computed<Account>(() => {
   if (found) return found
   return {
     id: activeId,
-    name: '...',
+    name: profileData.value?.u_full_name,
     email: profileData.value?.u_email ?? '',
     domain: window.location.hostname,
     type: 'company',
@@ -838,7 +836,13 @@ async function handleLogout() {
 
 function openAccountSettings() {
   closeMenu();
-  router.push("/settings");
+
+  router.push({
+    path: "/settings",
+    query: {
+      tab: "profile",
+    },
+  });
 }
 
 // ── Nav links ──────────────────────────────────────────────────

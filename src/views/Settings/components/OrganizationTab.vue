@@ -1,7 +1,34 @@
 <template>
   <div class="w-full space-y-6 flex-1">
+    <div v-if="isRefetchingAfterCreate" class="space-y-6 animate-pulse">
+  <section class="rounded-2xl border border-border/40 bg-bg-body/50 p-6">
+    <div class="mb-6 space-y-2">
+      <div class="h-5 w-48 bg-border/40 rounded-lg"></div>
+      <div class="h-3 w-72 bg-border/20 rounded-lg"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="md:col-span-2 flex items-center gap-4">
+        <div class="w-20 h-20 rounded-xl bg-border/30 shrink-0"></div>
+        <div class="space-y-2 flex-1">
+          <div class="h-3 w-32 bg-border/30 rounded"></div>
+          <div class="h-3 w-24 bg-border/20 rounded"></div>
+          <div class="h-8 w-28 bg-border/30 rounded-lg"></div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="h-3 w-24 bg-border/30 rounded"></div>
+        <div class="h-10 bg-border/20 rounded-lg"></div>
+      </div>
+      <div class="space-y-2">
+        <div class="h-3 w-24 bg-border/30 rounded"></div>
+        <div class="h-10 bg-border/20 rounded-lg"></div>
+      </div>
+    </div>
+  </section>
+  <div class="h-10 w-32 bg-border/30 rounded-lg"></div>
+</div>
 <!-- Replace the entire v-if="!hasOrg" block -->
-<div v-if="!hasOrg">
+<div v-else-if="!hasOrg">
 
   <!-- ── Inline creation flow ─────────────────────────────────── -->
   <div class="space-y-6" v-if="isCreatingOrg">
@@ -81,7 +108,7 @@
     <!-- Has org — settings form -->
     <div v-else class="space-y-6">
       <!-- Organization Info Section -->
-      <section class="rounded-2xl border border-border/40 bg-bg-body/50 p-6" :class="{ 'opacity-60 pointer-events-none': !canUpdateOrg }">
+      <section class="rounded-2xl border border-border/40 bg-bg-body/50 p-6">
         <div class="mb-6">
           <h3 class="text-lg font-bold text-text-primary flex items-center gap-2">
             <i class="fa-solid fa-building text-accent"></i>
@@ -107,7 +134,7 @@
                 </div>
               </div>
               <div class="flex-1">
-                <h4 class="text-sm font-semibold text-text-primary mb-2">Organization Logo</h4>
+                <h4 class="text-sm font-semibold text-text-primary mb-2">{{ orgName }}</h4>
                 <p class="text-xs text-text-secondary mb-3">PNG, JPG up to 2MB</p>
                 <button
                   @click="triggerLogoPicker"
@@ -256,9 +283,6 @@
     <i class="fa-solid fa-trash mr-2"></i> Delete organization
   </button>
 </div>
-<p v-if="!canUpdateOrg" class="text-xs text-red-500 mt-2">
-  You don’t have permission to modify organization settings.
-</p>
 <!-- Save error -->
 <p v-if="saveError" class="text-xs text-red-500 mt-2 flex items-center gap-1.5">
   <i class="fa-solid fa-circle-exclamation"></i> {{ saveError }}
@@ -320,13 +344,9 @@ import { useUpdateCompanyProfile, useDeleteOrganization } from '../../../service
 import { useQueryClient } from '@tanstack/vue-query'
 import { uploadPrivateFile } from '../../../queries/useCommon'
 import CreateOrganizationInline from './CreateOrganizationInline.vue'
+import { getProfile } from '../../../services/user'
 const queryClient = useQueryClient()
 const isCreatingOrg = ref(false)
-
-function onOrgCreated() {
-  isCreatingOrg.value = false
-  queryClient.invalidateQueries({ queryKey: ['profile'] })
-}
 const props = defineProps<{
   forceCreate?: boolean
   profile?: any
@@ -350,10 +370,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('company-changed', handleCompanyChange)
 })
 
-const currentCompany = computed(() => {
-  const list = props.profile?.companies_list || []
-  return list.find((c: any) => c._id === selectedCompanyId.value) || null
-})
+const currentCompany = computed(() => props.profile?.active_company ?? null)
 const membershipRole = computed(() => 
   currentCompany.value?.membership_role || null
 )
@@ -375,12 +392,20 @@ const canDeleteOrg = computed(() => {
 })
 const workspaceStore = useWorkspaceStore()
 const router = useRouter()
+const isRefetchingAfterCreate = ref(false)
 
+function onOrgCreated() {
+  isCreatingOrg.value = false
+  isRefetchingAfterCreate.value = true
+  queryClient.invalidateQueries({ queryKey: ['profile'] }).then(() => {
+    isRefetchingAfterCreate.value = false
+  })
+}
 const hasOrg = computed(() => {
   if (props.forceCreate) return false
+  if (isRefetchingAfterCreate.value) return true  // hold the state while refetching
   return !!props.profile?.active_company_id
 })
-
 // Form state
 const orgName = ref('')
 const orgSlug = ref('')
@@ -601,27 +626,46 @@ async function saveOrg() {
     },
   })
 }
+
 const { mutate: deleteOrganization, isPending: isDeleting } = useDeleteOrganization({
-  onSuccess: (data: any) => {
+  onSuccess: async (data: any) => {
     const payload = data?.data ?? data
+
     if (!payload || payload?.status === false) {
       toast.error(payload?.message || 'Failed to delete organization')
       return
     }
-    toast.success(payload?.message || 'Organization deleted successfully')
-    localStorage.removeItem('company_id')
-    router.push('/dashboard')
-    showDeleteConfirm.value = false
+    try {
+      localStorage.removeItem('company_id')
+      await getProfile()
+      toast.success(payload?.message || 'Organization deleted successfully')
+      router.push('/dashboard')
+      showDeleteConfirm.value = false
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to refresh profile')
+    }
   },
+
   onError: (error: any) => {
-    const msg = error?.response?.data?.message || error?.message || 'Failed to delete organization'
+    const msg =
+      error?.response?.data?.message ||
+      error?.message ||
+      'Failed to delete organization'
+
     toast.error(msg)
     showDeleteConfirm.value = false
   },
 })
+
 async function deleteOrg() {
   const companyId = localStorage.getItem('company_id')
+
   if (!companyId) return
-  deleteOrganization({ payload: { company_id: companyId } })
+
+  deleteOrganization({
+    payload: {
+      company_id: companyId,
+    },
+  })
 }
 </script>

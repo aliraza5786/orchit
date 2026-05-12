@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import api from '../libs/api'
 const COOKIE_KEY = 'auth_session'
-function parseCookie(): { token?: string; company_id?: string; personal_mode?: boolean } | null {
+function parseCookie(): { token?: string; company_id?: string; personal_mode?: boolean; company_switched?: boolean } | null {
   try {
     const raw = document.cookie
       .split('; ')
@@ -18,6 +18,7 @@ function writeCookie(data: {
   token?: string
   company_id?: string | null
   personal_mode?: boolean | null
+  company_switched?: boolean | null
 }) {
   try {
     const existing = parseCookie() || {}
@@ -25,7 +26,7 @@ function writeCookie(data: {
 
     if (data.company_id === null) delete merged.company_id
     if (data.personal_mode === null) delete merged.personal_mode
-
+    if (data.company_switched === null) delete merged.company_switched
     const value = encodeURIComponent(JSON.stringify(merged))
     const maxAge = 60 * 60 * 24 * 30
     const hostname = window.location.hostname
@@ -82,18 +83,18 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     setCompany(id: string) {
-      this.company_id = id
-      localStorage.setItem('company_id', id)
-      localStorage.removeItem('personal_mode')
-      writeCookie({ company_id: id, personal_mode: null })
-    },
+  this.company_id = id
+  localStorage.setItem('company_id', id)
+  localStorage.removeItem('personal_mode')
+  writeCookie({ company_id: id, personal_mode: null, company_switched: true }) // ← add this
+},
 
-    clearCompany() {
-      this.company_id = null
-      localStorage.removeItem('company_id')
-      localStorage.setItem('personal_mode', 'true')
-      writeCookie({ company_id: null, personal_mode: true })
-    },
+   clearCompany() {
+  this.company_id = null
+  localStorage.removeItem('company_id')
+  localStorage.setItem('personal_mode', 'true')
+  writeCookie({ company_id: null, personal_mode: true, company_switched: null }) // ← clear it
+},
 
     async bootstrap() {
       if (this.initialized) return
@@ -147,8 +148,8 @@ export const useAuthStore = defineStore('auth', {
         const res = await api.get('/profile')
         this.user = res.data
         const activeCompanyId = res.data?.data?.active_company_id
-
-        if (activeCompanyId && !this.company_id && !session?.personal_mode) {
+        const hasExplicitlySwitched = session?.company_switched === true
+        if (activeCompanyId && !this.company_id && !session?.personal_mode && hasExplicitlySwitched) {
           localStorage.setItem('company_id', activeCompanyId)
           this.company_id = activeCompanyId
           writeCookie({ company_id: activeCompanyId })

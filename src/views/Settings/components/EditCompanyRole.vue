@@ -293,7 +293,7 @@
                         class="mt-0.5 flex-shrink-0 w-4 h-4 rounded border transition-all flex items-center justify-center"
                         :class="form.permissionIds.includes(perm._id)
                           ? 'border-accent bg-accent/10'
-                          : 'border-border/60 bg-transparent'"
+                          : 'border border-accent/70'"
                       >
                         <i
                           v-if="form.permissionIds.includes(perm._id)"
