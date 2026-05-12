@@ -4,8 +4,14 @@
         <div class="max-w-[500px] mx-auto w-full min-h-full py-5 flex flex-col justify-center">
           <div class="mb-12 space-y-2">
             <h2 class="text-[24px] md:text-[32px] font-medium text-text-primary text-center" v-once>Enter Verification Code</h2>
-            <p class="text-base sm:text-nowrap font-medium text-text-secondary text-center" v-once>
-              We sent a five-digit code to your email <span class="font-bold">({{ email }})</span>.
+            <p
+              class="text-base font-medium text-text-secondary text-center"
+              v-once
+            >
+              We sent a five-digit code to your email
+              <span class="block sm:inline font-bold break-all">
+                ({{ email }})
+              </span>.
             </p>
           </div>
   

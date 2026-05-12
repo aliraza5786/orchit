@@ -134,11 +134,11 @@
           <div class="flex items-center gap-2 flex-wrap">
             <span class="text-sm font-semibold text-text-primary truncate">{{ member.u_full_name }}</span>
             <span
-              class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded-full tracking-wide"
-              :class="getRoleBadgeClass(member.membership_role)"
-            >
-              {{ member.membership_role }}
-            </span>
+            class="text-[10px] bg-accent/30 text-accent font-semibold uppercase px-1.5 py-0.5 rounded-full tracking-wide"
+            
+          >
+            {{ member.is_owner ? 'Owner' : member.membership_role }}
+          </span>
             <span
               class="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
               :class="getStatusBadgeClass(member.membership_status)"
@@ -612,7 +612,7 @@ import {
 const props = defineProps<{ profile?: any }>()
 
 const companyId = computed<string>(() =>
-  localStorage.getItem('company_id') || props.profile?.active_company?._id || ''
+  localStorage.getItem('company_id') ||  ''
 )
 const page     = ref(1)
 const pageSize = ref(10)
@@ -690,16 +690,6 @@ const filteredMembers = computed(() =>
 
 function getInitials(name: string) {
   return name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function getRoleBadgeClass(role: string) {
-  switch (role) {
-    case 'owner':  return 'bg-amber-500/15 text-amber-400'
-    case 'admin':  return 'bg-blue-500/15 text-blue-400'
-    case 'member': return 'bg-accent/15 text-accent'
-    case 'viewer': return 'bg-border/50 text-text-secondary'
-    default:       return 'bg-border/50 text-text-secondary'
-  }
 }
 
 function getStatusBadgeClass(status: string) {
