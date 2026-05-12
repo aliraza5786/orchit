@@ -2,7 +2,6 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../../stores/auth'
-import { isOnSubdomain } from '../../../utilities/authRedirect'
 const props = defineProps<{
   mobileOpen?: boolean
   profile?: any
@@ -51,15 +50,6 @@ function switchMode(val: 'personal' | 'org') {
 
   if (val === 'personal') {
     authStore.clearCompany()
-
-    // FIX: If on a company subdomain, redirect to primary domain settings
-    // not just push query — that would stay on the subdomain
-    if (isOnSubdomain()) {
-      const primary = import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
-      location.href = `${location.protocol}//${primary}/settings?tab=profile`
-      return
-    }
-
     router.push({ query: { tab: 'profile' } })
   } else {
     const first = companiesList.value[0]
@@ -233,10 +223,10 @@ function orgInitials(title: string) {
               class="w-full h-full object-cover"
               alt="avatar"
             />
-            <span v-else>{{ (profile?.u_name || 'U').charAt(0).toUpperCase() }}</span>
+            <span v-else>{{ (profile?.u_full_name || 'U').charAt(0).toUpperCase() }}</span>
           </div>
           <div class="min-w-0">
-            <p class="text-[13px] font-semibold text-text-primary truncate leading-tight">{{ profile?.u_name || 'My Account' }}</p>
+            <p class="text-[13px] font-semibold text-text-primary truncate leading-tight">{{ profile?.u_full_name || 'My Account' }}</p>
             <p class="text-[11px] text-text-secondary leading-tight flex items-center gap-1.5 mt-0.5">
               <span
                 class="w-1.5 h-1.5 rounded-full inline-block shrink-0"

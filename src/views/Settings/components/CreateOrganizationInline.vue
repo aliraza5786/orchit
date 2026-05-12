@@ -291,11 +291,16 @@
                 </svg>
                 {{ dnsError }}
               </p>
-              <p v-else-if="isDnsAvailable === true && dnsInput.trim()" class="text-xs flex items-center gap-1" style="color: #1d9e75;">
+              <p
+                  v-else-if="isDnsAvailable === true && dnsInput.trim()"
+                  class="text-xs flex items-center gap-1"
+                  style="color: #1d9e75;"
+                >
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none">
                   <path d="M2 5l2.5 2.5L8 3" stroke="#1d9e75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span class="font-medium">{{ dnsInput.trim() }}</span>&nbsp;is available — great choice!
+                <span class="font-medium">{{ dnsInput.trim() }}</span>
+                  &nbsp;is active and connected — great choice!
               </p>
 
               <!-- Domain taken: registrar links -->
@@ -556,7 +561,7 @@
 
     <!-- Navigation -->
     <div v-if="activeStep !== 6" class="flex justify-between items-center pt-4">
-      <Button v-if="activeStep > 2 && activeStep !== 8" variant="secondary" size="md" type="button" @click="goBack">
+      <Button v-if="activeStep > 2 && activeStep !== 8 && activeStep !== 7" variant="secondary" size="md" type="button" @click="goBack">
         <div class="flex items-center gap-1">
           <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
         </div>
@@ -884,17 +889,32 @@ watch(dnsInput, (val) => {
     try {
       const result = await workspaceStore.fetchDnsCheck(captured)
       if (dnsInput.value.trim() !== captured) return
-      if (!result) {
-        dnsError.value       = 'Invalid domain format. Please enter a valid domain (e.g. mycompany.com).'
+            if (!result) {
+        dnsError.value = 'Invalid domain format. Please enter a valid domain (e.g. mycompany.com).'
         isDnsAvailable.value = null
-      } else if (result.is_registered === false) {
-        isDnsAvailable.value = true
-        dnsError.value       = null
-      } else if (result.is_registered === true) {
-        isDnsAvailable.value = false
-        dnsError.value       = null
       } else {
-        isDnsAvailable.value = null
+        const isRegistered = result?.is_registered === true
+        const isActive = result?.is_active === true
+        const status = result?.status
+
+        /**
+         * ACTIVE + REGISTERED
+         * Domain already exists and is usable
+         * Allow user to continue
+         */
+        if (isRegistered && isActive && status === 'ACTIVE') {
+          isDnsAvailable.value = true
+          dnsError.value = null
+        }
+
+        /**
+         * Not registered OR inactive
+         * User needs to purchase/setup domain first
+         */
+        else {
+          isDnsAvailable.value = false
+          dnsError.value = null
+        }
       }
     } catch (err: any) {
       if (dnsInput.value.trim() !== captured) return
