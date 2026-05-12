@@ -10,7 +10,7 @@
         Review your project details before creation
       </p>
     </div>
-
+     {{ companyId }}
     <!-- Summary Cards -->
     <div class=" flex-wrap flex md:flex-nowrap gap-4 mb-6 ">
       <!-- Project Overview -->

@@ -32,17 +32,6 @@
 
   <!-- ── Inline creation flow ─────────────────────────────────── -->
   <div class="space-y-6" v-if="isCreatingOrg">
-    <div class="flex items-center gap-3 mb-2">
-      <button
-        @click="isCreatingOrg = true"
-        class="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
-      >
-        <i class="fa-solid fa-arrow-left text-xs"></i>
-        Back
-      </button>
-      <div class="h-px flex-1 bg-border/40"></div>
-      <span class="text-xs text-text-secondary font-medium">Create Organization</span>
-    </div>
     <div>
   <CreateOrganizationInline @done="onOrgCreated" />
 </div>
@@ -344,9 +333,10 @@ import { useUpdateCompanyProfile, useDeleteOrganization } from '../../../service
 import { useQueryClient } from '@tanstack/vue-query'
 import { uploadPrivateFile } from '../../../queries/useCommon'
 import CreateOrganizationInline from './CreateOrganizationInline.vue'
-import { getProfile } from '../../../services/user'
+import { useAuthStore } from '../../../stores/auth'
 const queryClient = useQueryClient()
 const isCreatingOrg = ref(false)
+const authStore = useAuthStore()
 const props = defineProps<{
   forceCreate?: boolean
   profile?: any
@@ -635,12 +625,18 @@ const { mutate: deleteOrganization, isPending: isDeleting } = useDeleteOrganizat
       toast.error(payload?.message || 'Failed to delete organization')
       return
     }
+
     try {
-      localStorage.removeItem('company_id')
-      await getProfile()
+      // 1. Clear company from store + cookie (use authStore, not just localStorage)
+      authStore.clearCompany()
+
+      // 2. Force the query cache to refetch fresh data from server
+      await queryClient.invalidateQueries({ queryKey: ['me'] })
+      await queryClient.invalidateQueries({ queryKey: ['profile'] })
+
       toast.success(payload?.message || 'Organization deleted successfully')
-      router.push('/dashboard')
       showDeleteConfirm.value = false
+      router.push('/dashboard')
     } catch (error: any) {
       toast.error(error?.message || 'Failed to refresh profile')
     }
