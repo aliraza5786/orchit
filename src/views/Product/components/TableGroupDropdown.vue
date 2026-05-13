@@ -115,7 +115,7 @@ const allOptions = computed(() => {
     { _id: 'card_type', title: 'Card Type' },
   ];
   return props.pin
-    ? [...staticOptions.filter(o => ['assignee', 'owner'].includes(o._id)), ...pinOptions.value]
+    ? [...staticOptions.filter(o => o._id === 'owner'), ...pinOptions.value]
     : staticOptions;
 });
 

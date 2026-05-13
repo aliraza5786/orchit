@@ -59,6 +59,7 @@
               :options="variables"
               v-model="selected_view_by"
               :canCreateVariable="canCreateVariable"
+              :hide-assignee="true"
               @close="showVariableDropdown = false"
               @add-new="
                 () => {
@@ -677,10 +678,11 @@ const kanbanActiveVariableSlug = computed(() => {
 
 const kanbanGroupExtraParams = computed(() => {
   const base = formattedExtraParams.value || {};
+  const result: any = { ...base, variable_id: kanbanActiveVariableId.value };
   if (kanbanActiveVariableSlug.value) {
-    return { ...base, variable_slug: kanbanActiveVariableSlug.value };
+    result.variable_slug = kanbanActiveVariableSlug.value;
   }
-  return base;
+  return result;
 });
 
 const {
@@ -731,13 +733,10 @@ const tableActiveVariableId = computed(() => {
   const group = selectedGroup.value;
   if (!group) return "";
 
-  // If it's a string (static option)
-  if (typeof group === "string") {
-    if (group === "assignee" || group === "owner") return "";
-    return group;
-  }
+  const groupId = typeof group === "string" ? group : group?._id;
+  if (groupId === "assignee" || groupId === "owner") return "";
 
-  return group._id || "";
+  return groupId || "";
 });
 
 // Maps group selections that use variable_slug instead of variable_id
@@ -753,10 +752,15 @@ const tableActiveVariableSlug = computed(() => {
 // Extra params for the grouped table query
 const tableGroupExtraParams = computed(() => {
   const base = formattedExtraParams.value || {};
+  const result: any = { ...base };
   if (tableActiveVariableSlug.value) {
-    return { ...base, variable_slug: tableActiveVariableSlug.value };
+    result.variable_slug = tableActiveVariableSlug.value;
   }
-  return base;
+  // If we have a regular variable ID, ensure it's in the payload too
+  if (tableActiveVariableId.value) {
+    result.variable_id = tableActiveVariableId.value;
+  }
+  return result;
 });
 
 const { data: TableGroupedLists, isPending: isTablePending } = useSheetList(

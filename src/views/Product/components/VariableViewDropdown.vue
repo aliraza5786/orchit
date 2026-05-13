@@ -140,6 +140,7 @@ const props = defineProps<{
   modelValue: string;
   options: Option[];
   canCreateVariable?: boolean;
+  hideAssignee?: boolean;
 }>();
 
 const emit = defineEmits(['update:modelValue', 'close', 'nested-select', 'add-new']);
@@ -172,7 +173,12 @@ const staticOptions: Option[] = [
   { _id: 'owner', title: 'Owner/Reporter' },
 ];
 
-const allOptions = computed(() => [...staticOptions, ...props.options]);
+const allOptions = computed(() => {
+  const filteredStatic = props.hideAssignee 
+    ? staticOptions.filter(o => o._id !== 'assignee')
+    : staticOptions;
+  return [...filteredStatic, ...props.options];
+});
 
 const recentOption = computed(() => {
   if (!recentId.value) return null;
