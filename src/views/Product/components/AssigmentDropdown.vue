@@ -75,7 +75,7 @@
                 <!-- Unassign -->
                </span>
                 <!-- Other users -->
-               <span v-else class="text-[10px]  px-2 py-1 border rounded-full border-accent group-hover:bg-accent transition group-hover:text-white">
+               <span v-else class="text-[10px]  px-2 py-1 border rounded-full border-primary-color group-hover:bg-primary-color transition group-hover:text-white">
                 Assign to
                </span>
              </div>

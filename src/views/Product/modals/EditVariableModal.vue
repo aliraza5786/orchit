@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="isOpen" size="md" title="Edit Field">
+    <BaseModal :inSpace="true"  v-model="isOpen" size="md" title="Edit Field">
       <!-- Header --> 
       
       <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Edit the title and options for your field.</p>

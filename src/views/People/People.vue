@@ -42,6 +42,7 @@
             customClasses="fixed w-[135px]"
           />
           <Dropdown
+            :inSpace="true"
             v-if="currentTab === 'agents'"
             :actions="false"
             v-model="selected_view_agent"
@@ -119,13 +120,13 @@
       <template v-if="currentView === 'kanban'">
         <!-- AGENTS KANBAN -->
         <template v-if="currentTab === 'agents'">
-          <div class="custom_scroll_bar h-full flex flex-col">
+          <div class="scrollbar-visible h-full flex flex-col">
             <Draggable
               v-model="filteredAgentGroups"
               item-key="title"
               group="agent-groups"
               :animation="180"
-              class="flex gap-2 mt-2 overflow-x-auto custom_scroll_bar flex-1 cursor-grab"
+              class="flex gap-2 mt-2 overflow-x-auto scrollbar-visible flex-1 cursor-grab"
               direction="horizontal"
               @end="onAgentGroupsEnd"
               :disabled="isMobile"
@@ -240,7 +241,7 @@
 
         <!-- TALENT KANBAN -->
         <template v-else>
-          <div class="flex flex-1 overflow-x-auto gap-2 custom_scroll_bar pt-2 pb-1 overflow-y-hidden">
+          <div class="flex flex-1 overflow-x-auto gap-2 scrollbar-visible pt-2 pb-1 overflow-y-hidden">
             <KanbanBoard
               :plusIcon="selected_view_id === 'team' && canCreateCard"
               v-if="filteredBoard?.length > 0"
@@ -292,7 +293,7 @@
                   <p class="text-sm text-text-secondary">
                     You can assign user later 
                   </p>
-                  <Button size="md" @click="addSeatToColumn(column)" :disabled="isPending">{{
+                  <Button :inSpace="true" size="md" @click="addSeatToColumn(column)" :disabled="isPending">{{
                     isPending ? "Adding..." : "Add Seat"
                   }}</Button>
                   <i
@@ -319,6 +320,7 @@
                 <p class="text-xs mt-1.5">You can add details while editing</p>
                 <div class="flex items-center mt-3 gap-3">
                   <Button
+                    :inSpace="true"
                     :disabled="!canCreateVariable"
                     :class="
                       canCreateVariable
@@ -466,7 +468,7 @@
     v-if="showAgentPanel"
   />
 
-  <BaseModal v-model="showModal" size="md" title="Add Seat">
+  <BaseModal :inSpace="true" v-model="showModal" size="md" title="Add Seat">
     <div class="px-6 py-4 space-y-4">
       <p class="text-sm text-text-secondary">
         {{ modalColumn.title }} &middot; Seat {{ (modalColumn.cards?.length ?? 0) + 1 }}
@@ -481,8 +483,8 @@
       </p>
     </div>
     <div class="flex justify-end gap-3 px-6 py-4 border-t border-border">
-      <Button variant="secondary" @click="closeModal">Cancel</Button>
-      <Button variant="primary" @click="addSeatToColumn(modalColumn)" :disabled="isPending">
+      <Button :inSpace="true" variant="secondary" @click="closeModal">Cancel</Button>
+      <Button :inSpace="true" variant="primary" @click="addSeatToColumn(modalColumn)" :disabled="isPending">
         {{ isPending ? "Adding..." : "Add Seat" }}
       </Button>
     </div>

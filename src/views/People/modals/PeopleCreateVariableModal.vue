@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="isOpen" size="sm" title="Create Field">
+    <BaseModal :inSpace="true" v-model="isOpen" size="sm" title="Create Field">
       <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Provide required data for your field.</p>
       <div class="px-6 py-6 flex flex-col gap-4">
         <BaseTextField

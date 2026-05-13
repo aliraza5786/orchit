@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="isOpen" size="sm" title="Create Field">
+    <BaseModal :inSpace="true" v-model="isOpen" size="sm" title="Create Field">
       <!-- Header --> 
       
       <p class="text-sm text-text-secondary px-6 pt-6 pb-2">Provide required data for your field.</p>

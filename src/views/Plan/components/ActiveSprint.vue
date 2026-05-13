@@ -121,9 +121,9 @@
             <div class="flex gap-3 items-center">
               <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
                 <button
-                  class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
                   :class="view === 'kanban'
-                    ? 'text-primary-color bg-primary-color/20'
+                    ? 'text-primary-color'
                     : 'hover:bg-border/50 transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   @click="view = 'kanban'"
                 >
@@ -132,9 +132,9 @@
 
                 <button
                   @click="view = 'table'"
-                  class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
                   :class="view === 'table'
-                    ? 'text-primary-color bg-primary-color/20'
+                    ? 'text-primary-color'
                     : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="Gallery view"
                 >
@@ -144,9 +144,9 @@
                 <!-- MindMap button — kept, logic lives in MindMapView component -->
                 <button
                   @click="view = 'mindmap'"
-                  class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
                   :class="view === 'mindmap'
-                    ? 'text-primary-color bg-primary-color/20'
+                    ? 'text-primary-color'
                     : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="MindMap view"
                 >
@@ -155,9 +155,9 @@
 
                 <button
                   @click="view = 'calendar'"
-                  class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
                   :class="view === 'calendar'
-                    ? 'text-primary-color bg-primary-color/20'
+                    ? 'text-primary-color'
                     : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="Calendar view"
                 >
@@ -166,26 +166,26 @@
 
                 <button
                   @click="view = 'gantt'"
-                  class="aspect-square cursor-pointer rounded-sm p-0"
+                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
                   :class="view === 'gantt'
-                    ? 'text-primary-color bg-primary-color/20'
+                    ? 'text-primary-color'
                     : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="Gantt Chart view"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
                   </svg>
                 </button>
 
                 <button
                   @click="view = 'timeline'"
-                  class="aspect-square cursor-pointer rounded-sm p-0"
+                  class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
                   :class="view === 'timeline'
-                    ? 'text-primary-color bg-primary-color/20'
+                    ? 'text-primary-color'
                     : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="Timeline view"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
                     <path
                       d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
                       opacity="0"

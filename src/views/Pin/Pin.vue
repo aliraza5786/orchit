@@ -34,7 +34,7 @@
             <button
               ref="variableTriggerRef"
               @click="toggleVariableDropdown"
-              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showVariableDropdown
                   ? 'border-primary-color text-primary-color'
@@ -69,7 +69,7 @@
             <button
               ref="groupTriggerRef"
               @click="toggleGroupDropdown"
-              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showGroupDropdown
                   ? 'border-primary-color text-primary-color'
@@ -108,11 +108,11 @@
             class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
           >
             <button
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'kanban'
-                  ? 'text-primary-color bg-primary-color-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="Kanban view"
               @click="view = 'kanban'"
@@ -122,11 +122,11 @@
 
             <button
               @click="view = 'table'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'table'
-                  ? 'text-primary-color bg-primary-color'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="List view"
             >
@@ -134,11 +134,11 @@
             </button>
             <button
               @click="view = 'mindmap'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'mindmap'
-                  ? 'text-primary-color bg-primary-color'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="MindMap view"
             >
@@ -147,11 +147,11 @@
 
             <button
               @click="view = 'calendar'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'calendar'
-                  ? 'text-primary-color bg-primary-color'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="Calendar view"
             >
@@ -160,17 +160,17 @@
 
             <button
               @click="view = 'gantt'"
-              class="aspect-square cursor-pointer rounded-sm p-0"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'gantt'
-                  ? 'text-primary-color bg-primary-color'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="Gantt Chart view"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
+                class="h-5 w-5"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -182,17 +182,17 @@
 
             <button
               @click="view = 'timeline'"
-              class="aspect-square cursor-pointer rounded-sm p-0"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'timeline'
-                  ? 'text-primary-color bg-primary-color'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="Timeline view"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
+                class="h-5 w-5"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -253,6 +253,7 @@
               Create pins and add your ideas into the related pins.
             </p>
             <Button
+              :inSpace="true"
               :disabled="!canCreateVariable"
               size="sm"
               @click="plusHandler(column)"

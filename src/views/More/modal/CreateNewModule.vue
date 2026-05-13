@@ -28,7 +28,7 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
                         @click="close">Cancel</button>
-                    <Button class="px-4" @click="submitManual" :loading="creatingModule">
+                    <Button :inSpace="true" class="px-4" @click="submitManual" :loading="creatingModule">
                         {{ creatingModule ? 'Saving' : 'Save' }}
                     </Button>
                 </div>
@@ -48,7 +48,7 @@
                         <!-- Record Button -->
                         <transition v-if="!description" name="fade-slide" appear>
                             <div class="absolute bottom-4 right-4">
-                                <AudioRecorder v-model="description" v-model:isRecording="isRecording"
+                                <AudioRecorder :inSpace="true" v-model="description" v-model:isRecording="isRecording"
                                     v-model:hasAudio="audioURL" />
                             </div>
                         </transition>

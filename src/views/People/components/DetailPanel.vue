@@ -54,7 +54,7 @@
           </p>
         </div>
       </div>
-      <SwitchTab v-model="activeTab" class="my-2" :options="tabOptions" />
+      <SwitchTab :inSpace="true" v-model="activeTab" class="my-2" :options="tabOptions" />
 
       <div class="flex flex-col mt-2">
         <h1 class="text-base font-medium text-text-primary cursor-pointer">
@@ -63,7 +63,7 @@
         <ProgressBar
           class="mt-2"
           :progress="progressPercentage"
-          fillColor="bg-accent "
+          fillColor="bg-primary-color "
           :indeterminate="true"
         />
         <span class="text-sm text-text-secondary mt-2">
@@ -146,7 +146,7 @@
                 <button
                   v-if="canEditVariable"
                   @click="handleEditVar(item)"
-                  class="text-text-secondary hover:text-accent transition-colors p-1"
+                  class="text-text-secondary hover:text-primary-color transition-colors p-1"
                   title="Edit variable"
                 >
                   <i class="fa-regular fa-pen-to-square text-[11px]"></i>
@@ -232,6 +232,7 @@
             >
               <i class="fa-regular fa-calendar text-[14px]"></i>
               <DatePicker
+                :inSpace="true"
                 :disabled="!canEditUser"
                 placeholder="Set date"
                 class="w-full"
@@ -297,7 +298,7 @@
                 class="flex justify-between text-[10px] text-text-secondary px-1"
               >
                 <span>Min: {{ item.data?.[0] || 0 }}</span>
-                <span class="font-bold text-accent">{{
+                <span class="font-bold text-primary-color">{{
                   localVarValues[item._id] ?? item.data?.[0] ?? 0
                 }}</span>
                 <span>Max: {{ item.data?.[1] || 100 }}</span>
@@ -307,7 +308,7 @@
                 :min="Number(item.data?.[0]) || 0"
                 :max="Number(item.data?.[1]) || 100"
                 :disabled="!canEditUser"
-                class="w-full h-1.5 bg-bg-input rounded-lg appearance-none cursor-pointer accent-accent"
+                class="w-full h-1.5 bg-bg-input rounded-lg appearance-none cursor-pointer accent-primary-color"
                 :value="localVarValues[item._id] ?? item.data?.[0] ?? 0"
                 @input="
                   (e: any) => handleSelect(Number(e.target.value), item._id)
@@ -345,7 +346,7 @@
           @click="canCreateVariable && (isCreateVar = true)"
           :disabled="!canCreateVariable"
           :class="[
-            'w-full mt-6 py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent flex items-center justify-center gap-2 transition-all duration-150',
+            'w-full mt-6 py-2 px-4 text-sm font-semibold text-white bg-primary-color rounded-lg border border-primary-color flex items-center justify-center gap-2 transition-all duration-150',
             canCreateVariable
               ? 'cursor-pointer active:scale-95'
               : 'cursor-not-allowed opacity-90',
@@ -723,14 +724,14 @@ const roleOptions = computed(() => {
       _id: "ADD_NEW_ROLE",
       title: "➕ Add New Role",
       customClass:
-        "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+        "text-primary-color font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
       isAction: true,
     },
     {
       _id: "MANAGE_PERMISSIONS",
       title: "🛠 Manage Permissions",
       customClass:
-        "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+        "text-primary-color font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
       isAction: true,
     },
   );
@@ -751,7 +752,7 @@ const jobOptions = computed(() => {
     _id: "ADD_NEW_ROLE",
     title: "+ Add New Job Role",
     customClass:
-      "text-accent font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
+      "text-primary-color font-medium sticky bottom-0 hover:bg-bg-dropdown-menu-hover transition-all duration-150 bg-bg-dropdown border-t border-border w-full",
     isAction: true,
   });
 

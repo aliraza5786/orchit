@@ -68,7 +68,7 @@
                     <!-- From Wrapper -->
                     <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all focus-0">
                       <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-primary-color transition-colors"></i>
-                      <DatePicker v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
+                      <DatePicker :inSpace="true" v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
                     </div>
                     
                     <div class="w-2.5 h-[1px] bg-border shrink-0"></div>
@@ -76,7 +76,7 @@
                     <!-- To Wrapper -->
                     <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all">
                       <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-primary-color transition-colors"></i>
-                      <DatePicker v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
+                      <DatePicker :inSpace="true" v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
                     </div>
                   </div>
                 </div>
@@ -220,11 +220,11 @@
                       <div class="flex flex-col gap-3">
                         <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all focus-0">
                           <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-primary-color transition-colors"></i>
-                          <DatePicker v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
+                          <DatePicker :inSpace="true" v-model="localFilters[dateType.from]" placeholder="From" size="sm" class="flex-1" />
                         </div>
                         <div class="flex-1 h-9 px-2.5 flex items-center gap-2 rounded-[6px] bg-bg-body border border-border group transition-all">
                           <i class="fa-regular fa-calendar text-text-secondary/70 text-xs shrink-0 group-hover:text-primary-color transition-colors"></i>
-                          <DatePicker v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
+                          <DatePicker :inSpace="true" v-model="localFilters[dateType.to]" placeholder="To" size="sm" class="flex-1" />
                         </div>
                       </div>
                     </div>

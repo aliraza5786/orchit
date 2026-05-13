@@ -34,6 +34,7 @@
             class="border relative flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
           >
             <DatePicker
+              :inSpace="true"
               placeholder="Set start date"
               class="w-full z-1"
               :model-value="form.start"
@@ -51,6 +52,7 @@
             class="border relative flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
           >
             <DatePicker
+              :inSpace="true"
               placeholder="Set end date"
               class="w-full"
               :model-value="form.end"

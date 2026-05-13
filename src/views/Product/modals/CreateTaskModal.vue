@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" title="Create Ticket" :size="size">
+  <BaseModal :inSpace="true"  v-model="isOpen" modalClass="!py-0" title="Create Ticket" :size="size">
       
     <h3 class="text-md text-text-secondary p-6">
         Provide the details below and click <span class="font-medium">Add Ticket</span>.
@@ -52,6 +52,7 @@
           :class="startDateError ? 'border-red-500' : ''"
         >
           <DatePicker
+            :inSpace="true"
             placeholder="Set start date"
             class="w-full"
             :model-value="form.startDate"
@@ -71,6 +72,7 @@
           :class="endDateError ? 'border-red-500' : ''"
         >
           <DatePicker
+            :inSpace="true"
             placeholder="Set end date"
             class="w-full"
             :model-value="form.endDate"
@@ -128,8 +130,8 @@
     <div
       class="flex justify-end gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border"
     >
-      <Button variant="secondary" @click="cancel">Cancel</Button>
-      <Button variant="primary" :disabled="isSubmitting" @click="create">
+      <Button :inSpace="true" variant="secondary" @click="cancel">Cancel</Button>
+      <Button :inSpace="true" variant="primary" :disabled="isSubmitting" @click="create">
         {{ isSubmitting ? "Adding…" : "Add Ticket" }}
       </Button>
     </div>

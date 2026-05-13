@@ -88,7 +88,7 @@
         @keydown.enter="handleEnter"
         @keydown.esc="cancelEditing"
         @input="isOpen = true"
-        class="absolute left-0 top-1/2 h-8 -translate-y-1/2 min-w-[200px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body z-50 text-[12px]"
+        class="absolute left-0 top-1/2 h-8 -translate-y-1/2 min-w-[200px] w-full p-1 border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-bg-body z-50 text-[12px]"
         placeholder="Search people by name"
       />
 
@@ -166,7 +166,7 @@
                         <!-- Unassign Label if needed, or matched by u.name -->
                     </span>
                     <!-- Other users: Assign -->
-                    <span v-else class="text-[10px] px-2 py-1 border rounded-full border-accent group-hover:bg-accent transition group-hover:text-white">
+                    <span v-else class="text-[10px] px-2 py-1 border rounded-full border-primary-color group-hover:bg-primary-color transition group-hover:text-white">
                         Assign to
                     </span>
                 </div>

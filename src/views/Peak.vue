@@ -6,7 +6,7 @@
       :animate="{ opacity: 1, y: 0 }"
       :transition="{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }"
     >
-      <div class="p-5 rounded-[6px] bg-bg-card space-y-6 border border-border">
+      <div class="p-5 rounded-[6px] bg-bg-surface space-y-6 border border-border">
         <div class="flex items-center justify-between">
           <div class="flex flex-col w-full">
             <h3 class="text-2xl text-text-primary font-semibold">Project Overview</h3>
@@ -31,7 +31,7 @@
                     :while-hover="{ y: -3, transition: { duration: 0.2 } }"
                   >
                     <button
-                      class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-xl"
+                      class="group focus:outline-none border-border border focus-visible:ring-2 focus-visible:ring-primary/50 rounded-[6px]"
                       type="button" role="button" aria-label="Open lane details" @click="onLaneClick(lane)"
                     >
                       <ProjectCard
@@ -95,7 +95,7 @@
         <ProjectPortfolio :data="projectPortfolio" :isLoading="isLoadingPortfolio" />
 
         <!-- Recent Activity -->
-        <div class="bg-bg-card w-full p-5 max-h-full rounded-lg overflow-y-auto flex flex-col border border-border">
+        <div class="bg-bg-surface w-full p-5 max-h-full rounded-[6px] overflow-y-auto flex flex-col border border-border">
           <!-- Header -->
           <div class="mb-2 flex items-start justify-between">
             <div>
@@ -358,7 +358,7 @@
     >
       <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4 items-stretch">
         <!-- Team Workload -->
-        <div class="bg-bg-card w-full max-h-full flex-auto p-5 rounded-lg border border-border">
+        <div class="bg-bg-surface w-full max-h-full flex-auto p-5 rounded-[6px] border border-border">
           <div class="mb-4">
             <h3 class="text-lg font-semibold text-text-primary">Team workload</h3>
             <p class="text-sm text-text-secondary mt-1">
@@ -475,7 +475,7 @@
             :animate="{ opacity: 1, scale: 1, y: 0 }"
             :exit="{ opacity: 0, scale: 0.96, y: 16 }"
             :transition="{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }"
-            class="relative bg-bg-card w-full max-w-4xl max-h-[85vh] rounded-lg flex flex-col border border-border"
+            class="relative bg-bg-surface w-full max-w-4xl max-h-[85vh] rounded-[6px] flex flex-col border border-border"
           >
             <!-- Modal Header -->
             <div class="p-4 flex items-center justify-between border-b border-border">

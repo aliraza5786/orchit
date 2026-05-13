@@ -63,7 +63,7 @@
                 class="h-8 w-8 rounded-full text-sm flex items-center justify-center hover:bg-bg-dropdown-menu-hover hover:text-text-primary transition"
                 :class="[
                   isSameDay(box.date, today) ? 'border border-gray-400' : '',
-                  isSameDay(box.date, selectedDate) ? 'bg-accent text-white border border-accent hover:bg-accent' : '',
+                  isSameDay(box.date, selectedDate) ?  getSelectedDateClass() : '',
                   box.disabled ? 'opacity-40 cursor-not-allowed hover:bg-transparent' : ''
                 ]"
                 :disabled="box.disabled"
@@ -112,15 +112,23 @@ const props = withDefaults(defineProps<{
   emptyText?: string
   tableInputClass?: Boolean 
   size?: 'sm' | 'md' | 'lg'
+  inSpace?: boolean
 }>(), {
   disabled: false,
   clearable: true,
   theme: 'system',
   emitAs: 'ymd',
-  size: 'md'
+  size: 'md', 
+  inSpace: false
 })
 
 const emit = defineEmits<{ (e: 'update:modelValue', v: any): void }>()
+
+const getSelectedDateClass = () => {
+  return props.inSpace
+    ? 'bg-primary-color text-white border border-primary-color hover:bg-primary-color'
+    : 'bg-accent text-white border border-accent hover:bg-accent'
+}
 
 /** Refs & state **/
 const root = ref<HTMLElement | null>(null)

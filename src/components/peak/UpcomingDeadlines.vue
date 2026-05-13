@@ -1,5 +1,5 @@
 <template>
-  <div class="border border-border rounded-lg bg-bg-card">
+  <div class="border border-border rounded-lg bg-bg-surface">
     <div class="border-b border-border p-6">
       <h3 class="font-semibold text-lg text-text-primary">Upcoming Deadlines</h3>
       <p class="text-text-secondary text-sm mt-1">Next milestones and due dates</p>

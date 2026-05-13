@@ -34,7 +34,7 @@
         @keydown.enter="handleEnter"
         @keydown.esc="cancelEditing"
         @input="isOpen = true"
-        class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[150px] w-full p-1 border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-bg-body z-50 text-[12px] h-8"
+        class="absolute left-0 top-1/2 -translate-y-1/2 min-w-[150px] w-full p-1 border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-bg-body z-50 text-[12px] h-8"
         :placeholder="placeholder"
       />
 

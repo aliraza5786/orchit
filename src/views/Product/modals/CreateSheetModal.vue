@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="model" size="lg" :title="sheet?._id ? 'Update Sheet' : 'Add a new Sheet'">
+    <BaseModal :inSpace="true"  v-model="model" size="lg" :title="sheet?._id ? 'Update Sheet' : 'Add a new Sheet'">
         <!-- Tabs -->
         <!-- <div class="px-6 pt-4 border-b border-border flex gap-6 text-sm font-medium">
             <button v-for="t in tabs" :key="t.value" @click="currentTab = t.value" class="pb-3 relative"

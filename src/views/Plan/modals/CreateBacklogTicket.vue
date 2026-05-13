@@ -31,7 +31,7 @@
                 <label class="text-sm">Start date</label>
                 <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
                     :class="startDateError ? 'border-red-500' : ''">
-                    <DatePicker placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
+                    <DatePicker :inSpace="true" placeholder="Set start date" class="w-full" :model-value="form.startDate" emit-as="ymd"
                         @update:modelValue="setStartDate" :min-date="today" />
                 </div>
                 <p v-if="startDateError" class="text-xs text-red-500">{{ startDateError }}</p>
@@ -42,7 +42,7 @@
                 <label class="text-sm">End date</label>
                 <div class="border flex items-center border-border h-10 px-2 bg-bg-input rounded-lg"
                     :class="endDateError ? 'border-red-500' : ''">
-                    <DatePicker placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
+                    <DatePicker :inSpace="true" placeholder="Set end date" class="w-full" :model-value="form.endDate" emit-as="ymd"
                         @update:modelValue="setEndDate" :min-date="form.startDate || today" />
                 </div>
                 <p v-if="endDateError" class="text-xs text-red-500">{{ endDateError }}</p>

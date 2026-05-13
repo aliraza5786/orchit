@@ -3,7 +3,7 @@
 
   <!-- Header -->
   <div
-    class="relative p-3 rounded-lg min-w-[240px] sm:min-w-sm border border-border overflow-hidden flex flex-col justify-between bg-bg-card w-full">
+    class="relative p-3 rounded-[6px] min-w-[240px] sm:min-w-sm border border-border overflow-hidden flex flex-col justify-between bg-bg-card w-full">
     <div class="flex justify-between items-start pb-2">
       <div>
         <h3 class="text-lg font-semibold text-text-primary text-left">
@@ -38,7 +38,7 @@
        {{ doneCard ??0 }}  / {{ totalCard }}
         </span>
       </div>
-      <ProgressBar class="mt-2" :progress="liveProgress" fillColor="bg-accent" :indeterminate="!!loading" />
+      <ProgressBar class="mt-2" :progress="liveProgress" fillColor="bg-primary-color" :indeterminate="!!loading" />
     </div>
   </div>
 

@@ -54,7 +54,7 @@
               <path
                 d="M2 1L8 5L2 9"
                 fill="none"
-                stroke="#6e3b96"
+                stroke="var(--primary-color, #6e3b96)"
                 stroke-width="1.5"
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -545,7 +545,7 @@
               :class="
                 selectedNodeId ? 'fa-solid fa-sliders' : 'fa-solid fa-palette'
               "
-              style="color: var(--accent, #6e3b96)"
+              style="color: var(--primary-color, #6e3b96)"
             ></i>
             <span>{{ selectedNodeId ? "Format Node" : "Map Theme" }}</span>
           </div>
@@ -3329,7 +3329,7 @@ watch(
   color: #fff;
 }
 .inline-btn--ok:hover:not(:disabled) {
-  background: #6e3b96;
+  background: var(--primary-color, #6e3b96);
 }
 .inline-btn--ok:disabled {
   background: rgba(125, 104, 200, 0.4);
@@ -3932,7 +3932,7 @@ watch(
   top: 3px;
   right: 4px;
   font-size: 8px;
-  color: #7d68c8;
+  color: var(--primary-color, #6e3b96);
   background: white;
   border-radius: 50%;
   padding: 1px;
@@ -4276,7 +4276,7 @@ watch(
   transition: background 0.15s;
 }
 .fs-save-btn:hover:not(:disabled) {
-  background: #6e3b96;
+  background: var(--primary-color, #6e3b96);
 }
 .fs-save-btn:disabled {
   background: rgba(125, 104, 200, 0.45);

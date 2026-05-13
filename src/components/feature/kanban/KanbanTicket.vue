@@ -11,7 +11,7 @@
                     {{ ticket['card-type'] && ticket['card-type'] !== '' ? ticket['card-type'] : 'General' }}
                 </span>
                 <span v-if="localStatus && selectedVarSlug[0]?.slug != 'card-status'"
-                    class="text-[10px] px-2 py-1 h-6 rounded bg-accent/20 text-accent font-medium capitalize">
+                    class="text-[10px] px-2 py-1 h-6 rounded bg-primary-color/20 text-primary-color font-medium capitalize">
                     {{ localStatus }}
                 </span>
             </div>
@@ -46,7 +46,7 @@
 
                 <div @click.stop
                     class="flex items-center gap-2 text-nowrap overflow-ellipsis text-xs text-text-secondary">
-                    <DatePicker placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
+                    <DatePicker :inSpace="true" placeholder="end date" :model-value="dueDate" theme="dark" emit-as="ymd"
                         @update:modelValue="setDueDate" />
                 </div>
             </div>
