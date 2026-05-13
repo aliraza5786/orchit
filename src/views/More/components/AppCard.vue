@@ -1,6 +1,6 @@
 
 <template>
-  <div class="group relative rounded-2xl border border-border bg-bg-body p-4 shadow-sm transition-shadow hover:shadow">
+  <div class="group relative rounded-[6px] border border-border bg-bg-body p-4 shadow-sm transition-shadow hover:shadow">
     <div class="flex items-start gap-3">
       <div :class="['flex h-10 w-10 shrink-0 bg-primary-color/30 backdrop-blur-lg items-center justify-center rounded-xl text-text-primary', app.color]">
         <i class="text-base font-semibold " :class="`fa-solid fa-${app?.icon?.iconName}`"></i>

@@ -17,9 +17,9 @@
   /* colors */
   --text-primary: #2b2c30;
   --text-secondary: #6b6b6e;
-  --border: #d9d9d9;
-  --bg-body: #f3f4f6;
-  --bg-surface: #dedfe3; /* table headers, panels */
+  --border: #d9d9d996;
+  --bg-body: #f4f4f4;
+  --bg-surface: #fefeff; /* table headers, panels */
   --bg-card: #ffffff;
   --accent: #7d68c8;
   --accent-hover: #6e3b96;
@@ -69,8 +69,8 @@ html.theme-switching * {
   --secondary-color: var(--accent-hover);
 
   /* Dropdowns & Inputs */
-  --bg-input: #1a1a1a; /* dark input backgrounds */
-  --border-input: #3e3e42; /* input borders */
+  --bg-input: #141414; /* dark input backgrounds */
+  --border-input: #1d222c; /* input borders */
   --bg-dropdown: #2b2c30; /* dropdown menus */
   /* Use brand hue plus complimentary neon accents */
   --glow-brand: var(--sidebar-primary);

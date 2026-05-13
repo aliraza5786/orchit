@@ -201,6 +201,7 @@
   </div>
 
   <ShareModal
+   :inSpace="true"
     v-if="showShareModal"
     v-model="showShareModal"
     :resourceId="activeShareId"

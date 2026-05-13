@@ -109,7 +109,7 @@
                 @click="toggleGroup(group.title)"
               >
                 <td :colspan="visibleColumns.length + 2" class="p-2 text-sm font-semibold text-text-primary border-r-0">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 ps-2">
                     <i 
                       class="fa-solid fa-chevron-right text-xs transition-transform"
                       :class="{ 'rotate-90': expandedGroups[group.title] }"
@@ -421,7 +421,7 @@
       <div 
         v-if="canCreate && !isTalent && !isGrouped" 
         ref="quickCreateContainerRef"
-        class="sticky left-0 bg-bg-surface border-t border-border/60 px-4 py-2"
+        class="sticky left-0 bg-bg-body border-t border-border/60 px-4 py-2"
         :style="{ width: viewportWidth + 'px' }"
       >
         <!-- IDLE STATE -->

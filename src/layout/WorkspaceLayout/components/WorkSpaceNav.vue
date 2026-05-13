@@ -65,8 +65,7 @@
                   class="rounded-full text-white flex items-center justify-center font-bold text-[13px] shrink-0 shadow-sm"
                   :class="expanded ? 'w-[25px] h-[25px]' : 'w-[30px] h-[30px]'"
                   :style="{
-                    backgroundColor:
-                      localWorkspace.variables?.['workspace-color'] ||
+                    backgroundColor: 
                       'var(--primary-color)',
                   }"
                   v-if="!localWorkspace.logo"
@@ -78,20 +77,23 @@
                   }}
                 </div>
                 <img
-                  v-else
-                  :src="localWorkspace.logo ?? dp"
-                  alt="Workspace menu"
+                   v-else
+                   :src="localWorkspace.logo ?? dp"
+                   alt="Workspace menu"
+                   class="rounded-full"
                   :class="expanded ? 'w-[25px] h-[25px]' : 'w-[30px] h-[30px]'"
                   :style="{
-                    borderColor:
-                      localWorkspace.variables?.['workspace-color'] ||
-                      'transparent',
-                    borderWidth: localWorkspace.variables?.['workspace-color']
-                      ? '2px'
-                      : '0',
-                  }"
-                  class="rounded-full cursor-pointer aspect-square object-cover shrink-0 shadow-sm border-solid"
-                />
+                  borderColor: localWorkspace.variables?.['workspace-color']
+                  ? 'var(--primary-color)'
+                  : 'transparent',
+
+                  borderWidth: localWorkspace.variables?.['workspace-color']
+                  ? '2px'
+                  : '0px',
+
+                  borderStyle: 'solid',
+                   }"
+                  />
                 <Transition name="title-fade">
                   <h3
                     v-if="expanded"

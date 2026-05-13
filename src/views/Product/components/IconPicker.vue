@@ -9,7 +9,8 @@ type IconValue = { prefix: IconPrefix; iconName: string } | null;
 
 const props = defineProps<{ 
   modelValue?: IconValue,
-  relevantIcons?: string[]
+  relevantIcons?: string[],
+  inSpace?: boolean
 }>();
 const emit = defineEmits<{ (e: 'update:modelValue', value: any): void }>();
 
@@ -88,7 +89,7 @@ function openIconLibrary() {
     <!-- Button / Empty state -->
     <div v-if="!showIconPicker && !modelValue?.iconName"
       class="border border-dashed bg-bg-input border-border rounded-xl p-6 flex flex-col items-center text-center">
-      <Button variant="primary" @click="openIconLibrary">Select Icon</Button>
+      <Button :inSpace="props.inSpace? props.inSpace : false"  variant="primary" @click="openIconLibrary">Select Icon</Button>
       <p class="text-xs text-text-secondary mt-2">Browse PrimeIcons</p>
     </div>
 

@@ -3,7 +3,7 @@
     <div
       v-show="showPanel"
       :class="[
-        'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.1)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
+        'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-surface/95 to-bg-surface/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.1)] border border-border overflow-hidden transition-all duration-300 ease-in-out',
         isExpanded
           ? 'min-w-full max-w-full'
           : 'min-w-full max-w-[380px] sm:min-w-[380px]',
@@ -28,7 +28,7 @@
       <div v-else>
         <!-- Header -->
         <div
-          class="sticky top-0 z-10 border-b border-border px-3 sm:px-3 py-[9px] flex items-center justify-between bg-bg-card"
+          class="sticky top-0 z-10 border-b border-border px-3 sm:px-3 py-[9px] flex items-center justify-between bg-bg-surface"
         >
           <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
           <div class="flex items-center gap-1">
@@ -68,7 +68,7 @@
               :class="
                 cardDetails.sprint.status === 'active'
                   ? 'bg-primary-color/15 text-primary-color border-primary-color/20'
-                  : 'bg-orchit-white/5 text-text-secondary border-orchit-white/10'
+                  : 'bg-orchit-white/5 text-text-secondary border-border'
               "
             >
               <i class="fa-solid fa-layer-group text-[10px]"></i>
@@ -129,7 +129,7 @@
                 @keydown.enter.prevent="saveTitle"
                 @keydown.esc.prevent="cancelEdit"
                 @blur="saveTitle"
-                class="w-full text-[18px] font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-primary-color/40 transition"
+                class="w-full text-[18px] font-semibold rounded-xl px-3 py-2 bg-bg-body border border-border focus:outline-none focus:ring-2 focus:ring-primary-color/40 transition"
                 type="text"
                 aria-label="Edit title"
               />
@@ -137,7 +137,7 @@
                 v-else
                 key="title-view"
                 :class="canEditCard ? 'cursor-text' : 'cursor-not-allowed'"
-                class="text-[18px] leading-[24px] break-words font-semibold tracking-tight rounded-lg px-2 py-1 hover:bg-orchit-white/5 transition"
+                class="text-[18px] leading-[24px] break-words font-semibold tracking-tight rounded-lg px-2 py-1 hover:bg-bg-body transition"
                 @click="editTitle()"
                 aria-label="Card title"
                 :title="
@@ -165,7 +165,7 @@
                 class="group relative rounded-lg px-3 py-2.5 transition-all duration-150 max-h-[400px] overflow-y-auto scrollbar-visible"
                 :class="[
                   canEditCard
-                    ? 'cursor-text hover:bg-orchit-white/5 hover:ring-1 hover:ring-orchit-white/10'
+                    ? 'cursor-text hover:bg-bg-body hover:ring-1 hover:ring-bg-body/50'
                     : 'cursor-not-allowed opacity-60'
                 ]"
                 @click="startEditDesc"
@@ -199,7 +199,7 @@
                 <div class="flex items-center gap-2 px-3 py-2 border-t border-border bg-orchit-white/3">
                   <button
                     type="button"
-                    class="px-3 py-1.5 rounded-md text-[13px] font-medium text-text-secondary bg-orchit-white/5 hover:bg-orchit-white/10 border border-orchit-white/10 transition-all active:scale-95"
+                    class="px-3 py-1.5 rounded-md text-[13px] font-medium text-text-secondary bg-orchit-white/5 hover:bg-orchit-white/10 border border-border transition-all active:scale-95"
                     @click="cancelDescEdit"
                   >
                     Cancel
@@ -236,7 +236,7 @@
               <!-- Meta tiles -->
               <div class="grid grid-cols-2 gap-4 text-sm">
                 <div
-                  class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-4"
+                  class="rounded-xl bg-orchit-white/5 border border-border p-4"
                 >
                   <div
                     class="text-xs uppercase tracking-wider text-text-secondary"
@@ -246,7 +246,7 @@
                   <div class="mt-1 font-medium">{{ dateISO }}</div>
                 </div>
                 <div
-                  class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-4"
+                  class="rounded-xl bg-orchit-white/5 border border-border p-4"
                 >
                   <div
                     class="text-xs uppercase tracking-wider text-text-secondary"
@@ -261,7 +261,7 @@
 
               <!-- Fields grid -->
               <div
-                class="rounded-2xl border border-orchit-white/10 bg-orchit-white/5 p-4 grid grid-cols-1 gap-4"
+                class="rounded-2xl border border-border bg-orchit-white/5 p-4 grid grid-cols-1 gap-4"
               >
                 <div class="space-y-2">
                   <div
@@ -300,7 +300,7 @@
                       Start Date
                     </div>
                     <div
-                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-2 rounded-lg bg-bg-input border border-border"
                     >
                       <i class="fa-regular fa-calendar"></i>
                       <DatePicker
@@ -326,7 +326,7 @@
                       :class="
                         endDateError
                           ? 'border-red-500'
-                          : 'border-orchit-white/10'
+                          : 'border-border'
                       "
                     >
                       <i class="fa-regular fa-calendar"></i>
@@ -501,7 +501,7 @@
                     <!-- Date & Time Types -->
                     <div
                       v-else-if="['Date', 'Date & Time'].includes(item.type)"
-                      class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-border"
                     >
                       <i class="fa-regular fa-calendar text-[14px]"></i>
                       <DatePicker
@@ -520,7 +520,7 @@
                     <!-- Time Type -->
                     <div
                       v-else-if="item.type === 'Time'"
-                      class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-orchit-white/10"
+                      class="h-10 px-3 flex items-center gap-1 rounded-lg bg-bg-input border border-border"
                     >
                       <i class="fa-regular fa-clock text-[14px]"></i>
                       <TimePicker
@@ -654,7 +654,7 @@
                   History
                 </h3>
                 <ol
-                  class="relative border-l border-orchit-white/10 pl-5 space-y-4 ml-1"
+                  class="relative border-l border-border pl-5 space-y-4 ml-1"
                 >
                   <li
                     v-for="(h, i) in cardDetails?.history"
@@ -665,7 +665,7 @@
                       class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-primary-color/70 ring-4 ring-primary-color/10"
                     ></span>
                     <div
-                      class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-3 hover:bg-orchit-white/7 transition"
+                      class="rounded-xl bg-orchit-white/5 border border-border p-3 hover:bg-orchit-white/7 transition"
                     >
                       <span class="font-semibold">{{
                         h.user.u_full_name
@@ -687,7 +687,7 @@
               <div
                 v-for="c in comments ?? []"
                 :key="c._id"
-                class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 p-4 hover:bg-orchit-white/7 transition"
+                class="rounded-xl border border-border bg-orchit-white/5 p-4 hover:bg-orchit-white/7 transition"
               >
                 <div class="flex items-center gap-3 mb-2">
                   <div
@@ -775,7 +775,7 @@
                           @input="(e) => handleCommentInput(e, c._id)"
                           @keydown="(e) => handleCommentKeydown(e, c._id)"
                           @blur="handleCommentBlur"
-                          class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-primary-color/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                          class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-border focus:ring-2 focus:ring-primary-color/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
                           style="
                             font-family:
                               Inter,
@@ -821,14 +821,14 @@
                       ? editAttachments
                       : c.attachments"
                     :key="index"
-                    class="group relative flex items-center gap-2 rounded-lg border border-orchit-white/10 bg-orchit-white/5 px-2 py-1 hover:bg-orchit-white/10 transition"
+                    class="group relative flex items-center gap-2 rounded-lg border border-border bg-orchit-white/5 px-2 py-1 hover:bg-orchit-white/10 transition"
                   >
                     <a
                       :href="file.url"
                       target="_blank"
                       class="flex items-center gap-2 flex-1 min-w-0"
                     >
-                      <div v-if="file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)" class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-orchit-white/10">
+                      <div v-if="file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)" class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-border">
                         <img :src="file.url" class="w-full h-full object-cover" />
                       </div>
                       <i v-else-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-[11px] text-red-400"></i>
@@ -853,7 +853,7 @@
 
               <!-- New comment -->
               <div
-                class="rounded-xl border border-orchit-white/10 bg-orchit-white/5 overflow-hidden relative"
+                class="rounded-xl border border-border bg-orchit-white/5 overflow-hidden relative"
               >
                 <div class="relative">
                   <div
@@ -913,9 +913,9 @@
                   <div
                     v-for="file in commentAttachments"
                     :key="file.id"
-                    class="group flex items-center gap-2 px-2 py-1 rounded-lg bg-orchit-white/5 border border-orchit-white/10 text-[11px] text-text-secondary transition-all hover:border-orchit-white/20"
+                    class="group flex items-center gap-2 px-2 py-1 rounded-lg bg-orchit-white/5 border border-border text-[11px] text-text-secondary transition-all hover:border-orchit-white/20"
                   >
-                    <div v-if="(file.previewUrl || file.data?.url) && file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)" class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-orchit-white/10">
+                    <div v-if="(file.previewUrl || file.data?.url) && file.name.match(/\.(jpg|jpeg|png|gif|webp|avif)$/i)" class="w-6 h-6 rounded overflow-hidden flex-shrink-0 border border-border">
                       <img :src="file.previewUrl || file.data?.url" class="w-full h-full object-cover" />
                     </div>
                     <i v-else-if="file.name.match(/\.pdf$/i)" class="fa-regular fa-file-pdf text-[10px] text-red-400"></i>
@@ -940,14 +940,14 @@
                   </div>
                 </div>
                 <div
-                  class="flex items-center w-full justify-between p-2 border-t border-orchit-white/10"
+                  class="flex items-center w-full justify-between p-2 border-t border-border"
                 >
                   <input
                     ref="fileInput"
                     type="file"
                     multiple
                     @change="handleFileChange"
-                    class="text-ellipsis text-xs text-transparent file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md file:border file:border-orchit-white/10 file:bg-orchit-white/10 hover:file:bg-orchit-white/15 file:text-text-primary transition inline-flex file:cursor-pointer max-w-[150px]"
+                    class="text-ellipsis text-xs text-transparent file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md file:border file:border-border file:bg-orchit-white/10 hover:file:bg-orchit-white/15 file:text-text-primary transition inline-flex file:cursor-pointer max-w-[150px]"
                   />
                   <Button
                     :inSpace="true"
@@ -972,7 +972,7 @@
                 <div class="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                   Files attached to this {{ details?.type ?? "item" }}
                 </div>
-                <div class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-orchit-white/10">
+                <div class="text-[11px] text-text-secondary bg-orchit-white/5 px-2 py-0.5 rounded-full border border-border">
                   {{ attachments.length }} files
                 </div>
               </div>
@@ -981,7 +981,7 @@
                 <div
                   v-for="file in attachments"
                   :key="file._id"
-                  class="group relative flex flex-col flex-wrap rounded-xl border border-orchit-white/10 bg-orchit-white/5 hover:bg-orchit-white/8 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
+                  class="group relative flex flex-col flex-wrap rounded-xl border border-border bg-orchit-white/5 hover:bg-orchit-white/8 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5"
                 >
                   <!-- Preview Area -->
                   <div class="aspect-[16/10] w-full relative rounded-t-xl overflow-hidden bg-bg-surface">
@@ -1042,7 +1042,7 @@
               </div>
 
               <!-- Empty State -->
-              <div v-else class="py-12 flex flex-col items-center justify-center border border-dashed border-orchit-white/10 rounded-3xl bg-orchit-white/2">
+              <div v-else class="py-12 flex flex-col items-center justify-center border border-dashed border-border rounded-3xl bg-orchit-white/2">
                 <div class="w-16 h-16 rounded-2xl bg-orchit-white/5 flex items-center justify-center mb-4">
                   <i class="fa-regular fa-folder-open text-2xl text-text-secondary opacity-40"></i>
                 </div>

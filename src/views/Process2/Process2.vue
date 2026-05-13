@@ -1,7 +1,7 @@
 <template>
-  <div class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-hidden flex flex-col">
+  <div class="flex-auto flex-grow h-full bg-bg-surface rounded-[6px] border border-border overflow-hidden flex flex-col">
      <!-- Header (Added) -->
-         <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-card border-b border-border">
+         <div class="overflow-x-auto shrink-0 sticky top-0 z-20 bg-bg-surface border-b border-border">
              <div class="flex items-center justify-between gap-4 py-2 px-2">
                  <h2 class="text-md font-semibold text-foreground text-nowrap">All Processes</h2>
                   <div class="w-[250px]">
@@ -52,7 +52,7 @@
           <BaseTextField size="md" :autofocus="true" v-model="newColumn" placeholder="Group Name..." 
             @keydown.enter.prevent="emitAddColumn" />
           <div class="flex items-center gap-2">
-            <Button @click="emitAddColumn" variant="primary" size="sm" :loading="addingList" class="mt-4">
+            <Button :inSpace="true" @click="emitAddColumn" variant="primary" size="sm" :loading="addingList" class="mt-4">
               Add Group
             </Button>
             <i class="fa-solid fa-close cursor-pointer text-text-secondary hover:text-text-primary px-2" @click="activeAddList = false"></i>

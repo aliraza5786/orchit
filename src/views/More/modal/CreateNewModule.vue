@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="model" size="lg" title=" Add New Module">
+    <BaseModal :inSpace="true" v-model="model" size="lg" title=" Add New Module">
        
 
         <!-- Tabs -->
@@ -17,7 +17,7 @@
 
             <!-- MANUAL TAB -->
             <section v-if="currentTab === 'manual'" class="space-y-4">
-                <IconPicker v-model="form.icon" />
+                <IconPicker :inSpace="true" v-model="form.icon" />
 
                 <BaseTextField v-model="form.title" label="Module name" size="lg" placeholder="Module name"
                     :error="!!errors.title" :message="errors.title" />

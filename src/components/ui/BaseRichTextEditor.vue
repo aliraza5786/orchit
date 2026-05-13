@@ -173,7 +173,8 @@ const props = withDefaults(defineProps<{
     label?: string
     placeholder?: string
     theme?: 'light' | 'dark'
-}>(), { theme: 'light' })
+    inSpace?: boolean
+}>(), { theme: 'light', inSpace: false })
 
 const emit = defineEmits(['update:modelValue', 'focusOut'])
 

@@ -1,5 +1,5 @@
 <template>
-    <BaseModal v-model="isOpen" modalClass="!py-0" title="Create Ticket" size="lg">
+    <BaseModal :inSpace="true" v-model="isOpen" modalClass="!py-0" title="Create Ticket" size="lg">
         
           
       <h3 class="text-md text-text-secondary p-6">
@@ -59,14 +59,14 @@
         </div>
 
         <div class="px-6 mt-2">
-            <BaseRichTextEditor label="Description" placeholder="What needs to be done, acceptance criteria, links…"
+            <BaseRichTextEditor :inSpace="true" label="Description" placeholder="What needs to be done, acceptance criteria, links…"
                 @blur="touched.description = true" v-model="form.description" />
         </div>
 
         <!-- Footer -->
         <div class="flex justify-end gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border">
-            <Button variant="secondary" @click="cancel">Cancel</Button>
-            <Button variant="primary" :disabled="!isValid || isSubmitting" @click="create">
+            <Button :inSpace="true" variant="secondary" @click="cancel">Cancel</Button>
+            <Button :inSpace="true" variant="primary" :disabled="!isValid || isSubmitting" @click="create">
                 {{ isSubmitting ? 'Adding…' : 'Add Ticket' }}
             </Button>
         </div>

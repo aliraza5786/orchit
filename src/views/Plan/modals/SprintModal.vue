@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="md" :title="sprint ? `Edit ${formattedLabel}` : `Add New ${formattedLabel}`">
+  <BaseModal :inSpace="true" v-model="isOpen" modalClass="!py-0" size="md" :title="sprint ? `Edit ${formattedLabel}` : `Add New ${formattedLabel}`">
     
     <div class="px-6 gap-4 bg-bg-input pt-5 pb-8">
       <!-- Name (required) -->
@@ -140,8 +140,8 @@
     <div
       class="flex justify-end gap-2 p-6 sticky bottom-0 bg-bg-input border-t border-border"
     >
-      <Button variant="secondary" @click="cancel">Cancel</Button>
-      <Button variant="primary" :disabled="!isValid" @click="save">{{
+      <Button :inSpace="true" variant="secondary" @click="cancel">Cancel</Button>
+      <Button :inSpace="true" variant="primary" :disabled="!isValid" @click="save">{{
         creatingSprint ? "Saving..." : "Save"
       }}</Button>
     </div>

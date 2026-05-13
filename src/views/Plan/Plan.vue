@@ -133,7 +133,7 @@
                   class="rounded-md relative flex flex-col flex-1 min-w-0 bg-bg-surface min-h-0 border border-border"
                 >
                   <div
-                    class="flex py-1 justify-between gap-4 px-2 border-b border-border-input"
+                    class="flex py-1 justify-between gap-4 px-2 border-b border-border"
                   >
                     <!-- Left Section: Sprint Tabs -->
                     <div class="overflow-x-auto">
@@ -204,8 +204,7 @@
                           <div class="flex items-center gap-2">
                             <span
                               v-if="selectedSprintId"
-                              class="w-2 h-2 rounded-full flex-shrink-0"
-                              :style="{ backgroundColor: selectedType.dot }"
+                              class="w-2 h-2 rounded-full flex-shrink-0 bg-primary-color" 
                             ></span>
                             <span class="truncate max-w-[160px]">{{ selectedSprintTitle || 'Select ' + selectedType.label }}</span>
                           </div>
@@ -239,8 +238,7 @@
                                     @click="selectSprint(sprint)"
                                   >
                                     <span
-                                      class="w-2 h-2 rounded-full flex-shrink-0"
-                                      :style="{ backgroundColor: selectedType.dot }"
+                                      class="w-2 h-2 rounded-full flex-shrink-0 bg-primary-color"
                                     ></span>
                                     <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-primary-color' : ''">{{ sprint.title }}</span>
                                   </button>
@@ -292,7 +290,7 @@
             
                         >
                           <template #icon>
-                            <i class="fa-solid fa-magnifying-glass text-[13px] text-primary-color"></i>
+                            <i class="fa-solid fa-magnifying-glass text-primary"></i>
                           </template>
                         </ExpandableSearch>
                         <div
@@ -371,7 +369,7 @@
                   <div class="flex-1 min-h-0 overflow-y-auto mt-2 px-2" v-else ref="subSprintsContainer">
                     <template v-if="hasSubSprints && ['planning', 'active'].includes(sprintDetailData?.status?.toLowerCase())">
                       <!-- Milestone Global Tickets -->
-                      <div class="mb-2 border border-border rounded-lg overflow-hidden bg-bg-card">
+                      <div class="mb-2 border border-border rounded-lg overflow-hidden bg-bg-body">
                         <div 
                           @click="toggleSprintCollapse('parent-global')"
                           class="flex items-center justify-between p-3 cursor-pointer hover:bg-bg-body transition-colors border-b border-border"
@@ -404,7 +402,7 @@
 
                       <!-- Sub Items (Sprints/Huddles) -->
                       <div v-for="sprint in allSubItems" :key="sprint._id" 
-                           class="mb-2 border border-border rounded-lg bg-bg-card transition-all"
+                           class="mb-2 border border-border rounded-lg bg-bg-body transition-all"
                            :class="{ 'relative z-50': activeSubSprintMenuId === sprint._id }">
                         <!-- Sprint Header -->
                         <div 
@@ -539,7 +537,7 @@
 
                             <!-- Nested Sub-Items Loop -->
                             <div v-for="huddle in [...(sprint.hurdles || []), ...(sprint.sprints || [])]" :key="huddle._id" 
-                                 class="mb-2 border border-border rounded-lg bg-bg-card transition-all">
+                                 class="mb-2 border border-border rounded-lg bg-bg-body transition-all">
                               <div 
                                 @click="huddle.status !== 'completed' && toggleSprintCollapse(huddle._id)"
                                 class="flex items-center justify-between p-3 hover:bg-bg-body transition-colors border-b rounded-[6px] border-border"

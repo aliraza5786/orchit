@@ -1,5 +1,5 @@
 <template>
-  <BaseModal :modelValue="modelValue" title="Add Process Card" @update:modelValue="$emit('update:modelValue', $event)" size="md">
+  <BaseModal :inSpace="true" :modelValue="modelValue" title="Add Process Card" @update:modelValue="$emit('update:modelValue', $event)" size="md">
     <div class="p-6 sm:mt-4"> 
       <div class="space-y-4">
         <BaseTextField label="Title" v-model="form.title" placeholder="e.g. Start Task" :autofocus="true" />
@@ -12,8 +12,8 @@
         
 
         <div class="flex justify-end gap-3 mt-6">
-             <Button variant="secondary" @click="$emit('update:modelValue', false)">Cancel</Button>
-             <Button variant="primary" @click="create" :loading="isPending">Create Process</Button>
+             <Button :inSpace="true" variant="secondary" @click="$emit('update:modelValue', false)">Cancel</Button>
+             <Button :inSpace="true" variant="primary" @click="create" :loading="isPending">Create Process</Button>
         </div>
       </div>
     </div>

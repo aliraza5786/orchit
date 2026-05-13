@@ -3,7 +3,7 @@
     <div class="px-6 py-6 space-y-4">
 
       <!-- Icon Picker -->
-      <IconPicker v-model="form.icon" />
+      <IconPicker :inSpace="true" v-model="form.icon" />
 
       <!-- Module Name -->
       <BaseTextField

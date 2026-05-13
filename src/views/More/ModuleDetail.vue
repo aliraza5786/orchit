@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col w-full h-full overflow-y-auto bg-bg-card rounded-6px border border-border overflow-hidden">
+  <div class="flex flex-col w-full h-full overflow-y-auto bg-bg-surface rounded-6px border border-border overflow-hidden">
 
     <!-- Header -->
-    <header class="sticky top-0 w-full z-10 bg-bg-card/80 backdrop-blur border-b border-border">
+    <header class="sticky top-0 w-full z-10 bg-bg-surface backdrop-blur border-b border-border">
       <div class="mx-auto px-6 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div class="flex flex-col gap-2">
           <router-link :to="`/workspace/more/${workspaceId}`">
@@ -42,7 +42,7 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <Button size="sm" :disabled="isModulePending || isusingPending" @click="useModuleHandler" :loading="isusingPending">{{ isusingPending
+          <Button :inSpace="true" size="sm" :disabled="isModulePending || isusingPending" @click="useModuleHandler" :loading="isusingPending">{{ isusingPending
             ? 'Processing' :'Use this Module'}}</Button>
           <button
             class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-primary-color flex items-center justify-center">
@@ -76,7 +76,7 @@
         <!-- White Board Area -->
         <div class="flex-auto border overflow-x-auto border-border bg-bg-card rounded-lg min-h-[420px]">
           <div class="flex px-4 py-2 justify-between items-center border-b border-border">
-            <Dropdown v-if="!isModulePending" v-model="selected_sheet_id" :options="moduleDetail?.sheets"
+            <Dropdown :inSpace="true" v-if="!isModulePending" v-model="selected_sheet_id" :options="moduleDetail?.sheets"
               variant="secondary" />
             <div v-else class="h-8 w-32 bg-bg-body rounded"></div>
           </div>
@@ -113,7 +113,7 @@
             class="w-full border border-border rounded-lg bg-bg-card text-sm text-text-secondary p-3 focus:outline-none"
             placeholder="Add a comment..." v-model="comment"></textarea>
           <div class="flex justify-end mt-2">
-            <Button @click="postCommentHandler" size="sm">{{ isCommenting ? 'Posting...' : 'Post' }}</Button>
+            <Button :inSpace="true" @click="postCommentHandler" size="sm">{{ isCommenting ? 'Posting...' : 'Post' }}</Button>
           </div>
         </div>
 

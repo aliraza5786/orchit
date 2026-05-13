@@ -14,11 +14,11 @@
             </div>
 
             <div class="flex items-center gap-3">
-              <Button :disabled="!canCreateCard" variant="secondary" size="sm" @click="handleAddStatus">
+              <Button :inSpace="true" :disabled="!canCreateCard" variant="secondary" size="sm" @click="handleAddStatus">
                 <i class="fa-solid fa-plus mr-2" aria-hidden="true" /> Add Steps
               </Button>
 
-              <Button variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="handleUpdateWorkflow">
+              <Button :inSpace="true" variant="primary" size="sm" :disabled="isSaving || !canEditCard || !canCreateCard" @click="handleUpdateWorkflow">
                 {{ updateButtonLabel }}
               </Button>
 

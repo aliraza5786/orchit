@@ -4,39 +4,189 @@
 // ─── Palette Definitions ──────────────────────────────────────────────────────
 
 export const lightColors = [
-  { color: "#386a20",  value: "#F0F4EC", "primary-color": "#386a20",  "secondary-color": "#b8f397" },
-  { color: "#0061a4",  value: "#F0F4F9", "primary-color": "#0061a4",  "secondary-color": "#d1e4ff" },
-  { color: "#6750a4",  value: "#F5F2F8", "primary-color": "#6750a4",  "secondary-color": "#eaddff" },
-  { color: "#984061",  value: "#F9F1F2", "primary-color": "#984061",  "secondary-color": "#ffd9e2" },
-  { color: "#006a6a",  value: "#EBF5F4", "primary-color": "#006a6a",  "secondary-color": "#80f2f2" },
-  { color: "#7a5900",  value: "#FAF3E5", "primary-color": "#7a5900",  "secondary-color": "#ffdf9e" },
-  { color: "#445e91",  value: "#F2F4F6", "primary-color": "#445e91",  "secondary-color": "#d8e2ff" },
-  { color: "#006d3a",  value: "#EFF6F1", "primary-color": "#006d3a",  "secondary-color": "#95f7b5" },
-  { color: "#625b71",  value: "#F3F2F4", "primary-color": "#625b71",  "secondary-color": "#e8def8" },
-  { color: "#1EA0DC",  value: "#F0F8FE", "primary-color": "#00668b",  "secondary-color": "#c2e8ff" },
-  { color: "#7d68c8",  value: "#F5F3FE", "primary-color": "#7d68c8",  "secondary-color": "#c4b5fd" },
-  { color: "#dc2626",  value: "#FEF2F1", "primary-color": "#dc2626",  "secondary-color": "#fecaca" },
-  { color: "#2563eb",  value: "#EFF6FE", "primary-color": "#2563eb",  "secondary-color": "#bfdbfe" },
-  { color: "#059669",  value: "#ECFDF4", "primary-color": "#059669",  "secondary-color": "#a7f3d0" },
-  { color: "#d97706",  value: "#FFFBEA", "primary-color": "#d97706",  "secondary-color": "#fde68a" },
+  {
+    color: "#386a20",
+    value: "#F0F4EC",
+    "primary-color": "#386a20",
+    "secondary-color": "#b8f397",
+  },
+  {
+    color: "#0061a4",
+    value: "#F0F4F9",
+    "primary-color": "#0061a4",
+    "secondary-color": "#d1e4ff",
+  },
+  {
+    color: "#6750a4",
+    value: "#F5F2F8",
+    "primary-color": "#6750a4",
+    "secondary-color": "#eaddff",
+  },
+  {
+    color: "#984061",
+    value: "#F9F1F2",
+    "primary-color": "#984061",
+    "secondary-color": "#ffd9e2",
+  },
+  {
+    color: "#006a6a",
+    value: "#EBF5F4",
+    "primary-color": "#006a6a",
+    "secondary-color": "#80f2f2",
+  },
+  {
+    color: "#7a5900",
+    value: "#FAF3E5",
+    "primary-color": "#7a5900",
+    "secondary-color": "#ffdf9e",
+  },
+  {
+    color: "#445e91",
+    value: "#F2F4F6",
+    "primary-color": "#445e91",
+    "secondary-color": "#d8e2ff",
+  },
+  {
+    color: "#006d3a",
+    value: "#EFF6F1",
+    "primary-color": "#006d3a",
+    "secondary-color": "#95f7b5",
+  },
+  {
+    color: "#625b71",
+    value: "#F3F2F4",
+    "primary-color": "#625b71",
+    "secondary-color": "#e8def8",
+  },
+  {
+    color: "#1EA0DC",
+    value: "#F0F8FE",
+    "primary-color": "#00668b",
+    "secondary-color": "#c2e8ff",
+  },
+  {
+    color: "#7d68c8",
+    value: "#F5F3FE",
+    "primary-color": "#7d68c8",
+    "secondary-color": "#c4b5fd",
+  },
+  {
+    color: "#dc2626",
+    value: "#FEF2F1",
+    "primary-color": "#dc2626",
+    "secondary-color": "#fecaca",
+  },
+  {
+    color: "#2563eb",
+    value: "#EFF6FE",
+    "primary-color": "#2563eb",
+    "secondary-color": "#bfdbfe",
+  },
+  {
+    color: "#059669",
+    value: "#ECFDF4",
+    "primary-color": "#059669",
+    "secondary-color": "#a7f3d0",
+  },
+  {
+    color: "#d97706",
+    value: "#FFFBEA",
+    "primary-color": "#d97706",
+    "secondary-color": "#fde68a",
+  },
 ];
 
 export const darkColors = [
-  { color: "#b8f397",  value: "#1a1c18", "primary-color": "#386a20",  "secondary-color": "#42493d" },
-  { color: "#d1e4ff",  value: "#1a1c19", "primary-color": "#0061a4",  "secondary-color": "#43474e" },
-  { color: "#eaddff",  value: "#1c1b18", "primary-color": "#6750a4",  "secondary-color": "#49454f" },
-  { color: "#ffd9e2",  value: "#201a18", "primary-color": "#984061",  "secondary-color": "#524346" },
-  { color: "#80f2f2",  value: "#191c18", "primary-color": "#006a6a",  "secondary-color": "#3f4948" },
-  { color: "#ffdf9e",  value: "#1f1b18", "primary-color": "#7a5900",  "secondary-color": "#4e4639" },
-  { color: "#d8e2ff",  value: "#1b1b18", "primary-color": "#445e91",  "secondary-color": "#44474e" },
-  { color: "#95f7b5",  value: "#191c19", "primary-color": "#006d3a",  "secondary-color": "#404943" },
-  { color: "#e8def8",  value: "#1c1b19", "primary-color": "#625b71",  "secondary-color": "#49454e" },
-  { color: "#c2e8ff",  value: "#191c1f", "primary-color": "#00668b",  "secondary-color": "#41484d" },
-  { color: "#c4b5fd",  value: "#1e1b18", "primary-color": "#7d68c8",  "secondary-color": "#4c1d95" },
-  { color: "#fecaca",  value: "#450a08", "primary-color": "#dc2626",  "secondary-color": "#7f1d1d" },
-  { color: "#bfdbfe",  value: "#172518", "primary-color": "#2563eb",  "secondary-color": "#1e3a8a" },
-  { color: "#a7f3d0",  value: "#064e18", "primary-color": "#059669",  "secondary-color": "#065f46" },
-  { color: "#fde68a",  value: "#451a04", "primary-color": "#d97706",  "secondary-color": "#78350f" },
+  {
+    color: "#b8f397",
+    value: "#1a1c18",
+    "primary-color": "#386a20",
+    "secondary-color": "#42493d",
+  },
+  {
+    color: "#d1e4ff",
+    value: "#1a1c19",
+    "primary-color": "#0061a4",
+    "secondary-color": "#43474e",
+  },
+  {
+    color: "#eaddff",
+    value: "#1c1b18",
+    "primary-color": "#6750a4",
+    "secondary-color": "#49454f",
+  },
+  {
+    color: "#ffd9e2",
+    value: "#201a18",
+    "primary-color": "#984061",
+    "secondary-color": "#524346",
+  },
+  {
+    color: "#80f2f2",
+    value: "#191c18",
+    "primary-color": "#006a6a",
+    "secondary-color": "#3f4948",
+  },
+  {
+    color: "#ffdf9e",
+    value: "#1f1b18",
+    "primary-color": "#7a5900",
+    "secondary-color": "#4e4639",
+  },
+  {
+    color: "#d8e2ff",
+    value: "#1b1b18",
+    "primary-color": "#445e91",
+    "secondary-color": "#44474e",
+  },
+  {
+    color: "#95f7b5",
+    value: "#191c19",
+    "primary-color": "#006d3a",
+    "secondary-color": "#404943",
+  },
+  {
+    color: "#e8def8",
+    value: "#1c1b19",
+    "primary-color": "#625b71",
+    "secondary-color": "#49454e",
+  },
+  {
+    color: "#c2e8ff",
+    value: "#191c1f",
+    "primary-color": "#00668b",
+    "secondary-color": "#41484d",
+  },
+  {
+    color: "#c4b5fd",
+    value: "#1e1b18",
+    "primary-color": "#7d68c8",
+    "secondary-color": "#4c1d95",
+  },
+  {
+    color: "#fecaca",
+    value: "#450a08",
+    "primary-color": "#dc2626",
+    "secondary-color": "#7f1d1d",
+  },
+  {
+    color: "#bfdbfe",
+    value: "#04041bff",
+    "primary-color": "#2563eb",
+    "secondary-color": "#1e3a8a",
+  },
+  {
+    color: "#a7f3d0",
+    value: "#011707ff",
+    "primary-color": "#1d614cff",
+    "secondary-color": "#065f46",
+  },
+  {
+    color: "#5f552eff",
+    value: "#250e03ff",
+    "primary-color": "#d97706",
+    "secondary-color": "#78350f",
+  },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -71,7 +221,9 @@ function mixHex(h1: string, h2: string, p: number): string {
 
 /** Get the current value of a CSS variable from :root */
 export function getCSSVar(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
 }
 
 // ─── Theme Generation ─────────────────────────────────────────────────────────
@@ -82,13 +234,18 @@ export function getCSSVar(name: string): string {
  */
 export function generateThemeFromColor(
   hex: string,
-  isDark: boolean
-): { "primary-color": string; "secondary-color": string; value: string; color: string } {
+  isDark: boolean,
+): {
+  "primary-color": string;
+  "secondary-color": string;
+  value: string;
+  color: string;
+} {
   if (isDark) {
     return {
       "primary-color": hex,
       "secondary-color": mixHex(hex, "#000000", 0.6),
-      value: mixHex(hex, "#000000", 0.95),
+      value: mixHex(hex, "#000000", 0.98),
       color: hex,
     };
   }
@@ -106,10 +263,17 @@ export function generateThemeFromColor(
  */
 export function getThemeColors(
   colorValue: string,
-  isDark: boolean
-): { "primary-color": string; "secondary-color": string; value: string; color: string } {
+  isDark: boolean,
+): {
+  "primary-color": string;
+  "secondary-color": string;
+  value: string;
+  color: string;
+} {
   const palette = isDark ? darkColors : lightColors;
-  const preset = palette.find((c) => c.value === colorValue || c.color === colorValue);
+  const preset = palette.find(
+    (c) => c.value === colorValue || c.color === colorValue,
+  );
   if (preset) {
     return {
       "primary-color": preset["primary-color"],
@@ -128,7 +292,9 @@ export function getThemeColors(
  */
 export function getPaletteIndex(colorValue: string, isDark: boolean): number {
   const palette = isDark ? darkColors : lightColors;
-  return palette.findIndex((c) => c.value === colorValue || c.color === colorValue);
+  return palette.findIndex(
+    (c) => c.value === colorValue || c.color === colorValue,
+  );
 }
 
 /**
@@ -137,7 +303,7 @@ export function getPaletteIndex(colorValue: string, isDark: boolean): number {
  */
 export function getPresetByIndex(
   index: number,
-  isDark: boolean
+  isDark: boolean,
 ): (typeof lightColors)[0] | null {
   const palette = isDark ? darkColors : lightColors;
   return palette[index] ?? null;
@@ -150,8 +316,10 @@ export function getPresetByIndex(
  * Accepts either a themeColors object or a raw hex string.
  */
 export function applyThemeVariables(
-  colorValue: { "primary-color"?: string; "secondary-color"?: string; color?: string } | string,
-  isDark: boolean
+  colorValue:
+    | { "primary-color"?: string; "secondary-color"?: string; color?: string }
+    | string,
+  isDark: boolean,
 ): void {
   const root = document.documentElement;
 
@@ -159,7 +327,10 @@ export function applyThemeVariables(
     if (colorValue["primary-color"]) {
       root.style.setProperty("--primary-color", colorValue["primary-color"]);
       if (colorValue["secondary-color"]) {
-        root.style.setProperty("--secondary-color", colorValue["secondary-color"]);
+        root.style.setProperty(
+          "--secondary-color",
+          colorValue["secondary-color"],
+        );
       }
       return;
     }
@@ -172,7 +343,9 @@ export function applyThemeVariables(
 
   if (typeof colorValue === "string") {
     const palette = isDark ? darkColors : lightColors;
-    const preset = palette.find((c) => c.value === colorValue || c.color === colorValue);
+    const preset = palette.find(
+      (c) => c.value === colorValue || c.color === colorValue,
+    );
     if (preset) {
       root.style.setProperty("--primary-color", preset["primary-color"]);
       root.style.setProperty("--secondary-color", preset["secondary-color"]);
@@ -203,7 +376,10 @@ export function applyThemeVariables(
  *  3. Color scheme → themeColors.value (tinted bg hex)
  *  4. Fallback     → var(--bg-body)
  */
-export function getWorkspaceBackground(variables: any, _isDark: boolean): string {
+export function getWorkspaceBackground(
+  variables: any,
+  _isDark: boolean,
+): string {
   if (!variables) return "var(--bg-body)";
 
   // 1. Image theme
@@ -226,9 +402,11 @@ export function getWorkspaceBackground(variables: any, _isDark: boolean): string
  * primary-color = workspace color.
  * No .value field → signals brand mode in getWorkspaceBackground.
  */
-export function buildBrandModeThemeColors(
-  workspaceColor: string
-): { "primary-color": string; "secondary-color": string; color: string } {
+export function buildBrandModeThemeColors(workspaceColor: string): {
+  "primary-color": string;
+  "secondary-color": string;
+  color: string;
+} {
   const bgBody = getCSSVar("--bg-body");
   return {
     color: bgBody,

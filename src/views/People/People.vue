@@ -2,8 +2,8 @@
   <div
     class="flex-auto flex-grow h-full bg-bg-surface rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
-    <div class="overflow-x-auto shrink-0 border-b border-border mx-2">
-      <div class="header py-2 flex items-center justify-between gap-2">
+    <div class="overflow-x-auto shrink-0 border-b border-border">
+      <div class="header py-2 flex items-center justify-between gap-2 mx-2">
         <div
           class="flex border-b border-border bg-bg-surface/50 gap-2 rounded-md py-1 px-1"
         >

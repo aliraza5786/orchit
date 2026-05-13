@@ -134,23 +134,46 @@ const calendarOptions = computed(() => ({
   min-width: 1000px;
   height:  calc(100% - 16px) !important;
 }
-::v-deep .fc-toolbar-chunk .fc-button {
-  background-color: transparent;
-  color: #7d68c8;
-  border: 1.5px solid #7d68c8;
-  border-radius: 6px;
-  font-weight: 500;
-  padding: 4px 12px;
-  transition: all 0.2s;
-}
 
+::v-deep .fc-prev-button {
+  background-color: var(--bg-body);
+  border: 0;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+  outline: none;
+}
+::v-deep .fc-next-button {
+  background-color: var(--bg-body);
+  border: 0;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  outline: none;
+}
 ::v-deep .fc-toolbar-chunk .fc-button:hover,
 ::v-deep .fc-prev-button:hover,
 ::v-deep .fc-next-button:hover,
-::v-deep .fc-today-button:hover {
-  background-color: #7d68c8;
+::v-deep .fc-today-button:hover, ::v-deep .fc-toolbar-chunk .fc-button:active,
+::v-deep .fc-prev-button:active,
+::v-deep .fc-next-button:active,
+::v-deep .fc-today-button:active{
+  background-color: var(--color-primary) !important;
   color: white;
+  outline: none;
 }
+::v-deep .fc-toolbar-chunk .fc-button:focus,
+::v-deep .fc-prev-button:focus,
+::v-deep .fc-next-button:focus,
+::v-deep .fc-today-button:focus{
+ outline: none;
+ box-shadow: unset !important;
+}
+ 
+
+ 
 
 ::v-deep .fc-toolbar-chunk .fc-button.fc-button-active {
   background-color: #7d68c8;

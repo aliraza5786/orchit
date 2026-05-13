@@ -657,8 +657,8 @@ function triggerAddStatus() {
         <BaseTextField v-model="transitionName" placeholder="e.g., Start work, Complete"
           @keyup.enter="confirmTransition" autofocus />
         <div class="modal-actions mt-4">
-          <Button size="sm" @click="confirmTransition">Add Transition</Button>
-          <Button variant="secondary" size="sm" @click="cancelTransition">Cancel</Button>
+          <Button :inSpace="true" size="sm" @click="confirmTransition">Add Transition</Button>
+          <Button :inSpace="true" variant="secondary" size="sm" @click="cancelTransition">Cancel</Button>
         </div>
       </div>
     </div>
@@ -685,9 +685,10 @@ function triggerAddStatus() {
       autofocus
     />
     <div class="modal-actions mt-4">
-      <Button size="sm" @click="confirmEditEdge">Save</Button>
+      <Button :inSpace="true" size="sm" @click="confirmEditEdge">Save</Button>
        <!-- DELETE BUTTON -->
       <Button
+        :inSpace="true"
         size="sm"
         variant="danger"
         @click="deleteSelectedEdge"
@@ -695,6 +696,7 @@ function triggerAddStatus() {
         Delete
       </Button>
       <Button
+        :inSpace="true"
         size="sm"
         variant="secondary"
         @click="reverseSelectedEdge"

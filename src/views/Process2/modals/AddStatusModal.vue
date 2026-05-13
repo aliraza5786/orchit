@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="open" size="md" :title=" isEditing ? 'Edit Step' : 'Add Step'">
+  <BaseModal :inSpace="true" v-model="open" size="md" :title=" isEditing ? 'Edit Step' : 'Add Step'">
     <div class="p-6"> 
 
       <div class="space-y-4">
@@ -29,8 +29,8 @@
       </div>
 
       <div class="mt-6 flex justify-end gap-2">
-        <Button @click="close" variant="secondary">Cancel</Button>
-        <Button @click="handleSubmit" :disabled="!statusName.trim() || isSubmitting">
+        <Button :inSpace="true" @click="close" variant="secondary">Cancel</Button>
+        <Button :inSpace="true" @click="handleSubmit" :disabled="!statusName.trim() || isSubmitting">
           {{ isSubmitting ? (isEditing ? 'Updating...' : 'Adding...') : (isEditing ? 'Update Step' : 'Add Step') }}
         </Button>
       </div>

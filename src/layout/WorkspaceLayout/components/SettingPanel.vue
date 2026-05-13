@@ -1,8 +1,8 @@
 <template>
   <div
     :class="[
-      'max-w-[358px] flex-grow rounded-[6px] overflow-y-auto overflow-x-hidden relative transition-all',
-      'text-text-primary bg-bg-card',
+      'max-w-[358px] flex-grow rounded-[6px] border border-border overflow-y-auto overflow-x-hidden relative transition-all',
+      'text-text-primary bg-bg-surface',
       workspaceStore.showSettingPanel
         ? 'translate-x-0 min-w-full sm:min-w-[380px] w-full h-full'
         : 'translate-x-100 !max-w-0 h-0',
@@ -10,7 +10,7 @@
   >
     <!-- Header -->
     <div
-      class="flex justify-between items-center border-b border-border px-3 py-2.5 sticky top-0 bg-bg-card z-10"
+      class="flex justify-between items-center border-b border-border px-3 pt-2.5 pb-2 sticky top-0 z-10 bg-bg-surface"
     >
       <h5 class="text-[16px] font-medium">Space Details</h5>
       <div
@@ -174,23 +174,22 @@
 
         <!-- Color Palette + Brand Toggle -->
         <div class="space-y-6 rounded-xl w-full max-w-md">
-          <div>
-            <h3 class="text-sm font-medium text-text-secondary mb-2">Color</h3>
+          <div> 
             <div class="grid grid-cols-4 gap-4">
               <!-- Preset palette swatches -->
               <button
                 v-for="(color, index) in currentPalette"
                 :key="index"
                 type="button"
-                class="w-16 h-16 rounded-2xl cursor-pointer border-2 flex items-center justify-center relative transition-all hover:scale-105 active:scale-95 bg-bg-body/50"
+                class="w-16 h-16 rounded-2xl cursor-pointer border-2  flex items-center justify-center relative transition-all hover:scale-105 active:scale-95 bg-bg-body "
                 :class="isSwatchSelected(index) ? 'border-primary-color' : 'border-transparent'"
                 @click="handleSwatchClick(index)"
                 aria-label="Select color"
               >
-                <div class="w-12 h-12 rounded-full overflow-hidden relative shadow-sm">
+                <div class="w-12 h-12 rounded-full overflow-hidden relative shadow-sm border border-border">
                   <div class="absolute inset-0 h-1/2 w-full top-0" :style="{ backgroundColor: color.value }"></div>
                   <div class="absolute h-1/2 w-1/2 bottom-0 left-0" :style="{ backgroundColor: color['primary-color'] }"></div>
-                  <div class="absolute h-1/2 w-1/2 bottom-0 right-0" :style="{ backgroundColor: color['secondary-color'] }"></div>
+                  <div class="absolute h-1/2 w-1/2 bottom-0 right-0 bg-bg-surface"></div>
                 </div>
                 <div
                   v-if="isSwatchSelected(index)"
@@ -387,7 +386,7 @@ import {
   darkColors,
   applyThemeVariables,
   generateThemeFromColor,
-  buildBrandModeThemeColors,
+  buildBrandModeThemeColors, 
   getPaletteIndex,
   getPresetByIndex,
 } from "../../../utilities/themeUtils";

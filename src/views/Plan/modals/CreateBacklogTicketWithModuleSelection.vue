@@ -1,5 +1,5 @@
 <template>
-  <BaseModal v-model="isOpen" modalClass="!py-0" size="lg" title="Create Backlog Ticket" >  
+  <BaseModal :inSpace="true" v-model="isOpen" modalClass="!py-0" size="lg" title="Create Backlog Ticket" >  
   <h3 class="text-md text-text-secondary p-6">
      {{ stepDescription }}
   </h3>
@@ -141,18 +141,18 @@
         </div>
 
         <div class="mt-4">
-          <BaseRichTextEditor label="Description" placeholder="What needs to be done, acceptance criteria, links…"
+          <BaseRichTextEditor :inSpace="true" label="Description" placeholder="What needs to be done, acceptance criteria, links…"
             v-model="form.description" @blur="touched.description = true" />
         </div>
       </div>
     </div>
 
     <div class="flex justify-between gap-2 p-6 mt-8 sticky bottom-0 bg-bg-body border-t border-border">
-      <Button v-if="currentStep > 1" variant="secondary" @click="goBack">Back</Button>
+      <Button :inSpace="true" v-if="currentStep > 1" variant="secondary" @click="goBack">Back</Button>
       <div v-else></div>
       <div class="flex gap-2">
-        <Button variant="secondary" @click="cancel">Cancel</Button>
-        <Button v-if="currentStep === 3" variant="primary" :disabled="!isValid || isSubmitting" @click="create">
+        <Button :inSpace="true" variant="secondary" @click="cancel">Cancel</Button>
+        <Button :inSpace="true" v-if="currentStep === 3" variant="primary" :disabled="!isValid || isSubmitting" @click="create">
           {{ isSubmitting ? 'Adding…' : 'Add Ticket' }}
         </Button>
       </div>

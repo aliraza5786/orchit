@@ -1,6 +1,6 @@
 <template>
-  <div class=" flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex">
-    <header class="sticky top-0 w-full z-10 bg-bg-card">
+  <div class=" flex-auto flex-grow h-full bg-bg-surface rounded-[6px] border border-border overflow-x-auto flex-col flex">
+    <header class="sticky top-0 w-full z-10 bg-bg-surface">
       <div class="mx-auto px-3 py-2">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <h1 class="text-2xl font-semibold tracking-tight">Apps</h1>
@@ -18,17 +18,17 @@
          <div class="mt-5 flex gap-2">
 
           <button v-if="isCatPending" v-for="i in ['3', '2', '2']" :key="i"
-            class="rounded-full text-nowrap border-border w-26 h-8 cursor-pointer border px-4 py-1.5 text-sm transition-all  animate-pulse bg-bg-surface">
+            class="rounded-[6px] text-nowrap border-border w-26 h-8 cursor-pointer border px-4 py-1.5 text-sm transition-all  animate-pulse bg-bg-surface">
 
           </button>
           <template v-else>
             <button @click="activeCategory = ''"
-              class="rounded-full text-nowrap cursor-pointer border px-4 py-1.5 text-sm transition-all"
+              class="rounded-[6px] text-nowrap cursor-pointer border px-4 py-1.5 text-sm transition-all"
               :class="activeCategory == '' ? 'border-border bg-primary-color text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-primary-color/50'">
               All
             </button>
             <button v-for="cat in categories" :key="cat?._id" @click="activeCategory = cat?._id"
-              class="rounded-full text-nowrap cursor-pointer border px-4 py-1.5 text-sm transition-all"
+              class="rounded-[6px] text-nowrap cursor-pointer border px-4 py-1.5 text-sm transition-all"
               :class="activeCategory === cat?._id ? 'border-border bg-primary-color text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-primary-color/50'">
               {{ cat?.title  }}
             </button>
@@ -39,7 +39,7 @@
       </div>
     </header>
 
-    <main class="mx-auto w-full px-3 pb-16">
+    <main class="mx-auto w-full px-3 pb-16 bg-bg-surface">
       <section>
         <div class="mb-4 flex items-center justify-between">
           <h2 class="text-lg font-semibold">Current Using</h2>

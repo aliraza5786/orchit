@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`max-w-[358px] bg-bg-card  rounded-lg overflow-y-auto overflow-x-hidden relative ${
+    :class="`max-w-[358px] bg-bg-surface rounded-[6px] border border-border overflow-y-auto overflow-x-hidden relative ${
       props.showPanel
         ? '!translate-x-0 w-full h-full min-w-full sm:min-w-[380px] overflow-y-auto'
         : '!translate-x-100 w-0 h-0'
@@ -8,7 +8,7 @@
   >
     <!-- Header -->
     <div
-      class="pt-[14.5px] pb-[15px] flex justify-between items-center border-b border-border px-3 sticky top-0 bg-bg-card z-1"
+      class="pt-[14.5px] pb-[15px] flex justify-between items-center border-b border-border px-3 sticky top-0 bg-bg-surface z-1"
     >
       <h5 class="text-[16px] font-medium">Profile</h5>
       <i
@@ -29,7 +29,7 @@
 
         <div
           v-else
-          class="min-w-10 max-h-10 aspect-square bg-bg-surface flex justify-center items-center rounded-full text-white text-sm font-semibold"
+          class="min-w-10 max-h-10 aspect-square bg-bg-body flex justify-center items-center rounded-full text-white text-sm font-semibold"
           :style="{
             backgroundColor:
               cardDetails?.name || cardDetails?.email
@@ -43,7 +43,7 @@
           <template v-else-if="cardDetails?.email">{{
             getEmailInitials(cardDetails.email)
           }}</template>
-          <i v-else class="fa-solid fa-user text-white"></i>
+          <i v-else class="fa-solid fa-user text-text-primary"></i>
         </div>
         <div>
           <h1 class="text-base font-medium text-text-primary cursor-pointer">

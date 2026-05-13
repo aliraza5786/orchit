@@ -15,7 +15,7 @@
 
             <!-- MANUAL TAB -->
             <section v-if="currentTab === 'manual'" class="space-y-4">
-                <IconPicker v-model="form.icon" />
+                <IconPicker :inSpace="true" v-model="form.icon" />
 
                 <BaseTextField v-model="form.title" label="Sheet name" size="lg" placeholder="Design Ideas"
                     :error="!!errors.title" :message="errors.title" />
@@ -26,7 +26,7 @@
                 <div class="flex justify-end gap-2 pt-2">
                     <button class="px-4 py-2 rounded-md text-sm text-text-secondary border"
                         @click="close">Cancel</button>
-                    <Button class="px-4" @click="submitManual">
+                    <Button :inSpace="true" class="px-4" @click="submitManual">
                         {{ creatingSheet || isUpdating ? 'Saving...' : 'Save' }}
                     </Button>
                 </div>
@@ -46,7 +46,7 @@
                         <!-- Record Button -->
                         <transition v-if="!description" name="fade-slide" appear>
                             <div class="absolute bottom-4 right-4">
-                                <AudioRecorder v-model="description" v-model:isRecording="isRecording"
+                                <AudioRecorder :inSpace="true" v-model="description" v-model:isRecording="isRecording"
                                     v-model:hasAudio="audioURL" />
                             </div>
                         </transition>
@@ -66,7 +66,7 @@
                     <hr class="flex-auto text-border">
                 </div>
                 <div class="px-6 mt-5">
-                    <Button variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
+                    <Button :inSpace="true" variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
                        <span v-if="sheet?._id">Update</span> <span v-else>Create</span> Manually
                     </Button>
                 </div>

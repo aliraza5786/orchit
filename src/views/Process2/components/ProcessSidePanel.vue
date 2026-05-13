@@ -1,12 +1,12 @@
 <template>
   <Transition name="panel" appear>
     <div v-show="showPanel" :class="[
-      'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-orchit-white/5 overflow-hidden transition-all duration-300 ease-in-out',
+      'flex flex-col h-full overflow-y-auto bg-gradient-to-b from-bg-surface/95 to-bg-surface/90 backdrop-blur rounded-[6px] shadow-[0_10px_40px_-10px_rgba(0,0,0,.5)] border border-border overflow-hidden transition-all duration-300 ease-in-out',
       isExpanded ? 'min-w-full max-w-full' : 'min-w-full max-w-[380px] sm:min-w-[380px]'
     ]" role="complementary" aria-label="Details panel">
       
       <!-- Header -->
-      <div class="sticky top-0 z-10 border-b border-border px-4 sm:px-6 py-[9px] flex items-center justify-between bg-bg-card">
+      <div class="sticky top-0 z-10 border-b border-border px-3 py-[5px] flex items-center justify-between bg-bg-surface">
         <h5 class="text-[18px] font-semibold tracking-tight">Details</h5>
         <div class="flex items-center gap-2">
           <button class="p-2 rounded-xl hover:bg-orchit-white/5 active:scale-[.98] cursor-pointer transition"
@@ -26,7 +26,7 @@
       </div>
 
       <!-- Body -->
-      <div v-else class="py-5 px-4 sm:px-6 flex flex-col gap-5 flex-grow">
+      <div v-else class="py-3 px-3 flex flex-col gap-5 flex-grow">
         
        
 

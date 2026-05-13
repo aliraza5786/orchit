@@ -25,9 +25,7 @@
       v-if="isActive"
       class="absolute left-0 top-1/2 -translate-y-1/2 h-[60%] w-[2px] rounded-r-md"
       :style="{
-        backgroundColor:
-          workspaceStore.singleWorkspace?.variables?.['workspace-color'] ||
-          'var(--primary-color)',
+        backgroundColor: 'var(--primary-color)',
       }"
     ></div>
 
@@ -47,10 +45,7 @@
       :style="
         isActive
           ? {
-              color:
-                workspaceStore.singleWorkspace?.variables?.[
-                  'workspace-color'
-                ] || 'var(--primary-color)',
+              color: 'var(--primary-color)',
             }
           : {}
       "
