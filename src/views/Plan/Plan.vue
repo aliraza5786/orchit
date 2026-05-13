@@ -24,7 +24,7 @@
                 class="flex gap-1 min-h-0 overflow-x-auto group h-full"
               >
                 <section
-                    class="px-2 rounded-md relative flex flex-col min-h-0 bg-bg-card h-full border border-border shrink-0"
+                    class="px-2 rounded-md relative flex flex-col min-h-0 bg-bg-surface h-full border border-border shrink-0"
                     :style="{ width: leftWidth + 'px', minWidth: '400px', maxWidth: '50%' }"
                   >
                   <div class="flex items-center justify-between mt-2">
@@ -45,7 +45,7 @@
                         v-if="backlogResp?.cards?.length"
                         v-model="backlogSearchQuery"
                         placeholder="Search ticket by title...." 
-                        buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-accent hover:opacity-90"
+                        buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-primary-color hover:opacity-90"
 
                       >
                         <template #icon>
@@ -55,7 +55,7 @@
                       <!-- Add Card Button -->
                       <button
                         v-if="canCreateCard"
-                        class="w-8.5 h-8.5 rounded cursor-pointer text-sm flex items-center justify-center border border-border hover:border-accent-hover"
+                        class="w-8.5 h-8.5 rounded cursor-pointer text-sm flex items-center justify-center border border-border hover:border-primary-color"
                         @click="openCreateBacklogTicket"
                       >
                         <i class="text-text-primary fa-regular fa-plus"></i>
@@ -87,7 +87,7 @@
                     <div
                       role="status"
                       aria-label="Loading"
-                      class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
+                      class="h-10 w-10 rounded-full border-4 border-primary-color border-t-transparent animate-spin"
                     ></div>
                   </div>
                     <div class="flex-1 min-h-0 overflow-y-hidden mt-2" v-else>
@@ -130,7 +130,7 @@
                 </div>
 
                 <section
-                  class="rounded-md relative flex flex-col flex-1 min-w-0 bg-bg-card min-h-0 border border-border"
+                  class="rounded-md relative flex flex-col flex-1 min-w-0 bg-bg-surface min-h-0 border border-border"
                 >
                   <div
                     class="flex py-1 justify-between gap-4 px-2 border-b border-border-input"
@@ -147,12 +147,11 @@
                           @click.stop="openElipseDropDown = !openElipseDropDown"
                           type="button"
                           class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
-                          :class="openElipseDropDown ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'"
+                          :class="openElipseDropDown ? 'border-primary-color ring-1 ring-primary-color/20' : 'border-border hover:border-primary-color'"
                         >
                           <div class="flex items-center gap-2">
                             <span
-                              class="w-2 h-2 rounded-full"
-                              :style="{ backgroundColor: selectedType.dot }"
+                              class="w-2 h-2 rounded-full bg-primary-color" 
                             ></span>
                             <span>{{ selectedType.label }}</span>
                           </div>
@@ -182,10 +181,9 @@
                                 class="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-bg-dropdown-menu-hover transition-colors"
                               >
                                 <span
-                                  class="w-2 h-2 rounded-full flex-shrink-0"
-                                  :style="{ backgroundColor: item.dot }"
+                                  class="w-2 h-2 rounded-full flex-shrink-0 bg-primary-color" 
                                 ></span>
-                                <span :class="item.value === selectedType.value ? 'font-semibold text-accent' : ''">{{ item.label }}</span>
+                                <span :class="item.value === selectedType.value ? 'font-semibold text-primary-color' : ''">{{ item.label }}</span>
                               </li>
                             </ul>
                           </transition>
@@ -201,7 +199,7 @@
                           @click="isSprintDropdownOpen = !isSprintDropdownOpen"
                           type="button"
                           class="text-nowrap inline-flex justify-between items-center gap-1.5 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
-                          :class="isSprintDropdownOpen ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'"
+                          :class="isSprintDropdownOpen ? 'border-primary-color ring-1 ring-primary-color/20' : 'border-border hover:border-primary-color'"
                         >
                           <div class="flex items-center gap-2">
                             <span
@@ -244,14 +242,14 @@
                                       class="w-2 h-2 rounded-full flex-shrink-0"
                                       :style="{ backgroundColor: selectedType.dot }"
                                     ></span>
-                                    <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-accent' : ''">{{ sprint.title }}</span>
+                                    <span class="truncate" :class="sprint._id === selectedSprintId ? 'font-semibold text-primary-color' : ''">{{ sprint.title }}</span>
                                   </button>
                                 </div>
 
                                 <!-- Actions -->
                                 <div class="ml-2 flex items-center gap-1.5 flex-shrink-0">
                                   <button
-                                    class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-accent hover:bg-bg-body transition-colors"
+                                    class="w-6 h-6 flex items-center justify-center rounded text-text-secondary hover:text-primary-color hover:bg-bg-body transition-colors"
                                     @click.stop="openModalEditSprint(sprint)"
                                     title="Edit"
                                   >
@@ -275,7 +273,7 @@
                       <!-- Add Sprint Button --> 
                        <button
                         v-if="canCreateCard"
-                        class="w-8.5 h-8.5 rounded cursor-pointer text-sm flex items-center justify-center border border-border hover:border-accent-hover"
+                        class="w-8.5 h-8.5 rounded cursor-pointer text-sm flex items-center justify-center border border-border hover:border-primary-color"
                         @click="openSprintModal(sprintsList?.sprints)"
                         title="Add new"
                       >
@@ -290,11 +288,11 @@
                           v-if="sprintDetailData?.cards?.length && sprintDetailData?.status !== 'completed'"
                           v-model="searchQuery"
                           placeholder="Search ticket by title...."
-                          buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-accent hover:opacity-90"
+                          buttonClass="w-8.5 h-8.5 bg-transparent rounded-[6px] border border-border hover:border-primary-color hover:opacity-90"
             
                         >
                           <template #icon>
-                            <i class="fa-solid fa-magnifying-glass text-[13px text-primary"></i>
+                            <i class="fa-solid fa-magnifying-glass text-[13px] text-primary-color"></i>
                           </template>
                         </ExpandableSearch>
                         <div
@@ -313,7 +311,7 @@
                         <!-- Tooltip -->
                         <div
                           v-show="showTooltip"
-                          class="absolute z-50 top-10 mb-2 -translate-x-2/3 bg-card border border-accent text-accent text-xs px-2 py-1 rounded whitespace-nowrap"
+                          class="absolute z-50 top-10 mb-2 -translate-x-2/3 bg-card border border-primary-color text-primary-color text-xs px-2 py-1 rounded whitespace-nowrap"
                         >
                           {{ sprintDetailData?.title }} is completed
                         </div>
@@ -366,7 +364,7 @@
                     <div
                       role="status"
                       aria-label="Loading"
-                      class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
+                      class="h-10 w-10 rounded-full border-4 border-primary-color border-t-transparent animate-spin"
                     ></div>
                   </div>
 
@@ -694,7 +692,7 @@
                     >
                       <!-- Icon -->
                       <div
-                        class="w-16 h-16 flex items-center justify-center rounded-full bg-muted/10 text-accent"
+                        class="w-16 h-16 flex items-center justify-center rounded-full bg-muted/10 text-primary-color"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"

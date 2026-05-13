@@ -10,7 +10,7 @@
               searchQuery = e
             }" placeholder="Search in Orchit AI space">
             </SearchBar>
-            <Button size="sm" @click="openNewModuleModalHandler()"> Add New </Button>
+            <Button :inSpace="true" size="sm" @click="openNewModuleModalHandler()"> Add New </Button>
              </div>
           </div>
         </div>
@@ -24,12 +24,12 @@
           <template v-else>
             <button @click="activeCategory = ''"
               class="rounded-full text-nowrap cursor-pointer border px-4 py-1.5 text-sm transition-all"
-              :class="activeCategory == '' ? 'border-border bg-accent text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-accent/50'">
+              :class="activeCategory == '' ? 'border-border bg-primary-color text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-primary-color/50'">
               All
             </button>
             <button v-for="cat in categories" :key="cat?._id" @click="activeCategory = cat?._id"
               class="rounded-full text-nowrap cursor-pointer border px-4 py-1.5 text-sm transition-all"
-              :class="activeCategory === cat?._id ? 'border-border bg-accent text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-accent/50'">
+              :class="activeCategory === cat?._id ? 'border-border bg-primary-color text-white shadow-sm' : 'border-border bg-bg-card text-text-secondary hover:bg-primary-color/50'">
               {{ cat?.title  }}
             </button>
           </template>

@@ -18,9 +18,10 @@ interface WorkspaceState {
   showLimitExccedModal: boolean;
   limits:any
   pricing:boolean
-  showChatBotPanel: boolean
-  selectedAgent:string
-  isExpanded:boolean
+  showChatBotPanel: boolean;
+  selectedAgent: string;
+  isExpanded: boolean;
+  themeColors: any;
 }
 
 export const useWorkspaceStore = defineStore("workspace", {
@@ -39,11 +40,12 @@ export const useWorkspaceStore = defineStore("workspace", {
     showFilter: false,
     selectedLaneIds: [],
     transitions: {},
-    limits:{},
-    pricing:false,
+    limits: {},
+    pricing: false,
     showChatBotPanel: false,
     selectedAgent: localStorage.getItem("selectedAgentModule") || "",
-    isExpanded:false
+    isExpanded: false,
+    themeColors: null,
   }),
   actions: {
     setPricing(p:boolean){
@@ -212,6 +214,9 @@ export const useWorkspaceStore = defineStore("workspace", {
     },
     setBackground(val: string) {
       this.background = val;
+    },
+    setThemeColors(val: any) {
+      this.themeColors = val;
     },
     setMenuType(val: "classic" | "modern") {
       this.menuStyle = val;

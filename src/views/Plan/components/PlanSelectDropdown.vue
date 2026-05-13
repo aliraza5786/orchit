@@ -6,10 +6,10 @@
       @click="toggle"
       type="button"
       class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
-      :class="isOpen ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'"
+      :class="isOpen ? 'border-primary-color ring-1 ring-primary-color/20' : 'border-border hover:border-primary-color-hover'"
     >
       <div class="flex items-center gap-2 truncate">
-        <i class="fa-regular fa-calendar-days text-accent opacity-70"></i>
+        <i class="fa-regular fa-calendar-days text-primary-color opacity-70"></i>
         <span class="truncate">{{ selectedLabel || 'Select Plans' }}</span>
       </div>
       <svg
@@ -49,10 +49,10 @@
                 <div class="w-4 h-4 flex items-center justify-center">
                   <div 
                     class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                    :class="isSelectedAll ? 'bg-accent border-accent' : (props.selectedIds.length > 0 ? 'border-accent bg-accent/20' : 'border-border bg-white')"
+                    :class="isSelectedAll ? 'bg-primary-color border-primary-color' : (props.selectedIds.length > 0 ? 'border-primary-color bg-primary-color/20' : 'border-border bg-white')"
                   >
                     <i v-if="isSelectedAll" class="fas fa-check text-[10px] text-white"></i>
-                    <div v-else-if="props.selectedIds.length > 0" class="w-2 h-0.5 bg-accent"></div>
+                    <div v-else-if="props.selectedIds.length > 0" class="w-2 h-0.5 bg-primary-color"></div>
                   </div>
                 </div>
                 <span>All Plans</span>
@@ -78,12 +78,12 @@
                   <div 
                     class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
                     :class="[
-                       isGroupFullySelected(group) ? 'bg-accent border-accent' : (isGroupPartiallySelected(group) ? 'border-accent bg-accent/20' : 'border-border bg-white'),
+                       isGroupFullySelected(group) ? 'bg-primary-color border-primary-color' : (isGroupPartiallySelected(group) ? 'border-primary-color bg-primary-color/20' : 'border-border bg-white'),
                        isGroupEmpty(group) ? 'opacity-50 cursor-not-allowed' : ''
                     ]"
                   >
                     <i v-if="isGroupFullySelected(group)" class="fas fa-check text-[10px] text-white"></i>
-                    <div v-else-if="isGroupPartiallySelected(group)" class="w-2 h-0.5 bg-accent"></div>
+                    <div v-else-if="isGroupPartiallySelected(group)" class="w-2 h-0.5 bg-primary-color"></div>
                   </div>
                 </div>
                 <div class="w-4 h-4 flex items-center justify-center opacity-70">
@@ -116,9 +116,9 @@
             @click="toggleGroup(getCurrentGroup!)"
           >
             <div class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                 :class="isGroupFullySelected(getCurrentGroup!) ? 'bg-accent border-accent' : (isGroupPartiallySelected(getCurrentGroup!) ? 'border-accent bg-accent/20' : 'border-border bg-white')">
+                 :class="isGroupFullySelected(getCurrentGroup!) ? 'bg-primary-color border-primary-color' : (isGroupPartiallySelected(getCurrentGroup!) ? 'border-primary-color bg-primary-color/20' : 'border-border bg-white')">
               <i v-if="isGroupFullySelected(getCurrentGroup!)" class="fas fa-check text-[10px] text-white"></i>
-              <div v-else-if="isGroupPartiallySelected(getCurrentGroup!)" class="w-2 h-0.5 bg-accent"></div>
+              <div v-else-if="isGroupPartiallySelected(getCurrentGroup!)" class="w-2 h-0.5 bg-primary-color"></div>
             </div>
             <span class="font-semibold text-xs">All {{ getCurrentGroup?.title }}</span>
            </li>
@@ -131,9 +131,9 @@
             @click="toggleItem(item._id)"
           >
              <div class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                  :class="isItemSelectedRecursive(item) ? 'bg-accent border-accent' : (isItemPartiallySelected(item) ? 'border-accent bg-accent/20' : 'border-border bg-white')">
+                  :class="isItemSelectedRecursive(item) ? 'bg-primary-color border-primary-color' : (isItemPartiallySelected(item) ? 'border-primary-color bg-primary-color/20' : 'border-border bg-white')">
                <i v-if="isItemSelectedRecursive(item)" class="fas fa-check text-[10px] text-white"></i>
-               <div v-else-if="isItemPartiallySelected(item)" class="w-2 h-0.5 bg-accent"></div>
+               <div v-else-if="isItemPartiallySelected(item)" class="w-2 h-0.5 bg-primary-color"></div>
              </div>
              <i class="fa-regular fa-calendar text-[10px] opacity-40"></i>
              <span class="truncate">{{ item.title }}</span>

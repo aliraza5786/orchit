@@ -10,7 +10,7 @@
         : workspaceStore.background.startsWith('url') && !isActive
           ? 'text-text-primary bg-bg-card'
           : workspaceStore.background.startsWith('url') && isActive
-            ? 'text-text-primary bg-accent'
+            ? 'text-text-primary bg-primary-color'
             : isActive
               ? 'text-text-primary bg-bg-card '
               : ' text-text-secondary',
@@ -27,7 +27,7 @@
       :style="{
         backgroundColor:
           workspaceStore.singleWorkspace?.variables?.['workspace-color'] ||
-          'var(--accent)',
+          'var(--primary-color)',
       }"
     ></div>
 
@@ -50,7 +50,7 @@
               color:
                 workspaceStore.singleWorkspace?.variables?.[
                   'workspace-color'
-                ] || 'var(--accent)',
+                ] || 'var(--primary-color)',
             }
           : {}
       "

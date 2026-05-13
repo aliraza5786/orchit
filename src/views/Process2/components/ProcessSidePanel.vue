@@ -22,7 +22,7 @@
 
       <!-- Loading State -->
       <div v-if="isLoading" class="flex justify-center items-center h-40">
-        <div class="animate-spin rounded-full h-8 w-8 border-4 border-accent border-t-transparent"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-4 border-primary-color border-t-transparent"></div>
       </div>
 
       <!-- Body -->
@@ -36,7 +36,7 @@
           <div v-if="editingTitle" class="relative">
              <input ref="titleInput" v-model="localTitle" 
               @blur="saveTitle" @keydown.enter.prevent="saveTitle" @keydown.esc.prevent="cancelEditTitle"
-              class="w-full text-2xl font-semibold rounded-[6px] px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition" 
+              class="w-full text-2xl font-semibold rounded-[6px] px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-primary-color/40 transition" 
               type="text" />
           </div>
           <h2 v-else 

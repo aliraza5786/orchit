@@ -67,7 +67,7 @@
                   :style="{
                     backgroundColor:
                       localWorkspace.variables?.['workspace-color'] ||
-                      'var(--accent)',
+                      'var(--primary-color)',
                   }"
                   v-if="!localWorkspace.logo"
                 >
@@ -152,15 +152,11 @@
             >
               <!-- Home -->
               <button
-              class="w-full px-3 py-2 cursor-pointer text-left text-sm font-normal 
-              hover:bg-bg-card/70 
-              transition-all duration-200 ease-out
-              hover:scale-[1.02] hover:translate-x-1
-              rounded-t-xl flex items-center gap-2"
-              role="menuitem"
-              @click="goHome"
-              ref="firstItemRef"
-            >
+                class="w-full px-3 py-2 cursor-pointer text-left text-sm font-normal hover:bg-bg-card/70 transition-all duration-200 ease-out hover:scale-[1.02] hover:translate-x-1 rounded-t-xl flex items-center gap-2"
+                role="menuitem"
+                @click="goHome"
+                ref="firstItemRef"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-10.5z"
@@ -177,16 +173,12 @@
               <div class="overflow-y-auto">
                 <div class="max-h-72 py-1 cursor-pointer">
                   <button
-                  v-for="ws in workspaceList"
-                  :key="ws._id"
-                  class="w-full px-3 py-2 text-left text-sm font-normal 
-                    hover:bg-bg-card/70 
-                    transition-all duration-200 ease-out
-                    hover:scale-[1.02] hover:translate-x-1
-                    cursor-pointer flex items-center gap-3"
-                  role="menuitem"
-                  @click="switchTo(ws)"
-                >
+                    v-for="ws in workspaceList"
+                    :key="ws._id"
+                    class="w-full px-3 py-2 text-left text-sm font-normal hover:bg-bg-card/70 transition-all duration-200 ease-out hover:scale-[1.02] hover:translate-x-1 cursor-pointer flex items-center gap-3"
+                    role="menuitem"
+                    @click="switchTo(ws)"
+                  >
                     <img
                       :src="ws.logo ?? dp"
                       alt=""
@@ -197,7 +189,7 @@
                     }}</span>
                     <span
                       v-if="ws._id === workspaceId"
-                      class="text-xs px-2 py-0.5 rounded-full border border-border bg-accent/30 text-accent"
+                      class="text-xs px-2 py-0.5 rounded-full border border-border bg-primary-color/30 text-primary-color"
                     >
                       Current
                     </span>
@@ -248,7 +240,7 @@
 
         <li
           v-if="canCreateLane"
-          class="hover:text-accent text-nowrap text-text-secondary flex gap-1 items-center text-[13px] font-normal cursor-pointer px-2 py-1"
+          class="hover:text-primary-color text-nowrap text-text-secondary flex gap-1 items-center text-[13px] font-normal cursor-pointer px-2 py-1"
           @click="createLaneHandler"
         >
           <svg
@@ -274,7 +266,7 @@
     <!-- Right side -->
     <div class="flex sm:gap-1 min-w-max items-center">
       <button
-        class="bg-gradient-to-tr from-accent to-accent-hover cursor-pointer text-white flex items-center gap-2 px-3 py-2 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-accent/20"
+        class="bg-primary-color cursor-pointer text-white flex items-center gap-2 px-3 py-2 rounded-[6px] text-xs font-medium transition-all hover:shadow-lg hover:shadow-primary-color/20"
         @click="workspaceStore.toggleChatBotPanel()"
         v-tooltip="'Ask any question'"
       >

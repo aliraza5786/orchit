@@ -41,7 +41,8 @@ const props = defineProps<{
   block?: boolean
   disabled?: boolean
   loading?: boolean
-  appearance?: 'filled' | 'outlined'  // ✅ NEW
+  appearance?: 'filled' | 'outlined'
+  inSpace?: boolean
 }>()
 
 const route = useRoute()
@@ -55,7 +56,7 @@ const variantClass = computed(() => {
 
   const base = {
     filled: {
-      primary: 'bg-accent text-white hover:bg-accent-hover',
+      primary: props.inSpace ? 'bg-primary-color text-white hover:bg-primary-color' : 'bg-accent text-white hover:bg-accent-hover',
       secondary: '!bg-transparent text-card  border-card border',
       danger: 'bg-red-500 text-white hover:bg-red-600',
       ghost: 'bg-transparent text-text-primary hover:bg-gray-100 hover:text-black',

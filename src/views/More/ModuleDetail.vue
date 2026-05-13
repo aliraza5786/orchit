@@ -33,7 +33,7 @@
           <!-- Actual tags -->
           <div v-else class="mt-3 flex flex-wrap gap-2">
             <span v-for="t in moduleDetail?.tags" :key="t"
-              class="border border-border bg-bg-surface cursor-pointer rounded-md px-2 py-1 text-xs text-text-secondary hover:bg-accent/50 hover:text-white">
+              class="border border-border bg-bg-surface cursor-pointer rounded-md px-2 py-1 text-xs text-text-secondary hover:bg-primary-color/50 hover:text-white">
               {{ t }}
             </span>
           </div>
@@ -45,23 +45,23 @@
           <Button size="sm" :disabled="isModulePending || isusingPending" @click="useModuleHandler" :loading="isusingPending">{{ isusingPending
             ? 'Processing' :'Use this Module'}}</Button>
           <button
-            class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">
+            class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-primary-color flex items-center justify-center">
             <span class="text-lg">♡</span>
           </button>
           <div class="relative group" ref="shareContainer">
             <button
              @click="toggleShareIcons"
-             class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center cursor-pointer">
+             class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-primary-color flex items-center justify-center cursor-pointer">
              <span><i class="fa-solid fa-share text-sm"></i></span>
             </button>
             <div v-if="showIcons">
-              <div class="mt-3 flex gap-2 absolute right-0 bottom-12 px-3  py-2 border border-accent rounded-[6px]">
+              <div class="mt-3 flex gap-2 absolute right-0 bottom-12 px-3  py-2 border border-primary-color rounded-[6px]">
               <button
-              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">⇪</button>
+              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-primary-color flex items-center justify-center">⇪</button>
               <button
-              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">⤫</button>
+              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-primary-color flex items-center justify-center">⤫</button>
               <button
-              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-accent flex items-center justify-center">Ｆ</button>
+              class="border border-input rounded-lg w-9 h-9 text-text-secondary hover:text-primary-color flex items-center justify-center">Ｆ</button>
              </div>
             </div>  
           </div>          
@@ -122,7 +122,7 @@
           <div v-for="c in commentLists" :key="c._id" class="flex gap-3 mt-4 border-b border-border pb-2">
             <img v-if="c.user_id?.u_profile_image" class="w-8 h-8 bg-bg-surface rounded-full"
               :src="c.user_id.u_profile_image" />
-            <div v-else class="w-8 h-8 rounded-full bg-accent/40 flex justify-center items-center">{{
+            <div v-else class="w-8 h-8 rounded-full bg-primary-color/40 flex justify-center items-center">{{
               getInitials(c?.user_id?.u_full_name ?? '') }}</div>
             <div>
               <p class="font-medium capitalize">{{ c?.user_id?.u_full_name }}</p>

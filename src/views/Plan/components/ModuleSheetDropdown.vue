@@ -6,10 +6,10 @@
       @click="toggle"
       type="button"
       class="text-nowrap inline-flex justify-between items-center gap-1 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
-      :class="isOpen ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'"
+      :class="isOpen ? 'border-primary-color ring-1 ring-primary-color/20' : 'border-border hover:border-primary-color-hover'"
     >
       <div class="flex items-center gap-2 truncate">
-        <i class="fa-regular fa-filter text-accent opacity-70"></i>
+        <i class="fa-regular fa-filter text-primary-color opacity-70"></i>
         <span class="truncate">{{ selectedLabel || 'All Modules' }}</span>
       </div>
       <svg
@@ -49,7 +49,7 @@
                 <div class="w-4 h-4 flex items-center justify-center">
                   <div 
                     class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                    :class="isSelectedAllModules ? 'bg-accent border-accent' : 'border-border bg-white'"
+                    :class="isSelectedAllModules ? 'bg-primary-color border-primary-color' : 'border-border bg-white'"
                   >
                     <i v-if="isSelectedAllModules" class="fas fa-check text-[10px] text-white"></i>
                   </div>
@@ -73,7 +73,7 @@
                 <div class="w-4 h-4 flex items-center justify-center">
                   <div 
                     class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                    :class="isSelectedModule(module._id) ? 'bg-accent border-accent' : 'border-border bg-white'"
+                    :class="isSelectedModule(module._id) ? 'bg-primary-color border-primary-color' : 'border-border bg-white'"
                   >
                     <i v-if="isSelectedModule(module._id)" class="fas fa-check text-[10px] text-white"></i>
                   </div>
@@ -102,7 +102,7 @@
         @click.stop
       >
         <div v-if="loadingMap[hoveredModuleId]" class="px-4 py-3 flex items-center gap-2">
-           <div class="w-3 h-3 border-2 border-accent border-t-transparent animate-spin rounded-full"></div>
+           <div class="w-3 h-3 border-2 border-primary-color border-t-transparent animate-spin rounded-full"></div>
            <span class="text-xs text-text-secondary">Loading sheets...</span>
         </div>
         <div v-else-if="!sheetsMap[hoveredModuleId] || sheetsMap[hoveredModuleId].length === 0" class="px-4 py-3 text-xs text-text-secondary italic">
@@ -115,7 +115,7 @@
             @click="toggleAllSheetsForModule(hoveredModuleId)"
           >
             <div class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                 :class="isAllSheetsSelected(hoveredModuleId) ? 'bg-accent border-accent' : 'border-border bg-white'">
+                 :class="isAllSheetsSelected(hoveredModuleId) ? 'bg-primary-color border-primary-color' : 'border-border bg-white'">
               <i v-if="isAllSheetsSelected(hoveredModuleId)" class="fas fa-check text-[10px] text-white"></i>
             </div>
             <span class="font-semibold text-xs">All Sheets</span>
@@ -129,7 +129,7 @@
             @click="toggleSheet(hoveredModuleId!, sheet._id)"
           >
              <div class="w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-colors"
-                  :class="isSelectedSheet(sheet._id, hoveredModuleId) ? 'bg-accent border-accent' : 'border-border bg-white'">
+                  :class="isSelectedSheet(sheet._id, hoveredModuleId) ? 'bg-primary-color border-primary-color' : 'border-border bg-white'">
                <i v-if="isSelectedSheet(sheet._id, hoveredModuleId)" class="fas fa-check text-[10px] text-white"></i>
              </div>
              <i class="fa-regular fa-file-lines text-[10px] opacity-40"></i>

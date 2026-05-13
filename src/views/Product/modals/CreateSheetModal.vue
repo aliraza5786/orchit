@@ -6,7 +6,7 @@
                 :class="currentTab === t.value ? 'text-text-primary' : 'text-text-secondary'">
                 {{ t.label }}
 
-                <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-accent"></div>
+                <div v-if="currentTab === t.value" class="absolute bottom-0 left-0 w-full h-0.5 bg-primary-color"></div>
             </button>
         </div> -->
 
@@ -54,7 +54,7 @@
                         <!-- Generate Button -->
                         <transition v-else name="rotate-fade" appear>
                             <div @click="handleGenerateSheet()"
-                                class="absolute bottom-4 right-4 w-9 h-9 bg-accent rounded-md flex items-center justify-center cursor-pointer shadow">
+                                class="absolute bottom-4 right-4 w-9 h-9 bg-primary-color rounded-md flex items-center justify-center cursor-pointer shadow">
                                 <i class="text-white fa-solid fa-arrow-right"></i>
                             </div>
                         </transition>
@@ -83,7 +83,7 @@
                 v-for="s in suggestionData"
                 :key="s.description"
                 @click="() => typeEffect(s.description)"
-                class="cursor-pointer border border-border/30 px-3 py-2 rounded-lg text-xs hover:border-accent transition"
+                class="cursor-pointer border border-border/30 px-3 py-2 rounded-lg text-xs hover:border-primary-color transition"
               >
                 {{ s.description }}
               </div>

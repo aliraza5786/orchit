@@ -69,7 +69,12 @@ import { useSingleWorkspace } from "../../queries/useWorkspace";
 import LoaderPeak from "../../components/ui/LoaderPeak.vue";
 import { useRouteIds } from "../../composables/useQueryParams";
 import { useTheme } from "../../composables/useTheme";
-import { getWorkspaceBackground } from "../../utilities/themeUtils";
+import {
+  getWorkspaceBackground,
+  applyThemeVariables,
+  lightColors,
+  darkColors,
+} from "../../utilities/themeUtils";
 const { isDark } = useTheme();
 const workspaceStore = useWorkspaceStore();
 const { workspaceId } = useRouteIds(); // Use the shared composable
@@ -82,23 +87,62 @@ const {
   isLoading,
 } = useSingleWorkspace(workspaceId);
 const localWorkspace = ref<any>(null);
+// ─── Paste this into your WorkspaceLayout.vue <script setup> ─────────────────
+// Replace only the two watch() blocks that handle workspace + isDark.
+// Everything else (sidebar, resize, modals) stays untouched.
+
+// 1. Seed the store from query data
 watch(
-  [getWorkspace, isDark],
-  ([newWorkspace, dark]) => {
-    if (!newWorkspace) return;
-
-    // shallow clone so local edits don’t mutate query cache
-    const wsClone = { ...newWorkspace };
-    localWorkspace.value = wsClone;
-    workspaceStore.setSingleWorkspace(wsClone);
-    workspaceStore.setLanes(wsClone?.lanes);
-
-    // Initialize background from workspace variables with fallback
-    workspaceStore.setBackground(
-      getWorkspaceBackground(wsClone?.variables, dark),
-    );
+  getWorkspace,
+  (newWorkspace) => {
+    if (newWorkspace) {
+      const wsClone = { ...newWorkspace };
+      localWorkspace.value = wsClone;
+      workspaceStore.setSingleWorkspace(wsClone);
+      workspaceStore.setLanes(wsClone?.lanes);
+    }
   },
-  { immediate: true },
+  { immediate: true }
+);
+
+// 2. Apply UI state (reactive to workspace data AND dark mode changes)
+watch(
+  [() => workspaceStore.singleWorkspace, isDark],
+  ([ws, dark]) => {
+    if (!ws) return;
+
+    // Resolve and set background
+    workspaceStore.setBackground(getWorkspaceBackground(ws.variables, dark));
+
+    // Apply CSS variables only when not using an image theme
+    if (!ws.variables?.theme) {
+      const tc = ws.variables?.themeColors;
+
+      if (!tc || !tc.value) {
+        // ── Brand mode ──
+        // primary-color = workspace-color, secondary = "" (or default)
+        const brandColor = ws.variables?.["workspace-color"];
+        if (brandColor) {
+          applyThemeVariables({ "primary-color": brandColor, "secondary-color": "" }, dark);
+        } else {
+          // Absolute fallback — first preset
+          applyThemeVariables((dark ? darkColors : lightColors)[0], dark);
+        }
+        workspaceStore.setThemeColors(tc ?? null);
+      } else {
+        // ── Color scheme (preset or custom) ──
+        // For custom colors, darkVariant/lightVariant are stored on themeColors
+        const variant = dark ? tc.darkVariant : tc.lightVariant;
+        const resolvedColors = variant
+          ? { ...variant, color: tc.color }
+          : tc;
+
+        applyThemeVariables(resolvedColors, dark);
+        workspaceStore.setThemeColors(tc);
+      }
+    }
+  },
+  { immediate: true }
 );
 
 const workspaceNavRef = ref<any>(null);

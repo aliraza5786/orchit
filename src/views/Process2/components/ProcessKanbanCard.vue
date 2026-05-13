@@ -3,8 +3,8 @@
            hover:shadow-md transition-all duration-200 group ">
     <div class="flex justify-between gap-2 items-start">
       <div class="flex items-start gap-3" style="width: 90%;">
-        <!-- <div class="w-10 h-10 bg-accent/20 flex justify-center items-center rounded-lg">
-          <i class="fa-solid fa-diagram-project text-accent"></i>
+        <!-- <div class="w-10 h-10 bg-primary-color/20 flex justify-center items-center rounded-lg">
+          <i class="fa-solid fa-diagram-project text-primary-color"></i>
         </div> -->
         <div class="flex-1 min-w-0">
             <span 

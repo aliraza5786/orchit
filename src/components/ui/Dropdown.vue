@@ -6,10 +6,14 @@
       type="button"
         class="text-nowrap inline-flex justify-between items-center gap-2 border rounded-[6px] font-medium cursor-pointer transition bg-transparent px-3 py-1.5 text-sm"
      
-      :class="[
-        buttonSizeClass, 
-        open ? 'border-accent ring-1 ring-accent/20' : 'border-border hover:border-accent-hover'
-      ]"
+     :class="[
+      buttonSizeClass,
+      open
+      ? (inSpace
+        ? 'border-primary-color ring-1 ring-primary-color/20'
+        : 'border-accent ring-1 ring-accent/20')
+      : (inSpace ? 'border-border hover:border-primary-color': 'border-border hover:border-accent-hover')
+]"
     >
       <!-- prefix (image or component) -->
       <span v-if="selectedOption?.prefix" :class="iconWrapSizeClass">
@@ -21,11 +25,10 @@
         <component v-else :is="selectedOption?.prefix" :class="iconSizeClass" />
       </span>
 
-      <i
-  class="text-accent "
+      <i 
   :class="[
     `${selectedOption?.icon?.prefix} ${selectedOption?.icon?.iconName ?? 'file'}`,
-    isAgent ? 'text-[6px]' : 'text-[14px]'
+    isAgent ? 'text-[6px]' : 'text-[14px]', inSpace ? 'text-primary-color' : 'text-accent'
   ]"
 ></i>
 <span :class="labelSizeClass">
@@ -94,7 +97,7 @@
                 <div class="flex items-center gap-2 min-w-0 flex-1">
                   <!-- Checkbox for multi-select -->
                   <div v-if="multiple" class="flex-shrink-0 pointer-events-none">
-                    <Checkbox :checked="isOptionSelected(option)" />
+                    <Checkbox :inSpace="true" :checked="isOptionSelected(option)" />
                   </div>
                   <span v-if="option.prefix" :class="iconWrapSizeClass">
                     <img
@@ -108,11 +111,10 @@
                       :class="['text-text-primary', iconSizeClass]"
                     />
                   </span>
-                      <i
-                        class="text-accent"
+                      <i 
                         :class="[
                           `${option.icon?.prefix} ${option.icon?.iconName ?? 'file'}`,
-                          isAgent ? 'text-[6px]' : 'text-[16px]'
+                          isAgent ? 'text-[6px]' : 'text-[16px]', inSpace ? 'text-primary-color' : 'text-accent'
                         ]"
                       ></i>
 
@@ -288,6 +290,7 @@ const props = withDefaults(
     customTitle?: string;
     isAgent?:boolean;
     multiple?: boolean;
+    inSpace?: boolean;
   }>(),
   {
     options: () => [],
@@ -299,6 +302,7 @@ const props = withDefaults(
     canDelete: true, 
     customClasses: "",
     multiple: false,
+    inSpace: false,
   },
 );
 

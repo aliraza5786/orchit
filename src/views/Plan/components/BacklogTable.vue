@@ -27,7 +27,7 @@
         <button
           :disabled="!canCreateCard"
           @click="$emit('open-create-ticket')"
-          class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition h-[34px] bg-accent text-white hover:bg-accent-hover border-border-input border"
+          class="relative inline-flex items-center justify-center font-medium py-1.5 px-3 text-sm rounded-md focus:outline-none transition h-[34px] bg-primary-color text-white hover:bg-primary-hover border-border-input border"
           :class="canCreateCard ? 'cursor-pointer' : 'cursor-not-allowed'"
         >
           Create Ticket
@@ -45,7 +45,7 @@
            <div
                 role="status"
                 aria-label="Loading"
-                class="h-10 w-10 rounded-full border-4 border-accent border-t-transparent animate-spin"
+                class="h-10 w-10 rounded-full border-4 border-primary-color border-t-transparent animate-spin"
               ></div>
           </div>
 

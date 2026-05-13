@@ -104,7 +104,7 @@
             <span>70%</span>
           </div>
           <div class="w-full h-1 bg-bg-body rounded">
-            <div class="h-1 bg-accent rounded" style="width: 70%"></div>
+            <div class="h-1 bg-primary-color rounded" style="width: 70%"></div>
           </div>
           <div class="flex items-center justify-between text-xs mt-2 text-text-secondary ">
             <div class="flex items-center gap-1">

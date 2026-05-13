@@ -67,7 +67,7 @@
               class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm transition-all duration-300 border"
               :class="
                 cardDetails.sprint.status === 'active'
-                  ? 'bg-accent/15 text-accent border-accent/20'
+                  ? 'bg-primary-color/15 text-primary-color border-primary-color/20'
                   : 'bg-orchit-white/5 text-text-secondary border-orchit-white/10'
               "
             >
@@ -129,7 +129,7 @@
                 @keydown.enter.prevent="saveTitle"
                 @keydown.esc.prevent="cancelEdit"
                 @blur="saveTitle"
-                class="w-full text-[18px] font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 transition"
+                class="w-full text-[18px] font-semibold rounded-xl px-3 py-2 bg-orchit-white/5 border border-orchit-white/10 focus:outline-none focus:ring-2 focus:ring-primary-color/40 transition"
                 type="text"
                 aria-label="Edit title"
               />
@@ -191,7 +191,7 @@
                 v-else
                 key="desc-edit"
                 ref="descEditorWrap"
-                class="rounded-lg overflow-hidden ring-2 ring-accent/40 border border-accent/25 shadow-sm"
+                class="rounded-lg overflow-hidden ring-2 ring-primary-color/40 border border-primary-color/25 shadow-sm"
               >
                 <BaseRichTextEditor v-model="description" />
 
@@ -206,8 +206,7 @@
                   </button>
                   <button
                     type="button"
-                    class="px-4 py-1.5 rounded-md text-[13px] font-semibold text-white transition-all active:scale-95 hover:opacity-90"
-                    style="background: var(--accent)"
+                    class="px-4 py-1.5 rounded-md bg-primary-color text-[13px] font-semibold text-white transition-all active:scale-95 hover:opacity-90"            
                     @click="finishDescEdit"
                   >
                     Save
@@ -220,6 +219,7 @@
 
           <!-- Tabs (segmented) -->
           <SwitchTab
+            :inSpace="true"
             v-model="activeTab"
             :options="tabOptions"
             size="md"
@@ -397,7 +397,7 @@
                         <button
                           v-if="canEditCard"
                           @click="handleEditVar(item)"
-                          class="text-text-secondary hover:text-accent transition-colors p-1"
+                          class="text-text-secondary hover:text-primary-color transition-colors p-1"
                           title="Edit variable"
                         >
                           <i
@@ -577,7 +577,7 @@
                         class="flex justify-between text-[10px] text-text-secondary px-1"
                       >
                         <span>Min: {{ item.data?.[0] || 0 }}</span>
-                        <span class="font-bold text-accent">{{
+                        <span class="font-bold text-primary-color">{{
                           localVarValues[item.slug] ?? item.data?.[0] ?? 0
                         }}</span>
                         <span>Max: {{ item.data?.[1] || 100 }}</span>
@@ -587,7 +587,7 @@
                         :min="Number(item.data?.[0]) || 0"
                         :max="Number(item.data?.[1]) || 100"
                         :disabled="!canEditCard"
-                        class="w-full h-1.5 bg-orchit-white/10 rounded-lg appearance-none cursor-pointer accent-accent"
+                        class="w-full h-1.5 bg-orchit-white/10 rounded-lg appearance-none cursor-pointer primary-color-primary-color"
                         :value="
                           localVarValues[item.slug] ?? item.data?.[0] ?? 0
                         "
@@ -638,7 +638,7 @@
                     isCreateVar = true;
                   }
                 "
-                class="w-full py-2 px-4 text-sm font-semibold text-white bg-accent rounded-lg border border-accent cursor-pointer active:scale-95 transition-all duration-150 flex items-center justify-center gap-2"
+                class="w-full py-2 px-4 text-sm font-semibold text-white bg-primary-color rounded-lg border border-primary-color cursor-pointer active:scale-95 transition-all duration-150 flex items-center justify-center gap-2"
               >
                 <i class="fa-solid fa-plus text-xs"></i>
                 Add Custom Fields
@@ -659,7 +659,7 @@
                     class="group"
                   >
                     <span
-                      class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-accent/70 ring-4 ring-accent/10"
+                      class="absolute -left-[5px] top-0 w-2 h-2 rounded-full bg-primary-color/70 ring-4 ring-primary-color/10"
                     ></span>
                     <div
                       class="rounded-xl bg-orchit-white/5 border border-orchit-white/10 p-3 hover:bg-orchit-white/7 transition"
@@ -688,7 +688,7 @@
               >
                 <div class="flex items-center gap-3 mb-2">
                   <div
-                    class="h-8 w-8 rounded-full bg-accent/15 text-accent flex items-center justify-center text-xs font-semibold"
+                    class="h-8 w-8 rounded-full bg-primary-color/15 text-primary-color flex items-center justify-center text-xs font-semibold"
                   >
                     {{ initials(c.commented_by?.u_full_name) }}
                   </div>
@@ -708,7 +708,7 @@
                         isUpdatingComment ||
                         isDeletingComment
                       "
-                      class="text-xs text-accent hover:underline"
+                      class="text-xs text-primary-color hover:underline"
                       @click="beginEdit(c)"
                     >
                       Edit
@@ -772,7 +772,7 @@
                           @input="(e) => handleCommentInput(e, c._id)"
                           @keydown="(e) => handleCommentKeydown(e, c._id)"
                           @blur="handleCommentBlur"
-                          class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-accent/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
+                          class="relative z-0 w-full p-3 rounded-lg bg-bg-input/80 border border-orchit-white/10 focus:ring-2 focus:ring-primary-color/40 outline-none text-sm leading-normal resize-none text-transparent caret-text-primary font-sans"
                           style="
                             font-family:
                               Inter,
@@ -924,7 +924,7 @@
                     <span class="truncate max-w-[120px]">{{ file.name }}</span>
                     <i
                       v-if="file.loading"
-                      class="fa-solid fa-spinner animate-spin text-[10px] text-accent"
+                      class="fa-solid fa-spinner animate-spin text-[10px] text-primary-color"
                     ></i>
                     <button
                       v-else
@@ -947,6 +947,7 @@
                     class="text-ellipsis text-xs text-transparent file:mr-3 col-span-2 file:px-3 file:py-1.5 file:rounded-md file:border file:border-orchit-white/10 file:bg-orchit-white/10 hover:file:bg-orchit-white/15 file:text-text-primary transition inline-flex file:cursor-pointer max-w-[150px]"
                   />
                   <Button
+                    :inSpace="true"
                     variant="primary"
                     class="min-w-[70px]"
                     size="sm"
@@ -1027,7 +1028,7 @@
                         :href="file.url"
                         target="_blank"
                         rel="noopener"
-                        class="flex items-center justify-center w-8 h-8 rounded-[6px] bg-accent/10 hover:bg-accent text-accent hover:text-white transition-all duration-200 border border-accent/20"
+                        class="flex items-center justify-center w-8 h-8 rounded-[6px] bg-primary-color/10 hover:bg-primary-color text-primary-color hover:text-white transition-all duration-200 border border-primary-color/20"
                         title="View Full File"
                       >
                         <i class="fa-regular fa-external-link text-xs"></i>
@@ -1142,7 +1143,7 @@
           ]"
         >
           <div
-            class="h-6 w-6 rounded-full bg-accent/15 text-accent flex items-center justify-center"
+            class="h-6 w-6 rounded-full bg-primary-color/15 text-primary-color flex items-center justify-center"
           >
             <i class="fa-solid fa-user-plus text-[10px]"></i>
           </div>
@@ -2719,12 +2720,12 @@ function handleEditVar(item: any) {
 }
 /* Mentions */
 :global(.mention-highlight) {
-  background-color: rgba(var(--accent-rgb, 99, 102, 241), 0.15);
-  color: var(--accent, #6366f1);
+  background-color: rgba(var(--primary-color-rgb, 99, 102, 241), 0.15);
+  color: var(--primary-color, #6366f1);
   padding: 1px 0;
   border-radius: 4px;
   font-weight: 400; /* Must match textarea exactly to prevent width drift */
-  box-shadow: 0 0 0 1px rgba(var(--accent-rgb, 99, 102, 241), 0.2);
+  box-shadow: 0 0 0 1px rgba(var(--primary-color-rgb, 99, 102, 241), 0.2);
   display: inline;
 }
 .word-break :deep(p) {

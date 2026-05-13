@@ -80,7 +80,7 @@ watchEffect(() => {
                isReady ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95']"
     >
         <!-- Banner -->
-        <div class="h-24 bg-accent relative opacity-90"></div>
+        <div class="h-24 bg-primary-color relative opacity-90"></div>
         
         <!-- Content Area -->
         <div class="px-5 pb-5 relative">
@@ -116,7 +116,7 @@ watchEffect(() => {
           <div class="pt-4 border-t border-border/50">
             <button 
               @click="viewProfile"
-              class="w-full py-2.5 bg-accent/10 hover:bg-accent/20 text-accent font-semibold text-sm rounded-xl transition-all duration-200 border border-accent/20 active:scale-[0.98] flex items-center justify-center gap-2"
+              class="w-full py-2.5 bg-primary-color/10 hover:bg-primary-color/20 text-primary-color font-semibold text-sm rounded-xl transition-all duration-200 border border-primary-color/20 active:scale-[0.98] flex items-center justify-center gap-2"
             >
                <span>View Full Profile</span>
                <i class="fa-solid fa-arrow-right text-[10px]"></i>

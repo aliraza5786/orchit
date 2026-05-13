@@ -19,7 +19,7 @@
         <div
           role="status"
           aria-label="Loading"
-          class="h-8 w-8 rounded-full border-4 border-accent border-t-transparent animate-spin"
+          class="h-8 w-8 rounded-full border-4 border-primary-color border-t-transparent animate-spin"
         ></div>
       </div>
       <!-- Tickets List -->

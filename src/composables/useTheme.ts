@@ -31,7 +31,6 @@ const LIGHT_VARS: Record<string, string> = {
   "--card": "#ffffff",
   "--text": "#0f172a",
   "--muted": "#6b7280",
-  "--border": "#e5e7eb",
   "--background": "#ffffff",
 };
 
@@ -41,7 +40,6 @@ const DARK_VARS: Record<string, string> = {
   "--card": "#12151d",
   "--text": "#e5e7eb",
   "--muted": "#9ca3af",
-  "--border": "#303948",
   "--background": "#1b1b1b",
 };
 

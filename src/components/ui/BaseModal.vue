@@ -9,8 +9,8 @@
       >
 
         <div
-          class="bg-bg-body w-full max-w-[860px] max-h-[80vh] border border-border/70 overflow-auto mx-4 rounded-xl shadow-lg shadow-accent/30 pb-6 relative"
-          :class="[{'!max-w-[500px]': size=='md'},modalClass]"
+          class="bg-bg-body w-full max-w-[860px] max-h-[80vh] border border-border/70 overflow-auto mx-4 rounded-xl shadow-lg pb-6 relative"
+          :class="[{'!max-w-[500px]': size=='md'},modalClass, inSpace ? 'shadow-primary-color/30' : 'shadow-accent/30']"
           role="dialog"
           aria-modal="true"
           @click.stop
@@ -40,6 +40,7 @@
     size?:string
     modalClass?:any
     title?:string
+    inSpace?:boolean
   }>() 
   const emit = defineEmits(['update:modelValue'])
   </script>

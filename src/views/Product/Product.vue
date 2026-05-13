@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex-grow h-full bg-bg-card border border-border overflow-x-auto overflow-y-hidden flex-col flex scrollbar-visible w-full"
+    class="flex-auto bg-bg-surface backdrop-blur rounded-[6px] flex-grow h-full border border-border overflow-x-auto overflow-y-hidden flex-col flex scrollbar-visible w-full"
   >
     <div class="relative">
       <div
@@ -9,6 +9,7 @@
         <div class="flex gap-2">
           <!-- ... Sheet Dropdown ... -->
           <Dropdown
+            :inSpace="true"
             ref="sheetDropdownRef"
             @open="closeAllDropdowns('sheet')"
             @edit-option="openEditSprintModal"
@@ -38,14 +39,14 @@
             <button
               ref="filterTriggerRef"
               @click="toggleFilters"
-              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
-              :class="showFilterBar ? 'border-accent' : 'border-border'"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
+              :class="showFilterBar ? 'border-primary-color' : 'border-border'"
             >
-              <i class="fa-solid fa-filter text-accent text-[14px]"></i>
+              <i class="fa-solid fa-filter text-primary-color text-[14px]"></i>
               <span>Filter</span>
               <span
                 v-if="activeFilterCount"
-                class="bg-accent text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
+                class="bg-primary-color text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
               >
                 {{ activeFilterCount }}
               </span>
@@ -54,7 +55,7 @@
             <button
               v-if="hasActiveFilters"
               @click="handleClearFilters"
-              class="text-[11px] font-medium text-text-secondary hover:text-accent transition-colors whitespace-nowrap"
+              class="text-[11px] font-medium text-text-secondary hover:text-primary-color transition-colors whitespace-nowrap"
             >
               Clear filters
             </button>
@@ -81,16 +82,16 @@
             <button
               ref="variableTriggerRef"
               @click="toggleVariableDropdown"
-              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showVariableDropdown
-                  ? 'border-accent text-accent'
+                  ? 'border-primary-color text-primary-color'
                   : 'border-border text-text-primary'
               "
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showVariableDropdown ? 'text-accent' : 'text-accent'"
+                :class="showVariableDropdown ? 'text-primary-color' : 'text-primary-color'"
               ></i>
               <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
             </button>
@@ -117,16 +118,16 @@
             <button
               ref="groupTriggerRef"
               @click="toggleGroupDropdown"
-              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-transparent hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showGroupDropdown
-                  ? 'border-accent text-accent'
+                  ? 'border-primary-color text-primary-color'
                   : 'border-border text-text-primary'
               "
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showGroupDropdown ? 'text-accent' : 'text-accent'"
+                :class="showGroupDropdown ? 'text-primary-color' : 'text-primary-color'"
               ></i>
               <span>Group: {{ selectedGroupLabel }}</span>
             </button>
@@ -157,11 +158,11 @@
           >
             <!-- View Buttons ... -->
             <button
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'kanban'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
               "
               title="Kanban view"
               @click="view = 'kanban'"
@@ -171,11 +172,11 @@
 
             <button
               @click="view = 'table'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'table'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
               "
               title="List view"
             >
@@ -184,11 +185,11 @@
 
             <button
               @click="view = 'mindmap'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'mindmap'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
               "
               title="MindMap view"
             >
@@ -197,11 +198,11 @@
 
             <button
               @click="view = 'calendar'"
-              class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'calendar'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
               "
               title="Calendar view"
             >
@@ -210,17 +211,17 @@
 
             <button
               @click="view = 'gantt'"
-              class="aspect-square cursor-pointer rounded-sm p-0"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'gantt'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
               "
               title="Gantt Chart view"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
+                class="h-5 w-5"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -232,17 +233,17 @@
 
             <button
               @click="view = 'timeline'"
-              class="aspect-square cursor-pointer rounded-sm p-0"
+              class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
               :class="
                 view === 'timeline'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color'
+                  : 'backdrop-blur-2xl transition-all duration-75 outline-0 hover:text-primary-color'
               "
               title="Timeline view"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
+                class="h-5 w-5"
                 viewBox="0 0 24 24"
                 fill="currentColor"
               >
@@ -267,23 +268,32 @@
     <!-- ── Kanban View ─────────────────────────────────────────────────────── -->
     <template v-if="view == 'kanban'">
       <KanbanSkeleton v-show="(isPending || isSheetPending) && hasSheets" />
-      
+
       <!-- Empty State -->
-      <div 
-        v-if="!isPending && !isSheetPending && hasSheets && !filteredBoard?.length"
+      <div
+        v-if="
+          !isPending && !isSheetPending && hasSheets && !filteredBoard?.length
+        "
         class="flex flex-col items-center justify-center flex-1 h-full py-20 text-center"
       >
         <div class="bg-bg-body p-6 rounded-full mb-4">
-          <i class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"></i>
+          <i
+            class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"
+          ></i>
         </div>
-        <h3 class="text-lg font-semibold text-text-primary">No columns to display</h3>
+        <h3 class="text-lg font-semibold text-text-primary">
+          No columns to display
+        </h3>
         <p class="text-sm text-text-secondary mt-1 max-w-[300px]">
-          There are no columns found for the current grouping or filter selection.
+          There are no columns found for the current grouping or filter
+          selection.
         </p>
       </div>
 
       <div
-        v-show="!isPending && !isSheetPending && hasSheets && filteredBoard?.length"
+        v-show="
+          !isPending && !isSheetPending && hasSheets && filteredBoard?.length
+        "
         class="flex overflow-x-auto gap-2 scrollbar-visible h-full mx-2 pt-2"
       >
         <div class="flex gap-2">
@@ -341,7 +351,7 @@
                 <Button
                   @click="emitAddColumn"
                   varaint="primary"
-                  class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+                  class="px-3 py-1 bg-primary-color cursor-pointer text-white rounded"
                   >{{ addingList ? "Adding..." : "Add list" }}</Button
                 >
                 <i class="fa-solid fa-close" @click="setActiveAddList"></i>
@@ -415,7 +425,7 @@
           class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
         >
           <div class="flex flex-col items-center gap-3">
-            <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+            <i class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"></i>
             <span class="text-sm font-medium text-text-secondary italic"
               >Mapping your data...</span
             >
@@ -479,7 +489,7 @@
         class="bg-bg-card rounded-lg p-6 w-[420px] text-center shadow-md border border-border"
       >
         <div class="flex items-center flex-col justify-center mb-4 gap-2">
-          <i class="fa-regular fa-file-lines text-2xl text-accent"></i>
+          <i class="fa-regular fa-file-lines text-2xl text-primary-color"></i>
           <h3 class="text-lg font-semibold">No Sheets Created</h3>
         </div>
         <p class="text-sm text-text-secondary mb-6">
@@ -488,7 +498,7 @@
         </p>
         <div class="flex justify-center gap-3">
           <Button
-            class="px-4 py-2 bg-accent text-white"
+            class="px-4 py-2 bg-primary-color text-white"
             @click="handleCreateSheetFromModal"
           >
             + Create Sheet
@@ -641,7 +651,11 @@ import {
 } from "../../queries/useSheets";
 import { useSidePanelStore } from "../../stores/sidePanelStore";
 import { useAgentStore } from "../../stores/agentStore";
-import { removeFromCacheStructure, performOptimisticUpdate, rollbackOptimisticUpdate } from "../../utilities/cacheSync";
+import {
+  removeFromCacheStructure,
+  performOptimisticUpdate,
+  rollbackOptimisticUpdate,
+} from "../../utilities/cacheSync";
 
 // ─── Lazy components ──────────────────────────────────────────────────────────
 const Dropdown = defineAsyncComponent(
@@ -1712,7 +1726,7 @@ const laneOptions = computed<any[]>(() =>
   })),
 );
 
-// ─── Table Columns ──────────────────────────────────────────────────────────── 
+// ─── Table Columns ────────────────────────────────────────────────────────────
 const columns = computed(() => {
   return [
     {
@@ -1724,9 +1738,9 @@ const columns = computed(() => {
             "a",
             {
               onClick: () => (selectedCard.value = row),
-            class:
-            "text-[12px] max-w-[80px] underline text-blue-500 shrink-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap",
-             title: row["card-code"],
+              class:
+                "text-[12px] max-w-[80px] underline text-blue-500 shrink-0 cursor-pointer overflow-hidden text-ellipsis whitespace-nowrap",
+              title: row["card-code"],
             },
             row["card-code"],
           ),
@@ -1736,7 +1750,7 @@ const columns = computed(() => {
                 handleChangeTicket(row, "card-title", e?.target?.value);
               },
               class:
-                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body text-[12px] h-8",
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-transparent focus:bg-bg-body text-[12px] h-8",
               defaultValue: value,
               disabled: !canEditCard.value,
             }),
@@ -1844,8 +1858,10 @@ const columns = computed(() => {
 
 const assignHandle = (row: any, users: any[]) => {
   const id = row?._id;
-  const userIds = (users || []).map(u => typeof u === 'string' ? u : (u?._id || u?.id)).filter(Boolean)
-  
+  const userIds = (users || [])
+    .map((u) => (typeof u === "string" ? u : u?._id || u?.id))
+    .filter(Boolean);
+
   const primarySeat = users.length > 0 ? users[0] : null;
 
   if (id) {
@@ -1854,12 +1870,12 @@ const assignHandle = (row: any, users: any[]) => {
       sidePanelStore,
       cardId: id,
       updates: { seat: primarySeat, seats: users, seat_id: userIds },
-      invalidateKeys: ['sheet-list', 'table-cards-flat']
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
     });
 
     moveCard.mutate(
       { card_id: id, seat_id: userIds, optimisticUser: users },
-      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   } else {
     row.seat = primarySeat;
@@ -2409,20 +2425,19 @@ function handleChangeTicket(row: any, key: any, value: any) {
       sidePanelStore,
       cardId: id,
       updates: { [key]: cleanValue },
-      invalidateKeys: ['sheet-list', 'table-cards-flat']
+      invalidateKeys: ["sheet-list", "table-cards-flat"],
     });
 
     moveCard.mutate(
       { card_id: id, variables: { [key]: cleanValue } },
-      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   } else {
     row[key] = cleanValue;
     if (Array.isArray(row.variables)) {
       const varIndex = row.variables.findIndex((v: any) => v.slug === key);
       if (varIndex !== -1) row.variables[varIndex].value = cleanValue;
-      else
-        row.variables.push({ slug: key, value: cleanValue, type: "Text" });
+      else row.variables.push({ slug: key, value: cleanValue, type: "Text" });
     } else {
       if (!row.variables) row.variables = {};
       row.variables[key] = cleanValue;
@@ -2448,7 +2463,7 @@ const setStartDate = (row: any, e: any) => {
 
     moveCard.mutate(
       { card_id, variables: { "start-date": e } },
-      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   } else {
     row["end-date"] = e;
@@ -2470,7 +2485,7 @@ function setLane(row: any, v: any) {
 
     moveCard.mutate(
       { card_id: id, workspace_lane_id: v },
-      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+      { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
     );
   } else {
     const newLane = laneOptions.value.find((l: any) => l._id === v);
@@ -2554,6 +2569,4 @@ declare global {
 }
 </script>
 
-<style scoped>
-</style>
-
+<style scoped></style>

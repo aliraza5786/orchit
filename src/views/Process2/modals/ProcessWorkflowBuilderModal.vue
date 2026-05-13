@@ -8,7 +8,7 @@
           <div class="flex items-center justify-between max-w-content gap-3">
             <div class="flex items-center gap-4">
               <h2 class="flex items-center gap-2 text-lg sm:text-xl font-semibold text-text-primary text-nowrap">
-                <i class="fa-solid fa-diagram-project text-accent" aria-hidden="true" />
+                <i class="fa-solid fa-diagram-project text-primary-color" aria-hidden="true" />
                 Workflow for {{ processTitle }}
               </h2>
             </div>
@@ -33,7 +33,7 @@
         <div class="relative flex-1 overflow-hidden">
           <div v-if="isLoading" class="flex items-center justify-center h-full bg-bg-surface">
             <div class="flex flex-col items-center gap-4">
-              <div class="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
+              <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary-color border-t-transparent"></div>
               <p class="text-sm text-text-secondary">Loading workflow data...</p>
             </div>
           </div>

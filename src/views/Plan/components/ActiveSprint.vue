@@ -33,14 +33,14 @@
                 <button
                   ref="filterTriggerRef"
                   @click="toggleFilters"
-                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
-                  :class="showFilterBar ? 'border-accent' : 'border-border'"
+                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
+                  :class="showFilterBar ? 'border-primary-color' : 'border-border'"
                 >
-                  <i class="fa-solid fa-filter text-accent text-[14px]"></i>
+                  <i class="fa-solid fa-filter text-primary-color text-[14px]"></i>
                   <span>Filter</span>
                   <span 
                     v-if="activeFilterCount" 
-                    class="bg-accent text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
+                    class="bg-primary-color text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
                   >
                     {{ activeFilterCount }}
                   </span>
@@ -49,7 +49,7 @@
                 <button 
                   v-if="hasActiveFilters"
                   @click="handleClearFilters"
-                  class="text-[11px] font-medium text-text-secondary hover:text-accent transition-colors whitespace-nowrap"
+                  class="text-[11px] font-medium text-text-secondary hover:text-primary-color transition-colors whitespace-nowrap"
                 >
                   Clear filters
                 </button>
@@ -73,10 +73,10 @@
                <button
                   ref="variableTriggerRef"
                   @click="toggleVariableDropdown"
-                  class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
-                  :class="showVariableDropdown ? 'border-accent text-accent' : 'border-border text-text-primary'"
+                  class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
+                  :class="showVariableDropdown ? 'border-primary-color text-primary-color' : 'border-border text-text-primary'"
               >
-                  <i class="fa-solid fa-layer-group text-[14px]" :class="showVariableDropdown ? 'text-accent' : 'text-accent'"></i>
+                  <i class="fa-solid fa-layer-group text-[14px]" :class="showVariableDropdown ? 'text-primary-color' : 'text-primary-color'"></i>
                   <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
               </button>
   
@@ -98,10 +98,10 @@
               <button
                   ref="groupTriggerRef"
                   @click="toggleGroupDropdown"
-                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
-                  :class="showGroupDropdown ? 'border-accent text-accent' : 'border-border text-text-primary'"
+                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
+                  :class="showGroupDropdown ? 'border-primary-color text-primary-color' : 'border-border text-text-primary'"
               >
-                  <i class="fa-solid fa-layer-group text-[14px]" :class="showGroupDropdown ? 'text-accent' : 'text-accent'"></i>
+                  <i class="fa-solid fa-layer-group text-[14px]" :class="showGroupDropdown ? 'text-primary-color' : 'text-primary-color'"></i>
                   <span>Group: {{ selectedGroupLabel }}</span>
               </button>
   
@@ -123,8 +123,8 @@
                 <button
                   class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
                   :class="view === 'kanban'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                    ? 'text-primary-color bg-primary-color/20'
+                    : 'hover:bg-border/50 transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   @click="view = 'kanban'"
                 >
                   <i class="fa-solid fa-chart-kanban"></i>
@@ -134,8 +134,8 @@
                   @click="view = 'table'"
                   class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
                   :class="view === 'table'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                    ? 'text-primary-color bg-primary-color/20'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="Gallery view"
                 >
                   <i class="fa-solid fa-align-left"></i>
@@ -146,8 +146,8 @@
                   @click="view = 'mindmap'"
                   class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
                   :class="view === 'mindmap'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                    ? 'text-primary-color bg-primary-color/20'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="MindMap view"
                 >
                   <i class="fa-solid fa-chart-diagram"></i>
@@ -157,8 +157,8 @@
                   @click="view = 'calendar'"
                   class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
                   :class="view === 'calendar'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                    ? 'text-primary-color bg-primary-color/20'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="Calendar view"
                 >
                   <i class="fa-regular fa-calendar"></i>
@@ -168,8 +168,8 @@
                   @click="view = 'gantt'"
                   class="aspect-square cursor-pointer rounded-sm p-0"
                   :class="view === 'gantt'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                    ? 'text-primary-color bg-primary-color/20'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="Gantt Chart view"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
@@ -181,8 +181,8 @@
                   @click="view = 'timeline'"
                   class="aspect-square cursor-pointer rounded-sm p-0"
                   :class="view === 'timeline'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'"
+                    ? 'text-primary-color bg-primary-color/20'
+                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
                   title="Timeline view"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
@@ -309,7 +309,7 @@
             <div class="relative flex-1 flex flex-col overflow-hidden px-2">
               <div v-if="isPending" class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]">
                 <div class="flex flex-col items-center gap-3">
-                  <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+                  <i class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"></i>
                   <span class="text-sm font-medium text-text-secondary italic">Mapping your data...</span>
                 </div>
               </div>
@@ -1323,7 +1323,7 @@ const columns = computed(() => {
           h("div", { class: "flex-1 min-w-0" }, [
             h("input", {
               onFocusout: (e: any) => { handleChangeTicket(row?._id, "card-title", e?.target?.value); },
-              class: "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body h-8",
+              class: "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-transparent focus:bg-bg-body h-8",
               defaultValue: value,
               disabled: !canEditCard.value,
             }),

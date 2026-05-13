@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border overflow-x-auto flex-col flex"
+    class="flex-auto flex-grow h-full bg-bg-surface rounded-[6px] border border-border overflow-x-auto flex-col flex"
   >
     <div class="overflow-x-auto shrink-0 border-b border-border mx-2">
       <div class="header py-2 flex items-center justify-between gap-2">
@@ -11,7 +11,7 @@
             @click="currentTab = 'talent'"
             :class="
               currentTab === 'talent'
-                ? 'bg-accent text-white rounded-md'
+                ? 'bg-primary-color text-white rounded-md'
                 : 'text-text-primary'
             "
             class="px-4 py-1 text-sm transition-colors text-nowrap"
@@ -22,7 +22,7 @@
             @click="currentTab = 'agents'"
             :class="
               currentTab === 'agents'
-                ? 'bg-accent text-white rounded-md '
+                ? 'bg-primary-color text-white rounded-md '
                 : 'text-text-secondary'
             "
             class="px-4 py-1 text-sm transition-colors text-nowrap"
@@ -33,6 +33,7 @@
 
         <div class="flex gap-2">
           <Dropdown
+            :inSpace="true"
             v-if="currentTab === 'talent'"
             :actions="false"
             v-model="selected_view_id"
@@ -62,11 +63,11 @@
               class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
             >
               <button
-                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                class="aspect-square cursor-pointer rounded-sm  py-0.5 px-1 border border-border outline-0"
                 :class="
                   currentView === 'kanban'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                    ? 'text-primary-color'
+                    : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="Kanban view"
                 @click="currentView = 'kanban'"
@@ -76,11 +77,11 @@
 
               <button
                 @click="currentView = 'table'"
-                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
                 :class="
                   currentView === 'table'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                    ? 'text-primary-color'
+                    : 'backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="List view"
               >
@@ -88,11 +89,11 @@
               </button>
               <button
                 @click="currentView = 'mindmap'"
-                class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
+                class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
                 :class="
                   currentView === 'mindmap'
-                    ? 'text-accent bg-accent-text'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                    ? 'text-primary-color'
+                    : ' backdrop-blur-2xl transition-all duration-75 hover:text-primary-color'
                 "
                 title="MindMap view"
               >
@@ -110,7 +111,7 @@
   class="flex flex-1 items-center justify-center"
 >
   <div class="flex flex-col items-center gap-3 text-text-secondary">
-    <i class="fa-solid fa-chart-diagram text-2xl animate-pulse text-accent"></i>
+    <i class="fa-solid fa-chart-diagram text-2xl animate-pulse text-primary-color"></i>
     <span class="text-sm animate-pulse">Loading mindmap...</span>
   </div>
 </div>
@@ -215,7 +216,7 @@
                       <!-- Footer Action -->
                       <div class="border-t border-border pt-3 mt-1">
                           <button
-                            class="w-full bg-accent/5 hover:bg-accent text-accent hover:text-white text-[10px] font-bold rounded-md px-3 py-1.5 transition-all duration-300 flex items-center justify-center gap-2 border border-accent/20 hover:border-accent"
+                            class="w-full bg-primary-color/5 hover:bg-primary-color text-primary-color hover:text-white text-[10px] font-bold rounded-md px-3 py-1.5 transition-all duration-300 flex items-center justify-center gap-2 border border-primary-color/20 hover:border-primary-color"
                             @click.stop="handleChatWithAgent(agent, group.module_id, group?.title)"
                           >
                             <i class="fa-solid fa-comments text-[10px]"></i>
@@ -327,7 +328,7 @@
                     @click="emitAddColumn"
                     type="submit"
                     variant="primary"
-                    class="px-3 py-1 bg-accent text-white rounded"
+                    class="px-3 py-1 bg-primary-color text-white rounded"
                   >
                     {{ addingList ? "Adding..." : "Add Team" }}
                   </Button>

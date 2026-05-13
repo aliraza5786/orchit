@@ -1,11 +1,12 @@
 <template>
   <div
-    class="flex-auto flex-grow h-full bg-bg-card rounded-[6px] border border-border flex-col flex overflow-hidden"
+    class="flex-auto flex-grow h-full bg-bg-surface rounded-[6px] border border-border flex-col flex overflow-hidden"
   >
     <!-- Header -->
     <div class="overflow-x-auto shrink-0 border-b border-border">
       <div class="header px-2 py-2 flex items-center justify-between gap-2">
         <Dropdown
+          :inSpace="true"
           v-model="selected_sheet_id"
           :options="transformedData"
           variant="secondary"
@@ -33,16 +34,16 @@
             <button
               ref="variableTriggerRef"
               @click="toggleVariableDropdown"
-              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showVariableDropdown
-                  ? 'border-accent text-accent'
+                  ? 'border-primary-color text-primary-color'
                   : 'border-border text-text-primary'
               "
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showVariableDropdown ? 'text-accent' : 'text-accent'"
+                :class="showVariableDropdown ? 'text-primary-color' : 'text-primary-color'"
               ></i>
               <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
             </button>
@@ -68,16 +69,16 @@
             <button
               ref="groupTriggerRef"
               @click="toggleGroupDropdown"
-              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-accent transition-all text-xs font-semibold relative"
+              class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
               :class="
                 showGroupDropdown
-                  ? 'border-accent text-accent'
+                  ? 'border-primary-color text-primary-color'
                   : 'border-border text-text-primary'
               "
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showGroupDropdown ? 'text-accent' : 'text-accent'"
+                :class="showGroupDropdown ? 'text-primary-color' : 'text-primary-color'"
               ></i>
               <span>Group: {{ selectedGroupLabel }}</span>
             </button>
@@ -110,8 +111,8 @@
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
               :class="
                 view === 'kanban'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color bg-primary-color-text'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
               "
               title="Kanban view"
               @click="view = 'kanban'"
@@ -124,8 +125,8 @@
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
               :class="
                 view === 'table'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color bg-primary-color'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
               "
               title="List view"
             >
@@ -136,8 +137,8 @@
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
               :class="
                 view === 'mindmap'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color bg-primary-color'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
               "
               title="MindMap view"
             >
@@ -149,8 +150,8 @@
               class="aspect-square cursor-pointer rounded-sm p-0 px-0.5"
               :class="
                 view === 'calendar'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color bg-primary-color'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
               "
               title="Calendar view"
             >
@@ -162,8 +163,8 @@
               class="aspect-square cursor-pointer rounded-sm p-0"
               :class="
                 view === 'gantt'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color bg-primary-color'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
               "
               title="Gantt Chart view"
             >
@@ -184,8 +185,8 @@
               class="aspect-square cursor-pointer rounded-sm p-0"
               :class="
                 view === 'timeline'
-                  ? 'text-accent bg-accent-text'
-                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-accent'
+                  ? 'text-primary-color bg-primary-color'
+                  : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
               "
               title="Timeline view"
             >
@@ -274,7 +275,7 @@
             <Button
               @click="emitAddColumn"
               variant="primary"
-              class="px-3 py-1 bg-accent cursor-pointer text-white rounded"
+              class="px-3 py-1 bg-primary-color cursor-pointer text-white rounded"
             >
               {{ addingList ? "Adding..." : "Add list" }}
             </Button>
@@ -334,7 +335,7 @@
         class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
       >
         <div class="flex flex-col items-center gap-3">
-          <i class="fa-solid fa-spinner fa-spin text-accent text-3xl"></i>
+          <i class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"></i>
           <span class="text-sm font-medium text-text-secondary italic"
             >Mapping your data...</span
           >
@@ -1259,7 +1260,7 @@ const columns = computed(() => {
           h("div", { class: "flex-1 min-w-0" }, [
             h("input", {
               class:
-                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-accent/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-accent bg-transparent focus:bg-bg-body h-8",
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-transparent focus:bg-bg-body h-8",
               value: row["card-title"] || value,
               placeholder: "Enter title...",
               disabled: !canEditCard.value,

@@ -170,7 +170,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="text-sm text-text-primary flex justify-between">
-                        <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                        <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                         <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                       </div>
                       <span class="text-text-secondary text-sm">{{ stripHtml(activity?.message || '') }}</span>
@@ -211,7 +211,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="text-sm text-text-primary flex justify-between">
-                        <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                        <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                         <div class="text-xs text-text-secondary font-medium mt-1">{{ formatTime(activity?.created_at) }}</div>
                       </div>
                       <span class="text-text-secondary text-sm">{{ stripHtml(activity?.message || '') }}</span>
@@ -252,7 +252,7 @@
                     </div>
                     <div class="flex-1 min-w-0">
                       <div class="text-sm text-text-primary flex justify-between">
-                        <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                        <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                         <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                       </div>
                       <span class="text-text-secondary text-sm">{{ stripHtml(activity?.message || '') }}</span>
@@ -307,7 +307,7 @@
               >
                 <button
                   class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                  :class="1 === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                  :class="1 === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                   @click="changePage(1)"
                 >1</button>
               </Motion>
@@ -318,7 +318,7 @@
                 <Motion v-if="page !== 1 && page !== pagination?.totalPages" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                   <button
                     class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                    :class="page === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                    :class="page === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                     @click="changePage(page)"
                   >{{ page }}</button>
                 </Motion>
@@ -329,7 +329,7 @@
               <Motion v-if="pagination?.totalPages > 1" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                 <button
                   class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                  :class="pagination.totalPages === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                  :class="pagination.totalPages === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                   @click="changePage(pagination.totalPages)"
                 >{{ pagination.totalPages }}</button>
               </Motion>
@@ -387,7 +387,7 @@
             <!-- Error State -->
             <div v-else-if="teamsError" class="text-center py-8">
               <p class="text-sm text-red-500 mb-2">Failed to load team workload</p>
-              <button @click="() => refetchTeams()" class="text-xs text-accent hover:underline">Try again</button>
+              <button @click="() => refetchTeams()" class="text-xs text-primary-color hover:underline">Try again</button>
             </div>
 
             <!-- Empty State -->
@@ -432,7 +432,7 @@
                       :animate="{ width: member.workload + '%' }"
                       :transition="{ duration: 0.7, delay: 0.1 + (index as number) * 0.06, ease: [0.22, 1, 0.36, 1] }"
                       class="h-full"
-                      :class="isDark ? 'bg-accent' : '!bg-accent-hover/40'"
+                      :class="isDark ? 'bg-primary-color' : '!bg-primary-color/40'"
                     />
                     <span
                       v-if="member.workload > 0"
@@ -534,7 +534,7 @@
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm text-text-primary flex justify-between">
-                          <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                          <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                           <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                         </div>
                         <span class="text-text-secondary text-sm">{{ stripHtmlModal(activity?.message || '') }}</span>
@@ -570,7 +570,7 @@
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm text-text-primary flex justify-between">
-                          <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                          <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                           <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                         </div>
                         <span class="text-text-secondary text-sm">{{ stripHtmlModal(activity?.message || '') }}</span>
@@ -606,7 +606,7 @@
                       </div>
                       <div class="flex-1 min-w-0">
                         <div class="text-sm text-text-primary flex justify-between">
-                          <span class="font-semibold text-md text-accent/90 pe-1">{{ activity?.user?.name }}</span>
+                          <span class="font-semibold text-md text-primary-color/90 pe-1">{{ activity?.user?.name }}</span>
                           <div class="text-xs text-text-secondary mt-1">{{ formatTime(activity?.created_at) }}</div>
                         </div>
                         <span class="text-text-secondary text-sm">{{ stripHtmlModal(activity?.message || '') }}</span>
@@ -655,7 +655,7 @@
                 <Motion v-if="pagination?.totalPages > 0" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                   <button
                     class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                    :class="1 === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                    :class="1 === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                     @click="changePage(1)"
                   >1</button>
                 </Motion>
@@ -666,7 +666,7 @@
                   <Motion v-if="page !== 1 && page !== pagination?.totalPages" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                     <button
                       class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                      :class="page === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                      :class="page === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                       @click="changePage(page)"
                     >{{ page }}</button>
                   </Motion>
@@ -677,7 +677,7 @@
                 <Motion v-if="pagination?.totalPages > 1" :while-hover="{ scale: 1.08 }" :while-tap="{ scale: 0.93 }">
                   <button
                     class="px-2 sm:px-3 py-1.5 sm:py-1 cursor-pointer text-xs sm:text-sm rounded border transition-colors touch-manipulation min-w-[32px] sm:min-w-[36px]"
-                    :class="pagination.totalPages === currentPage ? 'bg-accent text-white border-accent' : 'border-border text-text-secondary hover:bg-bg-hover'"
+                    :class="pagination.totalPages === currentPage ? 'bg-primary-color text-white border-primary-color' : 'border-border text-text-secondary hover:bg-bg-hover'"
                     @click="changePage(pagination.totalPages)"
                   >{{ pagination.totalPages }}</button>
                 </Motion>
