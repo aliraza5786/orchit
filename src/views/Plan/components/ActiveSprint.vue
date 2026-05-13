@@ -1,8 +1,7 @@
 <template>
   <div class="flex h-full w-full gap-2">
     <div
-      class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px]
-      flex flex-col border border-border overflow-hidden"
+      class="flex-auto bg-gradient-to-b from-bg-card/95 to-bg-card/90 backdrop-blur rounded-[6px] flex flex-col border border-border overflow-hidden"
     >
       <div class="sticky top-0 z-20 bg-bg-card overflow-x-auto shrink-0">
         <div
@@ -11,17 +10,15 @@
           <div class="flex lg:gap-4 gap-2 py-1 items-center">
             <div>
               <button
-                class=" bg-bg-body px-2 py-2 rounded-[6px] font-medium text-[14px] cursor-pointer gap-2 flex items-center"
+                class="bg-bg-body px-2 py-2 rounded-[6px] font-medium text-[14px] cursor-pointer gap-2 flex items-center"
                 @click="$emit('go-back')"
                 tooltip="go back"
                 v-tooltip="'Go Back'"
               >
                 <i class="fa-solid fa-chevrons-left text-[10px]"></i> Back
               </button>
-            </div> 
-            <div
-              class="text-lg font-semibold text-foreground text-nowrap"
-            >
+            </div>
+            <div class="text-lg font-semibold text-foreground text-nowrap">
               {{ activeSprintTitle }}
             </div>
           </div>
@@ -30,101 +27,153 @@
           <div class="flex gap-3 items-center">
             <!-- filters -->
             <div class="relative flex items-center gap-3">
-                <button
-                  ref="filterTriggerRef"
-                  @click="toggleFilters"
-                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
-                  :class="showFilterBar ? 'border-primary-color' : 'border-border'"
+              <button
+                ref="filterTriggerRef"
+                @click="toggleFilters"
+                class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
+                :class="
+                  showFilterBar ? 'border-primary-color' : 'border-border'
+                "
+              >
+                <i
+                  class="fa-solid fa-filter text-primary-color text-[14px]"
+                ></i>
+                <span>Filter</span>
+                <span
+                  v-if="activeFilterCount"
+                  class="bg-primary-color text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
                 >
-                  <i class="fa-solid fa-filter text-primary-color text-[14px]"></i>
-                  <span>Filter</span>
-                  <span 
-                    v-if="activeFilterCount" 
-                    class="bg-primary-color text-white rounded-full px-1.5 py-0.5 text-[9px] min-w-[16px] flex items-center justify-center"
-                  >
-                    {{ activeFilterCount }}
-                  </span>
-                </button>
-                
-                <button 
-                  v-if="hasActiveFilters"
-                  @click="handleClearFilters"
-                  class="text-[11px] font-medium text-text-secondary hover:text-primary-color transition-colors whitespace-nowrap"
-                >
-                  Clear filters
-                </button>
+                  {{ activeFilterCount }}
+                </span>
+              </button>
 
-                <!-- Floating Filter Dropdown -->
-                <ProductFilters
-                  v-if="showFilterBar"
-                  :triggerRef="filterTriggerRef"
-                  :variables="variables"
-                  :workspaceId="workspaceId"
-                  :moduleId="moduleId"
-                  :activeFilters="activeFilters"
-                  :hidePlanItems="true"
-                  @apply="(f: any) => { handleApplyFilters(f); showFilterBar = false; }"
-                  @clear="handleClearFilters"
-                  @close="showFilterBar = false"
-                />
+              <button
+                v-if="hasActiveFilters"
+                @click="handleClearFilters"
+                class="text-[11px] font-medium text-text-secondary hover:text-primary-color transition-colors whitespace-nowrap"
+              >
+                Clear filters
+              </button>
+
+              <!-- Floating Filter Dropdown -->
+              <ProductFilters
+                v-if="showFilterBar"
+                :triggerRef="filterTriggerRef"
+                :variables="variables"
+                :workspaceId="workspaceId"
+                :moduleId="moduleId"
+                :activeFilters="activeFilters"
+                :hidePlanItems="true"
+                @apply="
+                  (f: any) => {
+                    handleApplyFilters(f);
+                    showFilterBar = false;
+                  }
+                "
+                @clear="handleClearFilters"
+                @close="showFilterBar = false"
+              />
             </div>
 
-            <div v-if="view != 'table'" class="relative flex items-center gap-3">
-               <button
-                  ref="variableTriggerRef"
-                  @click="toggleVariableDropdown"
-                  class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
-                  :class="showVariableDropdown ? 'border-primary-color text-primary-color' : 'border-border text-text-primary'"
+            <div
+              v-if="view != 'table'"
+              class="relative flex items-center gap-3"
+            >
+              <button
+                ref="variableTriggerRef"
+                @click="toggleVariableDropdown"
+                class="flex items-center gap-2 text-nowrap px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
+                :class="
+                  showVariableDropdown
+                    ? 'border-primary-color text-primary-color'
+                    : 'border-border text-text-primary'
+                "
               >
-                  <i class="fa-solid fa-layer-group text-[14px]" :class="showVariableDropdown ? 'text-primary-color' : 'text-primary-color'"></i>
-                  <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
+                <i
+                  class="fa-solid fa-layer-group text-[14px]"
+                  :class="
+                    showVariableDropdown
+                      ? 'text-primary-color'
+                      : 'text-primary-color'
+                  "
+                ></i>
+                <span class="text-nowrap"
+                  >Group: {{ selectedViewByLabel }}</span
+                >
               </button>
-  
+
               <!-- Variable View Dropdown -->
               <VariableViewDropdown
-                  v-if="showVariableDropdown"
-                  :triggerRef="variableTriggerRef"
-                  :options="variables"
-                  v-model="selected_view_by"
-                  :canCreateVariable="canCreateVariable"
-                  @close="showVariableDropdown = false"
-                  @nested-select="handleProcessNestedSelection"
-                  @add-new="() => { isCreateVar = true; showVariableDropdown = false; }"
+                v-if="showVariableDropdown"
+                :triggerRef="variableTriggerRef"
+                :options="variables"
+                v-model="selected_view_by"
+                :canCreateVariable="canCreateVariable"
+                @close="showVariableDropdown = false"
+                @nested-select="handleProcessNestedSelection"
+                @add-new="
+                  () => {
+                    isCreateVar = true;
+                    showVariableDropdown = false;
+                  }
+                "
               />
             </div>
 
             <!-- Group button for Table View -->
-            <div v-if="view === 'table'" class="relative flex items-center gap-3">
+            <div
+              v-if="view === 'table'"
+              class="relative flex items-center gap-3"
+            >
               <button
-                  ref="groupTriggerRef"
-                  @click="toggleGroupDropdown"
-                  class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
-                  :class="showGroupDropdown ? 'border-primary-color text-primary-color' : 'border-border text-text-primary'"
+                ref="groupTriggerRef"
+                @click="toggleGroupDropdown"
+                class="flex items-center gap-2 px-3 h-[33px] rounded-md border cursor-pointer bg-bg-card hover:border-primary-color transition-all text-xs font-semibold relative"
+                :class="
+                  showGroupDropdown
+                    ? 'border-primary-color text-primary-color'
+                    : 'border-border text-text-primary'
+                "
               >
-                  <i class="fa-solid fa-layer-group text-[14px]" :class="showGroupDropdown ? 'text-primary-color' : 'text-primary-color'"></i>
-                  <span>Group: {{ selectedGroupLabel }}</span>
+                <i
+                  class="fa-solid fa-layer-group text-[14px]"
+                  :class="
+                    showGroupDropdown
+                      ? 'text-primary-color'
+                      : 'text-primary-color'
+                  "
+                ></i>
+                <span>Group: {{ selectedGroupLabel }}</span>
               </button>
-  
+
               <!-- Table Group Dropdown -->
               <TableGroupDropdown
-                  v-if="showGroupDropdown"
-                  :triggerRef="groupTriggerRef"
-                  v-model="selectedGroup"
-                  @close="showGroupDropdown = false"
+                v-if="showGroupDropdown"
+                :triggerRef="groupTriggerRef"
+                v-model="selectedGroup"
+                @close="showGroupDropdown = false"
               />
-             </div>
+            </div>
 
             <SearchBar
-            @onChange="(e: string) => { search = e; }"
-            placeholder="Search in Orchit AI space"
-          />
+              @onChange="
+                (e: string) => {
+                  search = e;
+                }
+              "
+              placeholder="Search in Orchit AI space"
+            />
             <div class="flex gap-3 items-center">
-              <div class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md">
+              <div
+                class="flex items-center gap-3 bg-bg-surface/50 h-[32px] px-2 rounded-md"
+              >
                 <button
                   class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-                  :class="view === 'kanban'
-                    ? 'text-primary-color'
-                    : 'hover:bg-border/50 transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
+                  :class="
+                    view === 'kanban'
+                      ? 'text-primary-color'
+                      : 'hover:bg-border/50 transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  "
                   @click="view = 'kanban'"
                 >
                   <i class="fa-solid fa-chart-kanban"></i>
@@ -133,9 +182,11 @@
                 <button
                   @click="view = 'table'"
                   class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-                  :class="view === 'table'
-                    ? 'text-primary-color'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
+                  :class="
+                    view === 'table'
+                      ? 'text-primary-color'
+                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  "
                   title="Gallery view"
                 >
                   <i class="fa-solid fa-align-left"></i>
@@ -145,9 +196,11 @@
                 <button
                   @click="view = 'mindmap'"
                   class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-                  :class="view === 'mindmap'
-                    ? 'text-primary-color'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
+                  :class="
+                    view === 'mindmap'
+                      ? 'text-primary-color'
+                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  "
                   title="MindMap view"
                 >
                   <i class="fa-solid fa-chart-diagram"></i>
@@ -156,9 +209,11 @@
                 <button
                   @click="view = 'calendar'"
                   class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-                  :class="view === 'calendar'
-                    ? 'text-primary-color'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
+                  :class="
+                    view === 'calendar'
+                      ? 'text-primary-color'
+                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  "
                   title="Calendar view"
                 >
                   <i class="fa-regular fa-calendar"></i>
@@ -167,25 +222,41 @@
                 <button
                   @click="view = 'gantt'"
                   class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-                  :class="view === 'gantt'
-                    ? 'text-primary-color'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
+                  :class="
+                    view === 'gantt'
+                      ? 'text-primary-color'
+                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  "
                   title="Gantt Chart view"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z" />
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M4 6h2v12H4V6Zm4 4h10v2H8v-2Zm0 4h10v2H8v-2Zm0-8h10v2H8V6Z"
+                    />
                   </svg>
                 </button>
 
                 <button
                   @click="view = 'timeline'"
                   class="aspect-square cursor-pointer rounded-sm py-0.5 px-1 border border-border outline-0"
-                  :class="view === 'timeline'
-                    ? 'text-primary-color'
-                    : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'"
+                  :class="
+                    view === 'timeline'
+                      ? 'text-primary-color'
+                      : 'hover:bg-border/50 backdrop-blur-2xl transition-all duration-75 hover:outline-border hover:outline hover:text-primary-color'
+                  "
                   title="Timeline view"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <path
                       d="M4 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm16 0a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm-8 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm0-16a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z"
                       opacity="0"
@@ -208,22 +279,26 @@
       <!-- ===== MAIN ===== -->
       <div class="flex flex-1 overflow-hidden bg-bg-card">
         <div class="flex-1 min-w-0 flex flex-col">
-
           <!-- ── Kanban View ─────────────────────────────────────── -->
           <template v-if="view === 'kanban'">
             <KanbanSkeleton v-show="isPending" />
 
             <!-- Empty State -->
-            <div 
+            <div
               v-if="!isPending && !filteredBoard?.length"
               class="flex flex-col items-center justify-center flex-1 h-full py-20 text-center"
             >
               <div class="bg-bg-body p-6 rounded-full mb-4">
-                <i class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"></i>
+                <i
+                  class="fa-solid fa-chart-kanban text-4xl text-text-secondary/20"
+                ></i>
               </div>
-              <h3 class="text-lg font-semibold text-text-primary">No columns to display</h3>
+              <h3 class="text-lg font-semibold text-text-primary">
+                No columns to display
+              </h3>
               <p class="text-sm text-text-secondary mt-1 max-w-[300px]">
-                There are no columns found for the current grouping or filter selection.
+                There are no columns found for the current grouping or filter
+                selection.
               </p>
             </div>
 
@@ -282,8 +357,17 @@
               <TableView
                 ref="tableViewRef"
                 @toggleVisibility="toggleVisibilityHandler"
-                @addVar="() => { isCreateVar = true }"
-                :isPending="isPending || isVariablesPending || isFlatTablePending || (!!selectedGroup && isTablePending)"
+                @addVar="
+                  () => {
+                    isCreateVar = true;
+                  }
+                "
+                :isPending="
+                  isPending ||
+                  isVariablesPending ||
+                  isFlatTablePending ||
+                  (!!selectedGroup && isTablePending)
+                "
                 :isCreating="isAddingTableTicket"
                 :columns="columns"
                 :rows="filteredBoard"
@@ -307,46 +391,56 @@
           <!-- ── MindMap View ─────────────────────────────────────── -->
           <template v-if="view === 'mindmap'">
             <div class="relative flex-1 flex flex-col overflow-hidden px-2">
-              <div v-if="isPending" class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]">
+              <div
+                v-if="isPending"
+                class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
+              >
                 <div class="flex flex-col items-center gap-3">
-                  <i class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"></i>
-                  <span class="text-sm font-medium text-text-secondary italic">Mapping your data...</span>
+                  <i
+                    class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"
+                  ></i>
+                  <span class="text-sm font-medium text-text-secondary italic"
+                    >Mapping your data...</span
+                  >
                 </div>
               </div>
               <MindMapView
                 :listsData="filteredBoard ?? []"
-              :style="Lists?.style"
-              :selectedSheetId="selected_sheet_id"
-              :selectedViewBy="selected_view_by"
-              :workspaceId="workspaceId"
-              :moduleId="moduleId"
-              :sheetId="selectedSheetId"
-              :addingList="!!addingList"
-              :activeAddList="activeAddList"
-              :newColumn="newColumn"
-              :canCreateCard="canCreateCard"
-              :canEditCard="canEditCard"
-              :canDeleteCard="canDeleteCard"
-              :canAssignCard="canAssignCard"
-              :canCreateSheet="false"
-              :canCreateVariable="canCreateVariable"
-              :canEditSheet="false"
-              @select:ticket="selectCardHandler"
-              @delete:ticket="handleMindmapDeleteTicket"
-              @create:sheet="handleMindmapCreateSheet"
-              @create:card="handleMindmapCreateCard"
-              @update:card="handleMindmapUpdateCard"
-              @update:sheet="handleMindmapUpdateSheet"
-              @reorder:card="handleMindmapReorderCard"
-              @toggle-add-list="setActiveAddList"
-              @add-column="handleAddColumn"
-              @save:theme="handleSaveTheme "
-            />
-          </div>
+                :style="Lists?.style"
+                :selectedSheetId="selected_sheet_id"
+                :selectedViewBy="selected_view_by"
+                :workspaceId="workspaceId"
+                :moduleId="moduleId"
+                :sheetId="selectedSheetId"
+                :addingList="!!addingList"
+                :activeAddList="activeAddList"
+                :newColumn="newColumn"
+                :canCreateCard="canCreateCard"
+                :canEditCard="canEditCard"
+                :canDeleteCard="canDeleteCard"
+                :canAssignCard="canAssignCard"
+                :canCreateSheet="false"
+                :canCreateVariable="canCreateVariable"
+                :canEditSheet="false"
+                @select:ticket="selectCardHandler"
+                @delete:ticket="handleMindmapDeleteTicket"
+                @create:sheet="handleMindmapCreateSheet"
+                @create:card="handleMindmapCreateCard"
+                @update:card="handleMindmapUpdateCard"
+                @update:sheet="handleMindmapUpdateSheet"
+                @reorder:card="handleMindmapReorderCard"
+                @toggle-add-list="setActiveAddList"
+                @add-column="handleAddColumn"
+                @save:theme="handleSaveTheme"
+              />
+            </div>
           </template>
 
           <!-- ── Calendar View ───────────────────────────────────── -->
-          <template v-if="view === 'calendar'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
+          <template
+            v-if="view === 'calendar'"
+            class="max-h-[calc(100vh-100px)] overflow-y-auto"
+          >
             <CalendarView
               :data="filteredBoard"
               @select:ticket="selectCardHandler"
@@ -355,7 +449,10 @@
           </template>
 
           <!-- ── Gantt View ───────────────────────────────────────── -->
-          <template v-if="view === 'gantt'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
+          <template
+            v-if="view === 'gantt'"
+            class="max-h-[calc(100vh-100px)] overflow-y-auto"
+          >
             <GanttChartView
               :data="filteredBoard"
               @select:ticket="selectCardHandler"
@@ -363,7 +460,10 @@
           </template>
 
           <!-- ── Timeline View ───────────────────────────────────── -->
-          <template v-if="view === 'timeline'" class="max-h-[calc(100vh-100px)] overflow-y-auto">
+          <template
+            v-if="view === 'timeline'"
+            class="max-h-[calc(100vh-100px)] overflow-y-auto"
+          >
             <TimelineView
               :data="filteredBoard"
               @select:ticket="selectCardHandler"
@@ -381,7 +481,11 @@
             size="md"
             :loading="addingList"
             @confirm="handleDeleteColumn"
-            @cancel="() => { showDelete = false }"
+            @cancel="
+              () => {
+                showDelete = false;
+              }
+            "
           />
 
           <CreateTaskModal
@@ -402,7 +506,9 @@
             title="Delete Ticket"
             itemLabel="Ticket"
             :itemName="ticketToDelete?.['card-title'] || ticketToDelete?.title"
-            :requireMatchText="ticketToDelete?.['card-title'] || ticketToDelete?.title"
+            :requireMatchText="
+              ticketToDelete?.['card-title'] || ticketToDelete?.title
+            "
             confirmText="Delete Ticket"
             cancelText="Cancel"
             size="md"
@@ -421,7 +527,6 @@
             v-if="isCreateVar"
             :sheetID="selected_sheet_id || sheetId"
           />
-
         </div>
       </div>
     </div>
@@ -440,14 +545,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  computed,
-  defineAsyncComponent,
-  ref,
-  watch,
-  h, 
-  onMounted,
-} from "vue";
+import { computed, defineAsyncComponent, ref, watch, h, onMounted } from "vue";
 import { toast } from "vue-sonner";
 import { usePermissions } from "../../../composables/usePermissions";
 import { useWorkspaceStore } from "../../../stores/workspace";
@@ -480,18 +578,41 @@ import { avatarColor } from "../../../utilities/avatarColor";
 import SearchBar from "../../../components/ui/SearchBar.vue";
 import { useSidePanelStore } from "../../../stores/sidePanelStore";
 import { useUpdateSprint } from "../../../queries/usePlan";
-import { performOptimisticUpdate, rollbackOptimisticUpdate } from "../../../utilities/cacheSync";
+import {
+  performOptimisticUpdate,
+  rollbackOptimisticUpdate,
+} from "../../../utilities/cacheSync";
 // ─── Lazy components ──────────────────────────────────────────────────────────
-const CreateTaskModal = defineAsyncComponent(() => import("../../Product/modals/CreateTaskModal.vue"));
-const ConfirmDeleteModal = defineAsyncComponent(() => import("../../Product/modals/ConfirmDeleteModal.vue"));
-const SidePanel = defineAsyncComponent(() => import("../../Product/components/SidePanel.vue"));
-const KanbanBoard = defineAsyncComponent(() => import("../../../components/feature/kanban/KanbanBoard.vue"));
-const DatePicker = defineAsyncComponent(() => import("../../Product/components/DatePicker.vue"));
-const TableSearchCell = defineAsyncComponent(() => import("../../../components/feature/TableView/TableSearchCell.vue"));
-const TableAssigneeCell = defineAsyncComponent(() => import("../../../components/feature/TableView/TableAssigneeCell.vue"));
-const CalendarView = defineAsyncComponent(() => import("../../../components/feature/CalendarView.vue"));
-const GanttChartView = defineAsyncComponent(() => import("../../../components/feature/GanttChartView.vue"));
-const TimelineView = defineAsyncComponent(() => import("../../../components/feature/TimelineView.vue"));
+const CreateTaskModal = defineAsyncComponent(
+  () => import("../../Product/modals/CreateTaskModal.vue"),
+);
+const ConfirmDeleteModal = defineAsyncComponent(
+  () => import("../../Product/modals/ConfirmDeleteModal.vue"),
+);
+const SidePanel = defineAsyncComponent(
+  () => import("../../Product/components/SidePanel.vue"),
+);
+const KanbanBoard = defineAsyncComponent(
+  () => import("../../../components/feature/kanban/KanbanBoard.vue"),
+);
+const DatePicker = defineAsyncComponent(
+  () => import("../../Product/components/DatePicker.vue"),
+);
+const TableSearchCell = defineAsyncComponent(
+  () => import("../../../components/feature/TableView/TableSearchCell.vue"),
+);
+const TableAssigneeCell = defineAsyncComponent(
+  () => import("../../../components/feature/TableView/TableAssigneeCell.vue"),
+);
+const CalendarView = defineAsyncComponent(
+  () => import("../../../components/feature/CalendarView.vue"),
+);
+const GanttChartView = defineAsyncComponent(
+  () => import("../../../components/feature/GanttChartView.vue"),
+);
+const TimelineView = defineAsyncComponent(
+  () => import("../../../components/feature/TimelineView.vue"),
+);
 const MindMapView = defineAsyncComponent(
   () => import("../../../components/feature/MindmapView.vue"),
 );
@@ -512,7 +633,7 @@ const props = defineProps<{
   sprint_id: any;
   searchQuery: string;
   activeSprint: string;
-  selectedSheetId:string;
+  selectedSheetId: string;
 }>();
 const {
   canCreateVariable,
@@ -536,7 +657,6 @@ watch(
   () => route.query.card_id,
   () => openPanelFromRoute(),
 );
- 
 
 async function openPanelFromRoute() {
   const cardId = route.query.card_id as string;
@@ -570,8 +690,8 @@ const handleTableRowsUpdate = (newRows: any[]) => {
 
 const { data: workspaces } = useSingleWorkspace(workspaceId.value);
 const modules = ref(workspaces.value.modules || []);
-const activeSprintTitle = localStorage.getItem("selectedSprintTitle")
-const sidePanelStore = useSidePanelStore()
+const activeSprintTitle = localStorage.getItem("selectedSprintTitle");
+const sidePanelStore = useSidePanelStore();
 const moduleOptions = computed(() => {
   return (modules.value || []).map((m: any) => ({
     _id: m._id,
@@ -587,17 +707,18 @@ watch(
   (opts) => {
     if (!opts.length) return;
     if (!selected_module_id.value) {
-      const defaultModule = opts.find((m: any) => m.title === "Tasks") || opts[0];
+      const defaultModule =
+        opts.find((m: any) => m.title === "Tasks") || opts[0];
       selected_module_id.value = defaultModule._id;
     }
   },
   { immediate: true },
-); 
+);
 
 const { data: sheets, refetch: refetchSheets } = useSheets({
   workspace_id: workspaceId.value,
   workspace_module_id: selected_module_id.value,
-}); 
+});
 
 watch(selected_module_id, (newModuleId) => {
   if (newModuleId) refetchSheets();
@@ -618,21 +739,26 @@ const selected_view_by = ref(viewBy.value);
 watch(viewBy, () => {
   if (!selected_view_by.value) selected_view_by.value = viewBy.value;
 });
-const selected_sprint_id = ref(props.sprint_id || localStorage.getItem("activeSprintKey"));
-watch(() => props.sprint_id, (newId) => {
-  if (newId) {
-    selected_sprint_id.value = newId;
-  }
-});
+const selected_sprint_id = ref(
+  props.sprint_id || localStorage.getItem("activeSprintKey"),
+);
+watch(
+  () => props.sprint_id,
+  (newId) => {
+    if (newId) {
+      selected_sprint_id.value = newId;
+    }
+  },
+);
 
 // Clear nested process selection when the main grouping variable changes
 // We use a flag to skip clearing when the change comes from a nested selection
 let lastSelectionWasNested = false;
 watch(selected_view_by, () => {
-    if (!lastSelectionWasNested) {
-        selectedProcessMeta.value = null;
-    }
-    lastSelectionWasNested = false;
+  if (!lastSelectionWasNested) {
+    selectedProcessMeta.value = null;
+  }
+  lastSelectionWasNested = false;
 });
 
 // ─── Filter Logic ─────────────────────────────────────────────────────────────
@@ -693,30 +819,32 @@ const GROUP_OPTIONS: Record<string, string> = {
 
 const selectedGroupLabel = computed(() => {
   return selectedGroup.value
-    ? Object.keys(GROUP_OPTIONS).find((k) => GROUP_OPTIONS[k] === selectedGroup.value)
+    ? Object.keys(GROUP_OPTIONS).find(
+        (k) => GROUP_OPTIONS[k] === selectedGroup.value,
+      )
     : "None";
 });
 
 const closeAllDropdowns = (except: string) => {
-  if (except !== 'variable') showVariableDropdown.value = false;
-  if (except !== 'filter') showFilterBar.value = false;
-  if (except !== 'group') showGroupDropdown.value = false;
+  if (except !== "variable") showVariableDropdown.value = false;
+  if (except !== "filter") showFilterBar.value = false;
+  if (except !== "group") showGroupDropdown.value = false;
 };
 
 const toggleVariableDropdown = () => {
-  closeAllDropdowns('variable');
+  closeAllDropdowns("variable");
   showVariableDropdown.value = !showVariableDropdown.value;
 };
 
 const toggleGroupDropdown = () => {
   const willShow = !showGroupDropdown.value;
-  if (willShow) closeAllDropdowns('group');
+  if (willShow) closeAllDropdowns("group");
   showGroupDropdown.value = willShow;
 };
 
 const toggleFilters = () => {
   const willShow = !showFilterBar.value;
-  if (willShow) closeAllDropdowns('filter');
+  if (willShow) closeAllDropdowns("filter");
   showFilterBar.value = willShow;
 };
 
@@ -795,36 +923,38 @@ const {
 } = useSprintKanban(selected_sprint_id, laneIds, kanbanExtraParams);
 
 // Dedicated flat Table View data (no variable_id passed = no grouping)
-const {
-  data: FlatTableData,
-  isPending: isFlatTablePending,
-} = useSprintTable(selected_sprint_id, laneIds, formattedExtraParams);
+const { data: FlatTableData, isPending: isFlatTablePending } = useSprintTable(
+  selected_sprint_id,
+  laneIds,
+  formattedExtraParams,
+);
 
 const tableActiveVariableId = computed(() => {
   if (!selectedGroup.value) return "";
   const group = selectedGroup.value;
-  if (group === 'assignee' || group === 'owner') return "";
+  if (group === "assignee" || group === "owner") return "";
 
   let slug = group;
-  if (slug === 'card_type') slug = 'card-type';
+  if (slug === "card_type") slug = "card-type";
 
   const findVar = (searchSlug: string) =>
-    variables.value?.find((v: any) =>
-      v.slug?.toLowerCase() === searchSlug.toLowerCase() ||
-      v.title?.toLowerCase() === searchSlug.toLowerCase()
+    variables.value?.find(
+      (v: any) =>
+        v.slug?.toLowerCase() === searchSlug.toLowerCase() ||
+        v.title?.toLowerCase() === searchSlug.toLowerCase(),
     );
 
   let variable = findVar(slug);
-  if (!variable && slug === 'status') variable = findVar('card-status');
-  if (!variable && slug === 'card-type') variable = findVar('type');
+  if (!variable && slug === "status") variable = findVar("card-status");
+  if (!variable && slug === "card-type") variable = findVar("type");
 
   return variable?._id || "";
 });
 
 const tableActiveVariableSlug = computed(() => {
-  if (selectedGroup.value === 'assignee') return 'assigned_to';
-  if (selectedGroup.value === 'owner') return 'created_by';
-  return '';
+  if (selectedGroup.value === "assignee") return "assigned_to";
+  if (selectedGroup.value === "owner") return "created_by";
+  return "";
 });
 
 const tableGroupExtraParams = computed(() => {
@@ -840,10 +970,11 @@ const tableGroupExtraParams = computed(() => {
 });
 
 // Grouped Table View data
-const {
-  data: TableGroupedLists,
-  isPending: isTablePending,
-} = useSprintKanban(selected_sprint_id, laneIds, tableGroupExtraParams);
+const { data: TableGroupedLists, isPending: isTablePending } = useSprintKanban(
+  selected_sprint_id,
+  laneIds,
+  tableGroupExtraParams,
+);
 
 const refreshTable = () => {
   queryClient.invalidateQueries({ queryKey: ["sheets"] });
@@ -868,13 +999,18 @@ const flattenSprintCards = (apiData: any): any[] => {
 
 const totalTableCount = computed(() => {
   if (selectedGroup.value) {
-    return tableGroups.value.reduce((acc: number, group: any) => acc + (group.cards?.length || 0), 0);
+    return tableGroups.value.reduce(
+      (acc: number, group: any) => acc + (group.cards?.length || 0),
+      0,
+    );
   }
   return filteredBoard.value.length;
 });
 
 const totalTableTotal = computed(() => {
-  const currentData = selectedGroup.value ? TableGroupedLists.value : FlatTableData.value;
+  const currentData = selectedGroup.value
+    ? TableGroupedLists.value
+    : FlatTableData.value;
   const cards = flattenSprintCards(currentData);
   return cards.length + localPendingTickets.value.length;
 });
@@ -914,7 +1050,8 @@ watch(
 watch(
   transformedData,
   (newData) => {
-    selectedSheetTitle.value = newData.length > 0 ? newData[0].title : props.activeSprint;
+    selectedSheetTitle.value =
+      newData.length > 0 ? newData[0].title : props.activeSprint;
   },
   { immediate: true },
 );
@@ -945,7 +1082,11 @@ function onReorder(a: any) {
     reorderList.mutate({
       payload: {
         workspace_id: workspaceId.value,
-        workspace_module_id: moduleId.value || selected_sprint_id.value || localStorage.getItem("activeSprintKey") || "",
+        workspace_module_id:
+          moduleId.value ||
+          selected_sprint_id.value ||
+          localStorage.getItem("activeSprintKey") ||
+          "",
         variable_id: selected_view_by.value,
         moved_value: a.meta.id,
         new_index: a.meta.newIndex,
@@ -975,7 +1116,7 @@ const handleBoardUpdate = (_: any) => {};
 
 const { mutate: updateSheet } = useUpdateWorkspaceSheet({
   onSuccess: () => {
-    if(!route?.path?.includes("plan")) {
+    if (!route?.path?.includes("plan")) {
       refetchSheets();
     }
     showDeleteModal.value = false;
@@ -986,7 +1127,7 @@ const { mutate: updateSheet } = useUpdateWorkspaceSheet({
 const { mutate: addList, isPending: addingList } = useAddList({
   onSuccess: () => {
     queryClient.invalidateQueries({ queryKey: ["sprint-kanban"] });
-    queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });  
+    queryClient.invalidateQueries({ queryKey: ["sprint-table-flat"] });
     newColumn.value = "";
     showDelete.value = false;
     activeAddList.value = false;
@@ -1010,7 +1151,11 @@ function setActiveAddList() {
 const handleUpdateColumn = (newTitle: any) => {
   addList({
     workspace_id: route.params.id,
-    module_id: route.params.module_id || selected_sprint_id.value || localStorage.getItem("activeSprintKey") || "",
+    module_id:
+      route.params.module_id ||
+      selected_sprint_id.value ||
+      localStorage.getItem("activeSprintKey") ||
+      "",
     new_value: newTitle.title,
     value: newTitle.oldTitle,
     variable_id: selected_view_by.value,
@@ -1056,15 +1201,15 @@ const fuse = computed(() => {
   const allCards = (Lists.value?.groups ?? []).flatMap((col: any) =>
     (col.cards ?? []).map((card: any) => ({ ...card, columnId: col.title })),
   );
-  return new Fuse(allCards, { 
-    keys: ["card-title", "card-description", "title", "name"], 
-    threshold: 0.3 
+  return new Fuse(allCards, {
+    keys: ["card-title", "card-description", "title", "name"],
+    threshold: 0.3,
   });
 });
 
 const filteredBoard = computed(() => {
   const query = searchQuery.value?.trim() || search.value?.trim();
-  
+
   if (view.value === "kanban" || view.value === "mindmap") {
     if (!query) return Lists.value?.groups;
     const results = fuse.value.search(query).map((r: any) => r.item);
@@ -1074,7 +1219,9 @@ const filteredBoard = computed(() => {
     }));
   } else {
     // TABLE VIEW
-    const currentData = selectedGroup.value ? TableGroupedLists.value : FlatTableData.value;
+    const currentData = selectedGroup.value
+      ? TableGroupedLists.value
+      : FlatTableData.value;
     const allCards = flattenSprintCards(currentData);
 
     if (!query) {
@@ -1095,10 +1242,12 @@ const tableGroups = computed(() => {
   const query = searchQuery.value?.trim() || search.value?.trim();
   const sourceLists = TableGroupedLists.value?.groups ?? [];
   if (!query) return sourceLists;
-  
+
   const fuseTable = new Fuse(
-    sourceLists.flatMap((col: any) => (col.cards || []).map((c: any) => ({...c, columnId: col.title}))), 
-    { keys: ["card-title", "card-description"], threshold: 0.3 }
+    sourceLists.flatMap((col: any) =>
+      (col.cards || []).map((c: any) => ({ ...c, columnId: col.title })),
+    ),
+    { keys: ["card-title", "card-description"], threshold: 0.3 },
   );
   const results = fuseTable.search(query).map((r: any) => r.item);
   return sourceLists.map((col: any) => ({
@@ -1134,12 +1283,14 @@ const { mutate: addTicket } = useAddTicket({
   onMutate: (variables: any) => {
     const tempId = variables.temp_row_id;
     if (tempId) {
-      const exists = localPendingTickets.value.some(t => t._id === tempId || t.id === tempId);
+      const exists = localPendingTickets.value.some(
+        (t) => t._id === tempId || t.id === tempId,
+      );
       if (!exists) {
         localPendingTickets.value.push({
           _id: tempId,
           "card-title": variables.variables?.["card-title"] || "New Ticket",
-          ...variables.variables
+          ...variables.variables,
         });
       }
     }
@@ -1148,7 +1299,7 @@ const { mutate: addTicket } = useAddTicket({
     const tempId = variables.temp_row_id;
     toast.success("Ticket created successfully");
     tableViewRef.value?.closeQuickCreate();
-    
+
     if (tempId) {
       localPendingTickets.value = localPendingTickets.value.filter(
         (t) => t._id !== tempId && t.id !== tempId,
@@ -1173,100 +1324,108 @@ function setLane(id: any, v: any) {
     sidePanelStore,
     cardId: id,
     updates: { lane: newLane, workspace_lane_id: v },
-    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
+    invalidateKeys: ["sprint-kanban", "sprint-table-flat"],
   });
-  
+
   moveCard.mutate(
     { card_id: id, workspace_lane_id: v },
-    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
   );
 }
 
 const assignHandle = (cardId: any, users: any[]) => {
-  const userIds = users.map(u => typeof u === 'string' ? u : (u?._id || u?.id)).filter(Boolean)
+  const userIds = users
+    .map((u) => (typeof u === "string" ? u : u?._id || u?.id))
+    .filter(Boolean);
   const primarySeat = users.length > 0 ? users[0] : null;
-  
+
   const snapshots = performOptimisticUpdate({
     queryClient,
     sidePanelStore,
     cardId: cardId,
     updates: { seat: primarySeat, seats: users, seat_id: userIds },
-    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
+    invalidateKeys: ["sprint-kanban", "sprint-table-flat"],
   });
 
   moveCard.mutate(
     { card_id: cardId, seat_id: userIds },
-    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
   );
 };
 
 function handleChangeTicket(id: any, key: any, value: any) {
   const updates: Record<string, any> = { [key]: value.trim() };
-  
+
   const snapshots = performOptimisticUpdate({
     queryClient,
     sidePanelStore,
     cardId: id,
     updates,
-    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
+    invalidateKeys: ["sprint-kanban", "sprint-table-flat"],
   });
 
   moveCard.mutate(
     { card_id: id, variables: { [key]: value.trim() } },
-    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
   );
 }
 
 function handleCreateTicket(title: any) {
   if (title["card-title"]) {
     isAddingTableTicket.value = true;
-    addTicket({
-      sheet_list_id: "General",
-      workspace_id: workspaceId.value,
-      sheet_id: selected_sheet_id.value,
-      variables: { "card-title": title["card-title"].trim(), ...title.variables },
-      sprint_id: sprintId.value,
-      createdAt: new Date().toISOString(),
-      ...title
-    }, {
-      onSettled: () => {
-        isAddingTableTicket.value = false;
-      }
-    });
+    addTicket(
+      {
+        sheet_list_id: "General",
+        workspace_id: workspaceId.value,
+        sheet_id: selected_sheet_id.value,
+        variables: {
+          "card-title": title["card-title"].trim(),
+          ...title.variables,
+        },
+        sprint_id: sprintId.value,
+        createdAt: new Date().toISOString(),
+        ...title,
+      },
+      {
+        onSettled: () => {
+          isAddingTableTicket.value = false;
+        },
+      },
+    );
   }
 }
 
 function handleQuickCreate(title: string, group: any) {
   if (!title?.trim()) return;
-  let cardPriority = '';
-  let cardStatus = '';
-  let cardType = '';
-  let cardAssignee = '';
+  let cardPriority = "";
+  let cardStatus = "";
+  let cardType = "";
+  let cardAssignee = "";
 
   const label = selectedGroupLabel.value?.toLowerCase();
-  
-  if (label === 'status') {
+
+  if (label === "status") {
     cardStatus = group.title;
-  } else if (label === 'priority') {
+  } else if (label === "priority") {
     cardPriority = group.title;
-  } else if (label === 'card type') {
+  } else if (label === "card type") {
     cardType = group.title;
-  } else if (label === 'assignee') {
-     cardAssignee = group?.cards[0]?.seat?._id || group?.cards[0]?.seat_id;
+  } else if (label === "assignee") {
+    cardAssignee = group?.cards[0]?.seat?._id || group?.cards[0]?.seat_id;
   }
 
   const payload = {
     "card-title": title,
     "card-status": cardStatus,
     "card-type": cardType,
-    "priority": cardPriority,
-    "seat_id": cardAssignee,
+    priority: cardPriority,
+    seat_id: cardAssignee,
     variables: {
       "card-title": title,
-      "card-status": cardStatus || 'General',
+      "card-status": cardStatus || "General",
       "card-type": cardType,
-      "priority": cardPriority
-    }
+      priority: cardPriority,
+    },
   };
 
   handleCreateTicket(payload);
@@ -1287,12 +1446,12 @@ const setStartDate = (card_id: any, e: any) => {
     sidePanelStore,
     cardId: card_id,
     updates: { "end-date": e, "start-date": e }, // The UI seems to use end-date for display sometimes
-    invalidateKeys: ['sprint-kanban', 'sprint-table-flat']
+    invalidateKeys: ["sprint-kanban", "sprint-table-flat"],
   });
 
   moveCard.mutate(
     { card_id, variables: { "start-date": e } },
-    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) }
+    { onError: () => rollbackOptimisticUpdate(queryClient, snapshots) },
   );
 };
 
@@ -1316,14 +1475,22 @@ const columns = computed(() => {
       label: "Title",
       render: ({ row, value }: any) =>
         h("div", { class: "flex items-center gap-1 w-full" }, [
-          h("a", {
-            onClick: () => (selectedCard.value = row),
-            class: "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
-          }, row["card-code"]),
+          h(
+            "a",
+            {
+              onClick: () => (selectedCard.value = row),
+              class:
+                "text-[12px] underline text-blue-500 shrink-0 overflow-ellipsis cursor-pointer",
+            },
+            row["card-code"],
+          ),
           h("div", { class: "flex-1 min-w-0" }, [
             h("input", {
-              onFocusout: (e: any) => { handleChangeTicket(row?._id, "card-title", e?.target?.value); },
-              class: "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-transparent focus:bg-bg-body h-8",
+              onFocusout: (e: any) => {
+                handleChangeTicket(row?._id, "card-title", e?.target?.value);
+              },
+              class:
+                "text-[12px] w-full overflow-ellipsis capitalize p-1 focus:border border-primary-color/60 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-color bg-transparent focus:bg-bg-body h-8",
               defaultValue: value,
               disabled: !canEditCard.value,
             }),
@@ -1367,11 +1534,19 @@ const columns = computed(() => {
         h("div", { class: "capitalize flex items-center gap-2 px-3" }, [
           h("div", { class: "rounded-full" }, [
             value?.u_profile_image
-              ? h("img", { class: "w-6 h-6 rounded-full", src: value?.u_profile_image })
-              : h("div", {
-                  class: "w-5 h-5 rounded-full flex justify-center items-center text-[11px]",
-                  style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ""}`,
-                }, getInitials(value?.u_full_name)),
+              ? h("img", {
+                  class: "w-6 h-6 rounded-full",
+                  src: value?.u_profile_image,
+                })
+              : h(
+                  "div",
+                  {
+                    class:
+                      "w-5 h-5 rounded-full flex justify-center items-center text-[11px]",
+                    style: `background:${value?.u_full_name ? avatarColor({ name: value.u_full_name, email: value.u_email }) : ""}`,
+                  },
+                  getInitials(value?.u_full_name),
+                ),
           ]),
           h("span", { class: "text-[12px]" }, value ? value?.u_full_name : ""),
         ]),
@@ -1409,7 +1584,9 @@ const columns = computed(() => {
               modelValue: cellValue,
               disabled: !canEditCard.value,
               emptyText: e.slug,
-              "onUpdate:modelValue": (val: any) => { handleChangeTicket(row?._id, e.slug, val); },
+              "onUpdate:modelValue": (val: any) => {
+                handleChangeTicket(row?._id, e.slug, val);
+              },
               columnName: e.slug,
             }),
           ]);
@@ -1427,7 +1604,9 @@ const removeCardFromState = (cardId: string) => {
   if (!Lists.value?.groups) return;
   Lists.value.groups.forEach((list: any) => {
     if (list.cards) {
-      list.cards = list.cards.filter((card: any) => (card._id || card.id) !== cardId);
+      list.cards = list.cards.filter(
+        (card: any) => (card._id || card.id) !== cardId,
+      );
     }
   });
 };
@@ -1504,20 +1683,18 @@ const handleSaveTheme = (e: any) => {
     },
     {
       onSuccess: () => {
-        refetchSheetLists(); 
+        refetchSheetLists();
       },
       onError: (err) => {
         console.error("Error updating sprint theme:", err);
       },
-    }
+    },
   );
 };
 
 const sprintId = computed(() => {
   return props.sprint_id || localStorage.getItem("activeSprintKey");
-})
+});
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

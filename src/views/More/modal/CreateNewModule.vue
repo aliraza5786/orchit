@@ -71,7 +71,7 @@
                     <hr class="flex-auto text-border">
                 </div>
                 <div class=" mt-5">
-                    <Button variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
+                    <Button :inSpace="true" variant="secondary" color="dark" :block="true" @click=" currentTab = 'manual'">
                         Create Manually
                     </Button>
                 </div>
@@ -122,8 +122,8 @@
                 </div>
 
                 <div class="flex justify-end gap-2 pt-2">
-                    <Button variant="secondary" @click="close">Cancel</Button>
-                    <Button :disabled="!chosenTemplate" @click="submitTemplate">
+                    <Button :inSpace="true" variant="secondary" @click="close">Cancel</Button>
+                    <Button :inSpace="true" :disabled="!chosenTemplate" @click="submitTemplate">
                         {{ creatingModule ? 'Adding...' : 'Add board' }}
                     </Button>
                 </div>
