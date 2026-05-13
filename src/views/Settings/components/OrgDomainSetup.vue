@@ -667,9 +667,6 @@ import {
   useSetPrimaryDomain,
   type CompanyDomain,
   type DnsInstructions,
-  type ApiResponse,
-  type ListDomainsData,
-  type VerifyDomainData,
 } from '../../../queries/useCommon'
 import { useWorkspaceStore } from '../../../stores/workspace'
 
