@@ -88,39 +88,25 @@ const isOwnerOfActive = computed(() =>
 const isSwitching = ref(false)
 async function selectCompany(company: any, navigate = true) {
   if (!company?._id || isSwitching.value) return
+
   isSwitching.value = true
   selectedCompanyId.value = company._id
 
   try {
-    const token = localStorage.getItem('token') ?? ''
     localStorage.setItem('company_id', company._id)
     localStorage.setItem('company_name', company.title)
+
     authStore.setCompany(company._id)
 
     emit('switch-company', company)
 
     if (!navigate) return
 
-    const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
-    if (isLocal) {
-      router.push({ query: { tab: 'org-setup' } })
-      return
-    }
-
-    if (company.domain_link) {
-      const domain = company.domain_link.replace(/^https?:\/\//, '')
-      
-      // FIX: Build URL with /settings?tab=org-setup instead of /dashboard
-      // Also pass token in URL for Opera/Safari cross-subdomain cookie issues
-      const url = new URL(`${location.protocol}//${domain}/settings`)
-      url.searchParams.set('tab', 'org-setup')
-      if (token) url.searchParams.set('_token', token)
-      url.searchParams.set('company_id', company._id)
-
-      location.href = url.toString()
-    } else {
-      router.push({ query: { tab: 'org-setup' } })
-    }
+    // ✅ ALWAYS stay in same app
+    router.push({
+      path: router.currentRoute.value.path,
+      query: { tab: 'org-setup' }
+    })
   } finally {
     isSwitching.value = false
   }
