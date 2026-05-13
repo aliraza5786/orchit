@@ -376,9 +376,6 @@ const canUpdateOrg = computed(() => {
   return isOwner.value || can('company.update') || can('company_user.update')
 })
 
-const canDeleteOrg = computed(() => {
-  return isOwner.value
-})
 const workspaceStore = useWorkspaceStore()
 const router = useRouter()
 const isRefetchingAfterCreate = ref(false)
