@@ -388,7 +388,6 @@ import {
   applyThemeVariables,
   generateThemeFromColor,
   buildBrandModeThemeColors,
-  getWorkspaceBackground,
   getPaletteIndex,
   getPresetByIndex,
 } from "../../../utilities/themeUtils";
