@@ -735,11 +735,10 @@ async function confirmSwitch() {
       authStore.setCompany(pendingAccount.value.id)
       await new Promise((res) => setTimeout(res, 100))
 
-      // FIX: Pass token in URL so Opera/Safari don't need to read
-      // the cross-subdomain cookie. The subdomain app reads _token
-      // from URL in main.ts and stores it locally before Vue mounts.
       const token = localStorage.getItem('token') ?? ''
       const url = new URL(`${window.location.protocol}//${pendingAccount.value.domain}/dashboard`)
+      
+      // Use _token consistently — bootstrap will read and remove it
       if (token) url.searchParams.set('_token', token)
       url.searchParams.set('company_id', pendingAccount.value.id)
 

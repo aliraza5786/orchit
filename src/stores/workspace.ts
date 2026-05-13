@@ -32,6 +32,7 @@ export interface DomainObject {
   ssl_provisioned_at: string | null;
   created_at: string;
   updated_at: string;
+  is_trash: boolean
 }
 
 export interface CnameInstructions {

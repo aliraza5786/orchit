@@ -20,21 +20,34 @@
         </div>
 
         <div class="how_help_steps grid sm:grid-cols-3 gap-4" v-show="activeStep === 1">
-          <label
-            v-for="option in options"
-            :key="option._id"
-            class="border rounded-xl py-4 px-2.5 cursor-pointer transition-all sm:aspect-square"
-            :class="optionClass(option._id)"
-            v-memo="[selected, option._id]"
-          >
-            <input type="radio" class="hidden" v-model="selected" :value="option._id" />
-            <div class="flex flex-col items-center">
-              <img :src="option.icon" class="w-12 h-12" />
-              <h3 class="font-medium text-sm text-text-primary mt-4">{{ option.title }}</h3>
-              <p class="text-[11px] text-text-secondary mt-2 text-center">{{ option.description }}</p>
-            </div>
-          </label>
-        </div>
+  <label
+    v-for="option in options"
+    :key="option._id"
+    class="group border rounded-xl py-4 px-2.5 cursor-pointer sm:aspect-square
+           transition-all duration-200 ease-out
+           hover:shadow-md hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5
+           active:scale-[0.98]"
+    :class="optionClass(option._id)"
+    v-memo="[selected, option._id]"
+  >
+    <input type="radio" class="hidden" v-model="selected" :value="option._id" />
+
+    <div class="flex flex-col items-center">
+      <img
+        :src="option.icon"
+        class="w-12 h-12 transition-transform duration-200 group-hover:scale-110"
+      />
+
+      <h3 class="font-medium text-sm text-text-primary mt-4">
+        {{ option.title }}
+      </h3>
+
+      <p class="text-[11px] text-text-secondary mt-2 text-center">
+        {{ option.description }}
+      </p>
+    </div>
+  </label>
+</div>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 2 — About Company / You / School
@@ -55,9 +68,37 @@
         </div>
 
         <div class="space-y-6" v-show="activeStep === 2 && selected === 'team'">
-          <BaseTextField v-model="team" label="Company Name" placeholder="Company name" size="lg" :error="!!errors.team" :message="errors.team" />
-          <BaseSelectField v-model="role" label="What role do you perform in your company?" :options="staticRolesList" placeholder="Select Role" size="lg" :error="!!errors.role" :message="errors.role" />
-          <BaseSelectField v-model="companySize" label="What's your company size?" :options="companySizeOptions" placeholder="Select Company size" size="lg" :error="!!errors.companySize" :message="errors.companySize" />
+          <BaseTextField
+  ref="teamRef"
+  v-model="team"
+  label="Company Name"
+  placeholder="Company name"
+  size="lg"
+  :error="!!errors.team"
+  :message="errors.team"
+/>
+
+<BaseSelectField
+  ref="roleRef"
+  v-model="role"
+  label="What role do you perform in your company?"
+  :options="staticRolesList"
+  placeholder="Select Role"
+  size="lg"
+  :error="!!errors.role"
+  :message="errors.role"
+/>
+
+<BaseSelectField
+  ref="companySizeRef"
+  v-model="companySize"
+  label="What's your company size?"
+  :options="companySizeOptions"
+  placeholder="Select Company size"
+  size="lg"
+  :error="!!errors.companySize"
+  :message="errors.companySize"
+/>
         </div>
 
         <div class="space-y-6" v-show="activeStep === 2 && selected === 'personal'">
@@ -84,15 +125,19 @@
           </div>
           <div class="flex flex-wrap gap-3">
             <button
-              v-for="module in activeModules"
-              :key="module.id"
-              type="button"
-              @click="toggleModule(module.id)"
-              class="px-4 py-2 rounded-full border text-sm transition-all"
-              :class="selectedModules.includes(module.id) ? 'bg-accent/30 border-accent text-text-primary' : 'border-border text-text-secondary'"
-            >
-              {{ module.label }}
-            </button>
+            v-for="module in activeModules"
+            :key="module.id"
+            type="button"
+            @click="toggleModule(module.id)"
+            class="px-4 py-2 rounded-full border text-sm cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-sm"
+            :class="
+              selectedModules.includes(module.id)
+                ? 'bg-accent/30 border-accent text-text-primary hover:bg-accent/40'
+                : 'border-border text-text-secondary hover:border-accent hover:text-text-primary hover:bg-accent/10'
+            "
+          >
+            {{ module.label }}
+          </button>
           </div>
           <p v-if="errors.selectedModules" class="text-xs text-red-500">{{ errors.selectedModules }}</p>
         </div>
@@ -106,17 +151,26 @@
             <p class="text-text-secondary text-sm md:text-base">This helps us tailor your workspace experience.</p>
           </div>
           <div class="grid grid-cols-2 gap-4">
-            <button
-              v-for="item in workTypeOptions"
-              :key="item.id"
-              @click="workType = item.id"
-              type="button"
-              class="flex items-center gap-3 p-4 rounded-xl border transition-all text-left"
-              :class="workType === item.id ? 'bg-accent/30 border-accent' : 'border-border'"
-            >
-              <FontAwesomeIcon :icon="['fas', item.icon]" class="text-lg text-text-primary" />
-              <span class="text-sm font-medium text-text-primary">{{ item.label }}</span>
-            </button>
+           <button
+            v-for="item in workTypeOptions"
+            :key="item.id"
+            @click="workType = item.id"
+            type="button"
+            class="flex items-center gap-3 p-4 rounded-xl cursor-pointer border text-left transition-all duration-200 hover:shadow-sm hover:scale-[1.02]"
+            :class="
+              workType === item.id
+                ? 'bg-accent/30 border-accent'
+                : 'border-border hover:border-accent hover:bg-accent/10'
+            "
+          >
+            <FontAwesomeIcon
+              :icon="['fas', item.icon]"
+              class="text-lg text-text-primary transition-colors duration-200"
+            />
+            <span class="text-sm font-medium text-text-primary">
+              {{ item.label }}
+            </span>
+          </button>
           </div>
           <p v-if="errors.workType" class="text-xs text-red-500 mt-2">{{ errors.workType }}</p>
         </div>
@@ -124,323 +178,194 @@
         <!-- ═══════════════════════════════════════════════════════
              STEP 5 — Create your site
         ════════════════════════════════════════════════════════════ -->
+        
         <div v-if="activeStep === 5" class="flex items-center justify-center w-full min-h-full py-3">
-          <div class="w-full max-w-115">
-            <div
-              class="rounded-2xl border p-8 md:p-10 space-y-7"
-              style="background: var(--bg-card); border-color: var(--border);"
-            >
-              <!-- Header -->
-              <div class="text-center space-y-3">
-                <div
-                  class="w-14 h-14 rounded-[14px] border flex items-center justify-center mx-auto"
-                  style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.2);"
-                >
-                  <img src="/src/assets/global/favicon.png" alt="logo" />
-                </div>
-                <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">
-                  Create your workspace
-                </h2>
-                <p class="text-sm leading-relaxed max-w-80 mx-auto" style="color: var(--text-secondary);">
-                  Set up your team's home. You can always change these settings later.
-                </p>
-              </div>
+  <div class="w-full max-w-115">
+    <div
+      class="rounded-2xl border p-8 md:p-10 space-y-7"
+      style="background: var(--bg-card); border-color: var(--border);"
+    >
 
-              <!-- ── Subdomain section ─────────────────────────────────────── -->
-              <div v-if="!hasCustomDomain" class="space-y-1.5">
-                <label class="text-[11px] font-semibold uppercase tracking-wider block" style="color: var(--text-secondary);">
-                  Site name
-                </label>
-                <div
-                  class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-all duration-200"
-                  :class="{
-                    'ring-[3px] ring-(--accent)/[0.14]': isFocused && !isAnyUnavailable,
-                    'ring-[3px] ring-red-500/10':        isFocused && isAnyUnavailable,
-                  }"
-                  :style="{
-                    borderColor: isFocused && isFullyAvailable ? 'var(--accent)'
-                               : isFocused && isAnyUnavailable ? '#e55050'
-                               : 'var(--border-input)',
-                    background: 'var(--bg-input)',
-                  }"
-                >
-                  <input
-                    v-model="siteName"
-                    type="text"
-                    placeholder="e.g. acme, my-team"
-                    class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
-                    style="color: var(--text-primary); font-family: 'Lato', sans-serif;"
-                    @focus="isFocused = true"
-                    @blur="isFocused = false"
-                  />
-                  <div class="flex items-center gap-2 px-3.5 border-l" style="background: var(--bg-surface); border-color: var(--border);">
-                    <span class="text-[13px] font-semibold whitespace-nowrap" style="color: var(--text-secondary);">.streamed.space</span>
-                    <span v-if="isCheckingSlug" class="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0" style="border-color: var(--border); border-top-color: var(--accent);" />
-                    <Transition enter-active-class="transition duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]" enter-from-class="opacity-0 scale-50" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-50">
-                      <span v-if="isSlugAvailable === true && !isCheckingSlug" class="flex items-center justify-center w-5 h-5 rounded-full shrink-0" style="background: #1d9e75;">
-                        <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      </span>
-                      <span v-else-if="isSlugAvailable === false && !isCheckingSlug" class="flex items-center justify-center w-5 h-5 rounded-full shrink-0" style="background: #e55050;">
-                        <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none"><path d="M3 3l4 4M7 3l-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
-                      </span>
-                    </Transition>
-                  </div>
-                </div>
-                <div class="mt-1">
-                  <p v-if="isCheckingSlug" class="text-xs" style="color: var(--text-secondary);">Checking availability…</p>
-                  <p v-else-if="isSlugAvailable === true" class="text-xs flex items-center gap-1" style="color: #1d9e75;">
-                    <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#1d9e75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    <span class="font-medium">{{ siteSlug }}</span>.streamed.space is available
-                  </p>
-                  <p v-else-if="isSlugAvailable === false" class="text-xs flex items-center gap-1" style="color: #e55050;">
-                    <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none"><path d="M3 3l4 4M7 3l-4 4" stroke="#e55050" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    This site name is already taken. Please choose another.
-                  </p>
-                  <p v-else class="text-xs" style="color: var(--text-secondary);">This is pre-filled from your company name — feel free to change it.</p>
-                </div>
-                <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0">
-                  <div v-if="isSlugAvailable === false && siteSlug && !isCheckingSlug" class="space-y-2 mt-1">
-                    <p class="text-xs font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Try one of these</p>
-                    <div class="flex flex-wrap gap-2">
-                      <button
-                        v-for="s in [`${siteSlug}-app`, `${siteSlug}-hq`, `${siteSlug}-team`]"
-                        :key="s"
-                        type="button"
-                        class="px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-150 hover:-translate-y-px"
-                        style="border-color: var(--border); color: var(--text-secondary); background: var(--bg-card);"
-                        @click="siteName = s"
-                      >
-                        {{ s }}
-                      </button>
-                    </div>
-                  </div>
-                </Transition>
-              </div>
+      <!-- HEADER -->
+      <div class="text-center space-y-3">
+        <div
+          class="w-14 h-14 rounded-[14px] border flex items-center justify-center mx-auto"
+          style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.2);"
+        >
+          <img src="/src/assets/global/favicon.png" alt="logo" />
+        </div>
 
-              <!-- Preview pill (subdomain) -->
-              <div
-                v-if="siteSlug && isSlugAvailable === true && !hasCustomDomain"
-                class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
-                style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
-              >
-                <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent); opacity: 0.7;" />
-                <span class="text-[13px] font-semibold break-all" style="color: var(--accent);">
-                  https://{{ siteSlug }}.streamed.space
-                </span>
-              </div>
+        <h2 class="text-[22px] font-bold tracking-tight" style="color: var(--text-primary);">
+          Create your workspace
+        </h2>
 
-              <!-- Divider -->
-              <div v-if="!hasCustomDomain" class="flex items-center gap-3">
-                <div class="flex-1 h-px" style="background: var(--border);" />
-                <span class="text-xs font-medium" style="color: var(--text-secondary);">Optional</span>
-                <div class="flex-1 h-px" style="background: var(--border);" />
-              </div>
+        <p class="text-sm leading-relaxed max-w-80 mx-auto" style="color: var(--text-secondary);">
+          Set up your team's home. You can always change these settings later.
+        </p>
+      </div>
 
-              <!-- ── Custom domain toggle button ──────────────────────────── -->
-              <button
-                type="button"
-                class="w-full flex items-center gap-4 px-5 py-4 rounded-xl border-2 transition-all duration-200 text-left"
-                :style="{
-                  borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
-                  background:  hasCustomDomain ? 'color-mix(in srgb, var(--accent) 8%, transparent)' : 'var(--bg-surface)',
-                }"
-                @click="toggleCustomDomain"
-              >
-                <div
-                  class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-200"
-                  :style="{
-                    background: hasCustomDomain ? 'color-mix(in srgb, var(--accent) 18%, transparent)' : 'var(--bg-card)',
-                    border: '1.5px solid',
-                    borderColor: hasCustomDomain ? 'color-mix(in srgb, var(--accent) 35%, transparent)' : 'var(--border)',
-                  }"
-                >
-                  <svg class="w-5 h-5" viewBox="0 0 20 20" fill="none" :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-secondary)' }">
-                    <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
-                    <path d="M10 2.5c0 0-3 3.5-3 7.5s3 7.5 3 7.5M10 2.5c0 0 3 3.5 3 7.5s-3 7.5-3 7.5M2.5 10h15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                  </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-2">
-                    <p class="text-sm font-semibold leading-tight" :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-primary)' }">
-                      Use a custom domain
-                    </p>
-                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0" style="background: color-mix(in srgb, #1d9e75 12%, transparent); color: #1d9e75;">
-                      Teams
-                    </span>
-                  </div>
-                  <p class="text-xs mt-0.5" style="color: var(--text-secondary);">e.g. mycompany.com, brand.pk, startup.ai</p>
-                </div>
-                <div
-                  class="w-10 h-6 rounded-full border-2 flex items-center transition-all duration-300 shrink-0 px-0.5"
-                  :style="{
-                    borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
-                    background:  hasCustomDomain ? 'var(--accent)' : 'transparent',
-                    justifyContent: hasCustomDomain ? 'flex-end' : 'flex-start',
-                  }"
-                >
-                  <div class="w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300" />
-                </div>
-              </button>
+      <!-- ─────────────────────────────────────────────
+           MODE SWITCH (FULLY REVERSIBLE)
+      ───────────────────────────────────────────── -->
+      <button
+        type="button"
+        class="w-full flex items-center justify-between gap-4 px-5 py-4 rounded-xl border-2 transition-all duration-200 text-left"
+        :style="{
+          borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
+          background: hasCustomDomain
+            ? 'color-mix(in srgb, var(--accent) 8%, transparent)'
+            : 'var(--bg-surface)',
+        }"
+        @click="toggleCustomDomain"
+      >
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold"
+             :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-primary)' }">
+            {{ hasCustomDomain ? 'Custom domain enabled' : 'Subdomain enabled' }}
+          </p>
 
-              <!-- ═══════════════════════════════════════════════════
-                   CUSTOM DOMAIN EXPANDED PANEL
-              ════════════════════════════════════════════════════════ -->
-              <Transition
-                enter-active-class="transition-all duration-300 ease-out"
-                enter-from-class="opacity-0 -translate-y-2 max-h-0"
-                enter-to-class="opacity-100 translate-y-0 max-h-[600px]"
-                leave-active-class="transition-all duration-200 ease-in"
-                leave-from-class="opacity-100 translate-y-0 max-h-[600px]"
-                leave-to-class="opacity-0 -translate-y-2 max-h-0"
-              >
-                <div v-if="hasCustomDomain" class="space-y-5 overflow-hidden">
-                  <!-- Info banner -->
-                  <div class="flex items-start gap-3 rounded-lg px-4 py-3 border" style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 20%, transparent);">
-                    <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
-                      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                      <path d="M8 7v5M8 5.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                    </svg>
-                    <p class="text-xs leading-relaxed" style="color: var(--accent);">
-                      Custom domains are best for larger teams. Your workspace URL will be your own brand (e.g.&nbsp;<strong>app.mycompany.com</strong>).
-                    </p>
-                  </div>
+          <p class="text-xs" style="color: var(--text-secondary);">
+            Click to switch to {{ hasCustomDomain ? 'subdomain (.streamed.space)' : 'custom domain' }}
+          </p>
+        </div>
 
-                  <!-- DNS check input -->
-                  <div class="space-y-1.5">
-                    <p class="text-xs" style="color: var(--text-secondary);">
-                      Must include a TLD like
-                      <span class="font-semibold" style="color: var(--text-primary);">.com</span>,
-                      <span class="font-semibold" style="color: var(--text-primary);">.pk</span>,
-                      <span class="font-semibold" style="color: var(--text-primary);">.ai</span>,
-                      <span class="font-semibold" style="color: var(--text-primary);">.io</span>, etc.
-                    </p>
-                    <div
-                      class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-all duration-200"
-                      :style="{
-                        borderColor: (dnsError || dnsValidationError) && !isCheckingDns ? '#e55050'
-                                   : isDnsAvailable === false && !isCheckingDns         ? '#e55050'
-                                   : isDnsAvailable === true  && !isCheckingDns         ? '#1d9e75'
-                                   : 'var(--border-input)',
-                        background: 'var(--bg-input)',
-                      }"
-                    >
-                      <input
-                        v-model="dnsInput"
-                        type="text"
-                        placeholder="e.g. mycompany.com"
-                        class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
-                        style="color: var(--text-primary); font-family: 'Lato', sans-serif;"
-                        autocomplete="off"
-                        :disabled="isDnsLocked"
-                      />
-                      <div class="flex items-center gap-2 px-3 border-l shrink-0" style="background: var(--bg-surface); border-color: var(--border);">
-                        <span v-if="isCheckingDns" class="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0" style="border-color: var(--border); border-top-color: var(--accent);" />
-                        <Transition enter-active-class="transition duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]" enter-from-class="opacity-0 scale-50" enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-150 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-50">
-                          <span v-if="isDnsAvailable === true && !isCheckingDns && !dnsError && !dnsValidationError" class="flex items-center justify-center w-5 h-5 rounded-full shrink-0" style="background: #1d9e75;">
-                            <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                          </span>
-                          <span v-else-if="(isDnsAvailable === false || dnsError || dnsValidationError) && !isCheckingDns" class="flex items-center justify-center w-5 h-5 rounded-full shrink-0" style="background: #e55050;">
-                            <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none"><path d="M3 3l4 4M7 3l-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
-                          </span>
-                        </Transition>
-                      </div>
-                    </div>
+        <!-- toggle visual -->
+        <div
+          class="w-10 h-6 rounded-full border-2 flex items-center transition-all duration-300 shrink-0 px-0.5"
+          :style="{
+            borderColor: hasCustomDomain ? 'var(--accent)' : 'var(--border)',
+            background: hasCustomDomain ? 'var(--accent)' : 'transparent',
+            justifyContent: hasCustomDomain ? 'flex-end' : 'flex-start',
+          }"
+        >
+          <div class="w-4 h-4 rounded-full bg-white shadow-sm transition-all duration-300" />
+        </div>
+      </button>
 
-                    <!-- DNS status messages -->
-                    <p v-if="dnsValidationError" class="text-xs flex items-center gap-1" style="color: #e55050;">
-                      <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none"><path d="M3 3l4 4M7 3l-4 4" stroke="#e55050" stroke-width="1.6" stroke-linecap="round"/></svg>
-                      {{ dnsValidationError }}
-                    </p>
-                    <p v-else-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">Checking DNS availability…</p>
-                    <p v-else-if="dnsError" class="text-xs flex items-center gap-1" style="color: #e55050;">
-                      <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none"><path d="M3 3l4 4M7 3l-4 4" stroke="#e55050" stroke-width="1.6" stroke-linecap="round"/></svg>
-                      {{ dnsError }}
-                    </p>
-                    <p v-else-if="isDnsAvailable === true && dnsInput.trim()" class="text-xs flex items-center gap-1" style="color: #1d9e75;">
-                      <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="#1d9e75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                      <span class="font-medium">{{ dnsInput.trim() }}</span> is active and ready to use.
-                    </p>
-                    <p v-else-if="!dnsInput.trim()" class="text-xs" style="color: var(--text-secondary);">We'll verify DNS availability before proceeding.</p>
+      <!-- ═══════════════════════════════════════
+           SUBDOMAIN MODE (DEFAULT)
+      ═══════════════════════════════════════ -->
+      <div v-if="!hasCustomDomain" class="space-y-5">
 
-                    <!-- Domain not registered block -->
-                    <div v-if="isDnsAvailable === false && dnsInput.trim() && !isCheckingDns && !dnsValidationError" class="space-y-3">
-                      <div class="flex items-start gap-3 rounded-lg px-4 py-3 border" style="background: color-mix(in srgb, #e55050 6%, transparent); border-color: color-mix(in srgb, #e55050 25%, transparent);">
-                        <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #e55050;">
-                          <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                          <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                        </svg>
-                        <div>
-                          <p class="text-xs font-semibold mb-0.5" style="color: #f59e0b;">
-                            {{ dnsError?.includes('not active') ? 'Domain DNS inactive' : 'Domain not registered' }}
-                          </p>
-                          <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                            <template v-if="dnsError?.includes('not active')">
-                              This domain exists, but DNS is not active yet. Please configure your DNS records before continuing.
-                            </template>
-                            <template v-else>
-                              <span class="font-medium" style="color: var(--text-primary);">{{ dnsInput.trim() }}</span>
-                              is not registered yet. Purchase it from a registrar below first.
-                            </template>
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <p class="text-[11px] font-semibold uppercase tracking-wider mb-2" style="color: var(--text-secondary);">Purchase a domain from</p>
-                        <div class="flex flex-wrap gap-2">
-                          <a
-                            v-for="registrar in domainRegistrars"
-                            :key="registrar.name"
-                            :href="`${registrar.url}${encodeURIComponent(dnsInput.trim())}`"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-150 hover:-translate-y-px hover:shadow-sm"
-                            style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);"
-                          >
-                            <span>{{ registrar.name }}</span>
-                            <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none"><path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                          </a>
-                        </div>
-                        <p class="text-[11px] mt-2" style="color: var(--text-secondary);">After purchasing, come back and enter your domain here.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Transition>
+        <!-- SITE NAME -->
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold uppercase tracking-wider"
+                 style="color: var(--text-secondary);">
+            Site name
+          </label>
 
-              <!-- ── Create site button (subdomain path) ── -->
-              <button
-                v-if="!hasCustomDomain"
-                type="button"
-                :disabled="isCreateSiteDisabled"
-                class="w-full flex items-center justify-center gap-2 py-3 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);"
-                @click="continueSiteHandler"
-              >
-                <span v-if="creatingProfile" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                <span v-else>Create site</span>
-              </button>
+          <div
+            class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
+            :style="{
+              borderColor: isFocused && isSlugAvailable ? 'var(--accent)'
+                         : isFocused && isAnyUnavailable ? '#e55050'
+                         : 'var(--border-input)',
+              background: 'var(--bg-input)',
+            }"
+          >
+            <input
+              v-model="siteName"
+              type="text"
+              placeholder="e.g. acme, my-team"
+              class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+              @focus="isFocused = true"
+              @blur="isFocused = false"
+              style="color: var(--text-primary);"
+            />
 
-              <!-- ── Custom domain: Create site then verify later ── -->
-              <div v-if="hasCustomDomain && isDnsAvailable === true" class="space-y-3">
-                <button
-                  type="button"
-                  :disabled="isCreateSiteDisabled || creatingProfile"
-                  class="w-full flex items-center justify-center gap-2 py-3 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);"
-                  @click="continueSiteHandler"
-                >
-                  <span v-if="creatingProfile" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  <span v-else>Create site with {{ dnsInput.trim() }}</span>
-                </button>
-              </div>
-
-              <p v-if="!hasCustomDomain" class="text-center text-xs" style="color: var(--text-secondary);">
-                <svg class="w-3 h-3 inline-block mr-1 -mt-0.5" viewBox="0 0 12 12" fill="none" style="color: var(--text-secondary);"><circle cx="6" cy="6" r="5.5" stroke="currentColor" stroke-width="1"/><path d="M6 5.5v3M6 4v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-                A free <strong style="color: var(--text-primary);">.streamed.space</strong> subdomain is perfect for individuals &amp; small teams.
-              </p>
+            <div class="flex items-center px-3.5 border-l"
+                 style="background: var(--bg-surface); border-color: var(--border);">
+              <span class="text-[13px] font-semibold"
+                    style="color: var(--text-secondary);">
+                .streamed.space
+              </span>
             </div>
           </div>
+
+          <p v-if="isCheckingSlug" class="text-xs" style="color: var(--text-secondary);">
+            Checking availability…
+          </p>
+
+          <p v-else-if="isSlugAvailable === true" class="text-xs" style="color: #1d9e75;">
+            {{ siteSlug }}.streamed.space is available
+          </p>
+
+          <p v-else-if="isSlugAvailable === false" class="text-xs" style="color: #e55050;">
+            This site name is already taken.
+          </p>
         </div>
+
+        <!-- PREVIEW -->
+        <div
+          v-if="siteSlug && isSlugAvailable === true"
+          class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
+          style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
+        >
+          <span class="text-[13px] font-semibold" style="color: var(--accent);">
+            https://{{ siteSlug }}.streamed.space
+          </span>
+        </div>
+
+      </div>
+
+      <!-- ═══════════════════════════════════════
+           CUSTOM DOMAIN MODE
+      ═══════════════════════════════════════ -->
+      <div v-else class="space-y-5">
+
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-semibold uppercase tracking-wider"
+                 style="color: var(--text-secondary);">
+            Custom domain
+          </label>
+
+          <div
+            class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px]"
+            :style="{
+              borderColor: isDnsAvailable === true ? '#1d9e75'
+                         : isDnsAvailable === false ? '#e55050'
+                         : 'var(--border-input)',
+              background: 'var(--bg-input)',
+            }"
+          >
+            <input
+              v-model="dnsInput"
+              type="text"
+              placeholder="e.g. mycompany.com"
+              class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
+              style="color: var(--text-primary);"
+            />
+          </div>
+
+          <p v-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">
+            Checking DNS availability…
+          </p>
+
+          <p v-else-if="isDnsAvailable === true" class="text-xs" style="color: #1d9e75;">
+            {{ dnsInput }} is active and ready
+          </p>
+
+          <p v-else-if="isDnsAvailable === false" class="text-xs" style="color: #e55050;">
+            Domain not available or inactive
+          </p>
+        </div>
+
+      </div>
+<button
+  type="button"
+  :disabled="isCreateSiteDisabled || (hasCustomDomain && isDnsAvailable !== true)"
+  class="w-full flex items-center justify-center gap-2 cursor-pointer py-3 rounded-[9px] font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+  style="background: var(--accent); color: var(--accent-text);"
+  @click="continueSiteHandler"
+>
+  <span>
+    {{ hasCustomDomain ? `Create site with ${dnsInput}` : 'Create site' }}
+  </span>
+</button>
+
+    </div>
+  </div>
+</div>
 
         <!-- ═══════════════════════════════════════════════════════
              STEP 6 — Loading / provisioning
@@ -449,6 +374,7 @@
           <LoadingCreateProfile
             :active="activeStep === 6"
             :abort="!!companySlugError"
+            :loading="isLoaderRunning"
             @complete="onProvisioningComplete"
           />
         </div>
@@ -468,8 +394,12 @@
                 :key="item.id"
                 @click="toggleReferral(item.id)"
                 type="button"
-                class="px-4 py-3 rounded-xl border text-sm font-medium transition"
-                :class="referralSources.includes(item.id) ? 'bg-accent/30 border-accent' : 'border-border'"
+                class="px-4 py-3 rounded-xl border text-sm cursor-pointer font-medium transition-all duration-200 hover:scale-[1.02] hover:shadow-sm"
+                :class="
+                  referralSources.includes(item.id)
+                    ? 'bg-accent/30 border-accent hover:bg-accent/40'
+                    : 'border-border hover:border-accent hover:bg-accent/10 text-text-secondary hover:text-text-primary'
+                "
               >
                 {{ item.label }}
               </button>
@@ -528,7 +458,7 @@
               <div class="flex gap-3">
                 <button
                   type="button"
-                  class="flex-1 flex items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-bold transition-all duration-200"
+                  class="flex-1 flex items-center cursor-pointer justify-center gap-2 py-3 rounded-[9px] text-sm font-bold transition-all duration-200"
                   style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);"
                   @click="startDomainVerificationPhase"
                 >
@@ -537,7 +467,7 @@
                 </button>
                 <button
                   type="button"
-                  class="flex-1 flex items-center justify-center gap-2 py-3 rounded-[9px] text-sm font-semibold border transition-all duration-200"
+                  class="flex-1 flex items-center cursor-pointer justify-center gap-2 py-3 rounded-[9px] text-sm font-semibold border transition-all duration-200"
                   style="border-color: var(--border); background: var(--bg-surface); color: var(--text-secondary);"
                   @click="skipDomainVerification"
                 >
@@ -611,7 +541,7 @@
                     v-for="m in verificationMethods"
                     :key="m.value"
                     type="button"
-                    class="py-2 px-3 rounded-lg text-xs font-semibold transition-all duration-200 text-center"
+                    class="py-2 px-3 rounded-lg text-xs cursor-pointer font-semibold transition-all duration-200 text-center"
                     :style="{
                       background: selectedVerificationMethod === m.value ? 'var(--bg-card)' : 'transparent',
                       color: selectedVerificationMethod === m.value ? 'var(--text-primary)' : 'var(--text-secondary)',
@@ -649,7 +579,7 @@
                           <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Host / Name</p>
                           <p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.record_host }}</p>
                         </div>
-                        <button type="button" @click="copyToClipboard(currentInstructions.record_host, 'host')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110" style="color: var(--text-secondary);">
+                        <button type="button" @click="copyToClipboard(currentInstructions.record_host, 'host')" class="shrink-0 p-1.5 rounded-lg cursor-pointer transition-all hover:scale-110" style="color: var(--text-secondary);">
                           <svg v-if="copiedField !== 'host'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
                           <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
@@ -659,7 +589,7 @@
                           <p class="text-[10px] font-bold uppercase tracking-wider mb-0.5" style="color: var(--text-secondary);">Value / Points to</p>
                           <p class="text-sm font-mono break-all" style="color: var(--text-primary);">{{ currentInstructions.record_value }}</p>
                         </div>
-                        <button type="button" @click="copyToClipboard(currentInstructions.record_value, 'value')" class="shrink-0 p-1.5 rounded-lg transition-all hover:scale-110" style="color: var(--text-secondary);">
+                        <button type="button" @click="copyToClipboard(currentInstructions.record_value, 'value')" class="shrink-0 p-1.5 rounded-lg cursor-pointer transition-all hover:scale-110 hover:color-accent" style="color: var(--text-secondary);">
                           <svg v-if="copiedField !== 'value'" class="w-4 h-4" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 11V3a1 1 0 011-1h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
                           <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none" style="color: #1d9e75;"><path d="M3 8l3.5 3.5L13 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         </button>
@@ -769,26 +699,54 @@
 
               <!-- Recheck button -->
               <div v-if="currentDomain?.status !== 'verified'" class="space-y-2">
-                <button
-                  type="button"
-                  :disabled="isRechecking || retryCountdown > 0"
-                  class="w-full flex items-center justify-center gap-2 py-3 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);"
-                  @click="recheckVerification"
-                >
-                  <span v-if="isRechecking" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  <svg v-else class="w-4 h-4" viewBox="0 0 16 16" fill="none"><path d="M13.5 8A5.5 5.5 0 112.5 5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M2.5 2v3.5H6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <span>{{ isRechecking ? 'Checking…' : "I've added the record — verify now" }}</span>
-                </button>
-                <button
-                  type="button"
-                  class="w-full py-2.5 rounded-[9px] text-sm font-medium transition-all border"
-                  style="border-color: var(--border); background: transparent; color: var(--text-secondary);"
-                  @click="skipDomainVerification"
-                >
-                  Skip for now
-                </button>
-              </div>
+
+  <!-- PRIMARY BUTTON -->
+  <button
+    type="button"
+    :disabled="isRechecking || retryCountdown > 0"
+    class="w-full flex items-center justify-center cursor-pointer gap-2 py-3 rounded-[9px] text-[15px] font-bold tracking-wide transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed hover:brightness-110 hover:shadow-md hover:-translate-y-[1px]"
+    style="background: var(--accent); color: var(--accent-text); box-shadow: 0 2px 0 rgba(0,0,0,0.12);"
+    @click="recheckVerification"
+  >
+    <span v-if="isRechecking" class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+
+    <svg v-else class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M20 12a8 8 0 10-3 6.3"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+      />
+      <path
+        d="M20 4v6h-6"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M9 12l2 2 4-4"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+
+    <span>{{ isRechecking ? 'Checking…' : "I've added the record — verify now" }}</span>
+  </button>
+
+  <!-- SECONDARY BUTTON -->
+  <button
+    type="button"
+    class="w-full py-2.5 rounded-[9px] cursor-pointer text-sm font-medium border transition-all duration-200 hover:bg-surface hover:text-text-primary hover:border-accent hover:-translate-y-[1px] hover:shadow-sm"
+    style="border-color: var(--border); background: transparent; color: var(--text-secondary);"
+    @click="skipDomainVerification"
+  >
+    Skip for now
+  </button>
+
+</div>
 
               <!-- Verified: set primary & proceed to enrol users -->
               <div v-if="currentDomain?.status === 'verified'" class="space-y-3">
@@ -1053,7 +1011,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
+import { ref, watch, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import AuthLayout from '../../layout/AuthLayout/AuthLayout.vue'
 import teamIcon from '../../assets/platform/team.svg'
 import personalIcon from '../../assets/platform/personal-use.svg'
@@ -1077,7 +1035,7 @@ const workspaceStore = useWorkspaceStore()
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
-
+const isLoaderRunning = ref(false)
 // ─── Error map ────────────────────────────────────────────────────────────────
 const errors = ref({})
 
@@ -1085,7 +1043,9 @@ const errors = ref({})
 const selected = ref('team')
 const activeStep = ref(1)
 const siteCreated = ref(false)
-
+const teamRef = ref(null)
+const roleRef = ref(null)
+const companySizeRef = ref(null)
 // ─── Step 2 ───────────────────────────────────────────────────────────────────
 const role = ref('')
 const team = ref('')
@@ -1372,12 +1332,17 @@ function armHistoryGuard() {
 }
 
 function handlePopState(event) {
-  if (!siteCreated.value) return
+  if (activeStep.value < 6) return   
   event.preventDefault?.()
-  history.pushState(SENTINEL, '')
+  history.pushState(SENTINEL, '')   
 }
-
-watch(siteCreated, (val) => { if (val) armHistoryGuard() })
+watch(activeStep, (step) => {
+  if (step === 6) armHistoryGuard()
+  if (step === 5 && !siteName.value) {
+    if (selected.value === 'team'   && team.value.trim())       siteName.value = generateSlug(team.value)
+    if (selected.value === 'school' && schoolName.value.trim()) siteName.value = generateSlug(schoolName.value)
+  }
+})
 
 // ─── Watchers ─────────────────────────────────────────────────────────────────
 watch(team,        (v) => { if (v?.trim() && errors.value.team)        errors.value.team        = undefined })
@@ -1489,18 +1454,21 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
       companySlugError.value = isNameConflictError.value
         ? 'This site name is already taken. Please choose a different one on this page.'
         : (msg || 'Something went wrong while creating your workspace. Please try again.')
+      // API failed — send user back to step 5 so they can fix the name
+      activeStep.value     = 5
+      isProvisioning.value = false
       return
     }
     const id     = payload?.company_id ?? payload?._id
     const join   = payload?.join_link  ?? ''
     const domain = payload?.domain_link ?? ''
-    companyID.value  = id
-    joinLink.value   = join
-    domainLink.value = domain
+    companyID.value   = id
+    joinLink.value    = join
+    domainLink.value  = domain
     localStorage.setItem('company_id', id ?? '')
-    siteCreated.value    = true
-    isProvisioning.value = true
-    activeStep.value     = 6
+    siteCreated.value = true
+    // Step 6 and isProvisioning are already set — loader is already showing.
+    // LoadingCreateProfile will call onProvisioningComplete() when done.
   },
   onError: (error) => {
     const msg = error?.response?.data?.message ?? error?.message ?? ''
@@ -1508,9 +1476,12 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
     companySlugError.value = isNameConflictError.value
       ? 'This site name is already taken. Please choose a different one on this page.'
       : (msg || 'Something went wrong while creating your workspace. Please try again.')
+    // API errored — send user back to step 5
+    activeStep.value     = 5
+    isProvisioning.value = false
+    isLoaderRunning.value = false
   },
 })
-
 const { mutate: updateProfile, isPending: updatingProfile } = useUpdateCompany({
   onSuccess: async () => {
     // After updating profile, go to step 7 (referral) if no custom domain
@@ -1558,9 +1529,10 @@ function generateSlug(value) {
 }
 
 function optionClass(id) {
-  return id === selected.value ? 'bg-accent/30 border-accent' : 'border-border'
+  return id === selected.value
+    ? 'border-accent bg-accent/10 shadow-sm'
+    : 'border-border'
 }
-
 function toggleModule(id) {
   if (selectedModules.value.includes(id)) {
     selectedModules.value = selectedModules.value.filter(m => m !== id)
@@ -1685,7 +1657,7 @@ function stopCountdown() {
 
 // ─── Provisioning complete callback ──────────────────────────────────────────
 function onProvisioningComplete() {
-  // After loading animation, go to referral step
+  isLoaderRunning.value = false 
   activeStep.value = 7
 }
 
@@ -1987,9 +1959,11 @@ async function continueHandler() {
 
 async function continueSiteHandler() {
   if (isCreateSiteDisabled.value) return
+  activeStep.value = 6
+  isProvisioning.value = true
+  isLoaderRunning.value = true 
   createProfile({ payload: buildProfilePayload(true) })
 }
-
 // ─── onMounted / onUnmounted ──────────────────────────────────────────────────
 onMounted(() => {
   if (route.query.mode === 'company') {
@@ -2005,6 +1979,16 @@ onUnmounted(() => {
   window.removeEventListener('popstate', handlePopState)
   stopCountdown()
 })
+watch(
+  () => activeStep.value,
+  (step) => {
+    if (step === 2 && selected.value === 'team') {
+      nextTick(() => {
+        teamRef.value?.focus?.()
+      })
+    }
+  }
+)
 </script>
 
 <style scoped>
