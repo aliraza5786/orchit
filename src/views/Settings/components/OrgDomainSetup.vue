@@ -744,13 +744,11 @@ async function addDomain(): Promise<void> {
     addError.value = ''
     // mutateAsync returns ApiResponse<VerifyDomainData>
     const result = await verifyDomainMutation({ domain: raw, verification_method: 'cname' })
-    const verifyData = result.data
+    const verifyData = result
     closeAddModal()
     // Auto-open the verify modal for the newly added domain
     if (verifyData?.domain) {
-      // Cast Partial<CompanyDomain> to CompanyDomain — safe here since the API returns
-      // a fully-populated domain object on creation; Partial is a conservative type annotation
-      openVerifyModalDirect(verifyData.domain as CompanyDomain, verifyData.instructions ?? null)
+      openVerifyModalDirect(verifyData.domain, verifyData.instructions ?? null)
     }
   } catch (err: unknown) {
     const error = err as { response?: { data?: { message?: string } } }
@@ -835,7 +833,7 @@ async function openVerifyModal(domain: CompanyDomain): Promise<void> {
   modalCurrentDomain.value = domain
   modalInstructions.value  = domain.instructions ?? null
   // verification_method on CompanyDomain is 'cname'|'txt'; default to 'cname' if undefined
-  modalSelectedMethod.value = (domain.verification_method as 'cname' | 'txt' | 'http') ?? 'cname'
+  modalSelectedMethod.value = domain.verification_method ?? 'cname'
   modalMethodSwitched.value = false
   modalError.value          = null
   showVerifyModal.value     = true
@@ -852,7 +850,7 @@ function openVerifyModalDirect(domain: CompanyDomain, instructions: DnsInstructi
   modalCurrentDomain.value = domain
   modalInstructions.value  = instructions
   // verification_method on CompanyDomain is 'cname'|'txt'; cast safely
-  modalSelectedMethod.value = (domain.verification_method as 'cname' | 'txt' | 'http') ?? 'cname'
+  modalSelectedMethod.value = domain.verification_method ?? 'cname'
   modalMethodSwitched.value = false
   modalError.value          = null
   showVerifyModal.value     = true
@@ -883,7 +881,7 @@ async function callVerifyApi(domain: string, method: 'cname' | 'txt' | 'http'): 
     modalCurrentDomain.value  = result.domain
     modalInstructions.value   = result.instructions
     // Use returned method; verification_method may be 'cname'|'txt', cast to include 'http'
-    modalSelectedMethod.value = (result.domain.verification_method as 'cname' | 'txt' | 'http') ?? method
+    modalSelectedMethod.value = result.domain.verification_method ?? method
     // Check if the server switched the method away from what we requested
     modalMethodSwitched.value = !!result.methodSwitched || result.domain.verification_method !== method
   } catch (err: unknown) {
@@ -1035,22 +1033,26 @@ function statusDotClass(status: CompanyDomain['status']): string {
 }
 
 // Only called for status 'pending' | 'verifying' | 'failed' (from template v-if guard)
-function pendingBannerStyle(status: 'pending' | 'verifying' | 'failed'): Record<string, string> {
+function pendingBannerStyle(status: CompanyDomain['status']): Record<string, string> {
   if (status === 'failed') {
     return {
       background:   'color-mix(in srgb, #e55050 6%, transparent)',
       borderColor:  'color-mix(in srgb, #e55050 25%, transparent)',
     }
   }
-  return {
-    background:  'color-mix(in srgb, #f59e0b 6%, transparent)',
-    borderColor: 'color-mix(in srgb, #f59e0b 25%, transparent)',
+  if (status === 'pending' || status === 'verifying') {
+    return {
+      background:  'color-mix(in srgb, #f59e0b 6%, transparent)',
+      borderColor: 'color-mix(in srgb, #f59e0b 25%, transparent)',
+    }
   }
+  return {}
 }
 
-function pendingIconStyle(status: 'pending' | 'verifying' | 'failed'): Record<string, string> {
+function pendingIconStyle(status: CompanyDomain['status']): Record<string, string> {
   if (status === 'failed') return { color: '#e55050' }
-  return { color: '#f59e0b' }
+  if (status === 'pending' || status === 'verifying') return { color: '#f59e0b' }
+  return {}
 }
 </script>
 

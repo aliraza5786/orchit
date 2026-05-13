@@ -169,7 +169,6 @@ export interface CompanyDomain {
   _id: string
   company_id: string
   domain: string
-  domains:any
   status: 'pending' | 'verifying' | 'verified' | 'failed' | 'disabled'
   verification_method: VerificationMethod
   verification_token: string
@@ -188,7 +187,7 @@ export interface CompanyDomain {
 export interface ApiResponse<T> {
   status: boolean
   message: string
-  domains: T
+  data: T
 }
 // ── API Response Shapes ────────────────────────────────────────────────────────
  
@@ -230,7 +229,7 @@ export interface RemoveDomainData {
  
 export interface VerifyDomainPayload {
   domain: string
-  verification_method?: 'cname' | 'txt'
+  verification_method?: 'cname' | 'txt' | 'http'
 }
  
  const getCompanyId = () => {
@@ -252,10 +251,10 @@ export const usePublicDomainLookup = (
 ) => {
   const companyId = getCompanyId()
 
-  return useQuery<ApiResponse<PublicLookupData>>({
+  return useQuery<PublicLookupData>({
     queryKey: ['domain-lookup', host, companyId],
     queryFn: ({ signal }) =>
-      request<ApiResponse<PublicLookupData>>({
+      request<PublicLookupData>({
         url: `company-domains/lookup?host=${encodeURIComponent(host)}&company_id=${companyId}`,
         method: 'GET',
         signal,
@@ -268,12 +267,12 @@ export const usePublicDomainLookup = (
 export const useVerifyDomain = (options: Record<string, unknown> = {}) => {
   const queryClient = useQueryClient()
 
-  return useMutation<ApiResponse<VerifyDomainData>, Error, VerifyDomainPayload>({
+  return useMutation<VerifyDomainData, Error, VerifyDomainPayload>({
     mutationKey: ['verify-domain'],
     mutationFn: (payload) => {
       const companyId = getCompanyId()
 
-      return request<ApiResponse<VerifyDomainData>>({
+      return request<VerifyDomainData>({
         url: 'company-domains/verify',
         method: 'POST',
         data: {
@@ -292,10 +291,10 @@ export const useVerifyDomain = (options: Record<string, unknown> = {}) => {
 export const useListDomains = (options: Record<string, unknown> = {}) => {
   const companyId = getCompanyId()
 
-  return useQuery<ApiResponse<ListDomainsData>>({
+  return useQuery<ListDomainsData>({
     queryKey: ['company-domains', companyId],
     queryFn: ({ signal }) =>
-      request<ApiResponse<ListDomainsData>>({
+      request<ListDomainsData>({
         url: `company-domains?company_id=${companyId}`,
         method: 'GET',
         signal,
@@ -310,10 +309,10 @@ export const useGetDomain = (
 ) => {
   const companyId = getCompanyId()
 
-  return useQuery<ApiResponse<GetDomainData>>({
+  return useQuery<GetDomainData>({
     queryKey: ['company-domains', id, companyId],
     queryFn: ({ signal }) =>
-      request<ApiResponse<GetDomainData>>({
+      request<GetDomainData>({
         url: `company-domains/${id}?company_id=${companyId}`,
         method: 'GET',
         signal,
@@ -326,12 +325,12 @@ export const useGetDomain = (
 export const useSetPrimaryDomain = (options: Record<string, unknown> = {}) => {
   const queryClient = useQueryClient()
 
-  return useMutation<ApiResponse<SetPrimaryDomainData>, Error, string>({
+  return useMutation<SetPrimaryDomainData, Error, string>({
     mutationKey: ['set-primary-domain'],
     mutationFn: (id) => {
       const companyId = getCompanyId()
 
-      return request<ApiResponse<SetPrimaryDomainData>>({
+      return request<SetPrimaryDomainData>({
         url: `company-domains/${id}/primary?company_id=${companyId}`,
         method: 'PUT',
       })
@@ -346,12 +345,12 @@ export const useSetPrimaryDomain = (options: Record<string, unknown> = {}) => {
 export const useRemoveDomain = (options: Record<string, unknown> = {}) => {
   const queryClient = useQueryClient()
 
-  return useMutation<ApiResponse<RemoveDomainData>, Error, string>({
+  return useMutation<RemoveDomainData, Error, string>({
     mutationKey: ['remove-domain'],
     mutationFn: (id) => {
       const companyId = getCompanyId()
 
-      return request<ApiResponse<RemoveDomainData>>({
+      return request<RemoveDomainData>({
         url: `company-domains/${id}?company_id=${companyId}`,
         method: 'DELETE',
       })
