@@ -2,6 +2,7 @@
 <template>
   <Teleport to="body">
     <BaseModal
+      :inSpace="true"
       :modelValue="show"
       @update:modelValue="(val) => !val && $emit('close')"
       title="Manage Role Permissions"
@@ -38,7 +39,7 @@
               <!-- Permission summary badge -->
               <div class="flex items-center justify-between mb-3">
                 <h3 class="text-sm font-medium text-text-primary">Permissions</h3>
-                <span class="text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent font-medium">
+                <span class="text-xs px-2 py-0.5 rounded-full bg-primary-color/10 text-primary-color font-medium">
                   {{ selectedPermissionIds.length }} selected
                 </span>
               </div>
@@ -86,7 +87,8 @@
                           :id="`perm-${perm._id}`"
                           :value="perm._id"
                           v-model="selectedPermissionIds"
-                          class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+                          class="h-4 w-4 rounded border-border cursor-pointer"
+                          :class="inSpace? 'accent-primary-color': 'accent-accent'" 
                         />
                       </div>
                       <div class="text-sm flex-1 min-w-0">
@@ -118,7 +120,8 @@
                               :id="`perm-${perm._id}`"
                               :value="perm._id"
                               v-model="selectedPermissionIds"
-                              class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+                              class="h-4 w-4 rounded border-border cursor-pointer"
+                              :class="inSpace? 'accent-primary-color': 'accent-accent'"
                             />
                           </div>
                           <div class="text-sm flex-1">
@@ -179,7 +182,8 @@
                                   :id="`mod-${action}-${row.moduleId}`"
                                   :value="row[action]._id"
                                   v-model="selectedPermissionIds"
-                                  class="h-4 w-4 rounded border-border accent-accent cursor-pointer"
+                                  class="h-4 w-4 rounded border-border cursor-pointer"
+                                  :class="inSpace? 'accent-primary-color': 'accent-accent'"
                                  />
                                 <div class="flex flex-col gap-2"> 
                                  <span class="text-xs font-medium text-text-primary capitalize">
@@ -217,8 +221,9 @@
 
         <!-- Footer -->
         <div class="bg-bg-body px-6 py-4 border-t border-border flex justify-end gap-2">
-          <Button variant="secondary" @click="$emit('close')">Cancel</Button>
+          <Button :inSpace="inSpace? true : false" variant="secondary" @click="$emit('close')">Cancel</Button>
           <Button
+            :inSpace="inSpace? true : false"
             @click="handleUpdate"
             :disabled="!selectedRoleId || isUpdating || selectedRoleData?.is_admin"
             :loading="isUpdating"
@@ -249,6 +254,7 @@ const props = defineProps<{
   show: boolean;
   companyId: string | null;
   initialRoleId?: string;
+  inSpace?: boolean;
 }>();
 
 const emit = defineEmits(['close']);

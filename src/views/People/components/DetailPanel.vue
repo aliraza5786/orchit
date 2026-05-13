@@ -399,6 +399,7 @@
       :show="showAddRoleModal"
       :workspaceId="workspaceId"
       :companyId="newCompanyId"
+      :inSpace="true"
       @close="showAddRoleModal = false"
     />
 
@@ -431,6 +432,7 @@
     />
 
     <ManagePermissionsModal
+      :inSpace="true"
       v-if="showManagePermissionsModal"
       :show="showManagePermissionsModal"
       :companyId="newCompanyId"

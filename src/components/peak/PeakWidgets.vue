@@ -2,12 +2,12 @@
   <div class="rounded-lg">
     <!-- Header -->
     <div
-      class="flex items-center justify-between mb-6 flex-wrap gap-3 bg-bg-surface px-5 py-2 rounded-md border border-border"
+      class="flex items-center justify-between mb-6 flex-wrap gap-3 bg-bg-body px-5 py-2 rounded-md border border-border"
     >
       <div class="text-lg font-semibold text-text-primary">Peak Widgets</div>
       <div class="flex items-center gap-2">
         <button
-          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-card)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center gap-1.5 px-3.5 py-[7px] bg-[var(--bg-body)] text-[var(--text-primary)] border border-[var(--border)] rounded-[7px] text-[13px] cursor-pointer transition-colors hover:bg-[var(--bg-surface)] disabled:opacity-50 disabled:cursor-not-allowed"
           @click="fetchAllPinnedWidgetData"
           :disabled="store.isLoadingWidgets"
           title="Refresh all"
@@ -34,7 +34,7 @@
         store.pinnedWidgets.length === 0 &&
         !store.pendingProposal
       "
-      class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3 bg-bg-surface rounded-md border border-border"
+      class="flex flex-col items-center justify-center py-16 px-6 text-center gap-3 bg-bg-body rounded-md border border-border"
     >
       <div
         class="w-14 h-14 bg-[var(--bg-lavender)] rounded-2xl flex items-center justify-center text-[22px] text-[var(--primary-color)] mb-1"
@@ -1157,7 +1157,7 @@
                       :disabled="isAiGenerating || !aiPrompt.trim()"
                     >
                       <i
-                    class="fa-solid text-primary-color text-[11px]"
+                    class="fa-solid text-white text-[11px]"
                     :class="
                       agentStore.isSending
                         ? 'fa-spinner fa-spin'
