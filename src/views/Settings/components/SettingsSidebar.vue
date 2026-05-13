@@ -38,6 +38,22 @@ onMounted(() => {
     const first = companiesList.value[0]
     if (first) selectCompany(first, false)
   }
+
+  // ── FIX: sync URL tab with resolved mode on mount ──────────────────────
+  const tab = route.query.tab as string
+  const isOrgTab = ['org-setup', 'org-domain', 'org-users', 'org-roles',
+                    'org-packages', 'token-allocation', 'ownership-transfer',
+                    'org-create'].includes(tab)
+  const isPersonalTab = ['profile', 'token-utilization', 'billing'].includes(tab)
+
+  if (mode.value === 'personal' && isOrgTab) {
+    // Mode resolved to personal but URL has an org tab → reset to profile
+    router.replace({ query: { tab: 'profile' } })
+  } else if (mode.value === 'org' && isPersonalTab) {
+    // Mode resolved to org but URL has a personal tab → reset to org-setup
+    router.replace({ query: { tab: 'org-setup' } })
+  }
+  // If no tab in URL, nothing to fix — currentTab defaults to 'profile' ✅
 })
 
 watch(mode, (val) => localStorage.setItem('sidebar_mode', val))
@@ -161,7 +177,7 @@ function orgInitials(title: string) {
       <!-- BACK -->
       <button
         @click="goBack"
-        class="flex items-center gap-2 text-xs text-text-secondary hover:text-text-primary group transition-colors mb-5"
+        class="flex items-center gap-2 cursor-pointer text-xs text-text-secondary hover:text-accent group transition-colors mb-5 p-2 hover:font-semibold"
       >
         <i class="fa-solid fa-arrow-left text-[10px] group-hover:-translate-x-0.5 transition-transform"></i>
         Back to dashboard
@@ -169,27 +185,32 @@ function orgInitials(title: string) {
 
       <!-- PERSONAL / ORG TOGGLE — only shown if user has orgs -->
       <div v-if="hasOrgs" class="flex rounded-lg border border-border bg-bg-card p-[2px] gap-[3px]">
-        <button
-          @click="switchMode('personal')"
-          class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[12px] font-semibold transition-all"
-          :class="mode === 'personal'
-            ? 'bg-bg-body text-text-primary shadow-sm border border-border/70'
-            : 'text-text-secondary hover:text-text-primary'"
-        >
-          <i class="fa-regular fa-circle-user text-[11px]"></i>
-          Personal
-        </button>
-        <button
-          @click="switchMode('org')"
-          class="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-md text-[12px] font-semibold transition-all"
-          :class="mode === 'org'
-            ? 'bg-bg-body text-text-primary shadow-sm border border-border/70'
-            : 'text-text-secondary hover:text-text-primary'"
-        >
-          <i class="fa-regular fa-building text-[11px]"></i>
-          Organization
-        </button>
-      </div>
+
+  <!-- Personal -->
+  <button
+    @click="switchMode('personal')"
+    class="flex-1 flex items-center cursor-pointer justify-center gap-1.5 py-2 rounded-md text-[12px] font-semibold transition-all duration-200 ease-out hover:shadow-sm hover:-translate-y-[1px]"
+    :class="mode === 'personal'
+      ? 'bg-bg-body text-text-primary shadow-sm border border-border/70'
+      : 'text-text-secondary hover:text-white hover:bg-accent hover:border border-accent'"
+  >
+    <i class="fa-regular fa-circle-user text-[11px] transition-colors duration-200"></i>
+    Personal
+  </button>
+
+  <!-- Organization -->
+  <button
+    @click="switchMode('org')"
+    class="flex-1 flex items-center cursor-pointer justify-center gap-1.5 py-2 rounded-md text-[12px] font-semibold transition-all duration-200 ease-out hover:shadow-sm hover:-translate-y-[1px]"
+    :class="mode === 'org'
+      ? 'bg-bg-body text-text-primary shadow-sm border border-border/70'
+      : 'text-text-secondary hover:text-white hover:bg-accent hover:border border-accent'"
+  >
+    <i class="fa-regular fa-building text-[11px] transition-colors duration-200"></i>
+    Organization
+  </button>
+
+</div>
     </div>
 
     <!-- ── Scrollable body ── -->
@@ -232,7 +253,7 @@ function orgInitials(title: string) {
             v-for="item in personalItems"
             :key="item.tab"
             @click="selectTab(item.tab)"
-            class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
+            class="w-full flex items-center cursor-pointer gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
             :class="currentTab === item.tab
               ? 'bg-accent/10 text-accent font-semibold'
               : 'text-text-secondary hover:bg-bg-card hover:text-text-primary'"
@@ -258,7 +279,7 @@ function orgInitials(title: string) {
             </p>
             <button
               @click="selectTab('billing')"
-              class="w-full py-2 rounded-lg bg-accent text-white text-[12px] font-bold hover:bg-accent/90 active:scale-[0.97] transition-all"
+              class="w-full py-2 rounded-lg cursor-pointer bg-accent text-white text-[12px] font-bold hover:bg-accent/90 active:scale-[0.97] transition-all"
             >
               Upgrade personal →
             </button>
@@ -343,7 +364,7 @@ function orgInitials(title: string) {
               v-for="item in visibleOrgItems"
               :key="item.tab"
               @click="selectTab(item.tab)"
-              class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
+              class="w-full flex items-center cursor-pointer gap-3 px-3 py-2 rounded-lg text-[13px] transition-all"
               :class="currentTab === item.tab
                 ? 'bg-accent/10 text-accent font-semibold'
                 : 'text-text-secondary hover:bg-bg-card hover:text-text-primary'"
@@ -369,7 +390,7 @@ function orgInitials(title: string) {
               </p>
               <button
                 @click="selectTab('org-packages')"
-                class="w-full py-2 rounded-lg text-white text-[12px] font-bold hover:opacity-90 active:scale-[0.97] transition-all"
+                class="w-full py-2 rounded-lg text-white text-[12px] cursor-pointer font-bold hover:opacity-90 active:scale-[0.97] transition-all"
                 style="background: linear-gradient(90deg, #7c3aed, #6c63ff)"
               >
                 Upgrade organization →

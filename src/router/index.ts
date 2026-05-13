@@ -4,7 +4,7 @@ import {
   type RouteRecordRaw,
 } from "vue-router";
 import { useAuthStore, getToken } from "../stores/auth";
-import { redirectToLogin } from "../utilities/authRedirect"; // ← new
+import { redirectToLogin } from "../utilities/authRedirect";
 import Task from "../views/Workspaces/Task.vue";
 import Users from "../views/Workspaces/Users.vue";
 import api from "../libs/api";
@@ -47,6 +47,30 @@ const BlogDetail = () => import("../views/blog/BlogDetail.vue");
 const KnowledgeCenterView = () => import("../views/KnowledgeCenter/KnowledgeCenterView.vue");
 const SettingsView = () => import("../views/Settings/SettingsView.vue");
 
+const ONBOARDING_ROUTE_NAMES = new Set([
+  'Register',
+  'Otp',
+  'create-profile',
+])
+
+function resolveOnboardingRedirect(auth: ReturnType<typeof useAuthStore>): string | null {
+  const hasToken = !!getToken()
+ 
+  if (!hasToken) return '/login'
+  if (!auth.user) return null // bootstrap still in progress — don't redirect yet
+ 
+  // API wraps data under .data in some responses
+  const userData = auth.user?.data ?? auth.user
+ 
+  const hasActiveCompany = !!userData?.active_company_id
+  const hasWorkspaces    = Array.isArray(userData?.workspaces) && userData.workspaces.length > 0
+ 
+  // Onboarding complete: has a company or has workspaces → send to dashboard
+  if (hasActiveCompany || hasWorkspaces) return '/dashboard'
+ 
+  // Onboarding incomplete: no company, no workspaces → must finish create-profile
+  return '/create-profile'
+}
 const routes: RouteRecordRaw[] = [
   {
     path: "/",
@@ -56,9 +80,7 @@ const routes: RouteRecordRaw[] = [
         path: "",
         name: "new-homepage",
         component: NewHomepage,
-        beforeEnter: (to, from, next) => {
-          console.log(to, from);
-          
+        beforeEnter: (_to, _from, next) => {
           const authStore = useAuthStore()
           if (authStore.isAuthenticated) {
             next('/dashboard')
@@ -89,18 +111,25 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
-  { path: "/login", name: "Login", component: Login, meta: { requiresAuth: false } },
-  { path: "/register", name: "Register", component: Register, meta: { requiresAuth: false } },
-  { path: "/otp-verification/:email", name: "Otp", component: OtpVerification, meta: { requiresAuth: false } },
-  { path: "/forgot-password", name: "ForgotPassword", component: ForgotPassword, meta: { requiresAuth: false } },
-  { path: "/reset-password", name: "ResetPassword", component: ResetPassword, meta: { requiresAuth: false } },
-  { path: "/create-profile", name: "create-profile", component: CreateProfile, meta: { requiresAuth: false } },
-  { path: "/finish-profile", name: "finishProfile", component: FinishProfile, meta: { requiresAuth: true } },
+
+  // ── Auth / Onboarding routes ─────────────────────────────────────────────
+  // All marked with meta.onboarding = true so the global guard can handle them.
+  { path: "/login",                  name: "Login",          component: Login,            meta: { requiresAuth: false } },
+  { path: "/register",               name: "Register",       component: Register,         meta: { requiresAuth: false, onboarding: true } },
+  { path: "/otp-verification/:email",name: "Otp",            component: OtpVerification,  meta: { requiresAuth: false, onboarding: true } },
+  { path: "/create-profile",         name: "create-profile", component: CreateProfile,    meta: { requiresAuth: false, onboarding: true } },
+  { path: "/forgot-password",        name: "ForgotPassword", component: ForgotPassword,   meta: { requiresAuth: false } },
+  { path: "/reset-password",         name: "ResetPassword",  component: ResetPassword,    meta: { requiresAuth: false } },
+  { path: "/finish-profile",         name: "finishProfile",  component: FinishProfile,    meta: { requiresAuth: true } },
+
+  // ── Invite routes ────────────────────────────────────────────────────────
   { path: "/workspace-invite/:token", name: "workspaceInvite", component: WorkspaceInvite, meta: { requiresAuth: false } },
-  { path: "/space-invite/:token", name: "spaceInvite", component: CompanyInvites, meta: { requiresAuth: false } },
-  { path: "/company-invite/:token", name: "companyInvite", component: CompanyInvites, meta: { requiresAuth: false } },
-  { path: "/company-join/:token", name: "companyjoin", component: companyJoin, meta: { requiresAuth: false } },
-  { path: "/join-as-owner/:token/:action", name: "joinAsOwner", component: joinAsOwner, meta: { requiresAuth: false } },
+  { path: "/space-invite/:token",     name: "spaceInvite",     component: CompanyInvites,  meta: { requiresAuth: false } },
+  { path: "/company-invite/:token",   name: "companyInvite",   component: CompanyInvites,  meta: { requiresAuth: false } },
+  { path: "/company-join/:token",     name: "companyjoin",     component: companyJoin,     meta: { requiresAuth: false } },
+  { path: "/join-as-owner/:token/:action", name: "joinAsOwner", component: joinAsOwner,   meta: { requiresAuth: false } },
+
+  // ── App routes ───────────────────────────────────────────────────────────
   {
     path: "/dashboard",
     component: LandingLayout,
@@ -118,12 +147,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
     children: [
       { path: "peak/:id/:job_id", name: "peakWithJob", component: Peak },
-      { path: "peak/:id", name: "peak", component: Peak },
-      { path: "talent/:id", name: "people", component: People },
-      { path: "pin/:id/:module_id", name: "pin", component: Pin },
-      { path: "plan/:id", name: "plan", component: Plan },
-      { path: "process/:id", name: "process", component: Process2 },
-      { path: "more/:id", name: "more", component: More },
+      { path: "peak/:id",         name: "peak",        component: Peak },
+      { path: "talent/:id",       name: "people",      component: People },
+      { path: "pin/:id/:module_id", name: "pin",       component: Pin },
+      { path: "plan/:id",         name: "plan",        component: Plan },
+      { path: "process/:id",      name: "process",     component: Process2 },
+      { path: "more/:id",         name: "more",        component: More },
       { path: "more/detail/:id/:module_id", name: "moreDetail", component: ModuleDetail },
       {
         path: ":id/:module_id",
@@ -147,17 +176,12 @@ const router = createRouter({
   },
 })
 
-// ── GAP 2 FIX: Axios 401 interceptor ─────────────────────────────────────────
-// Token expired mid-session. Previously did router.replace({ name: 'Login' })
-// which renders company.streamed.space/login — a route that doesn't exist on subdomains.
 api.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
       const auth = useAuthStore()
       auth.logout()
-      // redirectToLogin() checks hostname — issues hard redirect on subdomains,
-      // uses Vue router on main domain. Never lands on subdomain /login.
       redirectToLogin(router, window.location.pathname)
     }
     return Promise.reject(error)
@@ -167,10 +191,12 @@ api.interceptors.response.use(
 router.beforeEach(async (to, _from, next) => {
   const auth = useAuthStore()
 
+  // 1. Bootstrap auth state once per session
   if (!auth.initialized) {
     await auth.bootstrap()
   }
 
+  // ── Subdomain logic (unchanged from your original) ──────────────────────
   const hostname = window.location.hostname
   let subdomain: string | null = null
 
@@ -182,30 +208,36 @@ router.beforeEach(async (to, _from, next) => {
     if (subdomain === 'www') subdomain = null
   }
 
-  // On subdomain: unknown routes → dashboard
   if (subdomain && to.name === 'NotFound') {
     return next('/dashboard')
   }
 
-  // SAFETY NET: On a company subdomain, NEVER render /login locally.
-  // If anything tries to push to Login while on a subdomain,
-  // hard redirect to primary domain login instead.
-  // This catches Opera's cookie blocking, token expiry, any edge case.
   if (subdomain && to.name === 'Login') {
     const primary = import.meta.env.VITE_PRIMARY_DOMAIN || 'stagging.streamed.space'
     window.location.href = `${window.location.protocol}//${primary}/login?logout=true`
-    return // stop navigation
+    return
+  }
+  // ── End subdomain logic ──────────────────────────────────────────────────
+
+  const hasToken = !!getToken()
+  const requiresAuth = to.matched.some(r => r.meta.requiresAuth === true)
+  const isOnboardingRoute = ONBOARDING_ROUTE_NAMES.has(to.name as string)
+  if (isOnboardingRoute && hasToken) {
+    const correctDestination = resolveOnboardingRedirect(auth)
+    if (correctDestination && correctDestination !== to.fullPath) {
+      // Use replace so we don't push another entry onto the history stack
+      return next({ path: correctDestination, replace: true })
+    }
   }
 
-  const requiresAuth = to.matched.some(r => r.meta.requiresAuth === true)
-  const hasToken = !!getToken()
-
+  // 3. ── STANDARD AUTH GATE ────────────────────────────────────────────────
   if (requiresAuth && !hasToken) {
     const redirected = redirectToLogin(undefined, to.fullPath)
     if (redirected) return
     return next({ name: 'Login' })
   }
 
+  // 4. ── ALREADY LOGGED IN → don't show login page ────────────────────────
   if (to.name === 'Login' && hasToken && !subdomain) {
     return next({ name: 'Home' })
   }

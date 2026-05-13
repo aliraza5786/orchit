@@ -137,31 +137,31 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+
 const props = defineProps({
   active: { type: Boolean, required: true },
-  abort: { type: Boolean, default: false }, 
+  loading: { type: Boolean, required: true },
+  abort: { type: Boolean, default: false },
 })
-// Add this watch inside the component script
-watch(() => props.abort, (shouldAbort) => {
-  if (shouldAbort) {
-    clearInterval(particleInterval)
-    clearTimeout(stepTimeout)
-  }
-})
+
 const emit = defineEmits(['complete'])
+
 const provisionSteps = [
-  { label: 'Creating your profile',           ms: 1800 },
-  { label: 'Validating your information',     ms: 2200 },
-  { label: 'Setting up your preferences',     ms: 2600 },
-  { label: 'Initializing your account',       ms: 1600 },
-  { label: 'Securing your data',              ms: 2000 },
-  { label: 'Finalizing setup',                ms: 1400 },
+  { label: 'Creating your profile' },
+  { label: 'Validating your information' },
+  { label: 'Setting up your preferences' },
+  { label: 'Initializing your account' },
+  { label: 'Securing your data' },
+  { label: 'Finalizing setup' },
 ]
 
 const provisionStep = ref(0)
-const isLaunching   = ref(false)
-const starField     = ref(null)
-const particlePool  = ref(null)
+const isLaunching = ref(false)
+
+const starField = ref(null)
+const particlePool = ref(null)
+
+let particleInterval = null
 
 const SPARK_COLORS = ['#EF9F27', '#FAC775', '#BA7517', '#1D9E75', '#5DCAA5']
 
@@ -183,15 +183,15 @@ const rocketStyle = computed(() => {
   }
 })
 
-let particleInterval = null
-let stepTimeout      = null
-
 function spawnParticles() {
   if (!particlePool.value) return
+
   for (let i = 0; i < 5; i++) {
     const p = document.createElement('div')
     p.classList.add('rocket-particle')
+
     const dx = (Math.random() * 44 - 22).toFixed(0) + 'px'
+
     p.style.cssText = `
       background: ${SPARK_COLORS[Math.floor(Math.random() * SPARK_COLORS.length)]};
       left: ${16 + Math.random() * 24}px;
@@ -199,70 +199,104 @@ function spawnParticles() {
       --dx: ${dx};
       animation-delay: ${(Math.random() * 0.25).toFixed(2)}s;
     `
+
     particlePool.value.appendChild(p)
     setTimeout(() => p?.remove(), 1100)
-  }
-  for (let i = 0; i < 2; i++) {
-    const sm = document.createElement('div')
-    sm.classList.add('rocket-smoke')
-    sm.style.cssText = `
-      left: ${8 + Math.random() * 44}px;
-      bottom: 0;
-      animation-delay: ${(Math.random() * 0.15).toFixed(2)}s;
-    `
-    particlePool.value.appendChild(sm)
-    setTimeout(() => sm?.remove(), 1200)
   }
 }
 
 function buildStars() {
   if (!starField.value) return
+
   for (let i = 0; i < 14; i++) {
     const s = document.createElement('div')
     s.classList.add('rocket-star')
     s.style.cssText = `
       left: ${Math.random() * 100}%;
-      top:  ${Math.random() * 85}%;
+      top: ${Math.random() * 85}%;
       animation-duration: ${(1.4 + Math.random() * 2).toFixed(1)}s;
-      animation-delay:    ${(Math.random() * 2).toFixed(1)}s;
+      animation-delay: ${(Math.random() * 2).toFixed(1)}s;
     `
     starField.value.appendChild(s)
   }
 }
 
-function advance() {
-  if (provisionStep.value >= provisionSteps.length) return
-  const current = provisionStep.value
-  stepTimeout = setTimeout(() => {
-    provisionStep.value++
+/**
+ * PROGRESS CONTROL (NO STATIC TIMERS)
+ * - driven externally by props.loading
+ */
+function startLoading() {
+  if (provisionStep.value === 0) buildStars()
+
+  if (!particleInterval) {
+    particleInterval = setInterval(spawnParticles, 320)
+  }
+
+  // simulate step progression ONLY while loading is true
+  const interval = setInterval(() => {
+    if (!props.loading) return
+
     if (provisionStep.value < provisionSteps.length) {
-      advance()
-    } else {
-      clearInterval(particleInterval)
-      setTimeout(() => {
-        isLaunching.value = true
-        setTimeout(() => spawnParticles(), 100)
-        setTimeout(() => spawnParticles(), 300)
-        setTimeout(() => spawnParticles(), 500)
-        setTimeout(() => emit('complete'), 1200)
-      }, 400)
+      provisionStep.value++
     }
-  }, provisionSteps[current].ms)
+
+    if (provisionStep.value >= provisionSteps.length) {
+      clearInterval(interval)
+      finishLaunch()
+    }
+  }, 900)
 }
 
-function startProvisioning() {
-  buildStars()
-  particleInterval = setInterval(spawnParticles, 320)
-  advance()
+function resetLoader() {
+  provisionStep.value = 0
+  isLaunching.value = false
+  clearInterval(particleInterval)
+  particleInterval = null
 }
+
+function finishLaunch() {
+  isLaunching.value = true
+
+  setTimeout(() => spawnParticles(), 100)
+  setTimeout(() => spawnParticles(), 300)
+  setTimeout(() => spawnParticles(), 500)
+
+  setTimeout(() => {
+    emit('complete')
+  }, 1200)
+}
+
+/**
+ * WATCHERS (CORE CHANGE)
+ */
+watch(
+  () => props.loading,
+  (val) => {
+    if (val) {
+      startLoading()
+    } else {
+      resetLoader()
+    }
+  },
+  { immediate: true }
+)
+
+/**
+ * ABORT HANDLING
+ */
+watch(
+  () => props.abort,
+  (shouldAbort) => {
+    if (shouldAbort) resetLoader()
+  }
+)
 
 onMounted(() => {
-  if (props.active) startProvisioning()
+  if (props.active && props.loading) startLoading()
 })
 
 onBeforeUnmount(() => {
-  clearInterval(particleInterval)
-  clearTimeout(stepTimeout)
+  resetLoader()
 })
 </script>
 

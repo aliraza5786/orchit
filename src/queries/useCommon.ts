@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
 import api, { request } from "../libs/api";
 import { isRef, type Ref, type ComputedRef, computed } from 'vue'
 import { useAuthStore } from "../stores/auth";
+import type { VerificationMethod } from "../stores/workspace";
 export const uploadFile = (formData: FormData) => {
   return api
     .post("/upload/file-common", formData, {
@@ -133,22 +134,44 @@ export interface DnsCheckResult {
   error: string | null
   checked_at: string
 }
- 
-export interface DnsInstructions {
-  method: 'cname' | 'txt'
-  record_type: 'CNAME' | 'TXT'
+export interface CnameInstructions {
+  method: 'cname'
+  record_type: 'CNAME'
   record_host: string
   record_value: string
   ttl_recommended: number
   note: string
 }
- 
+
+export interface TxtInstructions {
+  method: 'txt'
+  record_type: 'TXT'
+  record_host: string
+  record_value: string
+  ttl_recommended: number
+  note: string
+}
+
+export interface HttpInstructions {
+  method: 'http'
+  record_type: null
+  file_url: string
+  file_content: string
+  ttl_recommended: null
+  note: string
+}
+
+export type DnsInstructions =
+  | CnameInstructions
+  | TxtInstructions
+  | HttpInstructions
 export interface CompanyDomain {
   _id: string
   company_id: string
   domain: string
+  domains:any
   status: 'pending' | 'verifying' | 'verified' | 'failed' | 'disabled'
-  verification_method: 'cname' | 'txt'
+  verification_method: VerificationMethod
   verification_token: string
   expected_target: string
   is_primary: boolean
@@ -165,29 +188,34 @@ export interface CompanyDomain {
 export interface ApiResponse<T> {
   status: boolean
   message: string
-  data: T
+  domains: T
 }
- 
 // ── API Response Shapes ────────────────────────────────────────────────────────
  
 export interface PublicLookupData {
-  domain: Pick<CompanyDomain, '_id' | 'company_id' | 'domain' | 'is_primary' | 'verified_at'>
+  domain: Pick<
+    CompanyDomain,
+    '_id' | 'company_id' | 'domain' | 'is_primary' | 'verified_at'
+  > | null
 }
  
 export interface VerifyDomainData {
   verified: boolean
-  domain: Partial<CompanyDomain>
+  domain: CompanyDomain
   result: DnsCheckResult
   instructions: DnsInstructions
+  methodSwitched?: boolean
 }
  
 export interface ListDomainsData {
   domains: CompanyDomain[]
+  status?: boolean
+  message?: string
 }
  
 export interface GetDomainData {
   domain: CompanyDomain
-  instructions: DnsInstructions
+  instructions: DnsInstructions | null
 }
  
 export interface SetPrimaryDomainData {

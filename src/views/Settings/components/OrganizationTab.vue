@@ -128,7 +128,7 @@
                 <button
                   @click="triggerLogoPicker"
                   :disabled="isUploadingLogo"
-                  class="px-4 py-2 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="px-4 py-2 text-sm cursor-pointer font-medium rounded-lg border border-border hover:bg-bg-card transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <i class="fa-solid fa-cloud-arrow-up mr-2"></i>
                   {{ isUploadingLogo ? 'Uploading...' : 'Upload logo' }}
@@ -254,7 +254,7 @@
 <button
   @click="saveOrg"
   :disabled="isSaving || !isFormValid || !canUpdateOrg"
-  class="px-6 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20"
+  class="px-6 py-2.5 bg-accent text-white cursor-pointer text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-accent/20"
 >
   <span v-if="isSaving" class="flex items-center gap-2">
     <i class="fa-solid fa-spinner fa-spin text-xs"></i> Saving...
@@ -265,9 +265,8 @@
 </button>
 
   <button
-  v-if="canDeleteOrg"
     @click="showDeleteConfirm = true"
-    class="px-6 py-2.5 text-sm font-semibold rounded-lg border border-red-500/30 text-red-600 hover:bg-red-500/10 transition-all active:scale-95"
+    class="px-6 py-2.5 text-sm font-semibold cursor-pointer rounded-lg border border-red-500/30 text-red-600 hover:bg-red-500/10 transition-all active:scale-95"
   >
     <i class="fa-solid fa-trash mr-2"></i> Delete organization
   </button>
@@ -303,14 +302,14 @@
         <div class="flex gap-3">
           <button
             @click="showDeleteConfirm = false"
-            class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-border hover:bg-bg-card transition-all"
+            class="flex-1 px-4 py-2.5 text-sm cursor-pointer font-medium rounded-lg border border-border hover:bg-bg-card transition-all"
           >
             Cancel
           </button>
           <button
             @click="deleteOrg"
             :disabled="isDeleting"
-            class="flex-1 px-4 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 px-4 py-2.5 bg-red-600 cursor-pointer text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span v-if="isDeleting" class="flex items-center justify-center gap-2">
               <i class="fa-solid fa-spinner fa-spin text-xs"></i> Deleting...
