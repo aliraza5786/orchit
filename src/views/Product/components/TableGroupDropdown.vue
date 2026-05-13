@@ -107,15 +107,16 @@ const dropdownStyles = ref<CSSProperties>({
 let cleanupFloating: (() => void) | null = null;
 
 const allOptions = computed(() => {
+  const staticOptions = [
+    { _id: 'priority', title: 'Priority' },
+    { _id: 'status', title: 'Status' },
+    { _id: 'assignee', title: 'Assignee' },
+    { _id: 'owner', title: 'Owner/Reporter' },
+    { _id: 'card_type', title: 'Card Type' },
+  ];
   return props.pin
-    ? pinOptions.value
-    : [
-        { _id: 'priority', title: 'Priority' },
-        { _id: 'status', title: 'Status' },
-        { _id: 'assignee', title: 'Assignee' },
-        { _id: 'owner', title: 'Owner/Reporter' },
-        { _id: 'card_type', title: 'Card Type' },
-      ];
+    ? [...staticOptions.filter(o => ['assignee', 'owner'].includes(o._id)), ...pinOptions.value]
+    : staticOptions;
 });
 
 const lastSelectedGroup = ref(localStorage.getItem('last_selected_group') || '');

@@ -78,6 +78,11 @@ export interface Ticket {
 export interface Column {
   _id: string | number;
   title: string;
+  avatar?: {
+    type: "initials" | "image";
+    initials?: string;
+    src?: string;
+  };
   cards: Ticket[];
   transitions: any;
 }
@@ -233,6 +238,7 @@ function cloneBoard(b: Column[]): Board {
         ? b.map((c) => ({
             _id: c._id, // keep same ID
             title: c.title,
+            avatar: c.avatar,
             transitions: c.transitions,
             cards: c.cards ?? [], // do not clone each card unless necessary
           }))

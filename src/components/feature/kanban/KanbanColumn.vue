@@ -8,6 +8,30 @@
       class="flex items-center justify-between w-full px-2 py-2.5 border-b border-border cursor-grab"
     >
       <div class="flex items-center gap-2 flex-auto max-w-4/5">
+        <!-- Avatar -->
+        <div v-if="column.avatar" class="flex-shrink-0">
+          <img
+            v-if="column.avatar.type === 'image'"
+            :src="column.avatar.src"
+            class="w-6 h-6 rounded-full object-cover border border-border shadow-sm"
+            :alt="column.title"
+          />
+          <div
+            v-else
+            class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold border-2 border-bg-card text-text-primary uppercase"
+            :style="{
+              backgroundColor: column.title
+                ? avatarColor({
+                    name: column.title,
+                    _id: column._id,
+                  })
+                : '',
+            }"
+          >
+            {{ column.avatar.initials || getInitials(column.title) }}
+          </div>
+        </div>
+
         <!-- Title: display vs edit -->
         <button
           v-if="!isEditingTitle"
@@ -100,6 +124,8 @@ import Draggable from "vuedraggable";
 import DropMenu from "../../ui/DropMenu.vue";
 import { useWorkspaceStore } from "../../../stores/workspace";
 import { usePermissions } from "../../../composables/usePermissions";
+import { avatarColor } from "../../../utilities/avatarColor";
+import { getInitials } from "../../../utilities";
 const { canDeleteVariable, canEditVariable } = usePermissions();
 type Id = string | number;
 export interface Ticket {
@@ -109,6 +135,11 @@ export interface Ticket {
 export interface Column {
   _id: Id;
   title: string;
+  avatar?: {
+    type: "initials" | "image";
+    initials?: string;
+    src?: string;
+  };
   cards: Ticket[];
   transitions: any;
   showADDNEW?: any;

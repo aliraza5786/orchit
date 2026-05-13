@@ -61,7 +61,7 @@
               @input="validateOptionTitle"
             />
           </div>
-          <Button class="mt-6" size="md" variant="primary" :disabled="!canAddOption" @click="addOption">
+          <Button :inSpace="true" class="mt-6" size="md" variant="primary" :disabled="!canAddOption" @click="addOption">
             Add
           </Button>
         </div>
@@ -69,6 +69,7 @@
         <!-- Group Filterable toggle -->
         <label class="flex items-center gap-2 select-none"  v-if="['Radio','Select'].includes(selectedTypeTitle)">
           <Checkbox
+            :inSpace="true"
             :checked="isFilterable"
             label="Show this in Group filters"
             @change="handleFilterChange"
@@ -95,8 +96,8 @@
   
       <!-- Footer -->
       <div class="flex justify-end gap-2 px-6 py-4 border-t border-border sticky bottom-0 bg-bg-body">
-        <Button variant="secondary" @click="cancel">Cancel</Button>
-        <Button variant="primary" :loading="isCreatingVariable" :disabled="!isValid || isCreatingVariable" @click="submit">
+        <Button :inSpace="true" variant="secondary" @click="cancel">Cancel</Button>
+        <Button :inSpace="true" variant="primary" :loading="isCreatingVariable" :disabled="!isValid || isCreatingVariable" @click="submit">
           {{ isCreatingVariable ? 'Creating' : " Create Field" }}
         </Button>
       </div>
@@ -320,4 +321,3 @@ const isValid = computed(() => {
     isFilterable.value = false // reset to default
   }
   </script>
-  

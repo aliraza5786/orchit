@@ -338,7 +338,7 @@
             </template>
           </KanbanBoard>
 
-          <div class="min-w-[270px]" @click.stop>
+          <div v-if="isStatusView" class="min-w-[270px]" @click.stop>
             <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
               <BaseTextField
                 :autofocus="true"
@@ -980,7 +980,22 @@ const selectedViewByLabel = computed(() => {
 
   return opt.title;
 });
+const isStatusView = computed(() => {
+  if (
+    selected_view_by.value === "owner" ||
+    selected_view_by.value === "assignee"
+  )
+    return false;
 
+  const v = selectedViewByVariable.value;
+  if (!v) return false;
+
+  // Match slug or title
+  const slug = v.slug?.toLowerCase() || "";
+  const title = v.title?.toLowerCase() || "";
+
+  return slug === "card-status" || slug === "status" || title === "status";
+});
 watch(selected_view_by, (newVal) => {
   const opt = variables.value?.find((v: any) => v._id === newVal);
   if (!opt?.nested?.length) {

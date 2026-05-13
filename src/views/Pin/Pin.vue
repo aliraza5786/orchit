@@ -43,7 +43,11 @@
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showVariableDropdown ? 'text-primary-color' : 'text-primary-color'"
+                :class="
+                  showVariableDropdown
+                    ? 'text-primary-color'
+                    : 'text-primary-color'
+                "
               ></i>
               <span class="text-nowrap">Group: {{ selectedViewByLabel }}</span>
             </button>
@@ -78,7 +82,11 @@
             >
               <i
                 class="fa-solid fa-layer-group text-[14px]"
-                :class="showGroupDropdown ? 'text-primary-color' : 'text-primary-color'"
+                :class="
+                  showGroupDropdown
+                    ? 'text-primary-color'
+                    : 'text-primary-color'
+                "
               ></i>
               <span>Group: {{ selectedGroupLabel }}</span>
             </button>
@@ -263,7 +271,7 @@
         </template>
       </KanbanBoard>
       <!-- Add List Section -->
-      <div class="min-w-[270px]" v-if="view === 'kanban'" @click.stop>
+      <div class="min-w-[270px]" v-if="view === 'kanban' && isStatusView" @click.stop >
         <div v-if="activeAddList" class="bg-bg-body rounded-lg p-4">
           <BaseTextField
             :autofocus="true"
@@ -336,7 +344,9 @@
         class="absolute inset-0 z-20 flex items-center justify-center bg-bg-card/60 backdrop-blur-[2px]"
       >
         <div class="flex flex-col items-center gap-3">
-          <i class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"></i>
+          <i
+            class="fa-solid fa-spinner fa-spin text-primary-color text-3xl"
+          ></i>
           <span class="text-sm font-medium text-text-secondary italic"
             >Mapping your data...</span
           >
@@ -589,6 +599,23 @@ const storageKey = computed(
   () => `pin_selected_sheets_${workspaceId.value}_${moduleId.value}`,
 );
 
+const isStatusView = computed(() => {
+  if (
+    selected_view_by.value === "owner" ||
+    selected_view_by.value === "assignee"
+  )
+    return false;
+
+  const v = selectedViewByVariable.value;
+  if (!v) return false;
+
+  // Match slug or title
+  const slug = v.slug?.toLowerCase() || "";
+  const title = v.title?.toLowerCase() || "";
+
+  return slug === "pin-list" || slug === "status" || title === "pin list" || slug === "card-status";
+});
+
 watch(
   data,
   (sheets) => {
@@ -634,6 +661,28 @@ watch(selected_sheet_id, (newVal) => {
 });
 
 const formattedExtraParams = computed(() => ({}));
+
+const kanbanActiveVariableId = computed(() => {
+  const val = selected_view_by.value;
+  if (val === "owner" || val === "assignee") return "";
+
+  return val;
+});
+
+const kanbanActiveVariableSlug = computed(() => {
+  if (selected_view_by.value === "owner") return "created_by";
+  if (selected_view_by.value === "assignee") return "assigned_to";
+  return "";
+});
+
+const kanbanGroupExtraParams = computed(() => {
+  const base = formattedExtraParams.value || {};
+  if (kanbanActiveVariableSlug.value) {
+    return { ...base, variable_slug: kanbanActiveVariableSlug.value };
+  }
+  return base;
+});
+
 const {
   data: Lists,
   isPending: isListPending,
@@ -642,8 +691,8 @@ const {
   moduleId,
   selected_sheet_id,
   computed(() => [...workspaceStore.selectedLaneIds]),
-  selected_view_by,
-  formattedExtraParams,
+  kanbanActiveVariableId,
+  kanbanGroupExtraParams,
 );
 
 const toggleVariableDropdown = () => {
@@ -659,10 +708,14 @@ const selectedViewByVariable = computed(() => {
 });
 
 const selectedViewByLabel = computed(() => {
+  if (selected_view_by.value === "owner") return "Owner/Reporter";
+  if (selected_view_by.value === "assignee") return "Assignee";
   return selectedViewByVariable.value?.title || "None";
 });
 
 const selectedGroupLabel = computed(() => {
+  if (selectedGroup.value === "owner") return "Owner/Reporter";
+  if (selectedGroup.value === "assignee") return "Assignee";
   return selectedGroup.value?.title || "None";
 });
 
@@ -675,12 +728,35 @@ const { data: FlatTableData, isPending: isFlatTablePending } = useTableCards(
 );
 
 const tableActiveVariableId = computed(() => {
-  return selectedGroup.value?._id || "";
+  const group = selectedGroup.value;
+  if (!group) return "";
+
+  // If it's a string (static option)
+  if (typeof group === "string") {
+    if (group === "assignee" || group === "owner") return "";
+    return group;
+  }
+
+  return group._id || "";
+});
+
+// Maps group selections that use variable_slug instead of variable_id
+const tableActiveVariableSlug = computed(() => {
+  const group = selectedGroup.value;
+  const groupId = typeof group === "string" ? group : group?._id;
+
+  if (groupId === "assignee") return "assigned_to";
+  if (groupId === "owner") return "created_by";
+  return "";
 });
 
 // Extra params for the grouped table query
 const tableGroupExtraParams = computed(() => {
-  return formattedExtraParams.value || {};
+  const base = formattedExtraParams.value || {};
+  if (tableActiveVariableSlug.value) {
+    return { ...base, variable_slug: tableActiveVariableSlug.value };
+  }
+  return base;
 });
 
 const { data: TableGroupedLists, isPending: isTablePending } = useSheetList(
