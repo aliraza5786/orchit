@@ -1932,6 +1932,7 @@ async function continueHandler() {
         activeStep.value = 6
       } finally {
         isUpdatingProfile.value = false
+        isLoaderRunning.value=false
       }
       return
     }
@@ -1947,6 +1948,7 @@ async function continueHandler() {
         like_to_manage: selectedModules.value,
         heard_about_us: referralSources.value,
       })
+      isLoaderRunning.value=false
       router.push({ path: '/finish-profile', query: { welcome: '1', type: 'personal' } })
       return
     }

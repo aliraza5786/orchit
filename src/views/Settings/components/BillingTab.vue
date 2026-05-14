@@ -92,183 +92,214 @@
       </div>
     </div>
 
-    <!-- ── LOADED ─────────────────────────────────────────────────── -->
-    <div v-else class="space-y-8">
+<!-- ── LOADED ─────────────────────────────────────────────────── -->
+<div v-else class="space-y-8">
 
-      <!-- Current Plan Section -->
-      <div class="bg-bg-body rounded-2xl p-6 border border-border shadow-sm">
-        <h3 class="text-lg font-semibold text-text-primary mb-4">Current Plan</h3>
+  <!-- Usage & Limits (unchanged) -->
+  <div class="bg-bg-body rounded-2xl p-6 border border-border shadow-sm">
+    <h3 class="text-lg font-semibold text-text-primary mb-4">Usage & Limits</h3>
 
-        <div class="flex items-center justify-between mb-4">
-          <div>
-            <p class="text-2xl font-bold text-text-primary">
-              {{ currentPackage?.package?.name }}
-            </p>
-            <p class="text-sm text-text-secondary">
-              {{ currentPackage?.package?.name === 'Free'
-                  ? 'Forever free'
-                  : (currentPackage?.interval === 'year' ? 'Yearly' : 'Monthly') }}
-            </p>
+    <div
+      v-if="!currentPackage?.features?.length"
+      class="flex flex-col items-center text-center gap-2 py-8 rounded-xl border border-dashed border-border bg-bg-card"
+    >
+      <i class="fa-solid fa-chart-simple text-2xl text-text-secondary opacity-40"></i>
+      <p class="text-sm font-medium text-text-primary">No usage data yet</p>
+      <p class="text-xs text-text-secondary max-w-xs">
+        Start using the workspace to see your usage metrics here.
+      </p>
+    </div>
+
+    <div v-else class="space-y-4">
+      <div v-for="(item, index) in currentPackage?.features" :key="index">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex flex-col">
+            <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
+            <span class="text-xs font-medium text-text-secondary">{{ item.description }}</span>
           </div>
-          <div class="text-right" v-if="currentPackage?.package?.name !== 'Free'">
-            <p class="text-2xl font-bold text-text-primary">
-              {{ currentPackage?.package?.currencySymbol + currentPackage?.package?.amount }}
-            </p>
-            <p class="text-xs text-text-secondary">
-              per {{ currentPackage?.interval || 'month' }}
-            </p>
-          </div>
+          <span class="text-sm text-text-secondary">
+            {{ item?.usage.current }} {{ item?.usage.unit }} /
+            {{ item.limits.limit }} {{ item?.limits?.unit }}
+          </span>
         </div>
-
-        <p class="text-sm text-text-secondary mb-4">
-          Next billing date:
-          {{ formatDate(currentPackage?.renewsAt) + `, ${extractYear(currentPackage?.renewsAt)}` }}
-        </p>
-
-        <h3 class="text-lg font-semibold text-text-primary mb-4">Usage & Limits</h3>
-
-        <!-- ── USAGE EMPTY STATE ── -->
-        <div
-          v-if="!currentPackage?.features?.length"
-          class="flex flex-col items-center text-center gap-2 py-8 rounded-xl border border-dashed border-border bg-bg-card"
-        >
-          <i class="fa-solid fa-chart-simple text-2xl text-text-secondary opacity-40"></i>
-          <p class="text-sm font-medium text-text-primary">No usage data yet</p>
-          <p class="text-xs text-text-secondary max-w-xs">
-            Start using the workspace to see your usage metrics here.
-          </p>
-        </div>
-
-        <div v-else class="space-y-4">
-          <div v-for="(item, index) in currentPackage?.features" :key="index">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex flex-col">
-                <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
-                <span class="text-xs font-medium text-text-secondary">{{ item.description }}</span>
-              </div>
-              <span class="text-sm text-text-secondary">
-                {{ item?.usage.current }} {{ item?.usage.unit }} /
-                {{ item.limits.limit }} {{ item?.limits?.unit }}
-              </span>
-            </div>
-            <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
-              <div
-                class="h-full bg-accent rounded-full transition-all"
-                :style="{ width: item?.usage.percentage + '%' }"
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── UPGRADE PLANS EMPTY STATE ── -->
-      <div
-        v-if="!currentPackage?.nextPackages?.length"
-        class="flex flex-col items-center text-center gap-3 py-16 border-t border-border"
-      >
-        <i class="fa-solid fa-rocket text-3xl text-text-secondary opacity-30"></i>
-        <p class="text-base font-semibold text-text-primary">No upgrade plans available</p>
-        <p class="text-sm text-text-secondary max-w-xs">
-          You're already on our top tier, or plans aren't available in your region yet.
-          Check back soon or reach out to support.
-        </p>
-      </div>
-
-      <!-- Available Plans Section -->
-      <div v-else class="space-y-6 pt-6 border-t border-border">
-        <div class="text-center space-y-4">
-          <h3 class="text-2xl font-bold text-text-primary">Upgrade your plan</h3>
-          <p class="text-text-secondary max-w-md mx-auto">
-            Choose the plan that best fits your team's needs. Save 20% by switching to yearly billing.
-          </p>
-
-          <div class="flex flex-col items-center gap-4 mt-6">
-            <div class="inline-flex p-1 bg-bg-body border border-border rounded-xl">
-              <button
-                v-for="option in intervalOptions"
-                :key="option.value"
-                @click="selectedInterval = option.value"
-                class="px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                :class="selectedInterval === option.value
-                  ? 'bg-accent text-white shadow-md'
-                  : 'text-text-secondary hover:text-text-primary'"
-              >
-                {{ option.label }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="h-2 w-full bg-border/60 rounded-full overflow-hidden">
           <div
-            v-for="nextPackage in currentPackage?.nextPackages"
-            :key="nextPackage.id"
-            class="bg-bg-body rounded-2xl border border-border overflow-hidden flex flex-col transition-all duration-300 hover:border-accent hover:shadow-xl group"
+            class="h-full bg-accent rounded-full transition-all"
+            :style="{ width: item?.usage.percentage + '%' }"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ALL PLANS IN ONE ROW ── -->
+  <div class="space-y-6 pt-6 border-t border-border">
+    <div class="text-center space-y-4">
+      <h3 class="text-2xl font-bold text-text-primary">Your Plans</h3>
+      <p class="text-text-secondary max-w-md mx-auto">
+        Choose the plan that best fits your team's needs. Save 20% by switching to yearly billing.
+      </p>
+
+      <div class="flex flex-col items-center gap-4 mt-6">
+        <div class="inline-flex p-1 bg-bg-body border border-border rounded-xl">
+          <button
+            v-for="option in intervalOptions"
+            :key="option.value"
+            @click="selectedInterval = option.value"
+            class="px-6 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+            :class="selectedInterval === option.value
+              ? 'bg-accent text-white shadow-md'
+              : 'text-text-secondary hover:text-text-primary'"
           >
-            <div class="p-6 border-b border-border bg-gradient-to-br from-bg-body to-bg-card">
-              <div class="flex items-center justify-between mb-2">
-                <span class="px-3 py-1 bg-accent/10 text-accent text-xs font-bold uppercase tracking-wider rounded-full">
-                  {{ nextPackage.name }}
-                </span>
-              </div>
-              <div class="flex items-center gap-2 mt-4">
-                <span class="text-2xl font-bold text-text-primary">
-                  {{ getPriceInfo(nextPackage, selectedInterval).currencySymbol }}{{ getPriceInfo(nextPackage, selectedInterval).amount }}
-                </span>
-                <span
-                  v-if="(selectedInterval === 'month'
-                    ? getPriceInfo(nextPackage, 'month').originalAmount
-                    : getPriceInfo(nextPackage, 'year').originalAmount) >
-                    getPriceInfo(nextPackage, selectedInterval).amount"
-                  class="text-text-primary/50 line-through text-lg"
-                >
-                  {{ getPriceInfo(nextPackage, selectedInterval).currencySymbol }}{{
-                    selectedInterval === 'month'
-                      ? getPriceInfo(nextPackage, 'month').originalAmount
-                      : getPriceInfo(nextPackage, 'year').originalAmount
-                  }}
-                </span>
-                <span class="text-text-secondary">/ {{ selectedInterval === 'month' ? 'mo' : 'yr' }}</span>
-              </div>
-              <p v-if="selectedInterval === 'year'" class="text-xs text-green-500 font-medium mt-1">
-                Save {{ getPriceInfo(nextPackage, 'year').currencySymbol }}{{ Number(getPriceInfo(nextPackage, 'year').originalAmount) - Number(getPriceInfo(nextPackage, 'year').amount) }} per year
-              </p>
-              <p v-if="selectedInterval === 'month'" class="text-xs text-green-500 font-medium mt-1">
-                Save {{ getPriceInfo(nextPackage, 'month')?.trialInfo }}
-              </p>
-              <p class="text-sm text-text-secondary mt-4 line-clamp-2">{{ nextPackage.description }}</p>
-            </div>
+            {{ option.label }}
+          </button>
+        </div>
+      </div>
+    </div>
 
-            <div class="p-6 flex-1 bg-bg-body/50">
-              <p class="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4">What's included</p>
-              <ul class="space-y-3">
-                <li
-                  v-for="(feature, index) in nextPackage?.features"
-                  :key="index"
-                  class="flex items-start gap-3 text-sm text-text-primary"
-                >
-                  <i class="fa-solid fa-circle-check text-accent mt-0.5 text-base"></i>
-                  <span class="font-medium">{{ formatFeature(feature) }}</span>
-                </li>
-              </ul>
-            </div>
+    <!-- No upgrade plans empty state -->
+    <div
+      v-if="!currentPackage?.nextPackages?.length"
+      class="flex flex-col items-center text-center gap-3 py-16"
+    >
+      <i class="fa-solid fa-rocket text-3xl text-text-secondary opacity-30"></i>
+      <p class="text-base font-semibold text-text-primary">No upgrade plans available</p>
+      <p class="text-sm text-text-secondary max-w-xs">
+        You're already on our top tier, or plans aren't available in your region yet.
+        Check back soon or reach out to support.
+      </p>
+    </div>
 
-            <div class="p-6 bg-bg-body border-t border-border">
-              <Button
-                variant="primary"
-                class="w-full !py-3 font-bold text-base"
-                @click="pay(nextPackage)"
-                :disabled="isUpgrading && upgradingPackageId === nextPackage.id"
-              >
-                <i v-if="isUpgrading && upgradingPackageId === nextPackage.id" class="fa-solid fa-spinner fa-spin mr-2"></i>
-                {{ isUpgrading && upgradingPackageId === nextPackage.id ? 'Upgrading…' : `Upgrade to ${nextPackage.name}` }}
-              </Button>
-            </div>
+    <div
+      v-else
+      class="grid grid-cols-1 gap-6"
+      :class="currentPackage?.nextPackages?.length === 1 ? 'md:grid-cols-2' : 'md:grid-cols-3'"
+    >
+
+      <!-- ── CURRENT PLAN CARD ── -->
+      <div class="relative bg-bg-body rounded-2xl border-2 border-accent overflow-hidden flex flex-col shadow-lg">
+        <!-- Active badge -->
+        <div class="absolute top-4 right-4">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-accent text-white text-[11px] font-bold uppercase tracking-wider rounded-full shadow-sm">
+            <span class="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse"></span>
+            Current Plan
+          </span>
+        </div>
+
+        <div class="p-6 border-b border-border bg-gradient-to-br from-accent/5 to-bg-card">
+          <span class="px-3 py-1 bg-accent/10 text-accent text-xs font-bold uppercase tracking-wider rounded-full">
+            {{ currentPackage?.package?.name }}
+          </span>
+          <div class="flex items-end gap-2 mt-4">
+            <span class="text-2xl font-bold text-text-primary">
+              {{ currentPackage?.package?.name === 'Free'
+                  ? 'Free'
+                  : (currentPackage?.package?.currencySymbol + currentPackage?.package?.amount) }}
+            </span>
+            <span v-if="currentPackage?.package?.name !== 'Free'" class="text-text-secondary mb-0.5">
+              / {{ currentPackage?.interval || 'month' }}
+            </span>
           </div>
+          <p class="text-sm text-text-secondary mt-1">
+            {{ currentPackage?.package?.name === 'Free' ? 'Forever free' : (currentPackage?.interval === 'year' ? 'Yearly billing' : 'Monthly billing') }}
+          </p>
+          <p class="text-xs text-text-secondary mt-3">
+            Next billing: {{ formatDate(currentPackage?.renewsAt) }}, {{ extractYear(currentPackage?.renewsAt) }}
+          </p>
+        </div>
+
+        <div class="p-6 flex-1 bg-bg-body/50">
+          <p class="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4">What's included</p>
+          <ul class="space-y-3">
+  <li
+    v-for="(feature, index) in currentPackage?.features"
+    :key="index"
+    class="flex items-start gap-3 text-sm text-text-primary"
+  >
+    <i class="fa-solid fa-circle-check text-accent mt-0.5 text-base"></i>
+    <span class="font-medium">{{ formatCurrentFeature(feature) }}</span>
+  </li>
+</ul>
+        </div>
+
+        <div class="p-6 bg-bg-body border-t border-border">
+          <div class="w-full py-3 rounded-xl border-2 border-accent/30 bg-accent/5 text-accent text-sm font-bold text-center">
+            ✓ Active Plan
+          </div>
+        </div>
+      </div>
+
+      <!-- ── UPGRADE PLAN CARDS ── -->
+      <div
+        v-for="nextPackage in currentPackage?.nextPackages"
+        :key="nextPackage.id"
+        class="bg-bg-body rounded-2xl border border-border overflow-hidden flex flex-col transition-all duration-300 hover:border-accent hover:shadow-xl group"
+      >
+        <div class="p-6 border-b border-border bg-gradient-to-br from-bg-body to-bg-card">
+          <div class="flex items-center justify-between mb-2">
+            <span class="px-3 py-1 bg-accent/10 text-accent text-xs font-bold uppercase tracking-wider rounded-full">
+              {{ nextPackage.name }}
+            </span>
+          </div>
+          <div class="flex items-center gap-2 mt-4">
+            <span class="text-2xl font-bold text-text-primary">
+              {{ getPriceInfo(nextPackage, selectedInterval).currencySymbol }}{{ getPriceInfo(nextPackage, selectedInterval).amount }}
+            </span>
+            <span
+              v-if="(selectedInterval === 'month'
+                ? getPriceInfo(nextPackage, 'month').originalAmount
+                : getPriceInfo(nextPackage, 'year').originalAmount) >
+                getPriceInfo(nextPackage, selectedInterval).amount"
+              class="text-text-primary/50 line-through text-lg"
+            >
+              {{ getPriceInfo(nextPackage, selectedInterval).currencySymbol }}{{
+                selectedInterval === 'month'
+                  ? getPriceInfo(nextPackage, 'month').originalAmount
+                  : getPriceInfo(nextPackage, 'year').originalAmount
+              }}
+            </span>
+            <span class="text-text-secondary">/ {{ selectedInterval === 'month' ? 'mo' : 'yr' }}</span>
+          </div>
+          <p v-if="selectedInterval === 'year'" class="text-xs text-green-500 font-medium mt-1">
+            Save {{ getPriceInfo(nextPackage, 'year').currencySymbol }}{{ Number(getPriceInfo(nextPackage, 'year').originalAmount) - Number(getPriceInfo(nextPackage, 'year').amount) }} per year
+          </p>
+          <p v-if="selectedInterval === 'month'" class="text-xs text-green-500 font-medium mt-1">
+            Save {{ getPriceInfo(nextPackage, 'month')?.trialInfo }}
+          </p>
+          <p class="text-sm text-text-secondary mt-4 line-clamp-2">{{ nextPackage.description }}</p>
+        </div>
+
+        <div class="p-6 flex-1 bg-bg-body/50">
+          <p class="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4">What's included</p>
+          <ul class="space-y-3">
+            <li
+              v-for="(feature, index) in nextPackage?.features"
+              :key="index"
+              class="flex items-start gap-3 text-sm text-text-primary"
+            >
+              <i class="fa-solid fa-circle-check text-accent mt-0.5 text-base"></i>
+              <span class="font-medium">{{ formatFeature(feature) }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="p-6 bg-bg-body border-t border-border">
+          <Button
+            variant="primary"
+            class="w-full !py-3 font-bold text-base"
+            @click="pay(nextPackage)"
+            :disabled="isUpgrading && upgradingPackageId === nextPackage.id"
+          >
+            <i v-if="isUpgrading && upgradingPackageId === nextPackage.id" class="fa-solid fa-spinner fa-spin mr-2"></i>
+            {{ isUpgrading && upgradingPackageId === nextPackage.id ? 'Upgrading…' : `Upgrade to ${nextPackage.name}` }}
+          </Button>
         </div>
       </div>
 
     </div>
+  </div>
+
+</div>
   </div>
 </template>
 
@@ -445,5 +476,16 @@ function pay(p: any) {
     packageId: id,
     interval: selectedInterval.value,
   });
+}
+const formatCurrentFeature = (feature: any) => {
+  const limits = feature?.limits
+  if (!limits) return 'Included feature'
+
+  if (limits.maxWorkspaces)      return `${limits.maxWorkspaces} Workspaces`
+  if (limits.storageGB)          return `${limits.storageGB} GB Storage`
+  if (limits.requestsPerMonth)   return `${limits.requestsPerMonth.toLocaleString()} Tokens`
+  if (limits.maxTeamMembers)     return `${limits.maxTeamMembers} Team Members`
+
+  return feature.description || 'Included feature'
 }
 </script>

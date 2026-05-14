@@ -23,11 +23,20 @@
         <p class="text-sm font-medium text-text-secondary">You can select multiple options.</p>
       </div>
       <div class="flex flex-wrap gap-3">
-        <button v-for="module in teamModules" :key="module.id" type="button" @click="toggleModule(module.id)"
-          class="px-4 py-2 rounded-full border text-sm transition-all"
-          :class="selectedModules.includes(module.id) ? 'bg-accent/30 border-accent text-text-primary' : 'border-border text-text-secondary'">
-          {{ module.label }}
-        </button>
+        <button
+  v-for="module in teamModules"
+  :key="module.id"
+  type="button"
+  @click="toggleModule(module.id)"
+  class="px-4 py-2 rounded-full border cursor-pointer text-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-95"
+  :class="
+    selectedModules.includes(module.id)
+      ? 'bg-accent/30 border-accent text-text-primary shadow-lg shadow-accent/10'
+      : 'border-border text-text-secondary hover:border-accent/40 hover:bg-accent/5 hover:text-text-primary'
+  "
+>
+  {{ module.label }}
+</button>
       </div>
       <p v-if="errors.selectedModules" class="text-xs text-red-500">{{ errors.selectedModules }}</p>
     </div>
@@ -39,12 +48,21 @@
         <p class="text-sm text-text-secondary">This helps us tailor your workspace experience.</p>
       </div>
       <div class="grid grid-cols-2 gap-4">
-        <button v-for="item in teamWorkTypeOptions" :key="item.id" @click="workType = item.id" type="button"
-          class="flex items-center gap-3 p-4 rounded-xl border transition-all text-left"
-          :class="workType === item.id ? 'bg-accent/30 border-accent' : 'border-border'">
-          <FontAwesomeIcon :icon="['fas', item.icon]" class="text-lg text-text-primary" />
-          <span class="text-sm font-medium text-text-primary">{{ item.label }}</span>
-        </button>
+        <button
+  v-for="item in teamWorkTypeOptions"
+  :key="item.id"
+  @click="workType = item.id"
+  type="button"
+  class="flex items-center gap-3 p-4 cursor-pointer rounded-xl border transition-all duration-200 text-left hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.98]"
+  :class="
+    workType === item.id
+      ? 'bg-accent/30 border-accent shadow-lg shadow-accent/10'
+      : 'border-border hover:border-accent/40 hover:bg-accent/5'
+  "
+>
+  <FontAwesomeIcon :icon="['fas', item.icon]" class="text-lg text-text-primary" />
+  <span class="text-sm font-medium text-text-primary">{{ item.label }}</span>
+</button>
       </div>
       <p v-if="errors.workType" class="text-xs text-red-500 mt-2">{{ errors.workType }}</p>
     </div>
@@ -63,12 +81,13 @@
           </p>
         </div>
 
-        <!-- Site name input (hidden when custom domain active) -->
+        <!-- Site name input -->
         <div v-if="!hasCustomDomain" class="space-y-1.5">
           <label class="text-[11px] font-semibold uppercase tracking-wider block" style="color: var(--text-secondary);">
             Site name
           </label>
-          <div class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-all duration-200"
+          <div
+            class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-all duration-200"
             :class="{
               'ring-[3px] ring-(--accent)/[0.14]': isFocused && isSlugAvailable !== false,
               'ring-[3px] ring-red-500/10': isFocused && isSlugAvailable === false,
@@ -78,30 +97,45 @@
                 : isFocused && isSlugAvailable === false ? '#e55050'
                 : 'var(--border-input)',
               background: 'var(--bg-input)',
-            }">
-            <input v-model="siteName" type="text" placeholder="e.g. acme, my-team"
+            }"
+          >
+            <input
+              v-model="siteName"
+              type="text"
+              placeholder="e.g. acme, my-team"
               class="flex-1 min-w-0 px-3.5 py-2.5 text-[15px] outline-none bg-transparent"
               style="color: var(--text-primary);"
-              @focus="isFocused = true" @blur="isFocused = false" />
+              @focus="isFocused = true"
+              @blur="isFocused = false"
+            />
             <div class="flex items-center gap-2 px-3.5 border-l"
               style="background: var(--bg-surface); border-color: var(--border);">
               <span class="text-[13px] font-semibold whitespace-nowrap" style="color: var(--text-secondary);">.orchit.ai</span>
-              <span v-if="isCheckingSlug"
+              <span
+                v-if="isCheckingSlug"
                 class="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0"
-                style="border-color: var(--border); border-top-color: var(--accent);" />
+                style="border-color: var(--border); border-top-color: var(--accent);"
+              />
               <Transition
                 enter-active-class="transition duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
                 enter-from-class="opacity-0 scale-50" enter-to-class="opacity-100 scale-100"
                 leave-active-class="transition duration-150 ease-in"
-                leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-50">
-                <span v-if="isSlugAvailable === true && !isCheckingSlug"
-                  class="flex items-center justify-center w-5 h-5 rounded-full shrink-0" style="background: #1d9e75;">
+                leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-50"
+              >
+                <span
+                  v-if="isSlugAvailable === true && !isCheckingSlug"
+                  class="flex items-center justify-center w-5 h-5 rounded-full shrink-0"
+                  style="background: #1d9e75;"
+                >
                   <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
                     <path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 </span>
-                <span v-else-if="isSlugAvailable === false && !isCheckingSlug"
-                  class="flex items-center justify-center w-5 h-5 rounded-full shrink-0" style="background: #e55050;">
+                <span
+                  v-else-if="isSlugAvailable === false && !isCheckingSlug"
+                  class="flex items-center justify-center w-5 h-5 rounded-full shrink-0"
+                  style="background: #e55050;"
+                >
                   <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
                     <path d="M3 3l4 4M7 3l-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" />
                   </svg>
@@ -121,26 +155,33 @@
         </div>
 
         <!-- URL preview -->
-        <div v-if="siteSlug && isSlugAvailable === true && !hasCustomDomain"
+        <div
+          v-if="siteSlug && isSlugAvailable === true && !hasCustomDomain"
           class="flex items-center gap-2 rounded-lg px-3.5 py-2.5 border"
-          style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);">
+          style="background: var(--bg-lavender); border-color: rgba(125,104,200,0.18);"
+        >
           <div class="w-2 h-2 rounded-full shrink-0" style="background: var(--accent); opacity: 0.7;" />
           <span class="text-[13px] font-semibold break-all" style="color: var(--accent);">
             https://{{ siteSlug }}.orchit.ai
           </span>
         </div>
 
-        <!-- Suggestions when taken -->
-        <Transition enter-active-class="transition duration-200 ease-out"
-          enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0">
+        <!-- Suggestions when slug taken -->
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="opacity-0 -translate-y-2" enter-to-class="opacity-100 translate-y-0"
+        >
           <div v-if="isSlugAvailable === false && siteSlug && !isCheckingSlug && !hasCustomDomain" class="space-y-2">
             <p class="text-xs font-semibold uppercase tracking-wider" style="color: var(--text-secondary);">Try one of these</p>
             <div class="flex flex-wrap gap-2">
-              <button v-for="s in [`${siteSlug}-app`, `${siteSlug}-hq`, `${siteSlug}-team`]" :key="s"
+              <button
+                v-for="s in [`${siteSlug}-app`, `${siteSlug}-hq`, `${siteSlug}-team`]"
+                :key="s"
                 type="button"
                 class="px-3 py-1.5 rounded-full border text-xs font-medium transition-all duration-150 hover:-translate-y-px"
                 style="border-color: var(--border); color: var(--text-secondary); background: var(--bg-card);"
-                @click="siteName = s">
+                @click="siteName = s"
+              >
                 {{ s }}
               </button>
             </div>
@@ -172,7 +213,8 @@
               borderColor: hasCustomDomain ? 'color-mix(in srgb, var(--accent) 35%, transparent)' : 'var(--border)',
             }"
           >
-            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="none" :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-secondary)' }">
+            <svg class="w-5 h-5" viewBox="0 0 20 20" fill="none"
+              :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-secondary)' }">
               <circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.5"/>
               <path d="M10 2.5c0 0-3 3.5-3 7.5s3 7.5 3 7.5M10 2.5c0 0 3 3.5 3 7.5s-3 7.5-3 7.5M2.5 10h15"
                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -184,8 +226,10 @@
                 :style="{ color: hasCustomDomain ? 'var(--accent)' : 'var(--text-primary)' }">
                 Use a custom domain
               </p>
-              <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0"
-                style="background: color-mix(in srgb, #1d9e75 12%, transparent); color: #1d9e75;">
+              <span
+                class="text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide shrink-0"
+                style="background: color-mix(in srgb, #1d9e75 12%, transparent); color: #1d9e75;"
+              >
                 Teams
               </span>
             </div>
@@ -213,8 +257,12 @@
           leave-to-class="opacity-0 -translate-y-2 max-h-0"
         >
           <div v-if="hasCustomDomain" class="space-y-4 overflow-hidden">
-            <div class="flex items-start gap-3 rounded-lg px-4 py-3 border"
-              style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 20%, transparent);">
+
+            <!-- Info banner -->
+            <div
+              class="flex items-start gap-3 rounded-lg px-4 py-3 border"
+              style="background: color-mix(in srgb, var(--accent) 6%, transparent); border-color: color-mix(in srgb, var(--accent) 20%, transparent);"
+            >
               <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: var(--accent);">
                 <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
                 <path d="M8 7v5M8 5.5v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
@@ -234,13 +282,16 @@
                 <span class="font-semibold" style="color: var(--text-primary);">.io</span>, etc.
               </p>
 
+              <!-- DNS input -->
               <div
                 class="flex items-stretch rounded-[10px] overflow-hidden border-[1.5px] transition-all duration-200"
                 :style="{
-                  borderColor: (dnsError || dnsValidationError) && !isCheckingDns ? '#e55050'
-                             : isDnsAvailable === false && !isCheckingDns ? '#e55050'
-                             : isDnsAvailable === true  && !isCheckingDns ? '#1d9e75'
-                             : 'var(--border-input)',
+                  borderColor:
+                    (dnsError || dnsValidationError) && !isCheckingDns ? '#e55050'
+                    : isDnsAvailable === false && !isCheckingDns ? '#e55050'
+                    : isDnsAvailable === 'not_registered' && !isCheckingDns ? '#e55050'
+                    : isDnsAvailable === true && !isCheckingDns ? '#1d9e75'
+                    : 'var(--border-input)',
                   background: 'var(--bg-input)',
                 }"
               >
@@ -254,22 +305,31 @@
                 />
                 <div class="flex items-center gap-2 px-3 border-l shrink-0"
                   style="background: var(--bg-surface); border-color: var(--border);">
-                  <span v-if="isCheckingDns"
+                  <span
+                    v-if="isCheckingDns"
                     class="w-3.5 h-3.5 rounded-full border-2 border-t-transparent animate-spin shrink-0"
-                    style="border-color: var(--border); border-top-color: var(--accent);" />
+                    style="border-color: var(--border); border-top-color: var(--accent);"
+                  />
                   <Transition
                     enter-active-class="transition duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]"
                     enter-from-class="opacity-0 scale-50" enter-to-class="opacity-100 scale-100"
                     leave-active-class="transition duration-150 ease-in"
-                    leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-50">
-                    <span v-if="isDnsAvailable === true && !isCheckingDns && !dnsError && !dnsValidationError"
-                      class="flex items-center justify-center w-5 h-5 rounded-full shrink-0" style="background: #1d9e75;">
+                    leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-50"
+                  >
+                    <span
+                      v-if="isDnsAvailable === true && !isCheckingDns && !dnsError && !dnsValidationError"
+                      class="flex items-center justify-center w-5 h-5 rounded-full shrink-0"
+                      style="background: #1d9e75;"
+                    >
                       <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
                         <path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                       </svg>
                     </span>
-                    <span v-else-if="(isDnsAvailable === false || dnsError || dnsValidationError) && !isCheckingDns"
-                      class="flex items-center justify-center w-5 h-5 rounded-full shrink-0" style="background: #e55050;">
+                    <span
+                      v-else-if="(isDnsAvailable === false || isDnsAvailable === 'not_registered' || dnsError || dnsValidationError) && !isCheckingDns"
+                      class="flex items-center justify-center w-5 h-5 rounded-full shrink-0"
+                      style="background: #e55050;"
+                    >
                       <svg class="w-2.5 h-2.5" viewBox="0 0 10 10" fill="none">
                         <path d="M3 3l4 4M7 3l-4 4" stroke="white" stroke-width="1.6" stroke-linecap="round" />
                       </svg>
@@ -278,72 +338,105 @@
                 </div>
               </div>
 
+              <!-- Status messages — priority order -->
+              <!-- 1. Format validation error -->
               <p v-if="dnsValidationError" class="text-xs flex items-center gap-1" style="color: #e55050;">
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none">
                   <path d="M3 3l4 4M7 3l-4 4" stroke="#e55050" stroke-width="1.6" stroke-linecap="round"/>
                 </svg>
                 {{ dnsValidationError }}
               </p>
-              <p v-else-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">Checking DNS availability…</p>
+
+              <!-- 2. Checking -->
+              <p v-else-if="isCheckingDns" class="text-xs" style="color: var(--text-secondary);">
+                Checking DNS availability…
+              </p>
+
+              <!-- 3. API/network error -->
               <p v-else-if="dnsError" class="text-xs flex items-center gap-1" style="color: #e55050;">
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none">
                   <path d="M3 3l4 4M7 3l-4 4" stroke="#e55050" stroke-width="1.6" stroke-linecap="round"/>
                 </svg>
                 {{ dnsError }}
               </p>
+
+              <!-- 4. Active and ready -->
               <p
-                  v-else-if="isDnsAvailable === true && dnsInput.trim()"
-                  class="text-xs flex items-center gap-1"
-                  style="color: #1d9e75;"
-                >
+                v-else-if="isDnsAvailable === true && dnsInput.trim()"
+                class="text-xs flex items-center gap-1"
+                style="color: #1d9e75;"
+              >
                 <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none">
                   <path d="M2 5l2.5 2.5L8 3" stroke="#1d9e75" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                <span class="font-medium">{{ dnsInput.trim() }}</span>
-                  &nbsp;is active and connected — great choice!
+                <span class="font-medium">{{ dnsInput.trim() }}</span>&nbsp;is active and connected — great choice!
               </p>
 
-              <!-- Domain taken: registrar links -->
-              <div v-if="isDnsAvailable === false && dnsInput.trim() && !isCheckingDns" class="space-y-3">
-                <div class="flex items-start gap-3 rounded-lg px-4 py-3 border"
-                  style="background: color-mix(in srgb, #e55050 6%, transparent); border-color: color-mix(in srgb, #e55050 25%, transparent);">
-                  <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #e55050;">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
-                    <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                  </svg>
-                  <div>
-                    <p class="text-xs font-semibold mb-0.5" style="color: #e55050;">Domain already registered</p>
-                    <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
-                      <span class="font-medium" style="color: var(--text-primary);">{{ dnsInput.trim() }}</span>
-                      is already taken. Try a different domain or purchase one from a registrar below.
-                    </p>
-                  </div>
-                </div>
-                <div>
-                  <p class="text-[11px] font-semibold uppercase tracking-wider mb-2" style="color: var(--text-secondary);">
-                    Purchase a domain from
-                  </p>
-                  <div class="flex flex-wrap gap-2">
-                    <a v-for="registrar in domainRegistrars" :key="registrar.name"
-                      :href="`${registrar.url}${encodeURIComponent(dnsInput.trim())}`"
-                      target="_blank" rel="noopener noreferrer"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all duration-150 hover:-translate-y-px hover:shadow-sm"
-                      style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary);">
-                      <span>{{ registrar.name }}</span>
-                      <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                    </a>
-                  </div>
-                  <p class="text-[11px] mt-2" style="color: var(--text-secondary);">
-                    After purchasing, come back and enter your domain here.
-                  </p>
-                </div>
-              </div>
+              <!-- 5. Registered but DNS inactive -->
+              <p
+                v-else-if="isDnsAvailable === false && dnsInput.trim() && !isCheckingDns"
+                class="text-xs flex items-center gap-1"
+                style="color: #e55050;"
+              >
+                <svg class="w-3 h-3 shrink-0" viewBox="0 0 10 10" fill="none">
+                  <path d="M3 3l4 4M7 3l-4 4" stroke="#e55050" stroke-width="1.6" stroke-linecap="round"/>
+                </svg>
+                This domain is registered but DNS is not active yet. Check back after DNS propagates.
+              </p>
 
+              <!-- 6. NOT_REGISTERED — purchase prompt -->
+              <!-- 6. NOT_REGISTERED — purchase prompt -->
+<div
+  v-else-if="isDnsAvailable === 'NOT_REGISTERED' && dnsInput.trim() && !isCheckingDns"
+  class="space-y-3"
+>
+  <div
+    class="flex items-start gap-3 rounded-lg px-4 py-3 border"
+    style="background: color-mix(in srgb, #f59e0b 8%, transparent); border-color: color-mix(in srgb, #f59e0b 25%, transparent);"
+  >
+    <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 16 16" fill="none" style="color: #d97706;">
+      <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.4"/>
+      <path d="M8 5v4M8 11v.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <p class="text-xs font-semibold mb-0.5" style="color: #d97706;">Domain not registered</p>
+      <p class="text-xs leading-relaxed" style="color: var(--text-secondary);">
+        <span class="font-medium" style="color: var(--text-primary);">{{ dnsInput.trim() }}</span>
+        is not registered yet. Purchase it from a registrar below, then come back and enter it here.
+      </p>
+    </div>
+  </div>
+  <div>
+    <p class="text-[11px] font-semibold uppercase tracking-wider mb-2" style="color: var(--text-secondary);">
+      Purchase a domain from
+    </p>
+    <div class="flex flex-wrap gap-2">
+      <a
+        v-for="registrar in domainRegistrars"
+        :key="registrar.name"
+        :href="`${registrar.url}${encodeURIComponent(dnsInput.trim())}`"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-xs font-medium transition-all duration-150 hover:-translate-y-px hover:shadow-sm"
+        style="border-color: var(--border); background: var(--bg-card); color: var(--text-primary); text-decoration: none;"
+      >
+        <span>{{ registrar.name }}</span>
+        <svg class="w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none">
+          <path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+    </div>
+    <p class="text-[11px] mt-2" style="color: var(--text-secondary);">
+      After purchasing, come back and enter your domain here.
+    </p>
+  </div>
+</div>
+
+              <!-- 7. Empty hint -->
               <p v-else-if="!dnsInput.trim()" class="text-xs" style="color: var(--text-secondary);">
                 We'll verify DNS availability before proceeding.
               </p>
+
             </div>
           </div>
         </Transition>
@@ -362,15 +455,24 @@
         <p class="text-sm text-text-secondary">This helps us improve our onboarding experience.</p>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <button v-for="item in referralOptions" :key="item.id" @click="toggleReferral(item.id)" type="button"
-          class="px-4 py-3 rounded-xl border text-sm font-medium transition"
-          :class="referralSources.includes(item.id) ? 'bg-accent/30 border-accent' : 'border-border'">
-          {{ item.label }}
-        </button>
+        <button
+  v-for="item in referralOptions"
+  :key="item.id"
+  @click="toggleReferral(item.id)"
+  type="button"
+  class="px-4 py-3 rounded-xl border cursor-pointer text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98]"
+  :class="
+    referralSources.includes(item.id)
+      ? 'bg-accent/30 border-accent shadow-lg shadow-accent/10 text-text-primary'
+      : 'border-border text-text-secondary hover:border-accent/40 hover:bg-accent/5 hover:text-text-primary'
+  "
+>
+  {{ item.label }}
+</button>
       </div>
     </div>
 
-    <!-- Step 8: Super Admin (only when custom domain verified) -->
+    <!-- Step 8: Super Admin -->
     <div v-if="activeStep === 8" class="space-y-6">
       <div class="space-y-2">
         <h2 class="text-[24px] lg:text-[32px] font-medium text-text-primary">Create Super Admin</h2>
@@ -531,12 +633,16 @@
     </div>
 
     <!-- Company slug conflict modal -->
-    <Transition enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0 scale-95"
+    <Transition
+      enter-active-class="transition duration-150 ease-out" enter-from-class="opacity-0 scale-95"
       enter-to-class="opacity-100 scale-100" leave-active-class="transition duration-100 ease-in"
-      leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95">
-      <div v-if="companySlugError"
+      leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95"
+    >
+      <div
+        v-if="companySlugError"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm px-4"
-        @click.self="companySlugError = null">
+        @click.self="companySlugError = null"
+      >
         <div class="w-full max-w-md rounded-2xl bg-bg-dropdown p-6 shadow-xl ring-1 ring-black/5">
           <div class="mb-4 flex h-13 w-13 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
             <i class="fa-solid fa-triangle-exclamation text-red-500 text-lg"></i>
@@ -544,14 +650,18 @@
           <h3 class="text-md font-semibold text-text-primary mb-1">Company name already taken</h3>
           <p class="text-sm text-text-secondary leading-relaxed mb-5">{{ companySlugError }}</p>
           <div class="flex gap-2">
-            <button type="button"
+            <button
+              type="button"
               class="flex-1 rounded-lg border border-black/10 bg-bg-dropdown px-3 py-2.5 text-sm font-medium text-text-secondary hover:border-black/20 hover:text-text-primary transition cursor-pointer"
-              @click="companySlugError = null">
+              @click="companySlugError = null"
+            >
               Dismiss
             </button>
-            <button type="button"
+            <button
+              type="button"
               class="flex-[1.5] rounded-lg bg-accent px-3 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover transition cursor-pointer"
-              @click="() => { companySlugError = null; activeStep = 2 }">
+              @click="() => { companySlugError = null; activeStep = 2 }"
+            >
               Change company name
             </button>
           </div>
@@ -561,7 +671,11 @@
 
     <!-- Navigation -->
     <div v-if="activeStep !== 6" class="flex justify-between items-center pt-4">
-      <Button v-if="activeStep > 2 && activeStep !== 8 && activeStep !== 7" variant="secondary" size="md" type="button" @click="goBack">
+      <Button
+        v-if="activeStep > 2 && activeStep !== 8 && activeStep !== 7"
+        variant="secondary" size="md" type="button"
+        @click="goBack"
+      >
         <div class="flex items-center gap-1">
           <FontAwesomeIcon :icon="['fas', 'arrow-left']" /> Back
         </div>
@@ -585,11 +699,16 @@
 
       <!-- All other steps -->
       <div v-else class="ml-auto flex gap-3">
-        <Button size="md"
-          :disabled="isSiteStepBlocked || creatingProfile || updatingProfile" @click="handleContinue">
+        <Button
+          size="md"
+          :disabled="isSiteStepBlocked || creatingProfile || updatingProfile"
+          @click="handleContinue"
+        >
           <div class="flex items-center gap-2">
-            <span v-if="creatingProfile && activeStep === 5"
-              class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+            <span
+              v-if="creatingProfile && activeStep === 5"
+              class="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"
+            />
             <span>{{ activeStep === 5 ? 'Create site' : 'Continue' }}</span>
           </div>
         </Button>
@@ -599,7 +718,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { ref, computed, watch } from 'vue'
 import Button from '../../../components/ui/Button.vue'
 import BaseTextField from '../../../components/ui/BaseTextField.vue'
@@ -611,7 +730,7 @@ import { useWorkspaceStore } from '../../../stores/workspace'
 import { useAuthStore } from '../../../stores/auth'
 import { useCreateCompanyUser } from '../../../queries/useCompanyUsers'
 
-const emit = defineEmits<{ done: [] }>()
+const emit = defineEmits(['done'])
 const workspaceStore = useWorkspaceStore()
 const authStore = useAuthStore()
 const { data: rolesList } = useRolesList()
@@ -625,7 +744,7 @@ const role = ref('')
 const companySize = ref('')
 
 // ── Step 3 ────────────────────────────────────────────────────────────────────
-const selectedModules = ref<string[]>([])
+const selectedModules = ref([])
 
 // ── Step 4 ────────────────────────────────────────────────────────────────────
 const workType = ref('')
@@ -635,15 +754,15 @@ const siteName = ref('')
 const siteSlug = ref('')
 const isFocused = ref(false)
 const isCheckingSlug = ref(false)
-const isSlugAvailable = ref<boolean | null>(null)
+const isSlugAvailable = ref(null)
 
 // ── Step 5 — custom domain ────────────────────────────────────────────────────
 const hasCustomDomain = ref(false)
 const dnsInput = ref('')
 const isCheckingDns = ref(false)
-const isDnsAvailable = ref<boolean | null>(null)
-const dnsError = ref<string | null>(null)
-const dnsValidationError = ref<string | null>(null)
+const isDnsAvailable = ref(null) // true | false | 'not_registered' | null
+const dnsError = ref(null)
+const dnsValidationError = ref(null)
 
 const domainRegistrars = [
   { name: 'GoDaddy',   url: 'https://www.godaddy.com/domainsearch/find?checkAvail=1&tmskey=&domainToCheck=' },
@@ -653,7 +772,7 @@ const domainRegistrars = [
 ]
 
 // ── Step 7 ────────────────────────────────────────────────────────────────────
-const referralSources = ref<string[]>([])
+const referralSources = ref([])
 
 // ── Step 8 — super admin ──────────────────────────────────────────────────────
 const adminFullName = ref('')
@@ -669,8 +788,8 @@ const companyID = ref('')
 const isInviting = ref(false)
 const isSkipping = ref(false)
 const isCopied = ref(false)
-const companySlugError = ref<string | null>(null)
-const errors = ref<Record<string, string | undefined>>({})
+const companySlugError = ref(null)
+const errors = ref({})
 
 // ── Computed ──────────────────────────────────────────────────────────────────
 const adminEmailCustom = computed(() =>
@@ -745,14 +864,14 @@ const referralOptions = [
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function generateSlug(value: string) {
+function generateSlug(value) {
   return value.toLowerCase().trim()
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 }
 
-function toggleModule(id: string) {
+function toggleModule(id) {
   if (selectedModules.value.includes(id)) {
     selectedModules.value = selectedModules.value.filter(m => m !== id)
   } else {
@@ -761,7 +880,7 @@ function toggleModule(id: string) {
   }
 }
 
-function toggleReferral(id: string) {
+function toggleReferral(id) {
   if (referralSources.value.includes(id)) {
     referralSources.value = referralSources.value.filter(i => i !== id)
   } else {
@@ -795,7 +914,7 @@ function goBack() {
 
 // ── Validation ────────────────────────────────────────────────────────────────
 function validateCompanyStep() {
-  const next: Record<string, string> = {}
+  const next = {}
   if (!team.value.trim())    next.team        = 'Please enter your company name.'
   if (!role.value)           next.role        = 'Please select your role.'
   if (!companySize.value)    next.companySize = 'Please select your company size.'
@@ -803,8 +922,8 @@ function validateCompanyStep() {
   return Object.keys(next).length === 0
 }
 
-function validateAdminUser(): boolean {
-  const next: Record<string, string> = {}
+function validateAdminUser() {
+  const next = {}
   const usingCustomDomain = hasCustomDomain.value && isDnsAvailable.value === true
 
   if (!adminFullName.value.trim()) {
@@ -869,8 +988,8 @@ watch(companySize, (v) => { if (v          && errors.value.companySize)  errors.
 watch(workType,    (v) => { if (v          && errors.value.workType)     errors.value.workType    = undefined })
 
 const DOMAIN_RE = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,10}$/
-let dnsDebounceTimer: ReturnType<typeof setTimeout> | null = null
-
+let dnsDebounceTimer = null
+const successMessage = ref(false)
 watch(dnsInput, (val) => {
   const trimmed = val.trim()
   isDnsAvailable.value     = null
@@ -888,47 +1007,46 @@ watch(dnsInput, (val) => {
     const captured = trimmed
     try {
       const result = await workspaceStore.fetchDnsCheck(captured)
+      // If input changed while request was in flight, discard result but still stop spinner
       if (dnsInput.value.trim() !== captured) return
-            if (!result) {
-        dnsError.value = 'Invalid domain format. Please enter a valid domain (e.g. mycompany.com).'
+
+      console.log('dns response', result)
+
+      if (!result) {
+        dnsError.value       = 'Invalid domain format. Please enter a valid domain (e.g. mycompany.com).'
         isDnsAvailable.value = null
       } else {
         const isRegistered = result?.is_registered === true
-        const isActive = result?.is_active === true
-        const status = result?.status
+        const isActive     = result?.is_active     === true
+        const status       = result?.status
 
-        /**
-         * ACTIVE + REGISTERED
-         * Domain already exists and is usable
-         * Allow user to continue
-         */
         if (isRegistered && isActive && status === 'ACTIVE') {
           isDnsAvailable.value = true
-          dnsError.value = null
-        }
-
-        /**
-         * Not registered OR inactive
-         * User needs to purchase/setup domain first
-         */
-        else {
+          dnsError.value       = null
+        } else if (isRegistered && !isActive) {
           isDnsAvailable.value = false
-          dnsError.value = null
+          dnsError.value       = null
+        } else {
+          // NOT_REGISTERED
+          isDnsAvailable.value = 'NOT_REGISTERED'
+          dnsError.value       = null
+          successMessage.value = true
         }
       }
-    } catch (err: any) {
+    } catch (err) {
       if (dnsInput.value.trim() !== captured) return
       dnsError.value       = err?.response?.data?.message ?? err?.message ?? 'Could not verify domain. Please try again.'
       isDnsAvailable.value = null
     } finally {
-      if (dnsInput.value.trim() === captured) isCheckingDns.value = false
+      // Always stop the spinner — no condition here
+      isCheckingDns.value = false
     }
   }, 600)
 })
 
 // ── Mutations ─────────────────────────────────────────────────────────────────
 const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
-  onSuccess: (data: any) => {
+  onSuccess: (data) => {
     const payload = data?.data ?? data
     if (!payload || payload?.status === false) {
       const msg = payload?.message ?? ''
@@ -943,7 +1061,7 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
     localStorage.setItem('company_id', companyID.value)
     activeStep.value = 6
   },
-  onError: (error: any) => {
+  onError: (error) => {
     const msg = error?.response?.data?.message ?? error?.message ?? ''
     companySlugError.value = msg.toLowerCase().includes('slug') || msg.toLowerCase().includes('already exists')
       ? 'A company with a similar name already exists. Please try a different name.'
@@ -953,7 +1071,6 @@ const { mutate: createProfile, isPending: creatingProfile } = useCreateCompany({
 
 const { mutate: updateProfile, isPending: updatingProfile } = useUpdateCompanyProfile({
   onSuccess: async () => {
-    // Only show super admin step when custom domain is verified
     if (hasCustomDomain.value && isDnsAvailable.value === true) {
       activeStep.value = 8
     } else {
@@ -1042,7 +1159,7 @@ async function sendInvites(skip = false) {
   if (skip) isSkipping.value = true
   else      isInviting.value = true
 
-  const adminCreationSuccess = await new Promise<boolean>((resolve) => {
+  const adminCreationSuccess = await new Promise((resolve) => {
     createAdminUser(
       {
         company_id:  companyID.value,
@@ -1052,7 +1169,7 @@ async function sendInvites(skip = false) {
       },
       {
         onSuccess: () => resolve(true),
-        onError: (error: any) => {
+        onError: (error) => {
           const serverMsg = error?.response?.data?.message ?? ''
           if (hasCustomDomain.value && isDnsAvailable.value === true) {
             errors.value.adminUsername = serverMsg || 'Failed to create super admin. Please try again.'
