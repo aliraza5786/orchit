@@ -490,12 +490,6 @@ export const useWorkspaceStore = defineStore("workspace", {
       this.domainUsers = users;
       return users;
     },
-
-    /**
-     * POST /api/v1/company-domains/:id/enrol-users
-     * Enrols selected users from the domain into the company workspace.
-     * :id is the company_id.
-     */
     async enrolDomainUsers(
       companyId: string,
       userIds: string[]
