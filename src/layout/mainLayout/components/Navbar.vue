@@ -52,7 +52,7 @@
         />
 
         <RouterLink
-          v-for="link in links"
+          v-for="link in visibleLinks"
           :key="link.to"
           :to="link.to"
           custom
@@ -826,13 +826,12 @@ async function handleLogout() {
     await queryClient.cancelQueries()
     queryClient.clear()
     await new Promise((res) => setTimeout(res, 200))
-    redirectToLogin(router, '/dashboard')
+    redirectToLogin(router)  // ← no second argument, defaults to '/'
   } catch (e) {
     console.error('Logout failed', e)
-    redirectToLogin(undefined, '/dashboard')
+    redirectToLogin(undefined)
   }
 }
-
 function openAccountSettings() {
   closeMenu();
 
@@ -845,11 +844,18 @@ function openAccountSettings() {
 }
 
 // ── Nav links ──────────────────────────────────────────────────
+// Remove the static `links` array and replace with:
 const links = [
   { label: "Workspaces", to: "/dashboard", exact: true },
   { label: "My Tasks", to: "/dashboard/task" },
-  { label: "Users", to: "/dashboard/users" },
+  { label: "Users", to: "/dashboard/users", personalOnly: true }, // ← changed flag
 ];
+
+const visibleLinks = computed(() =>
+  links.filter(
+    (l) => !l.personalOnly || currentAccount.value.type === "individual"
+  )
+);
 
 // ── Sliding underline indicator ────────────────────────────────
 const linksContainerRef = ref<HTMLElement | null>(null);

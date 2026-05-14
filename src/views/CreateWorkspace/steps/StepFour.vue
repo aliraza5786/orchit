@@ -10,7 +10,6 @@
         Review your project details before creation
       </p>
     </div>
-     {{ companyId }}
     <!-- Summary Cards -->
     <div class=" flex-wrap flex md:flex-nowrap gap-4 mb-6 ">
       <!-- Project Overview -->
@@ -83,10 +82,10 @@ import {
   useCreateWorkspace,
 } from "../../../queries/useWorkspace";
 import { useRouter } from "vue-router";
-import { useCompanyId } from "../../../services/user";
 import { useWorkspaceStore } from '../../../stores/workspace';
+import { useAuthStore } from "../../../stores/auth";
 const isLoader = ref(false);
-
+const authStore = useAuthStore()
 const workspaceStore = useWorkspaceStore();
 const router = useRouter()
 const { mutate: createStep2, isPending } = useCreateLanes({
@@ -140,12 +139,11 @@ const total_resorces = computed(() => project.value.variables?.roles ? project.v
   return e.people.length + el;
 }, 0) : 0
 );
-const { data: companyId } = useCompanyId()
 function createProjectHandler() {
   createWorkspace({
-    company_id: companyId?.value?._id,
+    ...(authStore.company_id ? { company_id: authStore.company_id } : {}),
     ...project.value,
-  }); // This triggers the workspace creation process
+  });
 }
 defineExpose({
   createProjectHandler,

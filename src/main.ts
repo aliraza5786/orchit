@@ -15,12 +15,10 @@ import { createHead } from "@vueuse/head";
 import vue3GoogleLogin from "vue3-google-login";
 import vTooltip from "./directives/vTooltip";
 
-// BUG 2 FIX: Use one consistent cookie name everywhere
 const COOKIE_KEY = "auth_session";
 const maxAge = 60 * 60 * 24 * 30;
 
 const hostname = window.location.hostname;
-// const protocol = window.location.protocol;
 
 if (hostname === "streamed.space" || hostname.endsWith(".streamed.space")) {
   document.domain = "streamed.space";
@@ -44,6 +42,10 @@ function readCookie(name: string): Record<string, unknown> | null {
 function writeAuthCookie(data: Record<string, unknown>) {
   const existing = readCookie(COOKIE_KEY) || {};
   const merged = { ...existing, ...data };
+
+  // Remove keys explicitly set to null
+  Object.keys(merged).forEach(k => { if (merged[k] === null) delete merged[k] })
+
   const value = encodeURIComponent(JSON.stringify(merged));
   if (hostname === "localhost" || hostname.endsWith(".localhost")) {
     document.cookie = `${COOKIE_KEY}=${value}; path=/; max-age=${maxAge}; SameSite=Lax`;
@@ -54,16 +56,17 @@ function writeAuthCookie(data: Record<string, unknown>) {
 
 // ── Step 1: Read URL params ────────────────────────────────────────────────
 const urlParams = new URLSearchParams(window.location.search);
-const urlToken = urlParams.get("_token");
-const urlCompanyId = urlParams.get("company_id");
-const urlTheme = urlParams.get("theme");
-const encodedToken = urlParams.get("_auth");
+const urlToken      = urlParams.get("_token");
+const urlCompanyId  = urlParams.get("company_id");
+const urlTheme      = urlParams.get("theme");
+const encodedToken  = urlParams.get("_auth");
+const urlPersonalMode = urlParams.get("personal_mode");
 
 // ── Step 2: Save token ─────────────────────────────────────────────────────
 if (urlToken) {
   localStorage.setItem("token", urlToken);
   writeAuthCookie({ token: urlToken });
-  sessionStorage.setItem('_relay_token', urlToken)
+  sessionStorage.setItem('_relay_token', urlToken);
 } else if (encodedToken) {
   try {
     const token = encodedToken.startsWith("eyJ")
@@ -75,8 +78,6 @@ if (urlToken) {
     console.error("❌ Token decode failed:", e);
   }
 } else {
-  // BUG 2 FIX: Read from auth_session (the real cookie), not space_auth.
-  // Also migrate anyone still on the old space_auth cookie.
   const session = readCookie(COOKIE_KEY);
   const legacySession = readCookie("space_auth");
 
@@ -86,7 +87,6 @@ if (urlToken) {
 
   if (token) {
     localStorage.setItem("token", token);
-    // Write it into auth_session if it wasn't already there
     if (!session?.token) writeAuthCookie({ token });
   }
 }
@@ -94,10 +94,17 @@ if (urlToken) {
 // ── Step 3: Save company_id ────────────────────────────────────────────────
 if (urlCompanyId) {
   localStorage.setItem("company_id", urlCompanyId);
-  writeAuthCookie({ company_id: urlCompanyId });
+  writeAuthCookie({ company_id: urlCompanyId, personal_mode: null, company_switched: true });
 }
 
-// ── Step 4: Apply theme ────────────────────────────────────────────────────
+// ── Step 4: Handle personal_mode param (switching back to personal) ────────
+if (urlPersonalMode === 'true') {
+  localStorage.removeItem('company_id');
+  localStorage.setItem('personal_mode', 'true');
+  writeAuthCookie({ company_id: null, personal_mode: true, company_switched: null });
+}
+
+// ── Step 5: Apply theme ────────────────────────────────────────────────────
 if (urlTheme) {
   const validThemes: ThemeMode[] = ["light", "dark", "system"];
   const safeTheme = validThemes.includes(urlTheme as ThemeMode)
@@ -105,37 +112,32 @@ if (urlTheme) {
     : "light";
   localStorage.setItem("theme", safeTheme);
 }
-// ── Step 5: Clean URL ──────────────────────────────────────────────────────
-if (urlToken || urlCompanyId || urlTheme || encodedToken) {
-  const cleaned = new URLSearchParams(window.location.search)
-  ;['_token', '_auth', 'company_id', 'theme'].forEach(p => cleaned.delete(p))
-  
-  const newUrl =
-    window.location.pathname +
-    (cleaned.toString() ? '?' + cleaned.toString() : '')
-  
-  window.history.replaceState({}, '', newUrl)
-}
 
-// ── Step 6: Handle personal_mode from cookie ───────────────────────────────
+// ── Step 6: Clean URL — always runs unconditionally ────────────────────────
+const cleanedParams = new URLSearchParams(window.location.search);
+['_token', '_auth', 'company_id', 'theme', 'personal_mode'].forEach(p => cleanedParams.delete(p));
+const cleanedUrl =
+  window.location.pathname +
+  (cleanedParams.toString() ? '?' + cleanedParams.toString() : '');
+window.history.replaceState({}, '', cleanedUrl);
+
+// ── Step 7: Handle personal_mode from cookie (no URL param case) ──────────
 const session = readCookie(COOKIE_KEY);
-const isPersonalMode = session?.personal_mode === true;
+const isPersonalMode = urlPersonalMode === 'true' || session?.personal_mode === true;
 
 if (isPersonalMode) {
   localStorage.removeItem("company_id");
   if (session?.company_id) {
-    const cleaned = { ...session };
-    delete cleaned.company_id;
     writeAuthCookie({ company_id: null });
   }
 } else if (session?.company_id && !urlCompanyId) {
   localStorage.setItem("company_id", session.company_id as string);
 }
 
-// ── Step 7: Init theme ─────────────────────────────────────────────────────
+// ── Step 8: Init theme ─────────────────────────────────────────────────────
 initThemeImmediately();
 
-// ── Step 8: Mount ─────────────────────────────────────────────────────────
+// ── Step 9: Mount ─────────────────────────────────────────────────────────
 const head = createHead();
 const app = createApp(App);
 

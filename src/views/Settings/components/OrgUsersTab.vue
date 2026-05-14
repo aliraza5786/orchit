@@ -1,18 +1,6 @@
 <template>
-  <!-- No access -->
-  <div
-    v-if="!canManageUsers"
-    class="flex flex-col items-center justify-center py-20 text-center"
-  >
-    <div class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
-      <i class="fa-solid fa-lock text-red-500 text-xl"></i>
-    </div>
-    <p class="text-sm font-semibold text-text-primary mb-1">Access restricted</p>
-    <p class="text-xs text-text-secondary">You don't have permission to manage team members.</p>
-  </div>
-
   <!-- Main -->
-  <div v-else class="w-full flex-1 space-y-5">
+  <div class="w-full flex-1 space-y-5">
 
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -30,8 +18,8 @@
       </div>
       <button
         v-if="canCreateUsers"
-        @click="openCreateModal"
-        class="flex items-center gap-2 px-4 py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto"
+        @click="handleAddMember"
+        class="flex items-center gap-2 px-4 cursor-pointer py-2.5 bg-accent text-white text-sm font-semibold rounded-lg hover:bg-accent/90 active:scale-95 transition-all shadow-lg shadow-accent/20 whitespace-nowrap self-start sm:self-auto"
       >
         <i class="fa-solid fa-user-plus text-xs"></i>
         Add member
@@ -430,7 +418,139 @@
       </div>
     </Transition>
   </Teleport>
+  <Transition
+  enter-active-class="transition-all duration-200 ease-out"
+  enter-from-class="opacity-0"
+  enter-to-class="opacity-100"
+  leave-active-class="transition-all duration-150 ease-in"
+  leave-from-class="opacity-100"
+  leave-to-class="opacity-0"
+>
+  <div
+    v-if="showDomainRequiredModal"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+    @click.self="showDomainRequiredModal = false"
+  >
+    <div
+      class="w-full max-w-md rounded-2xl overflow-hidden"
+      style="background: var(--bg-card); border: 1px solid var(--border);"
+    >
+      <!-- Header -->
+      <div
+        class="flex items-center justify-between px-5 py-4 border-b"
+        style="border-color: var(--border);"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-9 h-9 rounded-xl flex items-center justify-center"
+            style="background: color-mix(in srgb, #f59e0b 12%, transparent);"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#f59e0b"
+              stroke-width="2"
+            >
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
 
+          <div>
+            <h3 class="text-sm font-bold text-text-primary">
+              Domain verification required
+            </h3>
+            <p class="text-xs text-text-secondary">
+              Verify your domain before adding members
+            </p>
+          </div>
+        </div>
+
+        <button
+          @click="showDomainRequiredModal = false"
+          class="p-1.5 rounded-lg text-text-secondary hover:bg-border/20"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-5 py-5 space-y-4">
+        <div
+          class="rounded-xl px-4 py-3 border"
+          style="background: color-mix(in srgb, #f59e0b 5%, transparent); border-color: color-mix(in srgb, #f59e0b 20%, transparent);"
+        >
+          <p class="text-sm text-text-primary leading-relaxed">
+            You must verify your custom domain before inviting team members.
+          </p>
+        </div>
+
+        <div
+          v-if="pendingDomain"
+          class="rounded-xl border overflow-hidden"
+          style="border-color: var(--border);"
+        >
+          <div
+            class="px-4 py-3 border-b"
+            style="background: var(--bg-surface); border-color: var(--border);"
+          >
+            <p class="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+              Current domain status
+            </p>
+          </div>
+
+          <div class="px-4 py-4 space-y-2">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-sm font-semibold text-text-primary">
+                {{ pendingDomain.domain }}
+              </p>
+
+              <span
+                class="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                {{ pendingDomain.status }}
+              </span>
+            </div>
+
+            <p
+              v-if="pendingDomain.last_check_result?.error"
+              class="text-xs text-text-secondary leading-relaxed"
+            >
+              {{ pendingDomain.last_check_result.error }}
+            </p>
+          </div>
+        </div>
+
+        <p class="text-xs leading-relaxed text-text-secondary">
+          Once your domain status becomes
+          <span class="font-semibold text-emerald-400">Verified</span>,
+          you'll be able to add members to your workspace.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div
+        class="px-5 py-4 border-t"
+        style="border-color: var(--border);"
+      >
+        <button
+          @click="showDomainRequiredModal = false"
+          class="w-full py-3 rounded-xl text-sm font-semibold transition-all"
+          style="background: var(--accent); color: var(--accent-text);"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+  </div>
+</Transition>
   <!-- ═══════════════════════════════════════════════════════════════
        EDIT MEMBER MODAL
   ════════════════════════════════════════════════════════════════ -->
@@ -606,9 +726,24 @@ import {
   useToggleCompanyUserActive,
   type CompanyUser,
 } from '../../../queries/useCompanyUsers'
-
+import { useListDomains } from "../../../queries/useCommon"
 // ─── Props & company context ──────────────────────────────────────────────────
+const {
+  data: domainsData
+} = useListDomains()
 
+const domains = computed(() => {
+  return domainsData.value?.domains ?? []
+})
+const hasVerifiedDomain = computed(() =>
+  domains.value.some((d: any) => d.status === 'verified')
+)
+
+const pendingDomain = computed(() =>
+  domains.value.find((d: any) =>
+    ['pending', 'verifying', 'failed'].includes(d.status)
+  )
+)
 const props = defineProps<{ profile?: any }>()
 
 const companyId = computed<string>(() =>
@@ -616,11 +751,18 @@ const companyId = computed<string>(() =>
 )
 const page     = ref(1)
 const pageSize = ref(10)
-
+const showDomainRequiredModal = ref(false)
 const totalMembers = computed<number>(() =>
   usersData.value?.data?.total ?? usersData.value?.total ?? 0
 )
+function handleAddMember(): void {
+  if (!hasVerifiedDomain.value) {
+    showDomainRequiredModal.value = true
+    return
+  }
 
+  openCreateModal()
+}
 const totalPages = computed(() => Math.ceil(totalMembers.value / pageSize.value))
 
 function goToPage(p: number) {
@@ -648,11 +790,6 @@ const permissions = computed<string[]>(() => activeCompany.value?.permissions ??
 
 const isOwner = computed(() => membershipRole.value === 'owner')
 function can(p: string) { return permissions.value.includes(p) }
-
-const canManageUsers = computed(() =>
-  isOwner.value || can('company_user.create') || can('company_user.update') ||
-  can('company_user.delete') || can('company_user.read')
-)
 const canCreateUsers  = computed(() => isOwner.value || can('company_user.create'))
 const canUpdateUsers  = computed(() => isOwner.value || can('company_user.update'))
 const canDeleteUsers  = computed(() => isOwner.value || can('company_user.delete'))
