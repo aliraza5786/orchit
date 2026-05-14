@@ -47,6 +47,7 @@ export interface UpdateCompanyUserPayload {
   company_role_id?: string | 'null'
   is_active?: boolean
   u_password?: string
+  membership_role?: string
 }
 
 export interface ChangePasswordPayload {
